@@ -113,6 +113,30 @@ namespace Ambermoon.Data
         public uint Index { get; set; }
         public EventType Type { get; set; }
         public Event Next { get; set; }
+
+        protected void CloneProperties(Event @event, bool keepNext)
+        {
+            @event.Index = Index;
+            @event.Type = Type;
+            @event.Next = keepNext ? Next : null;
+        }
+
+        protected byte[] CloneBytes(byte[] bytes)
+        {
+            var newBytes = new byte[bytes.Length];
+            Buffer.BlockCopy(bytes, 0, newBytes, 0, bytes.Length);
+            return newBytes;
+        }
+
+        public virtual Event Clone(bool keepNext)
+        {
+            return new Event
+            {
+                Index = Index,
+                Type = Type,
+                Next = keepNext ? Next : null
+            };
+        }
     }
 
     public class TeleportEvent : Event
@@ -135,6 +159,22 @@ namespace Ambermoon.Data
         public TransitionType Transition { get; set; }
         public byte[] Unknown2 { get; set; }
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new TeleportEvent
+            {
+                MapIndex = MapIndex,
+                X = X,
+                Y = Y,
+                Direction = Direction,
+                NewTravelType = NewTravelType,
+                Transition = Transition,
+                Unknown2 = CloneBytes(Unknown2)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             var position = X == 0 || Y == 0 ? "same" : $"{X},{Y}";
@@ -151,6 +191,22 @@ namespace Ambermoon.Data
         public byte Unused { get; set; }
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new DoorEvent
+            {
+                LockpickingChanceReduction = LockpickingChanceReduction,
+                DoorIndex = DoorIndex,
+                TextIndex = TextIndex,
+                UnlockTextIndex = UnlockTextIndex,
+                Unused = Unused,
+                KeyIndex = KeyIndex,
+                UnlockFailedEventIndex = UnlockFailedEventIndex
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
 
         public override string ToString()
         {
@@ -216,6 +272,22 @@ namespace Ambermoon.Data
         public ChestFlags Flags { get; set; }
         public bool SearchSkillCheck => Flags != 0;
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new ChestEvent
+            {
+                LockpickingChanceReduction = LockpickingChanceReduction,
+                TextIndex = TextIndex,
+                ChestIndex = ChestIndex,
+                LootFlags = LootFlags,
+                KeyIndex = KeyIndex,
+                UnlockFailedEventIndex = UnlockFailedEventIndex,
+                Flags = Flags
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             string lockType = LockpickingChanceReduction == 0 ? "Open" : LockpickingChanceReduction >= 100 ? "No Lockpicking" : $"-{LockpickingChanceReduction}% Chance";
@@ -256,6 +328,20 @@ namespace Ambermoon.Data
         public bool TriggerIfBlind { get; set; }
         public byte[] Unknown { get; set; }
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new PopupTextEvent
+            {
+                TextIndex = TextIndex,
+                EventImageIndex = EventImageIndex,
+                PopupTrigger = PopupTrigger,
+                TriggerIfBlind = TriggerIfBlind,
+                Unknown = CloneBytes(Unknown)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Trigger {PopupTrigger}, {(TriggerIfBlind ? "" : "Not ")}Trigger If Blind, Unknown {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
@@ -266,6 +352,17 @@ namespace Ambermoon.Data
     {
         public CharacterDirection Direction { get; set; }
         public byte[] Unused { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new SpinnerEvent
+            {
+                Direction = Direction,
+                Unused = CloneBytes(Unused)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
 
         public override string ToString()
         {
@@ -317,6 +414,20 @@ namespace Ambermoon.Data
             _ => Condition.None
         };
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new TrapEvent
+            {
+                Ailment = Ailment,
+                Target = Target,
+                BaseDamage = BaseDamage,
+                AffectedGenders = AffectedGenders,
+                Unused = CloneBytes(Unused)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             return $"{Type}: {BaseDamage} damage with ailment {Ailment} on {Target}, Affected genders {AffectedGenders}";
@@ -331,6 +442,17 @@ namespace Ambermoon.Data
         public ActiveSpellType? AffectedBuff { get; set; }
         public byte[] Unused { get; set; } // TODO: Maybe some byte is used but was 0 in test case?
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new RemoveBuffsEvent
+            {
+                AffectedBuff = AffectedBuff,
+                Unused = CloneBytes(Unused)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             return $"{Type}: Affected buff {(AffectedBuff == null ? "all" : AffectedBuff.ToString())}, Unused {string.Join(" ", Unused.Select(u => u.ToString("x2")))}";
@@ -344,6 +466,20 @@ namespace Ambermoon.Data
         public uint CorrectAnswerDictionaryIndex1 { get; set; }
         public uint CorrectAnswerDictionaryIndex2 { get; set; }
         public byte[] Unused { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new RiddlemouthEvent
+            {
+                RiddleTextIndex = RiddleTextIndex,
+                SolutionTextIndex = SolutionTextIndex,
+                CorrectAnswerDictionaryIndex1 = CorrectAnswerDictionaryIndex1,
+                CorrectAnswerDictionaryIndex2 = CorrectAnswerDictionaryIndex2,
+                Unused = CloneBytes(Unused)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
 
         public override string ToString()
         {
@@ -405,6 +541,22 @@ namespace Ambermoon.Data
         public uint Value { get; set; }
         public byte Unknown { get; set; }
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new RewardEvent
+            {
+                TypeOfReward = TypeOfReward,
+                Target = Target,
+                Operation = Operation,
+                Random = Random,
+                RewardTypeValue = RewardTypeValue,
+                Value = Value,
+                Unknown = Unknown
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             string operationString = Operation switch
@@ -442,6 +594,20 @@ namespace Ambermoon.Data
         public uint WallIndex => FrontTileIndex > 100 && FrontTileIndex < 255 ? FrontTileIndex - 100 : 0;
         public uint ObjectIndex => FrontTileIndex <= 100 ? FrontTileIndex : 0;
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new ChangeTileEvent
+            {
+                X = X,
+                Y = Y,
+                FrontTileIndex = FrontTileIndex,
+                MapIndex = MapIndex,
+                Unknown = CloneBytes(Unknown)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, X {X}, Y {Y}, Front tile / Wall / Object {FrontTileIndex}, Unknown {(Unknown == null ? "null" : string.Join(" ", Unknown.Select(u => u.ToString("x2"))))}";
@@ -453,6 +619,18 @@ namespace Ambermoon.Data
         public uint MonsterGroupIndex { get; set; }
         public byte[] Unknown1 { get; set; }
         public byte[] Unknown2 { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new StartBattleEvent
+            {
+                MonsterGroupIndex = MonsterGroupIndex,
+                Unknown1 = CloneBytes(Unknown1),
+                Unknown2 = CloneBytes(Unknown2)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
 
         public override string ToString()
         {
@@ -474,6 +652,22 @@ namespace Ambermoon.Data
         /// </summary>
         public byte UsePlaceTextIndex { get; set; }
         public uint MerchantDataIndex { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new EnterPlaceEvent
+            {
+                OpeningHour = OpeningHour,
+                ClosingHour = ClosingHour,
+                PlaceIndex = PlaceIndex,
+                ClosedTextIndex = ClosedTextIndex,
+                PlaceType = PlaceType,
+                UsePlaceTextIndex = UsePlaceTextIndex,
+                MerchantDataIndex = MerchantDataIndex
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
 
         public override string ToString()
         {
@@ -530,6 +724,21 @@ namespace Ambermoon.Data
         /// 0xffff means continue with next map event from the list.
         /// </summary>
         public uint ContinueIfFalseWithMapEventIndex { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new ConditionEvent
+            {
+                TypeOfCondition = TypeOfCondition,
+                ObjectIndex = ObjectIndex,
+                Value = Value,
+                Count = Count,
+                ContinueIfFalseWithMapEventIndex = ContinueIfFalseWithMapEventIndex,
+                Unknown1 = CloneBytes(Unknown1)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
 
         public override string ToString()
         {
@@ -633,6 +842,21 @@ namespace Ambermoon.Data
         public uint Count { get; set; }
         public byte[] Unknown2 { get; set; }
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new ActionEvent
+            {
+                TypeOfAction = TypeOfAction,
+                ObjectIndex = ObjectIndex,
+                Value = Value,
+                Count = Count,
+                Unknown1 = CloneBytes(Unknown1),
+                Unknown2 = CloneBytes(Unknown2)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             return TypeOfAction switch
@@ -666,6 +890,18 @@ namespace Ambermoon.Data
         public uint ContinueIfFalseWithMapEventIndex { get; set; }
         public byte[] Unused { get; set; }
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new Dice100RollEvent
+            {
+                Chance = Chance,
+                ContinueIfFalseWithMapEventIndex = ContinueIfFalseWithMapEventIndex,
+                Unused = CloneBytes(Unused)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             string falseHandling = ContinueIfFalseWithMapEventIndex == 0xffff
@@ -698,6 +934,19 @@ namespace Ambermoon.Data
         public byte[] Unused1 { get; set; } // 4
         public byte[] Unused2 { get; set; } // 2
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new ConversationEvent
+            {
+                Interaction = Interaction,
+                Value = Value,
+                Unused1 = CloneBytes(Unused1),
+                Unused2 = CloneBytes(Unused2)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             string argument = Interaction switch
@@ -716,6 +965,17 @@ namespace Ambermoon.Data
     {
         public uint NPCTextIndex { get; set; }
         public byte[] Unused { get; set; } // 8
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new PrintTextEvent
+            {
+                NPCTextIndex = NPCTextIndex,
+                Unused = CloneBytes(Unused)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
 
         public override string ToString()
         {
@@ -737,6 +997,19 @@ namespace Ambermoon.Data
         public uint Amount { get; set; }
         public uint ItemIndex { get; set; }
         public byte[] Unused { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new CreateEvent
+            {
+                TypeOfCreation = TypeOfCreation,
+                Amount = Amount,
+                ItemIndex = ItemIndex,
+                Unused = CloneBytes(Unused)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
 
         public override string ToString()
         {
@@ -762,6 +1035,18 @@ namespace Ambermoon.Data
         /// </summary>
         public uint NoEventIndex { get; set; }
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new DecisionEvent
+            {
+                TextIndex = TextIndex,
+                NoEventIndex = NoEventIndex,
+                Unknown1 = CloneBytes(Unknown1)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             return $"{Type}: Text {TextIndex}, Event index when selecting 'No' {(NoEventIndex == 0xffff ? "None" : $"{NoEventIndex + 1:x4}")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
@@ -774,6 +1059,18 @@ namespace Ambermoon.Data
         public byte Volume { get; set; }
         public byte[] Unknown1 { get; set; }
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new ChangeMusicEvent
+            {
+                MusicIndex = MusicIndex,
+                Volume = Volume,
+                Unknown1 = CloneBytes(Unknown1)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             return $"{Type}: Music {(MusicIndex == 255 ? "<Map music>" : MusicIndex.ToString())}, Volume {(Volume / 255.0f).ToString("0.0", CultureInfo.InvariantCulture)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
@@ -783,6 +1080,16 @@ namespace Ambermoon.Data
     public class ExitEvent : Event
     {
         public byte[] Unused { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new ExitEvent
+            {
+                Unused = CloneBytes(Unused)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
 
         public override string ToString()
         {
@@ -799,6 +1106,20 @@ namespace Ambermoon.Data
         public uint MapIndex { get; set; }
         public byte[] Unknown2 { get; set; }
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new SpawnEvent
+            {
+                X = X,
+                Y = Y,
+                TravelType = TravelType,
+                MapIndex = MapIndex,
+                Unknown1 = CloneBytes(Unknown1),
+                Unknown2 = CloneBytes(Unknown2)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
 
         public override string ToString()
         {
@@ -810,6 +1131,16 @@ namespace Ambermoon.Data
     {
         public byte[] Unused { get; set; }
 
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new InteractEvent
+            {
+                Unused = CloneBytes(Unused)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
         public override string ToString()
         {
             return $"{Type}";
@@ -819,6 +1150,16 @@ namespace Ambermoon.Data
     public class DebugEvent : Event
     {
         public byte[] Data { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new DebugEvent
+            {
+                Data = CloneBytes(Data)
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
 
         public override string ToString()
         {
