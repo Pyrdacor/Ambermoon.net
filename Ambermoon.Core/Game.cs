@@ -330,7 +330,7 @@ namespace Ambermoon
         event Func<ItemGrid, int, ItemSlot, bool> TargetItemPicked;
         bool advancing = false; // party or monsters are advancing
         internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
-        internal int? CurrentInventoryIndex { get; private set; } = null;
+        internal int? CurrentInventoryIndex { get; set; } = null;
         internal Character CurrentCaster { get; set; } = null;
         internal Character CurrentSpellTarget { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;

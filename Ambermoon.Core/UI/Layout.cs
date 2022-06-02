@@ -2386,12 +2386,16 @@ namespace Ambermoon.UI
                             }
                         }
 
+                        var currentInventoryIndex = game.CurrentInventoryIndex; // close window will null this
+
                         game.CloseWindow(() =>
                         {
                             if (wasInputEnabled)
                                 game.InputEnable = true;
                             game.UpdateCursor();
+                            game.CurrentInventoryIndex = currentInventoryIndex; // TODO: this won't work long enough if some events open/close windows or are async/event-based
                             game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemIndex), eventX, eventY);
+                            game.CurrentInventoryIndex = null;
                         });
                     });
                 }
