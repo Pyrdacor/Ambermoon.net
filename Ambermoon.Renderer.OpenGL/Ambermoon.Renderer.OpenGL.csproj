@@ -19,7 +19,7 @@
 
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>10.6.3</Version>
+    <Version>10.6.4</Version>
     <Authors>Robert Schneckenhaus</Authors>
     <Description>OpenGL render interface implementation for Ambermoon</Description>
     <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>
@@ -27,10 +27,6 @@
     <RepositoryType>Github</RepositoryType>
     <PackageTags>Ambermoon OpenGL Render Graphics Shader</PackageTags>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Common" Version="10.6.6" />
-  </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='DebugAndroid'">
 	<PackageReference Include="Silk.NET.OpenGLES" Version="2.13.0" />

@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data.Serialization;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Ambermoon.Data.Legacy.Serialization
@@ -213,7 +214,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         }
                         else if (processUIPlaceholders)
                         {
-                            var matches = placeholderRegex.Matches(text);
+                            var matches = placeholderRegex.Matches(text).Where(m => m.Value.StartsWith('0')).ToList();
 
                             for (int m = matches.Count - 1; m >= 0; --m)
                             {

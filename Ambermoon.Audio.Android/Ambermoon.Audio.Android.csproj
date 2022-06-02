@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Common" Version="10.6.6" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Data.Common\Ambermoon.Data.Common.csproj" />
   </ItemGroup>
 

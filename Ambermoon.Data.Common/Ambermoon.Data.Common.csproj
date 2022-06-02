@@ -15,10 +15,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Common" Version="10.6.3" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Common\Ambermoon.Common.csproj" />
   </ItemGroup>
 
