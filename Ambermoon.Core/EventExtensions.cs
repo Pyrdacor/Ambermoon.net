@@ -647,6 +647,14 @@ namespace Ambermoon
                                 return mapEventIfFalse;
                             }
                             break;
+                        case ConditionEvent.ConditionType.LeadClass:
+                            if (((uint)game.CurrentPartyMember.Class == conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
                     }
 
                     // For some follow-up events we won't proceed by using Eye, Hand or Mouth.

@@ -183,7 +183,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.WriteEnumAsByte(conditionEvent.TypeOfCondition);
                     dataWriter.Write((byte)conditionEvent.Value);
                     dataWriter.Write((byte)conditionEvent.Count);
-                    dataWriter.Write(conditionEvent.Unknown1);
+                    dataWriter.Write((ushort)conditionEvent.DisallowedAilments);
                     dataWriter.Write((ushort)conditionEvent.ObjectIndex);
                     dataWriter.Write((ushort)conditionEvent.ContinueIfFalseWithMapEventIndex);
                     break;

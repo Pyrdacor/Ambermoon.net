@@ -707,11 +707,12 @@ namespace Ambermoon.Data
             Mouth = 0x15,
             TransportAtLocation = 0x16,
             MultiCursor = 0x17,
-            TravelType = 0x18
+            TravelType = 0x18,
+            LeadClass = 0x19
         }
 
         public ConditionType TypeOfCondition { get; set; }
-        public byte[] Unknown1 { get; set; }
+        public Condition DisallowedAilments { get; set; }
         /// <summary>
         /// This depends on condition type.
         /// It can be the item or variable index for example.
@@ -734,7 +735,7 @@ namespace Ambermoon.Data
                 Value = Value,
                 Count = Count,
                 ContinueIfFalseWithMapEventIndex = ContinueIfFalseWithMapEventIndex,
-                Unknown1 = CloneBytes(Unknown1)
+                DisallowedAilments = DisallowedAilments
             };
             CloneProperties(clone, keepNext);
             return clone;
@@ -746,29 +747,51 @@ namespace Ambermoon.Data
                 ? "Stop here if false"
                 : $"Jump to event {ContinueIfFalseWithMapEventIndex:x2} if false";
 
+            string GetMultiCursorString()
+            {
+                string cursors = "";
+
+                if ((ObjectIndex & 0x1) != 0)
+                    cursors += "Hand";
+                if ((ObjectIndex & 0x2) != 0)
+                    cursors += "Eye";
+                if ((ObjectIndex & 0x4) != 0)
+                    cursors += "Mouth";
+
+                if (cursors.Length == 0)
+                    return "None";
+
+                return cursors;
+            }
+
             return TypeOfCondition switch
             {
-                ConditionType.GlobalVariable => $"{Type}: Global variable {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.EventBit => $"{Type}: Event bit {ObjectIndex / 64 + 1}:{ObjectIndex % 64} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.DoorOpen => $"{Type}: Door {ObjectIndex} {(Value == 0 ? "closed" : "open")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.ChestOpen => $"{Type}: Chest {ObjectIndex} {(Value == 0 ? "closed" : "open")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.CharacterBit => $"{Type}: Character bit {ObjectIndex / 32 + 1}:{ObjectIndex % 32} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.PartyMember => $"{Type}: Has party member {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.ItemOwned => $"{Type}: {(Value == 0 ? $"Not own item" : $"Own item {Math.Max(1, Count)}x")} {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.UseItem => $"{Type}: Use item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.KnowsKeyword => $"{Type}: {(Value == 0 ? "Not know" : "Know")} keyword {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.LastEventResult => $"{Type}: Success of last event, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.GameOptionSet => $"{Type}: Game option {(Data.Enumerations.Option)(1 << (int)ObjectIndex)} is {(Value == 0 ? "not set" : "set")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.CanSee => $"{Type}: {(Value == 0 ? "Can't see" : "Can see")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.HasCondition => $"{Type}: {(Value == 0 ? "Has not" : "Has")} condition {(Condition)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.Hand => $"{Type}: Hand cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.SayWord => $"{Type}: Say keyword {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.EnterNumber => $"{Type}: Enter number {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
+                ConditionType.GlobalVariable => $"{Type}: Global variable {ObjectIndex} = {Value}, {falseHandling}",
+                ConditionType.EventBit => $"{Type}: Event bit {ObjectIndex / 64 + 1}:{ObjectIndex % 64} = {Value}, {falseHandling}",
+                ConditionType.DoorOpen => $"{Type}: Door {ObjectIndex} {(Value == 0 ? "closed" : "open")}, {falseHandling}",
+                ConditionType.ChestOpen => $"{Type}: Chest {ObjectIndex} {(Value == 0 ? "closed" : "open")}, {falseHandling}",
+                ConditionType.CharacterBit => $"{Type}: Character bit {ObjectIndex / 32 + 1}:{ObjectIndex % 32} = {Value}, {falseHandling}",
+                ConditionType.PartyMember => $"{Type}: Has party member {ObjectIndex} without ailments {Enum.GetFlagNames(DisallowedAilments)}, {falseHandling}",
+                ConditionType.ItemOwned => $"{Type}: {(Value == 0 ? $"Not own item" : $"Own item {Math.Max(1, Count)}x")} {ObjectIndex}, {falseHandling}",
+                ConditionType.UseItem => $"{Type}: Use item {ObjectIndex}, {falseHandling}",
+                ConditionType.KnowsKeyword => $"{Type}: {(Value == 0 ? "Not know" : "Know")} keyword {ObjectIndex}, {falseHandling}",
+                ConditionType.LastEventResult => $"{Type}: Success of last event, {falseHandling}",
+                ConditionType.GameOptionSet => $"{Type}: Game option {(Option)(1 << (int)ObjectIndex)} is {(Value == 0 ? "not set" : "set")}, {falseHandling}",
+                ConditionType.CanSee => $"{Type}: {(Value == 0 ? "Can't see" : "Can see")}, {falseHandling}",
+                ConditionType.HasCondition => $"{Type}: {(Value == 0 ? "Has not" : "Has")} condition {(Condition)(1 << (int)ObjectIndex)}, {falseHandling}",
+                ConditionType.Hand => $"{Type}: Hand cursor, {falseHandling}",
+                ConditionType.SayWord => $"{Type}: Say keyword {ObjectIndex}, {falseHandling}",
+                ConditionType.EnterNumber => $"{Type}: Enter number {ObjectIndex}, {falseHandling}",
                 ConditionType.Levitating => $"{Type}: Levitating, {falseHandling}",
                 ConditionType.HasGold => $"{Type}: Gold {(Value == 0 ? "<" : ">=")} {ObjectIndex}, {falseHandling}",
                 ConditionType.HasFood => $"{Type}: Food {(Value == 0 ? "<" : ">=")} {ObjectIndex}, {falseHandling}",
-                ConditionType.Eye => $"{Type}: Eye cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                _ => $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
+                ConditionType.Eye => $"{Type}: Eye cursor, {falseHandling}",
+                ConditionType.Mouth => $"{Type}: Mouth cursor, {falseHandling}",
+                ConditionType.TransportAtLocation => $"{Type}: Transport at event location , {falseHandling}",
+                ConditionType.MultiCursor => $"{Type}: Any cursor of {GetMultiCursorString()}, {falseHandling}",
+                ConditionType.TravelType => $"{Type}: Travel type {Enum.GetName((TravelType)ObjectIndex)}, {falseHandling}",
+                ConditionType.LeadClass => $"{Type}: Active party member has class {Enum.GetName((Class)ObjectIndex)}, {falseHandling}",
+                _ => $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, {falseHandling}",
             };
         }
     }

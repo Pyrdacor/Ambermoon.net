@@ -318,7 +318,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var conditionType = (ConditionEvent.ConditionType)dataReader.ReadByte();
                     var value = dataReader.ReadByte();
                     var count = dataReader.ReadByte();
-                    var unknown1 = dataReader.ReadBytes(2);
+                    var disallowedAilments = (Condition)dataReader.ReadWord();
                     var objectIndex = dataReader.ReadWord();
                     var jumpToIfNotFulfilled = dataReader.ReadWord();
                     @event = new ConditionEvent
@@ -327,7 +327,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         ObjectIndex = objectIndex,
                         Value = value,
                         Count = count,
-                        Unknown1 = unknown1,
+                        DisallowedAilments = disallowedAilments,
                         ContinueIfFalseWithMapEventIndex = jumpToIfNotFulfilled
                     };
                     break;

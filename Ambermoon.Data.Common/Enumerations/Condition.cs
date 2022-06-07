@@ -4,7 +4,7 @@ using System.ComponentModel;
 namespace Ambermoon.Data
 {
     [Flags]
-    public enum Condition
+    public enum Condition : ushort
     {
         None = 0,
         Irritated = 0x0001,
