@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 namespace Ambermoon
 {
@@ -12,14 +13,23 @@ namespace Ambermoon
 
         public static string GetFlagNames<TEnum>(TEnum value)
         {
-            var values = GetValues<TEnum>().Select(v => (uint)(object)v).Where(v => v != 0).Distinct().ToList();
+            var values = GetValues<TEnum>().Select(v => (uint)Convert.ChangeType(v, typeof(uint))).Where(v => v != 0).Distinct().ToList();
 
             if (values.Count == 0)
-                return GetName((TEnum)(object)0) ?? "None";
+            {
+                try
+                {
+                    return GetName((TEnum)(object)0) ?? "None";
+                }
+                catch (InvalidCastException)
+                {
+                    return "None";
+                }
+            }
 
             string result = "";
             values.Sort();
-            uint flags = (uint)(object)value;
+            uint flags = (uint)Convert.ChangeType(value, typeof(uint));
 
             foreach (var v in values)
             {
@@ -28,7 +38,40 @@ namespace Ambermoon
 
                 if (result.Length != 0)
                     result += " | ";
-                result += GetName(value);
+                result += GetName(v);
+            }
+
+            return result;
+        }
+
+        public static string GetFlagNames(Type enumType, object value)
+        {
+            var values = System.Enum.GetValues(enumType).Cast<object>().Select(v => (uint)Convert.ChangeType(v, typeof(uint))).Where(v => v != 0).Distinct().ToList();
+
+            if (values.Count == 0 || (uint)Convert.ChangeType(value, typeof(uint)) == 0)
+            {
+                try
+                {
+                    return System.Enum.GetName(enumType, (object)0) ?? "None";
+                }
+                catch (InvalidCastException)
+                {
+                    return "None";
+                }
+            }
+
+            string result = "";
+            values.Sort();
+            uint flags = (uint)Convert.ChangeType(value, typeof(uint));
+
+            foreach (var v in values)
+            {
+                if ((flags & v) == 0)
+                    continue;
+
+                if (result.Length != 0)
+                    result += " | ";
+                result += System.Enum.GetName(enumType, v);
             }
 
             return result;
