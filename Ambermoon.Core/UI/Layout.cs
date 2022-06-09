@@ -2539,9 +2539,20 @@ namespace Ambermoon.UI
                         return;
                     }
 
+                    if (game.Map.Flags.HasFlag(MapFlags.NoMarkOrReturn) && (item.Spell == Spell.WordOfMarking ||
+                        item.Spell == Spell.WordOfReturning))
+                    {
+                        SetInventoryMessage(game.DataNameProvider.ItemCannotBeUsedHere, true);
+                        return;
+                    }
+
                     bool wrongPlace = false;
 
-                    if (game.LastWindow.Window == Window.Camp)
+                    if (!game.Map.Flags.HasFlag(MapFlags.CanUseMagic) && item.Type == ItemType.SpellScroll)
+                    {
+                        wrongPlace = true;
+                    }
+                    else if (game.LastWindow.Window == Window.Camp)
                     {
                         wrongPlace = !SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.Camp);
                     }

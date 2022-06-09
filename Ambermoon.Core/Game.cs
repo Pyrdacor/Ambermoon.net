@@ -12006,6 +12006,12 @@ namespace Ambermoon
                 return;
             }
 
+            if (Map.Flags.HasFlag(MapFlags.NoMarkOrReturn) && (spell == Spell.WordOfMarking || spell == Spell.WordOfReturning))
+            {
+                ShowMessagePopup(DataNameProvider.CannotUseItHere);
+                return;
+            }
+
             if (!Map.Flags.HasFlag(MapFlags.Automapper))
             {
                 if (spell == Spell.MapView)
