@@ -600,6 +600,9 @@ namespace Ambermoon.Render
 
         public bool IsMapVisible(uint index)
         {
+            if (Map == null) // current map might be a 3D map, then Map is null here
+                return false;
+
             if (Map.Index == index)
                 return true;
 
@@ -614,6 +617,9 @@ namespace Ambermoon.Render
 
         public bool IsMapVisible(uint index, ref uint localMapX, ref uint localMapY)
         {
+            if (Map == null) // current map might be a 3D map, then Map is null here
+                return false;
+
             if (Map.Index == index)
                 return true;
 

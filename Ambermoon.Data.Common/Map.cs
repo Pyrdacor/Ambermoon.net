@@ -17,10 +17,12 @@ namespace Ambermoon.Data
         Unknown1 = 1 << 5, // Unknown. All world maps use that in Ambermoon.
         Sky = 1 << 6, // All towns have this and the ruin tower. Only considered for 3D maps.
         NoSleepUntilDawn = 1 << 7, // If active sleep time is always 8 hours.
-        StationaryGraphics = 1 << 8, // Allow stationary graphics (travel type images) and therefore transports. Is set for all world maps.
+        StationaryGraphics = 1 << 8, // Allow stationary graphics (travel type images) and therefore transports. Is set for all world maps. This also controls if the music is taken from the map file or dependent on the travel type.
         Unknown2 = 1 << 9, // Unknown. Never used in Ambermoon.
         WorldSurface = 1 << 10, // If set the map doesn't use map text 0 as the title but uses the world name instead. Moreover based on world adjacent maps are shown with a size of 50x50.
         CanUseMagic = 1 << 11, // Only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug). It just disables the spell book if not set but you still can use scrolls or items.
+        NoTravelMusic = 1 << 12, // Won't use travel music if StationaryGraphics is set
+        NoMarkOrReturn = 1 << 13, // Forbids the use of "Word of marking" and "Word of returning"
         SmallPlayer = StationaryGraphics // Display player smaller. Only all world maps have this set. Only considered for 2D maps.
     }
 
@@ -236,6 +238,7 @@ namespace Ambermoon.Data
         // for all world maps in Ambermoon so it should be safe.
         public bool IsWorldMap => Flags.HasFlag(MapFlags.WorldSurface);
         public bool UseTravelTypes => Flags.HasFlag(MapFlags.StationaryGraphics);
+        public bool UseTravelMusic => UseTravelTypes && !Flags.HasFlag(MapFlags.NoTravelMusic);
         public string GetText(int index, string fallbackText)
         {
             if (Texts == null || index < 0 || index >= Texts.Count)

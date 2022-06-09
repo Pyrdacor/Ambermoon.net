@@ -417,7 +417,8 @@ namespace Ambermoon
                             break;
                         case ConditionEvent.ConditionType.PartyMember:
                         {
-                            if (game.PartyMembers.Any(m => m.Index == conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+                            if (game.PartyMembers.Any(m => (m.Index == conditionEvent.ObjectIndex &&
+                                ((uint)m.Conditions & (uint)conditionEvent.DisallowedAilments) == 0)) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;

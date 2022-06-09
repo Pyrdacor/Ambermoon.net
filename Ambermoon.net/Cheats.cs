@@ -9,7 +9,7 @@ namespace Ambermoon
     {
         static readonly System.Random random = new System.Random(DateTime.Now.Millisecond);
 
-        static Dictionary<string, KeyValuePair<string, Action<Game, string[]>>> cheats =
+        static readonly Dictionary<string, KeyValuePair<string, Action<Game, string[]>>> cheats =
             new Dictionary<string, KeyValuePair<string, Action<Game, string[]>>>
         {
             { "help",
@@ -113,6 +113,16 @@ namespace Ambermoon
                     "Explores the whole dungeon map." + Environment.NewLine +
                     "Usage: explore",
                     Explore
+                )
+            },
+            { "kill",
+                Create
+                (
+                    "Kills a specific party member." + Environment.NewLine +
+                    "Usage: kill <party_member_index> [death_type]" + Environment.NewLine +
+                    "Death types: 0 (normal), 1 (ashes), 2 (dust)" + Environment.NewLine +
+                    "Defaults to death type 0",
+                    Kill
                 )
             }
         };
@@ -347,6 +357,7 @@ namespace Ambermoon
             foreach (var cheat in cheats)
                 Console.WriteLine(cheat.Key);
 
+            Console.WriteLine();
             Console.WriteLine("Type 'help <cheatname>' for more details.");
             Console.WriteLine("Example: help godmode");
             Console.WriteLine();
@@ -872,6 +883,75 @@ namespace Ambermoon
                 Console.WriteLine("You can't explore the map now.");
             }
 
+            Console.WriteLine();
+        }
+
+        static void Kill(Game game, string[] args)
+        {
+            Console.WriteLine();
+
+            int? partyMemberIndex = args.Length < 1 ? (int?)null : int.TryParse(args[0], out int i) ? i : null;
+
+            if (partyMemberIndex == null || partyMemberIndex < 1 || partyMemberIndex > Game.MaxPartyMembers)
+            {
+                Console.WriteLine("Party member index was invalid or outside the range 1~6.");
+                Console.WriteLine();
+                return;
+            }
+
+            var partyMember = game.GetPartyMember(partyMemberIndex.Value - 1);
+
+            if (partyMember == null)
+            {
+                Console.WriteLine($"There is no party member in slot {partyMemberIndex.Value}.");
+                Console.WriteLine();
+                return;
+            }
+
+            int deathType = args.Length < 2 ? 0 : int.TryParse(args[1], out int t) ? t : 0;
+            var deathCondition = deathType switch
+            {
+                1 => Condition.DeadAshes,
+                2 => Condition.DeadDust,
+                _ => Condition.DeadCorpse
+            };
+
+            if (!partyMember.Alive)
+            {
+                Console.WriteLine($"{partyMember.Name} is already dead.");
+                Console.WriteLine();
+
+                if (!partyMember.Conditions.HasFlag(deathCondition))
+                {
+                    if (deathCondition == Condition.DeadDust)
+                    {
+                        partyMember.Conditions = Condition.DeadDust;
+                        Console.WriteLine("But his death type was changed to dust.");
+                        Console.WriteLine();
+                    }
+                    else if (deathCondition == Condition.DeadAshes && !partyMember.Conditions.HasFlag(Condition.DeadDust))
+                    {
+                        partyMember.Conditions = Condition.DeadAshes;
+                        Console.WriteLine("But his death type was changed to ashes.");
+                        Console.WriteLine();
+                    }
+                }
+
+                return;
+            }
+
+            bool wasActive = game.CurrentPartyMember == partyMember;
+
+            partyMember.Damage(partyMember.HitPoints.TotalCurrentValue, _ =>
+            {
+                if (wasActive)
+                {
+
+                }
+
+            }, deathCondition);
+
+            Console.WriteLine($"{partyMember.Name} was killed!");
             Console.WriteLine();
         }
     }

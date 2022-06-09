@@ -414,7 +414,7 @@ namespace Ambermoon
                 bool superman = travelType == TravelType.Fly || value == TravelType.Fly;
                 travelType = value;
                 CurrentSavegame.TravelType = value;
-                if (Map != null)
+                if (Map != null && Map.UseTravelMusic)
                     PlayMusic(travelType.TravelSong());
                 player.MovementAbility = travelType.ToPlayerMovementAbility();
                 if (Map?.UseTravelTypes == true)
@@ -3739,8 +3739,10 @@ namespace Ambermoon
                 UpdateLight();
                 if (lastPlayedSong != null && lastPlayedSong != Song.BarBrawlin)
                     PlayMusic(lastPlayedSong.Value);
-                else
+                else if (Map.UseTravelMusic)
                     PlayMusic(TravelType.TravelSong());
+                else
+                    PlayMusic(Song.Default);
             }
             else
             {
@@ -6053,7 +6055,7 @@ namespace Ambermoon
             if (!changedMaps.Contains(map.Index))
                 changedMaps.Add(map.Index);
 
-            if (is3D)
+            if (map.Type == MapType.Map3D)
             {
                 var block = map.Blocks[x, y];
                 block.ObjectIndex = changeTileEvent.ObjectIndex;
@@ -9190,8 +9192,10 @@ namespace Ambermoon
                             PlayMusic(lastPlayedSong.Value);
                             lastPlayedSong = temp;
                         }
-                        else
+                        else if (Map.UseTravelMusic)
                             PlayMusic(travelType.TravelSong());
+                        else
+                            PlayMusic(Song.Default);
                         currentBattleInfo.EndBattle(battleEndInfo);
                         currentBattleInfo = null;
                     }
@@ -12785,6 +12789,7 @@ namespace Ambermoon
         /// </summary>
         internal Song PlayMusic(Song song)
         {
+            var lastSong = lastPlayedSong;
             lastPlayedSong = null;
 
             if (disableMusicChange)
@@ -12792,7 +12797,17 @@ namespace Ambermoon
 
             if (song == Song.Default || (int)song == 255)
             {
-                return PlayMusic(Map.MusicIndex == 0 || Map.MusicIndex == 255 ? Song.PloddingAlong : (Song)Map.MusicIndex);
+                if (Map.UseTravelMusic)
+                {
+                    var travelSong = TravelType.TravelSong();
+
+                    if (travelSong == Song.Default)
+                        travelSong = Song.PloddingAlong;
+
+                    return PlayMusic(travelSong);
+                }
+
+                return PlayMusic(Map.MusicIndex == 0 || Map.MusicIndex == 255 ? (lastSong ?? Song.PloddingAlong) : (Song)Map.MusicIndex);
             }
 
             var newSong = songManager.GetSong(song);
