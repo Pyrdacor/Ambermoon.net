@@ -22,7 +22,8 @@ namespace Ambermoon.Data.Legacy.Characters
             character.NumberOfFreeHands = dataReader.ReadByte();
             character.NumberOfFreeFingers = dataReader.ReadByte();
             character.SpokenLanguages = (Language)dataReader.ReadByte();
-            character.PortraitIndex = dataReader.ReadWord();
+            character.InventoryInaccessible = dataReader.ReadByte() != 0;
+            character.PortraitIndex = dataReader.ReadByte();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.CombatGraphicIndex = (MonsterGraphicIndex)value);
             character.UnknownBytes13 = dataReader.ReadBytes(2); // Unknown
             ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.Morale = value);

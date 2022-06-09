@@ -20,7 +20,8 @@ namespace Ambermoon.Data
         public byte NumberOfFreeHands { get; set; }
         public byte NumberOfFreeFingers { get; set; }
         public Language SpokenLanguages { get; set; }
-        public ushort PortraitIndex { get; set; }
+        public bool InventoryInaccessible { get; set; }
+        public byte PortraitIndex { get; set; }
         public byte[] UnknownBytes13 { get; set; } // Unknown 2 bytes
         public SpellTypeImmunity SpellTypeImmunity { get; set; }
         public byte AttacksPerRound { get; set; }

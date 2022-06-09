@@ -698,7 +698,7 @@ namespace Ambermoon
 
             initialSavegame.PartyMembers[1].Name = name;
             initialSavegame.PartyMembers[1].Gender = female ? Gender.Female : Gender.Male;
-            initialSavegame.PartyMembers[1].PortraitIndex = (ushort)portraitIndex;
+            initialSavegame.PartyMembers[1].PortraitIndex = (byte)portraitIndex;
 
             setup?.Invoke(initialSavegame);
 
@@ -2063,6 +2063,15 @@ namespace Ambermoon
             catch
             {
                 // ignore
+            }
+
+            // Update inventory accessible flag for the original (we don't use it in the remake)
+            foreach (var partyMember in CurrentSavegame.PartyMembers)
+            {
+                if (partyMember.Value != null)
+                {
+                    partyMember.Value.InventoryInaccessible = !partyMember.Value.Conditions.CanOpenInventory();
+                }
             }
 
             saveAction?.Invoke();
