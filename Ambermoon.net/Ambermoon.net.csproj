@@ -4,8 +4,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Ambermoon</RootNamespace>
-    <RuntimeIdentifiers>win-x86;win-x64;linux-x64;linux-arm64;osx-x64</RuntimeIdentifiers>
-    <Version>1.6.4</Version>
+    <RuntimeIdentifiers>win-x86;win-x64;linux-x64;linux-arm64;osx-x64;osx.12-arm64</RuntimeIdentifiers>
+    <Version>1.6.5</Version>
     <Copyright>Copyright (C) 2020-2021 by Robert Schneckenhaus</Copyright>
     <Company>Robert Schneckenhaus</Company>
     <Authors>Robert Schneckenhaus</Authors>

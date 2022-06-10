@@ -24,10 +24,10 @@ artifacts:
     name: Ambermoon.net-Windows32Bit
   - path: Ambermoon.net-Linux.tar.gz
     name: Ambermoon.net-Linux
+  - path: Ambermoon.net-Mac-ARM.zip
+    name: Ambermoon.net-Mac-ARM
   - path: Ambermoon.net-Mac.zip
     name: Ambermoon.net-Mac
-  - path: Ambermoon.net-Mac-Bundle.zip
-    name: Ambermoon.net-Mac-Bundle
   - path: nuget\*.nupkg
     name: NugetPackages
 
@@ -91,8 +91,8 @@ deploy:
     on:
       APPVEYOR_REPO_TAG: true
   - provider: GitHub
-    name: Ambermoon.net-Mac-Bundle
-    artifact: Ambermoon.net-Mac-Bundle
+    name: Ambermoon.net-Mac-ARM
+    artifact: Ambermoon.net-Mac-ARM
     tag: $(APPVEYOR_REPO_TAG_NAME)
     release: $(APPVEYOR_REPO_TAG_NAME)
     description: 'Release $(APPVEYOR_REPO_TAG_NAME)'

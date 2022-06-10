@@ -204,7 +204,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             WriteSimpleTextSection(textContainer.SpellClassNames, 7);
             WriteSimpleTextSection(textContainer.SpellNames, 210);
             WriteSimpleTextSection(textContainer.LanguageNames, 8);
-            WriteSimpleTextSection(textContainer.ClassNames, 9);
+            WriteSimpleTextSection(textContainer.ClassNames, 11);
             WriteSimpleTextSection(textContainer.RaceNames, 15);
             WriteSimpleTextSection(textContainer.SkillNames, 10);
             WriteSimpleTextSection(textContainer.AttributeNames, 9);

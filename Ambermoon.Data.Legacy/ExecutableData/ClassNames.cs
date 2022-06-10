@@ -15,14 +15,16 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
         internal ClassNames(List<string> names)
         {
-            if (names.Count != 9)
+            if (names.Count < 9 || names.Count > 11)
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid number of class names.");
 
             for (int i = 0; i < names.Count; ++i)
                 entries.Add((Class)i, names[i]);
 
-            entries.Add(Class.Animal, "");
-            entries.Add(Class.Monster, "");
+            if (names.Count < 10)
+                entries.Add(Class.Animal, "");
+            if (names.Count < 11)
+                entries.Add(Class.Monster, "");
         }
 
         /// <summary>

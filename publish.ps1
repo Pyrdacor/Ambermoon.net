@@ -23,13 +23,16 @@ if ($isWindows) {
 } else {
   Write-Host Publish Mac executable
   dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r osx-x64 --no-restore --self-contained
+  dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r osx.12-arm64 --no-restore --self-contained
   dotnet publish -c Release "./Ambermoon.ConcatFiles/Ambermoon.ConcatFiles.csproj" -r osx-x64 --no-restore
   Write-Host Pack zips for Mac
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/netcoreapp3.1/osx-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList '"./versions.dat"','"./Ambermoon.net/bin/Any CPU/Release/net6.0/osx-x64/publish/Ambermoon.net"'
-  7z a Ambermoon.net-Mac.zip "./Ambermoon.net/bin/Any CPU/Release/net6.0/osx-x64/publish/Ambermoon.net" "./Package/*" -mx9
   mkdir -p ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   cp -r ./Ambermoon.net/Mac/* ./bundle/Ambermoon.net/
   cp "./Ambermoon.net/bin/Any CPU/Release/net6.0/osx-x64/publish/Ambermoon.net" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   cp -r ./Package/* ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
-  7z a Ambermoon.net-Mac-Bundle.zip ./bundle/Ambermoon.net/ -mx9
+  7z a Ambermoon.net-Mac.zip ./bundle/Ambermoon.net/ -mx9
+  Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/netcoreapp3.1/osx-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList '"./versions.dat"','"./Ambermoon.net/bin/Any CPU/Release/net6.0/osx.12-arm64/publish/Ambermoon.net"'
+  cp "./Ambermoon.net/bin/Any CPU/Release/net6.0/osx.12-arm64/publish/Ambermoon.net" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
+  7z a Ambermoon.net-Mac-ARM.zip ./bundle/Ambermoon.net/ -mx9
 }

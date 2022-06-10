@@ -4320,13 +4320,14 @@ namespace Ambermoon
             layout.FillArea(new Rect(208, offsetY + 49, 96, 80), GetUIColor(28), false);
             layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 52, 1);
             layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.PortraitOffset + character.PortraitIndex - 1, PrimaryUIPaletteIndex, 2);
-            layout.AddText(new Rect(242, offsetY + 49, 62, 7), DataNameProvider.GetRaceName(character.Race));
+            if (character.Race <= Race.Thalionic)
+                layout.AddText(new Rect(242, offsetY + 49, 62, 7), DataNameProvider.GetRaceName(character.Race));
             layout.AddText(new Rect(242, offsetY + 56, 62, 7), DataNameProvider.GetGenderName(character.Gender));
             characterInfoTexts.Add(CharacterInfo.Age, layout.AddText(new Rect(242, offsetY + 63, 62, 7),
                 string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
                 character.Attributes[Attribute.Age].CurrentValue)));
             ShowSecondaryStatTooltip(new Rect(242, offsetY + 63, 62, 7), BuiltinTooltips.SecondaryStat.Age, character);
-            if (character.Class < Class.Animal)
+            if (character.Class < Class.Monster && !string.IsNullOrEmpty(DataNameProvider.GetClassName(character.Class)))
             {
                 characterInfoTexts.Add(CharacterInfo.Level, layout.AddText(new Rect(242, offsetY + 70, 62, 7),
                     $"{DataNameProvider.GetClassName(character.Class)} {character.Level}"));
@@ -4337,11 +4338,14 @@ namespace Ambermoon
             if (!conversation)
             {
                 bool magicClass = character.Class.IsMagic();
-                characterInfoTexts.Add(CharacterInfo.EP, layout.AddText(new Rect(242, 77, 62, 7),
-                    string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
-                    character.ExperiencePoints)));
-                ShowSecondaryStatTooltip(new Rect(242, 77, 62, 7), character.Level < 50 ?
-                    BuiltinTooltips.SecondaryStat.EPPre50 : BuiltinTooltips.SecondaryStat.EP50, character);
+                if (character.Class != Class.Animal)
+                {
+                    characterInfoTexts.Add(CharacterInfo.EP, layout.AddText(new Rect(242, 77, 62, 7),
+                        string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
+                        character.ExperiencePoints)));
+                    ShowSecondaryStatTooltip(new Rect(242, 77, 62, 7), character.Level < 50 ?
+                        BuiltinTooltips.SecondaryStat.EPPre50 : BuiltinTooltips.SecondaryStat.EP50, character);
+                }
                 characterInfoTexts.Add(CharacterInfo.LP, layout.AddText(new Rect(208, 92, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoHitPointsString,
                     Math.Min(character.HitPoints.CurrentValue, character.HitPoints.TotalMaxValue), character.HitPoints.TotalMaxValue),

@@ -27,6 +27,9 @@ Fixes
 - Fixed wrong ghost weapon damage
 - Fixed wrong magic projectile damage for monsters
 - Fixed wrong spinner end direction
+- You can now also rest on rafts
+- After game over and loading a new game the music is no longer started twice
+- Some minor fixes
 
 
 
