@@ -56,10 +56,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Silk.NET.Input" Version="2.13.0" />
-    <PackageReference Include="Silk.NET.OpenGL" Version="2.13.0" />
-    <PackageReference Include="Silk.NET.OpenGLES" Version="2.13.0" />
-    <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.13.0" />
+    <PackageReference Include="Silk.NET.Input" Version="2.15.0" />
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.15.0" />
+    <PackageReference Include="Silk.NET.OpenGLES" Version="2.15.0" />
+    <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.15.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Audio.Android\Ambermoon.Audio.Android.csproj" />

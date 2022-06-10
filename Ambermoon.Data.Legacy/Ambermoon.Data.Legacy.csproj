@@ -24,7 +24,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SonicArranger" Version="1.0.9" />
+    <PackageReference Include="SonicArranger" Version="1.0.11" />
   </ItemGroup>
 
   <ItemGroup>

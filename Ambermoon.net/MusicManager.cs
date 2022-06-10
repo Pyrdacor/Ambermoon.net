@@ -25,6 +25,7 @@ namespace Ambermoon
         IAudioStream currentStream = null;
         protected static readonly Song[] Songs = Enum.GetValues<Song>().Skip(1).ToArray();
         readonly Data.Legacy.Audio.SongManager songManager = null;
+        readonly object startMutex = new object();
 
         public MusicManager(IConfiguration configuration, IGameData gameData)
         {
@@ -127,16 +128,19 @@ namespace Ambermoon
 
         public void Start(IAudioOutput audioOutput, IAudioStream audioStream, int channels, int sampleRate, bool sample8Bit)
         {
-            this.audioOutput = audioOutput ?? throw new ArgumentNullException(nameof(audioOutput));
-
-            if (currentStream != audioStream)
+            lock (startMutex)
             {
-                Stop();
-                currentStream = audioStream;
-                audioOutput.StreamData(audioStream, channels, sampleRate, sample8Bit);
+                this.audioOutput = audioOutput ?? throw new ArgumentNullException(nameof(audioOutput));
+
+                if (currentStream != audioStream)
+                {
+                    Stop();
+                    currentStream = audioStream;
+                    audioOutput.StreamData(audioStream, channels, sampleRate, sample8Bit);
+                }
+                if (!audioOutput.Streaming)
+                    audioOutput.Start();
             }
-            if (!audioOutput.Streaming)
-                audioOutput.Start();
         }
 
         public void Stop()

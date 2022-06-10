@@ -1362,6 +1362,10 @@ namespace Ambermoon
 
         void FixPartyMember(PartyMember partyMember)
         {
+            // Don't do it for animals though!
+            if (partyMember.Race > Race.Thalionic)
+                return;
+
             // The original has some bugs where bonus values are not right.
             // We set the bonus values here dependent on equipment.
             partyMember.HitPoints.BonusValue = 0;
@@ -3731,7 +3735,7 @@ namespace Ambermoon
             cursor.UpdatePalette(this);
         }
 
-        void ShowMap(bool show)
+        void ShowMap(bool show, bool playMusic = true)
         {
             layout.HideTooltip();
 
@@ -3746,12 +3750,15 @@ namespace Ambermoon
                 Resume();
                 ResetMoveKeys();
                 UpdateLight();
-                if (lastPlayedSong != null && lastPlayedSong != Song.BarBrawlin)
-                    PlayMusic(lastPlayedSong.Value);
-                else if (Map.UseTravelMusic)
-                    PlayMusic(TravelType.TravelSong());
-                else
-                    PlayMusic(Song.Default);
+                if (playMusic)
+                {
+                    if (lastPlayedSong != null && lastPlayedSong != Song.BarBrawlin)
+                        PlayMusic(lastPlayedSong.Value);
+                    else if (Map.UseTravelMusic)
+                        PlayMusic(TravelType.TravelSong());
+                    else
+                        PlayMusic(Song.Default);
+                }
             }
             else
             {
@@ -14411,7 +14418,7 @@ namespace Ambermoon
 
             Fade(() =>
             {
-                SetWindow(Window.Event);
+                SetWindow(Window.Event, gameOver);
                 layout.SetLayout(LayoutType.Event);
                 ShowMap(false);
                 layout.Reset();
@@ -14968,7 +14975,9 @@ namespace Ambermoon
                             closedWindow.Window == Window.Event))
                             CurrentMapCharacter = null;
 
-                        ShowMap(true);
+                        bool wasGameOver = closedWindow.Window == Window.Event && (bool)closedWindow.WindowParameters[0] == true;
+
+                        ShowMap(true, !wasGameOver); // avoid playing music after gameover as Start() will start the music as well afterwards
                         finishAction?.Invoke();
 
                         if (closedWindow.Window == Window.BattleLoot)
