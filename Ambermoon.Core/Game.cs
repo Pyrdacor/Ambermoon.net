@@ -5068,14 +5068,17 @@ namespace Ambermoon
                 }
                 case RewardEvent.RewardType.Experience:
                 {
-                    switch (rewardEvent.Operation)
+                    if (partyMember.Race != Race.Animal)
                     {
-                        case RewardEvent.RewardOperation.Increase:
-                            AddExperience(partyMember, RandomizeIfNecessary(rewardEvent.Value), followAction);
-                            return;
-                        case RewardEvent.RewardOperation.Decrease:
-                            partyMember.ExperiencePoints = (uint)Util.Max(0, (long)partyMember.ExperiencePoints - RandomizeIfNecessary(rewardEvent.Value));
-                            break;
+                        switch (rewardEvent.Operation)
+                        {
+                            case RewardEvent.RewardOperation.Increase:
+                                AddExperience(partyMember, RandomizeIfNecessary(rewardEvent.Value), followAction);
+                                return;
+                            case RewardEvent.RewardOperation.Decrease:
+                                partyMember.ExperiencePoints = (uint)Util.Max(0, (long)partyMember.ExperiencePoints - RandomizeIfNecessary(rewardEvent.Value));
+                                break;
+                        }
                     }
                     break;
                 }
@@ -12960,7 +12963,7 @@ namespace Ambermoon
                 slot.Amount = 1;
                 slot.Flags = brokenItem.Value | ItemSlotFlags.Broken;
             }
-            var expReceivingPartyMembers = PartyMembers.Where(m => m.Alive && !battleEndInfo.FledPartyMembers.Contains(m)).ToList();
+            var expReceivingPartyMembers = PartyMembers.Where(m => m.Alive && !battleEndInfo.FledPartyMembers.Contains(m) && m.Race <= Race.Thalionic).ToList();
             int expPerPartyMember = battleEndInfo.TotalExperience / expReceivingPartyMembers.Count;
 
             if (loot.Empty)
