@@ -11684,7 +11684,32 @@ namespace Ambermoon
 
                 if (boughtItems.Any(item => item != null && !item.Empty))
                 {
-                    layout.OpenYesNoPopup(ProcessText(DataNameProvider.WantToGoWithoutItemsMerchant), Exit, ClosePopup, ClosePopup, 2);
+                    void ExitAndReturnItems()
+                    {
+                        var merchantSlots = merchant.Slots.ToList();
+
+                        foreach (var items in boughtItems)
+                            ReturnItems(items);
+
+                        void ReturnItems(ItemSlot items)
+                        {
+                            var slot = merchantSlots.FirstOrDefault(s => s.ItemIndex == items.ItemIndex) ??
+                                merchantSlots.FirstOrDefault(s => s.ItemIndex == 0 || s.Amount == 0);
+
+                            if (slot != null)
+                            {
+                                if (slot.ItemIndex == 0)
+                                    slot.Amount = 0;
+
+                                slot.ItemIndex = items.ItemIndex;
+                                slot.Amount += items.Amount;
+                            }
+                        }
+
+                        Exit();
+                    }
+
+                    layout.OpenYesNoPopup(ProcessText(DataNameProvider.WantToGoWithoutItemsMerchant), ExitAndReturnItems, ClosePopup, ClosePopup, 2);
                 }
                 else
                 {

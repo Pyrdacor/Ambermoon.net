@@ -4,10 +4,18 @@
 <dict>
 	<key>CFBundleExecutable</key>
 	<string>Ambermoon.net</string>
+	<key>CFBundleDisplayName</key>
+	<string>Ambermoon.net</string>
+	<key>CFBundleName</key>
+	<string>Ambermoon.net</string>
+	<key>CFBundleVersion</key>
+	<string>1.6.5</string>
 	<key>CFBundleIconFile</key>
 	<string>Ambermoon.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.pyrdacor.ambermoon.net</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 </dict>
