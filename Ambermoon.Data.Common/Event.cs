@@ -503,7 +503,14 @@ namespace Ambermoon.Data
             UsableSpellTypes = 0x06,
             Languages = 0x07,
             Experience = 0x08,
-            TrainingPoints = 0x09
+            MaxAttribute = 0x09,
+            AttacksPerRound = 0x0a,
+            TrainingPoints = 0x0b,
+            Level = 0x0c,
+            Damage = 0x0d,
+            Defense = 0x0e,
+            MaxHitPoints = 0x0f,
+            MaxSpellPoints = 0x10
         }
 
         public enum RewardOperation
@@ -536,7 +543,7 @@ namespace Ambermoon.Data
         /// </summary>
         public bool Random { get; set; }
         public ushort RewardTypeValue { get; set; }
-        public Attribute? Attribute => TypeOfReward == RewardType.Attribute ? (Attribute)RewardTypeValue : (Attribute?)null;
+        public Attribute? Attribute => TypeOfReward == RewardType.Attribute || TypeOfReward == RewardType.MaxAttribute ? (Attribute)RewardTypeValue : (Attribute?)null;
         public Skill? Skill => TypeOfReward == RewardType.Skill ? (Skill)RewardTypeValue : (Skill?)null;
         public Language? Languages => TypeOfReward == RewardType.Languages ? (Language)(1 << RewardTypeValue) : (Language?)null;
         public Condition? Conditions => TypeOfReward == RewardType.Conditions ? (Condition)(1 << RewardTypeValue) : (Condition?)null;
@@ -576,9 +583,15 @@ namespace Ambermoon.Data
                 RewardType.HitPoints => $"{Type}: HP on {Target} {operationString}, Unknown {Unknown:x2}",
                 RewardType.SpellPoints => $"{Type}: SP on {Target} {operationString}, Unknown {Unknown:x2}",
                 RewardType.SpellLearningPoints => $"{Type}: SLP on {Target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.TrainingPoints => $"{Type}: TP on {Target} {operationString}, Unknown {Unknown:x2}",
                 RewardType.Languages => $"{Type}: Add {Languages} on {Target}, Unknown {Unknown:x2}",
                 RewardType.Experience => $"{Type}: Exp on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.MaxAttribute => $"{Type}: Max {Attribute} on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.AttacksPerRound => $"{Type}: APR on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.TrainingPoints => $"{Type}: TP on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.Damage => $"{Type}: Damage on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.Defense => $"{Type}: Defense on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.MaxHitPoints => $"{Type}: Max HP on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.MaxSpellPoints => $"{Type}: Max SP on {Target} {operationString}, Unknown {Unknown:x2}",
                 _ => $"{Type}: Unknown ({(int)TypeOfReward}:{RewardTypeValue}) on {Target} {operationString}, Unknown {Unknown:x2}"
             };
         }

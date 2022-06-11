@@ -4916,38 +4916,57 @@ namespace Ambermoon
 
         internal void RewardPlayer(PartyMember partyMember, RewardEvent rewardEvent, Action followAction)
         {
-            void Change(CharacterValue characterValue, int amount, bool percentage, bool lpLike)
+            void Change(CharacterValue characterValue, int amount, bool percentage, bool lpLike, bool increaseMax)
             {
-                uint max = lpLike ? characterValue.TotalMaxValue : characterValue.MaxValue;
+                uint max = lpLike && !increaseMax ? characterValue.TotalMaxValue : characterValue.MaxValue;
+
+                if (increaseMax)
+                    max = Math.Max(max, (uint)(max + amount));
 
                 if (percentage)
                     amount = amount * (int)max / 100;
 
-                characterValue.CurrentValue = (uint)Util.Limit(0, (int)characterValue.CurrentValue + amount, (int)max);
+                if (increaseMax)
+                {
+                    characterValue.MaxValue = (uint)Util.Limit(0, (int)characterValue.CurrentValue + amount, (int)max);
+
+                    if (characterValue.CurrentValue > characterValue.MaxValue)
+                        characterValue.CurrentValue = characterValue.MaxValue;
+                }
+                else
+                    characterValue.CurrentValue = (uint)Util.Limit(0, (int)characterValue.CurrentValue + amount, (int)max);
             }
 
-            void RewardValue(CharacterValue characterValue, bool lpLike)
+            bool RewardValue(CharacterValue characterValue, bool lpLike, bool increaseMax = false)
             {
                 uint value = RandomizeIfNecessary(rewardEvent.Value);
 
                 switch (rewardEvent.Operation)
                 {
                     case RewardEvent.RewardOperation.Increase:
-                        Change(characterValue, (int)value, false, lpLike);
+                        Change(characterValue, (int)value, false, lpLike, increaseMax);
                         break;
                     case RewardEvent.RewardOperation.Decrease:
-                        Change(characterValue, -(int)value, false, lpLike);
+                        Change(characterValue, -(int)value, false, lpLike, increaseMax);
                         break;
                     case RewardEvent.RewardOperation.IncreasePercentage:
-                        Change(characterValue, (int)value, true, lpLike);
+                        Change(characterValue, (int)value, true, lpLike, increaseMax);
                         break;
                     case RewardEvent.RewardOperation.DecreasePercentage:
-                        Change(characterValue, -(int)value, true, lpLike);
+                        Change(characterValue, -(int)value, true, lpLike, increaseMax);
                         break;
                     case RewardEvent.RewardOperation.Fill:
-                        characterValue.CurrentValue = lpLike ? characterValue.TotalMaxValue : characterValue.MaxValue;
+                        if (increaseMax)
+                        {
+                            ShowMessagePopup($"ERROR: Reward operation fill is not allowed on a max value.", followAction);
+                            return false;
+                        }
+                        else
+                            characterValue.CurrentValue = lpLike ? characterValue.TotalMaxValue : characterValue.MaxValue;
                         break;
                 }
+
+                return true;
             }
 
             uint RandomizeIfNecessary(uint value) => rewardEvent.Random ? 1u + random.Next() % value : value;
@@ -5086,6 +5105,31 @@ namespace Ambermoon
                     }
                     break;
                 }
+                case RewardEvent.RewardType.MaxAttribute:
+                    if (rewardEvent.Attribute != null && rewardEvent.Attribute < Attribute.Age)
+                    {
+                        if (!RewardValue(partyMember.Attributes[rewardEvent.Attribute.Value], false, true))
+                            return;
+                    }
+                    else
+                    {
+                        ShowMessagePopup($"ERROR: Invalid reward event attribute type.", followAction);
+                        return;
+                    }
+                    break;
+                case RewardEvent.RewardType.AttacksPerRound:
+                {
+                    switch (rewardEvent.Operation)
+                    {
+                        case RewardEvent.RewardOperation.Increase:
+                            partyMember.AttacksPerRound = (byte)Util.Limit(ushort.MaxValue, partyMember.AttacksPerRound + RandomizeIfNecessary(rewardEvent.Value), 255);
+                            break;
+                        case RewardEvent.RewardOperation.Decrease:
+                            partyMember.AttacksPerRound = (byte)Util.Limit(0, (int)partyMember.AttacksPerRound - (int)RandomizeIfNecessary(rewardEvent.Value), 255);
+                            break;
+                    }
+                    break;
+                }
                 case RewardEvent.RewardType.TrainingPoints:
                 {
                     switch (rewardEvent.Operation)
@@ -5099,6 +5143,48 @@ namespace Ambermoon
                     }
                     break;
                 }
+                case RewardEvent.RewardType.Damage:
+                {
+                    switch (rewardEvent.Operation)
+                    {
+                        case RewardEvent.RewardOperation.Increase:
+                            partyMember.BaseAttack = (short)Util.Min(short.MaxValue, partyMember.BaseAttack + RandomizeIfNecessary(rewardEvent.Value));
+                            break;
+                        case RewardEvent.RewardOperation.Decrease:
+                            partyMember.BaseAttack = (short)Util.Max(0, (int)partyMember.BaseAttack - (int)RandomizeIfNecessary(rewardEvent.Value));
+                            break;
+                    }
+                    break;
+                }
+                case RewardEvent.RewardType.Defense:
+                {
+                    switch (rewardEvent.Operation)
+                    {
+                        case RewardEvent.RewardOperation.Increase:
+                            partyMember.BaseDefense = (short)Util.Min(short.MaxValue, partyMember.BaseDefense + RandomizeIfNecessary(rewardEvent.Value));
+                            break;
+                        case RewardEvent.RewardOperation.Decrease:
+                            partyMember.BaseDefense = (short)Util.Max(0, (int)partyMember.BaseDefense - (int)RandomizeIfNecessary(rewardEvent.Value));
+                            break;
+                    }
+                    break;
+                }
+                case RewardEvent.RewardType.MaxHitPoints:
+                {
+                    // Note: Rewards happen silently so there is no damage splash.
+                    // Looking at the original code there isn't even a die handling
+                    // when a negative reward would leave the LP at 0 but we do so here.
+                    RewardValue(partyMember.HitPoints, true, true);
+                    if (partyMember.Alive && partyMember.HitPoints.CurrentValue == 0)
+                        KillPartyMember(partyMember);
+                    else
+                        layout.UpdateCharacter(partyMember);
+                    break;
+                }
+                case RewardEvent.RewardType.MaxSpellPoints:
+                    RewardValue(partyMember.SpellPoints, true, true);
+                    layout.UpdateCharacter(partyMember);
+                    break;
             }
 
             followAction?.Invoke();
