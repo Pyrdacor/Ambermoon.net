@@ -522,7 +522,10 @@ namespace Ambermoon.Data
         public enum RewardTarget
         {
             ActivePlayer,
-            All
+            All,
+            // Ambermoon Advanced only
+            RandomPlayer,
+            FirstAnimal,
         }
 
         public RewardType TypeOfReward { get; set; }

@@ -282,6 +282,26 @@ namespace Ambermoon
                         case RewardEvent.RewardTarget.ActivePlayer:
                             Reward(game.CurrentPartyMember, Done);
                             break;
+                        case RewardEvent.RewardTarget.RandomPlayer:
+                        {
+                            var partyMembers = game.PartyMembers.Where(p => p != null && p.Alive && !p.Conditions.HasFlag(Condition.Petrified)).ToArray();
+                            int index = game.RandomInt(0, partyMembers.Length - 1);
+                            Reward(partyMembers[index], Done);
+                            break;
+                        }
+                        case RewardEvent.RewardTarget.FirstAnimal:
+                        {
+                            var animal = game.PartyMembers.FirstOrDefault(p => p.Race == Race.Animal);
+
+                            if (animal == null)
+                            {
+                                aborted = true;
+                                return null;
+                            }
+
+                            Reward(animal, Done);
+                            break;
+                        }
                         case RewardEvent.RewardTarget.All:
                             if (rewardEvent.TypeOfReward == RewardEvent.RewardType.HitPoints &&
                                 (rewardEvent.Operation == RewardEvent.RewardOperation.Decrease ||
