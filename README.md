@@ -6,17 +6,17 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.6.3 is the most recent version from 01-06-2022. It also includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced).
+Version 1.6.4 is the most recent version from 02-06-2022. It also includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced).
 
 You can also download the game on my website at www.pyrdacor.net!
 
-Platform | Download 1.6.3
+Platform | Download 1.6.4
 --- | :-:
-**Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.3/Ambermoon.net-Windows.zip)
-**Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.3/Ambermoon.net-Linux.tar.gz)
-**Mac 64bit bundled** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.3/Ambermoon.net-Mac-Bundle.zip)
-**Mac 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.3/Ambermoon.net-Mac.zip)
-**Windows 32bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.3/Ambermoon.net-Windows32Bit.zip)
+**Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.4/Ambermoon.net-Windows.zip)
+**Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.4/Ambermoon.net-Linux.tar.gz)
+**Mac 64bit bundled** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.4/Ambermoon.net-Mac-Bundle.zip)
+**Mac 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.4/Ambermoon.net-Mac.zip)
+**Windows 32bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.4/Ambermoon.net-Windows32Bit.zip)
 
 From version 1.5.0 onwards you can use your own music with Ambermoon (e.g. Atari music or the remixes of Matthias Steinwachs). For more details read [here](CustomMusic.md). \
 I also provide the Atari tracks [here](https://ambermoon-net.pyrdacor.net/download/music_atari.zip). Just extract the mp3 to a folder called "music" next to the main executable to enjoy the music. Note that not all tracks were converted to Atari so only 13 out of 32 tracks are available.
