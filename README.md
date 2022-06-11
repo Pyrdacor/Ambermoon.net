@@ -14,8 +14,8 @@ Platform | Download 1.6.5
 --- | :-:
 **Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows.zip)
 **Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Linux.tar.gz)
-**Mac 64bit bundled** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Mac-Bundle.zip)
-**Mac 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Mac.zip)
+**Mac 64bit (Intel processor)** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Mac.zip)
+**Mac 64bit (ARM processor, M1, M2, etc)** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Mac-ARM.zip)
 **Windows 32bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows32Bit.zip)
 
 Version 1.6.5 is the first experimental build for Macs with ARM processors. But I am not sure if they work but welcome any testers.
