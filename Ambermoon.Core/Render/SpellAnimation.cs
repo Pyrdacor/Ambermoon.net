@@ -1167,19 +1167,19 @@ namespace Ambermoon.Render
                 var position = GetTargetPosition(tile) - new Position(2, 0);
                 if (position.Y > Global.CombatBackgroundArea.Bottom - 6)
                     position.Y = Global.CombatBackgroundArea.Bottom - 6;
-                AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, displayLayer, () => { });
-                game.AddTimedEvent(TimeSpan.FromMilliseconds(135), () =>
-                {
-                    position.X += 6;
-                    position.Y += 6;
-                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, displayLayer, () => { });
-                });
-                game.AddTimedEvent(TimeSpan.FromMilliseconds(260), () =>
-                {
-                    position.X -= 12;
-                    position.Y -= 4;
-                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, displayLayer);
-                });
+                AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, displayLayer,
+                    () =>
+                    {
+                        position.X += 6;
+                        position.Y += 6;
+                        AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, displayLayer,
+                            () =>
+                            {
+                                position.X -= 12;
+                                position.Y -= 4;
+                                AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, displayLayer);
+                            });
+                    });
             }
 
             // Used by fire spells
