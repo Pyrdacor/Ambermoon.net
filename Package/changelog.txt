@@ -29,6 +29,8 @@ Fixes
 - Fixed wrong spinner end direction
 - You can now also rest on rafts
 - After game over and loading a new game the music is no longer started twice
+- Fixed a game freeze when some spells were casted
+- Fixed broken input after right-clicking some messages in places like the blacksmith
 - Some minor fixes
 
 

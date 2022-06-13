@@ -10,7 +10,7 @@
 	<RepositoryType>Github</RepositoryType>
 	<PackageTags>Ambermoon</PackageTags>
 	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-	<Version>10.6.4</Version>
+	<Version>10.6.6</Version>
 	<UserSecretsId>485e4790-32fd-45f1-b729-c5ca93ba0fad</UserSecretsId>
 	<Configurations>Debug;Release;DebugAndroid</Configurations>
   </PropertyGroup>

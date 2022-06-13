@@ -417,7 +417,7 @@ namespace Ambermoon.Data.Legacy
                 }
 
                 // We only need 1 dictionary, no savegames and only AM2_CPU but not AM2_BLIT.
-                if (IsDictionary(file) || disk == 'J' || file == "AM2_BLIT")
+                if (IsDictionary(file) || disk == 'J' || file == "AM2_BLIT" || file == "Keymap" || file.StartsWith("Initial/"))
                     return;
 
                 if (stopAtFirstError)
