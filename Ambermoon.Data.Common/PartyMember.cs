@@ -180,7 +180,7 @@ namespace Ambermoon.Data
             return true;
         }
 
-        void AddLevelUpEffects(Func<int, int, int> random)
+        public void AddLevelUpEffects(Func<int, int, int> random)
         {
             var intelligence = Attributes[Attribute.Intelligence].TotalCurrentValue;
             bool magicClass = Class.IsMagic();

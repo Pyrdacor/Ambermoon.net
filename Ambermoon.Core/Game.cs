@@ -244,6 +244,7 @@ namespace Ambermoon
         bool swimDamageHandled = false;
         uint lastSwimDamageHour = 0;
         uint lastSwimDamageMinute = 0;
+        public bool Teleporting { get; set; } = false;
         /// <summary>
         /// This is used for screen shaking.
         /// Position is in percentage of the resolution.
@@ -328,7 +329,7 @@ namespace Ambermoon
         event Action<int> TargetPlayerPicked;
         event Func<int, bool> TargetInventoryPicked;
         event Func<ItemGrid, int, ItemSlot, bool> TargetItemPicked;
-        bool advancing = false; // party or monsters are advancing
+        bool partyAdvances = false; // party or monsters are advancing
         internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
         internal int? CurrentInventoryIndex { get; set; } = null;
         internal Character CurrentCaster { get; set; } = null;
@@ -4936,14 +4937,14 @@ namespace Ambermoon
                 uint max = lpLike && !increaseMax ? characterValue.TotalMaxValue : characterValue.MaxValue;
 
                 if (increaseMax)
-                    max = Math.Max(max, (uint)(max + amount));
+                    max = Math.Max(max, (uint)Math.Max(0, (int)max + amount));
 
                 if (percentage)
                     amount = amount * (int)max / 100;
 
                 if (increaseMax)
                 {
-                    characterValue.MaxValue = (uint)Util.Limit(0, (int)characterValue.CurrentValue + amount, (int)max);
+                    characterValue.MaxValue = max;
 
                     if (characterValue.CurrentValue > characterValue.MaxValue)
                         characterValue.CurrentValue = characterValue.MaxValue;
@@ -5137,7 +5138,7 @@ namespace Ambermoon
                     switch (rewardEvent.Operation)
                     {
                         case RewardEvent.RewardOperation.Increase:
-                            partyMember.AttacksPerRound = (byte)Util.Limit(ushort.MaxValue, partyMember.AttacksPerRound + RandomizeIfNecessary(rewardEvent.Value), 255);
+                            partyMember.AttacksPerRound = (byte)Util.Limit(0, partyMember.AttacksPerRound + RandomizeIfNecessary(rewardEvent.Value), 255);
                             break;
                         case RewardEvent.RewardOperation.Decrease:
                             partyMember.AttacksPerRound = (byte)Util.Limit(0, (int)partyMember.AttacksPerRound - (int)RandomizeIfNecessary(rewardEvent.Value), 255);
@@ -5154,6 +5155,38 @@ namespace Ambermoon
                             break;
                         case RewardEvent.RewardOperation.Decrease:
                             partyMember.TrainingPoints = (ushort)Util.Max(0, (int)partyMember.TrainingPoints - (int)RandomizeIfNecessary(rewardEvent.Value));
+                            break;
+                    }
+                    break;
+                }
+                case RewardEvent.RewardType.Level:
+                {
+                    switch (rewardEvent.Operation)
+                    {
+                        case RewardEvent.RewardOperation.Increase:
+                            long levelUps = Util.Limit(0, rewardEvent.Value, 50 - partyMember.Level);
+                            if (levelUps == 0)
+                            {
+                                followAction?.Invoke();
+                                return;
+                            }
+                            partyMember.Level = (byte)(partyMember.Level + levelUps);
+                            for (long i = 0; i < levelUps; ++i)
+                            {
+                                if (partyMember.Race == Race.Animal)
+                                {
+                                    uint lpAdd = partyMember.HitPointsPerLevel * (uint)RandomInt(50, 100) / 100;
+                                    uint tpAdd = partyMember.TrainingPointsPerLevel * (uint)RandomInt(50, 100) / 100;
+                                    partyMember.HitPoints.MaxValue += lpAdd;
+                                    partyMember.HitPoints.CurrentValue += lpAdd;
+                                    partyMember.TrainingPoints = (ushort)Math.Min(ushort.MaxValue, partyMember.TrainingPoints + tpAdd);
+                                }
+                                else
+                                {
+                                    partyMember.AddLevelUpEffects(RandomInt);
+                                };
+                            }
+                            ShowLevelUpWindow(partyMember, followAction);
                             break;
                     }
                     break;
@@ -5585,11 +5618,16 @@ namespace Ambermoon
 
         internal void Teleport(TeleportEvent teleportEvent, uint x, uint y)
         {
+            Teleporting = true;
+
             uint targetX = teleportEvent.X == 0 ? x + 1 : teleportEvent.X;
             uint targetY = teleportEvent.Y == 0 ? y + 1 : teleportEvent.Y;
 
             ResetMoveKeys();
             ResetMapCharacterInteraction(Map);
+
+            if (PopupActive)
+                layout.ClosePopup(false, true);
 
             void RunTransition()
             {
@@ -5607,6 +5645,8 @@ namespace Ambermoon
                     CurrentSavegame.TransportLocations[index.Value] = null;
                     renderMap2D.RemoveTransport(index.Value);
                 }
+
+                Teleporting = false;
             }
 
             var transition = teleportEvent.Transition;
@@ -5622,6 +5662,8 @@ namespace Ambermoon
                 case TeleportEvent.TransitionType.WindGate:
                     if (CurrentSavegame.IsSpecialItemActive(SpecialItemPurpose.WindChain))
                         RunTransition();
+                    else
+                        Teleporting = false;
                     break;
                 case TeleportEvent.TransitionType.Falling:
                 {
@@ -5654,6 +5696,7 @@ namespace Ambermoon
                     }));
                     break;
                 case TeleportEvent.TransitionType.Outro:
+                    Teleporting = false;
                     ShowOutro();
                     break;
                 default:
@@ -7679,7 +7722,7 @@ namespace Ambermoon
 
         void UpdateBattle(double blinkingTimeFactor)
         {
-            if (advancing)
+            if (partyAdvances)
             {
                 foreach (var monster in currentBattle.Monsters)
                     layout.GetMonsterBattleAnimation(monster).Update(CurrentBattleTicks);
@@ -8191,14 +8234,14 @@ namespace Ambermoon
 
                     if (++advancedMonsters == totalMonsters)
                     {
-                        advancing = false;
+                        partyAdvances = false;
 
                         // Note: It is important to move closer rows first. Otherwise monsters
                         // will move to occupied spots and replace the monsters there before they move.
                         for (int i = monsters.Count - 1; i >= 0; --i)
                             currentBattle.MoveCharacterTo(newPositions[i], monsters[i]);
 
-                        layout.EnableButton(4, currentBattle.CanMoveForward);
+                        layout.EnableButton(4, currentBattle.CanPartyMoveForward);
                         finishAction?.Invoke();
                     }
                 }
@@ -8215,7 +8258,7 @@ namespace Ambermoon
                 MoveMonster(monsters[i], i);
             }
 
-            advancing = true;
+            partyAdvances = true;
         }
 
         internal void UpdateActiveBattleSpells()
@@ -9249,7 +9292,7 @@ namespace Ambermoon
                     battleRoundActiveSprite.Visible = false;
                     buttonGridBackground?.Destroy();
                     buttonGridBackground = null;
-                    layout.EnableButton(4, currentBattle.CanMoveForward);
+                    layout.EnableButton(4, currentBattle.CanPartyMoveForward);
 
                     foreach (var action in roundPlayerBattleActions)
                         CheckPlayerActionVisuals(GetPartyMember(action.Key), action.Value);
@@ -9533,7 +9576,7 @@ namespace Ambermoon
 
             layout.EnableButton(0, battleFieldSlot >= 24 && CurrentPartyMember.CanFlee()); // flee button, only enable in last row
             layout.EnableButton(3, CurrentPartyMember.CanMove()); // Note: If no slot is available the button still is enabled but after clicking you get "You can't move anywhere".
-            layout.EnableButton(4, currentBattle.CanMoveForward);
+            layout.EnableButton(4, currentBattle.CanPartyMoveForward);
             layout.EnableButton(6, CurrentPartyMember.BaseAttack > 0 && CurrentPartyMember.Conditions.CanAttack());
             layout.EnableButton(7, CurrentPartyMember.Conditions.CanParry());
             layout.EnableButton(8, CurrentPartyMember.Conditions.CanCastSpell() && CurrentPartyMember.HasAnySpell());

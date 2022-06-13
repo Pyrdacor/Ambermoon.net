@@ -109,8 +109,7 @@ namespace Ambermoon
             /// 
             /// This is an immediate action for the party and is therefore
             /// processed outside of battle rounds. If the monster group decides
-            /// to move forward this is done as the first action in a battle
-            /// round even if a party member is the first actor in the round.
+            /// to move forward this is done as the last action in a battle round.
             /// </summary>
             MoveGroupForward,
             /// <summary>
@@ -250,6 +249,7 @@ namespace Ambermoon
         readonly List<uint> averageMonsterDamage = new List<uint>();
         uint relativeDamageEfficiency = 0;
         bool showMonsterLP = false;
+        bool anyMonsterWantedToFlee = false;
         internal bool NeedsClickForNextAction { get; set; }
         internal int Speed { get; set; }
         public bool ReadyForNextAction { get; private set; } = false;
@@ -276,8 +276,9 @@ namespace Ambermoon
         public bool HasPartyMemberFled(PartyMember partyMember) => fledCharacters.Contains(partyMember);
         public bool IsBattleFieldEmpty(int slot) => battleField[slot] == null;
         public bool RoundActive { get; private set; } = false;
-        public bool CanMoveForward => !battleField.Skip(12).Take(6).Any(c => c != null) && // middle row empty
+        public bool CanPartyMoveForward => !battleField.Skip(12).Take(6).Any(c => c != null) && // middle row empty
             !battleField.Skip(18).Take(6).Any(c => c?.Type == CharacterType.Monster); // and no monster in front row
+        public bool CanMonstersMoveForward => !battleField.Skip(18).Take(6).Any(c => c != null); // 4th row empty
         public bool HasStartAnimation { get; } = false;
 
         public Battle(Game game, Layout layout, PartyMember[] partyMembers, MonsterGroup monsterGroup,
@@ -518,6 +519,31 @@ namespace Ambermoon
 
             if (roundBattleActions.Count == 0)
             {
+                // Check for monster advance at end of round
+                if (!anyMonsterWantedToFlee && CanMonstersMoveForward && PartyMembers.Count(p => p.Alive && !p.Conditions.HasFlag(Condition.Petrified) && !fledCharacters.Contains(p)) > 1)
+                {
+                    var firstMonster = Monsters.FirstOrDefault(c => c.Alive && !fledCharacters.Contains(c)); // take any existing one to avoid NullRef exception
+                    if (firstMonster != null)
+                    {
+                        roundBattleActions.Enqueue(new BattleAction
+                        {
+                            Character = firstMonster,
+                            Action = BattleActionType.DisplayActionText,
+                            ActionParameter = 0
+                        });
+                        roundBattleActions.Enqueue(new BattleAction
+                        {
+                            Character = firstMonster,
+                            Action = BattleActionType.MoveGroupForward,
+                            ActionParameter = 0
+                        });
+                        anyMonsterWantedToFlee = true; // set this so the monsters can't advance again this round
+                        NextAction(battleTicks); // call this again but now roundBattleActions.Count is not 0, so it will execute the advance actions
+                        return;
+                    }
+                }
+
+                anyMonsterWantedToFlee = false;
                 RoundActive = false;
                 if (showMonsterLP)
                 {
@@ -664,7 +690,6 @@ namespace Ambermoon
                         .ThenBy(c => c.Type)
                         .ToList();
                     parryingPlayers.Clear();
-                    bool monstersAdvance = false;
 
                     foreach (var droppedWeaponMonster in droppedWeaponMonsters)
                     {
@@ -680,26 +705,7 @@ namespace Ambermoon
                     }
 
                     droppedWeaponMonsters.Clear();
-
-                    // This is added in addition to normal monster actions directly
-                    // TODO: removed for now, check later when this is used (it seems awkward at the moment, maybe only later in battle?)
-                    /*if (CanMoveForward)
-                    {
-                        var firstMonster = roundActors.FirstOrDefault(c => c.Type == CharacterType.Monster && c.Alive);
-                        roundBattleActions.Enqueue(new BattleAction
-                        {
-                            Character = firstMonster,
-                            Action = BattleActionType.DisplayActionText,
-                            ActionParameter = 0
-                        });
-                        roundBattleActions.Enqueue(new BattleAction
-                        {
-                            Character = firstMonster,
-                            Action = BattleActionType.MoveGroupForward,
-                            ActionParameter = 0
-                        });
-                        monstersAdvance = true;
-                    }*/
+                    anyMonsterWantedToFlee = false;
 
                     var forbiddenMoveSpots = playerBattleActions.Where(a => a != null && a.BattleAction == BattleActionType.Move)
                         .Select(a => (int)GetTargetTileOrRowFromParameter(a.Parameter)).ToList();
@@ -709,7 +715,7 @@ namespace Ambermoon
                     {
                         if (roundActor is Monster monster)
                         {
-                            AddMonsterActions(monster, ref monstersAdvance, forbiddenMonsterMoveSpots);
+                            AddMonsterActions(monster, forbiddenMonsterMoveSpots);
                         }
                         else
                         {
@@ -811,26 +817,12 @@ namespace Ambermoon
             });
         }
 
-        void AddMonsterActions(Monster monster, ref bool monstersAdvance, List<int> forbiddenMonsterMoveSpots)
+        void AddMonsterActions(Monster monster, List<int> forbiddenMonsterMoveSpots)
         {
             bool wantsToFlee = MonsterWantsToFlee(monster);
 
-            if (wantsToFlee && monstersAdvance && roundBattleActions.Count > 1)
-            {
-                // The second action might be a monster advance.
-                // Remove this if any monster wants to flee.
-                var secondAction = roundBattleActions.Skip(1).First();
-
-                if (secondAction.Character.Type == CharacterType.Monster &&
-                    secondAction.Action == BattleActionType.MoveGroupForward)
-                {
-                    // Remove first two actions (display about monster advance and the actual advance).
-                    roundBattleActions.Dequeue();
-                    roundBattleActions.Dequeue();
-                }
-
-                monstersAdvance = false;
-            }
+            if (wantsToFlee)
+                anyMonsterWantedToFlee = true;
 
             BattleActionType action;
             uint actionParameter;
@@ -1277,7 +1269,21 @@ namespace Ambermoon
                 case BattleActionType.MoveGroupForward:
                     // No parameter
                     layout.SetBattleMessage(null);
-                    break;
+                    Proceed(() =>
+                    {
+                        foreach (var player in PartyMembers.Where(p => p.Alive && !fledCharacters.Contains(p)))
+                        {
+                            int currentPosition = GetCharacterPosition(player);
+
+                            HideBattleFieldDamage(currentPosition);
+
+                            MoveCharacterTo((uint)(currentPosition - 6), player);
+                        }
+
+                        ActionCompleted?.Invoke(battleAction);
+                        ReadyForNextAction = true;
+                    });
+                    return;
                 case BattleActionType.Attack:
                 {
                     GetAttackInformation(battleAction.ActionParameter, out uint targetTile, out uint weaponIndex, out uint ammoIndex);

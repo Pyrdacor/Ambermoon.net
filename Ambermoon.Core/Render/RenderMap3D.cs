@@ -309,6 +309,9 @@ namespace Ambermoon.Render
                         if ((long)game.CurrentTicks - lastInteractionTicks < Game.TicksPerSecond)
                             return false;
 
+                        if (game.Teleporting || game.Map != map.Map)
+                            return false;
+
                         // First set this to max so we won't trigger this again while we are interacting.
                         lastInteractionTicks = uint.MaxValue;
                         interacting = true;
