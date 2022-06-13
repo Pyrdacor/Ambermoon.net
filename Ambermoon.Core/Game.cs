@@ -3868,6 +3868,16 @@ namespace Ambermoon
             var partyMember = GetPartyMember(slot);
             bool canAccessInventory = !HasPartyMemberFled(partyMember) && partyMember.Conditions.CanOpenInventory();
 
+            if (canAccessInventory && partyMember.Race == Race.Animal && layout.IsDragging)
+            {
+                var draggedItem = layout.GetDraggedItem();
+
+                if (draggedItem == null) // gold or food
+                    canAccessInventory = false;
+                else // for animals only allow if the item is usable by animals (fallback item index 1 is never usable as it is a condition item)
+                    canAccessInventory = (ItemManager?.GetItem(draggedItem?.Item?.Item?.ItemIndex ?? 1)?.Classes)?.HasFlag(ClassFlag.Animal) ?? false;
+            }
+
             if (inventory && !canAccessInventory)
             {
                 // When fled you can only access the stats.

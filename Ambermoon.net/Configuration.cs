@@ -24,6 +24,9 @@ namespace Ambermoon
         [JsonIgnore]
         public bool IsMobile { get; } = false;
 
+        public int? WindowX { get; set; } = null;
+        public int? WindowY { get; set; } = null;
+        public int? MonitorIndex { get; set; } = null;
         public int? Width { get; set; } = null;
         public int? Height { get; set; } = null;
         public int? FullscreenWidth { get; set; } = null;

@@ -48,6 +48,7 @@ namespace Ambermoon
         FloatPosition trappedMouseLastPosition = null;
         LogoPyrdacor logoPyrdacor = null;
         Graphic[] logoPalettes;
+        bool initialized = false;
 
         public string Identifier { get; }
         public IGLContext GLContext => window?.GLContext;
@@ -250,7 +251,12 @@ namespace Ambermoon
 
         void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
         {
-            if (key == Silk.NET.Input.Key.F11)
+            if (key == Silk.NET.Input.Key.C && GetModifiers(keyboard) == (KeyModifiers.Control | KeyModifiers.Shift))
+            {
+                var monitor = Silk.NET.Windowing.Window.GetWindowPlatform(false)?.GetMainMonitor() ?? null;
+                window.Center(monitor);
+            }
+            else if (key == Silk.NET.Input.Key.F11)
             {
                 if (Game != null)
                     Game.PreFullscreenChanged();
@@ -1123,6 +1129,14 @@ namespace Ambermoon
                 configuration.FullscreenHeight = fullscreenSize.Height;
             }
 
+            var platform = Silk.NET.Windowing.Window.GetWindowPlatform(false);
+            var monitors = platform.GetMonitors().ToArray();
+
+            if (configuration.MonitorIndex != null && configuration.MonitorIndex >= 0 && configuration.MonitorIndex < monitors.Length)
+                window.Monitor = monitors[configuration.MonitorIndex.Value];
+            else
+                window.Monitor = platform.GetMainMonitor();
+
             if (configuration.Fullscreen)
             {
                 ChangeFullscreenMode(true); // This will adjust the window
@@ -1137,6 +1151,26 @@ namespace Ambermoon
                 if (!configuration.Fullscreen)
                     window.Size = new WindowDimension(Width, Height);
             }
+
+            if (!configuration.Fullscreen)
+            {
+                if (configuration.WindowX == null || configuration.WindowY == null)
+                {
+                    window.Center();
+                    configuration.WindowX = window.Position.X;
+                    configuration.WindowY = window.Position.Y;
+                    configuration.MonitorIndex = window.Monitor.Index;
+                }
+                else
+                {
+                    window.Position = new WindowDimension(Math.Max(window.BorderSize.Origin.X, configuration.WindowX.Value), Math.Max(window.BorderSize.Origin.Y, configuration.WindowY.Value));
+                    configuration.WindowX = window.Position.X;
+                    configuration.WindowY = window.Position.Y;
+                    configuration.MonitorIndex = window.Monitor.Index;
+                }
+            }
+
+            initialized = true;
 
             if (ShowVersionSelector((gameData, savePath, gameLanguage, features) =>
             {
@@ -1177,6 +1211,7 @@ namespace Ambermoon
                     renderView.Render(Game.ViewportOffset);
                 else if (renderView != null)
                     renderView.Render(null);
+
                 window.SwapBuffers();
             }
 
@@ -1310,6 +1345,13 @@ namespace Ambermoon
 
         void Window_Move(WindowDimension position)
         {
+            if (initialized)
+            {
+                configuration.WindowX = window.Position.X;
+                configuration.WindowY = window.Position.Y;
+                configuration.MonitorIndex = window.Monitor?.Index ?? 0;
+            }
+
             WindowMoved();
         }
 

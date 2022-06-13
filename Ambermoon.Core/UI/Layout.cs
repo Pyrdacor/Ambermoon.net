@@ -498,6 +498,7 @@ namespace Ambermoon.UI
         uint draggedFood = 0;
         public bool OptionMenuOpen { get; private set; } = false;
         public bool IsDragging => draggedItem != null || draggedGold != 0 || draggedFood != 0;
+        public DraggedItem GetDraggedItem() => draggedItem;
         Action<uint> draggedGoldOrFoodRemover = null;
         readonly List<IColoredRect> barAreas = new List<IColoredRect>();
         readonly List<IColoredRect> filledAreas = new List<IColoredRect>();
