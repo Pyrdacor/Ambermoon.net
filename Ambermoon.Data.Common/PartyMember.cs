@@ -21,6 +21,9 @@ namespace Ambermoon.Data
         {
             var item = itemManager.GetItem(itemSlot.ItemIndex);
 
+            if (Class == Class.Animal && !item.Classes.HasFlag(ClassFlag.Animal))
+                return false;
+
             // First test if we can carry that much weight.
             uint weight = (uint)itemSlot.Amount * item.Weight;
 

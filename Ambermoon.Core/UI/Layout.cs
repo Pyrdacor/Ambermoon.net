@@ -2773,7 +2773,7 @@ namespace Ambermoon.UI
                 ClosePopup();
                 CancelDrag();
 
-                if (!game.PartyMembers.Any(p => p.MaxGoldToTake >= amount))
+                if (!game.PartyMembers.Any(p => p.Race != Race.Animal && p.MaxGoldToTake >= amount))
                 {
                     if (chest != null)
                         ShowClickChestMessage(game.DataNameProvider.NoOneCanCarryThatMuch);
@@ -2800,7 +2800,7 @@ namespace Ambermoon.UI
                     if (partyMember != null && partyMember != game.CurrentInventory)
                     {
                         UpdateCharacterStatus(i, partyMember == game.CurrentInventory ? (UIGraphic?)null :
-                            partyMember.MaxGoldToTake >= amount && !game.HasPartyMemberFled(partyMember) ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
+                            partyMember.Race != Race.Animal && partyMember.MaxGoldToTake >= amount && !game.HasPartyMemberFled(partyMember) ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
                     }
                 }
             }
@@ -2834,7 +2834,7 @@ namespace Ambermoon.UI
                 ClosePopup();
                 CancelDrag();
 
-                if (!game.PartyMembers.Any(p => p.MaxFoodToTake >= amount))
+                if (!game.PartyMembers.Any(p => p.Race != Race.Animal && p.MaxFoodToTake >= amount))
                 {
                     cannotCarryHandler?.Invoke();
                     return;
@@ -2853,7 +2853,7 @@ namespace Ambermoon.UI
                     if (partyMember != null && partyMember != game.CurrentInventory)
                     {
                         UpdateCharacterStatus(i, partyMember == game.CurrentInventory ? (UIGraphic?)null :
-                            partyMember.MaxFoodToTake >= amount && !game.HasPartyMemberFled(partyMember) ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
+                            partyMember.Race != Race.Animal && partyMember.MaxFoodToTake >= amount && !game.HasPartyMemberFled(partyMember) ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
                     }
                 }
             }
@@ -4919,7 +4919,7 @@ namespace Ambermoon.UI
                     {
                         if (buttons == MouseButtons.Left)
                         {
-                            if (partyMember.MaxGoldToTake >= draggedGold)
+                            if (partyMember.MaxGoldToTake >= draggedGold && partyMember.Race != Race.Animal)
                             {
                                 partyMember.AddGold(draggedGold);
                                 draggedGoldOrFoodRemover?.Invoke(draggedGold);
@@ -4942,7 +4942,7 @@ namespace Ambermoon.UI
                     {
                         if (buttons == MouseButtons.Left)
                         {
-                            if (partyMember.MaxFoodToTake >= draggedFood)
+                            if (partyMember.MaxFoodToTake >= draggedFood && partyMember.Race != Race.Animal)
                             {
                                 partyMember.AddFood(draggedFood);
                                 draggedGoldOrFoodRemover?.Invoke(draggedFood);

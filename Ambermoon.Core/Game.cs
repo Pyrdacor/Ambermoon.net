@@ -10434,7 +10434,7 @@ namespace Ambermoon
 
         internal uint DistributeGold(uint gold, bool force)
         {
-            var partyMembers = PartyMembers.ToList();
+            var partyMembers = PartyMembers.Where(p => p.Race != Race.Animal).ToList();
 
             while (gold != 0)
             {
@@ -10472,7 +10472,7 @@ namespace Ambermoon
 
         internal uint DistributeFood(uint food, bool force)
         {
-            var partyMembers = PartyMembers.ToList();
+            var partyMembers = PartyMembers.Where(p => p.Race != Race.Animal).ToList();
 
             while (food != 0)
             {
