@@ -169,6 +169,8 @@ namespace Ambermoon
                         else
                         {
                             game.ResetMapCharacterInteraction(map);
+                            if (conversationPartner != null)
+                                provider?.Provide(null);
                         }
                     });
                     return null; // next event is only executed after popup response
@@ -276,6 +278,8 @@ namespace Ambermoon
                             else
                                 provider?.Provide(rewardEvent.Next);
                         }
+                        else if (conversationPartner != null)
+                            provider?.Provide(null);
                     }
                     switch (rewardEvent.Target)
                     {

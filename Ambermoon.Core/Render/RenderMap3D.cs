@@ -605,6 +605,7 @@ namespace Ambermoon.Render
                         game.MonsterSeesPlayer = true;
                         character3D.Stop(true);
                     }
+
                     if (!interacting && Interact(EventTrigger.Move, false))
                         return;
                 }

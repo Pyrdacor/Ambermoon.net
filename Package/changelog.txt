@@ -1,3 +1,11 @@
+Version 1.7
+===========
+
+- Fixed an issue where the "wanna fight" popup occurs after teleporting
+- Monsters will now advance if there are more than 1 players and the 4th row is empty
+- Fixed some conversation event chains that ended with texts or rewards
+
+
 Version 1.6
 ===========
 

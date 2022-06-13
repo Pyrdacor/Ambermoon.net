@@ -7590,7 +7590,11 @@ namespace Ambermoon
                                 eventProvider.Provided += @event =>
                                 {
                                     conversationEvent = @event;
-                                    HandleEvent(followAction);
+
+                                    if (@event == null)
+                                        followAction?.Invoke(EventType.Invalid);
+                                    else
+                                        HandleEvent(followAction);
                                 };
                             }
                         }
