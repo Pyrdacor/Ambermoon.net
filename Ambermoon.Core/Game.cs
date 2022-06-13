@@ -6639,8 +6639,10 @@ namespace Ambermoon
                     {
                         itemGrid.HideTooltip();
                         itemGrid.Disabled = true;
-                        layout.ShowChestMessage(null);
+                        layout.ShowChestMessage(null);                       
                         UntrapMouse();
+                        CursorType = CursorType.Sword;
+                        inputEnable = true;
                         return true;
                     }
 
@@ -10490,6 +10492,8 @@ namespace Ambermoon
                             DisableItemGrid();
                             layout.ShowChestMessage(null);
                             UntrapMouse();
+                            CursorType = CursorType.Sword;
+                            inputEnable = true;
                             return true;
                         }
 
@@ -10650,6 +10654,8 @@ namespace Ambermoon
                                 DisableItemGrid();
                                 layout.ShowChestMessage(null);
                                 UntrapMouse();
+                                CursorType = CursorType.Sword;
+                                inputEnable = true;
                                 return true;
                             }
 
@@ -10927,6 +10933,8 @@ namespace Ambermoon
                                 DisableConditionGrid();
                                 layout.ShowChestMessage(null);
                                 UntrapMouse();
+                                CursorType = CursorType.Sword;
+                                inputEnable = true;
                                 return true;
                             }
 
@@ -11038,6 +11046,8 @@ namespace Ambermoon
                                 DisableItemGrid();
                                 layout.ShowChestMessage(null);
                                 UntrapMouse();
+                                CursorType = CursorType.Sword;
+                                inputEnable = true;
                                 return true;
                             }
 
@@ -11697,6 +11707,8 @@ namespace Ambermoon
                         itemGrid.HideTooltip();
                         layout.ShowChestMessage(null);
                         UntrapMouse();
+                        CursorType = CursorType.Sword;
+                        inputEnable = true;
                         ShowBoughtItems();
                         return true;
                     }
