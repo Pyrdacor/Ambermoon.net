@@ -2778,6 +2778,10 @@ namespace Ambermoon
                             else
                                 layout.ClosePopup();
                         }
+                        else if (layout.InventoryMessageWaitsForClick)
+                        {
+                            layout.ClickInventoryMessage();
+                        }
                         else
                         {
                             if (layout.IsDragging)
@@ -2786,7 +2790,14 @@ namespace Ambermoon
                                 CursorType = CursorType.Sword;
                             }
                             else if (currentWindow.Window == Window.Automap)
+                            {
                                 nextClickHandler?.Invoke(MouseButtons.Right);
+                                nextClickHandler = null;
+                            }
+                            else if (nextClickHandler != null && nextClickHandler?.Invoke(MouseButtons.Right) == true)
+                            {
+                                nextClickHandler = null;
+                            }
                             else if (currentWindow.Closable)
                                 layout.PressButton(2, CurrentTicks);
                             else if (!WindowActive && !is3D)
@@ -2839,7 +2850,10 @@ namespace Ambermoon
                 }
                 default:
                     if (currentWindow.Window == Window.Automap && key == Key.Space)
+                    {
                         nextClickHandler?.Invoke(MouseButtons.Right);
+                        nextClickHandler = null;
+                    }
                     else if (WindowActive || layout.PopupActive)
                         layout.KeyDown(key, modifiers);
                     else if (key == Key.Return)
@@ -3872,6 +3886,7 @@ namespace Ambermoon
                 {
                     currentWindow.Window = Window.Inventory;
                     nextClickHandler?.Invoke(MouseButtons.Right);
+                    nextClickHandler = null;
                     currentWindow.Window = Window.Automap;
                 }
 

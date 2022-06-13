@@ -161,6 +161,8 @@ namespace Ambermoon.UI
             }
         }
 
+        public void InvokeClickEvent() => Clicked?.Invoke(true);
+
         public bool Click(Position position)
         {
             if (isScrolling)

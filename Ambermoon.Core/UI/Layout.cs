@@ -3125,6 +3125,8 @@ namespace Ambermoon.UI
 
         internal bool InventoryMessageWaitsForClick => inventoryMessage != null && !game.InputEnable;
 
+        internal void ClickInventoryMessage() => inventoryMessage?.InvokeClickEvent();
+
         internal void SetInventoryMessage(string message, bool waitForClick = false)
         {
             if (message == null)
