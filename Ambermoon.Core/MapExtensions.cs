@@ -91,6 +91,14 @@ namespace Ambermoon
                        ev?.Type == EventType.Dice100Roll)
                     ev = ev.Next;
 
+                if (ev != null && ev.Type == EventType.PopupText)
+                {
+                    if (ev.Next == null)
+                        return false;
+
+                    ev = ev.Next;
+                }
+
                 // avoid triggering the same event twice, but only for some events
                 if (ev != null &&
                     ev.Type != EventType.Teleport &&
@@ -99,6 +107,8 @@ namespace Ambermoon
                     ev.Type != EventType.EnterPlace &&
                     ev.Type != EventType.RemoveBuffs &&
                     ev.Type != EventType.Riddlemouth &&
+                    ev.Type != EventType.Reward &&
+                    ev.Type != EventType.Action &&
                     (map.Type == MapType.Map3D || ev.Type != EventType.Trap))
                 {
                     return false;
