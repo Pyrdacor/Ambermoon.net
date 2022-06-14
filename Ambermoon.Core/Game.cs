@@ -1560,8 +1560,11 @@ namespace Ambermoon
                 Start3D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection, true);
             else
                 Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection, true);
-            player.Position.X = (int)savegame.CurrentMapX - 1;
-            player.Position.Y = (int)savegame.CurrentMapY - 1;
+            if (!map.IsWorldMap)
+            {
+                player.Position.X = (int)savegame.CurrentMapX - 1;
+                player.Position.Y = (int)savegame.CurrentMapY - 1;
+            }
             TravelType = savegame.TravelType; // Yes this is necessary twice.
 
             ShowMap(true);
