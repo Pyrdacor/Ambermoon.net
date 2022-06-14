@@ -4,7 +4,7 @@ environment:
       configuration: Release
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       configuration: Release
-    - APPVEYOR_BUILD_WORKER_IMAGE: macOS
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
       configuration: Release
 
 platform: Any CPU

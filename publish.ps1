@@ -33,6 +33,7 @@ if ($isWindows) {
   cp -r ./Package/* ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   7z a Ambermoon.net-Mac.zip ./bundle/Ambermoon.net/ -mx9
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/netcoreapp3.1/osx-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList '"./versions.dat"','"./Ambermoon.net/bin/Any CPU/Release/net6.0/osx-arm64/publish/Ambermoon.net"'
+  rm ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/Ambermoon.net
   cp "./Ambermoon.net/bin/Any CPU/Release/net6.0/osx-arm64/publish/Ambermoon.net" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   7z a Ambermoon.net-Mac-ARM.zip ./bundle/Ambermoon.net/ -mx9
 }

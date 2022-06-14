@@ -1,11 +1,3 @@
-Version 1.7
-===========
-
-- Fixed an issue where the "wanna fight" popup occurs after teleporting
-- Monsters will now advance if there are more than 1 players and the 4th row is empty
-- Fixed some conversation event chains that ended with texts or rewards
-
-
 Version 1.6
 ===========
 
@@ -17,6 +9,7 @@ Features
 - Added shortcuts to toggle music (Ctrl+M) and change volume (Ctrl+Comma or Ctrl+Period)
 - Music is now streamed and there is no music cache needed anymore
 - External music is now also recognized if the filename only starts with the song number
+- The window position and active monitor are now memorized in the config
 
 
 Fixes
@@ -39,6 +32,11 @@ Fixes
 - After game over and loading a new game the music is no longer started twice
 - Fixed a game freeze when some spells were casted
 - Fixed broken input after right-clicking some messages in places like the blacksmith
+- Fixed an issue where the "wanna fight" popup occurs after teleporting
+- Monsters will now advance if there are more than 1 players and the 4th row is empty
+- Fixed some conversation event chains that ended with texts or rewards
+- Fixed an issue when loading a game on the world map. Sometimes the wrong tile was used as the player tile so that swimming was active on normal tiles, etc.
+- Improved map event triggering so that some events are not only triggered once (e.g. the oasis heal effect)
 - Some minor fixes
 
 
