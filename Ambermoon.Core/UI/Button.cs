@@ -27,7 +27,7 @@ using System.Collections.Generic;
 
 namespace Ambermoon.UI
 {
-    internal class Button
+    public class Button
     {
         public enum TooltipType
         {
@@ -307,16 +307,30 @@ namespace Ambermoon.UI
             }
         }
 
+        public Data.Enumerations.Color TooltipColor
+        {
+            get;
+            set;
+        } = Data.Enumerations.Color.White;
+
+        public Position TooltipOffset
+        {
+            get;
+            set;
+        } = null;
+
         public void SetTooltip(string text)
         {
             bool visible = !string.IsNullOrWhiteSpace(text);
 
             if (visible)
             {
+                var offset = TooltipOffset ?? new Position(0, 0);
                 tooltip.Text = renderView.TextProcessor.CreateText(text);
+                tooltip.TextColor = TooltipColor;
                 int width = tooltip.Text.MaxLineSize * Global.GlyphWidth;
-                tooltip.X = Math.Min(Global.VirtualScreenWidth - width, Area.Center.X - width / 2);
-                tooltip.Y = Area.Top - tooltip.Text.LineCount * Global.GlyphLineHeight + 1;
+                tooltip.X = Math.Min(Global.VirtualScreenWidth - width, offset.X + Area.Center.X - width / 2);
+                tooltip.Y = offset.Y + Area.Top - tooltip.Text.LineCount * Global.GlyphLineHeight + 1;
             }
 
             tooltip.Visible = visible;

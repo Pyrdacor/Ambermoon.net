@@ -49,6 +49,8 @@ namespace Ambermoon
         LogoPyrdacor logoPyrdacor = null;
         Graphic[] logoPalettes;
         bool initialized = false;
+        Patcher patcher = null;
+        bool checkPatcher = true;
 
         public string Identifier { get; }
         public IGLContext GLContext => window?.GLContext;
@@ -449,7 +451,9 @@ namespace Ambermoon
         {
             var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
 
-            if (logoPyrdacor != null)
+            if (patcher != null)
+                patcher.OnMouseDown(ConvertMousePosition(position), ConvertMouseButtons(button));
+            else if (logoPyrdacor != null)
             {
                 logoPyrdacor?.Cleanup();
                 logoPyrdacor = null;
@@ -466,7 +470,9 @@ namespace Ambermoon
         {
             var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
 
-            if (versionSelector != null)
+            if (patcher != null)
+                patcher.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
+            else if (versionSelector != null)
                 versionSelector.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
             else if (mainMenu != null)
                 mainMenu.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
@@ -486,7 +492,9 @@ namespace Ambermoon
                 mouse.MouseMove += Mouse_MouseMove;
             }
 
-            if (versionSelector != null)
+            if (patcher != null)
+                patcher.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
+            else if (versionSelector != null)
                 versionSelector.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
             else if (mainMenu != null)
                 mainMenu.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
@@ -866,17 +874,23 @@ namespace Ambermoon
             });
         }
 
-        bool ShowVersionSelector(Action<IGameData, string, GameLanguage, Features> selectHandler)
+        bool ShowVersionSelector(BinaryReader builtinVersionReader, Action<IGameData, string, GameLanguage, Features> selectHandler, out TextureAtlasManager createdTextureAtlasManager)
         {
-            var versionLoader = new BuiltinVersionLoader();
-            var versions = versionLoader.Load();
+            createdTextureAtlasManager = null;
+            List<BuiltinVersion> versions = null;
+
+            if (builtinVersionReader != null)
+            {
+                var versionLoader = new BuiltinVersionLoader();
+                versions = versionLoader.Load(builtinVersionReader);
+            }
+
             var gameData = new GameData();
             var dataPath = configuration.UseDataPath ? configuration.DataPath : Configuration.ExecutableDirectoryPath;
 
-            if (versions.Count == 0)
+            if (versions == null || versions.Count == 0)
             {
                 // no versions
-                versionLoader.Dispose();
                 gameData.Load(dataPath);
                 selectHandler?.Invoke(gameData, GetSavePath(Configuration.VersionSavegameFolders[4]), gameData.Language.ToGameLanguage(),
                     gameData.Advanced ? Features.AmbermoonAdvanced : Features.None);
@@ -951,6 +965,7 @@ namespace Ambermoon
             var executableData = ExecutableData.FromGameData(gameData);
             var graphicProvider = new GraphicProvider(gameData, executableData, null, null);
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
+            createdTextureAtlasManager = textureAtlasManager;
             var fontProvider = new FontProvider(executableData);
             foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
                 executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
@@ -1005,7 +1020,7 @@ namespace Ambermoon
 
             RunTask(() =>
             {
-                while (logoPyrdacor != null)
+                while (checkPatcher || patcher != null || logoPyrdacor != null)
                     Thread.Sleep(100);
 
                 versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager, gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption);
@@ -1015,7 +1030,6 @@ namespace Ambermoon
                     configuration.GameVersionIndex = gameVersionIndex;
                     selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : GetSavePath(Configuration.VersionSavegameFolders[gameVersionIndex]),
                         gameVersions[gameVersionIndex].Language.ToGameLanguage(), gameVersions[gameVersionIndex].Features);
-                    versionLoader.Dispose();
                 };
             });
 
@@ -1172,15 +1186,68 @@ namespace Ambermoon
 
             initialized = true;
 
-            if (ShowVersionSelector((gameData, savePath, gameLanguage, features) =>
+            var additionalData = AdditionalData.Loader.Load();
+            var builtinVersionReader = additionalData.TryGetValue("versions", out var reader) ? reader : null;
+
+            if (ShowVersionSelector(builtinVersionReader, (gameData, savePath, gameLanguage, features) =>
             {
+                builtinVersionReader?.Dispose();
                 renderView?.Dispose();
                 StartGame(gameData as GameData, savePath, gameLanguage, features);
                 WindowMoved();
                 versionSelector = null;
-            }))
+            }, out var textureAtlasManager))
             {
+                builtinVersionReader?.Dispose();
                 WindowMoved();
+            }
+
+            var patcherReader = additionalData.TryGetValue("patcher", out reader) ? reader : null;
+
+            if (patcherReader != null && configuration.UsePatcher != false)
+            {
+                bool firstTime = configuration.UsePatcher == null;
+                patcher = new Patcher(renderView, patcherReader, textureAtlasManager ?? TextureAtlasManager.Instance);
+                checkPatcher = false;
+
+                if (firstTime)
+                {
+                    patcher.AskToUsePatcher(() =>
+                    {
+                        configuration.UsePatcher = true;
+                        CheckPatches();
+                    }, () =>
+                    {
+                        configuration.UsePatcher ??= false;
+                        patcher?.CleanUp(true);
+                        patcher = null;
+                    });
+                }
+                else
+                {
+                    CheckPatches();
+                }
+
+                void CheckPatches()
+                {
+                    configuration.PatcherTimeout ??= 1250;                    
+                    int timeout = configuration.PatcherTimeout.Value;
+                    patcher.CheckPatches(afterCloseAction =>
+                    {
+                        if (afterCloseAction?.Invoke() == true)
+                            window.Close();
+                    }, () =>
+                    {
+                        patcher?.CleanUp(true);
+                        patcher = null;
+                    }, ref timeout);
+                    configuration.PatcherTimeout = timeout;
+                }
+            }
+            else if (patcherReader != null)
+            {
+                patcherReader.Dispose();
+                checkPatcher = false;
             }
         }
 
@@ -1203,7 +1270,9 @@ namespace Ambermoon
 
             if (window.WindowState != WindowState.Minimized)
             {
-                if (versionSelector != null)
+                if (patcher != null)
+                    patcher.Render();
+                else if (versionSelector != null)
                     versionSelector.Render();
                 if (mainMenu != null)
                     mainMenu.Render();
@@ -1228,10 +1297,12 @@ namespace Ambermoon
                 return;
             }
 
-            if (logoPyrdacor != null)
+            if (patcher == null && logoPyrdacor != null)
                 logoPyrdacor.Update(renderView, () => logoPyrdacor = null);
 
-            if (versionSelector != null)
+            if (patcher != null)
+                patcher.Update(delta);
+            else if (versionSelector != null)
                 versionSelector.Update(delta);
             else if (mainMenu != null)
             {

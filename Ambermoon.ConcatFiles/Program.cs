@@ -1,16 +1,13 @@
-﻿using System;
+﻿using Ambermoon.AdditionalData;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 
 namespace Ambermoon.ConcatFiles
 {
     class Program
     {
-        static void AppendAllBytes(string path, byte[] bytes)
-        {
-            using var stream = new FileStream(path, FileMode.Append);
-            stream.Write(bytes, 0, bytes.Length);
-        }
-
         static void Main(string[] args)
         {
             if (args.Length < 2)
@@ -19,16 +16,30 @@ namespace Ambermoon.ConcatFiles
                 return;
             }
 
-            string outfile = args[^1];
-
-            for (int i = 0; i < args.Length - 1; ++i)
+            if (args.Length % 2 != 1)
             {
-                string file = Path.GetFullPath(args[i]);
-                Console.WriteLine($"Appending file {file} ...");
-                AppendAllBytes(outfile, File.ReadAllBytes(file));
+                Console.WriteLine("Invalid number of arguments for ConcatFiles");
+                return;
             }
 
-            Console.WriteLine($"Added {args.Length - 1} into {outfile}");
+            string outfile = args[^1];
+
+            if (!Path.IsPathRooted(outfile))
+                outfile = Path.GetFullPath(outfile);
+
+            List<DataEntry> entries = new();
+
+            for (int i = 0; i < args.Length - 1; i += 2)
+            {
+                string name = args[i];
+                string file = Path.GetFullPath(args[i + 1]);
+                Console.WriteLine($"Appending file {file} with name {name} ...");
+                entries.Add(new DataEntry(name, File.ReadAllBytes(file)));
+            }
+
+            Loader.Create(outfile, entries);
+
+            Console.WriteLine($"Added {(args.Length - 1) / 2} files into {outfile}");
         }
     }
 }
