@@ -1186,8 +1186,9 @@ namespace Ambermoon
 
             initialized = true;
 
-            var additionalData = AdditionalData.Loader.Load();
-            var builtinVersionReader = additionalData.TryGetValue("versions", out var reader) ? reader : null;
+            var additionalData = OperatingSystem.IsMacOS() ? new Dictionary<string, BinaryReader>() : AdditionalData.Loader.Load();
+            var builtinVersionReader = OperatingSystem.IsMacOS() ? new BinaryReader(File.OpenRead("versions.dat")) :
+                (additionalData.TryGetValue("versions", out var reader) ? reader : null);
 
             if (ShowVersionSelector(builtinVersionReader, (gameData, savePath, gameLanguage, features) =>
             {
@@ -1202,7 +1203,7 @@ namespace Ambermoon
                 WindowMoved();
             }
 
-            var patcherReader = additionalData.TryGetValue("patcher", out reader) ? reader : null;
+            var patcherReader = !OperatingSystem.IsMacOS() && additionalData.TryGetValue("patcher", out reader) ? reader : null;
 
             if (patcherReader != null && configuration.UsePatcher != false)
             {

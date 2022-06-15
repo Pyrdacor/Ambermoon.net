@@ -54,9 +54,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.Audio.Android", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.Data.FileSystems", "Ambermoon.Data.FileSystems\Ambermoon.Data.FileSystems.csproj", "{46185D6F-7AC2-4BAA-802D-E704C27955B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AmbermoonPatcher", "AmbermoonPatcher\AmbermoonPatcher.csproj", "{B31BD63E-6D9B-4EB8-97BE-D9942FDD7083}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AmbermoonPatcher", "AmbermoonPatcher\AmbermoonPatcher.csproj", "{B31BD63E-6D9B-4EB8-97BE-D9942FDD7083}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AmbermoonAdditionalDataLoader", "AmbermoonAdditionalDataLoader\AmbermoonAdditionalDataLoader.csproj", "{8A8563CA-1594-4D13-A3D8-54701B383E0E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AmbermoonAdditionalDataLoader", "AmbermoonAdditionalDataLoader\AmbermoonAdditionalDataLoader.csproj", "{8A8563CA-1594-4D13-A3D8-54701B383E0E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

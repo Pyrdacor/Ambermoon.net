@@ -729,7 +729,10 @@ namespace Ambermoon
             {
                 var installDirectory = Configuration.ExecutableDirectoryPath;
                 string patcherFile = Path.Combine(Path.GetTempPath(), "AmbermoonPatcher" + (OperatingSystem.IsWindows() ? ".exe" : ""));
-                File.WriteAllBytes(patcherFile, patcherReader.ReadBytes((int)patcherReader.BaseStream.Length));
+
+                if (!OperatingSystem.IsMacOS())                   
+                    File.WriteAllBytes(patcherFile, patcherReader.ReadBytes((int)patcherReader.BaseStream.Length));
+
                 Process.Start(patcherFile, $"\"{downloadPath}\" \"{installDirectory}\"");
                 return true;
             }

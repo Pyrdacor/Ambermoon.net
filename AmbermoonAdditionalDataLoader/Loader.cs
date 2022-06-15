@@ -18,6 +18,11 @@ namespace Ambermoon.AdditionalData
 
     public class Loader
     {
+        void FindNextSegmentName(BinaryReader reader)
+        {
+            var buffer = reader.ReadBytes(Math.Min(128, (int)reader.BaseStream.Length));
+        }
+
         public static Dictionary<string, BinaryReader> Load()
         {
             static int ReadWord(BinaryReader reader)
