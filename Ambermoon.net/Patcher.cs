@@ -44,15 +44,15 @@ namespace Ambermoon
         Action clickHandler = null;
         long ticks = 0;
         readonly object uiLock = new();
-        BinaryReader patcherReader;
+        string patcherPath;
         readonly TextureAtlasManager textureAtlasManager;
         bool finished = false;
         readonly Queue<Action> uiChanges = new Queue<Action>();
 
-        public Patcher(IRenderView renderView, BinaryReader patcherReader, TextureAtlasManager textureAtlasManager)
+        public Patcher(IRenderView renderView, string patcherPath, TextureAtlasManager textureAtlasManager)
         {
             this.renderView = renderView;
-            this.patcherReader = patcherReader;
+            this.patcherPath = patcherPath;
             this.textureAtlasManager = textureAtlasManager;
         }
 
@@ -619,9 +619,6 @@ namespace Ambermoon
 
             if (cleanUpCursor)
                 cursor?.Destroy();
-
-            patcherReader?.Dispose();
-            patcherReader = null;
         }
 
         static string GetPatchFileName()
@@ -728,19 +725,7 @@ namespace Ambermoon
             try
             {
                 var installDirectory = Configuration.ExecutableDirectoryPath;
-                string patcherFile;
-
-                if (!OperatingSystem.IsMacOS())
-                {
-                    patcherFile = Path.Combine(Path.GetTempPath(), "AmbermoonPatcher" + (OperatingSystem.IsWindows() ? ".exe" : ""));
-                    File.WriteAllBytes(patcherFile, patcherReader.ReadBytes((int)patcherReader.BaseStream.Length));
-                }
-                else
-                {
-                    patcherFile = Path.Combine(Configuration.ExecutableDirectoryPath, "AmbermoonPatcher");
-                }
-
-                Process.Start(patcherFile, $"\"{downloadPath}\" \"{installDirectory}\"");
+                Process.Start(patcherPath, $"\"{downloadPath}\" \"{installDirectory}\"");
                 return true;
             }
             catch

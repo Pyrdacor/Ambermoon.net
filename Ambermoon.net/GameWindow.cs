@@ -1220,14 +1220,17 @@ namespace Ambermoon
                 WindowMoved();
             }
 
-            var patcherReader = !OperatingSystem.IsMacOS() && additionalData.TryGetValue("patcher", out reader) ? reader : null;
-            bool patcherAvailable = patcherReader != null ||
-                (OperatingSystem.IsMacOS() && File.Exists(Path.Combine(Configuration.ExecutableDirectoryPath, "AmbermoonPatcher")));
+            string patcherPath = Path.Combine(Configuration.ExecutableDirectoryPath, "AmbermoonPatcher");
 
-            if (patcherAvailable && configuration.UsePatcher != false)
+            if (OperatingSystem.IsWindows())
+                patcherPath += ".exe";
+
+            bool hasPatcher = File.Exists(patcherPath);
+
+            if (hasPatcher && configuration.UsePatcher != false)
             {
                 bool firstTime = configuration.UsePatcher == null;
-                patcher = new Patcher(renderView, patcherReader, textureAtlasManager ?? TextureAtlasManager.Instance);
+                patcher = new Patcher(renderView, patcherPath, textureAtlasManager ?? TextureAtlasManager.Instance);
                 checkPatcher = false;
 
                 if (firstTime)
@@ -1265,12 +1268,6 @@ namespace Ambermoon
                     }, ref timeout);
                     configuration.PatcherTimeout = timeout;
                 }
-            }
-            else if (patcherReader != null)
-            {
-                patcherReader.Dispose();
-                checkPatcher = false;
-                logoPyrdacor?.PlayMusic();
             }
             else
             {
