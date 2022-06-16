@@ -20,7 +20,6 @@ while (true)
     {
         Console.WriteLine("Unable to update Ambermoon.net as it is still running.");
         Console.WriteLine("Please close all instances and run only a single Ambermoon.net instance.");
-        Console.ReadLine();
         return;
     }
 }
@@ -42,7 +41,6 @@ try
         {
             Console.WriteLine("The downloaded zip does not contain the game exe.");
             Console.WriteLine("Please report that to Pyrdacor (trobt@web.de).");
-            Console.ReadLine();
             return;
         }
 
@@ -59,7 +57,6 @@ catch (Exception ex)
 #if DEBUG
     Console.WriteLine(ex.ToString());
 #endif
-    Console.ReadLine();
     return;
 }
 

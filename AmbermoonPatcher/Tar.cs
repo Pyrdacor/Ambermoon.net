@@ -34,7 +34,7 @@ namespace AmbermoonPatcher
                 read = gzip.Read(buffer, 0, chunk);
                 ms.Write(buffer, 0, read);
             }
-            while (read == chunk);
+            while (read != 0);
 
             ms.Seek(0, SeekOrigin.Begin);
             ExtractTar(ms, outputDir, filter);
@@ -95,6 +95,10 @@ namespace AmbermoonPatcher
                     stream.Read(blob, 0, blob.Length);
                     fs.Write(blob, 0, blob.Length);
                 }
+				else if (size != 0)
+                {
+					stream.Seek(size, SeekOrigin.Current);
+				}
 
 				var pos = stream.Position;
 
