@@ -98,7 +98,8 @@ namespace Ambermoon
         [Obsolete("Use BattleSpeed instead.")]
         bool? FastBattleMode { get; set; }
         int BattleSpeed { get; set; }
-        bool CacheMusic { get; set; }
+        [Obsolete("Music is no longer cached but streamed.")]
+        bool? CacheMusic { get; set; }
         bool AutoDerune { get; set; }
         bool EnableCheats { get; set; }
         bool ShowButtonTooltips { get; set; }

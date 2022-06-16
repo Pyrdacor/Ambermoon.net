@@ -44,9 +44,12 @@ namespace Ambermoon
         public int Volume { get; set; } = 100;
         public bool ExternalMusic { get; set; } = false;
         [Obsolete("Use BattleSpeed instead.")]
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? FastBattleMode { get; set; } = null;
         public int BattleSpeed { get; set; } = 0;
-        public bool CacheMusic { get; set; } = true;
+        [Obsolete("Music is no longer cached but streamed.")]
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public bool? CacheMusic { get; set; } = null;
         public bool AutoDerune { get; set; } = true;
         public bool EnableCheats { get; set; } = false;
         public bool ShowButtonTooltips { get; set; } = true;
