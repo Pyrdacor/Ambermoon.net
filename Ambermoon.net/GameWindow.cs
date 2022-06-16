@@ -1051,7 +1051,7 @@ namespace Ambermoon
             var renderView = new RenderView(this, gameData, graphicProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
                 new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
-                () => KeyValuePair.Create(logoPyrdacor != null ? 0 : (int)configuration.GraphicFilter, logoPyrdacor != null ? 0 : (int)configuration.GraphicFilterOverlay),
+                () => KeyValuePair.Create(logoPyrdacor != null ? 0 : (int)configuration.GraphicFilter, logoPyrdacor != null ? 0 : 0/* : (int)configuration.GraphicFilterOverlay*/),
                 () => (int)configuration.Effects,
                 additionalPalettes);
             if (!useFrameBuffer)
@@ -1204,8 +1204,10 @@ namespace Ambermoon
             }
 
             var patcherReader = !OperatingSystem.IsMacOS() && additionalData.TryGetValue("patcher", out reader) ? reader : null;
+            bool patcherAvailable = patcherReader != null ||
+                (OperatingSystem.IsMacOS() && File.Exists(Path.Combine(Configuration.ExecutableDirectoryPath, "AmbermoonPatcher")));
 
-            if (patcherReader != null && configuration.UsePatcher != false)
+            if (patcherAvailable && configuration.UsePatcher != false)
             {
                 bool firstTime = configuration.UsePatcher == null;
                 patcher = new Patcher(renderView, patcherReader, textureAtlasManager ?? TextureAtlasManager.Instance);
@@ -1433,6 +1435,7 @@ namespace Ambermoon
             {
                 var monitorSize = window.Monitor?.Bounds.Size ?? new WindowDimension(800, 500);
                 renderView.MaxScreenSize = new Size(monitorSize.X, monitorSize.Y);
+                renderView.Resize(window.FramebufferSize.X, window.FramebufferSize.Y);
             }
         }
 

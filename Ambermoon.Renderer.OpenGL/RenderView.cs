@@ -408,13 +408,15 @@ namespace Ambermoon.Renderer.OpenGL
                 {
                     int newHeight = Misc.Round(windowSize.Width / virtualRatio);
                     renderDisplayArea = new Rect(0, (windowSize.Height - newHeight) / 2, windowSize.Width, newHeight);
-                    frameBufferSize.Height = newHeight;
+                    int newFrameBufferHeight = Misc.Round(frameBufferSize.Width / virtualRatio);
+                    frameBufferSize.Height = newFrameBufferHeight;
                 }
                 else // windowRatio > virtualRatio
                 {
                     int newWidth = Misc.Round(windowSize.Height * virtualRatio);
                     renderDisplayArea = new Rect((windowSize.Width - newWidth) / 2, 0, newWidth, windowSize.Height);
-                    frameBufferSize.Width = newWidth;
+                    int newFrameBufferWidth = Misc.Round(frameBufferSize.Height * virtualRatio);
+                    frameBufferSize.Width = newFrameBufferWidth;
                 }
 
                 if (rotation == Rotation.Deg90 || rotation == Rotation.Deg270)
