@@ -1,7 +1,15 @@
 # Changelog
 
-## 1.6.0 - Sixth patch (February 2022 - May 2022)
+## 1.6.0 - Sixth patch (February 2022 - June 2022)
 
+- Version [1.6.8](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.6.8): First working Mac M1 version, added patcher under the hood (no Mac support)
+- Version [1.6.7](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.6.7): Added monster advancing, fixed world map load bug, window position is now memorized
+- Version [1.6.6](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.6.6): Battle freeze fix, fixed broken input after right clicks
+- Version [1.6.5](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.6.5): Fixed music stopping, added resting on rafts, added kill cheat
+- Version [1.6.4](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.6.4): Crash fixes
+- Version [1.6.3](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.6.3): Crash fixes
+- Version [1.6.2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.6.2): Reworked music streaming, bugfixes
+- Version [1.6.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.6.1): Fixed crash in version selector, enabled external music on Mac and Linux
 - Version [1.6.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.6.0): Music streaming, added most recent original game data, bugfixes
 
 ## 1.5.0 - Fifth patch (January 2022 - February 2022)

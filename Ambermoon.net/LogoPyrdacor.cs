@@ -126,7 +126,16 @@ namespace Ambermoon
             {
                 { 0u, logoGraphic }
             });
+        }
 
+        public void StopMusic()
+        {
+            if (audioOutput.Enabled)
+                song?.Stop();
+        }
+
+        public void PlayMusic()
+        {
             if (audioOutput.Enabled)
                 song?.Play(audioOutput);
         }

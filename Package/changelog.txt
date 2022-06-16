@@ -10,7 +10,7 @@ Features
 - Music is now streamed and there is no music cache needed anymore
 - External music is now also recognized if the filename only starts with the song number
 - The window position and active monitor are now memorized in the config
-- Under the hood a patcher was integrated for future updates
+- Under the hood a patcher was integrated for future updates (no Mac support)
 
 
 Fixes

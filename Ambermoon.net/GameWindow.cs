@@ -1051,8 +1051,8 @@ namespace Ambermoon
             var renderView = new RenderView(this, gameData, graphicProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
                 new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
-                () => KeyValuePair.Create(logoPyrdacor != null ? 0 : (int)configuration.GraphicFilter, logoPyrdacor != null ? 0 : 0/* : (int)configuration.GraphicFilterOverlay*/),
-                () => (int)configuration.Effects,
+                () => KeyValuePair.Create(logoPyrdacor != null ? 0 : (int)configuration.GraphicFilter, logoPyrdacor != null ? 0 : (int)configuration.GraphicFilterOverlay),
+                () => logoPyrdacor != null ? 0 : (int)configuration.Effects,
                 additionalPalettes);
             if (!useFrameBuffer)
             {
@@ -1224,6 +1224,7 @@ namespace Ambermoon
                         configuration.UsePatcher ??= false;
                         patcher?.CleanUp(true);
                         patcher = null;
+                        logoPyrdacor?.PlayMusic();
                     });
                 }
                 else
@@ -1243,6 +1244,7 @@ namespace Ambermoon
                     {
                         patcher?.CleanUp(true);
                         patcher = null;
+                        logoPyrdacor?.PlayMusic();
                     }, ref timeout);
                     configuration.PatcherTimeout = timeout;
                 }
@@ -1251,6 +1253,12 @@ namespace Ambermoon
             {
                 patcherReader.Dispose();
                 checkPatcher = false;
+                logoPyrdacor?.PlayMusic();
+            }
+            else
+            {
+                checkPatcher = false;
+                logoPyrdacor?.PlayMusic();
             }
         }
 
