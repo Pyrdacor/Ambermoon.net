@@ -38,7 +38,7 @@ if ($isWindows) {
   mkdir -p ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   cp -r ./Ambermoon.net/Mac/* ./bundle/Ambermoon.net/
   cp "./Ambermoon.net/bin/Any CPU/Release/net6.0/osx-x64/publish/Ambermoon.net" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
-  cp "./AmbermoonPatcher/bin/Any CPU/Release/net6.0/osx-x64/publish/AmbermoonPatcher" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
+  #cp "./AmbermoonPatcher/bin/Any CPU/Release/net6.0/osx-x64/publish/AmbermoonPatcher" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   cp "./versions.dat" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/Resources/
   cp -r ./Package/* ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   Start-Process -FilePath codesign -Wait -WorkingDirectory . -ArgumentList '-s','-','--force','--verbose','--deep','--no-strict','"./bundle/Ambermoon.net/Ambermoon.net.app"'
@@ -47,7 +47,7 @@ if ($isWindows) {
   rm ./bundle-arm/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/Ambermoon.net
   rm ./bundle-arm/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/AmbermoonPatcher
   cp "./Ambermoon.net/bin/Any CPU/Release/net6.0/osx-arm64/publish/Ambermoon.net" ./bundle-arm/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
-  cp "./AmbermoonPatcher/bin/Any CPU/Release/net6.0/osx-arm64/publish/AmbermoonPatcher" ./bundle-arm/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/ 
+  #cp "./AmbermoonPatcher/bin/Any CPU/Release/net6.0/osx-arm64/publish/AmbermoonPatcher" ./bundle-arm/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/ 
   Start-Process -FilePath codesign -Wait -WorkingDirectory . -ArgumentList '-s','-','--force','--verbose','--deep','--no-strict','"./bundle-arm/Ambermoon.net/Ambermoon.net.app"'
   7z a Ambermoon.net-Mac-ARM.zip ./bundle-arm/Ambermoon.net/ -mx9
 }
