@@ -6,11 +6,13 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.6.7 is the most recent version from 14-06-2022. It also includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced).
+Version 1.6.8 is the most recent version from 16-06-2022. It also includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced).
+
+Version 1.6.8 should now also work on ARM Macs (M1, etc)!
 
 You can also download the game on my website at www.pyrdacor.net!
 
-Platform | Download 1.6.7
+Platform | Download 1.6.8
 --- | :-:
 **Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows.zip)
 **Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Linux.tar.gz)
@@ -18,7 +20,6 @@ Platform | Download 1.6.7
 **Mac 64bit (ARM processor, M1, M2, etc)** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Mac-ARM.zip)
 **Windows 32bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows32Bit.zip)
 
-Version 1.6.5 is the first experimental build for Macs with ARM processors. But I am not sure if they work but welcome any testers.
 
 From version 1.5.0 onwards you can use your own music with Ambermoon (e.g. Atari music or the remixes of Matthias Steinwachs). For more details read [here](CustomMusic.md). \
 I also provide the Atari tracks [here](https://ambermoon-net.pyrdacor.net/download/music_atari.zip). Just extract the mp3 to a folder called "music" next to the main executable to enjoy the music. Note that not all tracks were converted to Atari so only 13 out of 32 tracks are available.
