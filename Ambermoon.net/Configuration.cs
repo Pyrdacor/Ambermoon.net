@@ -144,6 +144,36 @@ namespace Ambermoon
         public static readonly string FallbackConfigDirectory =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");
 
+        /// <summary>
+        /// The folder path where the bundle is located.
+        /// 
+        /// If not on Mac this is identical to <see cref="ExecutableDirectoryPath"/>.
+        /// </summary>
+        public static string BundleDirectory
+        {
+            get
+            {
+                if (!OperatingSystem.IsMacOS())
+                    return ExecutableDirectoryPath;
+
+                var bundleDirectory = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName); // "MacOS"
+                bundleDirectory = Path.GetDirectoryName(bundleDirectory.TrimEnd('/')); // "Contents"
+                bundleDirectory = Path.GetDirectoryName(bundleDirectory); // "Ambermoon.net.app"
+                bundleDirectory = Path.GetDirectoryName(bundleDirectory); // folder which contains the bundle
+
+                return bundleDirectory;
+            }
+        }
+
+        /// <summary>
+        /// Directory path where the executable is located.
+        /// 
+        /// On Windows this will consider build pathes of Visual Studio.
+        /// In that case the directory of the project file is used.
+        /// 
+        /// If the application is running via dotnet CLI, the correct
+        /// directory of the exe or dll will still be returned.
+        /// </summary>
         public static string ExecutableDirectoryPath
         {
             get

@@ -48,6 +48,15 @@ namespace Ambermoon
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
+            try
+            {
+                Environment.CurrentDirectory = Configuration.ExecutableDirectoryPath;
+            }
+            catch
+            {
+                // ignore
+            }
+
             var configuration = LoadConfig();
             configuration.UpgradeAdditionalSavegameSlots();
             var gameWindow = new GameWindow();

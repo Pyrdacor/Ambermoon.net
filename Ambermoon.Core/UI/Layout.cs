@@ -1434,7 +1434,7 @@ namespace Ambermoon.UI
             {
                 game.Configuration.Fullscreen = !game.Configuration.Fullscreen;
 
-                listBox.SetItemAction(3, game.Configuration.Fullscreen ? null : toggleResolutionAction);
+                listBox.SetItemAction(2, game.Configuration.Fullscreen ? null : toggleResolutionAction);
 
                 if (!game.Configuration.Fullscreen)
                     SetResolution();

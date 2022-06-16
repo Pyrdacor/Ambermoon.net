@@ -364,7 +364,7 @@ namespace Ambermoon
                  keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))))
             {
                 var imageData = renderView.TakeScreenshot();
-                string directory = Path.Combine(Configuration.ExecutableDirectoryPath, "Screenshots");
+                string directory = Path.Combine(Configuration.BundleDirectory, "Screenshots");
                 string path;
                 static string GetFileName() => "Screenshot_" + DateTime.Now.ToString("dd-MM-yyyy.HH-mm-ss");
                 try
@@ -886,7 +886,7 @@ namespace Ambermoon
             }
 
             var gameData = new GameData();
-            var dataPath = configuration.UseDataPath ? configuration.DataPath : Configuration.ExecutableDirectoryPath;
+            var dataPath = configuration.UseDataPath ? configuration.DataPath : Configuration.BundleDirectory;
 
             if (versions == null || versions.Count == 0)
             {
@@ -1071,14 +1071,14 @@ namespace Ambermoon
 
             try
             {
-                var path = Path.Combine(Configuration.ExecutableDirectoryPath, suffix);
+                var path = Path.Combine(Configuration.BundleDirectory, suffix);
                 try
                 {
                     Directory.CreateDirectory(path);
                 }
                 catch
                 {
-                    path = Path.Combine(Configuration.ExecutableDirectoryPath, alternativeSuffix);
+                    path = Path.Combine(Configuration.BundleDirectory, alternativeSuffix);
                     Directory.CreateDirectory(path);
                 }
                 return path;
@@ -1192,9 +1192,26 @@ namespace Ambermoon
 
             if (ShowVersionSelector(builtinVersionReader, (gameData, savePath, gameLanguage, features) =>
             {
-                builtinVersionReader?.Dispose();
-                renderView?.Dispose();
-                StartGame(gameData as GameData, savePath, gameLanguage, features);
+                try
+                {
+                    builtinVersionReader?.Dispose();
+                    renderView?.Dispose();
+                }
+                catch
+                {
+                    // ignore
+                }
+
+                try
+                {
+                    StartGame(gameData as GameData, savePath, gameLanguage, features);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error starting game: " + ex.ToString());
+                    window.Close();
+                    return;
+                }
                 WindowMoved();
                 versionSelector = null;
             }, out var textureAtlasManager))

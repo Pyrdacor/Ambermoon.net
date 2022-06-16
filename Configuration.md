@@ -33,7 +33,6 @@ GraphicFilter | Graphic filter to use | None, Smooth, Blur | None
 GraphicFilterOverlay | Overlay to use | None, Lines, Grid, Scanlines, CRT | None
 Effects | Additional graphic effects to use | None, Grayscale, Sepia | None
 ExtendedSavegameSlots | Enables additional 20 savegame slots | true or false | true
-ContinueSavegameSlot | If extended savegame slots are used, this states which slot is the one to continue | null or 0 to 29 | null
 
 Note that the names of the additional savegame slots are stored inside the configuration file as well. The secion is called AdditionalSavegameSlots. The first 10 slots are stored in a binary file called Saves instead. This binary file is compatible with the original Amiga game which only has 10 savegame slots.
 
