@@ -1,11 +1,11 @@
 environment:
   matrix:
-    #- APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    #  configuration: Release
-    #- APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    #  configuration: Release
-    - APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
       configuration: Release
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      configuration: Release
+    #- APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
+    #  configuration: Release
 
 platform: Any CPU
 
