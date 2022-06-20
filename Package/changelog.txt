@@ -3,7 +3,7 @@ Version 1.6
 
 Features
 
-- The remake can now also load the new original game data (english 1.14 and german 1.13)
+- The remake can now also load the new original game data (english 1.14 and german 1.14)
 - Added the mentioned new original game data to the remake
 - Improved error messages when game preparation fails
 - Added shortcuts to toggle music (Ctrl+M) and change volume (Ctrl+Comma or Ctrl+Period)
