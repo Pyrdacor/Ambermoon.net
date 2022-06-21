@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Version>10.6.9</Version>
+    <Version>10.6.10</Version>
     <Authors>Robert Schneckenhaus</Authors>
     <Description>OpenAL audio interface implementation for Ambermoon</Description>
     <RepositoryUrl>https://github.com/Pyrdacor/Ambermoon.net</RepositoryUrl>

@@ -1216,7 +1216,6 @@ namespace Ambermoon
                 versionSelector = null;
             }, out var textureAtlasManager))
             {
-                builtinVersionReader?.Dispose();
                 WindowMoved();
             }
 
