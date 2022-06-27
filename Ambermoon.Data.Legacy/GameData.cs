@@ -236,7 +236,8 @@ namespace Ambermoon.Data.Legacy
             return info;
         }
 
-        public static GameDataInfo GetInfo(string folderPath, LoadPreference loadPreference = LoadPreference.PreferExtracted)
+        public static GameDataInfo GetInfo(string folderPath, LoadPreference loadPreference = LoadPreference.PreferExtracted,
+            VersionPreference versionPreference = VersionPreference.Any)
         {
             var possibleSources = new string[3] { "Text.amb", "AM2_CPU", "AM2_BLIT" };
 
@@ -274,7 +275,7 @@ namespace Ambermoon.Data.Legacy
                     return null;
 
                 using var stream = File.OpenRead(diskFile);
-                var adf = ADFReader.ReadADF(stream);
+                var adf = ADFReader.ReadADF(stream, versionPreference);
 
                 return GetFirstReader(file =>
                 {
@@ -355,7 +356,7 @@ namespace Ambermoon.Data.Legacy
 
                 using var stream = File.OpenRead(diskFile);
 
-                return ADFReader.ReadADF(stream);
+                return ADFReader.ReadADF(stream, versionPreference);
             };
             Func<string, bool> fileExistChecker = name => File.Exists(GetPath(name));
             Load(fileLoader, diskLoader, fileExistChecker, savesOnly);

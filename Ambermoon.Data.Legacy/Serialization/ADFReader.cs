@@ -226,8 +226,22 @@ namespace Ambermoon.Data.Legacy.Serialization
             return sector;
         }
 
-        public static Dictionary<string, byte[]> ReadADF(Stream stream)
+        public static Dictionary<string, byte[]> ReadADF(Stream stream, GameData.VersionPreference versionPreference)
         {
+            var ambermoonFiles = new Dictionary<string, char>(Files.AmigaFiles);
+
+            if (versionPreference == GameData.VersionPreference.Post114)
+            {
+                foreach (var file in Files.Removed114Files)
+                    ambermoonFiles.Remove(file);
+            }
+
+            if (versionPreference != GameData.VersionPreference.Pre114)
+            {
+                foreach (var file in Files.New114Files)
+                    ambermoonFiles.Add(file.Key, file.Value);
+            }
+
             var directoryHashTables = new Dictionary<string, uint[]>();
 
             using (var reader = new BinaryReader(stream))
@@ -306,7 +320,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                 var loadedFiles = new Dictionary<string, byte[]>();
 
-                foreach (var file in Files.AmigaFiles.Keys)
+                foreach (var file in ambermoonFiles.Keys)
                 {
                     if (file.Contains('/'))
                     {
