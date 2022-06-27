@@ -14,8 +14,9 @@ namespace Ambermoon
         public static string GetFlagNames<TEnum>(TEnum value)
         {
             var values = GetValues<TEnum>().Select(v => (uint)Convert.ChangeType(v, typeof(uint))).Where(v => v != 0).Distinct().ToList();
+            uint flags = (uint)Convert.ChangeType(value, typeof(uint));
 
-            if (values.Count == 0)
+            if (values.Count == 0 || flags == 0)
             {
                 try
                 {
@@ -29,7 +30,6 @@ namespace Ambermoon
 
             string result = "";
             values.Sort();
-            uint flags = (uint)Convert.ChangeType(value, typeof(uint));
 
             foreach (var v in values)
             {
