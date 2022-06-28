@@ -1187,7 +1187,8 @@ namespace Ambermoon
             initialized = true;
 
             var additionalData = OperatingSystem.IsMacOS() ? new Dictionary<string, BinaryReader>() : AdditionalData.Loader.Load();
-            var builtinVersionReader = OperatingSystem.IsMacOS() ? new BinaryReader(File.OpenRead("versions.dat")) :
+            const string versions_filename = "versions.dat";
+            var builtinVersionReader = OperatingSystem.IsMacOS() && File.Exists(versions_filename) ? new BinaryReader(File.OpenRead(versions_filename)) :
                 (additionalData.TryGetValue("versions", out var reader) ? reader : null);
 
             if (ShowVersionSelector(builtinVersionReader, (gameData, savePath, gameLanguage, features) =>
