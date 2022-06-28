@@ -31,7 +31,6 @@ namespace Ambermoon.Data
             AllowMovementUnused13 = 0x00100000,
             AllowMovementUnused14 = 0x00200000,
             AllowMovementUnused15 = 0x00400000,
-            AllowMovementUnused16 = 0x00800000,
             PlayerInvisible = 0x04000000,
             AutoPoison = 0x08000000, // Most likely auto-poisoning (you can dodge the trap with LUK but there will be no popup). It only poisons while the animation is active.
             Transparency = Floor,
