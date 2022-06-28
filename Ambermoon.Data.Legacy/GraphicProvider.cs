@@ -191,9 +191,13 @@ namespace Ambermoon.Data.Legacy
                         var reader = file.Value;
                         reader.Position = 0;
 
-                        while (reader.Position <= reader.Size - graphicInfo.DataSize)
+                        while (reader.Position < reader.Size)
                         {
                             int numFrames = reader.ReadByte();
+
+                            if (numFrames == 0)
+                                break;
+
                             reader.AlignToWord();
                             var compoundGraphic = new Graphic(16 * numFrames, 32, 0);
 
