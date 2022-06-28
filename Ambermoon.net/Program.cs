@@ -121,7 +121,6 @@ namespace Ambermoon
             // automatically. So we try to do so on termination.
             // NET6 needs to extract some native dependecies as well.
             // TODO: Maybe later (.NET6 etc) we can remove this.
-            bool isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
 #pragma warning disable IL3000
             string appFolder = Assembly.GetEntryAssembly().Location;
 #pragma warning restore IL3000
@@ -133,7 +132,7 @@ namespace Ambermoon
 
             appFolder = Path.TrimEndingDirectorySeparator(appFolder);
 
-            if (isWindows)
+            if (OperatingSystem.IsWindows())
             {
                 CleanUpTempFolder(Path.TrimEndingDirectorySeparator(Path.GetTempPath()));
             }

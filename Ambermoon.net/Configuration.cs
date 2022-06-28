@@ -178,8 +178,6 @@ namespace Ambermoon
         {
             get
             {
-                bool isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
-
                 var assemblyPath = Process.GetCurrentProcess().MainModule.FileName;
 
 #pragma warning disable IL3000
@@ -191,7 +189,7 @@ namespace Ambermoon
 
                 var assemblyDirectory = Path.GetDirectoryName(assemblyPath);
 
-                if (isWindows)
+                if (OperatingSystem.IsWindows())
                 {
                     if (assemblyDirectory.EndsWith("Debug") || assemblyDirectory.EndsWith("Release")
                          || assemblyDirectory.EndsWith("net6.0"))
