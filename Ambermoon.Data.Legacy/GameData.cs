@@ -143,7 +143,7 @@ namespace Ambermoon.Data.Legacy
                 using var uncompressedStream = new MemoryStream();
                 archive.GetEntry(name).Open().CopyTo(uncompressedStream);
                 uncompressedStream.Position = 0;
-                return fileReader.ReadFile(name, uncompressedStream);
+                return fileReader.ReadRawFile(name, uncompressedStream);
             }
             bool CheckFileExists(string name)
             {
@@ -151,6 +151,118 @@ namespace Ambermoon.Data.Legacy
                     EnsureFallbackData()?.Files?.ContainsKey(name) == true;
             }
             Load(LoadFile, null, CheckFileExists);
+        }
+
+        public class GameDataWriter
+        {
+            internal class FileContainerWriter
+            {
+                public string Name { get; set; }
+                public uint Header { get; set; }
+                public Dictionary<int, IDataWriter> Files { get; set; }
+                public bool Changed { get; set; } = false;
+
+                static FileType GetFileType(FileContainerWriter writer, bool noCompression)
+                {
+                    var fileType = (FileType)writer.Header;
+
+                    if (noCompression)
+                    {
+                        if (fileType == FileType.AMNP ||
+                            fileType == FileType.AMPC)
+                            fileType = FileType.AMBR;
+                        else if (fileType == FileType.LOB ||
+                            fileType == FileType.VOL1)
+                            fileType = FileType.None;
+                    }
+
+                    return fileType;
+                }
+
+                public static IFileContainer AsContainer(FileContainerWriter writer, bool noCompression) =>
+                    FileReader.Create(writer.Name, GetFileType(writer, noCompression), writer.Files.ToDictionary(f => f.Key, f => WriterToReader(f.Value)));
+                public static FileContainerWriter FromContainer(IFileContainer container) =>
+                    new FileContainerWriter
+                    {
+                        Name = container.Name,
+                        Header = container.Header,
+                        Files = container.Files.ToDictionary(f => f.Key, f => ReaderToWriter(f.Value))
+                    };
+            }
+
+            static IDataWriter ReaderToWriter(IDataReader reader)
+            {
+                var oldPosition = reader.Position;
+                reader.Position = 0;
+
+                var writer = new DataWriter(reader.ReadToEnd());
+
+                reader.Position = oldPosition;
+
+                return writer;
+            }
+
+            static IDataReader WriterToReader(IDataWriter writer)
+            {
+                return new DataReader(writer.ToArray());
+            }
+
+            readonly Dictionary<string, FileContainerWriter> files = new Dictionary<string, FileContainerWriter>();
+
+            internal IReadOnlyDictionary<string, FileContainerWriter> Files => files;
+
+            internal GameDataWriter(GameData gameData)
+            {
+                foreach (var file in gameData.Files)
+                    files.Add(file.Key, FileContainerWriter.FromContainer(file.Value));
+            }
+
+            public void AddFile(string container, int index, IDataWriter writer)
+            {
+                files[container].Files.Add(index, writer);
+                files[container].Changed = true;
+            }
+
+            public void RemoveFile(string container, int index)
+            {
+                files[container].Files.Remove(index);
+                files[container].Changed = true;
+            }
+
+            public bool FileExists(string container, int index)
+            {
+                return files[container].Files.ContainsKey(index);
+            }
+
+            public void ReplaceFile(string container, int index, IDataWriter writer)
+            {
+                files[container].Files[index] = writer;
+                files[container].Changed = true;
+            }
+        }
+
+        public void Save(string targetFolder, Action<GameDataWriter> preSaveAction = null,
+            bool saveOnlyChangedContainers = false, Action finishAction = null,
+            bool noCompression = false)
+        {
+            var gameDataWriter = new GameDataWriter(this);
+
+            preSaveAction?.Invoke(gameDataWriter);
+
+            foreach (var file in gameDataWriter.Files)
+            {
+                if (saveOnlyChangedContainers && !file.Value.Changed)
+                    continue;
+
+                var dataWriter = new DataWriter();
+                var container = GameDataWriter.FileContainerWriter.AsContainer(file.Value, noCompression);
+                FileWriter.Write(dataWriter, container);
+
+                using var fileStream = File.Create(Path.Combine(targetFolder, file.Key));
+                dataWriter.CopyTo(fileStream);
+            }
+
+            finishAction?.Invoke();
         }
 
         public struct GameDataInfo
@@ -262,7 +374,7 @@ namespace Ambermoon.Data.Legacy
                     if (!File.Exists(path))
                         return null;
                     if (file == "Text.amb")
-                        return new FileReader().ReadFile(file, File.ReadAllBytes(path)).Files[1];
+                        return new FileReader().ReadRawFile(file, File.ReadAllBytes(path)).Files[1];
                     return new DataReader(File.ReadAllBytes(path));
                 });
             }
@@ -283,7 +395,7 @@ namespace Ambermoon.Data.Legacy
                     {
                         var data = adf[file];
                         if (file == "Text.amb")
-                            return new FileReader().ReadFile(file, data).Files[1];
+                            return new FileReader().ReadRawFile(file, data).Files[1];
                         return new DataReader(data);
                     }
 
@@ -345,7 +457,7 @@ namespace Ambermoon.Data.Legacy
             Func<string, IFileContainer> fileLoader = name =>
             {
                 using var stream = File.OpenRead(GetPath(name));
-                return fileReader.ReadFile(name, stream);
+                return fileReader.ReadRawFile(name, stream);
             };
             Func<char, Dictionary<string, byte[]>> diskLoader = disk =>
             {
@@ -543,7 +655,7 @@ namespace Ambermoon.Data.Legacy
                     else
                     {
                         GameDataSource = GameDataSource == GameDataSource.LegacyFiles ? GameDataSource.ADFAndLegacyFiles : GameDataSource.ADF;
-                        Files.Add(name, fileReader.ReadFile(name, loadedDisks[disk][name]));
+                        Files.Add(name, fileReader.ReadRawFile(name, loadedDisks[disk][name]));
                         HandleFileLoaded(name, false);
                     }
                 }

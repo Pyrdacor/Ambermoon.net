@@ -351,7 +351,8 @@ namespace Ambermoon.Render
                         return false;
                     break;
                 case EventTrigger.Move:
-                    if (characterReference.Type != CharacterType.Monster)
+                    if (characterReference.Type != CharacterType.Monster &&
+                        characterReference.Type != CharacterType.MapObject)
                         return false;
                     break;
                 default:

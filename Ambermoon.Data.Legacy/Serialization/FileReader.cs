@@ -23,6 +23,16 @@ namespace Ambermoon.Data.Legacy.Serialization
             public Dictionary<int, IDataReader> Files { get; set; } = new Dictionary<int, IDataReader>();
         }
 
+        public static IFileContainer Create(string name, FileType fileType, Dictionary<int, IDataReader> files)
+        {
+            return new FileContainer
+            {
+                Name = name,
+                FileType = fileType,
+                Files = files
+            };
+        }
+
         public static IFileContainer CreateRawFile(string name, byte[] fileData)
         {
             return new FileContainer
@@ -43,15 +53,15 @@ namespace Ambermoon.Data.Legacy.Serialization
             };
         }
 
-        public IFileContainer ReadFile(string name, Stream stream)
+        public IFileContainer ReadRawFile(string name, Stream stream)
         {
             byte[] rawData = new byte[stream.Length - stream.Position];
             stream.Read(rawData, 0, rawData.Length);
 
-            return ReadFile(name, rawData);
+            return ReadRawFile(name, rawData);
         }
 
-        public IFileContainer ReadFile(string name, byte[] rawData)
+        public IFileContainer ReadRawFile(string name, byte[] rawData)
         {
             return ReadFile(name, new DataReader(rawData));
         }
@@ -102,10 +112,16 @@ namespace Ambermoon.Data.Legacy.Serialization
                     fileContainer.Files[1].Position += 4;
                     return ProcessFileInfo(name, new FileInfo
                     {
-                        FileType = FileType.AMBR,
+                        FileType = FileType.JHPlusAMBR,
                         NumFiles = fileContainer.Files[1].ReadWord(),
                         SingleFile = false
                     }, fileContainer.Files[1] as DataReader);
+                }
+
+                // There is a special case where lOB can be inside JH.
+                if (fileInfo.FileType == FileType.JH && fileContainer.Files[1].PeekDword() == (uint)FileType.LOB)
+                {
+                    fileContainer.FileType = FileType.JHPlusLOB;
                 }
             }
             else

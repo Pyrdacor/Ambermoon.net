@@ -2,6 +2,7 @@
 using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data
 {
@@ -87,6 +88,17 @@ namespace Ambermoon.Data
 
                 return false;
             }
+
+            public Tile Clone()
+            {
+                return new Tile
+                {
+                    BackTileIndex = BackTileIndex,
+                    FrontTileIndex = FrontTileIndex,
+                    MapEventId = MapEventId,
+                    Type = Type
+                };
+            }
         }
 
         public class Block
@@ -139,6 +151,17 @@ namespace Ambermoon.Data
 
                 return false;
             }
+
+            public Block Clone()
+            {
+                return new Block
+                {
+                    ObjectIndex = ObjectIndex,
+                    WallIndex = WallIndex,
+                    MapEventId = MapEventId,
+                    MapBorder = MapBorder
+                };
+            }
         }
 
         public class CharacterReference
@@ -177,6 +200,25 @@ namespace Ambermoon.Data
             public uint GraphicIndex { get; set; }
             public uint CombatBackgroundIndex { get; set; }
             public List<Position> Positions { get; } = new List<Position>(288);
+
+            public CharacterReference Clone()
+            {
+                var clone =  new CharacterReference
+                {
+                    Type = Type,
+                    CharacterFlags = CharacterFlags,
+                    CollisionClass = CollisionClass,
+                    Index = Index,
+                    TileFlags = TileFlags,
+                    EventIndex = EventIndex,
+                    GraphicIndex = GraphicIndex,
+                    CombatBackgroundIndex = CombatBackgroundIndex
+                };
+
+                clone.Positions.AddRange(Positions.Select(p => new Position(p)));
+
+                return clone;
+            }
         }
 
         public class GotoPoint
@@ -186,6 +228,71 @@ namespace Ambermoon.Data
             public CharacterDirection Direction { get; set; }
             public uint Index { get; set; }
             public string Name { get; set; }
+
+            public GotoPoint Clone()
+            {
+                return new GotoPoint
+                {
+                    X = X,
+                    Y = Y,
+                    Direction = Direction,
+                    Index = Index,
+                    Name = Name
+                };
+            }
+        }
+
+        public Map Clone()
+        {
+            var clone = new Map
+            {
+                Index = Index,
+                Flags = Flags,
+                Type = Type,
+                MusicIndex = MusicIndex,
+                Width = Width,
+                Height = Height,
+                TilesetOrLabdataIndex = TilesetOrLabdataIndex,
+                NPCGfxIndex = NPCGfxIndex,
+                LabyrinthBackgroundIndex = LabyrinthBackgroundIndex,
+                PaletteIndex = PaletteIndex,
+                World = World,
+                Tiles = Type == MapType.Map2D ? new Tile[Width, Height] : null,
+                Blocks = Type == MapType.Map3D ? new Block[Width, Height] : null,
+                InitialTiles = Type == MapType.Map2D ? new Tile[Width, Height] : null,
+                InitialBlocks = Type == MapType.Map3D ? new Block[Width, Height] : null,
+            };
+
+            var events = Events.ToDictionary(e => e, e => e.Clone(false));
+
+            clone.EventList.AddRange(EventList.Select(e => events[e]));
+            clone.Events.AddRange(events.Values);
+            clone.Texts.AddRange(Texts);
+
+            for (int i = 0; i < clone.CharacterReferences.Length; ++i)
+                clone.CharacterReferences[i] = CharacterReferences[i]?.Clone();
+
+            clone.GotoPoints.AddRange(GotoPoints.Select(g => g?.Clone()));
+            clone.EventAutomapTypes.AddRange(EventAutomapTypes);
+
+            for (int y = 0; y < Height; ++y)
+            {
+                for (int x = 0; x < Width; ++x)
+                {
+                    if (Type == MapType.Map2D)
+                    {
+                        clone.Tiles[x, y] = Tiles[x, y].Clone();
+                        clone.InitialTiles[x, y] = InitialTiles[x, y].Clone();
+                    }
+                    else
+                    {
+                        clone.Blocks[x, y] = Blocks[x, y].Clone();
+                        clone.InitialBlocks[x, y] = InitialBlocks[x, y].Clone();
+                    }
+                }
+            }
+
+            return clone;
         }
 
         public uint Index { get; private set; }

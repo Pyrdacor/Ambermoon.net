@@ -232,6 +232,11 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public byte[] ToArray() => data.ToArray();
 
+        public byte[] GetBytes(int offset, int length)
+        {
+            return data.GetRange(offset, length).ToArray();
+        }
+
         public byte this[int index] => data[index];
 
         public void WriteEnumAsByte<T>(T value) where T : struct, System.Enum, IConvertible => Write(value.ToByte(null));

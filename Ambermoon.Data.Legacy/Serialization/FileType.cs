@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.Data.Legacy.Serialization
+﻿using System.ComponentModel;
+
+namespace Ambermoon.Data.Legacy.Serialization
 {
     public enum FileType : uint
     {
@@ -30,6 +32,41 @@
         /// <summary>
         /// Another multiple file container.
         /// </summary>
-        AMPC = 0x414d5043
+        AMPC = 0x414d5043,
+        /// <summary>
+        /// Special format. JH combined with LOB. Key in lower word.
+        /// </summary>
+        JHPlusLOB = 0xaaaa0000,
+        /// <summary>
+        /// Special format. JH combined with AMBR. Key in lower word.
+        /// </summary>
+        JHPlusAMBR = 0xbbbb0000
+    }
+
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
+    public static class FileTypeExtensions
+    {
+        public static FileType AsFileType(this uint header)
+        {
+            var upperHalf = header & 0xffff0000;
+
+            if (upperHalf == (uint)FileType.JH)
+                return FileType.JH;
+            if (upperHalf == (uint)FileType.JHPlusLOB)
+                return FileType.JHPlusLOB;
+            if (upperHalf == (uint)FileType.JHPlusAMBR)
+                return FileType.JHPlusAMBR;
+
+            return (FileType)header;
+        }
+
+        public static bool IsJH(this uint header)
+        {
+            var fileType = header.AsFileType();
+
+            return fileType == FileType.JH ||
+                   fileType == FileType.JHPlusLOB ||
+                   fileType == FileType.JHPlusAMBR;
+        }
     }
 }

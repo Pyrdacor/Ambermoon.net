@@ -18,12 +18,12 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public static void Write(DataWriter writer, IFileContainer fileContainer)
         {
-            var fileType = ((fileContainer.Header & 0xffff0000) == (uint)FileType.JH) ? FileType.JH : (FileType)fileContainer.Header;
+            var fileType = fileContainer.Header.AsFileType();
 
             switch (fileType)
             {
                 case FileType.JH:
-                    WriteJH(writer, fileContainer.Files[1].ToArray(), (ushort)(fileContainer.Header & 0xffff), false);
+                    WriteJH(writer, AlignData(fileContainer.Files[1].ToArray()), (ushort)(fileContainer.Header & 0xffff), false);
                     break;
                 case FileType.LOB:
                     WriteLob(writer, fileContainer.Files[1].ToArray());
@@ -37,6 +37,16 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case FileType.AMPC:
                     WriteContainer(writer, fileContainer.Files.ToDictionary(f => (uint)f.Key, f => f.Value.ToArray()), fileType);
                     break;
+                case FileType.JHPlusAMBR:
+                {
+                    var ambrWriter = new DataWriter();
+                    WriteContainer(ambrWriter, fileContainer.Files.ToDictionary(f => (uint)f.Key, f => f.Value.ToArray()), FileType.AMBR);
+                    WriteJH(writer, AlignData(ambrWriter.ToArray()), (ushort)(fileContainer.Header & 0xffff), false);
+                    break;
+                }
+                case FileType.JHPlusLOB:
+                    WriteJH(writer, fileContainer.Files[1].ToArray(), (ushort)(fileContainer.Header & 0xffff), true);
+                    break;
                 default: // raw
                     writer.Write(fileContainer.Files[1].ToArray());
                     break;
@@ -48,8 +58,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             if (additionalLobCompression)
             {
                 var lobWriter = new DataWriter();
-                WriteLob(lobWriter, AlignData(fileData), (uint)FileType.LOB);
-                fileData = lobWriter.ToArray();
+                WriteLob(lobWriter, fileData, (uint)FileType.LOB);
+                fileData = AlignData(lobWriter.ToArray());
             }
 
             var encryptedData = Compression.JH.Crypt(fileData, encryptKey);
@@ -98,6 +108,8 @@ namespace Ambermoon.Data.Legacy.Serialization
         {
             switch (fileType)
             {
+                case FileType.JHPlusAMBR:
+                    throw new AmbermoonException(ExceptionScope.Data, $"File type '{fileType}' is no valid container format. Use the Write method instead for this file type.");
                 case FileType.AMNC:
                 case FileType.AMNP:
                 case FileType.AMBR:

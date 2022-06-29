@@ -107,7 +107,7 @@ namespace Ambermoon.Data.Legacy
                     IFileContainer ReadContainer(string name)
                     {
                         using var stream = File.OpenRead(Path.Combine(backupPath, name));
-                        return fileReader.ReadFile(name, stream);
+                        return fileReader.ReadRawFile(name, stream);
                     }
                     IDataReader ReadFile(string name)
                     {
@@ -131,7 +131,7 @@ namespace Ambermoon.Data.Legacy
                         IFileContainer ReadContainer(string name)
                         {
                             using var stream = File.OpenRead(Path.Combine(path, name));
-                            return fileReader.ReadFile(name, stream);
+                            return fileReader.ReadRawFile(name, stream);
                         }
                         IDataReader ReadFile(string name)
                         {

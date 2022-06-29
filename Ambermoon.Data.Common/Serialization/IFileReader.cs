@@ -4,6 +4,6 @@ namespace Ambermoon.Data.Serialization
 {
     public interface IFileReader
     {
-        IFileContainer ReadFile(string name, Stream stream);
+        IFileContainer ReadRawFile(string name, Stream stream);
     }
 }

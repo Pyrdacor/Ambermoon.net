@@ -186,6 +186,11 @@ namespace Ambermoon.Data.Legacy.Serialization
             return data;
         }
 
+        public byte[] GetBytes(int offset, int length)
+        {
+            return data[offset..(offset + length)];
+        }
+
         public void Append(bool value)
         {
             UseWriter(writer => writer.Write(value));
