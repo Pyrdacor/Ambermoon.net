@@ -123,7 +123,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
          *         text offsets will differ between german and english version!
          */
 
-        public static ExecutableData FromGameData(IGameData gameData)
+        public static ExecutableData FromGameData(ILegacyGameData gameData)
         {
             var hunks = AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]);
 

@@ -325,6 +325,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             if (slot == 0)
                 throw new AmbermoonException(ExceptionScope.Application, "Savegame slots must be 1-based");
 
+            var legacyGameData = gameData as ILegacyGameData;
+
             if (name.Length > 38)
                 name = name.Substring(0, 38);
 
@@ -347,18 +349,18 @@ namespace Ambermoon.Data.Legacy.Serialization
             var currentSlot = slot--;
             const int DataSize = 2 + 10 * 39;
 
-            if (!gameData.Files.ContainsKey("Saves"))
+            if (!legacyGameData.Files.ContainsKey("Saves"))
             {
                 byte[] data = new byte[DataSize];
                 WriteCurrentSlot(data, currentSlot);
                 Buffer.BlockCopy(nameData, 0, data, 2 + slot * 39, 39);
-                gameData.Files.Add("Saves", FileReader.CreateRawFile("Saves", data));
+                legacyGameData.Files.Add("Saves", FileReader.CreateRawFile("Saves", data));
             }
             else
             {
                 // Note: There is a bug in original where the file 'Saves' is
                 // too small. If we detect it, we will fix it.
-                var data = gameData.Files["Saves"].Files[1].ToArray();
+                var data = legacyGameData.Files["Saves"].Files[1].ToArray();
                 if (data.Length < DataSize)
                 {
                     var tempData = new byte[DataSize];
@@ -367,7 +369,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 WriteCurrentSlot(data, currentSlot);
                 Buffer.BlockCopy(nameData, 0, data, 2 + slot * 39, 39);
-                gameData.Files["Saves"].Files[1] = new DataReader(data);
+                legacyGameData.Files["Saves"].Files[1] = new DataReader(data);
             }
         }
     }

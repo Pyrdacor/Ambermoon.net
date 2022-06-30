@@ -1,4 +1,5 @@
-﻿using Ambermoon.Data.Enumerations;
+﻿using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Render;
 using System;
@@ -104,7 +105,7 @@ namespace Ambermoon
             var fontTextureAtlas = textureAtlasManager.GetOrCreate(Layer.Text);
             var spriteFactory = renderView.SpriteFactory;
             var layer = renderView.GetLayer(Layer.UI);
-            var executableData = ExecutableData.FromGameData(renderView.GameData);
+            var executableData = ExecutableData.FromGameData(renderView.GameData as ILegacyGameData);
             cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly(),
                 textureAtlasManager);
 

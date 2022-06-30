@@ -8336,6 +8336,7 @@ namespace Ambermoon
                 if (BattleActive)
                     UpdateBattleStatus(partyMember);
                 layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
+                layout.UpdateCharacter(partyMember);
 
                 if (removeExhaustion)
                     RemoveExhaustion(partyMember);
@@ -8993,6 +8994,9 @@ namespace Ambermoon
                 case Spell.HealAging:
                 case Spell.StopAging:
                     Cast(() => RemoveCondition(Condition.Aging, target));
+                    break;
+                case Spell.StoneToFlesh:
+                    Cast(() => RemoveCondition(Condition.Petrified, target));
                     break;
                 case Spell.WakeUp:
                     Cast(() => RemoveCondition(Condition.Sleep, target));

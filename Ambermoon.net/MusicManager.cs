@@ -27,7 +27,7 @@ namespace Ambermoon
         readonly Data.Legacy.Audio.SongManager songManager = null;
         readonly object startMutex = new object();
 
-        public MusicManager(IConfiguration configuration, IGameData gameData)
+        public MusicManager(IConfiguration configuration, ILegacyGameData gameData)
         {
             songManager = new Data.Legacy.Audio.SongManager(gameData);
 

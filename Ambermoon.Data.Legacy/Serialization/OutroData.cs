@@ -83,7 +83,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         public delegate void FontOffsetProvider(bool large, out int glyphMappingOffset,
             out int advanceValueOffset, out int glyphDataOffset);
 
-        public OutroData(IGameData gameData)
+        public OutroData(ILegacyGameData gameData)
         {
             var outroHunks = AmigaExecutable.Read(gameData.Files["Ambermoon_extro"].Files[1]);
             var codeHunks = outroHunks.Where(h => h.Type == AmigaExecutable.HunkType.Code)

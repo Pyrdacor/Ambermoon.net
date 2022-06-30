@@ -740,7 +740,7 @@ namespace Ambermoon
                             var savegameSerializer = new SavegameSerializer();
                             var dataNameProvider = new DataNameProvider(executableData);
                             var characterManager = new CharacterManager(gameData, graphicProvider);
-                            var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
+                            var places = Places.Load(new PlacesReader(), (renderView.GameData as ILegacyGameData).Files["Place_data"].Files[1]);
                             var lightEffectProvider = new LightEffectProvider(executableData);
 
                             gameCreator = () =>
@@ -897,7 +897,7 @@ namespace Ambermoon
                 return false;
             }
 
-            GameData LoadBuiltinVersionData(BuiltinVersion builtinVersion, Func<IGameData> fallbackGameDataProvider)
+            GameData LoadBuiltinVersionData(BuiltinVersion builtinVersion, Func<ILegacyGameData> fallbackGameDataProvider)
             {
                 var gameData = new GameData();
                 builtinVersion.SourceStream.Position = builtinVersion.Offset;
@@ -957,7 +957,7 @@ namespace Ambermoon
                 }
             }
 
-            var builtinVersionDataProviders = new Func<IGameData>[4];
+            var builtinVersionDataProviders = new Func<ILegacyGameData>[4];
             builtinVersionDataProviders[0] = () => configuration.GameVersionIndex == 0 ? gameData : LoadBuiltinVersionData(versions[0], null);
             builtinVersionDataProviders[1] = () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1], builtinVersionDataProviders[0]);
             builtinVersionDataProviders[2] = () => configuration.GameVersionIndex == 2 ? gameData : LoadBuiltinVersionData(versions[2], null);

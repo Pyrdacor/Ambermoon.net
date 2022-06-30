@@ -20,7 +20,7 @@ namespace Ambermoon.Data.Legacy.Audio
         byte[] GetData();
     }
 
-    class Song : ISong, ISonicArrangerSongInfo, ISongDataProvider, IAudioStream
+    internal class Song : ISong, ISonicArrangerSongInfo, ISongDataProvider, IAudioStream
     {
         readonly SonicArranger.Song sonicArrangerSong;
         readonly SongPlayer songPlayer;

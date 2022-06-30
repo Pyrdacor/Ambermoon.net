@@ -16,10 +16,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             map.Texts = TextReader.ReadTexts(textDataReader);
         }
 
-        public void ReadMap(Map map, IDataReader dataReader, Dictionary<uint, Tileset> tilesets)
+        public void ReadMapHeader(Map map, IDataReader dataReader)
         {
-            dataReader.Position = 0;
-
             map.Flags = (MapFlags)dataReader.ReadWord();
             map.Type = (MapType)dataReader.ReadByte();
 
@@ -38,6 +36,13 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             if (dataReader.ReadByte() != 0) // end of map header
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid map data");
+        }
+
+        public void ReadMap(Map map, IDataReader dataReader, Dictionary<uint, Tileset> tilesets)
+        {
+            dataReader.Position = 0;
+
+            ReadMapHeader(map, dataReader);
 
             // Up to 32 character references (10 bytes each -> total 320 bytes)
             for (int i = 0; i < 32; ++i)

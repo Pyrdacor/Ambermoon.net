@@ -9,7 +9,7 @@ namespace Ambermoon.Data.Legacy.Characters
         readonly Dictionary<uint, Monster> monsters = new Dictionary<uint, Monster>();        
         readonly Dictionary<uint, MonsterGroup> monsterGroups = new Dictionary<uint, MonsterGroup>();
 
-        public CharacterManager(IGameData gameData, IGraphicProvider graphicProvider)
+        public CharacterManager(ILegacyGameData gameData, IGraphicProvider graphicProvider)
         {
             var npcReader = new NPCReader();
             var monsterReader = new MonsterReader(gameData, graphicProvider);

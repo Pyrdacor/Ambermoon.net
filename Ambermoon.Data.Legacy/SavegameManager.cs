@@ -26,13 +26,13 @@ namespace Ambermoon.Data.Legacy
             {
                 return SavegameSerializer.GetSavegameNames(new DataReader(File.ReadAllBytes(savesPath)), ref current);
             }
-            else if (!gameData.Files.ContainsKey("Saves"))
+            else if (!(gameData as ILegacyGameData).Files.ContainsKey("Saves"))
             {
                 return Enumerable.Repeat("", totalSavegames).ToArray();
             }
             else
             {
-                return SavegameSerializer.GetSavegameNames(gameData.Files["Saves"].Files[1], ref current);
+                return SavegameSerializer.GetSavegameNames((gameData as ILegacyGameData).Files["Saves"].Files[1], ref current);
             }            
         }
 
@@ -52,6 +52,8 @@ namespace Ambermoon.Data.Legacy
 
         public Savegame Load(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot, int totalSavegames)
         {
+            var legacyGameData = gameData as ILegacyGameData;
+
             if (!transferredFolderSaves && File.Exists(savesPath))
             {
                 transferredFolderSaves = true;
@@ -81,14 +83,14 @@ namespace Ambermoon.Data.Legacy
                         if (saveFiles.Count == 5)
                         {
                             foreach (var saveFile in saveFiles)
-                                gameData.Files[saveFile.Key] = saveFile.Value;
+                                legacyGameData.Files[saveFile.Key] = saveFile.Value;
                         }
                     }
 
                     var saves = TransferFile("Saves");
 
                     if (saves != null)
-                        gameData.Files[saves.Value.Key] = saves.Value.Value;
+                        legacyGameData.Files[saves.Value.Key] = saves.Value.Value;
                 }
                 catch
                 {
@@ -155,11 +157,11 @@ namespace Ambermoon.Data.Legacy
                 {
                     savegameFiles = new SavegameInputFiles
                     {
-                        SaveDataReader = gameData.Files[$"Save.{saveSlot:00}/Party_data.sav"].Files[1],
-                        PartyMemberDataReaders = gameData.Files[$"Save.{saveSlot:00}/Party_char.amb"],
-                        ChestDataReaders = gameData.Files[$"Save.{saveSlot:00}/Chest_data.amb"],
-                        MerchantDataReaders = gameData.Files[$"Save.{saveSlot:00}/Merchant_data.amb"],
-                        AutomapDataReaders = gameData.Files[$"Save.{saveSlot:00}/Automap.amb"]
+                        SaveDataReader = legacyGameData.Files[$"Save.{saveSlot:00}/Party_data.sav"].Files[1],
+                        PartyMemberDataReaders = legacyGameData.Files[$"Save.{saveSlot:00}/Party_char.amb"],
+                        ChestDataReaders = legacyGameData.Files[$"Save.{saveSlot:00}/Chest_data.amb"],
+                        MerchantDataReaders = legacyGameData.Files[$"Save.{saveSlot:00}/Merchant_data.amb"],
+                        AutomapDataReaders = legacyGameData.Files[$"Save.{saveSlot:00}/Automap.amb"]
                     };
                 }
             }
@@ -168,16 +170,17 @@ namespace Ambermoon.Data.Legacy
                 return null;
             }
 
-            var initialPartyMemberReaders = gameData.Files.TryGetValue("Initial/Party_char.amb", out var readers)
-                ? readers : gameData.Files.TryGetValue("Save.00/Party_char.amb", out readers) ? readers : null;
+            var initialPartyMemberReaders = legacyGameData.Files.TryGetValue("Initial/Party_char.amb", out var readers)
+                ? readers : legacyGameData.Files.TryGetValue("Save.00/Party_char.amb", out readers) ? readers : null;
 
-            savegameSerializer.Read(savegame, savegameFiles, gameData.Files["Party_texts.amb"], initialPartyMemberReaders);
+            savegameSerializer.Read(savegame, savegameFiles, legacyGameData.Files["Party_texts.amb"], initialPartyMemberReaders);
 
             return savegame;
         }
 
         public Savegame LoadInitial(IGameData gameData, ISavegameSerializer savegameSerializer)
         {
+            var legacyGameData = gameData as ILegacyGameData;
             var savegame = new Savegame();
             SavegameInputFiles savegameFiles;
             IFileContainer partyTextContainer;
@@ -186,11 +189,11 @@ namespace Ambermoon.Data.Legacy
             {
                 savegameFiles = new SavegameInputFiles
                 {
-                    SaveDataReader = gameData.Files["Initial/Party_data.sav"].Files[1],
-                    PartyMemberDataReaders = gameData.Files["Initial/Party_char.amb"],
-                    ChestDataReaders = gameData.Files["Initial/Chest_data.amb"],
-                    MerchantDataReaders = gameData.Files["Initial/Merchant_data.amb"],
-                    AutomapDataReaders = gameData.Files["Initial/Automap.amb"]
+                    SaveDataReader = legacyGameData.Files["Initial/Party_data.sav"].Files[1],
+                    PartyMemberDataReaders = legacyGameData.Files["Initial/Party_char.amb"],
+                    ChestDataReaders = legacyGameData.Files["Initial/Chest_data.amb"],
+                    MerchantDataReaders = legacyGameData.Files["Initial/Merchant_data.amb"],
+                    AutomapDataReaders = legacyGameData.Files["Initial/Automap.amb"]
                 };
             }
             catch
@@ -199,27 +202,27 @@ namespace Ambermoon.Data.Legacy
                 {
                     savegameFiles = new SavegameInputFiles
                     {
-                        SaveDataReader = gameData.Files["Save.00/Party_data.sav"].Files[1],
-                        PartyMemberDataReaders = gameData.Files["Save.00/Party_char.amb"],
-                        ChestDataReaders = gameData.Files["Save.00/Chest_data.amb"],
-                        MerchantDataReaders = gameData.Files["Save.00/Merchant_data.amb"],
-                        AutomapDataReaders = gameData.Files["Save.00/Automap.amb"]
+                        SaveDataReader = legacyGameData.Files["Save.00/Party_data.sav"].Files[1],
+                        PartyMemberDataReaders = legacyGameData.Files["Save.00/Party_char.amb"],
+                        ChestDataReaders = legacyGameData.Files["Save.00/Chest_data.amb"],
+                        MerchantDataReaders = legacyGameData.Files["Save.00/Merchant_data.amb"],
+                        AutomapDataReaders = legacyGameData.Files["Save.00/Automap.amb"]
                     };
                 }
                 catch
                 {
                     savegameFiles = new SavegameInputFiles
                     {
-                        SaveDataReader = gameData.Files["Party_data.sav"].Files[1],
-                        PartyMemberDataReaders = gameData.Files["Party_char.amb"],
-                        ChestDataReaders = gameData.Files["Chest_data.amb"],
-                        MerchantDataReaders = gameData.Files["Merchant_data.amb"],
-                        AutomapDataReaders = gameData.Files["Automap.amb"]
+                        SaveDataReader = legacyGameData.Files["Party_data.sav"].Files[1],
+                        PartyMemberDataReaders = legacyGameData.Files["Party_char.amb"],
+                        ChestDataReaders = legacyGameData.Files["Chest_data.amb"],
+                        MerchantDataReaders = legacyGameData.Files["Merchant_data.amb"],
+                        AutomapDataReaders = legacyGameData.Files["Automap.amb"]
                     };
                 }
             }
 
-            partyTextContainer = gameData.Files["Party_texts.amb"];
+            partyTextContainer = legacyGameData.Files["Party_texts.amb"];
             savegameSerializer.Read(savegame, savegameFiles, partyTextContainer);
             return savegame;
         }
@@ -234,7 +237,7 @@ namespace Ambermoon.Data.Legacy
                 WriteSavegameName(gameData, saveSlot, ref name);
                 SaveToGameData(gameData, savegameFiles, saveSlot);
             }
-            SaveToPath(path, savegameFiles, saveSlot, saveSlot > 10 ? null : gameData.Files["Saves"]);
+            SaveToPath(path, savegameFiles, saveSlot, saveSlot > 10 ? null : (gameData as ILegacyGameData).Files["Saves"]);
         }
 
         public void SetActiveSavegame(IGameData gameData, int slot)
@@ -247,7 +250,7 @@ namespace Ambermoon.Data.Legacy
                 string name = GetSavegameNames(gameData, out _, 10)[slot - 1];
                 WriteSavegameName(gameData, slot, ref name);
                 var savesWriter = new DataWriter();
-                FileWriter.Write(savesWriter, gameData.Files["Saves"]);
+                FileWriter.Write(savesWriter, (gameData as ILegacyGameData).Files["Saves"]);
                 File.WriteAllBytes(savesPath, savesWriter.ToArray());
             }
         }
@@ -283,27 +286,29 @@ namespace Ambermoon.Data.Legacy
 
         void SaveToGameData(IGameData gameData, SavegameOutputFiles savegameFiles, int saveSlot)
         {
+            var legacyGameData = gameData as ILegacyGameData;
+
             void WriteSingleFile(string name, IDataWriter writer)
             {
-                if (!gameData.Files.ContainsKey(name))
+                if (!legacyGameData.Files.ContainsKey(name))
                 {
-                    gameData.Files.Add(name, FileReader.CreateRawFile(name, writer.ToArray()));
+                    legacyGameData.Files.Add(name, FileReader.CreateRawFile(name, writer.ToArray()));
                 }
                 else
                 {
-                    gameData.Files[name].Files[1] = new DataReader(writer.ToArray());
+                    legacyGameData.Files[name].Files[1] = new DataReader(writer.ToArray());
                 }
             }
 
             void WriteFile(string name, IDataWriter writer, int fileIndex)
             {
-                if (!gameData.Files.ContainsKey(name))
+                if (!legacyGameData.Files.ContainsKey(name))
                 {
-                    gameData.Files.Add(name, FileReader.CreateRawContainer(name, new Dictionary<int, byte[]> { { fileIndex, writer.ToArray() } }));
+                    legacyGameData.Files.Add(name, FileReader.CreateRawContainer(name, new Dictionary<int, byte[]> { { fileIndex, writer.ToArray() } }));
                 }
                 else
                 {
-                    gameData.Files[name].Files[fileIndex] = new DataReader(writer.ToArray());
+                    legacyGameData.Files[name].Files[fileIndex] = new DataReader(writer.ToArray());
                 }
             }
 

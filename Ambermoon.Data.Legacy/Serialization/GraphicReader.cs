@@ -115,15 +115,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     break;
                 case GraphicFormat.RGBA32:
                     graphic.IndexedGraphic = false;
-                    graphic.Data = new byte[graphic.Width * graphic.Height * 4];
-                    for (int i = 0; i < graphic.Width * graphic.Height; ++i)
-                    {
-                        ulong color = dataReader.ReadDword();
-                        graphic.Data[i * 4 + 0] = (byte)((color >> 24) & 0xff);
-                        graphic.Data[i * 4 + 1] = (byte)((color >> 16) & 0xff);
-                        graphic.Data[i * 4 + 2] = (byte)((color >> 8) & 0xff);
-                        graphic.Data[i * 4 + 3] = (byte)(color & 0xff);
-                    }
+                    graphic.Data = dataReader.ReadBytes(graphic.Width * graphic.Height * 4);
                     break;
                 default:
                     throw new Exception("Invalid legacy graphic format.");

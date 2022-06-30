@@ -18,7 +18,7 @@ namespace Ambermoon.Data.Legacy.Audio
                 SonicArranger.Stream.ChannelMode.Mono, true, true);
         }
 
-        public SongManager(IGameData gameData)
+        public SongManager(ILegacyGameData gameData)
         {
             if (gameData == null)
                 throw new AmbermoonException(ExceptionScope.Application, "gameData must not be null.");

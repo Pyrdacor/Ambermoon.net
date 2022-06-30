@@ -246,6 +246,9 @@ namespace Ambermoon.Render
                 case Spell.MassHealing:
                 case Spell.RemoveRigidness:
                 case Spell.RemoveLamedness:
+                case Spell.HealAging:
+                case Spell.StopAging:
+                case Spell.StoneToFlesh:
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
                 case Spell.RestoreStamina:
@@ -370,6 +373,9 @@ namespace Ambermoon.Render
                 case Spell.MassHealing:
                 case Spell.RemoveRigidness:
                 case Spell.RemoveLamedness:
+                case Spell.HealAging:
+                case Spell.StopAging:
+                case Spell.StoneToFlesh:
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
                 case Spell.RestoreStamina:
@@ -574,6 +580,8 @@ namespace Ambermoon.Render
                 case Spell.MediumHealing:
                 case Spell.GreatHealing:
                 case Spell.RemoveRigidness:
+                case Spell.HealAging:
+                case Spell.StoneToFlesh:
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
                 case Spell.Hurry:
@@ -635,6 +643,9 @@ namespace Ambermoon.Render
                 case Spell.MassHealing:
                 case Spell.RemoveRigidness:
                 case Spell.RemoveLamedness:
+                case Spell.HealAging:
+                case Spell.StopAging:
+                case Spell.StoneToFlesh:
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
                 case Spell.Hurry:
@@ -1412,6 +1423,8 @@ namespace Ambermoon.Render
                 case Spell.MediumHealing:
                 case Spell.GreatHealing:
                 case Spell.RemoveRigidness:
+                case Spell.HealAging:
+                case Spell.StoneToFlesh:
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
                 case Spell.Hurry:
@@ -1446,6 +1459,7 @@ namespace Ambermoon.Render
                 case Spell.NeutralizePoison:
                 case Spell.MassHealing:
                 case Spell.RemoveLamedness:
+                case Spell.StopAging:
                     // Mass healing spells are handled in Play.
                     this.finishAction?.Invoke();
                     break;

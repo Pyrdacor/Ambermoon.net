@@ -123,13 +123,14 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
 
             // Load labyrinth graphics
+            var legacyGameData = gameData as ILegacyGameData;
             var graphicReader = new GraphicReader();
             if (labdata.FloorTextureIndex != 0)
-                labdata.FloorGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[labdata.FloorTextureIndex], 64, 64, false, false, true);
+                labdata.FloorGraphic = ReadGraphic(graphicReader, legacyGameData.Files["Floors.amb"].Files[labdata.FloorTextureIndex], 64, 64, false, false, true);
             if (labdata.CeilingTextureIndex != 0)
-                labdata.CeilingGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[labdata.CeilingTextureIndex], 64, 64, false, false, true);
-            var objectTextureFiles = gameData.Files[$"2Object3D.amb"].Files;
-            gameData.Files[$"3Object3D.amb"].Files.ToList().ForEach(f =>
+                labdata.CeilingGraphic = ReadGraphic(graphicReader, legacyGameData.Files["Floors.amb"].Files[labdata.CeilingTextureIndex], 64, 64, false, false, true);
+            var objectTextureFiles = legacyGameData.Files[$"2Object3D.amb"].Files;
+            legacyGameData.Files[$"3Object3D.amb"].Files.ToList().ForEach(f =>
             {
                 if (!objectTextureFiles.ContainsKey(f.Key) || objectTextureFiles[f.Key].Size == 0)
                     objectTextureFiles[f.Key] = f.Value;
@@ -158,14 +159,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                     labdata.ObjectGraphics.Add(compoundGraphic);
                 }
             }
-            var wallTextureFiles = gameData.Files[$"2Wall3D.amb"].Files;
-            var overlayTextureFiles = gameData.Files[$"2Overlay3D.amb"].Files;
-            gameData.Files[$"3Wall3D.amb"].Files.ToList().ForEach(f =>
+            var wallTextureFiles = legacyGameData.Files[$"2Wall3D.amb"].Files;
+            var overlayTextureFiles = legacyGameData.Files[$"2Overlay3D.amb"].Files;
+            legacyGameData.Files[$"3Wall3D.amb"].Files.ToList().ForEach(f =>
             {
                 if (!wallTextureFiles.ContainsKey(f.Key) || wallTextureFiles[f.Key].Size == 0)
                     wallTextureFiles[f.Key] = f.Value;
             });
-            gameData.Files[$"3Overlay3D.amb"].Files.ToList().ForEach(f =>
+            legacyGameData.Files[$"3Overlay3D.amb"].Files.ToList().ForEach(f =>
             {
                 if (!overlayTextureFiles.ContainsKey(f.Key) || overlayTextureFiles[f.Key].Size == 0)
                     overlayTextureFiles[f.Key] = f.Value;

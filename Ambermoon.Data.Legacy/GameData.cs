@@ -7,11 +7,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+
+[assembly: InternalsVisibleTo("Ambermoon.Data.Pyrdacor")]
 
 namespace Ambermoon.Data.Legacy
 {
-    public class GameData : IGameData
+    public class GameData : ILegacyGameData
     {
         public enum LoadPreference
         {
@@ -120,14 +123,14 @@ namespace Ambermoon.Data.Legacy
             Load(LoadFile, null, CheckFileExists);
         }
 
-        public void LoadFromMemoryZip(Stream stream, Func<IGameData> fallbackGameDataProvider = null)
+        public void LoadFromMemoryZip(Stream stream, Func<ILegacyGameData> fallbackGameDataProvider = null)
         {
             Loaded = false;
             GameDataSource = GameDataSource.Memory;
             using var archive = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Read, true);
             var fileReader = new FileReader();
-            IGameData fallbackGameData = null;
-            IGameData EnsureFallbackData()
+            ILegacyGameData fallbackGameData = null;
+            ILegacyGameData EnsureFallbackData()
             {
                 if (fallbackGameDataProvider == null)
                     return null;

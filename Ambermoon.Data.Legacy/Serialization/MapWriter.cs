@@ -5,7 +5,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 {
     public static class MapWriter
     {
-        public static void WriteMap(Map map, IDataWriter dataWriter)
+        public static void WriteMapHeader(Map map, IDataWriter dataWriter)
         {
             dataWriter.Write((ushort)map.Flags);
             dataWriter.Write((byte)map.Type);
@@ -18,6 +18,11 @@ namespace Ambermoon.Data.Legacy.Serialization
             dataWriter.Write((byte)map.PaletteIndex);
             dataWriter.Write((byte)map.World);
             dataWriter.Write(0);
+        }
+
+        public static void WriteMap(Map map, IDataWriter dataWriter)
+        {
+            WriteMapHeader(map, dataWriter);
 
             // Up to 32 character references (10 bytes each -> total 320 bytes)
             for (int i = 0; i < 32; ++i)

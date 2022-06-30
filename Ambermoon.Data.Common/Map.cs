@@ -24,6 +24,7 @@ namespace Ambermoon.Data
         CanUseMagic = 1 << 11, // Only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug). It just disables the spell book if not set but you still can use scrolls or items.
         NoTravelMusic = 1 << 12, // Won't use travel music if StationaryGraphics is set
         NoMarkOrReturn = 1 << 13, // Forbids the use of "Word of marking" and "Word of returning"
+        SharedMapData = 1 << 15, // Only used internal by the new game data, do not use in original!
         SmallPlayer = StationaryGraphics // Display player smaller. Only all world maps have this set. Only considered for 2D maps.
     }
 
@@ -41,7 +42,12 @@ namespace Ambermoon.Data
             Water
         }
 
-        public class Tile
+        public interface IEventOnMap
+        {
+            uint MapEventId { get; set; }
+        }
+
+        public class Tile : IEventOnMap
         {
             /// <summary>
             /// Back layer in 2D maps
@@ -101,7 +107,7 @@ namespace Ambermoon.Data
             }
         }
 
-        public class Block
+        public class Block : IEventOnMap
         {
             public uint ObjectIndex { get; set; }
             public uint WallIndex { get; set; }

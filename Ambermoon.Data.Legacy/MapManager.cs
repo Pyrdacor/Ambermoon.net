@@ -12,7 +12,7 @@ namespace Ambermoon.Data.Legacy
 
         public IReadOnlyList<Map> Maps => maps.Values.ToList();
 
-        public MapManager(IGameData gameData, IMapReader mapReader, ITilesetReader tilesetReader, ILabdataReader labdataReader)
+        public MapManager(ILegacyGameData gameData, IMapReader mapReader, ITilesetReader tilesetReader, ILabdataReader labdataReader)
         {
             foreach (var tilesetFile in gameData.Files["Icon_data.amb"].Files)
             {

@@ -5,13 +5,11 @@ namespace Ambermoon.Data.Legacy.Characters
 {
     public class MonsterReader : CharacterReader, IMonsterReader
     {
-        readonly IGameData gameData;
-        readonly IGraphicProvider graphicProvider;
+        readonly ILegacyGameData gameData;
 
-        public MonsterReader(IGameData gameData, IGraphicProvider graphicProvider)
+        public MonsterReader(ILegacyGameData gameData, IGraphicProvider graphicProvider)
         {
             this.gameData = gameData;
-            this.graphicProvider = graphicProvider;
         }
 
         public void ReadMonster(Monster monster, IDataReader dataReader)

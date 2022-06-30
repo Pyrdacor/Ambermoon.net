@@ -180,6 +180,8 @@ namespace Ambermoon.Data.FileSystems
             UpdateStream(offset, length);
         }
 
+        public byte[] GetBytes(int offset, int length) => writer.GetBytes(offset, length);
+
         public byte[] ToArray() => writer.ToArray();
 
         public void Write(bool value)
