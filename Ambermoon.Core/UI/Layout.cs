@@ -491,6 +491,7 @@ namespace Ambermoon.UI
         UIText freeScrolledText = null;
         public bool FreeTextScrollingActive => freeScrolledText != null;
         internal UIText ChestText { get; private set; } = null;
+        public bool TextWaitsForClick => ChestText?.WithScrolling == true || InventoryMessageWaitsForClick || FreeTextScrollingActive;
         Button questionYesButton = null;
         Button questionNoButton = null;
         DraggedItem draggedItem = null;

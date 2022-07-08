@@ -2714,6 +2714,9 @@ namespace Ambermoon
 
                 if (key != Key.Escape && !(key >= Key.Num1 && key <= Key.Num9))
                     return;
+
+                if (layout.TextWaitsForClick) // allow only if there is no text active which waits for a click
+                    return;
             }
 
             if (pickingTargetPlayer)
@@ -2878,6 +2881,9 @@ namespace Ambermoon
             if (!InputEnable || pickingNewLeader)
             {
                 if (key != Key.Escape && !(key >= Key.Num1 && key <= Key.Num9))
+                    return;
+
+                if (layout.TextWaitsForClick) // allow only if there is no text active which waits for a click
                     return;
             }
 
@@ -4349,7 +4355,7 @@ namespace Ambermoon
             layout.FillArea(new Rect(208, offsetY + 49, 96, 80), GetUIColor(28), false);
             layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 52, 1);
             layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.PortraitOffset + character.PortraitIndex - 1, PrimaryUIPaletteIndex, 2);
-            if (character.Race <= Race.Thalionic)
+            if (!string.IsNullOrEmpty(DataNameProvider.GetRaceName(character.Race)))
                 layout.AddText(new Rect(242, offsetY + 49, 62, 7), DataNameProvider.GetRaceName(character.Race));
             layout.AddText(new Rect(242, offsetY + 56, 62, 7), DataNameProvider.GetGenderName(character.Gender));
             characterInfoTexts.Add(CharacterInfo.Age, layout.AddText(new Rect(242, offsetY + 63, 62, 7),
@@ -4358,10 +4364,13 @@ namespace Ambermoon
             ShowSecondaryStatTooltip(new Rect(242, offsetY + 63, 62, 7), BuiltinTooltips.SecondaryStat.Age, character);
             if (character.Class < Class.Monster && !string.IsNullOrEmpty(DataNameProvider.GetClassName(character.Class)))
             {
-                characterInfoTexts.Add(CharacterInfo.Level, layout.AddText(new Rect(242, offsetY + 70, 62, 7),
-                    $"{DataNameProvider.GetClassName(character.Class)} {character.Level}"));
-                ShowSecondaryStatTooltip(new Rect(242, offsetY + 70, 62, 7), character.AttacksPerRoundIncreaseLevels == 0
-                    ? BuiltinTooltips.SecondaryStat.LevelWithoutAPRIncrease : BuiltinTooltips.SecondaryStat.LevelWithAPRIncrease, character);
+                if (!conversation || character.Class < Class.Animal)
+                {
+                    characterInfoTexts.Add(CharacterInfo.Level, layout.AddText(new Rect(242, offsetY + 70, 62, 7),
+                        $"{DataNameProvider.GetClassName(character.Class)} {character.Level}"));
+                    ShowSecondaryStatTooltip(new Rect(242, offsetY + 70, 62, 7), character.AttacksPerRoundIncreaseLevels == 0
+                        ? BuiltinTooltips.SecondaryStat.LevelWithoutAPRIncrease : BuiltinTooltips.SecondaryStat.LevelWithAPRIncrease, character);
+                }
             }
             layout.AddText(new Rect(208, offsetY + 84, 96, 7), character.Name, conversation ? TextColor.PartyMember : TextColor.ActivePartyMember, TextAlign.Center);
             if (!conversation)
