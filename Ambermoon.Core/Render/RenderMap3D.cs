@@ -919,14 +919,17 @@ namespace Ambermoon.Render
             // in relation to a full wall height.
             float add = race switch
             {
-                Race.Human => -0.04f,
-                Race.Elf => 0.0f,
-                Race.Dwarf => -0.125f,
-                Race.Gnome => -0.125f,
-                Race.HalfElf => 0.01f,
-                Race.Sylphe => -0.09f,
-                Race.Felinic => 0.0f,
-                Race.Thalionic => -0.04f,
+                Race.Human => -0.04f,       // Original: 180
+                Race.Elf => 0.0f,           // Original: 190
+                Race.Dwarf => -0.16f,       // Original: 150
+                Race.Gnome => -0.20f,       // Original: 120
+                Race.HalfElf => 0.02f,      // Original: 195
+                Race.Sylphe => -0.12f,      // Original: 160
+                Race.Felinic => 0.0f,       // Original: 190
+                Race.Moranian => -0.06f,    // Original: 175
+                Race.Thalionic => -0.04f,   // Original: 180
+                Race.Animal => -0.30f,      // AA: 80
+                Race.Monster => -0.04f,     // AA: 180
                 _ => 0.0f
             };
 
@@ -1675,7 +1678,7 @@ namespace Ambermoon.Render
                         }
                     }
                 }*/
-            }
+        }
 
             return info;
         }
