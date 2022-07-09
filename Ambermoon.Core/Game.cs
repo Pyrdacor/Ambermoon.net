@@ -10064,7 +10064,7 @@ namespace Ambermoon
             }
         }
 
-        bool CheckAbilityToAttack(out bool ranged)
+        bool CheckAbilityToAttack(out bool ranged, bool silent = false)
         {
             ranged = currentPickingActionMember.HasLongRangedAttack(ItemManager, out bool hasAmmo);
 
@@ -10072,14 +10072,16 @@ namespace Ambermoon
             {
                 // No ammo for ranged weapon
                 CancelSpecificPlayerAction();
-                SetBattleMessageWithClick(DataNameProvider.BattleMessageNoAmmunition, TextColor.BrightGray);
+                if (!silent)
+                    SetBattleMessageWithClick(DataNameProvider.BattleMessageNoAmmunition, TextColor.BrightGray);
                 return false;
             }
 
             if (currentPickingActionMember.BaseAttack <= 0 || !currentPickingActionMember.Conditions.CanAttack())
             {
                 CancelSpecificPlayerAction();
-                SetBattleMessageWithClick(DataNameProvider.BattleMessageUnableToAttack, TextColor.BrightGray);
+                if (!silent)
+                    SetBattleMessageWithClick(DataNameProvider.BattleMessageUnableToAttack, TextColor.BrightGray);
                 return false;
             }
 
@@ -14825,7 +14827,7 @@ namespace Ambermoon
                             CurrentInventory.Equipment.Slots[EquipmentSlot.RightHand]?.ItemIndex != null &&
                             ItemManager.GetItem(CurrentInventory.Equipment.Slots[EquipmentSlot.RightHand].ItemIndex).UsedAmmunitionType == removedItem.AmmunitionType);
 
-                        if (removedWeapon || !CheckAbilityToAttack(out _))
+                        if (removedWeapon || !CheckAbilityToAttack(out _, true))
                         {
                             roundPlayerBattleActions.Remove(partyMemberSlot);
                         }
