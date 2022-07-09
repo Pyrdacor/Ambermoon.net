@@ -2562,6 +2562,8 @@ namespace Ambermoon
             PickTargetPlayer();
             void TargetPlayerPicked(int characterSlot)
             {
+                ResetMoveKeys(true);
+
                 if (characterSlot != -1)
                 {
                     var partyMember = GetPartyMember(characterSlot);
@@ -13179,7 +13181,7 @@ namespace Ambermoon
                 slot.Flags = brokenItem.Value | ItemSlotFlags.Broken;
             }
             var expReceivingPartyMembers = PartyMembers.Where(m => m.Alive && !battleEndInfo.FledPartyMembers.Contains(m) && m.Race <= Race.Thalionic).ToList();
-            int expPerPartyMember = battleEndInfo.TotalExperience / expReceivingPartyMembers.Count;
+            int expPerPartyMember = expReceivingPartyMembers.Count == 0 ? 0 : battleEndInfo.TotalExperience / expReceivingPartyMembers.Count;
 
             if (loot.Empty)
             {
@@ -13191,11 +13193,18 @@ namespace Ambermoon
                 }
                 CloseWindow(() =>
                 {
-                    ShowMessagePopup(string.Format(DataNameProvider.ReceiveExp, expPerPartyMember), () =>
+                    if (expReceivingPartyMembers.Count == 0)
                     {
-                        Pause();
-                        AddExperience(expReceivingPartyMembers, (uint)expPerPartyMember, Finish);
-                    });
+                        Finish();
+                    }
+                    else
+                    {
+                        ShowMessagePopup(string.Format(DataNameProvider.ReceiveExp, expPerPartyMember), () =>
+                        {
+                            Pause();
+                            AddExperience(expReceivingPartyMembers, (uint)expPerPartyMember, Finish);
+                        });
+                    }
                 });
             }
             else
@@ -13217,14 +13226,21 @@ namespace Ambermoon
             {
                 InputEnable = true;
                 layout.Reset();
-                ShowLoot(storage, expReceivingPartyMembers == null ? null : string.Format(DataNameProvider.ReceiveExp, expPerPartyMember), () =>
+                ShowLoot(storage, expReceivingPartyMembers == null || expReceivingPartyMembers.Count == 0 ? null : string.Format(DataNameProvider.ReceiveExp, expPerPartyMember), () =>
                 {
                     if (expReceivingPartyMembers != null)
                     {
-                        AddExperience(expReceivingPartyMembers, (uint)expPerPartyMember, () =>
+                        if (expReceivingPartyMembers.Count > 0)
+                        {
+                            AddExperience(expReceivingPartyMembers, (uint)expPerPartyMember, () =>
+                            {
+                                layout.ShowChestMessage(DataNameProvider.LootAfterBattle, TextAlign.Left);
+                            });
+                        }
+                        else
                         {
                             layout.ShowChestMessage(DataNameProvider.LootAfterBattle, TextAlign.Left);
-                        });
+                        }
                     }
                 });
             }

@@ -928,7 +928,7 @@ namespace Ambermoon.Render
                 Race.Felinic => 0.0f,       // Original: 190
                 Race.Moranian => -0.06f,    // Original: 175
                 Race.Thalionic => -0.04f,   // Original: 180
-                Race.Animal => -0.30f,      // AA: 80
+                Race.Animal => -0.30f,      // AA: 100
                 Race.Monster => -0.04f,     // AA: 180
                 _ => 0.0f
             };
