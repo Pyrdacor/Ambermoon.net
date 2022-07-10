@@ -9420,11 +9420,30 @@ namespace Ambermoon
                         EndBattle();
                         CloseWindow(() =>
                         {
-                            InputEnable = true;
-                            if (nextEvent != null)
+                            this.NewLeaderPicked += NewLeaderPicked;
+                            allInputDisabled = false;
+                            RecheckActivePartyMember(out bool _);
+
+                            void Finish()
                             {
-                                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
-                                    (uint)RenderPlayer.Position.Y, nextEvent, false);
+                                this.NewLeaderPicked -= NewLeaderPicked;
+                                InputEnable = true;
+                                allInputDisabled = false;
+                                if (nextEvent != null)
+                                {
+                                    EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
+                                        (uint)RenderPlayer.Position.Y, nextEvent, false);
+                                }
+                            }
+
+                            if (!pickingNewLeader)
+                            {
+                                Finish();
+                            }
+
+                            void NewLeaderPicked(int _)
+                            {
+                                Finish();
                             }
                         });
                     }
