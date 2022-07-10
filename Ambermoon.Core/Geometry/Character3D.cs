@@ -104,7 +104,7 @@ namespace Ambermoon.Geometry
                 ticksPerMovement = lastTilePosition.GetMaxDistance(targetTilePosition) * TicksPerMovement;
             }
 
-            if (currentState == State.Idle)
+            if (currentState == State.Idle && targetTilePosition != null)
             {
                 // partial tile movement
                 var diff = targetTilePosition * Global.DistancePerBlock - RealPosition;
@@ -161,9 +161,13 @@ namespace Ambermoon.Geometry
             switch (currentState)
             {
             case State.MovingToTile:
+                currentState = RealPosition == targetTilePosition * Global.DistancePerBlock
+                    ? State.IdleOnTile : State.Idle;
+                break;
             case State.MovingTowardsPlayer:
                 currentState = RealPosition == targetTilePosition * Global.DistancePerBlock
                     ? State.IdleOnTile : State.Idle;
+                targetTilePosition = null;
                 break;
             }
 
@@ -222,7 +226,11 @@ namespace Ambermoon.Geometry
                 else if (!onlyMoveWhenSeePlayer && moveRandom && game.GameTime.TimeSlot >= NextMoveTimeSlot)
                 {
                     ResetMovementTimer();
-                    MoveToTile((uint)targetTilePosition.X, (uint)targetTilePosition.Y);
+
+                    if (targetTilePosition == null)
+                        RandomMovementRequested?.Invoke();
+                    else
+                        MoveToTile((uint)targetTilePosition.X, (uint)targetTilePosition.Y);
                 }
                 break;
             case State.MovingToTile:
