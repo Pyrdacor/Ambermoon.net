@@ -1177,7 +1177,8 @@ namespace Ambermoon
                 }
                 else
                 {
-                    window.Position = new WindowDimension(Math.Max(window.BorderSize.Origin.X, configuration.WindowX.Value), Math.Max(window.BorderSize.Origin.Y, configuration.WindowY.Value));
+                    window.Position = new WindowDimension(configuration.WindowX.Value, configuration.WindowY.Value);
+                    EnsureWindowOnMonitor();
                     configuration.WindowX = window.Position.X;
                     configuration.WindowY = window.Position.Y;
                     configuration.MonitorIndex = window.Monitor.Index;
@@ -1277,24 +1278,24 @@ namespace Ambermoon
 
         void Window_Render(double delta)
         {
-            int refreshRate = Util.Limit(1, window.Monitor.VideoMode.RefreshRate ?? 60, 250);
-            var timePerFrame = 1000.0 / refreshRate;
-            bool vsync = lastRenderDuration.TotalMilliseconds <= timePerFrame;
-
-            if (vsync != window.VSync)
-                window.VSync = vsync;
-            else if (vsync)
-            {
-                var renderDuration = DateTime.Now - lastRenderTime;
-                if (lastRenderDuration.TotalMilliseconds < 10 &&
-                    renderDuration.TotalMilliseconds < timePerFrame - 4.0 * delta * 1000.0 - lastRenderDuration.TotalMilliseconds)
-                    return;
-            }
-
-            var startRenderTime = DateTime.Now;
-
             if (window.WindowState != WindowState.Minimized)
             {
+                int refreshRate = Util.Limit(1, window.Monitor.VideoMode.RefreshRate ?? 60, 250);
+                var timePerFrame = 1000.0 / refreshRate;
+                bool vsync = lastRenderDuration.TotalMilliseconds <= timePerFrame;
+
+                if (vsync != window.VSync)
+                    window.VSync = vsync;
+                else if (vsync)
+                {
+                    var renderDuration = DateTime.Now - lastRenderTime;
+                    if (lastRenderDuration.TotalMilliseconds < 10 &&
+                        renderDuration.TotalMilliseconds < timePerFrame - 4.0 * delta * 1000.0 - lastRenderDuration.TotalMilliseconds)
+                        return;
+                }
+
+                var startRenderTime = DateTime.Now;
+            
                 if (patcher != null)
                     patcher.Render();
                 else if (versionSelector != null)
@@ -1307,10 +1308,10 @@ namespace Ambermoon
                     renderView.Render(null);
 
                 window.SwapBuffers();
-            }
 
-            lastRenderTime = DateTime.Now;
-            lastRenderDuration = lastRenderTime - startRenderTime;
+                lastRenderTime = DateTime.Now;
+                lastRenderDuration = lastRenderTime - startRenderTime;
+            }
         }
 
         void Window_Update(double delta)
@@ -1419,6 +1420,7 @@ namespace Ambermoon
             {
                 // This seems to happen when changing the screen resolution.
                 window.Size = new WindowDimension(Width, Height);
+                EnsureWindowOnMonitor();
             }
 
             if (renderView != null)
@@ -1469,9 +1471,41 @@ namespace Ambermoon
                 this.configuration.Width = Width = size.Width;
                 this.configuration.Height = Height = size.Height;
                 window.Size = new WindowDimension(size.Width, size.Height);
+                EnsureWindowOnMonitor();
             }
 
             renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
+        }
+
+        void EnsureWindowOnMonitor()
+        {
+            var bounds = window.Monitor?.Bounds;
+            WindowDimension upperLeft = bounds?.Origin ?? new WindowDimension(0, 0);
+            int? newX = null;
+            int? newY = null;
+
+            if (window.Position.X - window.BorderSize.Origin.X < upperLeft.X)
+            {
+                newX = upperLeft.X + window.BorderSize.Origin.X;
+            }
+            else if (bounds != null && window.Position.X >= upperLeft.X + bounds.Value.Size.X)
+            {
+                newX = Math.Max(upperLeft.X + window.BorderSize.Origin.X, upperLeft.X + bounds.Value.Size.X - window.Size.X - window.BorderSize.Origin.X - window.BorderSize.Size.X);
+            }
+
+            if (window.Position.Y - window.BorderSize.Origin.Y < upperLeft.Y)
+            {
+                newY = upperLeft.Y + window.BorderSize.Origin.Y;
+            }
+            else if (bounds != null && window.Position.Y >= upperLeft.Y + bounds.Value.Size.Y)
+            {
+                newY = Math.Max(upperLeft.Y + window.BorderSize.Origin.Y, upperLeft.Y + bounds.Value.Size.Y - window.Size.Y - window.BorderSize.Origin.Y - window.BorderSize.Size.Y);
+            }
+
+            if (newX != null || newY != null)
+            {
+                window.Position = new WindowDimension(newX ?? window.Position.X, newY ?? window.Position.Y);
+            }
         }
 
         public void Run(Configuration configuration)
