@@ -1159,7 +1159,7 @@ namespace Ambermoon
             if (configuration.Width == null || configuration.Height == null)
             {
                 var monitorSize = window.Monitor.Bounds.Size;
-                var size = ScreenResolutions.GetPossibleResolutions(new Size(monitorSize.X, monitorSize.Y))[1];
+                var size = ScreenResolutions.GetPossibleResolutions(new Size(monitorSize.X, monitorSize.Y))[2];
                 configuration.Width = Width = size.Width;
                 configuration.Height = Height = size.Height;
                 if (!configuration.Fullscreen)
@@ -1182,6 +1182,18 @@ namespace Ambermoon
                     configuration.WindowX = window.Position.X;
                     configuration.WindowY = window.Position.Y;
                     configuration.MonitorIndex = window.Monitor.Index;
+                }
+
+                var monitorSize = window.Monitor.Bounds.Size;
+                var realBorderSize = window.BorderSize.Origin + window.BorderSize.Size;
+                var realWindowSize = window.Size + realBorderSize;
+
+                if (realWindowSize.X > monitorSize.X || realWindowSize.Y > monitorSize.Y)
+                {
+                    var size = ScreenResolutions.GetPossibleResolutions(new Size(monitorSize.X, monitorSize.Y))[2];
+                    configuration.Width = Width = size.Width;
+                    configuration.Height = Height = size.Height;
+                    window.Size = new WindowDimension(Width, Height);
                 }
             }
 

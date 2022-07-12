@@ -36,11 +36,32 @@ namespace Ambermoon
         {
             var resolutions = new List<Size>(4);
 
-            // 4/8, 5/8, 6/8 and 7/8 of max size
-            for (int i = 0; i < 4; ++i)
+            const float defaultResolution = 16.0f / 10.0f;
+            float resolution = (float)maxSize.Width / maxSize.Height;
+
+            if (resolution <= defaultResolution + 0.0001f)
             {
-                int width = maxSize.Width * (4 + i) / 8;
-                resolutions.Add(new Size(width, width * 10 / 16));
+                // 16:10, 4:3, etc
+                // Width is the leading dimension for resolutions.
+
+                // 4/8, 5/8, 6/8 and 7/8 of max size
+                for (int i = 0; i < 4; ++i)
+                {
+                    int width = maxSize.Width * (4 + i) / 8;
+                    resolutions.Add(new Size(width, width * 10 / 16));
+                }
+            }
+            else
+            {
+                // 16:9, etc
+                // Height is the leading dimension for resolutions.
+
+                // 4/8, 5/8, 6/8 and 7/8 of max size
+                for (int i = 0; i < 4; ++i)
+                {
+                    int height = maxSize.Height * (4 + i) / 8;
+                    resolutions.Add(new Size(height * 16 / 10, height));
+                }
             }
 
             return resolutions;
