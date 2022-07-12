@@ -312,6 +312,9 @@ namespace Ambermoon.Render
                         if (game.Teleporting || game.Map != map.Map)
                             return false;
 
+                        if (game.Fading || game.PopupActive || game.CurrentWindow.Window != UI.Window.MapView)
+                            return false;
+
                         // First set this to max so we won't trigger this again while we are interacting.
                         lastInteractionTicks = uint.MaxValue;
                         interacting = true;

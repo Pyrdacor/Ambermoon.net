@@ -383,6 +383,7 @@ namespace Ambermoon
         bool allInputDisabled = false;
         bool inputEnable = true;
         bool paused = false;
+        public bool Fading { get; private set; } = false;
         internal bool ConversationTextActive { get; private set; } = false;
         Func<MouseButtons, bool> nextClickHandler = null;
         /// <summary>
@@ -4737,12 +4738,14 @@ namespace Ambermoon
 
         void Fade(Action midFadeAction, bool changeInputEnableState = true)
         {
+            Fading = true;
             if (changeInputEnableState)
                 allInputDisabled = true;
             layout.AddFadeEffect(new Rect(0, 36, Global.VirtualScreenWidth, Global.VirtualScreenHeight - 36), Render.Color.Black, FadeEffectType.FadeInAndOut, FadeTime);
             AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), midFadeAction);
             if (changeInputEnableState)
                 AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
+            AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime + 1), () => Fading = false);
         }
 
         internal void DamageAllPartyMembers(Func<PartyMember, uint> damageProvider, Func<PartyMember, bool> affectChecker = null,
