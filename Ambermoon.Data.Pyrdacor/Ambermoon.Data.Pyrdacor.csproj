@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <Configurations>Debug;Release;DebugAndroid</Configurations>
-    <Version>10.6.10</Version>
+    <Version>10.7.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

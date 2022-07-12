@@ -1,3 +1,21 @@
+Version 1.7
+===========
+
+- Fixed loading of game data from ADFs with new game format (1.14+ English, 1.13+ German)
+- Status symbols are now instantly removed when a spell is cast which removes the condition
+- Added the implementation for the spell Stone to Flesh
+- Added healing animation for spells Heal Aging and Stop Aging
+- Fixed a crash when unequipping some items in combat
+- Fixed monster damage/defense display for spell "Monster Knowledge"
+- Fixed a bug where the num pad and esc keys could be used during scroll texts in doors or chests
+- Fixed a bug when moving with keys and using the speak function (infinite turning)
+- When fleeing a fight but the last player in battle dies, the 'pick leader' popup shows now up after leaving the battle (no more occasions where no party member is selected and lead to other issues)
+- Improved initial resolution to fit on the screen (especially for 16:9 monitors)
+- Check resolution on each startup to fit on screen if the monitor configuration was changed
+- Ensure window is visible on the monitor and the title bar is visible (on startup or leaving fullscreen)
+- Integrated original version 1.16
+
+
 Version 1.6
 ===========
 

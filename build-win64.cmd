@@ -6,3 +6,4 @@ dotnet publish -c Debug ./AmbermoonPatcher/AmbermoonPatcher.csproj -p:PublishSin
 cd publish-win64
 Ambermoon.ConcatFiles.exe versions versions.dat patcher AmbermoonPatcher.exe Ambermoon.net.exe
 rm ./versions.dat
+rm ./Ambermoon.ConcatFiles.exe
