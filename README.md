@@ -14,11 +14,11 @@ You can also download the game on my website at www.pyrdacor.net!
 
 Platform | Download 1.6.10
 --- | :-:
-**Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows.zip)
-**Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Linux.tar.gz)
-**Mac 64bit (Intel processor)** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Mac.zip)
-**Mac 64bit (ARM processor, M1, M2, etc)** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Mac-ARM.zip)
-**Windows 32bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows32Bit.zip)
+**Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.10/Ambermoon.net-Windows.zip)
+**Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.10/Ambermoon.net-Linux.tar.gz)
+**Mac 64bit (Intel processor)** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.10/Ambermoon.net-Mac.zip)
+**Mac 64bit (ARM processor, M1, M2, etc)** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.10/Ambermoon.net-Mac-ARM.zip)
+**Windows 32bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.10/Ambermoon.net-Windows32Bit.zip)
 
 
 From version 1.5.0 onwards you can use your own music with Ambermoon (e.g. Atari music or the remixes of Matthias Steinwachs). For more details read [here](CustomMusic.md). \
