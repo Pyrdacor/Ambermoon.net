@@ -6,13 +6,13 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.6.10 is the most recent version from 21-06-2022. It also includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced).
+Version 1.7.0 is the most recent version from 12-07-2022. It includes [original version 1.16](https://github.com/Pyrdacor/Ambermoon) and also [Ambermoon Advanced 0.01](https://github.com/Pyrdacor/Ambermoon-Advanced).
 
 Version 1.6.8 and later should now also work on ARM Macs (M1, etc)!
 
 You can also download the game on my website at www.pyrdacor.net!
 
-Platform | Download 1.6.10
+Platform | Download 1.7.0
 --- | :-:
 **Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.10/Ambermoon.net-Windows.zip)
 **Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.10/Ambermoon.net-Linux.tar.gz)
@@ -44,6 +44,7 @@ A completely new game extension was also released called [Ambermoon Advanced](ht
 - [German Manual / Handbuch Deutsch](https://ambermoon-net.pyrdacor.net/download/Ambermoon_Handbuch_Deutsch.pdf)
 - [English Manual](https://ambermoon-net.pyrdacor.net/download/AmbermoonManualEnglish.pdf)
 - [English Amiga Walkthrough](https://ambermoon-net.pyrdacor.net/download/Walkthrough.txt) by Michael Böhnisch (1999)
+- [Tools](https://github.com/Pyrdacor/Ambermoon/blob/master/AmbermoonTools/README.md)
 
 ### Need help?
 
@@ -182,7 +183,7 @@ You can find the full changelog [here](changelog.md). You can also look at the [
 
 ## Special thanks
 
-Special thanks to my top patreons:
+Special thanks to my top patreons and github sponsors:
 - [Other Retro Matt](https://twitter.com/GothmogPlays)
 - Lorenz P.
 - Stephan [Mankie](https://twitter.com/MankiesWorkshop)
@@ -196,6 +197,8 @@ Special thanks to my top patreons:
 - soulsuckingjerk
 - Mahen
 - timbo t
+- Robin Mattheussen (@romatthe)
+- Teladi (@Levidega)
 
 Special thanks to some special contributors and testers as well:
 - kermitfrog
@@ -212,3 +215,5 @@ Special thanks to some special contributors and testers as well:
 Checkout my already working 'SerfCity (Die Siedler) rewrite' at [freeserf.net](https://github.com/Pyrdacor/freeserf.net).
 
 I also created another github project called [Ambermoon](https://github.com/Pyrdacor/Ambermoon) for providing resources and research the game data. Feel free to have a look or contribute.
+
+And I work on a huge extension of Ambermoon called [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced).

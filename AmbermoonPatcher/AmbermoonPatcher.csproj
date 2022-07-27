@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PublishTrimmed>true</PublishTrimmed>
-	<Version>1.7.0</Version>
+	<Version>1.7.1</Version>
   </PropertyGroup>
 
 </Project>

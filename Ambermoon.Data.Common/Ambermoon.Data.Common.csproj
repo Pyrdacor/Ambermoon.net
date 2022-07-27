@@ -10,7 +10,7 @@
     <RepositoryType>Github</RepositoryType>
     <PackageTags>Ambermoon Amiga</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>10.7.0</Version>
+    <Version>10.7.1</Version>
     <Configurations>Debug;Release;DebugAndroid</Configurations>
   </PropertyGroup>
 

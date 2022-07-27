@@ -7,7 +7,7 @@ if ($isWindows) {
   dotnet publish -c Release ./AmbermoonPatcher/AmbermoonPatcher.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true  -r win-x64 --nologo --self-contained
   dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r win-x86 --no-restore --nologo --self-contained
   dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r win-x64 --no-restore --nologo --self-contained
-  Write-Host Pack standalone zips for Windows
+  Write-Host Pack zips for Windows
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/net6.0/win-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList 'versions','"./versions.dat"','"./Ambermoon.net/bin/Any CPU/Release/net6.0/win-x64/publish/Ambermoon.net.exe"'
   cmd /c copy "Ambermoon.net\bin\Any CPU\Release\net6.0\win-x64\publish\Ambermoon.net.exe" "Ambermoon.net\Ambermoon.net.exe"
   7z a Ambermoon.net-Windows.zip "./Ambermoon.net/Ambermoon.net.exe" "./AmbermoonPatcher/bin/Any CPU/Release/net6.0/win-x64/publish/AmbermoonPatcher.exe" "./Ambermoon.net/x64/api-ms-win-core-winrt-l1-1-0.dll" "./Package/*" -mx9
@@ -27,7 +27,7 @@ if ($isWindows) {
   7z a Ambermoon.net-Linux.tar.gz Ambermoon.net-Linux.tar -mx9
   rm Ambermoon.net-Linux.tar
 } else {
-  Write-Host Publish Mac executable
+  Write-Host Publish Mac executables
   dotnet publish -c Release ./AmbermoonPatcher/AmbermoonPatcher.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true  -r osx-x64 --nologo --self-contained
   dotnet publish -c Release ./AmbermoonPatcher/AmbermoonPatcher.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true  -r osx-arm64 --nologo --self-contained
   dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r osx-x64 --no-restore --self-contained
