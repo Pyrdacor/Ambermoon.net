@@ -40,8 +40,9 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public static int GetGotoPointOffset(IDataReader dataReader)
         {
-            var gotoPoints = ReadGotoPoints(dataReader);
-            return dataReader.Position - 2 - gotoPoints.Count * 20;
+            var map = new Map();
+            ReadMap(map, dataReader, map => dataReader.Position += (map.Type == MapType.Map2D ? 4 : 2) * map.Width * map.Height);
+            return dataReader.Position - 2 - map.GotoPoints.Count * 20 - (map.Type == MapType.Map2D ? 0 : map.EventList.Count);
         }
 
         public static List<Map.GotoPoint> ReadGotoPoints(IDataReader dataReader)
