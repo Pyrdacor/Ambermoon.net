@@ -272,7 +272,16 @@ namespace Ambermoon.Data
             var events = Events.ToDictionary(e => e, e => e.Clone(false));
 
             clone.EventList.AddRange(EventList.Select(e => events[e]));
-            clone.Events.AddRange(events.Values);
+
+            var newEvents = events.Values.ToList();
+
+            foreach (var ev in events)
+            {
+                if (ev.Key.Next != null)
+                    ev.Value.Next = newEvents[Events.IndexOf(ev.Key.Next)];
+                clone.Events.Add(ev.Value);
+            }
+
             clone.Texts.AddRange(Texts);
 
             for (int i = 0; i < clone.CharacterReferences.Length; ++i)
