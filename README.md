@@ -6,19 +6,19 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.7.0 is the most recent version from 12-07-2022. It includes [original version 1.16](https://github.com/Pyrdacor/Ambermoon) and also [Ambermoon Advanced 0.01](https://github.com/Pyrdacor/Ambermoon-Advanced).
+Version 1.7.1 is the most recent version from 27-07-2022. It includes [original version 1.16](https://github.com/Pyrdacor/Ambermoon) and also [Ambermoon Advanced 0.01](https://github.com/Pyrdacor/Ambermoon-Advanced).
 
 Version 1.6.8 and later should now also work on ARM Macs (M1, etc)!
 
 You can also download the game on my website at www.pyrdacor.net!
 
-Platform | Download 1.7.0
+Platform | Download 1.7.1
 --- | :-:
-**Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.10/Ambermoon.net-Windows.zip)
-**Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.10/Ambermoon.net-Linux.tar.gz)
-**Mac 64bit (Intel processor)** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.10/Ambermoon.net-Mac.zip)
-**Mac 64bit (ARM processor, M1, M2, etc)** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.10/Ambermoon.net-Mac-ARM.zip)
-**Windows 32bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.10/Ambermoon.net-Windows32Bit.zip)
+**Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows.zip)
+**Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Linux.tar.gz)
+**Mac 64bit (Intel processor)** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Mac.zip)
+**Mac 64bit (ARM processor, M1, M2, etc)** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Mac-ARM.zip)
+**Windows 32bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows32Bit.zip)
 
 
 From version 1.5.0 onwards you can use your own music with Ambermoon (e.g. Atari music or the remixes of Matthias Steinwachs). For more details read [here](CustomMusic.md). \

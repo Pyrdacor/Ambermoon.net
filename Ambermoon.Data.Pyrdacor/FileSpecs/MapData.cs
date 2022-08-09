@@ -26,7 +26,7 @@ namespace Ambermoon.Data.Pyrdacor.FileSpecs
         {
             map = new Map();
 
-            new MapReader().ReadMapHeader(map, dataReader);
+            MapReader.ReadMapHeader(map, dataReader);
 
             if (map.Flags.HasFlag(MapFlags.SharedMapData))
             {

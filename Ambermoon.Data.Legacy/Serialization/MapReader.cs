@@ -16,7 +16,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             map.Texts = TextReader.ReadTexts(textDataReader);
         }
 
-        public void ReadMapHeader(Map map, IDataReader dataReader)
+        public static void ReadMapHeader(Map map, IDataReader dataReader)
         {
             map.Flags = (MapFlags)dataReader.ReadWord();
             map.Type = (MapType)dataReader.ReadByte();
@@ -38,7 +38,21 @@ namespace Ambermoon.Data.Legacy.Serialization
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid map data");
         }
 
-        public void ReadMap(Map map, IDataReader dataReader, Dictionary<uint, Tileset> tilesets)
+        public static int GetGotoPointOffset(IDataReader dataReader)
+        {
+            var map = new Map();
+            ReadMap(map, dataReader, map => dataReader.Position += (map.Type == MapType.Map2D ? 4 : 2) * map.Width * map.Height);
+            return dataReader.Position - 2 - map.GotoPoints.Count * 20 - (map.Type == MapType.Map2D ? 0 : map.EventList.Count);
+        }
+
+        public static List<Map.GotoPoint> ReadGotoPoints(IDataReader dataReader)
+        {
+            var map = new Map();
+            ReadMap(map, dataReader, map => dataReader.Position += (map.Type == MapType.Map2D ? 4 : 2) * map.Width * map.Height);
+            return map.GotoPoints;
+        }
+
+        static void ReadMap(Map map, IDataReader dataReader, Action<Map> readTilesOrBlocks)
         {
             dataReader.Position = 0;
 
@@ -84,67 +98,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
             }
 
-            if (map.Type == MapType.Map2D)
-            {
-                map.InitialTiles = new Map.Tile[map.Width, map.Height];
-                map.InitialBlocks = null;
-                map.Tiles = new Map.Tile[map.Width, map.Height];
-                map.Blocks = null;
-                var tileset = tilesets[map.TilesetOrLabdataIndex];
-
-                for (int y = 0; y < map.Height; ++y)
-                {
-                    for (int x = 0; x < map.Width; ++x)
-                    {
-                        var backTileIndex = dataReader.ReadByte();
-                        var mapEventId = dataReader.ReadByte();
-                        var frontTileIndex = dataReader.ReadWord();
-                        map.InitialTiles[x, y] = new Map.Tile
-                        {
-                            BackTileIndex = backTileIndex,
-                            FrontTileIndex = frontTileIndex,
-                            MapEventId = mapEventId
-                        };
-                        map.Tiles[x, y] = new Map.Tile
-                        {
-                            BackTileIndex = backTileIndex,
-                            FrontTileIndex = frontTileIndex,
-                            MapEventId = mapEventId
-                        };
-                        map.InitialTiles[x, y].Type = map.Tiles[x, y].Type = Map.TileTypeFromTile(map.InitialTiles[x, y], tileset);
-                    }
-                }
-            }
-            else
-            {
-                map.InitialBlocks = new Map.Block[map.Width, map.Height];
-                map.InitialTiles = null;
-                map.Blocks = new Map.Block[map.Width, map.Height];
-                map.Tiles = null;
-
-                for (int y = 0; y < map.Height; ++y)
-                {
-                    for (int x = 0; x < map.Width; ++x)
-                    {
-                        var blockDataIndex = dataReader.ReadByte();
-                        var mapEventId = dataReader.ReadByte();
-                        map.InitialBlocks[x, y] = new Map.Block
-                        {
-                            ObjectIndex = blockDataIndex <= 100 ? blockDataIndex : 0u,
-                            WallIndex = blockDataIndex != 255 && blockDataIndex > 100 ? blockDataIndex - 100u : 0u,
-                            MapEventId = mapEventId,
-                            MapBorder = blockDataIndex == 255
-                        };
-                        map.Blocks[x, y] = new Map.Block
-                        {
-                            ObjectIndex = blockDataIndex <= 100 ? blockDataIndex : 0u,
-                            WallIndex = blockDataIndex != 255 && blockDataIndex > 100 ? blockDataIndex - 100u : 0u,
-                            MapEventId = mapEventId,
-                            MapBorder = blockDataIndex == 255
-                        };
-                    }
-                }
-            }
+            // Read map tiles or blocks
+            readTilesOrBlocks(map);
 
             EventReader.ReadEvents(dataReader, map.Events, map.EventList);
 
@@ -190,6 +145,74 @@ namespace Ambermoon.Data.Legacy.Serialization
             {
                 map.EventAutomapTypes = dataReader.ReadBytes(map.EventList.Count).Select(a => (AutomapType)a).ToList();
             }
+        }
+
+        public void ReadMap(Map map, IDataReader dataReader, Dictionary<uint, Tileset> tilesets)
+        {
+            ReadMap(map, dataReader, map =>
+            {
+                if (map.Type == MapType.Map2D)
+                {
+                    map.InitialTiles = new Map.Tile[map.Width, map.Height];
+                    map.InitialBlocks = null;
+                    map.Tiles = new Map.Tile[map.Width, map.Height];
+                    map.Blocks = null;
+                    var tileset = tilesets[map.TilesetOrLabdataIndex];
+
+                    for (int y = 0; y < map.Height; ++y)
+                    {
+                        for (int x = 0; x < map.Width; ++x)
+                        {
+                            var backTileIndex = dataReader.ReadByte();
+                            var mapEventId = dataReader.ReadByte();
+                            var frontTileIndex = dataReader.ReadWord();
+                            map.InitialTiles[x, y] = new Map.Tile
+                            {
+                                BackTileIndex = backTileIndex,
+                                FrontTileIndex = frontTileIndex,
+                                MapEventId = mapEventId
+                            };
+                            map.Tiles[x, y] = new Map.Tile
+                            {
+                                BackTileIndex = backTileIndex,
+                                FrontTileIndex = frontTileIndex,
+                                MapEventId = mapEventId
+                            };
+                            map.InitialTiles[x, y].Type = map.Tiles[x, y].Type = Map.TileTypeFromTile(map.InitialTiles[x, y], tileset);
+                        }
+                    }
+                }
+                else
+                {
+                    map.InitialBlocks = new Map.Block[map.Width, map.Height];
+                    map.InitialTiles = null;
+                    map.Blocks = new Map.Block[map.Width, map.Height];
+                    map.Tiles = null;
+
+                    for (int y = 0; y < map.Height; ++y)
+                    {
+                        for (int x = 0; x < map.Width; ++x)
+                        {
+                            var blockDataIndex = dataReader.ReadByte();
+                            var mapEventId = dataReader.ReadByte();
+                            map.InitialBlocks[x, y] = new Map.Block
+                            {
+                                ObjectIndex = blockDataIndex <= 100 ? blockDataIndex : 0u,
+                                WallIndex = blockDataIndex != 255 && blockDataIndex > 100 ? blockDataIndex - 100u : 0u,
+                                MapEventId = mapEventId,
+                                MapBorder = blockDataIndex == 255
+                            };
+                            map.Blocks[x, y] = new Map.Block
+                            {
+                                ObjectIndex = blockDataIndex <= 100 ? blockDataIndex : 0u,
+                                WallIndex = blockDataIndex != 255 && blockDataIndex > 100 ? blockDataIndex - 100u : 0u,
+                                MapEventId = mapEventId,
+                                MapBorder = blockDataIndex == 255
+                            };
+                        }
+                    }
+                }
+            });
         }
     }
 }
