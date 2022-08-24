@@ -2108,7 +2108,9 @@ namespace Ambermoon
 
             if (target.Type != caster.Type)
             {
-                if (checkDeflection)
+                bool godmode = game.Godmode && caster is PartyMember;
+
+                if (checkDeflection && !godmode)
                 {
                     uint antiMagicBuffValue = game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.AntiMagic);
 
@@ -2129,13 +2131,13 @@ namespace Ambermoon
                     }
                 }
 
-                if ((target.SpellTypeImmunity & (SpellTypeImmunity)spellInfo.SpellType) != 0)
+                if (!godmode && (target.SpellTypeImmunity & (SpellTypeImmunity)spellInfo.SpellType) != 0)
                 {
                     ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpellType, Fail);
                     return false;
                 }
 
-                if (target.IsImmuneToSpell(spell, out bool silent, game.Features.HasFlag(Features.Elements)))
+                if (!godmode && target.IsImmuneToSpell(spell, out bool silent, game.Features.HasFlag(Features.Elements)))
                 {
                     if (silent)
                         Fail();
@@ -3812,13 +3814,15 @@ namespace Ambermoon
                 return AttackResult.Petrified;
             }
 
-            if (attacker.MagicAttack >= 0 && target.MagicDefense > attacker.MagicAttack)
+            bool godMode = attacker is PartyMember && game.Godmode;
+
+            if (!godMode && attacker.MagicAttack >= 0 && target.MagicDefense > attacker.MagicAttack)
             {
                 abortAttacking = true;
                 return AttackResult.Protected;
             }
 
-            if ((!game.Godmode || attacker is Monster) && game.RollDice100() > attacker.Skills[Skill.Attack].TotalCurrentValue)
+            if (!godMode && game.RollDice100() > attacker.Skills[Skill.Attack].TotalCurrentValue)
                 return AttackResult.Failed;
 
             if (game.RollDice100() < attacker.Skills[Skill.CriticalHit].TotalCurrentValue)
@@ -3834,8 +3838,15 @@ namespace Ambermoon
 
             if (damage <= 0)
             {
-                damage = 0;
-                return AttackResult.NoDamage;
+                if (!godMode)
+                {
+                    damage = 0;
+                    return AttackResult.NoDamage;
+                }
+                else
+                {
+                    damage = 1;
+                }
             }
 
             // Note: Monsters can't parry.
