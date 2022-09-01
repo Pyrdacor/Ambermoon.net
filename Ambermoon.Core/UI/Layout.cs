@@ -1918,6 +1918,7 @@ namespace Ambermoon.UI
                     bool hasEquippedItems = game.CurrentInventory.Equipment.Slots.Any(item => item.Value.ItemIndex != 0);
                     bool canUseItem = (hasInventoryItems || hasEquippedItems) && game.CurrentInventory.Conditions.CanUseItem();
                     bool animalOrAbove = game.CurrentInventory.Race >= Race.Animal;
+                    bool multiplePartyMembers = game.PartyMembers.Count(p => p != null) > 1;
                     buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, false), false, GetTooltip(Button.TooltipType.Stats));
                     buttonGrid.SetButton(1, ButtonType.UseItem, !canUseItem, () => PickInventoryItemForAction(UseItem,
                         true, game.DataNameProvider.WhichItemToUseMessage), true, GetTooltip(Button.TooltipType.UseItem));
@@ -1938,8 +1939,8 @@ namespace Ambermoon.UI
                     }
                     buttonGrid.SetButton(6, ButtonType.ViewItem, !hasInventoryItems && !hasEquippedItems, () => PickInventoryItemForAction(ViewItem,
                         true, game.DataNameProvider.WhichItemToExamineMessage), false, GetTooltip(Button.TooltipType.ExamineItem));
-                    buttonGrid.SetButton(7, ButtonType.GiveGold, animalOrAbove || game.OpenStorage is IPlace || game.CurrentInventory?.Gold == 0, () => GiveGold(null), false, GetTooltip(Button.TooltipType.GiveGold));
-                    buttonGrid.SetButton(8, ButtonType.GiveFood, animalOrAbove || game.CurrentInventory?.Food == 0, () => GiveFood(null), false, GetTooltip(Button.TooltipType.GiveFood));
+                    buttonGrid.SetButton(7, ButtonType.GiveGold, !multiplePartyMembers || animalOrAbove || game.OpenStorage is IPlace || game.CurrentInventory?.Gold == 0, () => GiveGold(null), false, GetTooltip(Button.TooltipType.GiveGold));
+                    buttonGrid.SetButton(8, ButtonType.GiveFood, !multiplePartyMembers || animalOrAbove || game.CurrentInventory?.Food == 0, () => GiveFood(null), false, GetTooltip(Button.TooltipType.GiveFood));
                     break;
                 }
                 case LayoutType.Stats:
