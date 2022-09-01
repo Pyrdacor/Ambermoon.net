@@ -4157,7 +4157,11 @@ namespace Ambermoon
                 {
                     RemoveEquipment(slotIndex, itemSlot, amount, updateSlot);
                     if (updateSlot)
+                    {
                         partyMember.Equipment.Slots[(EquipmentSlot)(slotIndex + 1)].Remove(amount);
+                        if (CurrentWindow.Window == Window.Inventory)
+                            layout.UpdateLayoutButtons();
+                    }
                     // TODO: When resetting the item back to the slot (even just dropping it there) the previous battle action should be restored.
                     RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), ItemManager.GetItem(itemSlot.ItemIndex));
                 };
@@ -4175,7 +4179,11 @@ namespace Ambermoon
                 {
                     RemoveInventoryItem(slotIndex, itemSlot, amount);
                     if (updateSlot)
+                    {
                         partyMember.Inventory.Slots[slotIndex].Remove(amount);
+                        if (CurrentWindow.Window == Window.Inventory)
+                            layout.UpdateLayoutButtons();
+                    }
                 };
                 inventoryGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot, int amount) =>
                 {
@@ -4588,6 +4596,8 @@ namespace Ambermoon
             partyMember ??= CurrentInventory;
 
             partyMember.TotalWeight += (uint)amount * item.Weight;
+
+            layout.UpdateLayoutButtons();
         }
 
         internal void InventoryItemAdded(uint itemIndex, int amount, PartyMember partyMember)
@@ -4600,6 +4610,8 @@ namespace Ambermoon
             partyMember ??= CurrentInventory;
 
             partyMember.TotalWeight -= (uint)amount * item.Weight;
+
+            layout.UpdateLayoutButtons();
         }
 
         internal void InventoryItemRemoved(uint itemIndex, int amount, PartyMember partyMember = null)
@@ -4634,6 +4646,8 @@ namespace Ambermoon
             if (item.SkillPenalty2Value != 0)
                 character.Skills[item.SkillPenalty2].BonusValue -= (int)item.SkillPenalty2Value;
             character.TotalWeight += (uint)amount * item.Weight;
+
+            layout.UpdateLayoutButtons();
         }
 
         internal void EquipmentAdded(uint itemIndex, int amount, Character character)
@@ -4664,6 +4678,8 @@ namespace Ambermoon
             if (item.SkillPenalty2Value != 0)
                 character.Skills[item.SkillPenalty2].BonusValue += (int)item.SkillPenalty2Value;
             character.TotalWeight -= (uint)amount * item.Weight;
+
+            layout.UpdateLayoutButtons();
         }
 
         void EquipmentRemoved(Item item, int amount, bool cursed)
@@ -6781,8 +6797,9 @@ namespace Ambermoon
                                     AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
                                     {
                                         item.Visible = false;
-                                        InventoryItemRemoved(itemSlot.ItemIndex, 1, CurrentPartyMember);
+                                        uint itemIndex = itemSlot.ItemIndex;
                                         itemSlot.Remove(1);
+                                        InventoryItemRemoved(itemIndex, 1, CurrentPartyMember);                                        
                                     });
                                 }
                                 else
@@ -6812,8 +6829,9 @@ namespace Ambermoon
                                 {
                                     layout.ShowClickChestMessage(DataNameProvider.LockpickBreaks, () =>
                                     {
-                                        InventoryItemRemoved(itemSlot.ItemIndex, 1, CurrentPartyMember);
+                                        uint itemIndex = itemSlot.ItemIndex;
                                         itemSlot.Remove(1);
+                                        InventoryItemRemoved(itemIndex, 1, CurrentPartyMember);                                        
                                         if (itemSlot.Amount > 0)
                                         {
                                             StartSequence();
@@ -7189,8 +7207,9 @@ namespace Ambermoon
                                             itemGrid.HideTooltip();
                                             layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true, () =>
                                             {
-                                                InventoryItemRemoved(itemSlot.ItemIndex, 1, CurrentPartyMember);
+                                                uint itemIndex = itemSlot.ItemIndex;
                                                 itemSlot.Remove(1);
+                                                InventoryItemRemoved(itemIndex, 1, CurrentPartyMember);                                                
                                                 //ShowCreatedItems();
                                                 EndSequence();
                                                 Abort();

@@ -1913,29 +1913,35 @@ namespace Ambermoon.UI
                     }
                     break;
                 case LayoutType.Inventory:
+                {
+                    bool hasInventoryItems = game.CurrentInventory.Inventory.Slots.Any(item => item.ItemIndex != 0);
+                    bool hasEquippedItems = game.CurrentInventory.Equipment.Slots.Any(item => item.Value.ItemIndex != 0);
+                    bool canUseItem = (hasInventoryItems || hasEquippedItems) && game.CurrentInventory.Conditions.CanUseItem();
+                    bool animalOrAbove = game.CurrentInventory.Race >= Race.Animal;
                     buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, false), false, GetTooltip(Button.TooltipType.Stats));
-                    buttonGrid.SetButton(1, ButtonType.UseItem, false, () => PickInventoryItemForAction(UseItem,
+                    buttonGrid.SetButton(1, ButtonType.UseItem, !canUseItem, () => PickInventoryItemForAction(UseItem,
                         true, game.DataNameProvider.WhichItemToUseMessage), true, GetTooltip(Button.TooltipType.UseItem));
                     buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false, GetTooltip(Button.TooltipType.Exit));
                     if (game.OpenStorage?.AllowsItemDrop == true)
                     {
-                        buttonGrid.SetButton(3, ButtonType.StoreItem, false, () => PickInventoryItemForAction(StoreItem,
+                        buttonGrid.SetButton(3, ButtonType.StoreItem, !hasInventoryItems, () => PickInventoryItemForAction(StoreItem,
                             false, game.DataNameProvider.WhichItemToStoreMessage), false, GetTooltip(Button.TooltipType.StoreItem));
-                        buttonGrid.SetButton(4, ButtonType.StoreGold, game.CurrentInventory?.Gold == 0, StoreGold, false, GetTooltip(Button.TooltipType.StoreGold));
-                        buttonGrid.SetButton(5, ButtonType.StoreFood, game.CurrentInventory?.Food == 0, StoreFood, false, GetTooltip(Button.TooltipType.StoreFood));
+                        buttonGrid.SetButton(4, ButtonType.StoreGold, animalOrAbove || game.CurrentInventory?.Gold == 0, StoreGold, false, GetTooltip(Button.TooltipType.StoreGold));
+                        buttonGrid.SetButton(5, ButtonType.StoreFood, animalOrAbove || game.CurrentInventory?.Food == 0, StoreFood, false, GetTooltip(Button.TooltipType.StoreFood));
                     }
                     else
                     {
-                        buttonGrid.SetButton(3, ButtonType.DropItem, false, () => PickInventoryItemForAction(DropItem,
+                        buttonGrid.SetButton(3, ButtonType.DropItem, !hasInventoryItems, () => PickInventoryItemForAction(DropItem,
                             false, game.DataNameProvider.WhichItemToDropMessage), false, GetTooltip(Button.TooltipType.DropItem));
-                        buttonGrid.SetButton(4, ButtonType.DropGold, game.OpenStorage is IPlace || game.CurrentInventory?.Gold == 0, DropGold, false, GetTooltip(Button.TooltipType.DropGold));
-                        buttonGrid.SetButton(5, ButtonType.DropFood, game.CurrentInventory?.Food == 0, DropFood, false, GetTooltip(Button.TooltipType.DropFood));
+                        buttonGrid.SetButton(4, ButtonType.DropGold, animalOrAbove || game.OpenStorage is IPlace || game.CurrentInventory?.Gold == 0, DropGold, false, GetTooltip(Button.TooltipType.DropGold));
+                        buttonGrid.SetButton(5, ButtonType.DropFood, animalOrAbove || game.CurrentInventory?.Food == 0, DropFood, false, GetTooltip(Button.TooltipType.DropFood));
                     }
-                    buttonGrid.SetButton(6, ButtonType.ViewItem, false, () => PickInventoryItemForAction(ViewItem,
+                    buttonGrid.SetButton(6, ButtonType.ViewItem, !hasInventoryItems && !hasEquippedItems, () => PickInventoryItemForAction(ViewItem,
                         true, game.DataNameProvider.WhichItemToExamineMessage), false, GetTooltip(Button.TooltipType.ExamineItem));
-                    buttonGrid.SetButton(7, ButtonType.GiveGold, game.OpenStorage is IPlace || game.CurrentInventory?.Gold == 0, () => GiveGold(null), false, GetTooltip(Button.TooltipType.GiveGold));
-                    buttonGrid.SetButton(8, ButtonType.GiveFood, game.CurrentInventory?.Food == 0, () => GiveFood(null), false, GetTooltip(Button.TooltipType.GiveFood));
+                    buttonGrid.SetButton(7, ButtonType.GiveGold, animalOrAbove || game.OpenStorage is IPlace || game.CurrentInventory?.Gold == 0, () => GiveGold(null), false, GetTooltip(Button.TooltipType.GiveGold));
+                    buttonGrid.SetButton(8, ButtonType.GiveFood, animalOrAbove || game.CurrentInventory?.Food == 0, () => GiveFood(null), false, GetTooltip(Button.TooltipType.GiveFood));
                     break;
+                }
                 case LayoutType.Stats:
                     buttonGrid.SetButton(0, ButtonType.Inventory, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, true), false, GetTooltip(Button.TooltipType.Inventory));
                     buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
@@ -2721,14 +2727,15 @@ namespace Ambermoon.UI
                     }
                     else
                     {
+                        uint itemIndex = itemSlot.ItemIndex;
+                        itemSlot.Remove(1);
                         if (character is PartyMember partyMember)
                         {
                             if (equip)
-                                game.EquipmentRemoved(partyMember, itemSlot.ItemIndex, 1, false);
+                                game.EquipmentRemoved(partyMember, itemIndex, 1, false);
                             else
-                                game.InventoryItemRemoved(itemSlot.ItemIndex, 1, partyMember);
-                        }
-                        itemSlot.Remove(1);
+                                game.InventoryItemRemoved(itemIndex, 1, partyMember);
+                        }                        
                         if (!itemSlot.Empty)
                             itemSlot.NumRemainingCharges = Math.Max(1, (int)item.InitialCharges);
                     }
@@ -3026,9 +3033,10 @@ namespace Ambermoon.UI
                 void DropIt()
                 {
                     // TODO: animation where the item falls down the screen
-                    game.InventoryItemRemoved(itemSlot.ItemIndex, (int)amount);
+                    uint itemIndex = itemSlot.ItemIndex;
                     itemSlot.Remove((int)amount);
-                    itemGrid.SetItem(slot, itemSlot); // update appearance
+                    itemGrid.SetItem(slot, itemSlot); // update appearance                    
+                    game.InventoryItemRemoved(itemIndex, (int)amount);
                     game.UpdateCharacterInfo();
                 }
 

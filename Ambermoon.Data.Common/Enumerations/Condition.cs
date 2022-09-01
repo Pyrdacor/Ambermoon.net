@@ -72,6 +72,20 @@ namespace Ambermoon.Data
                 !conditions.HasFlag(Condition.Petrified);
         }
 
+        public static bool CanUseItem(this Condition conditions)
+        {
+            return
+                !conditions.HasFlag(Condition.Crazy) &&
+                !conditions.HasFlag(Condition.Sleep) &&
+                !conditions.HasFlag(Condition.Panic) &&
+                !conditions.HasFlag(Condition.Drugged) &&
+                !conditions.HasFlag(Condition.Lamed) &&
+                !conditions.HasFlag(Condition.Petrified) &&
+                !conditions.HasFlag(Condition.DeadCorpse) &&
+                !conditions.HasFlag(Condition.DeadAshes) &&
+                !conditions.HasFlag(Condition.DeadDust);
+        }
+
         public static bool CanMove(this Condition conditions)
         {
             return
