@@ -306,6 +306,7 @@ namespace Ambermoon.Render
                 case Spell.AddLuck:
                 case Spell.AddAntiMagic:
                 case Spell.Drugs:
+                case Spell.SelfHealing:
                     // Those spells have no source position. They just appear somewhere.
                     // Or they only work with the target position. GetSourcePosition should
                     // never be called for those spells so we throw here.
@@ -408,6 +409,7 @@ namespace Ambermoon.Render
                 case Spell.AddLuck:
                 case Spell.AddAntiMagic:
                 case Spell.Drugs:
+                case Spell.SelfHealing:
                     // Those spells have no target position. They are just visible on portraits or not at all.
                     // GetTargetPosition should never be called for those spells so we throw here.
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
@@ -602,6 +604,7 @@ namespace Ambermoon.Render
                 case Spell.AddLuck:
                 case Spell.AddAntiMagic:
                 case Spell.DecreaseAge:
+                case Spell.SelfHealing:
                     PlayHealingAnimation(partyMember, finishAction);
                     break;
                 default:
@@ -677,6 +680,10 @@ namespace Ambermoon.Render
                     }
                     break;
                 }
+                case Spell.SelfHealing:
+                    // Handled in MoveTo
+                    this.finishAction?.Invoke();
+                    break;
                 case Spell.RestoreStamina:
                     // This doesn't seem to have any visual effect.
                     this.finishAction?.Invoke();
@@ -1443,6 +1450,7 @@ namespace Ambermoon.Render
                 case Spell.AddLuck:
                 case Spell.AddAntiMagic:
                 case Spell.Drugs:
+                case Spell.SelfHealing:
                     if (fromMonster)
                     {
                         // No visual effect if monster casts it.

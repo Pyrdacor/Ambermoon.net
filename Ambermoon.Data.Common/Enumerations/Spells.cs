@@ -145,7 +145,8 @@
         AddLuck = 198,
         AddAntiMagic = 199,
         Rope = 200, // levitation on a rope / climb
-        Drugs = 201 // stinking mushroom
+        Drugs = 201, // stinking mushroom
+        SelfHealing = 202 // Advanced only
     }
 
     public enum HealingSpell

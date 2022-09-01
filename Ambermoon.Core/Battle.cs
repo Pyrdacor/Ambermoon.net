@@ -1715,7 +1715,10 @@ namespace Ambermoon
                             switch (spellInfo.Target)
                             {
                                 case SpellTarget.None:
-                                    ApplySpellEffect(battleAction.Character, null, spell, game.CurrentBattleTicks, () => EndCast());
+                                    if (spell == Spell.SelfHealing)
+                                        CastSpellOn(battleAction.Character, () => EndCast());
+                                    else
+                                        ApplySpellEffect(battleAction.Character, null, spell, game.CurrentBattleTicks, () => EndCast());
                                     break;
                                 case SpellTarget.SingleEnemy:
                                 case SpellTarget.SingleFriend:

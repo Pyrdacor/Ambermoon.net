@@ -8739,6 +8739,9 @@ namespace Ambermoon
                     // For now we show the minimap instead.
                     OpenMiniMap();
                     break;
+                case Spell.SelfHealing:
+                    ApplySpellEffect(spell, caster, caster, finishAction, checkFail);
+                    break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no spell without target.");
             }
@@ -9029,6 +9032,9 @@ namespace Ambermoon
                     break;
                 case Spell.CreateFood:
                     Cast(() => ++target.Food);
+                    break;
+                case Spell.SelfHealing:
+                    Cast(() => Heal(5 + target.HitPoints.TotalMaxValue / 4)); // 5 HP + 25% of MaxHP
                     break;
                 case Spell.Resurrection:
                 {
@@ -12503,7 +12509,29 @@ namespace Ambermoon
                     void Consume()
                     {
                         ConsumeSP();
-                        ApplySpellEffect(spell, caster, null, checkFail);
+
+                        if (spell == Spell.SelfHealing)
+                        {
+                            void Cast()
+                            {
+                                currentAnimation?.Destroy();
+                                currentAnimation = new SpellAnimation(this, layout);
+                                currentAnimation.CastOn(spell, caster, () =>
+                                {
+                                    currentAnimation.Destroy();
+                                    currentAnimation = null;
+                                    ApplySpellEffect(spell, caster, null, false);
+                                });
+                            }
+                            if (checkFail)
+                                TrySpell(Cast);
+                            else
+                                Cast();
+                        }
+                        else
+                        {
+                            ApplySpellEffect(spell, caster, null, checkFail);
+                        }
                     }
                     if (consumeHandler != null)
                         consumeHandler(Consume);
