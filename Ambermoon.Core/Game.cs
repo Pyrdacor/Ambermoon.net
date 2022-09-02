@@ -12705,7 +12705,7 @@ namespace Ambermoon
                 // sleep button
                 layout.AttachEventToButton(6, () =>
                 {
-                    if (CurrentSavegame.HoursWithoutSleep < 8)
+                    if (!inn && CurrentSavegame.HoursWithoutSleep < 8)
                     {
                         layout.ShowClickChestMessage(DataNameProvider.RestingWouldHaveNoEffect);
                     }
