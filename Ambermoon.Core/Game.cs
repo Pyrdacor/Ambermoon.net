@@ -11259,7 +11259,7 @@ namespace Ambermoon
             });
         }
 
-        void OpenInn(Places.Inn inn, bool showWelcome = true)
+        void OpenInn(Places.Inn inn, string useText, bool showWelcome = true)
         {
             if (showWelcome)
                 inn.AvailableGold = 0;
@@ -11275,7 +11275,7 @@ namespace Ambermoon
             {
                 layout.Reset();
                 ShowMap(false);
-                SetWindow(Window.Inn, inn);
+                SetWindow(Window.Inn, inn, useText);
                 ShowPlaceWindow(inn.Name, showWelcome ? DataNameProvider.WelcomeInnkeeper : null,
                     Map.World switch
                     {
@@ -11301,7 +11301,7 @@ namespace Ambermoon
                         {
                             inn.AvailableGold -= (uint)totalCost;
                             updatePartyGold?.Invoke();
-                            layout.ShowClickChestMessage(DataNameProvider.InnkeeperGoodSleepWish, () =>
+                            layout.ShowClickChestMessage(useText, () =>
                             {
                                 currentWindow.Window = Window.MapView; // This way closing the camp will return to map and not the Inn
                                 layout.GetButtonAction(2)?.Invoke(); // Call close handler
@@ -12981,7 +12981,8 @@ namespace Ambermoon
                     case PlaceType.Inn:
                     {
                         var innData = new Places.Inn(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
-                        OpenInn(innData);
+                        OpenInn(innData, enterPlaceEvent.UsePlaceTextIndex == 0xff ? DataNameProvider.InnkeeperGoodSleepWish :
+                            map.GetText(enterPlaceEvent.UsePlaceTextIndex, DataNameProvider.InnkeeperGoodSleepWish));
                         return true;
                     }
                     case PlaceType.Merchant:
@@ -15431,7 +15432,8 @@ namespace Ambermoon
                 case Window.Inn:
                 {
                     var inn = (Places.Inn)currentWindow.WindowParameters[0];
-                    OpenInn(inn, false);
+                    var useText = (string)currentWindow.WindowParameters[1];
+                    OpenInn(inn, useText, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
