@@ -24,7 +24,7 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write(GetIfMonster<byte>(character, monster => (byte)monster.Morale, 0));
             dataWriter.WriteEnumAsByte(character.SpellTypeImmunity);
             dataWriter.Write(character.AttacksPerRound);
-            dataWriter.Write(GetIfMonster<byte>(character, monster => (byte)monster.MonsterFlags, 0));
+            dataWriter.WriteEnumAsByte(character.BattleFlags);
             dataWriter.WriteEnumAsByte(character.Element);
             dataWriter.Write(character.SpellLearningPoints);
             dataWriter.Write(character.TrainingPoints);

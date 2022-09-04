@@ -26,6 +26,7 @@ namespace Ambermoon.Data
         public SpellTypeImmunity SpellTypeImmunity { get; set; }
         public byte AttacksPerRound { get; set; }
         public CharacterElement Element { get; set; }
+        public BattleFlags BattleFlags { get; set; }
         public ushort SpellLearningPoints { get; set; }
         public ushort TrainingPoints { get; set; }
         public ushort Gold { get; set; }
@@ -88,10 +89,10 @@ namespace Ambermoon.Data
             // Note: This only checks for immunities based on monster flags and elements.
             // Other things like condition-dependent immunities or spell type immunities
             // are not checked here.
-            bool boss = monster.MonsterFlags.HasFlag(MonsterFlags.Boss);
-            bool undead = monster.MonsterFlags.HasFlag(MonsterFlags.Undead);
-            bool demon = monster.MonsterFlags.HasFlag(MonsterFlags.Demon);
-            bool animal = monster.MonsterFlags.HasFlag(MonsterFlags.Animal);
+            bool boss = monster.BattleFlags.HasFlag(BattleFlags.Boss);
+            bool undead = monster.BattleFlags.HasFlag(BattleFlags.Undead);
+            bool demon = monster.BattleFlags.HasFlag(BattleFlags.Demon);
+            bool animal = monster.BattleFlags.HasFlag(BattleFlags.Animal);
 
             silent = !undead &&
                      (spell == Spell.DispellUndead ||

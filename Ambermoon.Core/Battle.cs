@@ -2347,6 +2347,78 @@ namespace Ambermoon
             };
         }
 
+        static readonly KeyValuePair<uint, uint>[] DestructionSpellDamageValues = new KeyValuePair<uint, uint>[16]
+        {
+            // Mudsling
+            KeyValuePair.Create(4u, 8u),
+            // Rockfall
+            KeyValuePair.Create(10u, 25u),
+            // Earthslide
+            KeyValuePair.Create(8u, 16u),
+            // Earthquake
+            KeyValuePair.Create(8u, 22u),
+            // Winddevil
+            KeyValuePair.Create(8u, 16u),
+            // Windhowler
+            KeyValuePair.Create(16u, 48u),
+            // Thunderbolt
+            KeyValuePair.Create(20u, 32u),
+            // Whirlwind
+            KeyValuePair.Create(20u, 35u),
+            // Firebeam
+            KeyValuePair.Create(20u, 30u),
+            // Fireball
+            KeyValuePair.Create(40u, 85u),
+            // Firestorm
+            KeyValuePair.Create(35u, 65u),
+            // Firepillar
+            KeyValuePair.Create(40u, 70u),
+            // Waterfall
+            KeyValuePair.Create(32u, 60u),
+            // Iceball
+            KeyValuePair.Create(90u, 180u),
+            // Icestorm
+            KeyValuePair.Create(64u, 128u),
+            // Iceshower
+            KeyValuePair.Create(128u, 256u)
+        };
+
+        static readonly KeyValuePair<uint, uint>[] AdjustedDestructionSpellDamageValues = new KeyValuePair<uint, uint>[16u]
+        {
+            // Mudsling
+            KeyValuePair.Create(5u, 10u),
+            // Rockfall
+            KeyValuePair.Create(15u, 25u),
+            // Earthslide
+            KeyValuePair.Create(10u, 22u),
+            // Earthquake
+            KeyValuePair.Create(8u, 20u),
+            // Winddevil
+            KeyValuePair.Create(20u, 35u),
+            // Windhowler
+            KeyValuePair.Create(30u, 50u),
+            // Thunderbolt
+            KeyValuePair.Create(25u, 45u),
+            // Whirlwind
+            KeyValuePair.Create(20u, 40u),
+            // Firebeam
+            KeyValuePair.Create(40u, 60u),
+            // Fireball
+            KeyValuePair.Create(70u, 120u),
+            // Firestorm
+            KeyValuePair.Create(65u, 110u),
+            // Firepillar
+            KeyValuePair.Create(60u, 100u),
+            // Waterfall
+            KeyValuePair.Create(55u, 75u),
+            // Iceball
+            KeyValuePair.Create(150u, 200u),
+            // Icestorm
+            KeyValuePair.Create(125u, 175u),
+            // Iceshower
+            KeyValuePair.Create(110u, 170u)
+        };
+
         /// <summary>
         /// The boolean argument of the finish action means: NeedsClickAfterwards
         /// </summary>
@@ -2425,197 +2497,45 @@ namespace Ambermoon
                     AddCondition(Condition.Drugged, target);
                     break;
                 case Spell.Mudsling:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 5-10 damage
-                        DealDamage(5, 5);
-                    }
-                    else
-                    {
-                        // 4-8 damage
-                        DealDamage(4, 4);
-                    }                    
-                    return;
                 case Spell.Rockfall:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 12-25 damage
-                        DealDamage(12, 13);
-                    }
-                    else
-                    {
-                        // 10-25 damage
-                        DealDamage(10, 15);
-                    }
-                    return;
                 case Spell.Earthslide:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 10-20 damage
-                        DealDamage(10, 10);
-                    }
-                    else
-                    {
-                        // 8-16 damage
-                        DealDamage(8, 8);
-                    }
-                    return;
                 case Spell.Earthquake:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 8-18 damage
-                        DealDamage(8, 10);
-                    }
-                    else
-                    {
-                        // 8-22 damage
-                        DealDamage(8, 14);
-                    }
-                    return;
                 case Spell.Winddevil:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 20-35 damage
-                        DealDamage(20, 15);
-                    }
-                    else
-                    {
-                        // 8-16 damage
-                        DealDamage(8, 8);
-                    }
-                    return;
                 case Spell.Windhowler:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 30-50 damage
-                        DealDamage(30, 20);
-                    }
-                    else
-                    {
-                        // 16-48 damage
-                        DealDamage(16, 32);
-                    }
-                    return;
                 case Spell.Thunderbolt:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 25-45 damage
-                        DealDamage(25, 20);
-                    }
-                    else
-                    {
-                        // 20-32 damage
-                        DealDamage(20, 12);
-                    }
-                    return;
                 case Spell.Whirlwind:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 20-40 damage
-                        DealDamage(20, 20);
-                    }
-                    else
-                    {
-                        // 20-35 damage
-                        DealDamage(20, 15);
-                    }
-                    return;
                 case Spell.Firebeam:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 45-75 damage
-                        DealDamage(45, 30);
-                    }
-                    else
-                    {
-                        // 20-30 damage
-                        DealDamage(20, 10);
-                    }
-                    return;
                 case Spell.Fireball:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 70-120 damage
-                        DealDamage(70, 50);
-                    }
-                    else
-                    {
-                        // 40-85 damage
-                        DealDamage(40, 45);
-                    }
-                    return;
                 case Spell.Firestorm:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 65-110 damage
-                        DealDamage(65, 45);
-                    }
-                    else
-                    {
-                        // 35-65 damage
-                        DealDamage(35, 30);
-                    }
-                    return;
                 case Spell.Firepillar:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 60-100 damage
-                        DealDamage(60, 40);
-                    }
-                    else
-                    {
-                        // 40-70 damage
-                        DealDamage(40, 30);
-                    }
-                    return;
                 case Spell.Waterfall:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 110-150 damage
-                        DealDamage(110, 40);
-                    }
-                    else
-                    {
-                        // 32-60 damage
-                        DealDamage(32, 28);
-                    }
-                    return;
                 case Spell.Iceball:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 150-200 damage
-                        DealDamage(150, 50);
-                    }
-                    else
-                    {
-                        // 90-180 damage
-                        DealDamage(90, 90);
-                    }
-                    return;
                 case Spell.Icestorm:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
-                    {
-                        // 130-180 damage
-                        DealDamage(130, 50);
-                    }
-                    else
-                    {
-                        // 64-128 damage
-                        DealDamage(64, 64);
-                    }
-                    return;
                 case Spell.Iceshower:
-                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                {
+                    var damageValues = game.Features.HasFlag(Features.AdjustedSpellDamage)
+                        ? AdjustedDestructionSpellDamageValues
+                        : DestructionSpellDamageValues;
+                    int index = spell - Spell.Mudsling;
+                    if (index < 4)
                     {
-                        // 125-175 damage
-                        DealDamage(125, 50);
+                        if (caster.BattleFlags.HasFlag(BattleFlags.EarthSpellDamageBonus))
+                            index += 12;
                     }
-                    else
+                    else if (index < 8)
                     {
-                        // 128-256 damage
-                        DealDamage(128, 128);
+                        if (caster.BattleFlags.HasFlag(BattleFlags.WindSpellDamageBonus))
+                            index += 8;
                     }
+                    else if (index < 12)
+                    {
+                        if (caster.BattleFlags.HasFlag(BattleFlags.FireSpellDamageBonus))
+                            index += 4;
+                    }
+                    var damageValue = damageValues[index];
+                    DealDamage(damageValue.Key, damageValue.Value - damageValue.Key);
                     return;
+                }
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
                     // Those deal half the caster level as damage.
@@ -3479,7 +3399,7 @@ namespace Ambermoon
 
         bool MonsterWantsToFlee(Monster monster)
         {
-            if (monster.MonsterFlags.HasFlag(MonsterFlags.Boss))
+            if (monster.BattleFlags.HasFlag(BattleFlags.Boss))
                 return false;
 
             if (monster.Conditions.HasFlag(Condition.Panic))
@@ -3830,7 +3750,7 @@ namespace Ambermoon
 
             if (game.RollDice100() < attacker.Skills[Skill.CriticalHit].TotalCurrentValue)
             {
-                if (!(target is Monster monster) || !monster.MonsterFlags.HasFlag(MonsterFlags.Boss))
+                if (!(target is Monster monster) || !monster.BattleFlags.HasFlag(BattleFlags.Boss))
                 {
                     damage = (int)target.HitPoints.CurrentValue;
                     return AttackResult.CriticalHit;

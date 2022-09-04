@@ -12,7 +12,6 @@ namespace Ambermoon.Data
     {
         public MonsterGraphicIndex CombatGraphicIndex { get; set; }
         public uint Morale { get; set; }
-        public MonsterFlags MonsterFlags { get; set; }
         public ushort DefeatExperience { get; set; }
         public Animation[] Animations { get; } = new Animation[8];
         public byte[] UnknownAdditionalBytes1 { get; set; } // seems to be 16 bytes from 0 to 15

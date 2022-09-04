@@ -29,7 +29,7 @@ namespace Ambermoon.Data.Legacy.Characters
             ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.Morale = value);
             character.SpellTypeImmunity = (SpellTypeImmunity)dataReader.ReadByte();
             character.AttacksPerRound = dataReader.ReadByte();
-            ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.MonsterFlags = (MonsterFlags)value);
+            character.BattleFlags = (BattleFlags)dataReader.ReadByte();
             character.Element = (CharacterElement)dataReader.ReadByte();
             character.SpellLearningPoints = dataReader.ReadWord();
             character.TrainingPoints = dataReader.ReadWord();
