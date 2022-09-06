@@ -1916,7 +1916,7 @@ namespace Ambermoon.UI
                 {
                     bool hasInventoryItems = game.CurrentInventory.Inventory.Slots.Any(item => item.ItemIndex != 0);
                     bool hasEquippedItems = game.CurrentInventory.Equipment.Slots.Any(item => item.Value.ItemIndex != 0);
-                    bool canUseItem = (hasInventoryItems || hasEquippedItems) && game.CurrentInventory.Conditions.CanUseItem();
+                    bool canUseItem = (hasInventoryItems || hasEquippedItems) && game.CurrentInventory.Conditions.CanUseItem(game.CurrentInventory.Race == Race.Animal);
                     bool animalOrAbove = game.CurrentInventory.Race >= Race.Animal;
                     bool multiplePartyMembers = game.PartyMembers.Count(p => p != null) > 1;
                     buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, false), false, GetTooltip(Button.TooltipType.Stats));
@@ -2606,16 +2606,27 @@ namespace Ambermoon.UI
                         // Do not consume. Can be used by Thief/Ranger but has no effect in Ambermoon.
                         return;
                     }
-                    else if (item.Spell == Spell.CallEagle && game.TravelType == TravelType.Walk)
+                    else if (item.Spell == Spell.CallEagle)
                     {
-                        itemGrid.HideTooltip();
-                        ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Enchant, itemGrid.GetSlotPosition(slot), () =>
+                        if (game.TravelType != TravelType.Walk)
                         {
-                            if (wasInputEnabled)
-                                game.InputEnable = true;
-                            game.UpdateCursor();
-                            game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true);
-                        });
+                            SetInventoryMessage(game.DataNameProvider.CannotCallEagleIfNotOnFoot, true);
+                        }
+                        else if (game.Map.Flags.HasFlag(MapFlags.NoEagleOrBroom))
+                        {
+                            SetInventoryMessage(game.DataNameProvider.WrongPlaceToUseItem, true);
+                        }
+                        else
+                        {
+                            itemGrid.HideTooltip();
+                            ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Enchant, itemGrid.GetSlotPosition(slot), () =>
+                            {
+                                if (wasInputEnabled)
+                                    game.InputEnable = true;
+                                game.UpdateCursor();
+                                game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true);
+                            });
+                        }
                     }
                     else
                     {
@@ -2675,6 +2686,10 @@ namespace Ambermoon.UI
                         // it is not used in this case. Don't know yet where it is actually used.
                         SetInventoryMessage(game.DataNameProvider.CannotUseItHere, true);
                         return;
+                    }
+                    else if (item.Transportation == Transportation.WitchBroom && game.Map.Flags.HasFlag(MapFlags.NoEagleOrBroom))
+                    {
+                        SetInventoryMessage(game.DataNameProvider.WrongPlaceToUseItem, true);
                     }
 
                     if (wasInputEnabled)

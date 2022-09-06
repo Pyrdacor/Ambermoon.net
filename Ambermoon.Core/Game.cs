@@ -1336,15 +1336,17 @@ namespace Ambermoon
 
         void PartyMemberRevived(PartyMember partyMember, Action finishAction = null, bool showHealAnimation = true)
         {
+            string reviveMessage = partyMember.Race == Race.Animal && !string.IsNullOrWhiteSpace(DataNameProvider.ReviveCatMessage) ? DataNameProvider.ReviveCatMessage : DataNameProvider.ReviveMessage;
+
             if (currentWindow.Window == Window.Healer)
             {
-                layout.UpdateCharacter(partyMember, () => layout.ShowClickChestMessage(DataNameProvider.ReviveMessage, finishAction));
+                layout.UpdateCharacter(partyMember, () => layout.ShowClickChestMessage(reviveMessage, finishAction));
             }
             else
             {
                 bool allInputWasDisabled = allInputDisabled;
                 allInputDisabled = false;
-                ShowMessagePopup(DataNameProvider.ReviveMessage, () =>
+                ShowMessagePopup(reviveMessage, () =>
                 {
                     allInputDisabled = allInputWasDisabled;
                     layout.SetCharacter(SlotFromPartyMember(partyMember).Value, partyMember, false, finishAction);
@@ -4597,7 +4599,8 @@ namespace Ambermoon
 
             partyMember.TotalWeight += (uint)amount * item.Weight;
 
-            layout.UpdateLayoutButtons();
+            if (CurrentWindow.Window == Window.Inventory)
+                layout.UpdateLayoutButtons();
         }
 
         internal void InventoryItemAdded(uint itemIndex, int amount, PartyMember partyMember)
@@ -4611,7 +4614,8 @@ namespace Ambermoon
 
             partyMember.TotalWeight -= (uint)amount * item.Weight;
 
-            layout.UpdateLayoutButtons();
+            if (CurrentWindow.Window == Window.Inventory)
+                layout.UpdateLayoutButtons();
         }
 
         internal void InventoryItemRemoved(uint itemIndex, int amount, PartyMember partyMember = null)
@@ -4647,7 +4651,8 @@ namespace Ambermoon
                 character.Skills[item.SkillPenalty2].BonusValue -= (int)item.SkillPenalty2Value;
             character.TotalWeight += (uint)amount * item.Weight;
 
-            layout.UpdateLayoutButtons();
+            if (CurrentWindow.Window == Window.Inventory)
+                layout.UpdateLayoutButtons();
         }
 
         internal void EquipmentAdded(uint itemIndex, int amount, Character character)
@@ -4679,7 +4684,8 @@ namespace Ambermoon
                 character.Skills[item.SkillPenalty2].BonusValue += (int)item.SkillPenalty2Value;
             character.TotalWeight -= (uint)amount * item.Weight;
 
-            layout.UpdateLayoutButtons();
+            if (CurrentWindow.Window == Window.Inventory)
+                layout.UpdateLayoutButtons();
         }
 
         void EquipmentRemoved(Item item, int amount, bool cursed)
@@ -7747,7 +7753,24 @@ namespace Ambermoon
                 allInputDisabled || !inputEnable || !ingame)
                 return false;
 
-            StartBattle(monsterGroupIndex, false, null);
+            uint? combatBackgroundIndex = null;
+
+            if (!is3D)
+            {
+                var tile = renderMap2D[player.Position];
+
+                if (tile != null)
+                {
+                    var tileset = MapManager.GetTilesetForMap(Map);
+
+                    if (tile.FrontTileIndex != 0)
+                        combatBackgroundIndex = tileset.Tiles[tile.FrontTileIndex - 1].CombatBackgroundIndex;
+                    else if (tile.BackTileIndex != 0)
+                        combatBackgroundIndex = tileset.Tiles[tile.BackTileIndex - 1].CombatBackgroundIndex;
+                }
+            }
+
+            StartBattle(monsterGroupIndex, false, null, combatBackgroundIndex);
             return true;
         }
 
@@ -8700,54 +8723,47 @@ namespace Ambermoon
                     // Do nothing. Can be used by Thief/Ranger but has no effect in Ambermoon.
                     break;
                 case Spell.CallEagle:
-                    if (TravelType != TravelType.Walk)
+                    ShowMessagePopup(DataNameProvider.BlowsTheFlute, () =>
                     {
-                        ShowMessagePopup(DataNameProvider.CannotCallEagleIfNotOnFoot, null, TextAlign.Left);
-                    }
-                    else
-                    {
-                        ShowMessagePopup(DataNameProvider.BlowsTheFlute, () =>
+                        CloseWindow(() =>
                         {
-                            CloseWindow(() =>
+                            StartSequence();
+                            var travelInfoEagle = renderView.GameData.GetTravelGraphicInfo(TravelType.Eagle, CharacterDirection.Right);
+                            var currentTravelInfo = renderView.GameData.GetTravelGraphicInfo(TravelType, player.Direction);
+                            int diffX = (int)travelInfoEagle.OffsetX - (int)currentTravelInfo.OffsetX;
+                            int diffY = (int)travelInfoEagle.OffsetY - (int)currentTravelInfo.OffsetY;
+                            var targetPosition = player2D.DisplayArea.Position + new Position(diffX, diffY);
+                            var position = new Position(Global.Map2DViewX - (int)travelInfoEagle.Width, targetPosition.Y - (int)travelInfoEagle.Height);
+                            var eagle = layout.AddMapCharacterSprite(new Rect(position, new Size((int)travelInfoEagle.Width, (int)travelInfoEagle.Height)),
+                                3 * 17 + (uint)TravelType.Eagle * 4 + 1, ushort.MaxValue);
+                            eagle.ClipArea = Map2DViewArea;
+                            AddTimedEvent(TimeSpan.FromMilliseconds(200), AnimateEagle);
+                            void AnimateEagle()
                             {
-                                StartSequence();
-                                var travelInfoEagle = renderView.GameData.GetTravelGraphicInfo(TravelType.Eagle, CharacterDirection.Right);
-                                var currentTravelInfo = renderView.GameData.GetTravelGraphicInfo(TravelType, player.Direction);
-                                int diffX = (int)travelInfoEagle.OffsetX - (int)currentTravelInfo.OffsetX;
-                                int diffY = (int)travelInfoEagle.OffsetY - (int)currentTravelInfo.OffsetY;
-                                var targetPosition = player2D.DisplayArea.Position + new Position(diffX, diffY);
-                                var position = new Position(Global.Map2DViewX - (int)travelInfoEagle.Width, targetPosition.Y - (int)travelInfoEagle.Height);
-                                var eagle = layout.AddMapCharacterSprite(new Rect(position, new Size((int)travelInfoEagle.Width, (int)travelInfoEagle.Height)),
-                                    3 * 17 + (uint)TravelType.Eagle * 4 + 1, ushort.MaxValue);
-                                eagle.ClipArea = Map2DViewArea;
-                                AddTimedEvent(TimeSpan.FromMilliseconds(200), AnimateEagle);
-                                void AnimateEagle()
+                                if (position.X < targetPosition.X)
+                                    position.X = Math.Min(targetPosition.X, position.X + 12);
+                                if (position.Y < targetPosition.Y)
+                                    position.Y = Math.Min(targetPosition.Y, position.Y + 5);
+
+                                eagle.X = position.X;
+                                eagle.Y = position.Y;
+
+                                if (position == targetPosition)
                                 {
-                                    if (position.X < targetPosition.X)
-                                        position.X = Math.Min(targetPosition.X, position.X + 12);
-                                    if (position.Y < targetPosition.Y)
-                                        position.Y = Math.Min(targetPosition.Y, position.Y + 5);
-
-                                    eagle.X = position.X;
-                                    eagle.Y = position.Y;
-
-                                    if (position == targetPosition)
-                                    {
-                                        EndSequence();
-                                        eagle.Delete();
-                                        ActivateTransport(TravelType.Eagle);
-                                        // Update direction to right
-                                        player.Direction = CharacterDirection.Right; // Set this before player2D.MoveTo!
-                                        player2D.MoveTo(Map, (uint)player2D.Position.X, (uint)player2D.Position.Y, CurrentTicks, true, CharacterDirection.Right);
-                                    }
-                                    else
-                                    {
-                                        AddTimedEvent(TimeSpan.FromMilliseconds(40), AnimateEagle);
-                                    }
+                                    EndSequence();
+                                    eagle.Delete();
+                                    ActivateTransport(TravelType.Eagle);
+                                    // Update direction to right
+                                    player.Direction = CharacterDirection.Right; // Set this before player2D.MoveTo!
+                                    player2D.MoveTo(Map, (uint)player2D.Position.X, (uint)player2D.Position.Y, CurrentTicks, true, CharacterDirection.Right);
                                 }
-                            });
-                        }, TextAlign.Left);
-                    }
+                                else
+                                {
+                                    AddTimedEvent(TimeSpan.FromMilliseconds(40), AnimateEagle);
+                                }
+                            }
+                        });
+                    }, TextAlign.Left);
                     break;
                 case Spell.PlayElfHarp:
                     OpenMusicList();
@@ -8759,6 +8775,7 @@ namespace Ambermoon
                     OpenMiniMap();
                     break;
                 case Spell.SelfHealing:
+                case Spell.SelfReviving:
                     ApplySpellEffect(spell, caster, caster, finishAction, checkFail);
                     break;
                 default:
@@ -9065,6 +9082,7 @@ namespace Ambermoon
                     });
                     break;
                 }
+                case Spell.SelfReviving:
                 case Spell.WakeTheDead:
                 {
                     if (!(target is PartyMember targetPlayer))
@@ -9095,11 +9113,15 @@ namespace Ambermoon
                             EndSequence();
                             ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
                             {
-                                if (target.Conditions.HasFlag(Condition.DeadCorpse))
+                                if (spell != Spell.SelfReviving && target.Conditions.HasFlag(Condition.DeadCorpse))
                                 {
                                     target.Conditions &= ~Condition.DeadCorpse;
                                     target.Conditions |= Condition.DeadAshes;
                                     ShowMessagePopup(DataNameProvider.BodyBurnsUp, finishAction);
+                                }
+                                else
+                                {
+                                    finishAction?.Invoke();
                                 }
                             });
                         });
@@ -12529,7 +12551,7 @@ namespace Ambermoon
                     {
                         ConsumeSP();
 
-                        if (spell == Spell.SelfHealing)
+                        if (spell == Spell.SelfHealing || spell == Spell.SelfReviving)
                         {
                             void Cast()
                             {

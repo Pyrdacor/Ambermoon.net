@@ -86,10 +86,16 @@ namespace Ambermoon
             if (trigger == EventTrigger.Move && LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
             {
                 var ev = @event;
+                bool hasRandomness = false;
 
                 while (ev?.Type == EventType.Condition ||
                        ev?.Type == EventType.Dice100Roll)
+                {
+                    if (ev.Type == EventType.Dice100Roll)
+                        hasRandomness = true;
+
                     ev = ev.Next;
+                }
 
                 if (ev != null && ev.Type == EventType.PopupText)
                 {
@@ -109,7 +115,8 @@ namespace Ambermoon
                     ev.Type != EventType.Riddlemouth &&
                     ev.Type != EventType.Reward &&
                     ev.Type != EventType.Action &&
-                    (map.Type == MapType.Map3D || ev.Type != EventType.Trap))
+                    (map.Type == MapType.Map3D || ev.Type != EventType.Trap) &&
+                    (ev.Type != EventType.StartBattle || !hasRandomness))
                 {
                     return false;
                 }

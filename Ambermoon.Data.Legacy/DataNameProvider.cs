@@ -237,6 +237,7 @@
         public string MapViewNotWorkingHere => executableData.Messages.GetEntry(Messages.Index.MapViewNotWorkingHere);
         public string TurnOnTuneInAndDropOut => executableData.Messages.GetEntry(Messages.Index.TurnOnTuneInAndDropOut);
         public string TextBlockMissing => executableData.Messages.GetEntry(Messages.Index.TextBlockMissing);
+        public string ReviveCatMessage => executableData.Messages.GetEntry(Messages.Index.ReviveCat);
 
 
         #region Conversations

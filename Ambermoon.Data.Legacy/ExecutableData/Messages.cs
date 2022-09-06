@@ -373,7 +373,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             GameOverLoadOrQuit,
             NoSavegamesYetOnlyInitialGame,
             DontDeleteSavedGames,
-            TurnOnTuneInAndDropOut
+            TurnOnTuneInAndDropOut,
+            // Ambermoon Advanced
+            ReviveCat = 338,
+            Count
         }
 
         readonly List<string> entries = new List<string>();
@@ -383,7 +386,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
         internal Messages(List<string> formatMessages, List<string> messages)
         {
-            if (formatMessages.Count != 26 || messages.Count != 300)
+            if (formatMessages.Count != 26 || messages.Count < 300)
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid number of messages.");
 
             entries.Add(""); // None
@@ -391,6 +394,9 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.AddRange(Enumerable.Repeat("", 11));
             entries.AddRange(formatMessages.Skip(6).Select(FixMessage));
             entries.AddRange(messages);
+
+            while (entries.Count < (int)Index.Count)
+                entries.Add("");
         }
 
         static string FixMessage(string message)
@@ -443,6 +449,9 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
             if (dataReader.PeekWord() == 0)
                 dataReader.Position += 2;
+
+            while (entries.Count < (int)Index.Count)
+                entries.Add("");
         }
 
         bool ReadText(IDataReader dataReader)

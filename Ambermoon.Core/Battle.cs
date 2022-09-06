@@ -1715,7 +1715,7 @@ namespace Ambermoon
                             switch (spellInfo.Target)
                             {
                                 case SpellTarget.None:
-                                    if (spell == Spell.SelfHealing)
+                                    if (spell == Spell.SelfHealing || spell == Spell.SelfReviving)
                                         CastSpellOn(battleAction.Character, () => EndCast());
                                     else
                                         ApplySpellEffect(battleAction.Character, null, spell, game.CurrentBattleTicks, () => EndCast());
@@ -2383,7 +2383,7 @@ namespace Ambermoon
             KeyValuePair.Create(128u, 256u)
         };
 
-        static readonly KeyValuePair<uint, uint>[] AdjustedDestructionSpellDamageValues = new KeyValuePair<uint, uint>[16u]
+        static readonly KeyValuePair<uint, uint>[] AdjustedDestructionSpellDamageValues = new KeyValuePair<uint, uint>[16]
         {
             // Mudsling
             KeyValuePair.Create(5u, 10u),

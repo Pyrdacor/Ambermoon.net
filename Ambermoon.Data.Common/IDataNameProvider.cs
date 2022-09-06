@@ -207,6 +207,7 @@ namespace Ambermoon.Data
         string MapViewNotWorkingHere { get; }
         string TurnOnTuneInAndDropOut { get; }
         string TextBlockMissing { get; }
+        string ReviveCatMessage { get; }
 
 
         #region Conversations

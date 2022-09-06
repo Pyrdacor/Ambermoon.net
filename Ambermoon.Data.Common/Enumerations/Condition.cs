@@ -72,7 +72,7 @@ namespace Ambermoon.Data
                 !conditions.HasFlag(Condition.Petrified);
         }
 
-        public static bool CanUseItem(this Condition conditions)
+        public static bool CanUseItem(this Condition conditions, bool isAnimal = false)
         {
             return
                 !conditions.HasFlag(Condition.Crazy) &&
@@ -81,9 +81,9 @@ namespace Ambermoon.Data
                 !conditions.HasFlag(Condition.Drugged) &&
                 !conditions.HasFlag(Condition.Lamed) &&
                 !conditions.HasFlag(Condition.Petrified) &&
-                !conditions.HasFlag(Condition.DeadCorpse) &&
+                ((!conditions.HasFlag(Condition.DeadCorpse) &&
                 !conditions.HasFlag(Condition.DeadAshes) &&
-                !conditions.HasFlag(Condition.DeadDust);
+                !conditions.HasFlag(Condition.DeadDust)) || isAnimal);
         }
 
         public static bool CanMove(this Condition conditions)
