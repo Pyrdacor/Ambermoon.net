@@ -510,7 +510,9 @@ namespace Ambermoon.Data
             Damage = 0x0d,
             Defense = 0x0e,
             MaxHitPoints = 0x0f,
-            MaxSpellPoints = 0x10
+            MaxSpellPoints = 0x10,
+            EmpowerSpells = 0x20,
+            ChangePortrait = 0x21
         }
 
         public enum RewardOperation
@@ -576,6 +578,20 @@ namespace Ambermoon.Data
                 _ => $"?op={(int)Operation}?"
             };
 
+            string EmpowerString()
+            {
+                var element = Value switch
+                {
+                    0 => "earth",
+                    1 => "wind",
+                    2 => "fire",
+                    _ => null
+                };
+
+                return element == null ? "Invalid" :
+                    $"Grants empowered {element} spells for {Target}";
+            }
+
             return TypeOfReward switch
             {
                 RewardType.Attribute => $"{Type}: {Attribute} on {Target} {operationString}, Unknown {Unknown:x2}",
@@ -592,6 +608,8 @@ namespace Ambermoon.Data
                 RewardType.Defense => $"{Type}: Defense on {Target} {operationString}, Unknown {Unknown:x2}",
                 RewardType.MaxHitPoints => $"{Type}: Max HP on {Target} {operationString}, Unknown {Unknown:x2}",
                 RewardType.MaxSpellPoints => $"{Type}: Max SP on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.EmpowerSpells => $"{Type}: {EmpowerString()}",
+                RewardType.ChangePortrait => $"{Type}: Change portrait to {Value} for {Target}",
                 _ => $"{Type}: Unknown ({(int)TypeOfReward}:{RewardTypeValue}) on {Target} {operationString}, Unknown {Unknown:x2}"
             };
         }

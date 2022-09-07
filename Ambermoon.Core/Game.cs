@@ -8223,7 +8223,7 @@ namespace Ambermoon
                             if (!spellInfo.Worlds.HasFlag(worldFlag))
                                 return DataNameProvider.WrongWorld;
 
-                            if (GetSPCost(spell, CurrentPartyMember) > CurrentPartyMember.SpellPoints.CurrentValue)
+                            if (SpellInfos.GetSPCost(spell, CurrentPartyMember) > CurrentPartyMember.SpellPoints.CurrentValue)
                                 return DataNameProvider.NotEnoughSP;
 
                             // TODO: Is there more to check? Irritated?
