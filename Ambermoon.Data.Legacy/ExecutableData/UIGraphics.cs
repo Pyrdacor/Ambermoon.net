@@ -195,6 +195,21 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 }
             }
             entries.Add(UIGraphic.BrokenItemOverlay, brokenOverlay); // TODO: use it
+
+            if (dataReader.PeekWord() == 0xCA75)
+            {
+                dataReader.Position += 2;
+                graphicInfo.Width = 32;
+                graphicInfo.Height = 34;
+                graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
+                graphicInfo.PaletteOffset = 24;
+                graphicInfo.Alpha = true;
+                entries.Add(UIGraphic.CatSkull, ReadGraphic(dataReader, 25));
+            }
+            else
+            {
+                entries.Add(UIGraphic.CatSkull, entries[UIGraphic.Skull]);
+            }
         }
     }
 }

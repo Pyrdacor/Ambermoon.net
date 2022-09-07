@@ -1481,7 +1481,7 @@ namespace Ambermoon
 
                     if (itemSlotIndex == null)
                     {
-                        battleAction.Character.SpellPoints.CurrentValue = (uint)Math.Max(0, (int)battleAction.Character.SpellPoints.CurrentValue - (int)spellInfo.SP);
+                        battleAction.Character.SpellPoints.CurrentValue = (uint)Math.Max(0, (int)battleAction.Character.SpellPoints.CurrentValue - (int)SpellInfos.GetSPCost(spell, battleAction.Character));
 
                         if (battleAction.Character is PartyMember castingPartyMember)
                             layout.FillCharacterBars(castingPartyMember);
@@ -2402,21 +2402,21 @@ namespace Ambermoon
             // Whirlwind
             KeyValuePair.Create(20u, 40u),
             // Firebeam
-            KeyValuePair.Create(40u, 60u),
+            KeyValuePair.Create(35u, 55u),
             // Fireball
-            KeyValuePair.Create(70u, 120u),
+            KeyValuePair.Create(70u, 105u),
             // Firestorm
-            KeyValuePair.Create(65u, 110u),
+            KeyValuePair.Create(65u, 95u),
             // Firepillar
-            KeyValuePair.Create(60u, 100u),
+            KeyValuePair.Create(55u, 85u),
             // Waterfall
-            KeyValuePair.Create(55u, 75u),
+            KeyValuePair.Create(60u, 75u),
             // Iceball
-            KeyValuePair.Create(150u, 200u),
+            KeyValuePair.Create(110u, 150u),
             // Icestorm
-            KeyValuePair.Create(125u, 175u),
+            KeyValuePair.Create(100u, 135u),
             // Iceshower
-            KeyValuePair.Create(110u, 170u)
+            KeyValuePair.Create(90u, 120u)
         };
 
         /// <summary>
@@ -2997,7 +2997,7 @@ namespace Ambermoon
             return caster.LearnedSpells.Where(spell =>
             {
                 var spellInfo = SpellInfos.Entries[spell];
-                return sp >= spellInfo.SP &&
+                return sp >= SpellInfos.GetSPCost(spell, caster) &&
                     spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Battle) &&
                     checker(spell);
 

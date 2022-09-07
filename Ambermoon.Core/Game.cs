@@ -8223,7 +8223,7 @@ namespace Ambermoon
                             if (!spellInfo.Worlds.HasFlag(worldFlag))
                                 return DataNameProvider.WrongWorld;
 
-                            if (spellInfo.SP > CurrentPartyMember.SpellPoints.CurrentValue)
+                            if (GetSPCost(spell, CurrentPartyMember) > CurrentPartyMember.SpellPoints.CurrentValue)
                                 return DataNameProvider.NotEnoughSP;
 
                             // TODO: Is there more to check? Irritated?
@@ -12344,7 +12344,7 @@ namespace Ambermoon
             {
                 if (!fromItem) // Item spells won't consume SP
                 {
-                    caster.SpellPoints.CurrentValue -= spellInfo.SP;
+                    caster.SpellPoints.CurrentValue -= SpellInfos.GetSPCost(spell, caster);
                     layout.FillCharacterBars(caster);
                 }
             }
@@ -12631,7 +12631,7 @@ namespace Ambermoon
                         if (!spellInfo.Worlds.HasFlag(worldFlag))
                             return DataNameProvider.WrongWorld;
 
-                        if (spellInfo.SP > CurrentPartyMember.SpellPoints.CurrentValue)
+                        if (SpellInfos.GetSPCost(spell, CurrentPartyMember) > CurrentPartyMember.SpellPoints.CurrentValue)
                             return DataNameProvider.NotEnoughSP;
 
                         return null;
@@ -14626,7 +14626,7 @@ namespace Ambermoon
                 if (available)
                 {
                     // append usage amount
-                    entry = entry.PadRight(21) + $"({Math.Min(99, partyMember.SpellPoints.CurrentValue / spellInfo.SP)})";
+                    entry = entry.PadRight(21) + $"({Math.Min(99, partyMember.SpellPoints.CurrentValue / SpellInfos.GetSPCost(spell, partyMember))})";
                 }
 
                 return entry;

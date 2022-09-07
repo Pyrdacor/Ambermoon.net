@@ -248,6 +248,30 @@ namespace Ambermoon.Data
             { Spell.SelfReviving, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.All } }
         };
 
+        public static uint GetSPCost(Spell spell, Character caster)
+        {
+            if (caster is PartyMember)
+            {
+                if (spell >= Spell.Mudsling && spell <= Spell.Earthquake)
+                {
+                    if (caster.BattleFlags.HasFlag(BattleFlags.EarthSpellDamageBonus))
+                        return Entries[(Spell)((int)spell + 12)].SP;
+                }
+                else if (spell >= Spell.Winddevil && spell <= Spell.Whirlwind)
+                {
+                    if (caster.BattleFlags.HasFlag(BattleFlags.WindSpellDamageBonus))
+                        return Entries[(Spell)((int)spell + 8)].SP;
+                }
+                else if (spell >= Spell.Firebeam && spell <= Spell.Firepillar)
+                {
+                    if (caster.BattleFlags.HasFlag(BattleFlags.FireSpellDamageBonus))
+                        return Entries[(Spell)((int)spell + 4)].SP;
+                }
+            }
+
+            return Entries[spell].SP;
+        }
+
         static SpellInfos()
         {
             foreach (var spell in entries.ToList())

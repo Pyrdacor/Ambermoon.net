@@ -68,6 +68,7 @@
         ItemConsume, // 11 frames with 16x16 pixels
         Talisman, // healer's golden symbol / talisman (32x29, 5-bit)
         Unused, // seems to be unused in original code, 26 bytes
-        BrokenItemOverlay // 16x16 (1-bit) is colored with color index 26
+        BrokenItemOverlay, // 16x16 (1-bit) is colored with color index 26
+        CatSkull // Ambermoon Advanced only
     }
 }

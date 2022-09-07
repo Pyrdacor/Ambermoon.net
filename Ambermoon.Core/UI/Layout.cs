@@ -3508,7 +3508,7 @@ namespace Ambermoon.UI
             uint newGraphicIndex = newState switch
             {
                 PartyMemberPortaitState.Empty => Graphics.GetUIGraphicIndex(UIGraphic.EmptyCharacterSlot),
-                PartyMemberPortaitState.Dead => Graphics.GetUIGraphicIndex(UIGraphic.Skull),
+                PartyMemberPortaitState.Dead => partyMember.Race == Race.Animal ? Graphics.GetUIGraphicIndex(UIGraphic.CatSkull) : Graphics.GetUIGraphicIndex(UIGraphic.Skull),
                 _ => Graphics.PortraitOffset + partyMember.PortraitIndex - 1
             };
             if (animation)
