@@ -511,8 +511,8 @@ namespace Ambermoon.Data
             Defense = 0x0e,
             MaxHitPoints = 0x0f,
             MaxSpellPoints = 0x10,
-            EmpowerSpells = 0x20,
-            ChangePortrait = 0x21
+            EmpowerSpells = 0x11,
+            ChangePortrait = 0x12
         }
 
         public enum RewardOperation
