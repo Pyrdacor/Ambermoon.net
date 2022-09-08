@@ -10699,17 +10699,17 @@ namespace Ambermoon
                         });
                     }
 
+                    if (enchanter.AvailableGold < enchanter.Cost)
+                    {
+                        Error(DataNameProvider.NotEnoughMoney, true);
+                        return;
+                    }
+
                     var item = ItemManager.GetItem(itemSlot.ItemIndex);
 
                     if (item.Spell == Spell.None || item.InitialCharges == 0)
                     {
                         Error(DataNameProvider.CannotEnchantOrdinaryItem, false);
-                        return;
-                    }
-
-                    if (item.MaxRecharges != 0 && itemSlot.RechargeTimes >= item.MaxRecharges)
-                    {
-                        Error(DataNameProvider.CannotRechargeAnymore, false);
                         return;
                     }
 
@@ -10727,9 +10727,9 @@ namespace Ambermoon
                         return;
                     }
 
-                    if (enchanter.AvailableGold < enchanter.Cost)
+                    if (item.MaxRecharges != 0 && itemSlot.RechargeTimes >= item.MaxRecharges)
                     {
-                        Error(DataNameProvider.NotEnoughMoney, true);
+                        Error(DataNameProvider.CannotRechargeAnymore, false);
                         return;
                     }
 
