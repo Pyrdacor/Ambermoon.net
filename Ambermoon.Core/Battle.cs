@@ -2533,7 +2533,10 @@ namespace Ambermoon
                             index += 4;
                     }
                     var damageValue = damageValues[index];
-                    DealDamage(damageValue.Key, damageValue.Value - damageValue.Key);
+                    var bonusDamage = caster.Attributes[Attribute.BonusSpellDamage];
+                    uint baseDamage = damageValue.Key + bonusDamage.CurrentValue;
+                    uint maxDamage = damageValue.Value + bonusDamage.CurrentValue + bonusDamage.MaxValue;
+                    DealDamage(baseDamage, maxDamage - baseDamage);
                     return;
                 }
                 case Spell.MagicalProjectile:

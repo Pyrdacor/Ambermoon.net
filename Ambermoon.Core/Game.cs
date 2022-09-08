@@ -9081,7 +9081,11 @@ namespace Ambermoon
                     Cast(() => ++target.Food);
                     break;
                 case Spell.SelfHealing:
-                    Cast(() => Heal(5 + target.HitPoints.TotalMaxValue / 4)); // 5 HP + 25% of MaxHP
+                    Cast(() =>
+                    {
+                        if (target.Alive)
+                            Heal(5 + target.HitPoints.TotalMaxValue / 4); // 5 HP + 25% of MaxHP
+                    });
                     break;
                 case Spell.Resurrection:
                 {

@@ -2518,6 +2518,12 @@ namespace Ambermoon.UI
                         }
                     }
 
+                    if (item.Spell == Spell.SelfHealing && !game.CurrentInventory.Alive)
+                    {
+                        SetInventoryMessage(game.DataNameProvider.ItemHasNoEffectHere, true);
+                        return;
+                    }
+
                     // Note: itemGrids[0] is inventory and itemGrids[1] is equipment
                     bool equipped = itemGrid == itemGrids[1];
                     var caster = game.CurrentInventory;
@@ -2627,6 +2633,16 @@ namespace Ambermoon.UI
                                 game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true);
                             });
                         }
+                    }
+                    else if (item.Spell == Spell.SelfHealing && !game.CurrentInventory.Alive)
+                    {
+                        SetInventoryMessage(game.DataNameProvider.ItemHasNoEffectHere, true);
+                        return;
+                    }
+                    else if (item.Spell == Spell.SelfReviving && game.CurrentInventory.Alive)
+                    {
+                        SetInventoryMessage(game.DataNameProvider.IsNotDead, true);
+                        return;
                     }
                     else
                     {

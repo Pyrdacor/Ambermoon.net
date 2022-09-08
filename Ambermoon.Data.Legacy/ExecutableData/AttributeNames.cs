@@ -27,9 +27,9 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                     this.shortNames.Add((Attribute)i, shortNames[i]);
             }
 
-            entries.Add(Attribute.Unknown, "");
+            entries.Add(Attribute.BonusSpellDamage, "");
             this.shortNames.Add(Attribute.Age, "");
-            this.shortNames.Add(Attribute.Unknown, "");
+            this.shortNames.Add(Attribute.BonusSpellDamage, "");
         }
 
         /// <summary>
@@ -43,23 +43,23 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             foreach (var type in Enum.GetValues<Attribute>())
             {
-                if (type != Attribute.Unknown)
+                if (type != Attribute.BonusSpellDamage)
                     entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
 
-            entries.Add(Attribute.Unknown, "");
+            entries.Add(Attribute.BonusSpellDamage, "");
         }
 
         internal void AddShortNames(IDataReader dataReader)
         {
             foreach (var type in Enum.GetValues<Attribute>())
             {
-                if (type != Attribute.Age && type != Attribute.Unknown)
+                if (type != Attribute.Age && type != Attribute.BonusSpellDamage)
                     shortNames.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
 
             shortNames.Add(Attribute.Age, "");
-            shortNames.Add(Attribute.Unknown, "");
+            shortNames.Add(Attribute.BonusSpellDamage, "");
         }
     }
 }

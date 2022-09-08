@@ -39,7 +39,7 @@ namespace Ambermoon.Data
         Unused1 = 0x10,
         Unused2 = 0x20,
         Function = 0x40,
-        All = 0x4f,
+        All = 0x7f,
         Mastered = 0x80
     }
 

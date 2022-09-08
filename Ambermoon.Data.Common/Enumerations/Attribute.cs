@@ -11,6 +11,6 @@
         Luck,
         AntiMagic,
         Age,
-        Unknown // There seems to be a 10th unused attribute
+        BonusSpellDamage // Only used in Ambermoon Advanced
     }
 }
