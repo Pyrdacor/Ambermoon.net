@@ -680,6 +680,27 @@ namespace Ambermoon
                                 return mapEventIfFalse;
                             }
                             break;
+                        case ConditionEvent.ConditionType.SpellEmpowered:
+                        {
+                            uint elementIndex = conditionEvent.ObjectIndex;
+
+                            if (elementIndex > 2)
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+
+                            int mask = (1 << (4 + (int)elementIndex));
+
+                            if ((((int)game.CurrentPartyMember.BattleFlags & mask) != 0) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        }
                     }
 
                     // For some follow-up events we won't proceed by using Eye, Hand or Mouth.
