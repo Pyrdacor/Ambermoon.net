@@ -5282,6 +5282,17 @@ namespace Ambermoon
                     RewardValue(partyMember.SpellPoints, true, true);
                     layout.UpdateCharacter(partyMember);
                     break;
+                case RewardEvent.RewardType.EmpowerSpells:
+                {
+                    if (rewardEvent.Value < 3)
+                        partyMember.BattleFlags |= (BattleFlags)(1 << ((int)rewardEvent.Value + 4));
+                    break;
+                }
+                case RewardEvent.RewardType.ChangePortrait:
+                    partyMember.PortraitIndex = (byte)rewardEvent.Value;
+                    layout.UpdateCharacter(partyMember, followAction);
+                    return;
+
             }
 
             followAction?.Invoke();
