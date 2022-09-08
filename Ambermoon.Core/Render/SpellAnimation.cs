@@ -589,14 +589,11 @@ namespace Ambermoon.Render
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
                 case Spell.Hurry:
-                case Spell.WakeTheDead:
-                case Spell.Resurrection:
                 case Spell.SpellPointsI:
                 case Spell.SpellPointsII:
                 case Spell.SpellPointsIII:
                 case Spell.SpellPointsIV:
                 case Spell.SpellPointsV:
-                case Spell.AllHealing:
                 case Spell.AddStrength:
                 case Spell.AddIntelligence:
                 case Spell.AddDexterity:
@@ -607,7 +604,6 @@ namespace Ambermoon.Render
                 case Spell.AddAntiMagic:
                 case Spell.DecreaseAge:
                 case Spell.SelfHealing:
-                case Spell.SelfReviving:
                     PlayHealingAnimation(partyMember, finishAction);
                     break;
                 default:
@@ -616,9 +612,9 @@ namespace Ambermoon.Render
             }
         }
 
-        public void CastHealingOnPartyMembers(Action finishAction, bool reviving)
+        public void CastHealingOnPartyMembers(Action finishAction, List<PartyMember> partyMembers = null)
         {
-            var partyMembers = game.PartyMembers.Where(p => p.Alive != reviving).ToList();
+            partyMembers ??= game.PartyMembers.Where(p => p.Alive).ToList();
 
             for (int i = 0; i < partyMembers.Count; ++i)
                 PlayHealingAnimation(partyMembers[i], i == partyMembers.Count - 1 ? finishAction : null);

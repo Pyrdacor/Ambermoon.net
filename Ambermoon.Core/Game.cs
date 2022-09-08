@@ -1349,17 +1349,29 @@ namespace Ambermoon
                 ShowMessagePopup(reviveMessage, () =>
                 {
                     allInputDisabled = allInputWasDisabled;
-                    layout.SetCharacter(SlotFromPartyMember(partyMember).Value, partyMember, false, finishAction);
-                    if (showHealAnimation)
+
+                    void Finish()
                     {
-                        currentAnimation?.Destroy();
-                        currentAnimation = new SpellAnimation(this, layout);
-                        currentAnimation.CastOn(Spell.WakeTheDead, partyMember, () =>
+                        if (showHealAnimation)
                         {
-                            currentAnimation.Destroy();
-                            currentAnimation = null;
-                        });
+                            currentAnimation?.Destroy();
+                            currentAnimation = new SpellAnimation(this, layout);
+                            // This will just show the heal animation
+                            currentAnimation.CastOn(Spell.SelfHealing, partyMember, () =>
+                            {
+                                currentAnimation.Destroy();
+                                currentAnimation = null;
+                                finishAction?.Invoke();
+                            });
+                        }
+                        else
+                        {
+                            finishAction?.Invoke();
+                        }
                     }
+
+                    layout.SetCharacter(SlotFromPartyMember(partyMember).Value, partyMember, false, Finish);
+                    
                 });
             }
         }
@@ -9254,7 +9266,7 @@ namespace Ambermoon
                         target.Conditions &= ~Condition.DeadAshes;
                         target.Conditions &= ~Condition.DeadDust;
                         target.HitPoints.CurrentValue = 1;
-                        PartyMemberRevived(target as PartyMember, HealAll, false);
+                        PartyMemberRevived(target as PartyMember, HealAll);
                     }
                     else
                     {
@@ -12433,26 +12445,37 @@ namespace Ambermoon
                         ConsumeSP();
                         void Cast()
                         {
-                            currentAnimation?.Destroy();
-                            currentAnimation = new SpellAnimation(this, layout);
-
-                            currentAnimation.CastHealingOnPartyMembers(() =>
+                            if (spell == Spell.Resurrection)
                             {
-                                currentAnimation.Destroy();
-                                currentAnimation = null;
+                                void Revive(PartyMember target, Action finishAction) =>
+                                    ApplySpellEffect(Spell.Resurrection, caster, target, finishAction, false);
+                                var affectedMembers = PartyMembers.Where(p => p.Conditions.HasFlag(Condition.DeadCorpse)).ToList();
+                                ForeachPartyMember(Revive, p => p.Conditions.HasFlag(Condition.DeadCorpse), () =>
+                                {
+                                    currentAnimation?.Destroy();
+                                    currentAnimation = new SpellAnimation(this, layout);
 
-                                if (spell == Spell.Resurrection)
+                                    currentAnimation.CastHealingOnPartyMembers(() =>
+                                    {
+                                        currentAnimation.Destroy();
+                                        currentAnimation = null;
+                                    }, affectedMembers);
+                                });
+                            }
+                            else
+                            {
+                                currentAnimation?.Destroy();
+                                currentAnimation = new SpellAnimation(this, layout);
+
+                                currentAnimation.CastHealingOnPartyMembers(() =>
                                 {
-                                    void Revive(PartyMember target, Action finishAction) =>
-                                        ApplySpellEffect(Spell.Resurrection, caster, target, finishAction, false);
-                                    ForeachPartyMember(Revive, p => p.Conditions.HasFlag(Condition.DeadCorpse));
-                                }
-                                else
-                                {
+                                    currentAnimation.Destroy();
+                                    currentAnimation = null;
+
                                     foreach (var partyMember in PartyMembers.Where(p => p.Alive))
                                         ApplySpellEffect(spell, caster, partyMember, null, false);
-                                }
-                            }, spell == Spell.Resurrection);
+                                });
+                            }
                         }
                         if (checkFail)
                             TrySpell(Cast);

@@ -3518,7 +3518,7 @@ namespace Ambermoon.UI
                 return;
             }
 
-            bool animation = portraitStates[slot] != PartyMemberPortaitState.None;
+            bool animation = portraitStates[slot] != PartyMemberPortaitState.None && portraitStates[slot] != PartyMemberPortaitState.Dead;
 
             portraitStates[slot] = newState;
             uint newGraphicIndex = newState switch
