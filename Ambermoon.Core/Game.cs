@@ -1334,9 +1334,9 @@ namespace Ambermoon
                 layout.SetCharacter(slot.Value, member, false, () => ResetMoveKeys());
         }
 
-        void PartyMemberRevived(PartyMember partyMember, Action finishAction = null, bool showHealAnimation = true)
+        void PartyMemberRevived(PartyMember partyMember, Action finishAction = null, bool showHealAnimation = true, bool selfRevive = false)
         {
-            string reviveMessage = partyMember.Race == Race.Animal && !string.IsNullOrWhiteSpace(DataNameProvider.ReviveCatMessage) ? DataNameProvider.ReviveCatMessage : DataNameProvider.ReviveMessage;
+            string reviveMessage = selfRevive && partyMember.Race == Race.Animal && !string.IsNullOrWhiteSpace(DataNameProvider.ReviveCatMessage) ? DataNameProvider.ReviveCatMessage : DataNameProvider.ReviveMessage;
 
             if (currentWindow.Window == Window.Healer)
             {
@@ -9115,7 +9115,7 @@ namespace Ambermoon
                         }
                         target.Conditions &= ~Condition.DeadCorpse;
                         target.HitPoints.CurrentValue = 1;
-                        PartyMemberRevived(targetPlayer, finishAction);
+                        PartyMemberRevived(targetPlayer, finishAction, true, spell == Spell.SelfReviving);
                     }
                     if (checkFail)
                     {
