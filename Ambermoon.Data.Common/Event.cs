@@ -742,7 +742,8 @@ namespace Ambermoon.Data
             TransportAtLocation = 0x16,
             MultiCursor = 0x17,
             TravelType = 0x18,
-            LeadClass = 0x19
+            LeadClass = 0x19,
+            SpellEmpowered = 0x1a
         }
 
         public ConditionType TypeOfCondition { get; set; }
@@ -825,6 +826,7 @@ namespace Ambermoon.Data
                 ConditionType.MultiCursor => $"{Type}: Any cursor of {GetMultiCursorString()}, {falseHandling}",
                 ConditionType.TravelType => $"{Type}: Travel type {Enum.GetName((TravelType)ObjectIndex)}, {falseHandling}",
                 ConditionType.LeadClass => $"{Type}: Active party member has class {Enum.GetName((Class)ObjectIndex)}, {falseHandling}",
+                ConditionType.SpellEmpowered => $"{Type}: Active party member has {((CharacterElement)(1 << (4 + (int)Util.Limit(0, ObjectIndex, 2)))).ToString().ToLower()} spells empowered, {falseHandling}",
                 _ => $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, {falseHandling}",
             };
         }
