@@ -2306,6 +2306,11 @@ namespace Ambermoon
                 GameTime.Wait(hours);
         }
 
+        internal bool IsNight()
+        {
+            return CurrentSavegame.Hour >= 22 || CurrentSavegame.Hour < 5;
+        }
+
         // Note: Eagle allows movement even with overweight.
         bool CanPartyMove() => TravelType == TravelType.Eagle || !PartyMembers.Any(p => !p.CanMove(false));
 
