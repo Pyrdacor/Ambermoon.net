@@ -2427,8 +2427,14 @@ namespace Ambermoon
             switch (spell)
             {
                 case Spell.GhostWeapon:
-                    DealDamage((uint)Math.Max(1, caster.BaseAttack + caster.VariableAttack), 0);
+                {
+                    var damage = (uint)Math.Max(1, caster.BaseAttack + caster.VariableAttack);
+                    var bonusDamage = caster.Attributes[Attribute.BonusSpellDamage];
+                    uint baseDamage = damage + bonusDamage.CurrentValue;
+                    uint maxDamage = baseDamage + bonusDamage.MaxValue;
+                    DealDamage(baseDamage, maxDamage - baseDamage);
                     return;
+                }
                 case Spell.Blink:
                     game.SetBattleMessageWithClick(target.Name + game.DataNameProvider.BattleMessageHasBlinked, TextColor.BattlePlayer,
                         () => { MoveCharacterTo(targetField.Value, target); finishAction?.Invoke(); });
@@ -2541,11 +2547,16 @@ namespace Ambermoon
                 }
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
+                {
                     // Those deal half the caster level as damage.
                     // Monsters deal full level as damage instead.
-                    int damage = caster is Monster ? caster.Level : caster.Level / 2;
-                    DealDamage(Math.Max(1, (uint)damage), 0);
+                    uint damage = Math.Max(1u, caster is Monster ? (uint)caster.Level : (uint)caster.Level / 2);
+                    var bonusDamage = caster.Attributes[Attribute.BonusSpellDamage];
+                    uint baseDamage = damage + bonusDamage.CurrentValue;
+                    uint maxDamage = baseDamage + bonusDamage.MaxValue;
+                    DealDamage(baseDamage, maxDamage - baseDamage);
                     return;
+                }
                 case Spell.LPStealer:
                 {
                     uint stealAmount = Math.Min(caster.Level, target.HitPoints.CurrentValue);
@@ -3799,7 +3810,7 @@ namespace Ambermoon
         uint CalculateSpellDamage(Character caster, Character target, uint baseDamage, uint variableDamage)
         {
             // Note: In contrast to physical attacks this should always deal at least 1 damage
-            return Math.Max(1, baseDamage + (uint)game.RandomInt(0, (int)variableDamage));
+            return Math.Max(1, variableDamage == 0 ? baseDamage : baseDamage + (uint)game.RandomInt(0, (int)variableDamage));
         }
     }
 

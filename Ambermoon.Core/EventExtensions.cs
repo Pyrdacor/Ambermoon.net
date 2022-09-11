@@ -744,7 +744,11 @@ namespace Ambermoon
                         }
                     }
 
-                    trigger = EventTrigger.Always; // following events should not dependent on the trigger anymore
+                    if (conditionEvent.Next == null || !(conditionEvent.Next is ConditionEvent followEvent) ||
+                        (followEvent.TypeOfCondition != ConditionEvent.ConditionType.Eye &&
+                         followEvent.TypeOfCondition != ConditionEvent.ConditionType.Hand &&
+                         followEvent.TypeOfCondition != ConditionEvent.ConditionType.Mouth))
+                        trigger = EventTrigger.Always; // following events should not dependent on the trigger anymore in that case
 
                     break;
                 }
