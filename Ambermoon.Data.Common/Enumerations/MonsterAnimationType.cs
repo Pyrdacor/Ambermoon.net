@@ -4,8 +4,8 @@
     {
         Move, // also used for random idle animation
         Attack,
-        Cast,
         Unknown1,
+        Cast,        
         Hurt,
         Unknown2,
         Start, // played at start of battle
