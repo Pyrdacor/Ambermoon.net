@@ -8882,6 +8882,11 @@ namespace Ambermoon
                         Error(DataNameProvider.ItemAlreadyFullyCharged);
                         return;
                     }
+                    if (item.MaxRechargesSpell != 0 && item.MaxRechargesSpell != 255 && itemSlot.RechargeTimes >= item.MaxRechargesSpell)
+                    {
+                        Error(DataNameProvider.CannotRechargeAnymore);
+                        return;                        
+                    }
                     Cast(() =>
                     {
                         itemSlot.NumRemainingCharges += RandomInt(1, Math.Min(item.MaxCharges - itemSlot.NumRemainingCharges, caster.Level));
@@ -10748,7 +10753,7 @@ namespace Ambermoon
                         return;
                     }
 
-                    if (item.MaxRecharges != 0 && itemSlot.RechargeTimes >= item.MaxRecharges)
+                    if (item.MaxRecharges != 0 && item.MaxRecharges != 255 && itemSlot.RechargeTimes >= item.MaxRecharges)
                     {
                         Error(DataNameProvider.CannotRechargeAnymore, false);
                         return;
@@ -10778,7 +10783,7 @@ namespace Ambermoon
                                     DisableItemGrid();
                                 }
 
-                                if (item.MaxRecharges > 0 && itemSlot.RechargeTimes == item.MaxRecharges - 1)
+                                if (item.MaxRecharges != 0 && item.MaxRecharges != 255 && itemSlot.RechargeTimes == item.MaxRecharges - 1)
                                     layout.ShowClickChestMessage(DataNameProvider.LastTimeEnchanting, Enchant);
                                 else
                                     Enchant();
