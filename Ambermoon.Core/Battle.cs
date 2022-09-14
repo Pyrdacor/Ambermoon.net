@@ -2419,6 +2419,40 @@ namespace Ambermoon
             KeyValuePair.Create(90u, 120u)
         };
 
+        void AdjustDamage(ref uint minDamage, ref uint maxDamage, CharacterValue spellBonus)
+        {
+            static int UnsignedToSigned(uint word)
+            {
+                ushort w = (ushort)(word & 0xffff);
+
+                if ((w & 0x8000) == 0)
+                    return w;
+
+                return w - 0x10000;
+            }
+
+            int baseBonus = UnsignedToSigned(spellBonus.CurrentValue);
+            int maxBonus = UnsignedToSigned(spellBonus.MaxValue);
+            int percBonus = UnsignedToSigned(spellBonus.StoredValue);
+
+            if (percBonus <= -100)
+            {
+                minDamage = 1;
+                maxDamage = 1;
+                return;
+            }
+
+            minDamage = (uint)Math.Max(1, minDamage + baseBonus);
+            maxDamage = (uint)Math.Max(minDamage, maxDamage + baseBonus + maxBonus);
+
+            if (percBonus != 0)
+            {
+                percBonus += 100;
+                minDamage = (uint)Math.Max(1, (minDamage * percBonus) / 100);
+                maxDamage = (uint)Math.Max(minDamage, (maxDamage * percBonus) / 100);
+            }
+        }
+
         /// <summary>
         /// The boolean argument of the finish action means: NeedsClickAfterwards
         /// </summary>
@@ -2428,11 +2462,14 @@ namespace Ambermoon
             {
                 case Spell.GhostWeapon:
                 {
+                    bool ignoreDamageBonus = caster is PartyMember p && p.Index < 16;
                     var damage = (uint)Math.Max(1, caster.BaseAttack + caster.VariableAttack);
                     var bonusDamage = caster.Attributes[Attribute.BonusSpellDamage];
-                    uint baseDamage = damage + bonusDamage.CurrentValue;
-                    uint maxDamage = baseDamage + bonusDamage.MaxValue;
-                    DealDamage(baseDamage, maxDamage - baseDamage);
+                    uint minDamage = damage;
+                    uint maxDamage = damage;
+                    if (!ignoreDamageBonus)
+                        AdjustDamage(ref minDamage, ref maxDamage, bonusDamage);
+                    DealDamage(minDamage, maxDamage - minDamage);
                     return;
                 }
                 case Spell.Blink:
@@ -2538,11 +2575,14 @@ namespace Ambermoon
                         if (caster.BattleFlags.HasFlag(BattleFlags.FireSpellDamageBonus))
                             index += 4;
                     }
+                    bool ignoreDamageBonus = caster is PartyMember p && p.Index < 16;
                     var damageValue = damageValues[index];
                     var bonusDamage = caster.Attributes[Attribute.BonusSpellDamage];
-                    uint baseDamage = damageValue.Key + bonusDamage.CurrentValue;
-                    uint maxDamage = damageValue.Value + bonusDamage.CurrentValue + bonusDamage.MaxValue;
-                    DealDamage(baseDamage, maxDamage - baseDamage);
+                    uint minDamage = damageValue.Key + (ignoreDamageBonus ? 0 : bonusDamage.CurrentValue);
+                    uint maxDamage = damageValue.Value + (ignoreDamageBonus ? 0 : bonusDamage.CurrentValue + bonusDamage.MaxValue); var bonusDamage = caster.Attributes[Attribute.BonusSpellDamage];
+                    if (!ignoreDamageBonus)
+                        AdjustDamage(ref minDamage, ref maxDamage, bonusDamage);
+                    DealDamage(minDamage, maxDamage - minDamage);
                     return;
                 }
                 case Spell.MagicalProjectile:
@@ -2550,11 +2590,14 @@ namespace Ambermoon
                 {
                     // Those deal half the caster level as damage.
                     // Monsters deal full level as damage instead.
+                    bool ignoreDamageBonus = caster is PartyMember p && p.Index < 16;
                     uint damage = Math.Max(1u, caster is Monster ? (uint)caster.Level : (uint)caster.Level / 2);
                     var bonusDamage = caster.Attributes[Attribute.BonusSpellDamage];
-                    uint baseDamage = damage + bonusDamage.CurrentValue;
-                    uint maxDamage = baseDamage + bonusDamage.MaxValue;
-                    DealDamage(baseDamage, maxDamage - baseDamage);
+                    uint minDamage = damage;
+                    uint maxDamage = damage;
+                    if (!ignoreDamageBonus)
+                        AdjustDamage(ref minDamage, ref maxDamage, bonusDamage);
+                    DealDamage(minDamage, maxDamage - minDamage);
                     return;
                 }
                 case Spell.LPStealer:
