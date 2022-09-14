@@ -9,6 +9,7 @@ namespace Ambermoon.Data.Enumerations
         Elements = 0x01,
         AdjustedSpellDamage = 0x02,
         SpellDamageBonus = 0x04,
-        AmbermoonAdvanced = Elements | AdjustedSpellDamage | SpellDamageBonus
+        ReducedFoodWeight = 0x08,
+        AmbermoonAdvanced = Elements | AdjustedSpellDamage | SpellDamageBonus | ReducedFoodWeight
     }
 }

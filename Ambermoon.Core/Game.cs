@@ -545,6 +545,7 @@ namespace Ambermoon
             Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory, Features features)
         {
             Features = features;
+            Character.FoodWeight = Features.HasFlag(Features.ReducedFoodWeight) ? 25u : 250u;
             currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
             SecondaryUIPaletteIndex = (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1);
             AutomapPaletteIndex = (byte)(renderView.GraphicProvider.AutomapPaletteIndex - 1);
@@ -1607,7 +1608,7 @@ namespace Ambermoon
             void CheckWeight(PartyMember partyMember)
             {
                 // Adjust weight in case it was set to a wrong value before.
-                partyMember.TotalWeight = (uint)partyMember.Gold * 5 + (uint)partyMember.Food * 250;
+                partyMember.TotalWeight = (uint)partyMember.Gold * Character.GoldWeight + (uint)partyMember.Food * Character.FoodWeight;
 
                 foreach (var item in partyMember.Inventory.Slots)
                 {

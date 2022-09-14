@@ -8,7 +8,7 @@ namespace Ambermoon.Data
     public abstract class Character
     {
         public const uint GoldWeight = 5;
-        public const uint FoodWeight = 250;
+        public static uint FoodWeight { get; set; } = 250;
 
         public uint Index { get; set; }
         public CharacterType Type { get; }
