@@ -54,10 +54,10 @@ namespace Ambermoon.Data.Legacy.Serialization
             dataWriter.WriteEnumAsByte(item.SpellSchool);
             dataWriter.Write(item.SpellIndex);
             dataWriter.Write(item.InitialCharges);
-            dataWriter.Write(item.UnknownByte26);
+            dataWriter.Write(item.InitialRecharges);
             dataWriter.Write(item.MaxRecharges);
             dataWriter.Write(item.MaxCharges);
-            dataWriter.Write(item.UnknownByte29);
+            dataWriter.Write(item.MaxRechargesSpell);
             WriteSignedByte(item.MagicArmorLevel);
             WriteSignedByte(item.MagicAttackLevel);
             dataWriter.WriteEnumAsByte(item.Flags);

@@ -7481,9 +7481,9 @@ namespace Ambermoon
                         var item = ItemManager.GetItem(itemIndex);
                         createdItemSlots[i].ItemIndex = itemIndex;
                         createdItemSlots[i].Amount = (int)amount;
-                        createdItemSlots[i].NumRemainingCharges = Math.Max(1, (int)item.InitialCharges);
+                        createdItemSlots[i].NumRemainingCharges = item.MaxCharges == 0 ? 0 : Math.Max(1, (int)item.InitialCharges);
                         createdItemSlots[i].Flags = item.DefaultSlotFlags;
-                        createdItemSlots[i].RechargeTimes = 0;
+                        createdItemSlots[i].RechargeTimes = item.InitialRecharges;
                         break;
                     }
                 }
@@ -10728,7 +10728,7 @@ namespace Ambermoon
 
                     var item = ItemManager.GetItem(itemSlot.ItemIndex);
 
-                    if (item.Spell == Spell.None || item.InitialCharges == 0)
+                    if (item.Spell == Spell.None || (item.InitialCharges == 0 && item.MaxCharges == 0))
                     {
                         Error(DataNameProvider.CannotEnchantOrdinaryItem, false);
                         return;
@@ -12969,7 +12969,7 @@ namespace Ambermoon
                 detailsPopup.AddText(new Position(170, 103), (factor * item.SkillValue).ToString("+#;-#; 0"), TextColor.White);
             }
             detailsPopup.AddText(new Position(48, 110), DataNameProvider.FunctionHeader, TextColor.LightOrange);
-            if (item.Spell != Spell.None && item.InitialCharges != 0)
+            if (item.Spell != Spell.None && (item.InitialCharges != 0 || item.MaxCharges != 0))
             {
                 detailsPopup.AddText(new Position(48, 117),
                     $"{DataNameProvider.GetSpellName(item.Spell)} ({(itemSlot.NumRemainingCharges > 99 ? "**" : itemSlot.NumRemainingCharges.ToString())})",

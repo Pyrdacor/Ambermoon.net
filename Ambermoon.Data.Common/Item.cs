@@ -43,10 +43,10 @@ namespace Ambermoon.Data
         public SpellSchool SpellSchool { get; set; }
         public byte SpellIndex { get; set; }
         public byte InitialCharges { get; set; } // 255 = infinite
-        public byte UnknownByte26 { get; set; } // unknown, maybe has something to do with charges as well
-        public byte MaxRecharges { get; set; }
+        public byte InitialRecharges { get; set; } // initial times of recharging
+        public byte MaxRecharges { get; set; } // only used by enchanter
         public byte MaxCharges { get; set; }
-        public byte UnknownByte29 { get; set; } // has something to do with charges
+        public byte MaxRechargesSpell { get; set; } // unused
         public int MagicArmorLevel { get; set; } // M-B-R
         public int MagicAttackLevel { get; set; } // M-B-W
         public ItemFlags Flags { get; set; }
@@ -104,7 +104,8 @@ namespace Ambermoon.Data
 
         public bool IsImportant => !Flags.HasFlag(ItemFlags.NotImportant) && !Flags.HasFlag(ItemFlags.Clonable);
 
-        public bool CanBreak => BreakChance != 0 && !Flags.HasFlag(ItemFlags.Indestructible) && !Flags.HasFlag(ItemFlags.DestroyAfterUsage) && Type switch
+        public bool CanBreak => BreakChance != 0 && !Flags.HasFlag(ItemFlags.Indestructible) &&
+            !Flags.HasFlag(ItemFlags.DestroyAfterUsage) && !Flags.HasFlag(ItemFlags.Stackable) && Type switch
         {
             ItemType.CloseRangeWeapon => true,
             ItemType.LongRangeWeapon => true,

@@ -51,10 +51,10 @@ namespace Ambermoon.Data.Legacy.Serialization
             item.SpellSchool = (SpellSchool)dataReader.ReadByte();
             item.SpellIndex = dataReader.ReadByte();
             item.InitialCharges = dataReader.ReadByte();
-            item.UnknownByte26 = dataReader.ReadByte();
+            item.InitialRecharges = dataReader.ReadByte();
             item.MaxRecharges = dataReader.ReadByte();
             item.MaxCharges = dataReader.ReadByte();
-            item.UnknownByte29 = dataReader.ReadByte();
+            item.MaxRechargesSpell = dataReader.ReadByte();
             item.MagicArmorLevel = (sbyte)dataReader.ReadByte();
             item.MagicAttackLevel = (sbyte)dataReader.ReadByte();
             item.Flags = (ItemFlags)dataReader.ReadByte();

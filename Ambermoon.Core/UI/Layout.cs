@@ -2347,6 +2347,20 @@ namespace Ambermoon.UI
         internal ItemGrid GetInventoryGrid() => itemGrids[0];
         internal ItemGrid GetEquipmentGrid() => itemGrids[1];
 
+        bool CanConsumeItem(Item item, ItemSlot itemSlot)
+        {
+            // In Ambermoon Advanced the consume logic was changed.
+            // But the lantern won't work anymore then so we adjust the logic here.
+            bool lantern = item.Index == 243;
+            bool canConsume = !lantern && item.Flags.HasFlag(ItemFlags.DestroyAfterUsage);
+
+            if (canConsume && !item.Flags.HasFlag(ItemFlags.Stackable) && item.MaxCharges != 0)
+            {
+                canConsume = item.MaxRecharges != 0 && item.MaxRecharges != 255 && itemSlot.RechargeTimes >= item.MaxRecharges;
+            }
+
+            return canConsume;
+        }
 
         internal void UseItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
@@ -2660,7 +2674,7 @@ namespace Ambermoon.UI
                                 game.UpdateCursor();
                             }
 
-                            if (item.MaxCharges == 0 && item.Flags.HasFlag(ItemFlags.DestroyAfterUsage) && itemSlot.NumRemainingCharges <= 1)
+                            if (itemSlot.NumRemainingCharges <= 1 && CanConsumeItem(item, itemSlot))
                             {
                                 if (game.CurrentInventory == usingPlayer)
                                     DestroyItem(itemSlot, TimeSpan.FromMilliseconds(25), true, Done);
@@ -2668,10 +2682,10 @@ namespace Ambermoon.UI
                                 {
                                     var item = itemManager.GetItem(itemSlot.ItemIndex);
 
-                                    usingPlayer.TotalWeight -= item.Weight;
-
                                     if (equipped)
                                         game.EquipmentRemoved(usingPlayer, itemSlot.ItemIndex, 1, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
+                                    else
+                                        usingPlayer.TotalWeight -= item.Weight;
 
                                     itemSlot.Remove(1);
                                 }
@@ -2741,7 +2755,7 @@ namespace Ambermoon.UI
             {
                 var item = itemManager.GetItem(itemSlot.ItemIndex);
 
-                if (item.Flags.HasFlag(ItemFlags.DestroyAfterUsage))
+                if (CanConsumeItem(item, itemSlot))
                 {
                     if (slotVisible)
                     {
