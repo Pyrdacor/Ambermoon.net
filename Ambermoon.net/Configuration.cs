@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Ambermoon.Data.Legacy;
+using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -77,6 +78,61 @@ namespace Ambermoon
         public int? ContinueSavegameSlot { get; set; } = null;
         public AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
         public bool ShowSaveLoadMessage { get; set; } = false;
+
+        public static string GetSavePath(string version, bool createIfMissing = true)
+        {
+            string suffix = $"Saves{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
+            string alternativeSuffix = $"SavesRemake{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
+
+            try
+            {
+                var path = Path.Combine(Configuration.BundleDirectory, suffix);
+
+                if (createIfMissing)
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(path);
+                    }
+                    catch
+                    {
+                        path = Path.Combine(Configuration.BundleDirectory, alternativeSuffix);
+                        Directory.CreateDirectory(path);
+                    }
+                    return path;
+                }
+                else if (Directory.Exists(path))
+                {
+                    return path;
+                }
+
+                throw new Exception();
+            }
+            catch
+            {
+                var path = Path.Combine(Configuration.FallbackConfigDirectory, suffix);
+
+                if (createIfMissing)
+                {                    
+                    try
+                    {
+                        Directory.CreateDirectory(path);
+                    }
+                    catch
+                    {
+                        path = Path.Combine(Configuration.FallbackConfigDirectory, alternativeSuffix);
+                        Directory.CreateDirectory(path);
+                    }
+                    return path;
+                }
+                else if (Directory.Exists(path))
+                {
+                    return path;
+                }
+
+                return null;
+            }
+        }
 
 #pragma warning disable CS0618
         public void UpgradeAdditionalSavegameSlots()
@@ -231,6 +287,85 @@ namespace Ambermoon
                 return defaultValue;
 
             var configuration = JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(filename));
+
+            if (configuration == null) // corrupt config
+            {
+                Console.WriteLine("Corrupted configuration detected. Creating a clean one.");
+
+                configuration = defaultValue ?? new Configuration();
+                configuration.FirstStart = false;
+
+                // Ticks of last saving, version index
+                Tuple<long, int> mostRecentSavegameSlot = Tuple.Create(0L, -1);
+
+                try
+                {
+                    var savegameSlots = configuration.AdditionalSavegameSlots = new AdditionalSavegameSlots[VersionSavegameFolders.Length];
+                    int versionIndex = 0;
+
+                    foreach (var savegameFolder in VersionSavegameFolders)
+                    {
+                        // Ticks of last saving, slot index (1 .. 30)
+                        Tuple<long, int> mostRecentSavegameSlotOfVersion = Tuple.Create(0L, -1);
+                        var slots = savegameSlots[versionIndex] = new AdditionalSavegameSlots();
+                        string savePath = GetSavePath(savegameFolder, false);
+                        slots.GameVersionName = savegameFolder;
+
+                        for (int i = 0; i < Game.NumAdditionalSavegameSlots; ++i)
+                            slots.Names[i] = "";
+
+                        static long GetLastWriteTicksOfSaveFiles(DirectoryInfo saveFolder)
+                        {
+                            try
+                            {
+                                return saveFolder.GetFiles().Where(f => SavegameManager.SaveFileNames.Contains(f.Name)).Max(f => f.LastWriteTime.Ticks);
+                            }
+                            catch
+                            {
+                                return 0;
+                            }
+                        }
+
+                        if (savePath != null && Directory.Exists(savePath))
+                        {
+                            foreach (var saveFolder in new DirectoryInfo(savePath).GetDirectories())
+                            {
+                                if (saveFolder.Name.Length == 7 && saveFolder.Name.StartsWith("Save."))
+                                {
+                                    if (int.TryParse(saveFolder.Name[5..], out int index))
+                                    {
+                                        if (index > 10 && index <= 10 + Game.NumAdditionalSavegameSlots)
+                                        {
+                                            slots.Names[index - 10] = saveFolder.Name.Replace('.', ' ');
+                                        }
+
+                                        if (index >= 1 && index <= 10 + Game.NumAdditionalSavegameSlots)
+                                        {
+                                            long lastWriteTicks = Math.Max(saveFolder.LastWriteTime.Ticks, GetLastWriteTicksOfSaveFiles(saveFolder));
+
+                                            if (lastWriteTicks > mostRecentSavegameSlot.Item1)
+                                                mostRecentSavegameSlot = Tuple.Create(lastWriteTicks, versionIndex);
+
+                                            if (lastWriteTicks > mostRecentSavegameSlotOfVersion.Item1)
+                                                mostRecentSavegameSlotOfVersion = Tuple.Create(lastWriteTicks, index);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        slots.ContinueSavegameSlot = Math.Max(0, mostRecentSavegameSlotOfVersion.Item2);
+
+                        ++versionIndex;
+                    }
+
+                    configuration.GameVersionIndex = Math.Max(0, mostRecentSavegameSlot.Item2);
+                }
+                catch
+                {
+                    // ignore
+                }
+            }
 
 #pragma warning disable CS0618
             if (configuration?.UseGraphicFilter == true && configuration.GraphicFilter == GraphicFilter.None)

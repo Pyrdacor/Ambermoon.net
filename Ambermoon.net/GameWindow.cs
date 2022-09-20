@@ -892,7 +892,7 @@ namespace Ambermoon
             {
                 // no versions
                 gameData.Load(dataPath);
-                selectHandler?.Invoke(gameData, GetSavePath(Configuration.VersionSavegameFolders[4]), gameData.Language.ToGameLanguage(),
+                selectHandler?.Invoke(gameData, Configuration.GetSavePath(Configuration.VersionSavegameFolders[4]), gameData.Language.ToGameLanguage(),
                     gameData.Advanced ? Features.AmbermoonAdvanced : Features.None);
                 return false;
             }
@@ -1028,7 +1028,7 @@ namespace Ambermoon
                 {
                     configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
                     configuration.GameVersionIndex = gameVersionIndex;
-                    selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : GetSavePath(Configuration.VersionSavegameFolders[gameVersionIndex]),
+                    selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : Configuration.GetSavePath(Configuration.VersionSavegameFolders[gameVersionIndex]),
                         gameVersions[gameVersionIndex].Language.ToGameLanguage(), gameVersions[gameVersionIndex].Features);
                 };
             });
@@ -1062,41 +1062,6 @@ namespace Ambermoon
             if (!useEffects)
                 configuration.Effects = Effects.None;
             return renderView;
-        }
-
-        string GetSavePath(string version)
-        {
-            string suffix = $"Saves{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
-            string alternativeSuffix = $"SavesRemake{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
-
-            try
-            {
-                var path = Path.Combine(Configuration.BundleDirectory, suffix);
-                try
-                {
-                    Directory.CreateDirectory(path);
-                }
-                catch
-                {
-                    path = Path.Combine(Configuration.BundleDirectory, alternativeSuffix);
-                    Directory.CreateDirectory(path);
-                }
-                return path;
-            }
-            catch
-            {
-                var path = Path.Combine(Configuration.FallbackConfigDirectory, suffix);
-                try
-                {
-                    Directory.CreateDirectory(path);
-                }
-                catch
-                {
-                    path = Path.Combine(Configuration.FallbackConfigDirectory, alternativeSuffix);
-                    Directory.CreateDirectory(path);
-                }
-                return path;
-            }
         }
 
         bool PositionInsideWindow(MousePosition position)
@@ -1199,9 +1164,27 @@ namespace Ambermoon
 
             initialized = true;
 
-            var additionalData = OperatingSystem.IsMacOS() ? new Dictionary<string, BinaryReader>() : AdditionalData.Loader.Load();
-            var builtinVersionReader = OperatingSystem.IsMacOS() ? new BinaryReader(File.OpenRead("versions.dat")) :
-                (additionalData.TryGetValue("versions", out var reader) ? reader : null);
+            static BinaryReader LoadVersionData()
+            {
+                static bool TryLoad(string path, out BinaryReader reader)
+                {
+                    reader = File.Exists(path) ? new BinaryReader(File.OpenRead(path)) : null;
+                    return reader != null;
+                }
+
+                if (TryLoad("versions.dat", out var reader))
+                    return reader;
+
+                if (TryLoad(Path.Combine(Configuration.BundleDirectory, "versions.dat"), out reader))
+                    return reader;
+
+                return null;
+            }
+
+            var additionalData = OperatingSystem.IsMacOS() ? null : AdditionalData.Loader.Load();
+            var builtinVersionReader = additionalData == null
+                ? LoadVersionData()
+                : additionalData.TryGetValue("versions", out var reader) ? reader : LoadVersionData();
 
             if (ShowVersionSelector(builtinVersionReader, (gameData, savePath, gameLanguage, features) =>
             {
