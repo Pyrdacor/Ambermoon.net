@@ -2579,7 +2579,7 @@ namespace Ambermoon
                     var damageValue = damageValues[index];
                     var bonusDamage = caster.Attributes[Attribute.BonusSpellDamage];
                     uint minDamage = damageValue.Key + (ignoreDamageBonus ? 0 : bonusDamage.CurrentValue);
-                    uint maxDamage = damageValue.Value + (ignoreDamageBonus ? 0 : bonusDamage.CurrentValue + bonusDamage.MaxValue); var bonusDamage = caster.Attributes[Attribute.BonusSpellDamage];
+                    uint maxDamage = damageValue.Value + (ignoreDamageBonus ? 0 : bonusDamage.CurrentValue + bonusDamage.MaxValue);
                     if (!ignoreDamageBonus)
                         AdjustDamage(ref minDamage, ref maxDamage, bonusDamage);
                     DealDamage(minDamage, maxDamage - minDamage);
