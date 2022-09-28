@@ -803,10 +803,10 @@ namespace Ambermoon.Data
             return TypeOfCondition switch
             {
                 ConditionType.GlobalVariable => $"{Type}: Global variable {ObjectIndex} = {Value}, {falseHandling}",
-                ConditionType.EventBit => $"{Type}: Event bit {ObjectIndex / 64 + 1}:{ObjectIndex % 64} = {Value}, {falseHandling}",
+                ConditionType.EventBit => $"{Type}: Event bit {ObjectIndex / 64 + 1}:{1 + ObjectIndex % 64} = {Value}, {falseHandling}",
                 ConditionType.DoorOpen => $"{Type}: Door {ObjectIndex} {(Value == 0 ? "closed" : "open")}, {falseHandling}",
                 ConditionType.ChestOpen => $"{Type}: Chest {ObjectIndex} {(Value == 0 ? "closed" : "open")}, {falseHandling}",
-                ConditionType.CharacterBit => $"{Type}: Character bit {ObjectIndex / 32 + 1}:{ObjectIndex % 32} = {Value}, {falseHandling}",
+                ConditionType.CharacterBit => $"{Type}: Character bit {ObjectIndex / 32 + 1}:{1 + ObjectIndex % 32} = {Value}, {falseHandling}",
                 ConditionType.PartyMember => $"{Type}: Has party member {ObjectIndex} without ailments {Enum.GetFlagNames(DisallowedAilments)}, {falseHandling}",
                 ConditionType.ItemOwned => $"{Type}: {(Value == 0 ? $"Not own item" : $"Own item {Math.Max(1, Count)}x")} {ObjectIndex}, {falseHandling}",
                 ConditionType.UseItem => $"{Type}: Use item {ObjectIndex}, {falseHandling}",
@@ -923,10 +923,10 @@ namespace Ambermoon.Data
             return TypeOfAction switch
             {
                 ActionType.SetGlobalVariable => $"{Type}: Set global variable {ObjectIndex} to {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
-                ActionType.SetEventBit => $"{Type}: Set event bit {ObjectIndex / 64 + 1}:{ObjectIndex % 64} to {(Value != 0 ? "inactive" : "active")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
+                ActionType.SetEventBit => $"{Type}: Set event bit {ObjectIndex / 64 + 1}:{1 + ObjectIndex % 64} to {(Value != 0 ? "inactive" : "active")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.LockDoor => $"{Type}: {(Value == 0 ? "Lock" : "Unlock")} door {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.LockChest => $"{Type}: {(Value == 0 ? "Lock" : "Unlock")} chest {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",                
-                ActionType.SetCharacterBit => $"{Type}: Set character bit {ObjectIndex / 32 + 1}:{ObjectIndex % 32} to {(Value != 0 ? "hidden" : "show")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
+                ActionType.SetCharacterBit => $"{Type}: Set character bit {ObjectIndex / 32 + 1}:{1 + ObjectIndex % 32} to {(Value != 0 ? "hidden" : "show")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.AddItem => $"{Type}: {(Value == 0 ? "Remove" : "Add")} {Math.Max(1, Count)}x item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.AddKeyword => $"{Type}: {(Value == 0 ? "Remove" : "Add")} keyword {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.SetGameOption => $"{Type}: {(Value == 0 ? "Deactivate" : "Activate")} game option {(Data.Enumerations.Option)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
