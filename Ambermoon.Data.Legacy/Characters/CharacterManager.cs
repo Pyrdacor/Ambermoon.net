@@ -34,5 +34,6 @@ namespace Ambermoon.Data.Legacy.Characters
 
         public IReadOnlyList<Monster> Monsters => monsters.Values.ToList();
         public IReadOnlyDictionary<uint, MonsterGroup> MonsterGroups => monsterGroups;
+        public IReadOnlyDictionary<uint, NPC> NPCs => npcs;
     }
 }

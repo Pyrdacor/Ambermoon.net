@@ -1,5 +1,7 @@
 ﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Serialization;
+using Ambermoon.Data.Serialization.Json;
+using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
@@ -14,20 +16,27 @@ namespace Ambermoon.Data
         public uint Morale { get; set; }
         public MonsterFlags MonsterFlags { get; set; }
         public ushort DefeatExperience { get; set; }
+        [JsonProperty]
+        [JsonConverter(typeof(CollectionConverter<Animation[]>))]
         public Animation[] Animations { get; } = new Animation[8];
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] UnknownAdditionalBytes1 { get; set; } // seems to be 16 bytes from 0 to 15
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] MonsterPalette { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] UnknownAdditionalBytes2 { get; set; } // 2 bytes
         public uint FrameWidth { get; set; }
         public uint FrameHeight { get; set; }
         public uint MappedFrameWidth { get; set; }
         public uint MappedFrameHeight { get; set; }
+        [JsonIgnore]
         public Graphic CombatGraphic { get; set; }
 
         [Serializable]
         public class Animation
         {
             public int UsedAmount = 0; // 0-32
+            [JsonConverter(typeof(ByteArrayConverter))]
             public byte[] FrameIndices; // 32 bytes
         }
 

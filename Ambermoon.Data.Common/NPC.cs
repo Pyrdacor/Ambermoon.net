@@ -1,12 +1,17 @@
 ﻿using Ambermoon.Data.Serialization;
+using Ambermoon.Data.Serialization.Json;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace Ambermoon.Data
 {
-    public class NPC : Character, IConversationPartner
+    [JsonConverter(typeof(EventProviderConverter<NPC>))]
+    public class NPC : Character, IConversationPartner, IEventProvider
     {
         public List<string> Texts { get; set; }
+        [JsonProperty(ItemConverterType = typeof(EventConverter))]
         public List<Event> Events { get; } = new List<Event>();
+        [JsonIgnore]
         public List<Event> EventList { get; } = new List<Event>();
 
         public NPC()

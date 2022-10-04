@@ -1,4 +1,7 @@
 ﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Serialization.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Globalization;
 using System.Linq;
@@ -110,8 +113,11 @@ namespace Ambermoon.Data
 
     public class Event
     {
+        [JsonIgnore]
         public uint Index { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public EventType Type { get; set; }
+        [JsonIgnore]
         public Event Next { get; set; }
 
         protected void CloneProperties(Event @event, bool keepNext)
@@ -154,9 +160,13 @@ namespace Ambermoon.Data
         public uint MapIndex { get; set; }
         public uint X { get; set; }
         public uint Y { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public CharacterDirection Direction { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public TravelType? NewTravelType { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public TransitionType Transition { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unknown2 { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -254,11 +264,13 @@ namespace Ambermoon.Data
         /// Note: This is 0-based but the files might by 1-based.
         /// </summary>
         public uint ChestIndex { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public ChestLootFlags LootFlags { get; set; }
         public bool CloseWhenEmpty => LootFlags.HasFlag(ChestLootFlags.CloseWhenEmpty);
         public bool AutoRemove => CloseWhenEmpty && !LootFlags.HasFlag(ChestLootFlags.NoAutoRemove);
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         /// <summary>
         /// Only 1 chest uses this and it has the following bits set:
         /// - SearchSkillCheck
@@ -322,10 +334,12 @@ namespace Ambermoon.Data
         /// </summary>
         public uint EventImageIndex { get; set; }
         public bool HasImage => EventImageIndex != 0xff;
+        [JsonConverter(typeof(StringEnumConverter))]
         public EventTrigger PopupTrigger { get; set; }
         public bool CanTriggerByMoving => PopupTrigger.HasFlag(EventTrigger.Move);
         public bool CanTriggerByCursor => PopupTrigger.HasFlag(EventTrigger.EyeCursor);
         public bool TriggerIfBlind { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unknown { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -350,7 +364,9 @@ namespace Ambermoon.Data
 
     public class SpinnerEvent : Event
     {
+        [JsonConverter(typeof(StringEnumConverter))]
         public CharacterDirection Direction { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unused { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -392,13 +408,17 @@ namespace Ambermoon.Data
             All
         }
 
+        [JsonConverter(typeof(StringEnumConverter))]
         public TrapAilment Ailment { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public TrapTarget Target { get; set; }
         /// <summary>
         /// Base damage. Sometimes direct value but maybe in percentage of max health for other TrapType than 0?
         /// </summary>
         public byte BaseDamage { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public GenderFlag AffectedGenders { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unused { get; set; } // 5 bytes
         public Condition GetAilment() => Ailment switch
         {
@@ -436,10 +456,12 @@ namespace Ambermoon.Data
 
     public class RemoveBuffsEvent : Event
     {
+        [JsonConverter(typeof(StringEnumConverter))]
         /// <summary>
         /// null means all.
         /// </summary>
         public ActiveSpellType? AffectedBuff { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unused { get; set; } // TODO: Maybe some byte is used but was 0 in test case?
 
         public override Event Clone(bool keepNext)
@@ -465,6 +487,7 @@ namespace Ambermoon.Data
         public uint SolutionTextIndex { get; set; }
         public uint CorrectAnswerDictionaryIndex1 { get; set; }
         public uint CorrectAnswerDictionaryIndex2 { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unused { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -535,8 +558,11 @@ namespace Ambermoon.Data
             FirstAnimal,
         }
 
+        [JsonConverter(typeof(StringEnumConverter))]
         public RewardType TypeOfReward { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public RewardTarget Target { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public RewardOperation Operation { get; set; }
         /// <summary>
         /// If set the real value is random in the range 0 to Value.
@@ -601,6 +627,7 @@ namespace Ambermoon.Data
     {
         public uint X { get; set; }
         public uint Y { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unknown { get; set; }
         public uint FrontTileIndex { get; set; }
         /// <summary>
@@ -633,7 +660,9 @@ namespace Ambermoon.Data
     public class StartBattleEvent : Event
     {
         public uint MonsterGroupIndex { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unknown1 { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unknown2 { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -660,6 +689,7 @@ namespace Ambermoon.Data
         public byte ClosingHour { get; set; }
         public uint PlaceIndex { get; set; }
         public byte ClosedTextIndex { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public PlaceType PlaceType { get; set; }
         /// <summary>
         /// Displayed when you bought a horse, ship, etc.
@@ -727,7 +757,9 @@ namespace Ambermoon.Data
             LeadClass = 0x19
         }
 
+        [JsonConverter(typeof(StringEnumConverter))]
         public ConditionType TypeOfCondition { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public Condition DisallowedAilments { get; set; }
         /// <summary>
         /// This depends on condition type.
@@ -870,7 +902,9 @@ namespace Ambermoon.Data
             AddFood = 0x13
         }
 
+        [JsonConverter(typeof(StringEnumConverter))]
         public ActionType TypeOfAction { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unknown1 { get; set; }
         /// <summary>
         /// This depends on condition type.
@@ -879,6 +913,7 @@ namespace Ambermoon.Data
         public uint ObjectIndex { get; set; } // 0 = no variable needed
         public uint Value { get; set; }
         public uint Count { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unknown2 { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -927,6 +962,7 @@ namespace Ambermoon.Data
         /// 0xffff means continue with next map event from the list.
         /// </summary>
         public uint ContinueIfFalseWithMapEventIndex { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unused { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -966,11 +1002,14 @@ namespace Ambermoon.Data
             Leave = 8
         }
 
+        [JsonConverter(typeof(StringEnumConverter))]
         public InteractionType Interaction { get; set; }
         public ushort Value { get; set; }
         public uint KeywordIndex => Value;
         public uint ItemIndex => Value;
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unused1 { get; set; } // 4
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unused2 { get; set; } // 2
 
         public override Event Clone(bool keepNext)
@@ -1003,6 +1042,7 @@ namespace Ambermoon.Data
     public class PrintTextEvent : Event
     {
         public uint NPCTextIndex { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unused { get; set; } // 8
 
         public override Event Clone(bool keepNext)
@@ -1032,9 +1072,11 @@ namespace Ambermoon.Data
             Food
         }
 
+        [JsonConverter(typeof(StringEnumConverter))]
         public CreateType TypeOfCreation { get; set; }
         public uint Amount { get; set; }
         public uint ItemIndex { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unused { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -1067,6 +1109,7 @@ namespace Ambermoon.Data
     public class DecisionEvent : Event
     {
         public uint TextIndex { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unknown1 { get; set; }
         /// <summary>
         /// Event index to continue with if "No" is selected.
@@ -1096,6 +1139,7 @@ namespace Ambermoon.Data
     {
         public uint MusicIndex { get; set; }
         public byte Volume { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unknown1 { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -1118,6 +1162,7 @@ namespace Ambermoon.Data
 
     public class ExitEvent : Event
     {
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unused { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -1140,9 +1185,12 @@ namespace Ambermoon.Data
     {
         public uint X { get; set; }
         public uint Y { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public TravelType TravelType { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unknown1 { get; set; }
         public uint MapIndex { get; set; }
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unknown2 { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -1168,6 +1216,7 @@ namespace Ambermoon.Data
 
     public class InteractEvent : Event
     {
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Unused { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -1188,6 +1237,7 @@ namespace Ambermoon.Data
 
     public class DebugEvent : Event
     {
+        [JsonConverter(typeof(ByteArrayConverter))]
         public byte[] Data { get; set; }
 
         public override Event Clone(bool keepNext)

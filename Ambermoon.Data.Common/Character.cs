@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AmbermoonSerialize;
+using Ambermoon.Data.Serialization.Json;
 
 namespace Ambermoon.Data
 {
@@ -40,9 +42,13 @@ namespace Ambermoon.Data
         public ushort CharacterBitIndex { get; set; }
         public Condition Conditions { get; set; }
         public ushort UnknownWord34 { get; set; }
+        [JsonProperty(Serializer = typeof(AttributesConverter))]
         public CharacterValueCollection<Attribute> Attributes { get; } = new CharacterValueCollection<Attribute>(10); // 8 attribute + age + a hidden attribute
+        [JsonProperty(Serializer = typeof(SkillsConverter))]
         public CharacterValueCollection<Skill> Skills { get; } = new CharacterValueCollection<Skill>(10);
+        [JsonProperty(Serializer = typeof(CharacterValueConverter), SerializerArgument = 3)]
         public CharacterValue HitPoints { get; } = new CharacterValue();
+        [JsonProperty(Serializer = typeof(CharacterValueConverter), SerializerArgument = 3)]
         public CharacterValue SpellPoints { get; } = new CharacterValue();
         public short BaseAttack { get; set; }
         public short BaseDefense { get; set; }
@@ -238,7 +244,7 @@ namespace Ambermoon.Data
             }
         }
 
-        public Action<Character> Died;
+        public event Action<Character> Died;
 
         public void Die(Condition deathCondition = Condition.DeadCorpse)
         {
@@ -272,7 +278,9 @@ namespace Ambermoon.Data
             return Conditions.CanFlee();
         }
 
+        [JsonProperty(Serializer = typeof(InventoryConverter))]
         public Inventory Inventory { get; } = new Inventory();
+        [JsonProperty(Serializer = typeof(EquipmentConverter))]
         public Equipment Equipment { get; } = new Equipment();
 
         public static readonly List<Condition> PossibleConditions = Enum.GetValues<Condition>()

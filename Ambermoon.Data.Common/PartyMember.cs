@@ -1,11 +1,14 @@
 ﻿using Ambermoon.Data.Serialization;
+using Ambermoon.Data.Serialization.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Ambermoon.Data
 {
-    public class PartyMember : Character, IConversationPartner
+    [JsonConverter(typeof(EventProviderConverter<PartyMember>))]
+    public class PartyMember : Character, IConversationPartner, IEventProvider
     {
         public ushort MarkOfReturnMapIndex { get; set; }
         public ushort MarkOfReturnX { get; set; }
