@@ -164,7 +164,9 @@ namespace Ambermoon.Data.Legacy.Serialization
             if (fileType == FileType.LOB || fileType == FileType.VOL1)
             {
                 reader.Position += 4; // skip header
-                uint decodedSize = reader.PeekDword() & 0x00ffffff; // the first byte would contain the offset for the size entry (= 6)
+                uint lobHeader = reader.PeekDword();
+                uint decodedSize = lobHeader & 0x00ffffff;
+                uint lobType = lobHeader >> 24;
 
                 // AMNP archives are always encoded
                 if (containerType == FileType.AMNP)
@@ -178,7 +180,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                     reader.Position += 8;  // skip decoded and encoded size
                 }
 
-                return Lob.Decompress(reader, decodedSize);
+                return lobType == 0xff
+                    ? ExtendedLob.Decompress(reader, decodedSize)
+                    : Lob.Decompress(reader, decodedSize); // should be type 06
             }
             else
             {

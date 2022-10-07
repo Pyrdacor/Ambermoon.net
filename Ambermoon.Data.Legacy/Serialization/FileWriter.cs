@@ -16,7 +16,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             return buffer;
         }
 
-        public static void Write(DataWriter writer, IFileContainer fileContainer)
+        public static void Write(DataWriter writer, IFileContainer fileContainer, bool allowExtendedLob)
         {
             var fileType = fileContainer.Header.AsFileType();
 
@@ -26,16 +26,16 @@ namespace Ambermoon.Data.Legacy.Serialization
                     WriteJH(writer, AlignData(fileContainer.Files[1].ToArray()), (ushort)(fileContainer.Header & 0xffff), false);
                     break;
                 case FileType.LOB:
-                    WriteLob(writer, fileContainer.Files[1].ToArray());
+                    WriteLob(writer, fileContainer.Files[1].ToArray(), allowExtendedLob);
                     break;
                 case FileType.VOL1:
-                    WriteVol1(writer, fileContainer.Files[1].ToArray());
+                    WriteVol1(writer, fileContainer.Files[1].ToArray(), allowExtendedLob);
                     break;
                 case FileType.AMBR:
                 case FileType.AMNC:
                 case FileType.AMNP:
                 case FileType.AMPC:
-                    WriteContainer(writer, fileContainer.Files.ToDictionary(f => (uint)f.Key, f => f.Value.ToArray()), fileType);
+                    WriteContainer(writer, fileContainer.Files.ToDictionary(f => (uint)f.Key, f => f.Value.ToArray()), fileType, null, allowExtendedLob);
                     break;
                 case FileType.JHPlusAMBR:
                 {
@@ -45,7 +45,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     break;
                 }
                 case FileType.JHPlusLOB:
-                    WriteJH(writer, fileContainer.Files[1].ToArray(), (ushort)(fileContainer.Header & 0xffff), true);
+                    WriteJH(writer, fileContainer.Files[1].ToArray(), (ushort)(fileContainer.Header & 0xffff), true, false, allowExtendedLob);
                     break;
                 default: // raw
                     writer.Write(fileContainer.Files[1].ToArray());
@@ -53,12 +53,13 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
         }
 
-        public static void WriteJH(DataWriter writer, byte[] fileData, ushort encryptKey, bool additionalLobCompression, bool noHeader = false)
+        public static void WriteJH(DataWriter writer, byte[] fileData, ushort encryptKey, bool additionalLobCompression, bool noHeader = false,
+            bool allowExtendedLob = false)
         {
             if (additionalLobCompression)
             {
                 var lobWriter = new DataWriter();
-                WriteLob(lobWriter, fileData, (uint)FileType.LOB);
+                WriteLob(lobWriter, fileData, (uint)FileType.LOB, allowExtendedLob);
                 fileData = AlignData(lobWriter.ToArray());
             }
 
@@ -73,25 +74,28 @@ namespace Ambermoon.Data.Legacy.Serialization
             writer.Write(encryptedData);
         }
 
-        public static void WriteLob(DataWriter writer, byte[] fileData)
+        public static void WriteLob(DataWriter writer, byte[] fileData, bool allowExtendedLob)
         {
-            WriteLob(writer, AlignData(fileData), (uint)FileType.LOB);
+            WriteLob(writer, AlignData(fileData), (uint)FileType.LOB, allowExtendedLob);
         }
 
-        public static void WriteVol1(DataWriter writer, byte[] fileData)
+        public static void WriteVol1(DataWriter writer, byte[] fileData, bool allowExtendedLob)
         {
-            WriteLob(writer, AlignData(fileData), (uint)FileType.VOL1);
+            WriteLob(writer, AlignData(fileData), (uint)FileType.VOL1, allowExtendedLob);
         }
 
-        static void WriteLob(DataWriter writer, byte[] fileData, uint header)
+        static void WriteLob(DataWriter writer, byte[] fileData, uint header, bool allowExtendedLob)
         {
-            var compressedData = Compression.Lob.CompressData(fileData);
+            var compressedData = allowExtendedLob
+                ? Compression.ExtendedLob.CompressData(fileData)
+                : Compression.Lob.CompressData(fileData);
 
             if (fileData.Length % 2 == 1 || compressedData.Length % 2 == 1)
                 throw new AmbermoonException(ExceptionScope.Application, "Lob source or compressed data is not word-aligned.");
 
             writer.Write(header);
-            writer.Write((uint)fileData.Length | 0x06000000u);
+            uint lobType = allowExtendedLob ? 0xff000000u : 0x06000000u;
+            writer.Write((uint)fileData.Length | lobType);
             writer.Write((uint)compressedData.Length);
             writer.Write(compressedData);
         }
@@ -104,7 +108,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 WriteContainer(writer, filesData.Select((f, i) => new { f, i }).ToDictionary(f => 1 + (uint)f.i, f => f.f), fileType);
         }
 
-        public static void WriteContainer(DataWriter writer, Dictionary<uint, byte[]> filesData, FileType fileType, int? minimumFileCount = null)
+        public static void WriteContainer(DataWriter writer, Dictionary<uint, byte[]> filesData, FileType fileType,
+            int? minimumFileCount = null, bool allowExtendedLob = false)
         {
             switch (fileType)
             {
@@ -152,13 +157,13 @@ namespace Ambermoon.Data.Legacy.Serialization
                         }
                         else if (fileType == FileType.AMPC)
                         {
-                            WriteLob(writerWithoutHeader, fileData);
+                            WriteLob(writerWithoutHeader, fileData, allowExtendedLob);
                         }
                         else // AMNP
                         {
                             // this may be lob compressed if size is better
                             var lobWriter = new DataWriter();
-                            WriteLob(lobWriter, fileData);
+                            WriteLob(lobWriter, fileData, allowExtendedLob);
                             var data = lobWriter.Size - 4 < fileData.Length ? lobWriter.ToArray() : fileData;
                             bool lob = data != fileData;
                             // this is always JH encoded
