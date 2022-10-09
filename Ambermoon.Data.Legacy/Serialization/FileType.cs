@@ -40,7 +40,11 @@ namespace Ambermoon.Data.Legacy.Serialization
         /// <summary>
         /// Special format. JH combined with AMBR. Key in lower word.
         /// </summary>
-        JHPlusAMBR = 0xbbbb0000
+        JHPlusAMBR = 0xbbbb0000,
+        /// <summary>
+        /// Special text container.
+        /// </summary>
+        AMTX = 0x414d5458
     }
 
     [EditorBrowsable(EditorBrowsableState.Advanced)]

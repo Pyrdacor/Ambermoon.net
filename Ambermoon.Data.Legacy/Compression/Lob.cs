@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.Compression
 {
-    public static class Lob
+    internal static class Lob
     {
         const int MinMatchLength = 3;
         const int MaxMatchLength = 18;

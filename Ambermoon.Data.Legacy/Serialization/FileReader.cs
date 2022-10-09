@@ -1,8 +1,10 @@
 ﻿using Ambermoon.Data.Legacy.Compression;
 using Ambermoon.Data.Serialization;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using static Ambermoon.Data.Legacy.Compression.LobCompression;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
@@ -84,8 +86,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case FileType.AMNP:
                 case FileType.AMBR:
                 case FileType.AMPC:
+                case FileType.AMTX:
                     fileInfo.SingleFile = false;
-                    fileInfo.NumFiles = reader.ReadWord();
+                    fileInfo.NumFiles = reader.ReadWord() & 0x3ff;
                     break;
                 default: // raw format
                     var fileContainer = new FileContainer { Name = name };
@@ -113,7 +116,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     return ProcessFileInfo(name, new FileInfo
                     {
                         FileType = FileType.JHPlusAMBR,
-                        NumFiles = fileContainer.Files[1].ReadWord(),
+                        NumFiles = fileContainer.Files[1].ReadWord() & 0x3ff,
                         SingleFile = false
                     }, fileContainer.Files[1] as DataReader);
                 }
@@ -126,17 +129,60 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
             else
             {
-                reader.Position = 6; // here the file sizes follow (dword each)
-                int offset = 6 + (fileInfo.NumFiles << 2); // 4 bytes per size entry
+                reader.Position = 4; // skip header
+                ushort fileCount = reader.ReadWord();
+                int type = fileCount >> 14;
+                fileCount &= 0x3ff;
 
-                for (int i = 1; i <= fileInfo.NumFiles; ++i)
+                if (type == 0 || type == 2)
                 {
-                    int size = (int)reader.ReadDword();
-                    fileContainer.Files.Add(i, size == 0 ? new DataReader(new byte[0]) : DecodeFile(new DataReader(reader, offset, size), fileInfo.FileType, i));
-                    offset += size;
-                }
+                    int entrySize = type == 2 ? 2 : 4;
+                    int offset = 6 + fileCount * entrySize;
+                    Func<int> fileSizeProvider = type == 2 ? () => reader.ReadWord() : () => (int)reader.ReadDword();
 
-                reader.Position = offset;
+                    for (int i = 1; i <= fileCount; ++i)
+                    {
+                        int fileSize = fileSizeProvider();
+                        fileContainer.Files.Add(i, fileSize == 0 ? new DataReader(Array.Empty<byte>()) : DecodeFile(new DataReader(reader, offset, fileSize), fileInfo.FileType, i));
+                        offset += fileSize;
+                    }
+
+                    reader.Position = offset;
+                }
+                else // sections
+                {
+                    var fileEntries = new Dictionary<uint, KeyValuePair<int, int>>();
+                    Func<int> fileSizeProvider = type == 3 ? () => reader.ReadWord() : () => (int)reader.ReadDword();
+                    int sectionCount = reader.ReadWord();
+
+                    if (sectionCount == 0)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid container section count.");
+
+                    int offset = 0; // relative offset for now
+
+                    for (int i = 0; i < sectionCount; ++i)
+                    {
+                        uint index = reader.ReadWord();
+                        int sectionSize = reader.ReadWord();
+
+                        for (int j = 0; j < sectionSize; ++j)
+                        {
+                            int fileSize = fileSizeProvider();
+                            fileEntries.Add(index++, KeyValuePair.Create(offset, fileSize));
+                            offset += fileSize;
+                        }
+                    }
+
+                    offset = reader.Position;
+
+                    for (int i = 1; i <= fileCount; ++i)
+                    {
+                        if (fileEntries.TryGetValue((uint)i, out var entry))
+                            fileContainer.Files.Add(i, DecodeFile(new DataReader(reader, offset + entry.Key, entry.Value), fileInfo.FileType, i));
+                        else
+                            fileContainer.Files.Add(i, new DataReader(Array.Empty<byte>()));
+                    }
+                }
             }
 
             return fileContainer;
@@ -166,7 +212,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 reader.Position += 4; // skip header
                 uint lobHeader = reader.PeekDword();
                 uint decodedSize = lobHeader & 0x00ffffff;
-                uint lobType = lobHeader >> 24;
+                LobType lobType = (LobType)(lobHeader >> 24);
 
                 // AMNP archives are always encoded
                 if (containerType == FileType.AMNP)
@@ -180,9 +226,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     reader.Position += 8;  // skip decoded and encoded size
                 }
 
-                return lobType == 0xff
-                    ? ExtendedLob.Decompress(reader, decodedSize)
-                    : Lob.Decompress(reader, decodedSize); // should be type 06
+                return Decompress(reader, decodedSize, lobType);
             }
             else
             {

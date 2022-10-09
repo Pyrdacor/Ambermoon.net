@@ -250,7 +250,7 @@ namespace Ambermoon.Data.Legacy
                 string name = GetSavegameNames(gameData, out _, 10)[slot - 1];
                 WriteSavegameName(gameData, slot, ref name);
                 var savesWriter = new DataWriter();
-                FileWriter.Write(savesWriter, (gameData as ILegacyGameData).Files["Saves"], false);
+                FileWriter.Write(savesWriter, (gameData as ILegacyGameData).Files["Saves"], Compression.LobCompression.LobType.Ambermoon);
                 File.WriteAllBytes(savesPath, savesWriter.ToArray());
             }
         }
@@ -350,7 +350,7 @@ namespace Ambermoon.Data.Legacy
             if (savesContainer != null)
             {
                 var savesWriter = new DataWriter();
-                FileWriter.Write(savesWriter, savesContainer, false);
+                FileWriter.Write(savesWriter, savesContainer, Compression.LobCompression.LobType.Ambermoon);
                 File.WriteAllBytes(savesPath, savesWriter.ToArray());
             }
         }

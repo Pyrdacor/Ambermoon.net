@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Ambermoon.Data.Legacy.Compression;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using static Ambermoon.Data.Legacy.Compression.LobCompression;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
@@ -16,7 +18,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             return buffer;
         }
 
-        public static void Write(DataWriter writer, IFileContainer fileContainer, bool allowExtendedLob)
+        public static void Write(DataWriter writer, IFileContainer fileContainer, LobType lobType)
         {
             var fileType = fileContainer.Header.AsFileType();
 
@@ -26,16 +28,16 @@ namespace Ambermoon.Data.Legacy.Serialization
                     WriteJH(writer, AlignData(fileContainer.Files[1].ToArray()), (ushort)(fileContainer.Header & 0xffff), false);
                     break;
                 case FileType.LOB:
-                    WriteLob(writer, fileContainer.Files[1].ToArray(), allowExtendedLob);
+                    WriteLob(writer, fileContainer.Files[1].ToArray(), lobType);
                     break;
                 case FileType.VOL1:
-                    WriteVol1(writer, fileContainer.Files[1].ToArray(), allowExtendedLob);
+                    WriteVol1(writer, fileContainer.Files[1].ToArray(), lobType);
                     break;
                 case FileType.AMBR:
                 case FileType.AMNC:
                 case FileType.AMNP:
                 case FileType.AMPC:
-                    WriteContainer(writer, fileContainer.Files.ToDictionary(f => (uint)f.Key, f => f.Value.ToArray()), fileType, null, allowExtendedLob);
+                    WriteContainer(writer, fileContainer.Files.ToDictionary(f => (uint)f.Key, f => f.Value.ToArray()), fileType, null, lobType);
                     break;
                 case FileType.JHPlusAMBR:
                 {
@@ -45,7 +47,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     break;
                 }
                 case FileType.JHPlusLOB:
-                    WriteJH(writer, fileContainer.Files[1].ToArray(), (ushort)(fileContainer.Header & 0xffff), true, false, allowExtendedLob);
+                    WriteJH(writer, fileContainer.Files[1].ToArray(), (ushort)(fileContainer.Header & 0xffff), true, false, lobType);
                     break;
                 default: // raw
                     writer.Write(fileContainer.Files[1].ToArray());
@@ -53,13 +55,13 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
         }
 
-        public static void WriteJH(DataWriter writer, byte[] fileData, ushort encryptKey, bool additionalLobCompression, bool noHeader = false,
-            bool allowExtendedLob = false)
+        public static void WriteJH(DataWriter writer, byte[] fileData, ushort encryptKey, bool additionalLobCompression,
+            bool noHeader = false, LobType lobType = LobType.Ambermoon)
         {
             if (additionalLobCompression)
             {
                 var lobWriter = new DataWriter();
-                WriteLob(lobWriter, fileData, (uint)FileType.LOB, allowExtendedLob);
+                WriteLob(lobWriter, fileData, (uint)FileType.LOB, lobType);
                 fileData = AlignData(lobWriter.ToArray());
             }
 
@@ -74,28 +76,26 @@ namespace Ambermoon.Data.Legacy.Serialization
             writer.Write(encryptedData);
         }
 
-        public static void WriteLob(DataWriter writer, byte[] fileData, bool allowExtendedLob)
+        public static void WriteLob(DataWriter writer, byte[] fileData, LobType lobType)
         {
-            WriteLob(writer, AlignData(fileData), (uint)FileType.LOB, allowExtendedLob);
+            WriteLob(writer, AlignData(fileData), (uint)FileType.LOB, lobType);
         }
 
-        public static void WriteVol1(DataWriter writer, byte[] fileData, bool allowExtendedLob)
+        public static void WriteVol1(DataWriter writer, byte[] fileData, LobType lobType)
         {
-            WriteLob(writer, AlignData(fileData), (uint)FileType.VOL1, allowExtendedLob);
+            WriteLob(writer, AlignData(fileData), (uint)FileType.VOL1, lobType);
         }
 
-        static void WriteLob(DataWriter writer, byte[] fileData, uint header, bool allowExtendedLob)
+        static void WriteLob(DataWriter writer, byte[] fileData, uint header, LobType lobType)
         {
-            var compressedData = allowExtendedLob
-                ? Compression.ExtendedLob.CompressData(fileData)
-                : Compression.Lob.CompressData(fileData);
+            var compressedData = LobCompression.Compress(fileData, lobType);
 
             if (fileData.Length % 2 == 1 || compressedData.Length % 2 == 1)
                 throw new AmbermoonException(ExceptionScope.Application, "Lob source or compressed data is not word-aligned.");
 
             writer.Write(header);
-            uint lobType = allowExtendedLob ? 0xff000000u : 0x06000000u;
-            writer.Write((uint)fileData.Length | lobType);
+            uint lobTypeCode = (uint)lobType << 24;
+            writer.Write((uint)fileData.Length | lobTypeCode);
             writer.Write((uint)compressedData.Length);
             writer.Write(compressedData);
         }
@@ -109,7 +109,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         }
 
         public static void WriteContainer(DataWriter writer, Dictionary<uint, byte[]> filesData, FileType fileType,
-            int? minimumFileCount = null, bool allowExtendedLob = false)
+            int? minimumFileCount = null, LobType lobType = LobType.Ambermoon, bool compressDictionary = false)
         {
             switch (fileType)
             {
@@ -157,13 +157,13 @@ namespace Ambermoon.Data.Legacy.Serialization
                         }
                         else if (fileType == FileType.AMPC)
                         {
-                            WriteLob(writerWithoutHeader, fileData, allowExtendedLob);
+                            WriteLob(writerWithoutHeader, fileData, lobType);
                         }
                         else // AMNP
                         {
                             // this may be lob compressed if size is better
                             var lobWriter = new DataWriter();
-                            WriteLob(lobWriter, fileData, allowExtendedLob);
+                            WriteLob(lobWriter, fileData, lobType);
                             var data = lobWriter.Size - 4 < fileData.Length ? lobWriter.ToArray() : fileData;
                             bool lob = data != fileData;
                             // this is always JH encoded
@@ -179,8 +179,104 @@ namespace Ambermoon.Data.Legacy.Serialization
                     }
 
                     writer.Write((uint)fileType);
-                    writer.Write((ushort)totalFileNumber);
-                    fileSizes.ForEach(fileSize => writer.Write((uint)fileSize));
+
+                    if (compressDictionary)
+                    {
+                        uint largestGapSize = 0;
+                        uint sectionStart = 1;
+                        bool isGap = false;
+                        var sections = new List<KeyValuePair<uint, uint>>();
+                        var indices = new List<uint>(filesData.Keys);
+                        indices.Sort();
+                        uint maxIndex = indices.Max();
+
+                        if (maxIndex > 530) // this is the limit in original code
+                            throw new AmbermoonException(ExceptionScope.Application, "More than 530 files are not allowed.");
+
+                        bool useSections = false;
+
+                        if (minimumFileCount == null || minimumFileCount <= maxIndex)
+                        {
+                            // Sections are not allowed if the minimum file count
+                            // exceeds the highest file index. In that case there
+                            // would be empty entries at the end which can't be
+                            // expressed by the section encoding.
+
+                            for (uint i = 1; i <= maxIndex; ++i)
+                            {
+                                if (!filesData.TryGetValue(i, out var fileData) || fileData.Length == 0)
+                                {
+                                    if (i == 1)
+                                        isGap = true;
+                                    else if (!isGap)
+                                    {
+                                        sections.Add(KeyValuePair.Create(sectionStart, i - sectionStart));
+                                        isGap = true;
+                                        sectionStart = i;
+                                    }
+                                }
+                                else if (isGap)
+                                {
+                                    uint gapSize = i - sectionStart;
+
+                                    if (gapSize > largestGapSize)
+                                        largestGapSize = gapSize;
+
+                                    isGap = false;
+                                    sectionStart = i;
+                                }
+                            }
+
+                            if (maxIndex > sectionStart)
+                            {
+                                // isGap can't be true here, last section is always valid
+                                sections.Add(KeyValuePair.Create(sectionStart, maxIndex + 1 - sectionStart));
+                            }
+
+                            // use sections?
+                            useSections = sections.Count != 0 && largestGapSize > 2; // don't bother to use sections for tiny gaps
+                        }
+
+                        bool anyFileExceedsSize = fileSizes.Any(size => size > 0xffff);
+                        uint mask = anyFileExceedsSize
+                            ? (useSections ? 0x4000u : 0x0000u)
+                            : (useSections ? 0xc000u : 0x8000u);
+                        writer.Write((ushort)(mask | (uint)totalFileNumber));
+
+                        if (useSections)
+                        {
+                            writer.Write((ushort)sections.Count);
+
+                            foreach (var section in sections)
+                            {
+                                writer.Write((ushort)section.Key);
+                                writer.Write((ushort)section.Value);
+                                int index = (int)section.Key - 1;
+
+                                for (int i = 0; i < section.Value; ++i) 
+                                {
+                                    if (anyFileExceedsSize)
+                                        writer.Write((uint)(fileSizes[index++]));
+                                    else
+                                        writer.Write((ushort)(fileSizes[index++]));
+                                }
+                            }
+                        }
+                        else if (anyFileExceedsSize)
+                        {
+                            fileSizes.ForEach(fileSize => writer.Write((uint)fileSize));
+                        }
+                        else
+                        {
+                            fileSizes.ForEach(fileSize => writer.Write((ushort)fileSize));
+                        }
+                    }
+                    else
+                    {
+                        writer.Write((ushort)totalFileNumber);
+                        fileSizes.ForEach(fileSize => writer.Write((uint)fileSize));
+                    }
+
                     writer.Write(writerWithoutHeader.ToArray());
                 }
                 break;

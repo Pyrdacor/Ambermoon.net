@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Compression
 {
-    public static class ExtendedLob
+    internal static class ExtendedLob
     {
         const int MinMatchLength = 3;
         const int MaxSmallMatchLength = 3 + 0xf;
@@ -15,7 +15,7 @@ namespace Ambermoon.Data.Legacy.Compression
         const int MaxLargeMatchOffset = 0x3ff;
 
         // Small match: 100LLLLO OOOOOOOO, Length = 0000 (3) to 1111 (18), Offset = 000000000 (0) to 111111111 (511)
-        // Large match: 100LLLLL LLOOOOOO OOOO, Length = 0000000 (3) to 1111111 (130), Offset = 0000000000 (0) to 1111111111 (1023)
+        // Large match: 100LLLLL LLOOOOOO OOOO, Length = 00000000 (3) to 11111111 (130), Offset = 0000000000 (0) to 1111111111 (1023)
 
         public static byte[] CompressData(byte[] data)
         {
@@ -27,14 +27,6 @@ namespace Ambermoon.Data.Legacy.Compression
             var trie = new MatchTrie(MaxLargeMatchOffset);
             int i = 0;
             bool justFoundRle = false;
-
-            void Debug(string text)
-            {
-                string enctext = $"{i:x4}: {text}";
-                System.IO.File.AppendAllText(@"C:\Users\flavia\Downloads\ExtLobTests\enc.txt", enctext + Environment.NewLine);
-                text = $"{compressedData.Count:000}: {text}";
-                System.IO.File.AppendAllText(@"C:\Users\flavia\Downloads\ExtLobTests\encode.txt", text + Environment.NewLine);
-            }
 
             bool CheckRle()
             {
@@ -59,7 +51,7 @@ namespace Ambermoon.Data.Legacy.Compression
                 {
                     if (data[i] == literal)
                     {
-                        if (++length == 34)
+                        if (++length == 258)
                             break; // enough for our purposes
                     }
                     else
@@ -74,8 +66,16 @@ namespace Ambermoon.Data.Legacy.Compression
                 if (rleCount >= 3 && !noRle)
                 {
                     int index = i - rleCount;
+                    int addTrieCount = rleCount;
 
-                    for (int j = 0; j < rleCount; ++j)
+                    if (index < 3)
+                    {
+                        int reduce = 3 - index;
+                        addTrieCount -= reduce;
+                        index += reduce;
+                    }
+
+                    for (int j = 0; j < addTrieCount; ++j)
                         trie.Add(data, index + j, Math.Min(MaxLargeMatchLength, data.Length - index - j));
 
                     byte literal = useRleLiteral ?? rleLiteral;
@@ -85,7 +85,6 @@ namespace Ambermoon.Data.Legacy.Compression
                         while (rleCount >= 3)
                         {
                             int count = Math.Min(rleCount, 258);
-                            Debug("RLE0," + count.ToString());
                             compressedData.Add(0);
                             compressedData.Add((byte)(count - 3));
                             rleCount -= count;
@@ -96,7 +95,6 @@ namespace Ambermoon.Data.Legacy.Compression
                         while (rleCount >= 3)
                         {
                             int count = Math.Min(rleCount, 34);
-                            Debug("RLE" + ((int)literal).ToString() + "," + count.ToString());
                             compressedData.Add((byte)(0xc0 | (count - 3)));
                             compressedData.Add(literal);
                             rleCount -= count;
@@ -116,7 +114,6 @@ namespace Ambermoon.Data.Legacy.Compression
                     {
                         if (!literals.Any(l => l > 31))
                         {
-                            literals.ForEach(_ => Debug("SmallLiteral"));
                             literals.ForEach(l => compressedData.Add((byte)(l | 0xe0)));
                             literals.Clear();
                             break;
@@ -124,7 +121,6 @@ namespace Ambermoon.Data.Legacy.Compression
                         else
                         {
                             int count = Math.Min(127, literals.Count);
-                            Debug("Literals," + count);
                             var literalsToEncode = literals.Take(count).ToList();
                             compressedData.Add((byte)count);
                             literalsToEncode.ForEach(compressedData.Add);
@@ -209,7 +205,7 @@ namespace Ambermoon.Data.Legacy.Compression
                 var match = trie.GetLongestMatch(data, i, maxMatchLength);
                 int rleLength = justFoundRle ? CheckRleLength(data, i) : 0;
 
-                if (match.Value >= MinMatchLength && match.Value > rleLength)
+                if (i - match.Key <= MaxLargeMatchOffset && match.Value >= MinMatchLength && match.Value > rleLength)
                 {
                     trie.Add(data, i, maxMatchLength);
 
@@ -217,7 +213,7 @@ namespace Ambermoon.Data.Legacy.Compression
                         WriteCurrentData(false);
                     else
                         rleCount = 0;
-                    Debug("Match[" + (i - match.Key) + "," + match.Value + "]");
+
                     AddMatch(i - match.Key, match.Value);
 
                     for (int j = 1; j < match.Value; ++j)
@@ -231,7 +227,8 @@ namespace Ambermoon.Data.Legacy.Compression
                 }
                 else
                 {
-                    trie.Add(data, i, maxMatchLength);
+                    if (rleCount < 3)
+                        trie.Add(data, i, maxMatchLength);
                     WriteCurrentData(true);
                     literals.Add(data[i]);
                 }
@@ -252,29 +249,19 @@ namespace Ambermoon.Data.Legacy.Compression
             bool useLargeMatchReserve = false;
             byte largeMatchReserve = 0;
 
-            void Debug(int index, string text)
-            {
-                text = $"{index:000}: {text}";
-                System.IO.File.AppendAllText(@"C:\Users\flavia\Downloads\ExtLobTests\decode.txt", text + Environment.NewLine);
-            }
-
             while (decodeIndex < decodedSize)
             {
-                int position = reader.Position;
                 byte header = reader.ReadByte();
 
                 if (header == 0)
                 {
                     int amount = reader.ReadByte() + 3;
-                    Debug(position, "RLE0," + amount);
 
                     for (int i = 0; i < amount; ++i)
                         decodedData[decodeIndex++] = 0;
                 }
                 else if (header < 128)
                 {
-                    Debug(position, "Literals," + (int)header);
-
                     for (int i = 0; i < header; ++i)
                         decodedData[decodeIndex++] = reader.ReadByte();
                 }
@@ -284,7 +271,6 @@ namespace Ambermoon.Data.Legacy.Compression
 
                     void ProcessMatch(int offset, int length)
                     {
-                        Debug(position, "Match[" + offset + "," + length + "]");
                         int sourceIndex = (int)decodeIndex - offset;
 
                         for (int i = 0; i < length; ++i)
@@ -322,14 +308,12 @@ namespace Ambermoon.Data.Legacy.Compression
                     {
                         int length = (header & 0x1f) + 3;
                         byte literal = reader.ReadByte();
-                        Debug(position, "RLE" + (int)literal + "," + length);
 
                         for (int i = 0; i < length; ++i)
                             decodedData[decodeIndex++] = literal;
                     }
                     else // mode == 3, small literal
                     {
-                        Debug(position, "SmallLiteral");
                         decodedData[decodeIndex++] = (byte)(header & 0x1f);
                     }
                 }
