@@ -1,5 +1,4 @@
-﻿using Ambermoon.Data.Legacy.Compression;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using static Ambermoon.Data.Legacy.Compression.LobCompression;
@@ -18,7 +17,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             return buffer;
         }
 
-        public static void Write(DataWriter writer, IFileContainer fileContainer, LobType lobType)
+        public static void Write(DataWriter writer, IFileContainer fileContainer, LobType lobType,
+            FileDictionaryCompression fileDictionaryCompression, Action<int, int, int?> compressionPrinter = null)
         {
             var fileType = fileContainer.Header.AsFileType();
 
@@ -37,7 +37,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case FileType.AMNC:
                 case FileType.AMNP:
                 case FileType.AMPC:
-                    WriteContainer(writer, fileContainer.Files.ToDictionary(f => (uint)f.Key, f => f.Value.ToArray()), fileType, null, lobType);
+                    WriteContainer(writer, fileContainer.Files.ToDictionary(f => (uint)f.Key, f => f.Value.ToArray()), fileType, null,
+                        lobType, fileDictionaryCompression, compressionPrinter);
                     break;
                 case FileType.JHPlusAMBR:
                 {
@@ -76,19 +77,75 @@ namespace Ambermoon.Data.Legacy.Serialization
             writer.Write(encryptedData);
         }
 
-        public static void WriteLob(DataWriter writer, byte[] fileData, LobType lobType)
+        public static void WriteLob(DataWriter writer, byte[] fileData, LobType lobType, Action<int, int, int?> compressionPrinter = null)
         {
-            WriteLob(writer, AlignData(fileData), (uint)FileType.LOB, lobType);
+            WriteLob(writer, AlignData(fileData), (uint)FileType.LOB, lobType, compressionPrinter);
         }
 
-        public static void WriteVol1(DataWriter writer, byte[] fileData, LobType lobType)
+        public static void WriteVol1(DataWriter writer, byte[] fileData, LobType lobType, Action<int, int, int?> compressionPrinter = null)
         {
-            WriteLob(writer, AlignData(fileData), (uint)FileType.VOL1, lobType);
+            WriteLob(writer, AlignData(fileData), (uint)FileType.VOL1, lobType, compressionPrinter);
         }
 
-        static void WriteLob(DataWriter writer, byte[] fileData, uint header, LobType lobType)
+        static void WriteLob(DataWriter writer, byte[] fileData, uint header, LobType lobType, Action<int, int, int?> compressionPrinter = null)
         {
-            var compressedData = LobCompression.Compress(fileData, lobType);
+            if (lobType == LobType.TakeBest)
+            {
+                var extendedLobWriter = new DataWriter();
+                WriteLob(extendedLobWriter, fileData, header, LobType.Extended, compressionPrinter);
+                var originalLobWriter = new DataWriter();
+                WriteLob(originalLobWriter, fileData, header, LobType.Ambermoon, compressionPrinter);
+
+                if (extendedLobWriter.Size < originalLobWriter.Size)
+                    writer.Write(extendedLobWriter.ToArray());
+                else
+                    writer.Write(originalLobWriter.ToArray());
+
+                return;
+            }
+            else if (lobType == LobType.TakeBestForText)
+            {
+                var textLobWriter = new DataWriter();
+                WriteLob(textLobWriter, fileData, header, LobType.Text, compressionPrinter);
+                var originalLobWriter = new DataWriter();
+                WriteLob(originalLobWriter, fileData, header, LobType.Ambermoon, compressionPrinter);
+
+                if (textLobWriter.Size < originalLobWriter.Size)
+                    writer.Write(textLobWriter.ToArray());
+                else
+                    writer.Write(originalLobWriter.ToArray());
+
+                return;
+            }
+            else if (lobType == LobType.TakeBestForTexture)
+            {
+                var textureLobWriter = new DataWriter();
+                WriteLob(textureLobWriter, fileData, header, LobType.Texture, compressionPrinter);
+                var extendedLobWriter = new DataWriter();
+                WriteLob(extendedLobWriter, fileData, header, LobType.Extended, compressionPrinter);
+                var originalLobWriter = new DataWriter();
+                WriteLob(originalLobWriter, fileData, header, LobType.Ambermoon, compressionPrinter);
+
+                if (textureLobWriter.Size < originalLobWriter.Size)
+                {
+                    if (extendedLobWriter.Size < textureLobWriter.Size)
+                        writer.Write(extendedLobWriter.ToArray());
+                    else
+                        writer.Write(textureLobWriter.ToArray());
+                }
+                else
+                {
+                    if (extendedLobWriter.Size < originalLobWriter.Size)
+                        writer.Write(extendedLobWriter.ToArray());
+                    else
+                        writer.Write(originalLobWriter.ToArray());
+                }
+
+                return;
+            }
+
+            var compressedData = Compress(fileData, lobType);
+            compressionPrinter?.Invoke(compressedData.Length, fileData.Length, null);
 
             if (fileData.Length % 2 == 1 || compressedData.Length % 2 == 1)
                 throw new AmbermoonException(ExceptionScope.Application, "Lob source or compressed data is not word-aligned.");
@@ -108,8 +165,21 @@ namespace Ambermoon.Data.Legacy.Serialization
                 WriteContainer(writer, filesData.Select((f, i) => new { f, i }).ToDictionary(f => 1 + (uint)f.i, f => f.f), fileType);
         }
 
+        public static void WriteContainer(DataWriter writer, FileType fileType, LobType lobType,
+            FileDictionaryCompression fileDictionaryCompression, Action<int, int, int?> compressionPrinter,
+            params byte[][] filesData)
+        {
+            if (filesData == null)
+                WriteContainer(writer, new Dictionary<uint, byte[]>(), fileType, null, lobType, fileDictionaryCompression, compressionPrinter);
+            else
+                WriteContainer(writer, filesData.Select((f, i) => new { f, i }).ToDictionary(f => 1 + (uint)f.i, f => f.f), fileType, null,
+                    lobType, fileDictionaryCompression, compressionPrinter);
+        }
+
         public static void WriteContainer(DataWriter writer, Dictionary<uint, byte[]> filesData, FileType fileType,
-            int? minimumFileCount = null, LobType lobType = LobType.Ambermoon, bool compressDictionary = false)
+            int? minimumFileCount = null, LobType lobType = LobType.Ambermoon,
+            FileDictionaryCompression fileDictionaryCompression = FileDictionaryCompression.None,
+            Action<int, int, int?> compressionPrinter = null)
         {
             switch (fileType)
             {
@@ -157,7 +227,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                         }
                         else if (fileType == FileType.AMPC)
                         {
+                            int position = writerWithoutHeader.Position;
                             WriteLob(writerWithoutHeader, fileData, lobType);
+                            compressionPrinter?.Invoke(fileData.Length, writerWithoutHeader.Position - position, (int)file.Key);
                         }
                         else // AMNP
                         {
@@ -166,6 +238,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                             WriteLob(lobWriter, fileData, lobType);
                             var data = lobWriter.Size - 4 < fileData.Length ? lobWriter.ToArray() : fileData;
                             bool lob = data != fileData;
+                            compressionPrinter?.Invoke(fileData.Length, data.Length, (int)file.Key);
                             // this is always JH encoded
                             var jhWriter = new DataWriter();
                             byte[] header = lob ? data.Take(8).ToArray() : new byte[4] { 0, 0, 0, 0 };
@@ -180,7 +253,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                     writer.Write((uint)fileType);
 
-                    if (compressDictionary)
+                    if (fileDictionaryCompression != FileDictionaryCompression.None)
                     {
                         uint largestGapSize = 0;
                         uint sectionStart = 1;
@@ -195,7 +268,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                         bool useSections = false;
 
-                        if (minimumFileCount == null || minimumFileCount <= maxIndex)
+                        if (fileDictionaryCompression != FileDictionaryCompression.HalfEntrySize &&
+                            (minimumFileCount == null || minimumFileCount <= maxIndex))
                         {
                             // Sections are not allowed if the minimum file count
                             // exceeds the highest file index. In that case there
@@ -227,7 +301,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                                 }
                             }
 
-                            if (maxIndex > sectionStart)
+                            if (maxIndex >= sectionStart)
                             {
                                 // isGap can't be true here, last section is always valid
                                 sections.Add(KeyValuePair.Create(sectionStart, maxIndex + 1 - sectionStart));
@@ -235,10 +309,15 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                             // use sections?
                             useSections = sections.Count != 0 && largestGapSize > 2; // don't bother to use sections for tiny gaps
+
+                            if (useSections && fileDictionaryCompression == FileDictionaryCompression.UseBest &&
+                                (largestGapSize < 10 || (sections.Count > 4 && largestGapSize < 20)))
+                                useSections = false; // many small sections are not worth to encode if "UseBest" is specified
                         }
 
                         bool anyFileExceedsSize = fileSizes.Any(size => size > 0xffff);
-                        uint mask = anyFileExceedsSize
+                        bool useHalfEntrySize = !anyFileExceedsSize && fileDictionaryCompression != FileDictionaryCompression.UseSections;
+                        uint mask = !useHalfEntrySize
                             ? (useSections ? 0x4000u : 0x0000u)
                             : (useSections ? 0xc000u : 0x8000u);
                         writer.Write((ushort)(mask | (uint)totalFileNumber));
@@ -255,14 +334,14 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                                 for (int i = 0; i < section.Value; ++i) 
                                 {
-                                    if (anyFileExceedsSize)
+                                    if (!useHalfEntrySize)
                                         writer.Write((uint)(fileSizes[index++]));
                                     else
                                         writer.Write((ushort)(fileSizes[index++]));
                                 }
                             }
                         }
-                        else if (anyFileExceedsSize)
+                        else if (!useHalfEntrySize)
                         {
                             fileSizes.ForEach(fileSize => writer.Write((uint)fileSize));
                         }

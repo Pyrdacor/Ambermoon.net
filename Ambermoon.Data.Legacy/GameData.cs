@@ -259,7 +259,7 @@ namespace Ambermoon.Data.Legacy
 
                 var dataWriter = new DataWriter();
                 var container = GameDataWriter.FileContainerWriter.AsContainer(file.Value, noCompression);
-                FileWriter.Write(dataWriter, container, Compression.LobCompression.LobType.Ambermoon);
+                FileWriter.Write(dataWriter, container, Compression.LobCompression.LobType.Ambermoon, FileDictionaryCompression.None);
 
                 using var fileStream = File.Create(Path.Combine(targetFolder, file.Key));
                 dataWriter.CopyTo(fileStream);
