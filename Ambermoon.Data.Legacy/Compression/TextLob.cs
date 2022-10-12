@@ -37,8 +37,8 @@ namespace Ambermoon.Data.Legacy.Compression
     //
     // 0000OOOO OOOO
     //
-    // The offset is limited to 00000000 to 11101111.
-    // This is interpreted as 1 to 240.
+    // The offset is limited to 00000000 to 11111111.
+    // This is interpreted as 3 to 258.
     //
     // As only 4 bits of the next byte is used, the remaining
     // 4 bits are used for the next 2-byte-match.
@@ -48,7 +48,7 @@ namespace Ambermoon.Data.Legacy.Compression
     // 0001OOOO OOOOOLLL
     //
     // The offset is limited to 000000000 to 111011111.
-    // It is interpreted as 1 to 480.
+    // It is interpreted as 3 to 482.
     //
     // The length is limited to 000 to 111.
     // It is interpreted as 3 to 10.
@@ -61,8 +61,9 @@ namespace Ambermoon.Data.Legacy.Compression
     internal static class TextLob
     {
         const int MaxMatchLength = 10;
-        const int MaxSmallMatchOffset = 240;
-        const int MaxMatchOffset = 480;
+        const int MinMatchOffset = 3;
+        const int MaxSmallMatchOffset = 258;
+        const int MaxMatchOffset = 482;
 
         public static byte[] CompressData(byte[] data)
         {
@@ -73,14 +74,14 @@ namespace Ambermoon.Data.Legacy.Compression
 
             void AddMatch(int offset, int length)
             {
-                if (length < 0 || length > 10)
+                if (length < 1 || length > MaxMatchLength)
                     throw new Exception("Length " + length);
-                if (offset < 1 || offset > 480)
+                if (offset < MinMatchOffset || offset > MaxMatchOffset)
                     throw new Exception("Offset " + offset);
-                if (length == 2 && offset > 240)
+                if (length == 2 && offset > MaxSmallMatchOffset)
                     throw new Exception("2 Offset " + offset);
 
-                --offset;
+                offset -= MinMatchOffset;
 
                 if (length == 2)
                 {
@@ -123,7 +124,13 @@ namespace Ambermoon.Data.Legacy.Compression
             // first byte can not contain a match
             CheckDataValidity(i);
             trie.Add(data, i, MaxMatchLength);
-            compressedData.Add(data[i++]);
+            if (data[i] == 0)
+            {
+                compressedData.Add(0x1f);
+                ++i;
+            }
+            else
+                compressedData.Add(data[i++]);
 
             for (; i < data.Length; ++i)
             {
@@ -136,7 +143,7 @@ namespace Ambermoon.Data.Legacy.Compression
                 int matchOffset = i - match.Key;
                 int matchLength = match.Value;
 
-                if (matchOffset > 0 && matchOffset <= MaxMatchOffset && (matchLength > 2 || (matchLength > 1 && matchOffset <= MaxSmallMatchOffset)))
+                if (matchOffset >= MinMatchOffset && matchOffset <= MaxMatchOffset && (matchLength > 2 || (matchLength > 1 && matchOffset <= MaxSmallMatchOffset)))
                 {
                     AddMatch(matchOffset, matchLength);
 
@@ -216,7 +223,7 @@ namespace Ambermoon.Data.Legacy.Compression
                         useMatchReserve = !useMatchReserve;
                     }
 
-                    ++matchOffset;
+                    matchOffset += MinMatchOffset;
                     matchIndex = decodeIndex - matchOffset;
 
                     while (matchLength-- != 0)
