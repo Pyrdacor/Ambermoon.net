@@ -12,10 +12,6 @@ namespace Ambermoon.Data.Legacy.Compression
 
         public static byte[] CompressData(byte[] data)
         {
-            // ease algorithm by not compressing very small data (20 bytes)
-            if (data.Length < MaxMatchLength + 2)
-                return data;
-
             var compressedData = new List<byte>(data.Length);
             var trie = new MatchTrie();
             int currentHeaderPosition = 0;

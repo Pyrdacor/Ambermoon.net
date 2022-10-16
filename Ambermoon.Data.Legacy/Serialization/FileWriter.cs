@@ -93,13 +93,25 @@ namespace Ambermoon.Data.Legacy.Serialization
             {
                 var extendedLobWriter = new DataWriter();
                 WriteLob(extendedLobWriter, fileData, header, LobType.Extended, compressionPrinter);
+                var advancedLobWriter = new DataWriter();
+                WriteLob(advancedLobWriter, fileData, header, LobType.Advanced, compressionPrinter);
                 var originalLobWriter = new DataWriter();
                 WriteLob(originalLobWriter, fileData, header, LobType.Ambermoon, compressionPrinter);
 
-                if (extendedLobWriter.Size < originalLobWriter.Size)
-                    writer.Write(extendedLobWriter.ToArray());
+                if (advancedLobWriter.Size < originalLobWriter.Size)
+                {
+                    if (extendedLobWriter.Size <= advancedLobWriter.Size)
+                        writer.Write(extendedLobWriter.ToArray());
+                    else
+                        writer.Write(advancedLobWriter.ToArray());
+                }
                 else
-                    writer.Write(originalLobWriter.ToArray());
+                {
+                    if (extendedLobWriter.Size < originalLobWriter.Size)
+                        writer.Write(extendedLobWriter.ToArray());
+                    else
+                        writer.Write(originalLobWriter.ToArray());
+                }
 
                 return;
             }
@@ -114,32 +126,6 @@ namespace Ambermoon.Data.Legacy.Serialization
                     writer.Write(textLobWriter.ToArray());
                 else
                     writer.Write(originalLobWriter.ToArray());
-
-                return;
-            }
-            else if (lobType == LobType.TakeBestForTexture)
-            {
-                var textureLobWriter = new DataWriter();
-                WriteLob(textureLobWriter, fileData, header, LobType.Texture, compressionPrinter);
-                var extendedLobWriter = new DataWriter();
-                WriteLob(extendedLobWriter, fileData, header, LobType.Extended, compressionPrinter);
-                var originalLobWriter = new DataWriter();
-                WriteLob(originalLobWriter, fileData, header, LobType.Ambermoon, compressionPrinter);
-
-                if (textureLobWriter.Size < originalLobWriter.Size)
-                {
-                    if (extendedLobWriter.Size < textureLobWriter.Size)
-                        writer.Write(extendedLobWriter.ToArray());
-                    else
-                        writer.Write(textureLobWriter.ToArray());
-                }
-                else
-                {
-                    if (extendedLobWriter.Size < originalLobWriter.Size)
-                        writer.Write(extendedLobWriter.ToArray());
-                    else
-                        writer.Write(originalLobWriter.ToArray());
-                }
 
                 return;
             }

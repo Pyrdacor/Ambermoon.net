@@ -163,7 +163,7 @@ namespace Ambermoon.Data.Legacy.Compression
             }
 
             if (compressedData.Count % 2 != 0)
-                compressedData.Add(0);
+                compressedData.Add(0x1f); // would be converted to a single zero if this is accidently read
 
             return compressedData.ToArray();
         }

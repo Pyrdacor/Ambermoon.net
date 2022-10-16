@@ -9,63 +9,44 @@ namespace Ambermoon.Data.Legacy.Compression
     internal static class ExtendedLob
     {
         const int MinMatchLength = 3;
-        const int MaxSmallMatchLength = 3 + 0xf;
-        const int MaxLargeMatchLength = 3 + 0x7f;
-        const int MaxSmallMatchOffset = 1 + 0x1ff;
-        const int MaxLargeMatchOffset = 1 + 0x3ff;
+        const int MaxMatchLength = 32;
+        const int MinMatchOffset = 1;
+        const int MaxMatchOffset = 1024;
+        const int MinRLELength = 4;
 
-        // - Zero RLE: 00 CC where CC is the count interpreted as 35 to 290
-        // - Literals: CC .. where CC is the count (allowed are 1 to 127 only). The given amount of literals follow.
-        // - If the header byte is >= 128 the following 4 encodings are possible:
-        //   - Small match: 100LLLLO OOOOOOOO, Length = 0000 (3) to 1111 (18), Offset = 000000000 (1) to 111111111 (512)
-        //   - Large match: 101LLLLL LLOOOOOO OOOO, Length = 00000000 (3) to 11111111 (130), Offset = 0000000000 (1) to 1111111111 (1024)
-        //   - Literal RLE: 110CCCCC <literal> where C gives the count interpreted as 3 to 34. The following byte is the literal.
-        //   - Small literal: 111LLLLL where LLLLL directly gives the literal. Only literals 0 to 31 are possible here.
-        //
-        // First bytes:
-        // - Small matches: 80 to 9F
-        // - Large matches: A0 to BF
-        // - Literal RLE: C0 to DF
-        // - Small literal: E0 to FF
-
-        public static byte[] CompressData(byte[] data, bool repackBefore)
+        public static byte[] CompressData(byte[] data)
         {
-            var literals = new List<byte>(127);
+            var literals = new List<byte>();
             int rleCount = 0;
             byte rleLiteral = 0;
-            int largeMatchReserveIndex = -1;
+            int lastMatchHeaderIndex = -1;
             var compressedData = new List<byte>(data.Length);
-            var trie = new MatchTrie(MaxLargeMatchOffset);
+            var trie = new MatchTrie(MaxMatchOffset);
             int i = 0;
             bool justFoundRle = false;
+            int lastLiteral = -1;
 
-            byte[] Prepack()
+            void WriteAdditionalCount(int additionalCount)
             {
-                var packedData = new byte[data.Length];
-                int count = data.Length / 4;
+                int count;
 
-                for (int i = 0; i < count; ++i)
+                do
                 {
-                    packedData[i] = data[i * 4];
-                    packedData[count + i] = data[i * 4 + 1];
-                    packedData[2 * count + i] = data[i * 4 + 2];
-                    packedData[3 * count + i] = data[i * 4 + 3];
-                }
-
-                return packedData;
+                    count = Math.Min(additionalCount, 255);
+                    compressedData.Add((byte)count);
+                    additionalCount -= count;
+                } while (count == 255);
             }
-
-            if (repackBefore)
-                data = Prepack();
 
             bool CheckRle()
             {
-                if (data.Length - i >= 3 &&
+                if (data.Length - i >= MinRLELength &&
                     data[i] == data[i + 1] &&
-                    data[i] == data[i + 2])
+                    data[i] == data[i + 2] &&
+                    data[i] == data[i + 3])
                 {
                     rleLiteral = data[i];
-                    rleCount = 3;
+                    rleCount = MinRLELength;
                     return true;
                 }
 
@@ -81,7 +62,7 @@ namespace Ambermoon.Data.Legacy.Compression
                 {
                     if (data[i] == literal)
                     {
-                        if (++length == 290)
+                        if (++length == MaxMatchLength)
                             break; // enough for our purposes
                     }
                     else
@@ -93,97 +74,140 @@ namespace Ambermoon.Data.Legacy.Compression
 
             void WriteCurrentData(bool nextIsLiteral, bool noRle = false, byte? useRleLiteral = null)
             {
-                if (rleCount >= 3 && !noRle)
+                void ProcessLiterals()
                 {
-                    if (literals.Count != 0)
-                        throw new AmbermoonException(ExceptionScope.Application, "There should be no stored literals when a RLE is compressed.");
+                    int remainingLiteralCount = literals.Count;
 
+                    if (remainingLiteralCount == 0)
+                        return;
+
+                    int firstLiteralCount;
+
+                    // Add literal amount of 0 to 3 in the last match encoding.
+                    if (lastMatchHeaderIndex != -1)
+                    {
+                        firstLiteralCount = Math.Min(3, remainingLiteralCount);
+
+                        compressedData[lastMatchHeaderIndex] |= (byte)(firstLiteralCount << 2);
+
+                        if (remainingLiteralCount <= 3)
+                        {
+                            // Fits into the last match encoding
+                            if (literals.Count != 0)
+                            {
+                                literals.ForEach(l => compressedData.Add(l));
+                                lastLiteral = literals[^1];
+                                literals.Clear();
+                            }
+                            return;
+                        }
+                        else
+                        {
+                            foreach (var literal in literals.Take(firstLiteralCount))
+                                compressedData.Add(literal);
+
+                            literals = literals.Skip(firstLiteralCount).ToList();
+                        }
+
+                        remainingLiteralCount -= firstLiteralCount;
+                    }
+                    else
+                    {
+                        // This is the first sequence of literals in the data. It has a special encoding.
+                        if (literals.Count == 0)
+                            throw new AmbermoonException(ExceptionScope.Data, "Invalid extended lob data.");
+
+                        if (literals.Count < 256)
+                        {
+                            compressedData.Add((byte)literals.Count);
+                            literals.ForEach(l => compressedData.Add(l));
+                            lastLiteral = literals[^1];
+                            literals.Clear();
+                            return;
+                        }
+                        else
+                        {
+                            compressedData.Add(0);
+                            remainingLiteralCount -= 256;
+                        }
+
+                        WriteAdditionalCount(remainingLiteralCount);
+
+                        literals.ForEach(l => compressedData.Add(l));
+                        lastLiteral = literals[^1];
+                        literals.Clear();
+
+                        return;
+                    }
+
+                    // Only now we have to add a new literal encoding.
+                    firstLiteralCount = Math.Min(remainingLiteralCount, 32);
+                    compressedData.Add((byte)(0xe0 | (firstLiteralCount - 1))); // Write literal header
+                    remainingLiteralCount -= firstLiteralCount;
+
+                    if (firstLiteralCount == 32)
+                        WriteAdditionalCount(remainingLiteralCount);
+
+                    // At the end, write all literals.
+                    if (literals.Count != 0)
+                    {
+                        literals.ForEach(l => compressedData.Add(l));
+                        lastLiteral = literals[^1];
+                        literals.Clear();
+                    }
+                }
+
+                if (rleCount >= MinRLELength && !noRle)
+                {
                     int index = i - rleCount;
                     int addTrieCount = rleCount;
 
-                    if (index < 3)
+                    if (index < MinRLELength)
                     {
-                        int reduce = 3 - index;
+                        int reduce = MinRLELength - index;
                         addTrieCount -= reduce;
                         index += reduce;
                     }
 
                     for (int j = 0; j < addTrieCount; ++j)
-                        trie.Add(data, index + j, Math.Min(MaxLargeMatchLength, data.Length - index - j));
+                        trie.Add(data, index + j, Math.Min(MaxMatchLength, data.Length - index - j));
 
                     byte literal = useRleLiteral ?? rleLiteral;
+                    bool rleLiteralAlreadyThere = (literals.Count != 0 && literals[^1] == literal) ||
+                        (literals.Count == 0 && lastLiteral == literal);
 
-                    if (literal == 0)
+                    if (!rleLiteralAlreadyThere)
                     {
-                        while (rleCount >= 35)
-                        {
-                            int count = Math.Min(rleCount, 290);
-                            compressedData.Add(0);
-                            compressedData.Add((byte)(count - 35));
-                            rleCount -= count;
-                        }
-
-                        if (rleCount >= 3)
-                        {
-                            int count = Math.Min(rleCount, 34);
-                            compressedData.Add((byte)(0xc0 | (count - 3)));
-                            compressedData.Add(0);
-                            rleCount -= count;
-                        }
-                    }
-                    else
-                    {
-                        while (rleCount >= 3)
-                        {
-                            int count = Math.Min(rleCount, 34);
-                            compressedData.Add((byte)(0xc0 | (count - 3)));
-                            compressedData.Add(literal);
-                            rleCount -= count;
-                        }
+                        --rleCount; // match count does not include the first literal
+                        literals.Add(literal); // it is part of the preceeding literals instead
                     }
 
-                    while (rleCount != 0)
+                    ProcessLiterals();
+                    lastLiteral = literal;
+                    lastMatchHeaderIndex = compressedData.Count;
+
+                    int firstCount = Math.Min(rleCount, 16);
+                    compressedData.Add((byte)((firstCount - 3) << 4));
+                    compressedData.Add(0); // offset 1
+                    rleCount -= firstCount;
+
+                    if (firstCount == 16)
                     {
-                        literals.Add(rleLiteral);
-                        --rleCount;
+                        WriteAdditionalCount(rleCount);
+                        rleCount = 0;
                     }
+
+                    return;
                 }
                 
                 if (!nextIsLiteral && literals.Count != 0)
                 {
-                    while (literals.Count != 0)
-                    {
-                        // Try to use small literal encoding for short sequences of bytes.
-                        if (literals.Count < 10 && !literals.Any(l => l > 31))
-                        {
-                            literals.ForEach(l => compressedData.Add((byte)(l | 0xe0)));
-                            literals.Clear();
-                            break;
-                        }
-                        else
-                        {
-                            int count = Math.Min(127, literals.Count);
-                            var literalsToEncode = literals.Take(count).ToList();
-                            compressedData.Add((byte)count);
-                            literalsToEncode.ForEach(compressedData.Add);
-                            literals.RemoveRange(0, count);
-                        }
-                    }
+                    ProcessLiterals();
                 }
             }
 
-            if (CheckRle())
-            {
-                trie.Add(data, 0, Math.Min(MaxLargeMatchLength, data.Length));
-                trie.Add(data, 1, Math.Min(MaxLargeMatchLength, data.Length - 1));
-                trie.Add(data, 2, Math.Min(MaxLargeMatchLength, data.Length - 2));
-                i += 3;
-            }
-            else
-            {
-                trie.Add(data, 0, MaxLargeMatchLength);
-                literals.Add(data[i++]);
-            }
+            trie.Add(data, 0, MaxMatchLength);
+            literals.Add(data[i++]);
 
             for (; i < data.Length; ++i)
             {
@@ -197,9 +221,10 @@ namespace Ambermoon.Data.Legacy.Compression
                 else if (rleCount == 0 && CheckRle())
                 {
                     justFoundRle = true;
-                    WriteCurrentData(false, true);
+                    i += MinRLELength - 1;
+                    continue;
                 }
-                else if (rleCount >= 3)
+                else if (rleCount >= MinRLELength)
                 {
                     int rleCountBackup = rleCount;
                     byte rleLiteralBackup = rleLiteral;
@@ -209,46 +234,30 @@ namespace Ambermoon.Data.Legacy.Compression
                         justFoundRle = true;
                         rleCount = rleCountBackup;
                         WriteCurrentData(false, false, rleLiteralBackup);
-                        rleCount = 3;
+                        rleCount = MinRLELength;
                     }
                 }
 
                 void AddMatch(int offset, int length)
                 {
-                    if (length > MaxSmallMatchLength || offset > MaxSmallMatchOffset)
-                    {
-                        // large match
-                        --offset;
-                        length -= MinMatchLength;
-                        compressedData.Add((byte)(0xa0 | (length >> 2)));
-                        compressedData.Add((byte)(((length & 0x3) << 6)|(offset >> 4)));
-                        if (largeMatchReserveIndex == -1)
-                        {
-                            largeMatchReserveIndex = compressedData.Count;
-                            compressedData.Add((byte)((offset & 0xf) << 4));
-                        }
-                        else
-                        {
-                            compressedData[largeMatchReserveIndex] |= (byte)(offset & 0xf);
-                            largeMatchReserveIndex = -1;
-                        }
-                    }
-                    else
-                    {
-                        // small match
-                        int b1 = 0x80 | ((length - MinMatchLength) << 1);
-                        if (--offset > 255)
-                            ++b1;
-                        compressedData.Add((byte)b1);
-                        compressedData.Add((byte)(offset & 0xff));
-                    }
+                    int firstMatchLength = Math.Min(16, length);
+                    length -= firstMatchLength;
+                    --offset;
+                    byte header = (byte)(((firstMatchLength - 3) << 4) | (offset >> 8));
+                    lastMatchHeaderIndex = compressedData.Count;
+                    compressedData.Add(header);
+                    compressedData.Add((byte)(offset & 0xff));
+
+                    if (firstMatchLength == 16)
+                        WriteAdditionalCount(length);
                 }
 
-                int maxMatchLength = Math.Min(data.Length - i, MaxLargeMatchLength);
+                int maxMatchLength = Math.Min(data.Length - i, MaxMatchLength);
                 var match = trie.GetLongestMatch(data, i, maxMatchLength);
                 int rleLength = justFoundRle ? CheckRleLength(data, i) : 0;
+                int matchOffset = i - match.Key;
 
-                if (i - match.Key <= MaxLargeMatchOffset && match.Value >= MinMatchLength && match.Value > rleLength)
+                if (matchOffset >= MinMatchOffset && matchOffset <= MaxMatchOffset && match.Value >= MinMatchLength && match.Value > rleLength)
                 {
                     trie.Add(data, i, maxMatchLength);
 
@@ -257,20 +266,22 @@ namespace Ambermoon.Data.Legacy.Compression
                     else
                         rleCount = 0;
 
+                    lastLiteral = data[match.Key + match.Value - 1];
+
                     AddMatch(i - match.Key, match.Value);
 
                     for (int j = 1; j < match.Value; ++j)
-                        trie.Add(data, i + j, Math.Min(MaxLargeMatchLength, data.Length - i - j));
+                        trie.Add(data, i + j, Math.Min(MaxMatchLength, data.Length - i - j));
 
                     i += match.Value - 1; // -1 cause of for's ++i
                 }
                 else if (justFoundRle)
                 {
-                    i += 2;
+                    i += MinRLELength - 1;
                 }
                 else
                 {
-                    if (rleCount < 3)
+                    if (rleCount < MinRLELength)
                         trie.Add(data, i, maxMatchLength);
                     WriteCurrentData(true);
                     literals.Add(data[i]);
@@ -285,104 +296,74 @@ namespace Ambermoon.Data.Legacy.Compression
             return compressedData.ToArray();
         }
 
-        public static DataReader Decompress(IDataReader reader, uint decodedSize, bool repackAfterwards)
+        public static DataReader Decompress(IDataReader reader, uint decodedSize)
         {
             var decodedData = new byte[decodedSize];
             uint decodeIndex = 0;
-            bool useLargeMatchReserve = false;
-            byte largeMatchReserve = 0;
+
+            int ReadAdditionalCount(int initialCount)
+            {
+                int count;
+
+                do
+                {
+                    count = reader.ReadByte();
+                    initialCount += count;
+                } while (count == 255);
+
+                return initialCount;
+            }
+
+            int literalCount = reader.ReadByte();
+
+            if (literalCount == 0)
+                literalCount = ReadAdditionalCount(256);
+
+            for (int i = 0; i < literalCount; ++i)
+                decodedData[decodeIndex++] = reader.ReadByte();
 
             while (decodeIndex < decodedSize)
             {
-                byte header = reader.ReadByte();
+                ushort header = reader.ReadWord();
 
-                if (header == 0)
+                if ((header & 0xe000) != 0xe000) // match
                 {
-                    int amount = reader.ReadByte() + 35;
+                    int offset = (header & 0x3ff) + 1;
+                    int length = (header >> 12) + 3;
+                    literalCount = (header >> 10) & 0x3;
 
-                    for (int i = 0; i < amount; ++i)
-                        decodedData[decodeIndex++] = 0;
-                }
-                else if (header < 128)
-                {
-                    for (int i = 0; i < header; ++i)
+                    if (length == 16)
+                        length = ReadAdditionalCount(16);
+
+                    int sourceIndex = (int)decodeIndex - offset;
+
+                    for (int i = 0; i < length; ++i)
+                        decodedData[decodeIndex++] = decodedData[sourceIndex++];
+
+                    for (int i = 0; i < literalCount; ++i)
                         decodedData[decodeIndex++] = reader.ReadByte();
                 }
                 else
                 {
-                    int mode = (header >> 5) & 3;                    
+                    literalCount = (header >> 8) & 0x1f;
 
-                    void ProcessMatch(int offset, int length)
+                    if (literalCount == 31)
                     {
-                        int sourceIndex = (int)decodeIndex - offset;
-
-                        for (int i = 0; i < length; ++i)
-                            decodedData[decodeIndex++] = decodedData[sourceIndex++];
+                        --reader.Position;
+                        literalCount = ReadAdditionalCount(31) + 1;
+                    }
+                    else
+                    {
+                        decodedData[decodeIndex++] = (byte)(header & 0xff);
                     }
 
-                    if (mode == 0) // small match
-                    {
-                        int length = ((header >> 1) & 0xf) + 3;
-                        int offset = header & 0x1;
-                        offset <<= 8;
-                        offset |= reader.ReadByte();
-                        ProcessMatch(++offset, length);
-                    }
-                    else if (mode == 1) // large match
-                    {
-                        int length = (header & 0x1f) << 2;
-                        int offset = reader.ReadByte();
-                        length |= (offset >> 6);
-                        length += 3;
-                        offset &= 0x3f;
-                        offset <<= 4;
-                        if (useLargeMatchReserve)
-                            offset |= largeMatchReserve;
-                        else
-                        {
-                            largeMatchReserve = reader.ReadByte();
-                            offset |= (largeMatchReserve >> 4);
-                            largeMatchReserve &= 0xf;
-                        }
-                        useLargeMatchReserve = !useLargeMatchReserve;
-                        ProcessMatch(++offset, length);
-                    }
-                    else if (mode == 2) // literal rle
-                    {
-                        int length = (header & 0x1f) + 3;
-                        byte literal = reader.ReadByte();
-
-                        for (int i = 0; i < length; ++i)
-                            decodedData[decodeIndex++] = literal;
-                    }
-                    else // mode == 3, small literal
-                    {
-                        decodedData[decodeIndex++] = (byte)(header & 0x1f);
-                    }
+                    for (int i = 0; i < literalCount; ++i)
+                        decodedData[decodeIndex++] = reader.ReadByte();
                 }
             }
 
             if (reader.Position % 2 != 0 && reader.Position < reader.Size)
                 ++reader.Position;
-
-            byte[] Postpack()
-            {
-                var packedData = new byte[decodedData.Length];
-                int count = decodedData.Length / 4;
-
-                for (int i = 0; i < count; ++i)
-                {
-                    packedData[i * 4] = decodedData[i];
-                    packedData[i * 4 + 1] = decodedData[count + i];
-                    packedData[i * 4 + 2] = decodedData[2 * count + i];
-                    packedData[i * 4 + 3] = decodedData[3 * count + i];
-                }
-
-                return packedData;
-            }
-
-            if (repackAfterwards)
-                decodedData = Postpack();
 
             return new DataReader(decodedData);
         }
