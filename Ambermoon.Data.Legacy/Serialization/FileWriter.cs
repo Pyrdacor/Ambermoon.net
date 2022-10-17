@@ -92,9 +92,9 @@ namespace Ambermoon.Data.Legacy.Serialization
             if (lobType == LobType.TakeBest)
             {
                 var extendedLobWriter = new DataWriter();
-                WriteLob(extendedLobWriter, fileData, header, LobType.Extended, compressionPrinter);
+                WriteLob(extendedLobWriter, fileData, header, LobType.LZRS, compressionPrinter);
                 var advancedLobWriter = new DataWriter();
-                WriteLob(advancedLobWriter, fileData, header, LobType.Advanced, compressionPrinter);
+                WriteLob(advancedLobWriter, fileData, header, LobType.Extended, compressionPrinter);
                 var originalLobWriter = new DataWriter();
                 WriteLob(originalLobWriter, fileData, header, LobType.Ambermoon, compressionPrinter);
 

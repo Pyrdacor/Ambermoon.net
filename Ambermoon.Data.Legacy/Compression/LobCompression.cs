@@ -10,8 +10,8 @@ namespace Ambermoon.Data.Legacy.Compression
             TakeBest = 0x00, // Use original or extended or advanced LOB based on compression size
             TakeBestForText = 0x01, // Use original or text LOB based on compression size
             Ambermoon = 0x06,
-            Extended = 0x10,
-            Advanced = 0x11,
+            LZRS = 0x10,
+            Extended = 0x11,
             Text = 0x12        
         }
 
@@ -19,8 +19,8 @@ namespace Ambermoon.Data.Legacy.Compression
         {
             return lobType switch
             {
-                LobType.Extended => ExtendedLob.CompressData(data),
-                LobType.Advanced => AdvancedLob.CompressData(data),
+                LobType.LZRS => ExtendedLob.CompressData(data),
+                LobType.Extended => AdvancedLob.CompressData(data),
                 LobType.Text => TextLob.CompressData(data),
                 _ => Lob.CompressData(data),
             };
@@ -35,8 +35,8 @@ namespace Ambermoon.Data.Legacy.Compression
         {
             return lobType switch
             {
-                LobType.Extended => ExtendedLob.Decompress(reader, decodedSize),
-                LobType.Advanced => AdvancedLob.Decompress(reader, decodedSize),
+                LobType.LZRS => ExtendedLob.Decompress(reader, decodedSize),
+                LobType.Extended => AdvancedLob.Decompress(reader, decodedSize),
                 LobType.Text => TextLob.Decompress(reader, decodedSize),
                 _ => Lob.Decompress(reader, decodedSize),
             };

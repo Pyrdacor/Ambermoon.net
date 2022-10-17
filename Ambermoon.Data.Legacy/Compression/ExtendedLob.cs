@@ -38,6 +38,19 @@ namespace Ambermoon.Data.Legacy.Compression
                 } while (count == 255);
             }
 
+            bool WriteMoreLiterals()
+            {
+                int consumedCount = Math.Min(255, literals.Count);
+                compressedData.Add((byte)consumedCount);
+                for (int i = 0; i < consumedCount; ++i)
+                    compressedData.Add(literals[i]);
+                if (consumedCount == literals.Count)
+                    literals.Clear();
+                else
+                    literals = literals.Skip(consumedCount).ToList();
+                return consumedCount == 255;
+            }
+
             bool CheckRle()
             {
                 if (data.Length - i >= MinRLELength &&
@@ -131,11 +144,11 @@ namespace Ambermoon.Data.Legacy.Compression
                             remainingLiteralCount -= 256;
                         }
 
-                        WriteAdditionalCount(remainingLiteralCount);
-
-                        literals.ForEach(l => compressedData.Add(l));
                         lastLiteral = literals[^1];
-                        literals.Clear();
+                        bool moreLiterals = WriteMoreLiterals();
+
+                        while (moreLiterals)
+                            moreLiterals = WriteMoreLiterals();
 
                         return;
                     }
@@ -144,16 +157,17 @@ namespace Ambermoon.Data.Legacy.Compression
                     firstLiteralCount = Math.Min(remainingLiteralCount, 32);
                     compressedData.Add((byte)(0xe0 | (firstLiteralCount - 1))); // Write literal header
                     remainingLiteralCount -= firstLiteralCount;
+                    lastLiteral = literals[^1];
+                    for (int i = 0; i < firstLiteralCount; ++i)
+                        compressedData.Add(literals[i]);
+                    literals = literals.Skip(firstLiteralCount).ToList();
 
                     if (firstLiteralCount == 32)
-                        WriteAdditionalCount(remainingLiteralCount);
-
-                    // At the end, write all literals.
-                    if (literals.Count != 0)
                     {
-                        literals.ForEach(l => compressedData.Add(l));
-                        lastLiteral = literals[^1];
-                        literals.Clear();
+                        bool moreLiterals = WriteMoreLiterals();
+
+                        while (moreLiterals)
+                            moreLiterals = WriteMoreLiterals();
                     }
                 }
 
@@ -315,12 +329,30 @@ namespace Ambermoon.Data.Legacy.Compression
             }
 
             int literalCount = reader.ReadByte();
+            bool moreCountBytes = false;
 
             if (literalCount == 0)
-                literalCount = ReadAdditionalCount(256);
+            {
+                literalCount = 256;
+                moreCountBytes = true;
+            }
 
-            for (int i = 0; i < literalCount; ++i)
-                decodedData[decodeIndex++] = reader.ReadByte();
+            bool ReadNextCount()
+            {
+                if (!moreCountBytes)
+                    return false;
+
+                literalCount = reader.ReadByte();
+                moreCountBytes = literalCount == 255;
+
+                return true;
+            }
+
+            do
+            {
+                for (int i = 0; i < literalCount; ++i)
+                    decodedData[decodeIndex++] = reader.ReadByte();
+            } while (ReadNextCount());
 
             while (decodeIndex < decodedSize)
             {
@@ -346,19 +378,14 @@ namespace Ambermoon.Data.Legacy.Compression
                 else
                 {
                     literalCount = (header >> 8) & 0x1f;
+                    moreCountBytes = literalCount == 31;
+                    decodedData[decodeIndex++] = (byte)(header & 0xff);
 
-                    if (literalCount == 31)
+                    do
                     {
-                        --reader.Position;
-                        literalCount = ReadAdditionalCount(31) + 1;
-                    }
-                    else
-                    {
-                        decodedData[decodeIndex++] = (byte)(header & 0xff);
-                    }
-
-                    for (int i = 0; i < literalCount; ++i)
-                        decodedData[decodeIndex++] = reader.ReadByte();
+                        for (int i = 0; i < literalCount; ++i)
+                            decodedData[decodeIndex++] = reader.ReadByte();
+                    } while (ReadNextCount());
                 }
             }
 
