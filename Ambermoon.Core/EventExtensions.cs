@@ -118,27 +118,31 @@ namespace Ambermoon
                     if (!(@event is PopupTextEvent popupTextEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid text popup event.");
 
-                    switch (trigger)
+                    // Only check trigger if this is the first event of the chain.
+                    if (map.EventList.Contains(@event))
                     {
-                        case EventTrigger.Move:
-                            if (!popupTextEvent.CanTriggerByMoving)
-                            {
+                        switch (trigger)
+                        {
+                            case EventTrigger.Move:
+                                if (!popupTextEvent.CanTriggerByMoving)
+                                {
+                                    aborted = true;
+                                    return null;
+                                }
+                                break;
+                            case EventTrigger.Eye:
+                                if (!popupTextEvent.CanTriggerByCursor)
+                                {
+                                    aborted = true;
+                                    return null;
+                                }
+                                break;
+                            case EventTrigger.Always:
+                                break;
+                            default:
                                 aborted = true;
                                 return null;
-                            }
-                            break;
-                        case EventTrigger.Eye:
-                            if (!popupTextEvent.CanTriggerByCursor)
-                            {
-                                aborted = true;
-                                return null;
-                            }
-                            break;
-                        case EventTrigger.Always:
-                            break;
-                        default:
-                            aborted = true;
-                            return null;
+                        }
                     }
 
                     if (!popupTextEvent.TriggerIfBlind && !game.CanSee())
