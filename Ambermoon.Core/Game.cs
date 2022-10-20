@@ -4843,7 +4843,7 @@ namespace Ambermoon
                 {
                     partyMember.Damage(damage, _ => KillPartyMember(partyMember, Condition.DeadCorpse));
 
-                    if (partyMember.Alive && inflictCondition >= Condition.DeadCorpse)
+                    if (!Godmode && partyMember.Alive && inflictCondition >= Condition.DeadCorpse)
                     {
                         KillPartyMember(partyMember, inflictCondition);
                     }
@@ -4852,7 +4852,7 @@ namespace Ambermoon
                     {
                         damagedPlayers.Add(partyMember);
 
-                        if (inflictCondition != Condition.None && inflictCondition < Condition.DeadCorpse)
+                        if (!Godmode && inflictCondition != Condition.None && inflictCondition < Condition.DeadCorpse)
                         {
                             partyMember.Conditions |= inflictCondition;
 
