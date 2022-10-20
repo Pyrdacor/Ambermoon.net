@@ -32,6 +32,7 @@ namespace Ambermoon.Data.Legacy.Characters
 
         public MonsterGroup GetMonsterGroup(uint index) => index == 0 || !monsterGroups.ContainsKey(index) ? null : monsterGroups[index];
 
+        public IReadOnlyList<NPC> NPCs => npcs.Values.ToList();
         public IReadOnlyList<Monster> Monsters => monsters.Values.ToList();
         public IReadOnlyDictionary<uint, MonsterGroup> MonsterGroups => monsterGroups;
     }
