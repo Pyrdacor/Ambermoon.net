@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Ambermoon
 {
@@ -221,6 +222,9 @@ namespace Ambermoon
             }
         }
 
+        [JsonIgnore]
+        private static readonly Regex netFolderRegex = new(@"net[0-9]+\.[0-9]+$", RegexOptions.Compiled);
+
         /// <summary>
         /// Directory path where the executable is located.
         /// 
@@ -250,7 +254,7 @@ namespace Ambermoon
                 if (isWindows)
                 {
                     if (assemblyDirectory.EndsWith("Debug") || assemblyDirectory.EndsWith("Release")
-                         || assemblyDirectory.EndsWith("net6.0"))
+                         || netFolderRegex.IsMatch(assemblyDirectory))
                     {
                         string projectFile = Path.GetFileNameWithoutExtension(assemblyPath) + ".csproj";
 
