@@ -135,10 +135,10 @@ namespace Ambermoon.Render
                 topSprite.PaletteIndex = (byte)paletteIndexProvider();
                 topSprite.ClipArea = Game.Map2DViewArea;
                 topSprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
-                topSprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
-                sprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
-                sprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y +
-                    currentAnimationInfo.FrameHeight - RenderMap2D.TILE_HEIGHT;
+                topSprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y +
+                    RenderMap2D.TILE_HEIGHT - currentAnimationInfo.FrameHeight;
+                sprite.X = topSprite.X;
+                sprite.Y = topSprite.Y + topSprite.Height;
             }
             else
             {
