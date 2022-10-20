@@ -177,7 +177,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                     for (int i = 1; i <= fileCount; ++i)
                     {
-                        if (fileEntries.TryGetValue((uint)i, out var entry))
+                        if (fileEntries.TryGetValue((uint)i, out var entry) && entry.Value > 0)
                             fileContainer.Files.Add(i, DecodeFile(new DataReader(reader, offset + entry.Key, entry.Value), fileInfo.FileType, i));
                         else
                             fileContainer.Files.Add(i, new DataReader(Array.Empty<byte>()));

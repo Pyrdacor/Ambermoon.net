@@ -186,9 +186,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                     int totalFileNumber = (int)filesData.Keys.Max();
                     if (minimumFileCount != null && minimumFileCount > totalFileNumber)
                         totalFileNumber = minimumFileCount.Value;
-                    List<int> fileSizes = Enumerable.Repeat(0, totalFileNumber).ToList();
+                    var fileSizes = Enumerable.Repeat(0, totalFileNumber).ToList();
+                    var sortedFileEntries = new List<KeyValuePair<uint, byte[]>>(filesData);
+                    sortedFileEntries.Sort((a, b) => a.Key.CompareTo(b.Key));
 
-                    foreach (var file in filesData)
+                    foreach (var file in sortedFileEntries)
                     {
                         if (file.Value.Length == 0)
                         {
@@ -245,8 +247,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         uint sectionStart = 1;
                         bool isGap = false;
                         var sections = new List<KeyValuePair<uint, uint>>();
-                        var indices = new List<uint>(filesData.Keys);
-                        indices.Sort();
+                        var indices = sortedFileEntries.Select(e => e.Key);
                         uint maxIndex = indices.Max();
 
                         if (maxIndex > 530) // this is the limit in original code
