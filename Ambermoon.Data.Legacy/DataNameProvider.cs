@@ -238,6 +238,7 @@
         public string TurnOnTuneInAndDropOut => executableData.Messages.GetEntry(Messages.Index.TurnOnTuneInAndDropOut);
         public string TextBlockMissing => executableData.Messages.GetEntry(Messages.Index.TextBlockMissing);
         public string ReviveCatMessage => executableData.Messages.GetEntry(Messages.Index.ReviveCat);
+        public string CannotExchangeExpWithAnimals => executableData.Messages.GetEntry(Messages.Index.CannotExchangeExpWithAnimals);
 
 
         #region Conversations

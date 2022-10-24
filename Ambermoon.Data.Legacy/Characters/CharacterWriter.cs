@@ -21,7 +21,7 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write(character.PortraitIndex);
             dataWriter.Write(GetIfMonster<ushort>(character, monster => (ushort)monster.CombatGraphicIndex, 0));
             dataWriter.Write(character.UnknownBytes13); // Unknown
-            dataWriter.Write(GetIfMonster<byte>(character, monster => (byte)monster.Morale, 0));
+            dataWriter.Write(GetIfMonsterOrPartyMember<byte>(character, monster => (byte)monster.Morale, partyMember => partyMember.MaxReachedLevel, 0));
             dataWriter.WriteEnumAsByte(character.SpellTypeImmunity);
             dataWriter.Write(character.AttacksPerRound);
             dataWriter.WriteEnumAsByte(character.BattleFlags);
@@ -106,6 +106,17 @@ namespace Ambermoon.Data.Legacy.Characters
         T GetIfPartyMember<T>(Character character, Func<PartyMember, T> valueProvider, T nonPartyMemberValue)
         {
             return character is PartyMember member ? valueProvider(member) : nonPartyMemberValue;
+        }
+
+        T GetIfMonsterOrPartyMember<T>(Character character, Func<Monster, T> monsterValueProvider, Func<PartyMember, T> partyMemberValueProvider,
+            T defaultValue)
+        {
+            return character switch
+            {
+                Monster monster => monsterValueProvider(monster),
+                PartyMember partyMember => partyMemberValueProvider(partyMember),
+                _ => defaultValue
+            };
         }
     }
 }

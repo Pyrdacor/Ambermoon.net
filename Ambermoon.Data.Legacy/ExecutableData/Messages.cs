@@ -376,6 +376,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             TurnOnTuneInAndDropOut,
             // Ambermoon Advanced
             ReviveCat = 338,
+            CannotExchangeExpWithAnimals,
             Count
         }
 

@@ -208,6 +208,7 @@ namespace Ambermoon.Data
         string TurnOnTuneInAndDropOut { get; }
         string TextBlockMissing { get; }
         string ReviveCatMessage { get; }
+        string CannotExchangeExpWithAnimals { get; }
 
 
         #region Conversations

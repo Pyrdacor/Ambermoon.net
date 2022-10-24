@@ -147,7 +147,8 @@
         Rope = 200, // levitation on a rope / climb
         Drugs = 201, // stinking mushroom
         SelfHealing = 202, // Advanced only
-        SelfReviving = 203 // Advanced only
+        SelfReviving = 203, // Advanced only
+        ExpExchange = 204 // Advanced only
     }
 
     public enum HealingSpell

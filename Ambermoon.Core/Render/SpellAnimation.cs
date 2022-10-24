@@ -308,6 +308,7 @@ namespace Ambermoon.Render
                 case Spell.Drugs:
                 case Spell.SelfHealing:
                 case Spell.SelfReviving:
+                case Spell.ExpExchange:
                     // Those spells have no source position. They just appear somewhere.
                     // Or they only work with the target position. GetSourcePosition should
                     // never be called for those spells so we throw here.
@@ -412,6 +413,7 @@ namespace Ambermoon.Render
                 case Spell.Drugs:
                 case Spell.SelfHealing:
                 case Spell.SelfReviving:
+                case Spell.ExpExchange:
                     // Those spells have no target position. They are just visible on portraits or not at all.
                     // GetTargetPosition should never be called for those spells so we throw here.
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
@@ -800,6 +802,7 @@ namespace Ambermoon.Render
                 case Spell.AddLuck:
                 case Spell.AddAntiMagic:
                 case Spell.Drugs:
+                case Spell.ExpExchange:
                     // Those spells will only use the MoveTo method.
                     this.finishAction?.Invoke();
                     break;
@@ -1452,6 +1455,7 @@ namespace Ambermoon.Render
                 case Spell.Drugs:
                 case Spell.SelfHealing:
                 case Spell.SelfReviving:
+                case Spell.ExpExchange:
                     if (fromMonster)
                     {
                         // No visual effect if monster casts it.

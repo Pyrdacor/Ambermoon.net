@@ -9027,6 +9027,48 @@ namespace Ambermoon
             }
         }
 
+        void ExchangeExp(PartyMember caster, PartyMember target, Action finishAction)
+        {
+            uint casterExp = caster.ExperiencePoints;
+            uint targetExp = target.ExperiencePoints;
+
+            if (casterExp == targetExp)
+                return;
+
+            var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
+            var initialCaster = initialSavegame.PartyMembers[caster.Index];
+            var initialTarget = initialSavegame.PartyMembers[target.Index];
+
+            static void Init(Character character, Character initialCharacter)
+            {
+                character.Level = initialCharacter.Level;
+                character.HitPoints.CurrentValue = initialCharacter.HitPoints.CurrentValue;
+                character.HitPoints.MaxValue = initialCharacter.HitPoints.MaxValue;
+                character.SpellPoints.CurrentValue = initialCharacter.SpellPoints.CurrentValue;
+                character.SpellPoints.MaxValue = initialCharacter.SpellPoints.MaxValue;
+                character.AttacksPerRound = initialCharacter.AttacksPerRound;
+                character.ExperiencePoints = 0;
+                character.AttacksPerRound = 1;
+
+                while (character.Level > 1)
+                {
+                    --character.Level;
+                    character.HitPoints.CurrentValue -= character.HitPointsPerLevel;
+                    character.HitPoints.MaxValue -= character.HitPointsPerLevel;
+                    character.SpellPoints.CurrentValue -= character.SpellPointsPerLevel;
+                    character.SpellPoints.MaxValue -= character.SpellPointsPerLevel;
+                }
+            }
+
+            Init(caster, initialCaster);
+            Init(target, initialTarget);
+
+            AddExperience(caster, targetExp, () =>
+            {
+                AddExperience(target, casterExp, finishAction);
+            });
+        }
+
         void ApplySpellEffect(Spell spell, Character caster, Character target, Action finishAction, bool checkFail)
         {
             CurrentSpellTarget = target;
@@ -9102,6 +9144,9 @@ namespace Ambermoon
                     break;
                 case Spell.CreateFood:
                     Cast(() => ++target.Food);
+                    break;
+                case Spell.ExpExchange:
+                    Cast(() => ExchangeExp(caster as PartyMember, target as PartyMember, finishAction));
                     break;
                 case Spell.SelfHealing:
                     Cast(() =>
@@ -12410,10 +12455,29 @@ namespace Ambermoon
                             void Consume()
                             {
                                 ConsumeSP();
+
+                                if (spell == Spell.ExpExchange)
+                                {
+                                    var target = GetPartyMember(characterSlot);
+
+                                    if (caster.Race == Race.Animal || target.Race == Race.Animal)
+                                    {
+                                        ShowMessagePopup(DataNameProvider.CannotExchangeExpWithAnimals);
+                                        return;
+                                    }
+
+                                    if (caster.Index == target.Index || !caster.Alive || !target.Alive)
+                                    {
+                                        ShowMessagePopup(DataNameProvider.TheSpellFailed);
+                                        return;
+                                    }
+                                }
+
                                 bool reviveSpell = spell >= Spell.WakeTheDead && spell <= Spell.ChangeDust;
                                 void Cast()
                                 {
                                     var target = GetPartyMember(characterSlot);
+
                                     if (target != null && (reviveSpell || spell == Spell.AllHealing || target.Alive))
                                     {
                                         if (reviveSpell)

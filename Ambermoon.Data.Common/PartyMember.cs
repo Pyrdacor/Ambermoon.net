@@ -10,6 +10,7 @@ namespace Ambermoon.Data
         public ushort MarkOfReturnMapIndex { get; set; }
         public ushort MarkOfReturnX { get; set; }
         public ushort MarkOfReturnY { get; set; }
+        public byte MaxReachedLevel { get; set; }
         public List<string> Texts { get; set; }
         public List<Event> Events { get; } = new List<Event>();
         public List<Event> EventList { get; } = new List<Event>();
@@ -191,17 +192,24 @@ namespace Ambermoon.Data
             uint spAdd = magicClass ? SpellPointsPerLevel * (uint)random(50, 100) / 100 + intelligence / 25 : 0;
             uint slpAdd = magicClass ? SpellLearningPointsPerLevel * (uint)random(50, 100) / 100 + intelligence / 25 : 0;
             uint tpAdd = TrainingPointsPerLevel * (uint)random(50, 100) / 100;
+            // In Ambermoon Advanced the level can decrease through exp exchanging.
+            // SLP and TP won't be removed (as you might have spent parts of it).
+            // But to avoid exploits, the max level a character ever reached is tracked.
+            // And only if the character exceeds this, it will get SLP and TP.
+            bool addSLPAndTP = MaxReachedLevel < Level;
 
             HitPoints.MaxValue += lpAdd;
             HitPoints.CurrentValue += lpAdd;
-            if (magicClass)
+            if (magicClass && addSLPAndTP)
             {
                 SpellPoints.MaxValue += spAdd;
                 SpellPoints.CurrentValue += spAdd;
                 SpellLearningPoints = (ushort)Math.Min(ushort.MaxValue, SpellLearningPoints + slpAdd);
             }
-            TrainingPoints = (ushort)Math.Min(ushort.MaxValue, TrainingPoints + tpAdd);
+            if (addSLPAndTP)
+                TrainingPoints = (ushort)Math.Min(ushort.MaxValue, TrainingPoints + tpAdd);
             AttacksPerRound = (byte)(AttacksPerRoundIncreaseLevels == 0 ? 1 : 1 + Util.Min(Level / AttacksPerRoundIncreaseLevels, 255));
+            MaxReachedLevel = Math.Max(MaxReachedLevel, Level); // Update max reached level
         }
     }
 }

@@ -26,7 +26,8 @@ namespace Ambermoon.Data.Legacy.Characters
             character.PortraitIndex = dataReader.ReadByte();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.CombatGraphicIndex = (MonsterGraphicIndex)value);
             character.UnknownBytes13 = dataReader.ReadBytes(2); // Unknown
-            ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.Morale = value);
+            ProcessIfMonsterOrPartyMember(dataReader, character, (Monster monster, byte value) => monster.Morale = value,
+                (PartyMember partyMember, byte value) => partyMember.MaxReachedLevel = value);
             character.SpellTypeImmunity = (SpellTypeImmunity)dataReader.ReadByte();
             character.AttacksPerRound = dataReader.ReadByte();
             character.BattleFlags = (BattleFlags)dataReader.ReadByte();
@@ -130,6 +131,17 @@ namespace Ambermoon.Data.Legacy.Characters
                 processor(partyMember, reader.ReadWord());
             else
                 reader.Position += 2;
+        }
+
+        void ProcessIfMonsterOrPartyMember(IDataReader reader, Character character, Action<Monster, byte> monsterProcessor,
+            Action<PartyMember, byte> partyMemberProcessor)
+        {
+            if (character is Monster monster)
+                monsterProcessor(monster, reader.ReadByte());
+            else if (character is PartyMember partyMember)
+                partyMemberProcessor(partyMember, reader.ReadByte());
+            else
+                reader.Position += 1;
         }
     }
 }
