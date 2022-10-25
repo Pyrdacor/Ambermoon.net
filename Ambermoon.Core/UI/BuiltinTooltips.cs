@@ -40,7 +40,10 @@ namespace Ambermoon.UI
             EPPre50,
             EP50,
             LevelWithAPRIncrease,
-            LevelWithoutAPRIncrease
+            LevelWithoutAPRIncrease,
+            MagicLevelUpValues, // SP and SLP substring
+            RangeOperator, // "bis" or "to"
+            MagicIntBonus // INT/25 etc
         }
 
         public static string GetSecondaryStatTooltip(GameLanguage gameLanguage, SecondaryStat secondaryStat, PartyMember partyMember)
@@ -59,6 +62,29 @@ namespace Ambermoon.UI
                 return aprLevels.TrimEnd(' ');
             }
 
+            void GetLevelUpBaseValues(out string hp, out string spAndSlp, out string tp, out string intBonus)
+            {
+                string rangeOperator = SecondaryStatTooltips[gameLanguage][(int)SecondaryStat.RangeOperator];
+                int hpPerLevel = partyMember.HitPointsPerLevel;
+                hp = $"{hpPerLevel/2,2}{rangeOperator}{hpPerLevel}";
+                if (partyMember.Class.IsMagic())
+                {
+                    intBonus = string.Format(SecondaryStatTooltips[gameLanguage][(int)SecondaryStat.MagicIntBonus], partyMember.Attributes[Attribute.Intelligence].TotalCurrentValue / 25);
+                    int spPerLevel = partyMember.SpellPointsPerLevel;
+                    string sp = spPerLevel == 0 ? "0" : $"{spPerLevel / 2,2}{rangeOperator}{spPerLevel}";
+                    int slpPerLevel = partyMember.SpellLearningPointsPerLevel;
+                    string slp = slpPerLevel == 0 ? "0" : $"{slpPerLevel / 2,2}{rangeOperator}{slpPerLevel}";
+                    spAndSlp = string.Format(SecondaryStatTooltips[gameLanguage][(int)SecondaryStat.MagicLevelUpValues], sp, slp);
+                }
+                else
+                {
+                    spAndSlp = "^";
+                    intBonus = "";
+                }
+                int tpPerLevel = partyMember.TrainingPointsPerLevel;
+                tp = $"{tpPerLevel / 2,2}{rangeOperator}{tpPerLevel}";
+            }
+
             switch (secondaryStat)
             {
                 case SecondaryStat.Age:
@@ -66,13 +92,15 @@ namespace Ambermoon.UI
                 case SecondaryStat.EPPre50:
                     return string.Format(formatString, partyMember.GetNextLevelExperiencePoints());
                 case SecondaryStat.LevelWithAPRIncrease:
-                    return string.Format(formatString, partyMember.HitPointsPerLevel, partyMember.SpellPointsPerLevel,
-                        partyMember.SpellLearningPointsPerLevel, partyMember.TrainingPointsPerLevel,
-                        partyMember.AttacksPerRound, CreateAPRLevelString());
+                {
+                    GetLevelUpBaseValues(out var hp, out var spAndSlp, out var tp, out var intBonus);
+                    return string.Format(formatString, hp, spAndSlp, tp, intBonus, partyMember.AttacksPerRound, CreateAPRLevelString());
+                }
                 case SecondaryStat.LevelWithoutAPRIncrease:
-                    return string.Format(formatString, partyMember.HitPointsPerLevel, partyMember.SpellPointsPerLevel,
-                        partyMember.SpellLearningPointsPerLevel, partyMember.TrainingPointsPerLevel,
-                        partyMember.AttacksPerRound);
+                {
+                    GetLevelUpBaseValues(out var hp, out var spAndSlp, out var tp, out var intBonus);
+                    return string.Format(formatString, hp, spAndSlp, tp, intBonus, partyMember.AttacksPerRound);
+                }
                 default:
                     return formatString;
             }
@@ -318,9 +346,15 @@ namespace Ambermoon.UI
                 // EP50
                 "Erfahrungspunkte^^Werden für den Levelaufstieg benötigt.^^Maximallevel bereits erreicht.",
                 // LevelWithAPRIncrease
-                "Charakterlevel^^Jeder Levelaufstieg verbessert die^Werte des Charakters um:^^ {0} LP, {1} SP, {2} SLP und {3} TP^^Attacken pro Runde erhöhen sich^bei bestimmten Leveln:^^ {5}^^Attacken pro Runde sind {4}",
+                "Charakterlevel^^Jeder Levelaufstieg erhöht die^Werte des Charakters um:^^ LP : {0,-10}{1} TP : {2}{3}^^Attacken pro Runde erhöhen sich^bei bestimmten Leveln:^^ {5}^^Attacken pro Runde sind {4}",
                 // LevelWithoutAPRIncrease
-                "Charakterlevel^^Jeder Levelaufstieg verbessert die^Werte des Charakters um:^^ {0} LP, {1} SP, {2} SLP und {3} TP^^Attacken pro Runde sind {4}"
+                "Charakterlevel^^Jeder Levelaufstieg erhöht die^Werte des Charakters um:^^ LP : {0,-10}{1} TP : {2}{3}^^Attacken pro Runde sind {4}",
+                // MagicLevelUpValues
+                " SP : {0}^ SLP: {1,-10}",
+                // RangeOperator
+                " - ",
+                // MagicIntBonus
+                "^ Bonus: SP und SLP +INT/25 ({0})"
             } },
             { GameLanguage.English, new string[]
             {
@@ -347,9 +381,15 @@ namespace Ambermoon.UI
                 // EP50
                 "Experience Points^^Are needed to gain levels.^^Max level already reached.",
                 // LevelWithAPRIncrease
-                "Character Level^^Each level-up increases the^character's values by:^^ {0} LP, {1} SP, {2} SLP and {3} TP^^Attacks per round increase^at specific levels:^^ {5}^^Attacks per round are {4}",
+                "Character Level^^Each level-up increases the^character's values by:^^ LP : {0,-10}{1} TP : {2}{3}^^Attacks per round increase^at specific levels:^^ {5}^^Attacks per round are {4}",
                 // LevelWithoutAPRIncrease
-                "Character Level^^Each level-up increases the^character's values by:^^ {0} LP, {1} SP, {2} SLP and {3} TP^^Attacks per round are {4}"
+                "Character Level^^Each level-up increases the^character's values by:^^ LP : {0,-10}{1} TP : {2}{3}^^Attacks per round are {4}",
+                // MagicLevelUpValues
+                " SP : {0}^ SLP: {1,-10}",
+                // RangeOperator
+                " to ",
+                // MagicIntBonus
+                "^ Bonus: SP and SLP +INT/25 ({0})"
             } }
         };
     }
