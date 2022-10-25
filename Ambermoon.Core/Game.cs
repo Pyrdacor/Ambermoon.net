@@ -31,6 +31,7 @@ using Attribute = Ambermoon.Data.Attribute;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 using Ambermoon.Data.Audio;
+using static Ambermoon.UI.BuiltinTooltips;
 
 namespace Ambermoon
 {
@@ -308,6 +309,7 @@ namespace Ambermoon
         readonly Layout layout;
         readonly Dictionary<CharacterInfo, UIText> characterInfoTexts = new Dictionary<CharacterInfo, UIText>();
         readonly Dictionary<CharacterInfo, Panel> characterInfoPanels = new Dictionary<CharacterInfo, Panel>();
+        readonly Dictionary<SecondaryStat, Tooltip> characterInfoStatTooltips = new Dictionary<SecondaryStat, Tooltip>();
         public IMapManager MapManager { get; }
         public IItemManager ItemManager { get; }
         public ICharacterManager CharacterManager { get; }
@@ -4277,7 +4279,7 @@ namespace Ambermoon
                             (attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}");
                     }
                     if (Configuration.ShowPlayerStatsTooltips)
-                        AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), BuiltinTooltips.GetAttributeTooltip(GameLanguage, attribute, partyMember));
+                        AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), GetAttributeTooltip(GameLanguage, attribute, partyMember));
                 }
                 #endregion
                 #region Skills
@@ -4291,7 +4293,7 @@ namespace Ambermoon
                     layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
                         (skillValues.TotalCurrentValue > 99 ? "**" : $"{skillValues.TotalCurrentValue:00}") + $"%/{skillValues.MaxValue:00}%");
                     if (Configuration.ShowPlayerStatsTooltips)
-                        AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), BuiltinTooltips.GetSkillTooltip(GameLanguage, skill, partyMember));
+                        AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), GetSkillTooltip(GameLanguage, skill, partyMember));
                 }
                 #endregion
                 #region Languages
@@ -4339,7 +4341,7 @@ namespace Ambermoon
                             else if (partyMember.Conditions.HasFlag(Condition.DeadAshes))
                                 tooltipCondition = Condition.DeadAshes;
                         }
-                        AddTooltip(new Rect(x, y, 16, 16), conditionName + "^^" + BuiltinTooltips.GetConditionTooltip(GameLanguage, tooltipCondition, partyMember));
+                        AddTooltip(new Rect(x, y, 16, 16), conditionName + "^^" + GetConditionTooltip(GameLanguage, tooltipCondition, partyMember));
                     }
                 }
                 #endregion
@@ -4368,78 +4370,102 @@ namespace Ambermoon
             return true;
         }
 
-        void ShowSecondaryStatTooltip(Rect area, BuiltinTooltips.SecondaryStat secondaryStat, Character character)
+        Tooltip ShowSecondaryStatTooltip(Rect area, SecondaryStat secondaryStat, Character character)
         {
             if (character is PartyMember partyMember && Configuration.ShowPlayerStatsTooltips)
             {
-                var tooltip = BuiltinTooltips.GetSecondaryStatTooltip(GameLanguage, secondaryStat, partyMember);
-                layout.AddTooltip(area, tooltip, TextColor.White, TextAlign.Left, new Render.Color(GetPaletteColor(50, 15), 0xb0));
+                var tooltip = GetSecondaryStatTooltip(GameLanguage, secondaryStat, partyMember);
+                return layout.AddTooltip(area, tooltip, TextColor.White, TextAlign.Left, new Render.Color(GetPaletteColor(50, 15), 0xb0));
             }
+
+            return null;
+        }
+
+        void UpdateSecondaryStatTooltip(Tooltip tooltip, SecondaryStat secondaryStat, Character character)
+        {
+            if (secondaryStat == SecondaryStat.EP50 && character.Level < 50)
+                secondaryStat = SecondaryStat.EPPre50;
+            else if (secondaryStat == SecondaryStat.LevelWithAPRIncrease && character.AttacksPerRoundIncreaseLevels == 0)
+                secondaryStat = SecondaryStat.LevelWithoutAPRIncrease;
+
+            if (tooltip != null && character is PartyMember partyMember && Configuration.ShowPlayerStatsTooltips)
+                tooltip.Text = GetSecondaryStatTooltip(GameLanguage, secondaryStat, partyMember);
         }
 
         void DisplayCharacterInfo(Character character, bool conversation)
         {
+            void SetupSecondaryStatTooltip(Rect area, SecondaryStat secondaryStat)
+            {
+                characterInfoStatTooltips[secondaryStat] = ShowSecondaryStatTooltip(area, secondaryStat, character);
+            }
+
             int offsetY = conversation ? -6 : 0;
 
             characterInfoTexts.Clear();
             characterInfoPanels.Clear();
+            characterInfoStatTooltips.Clear();
             layout.FillArea(new Rect(208, offsetY + 49, 96, 80), GetUIColor(28), false);
             layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 52, 1);
             layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.PortraitOffset + character.PortraitIndex - 1, PrimaryUIPaletteIndex, 2);
             if (!string.IsNullOrEmpty(DataNameProvider.GetRaceName(character.Race)))
                 layout.AddText(new Rect(242, offsetY + 49, 62, 7), DataNameProvider.GetRaceName(character.Race));
             layout.AddText(new Rect(242, offsetY + 56, 62, 7), DataNameProvider.GetGenderName(character.Gender));
-            characterInfoTexts.Add(CharacterInfo.Age, layout.AddText(new Rect(242, offsetY + 63, 62, 7),
+            var area = new Rect(242, offsetY + 63, 62, 7);
+            characterInfoTexts.Add(CharacterInfo.Age, layout.AddText(area,
                 string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
                 character.Attributes[Attribute.Age].CurrentValue)));
-            ShowSecondaryStatTooltip(new Rect(242, offsetY + 63, 62, 7), BuiltinTooltips.SecondaryStat.Age, character);
+            SetupSecondaryStatTooltip(area, SecondaryStat.Age);
             if (character.Class < Class.Monster && !string.IsNullOrEmpty(DataNameProvider.GetClassName(character.Class)))
             {
                 if (!conversation || character.Class < Class.Animal)
                 {
                     characterInfoTexts.Add(CharacterInfo.Level, layout.AddText(new Rect(242, offsetY + 70, 62, 7),
                         $"{DataNameProvider.GetClassName(character.Class)} {character.Level}"));
-                    ShowSecondaryStatTooltip(new Rect(242, offsetY + 70, 62, 7), character.AttacksPerRoundIncreaseLevels == 0
-                        ? BuiltinTooltips.SecondaryStat.LevelWithoutAPRIncrease : BuiltinTooltips.SecondaryStat.LevelWithAPRIncrease, character);
+                    characterInfoStatTooltips[SecondaryStat.LevelWithAPRIncrease] = ShowSecondaryStatTooltip(new Rect(242, offsetY + 70, 62, 7),
+                        character.AttacksPerRoundIncreaseLevels == 0 ? SecondaryStat.LevelWithoutAPRIncrease : SecondaryStat.LevelWithAPRIncrease, character);
                 }
             }
             layout.AddText(new Rect(208, offsetY + 84, 96, 7), character.Name, conversation ? TextColor.PartyMember : TextColor.ActivePartyMember, TextAlign.Center);
             if (!conversation)
             {
                 bool magicClass = character.Class.IsMagic();
+
                 if (character.Class != Class.Animal)
                 {
-                    characterInfoTexts.Add(CharacterInfo.EP, layout.AddText(new Rect(242, 77, 62, 7),
+                    area = new Rect(242, 77, 62, 7);
+                    characterInfoTexts.Add(CharacterInfo.EP, layout.AddText(area,
                         string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
                         character.ExperiencePoints)));
-                    ShowSecondaryStatTooltip(new Rect(242, 77, 62, 7), character.Level < 50 ?
-                        BuiltinTooltips.SecondaryStat.EPPre50 : BuiltinTooltips.SecondaryStat.EP50, character);
+                    characterInfoStatTooltips[SecondaryStat.EP50] = ShowSecondaryStatTooltip(area, character.Level < 50 ?
+                        SecondaryStat.EPPre50 : SecondaryStat.EP50, character);
                 }
-                characterInfoTexts.Add(CharacterInfo.LP, layout.AddText(new Rect(208, 92, 96, 7),
+                area = new Rect(208, 92, 96, 7);
+                characterInfoTexts.Add(CharacterInfo.LP, layout.AddText(area,
                     string.Format(DataNameProvider.CharacterInfoHitPointsString,
                     Math.Min(character.HitPoints.CurrentValue, character.HitPoints.TotalMaxValue), character.HitPoints.TotalMaxValue),
                     TextColor.White, TextAlign.Center));
-                ShowSecondaryStatTooltip(new Rect(208, 92, 96, 7), BuiltinTooltips.SecondaryStat.LP, character);
+                SetupSecondaryStatTooltip(area, SecondaryStat.LP);
                 if (magicClass)
                 {
-                    characterInfoTexts.Add(CharacterInfo.SP, layout.AddText(new Rect(208, 99, 96, 7),
+                    area = new Rect(208, 99, 96, 7);
+                    characterInfoTexts.Add(CharacterInfo.SP, layout.AddText(area,
                         string.Format(DataNameProvider.CharacterInfoSpellPointsString,
                         Math.Min(character.SpellPoints.CurrentValue, character.SpellPoints.TotalMaxValue), character.SpellPoints.TotalMaxValue),
                         TextColor.White, TextAlign.Center));
-                    ShowSecondaryStatTooltip(new Rect(208, 99, 96, 7), BuiltinTooltips.SecondaryStat.SP, character);
+                    SetupSecondaryStatTooltip(area, SecondaryStat.SP);
                 }
                 characterInfoTexts.Add(CharacterInfo.SLPAndTP, layout.AddText(new Rect(208, 106, 96, 7),
                     (magicClass ? string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) : new string(' ', 7)) + " " +
                     string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints), TextColor.White, TextAlign.Center));
                 if (magicClass)
-                    ShowSecondaryStatTooltip(new Rect(214, 106, 42, 7), BuiltinTooltips.SecondaryStat.SLP, character);
-                ShowSecondaryStatTooltip(new Rect(262, 106, 36, 7), BuiltinTooltips.SecondaryStat.TP, character);
+                    SetupSecondaryStatTooltip(new Rect(214, 106, 42, 7), SecondaryStat.SLP);
+                SetupSecondaryStatTooltip(new Rect(262, 106, 36, 7), SecondaryStat.TP);
                 var displayGold = OpenStorage is IPlace ? 0 : character.Gold;
                 characterInfoTexts.Add(CharacterInfo.GoldAndFood, layout.AddText(new Rect(208, 113, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, displayGold, character.Food),
                     TextColor.White, TextAlign.Center));
-                ShowSecondaryStatTooltip(new Rect(214, 113, 42, 7), BuiltinTooltips.SecondaryStat.Gold, character);
-                ShowSecondaryStatTooltip(new Rect(262, 113, 36, 7), BuiltinTooltips.SecondaryStat.Food, character);
+                SetupSecondaryStatTooltip(new Rect(214, 113, 42, 7), SecondaryStat.Gold);
+                SetupSecondaryStatTooltip(new Rect(262, 113, 36, 7), SecondaryStat.Food);
                 layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), UIPaletteIndex);
                 int attack = character.BaseAttack + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
@@ -4455,7 +4481,7 @@ namespace Ambermoon
                     string attackString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack));
                     characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7), attackString, TextColor.White, TextAlign.Left));
                 }
-                ShowSecondaryStatTooltip(new Rect(214, 120, 36, 9), BuiltinTooltips.SecondaryStat.Damage, character);
+                SetupSecondaryStatTooltip(new Rect(214, 120, 36, 9), SecondaryStat.Damage);
                 layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), UIPaletteIndex);
                 int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Protection))
@@ -4471,7 +4497,7 @@ namespace Ambermoon
                     string defenseString = string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense));
                     characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7), defenseString, TextColor.White, TextAlign.Left));
                 }
-                ShowSecondaryStatTooltip(new Rect(261, 120, 37, 9), BuiltinTooltips.SecondaryStat.Defense, character);
+                SetupSecondaryStatTooltip(new Rect(261, 120, 37, 9), SecondaryStat.Defense);
             }
             else
             {
@@ -4522,23 +4548,38 @@ namespace Ambermoon
             var character = conversationPartner ?? CurrentInventory;
             bool magicClass = character.Class.IsMagic();
 
+            void UpdateSecondaryStatTooltip(SecondaryStat secondaryStat)
+            {
+                if (Configuration.ShowPlayerStatsTooltips && characterInfoStatTooltips.TryGetValue(secondaryStat, out var toolip) && toolip != null)
+                    this.UpdateSecondaryStatTooltip(toolip, secondaryStat, character);
+            }
+
             UpdateText(CharacterInfo.Age, () => string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
                 character.Attributes[Attribute.Age].CurrentValue));
+            UpdateSecondaryStatTooltip(SecondaryStat.Age);
             UpdateText(CharacterInfo.Level, () => $"{DataNameProvider.GetClassName(character.Class)} {character.Level}");
+            UpdateSecondaryStatTooltip(SecondaryStat.LevelWithAPRIncrease);
             UpdateText(CharacterInfo.EP, () => string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
                 character.ExperiencePoints));
+            UpdateSecondaryStatTooltip(SecondaryStat.EP50);
             UpdateText(CharacterInfo.LP, () => string.Format(DataNameProvider.CharacterInfoHitPointsString,
                 character.HitPoints.CurrentValue, character.HitPoints.TotalMaxValue));
+            UpdateSecondaryStatTooltip(SecondaryStat.LP);
             if (magicClass)
             {
                 UpdateText(CharacterInfo.SP, () => string.Format(DataNameProvider.CharacterInfoSpellPointsString,
                     character.SpellPoints.CurrentValue, character.SpellPoints.TotalMaxValue));
+                UpdateSecondaryStatTooltip(SecondaryStat.SP);
+                UpdateSecondaryStatTooltip(SecondaryStat.SLP);
             }
             UpdateText(CharacterInfo.SLPAndTP, () =>
                 (magicClass ? string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) : new string(' ', 7)) + " " +
                 string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints));
+            UpdateSecondaryStatTooltip(SecondaryStat.TP);
             UpdateText(CharacterInfo.GoldAndFood, () =>
                 string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food));
+            UpdateSecondaryStatTooltip(SecondaryStat.Gold);
+            UpdateSecondaryStatTooltip(SecondaryStat.Food);
             int attack = character.BaseAttack + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
             if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
             {
@@ -4552,6 +4593,7 @@ namespace Ambermoon
                 UpdateText(CharacterInfo.Attack, () =>
                     string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack)));
             }
+            UpdateSecondaryStatTooltip(SecondaryStat.Damage);
             int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
             if (CurrentSavegame.IsSpellActive(ActiveSpellType.Protection))
             {
@@ -4565,6 +4607,7 @@ namespace Ambermoon
                 UpdateText(CharacterInfo.Defense, () =>
                     string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense)));
             }
+            UpdateSecondaryStatTooltip(SecondaryStat.Defense);
             UpdateText(CharacterInfo.Weight, () => string.Format(DataNameProvider.CharacterInfoWeightString,
                 character.TotalWeight / 1000, (character as PartyMember).MaxWeight / 1000), true);
             if (conversationPartner != null)
@@ -9035,6 +9078,11 @@ namespace Ambermoon
             if (casterExp == targetExp)
                 return;
 
+            if (caster.MaxReachedLevel == 0)
+                caster.MaxReachedLevel = caster.Level;
+            if (target.MaxReachedLevel == 0)
+                target.MaxReachedLevel = target.Level;
+
             var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
             var initialCaster = initialSavegame.PartyMembers[caster.Index];
             var initialTarget = initialSavegame.PartyMembers[target.Index];
@@ -9046,7 +9094,6 @@ namespace Ambermoon
                 character.HitPoints.MaxValue = initialCharacter.HitPoints.MaxValue;
                 character.SpellPoints.CurrentValue = initialCharacter.SpellPoints.CurrentValue;
                 character.SpellPoints.MaxValue = initialCharacter.SpellPoints.MaxValue;
-                character.AttacksPerRound = initialCharacter.AttacksPerRound;
                 character.ExperiencePoints = 0;
                 character.AttacksPerRound = 1;
 
@@ -9065,7 +9112,11 @@ namespace Ambermoon
 
             AddExperience(caster, targetExp, () =>
             {
-                AddExperience(target, casterExp, finishAction);
+                AddExperience(target, casterExp, () =>
+                {
+                    UpdateCharacterInfo();
+                    finishAction?.Invoke();
+                });
             });
         }
 
@@ -13292,6 +13343,7 @@ namespace Ambermoon
             bool inputWasEnabled = InputEnable;
             InputEnable = false;
             allInputDisabled = false;
+            CursorType = CursorType.Click;
             var lastPlayedSong = this.lastPlayedSong;
             var previousSong = PlayMusic(Song.StairwayToLevel50);
             var popup = layout.OpenPopup(new Position(16, 62), 18, 6);
@@ -15386,6 +15438,7 @@ namespace Ambermoon
 
             characterInfoTexts.Clear();
             characterInfoPanels.Clear();
+            characterInfoStatTooltips.Clear();
             CurrentInventoryIndex = null;
             windowTitle.Visible = false;
             weightDisplayBlinking = false;
