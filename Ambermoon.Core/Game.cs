@@ -12519,7 +12519,8 @@ namespace Ambermoon
 
                                     if (caster.Index == target.Index)
                                     {
-                                        ShowMessagePopup(DataNameProvider.CannotExchangeExpWithSelf);
+                                        // Changing exp with self doesn't change anything but also will
+                                        // not require a message.
                                         return;
                                     }
                                     

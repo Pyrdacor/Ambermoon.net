@@ -209,7 +209,6 @@ namespace Ambermoon.Data
         string TextBlockMissing { get; }
         string ReviveCatMessage { get; }
         string CannotExchangeExpWithAnimals { get; }
-        string CannotExchangeExpWithSelf { get; }
         string CannotExchangeExpWithDead { get; }
 
 
