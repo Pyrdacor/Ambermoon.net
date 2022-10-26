@@ -210,6 +210,7 @@ namespace Ambermoon.Data
         string ReviveCatMessage { get; }
         string CannotExchangeExpWithAnimals { get; }
         string CannotExchangeExpWithDead { get; }
+        string ThisCantBeMoved { get; }
 
 
         #region Conversations

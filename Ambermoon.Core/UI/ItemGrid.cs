@@ -37,6 +37,7 @@ namespace Ambermoon.UI
         const int SlotHeight = 24;
         public static readonly Size SlotSize = new Size(SlotWidth, SlotHeight);
         readonly Game game;
+        readonly Layout layout;
         readonly IRenderView renderView;
         readonly IItemManager itemManager;
         readonly List<Position> slotPositions;
@@ -125,6 +126,7 @@ namespace Ambermoon.UI
             ScrollbarType? scrollbarType = null, bool showPrice = false, Func<uint> availableGoldProvider = null)
         {
             this.game = game;
+            this.layout = layout;
             this.renderView = renderView;
             this.itemManager = itemManager;
             this.slotPositions = slotPositions;
@@ -179,7 +181,23 @@ namespace Ambermoon.UI
                     layout.DragItems(item, takeAll, dragAction,
                     () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, false)),
                 12, 3, 24, new Rect(109 + 3 * 22, 76, 6, 112), new Size(6, 56), ScrollbarType.LargeVertical);
-            grid.dropSlotProvider = (position, broken, _) => grid.SlotFromPosition(position);
+            grid.dropSlotProvider = (position, broken, _) =>
+            {
+                int? slot = grid.SlotFromPosition(position);
+
+                if (slot != null)
+                {
+                    var itemSlot = grid.GetItemSlot(slot.Value);
+
+                    if (itemSlot.Flags.HasFlag(ItemSlotFlags.Locked))
+                    {
+                        layout.SetInventoryMessage(game.DataNameProvider.ThisCantBeMoved, true);
+                        slot = null;
+                    }
+                }
+
+                return slot;
+            };
             grid.itemControlClickHandler = useHandler;
             grid.itemShiftClickHandler = equipHandler;
             return grid;
@@ -797,6 +815,12 @@ namespace Ambermoon.UI
                                 Hover(position); // This updates the tooltip
                                 dragHandler?.Invoke(item);
                             });
+                        }
+                        else if (!dragDisabled && itemSlot.Item?.Flags.HasFlag(ItemSlotFlags.Locked) == true)
+                        {
+                            cursorType = CursorType.Click;
+                            layout.SetInventoryMessage(game.DataNameProvider.ThisCantBeMoved, true);
+                            return true;
                         }
                     }
                 }

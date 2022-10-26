@@ -378,6 +378,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             ReviveCat = 338,
             CannotExchangeExpWithAnimals,
             CannotExchangeExpWithDead,
+            ThisCantBeMoved,
             Count
         }
 

@@ -240,6 +240,7 @@
         public string ReviveCatMessage => executableData.Messages.GetEntry(Messages.Index.ReviveCat);
         public string CannotExchangeExpWithAnimals => executableData.Messages.GetEntry(Messages.Index.CannotExchangeExpWithAnimals);
         public string CannotExchangeExpWithDead => executableData.Messages.GetEntry(Messages.Index.CannotExchangeExpWithDead);
+        public string ThisCantBeMoved => executableData.Messages.GetEntry(Messages.Index.ThisCantBeMoved);
 
 
         #region Conversations
