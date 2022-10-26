@@ -9,6 +9,9 @@ namespace Ambermoon.Data.Legacy.Serialization
     {
         public void WriteTextContainer(TextContainer textContainer, IDataWriter dataWriter, bool withProcessedUIPlaceholders)
         {
+            if (textContainer.WorldNames?.Count != 3)
+                throw new AmbermoonException(ExceptionScope.Data, $"Invalid number of world names: {textContainer.WorldNames?.Count ?? 0}, expected: 3.");
+
             int formatMessageDataSize = textContainer.WorldNames.Sum(n => n.Length + 1);
             var formatMessages = new List<string>(textContainer.FormatMessages);
             int i;

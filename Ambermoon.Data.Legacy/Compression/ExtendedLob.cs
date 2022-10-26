@@ -142,6 +142,9 @@ namespace Ambermoon.Data.Legacy.Compression
                         {
                             compressedData.Add(0);
                             remainingLiteralCount -= 256;
+                            for (int i = 0; i < 256; ++i)
+                                compressedData.Add(literals[i]);
+                            literals = literals.Skip(256).ToList();
                         }
 
                         lastLiteral = literals[^1];
