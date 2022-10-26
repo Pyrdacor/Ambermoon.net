@@ -377,6 +377,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             // Ambermoon Advanced
             ReviveCat = 338,
             CannotExchangeExpWithAnimals,
+            CannotExchangeExpWithSelf,
+            CannotExchangeExpWithDead,
             Count
         }
 
@@ -396,8 +398,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.AddRange(formatMessages.Skip(6).Select(FixMessage));
             entries.AddRange(messages);
 
+            string textBlockMissingMessage = entries.Count <= (int)Index.TextBlockMissing ? "" : GetEntry(Index.TextBlockMissing);
+
             while (entries.Count < (int)Index.Count)
-                entries.Add("");
+                entries.Add(textBlockMissingMessage);
         }
 
         static string FixMessage(string message)

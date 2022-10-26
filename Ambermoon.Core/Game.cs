@@ -12517,9 +12517,15 @@ namespace Ambermoon
                                         return;
                                     }
 
-                                    if (caster.Index == target.Index || !caster.Alive || !target.Alive)
+                                    if (caster.Index == target.Index)
                                     {
-                                        ShowMessagePopup(DataNameProvider.TheSpellFailed);
+                                        ShowMessagePopup(DataNameProvider.CannotExchangeExpWithSelf);
+                                        return;
+                                    }
+                                    
+                                    if (!caster.Alive || !target.Alive)
+                                    {
+                                        ShowMessagePopup(DataNameProvider.CannotExchangeExpWithDead);
                                         return;
                                     }
                                 }

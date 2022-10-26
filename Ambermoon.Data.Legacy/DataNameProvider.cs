@@ -239,6 +239,8 @@
         public string TextBlockMissing => executableData.Messages.GetEntry(Messages.Index.TextBlockMissing);
         public string ReviveCatMessage => executableData.Messages.GetEntry(Messages.Index.ReviveCat);
         public string CannotExchangeExpWithAnimals => executableData.Messages.GetEntry(Messages.Index.CannotExchangeExpWithAnimals);
+        public string CannotExchangeExpWithSelf => executableData.Messages.GetEntry(Messages.Index.CannotExchangeExpWithSelf);
+        public string CannotExchangeExpWithDead => executableData.Messages.GetEntry(Messages.Index.CannotExchangeExpWithDead);
 
 
         #region Conversations
