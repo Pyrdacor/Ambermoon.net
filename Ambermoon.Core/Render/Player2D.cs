@@ -21,6 +21,7 @@
 
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
+using System;
 
 namespace Ambermoon.Render
 {
@@ -292,12 +293,12 @@ namespace Ambermoon.Render
             MoveTo(Map.Map, (uint)Position.X, (uint)Position.Y, ticks, true, null);
         }
 
-        public override void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
+        public override void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection, Action<Map> mapInitAction = null)
         {
             if (Map.Map != map)
                 Visible = true; // reset visibility before changing map
 
-            base.MoveTo(map, x, y, ticks, frameReset, newDirection);
+            base.MoveTo(map, x, y, ticks, frameReset, newDirection, mapInitAction);
 
             if (frameReset && map.Type == MapType.Map2D && !map.UseTravelTypes)
                 SetCurrentFrame(CurrentFrameIndex + 1); // Middle move frame = stand frame

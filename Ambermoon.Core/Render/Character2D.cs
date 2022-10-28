@@ -224,7 +224,7 @@ namespace Ambermoon.Render
             MoveTo(Map.Map, (uint)Position.X, (uint)Position.Y, ticks, true, direction);
         }
 
-        public virtual void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
+        public virtual void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection, Action<Map> mapInitAction = null)
         {
             if (newDirection == CharacterDirection.Random)
                 newDirection = (CharacterDirection)game.RandomInt(0, 3);
@@ -241,12 +241,13 @@ namespace Ambermoon.Render
                     Map.LimitScrollOffset(ref scrollX, ref scrollY, map);
                     Map.SetMap(map, scrollX, scrollY);
                     Direction = newDirection.Value;
+                    mapInitAction?.Invoke(map);
 
                     RecheckTopSprite();
                 }
                 else
                 {
-                    game.Start3D(map, x, y, newDirection.Value, false);
+                    game.Start3D(map, x, y, newDirection.Value, false, mapInitAction);
                     return;
                 }
             }

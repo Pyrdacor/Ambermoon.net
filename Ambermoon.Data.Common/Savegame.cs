@@ -239,45 +239,68 @@ namespace Ambermoon.Data
 
         public byte[] ChestUnlockStates { get; set; }
         public byte[] DoorUnlockStates { get; set; }
+        public byte[] ExtendedChestUnlockStates { get; set; }
         public bool IsChestLocked(uint chestIndex)
         {
+            if (chestIndex > 383)
+                throw new IndexOutOfRangeException($"Chest index must be 0..383 but was {chestIndex}.");
+
             if (chestIndex > 255)
-                throw new IndexOutOfRangeException($"Chest index must be 0..255 but was {chestIndex}.");
+            {
+                chestIndex -= 256;
+                return (ExtendedChestUnlockStates[chestIndex / 8] & (1 << ((int)chestIndex % 8))) == 0;
+            }
 
             return (ChestUnlockStates[chestIndex / 8] & (1 << ((int)chestIndex % 8))) == 0;
         }
         public void LockChest(uint chestIndex)
         {
-            if (chestIndex > 255)
-                throw new IndexOutOfRangeException($"Chest index must be 0..255 but was {chestIndex}.");
+            if (chestIndex > 383)
+                throw new IndexOutOfRangeException($"Chest index must be 0..383 but was {chestIndex}.");
 
-            ChestUnlockStates[chestIndex / 8] &= (byte)~(1 << ((int)chestIndex % 8));
+            if (chestIndex > 255)
+            {
+                chestIndex -= 256;
+                ExtendedChestUnlockStates[chestIndex / 8] &= (byte)~(1 << ((int)chestIndex % 8));
+            }
+            else
+            {
+                ChestUnlockStates[chestIndex / 8] &= (byte)~(1 << ((int)chestIndex % 8));
+            }
         }
         public void UnlockChest(uint chestIndex)
         {
-            if (chestIndex > 255)
-                throw new IndexOutOfRangeException($"Chest index must be 0..255 but was {chestIndex}.");
+            if (chestIndex > 383)
+                throw new IndexOutOfRangeException($"Chest index must be 0..383 but was {chestIndex}.");
 
-            ChestUnlockStates[chestIndex / 8] |= (byte)(1 << ((int)chestIndex % 8));
+            if (chestIndex > 255)
+            {
+                chestIndex -= 256;
+                ExtendedChestUnlockStates[chestIndex / 8] |= (byte)(1 << ((int)chestIndex % 8));
+            }
+            else
+            {
+                ChestUnlockStates[chestIndex / 8] |= (byte)(1 << ((int)chestIndex % 8));
+            }
         }
         public bool IsDoorLocked(uint doorIndex)
         {
-            if (doorIndex > 255)
-                throw new IndexOutOfRangeException($"Door index must be 0..255 but was {doorIndex}.");
+            if (doorIndex > 127)
+                throw new IndexOutOfRangeException($"Door index must be 0..127 but was {doorIndex}.");
 
             return (DoorUnlockStates[doorIndex / 8] & (1 << ((int)doorIndex % 8))) == 0;
         }
         public void LockDoor(uint doorIndex)
         {
-            if (doorIndex > 255)
-                throw new IndexOutOfRangeException($"Door index must be 0..255 but was {doorIndex}.");
+            if (doorIndex > 127)
+                throw new IndexOutOfRangeException($"Door index must be 0..127 but was {doorIndex}.");
 
             DoorUnlockStates[doorIndex / 8] &= (byte)~(1 << ((int)doorIndex % 8));
         }
         public void UnlockDoor(uint doorIndex)
         {
-            if (doorIndex > 255)
-                throw new IndexOutOfRangeException($"Door index must be 0..255 but was {doorIndex}.");
+            if (doorIndex > 127)
+                throw new IndexOutOfRangeException($"Door index must be 0..127 but was {doorIndex}.");
 
             DoorUnlockStates[doorIndex / 8] |= (byte)(1 << ((int)doorIndex % 8));
         }

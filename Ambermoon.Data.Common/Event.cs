@@ -245,7 +245,11 @@ namespace Ambermoon.Data
             /// Only considered if <see cref="CloseWhenEmpty"/> is set.
             /// If true the chest (event) is not removed automatically.
             /// </summary>
-            NoAutoRemove = 0x02
+            NoAutoRemove = 0x02,
+            /// <summary>
+            /// Extended chest (Ambermoon Advanced only)
+            /// </summary>
+            ExtendedChest = 0x04
         }
 
         public uint LockpickingChanceReduction { get; set; }
@@ -254,6 +258,19 @@ namespace Ambermoon.Data
         /// Note: This is 0-based but the files might by 1-based.
         /// </summary>
         public uint ChestIndex { get; set; }
+        /// <summary>
+        /// This is a 1-based index and also respects extended
+        /// chests of Ambermoon Advanced.
+        /// </summary>
+        public uint RealChestIndex
+        {
+            get
+            {
+                return LootFlags.HasFlag(ChestLootFlags.ExtendedChest)
+                    ? 257 + ChestIndex
+                    : 1 + ChestIndex;
+            }
+        }
         public ChestLootFlags LootFlags { get; set; }
         public bool CloseWhenEmpty => LootFlags.HasFlag(ChestLootFlags.CloseWhenEmpty);
         public bool AutoRemove => CloseWhenEmpty && !LootFlags.HasFlag(ChestLootFlags.NoAutoRemove);
@@ -291,7 +308,7 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             string lockType = LockpickingChanceReduction == 0 ? "Open" : LockpickingChanceReduction >= 100 ? "No Lockpicking" : $"-{LockpickingChanceReduction}% Chance";
-            return $"{Type}: Chest {ChestIndex}, Lock=[{lockType}], LootFlags={LootFlags}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, Flags: {Flags}";
+            return $"{Type}: Chest {RealChestIndex}, Lock=[{lockType}], LootFlags={LootFlags}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, Flags: {Flags}";
         }
     }
 

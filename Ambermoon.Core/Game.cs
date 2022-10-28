@@ -1156,7 +1156,7 @@ namespace Ambermoon
 
         public Render.Color GetUIColor(int colorIndex) => GetPaletteColor(1 + UIPaletteIndex, colorIndex);
 
-        internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction, bool initial)
+        internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction, bool initial, Action<Map> mapInitAction = null)
         {
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
@@ -1188,10 +1188,14 @@ namespace Ambermoon
             }
 
             if (renderMap2D.Map != map)
+            {
                 renderMap2D.SetMap(map, (uint)xOffset, (uint)yOffset);
+                mapInitAction?.Invoke(map);
+            }
             else
             {
                 renderMap2D.ScrollTo((uint)xOffset, (uint)yOffset, true);
+                mapInitAction?.Invoke(map);
                 renderMap2D.AddCharacters(map);
                 renderMap2D.InvokeMapChange();
             }
@@ -1224,7 +1228,7 @@ namespace Ambermoon
             PlayerMoved(true, null, true);
         }
 
-        internal void Start3D(Map map, uint playerX, uint playerY, CharacterDirection direction, bool initial)
+        internal void Start3D(Map map, uint playerX, uint playerY, CharacterDirection direction, bool initial, Action<Map> mapInitAction = null)
         {
             if (map.Type != MapType.Map3D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 3D.");
@@ -1236,6 +1240,7 @@ namespace Ambermoon
             renderMap2D.Destroy();
             renderMap3D.SetMap(map, playerX, playerY, direction, CurrentPartyMember?.Race ?? Race.Human, true);
             UpdateUIPalette(true);
+            mapInitAction?.Invoke(map);
             player3D.SetPosition((int)playerX, (int)playerY, CurrentTicks, !initial);
             player3D.TurnTowards((int)direction * 90.0f);
             if (player2D != null)
@@ -3757,11 +3762,12 @@ namespace Ambermoon
             }
         }
 
-        void UpdateMapName()
+        void UpdateMapName(Map map = null)
         {
-            string mapName = Map.IsWorldMap
-                ? DataNameProvider.GetWorldName(Map.World)
-                : Map.Name;
+            map ??= Map;
+            string mapName = map.IsWorldMap
+                ? DataNameProvider.GetWorldName(map.World)
+                : map.Name;
             windowTitle.Text = ProcessText(mapName);
             windowTitle.PaletteIndex = UIPaletteIndex;
             windowTitle.TextColor = TextColor.BrightGray;
@@ -5705,24 +5711,31 @@ namespace Ambermoon
             if (direction == CharacterDirection.Keep)
                 direction = PlayerDirection;
 
-            player.MoveTo(newMap, newX, newY, CurrentTicks, true, direction);
+            player.MoveTo(newMap, newX, newY, CurrentTicks, true, direction, UpdateMapNameAndLight);
             this.player.Position.X = RenderPlayer.Position.X;
             this.player.Position.Y = RenderPlayer.Position.Y;
             // This will also update the appearance.
             TravelType = TravelType.IgnoreEvents() ? TravelType.Walk : TravelType;
 
-            if (!mapTypeChanged)
+            void UpdateMapNameAndLight(Map map)
             {
-                PlayerMoved(mapChange);
+                if (mapChange && !WindowActive)
+                {
+                    UpdateMapName(map);
+                    UpdateLight(true, false, false, map);
+                }
             }
 
             if (mapChange && !WindowActive)
             {
                 // Color of the filled upper right area may need update cause of palette change.
                 mapViewRightFillArea.Color = GetUIColor(28);
-                UpdateMapName();
-                UpdateLight(true);
             }
+
+            if (!mapTypeChanged)
+            {
+                PlayerMoved(mapChange);
+            }            
 
             if (!mapChange) // Otherwise the map change handler takes care of this
                 ResetMoveKeys();
@@ -6411,12 +6424,14 @@ namespace Ambermoon
 
             CloseWindow(() =>
             {
+                uint chestIndex = chestEvent.RealChestIndex;
+
                 // Refill chest (is important if it is used elsewhere too)
-                var initialChest = GetInitialChest(1 + chestEvent.ChestIndex);
+                var initialChest = GetInitialChest(chestIndex);
 
                 if (initialChest != null)
                 {
-                    var chest = GetChest(1 + chestEvent.ChestIndex);
+                    var chest = GetChest(chestIndex);
 
                     chest.Gold = initialChest.Gold;
                     chest.Food = initialChest.Food;
@@ -6632,7 +6647,7 @@ namespace Ambermoon
         internal bool ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map map,
             Position position, bool fromEvent, bool triggerFollowEvents = false)
         {
-            var chest = GetChest(1 + chestEvent.ChestIndex);
+            var chest = GetChest(chestEvent.RealChestIndex);
 
             if (chestEvent.CloseWhenEmpty && chest.Empty)
                 return false; // Chest has gone due to looting
@@ -6641,7 +6656,7 @@ namespace Ambermoon
 
             void OpenChest()
             {
-                bool changed = !chest.Equals(GetInitialChest(1 + chestEvent.ChestIndex), false);
+                bool changed = !chest.Equals(GetInitialChest(chestEvent.RealChestIndex), false);
                 string initialText = changed ? null : map != null && fromEvent && chestEvent.TextIndex != 255 ?
                     map.GetText((int)chestEvent.TextIndex, DataNameProvider.TextBlockMissing) : null;
                 layout.Reset();
@@ -6650,11 +6665,11 @@ namespace Ambermoon
                 CursorType = CursorType.Sword;
                 ResetMapCharacterInteraction(map ?? Map, true);
 
-                if (chestEvent.LockpickingChanceReduction != 0 && CurrentSavegame.IsChestLocked(chestEvent.ChestIndex))
+                if (chestEvent.LockpickingChanceReduction != 0 && CurrentSavegame.IsChestLocked(chestEvent.RealChestIndex - 1))
                 {
                     ShowLocked(Picture80x80.ChestClosed, () =>
                     {
-                        CurrentSavegame.UnlockChest(chestEvent.ChestIndex);
+                        CurrentSavegame.UnlockChest(chestEvent.RealChestIndex - 1);
                         currentWindow.Window = Window.Chest; // This avoids returning to locked screen when closing chest window.
                         ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true, true));
                     }, null, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
@@ -10487,21 +10502,23 @@ namespace Ambermoon
             return usedLightIntensity / 255.0f;
         }
 
-        internal void UpdateLight(bool mapChange = false, bool lightActivated = false, bool playerSwitched = false)
+        internal void UpdateLight(bool mapChange = false, bool lightActivated = false, bool playerSwitched = false, Map map = null)
         {
-            if (Map == null)
+            map ??= Map;
+
+            if (map == null)
                 return;
 
             void ChangeLightRadius(int lastRadius, int newRadius)
             {
-                var map = Map;
+                var oldMap = map;
                 var lightLevel = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light);
                 const int timePerChange = 75;
                 var timeSpan = TimeSpan.FromMilliseconds(timePerChange);
 
                 void ChangeLightRadius()
                 {
-                    if (map != Map || // map changed
+                    if (oldMap != map || // map changed
                         lightLevel != CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light)) // light buff changed
                         return;
 

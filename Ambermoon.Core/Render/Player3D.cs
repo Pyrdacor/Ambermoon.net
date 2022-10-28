@@ -76,7 +76,7 @@ namespace Ambermoon.Render
             Camera.SetPosition(-Camera.X, Camera.Z, y);
         }
 
-        public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
+        public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection, Action<Map> mapInitAction = null)
         {
             if (newDirection == CharacterDirection.Random)
                 newDirection = (CharacterDirection)game.RandomInt(0, 3);
@@ -91,11 +91,12 @@ namespace Ambermoon.Render
 
                 if (map.Type == MapType.Map2D)
                 {
-                    game.Start2D(map, x, y, newDirection.Value, false);
+                    game.Start2D(map, x, y, newDirection.Value, false, mapInitAction);
                 }
                 else
                 {
                     this.map.SetMap(map, x, y, newDirection.Value, game.CurrentPartyMember?.Race ?? Race.Human);
+                    mapInitAction?.Invoke(map);
                     SetPosition((int)x, (int)y, ticks, false);
                     player.Position.X = Position.X;
                     player.Position.Y = Position.Y;
