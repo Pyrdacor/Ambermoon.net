@@ -1715,7 +1715,7 @@ namespace Ambermoon
 
                         if (partyMember != null && partyMember.Alive)
                         {
-                            if (!inn && partyMember.Food == 0)
+                            if (!inn && partyMember.Food == 0 && partyMember.Race < Race.Animal)
                             {
                                 layout.ShowClickChestMessage(partyMember.Name + DataNameProvider.HasNoMoreFood, Next);
                             }
@@ -1729,7 +1729,7 @@ namespace Ambermoon
                                 partyMember.SpellPoints.CurrentValue += (uint)spRecovered;
                                 layout.FillCharacterBars(partyMember);
 
-                                if (!inn)
+                                if (!inn && partyMember.Race < Race.Animal)
                                     --partyMember.Food;
 
                                 if (partyMember.Class.IsMagic() && spRecovered != 0) // Has SP and was recovered
@@ -11466,7 +11466,8 @@ namespace Ambermoon
                 // Rest button
                 layout.AttachEventToButton(3, () =>
                 {
-                    int totalCost = PartyMembers.Where(p => p.Alive).Count() * inn.Cost;
+                    // Animals etc don't need to pay
+                    int totalCost = Math.Max(1, PartyMembers.Where(p => p.Alive && p.Race < Race.Animal).Count()) * inn.Cost;
                     if (inn.AvailableGold < totalCost)
                     {
                         layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney);
@@ -11577,7 +11578,8 @@ namespace Ambermoon
                     // Buy transport button
                     layout.AttachEventToButton(3, () =>
                     {
-                        int totalCost = (salesman.PlaceType == PlaceType.HorseDealer ? PartyMembers.Where(p => p.Alive).Count() : 1) * salesman.Cost;
+                        // Animals don't have to pay for a transport
+                        int totalCost = (salesman.PlaceType == PlaceType.HorseDealer ? Math.Max(1, PartyMembers.Where(p => p.Alive && p.Race < Race.Animal).Count()) : 1) * salesman.Cost;
                         if (salesman.AvailableGold < totalCost)
                         {
                             layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney);
