@@ -10667,6 +10667,11 @@ namespace Ambermoon
             else // 2D
             {
                 GetTransportsInVisibleArea(out TransportLocation transportAtPlayerIndex);
+                if (player2D == null)
+                {
+                    player2D = new Player2D(this, renderView.GetLayer(Layer.Characters), player, renderMap2D,
+                        renderView.SpriteFactory, new Position(0, 0), MapManager);
+                }
                 player2D.BaselineOffset = !CanSee() || transportAtPlayerIndex != null ? MaxBaseLine :
                     player.MovementAbility > PlayerMovementAbility.Swimming ? 32 : 0;
             }
