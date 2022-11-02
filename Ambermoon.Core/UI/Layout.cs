@@ -3063,6 +3063,13 @@ namespace Ambermoon.UI
                 return;
             }
 
+            if (itemSlot.Flags.HasFlag(ItemSlotFlags.Locked))
+            {
+                itemGrid.HideTooltip();
+                SetInventoryMessage(game.DataNameProvider.ThisCantBeMoved, true);
+                return;
+            }
+
             if (itemSlot.Amount > 1)
             {
                 itemGrid.HideTooltip();
@@ -3121,6 +3128,12 @@ namespace Ambermoon.UI
 
         void StoreItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
+            if (itemSlot.Flags.HasFlag(ItemSlotFlags.Locked))
+            {
+                SetInventoryMessage(game.DataNameProvider.ThisCantBeMoved, true);
+                return;
+            }
+
             var slots = game.OpenStorage.Slots.ToList();
             int maxItemsToStore = 0;
             var item = itemManager.GetItem(itemSlot.ItemIndex);
