@@ -3534,18 +3534,18 @@ namespace Ambermoon.UI
             }
         }
 
-        void PlayPortraitAnimation(int slot, PartyMember partyMember, Action finishAction = null)
+        void PlayPortraitAnimation(int slot, PartyMember partyMember, Action finishAction = null, bool forceAnimation = false)
         {
             var newState = partyMember == null ? PartyMemberPortaitState.Empty
                 : partyMember.Alive ? PartyMemberPortaitState.Normal : PartyMemberPortaitState.Dead;
 
-            if (portraitStates[slot] == newState)
+            if (!forceAnimation && portraitStates[slot] == newState)
             {
                 finishAction?.Invoke();
                 return;
             }
 
-            bool animation = portraitStates[slot] != PartyMemberPortaitState.None && portraitStates[slot] != PartyMemberPortaitState.Dead;
+            bool animation = forceAnimation || (portraitStates[slot] != PartyMemberPortaitState.None && portraitStates[slot] != PartyMemberPortaitState.Dead);
 
             portraitStates[slot] = newState;
             uint newGraphicIndex = newState switch
@@ -3716,9 +3716,10 @@ namespace Ambermoon.UI
             return null;
         }
 
-        public void UpdateCharacter(PartyMember partyMember, Action portraitAnimationFinishedHandler = null)
+        public void UpdateCharacter(PartyMember partyMember, Action portraitAnimationFinishedHandler = null, bool forceUpdate = false)
         {
-            SetCharacter(game.SlotFromPartyMember(partyMember).Value, partyMember, false, portraitAnimationFinishedHandler);
+            int slot = game.SlotFromPartyMember(partyMember).Value;
+            SetCharacter(slot, partyMember, false, portraitAnimationFinishedHandler, false, forceUpdate);
         }
 
         public void UpdateCharacter(int slot, Action portraitAnimationFinishedHandler = null)
@@ -3730,7 +3731,7 @@ namespace Ambermoon.UI
         /// Set portait to 0 to remove the portrait.
         /// </summary>
         public void SetCharacter(int slot, PartyMember partyMember, bool initialize = false,
-            Action portraitAnimationFinishedHandler = null, bool forceAnimation = false)
+            Action portraitAnimationFinishedHandler = null, bool forceAnimation = false, bool forceUpdate = false)
         {
             var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, true, 2);
             sprite.Layer = renderLayer;
@@ -3746,7 +3747,7 @@ namespace Ambermoon.UI
             {
                 if (forceAnimation && portraitStates[slot] == PartyMemberPortaitState.None)
                     portraitStates[slot] = PartyMemberPortaitState.Empty;
-                PlayPortraitAnimation(slot, partyMember, portraitAnimationFinishedHandler);
+                PlayPortraitAnimation(slot, partyMember, portraitAnimationFinishedHandler, forceUpdate && !forceAnimation);
             }
             sprite.PaletteIndex = game.PrimaryUIPaletteIndex;
             sprite.Visible = true;

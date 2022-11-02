@@ -5356,9 +5356,12 @@ namespace Ambermoon
                     break;
                 }
                 case RewardEvent.RewardType.ChangePortrait:
+                {
+                    bool changed = partyMember.PortraitIndex != rewardEvent.Value;
                     partyMember.PortraitIndex = (byte)rewardEvent.Value;
-                    layout.UpdateCharacter(partyMember, followAction);
+                    layout.UpdateCharacter(partyMember, followAction, changed);
                     return;
+                }
 
             }
 
