@@ -13401,10 +13401,13 @@ namespace Ambermoon
             AddValueText(113, DataNameProvider.TPAreNow, partyMember.TrainingPoints);
             AddValueText(120, DataNameProvider.APRAreNow, partyMember.AttacksPerRound);
 
-            if (partyMember.Level >= 50)
-                popup.AddText(new Position(32, 134), DataNameProvider.MaxLevelReached, TextColor.BrightGray);
-            else
-                AddValueText(134, DataNameProvider.NextLevelAt, partyMember.GetNextLevelExperiencePoints(), null, " " + DataNameProvider.EP);
+            if (partyMember.Class < Class.Animal)
+            {
+                if (partyMember.Level >= 50)
+                    popup.AddText(new Position(32, 134), DataNameProvider.MaxLevelReached, TextColor.BrightGray);
+                else
+                    AddValueText(134, DataNameProvider.NextLevelAt, partyMember.GetNextLevelExperiencePoints(), null, " " + DataNameProvider.EP);
+            }
 
             popup.Closed += () =>
             {
