@@ -176,7 +176,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             ReallyLoad,
             ReallyOverwriteSave,
             SaveWhichSavegame,
-            DenyLeavingPartyOnForestMoon,
+            DenyLeavingPartyOnMoon,
             CannotSendDeadPeopleAway,
             CrazyPeopleDontFollowCommands,
             PetrifiedPeopleCantGoHome,

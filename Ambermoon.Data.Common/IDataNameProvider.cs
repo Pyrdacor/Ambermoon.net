@@ -218,7 +218,10 @@ namespace Ambermoon.Data
         string DontKnowAnythingSpecialAboutIt { get; }
         string DenyJoiningParty { get; }
         string PartyFull { get; }
-        string DenyLeavingPartyOnForestMoon { get; }
+        string DenyLeavingPartyOnMoon { get; }
+        string CannotSendDeadPeopleAway { get; }
+        string CrazyPeopleDontFollowCommands { get; }
+        string PetrifiedPeopleCantGoHome { get; }
         string YouDontSpeakSameLanguage { get; }
         string WhoToTalkTo { get; }
         string SelfTalkingIsMad { get; }

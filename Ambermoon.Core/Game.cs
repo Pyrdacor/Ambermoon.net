@@ -7455,9 +7455,33 @@ namespace Ambermoon
                 aborted = false;
                 if (character is PartyMember partyMember && PartyMembers.Contains(partyMember))
                 {
+                    if (!partyMember.Alive)
+                    {
+                        SetText(DataNameProvider.CannotSendDeadPeopleAway);
+                        return;
+                    }
+
+                    if (partyMember.Conditions.HasFlag(Condition.Crazy))
+                    {
+                        SetText(DataNameProvider.CrazyPeopleDontFollowCommands);
+                        return;
+                    }
+
+                    if (partyMember.Conditions.HasFlag(Condition.Petrified))
+                    {
+                        SetText(DataNameProvider.PetrifiedPeopleCantGoHome);
+                        return;
+                    }
+
+                    if (!partyMember.Alive)
+                    {
+                        SetText(DataNameProvider.CannotSendDeadPeopleAway);
+                        return;
+                    }
+
                     if (Map.World == World.ForestMoon)
                     {
-                        SetText(DataNameProvider.DenyLeavingPartyOnForestMoon);
+                        SetText(DataNameProvider.DenyLeavingPartyOnMoon);
                         return;
                     }
 

@@ -248,7 +248,10 @@
         public string DontKnowAnythingSpecialAboutIt => executableData.Messages.GetEntry(Messages.Index.DontKnowAnythingSpecialAboutIt);
         public string DenyJoiningParty => executableData.Messages.GetEntry(Messages.Index.DenyJoiningParty);
         public string PartyFull => executableData.Messages.GetEntry(Messages.Index.PartyFull);
-        public string DenyLeavingPartyOnForestMoon => executableData.Messages.GetEntry(Messages.Index.DenyLeavingPartyOnForestMoon);
+        public string DenyLeavingPartyOnMoon => executableData.Messages.GetEntry(Messages.Index.DenyLeavingPartyOnMoon);
+        public string CannotSendDeadPeopleAway => executableData.Messages.GetEntry(Messages.Index.CannotSendDeadPeopleAway);
+        public string CrazyPeopleDontFollowCommands => executableData.Messages.GetEntry(Messages.Index.CrazyPeopleDontFollowCommands);
+        public string PetrifiedPeopleCantGoHome => executableData.Messages.GetEntry(Messages.Index.PetrifiedPeopleCantGoHome);
         public string YouDontSpeakSameLanguage => executableData.Messages.GetEntry(Messages.Index.YouDontSpeakSameLanguage);
         public string WhoToTalkTo => executableData.Messages.GetEntry(Messages.Index.WhoToTalkTo);
         public string SelfTalkingIsMad => executableData.Messages.GetEntry(Messages.Index.SelfTalkingIsMad);
