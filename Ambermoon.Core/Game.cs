@@ -7479,7 +7479,7 @@ namespace Ambermoon
                         return;
                     }
 
-                    if (Map.World == World.ForestMoon)
+                    if (Map.World != World.Lyramion) // TODO: You can still leave in Morag hangar and prison like in the original
                     {
                         SetText(DataNameProvider.DenyLeavingPartyOnMoon);
                         return;
