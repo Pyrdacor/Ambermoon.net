@@ -7493,7 +7493,10 @@ namespace Ambermoon
                         HandleNextEvent();
                     }
                     else
+                    {
+                        SetText(DataNameProvider.WellIShouldLeave);
                         RemovePartyMember(() => Exit()); // Just remove from party and close
+                    }
                 }
             }
 
@@ -7596,6 +7599,11 @@ namespace Ambermoon
                         aborted = false;
                         lastEventStatus = true;
                         HandleNextEvent();
+                        return;
+                    }
+                    else
+                    {
+                        SetText(DataNameProvider.GoodBye, CloseWindow);
                         return;
                     }
                 }
@@ -7851,7 +7859,16 @@ namespace Ambermoon
                 conversationText.Visible = false;
 
                 if (showInitialText)
-                    HandleNextEvent();
+                {
+                    if (conversationEvent != null)
+                    {
+                        HandleNextEvent();
+                    }
+                    else
+                    {
+                        SetText(DataNameProvider.Hello);
+                    }
+                }
             });
         }
 

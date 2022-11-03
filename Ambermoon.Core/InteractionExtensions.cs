@@ -40,6 +40,10 @@ namespace Ambermoon
                 @event.ExecuteEvent(game.Map, game, ref trigger, x, y, ref lastEventStatus, out bool _, out var _,
                     conversationPartner, characterIndex);
             }
+            else
+            {
+                game.ShowConversation(conversationPartner, characterIndex, null, new Game.ConversationItems());
+            }
         }
     }
 }

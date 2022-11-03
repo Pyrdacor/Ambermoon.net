@@ -235,6 +235,9 @@ namespace Ambermoon.Data
         string NotInterestedInFood { get; }
         string MoreGoldNeeded { get; }
         string MoreFoodNeeded { get; }
+        string Hello { get; }
+        string GoodBye { get; }
+        string WellIShouldLeave { get; }
 
         #endregion
 

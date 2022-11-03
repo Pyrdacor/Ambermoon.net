@@ -265,6 +265,9 @@
         public string NotInterestedInFood => executableData.Messages.GetEntry(Messages.Index.NotInterestedInFood);
         public string MoreGoldNeeded => executableData.Messages.GetEntry(Messages.Index.HowAboutSomeMore);
         public string MoreFoodNeeded => executableData.Messages.GetEntry(Messages.Index.MoreFoodWouldBeGood);
+        public string Hello => executableData.Messages.GetEntry(Messages.Index.Hello);
+        public string GoodBye => executableData.Messages.GetEntry(Messages.Index.GoodBye);
+        public string WellIShouldLeave => executableData.Messages.GetEntry(Messages.Index.WellShouldLeave);
 
         #endregion
 
