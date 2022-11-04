@@ -8601,6 +8601,34 @@ namespace Ambermoon
                 throw new AmbermoonException(ExceptionScope.Application, $"Invalid spell target type: {target.GetType()}");
         }
 
+        public void KillAllMapMonsters()
+        {
+            if (Map == null || Map.CharacterReferences == null)
+                return;
+
+            for (uint characterIndex = 0; characterIndex < Map.CharacterReferences.Length; ++characterIndex)
+            {
+                var characterReference = Map.CharacterReferences[characterIndex];
+
+                if (characterReference == null)
+                    break;
+
+                if (characterReference.Type == CharacterType.Monster)
+                    SetMapCharacterBit(Map.Index, characterIndex, true);
+            }
+        }
+
+        public void ActivateLight(uint level)
+        {
+            ActivateLight(180, level);
+        }
+
+        void ActivateLight(uint duration, uint level)
+        {
+            CurrentSavegame.ActivateSpell(ActiveSpellType.Light, duration, level);
+            UpdateLight(false, true);
+        }
+
         void ApplySpellEffect(Spell spell, Character caster, Action finishAction, bool checkFail)
         {
             CurrentSpellTarget = null;
@@ -8611,12 +8639,6 @@ namespace Ambermoon
                     TrySpell(action);
                 else
                     action?.Invoke();
-            }
-
-            void ActivateLight(uint duration, uint level)
-            {
-                CurrentSavegame.ActivateSpell(ActiveSpellType.Light, duration, level);
-                UpdateLight(false, true);
             }
 
             switch (spell)
@@ -12648,20 +12670,8 @@ namespace Ambermoon
                         {
                             if (spell == Spell.Resurrection)
                             {
-                                void Revive(PartyMember target, Action finishAction) =>
-                                    ApplySpellEffect(Spell.Resurrection, caster, target, finishAction, false);
                                 var affectedMembers = PartyMembers.Where(p => p.Conditions.HasFlag(Condition.DeadCorpse)).ToList();
-                                ForeachPartyMember(Revive, p => p.Conditions.HasFlag(Condition.DeadCorpse), () =>
-                                {
-                                    currentAnimation?.Destroy();
-                                    currentAnimation = new SpellAnimation(this, layout);
-
-                                    currentAnimation.CastHealingOnPartyMembers(() =>
-                                    {
-                                        currentAnimation.Destroy();
-                                        currentAnimation = null;
-                                    }, affectedMembers);
-                                });
+                                Revive(caster, affectedMembers);
                             }
                             else
                             {
@@ -15765,6 +15775,24 @@ namespace Ambermoon
                 default:
                     break;
             }
+        }
+
+        public void Revive(Character caster, List<PartyMember> affectedMembers, Action finishAction = null)
+        {
+            void Revive(PartyMember target, Action finishAction) =>
+                ApplySpellEffect(Spell.Resurrection, caster, target, finishAction, false);
+            ForeachPartyMember(Revive, p => p.Conditions.HasFlag(Condition.DeadCorpse), () =>
+            {
+                currentAnimation?.Destroy();
+                currentAnimation = new SpellAnimation(this, layout);
+
+                currentAnimation.CastHealingOnPartyMembers(() =>
+                {
+                    currentAnimation.Destroy();
+                    currentAnimation = null;
+                    finishAction?.Invoke();
+                }, affectedMembers);
+            });
         }
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Ambermoon
 {
@@ -119,10 +120,37 @@ namespace Ambermoon
                 Create
                 (
                     "Kills a specific party member." + Environment.NewLine +
-                    "Usage: kill <party_member_index> [death_type]" + Environment.NewLine +
+                    "Usage: kill [party_member_index] [death_type]" + Environment.NewLine +
                     "Death types: 0 (normal), 1 (ashes), 2 (dust)" + Environment.NewLine +
-                    "Defaults to death type 0",
+                    "Defaults to active party member and death type 0",
                     Kill
+                )
+            },
+            { "revive",
+                Create
+                (
+                    "Revives a specific party member." + Environment.NewLine +
+                    "Usage: revive [party_member_index]" + Environment.NewLine +
+                    "If no index is given, all dead ones are revived.",
+                    Revive
+                )
+            },
+            { "berserk",
+                Create
+                (
+                    "Kills all monsters on the map." + Environment.NewLine +
+                    "Usage: berserk",
+                    Berserk
+                )
+            },
+            { "light",
+                Create
+                (
+                    "Gives the party light." + Environment.NewLine +
+                    "Usage: light [light_level]" + Environment.NewLine +
+                    "Levels 1 to 3 are possible." + Environment.NewLine +
+                    "Defaults to max light level",
+                    Light
                 )
             }
         };
@@ -135,10 +163,15 @@ namespace Ambermoon
         static int autoFillIndex = -1;
         static int cursorPosition = 0;
         static int historyIndex = -1;
-        static readonly List<string> history = new List<string>();
+        static readonly List<string> history = new();
+        static List<ConsoleKeyInfo> trackedKeys = new();
+        static bool inputDisabled = false;
 
         public static void ProcessInput(string input, Game game)
         {
+            if (inputDisabled)
+                return;
+
             currentAutoFillInput = null;
             currentInput = input;
             ProcessCurrentInput(game, true);
@@ -146,6 +179,15 @@ namespace Ambermoon
 
         public static void ProcessInput(ConsoleKeyInfo keyInfo, Game game)
         {
+            if (inputDisabled)
+            {
+                lock (trackedKeys)
+                {
+                    trackedKeys.Add(keyInfo);
+                    return;
+                }
+            }
+
             if (keyInfo.Key != ConsoleKey.Tab)
                 autoFillIndex = -1;
 
@@ -200,15 +242,14 @@ namespace Ambermoon
                 case ConsoleKey.End:
                     Console.CursorLeft = currentInput.Length;
                     return;
-                // TODO: History is not working great. Maybe add it later.
-                /*case ConsoleKey.UpArrow:
+                case ConsoleKey.UpArrow:
                     if (history.Count != 0)
-                        SetHistoryEntry(Math.Min(history.Count - 1, historyIndex + 1));
+                        SetHistoryEntry(Util.Limit(0, historyIndex + 1, history.Count - 1));
                     break;
                 case ConsoleKey.DownArrow:
                     if (history.Count != 0 && historyIndex != -1)
-                        SetHistoryEntry(Math.Max(0, historyIndex - 1));
-                    break;*/
+                        SetHistoryEntry(Util.Limit(-1, historyIndex - 1, history.Count - 1));
+                    break;
             }
 
             if ((keyInfo.KeyChar >= ' ' && keyInfo.KeyChar < 127) ||
@@ -220,14 +261,18 @@ namespace Ambermoon
 
         static void SetHistoryEntry(int index)
         {
-            historyIndex = Math.Min(history.Count - 1, index + 1);
-            string entry = history[history.Count - historyIndex - 1];
+            int oldIndex = historyIndex;
+            historyIndex = Util.Limit(-1, index, history.Count - 1);
+            if (historyIndex == oldIndex)
+                return;
+            string entry = historyIndex == -1 ? "" : history[history.Count - historyIndex - 1];
             int lengthDiff = Math.Max(0, currentInput.Length - entry.Length);
             currentInput = entry;
             Console.CursorLeft = 0;
             Console.Write(entry);
             if (lengthDiff != 0)
-                Console.WriteLine(new string(' ', lengthDiff));
+                Console.Write(new string(' ', lengthDiff));
+            Console.CursorLeft = entry.Length;
         }
 
         static void RemoveLastInput()
@@ -280,7 +325,10 @@ namespace Ambermoon
             Console.CursorLeft = 0;
             Console.Write(currentAutoFillInput);
             if (lengthDiff > 0)
+            {
                 Console.Write(new string(' ', lengthDiff));
+                Console.CursorLeft = currentAutoFillInput.Length;
+            }
         }
 
         static void ProcessCurrentInput(Game game, bool redirectedInput)
@@ -301,6 +349,7 @@ namespace Ambermoon
                         if (cheat.Key == parts[0].ToLower())
                         {
                             historyIndex = -1;
+                            history.Remove(currentInput);
                             history.Add(currentInput);
                             currentAutoFillInput = null;
                             currentInput = "";
@@ -319,7 +368,6 @@ namespace Ambermoon
                     }
 
                     historyIndex = -1;
-                    history.Add(currentInput);
                     currentAutoFillInput = null;
                     currentInput = "";
                     autoFillIndex = -1;
@@ -329,6 +377,7 @@ namespace Ambermoon
                         Console.CursorLeft = currentInput.Length;
                         Console.WriteLine();
                     }
+                    Console.WriteLine();
                     Console.WriteLine("Invalid cheat command. Type 'help' for a list of commands.");
                     Console.WriteLine();
                 }
@@ -892,18 +941,14 @@ namespace Ambermoon
 
             int? partyMemberIndex = args.Length < 1 ? (int?)null : int.TryParse(args[0], out int i) ? i : null;
 
-            if (partyMemberIndex == null || partyMemberIndex < 1 || partyMemberIndex > Game.MaxPartyMembers)
-            {
-                Console.WriteLine("Party member index was invalid or outside the range 1~6.");
-                Console.WriteLine();
-                return;
-            }
-
-            var partyMember = game.GetPartyMember(partyMemberIndex.Value - 1);
+            var partyMember = partyMemberIndex == null ? game.CurrentPartyMember : game.GetPartyMember(partyMemberIndex.Value - 1);
 
             if (partyMember == null)
             {
-                Console.WriteLine($"There is no party member in slot {partyMemberIndex.Value}.");
+                if (partyMemberIndex != null)
+                    Console.WriteLine($"There is no party member in slot {partyMemberIndex.Value}.");
+                else
+                    Console.WriteLine($"There is no active party member.");
                 Console.WriteLine();
                 return;
             }
@@ -952,6 +997,81 @@ namespace Ambermoon
             }, deathCondition);
 
             Console.WriteLine($"{partyMember.Name} was killed!");
+            Console.WriteLine();
+        }
+
+        static void Revive(Game game, string[] args)
+        {
+            Console.WriteLine();
+
+            int? partyMemberIndex = args.Length < 1 ? (int?)null : int.TryParse(args[0], out int v) ? v : null;
+            const int maxSlot = Game.MaxPartyMembers - 1;
+            int firstSlot = Util.Limit(0, partyMemberIndex == null ? 0 : partyMemberIndex.Value, maxSlot);
+            int lastSlot = Util.Limit(0, partyMemberIndex == null ? maxSlot : partyMemberIndex.Value, maxSlot);
+            var affectedPartyMembers = new List<PartyMember>();
+            bool singleTarget = partyMemberIndex != null;
+
+            for (int i = firstSlot; i <= lastSlot; ++i)
+            {
+                var partyMember = game.GetPartyMember(i);
+
+                if (partyMember == null || partyMember.Alive)
+                    continue;
+
+                affectedPartyMembers.Add(partyMember);
+            }
+
+            if (affectedPartyMembers.Count == 0)
+            {
+                if (singleTarget)
+                    Console.WriteLine($"{game.GetPartyMember(partyMemberIndex.Value - 1).Name} is not dead.");
+                else
+                    Console.WriteLine("Nobody is dead.");
+                Console.WriteLine();
+            }
+            else
+            {
+                inputDisabled = true;
+                Console.WriteLine("Reviving party members ... ");
+
+                game.Revive(null, affectedPartyMembers, () =>
+                {
+                    if (singleTarget)
+                        Console.WriteLine($"{game.GetPartyMember(partyMemberIndex.Value - 1).Name} was revived.");
+                    else if (affectedPartyMembers.Count == 1)
+                        Console.WriteLine($"{affectedPartyMembers[0].Name} was revived.");
+                    else
+                        Console.WriteLine($"{string.Join(", ", affectedPartyMembers.Select(p => p.Name))} were revived");
+                    Console.WriteLine();
+
+                    lock (trackedKeys)
+                    {
+                        inputDisabled = false;
+                        trackedKeys.ForEach(key => ProcessInput(key, game));
+                    }
+                });
+            }
+        }
+
+        static void Berserk(Game game, string[] args)
+        {
+            Console.WriteLine();
+
+            game.KillAllMapMonsters();
+
+            Console.WriteLine("The map was cleared from all monsters.");
+            Console.WriteLine();
+        }
+
+        static void Light(Game game, string[] args)
+        {
+            Console.WriteLine();
+
+            uint lightLevel = args.Length < 1 ? 3 : uint.TryParse(args[0], out uint i) ? i : 3;
+            lightLevel = Util.Limit(1, lightLevel, 3);
+            game.ActivateLight(lightLevel);
+
+            Console.WriteLine($"Light level {lightLevel} was granted.");
             Console.WriteLine();
         }
     }

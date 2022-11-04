@@ -1379,8 +1379,7 @@ namespace Ambermoon
 
                                     if (cheatsEnabled && configuration.EnableCheats)
                                     {
-                                        if (cheatsEnabled && configuration.EnableCheats)
-                                            Cheats.ProcessInput(input, Game);
+                                        Cheats.ProcessInput(input, Game);
                                     }
                                     else
                                     {
