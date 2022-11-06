@@ -13019,15 +13019,15 @@ namespace Ambermoon
                     }
                     else
                     {
-                        var spellInfo = SpellInfos.Entries[item.Spell];
+                        uint slpCost = SpellInfos.GetSLPCost(Features, item.Spell);
 
-                        if (CurrentPartyMember.SpellLearningPoints < spellInfo.SLP)
+                        if (CurrentPartyMember.SpellLearningPoints < slpCost)
                         {
                             ShowMessage(DataNameProvider.NotEnoughSpellLearningPoints);
                         }
                         else
                         {
-                            CurrentPartyMember.SpellLearningPoints -= (ushort)spellInfo.SLP;
+                            CurrentPartyMember.SpellLearningPoints -= (ushort)slpCost;
 
                             if (RollDice100() < CurrentPartyMember.Skills[Skill.ReadMagic].TotalCurrentValue)
                             {

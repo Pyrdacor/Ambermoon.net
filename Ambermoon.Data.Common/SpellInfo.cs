@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Ambermoon.Data.Enumerations;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Net;
 
 namespace Ambermoon.Data
 {
@@ -249,28 +251,127 @@ namespace Ambermoon.Data
             { Spell.ExpExchange, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.Lyramion } }
         };
 
-        public static uint GetSPCost(Spell spell, Character caster)
+        static readonly Dictionary<Spell, uint> adjustedSLP = new Dictionary<Spell, uint>
         {
+            { Spell.RemoveFear, 10 },
+            { Spell.RemovePanic, 20 },
+            { Spell.RemoveShadows, 10 },
+            { Spell.RemoveBlindness, 20 },
+            { Spell.RemovePain, 20 },
+            { Spell.RemoveDisease, 30 },
+            { Spell.SmallHealing, 20 },
+            { Spell.RemovePoison, 30 },
+            { Spell.NeutralizePoison, 45 },
+            { Spell.MediumHealing, 40 },
+            { Spell.DestroyUndead, 25 },
+            { Spell.HolyWord, 50 },
+            { Spell.WakeTheDead, 80 },
+            { Spell.ChangeAshes, 50 },
+            { Spell.ChangeDust, 50 },
+            { Spell.GreatHealing, 75 },
+            { Spell.MassHealing, 60 },
+            { Spell.Resurrection, 120 },
+            { Spell.RemoveRigidness, 25 },
+            { Spell.RemoveLamedness, 35 },
+            { Spell.HealAging, 15 },
+            { Spell.StopAging, 20 },
+            { Spell.StoneToFlesh, 55 },
+            { Spell.WakeUp, 10 },
+            { Spell.RemoveIrritation, 25 },
+            { Spell.RemoveDrugged, 15 },
+            { Spell.RemoveMadness, 50 },
+            { Spell.RestoreStamina, 5 },
+            { Spell.ChargeItem, 60 },
+            { Spell.Light, 5 },
+            { Spell.MagicalTorch, 10 },
+            { Spell.MagicalLantern, 20 },
+            { Spell.MagicalSun, 35 },
+            { Spell.GhostWeapon, 30 },
+            { Spell.CreateFood, 15 },
+            { Spell.Blink, 15 },
+            { Spell.Jump, 50 },
+            { Spell.WordOfMarking, 70 },
+            { Spell.WordOfReturning, 80 },
+            { Spell.MagicalShield, 25 },
+            { Spell.MagicalWall, 35 },
+            { Spell.MagicalBarrier, 45 },
+            { Spell.MagicalWeapon, 25 },
+            { Spell.MagicalAssault, 35 },
+            { Spell.MagicalAttack, 45 },
+            { Spell.Levitation, 65 },
+            { Spell.AntiMagicWall, 30 },
+            { Spell.AntiMagicSphere, 50 },
+            { Spell.AlchemisticGlobe, 120 },
+            { Spell.Hurry, 50 },
+            { Spell.MassHurry, 80 },
+            { Spell.RepairItem, 45 },
+            { Spell.DuplicateItem, 75 },
+            { Spell.LPStealer, 25 },
+            { Spell.SPStealer, 25 },
+            { Spell.MonsterKnowledge, 15 },
+            { Spell.Identification, 35 },
+            { Spell.Knowledge, 5 },
+            { Spell.Clairvoyance, 15 },
+            { Spell.MapView, 20 },
+            { Spell.MagicalCompass, 5 },
+            { Spell.FindTraps, 25 },
+            { Spell.FindMonsters, 25 },
+            { Spell.FindPersons, 25 },
+            { Spell.FindSecretDoors, 25 },
+            { Spell.MysticalMapping, 70 },
+            { Spell.MysticalMapI, 75 },
+            { Spell.MysticalMapII, 80 },
+            { Spell.MysticalMapIII, 85 },
+            { Spell.MysticalGlobe, 100 },
+            { Spell.ShowMonsterLP, 15 }
+        };
+
+        static readonly Dictionary<Spell, uint> adjustedSP = new Dictionary<Spell, uint>
+        {
+            { Spell.Escape, 100 },
+            { Spell.Mudsling, 10 },
+            { Spell.Earthquake, 25 },
+            { Spell.Winddevil, 20 },
+            { Spell.Windhowler, 30 },
+            { Spell.Thunderbolt, 40 },
+            { Spell.Firebeam, 40 },
+            { Spell.Firepillar, 100 },
+            { Spell.Waterfall, 80 },
+            { Spell.Iceball, 120 },
+            { Spell.Icestorm, 160 }
+        };
+
+        public static uint GetSPCost(Features features, Spell spell, Character caster)
+        {
+            uint GetBaseSP(Spell spell) => features.HasFlag(Features.AdjustedSPAndSLP) && adjustedSP.TryGetValue(spell, out var sp)
+                ? sp : Entries[spell].SP;
+
             if (caster is PartyMember)
             {
                 if (spell >= Spell.Mudsling && spell <= Spell.Earthquake)
                 {
                     if (caster.BattleFlags.HasFlag(BattleFlags.EarthSpellDamageBonus))
-                        return Entries[(Spell)((int)spell + 12)].SP;
+                        return GetBaseSP((Spell)((int)spell + 12));
                 }
                 else if (spell >= Spell.Winddevil && spell <= Spell.Whirlwind)
                 {
                     if (caster.BattleFlags.HasFlag(BattleFlags.WindSpellDamageBonus))
-                        return Entries[(Spell)((int)spell + 8)].SP;
+                        return GetBaseSP((Spell)((int)spell + 8));
                 }
                 else if (spell >= Spell.Firebeam && spell <= Spell.Firepillar)
                 {
                     if (caster.BattleFlags.HasFlag(BattleFlags.FireSpellDamageBonus))
-                        return Entries[(Spell)((int)spell + 4)].SP;
+                        return GetBaseSP((Spell)((int)spell + 4));
                 }
             }
 
-            return Entries[spell].SP;
+            return GetBaseSP(spell);
+        }
+
+        public static uint GetSLPCost(Features features, Spell spell)
+        {
+            return features.HasFlag(Features.AdjustedSPAndSLP) && adjustedSLP.TryGetValue(spell, out var slp)
+                ? slp : Entries[spell].SLP;
         }
 
         static SpellInfos()
