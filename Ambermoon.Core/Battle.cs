@@ -1481,7 +1481,7 @@ namespace Ambermoon
 
                     if (itemSlotIndex == null)
                     {
-                        battleAction.Character.SpellPoints.CurrentValue = (uint)Math.Max(0, (int)battleAction.Character.SpellPoints.CurrentValue - (int)SpellInfos.GetSPCost(spell, battleAction.Character));
+                        battleAction.Character.SpellPoints.CurrentValue = (uint)Math.Max(0, (int)battleAction.Character.SpellPoints.CurrentValue - (int)SpellInfos.GetSPCost(game.Features, spell, battleAction.Character));
 
                         if (battleAction.Character is PartyMember castingPartyMember)
                             layout.FillCharacterBars(castingPartyMember);
@@ -3054,7 +3054,7 @@ namespace Ambermoon
             return caster.LearnedSpells.Where(spell =>
             {
                 var spellInfo = SpellInfos.Entries[spell];
-                return sp >= SpellInfos.GetSPCost(spell, caster) &&
+                return sp >= SpellInfos.GetSPCost(game.Features, spell, caster) &&
                     spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Battle) &&
                     checker(spell);
 

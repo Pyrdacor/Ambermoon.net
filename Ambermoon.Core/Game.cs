@@ -8354,7 +8354,7 @@ namespace Ambermoon
                             if (!spellInfo.Worlds.HasFlag(worldFlag))
                                 return DataNameProvider.WrongWorld;
 
-                            if (SpellInfos.GetSPCost(spell, CurrentPartyMember) > CurrentPartyMember.SpellPoints.CurrentValue)
+                            if (SpellInfos.GetSPCost(Features, spell, CurrentPartyMember) > CurrentPartyMember.SpellPoints.CurrentValue)
                                 return DataNameProvider.NotEnoughSP;
 
                             // TODO: Is there more to check? Irritated?
@@ -12568,7 +12568,7 @@ namespace Ambermoon
             {
                 if (!fromItem) // Item spells won't consume SP
                 {
-                    caster.SpellPoints.CurrentValue -= SpellInfos.GetSPCost(spell, caster);
+                    caster.SpellPoints.CurrentValue -= SpellInfos.GetSPCost(Features, spell, caster);
                     layout.FillCharacterBars(caster);
                 }
             }
@@ -12880,7 +12880,7 @@ namespace Ambermoon
                         if (!spellInfo.Worlds.HasFlag(worldFlag))
                             return DataNameProvider.WrongWorld;
 
-                        if (SpellInfos.GetSPCost(spell, CurrentPartyMember) > CurrentPartyMember.SpellPoints.CurrentValue)
+                        if (SpellInfos.GetSPCost(Features, spell, CurrentPartyMember) > CurrentPartyMember.SpellPoints.CurrentValue)
                             return DataNameProvider.NotEnoughSP;
 
                         return null;
@@ -14879,7 +14879,7 @@ namespace Ambermoon
                 if (available)
                 {
                     // append usage amount
-                    entry = entry.PadRight(21) + $"({Math.Min(99, partyMember.SpellPoints.CurrentValue / SpellInfos.GetSPCost(spell, partyMember))})";
+                    entry = entry.PadRight(21) + $"({Math.Min(99, partyMember.SpellPoints.CurrentValue / SpellInfos.GetSPCost(Features, spell, partyMember))})";
                 }
 
                 return entry;
