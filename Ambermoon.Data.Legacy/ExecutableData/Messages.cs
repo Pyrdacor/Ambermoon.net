@@ -379,6 +379,17 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             CannotExchangeExpWithAnimals,
             CannotExchangeExpWithDead,
             ThisCantBeMoved,
+            ElementNone,
+            ElementMental,
+            ElementSpirit,
+            ElementPhysical,
+            ElementUndead,
+            ElementEarth,
+            ElementWind,
+            ElementFire,
+            ElementWater,
+            ElementMultiple,
+            ElementLabel,
             Count
         }
 

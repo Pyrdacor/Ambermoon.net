@@ -2267,6 +2267,7 @@ namespace Ambermoon
 
         void ShowMonsterInfo(Monster monster, Action finishAction)
         {
+            game.StartSequence();
             var area = new Rect(64, 38, 12 * 16, 10 * 16);
             var popup = layout.OpenPopup(area.Position, 12, 10, true, true, 225);
             area = area.CreateShrinked(16);
@@ -2336,7 +2337,15 @@ namespace Ambermoon
             popup.AddSunkenBox(new Rect(position, new Size(18, 18)));
             popup.AddImage(new Rect(position.X + 1, position.Y + 2, 16, 14), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
                 Layer.UI, 2, game.PrimaryUIPaletteIndex);
-            popup.AddText(position + new Position(21, 5), $"{monster.Name} {monster.Level}", TextColor.BrightGray);
+            if (game.Features.HasFlag(Features.Elements))
+            {
+                popup.AddText(position + new Position(21, 2), $"{monster.Name} {monster.Level}", TextColor.BrightGray);
+                popup.AddText(position + new Position(21, 10), $"{game.DataNameProvider.ElementLabel} {game.DataNameProvider.GetElementName(monster.Element)}", TextColor.BrightGray);
+            }
+            else
+            {
+                popup.AddText(position + new Position(21, 5), $"{monster.Name} {monster.Level}", TextColor.BrightGray);
+            }
             // Closing
             game.TrapMouse(area);
             popup.Closed += () =>
@@ -2345,6 +2354,7 @@ namespace Ambermoon
                 game.UntrapMouse();
                 finishAction?.Invoke();
             };
+            game.EndSequence();
         }
 
         static readonly KeyValuePair<uint, uint>[] DestructionSpellDamageValues = new KeyValuePair<uint, uint>[16]

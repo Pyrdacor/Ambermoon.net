@@ -2,6 +2,7 @@
 {
     using Ambermoon.Data.Enumerations;
     using ExecutableData;
+    using System.Linq;
 
     public class DataNameProvider : IDataNameProvider
     {
@@ -57,6 +58,25 @@
                 Song.Menu => "MainMenu",
                 _ => executableData.SongNames.Entries[song]
             };
+        public string GetElementName(CharacterElement element)
+        {
+            Messages.Index index = Messages.Index.ElementNone;
+
+            if (element != CharacterElement.None)
+            {
+                if (((int)element & ((int)element - 1)) == 0) // single bit set
+                {
+                    int elementIndex = System.Enum.GetNames<CharacterElement>().ToList().IndexOf(element.ToString());
+                    index = Messages.Index.ElementNone + elementIndex;
+                }
+                else
+                {
+                    index = Messages.Index.ElementMultiple;
+                }
+            }
+
+            return executableData.Messages.GetEntry(index);
+        }
         public string InventoryTitleString => executableData.UITexts.Entries[UITextIndex.Inventory];
         public string AttributesHeaderString => executableData.UITexts.Entries[UITextIndex.Attributes];
         public string SkillsHeaderString => executableData.UITexts.Entries[UITextIndex.Skills];
@@ -241,6 +261,7 @@
         public string CannotExchangeExpWithAnimals => executableData.Messages.GetEntry(Messages.Index.CannotExchangeExpWithAnimals);
         public string CannotExchangeExpWithDead => executableData.Messages.GetEntry(Messages.Index.CannotExchangeExpWithDead);
         public string ThisCantBeMoved => executableData.Messages.GetEntry(Messages.Index.ThisCantBeMoved);
+        public string ElementLabel => executableData.Messages.GetEntry(Messages.Index.ElementLabel);
 
 
         #region Conversations

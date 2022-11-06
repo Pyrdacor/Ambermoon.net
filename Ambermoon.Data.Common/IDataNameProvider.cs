@@ -18,6 +18,7 @@ namespace Ambermoon.Data
         string GetWorldName(World world);
         string GetItemTypeName(ItemType itemType);
         string GetSongName(Song song);
+        string GetElementName(CharacterElement element);
         string CharacterInfoHitPointsString { get; }
         string CharacterInfoSpellPointsString { get; }
         string CharacterInfoSpellLearningPointsString { get; }
@@ -211,6 +212,7 @@ namespace Ambermoon.Data
         string CannotExchangeExpWithAnimals { get; }
         string CannotExchangeExpWithDead { get; }
         string ThisCantBeMoved { get; }
+        string ElementLabel { get; }
 
 
         #region Conversations
