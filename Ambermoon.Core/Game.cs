@@ -5041,6 +5041,8 @@ namespace Ambermoon
 
             void Finished()
             {
+                ResetMoveKeys(true);
+
                 if (trapEvent.Next != null)
                 {
                     EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, x,

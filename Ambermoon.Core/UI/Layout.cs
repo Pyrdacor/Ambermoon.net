@@ -438,10 +438,20 @@ namespace Ambermoon.UI
 
         class PortraitAnimation
         {
+            public enum MoveType
+            {
+                MoveBoth,
+                MovePrimary,
+                MoveSecondary
+            }
+
             public uint StartTicks;
             public int Offset;
-            public ISprite PrimarySprite;
-            public ISprite SecondarySprite;
+            public int InitialOffset;
+            public ILayerSprite PrimarySprite;
+            public ILayerSprite SecondarySprite;
+            public MoveType Movement;
+            public byte InitialDisplayLayer;
             public event Action Finished;
 
             public void OnFinished() => Finished?.Invoke();
@@ -3534,7 +3544,7 @@ namespace Ambermoon.UI
             }
         }
 
-        void PlayPortraitAnimation(int slot, PartyMember partyMember, Action finishAction = null, bool forceAnimation = false)
+        bool PlayPortraitAnimation(int slot, PartyMember partyMember, Action finishAction = null, bool forceAnimation = false)
         {
             var newState = partyMember == null ? PartyMemberPortaitState.Empty
                 : partyMember.Alive ? PartyMemberPortaitState.Normal : PartyMemberPortaitState.Dead;
@@ -3542,7 +3552,7 @@ namespace Ambermoon.UI
             if (!forceAnimation && portraitStates[slot] == newState)
             {
                 finishAction?.Invoke();
-                return;
+                return false;
             }
 
             bool animation = forceAnimation || (portraitStates[slot] != PartyMemberPortaitState.None && portraitStates[slot] != PartyMemberPortaitState.Dead);
@@ -3556,9 +3566,13 @@ namespace Ambermoon.UI
             };
             if (animation)
             {
-                int yOffset = newState == PartyMemberPortaitState.Normal ? 34 : -34;
-                var sprite = portraits[slot];
-                var overlaySprite = RenderView.SpriteFactory.Create(32, 34, true, 1);
+                // If dismissed, the mask moves down from the top in front of the portrait.
+                // If died, the background stays static, the portrait drops down and the skull comes from top.
+                // If added to party, the mask moves down, revealing the portrait.
+                // If portraits are exchanged, the old portrait moves down, revealing the new one.
+                int yOffset = newState == PartyMemberPortaitState.Normal ? 0 : -34;
+                var sprite = portraits[slot] as ILayerSprite;
+                var overlaySprite = RenderView.SpriteFactory.Create(32, 34, true, 1) as ILayerSprite;
                 overlaySprite.Layer = renderLayer;
                 overlaySprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
                 overlaySprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
@@ -3573,25 +3587,34 @@ namespace Ambermoon.UI
                 {
                     StartTicks = game.BattleActive ? game.CurrentBattleTicks : game.CurrentAnimationTicks,
                     Offset = yOffset,
+                    InitialOffset = yOffset,
                     PrimarySprite = sprite,
-                    SecondarySprite = overlaySprite
+                    SecondarySprite = overlaySprite,
+                    Movement = newState switch
+                    {
+                        PartyMemberPortaitState.Dead => PortraitAnimation.MoveType.MoveBoth,
+                        PartyMemberPortaitState.Empty => PortraitAnimation.MoveType.MovePrimary,
+                        _ => PortraitAnimation.MoveType.MoveSecondary
+                    },
+                    InitialDisplayLayer = sprite.DisplayLayer
                 };
 
-                if (finishAction != null)
+                void Finished()
                 {
-                    void Finished()
-                    {
-                        if (portraitAnimation != null)
-                            portraitAnimation.Finished -= Finished;
-                        finishAction?.Invoke();
-                    }
-                    portraitAnimation.Finished += Finished;
+                    if (portraitAnimation != null)
+                        portraitAnimation.Finished -= Finished;
+                    SetCharacter(slot, partyMember);
+                    finishAction?.Invoke();
                 }
+
+                portraitAnimation.Finished += Finished;
+                return true;
             }
             else
             {
                 portraits[slot].TextureAtlasOffset = textureAtlas.GetOffset(newGraphicIndex);
                 finishAction?.Invoke();
+                return false;
             }
         }
 
@@ -3738,6 +3761,7 @@ namespace Ambermoon.UI
             sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
             sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
             sprite.ClipArea = Global.PartyMemberPortraitAreas[slot].CreateModified(1, 1, -2, -2);
+            bool animation = false;
             if (initialize)
             {
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.EmptyCharacterSlot));
@@ -3747,21 +3771,54 @@ namespace Ambermoon.UI
             {
                 if (forceAnimation && portraitStates[slot] == PartyMemberPortaitState.None)
                     portraitStates[slot] = PartyMemberPortaitState.Empty;
-                PlayPortraitAnimation(slot, partyMember, portraitAnimationFinishedHandler, forceUpdate && !forceAnimation);
+                animation = PlayPortraitAnimation(slot, partyMember, portraitAnimationFinishedHandler, forceUpdate && !forceAnimation);
             }
             sprite.PaletteIndex = game.PrimaryUIPaletteIndex;
             sprite.Visible = true;
 
-            if (partyMember == null)
+            if (!animation)
             {
-                portraitBackgrounds[slot]?.Delete();
-                portraitBackgrounds[slot] = null;
-                portraitNames[slot]?.Delete();
-                portraitNames[slot] = null;
-                characterStatusIcons[slot]?.Delete();
-                characterStatusIcons[slot] = null;
+                if (partyMember == null)
+                {
+                    portraitBackgrounds[slot]?.Delete();
+                    portraitBackgrounds[slot] = null;
+                    portraitNames[slot]?.Delete();
+                    portraitNames[slot] = null;
+                    characterStatusIcons[slot]?.Delete();
+                    characterStatusIcons[slot] = null;
+                }
+                else
+                {
+                    AddPortraitBackground();
+
+                    var text = portraitNames[slot];
+                    var name = RenderView.TextProcessor.CreateText(partyMember.Name.Substring(0, Math.Min(5, partyMember.Name.Length)));
+
+                    if (text == null)
+                    {
+                        text = portraitNames[slot] = RenderView.RenderTextFactory.Create(textLayer, name, TextColor.PartyMember, true,
+                            new Rect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6),
+                            TextAlign.Center);
+                    }
+                    else
+                    {
+                        text.Text = name;
+                    }
+                    text.DisplayLayer = 3;
+                    text.PaletteIndex = game.PrimaryUIPaletteIndex;
+                    text.TextColor = partyMember.Alive ? game.CurrentPartyMember == partyMember ? TextColor.ActivePartyMember : TextColor.PartyMember : TextColor.DeadPartyMember;
+                    text.Visible = true;
+                    UpdateCharacterStatus(partyMember);
+                }
+
+                FillCharacterBars(slot, partyMember);
             }
-            else
+            else if (partyMember != null)
+            {
+                AddPortraitBackground();
+            }
+
+            void AddPortraitBackground()
             {
                 sprite = portraitBackgrounds[slot] ??= RenderView.SpriteFactory.Create(32, 34, true, 0);
                 sprite.Layer = renderLayer;
@@ -3770,28 +3827,7 @@ namespace Ambermoon.UI
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground);
                 sprite.PaletteIndex = 52;
                 sprite.Visible = true;
-
-                var text = portraitNames[slot];
-                var name = RenderView.TextProcessor.CreateText(partyMember.Name.Substring(0, Math.Min(5, partyMember.Name.Length)));
-
-                if (text == null)
-                {
-                    text = portraitNames[slot] = RenderView.RenderTextFactory.Create(textLayer, name, TextColor.PartyMember, true,
-                        new Rect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6),
-                        TextAlign.Center);
-                }
-                else
-                {
-                    text.Text = name;
-                }
-                text.DisplayLayer = 3;
-                text.PaletteIndex = game.PrimaryUIPaletteIndex;
-                text.TextColor = partyMember.Alive ? game.CurrentPartyMember == partyMember ? TextColor.ActivePartyMember : TextColor.PartyMember : TextColor.DeadPartyMember;
-                text.Visible = true;
-                UpdateCharacterStatus(partyMember);
             }
-
-            FillCharacterBars(slot, partyMember);
 
             if (initialize)
                 portraitAnimationFinishedHandler?.Invoke();
@@ -4492,12 +4528,13 @@ namespace Ambermoon.UI
 
             if (portraitAnimation != null)
             {
-                const int animationTime = (int)Game.TicksPerSecond / 2;
+                const int animationTime = (int)Game.TicksPerSecond;
                 uint elapsed = (game.BattleActive ? game.CurrentBattleTicks : game.CurrentAnimationTicks) - portraitAnimation.StartTicks;
 
                 if (elapsed > animationTime)
                 {
                     portraitAnimation.PrimarySprite.Y = 1;
+                    portraitAnimation.PrimarySprite.DisplayLayer = portraitAnimation.InitialDisplayLayer;
                     portraitAnimation.SecondarySprite.Delete();
                     var tempAnimation = portraitAnimation;
                     portraitAnimation = null;
@@ -4505,21 +4542,24 @@ namespace Ambermoon.UI
                 }
                 else
                 {
-                    int diff;
+                    portraitAnimation.Offset = portraitAnimation.InitialOffset + Math.Min(34, (int)elapsed * 34 / animationTime);
 
-                    if (portraitAnimation.Offset < 0)
+                    switch (portraitAnimation.Movement)
                     {
-                        portraitAnimation.Offset = Math.Min(0, -34 + (int)elapsed * 34 / animationTime);
-                        diff = 34;
+                        case PortraitAnimation.MoveType.MovePrimary:
+                            portraitAnimation.PrimarySprite.Y = 1 + portraitAnimation.Offset;
+                            portraitAnimation.PrimarySprite.DisplayLayer = (byte)Math.Min(255, portraitAnimation.InitialDisplayLayer + 10);
+                            break;
+                        case PortraitAnimation.MoveType.MoveSecondary:
+                            portraitAnimation.SecondarySprite.Y = 1 + portraitAnimation.Offset;
+                            portraitAnimation.SecondarySprite.DisplayLayer = (byte)Math.Min(255, portraitAnimation.InitialDisplayLayer + 10);
+                            break;
+                        case PortraitAnimation.MoveType.MoveBoth:
+                            portraitAnimation.PrimarySprite.Y = 1 + portraitAnimation.Offset;
+                            portraitAnimation.SecondarySprite.Y = portraitAnimation.PrimarySprite.Y + portraitAnimation.PrimarySprite.Height;
+                            portraitAnimation.SecondarySprite.DisplayLayer = portraitAnimation.PrimarySprite.DisplayLayer = portraitAnimation.InitialDisplayLayer;
+                            break;
                     }
-                    else
-                    {
-                        portraitAnimation.Offset = Math.Max(0, 34 - (int)elapsed * 34 / animationTime);
-                        diff = -34;
-                    }
-
-                    portraitAnimation.PrimarySprite.Y = 1 + portraitAnimation.Offset;
-                    portraitAnimation.SecondarySprite.Y = portraitAnimation.PrimarySprite.Y + diff;
                 }
             }
 
