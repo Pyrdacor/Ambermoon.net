@@ -2835,18 +2835,25 @@ namespace Ambermoon
                             {
                                 nextClickHandler = null;
                             }
-                            else if (currentWindow.Closable)
-                                layout.PressButton(2, CurrentTicks);
-                            else if (!WindowActive && !is3D)
+                            else if (InputEnable)
                             {
-                                if (CursorType == CursorType.Eye ||
-                                    CursorType == CursorType.Mouth ||
-                                    CursorType == CursorType.Hand ||
-                                    CursorType == CursorType.Target)
+                                if (currentWindow.Closable)
+                                    layout.PressButton(2, CurrentTicks);
+                                else if (!WindowActive && !is3D)
                                 {
-                                    CursorType = CursorType.Sword;
-                                    UpdateCursor(lastMousePosition, MouseButtons.None);
+                                    if (CursorType == CursorType.Eye ||
+                                        CursorType == CursorType.Mouth ||
+                                        CursorType == CursorType.Hand ||
+                                        CursorType == CursorType.Target)
+                                    {
+                                        CursorType = CursorType.Sword;
+                                        UpdateCursor(lastMousePosition, MouseButtons.None);
+                                    }
                                 }
+                            }
+                            else
+                            {
+                                return;
                             }
                         }
                     }
