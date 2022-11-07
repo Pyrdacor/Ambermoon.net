@@ -98,6 +98,7 @@ namespace Ambermoon.Data
         string His { get; }
         string Her { get; }
         string DontForgetItems { get; }
+        string LeaveConversationWithoutItems { get; }
         string LootAfterBattle { get; }
         string ReceiveExp { get; }
         string ChooseBattlePositions { get; }

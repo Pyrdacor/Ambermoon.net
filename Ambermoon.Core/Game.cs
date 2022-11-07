@@ -7632,25 +7632,47 @@ namespace Ambermoon
                 {
                     if (createdItems.HasAnyImportantItem(ItemManager))
                     {
+                        aborted = true;
                         SetText(DataNameProvider.DontForgetItems +
                             string.Join(", ", createdItems.GetImportantItemNames(ItemManager)) + ".");
                         return;
                     }
 
-                    conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.Leave);
-
-                    if (conversationEvent != null)
+                    if (createdItems.Slots.Cast<ItemSlot>().Any(s => !s.Empty))
                     {
-                        currentInteractionType = InteractionType.Leave;
-                        aborted = false;
-                        lastEventStatus = true;
-                        HandleNextEvent();
+                        ShowDecisionPopup(DataNameProvider.LeaveConversationWithoutItems, response =>
+                        {
+                            if (response == PopupTextEvent.Response.Yes)
+                            {
+                                ExitConversation();
+                                return;
+                            }
+
+                            aborted = true;
+                        }, 1);
                         return;
                     }
-                    else
+
+                    ExitConversation();
+                    return;
+
+                    void ExitConversation()
                     {
-                        SetText(DataNameProvider.GoodBye, CloseWindow);
-                        return;
+                        conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.Leave);
+
+                        if (conversationEvent != null)
+                        {
+                            currentInteractionType = InteractionType.Leave;
+                            aborted = false;
+                            lastEventStatus = true;
+                            HandleNextEvent();
+                            return;
+                        }
+                        else
+                        {
+                            SetText(DataNameProvider.GoodBye, CloseWindow);
+                            return;
+                        }
                     }
                 }
 

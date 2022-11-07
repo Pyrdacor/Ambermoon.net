@@ -147,6 +147,7 @@
         public string His => executableData.UITexts.Entries[UITextIndex.His];
         public string Her => executableData.UITexts.Entries[UITextIndex.Her];
         public string DontForgetItems => executableData.Messages.GetEntry(Messages.Index.DontForgetItems);
+        public string LeaveConversationWithoutItems => executableData.Messages.GetEntry(Messages.Index.DontWantToTakeItemsWithYou);
         public string LootAfterBattle => executableData.Messages.GetEntry(Messages.Index.LootAfterBattle);
         public string ReceiveExp => executableData.Messages.GetEntry(Messages.Index.ReceiveExp);
         public string ChooseBattlePositions => executableData.Messages.GetEntry(Messages.Index.EnterBattlePositions);
