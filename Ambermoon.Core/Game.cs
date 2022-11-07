@@ -5322,7 +5322,7 @@ namespace Ambermoon
                                 };
                             }
                             ShowLevelUpWindow(partyMember, followAction);
-                            break;
+                            return;
                     }
                     break;
                 }
