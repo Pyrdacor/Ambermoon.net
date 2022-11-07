@@ -5381,7 +5381,32 @@ namespace Ambermoon
                     layout.UpdateCharacter(partyMember, followAction, changed);
                     return;
                 }
-
+                case RewardEvent.RewardType.MagicArmorLevel:
+                {
+                    switch (rewardEvent.Operation)
+                    {
+                        case RewardEvent.RewardOperation.Increase:
+                            partyMember.MagicDefense = (short)Util.Min(short.MaxValue, partyMember.MagicDefense + RandomizeIfNecessary(rewardEvent.Value));
+                            break;
+                        case RewardEvent.RewardOperation.Decrease:
+                            partyMember.MagicDefense = (short)Util.Max(0, (int)partyMember.MagicDefense - (int)RandomizeIfNecessary(rewardEvent.Value));
+                            break;
+                    }
+                    break;
+                }
+                case RewardEvent.RewardType.MagicWeaponLevel:
+                {
+                    switch (rewardEvent.Operation)
+                    {
+                        case RewardEvent.RewardOperation.Increase:
+                            partyMember.MagicAttack = (short)Util.Min(short.MaxValue, partyMember.MagicAttack + RandomizeIfNecessary(rewardEvent.Value));
+                            break;
+                        case RewardEvent.RewardOperation.Decrease:
+                            partyMember.MagicAttack = (short)Util.Max(0, (int)partyMember.MagicAttack - (int)RandomizeIfNecessary(rewardEvent.Value));
+                            break;
+                    }
+                    break;
+                }
             }
 
             followAction?.Invoke();

@@ -530,7 +530,9 @@ namespace Ambermoon.Data
             MaxSpellPoints = 0x10,
             EmpowerSpells = 0x11,
             ChangePortrait = 0x12,
-            MaxSkill = 0x13
+            MaxSkill = 0x13,
+            MagicArmorLevel = 0x14,
+            MagicWeaponLevel = 0x15
         }
 
         public enum RewardOperation
@@ -629,6 +631,8 @@ namespace Ambermoon.Data
                 RewardType.EmpowerSpells => $"{Type}: {EmpowerString()}",
                 RewardType.ChangePortrait => $"{Type}: Change portrait to {Value} for {Target}",
                 RewardType.MaxSkill => $"{Type}: Max {Skill} on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.MagicArmorLevel => $"{Type}: M-B-A on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.MagicWeaponLevel => $"{Type}: M-B-W on {Target} {operationString}, Unknown {Unknown:x2}",
                 _ => $"{Type}: Unknown ({(int)TypeOfReward}:{RewardTypeValue}) on {Target} {operationString}, Unknown {Unknown:x2}"
             };
         }
