@@ -5249,6 +5249,18 @@ namespace Ambermoon
                         return;
                     }
                     break;
+                case RewardEvent.RewardType.MaxSkill:
+                    if (rewardEvent.Skill != null && (int)rewardEvent.Skill < 10)
+                    {
+                        if (!RewardValue(partyMember.Skills[rewardEvent.Skill.Value], false, true))
+                            return;
+                    }
+                    else
+                    {
+                        ShowMessagePopup($"ERROR: Invalid reward event skill type.", followAction);
+                        return;
+                    }
+                    break;
                 case RewardEvent.RewardType.AttacksPerRound:
                 {
                     switch (rewardEvent.Operation)
