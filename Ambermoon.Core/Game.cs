@@ -5775,16 +5775,16 @@ namespace Ambermoon
                 }
             }
 
+            if (!mapTypeChanged)
+            {
+                PlayerMoved(mapChange);
+            }
+
             if (mapChange && !WindowActive)
             {
                 // Color of the filled upper right area may need update cause of palette change.
                 mapViewRightFillArea.Color = GetUIColor(28);
             }
-
-            if (!mapTypeChanged)
-            {
-                PlayerMoved(mapChange);
-            }            
 
             if (!mapChange) // Otherwise the map change handler takes care of this
                 ResetMoveKeys();
