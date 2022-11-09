@@ -13988,6 +13988,7 @@ namespace Ambermoon
                     SetWindow(Window.Automap, automapOptions);
                     layout.Reset();
                     layout.SetLayout(LayoutType.Automap);
+                    ResetMoveKeys(true);
                     CursorType = CursorType.Sword;
 
                     var sprites = new List<ISprite>();
