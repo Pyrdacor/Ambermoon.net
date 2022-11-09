@@ -384,8 +384,8 @@ namespace Ambermoon.Data.Legacy
                     ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 1, true);
                     // Person (1 frame)
                     ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 1, true);
-                    // Goto point (7 frames)
-                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 7, true);
+                    // Goto point (8 frames)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 8, true);
 
                     graphics[type] = automapGraphics;
                 }

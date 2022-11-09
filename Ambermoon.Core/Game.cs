@@ -14128,10 +14128,10 @@ namespace Ambermoon
                             case AutomapGraphic.TrapDoor:
                             case AutomapGraphic.Special:
                             case AutomapGraphic.Monster: // this and all above have 4 frames
-                            case AutomapGraphic.GotoPoint: // this has 7 frames
+                            case AutomapGraphic.GotoPoint: // this has 8 frames
                             {
                                 var animatedSprite = layout.AddAnimatedSprite(new Rect(x, y, width, height), Graphics.GetAutomapGraphicIndex(automapGraphic),
-                                    paletteIndex, automapGraphic == AutomapGraphic.GotoPoint ? 7u : 4u, displayLayer);
+                                    paletteIndex, automapGraphic == AutomapGraphic.GotoPoint ? 8u : 4u, displayLayer);
                                 animatedSprites.Add(animatedSprite);
                                 sprite = animatedSprite;
                                 break;
@@ -14503,7 +14503,7 @@ namespace Ambermoon
                             foreach (var animatedSprite in animatedSprites)
                                 ++animatedSprite.CurrentFrame;
 
-                            AddTimedEvent(TimeSpan.FromMilliseconds(100), Animate);
+                            AddTimedEvent(TimeSpan.FromMilliseconds(120), Animate);
                         }
                     }
                     Animate();
