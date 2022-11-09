@@ -1258,7 +1258,7 @@ namespace Ambermoon.Render
             {
                 if (!characterBlockingBlocks[i].Contains(blockIndex))
                 {
-                    if (blockAll || !flags.HasFlag(Tileset.TileFlags.AllowMovementWalk + i))
+                    if (blockAll || !flags.HasFlag((Tileset.TileFlags)(1 << (8 + i))))
                     {
                         characterBlockingBlocks[i].Add(blockIndex);
                         blockAny = true;
