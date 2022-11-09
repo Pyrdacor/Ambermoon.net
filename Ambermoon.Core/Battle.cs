@@ -2759,14 +2759,14 @@ namespace Ambermoon
 
         static readonly int[] SpellBonusTable = new int[]
         {
-            0,100,100,100,100,100,100,100, // Mental spells
-            100,0,150,150,100,100,100,100, // Spirit spells
-            100,100,0,100,100,100,100,100, // Physical spells
-            100,100,100,0,100,100,100,100, // Undead spells
-            100,100,100,75,0,50,100,150, // Earth spells
-            100,100,100,75,150,0,50,150, // Wind spells
-            100,75,100,125,100,150,0,50, // Fire spells
-            100,100,100,75,50,100,150,0 // Water spells
+              0, 100, 100, 100, 100, 100, 100, 100, // Mental spells
+            125,   0, 150, 150, 100, 100, 100, 100, // Spirit spells
+            100, 100,   0, 100, 100, 100, 100, 100, // Physical spells
+            100, 100, 100,   0, 100, 100, 100, 100, // Undead spells
+             75, 100, 100,  75,   0,  50, 100, 150, // Earth spells
+             75, 100, 100,  75, 150,   0,  50, 150, // Wind spells
+             75,  75, 100, 125, 100, 150,   0,  50, // Fire spells
+             75, 100, 100,  75,  50, 100, 150,   0  // Water spells
         };
 
         public void StartMonsterAnimation(Monster monster, Action<BattleAnimation> setupAction, Action<BattleAnimation> finishAction)
