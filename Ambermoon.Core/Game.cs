@@ -9893,7 +9893,7 @@ namespace Ambermoon
             }
 
             // Attributes, skills, LP and SP is special for monsters.
-            foreach (var attribute in Enum.GetValues<Attribute>())
+            foreach (var attribute in Enum.GetValues<Attribute>().Take(8))
                 FixValue(game, monster.Attributes[attribute]);
             foreach (var skill in Enum.GetValues<Skill>())
                 FixValue(game, monster.Skills[skill]);

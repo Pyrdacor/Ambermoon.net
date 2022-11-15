@@ -2429,18 +2429,18 @@ namespace Ambermoon
             KeyValuePair.Create(90u, 120u)
         };
 
+        static int UnsignedToSigned(uint word)
+        {
+            ushort w = (ushort)(word & 0xffff);
+
+            if ((w & 0x8000) == 0)
+                return w;
+
+            return w - 0x10000;
+        }
+
         void AdjustDamage(ref uint minDamage, ref uint maxDamage, CharacterValue spellBonus)
         {
-            static int UnsignedToSigned(uint word)
-            {
-                ushort w = (ushort)(word & 0xffff);
-
-                if ((w & 0x8000) == 0)
-                    return w;
-
-                return w - 0x10000;
-            }
-
             int baseBonus = UnsignedToSigned(spellBonus.CurrentValue);
             int maxBonus = UnsignedToSigned(spellBonus.MaxValue);
             int percBonus = UnsignedToSigned(spellBonus.StoredValue);
@@ -2588,8 +2588,8 @@ namespace Ambermoon
                     bool ignoreDamageBonus = caster is PartyMember p && p.Index < 16;
                     var damageValue = damageValues[index];
                     var bonusDamage = caster.Attributes[Attribute.BonusSpellDamage];
-                    uint minDamage = damageValue.Key + (ignoreDamageBonus ? 0 : bonusDamage.CurrentValue);
-                    uint maxDamage = damageValue.Value + (ignoreDamageBonus ? 0 : bonusDamage.CurrentValue + bonusDamage.MaxValue);
+                    uint minDamage = damageValue.Key;
+                    uint maxDamage = damageValue.Value;
                     if (!ignoreDamageBonus)
                         AdjustDamage(ref minDamage, ref maxDamage, bonusDamage);
                     DealDamage(minDamage, maxDamage - minDamage);
@@ -2719,7 +2719,11 @@ namespace Ambermoon
                     if (factor <= 0)
                         damage = 1;
                     else
-                        damage = Math.Max(1, damage * (uint)factor / 100);
+                    {
+                        int damageReduction = UnsignedToSigned((uint)target.Attributes[Attribute.BonusSpellDamage].BonusValue);
+                        damage = (damage * (uint)factor) / 100;                        
+                        damage = (uint)Math.Max(1, damage - (damage * damageReduction) / 100);
+                    }
                 }
                 uint position = (uint)GetSlotFromCharacter(target);
                 PlayBattleEffectAnimation(target.Type == CharacterType.Monster ? BattleEffect.HurtMonster : BattleEffect.HurtPlayer,
