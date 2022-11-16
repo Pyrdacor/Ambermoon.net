@@ -2738,7 +2738,20 @@ namespace Ambermoon
                 // In battle the space key can be used to click for next action.
                 if (key == Key.Space && currentBattle?.WaitForClick == true)
                 {
-                    currentBattle.Click(CurrentBattleTicks);
+                    if (!currentBattle.RoundActive && nextClickHandler != null)
+                    {
+                        nextClickHandler(MouseButtons.Left);
+                        nextClickHandler = null;
+                    }
+                    else
+                        currentBattle.Click(CurrentBattleTicks);
+                    return;
+                }
+
+                if (key == Key.Escape && currentBattle?.WaitForClick == true && !currentBattle.RoundActive && nextClickHandler != null)
+                {
+                    nextClickHandler(MouseButtons.Left);
+                    nextClickHandler = null;
                     return;
                 }
 
