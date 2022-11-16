@@ -303,6 +303,7 @@
         public string GotoPointSaved => executableData.Messages.GetEntry(Messages.Index.GotoPointSaved);
         public string WayBackTooDangerous => executableData.Messages.GetEntry(Messages.Index.WayBackTooDangerous);
         public string ReallyWantToGoThere => executableData.Messages.GetEntry(Messages.Index.ReallyWantToGoThere);
+        public string DarkDontFindWayBack => executableData.Messages.GetEntry(Messages.Index.DarkDontFindWayBack);
 
         #endregion
 

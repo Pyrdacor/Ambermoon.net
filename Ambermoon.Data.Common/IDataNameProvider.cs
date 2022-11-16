@@ -254,6 +254,7 @@ namespace Ambermoon.Data
         string GotoPointSaved { get; }
         string WayBackTooDangerous { get; }
         string ReallyWantToGoThere { get; }
+        string DarkDontFindWayBack { get; }
 
         #endregion
 
