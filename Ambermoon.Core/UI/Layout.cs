@@ -4596,7 +4596,7 @@ namespace Ambermoon.UI
 
         public bool KeyChar(char ch)
         {
-            if (questionYesButton != null && (char.ToLower(ch) == 'y' || char.ToLower(ch) == 'j'))
+            if (questionYesButton != null && (char.ToLower(ch) == 'y' || char.ToLower(ch) == 'j' || char.ToLower(ch) == 'o'))
             {
                 questionYesButton.PressImmediately(game, false, true);
                 return true;

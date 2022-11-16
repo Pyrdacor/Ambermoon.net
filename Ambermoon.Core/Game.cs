@@ -2963,7 +2963,8 @@ namespace Ambermoon
                     int index = key - Key.Num1;
                     int column = index % 3;
                     int row = 2 - index / 3;
-                    layout.ReleaseButton(column + row * 3);
+                    bool immediately = CurrentWindow.Window == Window.MapView && index != 4;
+                    layout.ReleaseButton(column + row * 3, immediately);
 
                     break;
                 }
