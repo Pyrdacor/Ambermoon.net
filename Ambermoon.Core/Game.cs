@@ -2736,7 +2736,7 @@ namespace Ambermoon
                 }
 
                 // In battle the space key can be used to click for next action.
-                if (key == Key.Space && BattleRoundActive && currentBattle?.WaitForClick == true)
+                if (key == Key.Space && currentBattle?.WaitForClick == true)
                 {
                     currentBattle.Click(CurrentBattleTicks);
                     return;
@@ -2745,7 +2745,7 @@ namespace Ambermoon
                 if (key != Key.Escape && !(key >= Key.Num1 && key <= Key.Num9))
                     return;
 
-                if (layout.TextWaitsForClick) // allow only if there is no text active which waits for a click
+                if (layout.TextWaitsForClick || currentBattle?.WaitForClick == true) // allow only if there is no text active which waits for a click
                     return;
             }
 
