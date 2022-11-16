@@ -14608,7 +14608,11 @@ namespace Ambermoon
                                         layout.HideTooltip();
                                         UntrapMouse();
                                         animationsPaused = true;
-                                        if (MonsterSeesPlayer)
+                                        if (!CanSee())
+                                        {
+                                            ShowMessagePopup(DataNameProvider.DarkDontFindWayBack, AbortGoto, TextAlign.Left, 202);
+                                        }
+                                        else if (MonsterSeesPlayer)
                                         {
                                             ShowMessagePopup(DataNameProvider.WayBackTooDangerous, AbortGoto, TextAlign.Left, 202);
                                         }
