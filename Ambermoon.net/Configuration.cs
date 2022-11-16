@@ -79,6 +79,7 @@ namespace Ambermoon
         public int? ContinueSavegameSlot { get; set; } = null;
         public AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
         public bool ShowSaveLoadMessage { get; set; } = false;
+        public Movement3D Movement3D { get; set; } = Movement3D.WASD;
 
         public static string GetSavePath(string version, bool createIfMissing = true)
         {

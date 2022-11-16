@@ -65,6 +65,8 @@ namespace Ambermoon
         A,
         S,
         D,
+        Q,
+        E,
         Number0,
         Number1,
         Number2,

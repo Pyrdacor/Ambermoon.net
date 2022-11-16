@@ -1124,6 +1124,8 @@ namespace Ambermoon
             ResetKey(Key.A);
             ResetKey(Key.S);
             ResetKey(Key.D);
+            ResetKey(Key.Q);
+            ResetKey(Key.E);
 
             if (!WindowActive && !layout.PopupActive && layout.ButtonGridPage == 0)
             {
@@ -2522,6 +2524,8 @@ namespace Ambermoon
             bool right = keys[(int)Key.Right] || keys[(int)Key.D];
             bool up = keys[(int)Key.Up] || keys[(int)Key.W];
             bool down = keys[(int)Key.Down] || keys[(int)Key.S];
+            bool turnLeft = Configuration.Movement3D == Movement3D.WASDQE ? keys[(int)Key.Q] : keys[(int)Key.A];
+            bool turnRight = Configuration.Movement3D == Movement3D.WASDQE ? keys[(int)Key.E] : keys[(int)Key.D];
 
             if (left && !right)
             {
@@ -2531,13 +2535,13 @@ namespace Ambermoon
                     if (!up && !down)
                         Move2D(-1, 0);
                 }
-                else
+                else if (Configuration.Movement3D == Movement3D.WASDQE)
                 {
-                    player3D.TurnLeft(movement.TurnSpeed3D);
+                    player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                     CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
                 }
             }
-            if (right && !left)
+            else if (right && !left)
             {
                 if (!is3D)
                 {
@@ -2545,7 +2549,20 @@ namespace Ambermoon
                     if (!up && !down)
                         Move2D(1, 0);
                 }
-                else
+                else if (Configuration.Movement3D == Movement3D.WASDQE)
+                {
+                    player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                    CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
+                }
+            }
+            if (is3D)
+            {
+                if (turnLeft && !turnRight)
+                {
+                    player3D.TurnLeft(movement.TurnSpeed3D);
+                    CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
+                }
+                else if (!turnLeft && turnRight)
                 {
                     player3D.TurnRight(movement.TurnSpeed3D);
                     CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
@@ -2565,7 +2582,7 @@ namespace Ambermoon
                     CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
                 }
             }
-            if (down && !up)
+            else if (down && !up)
             {
                 if (!is3D)
                 {

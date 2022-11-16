@@ -1160,7 +1160,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 18;
+        const int OptionCount = 19;
         const int OptionsPerPage = 7;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
@@ -1178,13 +1178,14 @@ namespace Ambermoon.UI
                     "Effekt",
                     // Page 2
                     "Kampfgeschwindigkeit",
+                    "3D-Bewegung",
                     "Button Tooltips anzeigen",
                     "Stats Tooltips anzeigen",
                     "Runen als Text anzeigen",
                     "Cheats aktivieren",
                     "3D Boden und Decke",
-                    "Zusätzliche Spielstände",
                     // Page3
+                    "Zusätzliche Spielstände",
                     "Externe Musik",
                     "Pyrdacor Logo zeigen",
                     "Thalion Logo zeigen",
@@ -1208,13 +1209,14 @@ namespace Ambermoon.UI
                     "Effect",
                     // Page 2
                     "Battle speed",
+                    "3D Movement",
                     "Show button tooltips",
                     "Show stats tooltips",
                     "Show runes as text",
                     "Enable cheats",
                     "3D floor and ceiling",
-                    "Additional saveslots",
                     // Page 3
+                    "Additional saveslots",
                     "External music",
                     "Show Pyrdacor logo",
                     "Show Thalion logo",
@@ -1257,6 +1259,25 @@ namespace Ambermoon.UI
                 GameLanguage.English, "Default"
             }
         };
+        static readonly Dictionary<GameLanguage, string[]> Movement3DValues = new Dictionary<GameLanguage, string[]>
+        {
+            {
+                GameLanguage.German,
+                new string[2]
+                {
+                    "WASD",
+                    "QWEASD"
+                }
+            },
+            {
+                GameLanguage.English,
+                new string[2]
+                {
+                    "WASD",
+                    "QWEASD"
+                }
+            }
+        };
 
         void OpenOptions()
         {
@@ -1285,13 +1306,14 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", RenderView.AllowEffects ? ((index, _) => ToggleEffects()) : nullOptionAction),
                 // Page 2
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleBattleSpeed())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => Toggle3DMovement())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePlayerStatsTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
                 KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleCheats())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFloorAndCeiling())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),
                 // Page 3
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExternalMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleThalionLogo())),
@@ -1348,17 +1370,18 @@ namespace Ambermoon.UI
             void SetEffects() => SetOptionString(6, game.Configuration.Effects == Effects.None ? off : game.Configuration.Effects.ToString());
             // Page 2
             void SetBattleSpeed() => SetOptionString(7, game.Configuration.BattleSpeed == 0 ? DefaultBattleSpeedName[game.GameLanguage] : $"+{game.Configuration.BattleSpeed}%");
-            void SetTooltips() => SetOptionString(8, game.Configuration.ShowButtonTooltips ? on : off);
-            void SetPlayerStatsTooltips() => SetOptionString(9, game.Configuration.ShowPlayerStatsTooltips ? on : off);
-            void SetAutoDerune() => SetOptionString(10, game.Configuration.AutoDerune ? on : off);
-            void SetCheats() => SetOptionString(11, cheatsEnabled ? on : off);
-            void SetFloorAndCeiling() => SetOptionString(12, GetFloorAndCeilingValueString());
-            void SetExtendedSaves() => SetOptionString(13, game.Configuration.ExtendedSavegameSlots ? on : off);
+            void Set3DMovement() => SetOptionString(8, Movement3DValues[game.GameLanguage][Util.Limit(0, (int)game.Configuration.Movement3D, 1)]);
+            void SetTooltips() => SetOptionString(9, game.Configuration.ShowButtonTooltips ? on : off);
+            void SetPlayerStatsTooltips() => SetOptionString(10, game.Configuration.ShowPlayerStatsTooltips ? on : off);
+            void SetAutoDerune() => SetOptionString(11, game.Configuration.AutoDerune ? on : off);
+            void SetCheats() => SetOptionString(12, cheatsEnabled ? on : off);
+            void SetFloorAndCeiling() => SetOptionString(13, GetFloorAndCeilingValueString());
             // Page 3
-            void SetExternalMusic() => SetOptionString(14, game.Configuration.ExternalMusic ? on : off);
-            void SetPyrdacorLogo() => SetOptionString(15, game.Configuration.ShowPyrdacorLogo ? on : off);
-            void SetThalionLogo() => SetOptionString(16, game.Configuration.ShowThalionLogo ? on : off);
-            void SetSaveLoadInfo() => SetOptionString(17, game.Configuration.ShowSaveLoadMessage ? on : off);
+            void SetExtendedSaves() => SetOptionString(14, game.Configuration.ExtendedSavegameSlots ? on : off);
+            void SetExternalMusic() => SetOptionString(15, game.Configuration.ExternalMusic ? on : off);
+            void SetPyrdacorLogo() => SetOptionString(16, game.Configuration.ShowPyrdacorLogo ? on : off);
+            void SetThalionLogo() => SetOptionString(17, game.Configuration.ShowThalionLogo ? on : off);
+            void SetSaveLoadInfo() => SetOptionString(18, game.Configuration.ShowSaveLoadMessage ? on : off);
             // TODO: void SetIntro() => SetOptionString(?, game.Configuration.ShowIntro ? on : off);
             // TODO: void SetFantasyIntro() => SetOptionString(?, game.Configuration.ShowFantasyIntro ? on : off);
 
@@ -1378,14 +1401,15 @@ namespace Ambermoon.UI
                         break;
                     case 1:
                         SetBattleSpeed();
+                        Set3DMovement();
                         SetTooltips();
                         SetPlayerStatsTooltips();
                         SetAutoDerune();
                         SetCheats();
-                        SetFloorAndCeiling();
-                        SetExtendedSaves();
+                        SetFloorAndCeiling();                        
                         break;
                     case 2:
+                        SetExtendedSaves();
                         SetExternalMusic();
                         SetPyrdacorLogo();
                         SetThalionLogo();
@@ -1463,6 +1487,12 @@ namespace Ambermoon.UI
                     game.Configuration.BattleSpeed += 10;
                 SetBattleSpeed();
                 game.SetBattleSpeed(game.Configuration.BattleSpeed);
+                changedConfiguration = true;
+            }
+            void Toggle3DMovement()
+            {
+                game.Configuration.Movement3D = (Movement3D)(((int)game.Configuration.Movement3D + 1) % 2);
+                Set3DMovement();
                 changedConfiguration = true;
             }
             void ToggleTooltips()

@@ -98,6 +98,12 @@ namespace Ambermoon
         Sepia
     }
 
+    public enum Movement3D
+    {
+        WASD,
+        WASDQE
+    }
+
     public interface IConfiguration
     {
         bool FirstStart { get; set; }
@@ -143,6 +149,7 @@ namespace Ambermoon
         int? ContinueSavegameSlot { get; set; }
         AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
         bool ShowSaveLoadMessage { get; set; }
+        Movement3D Movement3D { get; set; }
 
         void UpgradeAdditionalSavegameSlots();
         AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots();
