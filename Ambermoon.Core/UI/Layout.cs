@@ -2965,7 +2965,7 @@ namespace Ambermoon.UI
         }
 
         Button AddButton(Position position, ButtonType type, Action leftClickAction, byte displayLayer,
-            List<FilledArea> areas)
+            List<FilledArea> areas, bool allowOnlyOnce = false)
         {
             var brightBorderColor = game.GetUIColor(31);
             var darkBorderColor = game.GetUIColor(26);
@@ -2979,7 +2979,15 @@ namespace Ambermoon.UI
             button.ButtonType = type;
             button.Disabled = false;
             button.DisplayLayer = displayLayer;
-            button.LeftClickAction = leftClickAction;
+            button.LeftClickAction = leftClickAction != null && allowOnlyOnce ? ClickOnce : leftClickAction;
+
+            void ClickOnce()
+            {
+                button.LeftClickAction = null;
+                leftClickAction?.Invoke();
+                leftClickAction = null;
+            }
+
             return button;
         }
 
@@ -2988,8 +2996,8 @@ namespace Ambermoon.UI
             var areas = new List<FilledArea>();
             questionYesButton?.Destroy();
             questionNoButton?.Destroy();
-            questionYesButton = AddButton(new Position(128, 169), hasSavegames ? ButtonType.Load : ButtonType.Stats, () => Choose(true), 2, areas);
-            questionNoButton = AddButton(new Position(128 + Button.Width, 169), ButtonType.Quit, () => Choose(false), 2, areas);
+            questionYesButton = AddButton(new Position(128, 169), hasSavegames ? ButtonType.Load : ButtonType.Stats, () => Choose(true), 2, areas, true);
+            questionNoButton = AddButton(new Position(128 + Button.Width, 169), ButtonType.Quit, () => Choose(false), 2, areas, true);
 
             void Choose(bool load)
             {
@@ -3011,8 +3019,8 @@ namespace Ambermoon.UI
             ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
             questionYesButton?.Destroy();
             questionNoButton?.Destroy();
-            questionYesButton = AddButton(new Position(223, 75), ButtonType.Yes, () => Answer(true), 2, areas);
-            questionNoButton = AddButton(new Position(223 + Button.Width, 75), ButtonType.No, () => Answer(false), 2, areas);
+            questionYesButton = AddButton(new Position(223, 75), ButtonType.Yes, () => Answer(true), 2, areas, true);
+            questionNoButton = AddButton(new Position(223 + Button.Width, 75), ButtonType.No, () => Answer(false), 2, areas, true);
             game.CursorType = CursorType.Click;
             game.InputEnable = false;
 

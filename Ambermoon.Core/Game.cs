@@ -32,6 +32,7 @@ using TextColor = Ambermoon.Data.Enumerations.Color;
 using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 using Ambermoon.Data.Audio;
 using static Ambermoon.UI.BuiltinTooltips;
+using System.Security;
 
 namespace Ambermoon
 {
@@ -314,6 +315,7 @@ namespace Ambermoon
         public IItemManager ItemManager { get; }
         public ICharacterManager CharacterManager { get; }
         readonly Places places;
+        IPlace currentPlace = null;
         readonly IRenderView renderView;
         internal IAudioOutput AudioOutput { get; private set; }
         readonly ISongManager songManager;
@@ -2105,6 +2107,13 @@ namespace Ambermoon
                 }
             }
 
+            // If a crash save is stored and the game crashes inside a place (like merchants),
+            // all the gold is at the place and none at the party.
+            if (currentPlace != null && currentPlace.AvailableGold != 0)
+            {
+                DistributeGold(currentPlace.AvailableGold, true);
+            }
+
             saveAction?.Invoke();
 
             try
@@ -3823,7 +3832,7 @@ namespace Ambermoon
                 OpenStorage = null;
                 UpdateMapName();
                 Resume();
-                ResetMoveKeys();
+                ResetMoveKeys(true);
                 UpdateLight();
                 if (playMusic)
                 {
@@ -10914,6 +10923,8 @@ namespace Ambermoon
 
         void OpenEnchanter(Places.Enchanter enchanter, bool showWelcome = true)
         {
+            currentPlace = enchanter;
+
             if (showWelcome)
                 enchanter.AvailableGold = 0;
 
@@ -11079,6 +11090,8 @@ namespace Ambermoon
 
         void OpenSage(Places.Sage sage, bool showWelcome = true)
         {
+            currentPlace = sage;
+
             if (showWelcome)
                 sage.AvailableGold = 0;
 
@@ -11195,6 +11208,8 @@ namespace Ambermoon
 
         void OpenHealer(Places.Healer healer, bool showWelcome = true)
         {
+            currentPlace = healer;
+
             if (showWelcome)
                 healer.AvailableGold = 0;
 
@@ -11464,6 +11479,8 @@ namespace Ambermoon
 
         void OpenBlacksmith(Places.Blacksmith blacksmith, bool showWelcome = true)
         {
+            currentPlace = blacksmith;
+
             if (showWelcome)
                 blacksmith.AvailableGold = 0;
 
@@ -11586,6 +11603,8 @@ namespace Ambermoon
 
         void OpenInn(Places.Inn inn, string useText, bool showWelcome = true)
         {
+            currentPlace = inn;
+
             if (showWelcome)
                 inn.AvailableGold = 0;
 
@@ -11672,6 +11691,7 @@ namespace Ambermoon
         void OpenTransportSalesman(Places.Salesman salesman, string buyText, TravelType travelType,
             Window window, Picture80x80 picture80X80, string welcomeMessage)
         {
+            currentPlace = salesman;
             Action updatePartyGold = null;
 
             void SetupSalesman(Action updateGold, ItemGrid _)
@@ -11812,6 +11832,8 @@ namespace Ambermoon
 
         void OpenFoodDealer(Places.FoodDealer foodDealer, bool showWelcome = true)
         {
+            currentPlace = foodDealer;
+
             if (showWelcome)
                 foodDealer.AvailableGold = 0;
 
@@ -11930,6 +11952,8 @@ namespace Ambermoon
 
         void OpenTrainer(Places.Trainer trainer, bool showWelcome = true)
         {
+            currentPlace = trainer;
+
             if (showWelcome)
                 trainer.AvailableGold = 0;
 
@@ -12106,6 +12130,7 @@ namespace Ambermoon
             bool showWelcome, ItemSlot[] boughtItems)
         {
             var merchant = GetMerchant(1 + merchantIndex);
+            currentPlace = merchant;
             merchant.Name = placeName;
             if (showWelcome)
                 merchant.AvailableGold = 0;
@@ -12521,6 +12546,7 @@ namespace Ambermoon
                         {
                             if (answer) // yes
                             {
+                                allInputDisabled = true;
                                 merchant.AddItems(ItemManager, item.Index, amount, itemSlot);
                                 CurrentPartyMember.Inventory.Slots[slotIndex].Remove((int)amount);
                                 InventoryItemRemoved(item.Index, (int)amount, CurrentPartyMember);
@@ -12528,6 +12554,7 @@ namespace Ambermoon
                                 merchant.AvailableGold += sellPrice;
                                 UpdateGoldDisplay();
                                 UpdateButtons();
+                                allInputDisabled = false;
                             }
 
                             if (!merchant.Slots.ToList().Any(s => s.Empty))
@@ -15634,6 +15661,8 @@ namespace Ambermoon
             {
                 case Window.MapView:
                 {
+                    currentPlace = null;
+
                     Fade(() =>
                     {
                         if (CurrentMapCharacter != null &&
