@@ -40,7 +40,7 @@ if ($isWindows) {
   cp "./Ambermoon.net/bin/Any CPU/Release/net6.0/osx-x64/publish/Ambermoon.net" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   #cp "./AmbermoonPatcher/bin/Any CPU/Release/net6.0/osx-x64/publish/AmbermoonPatcher" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   cp "./versions.dat" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/Resources/
-  cp -r ./Package/* ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
+  cp -r ./Package/* ./bundle/Ambermoon.net/
   Start-Process -FilePath codesign -Wait -WorkingDirectory . -ArgumentList '-s','-','--force','--verbose','--deep','--no-strict','"./bundle/Ambermoon.net/Ambermoon.net.app"'
   7z a Ambermoon.net-Mac.zip ./bundle/Ambermoon.net/ -mx9
   cp -r ./bundle ./bundle-arm
