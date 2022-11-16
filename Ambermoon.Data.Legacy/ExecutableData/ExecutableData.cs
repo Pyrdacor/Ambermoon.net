@@ -127,27 +127,27 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             var hunks = AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]);
 
-            if (gameData.Files.TryGetValue("Text.amb", out var textAmb) &&
-                gameData.Files.TryGetValue("Objects.amb", out var objectsAmb) &&
-                gameData.Files.TryGetValue("Button_graphics", out var buttonGraphics))
+            gameData.Files.TryGetValue("Text.amb", out var textAmb);
+            gameData.Files.TryGetValue("Objects.amb", out var objectsAmb);
+            gameData.Files.TryGetValue("Button_graphics", out var buttonGraphics);
+
+            int textAmbPosition = textAmb == null ? 0 : textAmb.Files[1].Position;
+            int objectsAmbPosition = objectsAmb == null ? 0 : objectsAmb.Files[1].Position;
+            int buttonGraphicsPosition = buttonGraphics == null ? 0 : buttonGraphics.Files[1].Position;
+
+            try
             {
-                int textAmbPosition = textAmb.Files[1].Position;
-                int objectsAmbPosition = objectsAmb.Files[1].Position;
-                int buttonGraphicsPosition = buttonGraphics.Files[1].Position;
-
-                try
-                {
-                    return new ExecutableData(hunks, textAmb.Files[1], objectsAmb.Files[1], buttonGraphics.Files[1]);
-                }
-                finally
-                {
+                return new ExecutableData(hunks, textAmb?.Files[1], objectsAmb?.Files[1], buttonGraphics?.Files[1]);
+            }
+            finally
+            {
+                if (textAmb != null)
                     textAmb.Files[1].Position = textAmbPosition;
+                if (objectsAmb != null)
                     objectsAmb.Files[1].Position = objectsAmbPosition;
+                if (buttonGraphics != null)
                     buttonGraphics.Files[1].Position = buttonGraphicsPosition;
-                }
-            } 
-
-            return new ExecutableData(hunks);
+            }
         }
 
         public ExecutableData(List<AmigaExecutable.IHunk> hunks)
