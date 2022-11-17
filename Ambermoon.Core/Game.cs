@@ -1467,6 +1467,39 @@ namespace Ambermoon
             return null;
         }
 
+        private void UpdateOutdoorLight(uint minutesPassed)
+        {
+            bool lightBuffBurningOut = false;
+
+            if (!CurrentSavegame.IsSpellActive(ActiveSpellType.Light) && minutesPassed == 5)
+            {
+                uint lastHour = 0;
+
+                if (GameTime.Minute == 0) // hour changed
+                {
+                    lastHour = GameTime.Hour == 0 ? 23 : GameTime.Hour - 1;
+                }
+                else
+                {
+                    lastHour = GameTime.Hour;
+                }
+
+                uint expectedLightIntensity = GetDaytimeLightIntensity(lastHour);
+
+                if (lightIntensity > expectedLightIntensity)
+                    lightBuffBurningOut = true;
+            }
+
+            uint newExpectedLightIntensity = GetDaytimeLightIntensity();
+
+            if (lightBuffBurningOut)
+                lightIntensity = (uint)Math.Max(newExpectedLightIntensity, (int)lightIntensity - 16);
+            else
+                lightIntensity = newExpectedLightIntensity;
+
+            UpdateLight(false, false, false, null, lightBuffBurningOut ? lightIntensity : (uint?)null);
+        }
+
         public void Start(Savegame savegame, Action postAction = null)
         {
             lastPlayedSong = null;
@@ -1515,13 +1548,14 @@ namespace Ambermoon
                     CurrentSavegame.GetActiveSpellDuration(ActiveSpellType.Light) * 5 < amount)
                 {
                     lightIntensity = 0;
-                    CurrentSavegame.ActiveSpells.Where(s => s?.Type == ActiveSpellType.Light)
-                    .ToList().ForEach(s => s.Duration = 0);
+                    CurrentSavegame.ActiveSpells
+                        .Where(s => s?.Type == ActiveSpellType.Light)
+                        .ToList().ForEach(s => s.Duration = 0);
                     UpdateLight(true);
                 }
                 else if (Map.Flags.HasFlag(MapFlags.Outdoor) && this.is3D)
                 {
-                    UpdateLight();
+                    UpdateOutdoorLight(amount);
                 }
 
                 if (!swamLastTick && Map.UseTravelTypes && TravelType == TravelType.Swim)
@@ -1817,7 +1851,6 @@ namespace Ambermoon
             if (disableTimeEvents)
                 return;
 
-            UpdateLight();
             ProcessPoisonDamage(hours, () =>
             {
                 if (!notTiredNorExhausted && !swamLastTick && Map.UseTravelTypes && TravelType == TravelType.Swim)
@@ -10676,7 +10709,38 @@ namespace Ambermoon
             return usedLightIntensity / 255.0f;
         }
 
-        internal void UpdateLight(bool mapChange = false, bool lightActivated = false, bool playerSwitched = false, Map map = null)
+        private uint GetDaytimeLightIntensity()
+        {
+            return GetDaytimeLightIntensity(GameTime.Hour);
+        }
+
+        private uint GetDaytimeLightIntensity(uint hour)
+        {
+            // 17:00-18:59: 128
+            // 19:00-19:59: 80
+            // 20:00-05:59: 32
+            // 06:00-06:59: 80
+            // 07:00-07:59: 128
+            // 08:00-16:59: 255
+
+            if (hour < 6 || hour >= 20)
+                return 32;
+            else if (hour < 7)
+                return 80;
+            else if (hour < 8)
+                return 128;
+            else if (hour < 17)
+                return 255;
+            else if (hour < 19)
+                return 128;
+            else if (hour < 20)
+                return 80;
+            else
+                return 32;
+        }
+
+        internal void UpdateLight(bool mapChange = false, bool lightActivated = false, bool playerSwitched = false, Map map = null,
+            uint? customOutdoorLightIntensity = null)
         {
             map ??= Map;
 
@@ -10738,41 +10802,23 @@ namespace Ambermoon
             }
             else if (Map.Flags.HasFlag(MapFlags.Outdoor))
             {
-                
                 // Light is based on daytime and own light sources
-                // 17:00-18:59: 128
-                // 19:00-19:59: 80
-                // 20:00-05:59: 32
-                // 06:00-06:59: 80
-                // 07:00-07:59: 128
-                // 08:00-16:59: 255
                 // Each light spell level adds an additional 32.
 
-                uint lastIntensity = lightIntensity;
-
-                if (GameTime.Hour < 6 || GameTime.Hour >= 20)
-                    lightIntensity = 32;
-                else if (GameTime.Hour < 7)
-                    lightIntensity = 80;
-                else if (GameTime.Hour < 8)
-                    lightIntensity = 128;
-                else if (GameTime.Hour < 17)
-                    lightIntensity = 255;
-                else if (GameTime.Hour < 19)
-                    lightIntensity = 128;
-                else if (GameTime.Hour < 20)
-                    lightIntensity = 80;
-                else
-                    lightIntensity = 32;
-
-                lightIntensity = Math.Min(255, lightIntensity + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
-
-                if (!is3D && (lastIntensity != lightIntensity || mapChange))
+                if (!is3D || customOutdoorLightIntensity == null)
                 {
-                    var lastRadius = mapChange ? 0 : (int)(lastIntensity >> 1);
-                    var newRadius = (int)(lightIntensity >> 1);
-                    fow2D.Visible = lastIntensity < 224;
-                    ChangeLightRadius(lastRadius, newRadius);
+                    uint lastIntensity = lightIntensity;
+
+                    lightIntensity = GetDaytimeLightIntensity();
+                    lightIntensity = Math.Min(255, lightIntensity + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
+
+                    if (!is3D && (lastIntensity != lightIntensity || mapChange))
+                    {
+                        var lastRadius = mapChange ? 0 : (int)(lastIntensity >> 1);
+                        var newRadius = (int)(lightIntensity >> 1);
+                        fow2D.Visible = lastIntensity < 224;
+                        ChangeLightRadius(lastRadius, newRadius);
+                    }
                 }
             }
             else if (Map.Flags.HasFlag(MapFlags.Indoor))
@@ -10835,7 +10881,10 @@ namespace Ambermoon
                 fow2D.Visible = false;
                 var light3D = Get3DLight();
                 renderView.SetLight(light3D);
-                renderMap3D.UpdateSky(lightEffectProvider, GameTime);
+                uint lightBuffIntensity = Map.Flags.HasFlag(MapFlags.Outdoor)
+                    ? (uint)Math.Max(0, (customOutdoorLightIntensity ?? lightIntensity) - (long)GetDaytimeLightIntensity())
+                    : lightIntensity;
+                renderMap3D.UpdateSky(lightEffectProvider, GameTime, lightBuffIntensity);
                 renderMap3D.SetColorLightFactor(light3D);
             }
             else // 2D

@@ -1509,7 +1509,7 @@ namespace Ambermoon.Render
                 ceilingColor.Color = baseCeilingColor.WithLight(lightFactor);
         }
 
-        public void UpdateSky(ILightEffectProvider lightEffectProvider, ITime time)
+        public void UpdateSky(ILightEffectProvider lightEffectProvider, ITime time, uint buffLightIntensity)
         {
             if (Map?.Flags.HasFlag(MapFlags.Outdoor) != true)
             {
@@ -1518,7 +1518,9 @@ namespace Ambermoon.Render
             }
 
             var skyParts = lightEffectProvider.GetSkyParts(Map, time.Hour, time.Minute,
-                renderView.GraphicProvider, out var paletteReplacement);
+                renderView.GraphicProvider);
+            var paletteReplacement = lightEffectProvider.GetLightPaletteReplacement(Map, time.Hour, time.Minute,
+                buffLightIntensity, renderView.GraphicProvider);
 
             renderView.PaletteReplacement = paletteReplacement;
 
