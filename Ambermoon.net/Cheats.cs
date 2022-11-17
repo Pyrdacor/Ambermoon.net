@@ -1004,6 +1004,13 @@ namespace Ambermoon
         {
             Console.WriteLine();
 
+            if (!game.CanRevive())
+            {
+                Console.WriteLine("Can't revive outside the camp.");
+                Console.WriteLine();
+                return;
+            }
+
             int? partyMemberIndex = args.Length < 1 ? (int?)null : int.TryParse(args[0], out int v) ? v : null;
             const int maxSlot = Game.MaxPartyMembers - 1;
             int firstSlot = Util.Limit(0, partyMemberIndex == null ? 0 : partyMemberIndex.Value, maxSlot);
