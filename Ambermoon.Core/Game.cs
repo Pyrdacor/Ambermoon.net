@@ -8012,14 +8012,20 @@ namespace Ambermoon
 
                 UpdateButtons();
 
-                layout.AttachEventToButton(0, ShowDictionary);
-                layout.AttachEventToButton(2, () => Exit(true));
-                layout.AttachEventToButton(3, ShowItem);
-                layout.AttachEventToButton(4, AskToLeave);
-                layout.AttachEventToButton(5, AskToJoin);
-                layout.AttachEventToButton(6, GiveItem);
-                layout.AttachEventToButton(7, GiveGold);
-                layout.AttachEventToButton(8, GiveFood);
+                void ButtonAction(Action action)
+                {
+                    if (conversationEvent != null)
+                        return;
+                }
+
+                layout.AttachEventToButton(0, () => ButtonAction(ShowDictionary));
+                layout.AttachEventToButton(2, () => ButtonAction(() => Exit(true)));
+                layout.AttachEventToButton(3, () => ButtonAction(ShowItem));
+                layout.AttachEventToButton(4, () => ButtonAction(AskToLeave));
+                layout.AttachEventToButton(5, () => ButtonAction(AskToJoin));
+                layout.AttachEventToButton(6, () => ButtonAction(GiveItem));
+                layout.AttachEventToButton(7, () => ButtonAction(GiveGold));
+                layout.AttachEventToButton(8, () => ButtonAction(GiveFood));
 
                 // Add item grid
                 var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
