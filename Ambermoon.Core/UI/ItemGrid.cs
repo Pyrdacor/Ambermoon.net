@@ -266,6 +266,22 @@ namespace Ambermoon.UI
                         }
                     }
 
+                    int? clickedSlot = grid.SlotFromPosition(position);
+
+                    // If explicitly clicked on a slot, drop the item there!
+                    if (clickedSlot == rightFingerSlot || clickedSlot == rightFingerSlot + 2)
+                    {
+                        var dropSlot = grid.GetItemSlot(clickedSlot.Value);
+                       
+                        if (dropSlot?.Flags.HasFlag(ItemSlotFlags.Cursed) == true)
+                        {
+                            layout.SetInventoryMessage(game.DataNameProvider.ItemIsCursed, true);
+                            return null;
+                        }
+
+                        return clickedSlot.Value;
+                    }
+
                     var rightFingerItemSlot = grid.GetItemSlot(rightFingerSlot);
 
                     // place on first free finger starting at right one
