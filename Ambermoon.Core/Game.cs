@@ -4273,7 +4273,10 @@ namespace Ambermoon
                     {
                         partyMember.Equipment.Slots[(EquipmentSlot)(slotIndex + 1)].Remove(amount);
                         if (CurrentWindow.Window == Window.Inventory)
+                        {
                             layout.UpdateLayoutButtons();
+                            UpdateCharacterInfo();
+                        }
                     }
                     // TODO: When resetting the item back to the slot (even just dropping it there) the previous battle action should be restored.
                     RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), ItemManager.GetItem(itemSlot.ItemIndex));
@@ -4483,6 +4486,31 @@ namespace Ambermoon
                 tooltip.Text = GetSecondaryStatTooltip(GameLanguage, secondaryStat, partyMember);
         }
 
+        public int AdjustAttackForNotUsedAmmunition(Character character, int attack)
+        {
+            var leftHandItemSlot = character.Equipment.Slots[EquipmentSlot.LeftHand];
+
+            if (leftHandItemSlot != null && leftHandItemSlot.ItemIndex != 0 && leftHandItemSlot.Amount != 0)
+            {
+                var leftHandItem = ItemManager.GetItem(leftHandItemSlot.ItemIndex);
+
+                if (leftHandItem.Type == ItemType.Ammunition && leftHandItem.Damage != 0)
+                {
+                    var rightHandItemSlot = character.Equipment.Slots[EquipmentSlot.RightHand];
+
+                    if (rightHandItemSlot == null || rightHandItemSlot.ItemIndex == 0 || rightHandItemSlot.Amount == 0)
+                        return attack - leftHandItem.Damage;
+
+                    var rightHandItem = ItemManager.GetItem(rightHandItemSlot.ItemIndex);
+
+                    if (rightHandItem.UsedAmmunitionType != leftHandItem.AmmunitionType)
+                        return attack - leftHandItem.Damage;
+                }
+            }
+
+            return attack;
+        }
+
         void DisplayCharacterInfo(Character character, bool conversation)
         {
             void SetupSecondaryStatTooltip(Rect area, SecondaryStat secondaryStat)
@@ -4558,7 +4586,7 @@ namespace Ambermoon
                 SetupSecondaryStatTooltip(new Rect(214, 113, 42, 7), SecondaryStat.Gold);
                 SetupSecondaryStatTooltip(new Rect(262, 113, 36, 7), SecondaryStat.Food);
                 layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), UIPaletteIndex);
-                int attack = character.BaseAttack + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
+                int attack = AdjustAttackForNotUsedAmmunition(character, character.BaseAttack) + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
                 {
                     if (attack > 0)
@@ -4671,7 +4699,7 @@ namespace Ambermoon
                 string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food));
             UpdateSecondaryStatTooltip(SecondaryStat.Gold);
             UpdateSecondaryStatTooltip(SecondaryStat.Food);
-            int attack = character.BaseAttack + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
+            int attack = AdjustAttackForNotUsedAmmunition(character, character.BaseAttack) + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
             if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
             {
                 if (attack > 0)

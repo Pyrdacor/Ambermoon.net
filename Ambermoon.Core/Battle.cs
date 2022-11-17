@@ -3874,7 +3874,8 @@ namespace Ambermoon
 
         int CalculatePhysicalDamage(Character attacker, Character target)
         {
-            int damage = attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack) + (int)target.Attributes[Attribute.Strength].TotalCurrentValue / 25;
+            int baseAttack = attacker is PartyMember ? game.AdjustAttackForNotUsedAmmunition(attacker, attacker.BaseAttack) : attacker.BaseAttack;
+            int damage = baseAttack + game.RandomInt(0, attacker.VariableAttack) + (int)target.Attributes[Attribute.Strength].TotalCurrentValue / 25;
             int defense = target.BaseDefense + game.RandomInt(0, target.VariableDefense) + (int)target.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
 
             if (damage > 0)
