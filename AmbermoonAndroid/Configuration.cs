@@ -15,7 +15,7 @@ namespace AmbermoonAndroid
             "external"
         };
 
-
+        public event Action SaveRequested;
         [JsonIgnore]
         public bool FirstStart { get; set; } = false;
         [JsonIgnore]
@@ -69,6 +69,9 @@ namespace AmbermoonAndroid
         public int? ContinueSavegameSlot { get; set; } = null;
         public AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
         public bool ShowSaveLoadMessage { get; set; } = false;
+        public Movement3D Movement3D { get; set; } = Movement3D.WASD;
+
+        public void RequestSave() => SaveRequested?.Invoke();
 
 #pragma warning disable CS0618
         public void UpgradeAdditionalSavegameSlots()

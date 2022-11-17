@@ -21,6 +21,7 @@ namespace Ambermoon
             "external"
         };
 
+        public event Action SaveRequested;
         [JsonIgnore]
         public bool FirstStart { get; set; } = false;
         [JsonIgnore]
@@ -80,6 +81,8 @@ namespace Ambermoon
         public AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
         public bool ShowSaveLoadMessage { get; set; } = false;
         public Movement3D Movement3D { get; set; } = Movement3D.WASD;
+
+        public void RequestSave() => SaveRequested?.Invoke();
 
         public static string GetSavePath(string version, bool createIfMissing = true)
         {

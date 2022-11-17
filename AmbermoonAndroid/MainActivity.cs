@@ -29,6 +29,8 @@ namespace AmbermoonAndroid
             appDataDir = ApplicationContext!.FilesDir!.AbsolutePath;
 
             var configuration = LoadConfig();
+            configuration.UpgradeAdditionalSavegameSlots();
+            configuration.SaveRequested += () => SaveConfig(configuration);
 
             try
             {

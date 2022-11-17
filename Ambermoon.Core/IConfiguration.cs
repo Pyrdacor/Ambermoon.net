@@ -108,6 +108,7 @@ namespace Ambermoon
     {
         bool FirstStart { get; set; }
         bool IsMobile { get; }
+        event Action SaveRequested;
 
         int? Width { get; set; }
         int? Height { get; set; }
@@ -151,6 +152,7 @@ namespace Ambermoon
         bool ShowSaveLoadMessage { get; set; }
         Movement3D Movement3D { get; set; }
 
+        void RequestSave();
         void UpgradeAdditionalSavegameSlots();
         AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots();
     }

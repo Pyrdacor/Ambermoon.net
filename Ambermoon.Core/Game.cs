@@ -2176,7 +2176,7 @@ namespace Ambermoon
             {
                 SavegameManager.Save(renderView.GameData, savegameSerializer, slot, name, CurrentSavegame);
 
-                if (slot > 10) // extended slots
+                if (Configuration.ExtendedSavegameSlots) // extended slots
                 {
                     var additionalSavegameSlots = Configuration.GetOrCreateCurrentAdditionalSavegameSlots();
 
@@ -2188,7 +2188,12 @@ namespace Ambermoon
                         additionalSavegameSlots.Names = Enumerable.Concat(additionalSavegameSlots.Names,
                             Enumerable.Repeat("", NumAdditionalSavegameSlots - additionalSavegameSlots.Names.Length)).ToArray();
 
-                    additionalSavegameSlots.Names[slot - 11] = name;
+                    if (slot > 10)
+                        additionalSavegameSlots.Names[slot - 11] = name;
+
+                    additionalSavegameSlots.ContinueSavegameSlot = slot;
+
+                    Configuration.RequestSave();
                 }
             });
         }

@@ -59,6 +59,7 @@ namespace Ambermoon
 
             var configuration = LoadConfig();
             configuration.UpgradeAdditionalSavegameSlots();
+            configuration.SaveRequested += () => SaveConfig(configuration);
             var gameWindow = new GameWindow();
 
             try
