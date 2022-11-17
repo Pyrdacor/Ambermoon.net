@@ -234,15 +234,15 @@ namespace Ambermoon.Data.Legacy
                 .Build(),
 
                 // Bigger info box
-                GraphicBuilder.Create(144, 26)
+                GraphicBuilder.Create(144, 40)
                 .AddColoredArea(new Rect(0, 0, 1, 1), 31)
                 .AddColoredArea(new Rect(1, 0, 142, 1), 30)
                 .AddColoredArea(new Rect(143, 0, 1, 1), 27)
-                .AddColoredArea(new Rect(0, 1, 1, 24), 30)
-                .AddColoredArea(new Rect(1, 1, 142, 24), 28)
-                .AddColoredArea(new Rect(143, 1, 1, 24), 26)
-                .AddColoredArea(new Rect(0, 25, 1, 1), 27)
-                .AddColoredArea(new Rect(1, 25, 143, 1), 26)
+                .AddColoredArea(new Rect(0, 1, 1, 38), 30)
+                .AddColoredArea(new Rect(1, 1, 142, 38), 28)
+                .AddColoredArea(new Rect(143, 1, 1, 38), 26)
+                .AddColoredArea(new Rect(0, 39, 1, 1), 27)
+                .AddColoredArea(new Rect(1, 39, 143, 1), 26)
                 .Build(),
 
                 // BattleFieldYellowBorder

@@ -38,6 +38,8 @@ namespace Ambermoon
         public string Info;
         public Features Features;
         public Func<IGameData> DataProvider;
+
+        internal const string RemakeReleaseDate = "27-07-2022";
     }
 
     public static class GameLanguageExtensions

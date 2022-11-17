@@ -738,18 +738,18 @@ namespace Ambermoon.UI
             };
             AddSprite(area, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.MapDisableOverlay), game.UIPaletteIndex, 1);
             var version = System.Reflection.Assembly.GetEntryAssembly().GetName().Version;
-            string versionString = $"Ambermoon.net V{version.Major}.{version.Minor}.{version.Build:00}^{game.DataNameProvider.DataVersionString}^{game.DataNameProvider.DataInfoString}";
+            string versionString = $"Ambermoon.net V{version.Major}.{version.Minor}.{version.Build:00}^{GameVersion.RemakeReleaseDate}^^{game.DataNameProvider.DataVersionString}^{game.DataNameProvider.DataInfoString}";
             Rect boxArea;
             Rect textArea;
             if (Type == LayoutType.Battle)
             {
-                boxArea = new Rect(88, 56, 144, 26);
-                textArea = new Rect(88, 59, 144, 26);
+                boxArea = new Rect(88, 64, 144, 40);
+                textArea = new Rect(88, 67, 144, 40);
             }
             else
             {
-                boxArea = new Rect(32, 82, 144, 26);
-                textArea = new Rect(32, 85, 144, 26);
+                boxArea = new Rect(32, 90, 144, 40);
+                textArea = new Rect(32, 93, 144, 40);
             }
             AddSprite(boxArea, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BiggerInfoBox), game.UIPaletteIndex, 2);
             AddText(textArea, versionString, TextColor.BrightGray, TextAlign.Center, 3);
