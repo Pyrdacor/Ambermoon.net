@@ -233,6 +233,7 @@ namespace Ambermoon
         bool startAnimationRunning = false;
         bool idleAnimationRunning = false;
         uint nextIdleAnimationTicks = 0;
+        Queue<Monster> startAnimationMonsters = new Queue<Monster>();
         List<BattleAnimation> effectAnimations = null;
         SpellAnimation currentSpellAnimation = null;
         readonly Dictionary<ActiveSpellType, ILayerSprite> activeSpellSprites = new Dictionary<ActiveSpellType, ILayerSprite>();
@@ -334,15 +335,19 @@ namespace Ambermoon
 
             effectAnimations = new List<BattleAnimation>();
 
-            // TODO: for now only one monster start animation is played (in original there is only one -> Nera - so for now it's ok)
-            var startAnimationMonster = Monsters.FirstOrDefault(m => m.Animations[(int)MonsterAnimationType.Start].UsedAmount != 0);
+            var startAnimationMonsters = Monsters.Where(m => m.Animations[(int)MonsterAnimationType.Start].UsedAmount != 0);
 
-            if (startAnimationMonster != null)
+            if (startAnimationMonsters.Any())
             {
                 HasStartAnimation = true;
                 animationStartTicks = 0;
                 startAnimationRunning = true;
-                currentlyAnimatedMonster = startAnimationMonster;
+                currentlyAnimatedMonster = startAnimationMonsters.First();
+                foreach (var monster in startAnimationMonsters.Skip(1))
+                {
+                    this.startAnimationMonsters.Enqueue(monster);
+                    layout.UpdateMonsterCombatSprite(monster, MonsterAnimationType.Start, 0, 0);
+                }
                 layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Start, 0, 0);
             }
             else
@@ -363,10 +368,13 @@ namespace Ambermoon
 
         void MonsterAnimationFinished(Monster monster)
         {
-            animationStartTicks = null;
-            idleAnimationRunning = false;
-            currentlyAnimatedMonster = null;
-            layout.ResetMonsterCombatSprite(monster);
+            if (!startAnimationRunning)
+            {
+                animationStartTicks = null;
+                idleAnimationRunning = false;
+                currentlyAnimatedMonster = null;
+                layout.ResetMonsterCombatSprite(monster);
+            }
         }
 
         void SetupNextIdleAnimation(uint battleTicks)
@@ -412,13 +420,26 @@ namespace Ambermoon
 
                 if (layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Start, animationTicks, battleTicks)?.Finished != false)
                 {
-                    game.EndSequence();
-                    animationStartTicks = null;
-                    startAnimationRunning = false;
-                    if (currentlyAnimatedMonster != null)
-                        layout.ResetMonsterCombatSprite(currentlyAnimatedMonster);
-                    SetupNextIdleAnimation(battleTicks);
-                    StartAnimationFinished?.Invoke();
+                    // start animation finished
+                    if (startAnimationMonsters.Any())
+                    {
+                        // still more start animations to play
+                        animationStartTicks = battleTicks;
+                        if (currentlyAnimatedMonster != null)
+                            layout.ResetMonsterCombatSprite(currentlyAnimatedMonster);
+                        currentlyAnimatedMonster = startAnimationMonsters.Dequeue();
+                        layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Start, 0, battleTicks);
+                    }
+                    else
+                    {
+                        game.EndSequence();
+                        animationStartTicks = null;
+                        startAnimationRunning = false;
+                        if (currentlyAnimatedMonster != null)
+                            layout.ResetMonsterCombatSprite(currentlyAnimatedMonster);
+                        SetupNextIdleAnimation(battleTicks);
+                        StartAnimationFinished?.Invoke();
+                    }
                 }
             }
             else if (idleAnimationRunning)
