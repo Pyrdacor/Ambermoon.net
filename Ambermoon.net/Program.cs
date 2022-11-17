@@ -84,12 +84,15 @@ namespace Ambermoon
             
             try
             {
-                File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "error.txt"), error);
+                File.WriteAllText(Path.Combine(Configuration.BundleDirectory, "error.txt"), error);
             }
             catch
             {
                 // ignore
             }
+
+            Console.WriteLine("Press return to exit");
+            Console.ReadLine();
         }
 
         static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -105,14 +108,16 @@ namespace Ambermoon
         static void PrintException(Exception ex)
         {
             string message = ex.Message;
+            string stackTrace = ex.StackTrace;
+            ex = ex.InnerException;
 
-            if (ex.InnerException != null)
+            while (ex != null)
             {
-                message += Environment.NewLine + ex.InnerException.Message;
+                message += Environment.NewLine + ex.Message;
                 ex = ex.InnerException;
             }
 
-            OutputError(message + Environment.NewLine + ex.StackTrace ?? "");
+            OutputError(message + Environment.NewLine + stackTrace ?? "");
         }
 
         static void DotnetCleanup()
