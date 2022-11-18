@@ -7291,7 +7291,6 @@ namespace Ambermoon
             ActivePlayerChanged += SwitchPlayer;
 
             conversationEvent ??= GetFirstMatchingEvent(e => e.Interaction == InteractionType.Talk);
-            layout.ButtonsDisabled = conversationEvent != null;
 
             bool creatingItems = false;
             var createdItemSlots = createdItems.Slots.ToList();
@@ -7806,6 +7805,7 @@ namespace Ambermoon
                 layout.DraggedItemDropped -= DraggedItemDropped;
                 ActivePlayerChanged -= SwitchPlayer;
                 ConversationTextActive = false;
+                layout.ButtonsDisabled = false;
             }
 
             void HandleNextEvent(Action<EventType> followAction = null)
@@ -8040,22 +8040,14 @@ namespace Ambermoon
 
                 UpdateButtons();
 
-                void ButtonAction(Action action)
-                {
-                    if (conversationEvent != null)
-                        return;
-
-                    action();
-                }
-
-                layout.AttachEventToButton(0, () => ButtonAction(ShowDictionary));
-                layout.AttachEventToButton(2, () => ButtonAction(() => Exit(true)));
-                layout.AttachEventToButton(3, () => ButtonAction(ShowItem));
-                layout.AttachEventToButton(4, () => ButtonAction(AskToLeave));
-                layout.AttachEventToButton(5, () => ButtonAction(AskToJoin));
-                layout.AttachEventToButton(6, () => ButtonAction(GiveItem));
-                layout.AttachEventToButton(7, () => ButtonAction(GiveGold));
-                layout.AttachEventToButton(8, () => ButtonAction(GiveFood));
+                layout.AttachEventToButton(0, ShowDictionary);
+                layout.AttachEventToButton(2, () => Exit(true));
+                layout.AttachEventToButton(3, ShowItem);
+                layout.AttachEventToButton(4, AskToLeave);
+                layout.AttachEventToButton(5, AskToJoin);
+                layout.AttachEventToButton(6, GiveItem);
+                layout.AttachEventToButton(7, GiveGold);
+                layout.AttachEventToButton(8, GiveFood);
 
                 // Add item grid
                 var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
@@ -8074,6 +8066,7 @@ namespace Ambermoon
                 {
                     if (conversationEvent != null)
                     {
+                        layout.ButtonsDisabled = true;
                         HandleNextEvent();
                     }
                     else

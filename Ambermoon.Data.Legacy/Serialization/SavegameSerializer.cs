@@ -2,6 +2,7 @@
 using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
@@ -322,7 +323,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             return savegameNames;
         }
 
-        internal static void WriteSavegameName(IGameData gameData, int slot, ref string name)
+        internal static void WriteSavegameName(IGameData gameData, int slot, ref string name, string externalSavesPath)
         {
             if (slot == 0)
                 throw new AmbermoonException(ExceptionScope.Application, "Savegame slots must be 1-based");
@@ -330,14 +331,14 @@ namespace Ambermoon.Data.Legacy.Serialization
             var legacyGameData = gameData as ILegacyGameData;
 
             if (name.Length > 38)
-                name = name.Substring(0, 38);
+                name = name[..38];
 
             byte[] ConvertName(string name)
             {
-                List<byte> buffer = new List<byte>(39);
+                var buffer = new List<byte>(39);
                 buffer.AddRange(new AmbermoonEncoding().GetBytes(name));
                 for (int i = buffer.Count; i < 39; ++i)
-                    buffer.Add((byte)0);
+                    buffer.Add(0);
                 return buffer.ToArray();
             }
 
@@ -350,6 +351,11 @@ namespace Ambermoon.Data.Legacy.Serialization
             var nameData = ConvertName(name);
             var currentSlot = slot--;
             const int DataSize = 2 + 10 * 39;
+
+            if (!legacyGameData.Files.ContainsKey("Saves") && externalSavesPath != null && File.Exists(externalSavesPath))
+            {
+                legacyGameData.Files.Add("Saves", FileReader.CreateRawFile("Saves", File.ReadAllBytes(externalSavesPath)));
+            }
 
             if (!legacyGameData.Files.ContainsKey("Saves"))
             {

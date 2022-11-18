@@ -36,9 +36,9 @@ namespace Ambermoon.Data.Legacy
             }            
         }
 
-        public void WriteSavegameName(IGameData gameData, int slot, ref string name)
+        public void WriteSavegameName(IGameData gameData, int slot, ref string name, string externalSavesPath)
         {
-            SavegameSerializer.WriteSavegameName(gameData, slot, ref name);
+            SavegameSerializer.WriteSavegameName(gameData, slot, ref name, externalSavesPath);
         }
 
         public static readonly string[] SaveFileNames = new string[5]
@@ -234,7 +234,7 @@ namespace Ambermoon.Data.Legacy
             var savegameFiles = savegameSerializer.Write(savegame);
             if (saveSlot <= 10)
             {
-                WriteSavegameName(gameData, saveSlot, ref name);
+                WriteSavegameName(gameData, saveSlot, ref name, savesPath);
                 SaveToGameData(gameData, savegameFiles, saveSlot);
             }
             SaveToPath(path, savegameFiles, saveSlot, saveSlot > 10 ? null : (gameData as ILegacyGameData).Files["Saves"]);
@@ -248,7 +248,7 @@ namespace Ambermoon.Data.Legacy
             if (slot <= 10)
             {
                 string name = GetSavegameNames(gameData, out _, 10)[slot - 1];
-                WriteSavegameName(gameData, slot, ref name);
+                WriteSavegameName(gameData, slot, ref name, savesPath);
                 var savesWriter = new DataWriter();
                 FileWriter.Write(savesWriter, (gameData as ILegacyGameData).Files["Saves"],
                     Compression.LobCompression.LobType.Ambermoon, FileDictionaryCompression.None);
