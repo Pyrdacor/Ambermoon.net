@@ -57,12 +57,12 @@ namespace Ambermoon.UI
 
         public CursorType? PressButton(int index, uint currentTicks)
         {
-            return buttons[index].Disabled ? null : buttons[index].Press(currentTicks);
+            return Disabled || buttons[index].Disabled ? null : buttons[index].Press(currentTicks);
         }
 
         public void ReleaseButton(int index, bool immediately = false)
         {
-            if (!buttons[index].Disabled)
+            if (!Disabled && !buttons[index].Disabled)
                 buttons[index].Release(immediately);
         }
 
@@ -108,6 +108,9 @@ namespace Ambermoon.UI
         {
             newCursorType = null;
 
+            if (Disabled)
+                return;
+
             if (mouseButtons.HasFlag(MouseButtons.Right))
             {
                 if (rightMouseDown)
@@ -126,6 +129,9 @@ namespace Ambermoon.UI
             out CursorType? newCursorType, uint currentTicks)
         {
             newCursorType = null;
+
+            if (Disabled)
+                return false;
 
             if (mouseButtons == MouseButtons.Left)
             {
@@ -174,5 +180,11 @@ namespace Ambermoon.UI
                     button.PaletteIndex = value;
             }
         }
+
+        public bool Disabled
+        {
+            get;
+            set;
+        } = false;
     }
 }

@@ -791,6 +791,12 @@ namespace Ambermoon.UI
             buttonGrid.EnableButton(index, enable);
         }
 
+        public bool ButtonsDisabled
+        {
+            get => buttonGrid.Disabled;
+            set => buttonGrid.Disabled = value;
+        }
+
         internal Popup OpenPopup(Position position, int columns, int rows,
             bool disableButtons = true, bool closeOnClick = true, byte displayLayerOffset = 0)
         {

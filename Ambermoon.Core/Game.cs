@@ -7285,6 +7285,7 @@ namespace Ambermoon
             ActivePlayerChanged += SwitchPlayer;
 
             conversationEvent ??= GetFirstMatchingEvent(e => e.Interaction == InteractionType.Talk);
+            layout.ButtonsDisabled = conversationEvent != null;
 
             bool creatingItems = false;
             var createdItemSlots = createdItems.Slots.ToList();
@@ -7347,6 +7348,7 @@ namespace Ambermoon
                     {
                         currentInteractionType = InteractionType.Keyword;
                         conversationEvent = e;
+                        layout.ButtonsDisabled = true;
                         aborted = false;
                         lastEventStatus = true;
                         HandleNextEvent();
@@ -7491,6 +7493,7 @@ namespace Ambermoon
                             });
                         }
 
+                        layout.ButtonsDisabled = true;
                         HandleInteraction();
                     }
                 }
@@ -7535,6 +7538,7 @@ namespace Ambermoon
                             else
                             {
                                 conversationEvent = @event;
+                                layout.ButtonsDisabled = true;
                                 currentInteractionType = InteractionType.GiveGold;
                                 amount = @event.Value;
                                 aborted = false;
@@ -7566,6 +7570,7 @@ namespace Ambermoon
                             else
                             {
                                 conversationEvent = @event;
+                                layout.ButtonsDisabled = true;
                                 currentInteractionType = InteractionType.GiveFood;
                                 amount = @event.Value;
                                 aborted = false;
@@ -7587,12 +7592,14 @@ namespace Ambermoon
                 {
                     conversationEvent = null;
                     SetText(DataNameProvider.PartyFull);
+                    layout.ButtonsDisabled = false;
                     return;
                 }
 
                 if (character is PartyMember &&
                     (conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.JoinParty)) != null)
                 {
+                    layout.ButtonsDisabled = true;
                     currentInteractionType = InteractionType.JoinParty;
                     aborted = false;
                     lastEventStatus = true;
@@ -7642,6 +7649,7 @@ namespace Ambermoon
                     if ((conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.LeaveParty)) != null)
                     {
                         currentInteractionType = InteractionType.LeaveParty;
+                        layout.ButtonsDisabled = true;
                         aborted = false;
                         lastEventStatus = true;
                         HandleNextEvent();
@@ -7771,6 +7779,7 @@ namespace Ambermoon
                         if (conversationEvent != null)
                         {
                             currentInteractionType = InteractionType.Leave;
+                            layout.ButtonsDisabled = true;
                             aborted = false;
                             lastEventStatus = true;
                             HandleNextEvent();
@@ -7797,6 +7806,7 @@ namespace Ambermoon
             void HandleNextEvent(Action<EventType> followAction = null)
             {
                 conversationEvent = conversationEvent?.Next;
+                layout.ButtonsDisabled = conversationEvent != null;
                 HandleEvent(followAction);
             }
 
@@ -7856,6 +7866,7 @@ namespace Ambermoon
 
                     if (conversationEvent == createEvent)
                         conversationEvent = conversationEvent.Next;
+                    layout.ButtonsDisabled = conversationEvent != null;
                 }
                 else if (conversationEvent is InteractEvent)
                 {
@@ -7923,6 +7934,7 @@ namespace Ambermoon
                         conversationEvent = EventExtensions.ExecuteEvent(conversationEvent, Map, this, ref trigger,
                             (uint)player.Position.X, (uint)player.Position.Y, ref lastEventStatus, out aborted,
                             out var eventProvider, conversationPartner);
+                        layout.ButtonsDisabled = conversationEvent != null;
 
                         // Might be reduced or added by action events
                         layout.EnableButton(7, CurrentPartyMember.Gold != 0);
@@ -7933,6 +7945,7 @@ namespace Ambermoon
                             if (eventProvider.Event != null)
                             {
                                 conversationEvent = eventProvider.Event;
+                                layout.ButtonsDisabled = conversationEvent != null;
                                 HandleEvent(followAction);
                             }
                             else
@@ -7940,6 +7953,7 @@ namespace Ambermoon
                                 eventProvider.Provided += @event =>
                                 {
                                     conversationEvent = @event;
+                                    layout.ButtonsDisabled = conversationEvent != null;
 
                                     if (@event == null)
                                         followAction?.Invoke(EventType.Invalid);
@@ -8016,6 +8030,8 @@ namespace Ambermoon
                 {
                     if (conversationEvent != null)
                         return;
+
+                    action();
                 }
 
                 layout.AttachEventToButton(0, () => ButtonAction(ShowDictionary));
@@ -15751,6 +15767,7 @@ namespace Ambermoon
             CurrentInventoryIndex = null;
             windowTitle.Visible = false;
             weightDisplayBlinking = false;
+            layout.ButtonsDisabled = false;
 
             if (currentWindow.Window == Window.Event || currentWindow.Window == Window.Riddlemouth)
             {
