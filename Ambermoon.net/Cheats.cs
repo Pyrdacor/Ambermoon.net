@@ -781,7 +781,7 @@ namespace Ambermoon
                 return;
             }
 
-            var partyMember = partyMemberIndex == null ? game.CurrentPartyMember : game.GetPartyMember(partyMemberIndex.Value);
+            var partyMember = partyMemberIndex == null ? game.CurrentPartyMember : game.GetPartyMember(partyMemberIndex.Value - 1);
 
             if (partyMember == null)
             {
