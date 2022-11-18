@@ -7731,17 +7731,16 @@ namespace Ambermoon
                 // Note: Multiple items can be created. While at least one
                 // item was created and is not picked up, the item grid is
                 // enabled.
+                int remainingCount = (int)amount;
+
                 for (int i = 0; i < 24; ++i)
                 {
                     if (createdItemSlots[i].Empty)
                     {
-                        var item = ItemManager.GetItem(itemIndex);
-                        createdItemSlots[i].ItemIndex = itemIndex;
-                        createdItemSlots[i].Amount = (int)amount;
-                        createdItemSlots[i].NumRemainingCharges = item.MaxCharges == 0 ? 0 : Math.Max(1, (int)item.InitialCharges);
-                        createdItemSlots[i].Flags = item.DefaultSlotFlags;
-                        createdItemSlots[i].RechargeTimes = item.InitialRecharges;
-                        break;
+                        createdItemSlots[i].FillWithNewItem(ItemManager, itemIndex, ref remainingCount);
+
+                        if (remainingCount == 0)
+                            break;
                     }
                 }
                 ShowCreatedItems();
@@ -15660,11 +15659,7 @@ namespace Ambermoon
 
         internal int DropItem(PartyMember partyMember, uint itemIndex, int amount)
         {
-            return DropItem(SlotFromPartyMember(partyMember).Value, null, new ItemSlot
-            {
-                ItemIndex = itemIndex,
-                Amount = amount
-            });
+            return DropItem(SlotFromPartyMember(partyMember).Value, null, ItemSlot.CreateFromItem(ItemManager, itemIndex, ref amount, true));
         }
 
         /// <summary>

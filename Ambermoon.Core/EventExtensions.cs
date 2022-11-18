@@ -812,6 +812,8 @@ namespace Ambermoon
                         }
                         case ActionEvent.ActionType.AddItem:
                         {
+                            // Note: This is never used in Ambermoon with value 1. So it always removes items only.
+                            // Giving items is either done through a chest event or the conversation create event.
                             var itemIndex = actionEvent.ObjectIndex;
                             if (itemIndex > 0)
                             {

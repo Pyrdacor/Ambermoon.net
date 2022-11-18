@@ -19,6 +19,36 @@ namespace Ambermoon.Data
         public bool Stacked => Amount > 1;
         public bool Draggable => ItemIndex != 0 && Amount != 0 && !Flags.HasFlag(ItemSlotFlags.Locked);
 
+        public static ItemSlot CreateFromItem(IItemManager itemManager, uint itemIndex, ref int amount, bool forceInSingleSlot = false)
+        {
+            if (itemIndex == 0)
+                return new ItemSlot();
+
+            var item = itemManager.GetItem(itemIndex);
+            int usedAmount = forceInSingleSlot || item.Flags.HasFlag(ItemFlags.Stackable) ? Math.Min(amount, 99) : 1;
+            amount -= usedAmount;
+
+            return new ItemSlot
+            {
+                ItemIndex = itemIndex,
+                Amount = usedAmount,
+                Flags = item.DefaultSlotFlags,
+                NumRemainingCharges = item.MaxCharges == 0 ? 0 : Math.Max(1, (int)item.InitialCharges),
+                RechargeTimes = item.InitialRecharges
+            };
+        }
+
+        public void FillWithNewItem(IItemManager itemManager, uint itemIndex, ref int amount)
+        {
+            var itemSlot = CreateFromItem(itemManager, itemIndex, ref amount);
+
+            ItemIndex = itemSlot.ItemIndex;
+            Amount = itemSlot.Amount;
+            Flags = itemSlot.Flags;
+            NumRemainingCharges = itemSlot.NumRemainingCharges;
+            RechargeTimes = itemSlot.RechargeTimes;
+        }
+
         public int Add(ItemSlot item, int maxAmount = 99)
         {
             int amountToAdd = Math.Min(item.Amount, maxAmount);
