@@ -1473,7 +1473,7 @@ namespace Ambermoon
 
             if (!CurrentSavegame.IsSpellActive(ActiveSpellType.Light) && minutesPassed == 5)
             {
-                uint lastHour = 0;
+                uint lastHour;
 
                 if (GameTime.Minute == 0) // hour changed
                 {
@@ -1553,9 +1553,12 @@ namespace Ambermoon
                         .ToList().ForEach(s => s.Duration = 0);
                     UpdateLight(true);
                 }
-                else if (Map.Flags.HasFlag(MapFlags.Outdoor) && this.is3D)
+                else if (Map.Flags.HasFlag(MapFlags.Outdoor))
                 {
-                    UpdateOutdoorLight(amount);
+                    if (this.is3D)
+                        UpdateOutdoorLight(amount);
+                    else if (GameTime.Minute % 60 == 0 || amount > GameTime.Minute % 60) // hour changed
+                        UpdateLight();
                 }
 
                 if (!swamLastTick && Map.UseTravelTypes && TravelType == TravelType.Swim)
@@ -10768,7 +10771,12 @@ namespace Ambermoon
 
         private uint GetDaytimeLightIntensity()
         {
-            return GetDaytimeLightIntensity(GameTime.Hour);
+            uint hour = GameTime.Hour;
+
+            if (GameTime.Minute == 60) // this might happen during a minute tick just before the hours are adjusted
+                hour = (hour + 1) % 24;
+
+            return GetDaytimeLightIntensity(hour);
         }
 
         private uint GetDaytimeLightIntensity(uint hour)
