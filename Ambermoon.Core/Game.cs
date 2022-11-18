@@ -642,6 +642,8 @@ namespace Ambermoon
             renderView.GetLayer(Layer.BattleMonsterRow).Texture = monsterGraphicAtlas.Texture;
 
             layout.ShowPortraitArea(false);
+
+            TextInput.FocusChanged += UpdateCursor;
         }
 
         internal byte UIPaletteIndex => currentUIPaletteIndex;
@@ -1333,6 +1335,7 @@ namespace Ambermoon
             Util.SafeCall(() => layout.Destroy());
             Util.SafeCall(() => CursorType = CursorType.None);
             Util.SafeCall(() => windowTitle?.Delete());
+            TextInput.FocusChanged -= UpdateCursor;
         }
 
         void PartyMemberDied(Character partyMember)

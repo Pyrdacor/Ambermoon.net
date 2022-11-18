@@ -138,6 +138,8 @@ namespace Ambermoon.UI
 
         public static TextInput FocusedInput { get; private set; } = null;
 
+        public static event Action FocusChanged;
+
         public TextInput(Game game, IRenderView renderView, Position position, int inputLength, byte displayLayer,
             ClickAction leftClickAction, ClickAction rightClickAction, TextAlign textAlign)
         {
@@ -235,6 +237,8 @@ namespace Ambermoon.UI
                 currentInput = "";
                 UpdateText();
             }
+
+            FocusChanged?.Invoke();
         }
 
         public void LoseFocus()
@@ -247,8 +251,9 @@ namespace Ambermoon.UI
 
                 if (AutoSubmit)
                     Submit();
-            }
 
+                FocusChanged?.Invoke();
+            }
         }
 
         public void Update()

@@ -46,6 +46,7 @@ namespace Ambermoon.UI
         int ScrollRange => items.Count - itemAreas.Count;
         public bool Editing => editingItem != -1;
         public Rect Bounds { get; private set; }
+        Position lastHoverPosition = new Position();
 
         public event Action<int> HoverItem;
 
@@ -97,6 +98,7 @@ namespace Ambermoon.UI
                     ReactToGlobalClicks = true
                 };
                 editInput.InputSubmitted += _ => CommitEdit();
+                editInput.Aborted += () => AbortEdit();
             }
         }
 
@@ -195,6 +197,8 @@ namespace Ambermoon.UI
 
         public void Hover(Position position)
         {
+            lastHoverPosition = position;
+
             if (!Editing)
             {
                 for (int i = 0; i < Util.Min(maxItems, items.Count); ++i)
@@ -223,14 +227,19 @@ namespace Ambermoon.UI
             itemTexts[itemIndex - scrollOffset].Text = renderView.TextProcessor.CreateText(editInput.Text);
             items[itemIndex] = KeyValuePair.Create(editInput.Text, items[itemIndex].Value);
             items[itemIndex].Value?.Invoke(itemIndex, items[itemIndex].Key);
+            Hover(lastHoverPosition);
         }
 
         public void AbortEdit(int? index = null)
         {
+            if (!Editing && index == null)
+                return;
+
             itemTexts[(index ?? editingItem) - scrollOffset].Visible = true;
             editingItem = -1;
             editInput.LoseFocus();
             editInput.Visible = false;
+            Hover(lastHoverPosition);
         }
 
         void StartEdit(int row, int itemIndex)
