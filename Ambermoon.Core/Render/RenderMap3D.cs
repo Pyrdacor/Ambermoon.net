@@ -1076,6 +1076,58 @@ namespace Ambermoon.Render
                 character.Value.Resume();
         }
 
+        public EventType EventTypeFromBlock(uint x, uint y)
+        {
+            var block = Map.Blocks[x, y];
+
+            if (block.MapEventId != 0 && game.CurrentSavegame.IsEventActive(Map.Index, block.MapEventId - 1))
+                return Map.EventList[(int)block.MapEventId - 1].Type;
+
+            return EventType.Invalid;
+        }
+
+        public EventType FindEventTypesOnBlock(uint x, uint y, params EventType[] eventTypes)
+        {
+            if (eventTypes == null || eventTypes.Length == 0)
+                return EventType.Invalid;
+
+            var block = Map.Blocks[x, y];
+
+            if (block.MapEventId == 0 || !game.CurrentSavegame.IsEventActive(Map.Index, block.MapEventId - 1))
+                return EventType.Invalid;
+             
+            var branches = new Queue<Event>();
+            var checkedEvent = new HashSet<Event>();
+
+            EventType CheckEventBranch(Event @event)
+            {
+                while (@event != null)
+                {
+                    if (checkedEvent.Contains(@event))
+                        break;
+
+                    checkedEvent.Add(@event);
+
+                    if (eventTypes.Contains(@event.Type))
+                        return @event.Type;
+
+                    var branch = @event.GetSecondaryBranchSuccessor(Map.Events);
+
+                    if (branch != null && !checkedEvent.Contains(branch))
+                        branches.Enqueue(branch);
+
+                    @event = @event.Next;
+                }
+
+                if (branches.Count != 0)
+                    return CheckEventBranch(branches.Dequeue());
+
+                return EventType.Invalid;
+            }
+
+            return CheckEventBranch(Map.EventList[(int)block.MapEventId - 1]);
+        }
+
         public AutomapType AutomapTypeFromBlock(uint x, uint y)
         {
             var characterEventId = mapCharacters.Select(c => c.Value).FirstOrDefault(c => c.Active && c.Position.X == x && c.Position.Y == y)?.EventId ?? 0;

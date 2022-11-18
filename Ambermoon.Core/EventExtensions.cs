@@ -21,6 +21,7 @@
 
 using Ambermoon.Data;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Ambermoon
@@ -1097,6 +1098,24 @@ namespace Ambermoon
             }
 
             return true;
+        }
+
+        public static Event GetSecondaryBranchSuccessor(this Event @event, List<Event> events)
+        {
+            uint nextEventIndex = 0xffff;
+
+            if (@event is ConditionEvent conditionEvent)
+                nextEventIndex = conditionEvent.ContinueIfFalseWithMapEventIndex;
+            else if (@event is Dice100RollEvent dice100RollEvent)
+                nextEventIndex = dice100RollEvent.ContinueIfFalseWithMapEventIndex;
+            else if (@event is DoorEvent doorEvent)
+                nextEventIndex = doorEvent.UnlockFailedEventIndex;
+            else if (@event is ChestEvent chestEvent)
+                nextEventIndex = chestEvent.UnlockFailedEventIndex;
+            else if (@event is DecisionEvent decisionEvent)
+                nextEventIndex = decisionEvent.NoEventIndex;
+
+            return nextEventIndex == 0xffff ? null : events[(int)nextEventIndex];
         }
     }
 }

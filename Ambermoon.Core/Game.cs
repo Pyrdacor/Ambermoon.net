@@ -6452,17 +6452,27 @@ namespace Ambermoon
                 {
                     bool trapFound = false;
                     bool spinnerFound = false;
+                    player3D.Camera.GetForwardPosition(1.05f * Global.DistancePerBlock, out float x, out float z, false, false);
 
-                    foreach (var touchedPosition in player3D.GetTouchedPositions(1.45f * Global.DistancePerBlock))
+                    var checkPositions = new Position[2]
                     {
-                        var type = renderMap3D.AutomapTypeFromBlock((uint)touchedPosition.X, (uint)touchedPosition.Y);
-                        if (type == AutomapType.Trapdoor)
+                        player3D.Position,
+                        Geometry.Geometry.CameraToBlockPosition(Map, x, z)
+                    };
+
+                    foreach (var checkPosition in checkPositions)
+                    {
+                        if (checkPosition == lastPlayerPosition)
+                            continue;
+
+                        var type = renderMap3D.FindEventTypesOnBlock((uint)checkPosition.X, (uint)checkPosition.Y, EventType.Trap, EventType.Spinner);
+
+                        if (type == EventType.Trap)
                         {
-                            // TODO: It seems that only trap doors are detected and not traps.
                             trapFound = true;
                             break;
                         }
-                        else if (type == AutomapType.Spinner)
+                        else if (type == EventType.Spinner)
                             spinnerFound = true;
                     }
 
