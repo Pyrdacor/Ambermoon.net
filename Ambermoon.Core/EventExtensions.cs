@@ -144,13 +144,13 @@ namespace Ambermoon
                                 aborted = true;
                                 return null;
                         }
-                    }
 
-                    if (!popupTextEvent.TriggerIfBlind && !game.CanSee())
-                    {
-                        aborted = true;
-                        return null;
-                    }
+                        if (!popupTextEvent.TriggerIfBlind && !game.CanSee())
+                        {
+                            aborted = true;
+                            return null;
+                        }
+                    }                    
 
                     bool eventStatus = lastEventStatus;
                     EventProvider provider = null;
