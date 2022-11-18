@@ -7870,7 +7870,16 @@ namespace Ambermoon
                     }
 
                     if (conversationEvent == createEvent)
+                    {
                         conversationEvent = conversationEvent.Next;
+                        layout.ButtonsDisabled = conversationEvent != null;
+
+                        // Sometimes multiple items are created, so do them all at once.
+                        if (conversationEvent is CreateEvent)
+                        {
+                            HandleEvent();
+                        }
+                    }
                     layout.ButtonsDisabled = conversationEvent != null;
                 }
                 else if (conversationEvent is InteractEvent)
