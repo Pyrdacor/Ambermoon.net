@@ -1525,6 +1525,8 @@ namespace Ambermoon
                             layout.ReduceItemCharge(itemSlot, false, equippedItem, battleAction.Character);
                         }
 
+                        game.CurrentSpellTarget = null;
+
                         if (currentSpellAnimation != null)
                         {
                             currentSpellAnimation.PostCast(() =>
@@ -2675,8 +2677,8 @@ namespace Ambermoon
                     break;
                 }
                 default:
-                    game.ApplySpellEffect(spell, caster, target, null, false);
-                    break;
+                    game.ApplySpellEffect(spell, caster, target, finishAction, false);
+                    return;
             }
 
             finishAction?.Invoke();

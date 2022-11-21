@@ -62,6 +62,7 @@ namespace Ambermoon.Render
         int endY;
         int startX;
         int startY;
+        bool wasVisible;
         public HorizontalAnchor AnchorX { get; set; } = HorizontalAnchor.Center;
         public VerticalAnchor AnchorY { get; set; } = VerticalAnchor.Center;
         public bool Finished { get; private set; } = true;
@@ -83,6 +84,7 @@ namespace Ambermoon.Render
             sprite.TextureSize ??= baseSpriteSize;
             Scale = 1.0f;
             sprite.ClipArea ??= Global.CombatBackgroundArea;
+            wasVisible = sprite.Visible;
         }
 
         public void SetStartFrame(Position textureOffset, Size size, Position centerPosition = null,
@@ -111,7 +113,7 @@ namespace Ambermoon.Render
         public bool Visible
         {
             get => sprite.Visible;
-            set => sprite.Visible = value;
+            set => sprite.Visible = wasVisible = value;
         }
 
         Position Position
@@ -208,6 +210,16 @@ namespace Ambermoon.Render
                 Finished = true;
                 AnimationFinished?.Invoke();
                 return !Finished;
+            }
+
+            if (ticks < startAnimationTicks)
+            {
+                sprite.Visible = false;
+                return true;
+            }
+            else if (!sprite.Visible && wasVisible)
+            {
+                sprite.Visible = true;
             }
 
             uint elapsed = ticks - startAnimationTicks;

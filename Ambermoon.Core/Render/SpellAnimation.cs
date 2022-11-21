@@ -81,11 +81,14 @@ namespace Ambermoon.Render
 
         void RemoveAnimation(BattleAnimation animation, bool callGlobalFinish = true)
         {
-            animation?.Destroy();
-            animations.Remove(animation);
+            lock (animations)
+            {
+                animation?.Destroy();
+                animations.Remove(animation);
 
-            if (animations.Count == 0 && callGlobalFinish)
-                finishAction?.Invoke();
+                if (animations.Count == 0 && callGlobalFinish)
+                    finishAction?.Invoke();
+            }
         }
 
         BattleAnimation AddAnimation(CombatGraphicIndex graphicIndex, int[] frameIndices, Position startPosition, Position endPosition,
@@ -93,7 +96,8 @@ namespace Ambermoon.Render
             Size customBaseSize = null, BattleAnimation.AnimationScaleType scaleType = BattleAnimation.AnimationScaleType.Both,
             BattleAnimation.HorizontalAnchor anchorX = BattleAnimation.HorizontalAnchor.Center,
             BattleAnimation.VerticalAnchor anchorY = BattleAnimation.VerticalAnchor.Center,
-            bool mirrorX = false, byte palette = 17, byte[] maskColors = null, bool removeWhenFinished = true)
+            bool mirrorX = false, byte palette = 17, byte[] maskColors = null, bool removeWhenFinished = true,
+            uint? customStartTicks = null)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var textureSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height);
@@ -104,8 +108,8 @@ namespace Ambermoon.Render
             sprite.PaletteIndex = palette;
             sprite.MaskColor = maskColors == null ? (byte?)null : maskColors[0];
             sprite.TextureSize = textureSize;
-            sprite.Visible = true;
             var animation = new BattleAnimation(sprite);
+            animation.Visible = true;
             void AnimationEnded()
             {
                 animation.AnimationFinished -= AnimationEnded;
@@ -120,8 +124,11 @@ namespace Ambermoon.Render
             animation.ScaleType = scaleType;
             animation.SetStartFrame(textureAtlas.GetOffset(Graphics.CombatGraphicOffset + (uint)graphicIndex),
                 size, startPosition, startScale, mirrorX, textureSize, anchorX, anchorY);
-            animation.Play(frameIndices, Math.Max(1, duration / (uint)frameIndices.Length), game.CurrentBattleTicks, endPosition, endScale);
-            animations.Add(animation);
+            animation.Play(frameIndices, Math.Max(1, duration / (uint)frameIndices.Length), customStartTicks ?? game.CurrentBattleTicks, endPosition, endScale);
+            lock (animations)
+            {
+                animations.Add(animation);
+            }
 
             if (maskColors != null)
             {
@@ -169,6 +176,14 @@ namespace Ambermoon.Render
         }
 
         BattleAnimation AddAnimation(CombatGraphicIndex graphicIndex, int numFrames, Position startPosition, Position endPosition,
+            uint duration, float startScale, float endScale, byte displayLayer, Action finishAction, uint customStartTicks)
+        {
+            return AddAnimation(graphicIndex, Enumerable.Range(0, numFrames).ToArray(), startPosition, endPosition,
+                duration, startScale, endScale, displayLayer, finishAction, null, BattleAnimation.AnimationScaleType.Both,
+                BattleAnimation.HorizontalAnchor.Center, BattleAnimation.VerticalAnchor.Center, false, 17, null, true, customStartTicks);
+        }
+
+        BattleAnimation AddAnimation(CombatGraphicIndex graphicIndex, int numFrames, Position startPosition, Position endPosition,
             uint duration, float startScale, float endScale, byte displayLayer, Action finishAction, byte palette)
         {
             return AddAnimation(graphicIndex, Enumerable.Range(0, numFrames).ToArray(), startPosition, endPosition,
@@ -193,8 +208,8 @@ namespace Ambermoon.Render
             sprite.Layer = renderView.GetLayer(Layer.UI);
             sprite.PaletteIndex = game.PrimaryUIPaletteIndex;
             sprite.TextureSize = frameSize;
-            sprite.Visible = true;
             var animation = new BattleAnimation(sprite);
+            animation.Visible = true;
             void AnimationEnded()
             {
                 animation.AnimationFinished -= AnimationEnded;
@@ -210,7 +225,10 @@ namespace Ambermoon.Render
                 area.Position + startOffset, 1.0f, false, frameSize, BattleAnimation.HorizontalAnchor.Left, BattleAnimation.VerticalAnchor.Top);
             var ticks = battle != null ? game.CurrentBattleTicks : game.CurrentAnimationTicks;
             animation.Play(Enumerable.Range(0, frameCount).ToArray(), duration / (uint)frameCount, ticks, area.Position + endOffset);
-            animations.Add(animation);
+            lock (animations)
+            {
+                animations.Add(animation);
+            }
             return animation;
         }
 
@@ -1218,19 +1236,27 @@ namespace Ambermoon.Render
             // Used for monster knowledge
             void PlayKnowledge()
             {
+                game.StartSequence();
                 const int count = 8;
                 var basePosition = GetTargetPosition(tile) + new Position(0, 18);
                 var displayLayer = (byte)(fromMonster ? 255 : (tile / 6) * 60 + 60);
 
+                void Finish()
+                {
+                    game.EndSequence();
+                    this.finishAction?.Invoke();
+                }
+
+                var ignore = new Action(() => { });
+                uint ticks = game.CurrentBattleTicks;
+
                 for (int i = 0; i < count; ++i)
                 {
                     int index = i;
-                    game.AddTimedEvent(TimeSpan.FromMilliseconds(i * 50), () =>
-                    {
-                        var position = basePosition + new Position(game.RandomInt(0, 32) - 16, -2 * index);
-                        AddAnimation(CombatGraphicIndex.GreenStar, 5, position, new Position(position.X, position.Y - 38),
-                            Game.TicksPerSecond * 7 / 10, 1.0f, 1.2f, displayLayer, index == count - 1 ? (Action)null : () => { });
-                    });
+                    var position = basePosition + new Position(game.RandomInt(0, 32) - 16, -2 * index);
+                    AddAnimation(CombatGraphicIndex.GreenStar, 5, position, new Position(position.X, position.Y - 38),
+                        Game.TicksPerSecond * 7 / 10, 1.0f, 1.2f, displayLayer, index == count - 1 ? Finish : ignore, ticks);
+                    ticks += (Game.TicksPerSecond * 50) / 1000;
                 }
             }
 

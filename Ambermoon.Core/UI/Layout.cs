@@ -5431,8 +5431,8 @@ namespace Ambermoon.UI
             sprite.DisplayLayer = displayLayer;
             sprite.PaletteIndex = paletteIndex;
             sprite.Layer = RenderView.GetLayer(Layer.BattleMonsterRow);
-            sprite.Visible = true;
             var animation = new BattleAnimation(sprite);
+            animation.Visible = true;
             animation.SetStartFrame(GetMonsterCombatCenterPosition(column, row, monster), sizeMultiplier);
             monsterCombatGraphics.Add(new MonsterCombatGraphic
             {

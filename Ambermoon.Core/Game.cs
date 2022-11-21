@@ -76,7 +76,12 @@ namespace Ambermoon
                 this.game = game;
             }
 
-            Character Subject => game.currentWindow.Window == Window.Healer ? game.currentlyHealedMember : game.CurrentSpellTarget ?? game.CurrentPartyMember;
+            Character Subject => game.currentWindow.Window switch
+            {
+                Window.Healer => game.currentlyHealedMember,
+                Window.Battle => game.BattleRoundActive ? game.CurrentPartyMember : game.CurrentSpellTarget ?? game.CurrentPartyMember,
+                _ => game.CurrentSpellTarget ?? game.CurrentPartyMember
+            };
 
             /// <inheritdoc />
             public string LeadName => game.CurrentPartyMember?.Name ?? "";
@@ -8844,16 +8849,44 @@ namespace Ambermoon
             UpdateLight(false, true);
         }
 
+        void Cast(Action action, Action finishAction = null, Action failAction = null, bool checkFail = true)
+        {
+            if (finishAction == null)
+            {
+                if (checkFail)
+                    TrySpell(action, failAction);
+                else
+                    action?.Invoke();
+            }
+            else
+            {
+                if (checkFail)
+                {
+                    TrySpell(() =>
+                    {
+                        action?.Invoke();
+                        finishAction();
+                    }, () =>
+                    {
+                        failAction?.Invoke();
+                        finishAction();
+                    });
+                }
+                else
+                {
+                    action?.Invoke();
+                    finishAction();
+                }
+            }
+        }
+
         void ApplySpellEffect(Spell spell, Character caster, Action finishAction, bool checkFail)
         {
             CurrentSpellTarget = null;
 
-            void Cast(Action action)
+            void Cast(Action action, Action finishAction = null, Action failAction = null)
             {
-                if (checkFail)
-                    TrySpell(action);
-                else
-                    action?.Invoke();
+                this.Cast(action, finishAction, failAction, checkFail);
             }
 
             switch (spell)
@@ -8861,25 +8894,25 @@ namespace Ambermoon
                 case Spell.Light:
                     // Duration: 30 (150 minutes = 2h30m)
                     // Level: 1 (Light radius 1)
-                    Cast(() => ActivateLight(30, 1));
+                    Cast(() => ActivateLight(30, 1), finishAction);
                     break;
                 case Spell.MagicalTorch:
                     // Duration: 60 (300 minutes = 5h)
                     // Level: 1 (Light radius 1)
-                    Cast(() => ActivateLight(60, 1));
+                    Cast(() => ActivateLight(60, 1), finishAction);
                     break;
                 case Spell.MagicalLantern:
                     // Duration: 120 (600 minutes = 10h)
                     // Level: 2 (Light radius 2)
-                    Cast(() => ActivateLight(120, 2));
+                    Cast(() => ActivateLight(120, 2), finishAction);
                     break;
                 case Spell.MagicalSun:
                     // Duration: 180 (900 minutes = 15h)
                     // Level: 3 (Light radius 3)
-                    Cast(() => ActivateLight(180, 3));
+                    Cast(() => ActivateLight(180, 3), finishAction);
                     break;
                 case Spell.Jump:
-                    Cast(Jump);
+                    Cast(Jump, finishAction);
                     break;
                 case Spell.WordOfMarking:
                 {
@@ -8891,9 +8924,13 @@ namespace Ambermoon
                                 renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index : Map.Index);
                             partyMember.MarkOfReturnX = (ushort)(player.Position.X + 1); // stored 1-based
                             partyMember.MarkOfReturnY = (ushort)(player.Position.Y + 1); // stored 1-based
-                            ShowMessagePopup(DataNameProvider.MarksPosition);
+                            ShowMessagePopup(DataNameProvider.MarksPosition, finishAction);
                         }
-                    });
+                        else
+                        {
+                            finishAction?.Invoke();
+                        }
+                    }, null, finishAction);
                     break;
                 }
                 case Spell.WordOfReturning:
@@ -8904,11 +8941,15 @@ namespace Ambermoon
                         {
                             if (partyMember.MarkOfReturnMapIndex == 0)
                             {
-                                ShowMessagePopup(DataNameProvider.HasntMarkedAPosition);
+                                ShowMessagePopup(DataNameProvider.HasntMarkedAPosition, finishAction);
                             }
                             else
                             {
-                                void Return() => Teleport(partyMember.MarkOfReturnMapIndex, partyMember.MarkOfReturnX, partyMember.MarkOfReturnY, player.Direction, out _, true);
+                                void Return()
+                                {
+                                    Teleport(partyMember.MarkOfReturnMapIndex, partyMember.MarkOfReturnX, partyMember.MarkOfReturnY, player.Direction, out _, true);
+                                    finishAction?.Invoke();
+                                }
                                 ShowMessagePopup(DataNameProvider.ReturnToMarkedPosition, () =>
                                 {
                                     var targetMap = MapManager.GetMap(partyMember.MarkOfReturnMapIndex);
@@ -8921,63 +8962,67 @@ namespace Ambermoon
                                 });
                             }
                         }
-                    });
+                        else
+                        {
+                            finishAction?.Invoke();
+                        }
+                    }, null, finishAction);
                     break;
                 }
                 case Spell.MagicalShield:
                     // Duration: 30 (150 minutes = 2h30m)
                     // Level: 10 (10% defense increase)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 30, 10));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 30, 10), finishAction);
                     break;
                 case Spell.MagicalWall:
                     // Duration: 90 (450 minutes = 7h30m)
                     // Level: 20 (20% defense increase)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 90, 20));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 90, 20), finishAction);
                     break;
                 case Spell.MagicalBarrier:
                     // Duration: 180 (900 minutes = 15h)
                     // Level: 30 (30% defense increase)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30), finishAction);
                     break;
                 case Spell.MagicalWeapon:
                     // Duration: 30 (150 minutes = 2h30m)
                     // Level: 10 (10% damage increase)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 30, 10));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 30, 10), finishAction);
                     break;
                 case Spell.MagicalAssault:
                     // Duration: 90 (450 minutes = 7h30m)
                     // Level: 20 (20% damage increase)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 90, 20));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 90, 20), finishAction);
                     break;
                 case Spell.MagicalAttack:
                     // Duration: 180 (900 minutes = 15h)
                     // Level: 30 (30% damage increase)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30), finishAction);
                     break;
                 case Spell.Levitation:
-                    Cast(Levitate);
+                    Cast(Levitate, finishAction);
                     break;
                 case Spell.Rope:
                 {
                     if (!is3D)
                     {
-                        ShowMessagePopup(DataNameProvider.CannotClimbHere);
+                        ShowMessagePopup(DataNameProvider.CannotClimbHere, finishAction);
                     }
                     else
                     {
-                        Levitate(() => ShowMessagePopup(DataNameProvider.CannotClimbHere), false);
+                        Levitate(() => ShowMessagePopup(DataNameProvider.CannotClimbHere, finishAction), false);
                     }
                     break;
                 }
                 case Spell.AntiMagicWall:
                     // Duration: 30 (150 minutes = 2h30m)
                     // Level: 15 (15% anti-magic protection)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 30, 15));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 30, 15), finishAction);
                     break;
                 case Spell.AntiMagicSphere:
                     // Duration: 180 (900 minutes = 15h)
                     // Level: 25 (25% anti-magic protection)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25), finishAction);
                     break;
                 case Spell.AlchemisticGlobe:
                     // Duration: 180 (900 minutes = 15h)
@@ -8987,22 +9032,22 @@ namespace Ambermoon
                         CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30);
                         CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30);
                         CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25);
-                    });
+                    }, finishAction);
                     break;
                 case Spell.Knowledge:
                     // Duration: 30 (150 minutes = 2h30m)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 30, 1));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 30, 1), finishAction);
                     break;
                 case Spell.Clairvoyance:
                     // Duration: 90 (450 minutes = 7h30m)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 90, 1));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 90, 1), finishAction);
                     break;
                 case Spell.SeeTheTruth:
                     // Duration: 180 (900 minutes = 15h)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1), finishAction);
                     break;
                 case Spell.MapView:
-                    Cast(OpenMiniMap);
+                    Cast(() => OpenMiniMap(finishAction), null, finishAction);
                     break;
                 case Spell.MagicalCompass:
                 {
@@ -9018,8 +9063,9 @@ namespace Ambermoon
                         {
                             UntrapMouse();
                             Resume();
+                            finishAction?.Invoke();
                         };
-                    });
+                    }, null, finishAction);
                     break;
                 }
                 case Spell.FindTraps:
@@ -9029,7 +9075,7 @@ namespace Ambermoon
                         MonstersVisible = false,
                         PersonsVisible = false,
                         TrapsVisible = true
-                    }));
+                    }, finishAction), null, finishAction);
                     break;
                 case Spell.FindMonsters:
                     Cast(() => ShowAutomap(new AutomapOptions
@@ -9038,7 +9084,7 @@ namespace Ambermoon
                         MonstersVisible = true,
                         PersonsVisible = false,
                         TrapsVisible = false
-                    }));
+                    }, finishAction), null, finishAction);
                     break;
                 case Spell.FindPersons:
                     Cast(() => ShowAutomap(new AutomapOptions
@@ -9047,7 +9093,7 @@ namespace Ambermoon
                         MonstersVisible = false,
                         PersonsVisible = true,
                         TrapsVisible = false
-                    }));
+                    }, finishAction), null, finishAction);
                     break;
                 case Spell.FindSecretDoors:
                     Cast(() => ShowAutomap(new AutomapOptions
@@ -9056,7 +9102,7 @@ namespace Ambermoon
                         MonstersVisible = false,
                         PersonsVisible = false,
                         TrapsVisible = false
-                    }));
+                    }, finishAction), null, finishAction);
                     break;
                 case Spell.MysticalMapping:
                     Cast(() => ShowAutomap(new AutomapOptions
@@ -9065,19 +9111,19 @@ namespace Ambermoon
                         MonstersVisible = true,
                         PersonsVisible = true,
                         TrapsVisible = true
-                    }));
+                    }, finishAction), null, finishAction);
                     break;
                 case Spell.MysticalMapI:
                     // Duration: 32 (160 minutes = 2h40m)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 32, 1));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 32, 1), finishAction);
                     break;
                 case Spell.MysticalMapII:
                     // Duration: 60 (300 minutes = 5h)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 60, 1));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 60, 1), finishAction);
                     break;
                 case Spell.MysticalMapIII:
                     // Duration: 90 (450 minutes = 7h30m)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 90, 1));
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 90, 1), finishAction);
                     break;
                 case Spell.MysticalGlobe:
                     // Duration: 180 (900 minutes = 15h)
@@ -9085,10 +9131,11 @@ namespace Ambermoon
                     {
                         CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1);
                         CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 180, 1);
-                    });
+                    }, finishAction);
                     break;
                 case Spell.Lockpicking:
                     // Do nothing. Can be used by Thief/Ranger but has no effect in Ambermoon.
+                    finishAction?.Invoke();
                     break;
                 case Spell.CallEagle:
                     ShowMessagePopup(DataNameProvider.BlowsTheFlute, () =>
@@ -9124,6 +9171,7 @@ namespace Ambermoon
                                     // Update direction to right
                                     player.Direction = CharacterDirection.Right; // Set this before player2D.MoveTo!
                                     player2D.MoveTo(Map, (uint)player2D.Position.X, (uint)player2D.Position.Y, CurrentTicks, true, CharacterDirection.Right);
+                                    finishAction?.Invoke();
                                 }
                                 else
                                 {
@@ -9134,13 +9182,13 @@ namespace Ambermoon
                     }, TextAlign.Left);
                     break;
                 case Spell.PlayElfHarp:
-                    OpenMusicList();
+                    OpenMusicList(finishAction);
                     break;
                 case Spell.MagicalMap:
                     // TODO: In original this has no effect. Maybe it was planned to show
                     // the real map that was inside the original package.
                     // For now we show the minimap instead.
-                    OpenMiniMap();
+                    OpenMiniMap(finishAction);
                     break;
                 case Spell.SelfHealing:
                 case Spell.SelfReviving:
@@ -9168,6 +9216,11 @@ namespace Ambermoon
         {
             CurrentSpellTarget = null;
 
+            void Cast(Action action, Action finishAction = null, Action failAction = null)
+            {
+                this.Cast(action, finishAction, failAction, checkFail);
+            }
+
             void PlayItemMagicAnimation(Action animationFinishAction = null)
             {
                 ItemAnimation.Play(this, renderView, ItemAnimation.Type.Enchant, layout.GetItemSlotPosition(itemSlot),
@@ -9178,14 +9231,6 @@ namespace Ambermoon
             {
                 EndSequence();
                 ShowMessagePopup(message, finishAction, TextAlign.Left);
-            }
-
-            void Cast(Action successAction, Action failAction)
-            {
-                if (checkFail)
-                    TrySpell(successAction, failAction);
-                else
-                    successAction?.Invoke();
             }
 
             switch (spell)
@@ -9201,7 +9246,7 @@ namespace Ambermoon
                             UntrapMouse();
                             ShowItemPopup(itemSlot, finishAction);
                         });
-                    }, () =>
+                    }, null, () =>
                     {
                         EndSequence();
                         ShowMessagePopup(DataNameProvider.TheSpellFailed, finishAction);
@@ -9230,8 +9275,8 @@ namespace Ambermoon
                     Cast(() =>
                     {
                         itemSlot.NumRemainingCharges += RandomInt(1, Math.Min(item.MaxCharges - itemSlot.NumRemainingCharges, caster.Level));
-                        PlayItemMagicAnimation();
-                    }, () =>
+                        PlayItemMagicAnimation(finishAction);
+                    }, null, () =>
                     {
                         EndSequence();
                         ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
@@ -9255,8 +9300,8 @@ namespace Ambermoon
                     {
                         itemSlot.Flags &= ~ItemSlotFlags.Broken;
                         layout.UpdateItemSlot(itemSlot);
-                        PlayItemMagicAnimation();
-                    }, () =>
+                        PlayItemMagicAnimation(finishAction);
+                    }, null, () =>
                     {
                         EndSequence();
                         ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
@@ -9320,7 +9365,7 @@ namespace Ambermoon
                                 finishAction?.Invoke();
                             }
                         });
-                    }, () =>
+                    }, null, () =>
                     {
                         EndSequence();
                         ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
@@ -9358,7 +9403,7 @@ namespace Ambermoon
                                 });
                             });
                         }
-                    }, Fail);
+                    }, null, Fail);
                     break;
                 }
                 default:
@@ -9420,12 +9465,9 @@ namespace Ambermoon
         {
             CurrentSpellTarget = target;
 
-            void Cast(Action action)
+            void Cast(Action action, Action finishAction = null, Action failAction = null)
             {
-                if (checkFail)
-                    TrySpell(action);
-                else
-                    action?.Invoke();
+                this.Cast(action, finishAction, failAction, checkFail);
             }
 
             switch (spell)
@@ -9433,74 +9475,75 @@ namespace Ambermoon
                 case Spell.Hurry:
                 case Spell.MassHurry:
                     // Note: This is handled by battle code
+                    finishAction?.Invoke();
                     break;
                 case Spell.RemoveFear:
                 case Spell.RemovePanic:
-                    Cast(() => RemoveCondition(Condition.Panic, target));
+                    Cast(() => RemoveCondition(Condition.Panic, target), finishAction);
                     break;
                 case Spell.RemoveShadows:
                 case Spell.RemoveBlindness:
-                    Cast(() => RemoveCondition(Condition.Blind, target));
+                    Cast(() => RemoveCondition(Condition.Blind, target), finishAction);
                     break;
                 case Spell.RemovePain:
                 case Spell.RemoveDisease:
-                    Cast(() => RemoveCondition(Condition.Diseased, target));
+                    Cast(() => RemoveCondition(Condition.Diseased, target), finishAction);
                     break;
                 case Spell.RemovePoison:
                 case Spell.NeutralizePoison:
-                    Cast(() => RemoveCondition(Condition.Poisoned, target));
+                    Cast(() => RemoveCondition(Condition.Poisoned, target), finishAction);
                     break;
                 case Spell.HealingHand:
-                    Cast(() => Heal(target.HitPoints.TotalMaxValue / 10)); // 10%
+                    Cast(() => Heal(target.HitPoints.TotalMaxValue / 10), finishAction); // 10%
                     break;
                 case Spell.SmallHealing:
                 case Spell.MassHealing:
-                    Cast(() => Heal(target.HitPoints.TotalMaxValue / 4)); // 25%
+                    Cast(() => Heal(target.HitPoints.TotalMaxValue / 4), finishAction); // 25%
                     break;
                 case Spell.MediumHealing:
-                    Cast(() => Heal(target.HitPoints.TotalMaxValue / 2)); // 50%
+                    Cast(() => Heal(target.HitPoints.TotalMaxValue / 2), finishAction); // 50%
                     break;
                 case Spell.GreatHealing:
-                    Cast(() => Heal(target.HitPoints.TotalMaxValue * 3 / 4)); // 75%
+                    Cast(() => Heal(target.HitPoints.TotalMaxValue * 3 / 4), finishAction); // 75%
                     break;
                 case Spell.RemoveRigidness:
                 case Spell.RemoveLamedness:
-                    Cast(() => RemoveCondition(Condition.Lamed, target));
+                    Cast(() => RemoveCondition(Condition.Lamed, target), finishAction);
                     break;
                 case Spell.HealAging:
                 case Spell.StopAging:
-                    Cast(() => RemoveCondition(Condition.Aging, target));
+                    Cast(() => RemoveCondition(Condition.Aging, target), finishAction);
                     break;
                 case Spell.StoneToFlesh:
-                    Cast(() => RemoveCondition(Condition.Petrified, target));
+                    Cast(() => RemoveCondition(Condition.Petrified, target), finishAction);
                     break;
                 case Spell.WakeUp:
-                    Cast(() => RemoveCondition(Condition.Sleep, target));
+                    Cast(() => RemoveCondition(Condition.Sleep, target), finishAction);
                     break;
                 case Spell.RemoveIrritation:
-                    Cast(() => RemoveCondition(Condition.Irritated, target));
+                    Cast(() => RemoveCondition(Condition.Irritated, target), finishAction);
                     break;
                 case Spell.RemoveDrugged:
-                    Cast(() => RemoveCondition(Condition.Drugged, target));
+                    Cast(() => RemoveCondition(Condition.Drugged, target), finishAction);
                     break;
                 case Spell.RemoveMadness:
-                    Cast(() => RemoveCondition(Condition.Crazy, target));
+                    Cast(() => RemoveCondition(Condition.Crazy, target), finishAction);
                     break;
                 case Spell.RestoreStamina:
-                    Cast(() => RemoveCondition(Condition.Exhausted, target));
+                    Cast(() => RemoveCondition(Condition.Exhausted, target), finishAction);
                     break;
                 case Spell.CreateFood:
-                    Cast(() => ++target.Food);
+                    Cast(() => ++target.Food, finishAction);
                     break;
                 case Spell.ExpExchange:
-                    Cast(() => ExchangeExp(caster as PartyMember, target as PartyMember, finishAction));
+                    Cast(() => ExchangeExp(caster as PartyMember, target as PartyMember, finishAction), null, finishAction);
                     break;
                 case Spell.SelfHealing:
                     Cast(() =>
                     {
                         if (target.Alive)
                             Heal(5 + target.HitPoints.TotalMaxValue / 4); // 5 HP + 25% of MaxHP
-                    });
+                    }, finishAction);
                     break;
                 case Spell.Resurrection:
                 {
@@ -9509,7 +9552,7 @@ namespace Ambermoon
                         target.Conditions &= ~Condition.DeadCorpse;
                         target.HitPoints.CurrentValue = target.HitPoints.TotalMaxValue;
                         PartyMemberRevived(target as PartyMember, finishAction, false);
-                    });
+                    }, null, finishAction);
                     break;
                 }
                 case Spell.SelfReviving:
@@ -9518,6 +9561,7 @@ namespace Ambermoon
                     if (!(target is PartyMember targetPlayer))
                     {
                         // Should not happen
+                        finishAction?.Invoke();
                         return;
                     }
                     void Revive()
@@ -9567,6 +9611,7 @@ namespace Ambermoon
                     if (!(target is PartyMember targetPlayer))
                     {
                         // Should not happen
+                        finishAction?.Invoke();
                         return;
                     }
                     void TransformToBody()
@@ -9594,6 +9639,10 @@ namespace Ambermoon
                                     target.Conditions |= Condition.DeadDust;
                                     ShowMessagePopup(DataNameProvider.AshesFallToDust, finishAction);
                                 }
+                                else
+                                {
+                                    finishAction?.Invoke();
+                                }
                             });
                         });
                     }
@@ -9608,6 +9657,7 @@ namespace Ambermoon
                     if (!(target is PartyMember targetPlayer))
                     {
                         // Should not happen
+                        finishAction?.Invoke();
                         return;
                     }
                     void TransformToAshes()
@@ -9637,18 +9687,23 @@ namespace Ambermoon
                 }
                 case Spell.SpellPointsI:
                     FillSP(target.SpellPoints.TotalMaxValue / 10); // 10%
+                    finishAction?.Invoke();
                     break;
                 case Spell.SpellPointsII:
                     FillSP(target.SpellPoints.TotalMaxValue / 4); // 25%
+                    finishAction?.Invoke();
                     break;
                 case Spell.SpellPointsIII:
                     FillSP(target.SpellPoints.TotalMaxValue / 2); // 50%
+                    finishAction?.Invoke();
                     break;
                 case Spell.SpellPointsIV:
                     FillSP(target.SpellPoints.TotalMaxValue * 3 / 4); // 75%
+                    finishAction?.Invoke();
                     break;
                 case Spell.SpellPointsV:
                     FillSP(target.SpellPoints.TotalMaxValue); // 100%
+                    finishAction?.Invoke();
                     break;
                 case Spell.AllHealing:
                 {
@@ -9679,27 +9734,35 @@ namespace Ambermoon
                 }
                 case Spell.AddStrength:
                     IncreaseAttribute(Attribute.Strength);
+                    finishAction?.Invoke();
                     break;
                 case Spell.AddIntelligence:
                     IncreaseAttribute(Attribute.Intelligence);
+                    finishAction?.Invoke();
                     break;
                 case Spell.AddDexterity:
                     IncreaseAttribute(Attribute.Dexterity);
+                    finishAction?.Invoke();
                     break;
                 case Spell.AddSpeed:
                     IncreaseAttribute(Attribute.Speed);
+                    finishAction?.Invoke();
                     break;
                 case Spell.AddStamina:
                     IncreaseAttribute(Attribute.Stamina);
+                    finishAction?.Invoke();
                     break;
                 case Spell.AddCharisma:
                     IncreaseAttribute(Attribute.Charisma);
+                    finishAction?.Invoke();
                     break;
                 case Spell.AddLuck:
                     IncreaseAttribute(Attribute.Luck);
+                    finishAction?.Invoke();
                     break;
                 case Spell.AddAntiMagic:
                     IncreaseAttribute(Attribute.AntiMagic);
+                    finishAction?.Invoke();
                     break;
                 case Spell.DecreaseAge:
                     if (target.Alive && !target.Conditions.HasFlag(Condition.Petrified) && target.Attributes[Attribute.Age].CurrentValue > 18)
@@ -9709,10 +9772,12 @@ namespace Ambermoon
                         if (CurrentWindow.Window == Window.Inventory && CurrentInventory == target)
                             UpdateCharacterInfo();
                     }
+                    finishAction?.Invoke();
                     break;
                 case Spell.Drugs:
                     if (target is PartyMember partyMember)
                         AddCondition(Condition.Drugged, partyMember);
+                    finishAction?.Invoke();
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no character-targeted spell.");
@@ -12827,6 +12892,8 @@ namespace Ambermoon
                 }
             }
 
+            void SpellFinished() => CurrentSpellTarget = null;
+
             bool checkFail = !fromItem; // Item spells can't fail
 
             switch (spellInfo.Target)
@@ -12884,7 +12951,7 @@ namespace Ambermoon
                                     {
                                         if (reviveSpell)
                                         {
-                                            ApplySpellEffect(spell, caster, target, null, checkFail);
+                                            ApplySpellEffect(spell, caster, target, SpellFinished, checkFail);
                                         }
                                         else
                                         {
@@ -12894,13 +12961,13 @@ namespace Ambermoon
                                             {
                                                 currentAnimation.Destroy();
                                                 currentAnimation = null;
-                                                ApplySpellEffect(spell, caster, target, null, false);
+                                                ApplySpellEffect(spell, caster, target, SpellFinished, false);
                                             });
                                         }
                                     }
                                 }
                                 if (!reviveSpell && checkFail)
-                                    TrySpell(Cast);
+                                    TrySpell(Cast, SpellFinished);
                                 else
                                     Cast();
                             }
@@ -12925,7 +12992,7 @@ namespace Ambermoon
                             if (spell == Spell.Resurrection)
                             {
                                 var affectedMembers = PartyMembers.Where(p => p.Conditions.HasFlag(Condition.DeadCorpse)).ToList();
-                                Revive(caster, affectedMembers);
+                                Revive(caster, affectedMembers, SpellFinished);
                             }
                             else
                             {
@@ -12939,11 +13006,13 @@ namespace Ambermoon
 
                                     foreach (var partyMember in PartyMembers.Where(p => p.Alive))
                                         ApplySpellEffect(spell, caster, partyMember, null, false);
+
+                                    SpellFinished();
                                 });
                             }
                         }
                         if (checkFail)
-                            TrySpell(Cast);
+                            TrySpell(Cast, SpellFinished);
                         else
                             Cast();
                     }
@@ -12984,7 +13053,7 @@ namespace Ambermoon
                                     EndSequence();
                                     layout.ShowChestMessage(null);
                                     layout.SetInventoryMessage(null);
-                                }
+                                 }
 
                                 this.TargetItemPicked -= TargetItemPicked;
                                 Consume();
@@ -13861,7 +13930,7 @@ namespace Ambermoon
         }
 
         // Elf harp
-        void OpenMusicList()
+        void OpenMusicList(Action finishAction = null)
         {
             bool wasPaused = paused;
             Pause();
@@ -13892,6 +13961,7 @@ namespace Ambermoon
                 UntrapMouse();
                 if (!wasPaused)
                     Resume();
+                finishAction?.Invoke();
             };
             int scrollRange = Math.Max(0, 16); // = 32 songs - 16 songs visible
             var scrollbar = popup.AddScrollbar(layout, scrollRange, 2);
@@ -13901,7 +13971,7 @@ namespace Ambermoon
             };
         }
 
-        void OpenMiniMap()
+        void OpenMiniMap(Action finishAction = null)
         {
             CloseWindow(() =>
             {
@@ -14043,6 +14113,7 @@ namespace Ambermoon
                     filledAreas.ForEach(area => area.Destroy());
                     UntrapMouse();
                     Resume();
+                    finishAction?.Invoke();
                 };
                 nextClickHandler = buttons =>
                 {
@@ -14146,7 +14217,7 @@ namespace Ambermoon
             public bool BlocksSight;
         }
 
-        internal void ShowAutomap(AutomapOptions automapOptions)
+        internal void ShowAutomap(AutomapOptions automapOptions, Action finishAction = null)
         {
             Action create = () =>
             {
@@ -14833,10 +14904,18 @@ namespace Ambermoon
 
                     void Exit(Action followAction = null)
                     {
+                        var exitAction = finishAction == null ? followAction : () =>
+                        {
+                            followAction?.Invoke();
+                            finishAction();
+                        };
+
                         closed = true;
                         UntrapMouse();
                         if (currentWindow.Window == Window.Automap)
-                            CloseWindow(followAction);
+                            CloseWindow(exitAction);
+                        else
+                            exitAction?.Invoke();
                     }
 
                     void CheckScroll()
