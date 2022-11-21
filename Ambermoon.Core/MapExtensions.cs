@@ -42,11 +42,13 @@ namespace Ambermoon
     {
         static uint? LastMapEventIndexMap = null;
         static uint? LastMapEventIndex = null;
+        static Position LastMapEventPosition = null;
 
         public static void Reset()
         {
             LastMapEventIndexMap = null;
             LastMapEventIndex = null;
+            LastMapEventPosition = null;
         }
 
         public static uint PositionToTileIndex(this Map map, uint x, uint y) => x + y * (uint)map.Width;
@@ -115,7 +117,7 @@ namespace Ambermoon
                     ev.Type != EventType.Riddlemouth &&
                     ev.Type != EventType.Reward &&
                     ev.Type != EventType.Action &&
-                    (map.Type == MapType.Map3D || ev.Type != EventType.Trap) &&
+                    ((LastMapEventPosition == new Position((int)x, (int)y) && map.Type == MapType.Map3D) || ev.Type != EventType.Trap) &&
                     (ev.Type != EventType.StartBattle || !hasRandomness))
                 {
                     return false;
@@ -124,11 +126,13 @@ namespace Ambermoon
 
             LastMapEventIndexMap = map.Index;
             LastMapEventIndex = mapEventId;
+            LastMapEventPosition = new Position((int)x, (int)y);
 
             if (!map.TriggerEventChain(game, trigger, x, y, @event))
             {
                 LastMapEventIndexMap = null;
                 LastMapEventIndex = null;
+                LastMapEventPosition = null;
                 return false;
             }
 
@@ -139,6 +143,7 @@ namespace Ambermoon
         {
             LastMapEventIndexMap = map.Index;
             LastMapEventIndex = 0;
+            LastMapEventPosition = null;
         }
     }
 }
