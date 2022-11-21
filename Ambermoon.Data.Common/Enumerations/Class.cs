@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ambermoon.Data.Enumerations;
+using System;
 
 namespace Ambermoon.Data
 {
@@ -54,19 +55,24 @@ namespace Ambermoon.Data
         public static bool Contains(this ClassFlag classes, Class @class) => classes.HasFlag((ClassFlag)(1 << (int)@class));
 
         // TODO: This is stored in AM2_CPU (slothsoft said at 0x451F0, I guess in v1.05 german)
-        public static uint GetExpFactor(this Class @class) => @class switch
+        public static uint GetExpFactor(this Class @class, Features? features = null)
         {
-            Class.Adventurer => 75,
-            Class.Warrior => 150,
-            Class.Paladin => 180,
-            Class.Thief => 100,
-            Class.Ranger => 125,
-            Class.Healer => 90,
-            Class.Alchemist => 90,
-            Class.Mystic => 90,
-            Class.Mage => 95,
-            _ => 32767
-        };
+            bool adjusted = features?.HasFlag(Features.AdjustedEPFactors) == true;
+
+            return @class switch
+            {
+                Class.Adventurer => adjusted ? 85u : 75u,
+                Class.Warrior => adjusted ? 110u : 150u,
+                Class.Paladin => adjusted ? 115u : 180u,
+                Class.Thief => 100,
+                Class.Ranger => adjusted ? 105u : 125u,
+                Class.Healer => 90,
+                Class.Alchemist => 90,
+                Class.Mystic => 90,
+                Class.Mage => 95,
+                _ => 32767
+            };
+        }
 
         public static bool IsMagic(this Class @class) => @class != Class.Warrior && @class != Class.Thief && @class < Class.Animal;
     }

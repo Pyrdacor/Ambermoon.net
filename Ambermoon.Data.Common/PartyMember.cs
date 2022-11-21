@@ -1,4 +1,5 @@
-﻿using Ambermoon.Data.Serialization;
+﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -153,10 +154,10 @@ namespace Ambermoon.Data
             AddFood(food);
         }
 
-        public uint GetNextLevelExperiencePoints()
+        public uint GetNextLevelExperiencePoints(Features? features = null)
         {
             uint nextLevel = Level + 1u;
-            return Class.GetExpFactor() * (nextLevel * nextLevel + nextLevel) / 2;
+            return Class.GetExpFactor(features) * (nextLevel * nextLevel + nextLevel) / 2;
         }
 
         /// <summary>
@@ -164,19 +165,22 @@ namespace Ambermoon.Data
         /// party member. Returns true if the party members
         /// gained at least one level up.
         /// </summary>
-        public bool AddExperiencePoints(uint amount, Func<int, int, int> random)
+        public bool AddExperiencePoints(uint amount, Func<int, int, int> random, Features? features = null)
         {
             ExperiencePoints += amount;
 
-            uint nextLevelExperiencePoints = GetNextLevelExperiencePoints();
+            if (Level == 50)
+                return false;
 
-            if (ExperiencePoints < nextLevelExperiencePoints || Level == 50)
+            uint nextLevelExperiencePoints = GetNextLevelExperiencePoints(features);
+
+            if (ExperiencePoints < nextLevelExperiencePoints)
                 return false;
 
             do
             {
                 ++Level;
-                nextLevelExperiencePoints = GetNextLevelExperiencePoints();
+                nextLevelExperiencePoints = GetNextLevelExperiencePoints(features);
                 AddLevelUpEffects(random);
             }
             while (ExperiencePoints >= nextLevelExperiencePoints && Level < 50);

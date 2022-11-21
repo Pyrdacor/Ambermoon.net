@@ -20,6 +20,7 @@
  */
 
 using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using System.Collections.Generic;
 
 namespace Ambermoon.UI
@@ -46,7 +47,7 @@ namespace Ambermoon.UI
             MagicIntBonus // INT/25 etc
         }
 
-        public static string GetSecondaryStatTooltip(GameLanguage gameLanguage, SecondaryStat secondaryStat, PartyMember partyMember)
+        public static string GetSecondaryStatTooltip(Features features, GameLanguage gameLanguage, SecondaryStat secondaryStat, PartyMember partyMember)
         {
             var formatString = SecondaryStatTooltips[gameLanguage][(int)secondaryStat];
 
@@ -90,7 +91,7 @@ namespace Ambermoon.UI
                 case SecondaryStat.Age:
                     return string.Format(formatString, partyMember.Attributes[Attribute.Age].MaxValue);
                 case SecondaryStat.EPPre50:
-                    return string.Format(formatString, partyMember.GetNextLevelExperiencePoints());
+                    return string.Format(formatString, partyMember.GetNextLevelExperiencePoints(features));
                 case SecondaryStat.LevelWithAPRIncrease:
                 {
                     GetLevelUpBaseValues(out var hp, out var spAndSlp, out var tp, out var intBonus);

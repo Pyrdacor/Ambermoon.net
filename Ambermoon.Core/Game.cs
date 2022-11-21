@@ -4481,7 +4481,7 @@ namespace Ambermoon
         {
             if (character is PartyMember partyMember && Configuration.ShowPlayerStatsTooltips)
             {
-                var tooltip = GetSecondaryStatTooltip(GameLanguage, secondaryStat, partyMember);
+                var tooltip = GetSecondaryStatTooltip(Features, GameLanguage, secondaryStat, partyMember);
                 return layout.AddTooltip(area, tooltip, TextColor.White, TextAlign.Left, new Render.Color(GetPaletteColor(50, 15), 0xb0));
             }
 
@@ -4496,7 +4496,7 @@ namespace Ambermoon
                 secondaryStat = SecondaryStat.LevelWithoutAPRIncrease;
 
             if (tooltip != null && character is PartyMember partyMember && Configuration.ShowPlayerStatsTooltips)
-                tooltip.Text = GetSecondaryStatTooltip(GameLanguage, secondaryStat, partyMember);
+                tooltip.Text = GetSecondaryStatTooltip(Features, GameLanguage, secondaryStat, partyMember);
         }
 
         public int AdjustAttackForNotUsedAmmunition(Character character, int attack)
@@ -13669,7 +13669,7 @@ namespace Ambermoon
 
         void AddExperience(PartyMember partyMember, uint amount, Action finishedEvent)
         {
-            if (partyMember.AddExperiencePoints(amount, RandomInt))
+            if (partyMember.AddExperiencePoints(amount, RandomInt, Features))
             {
                 // Level-up
                 ShowLevelUpWindow(partyMember, finishedEvent);
@@ -13780,7 +13780,7 @@ namespace Ambermoon
                 if (partyMember.Level >= 50)
                     popup.AddText(new Position(32, 134), DataNameProvider.MaxLevelReached, TextColor.BrightGray);
                 else
-                    AddValueText(134, DataNameProvider.NextLevelAt, partyMember.GetNextLevelExperiencePoints(), null, " " + DataNameProvider.EP);
+                    AddValueText(134, DataNameProvider.NextLevelAt, partyMember.GetNextLevelExperiencePoints(Features), null, " " + DataNameProvider.EP);
             }
 
             popup.Closed += () =>
