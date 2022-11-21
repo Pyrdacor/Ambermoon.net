@@ -429,6 +429,8 @@
         public string PriceForEnchanting => executableData.Messages.GetEntry(Messages.Index.PriceForEnchanting);
         public string LastTimeEnchanting => executableData.Messages.GetEntry(Messages.Index.LastTimeEnchanting);
         public string CannotRechargeAnymore => executableData.Messages.GetEntry(Messages.Index.CannotRechargeAnymore);
+        public string SageIdentifyScroll => executableData.Messages.GetEntry(Messages.Index.SageIdentifyScroll);
+        public string SageSLP => executableData.Messages.GetEntry(Messages.Index.SageSLP);
 
         #endregion
     }

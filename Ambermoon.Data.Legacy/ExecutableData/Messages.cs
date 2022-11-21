@@ -390,6 +390,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             ElementWater,
             ElementMultiple,
             ElementLabel,
+            SageIdentifyScroll,
+            SageSLP,
             Count
         }
 

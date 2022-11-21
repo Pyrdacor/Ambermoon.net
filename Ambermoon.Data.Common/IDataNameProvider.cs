@@ -380,6 +380,8 @@ namespace Ambermoon.Data
         string PriceForEnchanting { get; }
         string LastTimeEnchanting { get; }
         string CannotRechargeAnymore { get; }
+        string SageIdentifyScroll { get; }
+        string SageSLP { get; }
 
         #endregion
     }

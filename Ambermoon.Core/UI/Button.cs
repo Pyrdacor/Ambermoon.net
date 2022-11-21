@@ -91,7 +91,8 @@ namespace Ambermoon.UI
             BattleAdvance,
             BattleAttack,
             BattleDefend,
-            BattleCast
+            BattleCast,
+            IdentifyScroll
         }
 
         // TODO: add more languages or add this to some kind of game data
@@ -159,7 +160,8 @@ namespace Ambermoon.UI
                     "Vorrücken",
                     "Angreifen",
                     "Abwehren",
-                    "Zaubern"
+                    "Zaubern",
+                    "Nötige Spruchlernpunkte ermitteln"
                 }
             },
             { GameLanguage.English, new string[]
@@ -224,7 +226,8 @@ namespace Ambermoon.UI
                     "Advance",
                     "Attack",
                     "Defend",
-                    "Cast spell"
+                    "Cast spell",
+                    "Identify required spell learning points"
                 }
             }
         };

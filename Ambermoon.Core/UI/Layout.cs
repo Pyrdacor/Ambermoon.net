@@ -2119,7 +2119,10 @@ namespace Ambermoon.UI
                                 buttonGrid.SetButton(3, ButtonType.Inventory, false, null, false, GetTooltip(Button.TooltipType.IdentifyInventory)); // this is set later manually
                                 buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
+                                if (game.Features.HasFlag(Features.SageScrollIdentification))
+                                    buttonGrid.SetButton(6, ButtonType.ReadScroll, false, null, false, GetTooltip(Button.TooltipType.IdentifyScroll)); // this is set later manually
+                                else
+                                    buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                                 break;

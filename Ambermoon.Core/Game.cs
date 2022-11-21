@@ -11323,7 +11323,7 @@ namespace Ambermoon
                 ShowPlaceWindow(sage.Name, showWelcome ? DataNameProvider.WelcomeSage : null,
                     Picture80x80.Sage, sage, SetupSage, null, null, null, 24);
                 void ShowDefaultMessage() => layout.ShowChestMessage(DataNameProvider.ExamineWhichItemSage, TextAlign.Left);
-                void ShowItems(bool equipment)
+                void ShowItems(bool equipment, bool scrollIdentification = false)
                 {
                     itemsGrid.Disabled = false;
                     itemsGrid.DisableDrag = true;
@@ -11362,7 +11362,7 @@ namespace Ambermoon
                     {
                         itemsGrid.HideTooltip();
 
-                        void Error(string message, bool abort)
+                        void Message(string message, bool abort)
                         {
                             layout.ShowClickChestMessage(message, () =>
                             {
@@ -11379,15 +11379,23 @@ namespace Ambermoon
                             });
                         }
 
-                        if (itemSlot.Flags.HasFlag(ItemSlotFlags.Identified))
+                        if (scrollIdentification)
                         {
-                            Error(DataNameProvider.ItemAlreadyIdentified, false);
+                            if (ItemManager.GetItem(itemSlot.ItemIndex).Type != ItemType.SpellScroll)
+                            {
+                                Message(DataNameProvider.ThatsNotASpellScroll, false);
+                                return;
+                            }
+                        }
+                        else if (itemSlot.Flags.HasFlag(ItemSlotFlags.Identified))
+                        {
+                            Message(DataNameProvider.ItemAlreadyIdentified, false);
                             return;
                         }
 
                         if (sage.AvailableGold < sage.Cost)
                         {
-                            Error(DataNameProvider.NotEnoughMoney, true);
+                            Message(DataNameProvider.NotEnoughMoney, true);
                             return;
                         }
 
@@ -11395,18 +11403,43 @@ namespace Ambermoon
                         layout.ShowPlaceQuestion($"{DataNameProvider.PriceForExamining}{sage.Cost}{DataNameProvider.AgreeOnPrice}", answer =>
                         {
                             nextClickHandler = null;
-                            EndSequence();
-                            UntrapMouse();
-                            DisableItemGrid();
-                            layout.ShowChestMessage(null);
 
-                            if (answer) // yes
+                            void Finish()
                             {
-                                sage.AvailableGold -= (uint)sage.Cost;
-                                updatePartyGold?.Invoke();
-                                itemSlot.Flags |= ItemSlotFlags.Identified;
-                                ShowItemPopup(itemSlot, null);
+                                EndSequence();
+                                UntrapMouse();
+                                DisableItemGrid();
+                                layout.ShowChestMessage(null);
+
+                                if (answer) // yes
+                                {
+                                    sage.AvailableGold -= (uint)sage.Cost;
+                                    updatePartyGold?.Invoke();
+
+                                    if (scrollIdentification)
+                                    {
+                                        var item = ItemManager.GetItem(itemSlot.ItemIndex);
+                                        var slp = SpellInfos.Entries[item.Spell].SLP;
+                                        Message(DataNameProvider.SageIdentifyScroll + slp.ToString() + DataNameProvider.SageSLP, true);
+                                    }
+                                    else
+                                    {
+                                        itemSlot.Flags |= ItemSlotFlags.Identified;
+                                        ShowItemPopup(itemSlot, null);
+                                    }
+                                }
                             }
+
+                            if (answer)
+                            {
+                                ItemAnimation.Play(this, renderView, ItemAnimation.Type.Enchant, layout.GetItemSlotPosition(itemSlot),
+                                    Finish, TimeSpan.FromMilliseconds(50));
+                            }
+                            else
+                            {
+                                Finish();
+                            }
+                            
                         }, TextAlign.Left);
                     };
                 }
@@ -11414,6 +11447,8 @@ namespace Ambermoon
                 layout.AttachEventToButton(0, () => ShowItems(true));
                 // Examine inventory item button
                 layout.AttachEventToButton(3, () => ShowItems(false));
+                if (Features.HasFlag(Features.SageScrollIdentification))
+                    layout.AttachEventToButton(6, () => ShowItems(false, true));
             });
         }
 
