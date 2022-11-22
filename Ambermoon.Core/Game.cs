@@ -11393,14 +11393,16 @@ namespace Ambermoon
                             return;
                         }
 
-                        if (sage.AvailableGold < sage.Cost)
+                        int cost = scrollIdentification ? sage.TellingSLPCost : sage.IdentificationCost;
+
+                        if (sage.AvailableGold < cost)
                         {
                             Message(DataNameProvider.NotEnoughMoney, true);
                             return;
                         }
 
                         nextClickHandler = null;
-                        layout.ShowPlaceQuestion($"{DataNameProvider.PriceForExamining}{sage.Cost}{DataNameProvider.AgreeOnPrice}", answer =>
+                        layout.ShowPlaceQuestion($"{DataNameProvider.PriceForExamining}{cost}{DataNameProvider.AgreeOnPrice}", answer =>
                         {
                             nextClickHandler = null;
 
@@ -11413,7 +11415,7 @@ namespace Ambermoon
 
                                 if (answer) // yes
                                 {
-                                    sage.AvailableGold -= (uint)sage.Cost;
+                                    sage.AvailableGold -= (uint)cost;
                                     updatePartyGold?.Invoke();
 
                                     if (scrollIdentification)

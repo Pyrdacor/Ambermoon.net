@@ -158,11 +158,15 @@ namespace Ambermoon.Data
             }
 
             public override PlaceType PlaceType => PlaceType.Sage;
-            public int Cost => GetWord(0);
+            public int IdentificationCost => GetWord(0);
+            public int TellingSLPCost => GetWord(2);
 
             public override string ToString()
             {
-                return $"Sage, Cost: {Cost}";
+                if (TellingSLPCost == 0)
+                    return $"Sage, Identification Cost: {IdentificationCost}";
+
+                return $"Sage, Identification Cost: {IdentificationCost}, Tell SLP Cost: {TellingSLPCost}";
             }
         }
 
