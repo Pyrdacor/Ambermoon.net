@@ -616,7 +616,7 @@ namespace Ambermoon
                         else
                         {
                             Console.WriteLine("Unable to teleport in current game state.");
-                            Console.WriteLine("Try to use the command when no ingame window is open.");
+                            Console.WriteLine("Try to use the command when no ingame window is open and you are on foot.");
                         }
                         Console.WriteLine();
                         return;
@@ -688,7 +688,7 @@ namespace Ambermoon
                         else
                         {
                             Console.WriteLine("Unable to teleport in current game state.");
-                            Console.WriteLine("Try to use the command when no ingame window is open.");
+                            Console.WriteLine("Try to use the command when no ingame window is open and you are on foot.");
                         }
                         Console.WriteLine();
                         return;
@@ -696,7 +696,7 @@ namespace Ambermoon
                     else if (!blocked)
                     {
                         Console.WriteLine("Unable to teleport in current game state.");
-                        Console.WriteLine("Try to use the command when no ingame window is open.");
+                        Console.WriteLine("Try to use the command when no ingame window is open and you are on foot.");
                         Console.WriteLine();
                         return;
                     }

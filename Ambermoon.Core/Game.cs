@@ -5839,6 +5839,9 @@ namespace Ambermoon
                 return false;
             }
 
+            if (!newMap.UseTravelTypes && TravelType != TravelType.Walk)
+                return false;
+
             bool mapChange = newMap.Index != Map.Index;
             var player = is3D ? (IRenderPlayer)player3D : player2D;
             bool mapTypeChanged = Map.Type != newMap.Type;
@@ -5882,8 +5885,8 @@ namespace Ambermoon
             player.MoveTo(newMap, newX, newY, CurrentTicks, true, direction, UpdateMapNameAndLight);
             this.player.Position.X = RenderPlayer.Position.X;
             this.player.Position.Y = RenderPlayer.Position.Y;
-            // This will also update the appearance.
-            TravelType = TravelType.IgnoreEvents() ? TravelType.Walk : TravelType;
+            // This will update the appearance.
+            TravelType = TravelType;
 
             void UpdateMapNameAndLight(Map map)
             {
@@ -5908,7 +5911,7 @@ namespace Ambermoon
             if (!mapChange) // Otherwise the map change handler takes care of this
                 ResetMoveKeys();
 
-            if (!WindowActive && !layout.PopupActive)
+            if (!WindowActive && !layout.PopupActive && !TravelType.IgnoreEvents())
             {
                 // Trigger events after map transition
                 TriggerMapEvents(EventTrigger.Move, (uint)this.player.Position.X,
