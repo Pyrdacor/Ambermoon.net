@@ -6058,6 +6058,14 @@ namespace Ambermoon
                 automap.ExplorationBits = Enumerable.Repeat((byte)0xff, (Map.Width * Map.Height + 7) / 8).ToArray();
             }
 
+            if (Map.GotoPoints?.Count > 0)
+            {
+                foreach (var gotoPoint in Map.GotoPoints)
+                {
+                    CurrentSavegame.ActivateGotoPoint(gotoPoint.Index);
+                }
+            }
+
             return true;
         }
 
