@@ -56,9 +56,11 @@ Wenn du Fragen hast, meld dich einfach per [Email](mailto:trobt@web.de), auf [Tw
 ### Support the project
 
 I appreciate all kind of support for this project. If you want to donate to help increase my motivation and allow me to spend more time developing this Ambermoon project and similar projects like a 3rd part of the trilogy or map and character editors, you can do so here. \
-<a href="https://www.patreon.com/bePatron?u=44764566"><img src="https://github.com/Pyrdacor/github-images/blob/main/patreon.svg" width="140" height="28" alt="Become a patron" /></a>
-<a href="https://github.com/sponsors/Pyrdacor"><img src="https://github.com/Pyrdacor/github-images/blob/main/sponsor.svg" width="70" height="24" alt="Sponsor" /></a>
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=76DV5MK5GNEMS&source=url) [![Flattr](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=Pyrdacor&url=https://github.com/Pyrdacor/Ambermoon.net&title=Ambermoon.net&language=C#&tags=github&category=software) \
+- <a href="https://www.patreon.com/bePatron?u=44764566"><img src="https://github.com/Pyrdacor/github-images/blob/main/patreon.svg" width="140" height="28" alt="Become a patron" /></a>
+- <a href="https://github.com/sponsors/Pyrdacor"><img src="https://github.com/Pyrdacor/github-images/blob/main/sponsor.svg" width="70" height="24" alt="Sponsor" /></a>
+- <a href="https://ko-fi.com/pyrdacor"><img src="https://storage.ko-fi.com/cdn/cup-border.png" width="39" alt="Sponsor" /> Buy me a coffee</a>
+- [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=76DV5MK5GNEMS&source=url)
+- [![Flattr](https://ambermoon-net.pyrdacor.net/assets/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=Pyrdacor&url=https://github.com/Pyrdacor/Ambermoon.net&title=Ambermoon.net&language=C#&tags=github&category=software) \
 Thank you very much.
 
 I will also post updates about releases and interesting stuff on twitter: https://twitter.com/Pyrdacor2
