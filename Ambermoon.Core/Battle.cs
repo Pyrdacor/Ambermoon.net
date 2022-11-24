@@ -2864,8 +2864,9 @@ namespace Ambermoon
                 int playerRow = position / 6;
                 var possibleSpots = new List<int>(2);
                 int newSpot = -1;
+                int moveRange = GetMoveRange(partyMember);
 
-                for (int column = Math.Max(0, playerColumn - 1); column <= Math.Min(5, playerColumn + 1); ++column)
+                for (int column = Math.Max(0, playerColumn - moveRange); column <= Math.Min(5, playerColumn + moveRange); ++column)
                 {
                     int newPosition = column + (playerRow + 1) * 6;
 
@@ -2886,7 +2887,11 @@ namespace Ambermoon
                 if (newSpot == -1)
                 {
                     if (possibleSpots.Count == 0)
-                        throw new AmbermoonException(ExceptionScope.Application, "No move spot found for panic player."); // should never happen
+                    {
+                        // Should not happen but if so, just do nothing.
+                        playerBattleAction.BattleAction = BattleActionType.None;
+                        return;
+                    }
 
                     newSpot = possibleSpots[game.RandomInt(0, possibleSpots.Count - 1)];
                 }
@@ -3228,6 +3233,10 @@ namespace Ambermoon
                     // Don't move up (away from players)
                     minY = characterY;
                 }
+            }
+            else if (wantsToFlee) // Fleeing party member (Fear)
+            {
+                minY = maxY = 4; // always move to last row when fleeing
             }
             else // Mad party member
             {
