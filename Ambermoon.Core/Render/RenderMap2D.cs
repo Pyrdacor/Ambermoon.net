@@ -308,6 +308,9 @@ namespace Ambermoon.Render
 
         public Map GetMapFromTile(uint x, uint y)
         {
+            if (adjacentMaps == null)
+                return Map;
+
             if (x >= Map.Width)
             {
                 if (y >= Map.Height)
