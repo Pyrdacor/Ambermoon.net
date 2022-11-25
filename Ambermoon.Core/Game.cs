@@ -5839,7 +5839,7 @@ namespace Ambermoon
                 return false;
             }
 
-            if (!newMap.UseTravelTypes && TravelType != TravelType.Walk)
+            if (!newMap.UseTravelTypes && (TravelType != TravelType.Walk && TravelType != TravelType.Swim))
                 return false;
 
             bool mapChange = newMap.Index != Map.Index;
