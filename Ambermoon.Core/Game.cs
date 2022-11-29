@@ -8849,6 +8849,11 @@ namespace Ambermoon
             }
         }
 
+        public Savegame GetCurrentSavegame()
+        {
+            return CurrentSavegame;
+        }
+
         public void ActivateLight(uint level)
         {
             ActivateLight(180, level);

@@ -1675,7 +1675,7 @@ namespace Ambermoon.Render
         {
             var eventId = Map.Blocks[position.X, position.Y].MapEventId;
 
-            if (eventId != 0 && game.CurrentSavegame.IsEventActive(Map.Index, eventId))
+            if (eventId != 0 && game.CurrentSavegame.IsEventActive(Map.Index, eventId - 1))
             {
                 var @event = Map.EventList[(int)eventId - 1];
 

@@ -152,6 +152,14 @@ namespace Ambermoon
                     "Defaults to max light level",
                     Light
                 )
+            },
+            { "where",
+                Create
+                (
+                    "Tells the current location." + Environment.NewLine +
+                    "Usage: where" + Environment.NewLine,
+                    Where
+                )
             }
         };
 
@@ -1079,6 +1087,16 @@ namespace Ambermoon
             game.ActivateLight(lightLevel);
 
             Console.WriteLine($"Light level {lightLevel} was granted.");
+            Console.WriteLine();
+        }
+
+        static void Where(Game game, string[] args)
+        {
+            Console.WriteLine();
+
+            var savegame = game.GetCurrentSavegame();
+
+            Console.WriteLine($"Map {savegame.CurrentMapIndex}, X {savegame.CurrentMapX}, Y {savegame.CurrentMapY}, Looking {savegame.CharacterDirection}");
             Console.WriteLine();
         }
     }
