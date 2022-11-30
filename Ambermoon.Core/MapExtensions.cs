@@ -113,7 +113,7 @@ namespace Ambermoon
                     ev.Type != EventType.Chest &&
                     ev.Type != EventType.Door &&
                     ev.Type != EventType.EnterPlace &&
-                    ev.Type != EventType.RemoveBuffs &&
+                    ev.Type != EventType.ChangeBuffs &&
                     ev.Type != EventType.Riddlemouth &&
                     ev.Type != EventType.Reward &&
                     ev.Type != EventType.Action &&

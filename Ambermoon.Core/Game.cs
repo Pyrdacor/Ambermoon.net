@@ -8865,8 +8865,18 @@ namespace Ambermoon
             UpdateLight(false, true);
         }
 
+        internal void ActivateBuff(ActiveSpellType buff, uint value, uint duration)
+        {
+            if (buff == ActiveSpellType.Light)
+                ActivateLight(duration, value);
+            else
+                CurrentSavegame.ActivateSpell(buff, duration, value);
+        }
+
         void Cast(Action action, Action finishAction = null, Action failAction = null, bool checkFail = true)
         {
+            failAction ??= () => ShowMessagePopup(DataNameProvider.TheSpellFailed);
+
             if (finishAction == null)
             {
                 if (checkFail)

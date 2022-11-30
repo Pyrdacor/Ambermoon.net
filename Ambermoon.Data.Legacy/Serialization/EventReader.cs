@@ -206,14 +206,22 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
-                case EventType.RemoveBuffs:
+                case EventType.ChangeBuffs:
                 {
                     byte affectedBuffs = dataReader.ReadByte();
-                    var unused = dataReader.ReadBytes(8);
-                    @event = new RemoveBuffsEvent
+                    bool add = dataReader.ReadByte() != 0;
+                    var unused1 = dataReader.ReadByte();
+                    var value = dataReader.ReadWord();
+                    var duration = dataReader.ReadWord();
+                    var unused2 = dataReader.ReadBytes(2);
+                    @event = new ChangeBuffsEvent
                     {
                         AffectedBuff = affectedBuffs == 0 ? (ActiveSpellType?)null: (ActiveSpellType)(affectedBuffs - 1),
-                        Unused = unused
+                        Add = add,
+                        Value = value,
+                        Duration = duration,
+                        Unused1 = unused1,
+                        Unused2 = unused2
                     };
                     break;
                 }

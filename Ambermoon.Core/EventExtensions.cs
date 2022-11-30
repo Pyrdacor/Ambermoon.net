@@ -20,6 +20,7 @@
  */
 
 using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -220,30 +221,41 @@ namespace Ambermoon
                     game.TriggerTrap(trapEvent, lastEventStatus, x, y);
                     return null; // next event is only executed after trap effect
                 }
-                case EventType.RemoveBuffs:
+                case EventType.ChangeBuffs:
                 {
-                    if (!(@event is RemoveBuffsEvent removeBuffsEvent))
-                        throw new AmbermoonException(ExceptionScope.Data, "Invalid remove buffs event.");
+                    if (!(@event is ChangeBuffsEvent changeBuffsEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid change buffs event.");
 
-                    if (removeBuffsEvent.AffectedBuff == null) // all
+                    if (changeBuffsEvent.AffectedBuff == null) // all
                     {
                         for (int i = 0; i < 6; ++i)
                         {
-                            game.CurrentSavegame.ActiveSpells[i] = null;
+                            if (changeBuffsEvent.Add)
+                                game.ActivateBuff((ActiveSpellType)i, changeBuffsEvent.Value, changeBuffsEvent.Duration);
+                            else
+                                game.CurrentSavegame.ActiveSpells[i] = null;                            
                         }
 
-                        game.UpdateLight();
+                        if (!changeBuffsEvent.Add)
+                            game.UpdateLight();
                     }
                     else
                     {
-                        int index = (int)removeBuffsEvent.AffectedBuff;
+                        int index = (int)changeBuffsEvent.AffectedBuff;
 
                         if (index < 6)
                         {
-                            game.CurrentSavegame.ActiveSpells[index] = null;
+                            if (changeBuffsEvent.Add)
+                            {
+                                game.ActivateBuff((ActiveSpellType)index, changeBuffsEvent.Value, changeBuffsEvent.Duration);
+                            }
+                            else
+                            {
+                                game.CurrentSavegame.ActiveSpells[index] = null;
 
-                            if (index == (int)Data.Enumerations.ActiveSpellType.Light)
-                                game.UpdateLight();
+                                if (index == (int)ActiveSpellType.Light)
+                                    game.UpdateLight();
+                            }
                         }
                     }
                     break;

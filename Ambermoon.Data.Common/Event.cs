@@ -39,7 +39,7 @@ namespace Ambermoon.Data
         /// <summary>
         /// Removes one or all buffs
         /// </summary>
-        RemoveBuffs,
+        ChangeBuffs,
         /// <summary>
         /// Opens the riddlemouth window with some riddle
         /// </summary>
@@ -451,20 +451,35 @@ namespace Ambermoon.Data
         }
     }
 
-    public class RemoveBuffsEvent : Event
+    public class ChangeBuffsEvent : Event
     {
         /// <summary>
-        /// null means all.
+        /// 0 means all.
         /// </summary>
         public ActiveSpellType? AffectedBuff { get; set; }
-        public byte[] Unused { get; set; } // TODO: Maybe some byte is used but was 0 in test case?
+        public bool Add { get; set; }
+        public byte Unused1 { get; set; }
+        /// <summary>
+        /// Only used when adding buffs. Gives the level/value of the buff.
+        /// </summary>
+        public ushort Value { get; set; }
+        /// <summary>
+        /// Only used when adding buffs. Gives the duration in 5 min chunks.
+        /// Should be in the range 5 to 180 (5 minutes to 15 hours).
+        /// </summary>
+        public ushort Duration { get; set; }
+        public byte[] Unused2 { get; set; }
 
         public override Event Clone(bool keepNext)
         {
-            var clone = new RemoveBuffsEvent
+            var clone = new ChangeBuffsEvent
             {
                 AffectedBuff = AffectedBuff,
-                Unused = CloneBytes(Unused)
+                Add = Add,
+                Unused1 = Unused1,
+                Value = Value,
+                Duration = Duration,
+                Unused2 = CloneBytes(Unused2)
             };
             CloneProperties(clone, keepNext);
             return clone;
@@ -472,7 +487,10 @@ namespace Ambermoon.Data
 
         public override string ToString()
         {
-            return $"{Type}: Affected buff {(AffectedBuff == null ? "all" : AffectedBuff.ToString())}, Unused {string.Join(" ", Unused.Select(u => u.ToString("x2")))}";
+            string operation = Add ? "AddBuff" : "RemoveBuff";
+            string values = Add ? $" , Value {Value}, Duration {Duration * 5} minutes" : "";
+
+            return $"{operation}: Affected buff {(AffectedBuff == null ? "all" : AffectedBuff.ToString())}{values}";
         }
     }
 

@@ -118,11 +118,15 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write(trapEvent.Unused);
                     break;
                 }
-                case EventType.RemoveBuffs:
+                case EventType.ChangeBuffs:
                 {
-                    var removeBuffsEvent = @event as RemoveBuffsEvent;
+                    var removeBuffsEvent = @event as ChangeBuffsEvent;
                     dataWriter.Write(removeBuffsEvent.AffectedBuff == null ? (byte)0 : (byte)removeBuffsEvent.AffectedBuff.Value);
-                    dataWriter.Write(removeBuffsEvent.Unused);
+                    dataWriter.Write(removeBuffsEvent.Add ? (byte)1 : (byte)0);
+                    dataWriter.Write(removeBuffsEvent.Unused1);
+                    dataWriter.Write(removeBuffsEvent.Value);
+                    dataWriter.Write(removeBuffsEvent.Duration);
+                    dataWriter.Write(removeBuffsEvent.Unused2);
                     break;
                 }
                 case EventType.Riddlemouth:
