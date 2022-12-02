@@ -1351,7 +1351,7 @@ namespace Ambermoon
             int? slot = SlotFromPartyMember(member);
 
             if (slot != null)
-                layout.SetCharacter(slot.Value, member, false, () => ResetMoveKeys());
+                layout.SetCharacter(slot.Value, member, false, () => ResetMoveKeys(true));
         }
 
         void PartyMemberRevived(PartyMember partyMember, Action finishAction = null, bool showHealAnimation = true, bool selfRevive = false)
@@ -5003,16 +5003,6 @@ namespace Ambermoon
                 }
 
                 var damage = Godmode ? 0 : damageProvider?.Invoke(partyMember) ?? 0;
-
-                if (Godmode)
-                {
-                    if (inflictCondition.HasFlag(Condition.DeadCorpse))
-                        inflictCondition &= ~Condition.DeadCorpse;
-                    if (inflictCondition.HasFlag(Condition.DeadAshes))
-                        inflictCondition &= ~Condition.DeadAshes;
-                    if (inflictCondition.HasFlag(Condition.DeadDust))
-                        inflictCondition &= ~Condition.DeadDust;
-                }
 
                 if (damage > 0 || inflictCondition != Condition.None)
                 {
@@ -15696,6 +15686,7 @@ namespace Ambermoon
                     {
                         pickingNewLeader = false;
                         layout.ClosePopup(true, true);
+                        ResetMoveKeys(true);
                         NewLeaderPicked?.Invoke(index);
                     }
 

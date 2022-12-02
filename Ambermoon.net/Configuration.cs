@@ -91,7 +91,7 @@ namespace Ambermoon
 
             try
             {
-                var path = Path.Combine(Configuration.BundleDirectory, suffix);
+                var path = Path.Combine(BundleDirectory, suffix);
 
                 if (createIfMissing)
                 {
@@ -101,7 +101,7 @@ namespace Ambermoon
                     }
                     catch
                     {
-                        path = Path.Combine(Configuration.BundleDirectory, alternativeSuffix);
+                        path = Path.Combine(BundleDirectory, alternativeSuffix);
                         Directory.CreateDirectory(path);
                     }
                     return path;
@@ -115,7 +115,7 @@ namespace Ambermoon
             }
             catch
             {
-                var path = Path.Combine(Configuration.FallbackConfigDirectory, suffix);
+                var path = Path.Combine(FallbackConfigDirectory, suffix);
 
                 if (createIfMissing)
                 {                    
@@ -125,7 +125,7 @@ namespace Ambermoon
                     }
                     catch
                     {
-                        path = Path.Combine(Configuration.FallbackConfigDirectory, alternativeSuffix);
+                        path = Path.Combine(FallbackConfigDirectory, alternativeSuffix);
                         Directory.CreateDirectory(path);
                     }
                     return path;
@@ -217,12 +217,19 @@ namespace Ambermoon
                 if (!OperatingSystem.IsMacOS())
                     return ExecutableDirectoryPath;
 
-                var bundleDirectory = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName); // "MacOS"
-                bundleDirectory = Path.GetDirectoryName(bundleDirectory.TrimEnd('/')); // "Contents"
-                bundleDirectory = Path.GetDirectoryName(bundleDirectory); // "Ambermoon.net.app"
-                bundleDirectory = Path.GetDirectoryName(bundleDirectory); // folder which contains the bundle
+                try
+                {
+                    var bundleDirectory = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName); // "MacOS"
+                    bundleDirectory = Path.GetDirectoryName(bundleDirectory.TrimEnd('/')); // "Contents"
+                    bundleDirectory = Path.GetDirectoryName(bundleDirectory); // "Ambermoon.net.app"
+                    bundleDirectory = Path.GetDirectoryName(bundleDirectory); // folder which contains the bundle
 
-                return bundleDirectory;
+                    return bundleDirectory;
+                }
+                catch
+                {
+                    return ExecutableDirectoryPath;
+                }
             }
         }
 
@@ -242,12 +249,10 @@ namespace Ambermoon
         {
             get
             {
-                bool isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
-
-                var assemblyPath = Process.GetCurrentProcess().MainModule.FileName;
+                var assemblyPath = Environment.ProcessPath;
 
 #pragma warning disable IL3000
-                if (assemblyPath.EndsWith("dotnet"))
+                if (assemblyPath.EndsWith("dotnet") || assemblyPath.EndsWith("dotnet.exe"))
                 {
                     assemblyPath = Assembly.GetExecutingAssembly().Location;
                 }
@@ -255,7 +260,7 @@ namespace Ambermoon
 
                 var assemblyDirectory = Path.GetDirectoryName(assemblyPath);
 
-                if (isWindows)
+                if (OperatingSystem.IsWindows())
                 {
                     if (assemblyDirectory.EndsWith("Debug") || assemblyDirectory.EndsWith("Release")
                          || netFolderRegex.IsMatch(assemblyDirectory))
