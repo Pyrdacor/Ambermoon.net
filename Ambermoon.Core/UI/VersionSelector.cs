@@ -163,7 +163,7 @@ namespace Ambermoon.UI
             for (int i = 0; i < gameVersions.Count; ++i)
             {
                 var gameVersion = gameVersions[i];
-                string text = $"{gameVersion.Info.Substring(0, Math.Min(24, gameVersion.Info.Length)).PadRight(24)} {gameVersion.Version} {gameVersion.Language.PadRight(9)}";
+                string text = $"{gameVersion.Info[..Math.Min(24, gameVersion.Info.Length)],-24} {gameVersion.Version,-4} {gameVersion.Language[..Math.Min(7, gameVersion.Language.Length)]}";
                 var versionArea = new Rect(versionListArea.X, versionListArea.Y + i * 10, versionListArea.Width, 10);
                 var markerArea = versionArea.CreateModified(0, 0, 0, -1);
                 var highlight = versionHighlights[i] = FillArea(markerArea, Color.White, 2);
