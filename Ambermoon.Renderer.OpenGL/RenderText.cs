@@ -179,6 +179,39 @@ namespace Ambermoon.Renderer
             return CheckOnScreen(bounds);
         }
 
+        public IReadOnlyList<TextColor> GetTextColorPerLine(IText text)
+        {
+            text ??= this.text;
+            var lineColors = new List<TextColor>(text.LineCount);
+            TextColor color = TextColor;
+
+            foreach (var line in text.Lines)
+            {
+                if (line.Length == 0)
+                {
+                    lineColors.Add(color);
+                    continue;
+                }
+
+                foreach (byte b in line)
+                {
+                    if (b < (byte)SpecialGlyph.SoftSpace)
+                    {
+                        lineColors.Add(color);
+                        break;
+                    }
+                    else if (b >= (byte)SpecialGlyph.FirstColor)
+                    {
+                        color = (TextColor)(b - SpecialGlyph.FirstColor);
+                        lineColors.Add(color);
+                        break;
+                    }
+                }
+            }
+
+            return lineColors.AsReadOnly();
+        }
+
         void UpdateDisplayLayer()
         {
             byte textDisplayLayer = (byte)Util.Min(255, DisplayLayer + 2); // draw above shadow a bit

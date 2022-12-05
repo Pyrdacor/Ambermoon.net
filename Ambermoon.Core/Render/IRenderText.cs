@@ -35,6 +35,7 @@ namespace Ambermoon.Render
         IText Text { get; set; }
         byte DisplayLayer { get; set; }
         byte PaletteIndex { get; set; }
+        IReadOnlyList<TextColor> GetTextColorPerLine(IText text);
     }
 
     public interface IRenderTextFactory

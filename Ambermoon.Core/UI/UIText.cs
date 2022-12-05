@@ -22,6 +22,7 @@
 using Ambermoon.Data;
 using Ambermoon.Render;
 using System;
+using System.Collections.Generic;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI
@@ -38,6 +39,7 @@ namespace Ambermoon.UI
         int lineOffset = 0;
         readonly int numVisibleLines;
         readonly Action<TimeSpan, Action> timedEventCreator;
+        IReadOnlyList<TextColor> textColorsPerLine;
         public bool WithScrolling { get; internal set; }
 
         public event Action FreeScrollingStarted;
@@ -71,6 +73,7 @@ namespace Ambermoon.UI
         {
             allowScrolling = false;
             this.renderText = renderText;
+            textColorsPerLine = renderText.GetTextColorPerLine(null);
         }
 
         public UIText(IRenderView renderView, byte paletteIndex, IText text, Rect bounds, byte displayLayer = 1,
@@ -88,6 +91,7 @@ namespace Ambermoon.UI
             numVisibleLines = (bounds.Height + 1) / Global.GlyphLineHeight;
             WithScrolling = allowScrolling;
             this.timedEventCreator = timedEventCreator;
+            textColorsPerLine = renderText.GetTextColorPerLine(this.text);
 
             if (allowScrolling && this.text.LineCount > numVisibleLines)
             {
@@ -103,6 +107,8 @@ namespace Ambermoon.UI
 
         void UpdateText(int lineOffset)
         {
+            if (textColorsPerLine != null && lineOffset >= 0 && lineOffset < textColorsPerLine.Count)
+                renderText.TextColor = textColorsPerLine[lineOffset];
             renderText.Text = renderView.TextProcessor.WrapText(
                 renderView.TextProcessor.GetLines(text, lineOffset, numVisibleLines), bounds,
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
@@ -111,6 +117,7 @@ namespace Ambermoon.UI
         public void SetText(IText text)
         {
             this.text = renderView.TextProcessor.WrapText(text, bounds, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+            textColorsPerLine = renderText.GetTextColorPerLine(this.text);
             allowScrolling = WithScrolling;
             freeScrolling = false;
             lineOffset = 0;
@@ -127,6 +134,7 @@ namespace Ambermoon.UI
         public void SetTextColor(TextColor textColor)
         {
             renderText.TextColor = textColor;
+            textColorsPerLine = renderText.GetTextColorPerLine(text);
         }
 
         public void SetTextAlign(TextAlign textAlign)

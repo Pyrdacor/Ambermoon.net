@@ -139,16 +139,6 @@ namespace Ambermoon.Render
                 }
             }
 
-            public ICollisionBody GetCollisionBody()
-            {
-                return new CollisionSphere3D
-                {
-                    CenterX = surface.X,
-                    CenterZ = -surface.Z,
-                    Radius = Global.DistancePerBlock * objectPosition.Object.MappedTextureWidth / BlockSize
-                };
-            }
-
             public void AddChild(MapCharacter child)
             {
                 children.Add(child);
