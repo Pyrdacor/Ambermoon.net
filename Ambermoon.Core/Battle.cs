@@ -680,6 +680,10 @@ namespace Ambermoon
         {
             game.ProcessPoisonDamage(1, () =>
             {
+                // Remove all died party members from the battle field
+                foreach (var partyMember in partyMembers.Where(p => p != null && !p.Alive))
+                    RemoveCharacterFromBattleField(partyMember);
+
                 var poisonedMonsters = Monsters.Where(m => m.Alive && m.Conditions.HasFlag(Condition.Poisoned)).ToList();
 
                 if (poisonedMonsters.Count == 0)
@@ -2184,7 +2188,7 @@ namespace Ambermoon
             return true;
         }
 
-        void RemoveCondition(Condition condition, Character target)
+        internal void RemoveCondition(Condition condition, Character target)
         {
             // Healing spells or potions.
             // Sleep can be removed by attacking as well.
@@ -2195,6 +2199,16 @@ namespace Ambermoon
                 game.UpdateBattleStatus(partyMember);
                 layout.UpdateCharacterNameColors(game.CurrentSavegame.ActivePartyMemberSlot);
             }
+
+            void SkipActions()
+            {
+                foreach (var action in roundBattleActions.Where(a => a.Character == target))
+                    action.Skip = true;
+            }
+
+            // Avoid fleeing or acting crazy if the condition is removed
+            if (condition == Condition.Panic || condition == Condition.Crazy)
+                SkipActions();
         }
 
         void AddCondition(Condition condition, Character target)
@@ -2222,6 +2236,15 @@ namespace Ambermoon
 
             if (!condition.CanSelect()) // disabled
             {
+                // Still allow fleeing under fear
+                if (condition.HasFlag(Condition.Panic) && condition.CanFlee() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.Flee))
+                    return;
+                // Still allow moving and attacking when crazy
+                if (condition.HasFlag(Condition.Crazy) &&
+                    (condition.CanMove() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.Move)) ||
+                    (condition.CanAttack() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.Attack)))
+                    return;
+
                 SkipActions();
             }
             else

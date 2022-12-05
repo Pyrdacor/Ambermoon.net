@@ -8210,15 +8210,21 @@ namespace Ambermoon
                 // when the battle starts the action icon will be shown instead.
                 layout.UpdateCharacterStatus(slot, GetDisabledStatusGraphic(partyMember));
                 roundPlayerBattleActions.Remove(slot);
+                if (partyMemberBattleFieldTooltips[slot] != null)
+                    partyMemberBattleFieldTooltips[slot].TextColor = TextColor.DeadPartyMember;
             }
             else if (roundPlayerBattleActions.ContainsKey(slot))
             {
                 var action = roundPlayerBattleActions[slot];
                 layout.UpdateCharacterStatus(slot, action.BattleAction.ToStatusGraphic(action.Parameter, ItemManager));
+                if (partyMemberBattleFieldTooltips[slot] != null)
+                    partyMemberBattleFieldTooltips[slot].TextColor = TextColor.White;
             }
             else
             {
                 layout.UpdateCharacterStatus(slot, null);
+                if (partyMemberBattleFieldTooltips[slot] != null)
+                    partyMemberBattleFieldTooltips[slot].TextColor = TextColor.White;
             }
         }
 
@@ -8743,7 +8749,10 @@ namespace Ambermoon
             if (target is PartyMember partyMember)
             {
                 if (BattleActive)
+                {
                     UpdateBattleStatus(partyMember);
+                    currentBattle.RemoveCondition(condition, target);
+                }
                 layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
                 layout.UpdateCharacter(partyMember);
 
