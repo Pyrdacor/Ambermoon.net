@@ -5169,6 +5169,8 @@ namespace Ambermoon.UI
                 if (itemSlot.ItemIndex == 0)
                     return;
 
+                itemGrids[0].DisableDrag = false;
+                itemGrids[1].DisableDrag = false;
                 itemGrids[0].ItemClicked -= FinishPickingTargetItem;
                 itemGrids[1].ItemClicked -= FinishPickingTargetItem;
                 game.FinishPickingTargetInventory(itemGrid, slotIndex, itemSlot);
