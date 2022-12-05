@@ -395,6 +395,7 @@ namespace Ambermoon
         public bool Fading { get; private set; } = false;
         internal bool ConversationTextActive { get; private set; } = false;
         Func<MouseButtons, bool> nextClickHandler = null;
+        Action itemDragCancelledHandler = null;
         /// <summary>
         /// The 3x3 buttons will always be enabled!
         /// </summary>
@@ -12417,6 +12418,11 @@ namespace Ambermoon
             });
         }
 
+        internal void ItemDraggingCancelled()
+        {
+            itemDragCancelledHandler?.Invoke();
+        }
+
         void ShowMerchantWindow(Merchant merchant, string placeName, string initialText,
             string buyText, Picture80x80 picture, bool buysGoods, ItemSlot[] boughtItems)
         {
@@ -12601,6 +12607,7 @@ namespace Ambermoon
                 var bonus = (uint)Util.Floor(Util.Floor(charisma / 10) * (price / 100.0f));
                 return basePrice + bonus;
             }
+            itemDragCancelledHandler += ShowBoughtItems;
             itemGrid.DisableDrag = false;
             itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount, bool updateSlot) =>
             {
@@ -12887,6 +12894,7 @@ namespace Ambermoon
 
             void CleanUp()
             {
+                itemDragCancelledHandler = null;
                 ActivePlayerChanged -= UpdateSellButton;
                 layout.DraggedItemDropped -= UpdateSellButton;
             }

@@ -4421,6 +4421,7 @@ namespace Ambermoon.UI
 
             // Remove hand icons and set current status icons
             game.PartyMembers.ToList().ForEach(p => UpdateCharacterStatus(p));
+            game.ItemDraggingCancelled();
         }
 
         void DropItem()
@@ -5063,7 +5064,7 @@ namespace Ambermoon.UI
                                 else
                                     return false;
                             }
-                            else // In chest window right click aborts dragging instead
+                            else // In chest or place window right click aborts dragging instead
                             {
                                 CancelDrag();
                             }
