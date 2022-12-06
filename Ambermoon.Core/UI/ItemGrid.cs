@@ -406,7 +406,7 @@ namespace Ambermoon.UI
                     if (slots[i]?.Empty == false)
                         SetItem(i, slots[i], merchantItem);
                 }
-                else
+                else if (SlotVisible(i))
                 {
                     items[i].Update(true);
                 }
