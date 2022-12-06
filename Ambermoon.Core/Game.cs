@@ -1053,6 +1053,8 @@ namespace Ambermoon
         public int RandomInt(int min, int max)
         {
             uint range = (uint)(max + 1 - min);
+            if (range == 0) // this avoid a possible division by zero crash
+                return min;
             return min + (int)(random.Next() % range);
         }
 

@@ -2950,8 +2950,10 @@ namespace Ambermoon
             {
                 if (partyMember.CanMove() && MoveSpotAvailable(position, partyMember, false, forbiddenMoveSpots))
                 {
-                    playerBattleAction.BattleAction = BattleActionType.Move;
                     uint moveSpot = GetRandomMoveSpot(position, partyMember, forbiddenMoveSpots);
+                    if (moveSpot == uint.MaxValue) // still no spot found?
+                        return false;
+                    playerBattleAction.BattleAction = BattleActionType.Move;
                     playerBattleAction.Parameter = CreateMoveParameter(moveSpot);
                     forbiddenMoveSpots.Add((int)moveSpot);
                     return true;
@@ -3292,6 +3294,8 @@ namespace Ambermoon
                         possiblePositions.Add(position);
                 }
             }
+            if (possiblePositions.Count == 0)
+                return uint.MaxValue;
             return (uint)possiblePositions[game.RandomInt(0, possiblePositions.Count - 1)];
         }
 
