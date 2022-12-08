@@ -1177,8 +1177,16 @@ namespace Ambermoon
                 if (TryLoad("versions.dat", out var reader))
                     return reader;
 
-                if (TryLoad(Path.Combine(Configuration.BundleDirectory, "versions.dat"), out reader))
+                if (TryLoad(Path.Combine(Configuration.ReadonlyBundleDirectory, "versions.dat"), out reader))
                     return reader;
+
+                if (OperatingSystem.IsMacOS() &&
+                    Configuration.ReadonlyBundleDirectory != Configuration.ExecutableDirectoryPath &&
+                    !Directory.Exists(Configuration.ReadonlyBundleDirectory) &&
+                    TryLoad(Path.Combine(Configuration.ExecutableDirectoryPath, "versions.dat"), out reader))
+                {
+                    return reader;
+                }
 
                 return null;
             }

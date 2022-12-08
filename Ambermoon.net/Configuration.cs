@@ -205,30 +205,67 @@ namespace Ambermoon
         public static readonly string FallbackConfigDirectory =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");
 
+        private static string bundleDirectory = null;
         /// <summary>
-        /// The folder path where the bundle is located.
+        /// The folder path where the bundle is located. This falls back to
+        /// the user's app path on macOS if it is a translocated app.
         /// 
         /// If not on Mac this is identical to <see cref="ExecutableDirectoryPath"/>.
         /// </summary>
+        [JsonIgnore]
         public static string BundleDirectory
         {
             get
             {
+                if (bundleDirectory != null)
+                    return bundleDirectory;
+
+                bundleDirectory = ReadonlyBundleDirectory;
+
                 if (!OperatingSystem.IsMacOS())
-                    return ExecutableDirectoryPath;
+                    return bundleDirectory;
+
+                if (bundleDirectory.Contains("AppTranslocation")) // avoid using an translocated app path on macOS
+                    bundleDirectory = FallbackConfigDirectory;
+
+                return bundleDirectory;
+            }
+        }
+
+        private static string readonlyBundleDirectory = null;
+        /// <summary>
+        /// The folder path where the bundle is located. This also
+        /// allows translocated app paths on macOS as only read access is needed.
+        /// 
+        /// If not on Mac this is identical to <see cref="ExecutableDirectoryPath"/>.
+        /// </summary>
+        [JsonIgnore]
+        public static string ReadonlyBundleDirectory
+        {
+            get
+            {
+                if (readonlyBundleDirectory != null)
+                    return readonlyBundleDirectory;
+
+                if (!OperatingSystem.IsMacOS())
+                    return readonlyBundleDirectory = ExecutableDirectoryPath;
 
                 try
                 {
-                    var bundleDirectory = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName); // "MacOS"
-                    bundleDirectory = Path.GetDirectoryName(bundleDirectory.TrimEnd('/')); // "Contents"
-                    bundleDirectory = Path.GetDirectoryName(bundleDirectory); // "Ambermoon.net.app"
-                    bundleDirectory = Path.GetDirectoryName(bundleDirectory); // folder which contains the bundle
+                    readonlyBundleDirectory = Path.GetDirectoryName(Environment.ProcessPath).TrimEnd('/'); // "MacOS"
 
-                    return bundleDirectory;
+                    if (readonlyBundleDirectory.EndsWith("MacOS"))
+                    {
+                        readonlyBundleDirectory = Path.GetDirectoryName(readonlyBundleDirectory); // "Contents"
+                        readonlyBundleDirectory = Path.GetDirectoryName(readonlyBundleDirectory); // "Ambermoon.net.app"
+                        readonlyBundleDirectory = Path.GetDirectoryName(readonlyBundleDirectory); // folder which contains the bundle
+                    }
+
+                    return readonlyBundleDirectory;
                 }
                 catch
                 {
-                    return ExecutableDirectoryPath;
+                    return readonlyBundleDirectory = FallbackConfigDirectory;
                 }
             }
         }

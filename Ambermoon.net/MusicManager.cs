@@ -64,10 +64,14 @@ namespace Ambermoon
 
             try
             {
-                string musicPath = Path.Combine(Configuration.BundleDirectory, "music");
+                string musicPath = Path.Combine(Configuration.ReadonlyBundleDirectory, "music");
 
-                if (!Directory.Exists(musicPath) && OperatingSystem.IsMacOS())
+                if (OperatingSystem.IsMacOS() &&
+                    Configuration.ReadonlyBundleDirectory != Configuration.ExecutableDirectoryPath &&
+                    !Directory.Exists(musicPath))
+                {
                     musicPath = Path.Combine(Configuration.ExecutableDirectoryPath, "music");
+                }
 
                 if (!Directory.Exists(musicPath))
                     return;
