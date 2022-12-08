@@ -201,6 +201,8 @@ Special thanks to my top patreons and github sponsors:
 - timbo t
 - Robin Mattheussen (@romatthe)
 - Teladi (@Levidega)
+- Sebberick
+- Kaspar
 
 Special thanks to some special contributors and testers as well:
 - kermitfrog
@@ -210,6 +212,7 @@ Special thanks to some special contributors and testers as well:
 - Uukrull
 - Nephilim
 - skdubg
+- crediar
 
 
 ## Other projects
