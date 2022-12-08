@@ -225,7 +225,7 @@ namespace Ambermoon
                 if (!OperatingSystem.IsMacOS())
                     return bundleDirectory;
 
-                if (bundleDirectory.Contains("AppTranslocation")) // avoid using an translocated app path on macOS
+                if (OperatingSystem.IsMacOSVersionAtLeast(13) || new DirectoryInfo(bundleDirectory).Attributes.HasFlag(FileAttributes.ReadOnly))
                     bundleDirectory = FallbackConfigDirectory;
 
                 return bundleDirectory;
