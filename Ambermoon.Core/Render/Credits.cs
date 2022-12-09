@@ -95,6 +95,10 @@ namespace Ambermoon.Render
             AddText("soulsuckingjerk");
             AddText("Mahen");
             AddText("timbo t");
+            AddText("Robin Mattheussen");
+            AddText("Teladi");
+            AddText("Sebberick");
+            AddText("Kaspar");
 
             AddHeader("Contributors", 12);
             AddText("Over the years many people contributed to Ambermoon.", 1);
@@ -119,8 +123,8 @@ namespace Ambermoon.Render
             AddText("Thank you guys! You're awesome!", 1);
 
             AddText("Also thanks to all the testers of Ambermoon.net!", 3);
-            AddText("Especially to Thallyrion, Uukrull, Nephilim and");
-            AddText("skdubg who also helped fixing translation bugs.");
+            AddText("Especially to Thallyrion, Uukrull, Nephilim, crediar");
+            AddText("and skdubg who also helped fixing translation bugs.");
 
             AddText("Matthias Steinwachs (the guy who made the incredible", 6);
             AddText("music for Ambermoon) started creating remixes of");
@@ -147,7 +151,7 @@ namespace Ambermoon.Render
             AddText("twitter.com/Pyrdacor2");
             AddText("www.pyrdacor.net");
 
-            AddText("May 2022", 2);
+            AddText("December 2022", 2);
 
             lastText = creditsTexts.Peek();
             SetupNextText(lastText.EmptyLines);
