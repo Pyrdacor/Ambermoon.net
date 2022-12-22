@@ -59,7 +59,8 @@ namespace Ambermoon.Render
         Position lastUpdateScroll = null;
         Map lastUpdateMap = null;
         readonly Dictionary<uint, MapCharacter2D> mapCharacters = new Dictionary<uint, MapCharacter2D>();
-        readonly RandomAnimationInfo[] randomAnimationFrames = new RandomAnimationInfo[NUM_TILES];
+        readonly RandomAnimationInfo[] randomAnimationFramesBackground = new RandomAnimationInfo[NUM_TILES];
+        readonly RandomAnimationInfo[] randomAnimationFramesForeground = new RandomAnimationInfo[NUM_TILES];
 
         class RandomAnimationInfo
         {
@@ -137,45 +138,78 @@ namespace Ambermoon.Render
                 {
                     for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
                     {
-                        uint animationFrame = frame;
-                        var randomAnimation = randomAnimationFrames[column + row * NUM_VISIBLE_TILES_X];
+                        uint animationFrameBackground = frame;
+                        uint animationFrameForeground = frame;
+                        var randomAnimationBackground = randomAnimationFramesBackground[column + row * NUM_VISIBLE_TILES_X];
+                        var randomAnimationForeground = randomAnimationFramesForeground[column + row * NUM_VISIBLE_TILES_X];
 
-                        if (randomAnimation != null)
+                        if (randomAnimationBackground != null || randomAnimationForeground != null)
                         {
-                            int frameCount = randomAnimation.FrameCount;
-                            bool poison = randomAnimation.Poison;
+                            bool poison = randomAnimationBackground?.Poison == true || randomAnimationForeground?.Poison == true;
+                            bool poisoned = false;
 
-                            if (++randomAnimation.CurrentFrame >= frameCount) // full cycle passed
+                            if (randomAnimationBackground != null)
                             {
-                                randomAnimationFrames[column + row * NUM_VISIBLE_TILES_X] = CreateRandomStart(frameCount, poison);
-                                animationFrame = 0;
-                            }
-                            else if (randomAnimation.CurrentFrame >= 0)
-                            {
-                                animationFrame = (uint)randomAnimation.CurrentFrame;
+                                int frameCountBackground = randomAnimationBackground.FrameCount;                                
 
-                                if (randomAnimation.CurrentFrame == 0 && poison && !game.TravelType.IgnoreEvents())
+                                if (++randomAnimationBackground.CurrentFrame >= frameCountBackground) // full cycle passed
                                 {
-                                    PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
+                                    randomAnimationFramesBackground[column + row * NUM_VISIBLE_TILES_X] = CreateRandomStart(frameCountBackground, poison);
+                                    animationFrameBackground = 0;
+                                }
+                                else if (randomAnimationBackground.CurrentFrame >= 0)
+                                {
+                                    animationFrameBackground = (uint)randomAnimationBackground.CurrentFrame;
+
+                                    if (poison && randomAnimationBackground.CurrentFrame == 0 && !game.TravelType.IgnoreEvents())
+                                    {
+                                        poisoned = true;
+                                        PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
+                                    }
+                                }
+                                else
+                                {
+                                    animationFrameBackground = 0;
                                 }
                             }
-                            else
+
+                            if (randomAnimationForeground != null)
                             {
-                                animationFrame = 0;
+                                int frameCountForeground = randomAnimationForeground.FrameCount;
+
+                                if (++randomAnimationForeground.CurrentFrame >= frameCountForeground) // full cycle passed
+                                {
+                                    randomAnimationFramesForeground[column + row * NUM_VISIBLE_TILES_X] = CreateRandomStart(frameCountForeground, poison);
+                                    animationFrameForeground = 0;
+                                }
+                                else if (randomAnimationForeground.CurrentFrame >= 0)
+                                {
+                                    animationFrameForeground = (uint)randomAnimationForeground.CurrentFrame;
+
+                                    if (!poisoned && poison && randomAnimationForeground.CurrentFrame == 0 && !game.TravelType.IgnoreEvents())
+                                    {
+                                        poisoned = true;
+                                        PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
+                                    }
+                                }
+                                else
+                                {
+                                    animationFrameForeground = 0;
+                                }
                             }
                         }
-                        else if (animationFrame == 0)
+                        else if (animationFrameBackground == 0 || animationFrameForeground == 0)
                         {
                             var tile = this[ScrollX + (uint)column, ScrollY + (uint)row];
 
-                            if (tile.FrontTileIndex != 0)
+                            if (tile.FrontTileIndex != 0 && animationFrameForeground == 0)
                             {
                                 var frontTile = tileset.Tiles[(int)tile.FrontTileIndex - 1];
 
                                 if (frontTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison) && !game.TravelType.IgnoreEvents())
                                     PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
                             }
-                            else if (tile.BackTileIndex != 0)
+                            else if (tile.BackTileIndex != 0 && animationFrameBackground == 0)
                             {
                                 var backTile = tileset.Tiles[(int)tile.BackTileIndex - 1];
 
@@ -185,9 +219,9 @@ namespace Ambermoon.Render
                         }
 
                         if (backgroundTileSprites[index].NumFrames != 1)
-                            backgroundTileSprites[index].CurrentFrame = animationFrame;
+                            backgroundTileSprites[index].CurrentFrame = animationFrameBackground;
                         if (foregroundTileSprites[index].NumFrames != 1)
-                            foregroundTileSprites[index].CurrentFrame = animationFrame;
+                            foregroundTileSprites[index].CurrentFrame = animationFrameForeground;
                         ++index;
                     }
                 }
@@ -522,13 +556,17 @@ namespace Ambermoon.Render
             if (mapChange)
                 lastUpdateScroll = null;
             lastUpdateMap = Map;
-            var randomAnimationFramesBackup = mapChange ? null : new RandomAnimationInfo[NUM_TILES];
+            var randomAnimationFramesBgBackup = mapChange ? null : new RandomAnimationInfo[NUM_TILES];
+            var randomAnimationFramesFgBackup = mapChange ? null : new RandomAnimationInfo[NUM_TILES];
             int scrolledX = lastUpdateScroll == null ? 0 : (int)ScrollX - lastUpdateScroll.X;
             int scrolledY = lastUpdateScroll == null ? 0 : (int)ScrollY - lastUpdateScroll.Y;
             lastUpdateScroll = new Position((int)ScrollX, (int)ScrollY);
 
             if (!mapChange)
-                Array.Copy(randomAnimationFrames, randomAnimationFramesBackup, randomAnimationFramesBackup.Length);
+            {
+                Array.Copy(randomAnimationFramesBackground, randomAnimationFramesBgBackup, randomAnimationFramesBgBackup.Length);
+                Array.Copy(randomAnimationFramesForeground, randomAnimationFramesFgBackup, randomAnimationFramesFgBackup.Length);
+            }
 
             for (uint row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
             {
@@ -542,7 +580,8 @@ namespace Ambermoon.Render
                     foregroundTileSprites[index].Layer = frontLayer;
                     foregroundTileSprites[index].TextureAtlasWidth = textureAtlas.Texture.Width;
                     foregroundTileSprites[index].PaletteIndex = (byte)(Map.PaletteIndex - 1);
-                    randomAnimationFrames[index] = null;
+                    randomAnimationFramesBackground[index] = null;
+                    randomAnimationFramesForeground[index] = null;
 
                     if (tile.BackTileIndex == 0)
                     {
@@ -563,9 +602,9 @@ namespace Ambermoon.Render
                         {
                             if (mapChange || column + scrolledX < 0 || column + scrolledX >= NUM_VISIBLE_TILES_X
                                 || row + scrolledY < 0 || row + scrolledY >= NUM_VISIBLE_TILES_Y)
-                                randomAnimationFrames[index] = CreateRandomStart(backTile);
+                                randomAnimationFramesBackground[index] = CreateRandomStart(backTile);
                             else
-                                randomAnimationFrames[index] = randomAnimationFramesBackup[column + scrolledX + (row + scrolledY) * NUM_VISIBLE_TILES_X];
+                                randomAnimationFramesBackground[index] = randomAnimationFramesBgBackup[column + scrolledX + (row + scrolledY) * NUM_VISIBLE_TILES_X];
                         }
                     }
 
@@ -588,9 +627,9 @@ namespace Ambermoon.Render
                         {
                             if (mapChange || column + scrolledX < 0 || column + scrolledX >= NUM_VISIBLE_TILES_X
                                 || row + scrolledY < 0 || row + scrolledY >= NUM_VISIBLE_TILES_Y)
-                                randomAnimationFrames[index] = CreateRandomStart(frontTile);
+                                randomAnimationFramesForeground[index] = CreateRandomStart(frontTile);
                             else
-                                randomAnimationFrames[index] = randomAnimationFramesBackup[column + scrolledX + (row + scrolledY) * NUM_VISIBLE_TILES_X];
+                                randomAnimationFramesForeground[index] = randomAnimationFramesFgBackup[column + scrolledX + (row + scrolledY) * NUM_VISIBLE_TILES_X];
                         }
                     }
 
