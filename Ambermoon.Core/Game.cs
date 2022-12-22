@@ -6250,7 +6250,7 @@ namespace Ambermoon
                 return totalDamage;
             }
 
-            DamageAllPartyMembers(CalculateDamage);
+            DamageAllPartyMembers(CalculateDamage, null, null, () => ResetMoveKeys(true));
         }
 
         internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null, bool updateSavegame = true,
