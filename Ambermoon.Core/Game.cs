@@ -1394,7 +1394,9 @@ namespace Ambermoon
                     }
 
                     layout.SetCharacter(SlotFromPartyMember(partyMember).Value, partyMember, false, Finish);
-                    
+
+                    if (currentWindow.Window == Window.Inventory && partyMember == CurrentInventory)
+                        UpdateCharacterInfo();
                 });
             }
         }
