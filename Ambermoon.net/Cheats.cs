@@ -161,6 +161,16 @@ namespace Ambermoon
                     "Usage: where" + Environment.NewLine,
                     Where
                 )
+            },
+            { "level",
+                Create
+                (
+                    "Increases the level of one or all party members." + Environment.NewLine +
+                    "Usage: level [amount] [party_member_index]" + Environment.NewLine +
+                    "Use party member 0 to increase for all party members." + Environment.NewLine +
+                    "If you omit the party member index, the selected one gets the levels.",
+                    Level
+                )
             }
         };
 
@@ -1158,6 +1168,97 @@ namespace Ambermoon
 
             Console.WriteLine($"Map {savegame.CurrentMapIndex}, X {savegame.CurrentMapX}, Y {savegame.CurrentMapY}, Looking {savegame.CharacterDirection}");
             Console.WriteLine();
+        }
+
+        static void Level(Game game, string[] args)
+        {
+            Console.WriteLine();
+
+            PartyMember[] GetPartyMembers(int argIndex)
+            {
+                int? partyMemberIndex = args.Length < argIndex + 1 ? (int?)null : int.TryParse(args[argIndex], out int i) ? i : -1;
+
+                if (partyMemberIndex != null && partyMemberIndex > Game.MaxPartyMembers)
+                {
+                    Console.WriteLine("Party member index was invalid or outside the range 0~6.");
+                    Console.WriteLine();
+                    return null;
+                }
+
+                if (partyMemberIndex == 0)
+                {
+                    return game.PartyMembers.ToArray();
+                }
+
+                var partyMember = partyMemberIndex == null ? game.CurrentPartyMember : game.GetPartyMember(partyMemberIndex.Value - 1);
+
+                if (partyMember == null)
+                {
+                    Console.WriteLine($"Party member with index {partyMemberIndex} does not exist.");
+                    Console.WriteLine();
+                    return null;
+                }
+
+                return new PartyMember[1] { partyMember };
+            }
+
+            int amount = args.Length < 1 ? 1 : int.TryParse(args[0], out int n) ? n : -1;
+
+            if (amount < 1)
+            {
+                Console.WriteLine("Amount was invalid or below 1.");
+                Console.WriteLine();
+                return;
+            }
+
+            var partyMembers = GetPartyMembers(1).Where(p => p.Alive).ToList();
+
+            if (partyMembers.Count == 0)
+            {
+                Console.WriteLine("There is no alive target party member.");
+                Console.WriteLine();
+            }
+
+            partyMembers = partyMembers.Where(p => p.Level < 50).ToList();
+
+            if (partyMembers.Count == 0)
+            {
+                Console.WriteLine("There is no target party member below max level.");
+                Console.WriteLine();
+            }
+
+            void Finish()
+            {
+                Console.WriteLine("Levels were increased.");
+                Console.WriteLine();
+
+                game.UpdateInventory();
+            }
+
+            int partyMemberCount = partyMembers.Count;
+            Action[] actions = null;
+            actions = partyMembers.Select((partyMember, index) => new Action
+            (
+                () => {
+                    int currentLevel = partyMember.Level;
+                    int targetLevel = Math.Min(50, currentLevel + amount);
+                    uint exp;
+
+                    do
+                    {
+                        exp = partyMember.GetNextLevelExperiencePoints(game.Features);
+                        ++partyMember.Level;
+                    }
+                    while (partyMember.Level < targetLevel);
+
+                    partyMember.Level = (byte)currentLevel;
+
+                    game.AddExperience(partyMember, exp - partyMember.ExperiencePoints, index == partyMemberCount - 1 ? Finish : actions[index + 1]);
+                }
+            )).ToArray();
+
+            actions[0]();
+
         }
     }
 }

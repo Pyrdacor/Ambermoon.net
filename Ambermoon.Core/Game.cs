@@ -240,7 +240,7 @@ namespace Ambermoon
         readonly Random random = new Random();
         bool disableMusicChange = false;
         bool disableTimeEvents = false;
-        internal Features Features { get; }
+        public Features Features { get; }
         public const int NumAdditionalSavegameSlots = 20;
         internal SavegameTime GameTime { get; private set; } = null;
         readonly List<uint> changedMaps = new List<uint>();
@@ -13772,7 +13772,7 @@ namespace Ambermoon
             Add(0);
         }
 
-        void AddExperience(PartyMember partyMember, uint amount, Action finishedEvent)
+        public void AddExperience(PartyMember partyMember, uint amount, Action finishedEvent)
         {
             if (partyMember.AddExperiencePoints(amount, RandomInt, Features))
             {
