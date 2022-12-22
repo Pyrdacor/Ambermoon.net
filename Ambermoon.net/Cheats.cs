@@ -874,6 +874,9 @@ namespace Ambermoon
                     if (exactItem != null)
                     {
                         itemIndex = exactItem.Index;
+
+                        if ((partyMember = GetPartyMember(amountIndex + 1)) == null)
+                            return;
                     }
                     else
                     {
