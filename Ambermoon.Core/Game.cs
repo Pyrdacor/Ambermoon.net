@@ -1354,13 +1354,7 @@ namespace Ambermoon
             int? slot = SlotFromPartyMember(member);
 
             if (slot != null)
-            {
-                layout.SetCharacter(slot.Value, member, false, () =>
-                {
-                    clickMoveActive = false;
-                    ResetMoveKeys(true);
-                });
-            }
+                layout.SetCharacter(slot.Value, member, false, () => ResetMoveKeys(true));
         }
 
         void PartyMemberRevived(PartyMember partyMember, Action finishAction = null, bool showHealAnimation = true, bool selfRevive = false)
@@ -6256,7 +6250,11 @@ namespace Ambermoon
                 return totalDamage;
             }
 
-            DamageAllPartyMembers(CalculateDamage, null, null, () => ResetMoveKeys(true));
+            DamageAllPartyMembers(CalculateDamage, null, null, () =>
+            {
+                clickMoveActive = false;
+                ResetMoveKeys(true);
+            });
         }
 
         internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null, bool updateSavegame = true,
