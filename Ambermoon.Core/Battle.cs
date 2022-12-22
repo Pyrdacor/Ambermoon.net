@@ -678,7 +678,7 @@ namespace Ambermoon
         /// <param name="battleTicks">Battle ticks when starting the round.</param>
         internal void StartRound(PlayerBattleAction[] playerBattleActions, uint battleTicks)
         {
-            game.ProcessPoisonDamage(1, () =>
+            game.ProcessPoisonDamage(1, _ =>
             {
                 // Remove all died party members from the battle field
                 foreach (var partyMember in partyMembers.Where(p => p != null && !p.Alive))

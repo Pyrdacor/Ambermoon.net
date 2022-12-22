@@ -5003,7 +5003,7 @@ namespace Ambermoon.UI
                 {
                     if (draggedItem != null)
                     {
-                        if (buttons == MouseButtons.Left)
+                        if (buttons == MouseButtons.Left && partyMember.Alive && partyMember.Conditions.CanOpenInventory())
                         {
                             if (draggedItem.SourcePlayer == i && draggedItem.Equipped != true)
                             {
@@ -5048,7 +5048,7 @@ namespace Ambermoon.UI
                                 itemGrids[0].Refresh();
                             }
                         }
-                        else if (buttons == MouseButtons.Right)
+                        else if (buttons == MouseButtons.Right && partyMember.Conditions.CanOpenInventory())
                         {
                             // Only allow opening inventory with dragged item if we are
                             // not inside a chest window.
@@ -5072,7 +5072,7 @@ namespace Ambermoon.UI
 
                         return true;
                     }
-                    else if (draggedGold != 0)
+                    else if (draggedGold != 0 && partyMember.Alive && partyMember.Conditions.CanOpenInventory())
                     {
                         if (buttons == MouseButtons.Left)
                         {
@@ -5095,7 +5095,7 @@ namespace Ambermoon.UI
 
                         return true;
                     }
-                    else if (draggedFood != 0)
+                    else if (draggedFood != 0 && partyMember.Alive && partyMember.Conditions.CanOpenInventory())
                     {
                         if (buttons == MouseButtons.Left)
                         {

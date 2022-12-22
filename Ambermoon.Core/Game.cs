@@ -1691,7 +1691,7 @@ namespace Ambermoon
             }
         }
 
-        internal void ProcessPoisonDamage(uint times, Action followAction = null)
+        internal void ProcessPoisonDamage(uint times, Action<bool> followAction = null)
         {
             uint GetDamage()
             {
@@ -1844,7 +1844,16 @@ namespace Ambermoon
             void DealDamage()
             {
                 DamageAllPartyMembers(p => damageValues[SlotFromPartyMember(p).Value],
-                    null, null, () => GameTime_HoursPassed(hoursPassed));
+                    null, null, someoneDied =>
+                    {
+                        GameTime_HoursPassed(hoursPassed);
+
+                        if (someoneDied)
+                        {
+                            clickMoveActive = false;
+                            ResetMoveKeys(true);
+                        }
+                    });
             }
 
             if (!alreadyExhausted)
@@ -1867,13 +1876,20 @@ namespace Ambermoon
             if (disableTimeEvents)
                 return;
 
-            ProcessPoisonDamage(hours, () =>
+            ProcessPoisonDamage(hours, someoneDied =>
             {
                 if (!notTiredNorExhausted && !swamLastTick && Map.UseTravelTypes && TravelType == TravelType.Swim)
                 {
                     int hours = (int)(24 + GameTime.Hour - lastSwimDamageHour) % 24;
                     int minutes = (int)GameTime.Minute - (int)lastSwimDamageMinute;
-                    DoSwimDamage((uint)(hours * 12 + minutes / 5));
+                    DoSwimDamage((uint)(hours * 12 + minutes / 5), someoneDrown =>
+                    {
+                        if (someoneDied || someoneDrown)
+                        {
+                            clickMoveActive = false;
+                            ResetMoveKeys(true);
+                        }
+                    });
                 }
             });
         }
@@ -1952,8 +1968,8 @@ namespace Ambermoon
             void Finish()
             {
                 EndSequence();
-                followUpAction?.Invoke();
                 clickMoveActive = wasClickMoveActive;
+                followUpAction?.Invoke();
             }
         }
 
@@ -4969,7 +4985,7 @@ namespace Ambermoon
         }
 
         internal void DamageAllPartyMembers(Func<PartyMember, uint> damageProvider, Func<PartyMember, bool> affectChecker = null,
-            Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null, Condition inflictCondition = Condition.None,
+            Action<PartyMember, Action> notAffectedHandler = null, Action<bool> followAction = null, Condition inflictCondition = Condition.None,
             bool showDamageSplash = true)
         {
             // In original all players are damaged one after the other
@@ -4986,13 +5002,13 @@ namespace Ambermoon
                     ForeachPartyMember(ShowDamageSplash, p => damagedPlayers.Contains(p), () =>
                     {
                         layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
-                        followAction?.Invoke();
+                        followAction?.Invoke(damagedPlayers.Any(player => !player.Alive));
                     });
                 }
                 else
                 {
                     layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
-                    followAction?.Invoke();
+                    followAction?.Invoke(damagedPlayers.Any(player => !player.Alive));
                 }
             });
 
@@ -5078,6 +5094,7 @@ namespace Ambermoon
                     finished?.Invoke();
                 }
             }
+
             void ShowDamageSplash(PartyMember partyMember, Action finished) => this.ShowDamageSplash(partyMember, damageProvider, finished);
         }
 
@@ -5090,7 +5107,7 @@ namespace Ambermoon
         }
 
         void DamageAllPartyMembers(uint damage, Func<PartyMember, bool> affectChecker = null,
-            Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null)
+            Action<PartyMember, Action> notAffectedHandler = null, Action<bool> followAction = null)
         {
             DamageAllPartyMembers(_ => damage, affectChecker, notAffectedHandler, followAction);
         }
@@ -5153,9 +5170,13 @@ namespace Ambermoon
                     Next();
             }, Finished, trapEvent.GetAilment());
 
-            void Finished()
+            void Finished(bool someoneDied)
             {
-                ResetMoveKeys(true);
+                if (someoneDied)
+                {
+                    clickMoveActive = false;
+                    ResetMoveKeys(true);
+                }
 
                 if (trapEvent.Next != null)
                 {
@@ -6223,7 +6244,7 @@ namespace Ambermoon
             DoSwimDamage();
         }
 
-        void DoSwimDamage(uint numTicks = 1)
+        void DoSwimDamage(uint numTicks = 1, Action<bool> finishAction = null)
         {
             lastSwimDamageHour = GameTime.Hour;
             lastSwimDamageMinute = GameTime.Minute;
@@ -6250,11 +6271,17 @@ namespace Ambermoon
                 return totalDamage;
             }
 
-            DamageAllPartyMembers(CalculateDamage, null, null, () =>
+            // Make sure the party stops moving after someone died
+            finishAction ??= someoneDied =>
             {
-                clickMoveActive = false;
-                ResetMoveKeys(true);
-            });
+                if (someoneDied)
+                {
+                    clickMoveActive = false;
+                    ResetMoveKeys(true);
+                }
+            };
+
+            DamageAllPartyMembers(CalculateDamage, null, null, finishAction);
         }
 
         internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null, bool updateSavegame = true,

@@ -332,7 +332,7 @@ namespace Ambermoon
                                     ? (Func<PartyMember, uint>)(_ => rewardEvent.Value) : p => rewardEvent.Value * p.HitPoints.TotalMaxValue / 100;
 
                                 // Note: Rewards damage silently.
-                                game.DamageAllPartyMembers(damageProvider, p => p.Alive, null, Done, Condition.None, false);
+                                game.DamageAllPartyMembers(damageProvider, p => p.Alive, null, _ => Done(), Condition.None, false);
                             }
                             else
                             {
