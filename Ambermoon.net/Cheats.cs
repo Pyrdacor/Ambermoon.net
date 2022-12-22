@@ -95,6 +95,7 @@ namespace Ambermoon
                 (
                     "Gives an item, gold or food to a party member." + Environment.NewLine +
                     "Usage: give <item_index> [amount] [party_member_index]" + Environment.NewLine +
+                    "Usage: give <partial_name> [amount] [party_member_index]" + Environment.NewLine +
                     "Usage: give gold <amount> [party_member_index]" + Environment.NewLine +
                     "Usage: give food <amount> [party_member_index]",
                     Give
@@ -780,29 +781,38 @@ namespace Ambermoon
         {
             Console.WriteLine();
 
-            int? partyMemberIndex = args.Length < 3 ? (int?)null : int.TryParse(args[2], out int i) ? i : -1;
-
-            if (partyMemberIndex != null && (partyMemberIndex < 1 || partyMemberIndex > Game.MaxPartyMembers))
+            PartyMember GetPartyMember(int argIndex)
             {
-                Console.WriteLine("Party member index was invalid or outside the range 1~6.");
-                Console.WriteLine();
-                return;
+                int? partyMemberIndex = args.Length < argIndex + 1 ? (int?)null : int.TryParse(args[argIndex], out int i) ? i : -1;
+
+                if (partyMemberIndex != null && (partyMemberIndex < 1 || partyMemberIndex > Game.MaxPartyMembers))
+                {
+                    Console.WriteLine("Party member index was invalid or outside the range 1~6.");
+                    Console.WriteLine();
+                    return null;
+                }
+
+                var partyMember = partyMemberIndex == null ? game.CurrentPartyMember : game.GetPartyMember(partyMemberIndex.Value - 1);
+
+                if (partyMember == null)
+                {
+                    Console.WriteLine($"Party member with index {partyMemberIndex} does not exist.");
+                    Console.WriteLine();
+                    return null;
+                }
+
+                return partyMember;
             }
 
-            var partyMember = partyMemberIndex == null ? game.CurrentPartyMember : game.GetPartyMember(partyMemberIndex.Value - 1);
-
-            if (partyMember == null)
-            {
-                Console.WriteLine($"Party member with index {partyMemberIndex} does not exist.");
-                Console.WriteLine();
-                return;
-            }
+            PartyMember partyMember = null;
 
             if (args.Length >= 2)
             {
                 switch (args[0].ToLower())
                 {
                     case "gold":
+                        if ((partyMember = GetPartyMember(2)) == null)
+                            return;
                         if (int.TryParse(args[1], out int gold) || gold < 1)
                         {
                             partyMember.AddGold((uint)gold);
@@ -815,6 +825,8 @@ namespace Ambermoon
                         Console.WriteLine();
                         return;
                     case "food":
+                        if ((partyMember = GetPartyMember(2)) == null)
+                            return;
                         if (int.TryParse(args[1], out int food) || food < 1)
                         {
                             partyMember.AddFood((uint)food);
@@ -829,16 +841,64 @@ namespace Ambermoon
                 }
             }
 
-            if (args.Length == 0 || !uint.TryParse(args[0], out uint itemIndex) ||
-                !game.ItemManager.Items.Any(item => item.Index == itemIndex))
+            uint itemIndex = 0;
+            int amountIndex = 1;
+
+            if (args[0].Length > 0 && !char.IsDigit(args[0][0]))
             {
-                Console.WriteLine("Invalid item index.");
-                Console.WriteLine("Type 'items' to see a list of items.");
-                Console.WriteLine();
-                return;
+                var nameArgs = args.TakeWhile(a => !char.IsDigit(a[0]));
+                string searchString = string.Join(" ", nameArgs).ToLower();
+                var items = game.ItemManager.Items.Where(item => item.Name.ToLower().Contains(searchString)).ToList();
+
+                if (items.Count == 0)
+                {
+                    Console.WriteLine("No item was found with that name.");
+                    Console.WriteLine("Type 'items' to see a list of items.");
+                    Console.WriteLine();
+                    return;
+                }
+                else if (items.Count > 1)
+                {
+                    var exactItem = items.FirstOrDefault(item => item.Name.ToLower() == searchString);
+
+                    if (exactItem != null)
+                    {
+                        itemIndex = exactItem.Index;
+                    }
+                    else
+                    {
+                        Console.WriteLine("The following items match your search.");
+                        Console.WriteLine("Use the index or be more precise with the name.");
+                        Console.WriteLine();
+                        ShowList(Array.Empty<string>(), items, item => item.Name, item => item.Index);
+                        return;
+                    }
+                }
+                else
+                {
+                    itemIndex = items[0].Index;
+                    amountIndex = nameArgs.Count();
+
+                    if ((partyMember = GetPartyMember(amountIndex + 1)) == null)
+                        return;
+                }
+            }
+            else
+            {
+                if (args.Length == 0 || !uint.TryParse(args[0], out itemIndex) ||
+                    !game.ItemManager.Items.Any(item => item.Index == itemIndex))
+                {
+                    Console.WriteLine("Invalid item index.");
+                    Console.WriteLine("Type 'items' to see a list of items.");
+                    Console.WriteLine();
+                    return;
+                }
+
+                if ((partyMember = GetPartyMember(2)) == null)
+                    return;
             }
 
-            int amount = args.Length < 2 ? 1 : int.TryParse(args[1], out int n) ? n : -1;
+            int amount = args.Length < amountIndex + 1 ? 1 : int.TryParse(args[amountIndex], out int n) ? n : -1;
 
             if (amount < 1)
             {
