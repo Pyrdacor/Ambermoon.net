@@ -2673,6 +2673,8 @@ namespace Ambermoon.UI
                     if (item.Spell == Spell.Lockpicking)
                     {
                         // Do not consume. Can be used by Thief/Ranger but has no effect in Ambermoon.
+                        if (wasInputEnabled)
+                            game.InputEnable = true;
                         return;
                     }
                     else if (item.Spell == Spell.CallEagle)
