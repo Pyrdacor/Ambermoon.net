@@ -2844,6 +2844,9 @@ namespace Ambermoon
         {
             int position = GetCharacterPosition(character);
 
+            if (position < 0) // already removed
+                return;
+
             HideBattleFieldDamage(position);
 
             if (currentBattleAnimation != null && character == currentlyAnimatedMonster)

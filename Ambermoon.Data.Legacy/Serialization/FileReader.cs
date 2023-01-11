@@ -121,7 +121,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     }, fileContainer.Files[1] as DataReader);
                 }
 
-                // There is a special case where lOB can be inside JH.
+                // There is a special case where LOB can be inside JH.
                 if (fileInfo.FileType == FileType.JH && fileContainer.Files[1].PeekDword() == (uint)FileType.LOB)
                 {
                     fileContainer.FileType = FileType.JHPlusLOB;
