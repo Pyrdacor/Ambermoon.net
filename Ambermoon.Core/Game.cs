@@ -14444,7 +14444,8 @@ namespace Ambermoon
                     }
                     void ToggleLegendPage()
                     {
-                        ShowLegendPage(1 - legendPage);
+                        if (CurrentWindow.Window == Window.Automap)
+                            ShowLegendPage(1 - legendPage);
                     }
                     ShowLegendPage(0);
                     var locationArea = new Rect(217, 166, 86, 22);
