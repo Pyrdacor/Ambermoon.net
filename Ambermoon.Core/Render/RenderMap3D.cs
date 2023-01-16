@@ -112,6 +112,8 @@ namespace Ambermoon.Render
 
             public void ResetLastInteractionTime() => lastInteractionTicks = game.CurrentTicks;
 
+            public void ResetMovementTimer() => character3D?.ResetMovementTimer();
+
             public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
                 Labdata.ObjectPosition objectPosition, uint textureIndex, MapCharacter parent,
@@ -490,6 +492,12 @@ namespace Ambermoon.Render
             {
                 var testPosition = Position * Global.DistancePerBlock;
 
+                bool TestRoundedPosition(Position position)
+                {
+                    uint blockIndex = (uint)(position.X + position.Y * map.Map.Width);
+                    return blockingTiles.Contains(blockIndex);
+                }
+
                 while (true)
                 {
                     if (testPosition.GetMaxDistance(position) < Global.DistancePerBlock / 4)
@@ -508,10 +516,100 @@ namespace Ambermoon.Render
                         testPosition.Y += Global.DistancePerBlock / 4;
 
                     var roundedTestPosition = testPosition.Round(1.0f / Global.DistancePerBlock);
-                    uint blockIndex = (uint)(roundedTestPosition.X + roundedTestPosition.Y * map.Map.Width);
 
-                    if (blockingTiles.Contains(blockIndex))
-                        return true;
+                    if (TestRoundedPosition(roundedTestPosition))
+                    {
+                        // If we are on the edge, test the other tile.
+                        // Note: This might not work if Global.DistancePerBlock is no longer 1.0f.
+                        float xFraction = testPosition.X - (int)testPosition.X;
+                        float yFraction = testPosition.Y - (int)testPosition.Y;
+
+                        if (Util.FloatEqual(Math.Abs(xFraction), 0.5f))
+                        {
+                            if ((int)testPosition.X == roundedTestPosition.X)
+                            {
+                                if (distance.X > 0)
+                                    testPosition.X += Math.Sign(testPosition.X) * Global.DistancePerBlock / 2;
+                            }
+                            else
+                            {
+                                if (distance.X < 0)
+                                    testPosition.X -= Math.Sign(testPosition.X) * Global.DistancePerBlock / 2;
+                            }
+                        }
+                        if (Util.FloatEqual(Math.Abs(yFraction), 0.5f))
+                        {
+                            if ((int)testPosition.Y == roundedTestPosition.Y)
+                            {
+                                if (distance.Y > 0)
+                                    testPosition.Y += Math.Sign(testPosition.Y) * Global.DistancePerBlock / 2;
+                            }
+                            else
+                            {
+                                if (distance.Y < 0)
+                                    testPosition.Y -= Math.Sign(testPosition.Y) * Global.DistancePerBlock / 2;
+                            }
+                        }
+
+                        roundedTestPosition = testPosition.Round(1.0f / Global.DistancePerBlock);
+
+                        if (TestRoundedPosition(roundedTestPosition))
+                            return true;
+                    }
+                    else
+                    {
+                        // Don't allow looking through adjacent diagonal blocks.
+                        if (distance.X < 0)
+                        {
+                            // Looking left
+
+                            if (distance.Y < 0)
+                            {
+                                // Looking up left
+                                // Test position is in the upper left quadrant.
+                                //   \[ ]
+                                // [ ]\
+                                if (TestRoundedPosition(roundedTestPosition + new Position(1, 0)) &&
+                                    TestRoundedPosition(roundedTestPosition + new Position(0, 1)))
+                                    return true; // Block if both adjacent blocks are blocking.
+                            }
+                            else if (distance.Y > 0)
+                            {
+                                // Looking down left
+                                // Test position is in the lower left quadrant.
+                                // [ ]/
+                                //   /[ ]
+                                if (TestRoundedPosition(roundedTestPosition + new Position(1, 0)) &&
+                                    TestRoundedPosition(roundedTestPosition + new Position(0, -1)))
+                                    return true; // Block if both adjacent blocks are blocking.
+                            }
+                        }
+                        else if (distance.X > 0)
+                        {
+                            // Looking right
+
+                            if (distance.Y < 0)
+                            {
+                                // Looking up right
+                                // Test position is in the upper right quadrant.
+                                // [ ]/
+                                //   /[ ]
+                                if (TestRoundedPosition(roundedTestPosition + new Position(-1, 0)) &&
+                                    TestRoundedPosition(roundedTestPosition + new Position(0, 1)))
+                                    return true; // Block if both adjacent blocks are blocking.
+                            }
+                            else if (distance.Y > 0)
+                            {
+                                // Looking down right
+                                // Test position is in the lower right quadrant.
+                                //   \[ ]
+                                // [ ]\
+                                if (TestRoundedPosition(roundedTestPosition + new Position(-1, 0)) &&
+                                    TestRoundedPosition(roundedTestPosition + new Position(0, -1)))
+                                    return true; // Block if both adjacent blocks are blocking.
+                            }
+                        }
+                    }
                 }
             }
 
@@ -1637,7 +1735,12 @@ namespace Ambermoon.Render
             if (Map.CharacterReferences[characterIndex] == null)
                 throw new AmbermoonException(ExceptionScope.Application, "Null map character");
 
+            bool wasActive = mapCharacters[characterIndex].Active;
+
             mapCharacters[characterIndex].Active = !game.CurrentSavegame.GetCharacterBit(Map.Index, characterIndex);
+
+            if (!wasActive && mapCharacters[characterIndex].Active) // avoid instant movement when spawning characters
+                mapCharacters[characterIndex].ResetMovementTimer();
         }
 
         public CollisionDetectionInfo3D GetCollisionDetectionInfoForPlayer(Position position)
