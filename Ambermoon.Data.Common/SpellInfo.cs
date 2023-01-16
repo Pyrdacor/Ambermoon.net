@@ -268,8 +268,8 @@ namespace Ambermoon.Data
             { Spell.WakeTheDead, 80 },
             { Spell.ChangeAshes, 50 },
             { Spell.ChangeDust, 50 },
-            { Spell.GreatHealing, 75 },
-            { Spell.MassHealing, 60 },
+            { Spell.GreatHealing, 60 },
+            { Spell.MassHealing, 65 },
             { Spell.Resurrection, 120 },
             { Spell.RemoveRigidness, 25 },
             { Spell.RemoveLamedness, 35 },
@@ -287,7 +287,7 @@ namespace Ambermoon.Data
             { Spell.MagicalLantern, 20 },
             { Spell.MagicalSun, 35 },
             { Spell.GhostWeapon, 30 },
-            { Spell.CreateFood, 15 },
+            { Spell.CreateFood, 30 },
             { Spell.Blink, 15 },
             { Spell.Jump, 50 },
             { Spell.WordOfMarking, 70 },
@@ -327,8 +327,10 @@ namespace Ambermoon.Data
         };
 
         static readonly Dictionary<Spell, uint> adjustedSP = new Dictionary<Spell, uint>
-        {
+        {            
             { Spell.Escape, 100 },
+            { Spell.AlchemisticGlobe, 200 },
+            { Spell.MysticalGlobe, 100 },
             { Spell.Mudsling, 10 },
             { Spell.Earthquake, 25 },
             { Spell.Winddevil, 20 },
