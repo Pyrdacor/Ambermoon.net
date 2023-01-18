@@ -17,6 +17,18 @@ namespace Ambermoon.Data.Legacy.Serialization
         public int Position { get; private set; } = 0;
         public int Size => data.Count;
 
+        public byte this[int index]
+        {
+            get => data[index];
+            set
+            {
+                if (index == data.Count)
+                    data.Add(value);
+                else
+                    data[index] = value;
+            }
+        }
+
         public DataWriter()
         {
 
@@ -237,10 +249,21 @@ namespace Ambermoon.Data.Legacy.Serialization
             return data.GetRange(offset, length).ToArray();
         }
 
-        public byte this[int index] => data[index];
-
         public void WriteEnumAsByte<T>(T value) where T : struct, System.Enum, IConvertible => Write(value.ToByte(null));
 
         public void WriteEnumAsWord<T>(T value) where T : struct, System.Enum, IConvertible => Write(value.ToUInt16(null));
+
+        public void Remove(int index, int count)
+        {
+            if (index >= Size)
+                return;
+
+            data.RemoveRange(index, count);
+        }
+
+        public void Clear()
+        {
+            data.Clear();
+        }
     }
 }

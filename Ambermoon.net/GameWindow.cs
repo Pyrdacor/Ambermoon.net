@@ -665,7 +665,7 @@ namespace Ambermoon
 
         string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
 
-        void StartGame(GameData gameData, string savePath, GameLanguage gameLanguage, Features features)
+        void StartGame(GameData gameData, string savePath, GameLanguage gameLanguage, Features features, BinaryReader advancedDiffsReader)
         {
             // Load intro data
             var introData = new IntroData(gameData);
@@ -817,6 +817,21 @@ namespace Ambermoon
                                 };
                                 game.DrugTicked += Drug_Ticked;
                                 mainMenu.GameDataLoaded = true;
+
+                                AdvancedSavegamePatcher advancedSavegamePatcher = null;
+
+                                // Load advanced diffs (is null for non-advanced versions)
+                                if (advancedDiffsReader != null)
+                                    advancedSavegamePatcher = new AdvancedSavegamePatcher(advancedDiffsReader);
+
+                                game.RequestAdvancedSavegamePatching += (gameData, saveSlot, sourceEpisode, targetEpisode) =>
+                                {
+                                    if (advancedSavegamePatcher == null)
+                                        throw new AmbermoonException(ExceptionScope.Data, "No diff information for old Ambermoon Advanced savegame found.");
+
+                                    advancedSavegamePatcher.PatchSavegame(gameData, saveSlot, sourceEpisode, targetEpisode);
+                                };
+
                                 game.Run(continueGame, ConvertMousePosition(mouse.Position));
                                 return game;
                             };
@@ -1166,6 +1181,31 @@ namespace Ambermoon
 
             initialized = true;
 
+            static BinaryReader LoadAdvancedDiffs()
+            {
+                static bool TryLoad(string path, out BinaryReader reader)
+                {
+                    reader = File.Exists(path) ? new BinaryReader(File.OpenRead(path)) : null;
+                    return reader != null;
+                }
+
+                if (TryLoad("diffs.dat", out var reader))
+                    return reader;
+
+                if (TryLoad(Path.Combine(Configuration.ReadonlyBundleDirectory, "diffs.dat"), out reader))
+                    return reader;
+
+                if (OperatingSystem.IsMacOS() &&
+                    Configuration.ReadonlyBundleDirectory != Configuration.ExecutableDirectoryPath &&
+                    !Directory.Exists(Configuration.ReadonlyBundleDirectory) &&
+                    TryLoad(Path.Combine(Configuration.ExecutableDirectoryPath, "diffs.dat"), out reader))
+                {
+                    return reader;
+                }
+
+                return null;
+            }
+
             static BinaryReader LoadVersionData()
             {
                 static bool TryLoad(string path, out BinaryReader reader)
@@ -1210,7 +1250,10 @@ namespace Ambermoon
 
                 try
                 {
-                    StartGame(gameData as GameData, savePath, gameLanguage, features);
+                    var advancedDiffsReader = gameData.Advanced ? (additionalData == null
+                        ? LoadAdvancedDiffs()
+                        : additionalData.TryGetValue("diffs", out var reader) ? reader : LoadAdvancedDiffs()) : null;
+                    StartGame(gameData as GameData, savePath, gameLanguage, features, advancedDiffsReader);
                 }
                 catch (Exception ex)
                 {

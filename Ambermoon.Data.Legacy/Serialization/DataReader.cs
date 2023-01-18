@@ -2,6 +2,7 @@
 using SonicArranger;
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Ambermoon.Data.Legacy.Serialization
@@ -27,6 +28,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
         }
         public int Size => data == null ? 0 : data.Length;
+
+        public byte this[int index] => data[index];
 
         static DataReader()
         {

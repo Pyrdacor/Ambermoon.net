@@ -33,6 +33,7 @@ using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 using Ambermoon.Data.Audio;
 using static Ambermoon.UI.BuiltinTooltips;
 using System.Security;
+using System.IO;
 
 namespace Ambermoon
 {
@@ -476,6 +477,7 @@ namespace Ambermoon
         static Dictionary<uint, Chest> initialChests = null;
         internal Savegame CurrentSavegame { get; private set; }
         event Action ActivePlayerChanged;
+        public event Action<ILegacyGameData, int, int, int> RequestAdvancedSavegamePatching;
 
         // Rendering
         readonly Cursor cursor = null;
@@ -2122,6 +2124,14 @@ namespace Ambermoon
                     var additionalSavegameSlots = Configuration.GetOrCreateCurrentAdditionalSavegameSlots();
                     additionalSavegameSlots.ContinueSavegameSlot = slot;
                 }
+            }
+
+            // Upgrade old Ambermoon Advanced save games
+            if (Features == Features.AmbermoonAdvanced && slot > 0 && !savegame.PartyMembers.ContainsKey(16))
+            {
+                // TODO: will only work for legacy data for now!
+                RequestAdvancedSavegamePatching((ILegacyGameData)renderView.GameData, slot, 1, 2);
+                savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, slot, totalSavegames);
             }
 
             void Start() => this.Start(savegame, () => postAction?.Invoke(slot));
