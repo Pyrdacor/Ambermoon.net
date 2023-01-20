@@ -556,7 +556,7 @@ namespace Ambermoon.Render
                         if (TestRoundedPosition(roundedTestPosition))
                             return true;
                     }
-                    else
+                    else if (roundedTestPosition.X != Position.X && roundedTestPosition.Y != Position.Y)
                     {
                         // Don't allow looking through adjacent diagonal blocks.
                         if (distance.X < 0)

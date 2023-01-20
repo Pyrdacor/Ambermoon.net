@@ -121,11 +121,20 @@ namespace Ambermoon.Geometry
             currentState = State.MovingToTile;
         }
 
-        public void MoveTowardsPlayer(FloatPosition playerPosition)
+        public void MoveTowardsPlayer(FloatPosition playerPosition, uint ticks)
         {
             var diff = playerPosition - RealPosition;
             diff.Normalize();
-            var nextPosition = RealPosition + diff * (0.25f * Global.DistancePerBlock);
+            float stepSize = 0.25f * Global.DistancePerBlock;
+
+            if (currentState == State.BlockedToPlayer)
+            {
+                uint moveTicks = Math.Min(ticks - lastMoveTicks, ticksPerMovement - movedTicks);
+                lastMoveTicks = ticks;
+                stepSize = moveTicks * Global.DistancePerBlock / TicksPerMovement;
+            }           
+
+            var nextPosition = RealPosition + diff * stepSize;
 
             if (!MoveRequested(nextPosition))
             {
@@ -195,7 +204,7 @@ namespace Ambermoon.Geometry
                     if (monster)
                     {
                         movedTicks = 0;
-                        MoveTowardsPlayer(playerPosition);
+                        MoveTowardsPlayer(playerPosition, ticks);
                     }
                     else if (moveRandom && game.GameTime.TimeSlot >= NextMoveTimeSlot)
                     {
@@ -215,7 +224,7 @@ namespace Ambermoon.Geometry
                     if (monster)
                     {
                         movedTicks = 0;
-                        MoveTowardsPlayer(playerPosition);
+                        MoveTowardsPlayer(playerPosition, ticks);
                     }
                     else if (moveRandom && game.GameTime.TimeSlot >= NextMoveTimeSlot)
                     {
@@ -239,7 +248,7 @@ namespace Ambermoon.Geometry
                     {
                         movedTicks = 0;
                         lastTilePosition = Position;
-                        MoveTowardsPlayer(playerPosition);
+                        MoveTowardsPlayer(playerPosition, ticks);
                     }
                     else
                     {
@@ -278,9 +287,16 @@ namespace Ambermoon.Geometry
                     var diff = playerPosition - RealPosition;
                     diff.Normalize();
                     float stepSize = moveTicks * Global.DistancePerBlock / TicksPerMovement;
+                    var nextPosition = RealPosition + diff * stepSize;
 
-                    RealPosition.X += diff.X * stepSize;
-                    RealPosition.Y += diff.Y * stepSize;
+                    if (!MoveRequested(nextPosition))
+                    {
+                        Stop(false);
+                        currentState = State.BlockedToPlayer;
+                        return;
+                    }
+
+                    RealPosition = nextPosition;
                     movedTicks += moveTicks;
 
                     if (movedTicks == ticksPerMovement) // finished movement
@@ -288,7 +304,7 @@ namespace Ambermoon.Geometry
                         currentState = State.IdleOnTile;
                         lastTilePosition = Position;
                         movedTicks = 0;
-                        MoveTowardsPlayer(playerPosition);
+                        MoveTowardsPlayer(playerPosition, ticks);
                     }
 
                     break;
@@ -301,7 +317,7 @@ namespace Ambermoon.Geometry
                         return;
                     }
 
-                    MoveTowardsPlayer(playerPosition);
+                    MoveTowardsPlayer(playerPosition, ticks);
 
                     break;
                 }
