@@ -4,7 +4,7 @@
     <LangVersion>8</LangVersion>
     <RootNamespace>Ambermoon</RootNamespace>
     <UserSecretsId>5ff861f6-0255-427a-978a-7a8030ee8731</UserSecretsId>
-    <Version>10.7.1</Version>
+    <Version>10.8.0</Version>
     <Authors>Robert Schneckenhaus</Authors>
     <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Pyrdacor/Ambermoon.net</RepositoryUrl>
