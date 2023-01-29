@@ -69,6 +69,7 @@ namespace Ambermoon.Renderer
         {
             State.ProjectionMatrix2D = Matrix4.CreateOrtho2D(0, Global.VirtualScreenWidth, 0, Global.VirtualScreenHeight, 0, 1);
             State.ProjectionMatrix3D = Matrix4.CreatePerspective(FovY3D, aspect, 0.1f, 40.0f * Global.DistancePerBlock); // Max 3D map dimension is 41
+            State.FullScreenProjectionMatrix2D = Matrix4.CreateOrtho2D(0, width, 0, height, 0, 1);
 
             State.ClearMatrices();
             State.PushModelViewMatrix(Matrix4.Identity);

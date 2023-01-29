@@ -26,5 +26,7 @@ namespace Ambermoon
         internal static byte[] Logo => (byte[])ResourceManager.GetObject("logo", Culture);
 
         internal static byte[] Song => (byte[])ResourceManager.GetObject("song", Culture);
+
+        internal static byte[] Advanced => (byte[])ResourceManager.GetObject("advanced", Culture);
     }
 }

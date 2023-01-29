@@ -64,7 +64,8 @@ namespace Ambermoon
         Effects,
         Cursor,
         DrugEffect,
-        Misc // general purpose layer
+        Misc, // general purpose layer
+        Images // non-palette high-resolution images
     }
 
     public partial class Global

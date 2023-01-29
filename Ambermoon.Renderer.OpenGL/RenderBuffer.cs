@@ -63,10 +63,11 @@ namespace Ambermoon.Renderer
         static readonly Dictionary<State, FowShader> fowShaders = new Dictionary<State, FowShader>();
         static readonly Dictionary<State, SkyShader> skyShaders = new Dictionary<State, SkyShader>();
         static readonly Dictionary<State, AlphaTextureShader> alphaTextureShaders = new Dictionary<State, AlphaTextureShader>();
+        static readonly Dictionary<State, ImageShader> imageShaders = new Dictionary<State, ImageShader>();
 
         public RenderBuffer(State state, bool is3D, bool supportAnimations, bool layered,
             bool noTexture = false, bool isBillboard = false, bool isText = false, bool opaque = false,
-            bool fow = false, bool sky = false, bool special = false)
+            bool fow = false, bool sky = false, bool special = false, bool noPaletteImage = false)
         {
             this.state = state;
             Opaque = opaque;
@@ -77,7 +78,13 @@ namespace Ambermoon.Renderer
                     throw new AmbermoonException(ExceptionScope.Render, "3D render buffers can't be masked nor layered and must not lack a texture.");
             }
 
-            if (special)
+            if (noPaletteImage)
+            {
+                if (!imageShaders.ContainsKey(state))
+                    imageShaders[state] = ImageShader.Create(state);
+                vertexArrayObject = new VertexArrayObject(state, imageShaders[state].ShaderProgram);
+            }
+            else if (special)
             {
                 if (!alphaTextureShaders.ContainsKey(state))
                     alphaTextureShaders[state] = AlphaTextureShader.Create(state);
@@ -150,7 +157,7 @@ namespace Ambermoon.Renderer
                 positionBuffer = new PositionBuffer(state, false);
             indexBuffer = new IndexBuffer(state);
 
-            if (special)
+            if (special || noPaletteImage)
                 alphaBuffer = new ByteBuffer(state, false);
 
             if (fow)
@@ -173,7 +180,8 @@ namespace Ambermoon.Renderer
             }
             else
             {
-                paletteIndexBuffer = new ByteBuffer(state, true);
+                if (!noPaletteImage)
+                    paletteIndexBuffer = new ByteBuffer(state, true);
                 textureAtlasOffsetBuffer = new PositionBuffer(state, !supportAnimations);
 
                 if (isText)
@@ -183,7 +191,7 @@ namespace Ambermoon.Renderer
                     vertexArrayObject.AddBuffer(TextShader.DefaultTextColorIndexName, textColorIndexBuffer);
                 }
 
-                if (!isText && !is3D)
+                if (!isText && !is3D && !noPaletteImage)
                 {
                     colorBuffer = new ColorBuffer(state, true);
 
@@ -232,12 +240,13 @@ namespace Ambermoon.Renderer
                 vertexArrayObject.AddBuffer(ColorShader.DefaultPositionName, positionBuffer);
             vertexArrayObject.AddBuffer("index", indexBuffer);
 
-            if (special)
+            if (special || noPaletteImage)
                 vertexArrayObject.AddBuffer(AlphaTextureShader.DefaultAlphaName, alphaBuffer);
 
             if (!fow && !noTexture)
             {
-                vertexArrayObject.AddBuffer(TextureShader.DefaultPaletteIndexName, paletteIndexBuffer);
+                if (!noPaletteImage)
+                    vertexArrayObject.AddBuffer(TextureShader.DefaultPaletteIndexName, paletteIndexBuffer);
                 vertexArrayObject.AddBuffer(TextureShader.DefaultTexCoordName, textureAtlasOffsetBuffer);
             }
         }
@@ -251,6 +260,7 @@ namespace Ambermoon.Renderer
         internal FowShader FowShader => fowShaders[state];
         internal SkyShader SkyShader => skyShaders[state];
         internal AlphaTextureShader AlphaTextureShader => alphaTextureShaders[state];
+        internal ImageShader ImageShader => imageShaders[state];
 
         public int GetDrawIndex(Render.IFow fow,
             Render.PositionTransformation positionTransformation,

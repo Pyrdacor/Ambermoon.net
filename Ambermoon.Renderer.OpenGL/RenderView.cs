@@ -621,17 +621,32 @@ namespace Ambermoon.Renderer.OpenGL
                                 (0x800000 >> (8 * (DrugColorComponent.Value % 3))))));
                         State.Gl.BlendFunc(BlendingFactor.DstColor, BlendingFactor.OneMinusConstantColor);
                     }
-                    else if (layer.Key == Layer.FOW || layer.Key == Layer.Misc)
+                    else if (layer.Key == Layer.FOW || layer.Key == Layer.Misc || layer.Key == Layer.Images)
                     {
                         State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                     }
                     if (layer.Key == Layer.FOW || layer.Key == Layer.IntroEffects || layer.Key == Layer.Effects ||
-                        layer.Key == Layer.DrugEffect || layer.Key == Layer.Misc)
+                        layer.Key == Layer.DrugEffect || layer.Key == Layer.Misc || layer.Key == Layer.Images)
                         State.Gl.Enable(EnableCap.Blend);
                     else
                         State.Gl.Disable(EnableCap.Blend);
 
-                    layer.Value.Render();
+                    if (layer.Key == Layer.Images)
+                    {
+                        State.PushProjectionMatrix(State.FullScreenProjectionMatrix2D);
+                        try
+                        {
+                            layer.Value.Render();
+                        }
+                        finally
+                        {
+                            State.PopProjectionMatrix();
+                        }
+                    }
+                    else
+                    {
+                        layer.Value.Render();
+                    }
                 }
 
                 accessViolationDetected = false;

@@ -69,6 +69,8 @@ namespace Ambermoon.Render
             atlasBuilders[layer].AddTexture(index, texture);
         }
 
+        public bool HasLayer(Layer layer) => atlas.ContainsKey(layer);
+
         public ITextureAtlas GetOrCreate(Layer layer)
         {
             if (!atlas.ContainsKey(layer))
@@ -78,6 +80,8 @@ namespace Ambermoon.Render
 
                 if (layer == Layer.BattleMonsterRow)
                     atlas.Add(layer, atlasBuilders[layer].Create(1));
+                else if (layer == Layer.Images)
+                    atlas.Add(layer, atlasBuilders[layer].Create(4));
                 else
                     atlas.Add(layer, atlasBuilders[layer].CreateUnpacked(320, 1));
             }

@@ -106,7 +106,8 @@ namespace Ambermoon.Renderer
             0.97f,  // Effects
             0.98f,  // Cursor
             0.99f,  // DrugEffect
-            0.70f   // Misc / General purpose
+            0.70f,  // Misc / General purpose
+            0.70f   // Non-palette high-res images
         };
 
         public RenderLayer(State state, Layer layer, Texture texture, Texture palette)
@@ -121,7 +122,7 @@ namespace Ambermoon.Renderer
 
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3DCeiling || layer == Layer.Map3D || layer == Layer.Billboards3D,
                 supportAnimations, layered, layer == Layer.DrugEffect, layer == Layer.Billboards3D, layer == Layer.Text,
-                opaque, layer == Layer.FOW, layer == Layer.Map3DBackground, layer == Layer.Misc);
+                opaque, layer == Layer.FOW, layer == Layer.Map3DBackground, layer == Layer.Misc, layer == Layer.Images);
 
             // UI uses color-filled areas and effects use colored areas for things like black fading map transitions.
             if (layer == Layer.Map3DBackground || layer == Layer.UI || layer == Layer.IntroEffects ||
@@ -216,6 +217,19 @@ namespace Ambermoon.Renderer
                             state.Gl.ActiveTexture(GLEnum.Texture1);
                             palette.Bind();
                         }
+
+                        shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
+                        shader.SetZ(LayerBaseZ[(int)Layer]);
+                    }
+                    else if (Layer == Layer.Images)
+                    {
+                        ImageShader shader = RenderBuffer.ImageShader;
+
+                        shader.UpdateMatrices(state);
+
+                        shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+                        state.Gl.ActiveTexture(GLEnum.Texture0);
+                        texture.Bind();
 
                         shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
                         shader.SetZ(LayerBaseZ[(int)Layer]);

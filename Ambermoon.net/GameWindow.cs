@@ -47,6 +47,7 @@ namespace Ambermoon
         FloatPosition trappedMouseOffset = null;
         FloatPosition trappedMouseLastPosition = null;
         LogoPyrdacor logoPyrdacor = null;
+        AdvancedLogo advancedLogo = null;
         Graphic[] logoPalettes;
         bool initialized = false;
         Patcher patcher = null;
@@ -404,6 +405,11 @@ namespace Ambermoon
                     logoPyrdacor?.Cleanup();
                     logoPyrdacor = null;
                 }
+                else if (advancedLogo != null)
+                {
+                    advancedLogo?.Cleanup();
+                    advancedLogo = null;
+                }
                 else if (versionSelector != null)
                     versionSelector.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
                 else if (Game != null)
@@ -459,6 +465,11 @@ namespace Ambermoon
             {
                 logoPyrdacor?.Cleanup();
                 logoPyrdacor = null;
+            }
+            else if (advancedLogo != null)
+            {
+                advancedLogo?.Cleanup();
+                advancedLogo = null;
             }
             else if (versionSelector != null)
                 versionSelector.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
@@ -697,6 +708,9 @@ namespace Ambermoon
                 }
             }
 
+            if (gameData.Advanced)
+                advancedLogo = new AdvancedLogo(); // TODO: later add it to options
+
             musicManager = new MusicManager(configuration, gameData);
 
             // Create render view
@@ -706,6 +720,7 @@ namespace Ambermoon
                 textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
                     introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
                 logoPyrdacor?.Initialize(textureAtlasManager);
+                AdvancedLogo.Initialize(textureAtlasManager);
                 return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;
@@ -844,6 +859,9 @@ namespace Ambermoon
                     }
 
                     while (logoPyrdacor != null)
+                        Thread.Sleep(100);
+
+                    while (advancedLogo != null)
                         Thread.Sleep(100);
 
                     ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFont,
@@ -1004,6 +1022,7 @@ namespace Ambermoon
             {
                 textureAtlasManager.AddUIOnly(graphicProvider, fontProvider);
                 logoPyrdacor?.Initialize(textureAtlasManager);
+                AdvancedLogo.Initialize(textureAtlasManager);
                 return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;
@@ -1068,8 +1087,8 @@ namespace Ambermoon
             var renderView = new RenderView(this, gameData, graphicProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
                 new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
-                () => KeyValuePair.Create(logoPyrdacor != null ? 0 : (int)configuration.GraphicFilter, logoPyrdacor != null ? 0 : (int)configuration.GraphicFilterOverlay),
-                () => logoPyrdacor != null ? 0 : (int)configuration.Effects,
+                () => KeyValuePair.Create(logoPyrdacor != null || advancedLogo != null ? 0 : (int)configuration.GraphicFilter, logoPyrdacor != null || advancedLogo != null ? 0 : (int)configuration.GraphicFilterOverlay),
+                () => logoPyrdacor != null || advancedLogo != null ? 0 : (int)configuration.Effects,
                 additionalPalettes);
             if (!useFrameBuffer)
             {
@@ -1378,6 +1397,8 @@ namespace Ambermoon
                 patcher.Update(delta);
             else if (versionSelector != null)
                 versionSelector.Update(delta);
+            else if (advancedLogo != null)
+                advancedLogo.Update(renderView, () => advancedLogo = null);
             else if (mainMenu != null)
             {
                 mainMenu.Update();
