@@ -229,8 +229,34 @@ namespace Ambermoon.Data.Legacy
 
         public bool HasCrashSavegame() => Directory.Exists(Path.Combine(path, "Save.99"));
 
+        void SaveBackup(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot)
+        {
+            if (gameData is not ILegacyGameData legacyGameData)
+                return;
+
+            try
+            {
+                var savegameFiles = new SavegameInputFiles
+                {
+                    SaveDataReader = legacyGameData.Files[$"Save.{saveSlot:00}/Party_data.sav"].Files[1],
+                    PartyMemberDataReaders = legacyGameData.Files[$"Save.{saveSlot:00}/Party_char.amb"],
+                    ChestDataReaders = legacyGameData.Files[$"Save.{saveSlot:00}/Chest_data.amb"],
+                    MerchantDataReaders = legacyGameData.Files[$"Save.{saveSlot:00}/Merchant_data.amb"],
+                    AutomapDataReaders = legacyGameData.Files[$"Save.{saveSlot:00}/Automap.amb"]
+                };
+                var oldSavegame = Savegame.Load(savegameSerializer, savegameFiles, null);
+                var savegameOutFiles = savegameSerializer.Write(oldSavegame);
+                SaveToPath(Path.Combine(path, "backups"), savegameOutFiles, saveSlot, null);
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
         public void Save(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot, string name, Savegame savegame)
         {
+            SaveBackup(gameData, savegameSerializer, saveSlot);
             var savegameFiles = savegameSerializer.Write(savegame);
             if (saveSlot <= 10)
             {

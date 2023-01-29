@@ -244,8 +244,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             foreach (var partyMemberDataReader in files.PartyMemberDataReaders.Files.Where(f => f.Value.Size != 0))
             {
-                var partyTextFile = partyTextsContainer.Files.ContainsKey(partyMemberDataReader.Key) && partyTextsContainer.Files[partyMemberDataReader.Key].Size != 0
-                    ? partyTextsContainer.Files[partyMemberDataReader.Key] : null;
+                var partyTextFile = partyTextsContainer != null && partyTextsContainer.Files.TryGetValue(partyMemberDataReader.Key, out var textFile) && textFile.Size != 0
+                    ? textFile : null;
                 partyMemberDataReader.Value.Position = 0;
                 savegame.PartyMembers.Add((uint)partyMemberDataReader.Key,
                     PartyMember.Load((uint)partyMemberDataReader.Key, partyMemberReader,
