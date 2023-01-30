@@ -6,13 +6,11 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.7.1 is the most recent version from 27-07-2022. It includes [original version 1.16](https://github.com/Pyrdacor/Ambermoon) and also [Ambermoon Advanced 0.01](https://github.com/Pyrdacor/Ambermoon-Advanced).
-
-Version 1.6.8 and later should now also work on ARM Macs (M1, etc)!
+Version 1.8.0 is the most recent version from 30-01-2023. It includes [original version 1.17](https://github.com/Pyrdacor/Ambermoon) and also [Ambermoon Advanced 1.02](https://github.com/Pyrdacor/Ambermoon-Advanced).
 
 You can also download the game on my website at www.pyrdacor.net!
 
-Platform | Download 1.7.1
+Platform | Download 1.8.0
 --- | :-:
 **Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows.zip)
 **Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Linux.tar.gz)
@@ -21,12 +19,9 @@ Platform | Download 1.7.1
 **Windows 32bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows32Bit.zip)
 
 
-From version 1.5.0 onwards you can use your own music with Ambermoon (e.g. Atari music or the remixes of Matthias Steinwachs). For more details read [here](CustomMusic.md). \
-I also provide the Atari tracks [here](https://ambermoon-net.pyrdacor.net/download/music_atari.zip). Just extract the mp3 to a folder called "music" next to the main executable to enjoy the music. Note that not all tracks were converted to Atari so only 13 out of 32 tracks are available.
-
 Problems? The [FAQ](FAQ.md) might help.
 
-Other platforms like Android, iOS or Raspberry Pi4 might follow.
+Other platforms like Android, iOS or Raspberry Pi4 might follow later.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
 
@@ -45,6 +40,7 @@ A completely new game extension was also released called [Ambermoon Advanced](ht
 - [English Manual](https://ambermoon-net.pyrdacor.net/download/AmbermoonManualEnglish.pdf)
 - [English Amiga Walkthrough](https://ambermoon-net.pyrdacor.net/download/Walkthrough.txt) by Michael Böhnisch (1999)
 - [Tools](https://github.com/Pyrdacor/Ambermoon/blob/master/AmbermoonTools/README.md)
+
 
 ### Need help?
 
@@ -181,6 +177,12 @@ See [Configuration](Configuration.md) for more details.
 ## Changelog
 
 You can find the full changelog [here](changelog.md). You can also look at the [releases](https://github.com/Pyrdacor/Ambermoon.net/releases). They have more details in general.
+
+
+## Custom music
+
+You can use your own music with Ambermoon (e.g. the Atari music or the remixes from Matthias Steinwachs). For more details read [here](CustomMusic.md). \
+I also provide the Atari tracks [here](https://ambermoon-net.pyrdacor.net/download/music_atari.zip). Just extract the mp3 to a folder called "music" next to the main executable to enjoy the music. Note that not all tracks were converted to Atari so only 13 out of 32 tracks are available.
 
 
 ## Special thanks
