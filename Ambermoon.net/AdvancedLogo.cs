@@ -179,10 +179,12 @@ namespace Ambermoon
                     if (commandActivated)
                     {
                         float ratio = (float)logoAdvancedGraphic.Width / logoAdvancedGraphic.Height;
-                        int width = renderView.FramebufferSize.Width / 2;
-                        int height = Math.Min(renderView.FramebufferSize.Height, Util.Round(width / ratio));
+                        int height = renderView.FramebufferSize.Height;
+                        int width = Util.Round(ratio * height);
                         sprite = renderView.SpriteFactory.CreateWithAlpha(width, height);
                         sprite.Layer = renderView.GetLayer(Layer.Images);
+                        // Important for visibility check, otherwise the virtual screen is used!
+                        sprite.ClipArea = new Rect(Position.Zero, renderView.FramebufferSize);
                         sprite.X = (renderView.FramebufferSize.Width - width) / 2;
                         sprite.Y = (renderView.FramebufferSize.Height - height) / 2;
                         sprite.TextureAtlasOffset = new Position(0, 0); // TODO: must be first image!
