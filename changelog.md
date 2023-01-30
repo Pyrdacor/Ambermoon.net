@@ -1,5 +1,15 @@
 # Changelog
 
+
+## 1.8.0 - Eighth patch (July 2022 - January 2023)
+
+- Version [1.8.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.8.0): Added Ambermoon Advanced Ep II, many bugfixes
+
+## 1.7.0 - Seventh patch (June 2022 - July 2022)
+
+- Version [1.7.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.7.1): Small bugfixes and improvements
+- Version [1.7.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.7.0): Many bugfixes and improvements
+
 ## 1.6.0 - Sixth patch (February 2022 - June 2022)
 
 - Version [1.6.8](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.6.8): First working Mac M1 version, added patcher under the hood (no Mac support)
