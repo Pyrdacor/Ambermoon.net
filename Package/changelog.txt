@@ -1,3 +1,14 @@
+Version 1.8
+===========
+
+- Added Ambermoon Advanced 1.02 (first official release with 2 episodes)
+- Added a lot of stuff to support the new Advanced features
+- When saving a game, a backup of the last save is created if possible
+- Added optional 3D movement layout with strafe keys (QWEASD) instead of WASD
+- A lot of bug and crash fixes
+- Added some useful cheats
+
+
 Version 1.7
 ===========
 
