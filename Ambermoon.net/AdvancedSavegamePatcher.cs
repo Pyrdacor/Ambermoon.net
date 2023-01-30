@@ -575,6 +575,9 @@ namespace Ambermoon
                             data[index] &= 0x7f; // remove the marker
                         }
                     }
+                    // TODO: this is a manual hack when converting EP 1 to 2
+                    // Reset glob var 54 (was used for Kasimir before but now for Sunny's brooch)
+                    data[0x104 + 6] &= 0xbf;
                 }
                 else if (fileIndex == 1)
                 {
