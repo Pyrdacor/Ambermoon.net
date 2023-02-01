@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-	<Nullable>disable</Nullable>
+    <TargetFramework>net7.0</TargetFramework>
+	  <Nullable>disable</Nullable>
     <Authors>Robert Schneckenhaus</Authors>
     <Description>Library to load and process legacy data from the Amiga game Ambermoon.</Description>
     <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>
