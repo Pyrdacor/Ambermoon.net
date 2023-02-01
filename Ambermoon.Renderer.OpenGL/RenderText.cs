@@ -202,11 +202,15 @@ namespace Ambermoon.Renderer
                     }
                     else if (b >= (byte)SpecialGlyph.FirstColor)
                     {
-                        color = (TextColor)(b - SpecialGlyph.FirstColor);
-                        lineColors.Add(color);
+                        lineColors.Add((TextColor)(b - SpecialGlyph.FirstColor));
                         break;
                     }
                 }
+
+                // Use the last color specification in line if any for following lines
+                var lastColorSpec = line.LastOrDefault(b => b >= (byte)SpecialGlyph.FirstColor);
+                if (lastColorSpec != 0)
+                    color = (TextColor)(lastColorSpec - SpecialGlyph.FirstColor);
             }
 
             return lineColors.AsReadOnly();
