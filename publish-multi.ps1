@@ -24,7 +24,7 @@ Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Release/net7.0/win-x64/publ
 rm Ambermoon.net-Linux-x64.tar
 
 Write-Host Publish Linux-arm64 executable
-Set-Variable -Name UseGLES -Value true
+Set-Variable -Name UseGLES -Value false
 dotnet clean "./Ambermoon.Renderer.OpenGL/Ambermoon.Renderer.OpenGL.csproj"
 dotnet build -c Release "./Ambermoon.Renderer.OpenGL/Ambermoon.Renderer.OpenGL.csproj"
 dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r linux-arm64 --no-restore --self-contained
