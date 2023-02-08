@@ -80,13 +80,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="glfw" Version="3.3.7" />
+    <PackageReference Include="glfw" Version="3.3.8" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
     <PackageReference Include="NLayer" Version="1.14.0" />
-    <PackageReference Include="Silk.NET.GLFW" Version="2.15.0" />
-    <PackageReference Include="Silk.NET.Input" Version="2.15.0" />
-    <PackageReference Include="Silk.NET.Windowing" Version="2.15.0" />
-    <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
+    <PackageReference Include="Silk.NET.GLFW" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.Input" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.Windowing" Version="2.16.0" />
+    <PackageReference Include="System.Resources.Extensions" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='ReleaseNative'">
