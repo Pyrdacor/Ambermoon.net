@@ -31,91 +31,74 @@
     <DefineConstants>$(DefineConstants);GLES</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Saves\**" />
-    <EmbeddedResource Remove="Saves\**" />
-    <None Remove="Saves\**" />
-  </ItemGroup>
+	<PropertyGroup Condition="'$(Configuration)'=='Debug'">
+		<DefineConstants>DEBUG;TRACE</DefineConstants>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="ambermoon.cfg" />
-    <None Remove="Resources\app.ico" />
-    <None Remove="Resources\IntroFont.dat" />
-    <None Remove="Resources\logo.pyr" />
-    <None Remove="Resources\song.pyr" />
-    <None Remove="Resources\windowIcon.png" />
-  </ItemGroup>
+	<PropertyGroup Condition="'$(Configuration)'=='DebugAndroid'">
+		<DefineConstants>DEBUG;TRACE;GLES</DefineConstants>
+	</PropertyGroup>
 
-  <ItemGroup Condition="'$(Platform)'!='x86'">
-    <ContentWithTargetPath Include="x64\api-ms-win-core-winrt-l1-1-0.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  <TargetPath>x64\api-ms-win-core-winrt-l1-1-0.dll</TargetPath>
-	  <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </ContentWithTargetPath>
-  </ItemGroup>
-  <ItemGroup Condition="'$(Platform)'=='x86'">
-    <ContentWithTargetPath Include="x86\api-ms-win-core-winrt-l1-1-0.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  <TargetPath>x86\api-ms-win-core-winrt-l1-1-0.dll</TargetPath>
-	  <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </ContentWithTargetPath>
-  </ItemGroup>
+	<PropertyGroup Condition="'$(Configuration)'=='ReleaseAndroid'">
+		<DefineConstants>GLES</DefineConstants>
+		<Optimize>True</Optimize>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\app.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\logo.pyr">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\song.pyr">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\windowIcon.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\IntroFont.dat">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
+	<PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+		<DefineConstants>WINDOWS</DefineConstants>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="glfw" Version="3.3.8" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-    <PackageReference Include="NLayer" Version="1.14.0" />
-    <PackageReference Include="Silk.NET.GLFW" Version="2.16.0" />
-    <PackageReference Include="Silk.NET.Input" Version="2.16.0" />
-    <PackageReference Include="Silk.NET.Windowing" Version="2.16.0" />
-    <PackageReference Include="System.Resources.Extensions" Version="7.0.0" />
-  </ItemGroup>
+	<PropertyGroup Condition="'$(Configuration)'=='ReleaseNative'">
+		<Optimize>True</Optimize>
+	</PropertyGroup>
 
-  <ItemGroup Condition="'$(Configuration)'=='ReleaseNative'">
-	<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-*" />
-  </ItemGroup>	
+	<ItemGroup>
+		<Compile Remove="Saves\**" />
+		<EmbeddedResource Remove="Saves\**" />
+		<None Remove="Saves\**" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Ambermoon.Audio.OpenAL\Ambermoon.Audio.OpenAL.csproj" />
-    <ProjectReference Include="..\Ambermoon.Core\Ambermoon.Core.csproj" />
-    <ProjectReference Include="..\Ambermoon.Data.Legacy\Ambermoon.Data.Legacy.csproj" />
-    <ProjectReference Include="..\Ambermoon.Renderer.OpenGL\Ambermoon.Renderer.OpenGL.csproj" />
-    <ProjectReference Include="..\AmbermoonAdditionalDataLoader\AmbermoonAdditionalDataLoader.csproj" />
-    <ProjectReference Include="..\AmbermoonPatcher\AmbermoonPatcher.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="ambermoon.cfg" />
+		<None Remove="Resources\app.ico" />
+		<None Remove="Resources\IntroFont.dat" />
+		<None Remove="Resources\logo.pyr" />
+		<None Remove="Resources\song.pyr" />
+		<None Remove="Resources\windowIcon.png" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Resources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
+	<ItemGroup Condition="'$(Platform)'=='x64'">
+		<ContentWithTargetPath Include="x64\api-ms-win-core-winrt-l1-1-0.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>x64\api-ms-win-core-winrt-l1-1-0.dll</TargetPath>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		</ContentWithTargetPath>
+	</ItemGroup>
+	<ItemGroup Condition="'$(Platform)'=='x86'">
+		<ContentWithTargetPath Include="x86\api-ms-win-core-winrt-l1-1-0.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>x86\api-ms-win-core-winrt-l1-1-0.dll</TargetPath>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		</ContentWithTargetPath>
+	</ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Update="Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\app.ico">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Resources\logo.pyr">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Resources\song.pyr">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Resources\windowIcon.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Resources\IntroFont.dat">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</EmbeddedResource>
+	</ItemGroup>
 
   <ItemGroup>
     <None Update="x64\api-ms-win-core-winrt-l1-1-0.dll">
@@ -129,5 +112,42 @@
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
 	  <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
   </PropertyGroup>
+
+	<ItemGroup Condition="'$(Configuration)'=='ReleaseNative'">
+		<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-*" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Ambermoon.Audio.OpenAL\Ambermoon.Audio.OpenAL.csproj" />
+		<ProjectReference Include="..\Ambermoon.Core\Ambermoon.Core.csproj" />
+		<ProjectReference Include="..\Ambermoon.Data.Legacy\Ambermoon.Data.Legacy.csproj" />
+		<ProjectReference Include="..\Ambermoon.Renderer.OpenGL\Ambermoon.Renderer.OpenGL.csproj" />
+		<ProjectReference Include="..\AmbermoonAdditionalDataLoader\AmbermoonAdditionalDataLoader.csproj" />
+		<ProjectReference Include="..\AmbermoonPatcher\AmbermoonPatcher.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="x64\api-ms-win-core-winrt-l1-1-0.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="x86\api-ms-win-core-winrt-l1-1-0.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
 </Project>
