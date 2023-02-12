@@ -86,7 +86,7 @@ namespace Ambermoon
 
             if (fullscreen)
             {
-                var fullscreenSize = renderView.AvailableFullscreenModes.OrderBy(r => r.Width * r.Height).LastOrDefault();
+                var fullscreenSize = renderView.AvailableFullscreenModes.MaxBy(r => r.Width * r.Height);
 
                 if (fullscreenSize != null)
                 {
@@ -1136,7 +1136,7 @@ namespace Ambermoon
             availableFullscreenModes = window.Monitor.GetAllVideoModes().Select(mode =>
                 new Size(mode.Resolution.Value.X, mode.Resolution.Value.Y)).Distinct().ToList();
 
-            var fullscreenSize = availableFullscreenModes.OrderBy(r => r.Width * r.Height).LastOrDefault();
+            var fullscreenSize = availableFullscreenModes.MaxBy(r => r.Width * r.Height);
 
             if (fullscreenSize != null)
             {
