@@ -29,7 +29,7 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='DebugAndroid'">
-	<PackageReference Include="Silk.NET.OpenGLES" Version="2.15.0" />
+	<PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='ReleaseAndroid'">
