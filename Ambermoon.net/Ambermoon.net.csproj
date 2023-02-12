@@ -27,9 +27,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <DefineConstants Condition=" '$(UseGLES)' == 'true' ">$(DefineConstants);GLES</DefineConstants>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)'=='ReleaseWithAndroid'">
+		<DefineConstants>$(DefineConstants);GLES</DefineConstants>
+	</PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="Saves\**" />
