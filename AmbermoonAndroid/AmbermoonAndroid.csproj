@@ -25,7 +25,7 @@
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
     <PublishTrimmed>False</PublishTrimmed>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithAndroid|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseAndroid|AnyCPU'">
 	<DefineConstants>$(DefineConstants);GLES</DefineConstants>
     <AndroidLinkTool>r8</AndroidLinkTool>
     <AndroidUseAapt2>True</AndroidUseAapt2>
