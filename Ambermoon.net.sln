@@ -361,9 +361,9 @@ Global
 		{C5250198-DA00-4210-982C-C8B057FA0319}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5250198-DA00-4210-982C-C8B057FA0319}.Release|x64.ActiveCfg = Release|Any CPU
 		{C5250198-DA00-4210-982C-C8B057FA0319}.Release|x86.ActiveCfg = Release|Any CPU
-		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseAndroid|Any CPU.ActiveCfg = ReleaseWithAndroid|Any CPU
-		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseAndroid|x64.ActiveCfg = ReleaseWithAndroid|Any CPU
-		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseAndroid|x86.ActiveCfg = ReleaseWithAndroid|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseAndroid|Any CPU.ActiveCfg = ReleaseAndroid|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseAndroid|x64.ActiveCfg = ReleaseAndroid|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseAndroid|x86.ActiveCfg = ReleaseAndroid|Any CPU
 		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseNative|Any CPU.ActiveCfg = Release|Any CPU
 		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseNative|x64.ActiveCfg = Release|Any CPU
 		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseNative|x86.ActiveCfg = Release|Any CPU
@@ -380,9 +380,9 @@ Global
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.Release|x64.ActiveCfg = Release|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.Release|x86.ActiveCfg = Release|Any CPU
-		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseAndroid|Any CPU.ActiveCfg = ReleaseWithAndroid|Any CPU
-		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseAndroid|x64.ActiveCfg = ReleaseWithAndroid|Any CPU
-		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseAndroid|x86.ActiveCfg = ReleaseWithAndroid|Any CPU
+		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseAndroid|Any CPU.ActiveCfg = ReleaseAndroid|Any CPU
+		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseAndroid|x64.ActiveCfg = ReleaseAndroid|Any CPU
+		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseAndroid|x86.ActiveCfg = ReleaseAndroid|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseNative|Any CPU.ActiveCfg = Release|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseNative|x64.ActiveCfg = Release|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseNative|x86.ActiveCfg = Release|Any CPU

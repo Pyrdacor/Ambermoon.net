@@ -9,7 +9,7 @@
     <ApplicationId>com.pyrdacor.AmbermoonAndroid</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-    <Configurations>Debug;Release;ReleaseWithAndroid;DebugAndroid</Configurations>
+    <Configurations>Debug;Release;ReleaseAndroid;DebugAndroid</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>$(DefineConstants)</DefineConstants>

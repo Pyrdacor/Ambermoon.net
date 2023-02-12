@@ -5,7 +5,7 @@
 	  <SupportedOSPlatformVersion>30</SupportedOSPlatformVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Configurations>Debug;Release;DebugAndroid;ReleaseWithAndroid</Configurations>
+    <Configurations>Debug;Release;DebugAndroid;ReleaseAndroid</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
