@@ -1397,7 +1397,7 @@ namespace Ambermoon
                 patcher.Update(delta);
             else if (versionSelector != null)
                 versionSelector.Update(delta);
-            else if (advancedLogo != null)
+            else if (logoPyrdacor == null && advancedLogo != null)
                 advancedLogo.Update(renderView, () => advancedLogo = null);
             else if (mainMenu != null)
             {
@@ -1585,7 +1585,7 @@ namespace Ambermoon
 
 #if GLES
             var api = new GraphicsAPI
-                (ContextAPI.OpenGLES, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(3, 0));
+                (ContextAPI.OpenGLES, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(2, 0));
 #else
             var api = GraphicsAPI.Default;
 #endif

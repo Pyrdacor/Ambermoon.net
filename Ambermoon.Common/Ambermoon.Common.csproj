@@ -11,7 +11,7 @@
     <Version>10.8.0</Version>
     <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>
     <PackageTags>Ambermoon</PackageTags>
-    <Configurations>Debug;Release;DebugAndroid</Configurations>
+    <Configurations>Debug;Release;DebugAndroid;DebugES;ReleaseES</Configurations>
   </PropertyGroup>
 
 </Project>

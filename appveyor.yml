@@ -10,7 +10,7 @@ environment:
 platform: Any CPU
 
 before_build:
-  - ps: if ($env:CONFIGURATION -eq 'ReleaseWithAndroid') { dotnet workload install android }
+  - ps: if ($env:CONFIGURATION -eq 'ReleaseAndroid') { dotnet workload install android }
   - dotnet restore Ambermoon.net.sln --verbosity normal
 
 build:

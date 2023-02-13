@@ -9,7 +9,7 @@
     <ApplicationId>com.pyrdacor.AmbermoonAndroid</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-    <Configurations>Debug;Release;ReleaseWithAndroid;DebugAndroid</Configurations>
+    <Configurations>Debug;Release;ReleaseAndroid;DebugAndroid;DebugES;ReleaseES</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>$(DefineConstants)</DefineConstants>
@@ -20,13 +20,27 @@
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 	<AndroidUseAapt2>True</AndroidUseAapt2>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugES|AnyCPU'">
+    <DefineConstants>$(DefineConstants);GLES</DefineConstants>
+    <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>$(DefineConstants);GLES</DefineConstants>
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
     <PublishTrimmed>False</PublishTrimmed>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithAndroid|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseAndroid|AnyCPU'">
 	<DefineConstants>$(DefineConstants);GLES</DefineConstants>
+    <AndroidLinkTool>r8</AndroidLinkTool>
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+    <AndroidPackageFormat>aab</AndroidPackageFormat>
+    <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseES|AnyCPU'">
+    <DefineConstants>$(DefineConstants);GLES</DefineConstants>
     <AndroidLinkTool>r8</AndroidLinkTool>
     <AndroidUseAapt2>True</AndroidUseAapt2>
     <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>

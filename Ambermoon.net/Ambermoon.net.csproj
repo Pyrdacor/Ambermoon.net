@@ -15,20 +15,20 @@
     <PackageTags>Ambermoon</PackageTags>
     <Description>Rework of the Amiga game Ambermoon</Description>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Configurations>Debug;Release;DebugAndroid;ReleaseNative;ReleaseNative</Configurations>
+    <Configurations>Debug;Release;DebugAndroid;ReleaseAndroid;ReleaseNative;DebugES;ReleaseES</Configurations>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 	
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAndroid|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)'=='DebugES'">
+    <DefineConstants>$(DefineConstants);DEBUG;TRACE;GLES</DefineConstants>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <DefineConstants Condition=" '$(UseGLES)' == 'true' ">$(DefineConstants);GLES</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)'=='ReleaseES'">
+    <DefineConstants>$(DefineConstants);GLES</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -80,13 +80,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="glfw" Version="3.3.7" />
+    <PackageReference Include="glfw" Version="3.3.8" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
     <PackageReference Include="NLayer" Version="1.14.0" />
-    <PackageReference Include="Silk.NET.GLFW" Version="2.15.0" />
-    <PackageReference Include="Silk.NET.Input" Version="2.15.0" />
-    <PackageReference Include="Silk.NET.Windowing" Version="2.15.0" />
-    <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
+    <PackageReference Include="Silk.NET.GLFW" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.Input" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.Windowing" Version="2.16.0" />
+    <PackageReference Include="System.Resources.Extensions" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='ReleaseNative'">
@@ -127,7 +127,7 @@
   </ItemGroup>
 	
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-	  <DefineConstants>WINDOWS</DefineConstants>
+	  <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
   </PropertyGroup>
 
 </Project>
