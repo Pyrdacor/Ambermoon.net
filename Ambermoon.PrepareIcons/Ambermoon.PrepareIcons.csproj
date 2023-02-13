@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,7 +6,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Authors>Robert Schneckenhaus</Authors>
     <Copyright>Copyright (C) 2021 by Robert Schneckenhaus</Copyright>
-    <Configurations>Debug;Release;DebugAndroid</Configurations>
+    <Configurations>Debug;Release;DebugAndroid;DebugES;ReleaseES</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

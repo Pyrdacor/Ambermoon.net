@@ -11,7 +11,7 @@
     <PackageTags>Ambermoon Amiga</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Version>10.8.0</Version>
-    <Configurations>Debug;Release;DebugAndroid</Configurations>
+    <Configurations>Debug;Release;DebugAndroid;DebugES;ReleaseES</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

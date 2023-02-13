@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
 	<PublishTrimmed>true</PublishTrimmed>
 	<Version>1.8.0</Version>
+	<Configurations>Debug;Release;DebugES;ReleaseES</Configurations>
   </PropertyGroup>
 
 </Project>

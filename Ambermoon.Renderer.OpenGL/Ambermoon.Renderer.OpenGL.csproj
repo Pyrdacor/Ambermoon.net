@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Configurations>Debug;Release;DebugAndroid;ReleaseAndroid</Configurations>
+    <Configurations>Debug;Release;DebugAndroid;ReleaseAndroid;DebugES;ReleaseES</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -13,8 +13,16 @@
     <DefineConstants>$(DefineConstants);DEBUG;TRACE;GLES</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)'=='DebugES'">
+    <DefineConstants>$(DefineConstants);DEBUG;TRACE;GLES</DefineConstants>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)'=='ReleaseAndroid'">
 	<DefineConstants>$(DefineConstants);GLES</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='ReleaseES'">
+    <DefineConstants>$(DefineConstants);GLES</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -32,16 +40,28 @@
 	<PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(Configuration)'=='DebugES'">
+	  <PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(Configuration)'=='ReleaseAndroid'">
 	<PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Release'">
-	<PackageReference Include="Silk.NET.OpenGL" Version="2.15.0" />
+	<PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)'=='ReleaseES'">
+	  <PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug'">
-	<PackageReference Include="Silk.NET.OpenGL" Version="2.15.0" />
+	<PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)'=='ReleaseNative'">
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
   </ItemGroup>
 
   <ItemGroup>
