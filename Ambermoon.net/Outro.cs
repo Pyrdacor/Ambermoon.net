@@ -275,7 +275,7 @@ namespace Ambermoon
             else
             {
                 textEntry = outroFont.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 11), text, 10, text.StartsWith('<') ? TextAlign.Center : TextAlign.Left, 208);
+                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 11), text, 10, TextAlign.Left, 208);
             }
 
             textEntry.Visible = true;
