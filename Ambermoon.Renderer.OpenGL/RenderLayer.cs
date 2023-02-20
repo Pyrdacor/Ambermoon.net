@@ -122,7 +122,7 @@ namespace Ambermoon.Renderer
 
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3DCeiling || layer == Layer.Map3D || layer == Layer.Billboards3D,
                 supportAnimations, layered, layer == Layer.DrugEffect, layer == Layer.Billboards3D, layer == Layer.Text,
-                opaque, layer == Layer.FOW, layer == Layer.Map3DBackground, layer == Layer.Misc, layer == Layer.Images);
+                opaque, layer == Layer.FOW, layer == Layer.Map3DBackground, layer == Layer.Misc || layer == Layer.OutroText, layer == Layer.Images);
 
             // UI uses color-filled areas and effects use colored areas for things like black fading map transitions.
             if (layer == Layer.Map3DBackground || layer == Layer.UI || layer == Layer.IntroEffects ||
@@ -236,7 +236,7 @@ namespace Ambermoon.Renderer
                     }
                     else
                     {
-                        bool special = Layer == Layer.Misc;
+                        bool special = Layer == Layer.Misc || Layer == Layer.OutroText;
                         bool sky = Layer == Layer.Map3DBackground;
                         TextureShader shader = special ? RenderBuffer.AlphaTextureShader : sky ? RenderBuffer.SkyShader :
                             RenderBuffer.Opaque ? RenderBuffer.OpaqueTextureShader : RenderBuffer.TextureShader;

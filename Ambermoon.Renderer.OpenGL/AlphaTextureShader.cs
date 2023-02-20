@@ -40,7 +40,7 @@ namespace Ambermoon.Renderer
             $"{{",
             $"    float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
             $"    ",
-            $"    if (a < 0.001f)",
+            $"    if (colorIndex < 0.5f || a < 0.001f)",
             $"        discard;",
             $"    else",
             $"    {{",

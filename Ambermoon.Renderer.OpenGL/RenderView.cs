@@ -621,12 +621,13 @@ namespace Ambermoon.Renderer.OpenGL
                                 (0x800000 >> (8 * (DrugColorComponent.Value % 3))))));
                         State.Gl.BlendFunc(BlendingFactor.DstColor, BlendingFactor.OneMinusConstantColor);
                     }
-                    else if (layer.Key == Layer.FOW || layer.Key == Layer.Misc || layer.Key == Layer.Images)
+                    else if (layer.Key == Layer.FOW || layer.Key == Layer.Misc || layer.Key == Layer.Images || layer.Key == Layer.OutroText)
                     {
                         State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                     }
                     if (layer.Key == Layer.FOW || layer.Key == Layer.IntroEffects || layer.Key == Layer.Effects ||
-                        layer.Key == Layer.DrugEffect || layer.Key == Layer.Misc || layer.Key == Layer.Images)
+                        layer.Key == Layer.DrugEffect || layer.Key == Layer.Misc || layer.Key == Layer.Images ||
+                        layer.Key == Layer.OutroText)
                         State.Gl.Enable(EnableCap.Blend);
                     else
                         State.Gl.Disable(EnableCap.Blend);

@@ -266,12 +266,12 @@ namespace Ambermoon
             if (large)
             {
                 textEntry = outroFontLarge.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 22), text, 10);
+                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 22), text, 10, TextAlign.Left, 224);
             }
             else
             {
                 textEntry = outroFont.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 11), text, 10);
+                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 11), text, 10, TextAlign.Left, 224);
             }
 
             textEntry.Visible = true;

@@ -10,14 +10,15 @@ namespace Ambermoon
 {
     class Text
     {
-        readonly List<ILayerSprite> renderGlyphs = new List<ILayerSprite>();
+        readonly List<IAlphaSprite> renderGlyphs = new List<IAlphaSprite>();
         bool visible = false;
         readonly int totalWidth = 0;
         int baseX = 0;
         TextColor textColor = TextColor.White;
 
         public Text(IRenderView renderView, Layer layer, string text, IReadOnlyDictionary<char, Glyph> glyphs,
-            List<char> characters, byte displayLayer, int spaceWidth, bool upperOnly, uint textureAtlasIndexOffset)
+            List<char> characters, byte displayLayer, int spaceWidth, bool upperOnly, uint textureAtlasIndexOffset,
+            byte alpha = 255)
         {
             totalWidth = 0;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
@@ -31,8 +32,9 @@ namespace Ambermoon
                     totalWidth += spaceWidth;
                 else if (glyphs.TryGetValue(ch, out var glyph))
                 {
-                    var sprite = renderView.SpriteFactory.Create(glyph.Graphic.Width, glyph.Graphic.Height, true, displayLayer) as ILayerSprite;
+                    var sprite = renderView.SpriteFactory.CreateWithAlpha(glyph.Graphic.Width, glyph.Graphic.Height, displayLayer) as IAlphaSprite;
                     sprite.TextureAtlasOffset = textureAtlas.GetOffset((uint)characters.IndexOf(ch) + textureAtlasIndexOffset);
+                    sprite.Alpha = alpha;
                     sprite.X = totalWidth;
                     sprite.Y = 0;
                     sprite.Layer = renderView.GetLayer(layer);
@@ -175,10 +177,10 @@ namespace Ambermoon
         }
 
         public Text CreateText(IRenderView renderView, Layer layer, Rect area, string text,
-            byte displayLayer, TextAlign textAlign = TextAlign.Center)
+            byte displayLayer, TextAlign textAlign = TextAlign.Center, byte alpha = 255)
         {
             var renderText = new Text(renderView, layer, text, glyphs, characters, displayLayer, spaceWidth, upperOnly,
-                textureAtlasIndexOffset);
+                textureAtlasIndexOffset, alpha);
             renderText.Place(area, textAlign);
             return renderText;
         }
