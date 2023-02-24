@@ -12,7 +12,8 @@ namespace Ambermoon.Data
         Palette3Bit,
         Texture4Bit,
         XRGB16,
-        RGBA32
+        RGBA32,
+        AttachedSprite
     }
 
     public struct GraphicInfo
@@ -32,6 +33,7 @@ namespace Ambermoon.Data
             GraphicFormat.Texture4Bit => 4,
             GraphicFormat.XRGB16 => 16,
             GraphicFormat.RGBA32 => 32,
+            GraphicFormat.AttachedSprite => 4,
             _ => throw new ArgumentOutOfRangeException("Invalid graphic format")
         };
 

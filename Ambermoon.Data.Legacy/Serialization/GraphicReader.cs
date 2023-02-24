@@ -117,6 +117,67 @@ namespace Ambermoon.Data.Legacy.Serialization
                     graphic.IndexedGraphic = false;
                     graphic.Data = dataReader.ReadBytes(graphic.Width * graphic.Height * 4);
                     break;
+                case GraphicFormat.AttachedSprite:
+                {
+                    // Attached sprites are two Amiga hardware sprites (2bpp each).
+                    //
+                    // word[2]           ControlWords
+                    // word[2 * Height]  Data (2 words for each pixel row)
+                    // long              Next pointer
+                    //
+                    // Each sprite has a width of 16 pixel. The first sprite gives the lower
+                    // 2 bits and the second sprite the higher 2 bits of a 4 bit color index.
+                    // The color index starts at 16 (transparent) and can otherwise have the
+                    // values 17 to 31.
+                    if (graphic.Width % 16 != 0)
+                        throw new Exception("Attached sprites must have a width which is a multiple of 16.");
+                    if (graphic.Width > 64)
+                        throw new Exception("Attached sprites has a max width of 64 pixels.");
+                    graphic.IndexedGraphic = true;
+                    graphic.Data = new byte[graphic.Width * graphic.Height];
+                    int numSprites = 2 * graphic.Width / 16;
+                    for (int s = 0; s < numSprites; ++s)
+                    {
+                        // Skip the 2 control words
+                        dataReader.Position += 4;
+
+                        int line0Add = s % 2 == 0 ? 1 : 4;
+                        int line1Add = s % 2 == 0 ? 2 : 8;
+
+                        for (int y = 0; y < graphic.Height; ++y)
+                        {
+                            ushort line0 = dataReader.ReadWord();
+                            ushort line1 = dataReader.ReadWord();
+                            ushort mask = 0x8000;                          
+
+                            for (int x = 0; x < 16; ++x)
+                            {
+                                int index = (s / 2) * 16 + x + y * graphic.Width;
+                                int colorIndex = graphic.Data[index];
+
+                                if ((line0 & mask) != 0)
+                                    colorIndex |= line0Add;
+                                if ((line1 & mask) != 0)
+                                    colorIndex |= line1Add;
+
+                                graphic.Data[index] = (byte)colorIndex;
+
+                                mask >>= 1;
+                            }
+                        }
+
+                        // Skip the next pointer
+                        dataReader.Position += 4;
+                    }
+
+                    // Adjust indices
+                    for (int i = 0; i < graphic.Data.Length; ++i)
+                    {
+                        if (graphic.Data[i] != 0)
+                            graphic.Data[i] += 16;
+                    }
+                    break;
+                }   
                 default:
                     throw new Exception("Invalid legacy graphic format.");
             }
