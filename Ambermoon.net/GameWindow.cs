@@ -46,6 +46,7 @@ namespace Ambermoon
         bool trapMouse = false;
         FloatPosition trappedMouseOffset = null;
         FloatPosition trappedMouseLastPosition = null;
+        FantasyIntro fantasyIntro = null;
         LogoPyrdacor logoPyrdacor = null;
         AdvancedLogo advancedLogo = null;
         Graphic[] logoPalettes;
@@ -400,10 +401,15 @@ namespace Ambermoon
             }
             else
             {
+                
                 if (logoPyrdacor != null)
                 {
                     logoPyrdacor?.Cleanup();
                     logoPyrdacor = null;
+                }
+                else if (fantasyIntro != null)
+                {
+                    fantasyIntro.Abort();
                 }
                 else if (advancedLogo != null)
                 {
@@ -465,6 +471,10 @@ namespace Ambermoon
             {
                 logoPyrdacor?.Cleanup();
                 logoPyrdacor = null;
+            }
+            else if (fantasyIntro != null)
+            {
+                fantasyIntro.Abort();
             }
             else if (advancedLogo != null)
             {
@@ -678,6 +688,9 @@ namespace Ambermoon
 
         void StartGame(GameData gameData, string savePath, GameLanguage gameLanguage, Features features, BinaryReader advancedDiffsReader)
         {
+            // Load fantasy intro data
+            var fantasyIntroData = new FantasyIntroData(gameData);
+
             // Load intro data
             var introData = new IntroData(gameData);
             var introFont = new Font(Resources.IntroFont, 12);
@@ -689,7 +702,7 @@ namespace Ambermoon
 
             // Load game data
             var executableData = ExecutableData.FromGameData(gameData);
-            var graphicProvider = new GraphicProvider(gameData, executableData, introData, outroData);
+            var graphicProvider = new GraphicProvider(gameData, executableData, introData, outroData, fantasyIntroData);
             var fontProvider = new FontProvider(executableData);
 
             if (audioOutput == null)
@@ -714,7 +727,7 @@ namespace Ambermoon
             musicManager = new MusicManager(configuration, gameData);
 
             // Create render view
-            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPalettes, () =>
+            renderView = CreateRenderView(gameData, configuration, graphicProvider, logoPalettes, () =>
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;
                 textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
@@ -724,6 +737,11 @@ namespace Ambermoon
                 return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;
+
+            if (configuration.ShowFantasyIntro)
+            {
+                fantasyIntro = new FantasyIntro(renderView, fantasyIntroData, () => fantasyIntro = null);
+            }
 
             InitGlyphs();
 
@@ -859,6 +877,9 @@ namespace Ambermoon
                     }
 
                     while (logoPyrdacor != null)
+                        Thread.Sleep(100);
+
+                    while (fantasyIntro != null)
                         Thread.Sleep(100);
 
                     while (advancedLogo != null)
@@ -998,7 +1019,7 @@ namespace Ambermoon
             builtinVersionDataProviders[2] = () => configuration.GameVersionIndex == 2 ? gameData : LoadBuiltinVersionData(versions[2], null);
             builtinVersionDataProviders[3] = () => configuration.GameVersionIndex == 3 ? gameData : LoadBuiltinVersionData(versions[3], builtinVersionDataProviders[2]);
             var executableData = ExecutableData.FromGameData(gameData);
-            var graphicProvider = new GraphicProvider(gameData, executableData, null, null);
+            var graphicProvider = new GraphicProvider(gameData, executableData, null, null, null);
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
             createdTextureAtlasManager = textureAtlasManager;
             var fontProvider = new FontProvider(executableData);
@@ -1018,7 +1039,7 @@ namespace Ambermoon
                 logoPalettes = new Graphic[1] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] } };
             }
 
-            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPalettes, () =>
+            renderView = CreateRenderView(gameData, configuration, graphicProvider, logoPalettes, () =>
             {
                 textureAtlasManager.AddUIOnly(graphicProvider, fontProvider);
                 logoPyrdacor?.Initialize(textureAtlasManager);
@@ -1080,15 +1101,16 @@ namespace Ambermoon
         }
 
         RenderView CreateRenderView(GameData gameData, IConfiguration configuration, GraphicProvider graphicProvider,
-            FontProvider fontProvider, Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
+            Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
+            bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;
             var useFrameBuffer = true;
             var useEffects = configuration.Effects != Effects.None;
             var renderView = new RenderView(this, gameData, graphicProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
                 new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
-                () => KeyValuePair.Create(logoPyrdacor != null || advancedLogo != null ? 0 : (int)configuration.GraphicFilter, logoPyrdacor != null || advancedLogo != null ? 0 : (int)configuration.GraphicFilterOverlay),
-                () => logoPyrdacor != null || advancedLogo != null ? 0 : (int)configuration.Effects,
+                () => KeyValuePair.Create(AnyIntroActive() ? 0 : (int)configuration.GraphicFilter, AnyIntroActive() ? 0 : (int)configuration.GraphicFilterOverlay),
+                () => AnyIntroActive() ? 0 : (int)configuration.Effects,
                 additionalPalettes);
             if (!useFrameBuffer)
             {
@@ -1397,6 +1419,8 @@ namespace Ambermoon
                 patcher.Update(delta);
             else if (versionSelector != null)
                 versionSelector.Update(delta);
+            else if (logoPyrdacor == null && fantasyIntro != null)
+                fantasyIntro.Update(delta);
             else if (logoPyrdacor == null && advancedLogo != null)
                 advancedLogo.Update(renderView, () => advancedLogo = null);
             else if (mainMenu != null)

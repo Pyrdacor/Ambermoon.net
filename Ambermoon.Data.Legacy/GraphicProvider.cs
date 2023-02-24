@@ -70,9 +70,10 @@ namespace Ambermoon.Data.Legacy
         public byte AutomapPaletteIndex { get; } = 51;
         public byte FirstIntroPaletteIndex { get; } = 54;
         public byte FirstOutroPaletteIndex { get; } = 63;
+        public byte FirstFantasyIntroPaletteIndex { get; } = 69; 
 
         public GraphicProvider(GameData gameData, ExecutableData.ExecutableData executableData,
-            IntroData introData, OutroData outroData)
+            IntroData introData, OutroData outroData, FantasyIntroData fantasyIntroData)
         {
             this.gameData = gameData;
             var graphicReader = new GraphicReader();
@@ -135,6 +136,22 @@ namespace Ambermoon.Data.Legacy
             for (; p < 6; ++p)
             {
                 Palettes.Add(63 + p, new Graphic
+                {
+                    Width = 32,
+                    Height = 1,
+                    IndexedGraphic = false,
+                    Data = new byte[32 * 4]
+                });
+            }
+
+            // Add the 2 fantasy intro palettes
+            int fantasyIntroPaletteCount = fantasyIntroData == null ? 0 : Math.Min(2, fantasyIntroData.FantasyIntroPalettes.Count);
+            p = 0;
+            for (; p < fantasyIntroPaletteCount; ++p)
+                Palettes.Add(69 + p, fantasyIntroData.FantasyIntroPalettes[p]);
+            for (; p < 2; ++p)
+            {
+                Palettes.Add(69 + p, new Graphic
                 {
                     Width = 32,
                     Height = 1,

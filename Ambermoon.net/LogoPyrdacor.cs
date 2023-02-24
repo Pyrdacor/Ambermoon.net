@@ -182,7 +182,7 @@ namespace Ambermoon
                 sprite.Layer = renderView.GetLayer(Layer.Misc);
                 sprite.X = (Global.VirtualScreenWidth - frameSize.Width) / 2;
                 sprite.Y = (Global.VirtualScreenHeight - frameSize.Height) / 2;
-                sprite.PaletteIndex = 69;
+                sprite.PaletteIndex = 71;
                 return sprite;
             }
 

@@ -61,6 +61,7 @@ namespace Ambermoon
         IntroEffects,
         OutroGraphics,
         OutroText,
+        FantasyIntroGraphics,
         Effects,
         Cursor,
         DrugEffect,

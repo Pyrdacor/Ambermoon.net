@@ -58,5 +58,6 @@ namespace Ambermoon.Data
         byte AutomapPaletteIndex { get; }
         byte FirstIntroPaletteIndex { get; }
         byte FirstOutroPaletteIndex { get; }
+        byte FirstFantasyIntroPaletteIndex { get; }
     }
 }

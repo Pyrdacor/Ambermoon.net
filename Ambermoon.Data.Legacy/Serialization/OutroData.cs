@@ -86,6 +86,11 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public static IDataWriter PatchTexts(ILegacyGameData gameData, List<string> texts)
         {
+            // TODO: Note that this is work in progress and was used to create the french outro for
+            // the first time. It has some hardcode stuff for that purpose in it which should be
+            // removed later. Maybe we don't need this at all later as the original outro should be
+            // changed so that the texts and glyphs are moved to an external file.
+            // Still I want to preserve the work if we need to recreate the outro before that.
             var outroHunks = AmigaExecutable.Read(gameData.Files["Ambermoon_extro"].Files[1]);
             var dataHunkInfo = outroHunks
                 .Where(h => h.Type == AmigaExecutable.HunkType.Data)
@@ -323,11 +328,11 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                     if (offset == 5552 && index >= 115 && newText != "<CLIQUEZ>")
                     {
-                        writer.Replace(writer.Position - 1, (byte)6);
+                        writer.Replace(writer.Position - 1, (byte)(index == 123 ? 66 : 6));
                     }
                     else if (offset == 5552 && newText == "<CLIQUEZ>")
                     {
-                        writer.Replace(writer.Position - 1, (byte)0);
+                        writer.Replace(writer.Position - 1, (byte)12);
                         xAndSize = 0x8600;
                     }
                     else if (newText.StartsWith("Steinwachs, pour"))

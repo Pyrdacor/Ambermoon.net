@@ -103,6 +103,7 @@ namespace Ambermoon.Renderer
             0.70f,  // IntroEffects
             0.70f,  // OutroGraphics
             0.70f,  // OutroText
+            0.70f,  // FantasyIntroGraphics
             0.97f,  // Effects
             0.98f,  // Cursor
             0.99f,  // DrugEffect

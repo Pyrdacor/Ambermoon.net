@@ -32,7 +32,7 @@ namespace Ambermoon.Renderer
     {
         // Note: We use this inside the shader code texts so this is a string.
         // This includes the game data palettes, some extra added ones and the intro and outro palettes.
-        public const string PaletteCount = "69.0f";
+        public const string PaletteCount = "71.0f";
 
         public enum Type
         {

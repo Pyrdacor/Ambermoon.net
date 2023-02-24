@@ -10,7 +10,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             return size % 8 == 0 ? size : size + (8 - size % 8);
         }
 
-        void ReadPaletteGraphic(Graphic graphic, IDataReader dataReader, int planes, GraphicInfo graphicInfo, int? pixelsPerPlane = null)
+        static void ReadPaletteGraphic(Graphic graphic, IDataReader dataReader, int planes, GraphicInfo graphicInfo, int? pixelsPerPlane = null)
         {
             graphic.Width = graphicInfo.Width;
             graphic.Height = graphicInfo.Height;

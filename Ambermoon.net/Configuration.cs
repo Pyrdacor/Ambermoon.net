@@ -56,8 +56,7 @@ namespace Ambermoon
         public bool AutoDerune { get; set; } = true;
         public bool EnableCheats { get; set; } = false;
         public bool ShowButtonTooltips { get; set; } = true;
-        [JsonIgnore] // TODO: remove attribute later
-        public bool ShowFantasyIntro { get; set; } = false; // TODO: change to true later
+        public bool ShowFantasyIntro { get; set; } = true;
         [JsonIgnore] // TODO: remove attribute later
         public bool ShowIntro { get; set; } = false; // TODO: change to true later
         [Obsolete("Use GraphicFilter instead.")]
