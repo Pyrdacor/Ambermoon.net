@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
@@ -89,6 +90,18 @@ namespace Ambermoon.Data.Legacy.Serialization
             new Position(58, 33), new Position(58, 36), new Position(58, 37),
             new Position(55, 30), new Position(54, 29), new Position(50, 23),
             new Position(45, 18)
+        };
+
+        static readonly int[] WritingSparkImageIndex = new[]
+        {
+            6, 3, 0, 3, 6, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            4, 1, 4, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            8, 5, 2, 5, 8, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            6, 6, 3, 3, 0, 0, 3, 3, 3, 6, 6, 6, -1, 0, 0, 0,
+            7, 7, 4, 4, 0, 0, 0, 4, 4, 7, 7, -1, 0, 0, 0, 0,
+            8, 8, 8, 5, 5, 5, 0, 0, 0, 5, 5, 5, 8, 8, 8, -1,
+            3, 0, 3, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            5, 0, 5, -1, 0,64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
 
         static readonly int[] Spark0ColorIndices = new[]
@@ -381,13 +394,46 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
             }
 
+            void DrawWriting()
+            {
+                if (writingPosition >= 0)
+                {
+                    if (writingPosition >= 64 && writingPosition < 272)
+                    {
+                        actions.Enqueue(new(frames, FantasyIntroCommand.AddWritingPart));
+                    }
+
+                    for (int i = 0; i < 24; ++i)
+                    {
+                        var r = Random();
+                        long y = 140 + (r % 88);
+                        r = Random();
+                        long x = writingPosition + (r & 0x7) - 4;
+                        //long i = r & 0xe0;
+                        /*find_if (s : WritingSparkItem, s.x < 0) {
+                        s.x = x
+                        s.y = y
+                        s.i = i*/
+                    }
+
+                    writingPosition += 4;
+
+                    if (writingPosition >= 276)
+                    {
+                        writingPosition = -1;
+                        fairyMode = 0;
+
+                    }
+                }
+            }
+
             int cycleCounter = 0;
 
             void Cycle()
             {
                 ++cycleCounter;
 
-                if (fairyMode == 0)
+                if (fairyMode == 0 && endTimer <= 0)
                 {
                     int x = unchecked((short)positionData.ReadWord());
                     int y = unchecked((short)positionData.ReadWord());
@@ -475,7 +521,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                 if (writingPosition < -1)
                 {
-                    if (++writingPosition == 1)
+                    if (++writingPosition == -1)
                         writingPosition = 60;
                 }
             }
@@ -489,6 +535,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 cycleCounter = 0;
                 DrawFairySparks0();
                 DrawFairySparks1();
+                DrawWriting();
                 while (cycleCounter < 2)
                     Cycle();
 
@@ -500,9 +547,11 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                 if (endTimer > 0)
                 {
-                    if (--endTimer == 16)
+                    // TODO: Maybe decrease by 2 here? Won't reach exactly 0 then as it starts at 133 at the end.
+                    endTimer -= 2;
+                    if (endTimer >= 16 && endTimer < 8)
                         actions.Enqueue(new(frames, FantasyIntroCommand.FadeOut));
-                    else if (endTimer == 0)
+                    else if (endTimer <= 0)
                         break; // Finished
                 }
             }
