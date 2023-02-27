@@ -32,6 +32,7 @@ namespace Ambermoon.Renderer
         static string[] TextFragmentShader(State state) => new string[]
         {
             GetFragmentShaderHeader(state),
+            $"uniform float {DefaultUsePaletteName};",
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform sampler2D {DefaultPaletteName};",
             $"in vec2 varTexCoord;",
@@ -40,11 +41,25 @@ namespace Ambermoon.Renderer
             $"",
             $"void main()",
             $"{{",
-            $"    float alpha = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
-            $"    if (alpha < 0.5f)",
-            $"        discard;",
+            $"    if ({DefaultUsePaletteName} > 0.5f)",
+            $"    {{",
+            $"        float alpha = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
+            $"        if (alpha < 0.5f)",
+            $"            discard;",
+            $"        else",
+            $"            {DefaultFragmentOutColorName} = texture({DefaultPaletteName}, vec2((textColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"    }}",
             $"    else",
-            $"        {DefaultFragmentOutColorName} = texture({DefaultPaletteName}, vec2((textColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"    {{",
+            $"        vec4 pixelColor = texture({DefaultSamplerName}, varTexCoor);",
+            $"        if (pixelColor.a < 0.5f)",
+            $"            discard;",
+            $"        else",
+            $"        {{",
+            $"            vec4 textColor = texture({DefaultPaletteName}, vec2((textColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"            {DefaultFragmentOutColorName} = pixelColor * vec4(textColor.rgb, 1.0f);",
+            $"        }}",
+            $"    }}",
             $"}}"
         };
 

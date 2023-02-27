@@ -21,6 +21,8 @@
 
 namespace Ambermoon.Renderer
 {
+    // NOTE: This won't support non-palette graphics as it uses the color indices
+    // for color replacements.
     internal class Billboard3DShader : Texture3DShader
     {
         internal static readonly string DefaultBillboardCenterName = "center";

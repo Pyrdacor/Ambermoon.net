@@ -153,10 +153,10 @@ namespace Ambermoon.Renderer
 
             unsafe
             {
-                if (buffer.Type == VertexAttribPointerType.Float)
-                    state.Gl.VertexAttribPointer(location, buffer.Dimension, buffer.Type, buffer.Normalized, 0, (void*)0);
+                if (BufferObject<T>.Type == VertexAttribPointerType.Float)
+                    state.Gl.VertexAttribPointer(location, buffer.Dimension, BufferObject<T>.Type, buffer.Normalized, 0, (void*)0);
                 else
-                    state.Gl.VertexAttribIPointer(location, buffer.Dimension, (VertexAttribIType)buffer.Type, 0, (void*)0);
+                    state.Gl.VertexAttribIPointer(location, buffer.Dimension, (VertexAttribIType)BufferObject<T>.Type, 0, (void*)0);
             }
 
             return location;

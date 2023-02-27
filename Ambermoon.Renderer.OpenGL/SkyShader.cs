@@ -23,6 +23,8 @@ using Ambermoon.Data;
 
 namespace Ambermoon.Renderer
 {
+    // NOTE: This won't support non-palette graphics as it uses the color indices
+    // for color replacements.
     internal class SkyShader : TextureShader
     {
         internal static readonly string DefaultLightName = "light";

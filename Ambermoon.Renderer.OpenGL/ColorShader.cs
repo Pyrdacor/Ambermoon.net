@@ -32,6 +32,7 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultLayerName = "layer";
 
         internal ShaderProgram shaderProgram;
+        private protected State State { get; }
 
         protected static string GetFragmentShaderHeader(State state)
         {
@@ -116,6 +117,8 @@ namespace Ambermoon.Renderer
             var vertexShader = new Shader(state, Shader.Type.Vertex, string.Join("\n", vertexShaderLines));
 
             shaderProgram = new ShaderProgram(state, fragmentShader, vertexShader);
+
+            State = state;
         }
 
         public ShaderProgram ShaderProgram => shaderProgram;

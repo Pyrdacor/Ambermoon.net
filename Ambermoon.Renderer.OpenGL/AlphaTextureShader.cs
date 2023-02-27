@@ -1,7 +1,7 @@
 ﻿/*
  * AlphaTextureShader.cs - Shader for textured objects with alpha channel
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -28,6 +28,7 @@ namespace Ambermoon.Renderer
         protected static string[] AlphaTextureFragmentShader(State state) => new string[]
         {
             GetFragmentShaderHeader(state),
+            $"uniform float {DefaultUsePaletteName};",
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform sampler2D {DefaultPaletteName};",
             $"uniform float {DefaultColorKeyName};",
@@ -36,22 +37,30 @@ namespace Ambermoon.Renderer
             $"flat in float maskColIndex;",
             $"flat in float a;",
             $"",
-            $"void main()",
-            $"{{",
-            $"    float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
-            $"    ",
-            $"    if (colorIndex < 0.5f || a < 0.001f)",
-            $"        discard;",
+            $"    vec4 pixelColor;",
+            $"    if ({DefaultUsePaletteName} > 0.5f)",
+            $"    {{",
+            $"        float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
+            $"        ",
+            $"        if (colorIndex < 0.5f)",
+            $"            discard;",
+            $"        else",
+            $"        {{",
+            $"            if (colorIndex >= 31.5f)",
+            $"                colorIndex = 0.0f;",
+            $"            pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"        }}",
+            $"    }}",
             $"    else",
             $"    {{",
-            $"        if (colorIndex >= 31.5f)",
-            $"            colorIndex = 0.0f;",
-            $"        vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
-            $"        if (maskColIndex >= 0.5f)",
-            $"            pixelColor = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
-            $"        {DefaultFragmentOutColorName} = vec4(pixelColor.rgb, pixelColor.a * a);",
+            $"        pixelColor = texture({DefaultSamplerName}, varTexCoord);",
+            $"        if (pixelColor.a < 0.5f)",
+            $"            discard;",
             $"    }}",
-            $"}}"
+            $"    ",
+            $"    if (maskColIndex > 0.5f)",
+            $"        pixelColor = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"    {DefaultFragmentOutColorName} = vec4(pixelColor.rgb, pixelColor.a * a);",
         };
 
         protected static string[] AlphaTextureVertexShader(State state) => new string[]

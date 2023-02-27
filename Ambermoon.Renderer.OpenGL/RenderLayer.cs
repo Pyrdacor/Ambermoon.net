@@ -20,17 +20,292 @@
  */
 
 using Ambermoon.Render;
+using Ambermoon.Renderer.OpenGL;
 #if GLES
 using Silk.NET.OpenGLES;
 #else
 using Silk.NET.OpenGL;
 #endif
 using System;
+using System.Collections.Generic;
+using System.Runtime.Intrinsics.X86;
 
 namespace Ambermoon.Renderer
 {
     public class RenderLayer : IRenderLayer, IDisposable
     {
+        internal static Dictionary<Layer, LayerConfig> DefaultLayerConfigs = new()
+        {
+            { Layer.Map3DBackground, new ()
+            {
+                BaseZ = 0.00f,
+                EnableBlending = false,
+                SupportAnimations = false,
+                SupportColoredRects = true,
+                Opaque = true
+            } },
+            { Layer.Map3DCeiling, new ()
+            {
+                Layered = false,
+                BaseZ = 0.00f,
+                EnableBlending = false
+            } },
+            { Layer.Map3D, new ()
+            {
+                Layered = false,
+                BaseZ = 0.00f,
+                EnableBlending = false
+            } },
+            { Layer.Billboards3D, new ()
+            {
+                Layered = false,
+                BaseZ = 0.00f,
+                EnableBlending = false
+            } },
+            { Layer.MapBackground1, new ()
+            {
+                Layered = false,
+                BaseZ = 0.01f,
+                EnableBlending = false,
+                Opaque = true
+            } },
+            { Layer.MapBackground2, new ()
+            {
+                Layered = false,
+                BaseZ = 0.01f,
+                EnableBlending = false,
+                Opaque = true
+            } },
+            { Layer.MapBackground3, new ()
+            {
+                Layered = false,
+                BaseZ = 0.01f,
+                EnableBlending = false,
+                Opaque = true
+            } },
+            { Layer.MapBackground4, new ()
+            {
+                Layered = false,
+                BaseZ = 0.01f,
+                EnableBlending = false,
+                Opaque = true
+            } },
+            { Layer.MapBackground5, new ()
+            {
+                Layered = false,
+                BaseZ = 0.01f,
+                EnableBlending = false,
+                Opaque = true
+            } },
+            { Layer.MapBackground6, new ()
+            {
+                Layered = false,
+                BaseZ = 0.01f,
+                EnableBlending = false,
+                Opaque = true
+            } },
+            { Layer.MapBackground7, new ()
+            {
+                Layered = false,
+                BaseZ = 0.01f,
+                EnableBlending = false,
+                Opaque = true
+            } },
+            { Layer.MapBackground8, new ()
+            {
+                Layered = false,
+                BaseZ = 0.01f,
+                EnableBlending = false,
+                Opaque = true
+            } },
+            { Layer.MapBackground9, new ()
+            {
+                Layered = false,
+                BaseZ = 0.01f,
+                EnableBlending = false,
+                Opaque = true
+            } },
+            { Layer.MapBackground10, new ()
+            {
+                Layered = false,
+                BaseZ = 0.01f,
+                EnableBlending = false,
+                Opaque = true
+            } },
+            { Layer.Characters, new ()
+            {
+                Layered = false,
+                BaseZ = 0.31f,
+                EnableBlending = false
+            } },
+            { Layer.MapForeground1, new ()
+            {
+                Layered = false,
+                BaseZ = 0.31f,
+                EnableBlending = false
+            } },
+            { Layer.MapForeground2, new ()
+            {
+                Layered = false,
+                BaseZ = 0.31f,
+                EnableBlending = false
+            } },
+            { Layer.MapForeground3, new ()
+            {
+                Layered = false,
+                BaseZ = 0.31f,
+                EnableBlending = false
+            } },
+            { Layer.MapForeground4, new ()
+            {
+                Layered = false,
+                BaseZ = 0.31f,
+                EnableBlending = false
+            } },
+            { Layer.MapForeground5, new ()
+            {
+                Layered = false,
+                BaseZ = 0.31f,
+                EnableBlending = false
+            } },
+            { Layer.MapForeground6, new ()
+            {
+                Layered = false,
+                BaseZ = 0.31f,
+                EnableBlending = false
+            } },
+            { Layer.MapForeground7, new ()
+            {
+                Layered = false,
+                BaseZ = 0.31f,
+                EnableBlending = false
+            } },
+            { Layer.MapForeground8, new ()
+            {
+                Layered = false,
+                BaseZ = 0.31f,
+                EnableBlending = false
+            } },
+            { Layer.MapForeground9, new ()
+            {
+                Layered = false,
+                BaseZ = 0.31f,
+                EnableBlending = false
+            } },
+            { Layer.MapForeground10, new ()
+            {
+                Layered = false,
+                BaseZ = 0.31f,
+                EnableBlending = false
+            } },
+            { Layer.FOW, new ()
+            {
+                // Note: this uses neither colored rects
+                // nor textured sprites. Have a look at IFow.
+                BaseZ = 0.31f,
+                EnableBlending = true,
+                SupportAnimations = false,
+                SupportTextures = false
+            } },
+            { Layer.CombatBackground, new ()
+            {
+                BaseZ = 0.61f,
+                EnableBlending = false,
+                SupportAnimations = false,
+                Opaque = true
+            } },
+            { Layer.BattleMonsterRow, new ()
+            {
+                BaseZ = 0.62f,
+                EnableBlending = false
+            } },
+            { Layer.BattleEffects, new ()
+            {
+                BaseZ = 0.62f,
+                EnableBlending = false
+            } },
+            { Layer.UI, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = false,
+                SupportColoredRects = true
+            } },
+            { Layer.Items, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = false
+            } },
+            { Layer.Text, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = false
+            } },
+            { Layer.IntroGraphics, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = false,
+                SupportColoredRects = true
+            } },
+            { Layer.IntroText, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = false
+            } },
+            { Layer.IntroEffects, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = true,
+                SupportColoredRects = true
+            } },
+            { Layer.OutroGraphics, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = false,
+                Opaque = true
+            } },
+            { Layer.OutroText, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = true
+            } },
+            { Layer.FantasyIntroGraphics, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = true
+            } },
+            { Layer.Effects, new ()
+            {
+                BaseZ = 0.97f,
+                EnableBlending = true,
+                SupportColoredRects = true,
+                SupportTextures = false
+            } },
+            { Layer.Cursor, new ()
+            {
+                BaseZ = 0.98f,
+                EnableBlending = false
+            } },
+            { Layer.DrugEffect, new ()
+            {
+                BaseZ = 0.99f,
+                EnableBlending = true,
+                SupportColoredRects = true,
+                SupportTextures = false
+            } },
+            { Layer.Misc, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = true,
+                SupportColoredRects = true
+            } },
+            { Layer.Images, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = true,
+                RenderToVirtualScreen = false
+            } }
+        };
+
         public Layer Layer { get; } = Layer.None;
 
         public bool Visible
@@ -57,6 +332,8 @@ namespace Ambermoon.Renderer
             set;
         } = null;
 
+        public LayerConfig Config { get; private set; }
+
         internal RenderBuffer RenderBuffer { get; } = null;
 
         readonly State state = null;
@@ -64,75 +341,46 @@ namespace Ambermoon.Renderer
         readonly Texture palette = null;
         bool disposed = false;
 
-        private static readonly float[] LayerBaseZ = new float[]
-        {
-            0.00f,  // Map3DBackground
-            0.00f,  // Map3DCeiling
-            0.00f,  // Map3D
-            0.00f,  // Billboards3D
-            0.01f,  // MapBackground1
-            0.01f,  // MapBackground2
-            0.01f,  // MapBackground3
-            0.01f,  // MapBackground4
-            0.01f,  // MapBackground5
-            0.01f,  // MapBackground6
-            0.01f,  // MapBackground7
-            0.01f,  // MapBackground8
-            0.01f,  // MapBackground9
-            0.01f,  // MapBackground10
-            0.31f,  // Characters
-            0.31f,  // MapForeground1
-            0.31f,  // MapForeground2
-            0.31f,  // MapForeground3
-            0.31f,  // MapForeground4
-            0.31f,  // MapForeground5
-            0.31f,  // MapForeground6
-            0.31f,  // MapForeground7
-            0.31f,  // MapForeground8
-            0.31f,  // MapForeground9
-            0.31f,  // MapForeground10
-            0.31f,  // FOW
-            0.61f,  // CombatBackground
-            0.62f,  // BattleMonsterRow
-            0.62f,  // BattleEffects
-            0.70f,  // UI
-            0.70f,  // Items
-            0.70f,  // Text
-            0.70f,  // IntroGraphics
-            0.70f,  // IntroText
-            0.70f,  // IntroEffects
-            0.70f,  // OutroGraphics
-            0.70f,  // OutroText
-            0.70f,  // FantasyIntroGraphics
-            0.97f,  // Effects
-            0.98f,  // Cursor
-            0.99f,  // DrugEffect
-            0.70f,  // Misc / General purpose
-            0.70f   // Non-palette high-res images
-        };
-
         public RenderLayer(State state, Layer layer, Texture texture, Texture palette)
         {
             if (layer == Layer.None)
                 throw new AmbermoonException(ExceptionScope.Application, "Layer.None should never be used.");
 
             this.state = state;
-            bool supportAnimations = layer != Layer.CombatBackground && layer != Layer.FOW && layer != Layer.Map3DBackground;
-            bool layered = layer == Layer.Map3DBackground || layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
-            bool opaque = layer == Layer.CombatBackground || layer >= Layer.MapBackground1 && layer <= Layer.MapBackground10;
+            Config = DefaultLayerConfigs[layer];
+            bool supportAnimations = Config.SupportAnimations;
+            bool layered = Config.Layered;
+            bool opaque = Config.Opaque;
 
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3DCeiling || layer == Layer.Map3D || layer == Layer.Billboards3D,
-                supportAnimations, layered, layer == Layer.DrugEffect, layer == Layer.Billboards3D, layer == Layer.Text,
-                opaque, layer == Layer.FOW, layer == Layer.Map3DBackground, layer == Layer.Misc || layer == Layer.OutroText, layer == Layer.Images);
+                supportAnimations, layered, !Config.SupportTextures, layer == Layer.Billboards3D, layer == Layer.Text,
+                opaque, layer == Layer.FOW, layer == Layer.Map3DBackground, layer == Layer.Misc || layer == Layer.OutroText, layer == Layer.Images,
+                Config.UsePalette, Config.TextureFactor);
 
-            // UI uses color-filled areas and effects use colored areas for things like black fading map transitions.
-            if (layer == Layer.Map3DBackground || layer == Layer.UI || layer == Layer.IntroEffects ||
-                layer == Layer.Effects || layer == Layer.DrugEffect || layer == Layer.IntroGraphics || layer == Layer.Misc)
+            if (Config.SupportColoredRects)
                 renderBufferColorRects = new RenderBuffer(state, false, false, true, true);
 
             Layer = layer;
             Texture = texture;
             this.palette = palette;
+        }
+
+        public void UsePalette(bool use)
+        {
+            if (Config.UsePalette == use || !Config.SupportTextures || Layer == Layer.Images)
+                return;
+
+            Config = Config with { UsePalette = use };
+            RenderBuffer.UsePalette(use);
+        }
+
+        public void SetTextureFactor(uint factor)
+        {
+            if (Config.TextureFactor == factor || !Config.SupportTextures || Layer == Layer.Images)
+                return;
+
+            Config = Config with { TextureFactor = factor };
+            RenderBuffer.SetTextureFactor(factor);
         }
 
         public void Render()
@@ -145,7 +393,7 @@ namespace Ambermoon.Renderer
                 var fowShader = RenderBuffer.FowShader;
 
                 fowShader.UpdateMatrices(state);
-                fowShader.SetZ(LayerBaseZ[(int)Layer]);
+                fowShader.SetZ(Config.BaseZ);
             }
             else
             {
@@ -154,20 +402,21 @@ namespace Ambermoon.Renderer
                     var colorShader = renderBufferColorRects.ColorShader;
 
                     colorShader.UpdateMatrices(state);
-                    colorShader.SetZ(LayerBaseZ[(int)Layer]);
+                    colorShader.SetZ(Config.BaseZ);
 
                     renderBufferColorRects.Render();
                 }
 
                 if (Texture != null)
                 {
-                    if (!(Texture is Texture texture))
+                    if (Texture is not Texture texture)
                         throw new AmbermoonException(ExceptionScope.Render, "Invalid texture for this renderer.");
 
                     if (Layer == Layer.Map3D || Layer == Layer.Map3DCeiling)
                     {
                         Texture3DShader shader = RenderBuffer.Texture3DShader;
 
+                        shader.UsePalette(Config.UsePalette);
                         shader.UpdateMatrices(state);
 
                         shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
@@ -187,6 +436,7 @@ namespace Ambermoon.Renderer
                     {
                         Billboard3DShader shader = RenderBuffer.Billboard3DShader;
 
+                        shader.UsePalette(Config.UsePalette);
                         shader.UpdateMatrices(state);
 
                         shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
@@ -206,6 +456,7 @@ namespace Ambermoon.Renderer
                     {
                         TextShader shader = RenderBuffer.TextShader;
 
+                        shader.UsePalette(Config.UsePalette);
                         shader.UpdateMatrices(state);
 
                         shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
@@ -220,7 +471,7 @@ namespace Ambermoon.Renderer
                         }
 
                         shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
-                        shader.SetZ(LayerBaseZ[(int)Layer]);
+                        shader.SetZ(Config.BaseZ);
                     }
                     else if (Layer == Layer.Images)
                     {
@@ -233,7 +484,7 @@ namespace Ambermoon.Renderer
                         texture.Bind();
 
                         shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
-                        shader.SetZ(LayerBaseZ[(int)Layer]);
+                        shader.SetZ(Config.BaseZ);
                     }
                     else
                     {
@@ -242,6 +493,7 @@ namespace Ambermoon.Renderer
                         TextureShader shader = special ? RenderBuffer.AlphaTextureShader : sky ? RenderBuffer.SkyShader :
                             RenderBuffer.Opaque ? RenderBuffer.OpaqueTextureShader : RenderBuffer.TextureShader;
 
+                        shader.UsePalette(Config.UsePalette);
                         shader.UpdateMatrices(state);
 
                         shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
@@ -256,7 +508,7 @@ namespace Ambermoon.Renderer
                         }
 
                         shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
-                        shader.SetZ(LayerBaseZ[(int)Layer]);
+                        shader.SetZ(Config.BaseZ);
                     }
                 }
             }

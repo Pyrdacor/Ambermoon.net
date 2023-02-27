@@ -32,6 +32,8 @@ namespace Ambermoon.Render
         IRenderLayer GetLayer(Layer layer);
         void Resize(int width, int height, int? windowWidth = null, int? windowHeight = null);
         void Close();
+        void UsePalette(Layer layer, bool use);
+        void SetTextureFactor(Layer layer, uint factor);
 
         Position GameToScreen(Position position);
         Position ViewToScreen(Position position);

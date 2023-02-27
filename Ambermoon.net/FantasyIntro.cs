@@ -16,6 +16,7 @@ namespace Ambermoon
         readonly Queue<FantasyIntroAction> actions = null;
         readonly ILayerSprite background;
         readonly ILayerSprite fairy;
+        readonly ILayerSprite writing;
         readonly Dictionary<int, ILayerSprite> sparks = new(512);
         readonly Dictionary<int, IColoredRect> sparkLines = new(96);
         readonly Dictionary<int, IColoredRect> sparkDots = new(512);
@@ -50,19 +51,29 @@ namespace Ambermoon
 
             EnsureTextures(renderView, fantasyIntroData);
 
-            background = renderView.SpriteFactory.Create(320, 200, true, 1) as ILayerSprite;
+            background = renderView.SpriteFactory.Create(320, 256, true, 1) as ILayerSprite;
             background.Layer = renderLayer;
             background.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Background);
             background.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Background);
             background.X = 0;
-            background.Y = 0;
+            background.Y = -28;
             background.Visible = false;
 
-            fairy = renderView.SpriteFactory.Create(64, 71, true, 5) as ILayerSprite;
+            fairy = renderView.SpriteFactory.Create(64, 71, true, 7) as ILayerSprite;
             fairy.Layer = renderLayer;
             fairy.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Fairy);
             fairy.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Fairy);
+            fairy.ClipArea = new Rect(0, 0, 320, 200);
             fairy.Visible = false;
+
+            writing = renderView.SpriteFactory.Create(208, 83, true, 4) as ILayerSprite;
+            writing.Layer = renderLayer;
+            writing.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Writing);
+            writing.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Writing);
+            writing.X = 64;
+            writing.Y = 146 - 28; // - 28 because screen height is only 200
+            writing.ClipArea = new Rect(64, 0, 64, 200); // width will be increased later
+            writing.Visible = false;
 
             fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
             fadeArea.Layer = colorLayer;
@@ -204,7 +215,6 @@ namespace Ambermoon
                 Active = true;
 
                 background.Visible = true;
-                fairy.Visible = true;
             }
 
             time += deltaTime;
@@ -219,9 +229,9 @@ namespace Ambermoon
 
                 lastFrame = frame;
 
-                if (Active && actions.Count != 0)
+                if (Active)
                 {
-                    while (actions.Peek().Frames <= frame)
+                    while (actions.Count != 0 && actions.Peek().Frames <= frame)
                     {
                         ProcessAction(frame, actions.Dequeue());
                     }
@@ -248,9 +258,9 @@ namespace Ambermoon
                 fairy.TextureAtlasOffset = GetFairyFrameTextureOffset();
             }
 
-            if (fadeStartFrames >= 0 && frame - fadeStartFrames < 16)
+            if (fadeStartFrames >= 0 && frame - fadeStartFrames < 32)
             {
-                byte alpha = (byte)Util.Limit(0, fadeOut ? frame * 16 : 255 - frame * 16, 255);
+                byte alpha = (byte)Util.Limit(0, fadeOut ? frame * 8 : 255 - frame * 8, 255);
                 fadeArea.Color = new Color(fadeArea.Color, alpha);
                 fadeArea.Visible = true;
             }
@@ -280,7 +290,7 @@ namespace Ambermoon
                 case FantasyIntroCommand.MoveFairy:
                 {
                     fairy.X = action.Parameters[0];
-                    fairy.Y = action.Parameters[1] - 56;
+                    fairy.Y = action.Parameters[1] - 28;
                     fairy.Visible = true;
                     playFairyAnimation = false;
                     break;
@@ -288,6 +298,13 @@ namespace Ambermoon
                 case FantasyIntroCommand.PlayFairyAnimation:
                 {
                     playFairyAnimation = true;
+                    break;
+                }
+                case FantasyIntroCommand.AddWritingPart:
+                {
+                    // Each time by 4 pixels
+                    writing.ClipArea = writing.ClipArea.CreateModified(0, 0, 4, 0);
+                    writing.Visible = true;
                     break;
                 }
                 case FantasyIntroCommand.DrawSparkDot:
@@ -313,6 +330,7 @@ namespace Ambermoon
             Active = false;
             background?.Delete();
             fairy?.Delete();
+            writing?.Delete();
             fadeArea?.Delete();
             foreach (var spark in sparks)
                 spark.Value?.Delete();

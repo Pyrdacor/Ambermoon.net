@@ -59,5 +59,32 @@ namespace Ambermoon.Renderer
         {
             Update(UpdatePositionData, index, Tuple.Create(x, y));
         }
+
+        public void TransformAll(Func<int, Tuple<short, short>, Tuple<short, short>> updater)
+        {
+            bool TransformPositionData(short[] buffer, int index, Tuple<short, short> _)
+            {
+                bool changed = false;
+                var position = Tuple.Create(buffer[index + 0], buffer[index + 1]);
+                var newPosition = updater(index, position);
+                short x = newPosition.Item1;
+                short y = newPosition.Item2;
+
+                if (buffer[index + 0] != x ||
+                    buffer[index + 1] != y)
+                {
+                    buffer[index + 0] = x;
+                    buffer[index + 1] = y;
+                    changed = true;
+                }
+
+                return changed || index == Size;
+            }
+
+            for (int i = 0; i < Size; ++i)
+            {
+                Update<Tuple<short, short>>(TransformPositionData, i, null);
+            }
+        }
     }
 }

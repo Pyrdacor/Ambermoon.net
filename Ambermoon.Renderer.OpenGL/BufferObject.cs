@@ -35,7 +35,7 @@ namespace Ambermoon.Renderer
         public bool Normalized { get; protected set; } = false;
         public int Size { get; protected set; }
         protected GLEnum BufferTarget { get; set; } = GLEnum.ArrayBuffer;
-        public VertexAttribPointerType Type => typeof(T).Name.ToLower() switch
+        public static VertexAttribPointerType Type => typeof(T).Name.ToLower() switch
         {
             "byte" => VertexAttribPointerType.UnsignedByte,
             "int16" => VertexAttribPointerType.Short,
@@ -47,8 +47,8 @@ namespace Ambermoon.Renderer
         uint index = 0;
         bool disposed = false;
         T[] buffer = null;
-        readonly object bufferLock = new object();
-        readonly IndexPool indices = new IndexPool();
+        readonly object bufferLock = new();
+        readonly IndexPool indices = new();
         bool changedSinceLastCreation = true;
         readonly GLEnum usageHint = GLEnum.DynamicDraw;
         readonly State state;

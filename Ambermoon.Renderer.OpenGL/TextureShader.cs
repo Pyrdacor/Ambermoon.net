@@ -1,7 +1,7 @@
 ﻿/*
  * TextureShader.cs - Shader for textured objects
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -23,6 +23,7 @@ namespace Ambermoon.Renderer
 {
     internal class TextureShader : ColorShader
     {
+        internal static readonly string DefaultUsePaletteName = "usePalette";
         internal static readonly string DefaultTexCoordName = "texCoord";
         internal static readonly string DefaultSamplerName = "sampler";
         internal static readonly string DefaultAtlasSizeName = "atlasSize";
@@ -38,6 +39,7 @@ namespace Ambermoon.Renderer
         protected static string[] TextureFragmentShader(State state) => new string[]
         {
             GetFragmentShaderHeader(state),
+            $"uniform float {DefaultUsePaletteName};",
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform sampler2D {DefaultPaletteName};",
             $"uniform float {DefaultColorKeyName};",
@@ -47,20 +49,31 @@ namespace Ambermoon.Renderer
             $"",
             $"void main()",
             $"{{",
-            $"    float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
-            $"    ",
-            $"    if (colorIndex < 0.5f)",
-            $"        discard;",
+            $"    vec4 pixelColor;",
+            $"    if ({DefaultUsePaletteName} > 0.5f)",
+            $"    {{",
+            $"        float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
+            $"        ",
+            $"        if (colorIndex < 0.5f)",
+            $"            discard;",
+            $"        else",
+            $"        {{",
+            $"            if (colorIndex >= 31.5f)",
+            $"                colorIndex = 0.0f;",
+            $"            pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"        }}",
+            $"    }}",
             $"    else",
             $"    {{",
-            $"        if (colorIndex >= 31.5f)",
-            $"            colorIndex = 0.0f;",
-            $"        vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
-            $"        if (maskColIndex < 0.5f)",
-            $"            {DefaultFragmentOutColorName} = pixelColor;",
-            $"        else",
-            $"            {DefaultFragmentOutColorName} = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"        pixelColor = texture({DefaultSamplerName}, varTexCoord);",
+            $"        if (pixelColor.a < 0.5f)",
+            $"            discard;",
             $"    }}",
+            $"    ",
+            $"    if (maskColIndex < 0.5f)",
+            $"        {DefaultFragmentOutColorName} = pixelColor;",
+            $"    else",
+            $"        {DefaultFragmentOutColorName} = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
             $"}}"
         };
 
@@ -102,6 +115,11 @@ namespace Ambermoon.Renderer
             : base(state, fragmentShaderLines, vertexShaderLines)
         {
 
+        }
+
+        public void UsePalette(bool use)
+        {
+            shaderProgram.SetInput(DefaultPaletteName, use ? 1.0f : 0.0f);
         }
 
         public void SetSampler(int textureUnit = 0)

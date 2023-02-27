@@ -1,7 +1,7 @@
 ﻿/*
  * RenderBuffer.cs - Renders several buffered objects
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -35,6 +35,8 @@ namespace Ambermoon.Renderer
         public bool Opaque { get; } = false;
         bool disposed = false;
         readonly State state;
+        uint textureFactor = 1;
+        bool usePalette = true;
 
         readonly VertexArrayObject vertexArrayObject = null;
         readonly VectorBuffer vectorBuffer = null;
@@ -42,6 +44,7 @@ namespace Ambermoon.Renderer
         readonly PositionBuffer textureAtlasOffsetBuffer = null;
         readonly WordBuffer baseLineBuffer = null;
         readonly ColorBuffer colorBuffer = null;
+        readonly ByteBuffer maskColorBuffer = null;
         readonly ByteBuffer layerBuffer = null;
         readonly IndexBuffer indexBuffer = null;
         readonly ByteBuffer paletteIndexBuffer = null;
@@ -67,9 +70,12 @@ namespace Ambermoon.Renderer
 
         public RenderBuffer(State state, bool is3D, bool supportAnimations, bool layered,
             bool noTexture = false, bool isBillboard = false, bool isText = false, bool opaque = false,
-            bool fow = false, bool sky = false, bool special = false, bool noPaletteImage = false)
+            bool fow = false, bool sky = false, bool texturesWithAlpha = false, bool noPaletteImage = false,
+            bool usePalette = true, uint textureFactor = 1)
         {
             this.state = state;
+            this.textureFactor = textureFactor;
+            this.usePalette = usePalette;
             Opaque = opaque;
 
             if (is3D)
@@ -84,7 +90,7 @@ namespace Ambermoon.Renderer
                     imageShaders[state] = ImageShader.Create(state);
                 vertexArrayObject = new VertexArrayObject(state, imageShaders[state].ShaderProgram);
             }
-            else if (special)
+            else if (texturesWithAlpha)
             {
                 if (!alphaTextureShaders.ContainsKey(state))
                     alphaTextureShaders[state] = AlphaTextureShader.Create(state);
@@ -157,7 +163,7 @@ namespace Ambermoon.Renderer
                 positionBuffer = new PositionBuffer(state, false);
             indexBuffer = new IndexBuffer(state);
 
-            if (special || noPaletteImage)
+            if (texturesWithAlpha || noPaletteImage)
                 alphaBuffer = new ByteBuffer(state, false);
 
             if (fow)
@@ -193,9 +199,9 @@ namespace Ambermoon.Renderer
 
                 if (!isText && !is3D && !noPaletteImage)
                 {
-                    colorBuffer = new ColorBuffer(state, true);
+                    maskColorBuffer = new ByteBuffer(state, !supportAnimations);
 
-                    vertexArrayObject.AddBuffer(TextureShader.DefaultMaskColorIndexName, colorBuffer);
+                    vertexArrayObject.AddBuffer(TextureShader.DefaultMaskColorIndexName, maskColorBuffer);
                 }
 
                 if (layered || isText)
@@ -240,7 +246,7 @@ namespace Ambermoon.Renderer
                 vertexArrayObject.AddBuffer(ColorShader.DefaultPositionName, positionBuffer);
             vertexArrayObject.AddBuffer("index", indexBuffer);
 
-            if (special || noPaletteImage)
+            if (texturesWithAlpha || noPaletteImage)
                 vertexArrayObject.AddBuffer(AlphaTextureShader.DefaultAlphaName, alphaBuffer);
 
             if (!fow && !noTexture)
@@ -249,6 +255,27 @@ namespace Ambermoon.Renderer
                     vertexArrayObject.AddBuffer(TextureShader.DefaultPaletteIndexName, paletteIndexBuffer);
                 vertexArrayObject.AddBuffer(TextureShader.DefaultTexCoordName, textureAtlasOffsetBuffer);
             }
+        }
+
+        internal void SetTextureFactor(uint factor)
+        {
+            if (textureFactor != factor)
+            {
+                uint oldFactor = textureFactor;
+                textureFactor = factor;
+
+                short Transform(short value) => (short)((value / oldFactor) * factor);
+                Tuple<short, short> TransformPosition(Tuple<short, short> position) => Tuple.Create(Transform(position.Item1), Transform(position.Item2));
+
+                textureAtlasOffsetBuffer?.TransformAll((_, position) => TransformPosition(position));
+                textureEndCoordBuffer?.TransformAll((_, position) => TransformPosition(position));
+                textureSizeBuffer?.TransformAll((_, position) => TransformPosition(position));
+            }
+        }
+
+        internal void UsePalette(bool use)
+        {
+            usePalette = use;
         }
 
         internal ColorShader ColorShader => colorShaders[state];
@@ -449,13 +476,13 @@ namespace Ambermoon.Renderer
                 layerBuffer.Add(layer, layerBufferIndex + 3);
             }
 
-            if (colorBuffer != null)
+            if (maskColorBuffer != null)
             {
                 byte color = sprite.MaskColor ?? 0;
-                int maskColorBufferIndex = colorBuffer.Add(color, index);
-                colorBuffer.Add(color, maskColorBufferIndex + 1);
-                colorBuffer.Add(color, maskColorBufferIndex + 2);
-                colorBuffer.Add(color, maskColorBufferIndex + 3);
+                int maskColorBufferIndex = maskColorBuffer.Add(color, index);
+                maskColorBuffer.Add(color, maskColorBufferIndex + 1);
+                maskColorBuffer.Add(color, maskColorBufferIndex + 2);
+                maskColorBuffer.Add(color, maskColorBufferIndex + 3);
             }
 
             if (textColorIndexBuffer != null)
@@ -777,13 +804,13 @@ namespace Ambermoon.Renderer
 
         public void UpdateMaskColor(int index, byte? maskColor)
         {
-            if (colorBuffer != null)
+            if (maskColorBuffer != null)
             {
                 var color = maskColor ?? 0;
-                colorBuffer.Update(index, color);
-                colorBuffer.Update(index + 1, color);
-                colorBuffer.Update(index + 2, color);
-                colorBuffer.Update(index + 3, color);
+                maskColorBuffer.Update(index, color);
+                maskColorBuffer.Update(index + 1, color);
+                maskColorBuffer.Update(index + 2, color);
+                maskColorBuffer.Update(index + 3, color);
             }
         }
 
@@ -1010,6 +1037,11 @@ namespace Ambermoon.Renderer
                     colorBuffer.Remove(index + i);
                 }
 
+                if (maskColorBuffer != null)
+                {
+                    maskColorBuffer.Remove(index + i);
+                }
+
                 if (layerBuffer != null)
                 {
                     layerBuffer.Remove(index + i);
@@ -1125,6 +1157,7 @@ namespace Ambermoon.Renderer
                 textureAtlasOffsetBuffer?.Dispose();
                 baseLineBuffer?.Dispose();
                 colorBuffer?.Dispose();
+                maskColorBuffer?.Dispose();
                 layerBuffer?.Dispose();
                 indexBuffer?.Dispose();
 

@@ -26,6 +26,7 @@ namespace Ambermoon.Renderer
         static string[] OpaqueTextureFragmentShader(State state) => new string[]
         {
             GetFragmentShaderHeader(state),
+            $"uniform float {DefaultUsePaletteName};",
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform sampler2D {DefaultPaletteName};",
             $"in vec2 varTexCoord;",
@@ -33,8 +34,16 @@ namespace Ambermoon.Renderer
             $"",
             $"void main()",
             $"{{",
-            $"    float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
-            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"    vec4 pixelColor;",
+            $"    if ({DefaultUsePaletteName} > 0.5f)",
+            $"    {{",
+            $"        float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
+            $"        pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"    }}",
+            $"    else",
+            $"    {{",
+            $"        pixelColor = texture({DefaultSamplerName}, varTexCoord);",
+            $"    }}",
             $"    ",
             $"    {DefaultFragmentOutColorName} = pixelColor;",
             $"}}"
