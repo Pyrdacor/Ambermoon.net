@@ -1,4 +1,4 @@
-﻿namespace Ambermoon.Data.Legacy.Serialization
+﻿namespace Ambermoon.Data
 {
     public struct Glyph
     {

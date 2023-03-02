@@ -574,7 +574,7 @@ namespace Ambermoon
             this.songManager = songManager;
             MapManager = renderView.GameData.MapManager;
             ItemManager = renderView.GameData.ItemManager;
-            CharacterManager = renderView.GameData.GetCharacterManager(graphicProvider);
+            CharacterManager = renderView.GameData.CharacterManager;
             SavegameManager = savegameManager;
             this.places = renderView.GameData.Places;
             this.savegameSerializer = savegameSerializer;

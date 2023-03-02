@@ -21,7 +21,7 @@ namespace Ambermoon.Data
 
     public readonly struct FantasyIntroAction
     {
-        internal FantasyIntroAction(uint frames, FantasyIntroCommand command, params int[] parameters)
+        public FantasyIntroAction(uint frames, FantasyIntroCommand command, params int[] parameters)
         {
             Frames = frames;
             Command = command;

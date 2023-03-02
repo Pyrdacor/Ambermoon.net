@@ -128,6 +128,11 @@ namespace Ambermoon.Renderer
 
         }
 
+        public void UsePalette(bool use)
+        {
+            shaderProgram.SetInput(DefaultPaletteName, use ? 1.0f : 0.0f);
+        }
+
         public void SetSampler(int textureUnit = 0)
         {
             shaderProgram.SetInput(DefaultSamplerName, textureUnit);

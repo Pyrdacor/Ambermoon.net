@@ -27,7 +27,7 @@ namespace Ambermoon.Data
         ValdynNotInParty
     }
 
-    public struct OutroAction
+    public readonly struct OutroAction
     {
         public OutroCommand Command { get; init; }
         public bool LargeText { get; init; }
@@ -37,7 +37,7 @@ namespace Ambermoon.Data
         public uint? ImageOffset { get; init; }
     }
 
-    public struct OutroGraphicInfo
+    public readonly struct OutroGraphicInfo
     {
         public uint GraphicIndex { get; init; }
         public int Width { get; init; }
@@ -47,10 +47,12 @@ namespace Ambermoon.Data
 
     public interface IOutroData
     {
-        public IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>> OutroActions { get; }
-        public IReadOnlyList<Graphic> OutroPalettes { get; }
-        public IReadOnlyList<Graphic> Graphics { get; }
-        public IReadOnlyList<string> Texts { get; }
-        public IReadOnlyDictionary<uint, OutroGraphicInfo> GraphicInfos { get; }
+        IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>> OutroActions { get; }
+        IReadOnlyList<Graphic> OutroPalettes { get; }
+        IReadOnlyList<Graphic> Graphics { get; }
+        IReadOnlyList<string> Texts { get; }
+        IReadOnlyDictionary<uint, OutroGraphicInfo> GraphicInfos { get; }
+        IReadOnlyDictionary<char, Glyph> Glyphs { get; }
+        IReadOnlyDictionary<char, Glyph> LargeGlyphs { get; }
     }
 }

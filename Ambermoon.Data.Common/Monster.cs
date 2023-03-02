@@ -55,10 +55,12 @@ namespace Ambermoon.Data
             // So this doesn't matter much and is easier to implement
             // than the alternatives.
             using var stream = new MemoryStream();
+#pragma warning disable SYSLIB0011
             var formatter = new BinaryFormatter();
             formatter.Serialize(stream, this);
             stream.Position = 0;
             return (Monster)formatter.Deserialize(stream);
+#pragma warning restore SYSLIB0011
         }
 
         /// <summary>

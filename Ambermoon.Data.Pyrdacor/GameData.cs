@@ -76,6 +76,8 @@ namespace Ambermoon.Data.Pyrdacor
 
         public IOutroData OutroData => throw new NotImplementedException();
 
+        public TextDictionary Dictionary => throw new NotImplementedException();
+
         public Dictionary<int, Graphic> Palettes => throw new NotImplementedException();
 
         public Dictionary<int, int> NPCGraphicOffsets => throw new NotImplementedException();

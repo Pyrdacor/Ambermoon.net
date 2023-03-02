@@ -4,7 +4,9 @@ using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
+#pragma warning disable CS8981
     using word = UInt16;
+#pragma warning restore CS8981
 
     public static class ItemWriter
     {

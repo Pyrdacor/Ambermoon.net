@@ -556,31 +556,6 @@ namespace Ambermoon.Data.Pyrdacor.FileSpecs
                 dataWriter.Write((ushort)Texture.Width);
                 dataWriter.Write((ushort)Texture.Height);
                 dataWriter.Write(data);
-
-                Texture = new Graphic
-                {
-                    Width = width,
-                    Height = height,
-                    IndexedGraphic = usePalette,
-                    Data = dataReader.ReadBytes(width * height * (usePalette ? 1 : 4))
-                };
-
-                if (usePalette)
-                {
-                    if (colorIndexOffset != 0)
-                    {
-                        if (alpha)
-                        {
-                            for (int i = 0; i < Texture.Data.Length; ++i)
-                                Texture.Data[i] = Texture.Data[i] == 0 ? (byte)0 : (byte)(colorIndexOffset + Texture.Data[i]);
-                        }
-                        else
-                        {
-                            for (int i = 0; i < Texture.Data.Length; ++i)
-                                Texture.Data[i] = (byte)(colorIndexOffset + Texture.Data[i]);
-                        }
-                    }
-                }
             }
 
             if (tiles)

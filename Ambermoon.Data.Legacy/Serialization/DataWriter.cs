@@ -6,9 +6,11 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
+#pragma warning disable CS8981
     using word = UInt16;
     using dword = UInt32;
     using qword = UInt64;
+#pragma warning restore CS8981
 
     public class DataWriter : IDataWriter
     {

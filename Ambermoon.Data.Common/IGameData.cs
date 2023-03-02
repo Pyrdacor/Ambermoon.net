@@ -36,6 +36,7 @@ namespace Ambermoon.Data
         IIntroData IntroData { get; }
         IFantasyIntroData FantasyIntroData { get; }
         IOutroData OutroData { get; }
+        TextDictionary Dictionary { get; }
     }
 
     public interface ILegacyGameData : IGameData

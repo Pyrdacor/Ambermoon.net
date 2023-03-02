@@ -28,7 +28,7 @@ namespace Ambermoon.Data.Pyrdacor.FileSpecs
         public void Read(IDataReader dataReader, uint index, GameData gameData)
         {
             var initialPosition = dataReader.Position;
-            song = gameData.SongManager.LoadSong(dataReader, (int)index, true, true) as Song;
+            song = (gameData.SongManager as SongManager)!.LoadSong(dataReader, (int)index, true, true) as Song;
             var position = dataReader.Position;
             dataReader.Position = initialPosition;
             songData = dataReader.ReadBytes(position - initialPosition);

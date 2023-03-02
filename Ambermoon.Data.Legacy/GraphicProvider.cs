@@ -77,9 +77,10 @@ namespace Ambermoon.Data.Legacy
             this.gameData = gameData;
             var graphicReader = new GraphicReader();
             Palettes = gameData.Files[paletteFile].Files.ToDictionary(f => f.Key, f => ReadPalette(graphicReader, f.Value));
+            int i;
 
             // Add builtin palettes
-            for (int i = 0; i < 3; ++i)
+            for (i = 0; i < 3; ++i)
                 Palettes.Add(50 + i, executableData.BuiltinPalettes[i]);
 
             // And another palette for some UI graphics.
@@ -112,7 +113,7 @@ namespace Ambermoon.Data.Legacy
             });
 
             const int additionalPaletteCount = 9 + 6 + 2; // Intro, Outro, Fantasy Intro
-            int i = 0;
+            i = 0;
             for (; i < Math.Min(additionalPaletteCount, additionalPalettes.Count); ++i)
             {
                 Palettes.Add(54 + i, additionalPalettes[i]);
@@ -186,7 +187,7 @@ namespace Ambermoon.Data.Legacy
                             reader.AlignToWord();
                             var compoundGraphic = new Graphic(16 * numFrames, 32, 0);
 
-                            for (int i = 0; i < numFrames; ++i)
+                            for (i = 0; i < numFrames; ++i)
                             {
                                 graphicReader.ReadGraphic(graphic, reader, graphicInfo);
                                 compoundGraphic.AddOverlay((uint)i * 16, 0, graphic, false);
@@ -240,7 +241,7 @@ namespace Ambermoon.Data.Legacy
                             var graphic = new Graphic();
                             var compoundGraphic = new Graphic((int)info.FrameCount * info.GraphicInfo.Width, info.GraphicInfo.Height, 0);
 
-                            for (int i = 0; i < info.FrameCount; ++i)
+                            for (i = 0; i < info.FrameCount; ++i)
                             {
                                 graphicReader.ReadGraphic(graphic, reader, info.GraphicInfo);
                                 compoundGraphic.AddOverlay((uint)(i * info.GraphicInfo.Width), 0, graphic, false);

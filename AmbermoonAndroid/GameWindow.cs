@@ -486,7 +486,6 @@ namespace AmbermoonAndroid
             {
                 try
                 {
-                    var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.GetDictionary());
                     foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
                         executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
                     var savegameManager = new SavegameManager(savePath);
@@ -510,7 +509,7 @@ namespace AmbermoonAndroid
                             gameCreator = () =>
                             {
                                 var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
-                                    characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
+                                    characterManager, savegameManager, savegameSerializer, dataNameProvider, gameData.Dictionary, places,
                                     cursor, lightEffectProvider, audioOutput, songManager, FullscreenChangeRequest, ChangeResolution,
                                     QueryPressedKeys, new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features);
                                 game.QuitRequested += window.Close;

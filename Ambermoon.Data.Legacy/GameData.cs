@@ -7,6 +7,7 @@ using Ambermoon.Data.Serialization;
 using Ambermoon.Data.Serialization.FileSystem;
 using Ambermoon.Render;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -77,6 +78,7 @@ namespace Ambermoon.Data.Legacy
         public string Version { get; private set; } = "Unknown";
         public string Language { get; private set; } = "Unknown";
         public bool Advanced { get; private set; } = false;
+        public TextDictionary Dictionary { get; private set; }
 
         public KeyValuePair<string, IDataReader> GetDictionary()
         {
@@ -718,6 +720,9 @@ namespace Ambermoon.Data.Legacy
             }
 
             executableData = ExecutableData.ExecutableData.FromGameData(this);
+            IntroData = new IntroData(this);
+            FantasyIntroData = new FantasyIntroData(this);
+            OutroData = new OutroData(this);
             var additionalPalettes = new List<Graphic>();
             additionalPalettes.AddRange(IntroData.IntroPalettes);
             additionalPalettes.AddRange(OutroData.OutroPalettes);
@@ -731,9 +736,7 @@ namespace Ambermoon.Data.Legacy
             LightEffectProvider = new LightEffectProvider(executableData);
             MapManager = new MapManager(this, new MapReader(), new TilesetReader(), new LabdataReader());
             SongManager = new SongManager(this);
-            IntroData = new IntroData(this);
-            FantasyIntroData = new FantasyIntroData(this);
-            OutroData = new OutroData(this);
+            Dictionary = TextDictionary.Load(new TextDictionaryReader(), GetDictionary());
             Places = Places.Load(new PlacesReader(), Files["Place_data"].Files[1]);
 
             Loaded = true;
