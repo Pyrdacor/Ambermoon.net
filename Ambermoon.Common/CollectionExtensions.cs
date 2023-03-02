@@ -29,5 +29,17 @@ namespace Ambermoon
 
             return list;
         }
+
+        public static void AddSorted<T>(this List<T> list, T value)
+        {
+            int x = list.BinarySearch(value);
+            list.Insert((x >= 0) ? x : ~x, value);
+        }
+
+        public static void AddSorted<T>(this List<T> list, T value, IComparer<T> comparer)
+        {
+            int x = list.BinarySearch(value, comparer);
+            list.Insert((x >= 0) ? x : ~x, value);
+        }
     }
 }

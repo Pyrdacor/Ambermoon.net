@@ -72,8 +72,7 @@ namespace Ambermoon.Data.Legacy
         public byte FirstOutroPaletteIndex { get; } = 63;
         public byte FirstFantasyIntroPaletteIndex { get; } = 69; 
 
-        public GraphicProvider(GameData gameData, ExecutableData.ExecutableData executableData,
-            IntroData introData, OutroData outroData, FantasyIntroData fantasyIntroData)
+        public GraphicProvider(GameData gameData, ExecutableData.ExecutableData executableData, List<Graphic> additionalPalettes)
         {
             this.gameData = gameData;
             var graphicReader = new GraphicReader();
@@ -111,47 +110,16 @@ namespace Ambermoon.Data.Legacy
                     0x22, 0x22, 0x22, 0xff, 0x88, 0x88, 0x77, 0xff, 0xaa, 0xaa, 0x99, 0xff, 0xcc, 0xcc, 0xbb, 0xff
                 }
             });
-            
-            // Add the 9 intro palettes
-            int introPaletteCount = introData == null ? 0 : Math.Min(9, introData.IntroPalettes.Count);
-            int p = 0;
-            for (; p < introPaletteCount; ++p)
-                Palettes.Add(54 + p, introData.IntroPalettes[p]);
-            for (; p < 9; ++p)
-            {
-                Palettes.Add(54 + p, new Graphic
-                {
-                    Width = 32,
-                    Height = 1,
-                    IndexedGraphic = false,
-                    Data = new byte[32 * 4]
-                });
-            }
 
-            // Add the 6 outro palettes
-            int outroPaletteCount = outroData == null ? 0 : Math.Min(6, outroData.OutroPalettes.Count);
-            p = 0;
-            for (; p < outroPaletteCount; ++p)
-                Palettes.Add(63 + p, outroData.OutroPalettes[p]);
-            for (; p < 6; ++p)
+            const int additionalPaletteCount = 9 + 6 + 2; // Intro, Outro, Fantasy Intro
+            int i = 0;
+            for (; i < Math.Min(additionalPaletteCount, additionalPalettes.Count); ++i)
             {
-                Palettes.Add(63 + p, new Graphic
-                {
-                    Width = 32,
-                    Height = 1,
-                    IndexedGraphic = false,
-                    Data = new byte[32 * 4]
-                });
+                Palettes.Add(54 + i, additionalPalettes[i]);
             }
-
-            // Add the 2 fantasy intro palettes
-            int fantasyIntroPaletteCount = fantasyIntroData == null ? 0 : Math.Min(2, fantasyIntroData.FantasyIntroPalettes.Count);
-            p = 0;
-            for (; p < fantasyIntroPaletteCount; ++p)
-                Palettes.Add(69 + p, fantasyIntroData.FantasyIntroPalettes[p]);
-            for (; p < 2; ++p)
+            for (; i < additionalPaletteCount; ++i)
             {
-                Palettes.Add(69 + p, new Graphic
+                Palettes.Add(54 + i, new Graphic
                 {
                     Width = 32,
                     Height = 1,

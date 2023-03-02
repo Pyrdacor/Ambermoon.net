@@ -549,12 +549,11 @@ namespace Ambermoon
         internal void RequestFullscreenChange(bool fullscreen) => fullscreenChangeHandler?.Invoke(fullscreen);
         internal void NotifyResolutionChange(int? oldWidth) => resolutionChangeHandler?.Invoke(oldWidth);
 
-        public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IMapManager mapManager,
-            IItemManager itemManager, ICharacterManager characterManager, ISavegameManager savegameManager,
-            ISavegameSerializer savegameSerializer, IDataNameProvider dataNameProvider, TextDictionary textDictionary,
-            Places places, Cursor cursor, ILightEffectProvider lightEffectProvider, IAudioOutput audioOutput, ISongManager songManager,
-            FullscreenChangeHandler fullscreenChangeHandler, ResolutionChangeHandler resolutionChangeHandler,
-            Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory, Features features)
+        public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IGraphicProvider graphicProvider,
+            ISavegameManager savegameManager, ISavegameSerializer savegameSerializer, TextDictionary textDictionary,
+            Cursor cursor, IAudioOutput audioOutput, ISongManager songManager, FullscreenChangeHandler fullscreenChangeHandler,
+            ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory,
+            Features features)
         {
             Features = features;
             Character.FoodWeight = Features.HasFlag(Features.ReducedFoodWeight) ? 25u : 250u;
@@ -573,22 +572,22 @@ namespace Ambermoon
             this.renderView = renderView;
             AudioOutput = audioOutput;
             this.songManager = songManager;
-            MapManager = mapManager;
-            ItemManager = itemManager;
-            CharacterManager = characterManager;
+            MapManager = renderView.GameData.MapManager;
+            ItemManager = renderView.GameData.ItemManager;
+            CharacterManager = renderView.GameData.GetCharacterManager(graphicProvider);
             SavegameManager = savegameManager;
-            this.places = places;
+            this.places = renderView.GameData.Places;
             this.savegameSerializer = savegameSerializer;
-            DataNameProvider = dataNameProvider;
+            DataNameProvider = renderView.GameData.DataNameProvider;
             this.textDictionary = textDictionary;
-            this.lightEffectProvider = lightEffectProvider;
+            this.lightEffectProvider = renderView.GameData.LightEffectProvider;
             this.outroFactory = outroFactory;
             camera3D = renderView.Camera3D;
             windowTitle = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(""), TextColor.BrightGray, true,
                 new Rect(8, 40, 192, 10), TextAlign.Center);
             windowTitle.DisplayLayer = 2;
-            layout = new Layout(this, renderView, itemManager);
+            layout = new Layout(this, renderView, ItemManager);
             layout.BattleFieldSlotClicked += BattleFieldSlotClicked;
             fow2D = renderView.FowFactory.Create(Global.Map2DViewWidth, Global.Map2DViewHeight,
                 new Position(Global.Map2DViewX + Global.Map2DViewWidth / 2, Global.Map2DViewY + Global.Map2DViewHeight / 2), 255);

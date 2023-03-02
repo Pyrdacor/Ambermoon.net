@@ -4,7 +4,6 @@ using Ambermoon.Data.Audio;
 using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -24,12 +23,12 @@ namespace Ambermoon
         IAudioOutput audioOutput = null;
         IAudioStream currentStream = null;
         protected static readonly Song[] Songs = Enum.GetValues<Song>().Skip(1).ToArray();
-        readonly Data.Legacy.Audio.SongManager songManager = null;
-        readonly object startMutex = new object();
+        readonly ISongManager songManager = null;
+        readonly object startMutex = new();
 
-        public MusicManager(IConfiguration configuration, ILegacyGameData gameData)
+        public MusicManager(IConfiguration configuration, IGameData gameData)
         {
-            songManager = new Data.Legacy.Audio.SongManager(gameData);
+            songManager = gameData.SongManager;
 
             this.configuration = configuration;
 

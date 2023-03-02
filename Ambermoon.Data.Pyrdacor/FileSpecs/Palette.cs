@@ -10,15 +10,6 @@ namespace Ambermoon.Data.Pyrdacor.FileSpecs
         public byte SupportedVersion => 0;
         public ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
         Graphic? graphic = null;
-        const int PaletteCount = 69;
-
-        static readonly GraphicInfo PaletteGraphicInfo = new GraphicInfo
-        {
-            Width = 32,
-            Height = PaletteCount,
-            GraphicFormat = GraphicFormat.RGBA32,
-            Alpha = false
-        };
 
         public Graphic Graphic => graphic!;
 
@@ -34,8 +25,15 @@ namespace Ambermoon.Data.Pyrdacor.FileSpecs
 
         public void Read(IDataReader dataReader, uint _, GameData __)
         {
+            int paletteCount = dataReader.ReadWord();
             graphic = new Graphic();
-            new GraphicReader().ReadGraphic(graphic, dataReader, PaletteGraphicInfo);
+            new GraphicReader().ReadGraphic(graphic, dataReader, new GraphicInfo
+            {
+                Width = 32,
+                Height = paletteCount,
+                GraphicFormat = GraphicFormat.RGBA32,
+                Alpha = false
+            });
         }
 
         public void Write(IDataWriter dataWriter)
@@ -43,6 +41,7 @@ namespace Ambermoon.Data.Pyrdacor.FileSpecs
             if (graphic == null)
                 throw new AmbermoonException(ExceptionScope.Application, "Palette data was null when trying to write it.");
 
+            dataWriter.Write((ushort)graphic.Height);
             dataWriter.Write(graphic.Data);
         }
     }

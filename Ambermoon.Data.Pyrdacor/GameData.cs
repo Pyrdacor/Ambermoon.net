@@ -1,6 +1,6 @@
-﻿using Ambermoon.Data.Enumerations;
+﻿using Ambermoon.Data.Audio;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy.Audio;
-using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
 using Ambermoon.Data.Pyrdacor.Objects;
@@ -9,7 +9,7 @@ using Ambermoon.Render;
 
 namespace Ambermoon.Data.Pyrdacor
 {
-    public class GameData : IGameData
+    public class GameData : IGameData, IGraphicProvider
     {
         LazyFileLoader<Palette, Graphic> paletteLoader;
         LazyContainerLoader<FontData, Font> fontLoader;
@@ -28,6 +28,7 @@ namespace Ambermoon.Data.Pyrdacor
         readonly Dictionary<string, Action<IDataReader>> fileHandlers = new Dictionary<string, Action<IDataReader>>();
         readonly Lazy<SongManager> songManager;
         readonly Lazy<ICharacterManager> characterManager;
+        readonly Lazy<IItemManager> itemManager;
         readonly Lazy<ISavegameManager> savegameManager;
         readonly Lazy<IngameFont> ingameFont;
         readonly Lazy<Font> outroSmallFont;
@@ -45,13 +46,51 @@ namespace Ambermoon.Data.Pyrdacor
 
         public ISavegameManager SavegameManager => savegameManager!.Value;
 
-        internal SongManager SongManager => songManager!.Value;
+        public ISongManager SongManager => songManager!.Value;
 
         // TODO
         public Dictionary<TravelType, GraphicInfo> StationaryImageInfos => throw new NotImplementedException();
 
         // TODO
         public Character2DAnimationInfo PlayerAnimationInfo => throw new NotImplementedException();
+
+        public IReadOnlyList<Position> CursorHotspots => throw new NotImplementedException();
+
+        public Places Places => throw new NotImplementedException();
+
+        public IItemManager ItemManager => itemManager!.Value;
+
+        public IFontProvider FontProvider => throw new NotImplementedException();
+
+        public IDataNameProvider DataNameProvider => throw new NotImplementedException();
+
+        public ILightEffectProvider LightEffectProvider => throw new NotImplementedException();
+
+        public IMapManager MapManager => throw new NotImplementedException();
+
+        public IGraphicProvider GraphicProvider => this;
+
+        public IIntroData IntroData => throw new NotImplementedException();
+
+        public IFantasyIntroData FantasyIntroData => throw new NotImplementedException();
+
+        public IOutroData OutroData => throw new NotImplementedException();
+
+        public Dictionary<int, Graphic> Palettes => throw new NotImplementedException();
+
+        public Dictionary<int, int> NPCGraphicOffsets => throw new NotImplementedException();
+
+        public byte PrimaryUIPaletteIndex => throw new NotImplementedException();
+
+        public byte SecondaryUIPaletteIndex => throw new NotImplementedException();
+
+        public byte AutomapPaletteIndex => throw new NotImplementedException();
+
+        public byte FirstIntroPaletteIndex => throw new NotImplementedException();
+
+        public byte FirstOutroPaletteIndex => throw new NotImplementedException();
+
+        public byte FirstFantasyIntroPaletteIndex => throw new NotImplementedException();
 
         // TODO
         public TravelGraphicInfo GetTravelGraphicInfo(TravelType type, CharacterDirection direction)
@@ -119,6 +158,12 @@ namespace Ambermoon.Data.Pyrdacor
                 () => monsterGroupLoader!.LoadAll()
             ));
 
+            itemManager = new Lazy<IItemManager>(() => new ItemManager
+            (
+                () => itemLoader!.LoadAll(),
+                () => itemTextLoader!.LoadAll()
+            ));
+
             ingameFont = new Lazy<IngameFont>(() => new IngameFont
             (
                 () => fontLoader!.Load(FontData.IngameFontIndex),
@@ -135,7 +180,7 @@ namespace Ambermoon.Data.Pyrdacor
 
             for (int i = 0; i < fileCount; ++i)
             {
-                var file = reader.ReadString();
+                var file = reader.ReadString(4);
 
                 if (!fileHandlers.TryGetValue(file, out var loader))
                     throw new AmbermoonException(ExceptionScope.Data, $"No loader found for file '{file}' inside game data.");
@@ -149,7 +194,7 @@ namespace Ambermoon.Data.Pyrdacor
         }
 
         internal Tileset GetTileset(uint index) => tilesetLoader.Load((ushort)index);
-        internal string GetGotoPointName(int index) => gotoPointNameLoader.Load().GetText(index);
+        internal string? GetGotoPointName(int index) => gotoPointNameLoader.Load().GetText(index);
 
 
         #region Loaders
@@ -364,6 +409,36 @@ namespace Ambermoon.Data.Pyrdacor
         void LoadMusic(IDataReader dataReader)
         {
 
+        }
+
+        public List<Graphic> GetGraphics(GraphicType type)
+        {
+            throw new NotImplementedException();
+        }
+
+        public CombatBackgroundInfo Get2DCombatBackground(uint index)
+        {
+            throw new NotImplementedException();
+        }
+
+        public CombatBackgroundInfo Get3DCombatBackground(uint index)
+        {
+            throw new NotImplementedException();
+        }
+
+        public CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index)
+        {
+            throw new NotImplementedException();
+        }
+
+        public float GetMonsterRowImageScaleFactor(MonsterRow row)
+        {
+            throw new NotImplementedException();
+        }
+
+        public byte PaletteIndexFromColorIndex(Map map, byte colorIndex)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion

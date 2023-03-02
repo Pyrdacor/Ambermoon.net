@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data.Pyrdacor
 {
-    public class CharacterManager : ICharacterManager
+    internal class CharacterManager : ICharacterManager
     {
         readonly Lazy<Dictionary<uint, NPC>> npcs;
         readonly Lazy<Dictionary<uint, Monster>> monsters;        
@@ -21,7 +21,7 @@
 
         public MonsterGroup? GetMonsterGroup(uint index) => index == 0 || !monsterGroups.Value.ContainsKey(index) ? null : monsterGroups.Value[index];
 
-        public IReadOnlyList<Monster> Monsters => monsters.Value.Values.ToList();
-        public IReadOnlyDictionary<uint, MonsterGroup> MonsterGroups => monsterGroups.Value;
+        public IReadOnlyList<Monster> Monsters => monsters.Value.Values.ToList().AsReadOnly();
+        public IReadOnlyDictionary<uint, MonsterGroup> MonsterGroups => monsterGroups.Value.AsReadOnly();
     }
 }

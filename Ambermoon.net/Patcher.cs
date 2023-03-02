@@ -105,9 +105,7 @@ namespace Ambermoon
             var fontTextureAtlas = textureAtlasManager.GetOrCreate(Layer.Text);
             var spriteFactory = renderView.SpriteFactory;
             var layer = renderView.GetLayer(Layer.UI);
-            var executableData = ExecutableData.FromGameData(renderView.GameData as ILegacyGameData);
-            cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly(),
-                textureAtlasManager);
+            cursor = new Render.Cursor(renderView, renderView.GameData.CursorHotspots, textureAtlasManager);
 
             #region Window
             void AddBorder(UIGraphic frame, int column, int row)

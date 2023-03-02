@@ -3,46 +3,13 @@ using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
-    public enum IntroGraphic
-    {
-        Frame, // unknown
-        MainMenuBackground,
-        Gemstone,
-        Illien,
-        Snakesign,
-        DestroyedGemstone,
-        DestroyedIllien,
-        DestroyedSnakesign,
-        ThalionLogo,
-        SunAnimation,
-        Lyramion,
-        Morag,
-        ForestMoon,
-        Meteor
-    }
+    
 
-    public enum IntroText
+    public class IntroData : IIntroData
     {
-        Gemstone,
-        Illien,
-        Snakesign,
-        Presents,
-        Twinlake,
-        Lyramion,
-        SeventyYears,
-        After,
-        Continue,
-        NewGame,
-        Intro,
-        Quit
-        // TODO: also extract credits?
-    }
-
-    public class IntroData
-    {
-        readonly List<Graphic> introPalettes = new List<Graphic>();
-        readonly Dictionary<IntroGraphic, Graphic> graphics = new Dictionary<IntroGraphic, Graphic>();
-        static readonly Dictionary<IntroGraphic, byte> graphicPalettes = new Dictionary<IntroGraphic, byte>
+        readonly List<Graphic> introPalettes = new();
+        readonly Dictionary<IntroGraphic, Graphic> graphics = new();
+        static readonly Dictionary<IntroGraphic, byte> graphicPalettes = new()
         {
             { IntroGraphic.Frame, 0 }, // unknown
             { IntroGraphic.MainMenuBackground, 6 }, // 7 will work too
@@ -60,13 +27,13 @@ namespace Ambermoon.Data.Legacy.Serialization
             { IntroGraphic.Meteor, 3 },
             // TODO ...
         };
-        static GraphicInfo paletteGraphicInfo = new GraphicInfo
+        static GraphicInfo paletteGraphicInfo = new()
         {
             Width = 32,
             Height = 1,
             GraphicFormat = GraphicFormat.XRGB16
         };
-        readonly Dictionary<IntroText, string> texts = new Dictionary<IntroText, string>();
+        readonly Dictionary<IntroText, string> texts = new();
 
         public IReadOnlyList<Graphic> IntroPalettes => introPalettes.AsReadOnly();
         public static IReadOnlyDictionary<IntroGraphic, byte> GraphicPalettes => graphicPalettes;

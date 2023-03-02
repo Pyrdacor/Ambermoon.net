@@ -1,4 +1,7 @@
-﻿using Ambermoon.Data.Enumerations;
+﻿using Ambermoon.Data.Audio;
+using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Legacy.Audio;
+using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 using Ambermoon.Data.Serialization.FileSystem;
@@ -7,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
@@ -53,6 +57,20 @@ namespace Ambermoon.Data.Legacy
         private readonly ILogger log;
         private readonly bool stopAtFirstError;
         private readonly List<TravelGraphicInfo> travelGraphicInfos = new List<TravelGraphicInfo>(44);
+        private ExecutableData.ExecutableData executableData;
+        public IReadOnlyList<Position> CursorHotspots => executableData?.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly();
+        public Places Places { get; private set; }
+        public IGraphicProvider GraphicProvider { get; private set; }
+        public ICharacterManager CharacterManager { get; private set; }
+        public IItemManager ItemManager => executableData?.ItemManager;
+        public IFontProvider FontProvider { get; private set; }
+        public IDataNameProvider DataNameProvider { get; private set; }
+        public ILightEffectProvider LightEffectProvider { get; private set; }
+        public IMapManager MapManager { get; private set; }
+        public ISongManager SongManager { get; private set; }
+        public IIntroData IntroData { get; private set; }
+        public IFantasyIntroData FantasyIntroData { get; private set; }
+        public IOutroData OutroData { get; private set; }
         internal List<Graphic> TravelGraphics { get; } = new List<Graphic>(44);
         public bool Loaded { get; private set; } = false;
         public GameDataSource GameDataSource { get; private set; } = GameDataSource.Memory;
@@ -698,6 +716,25 @@ namespace Ambermoon.Data.Legacy
             {
                 // ignore
             }
+
+            executableData = ExecutableData.ExecutableData.FromGameData(this);
+            var additionalPalettes = new List<Graphic>();
+            additionalPalettes.AddRange(IntroData.IntroPalettes);
+            additionalPalettes.AddRange(OutroData.OutroPalettes);
+            additionalPalettes.AddRange(FantasyIntroData.FantasyIntroPalettes);
+            GraphicProvider = new GraphicProvider(this, executableData, additionalPalettes);
+            CharacterManager = new CharacterManager(this, GraphicProvider);
+            foreach (var objectTextFile in Files["Object_texts.amb"].Files)
+                executableData.ItemManager.AddTexts((uint)objectTextFile.Key, Serialization.TextReader.ReadTexts(objectTextFile.Value));
+            FontProvider = new FontProvider(executableData);
+            DataNameProvider = new DataNameProvider(executableData);
+            LightEffectProvider = new LightEffectProvider(executableData);
+            MapManager = new MapManager(this, new MapReader(), new TilesetReader(), new LabdataReader());
+            SongManager = new SongManager(this);
+            IntroData = new IntroData(this);
+            FantasyIntroData = new FantasyIntroData(this);
+            OutroData = new OutroData(this);
+            Places = Places.Load(new PlacesReader(), Files["Place_data"].Files[1]);
 
             Loaded = true;
         }

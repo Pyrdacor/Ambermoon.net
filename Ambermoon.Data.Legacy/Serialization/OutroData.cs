@@ -5,65 +5,22 @@ using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
-    public enum OutroCommand
+    public class OutroData : IOutroData
     {
-        PrintTextAndScroll,
-        WaitForClick,
-        ChangePicture
-    }
-
-    public enum OutroOption
-    {
-        /// <summary>
-        /// Valdyn is inside the party when you leave the machine room.
-        /// And you got the yellow sphere from the dying moranian.
-        /// </summary>
-        ValdynInPartyNoYellowSphere,
-        /// <summary>
-        /// Valdyn is inside the party when you leave the machine room.
-        /// And you did not get the yellow sphere from the dying moranian.
-        /// </summary>
-        ValdynInPartyWithYellowSphere,
-        /// <summary>
-        /// Valdyn is not inside the party when you leave the machine room.
-        /// </summary>
-        ValdynNotInParty
-    }
-
-    public struct OutroAction
-    {
-        public OutroCommand Command { get; internal set; }
-        public bool LargeText { get; internal set; }
-        public int ScrollAmount { get; internal set; }
-        public int TextDisplayX { get; internal set; }
-        public int? TextIndex { get; internal set; }
-        public uint? ImageOffset { get; internal set; }
-    }
-
-    public struct OutroGraphicInfo
-    {
-        public uint GraphicIndex { get; internal set; }
-        public int Width { get; internal set; }
-        public int Height { get; internal set; }
-        public byte PaletteIndex { get; internal set; }
-    }
-
-    public class OutroData
-    {
-        readonly Dictionary<OutroOption, IReadOnlyList<OutroAction>> outroActions = new Dictionary<OutroOption, IReadOnlyList<OutroAction>>();
-        readonly List<Graphic> outroPalettes = new List<Graphic>();
+        readonly Dictionary<OutroOption, IReadOnlyList<OutroAction>> outroActions = new();
+        readonly List<Graphic> outroPalettes = new();
         // The key is the offset inside the image hunk (it is reference by it from the data hunk).
         // The byte of the pair is the 0-based palette index (in relation to the OutroPalettes).
-        readonly Dictionary<uint, KeyValuePair<Graphic, byte>> graphics = new Dictionary<uint, KeyValuePair<Graphic, byte>>();
-        static GraphicInfo paletteGraphicInfo = new GraphicInfo
+        readonly Dictionary<uint, KeyValuePair<Graphic, byte>> graphics = new();
+        static GraphicInfo paletteGraphicInfo = new()
         {
             Width = 32,
             Height = 1,
             GraphicFormat = GraphicFormat.XRGB16
         };
-        readonly List<string> texts = new List<string>();
-        readonly Dictionary<char, Glyph> glyphs = new Dictionary<char, Glyph>();
-        readonly Dictionary<char, Glyph> largeGlyphs = new Dictionary<char, Glyph>();
+        readonly List<string> texts = new();
+        readonly Dictionary<char, Glyph> glyphs = new();
+        readonly Dictionary<char, Glyph> largeGlyphs = new();
 
         public IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>> OutroActions => outroActions;
         public IReadOnlyList<Graphic> OutroPalettes => outroPalettes.AsReadOnly();

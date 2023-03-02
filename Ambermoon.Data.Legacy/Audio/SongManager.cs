@@ -3,7 +3,6 @@ using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace Ambermoon.Data.Legacy.Audio
 {

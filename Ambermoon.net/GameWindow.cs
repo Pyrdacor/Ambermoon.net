@@ -686,7 +686,7 @@ namespace Ambermoon
 
         string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
 
-        void StartGame(GameData gameData, string savePath, GameLanguage gameLanguage, Features features, BinaryReader advancedDiffsReader)
+        void StartGame(IGameData gameData, string savePath, GameLanguage gameLanguage, Features features, BinaryReader advancedDiffsReader)
         {
             // Load fantasy intro data
             var fantasyIntroData = new FantasyIntroData(gameData);
@@ -701,9 +701,11 @@ namespace Ambermoon
             var outroFontLarge = new Font(outroData.LargeGlyphs, 10, (uint)outroData.Glyphs.Count);
 
             // Load game data
-            var executableData = ExecutableData.FromGameData(gameData);
-            var graphicProvider = new GraphicProvider(gameData, executableData, introData, outroData, fantasyIntroData);
-            var fontProvider = new FontProvider(executableData);
+            var additionalPalettes = new List<Graphic>();
+            additionalPalettes.AddRange(introData.IntroPalettes);
+            additionalPalettes.AddRange(outroData.OutroPalettes);
+            additionalPalettes.AddRange(fantasyIntroData.FantasyIntroPalettes);
+            var graphicProvider = gameData.GetGraphicProvider(additionalPalettes);
 
             if (audioOutput == null)
             {
@@ -730,7 +732,7 @@ namespace Ambermoon
             renderView = CreateRenderView(gameData, configuration, graphicProvider, logoPalettes, () =>
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;
-                textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
+                textureAtlasManager.AddAll(gameData, graphicProvider, gameData.FontProvider, introFont.GlyphGraphics,
                     introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
                 logoPyrdacor?.Initialize(textureAtlasManager);
                 AdvancedLogo.Initialize(textureAtlasManager);
@@ -756,14 +758,12 @@ namespace Ambermoon
                 try
                 {
                     var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.GetDictionary());
-                    foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
-                        executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
                     var savegameManager = new SavegameManager(savePath);
                     savegameManager.GetSavegameNames(gameData, out int currentSavegame, 10);
                     if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
                         currentSavegame = configuration.GetOrCreateCurrentAdditionalSavegameSlots()?.ContinueSavegameSlot ?? 0;
                     bool canContinue = currentSavegame != 0;
-                    var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly());
+                    var cursor = new Render.Cursor(renderView, gameData.CursorHotspots);
                     cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
                     cursor.Type = Data.CursorType.None;
 
@@ -771,19 +771,14 @@ namespace Ambermoon
                     {
                         try
                         {
-                            var mapManager = new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader());
                             var savegameSerializer = new SavegameSerializer();
-                            var dataNameProvider = new DataNameProvider(executableData);
-                            var characterManager = new CharacterManager(gameData, graphicProvider);
-                            var places = Places.Load(new PlacesReader(), (renderView.GameData as ILegacyGameData).Files["Place_data"].Files[1]);
-                            var lightEffectProvider = new LightEffectProvider(executableData);
 
                             gameCreator = () =>
                             {
-                                var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
-                                    characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
-                                    cursor, lightEffectProvider, audioOutput, musicManager, FullscreenChangeRequest, ChangeResolution,
-                                    QueryPressedKeys, new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features);
+                                var game = new Game(configuration, gameLanguage, renderView, graphicProvider,
+                                    savegameManager, savegameSerializer, textDictionary, cursor, audioOutput, musicManager,
+                                    FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
+                                    new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features);
                                 game.QuitRequested += window.Close;
                                 game.MousePositionChanged += position =>
                                 {
@@ -1023,8 +1018,6 @@ namespace Ambermoon
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
             createdTextureAtlasManager = textureAtlasManager;
             var fontProvider = new FontProvider(executableData);
-            foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
-                executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
 
             audioOutput = new AudioOutput();
             audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
@@ -1100,7 +1093,7 @@ namespace Ambermoon
             renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => textureAtlas.GetOffset(100 + (uint)x));
         }
 
-        RenderView CreateRenderView(GameData gameData, IConfiguration configuration, GraphicProvider graphicProvider,
+        RenderView CreateRenderView(IGameData gameData, IConfiguration configuration, IGraphicProvider graphicProvider,
             Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
             bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;
