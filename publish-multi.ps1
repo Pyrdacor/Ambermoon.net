@@ -13,7 +13,6 @@ cmd /c copy "Ambermoon.net\bin\Release\net7.0\win-x86\publish\Ambermoon.net.exe"
 7z a Ambermoon.net-Windows-x86.zip "./Ambermoon.net/Ambermoon.net.exe" "./AmbermoonPatcher/bin/Release/net7.0/win-x86/publish/AmbermoonPatcher.exe" "./Ambermoon.net/x86/api-ms-win-core-winrt-l1-1-0.dll" "./Package/*" -mx9
 
 Write-Host Publish Linux-x64 executable
-Set-Variable -Name UseGLES -Value false
 dotnet build -c Release "./Ambermoon.Renderer.OpenGL/Ambermoon.Renderer.OpenGL.csproj"
 dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r linux-x64 --no-restore --self-contained
 dotnet publish -c Release ./AmbermoonPatcher/AmbermoonPatcher.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r linux-x64 --nologo --self-contained
