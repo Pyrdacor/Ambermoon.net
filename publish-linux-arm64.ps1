@@ -1,5 +1,4 @@
 Write-Host Publish Linux-arm64 executable
-Set-Variable -Name UseGLES -Value true
 dotnet clean "./Ambermoon.Renderer.OpenGL/Ambermoon.Renderer.OpenGL.csproj"
 dotnet build -c ReleaseES "./Ambermoon.Renderer.OpenGL/Ambermoon.Renderer.OpenGL.csproj"
 dotnet publish -c ReleaseES ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r linux-arm64 --no-restore --self-contained
