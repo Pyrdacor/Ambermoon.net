@@ -689,23 +689,19 @@ namespace Ambermoon
         void StartGame(IGameData gameData, string savePath, GameLanguage gameLanguage, Features features, BinaryReader advancedDiffsReader)
         {
             // Load fantasy intro data
-            var fantasyIntroData = new FantasyIntroData(gameData);
+            var fantasyIntroData = gameData.FantasyIntroData;
 
             // Load intro data
-            var introData = new IntroData(gameData);
+            var introData = gameData.IntroData;
             var introFont = new Font(Resources.IntroFont, 12);
 
             // Load outro data
-            var outroData = new OutroData(gameData);
+            var outroData = gameData.OutroData;
             var outroFont = new Font(outroData.Glyphs, 6, 0);
             var outroFontLarge = new Font(outroData.LargeGlyphs, 10, (uint)outroData.Glyphs.Count);
 
             // Load game data
-            var additionalPalettes = new List<Graphic>();
-            additionalPalettes.AddRange(introData.IntroPalettes);
-            additionalPalettes.AddRange(outroData.OutroPalettes);
-            additionalPalettes.AddRange(fantasyIntroData.FantasyIntroPalettes);
-            var graphicProvider = gameData.GetGraphicProvider(additionalPalettes);
+            var graphicProvider = gameData.GraphicProvider;
 
             if (audioOutput == null)
             {
@@ -757,7 +753,6 @@ namespace Ambermoon
             {
                 try
                 {
-                    var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.GetDictionary());
                     var savegameManager = new SavegameManager(savePath);
                     savegameManager.GetSavegameNames(gameData, out int currentSavegame, 10);
                     if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
@@ -776,8 +771,8 @@ namespace Ambermoon
                             gameCreator = () =>
                             {
                                 var game = new Game(configuration, gameLanguage, renderView, graphicProvider,
-                                    savegameManager, savegameSerializer, textDictionary, cursor, audioOutput, musicManager,
-                                    FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
+                                    savegameManager, savegameSerializer, gameData.Dictionary, cursor, audioOutput,
+                                    musicManager, FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
                                     new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features);
                                 game.QuitRequested += window.Close;
                                 game.MousePositionChanged += position =>
@@ -1013,11 +1008,8 @@ namespace Ambermoon
             builtinVersionDataProviders[1] = () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1], builtinVersionDataProviders[0]);
             builtinVersionDataProviders[2] = () => configuration.GameVersionIndex == 2 ? gameData : LoadBuiltinVersionData(versions[2], null);
             builtinVersionDataProviders[3] = () => configuration.GameVersionIndex == 3 ? gameData : LoadBuiltinVersionData(versions[3], builtinVersionDataProviders[2]);
-            var executableData = ExecutableData.FromGameData(gameData);
-            var graphicProvider = new GraphicProvider(gameData, executableData, null, null, null);
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
             createdTextureAtlasManager = textureAtlasManager;
-            var fontProvider = new FontProvider(executableData);
 
             audioOutput = new AudioOutput();
             audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
@@ -1032,9 +1024,9 @@ namespace Ambermoon
                 logoPalettes = new Graphic[1] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] } };
             }
 
-            renderView = CreateRenderView(gameData, configuration, graphicProvider, logoPalettes, () =>
+            renderView = CreateRenderView(gameData, configuration, gameData.GraphicProvider, logoPalettes, () =>
             {
-                textureAtlasManager.AddUIOnly(graphicProvider, fontProvider);
+                textureAtlasManager.AddUIOnly(gameData.GraphicProvider, gameData.FontProvider);
                 logoPyrdacor?.Initialize(textureAtlasManager);
                 AdvancedLogo.Initialize(textureAtlasManager);
                 return textureAtlasManager;
@@ -1065,8 +1057,7 @@ namespace Ambermoon
                     Features = additionalVersionInfo.Value.Advanced ? Features.AmbermoonAdvanced : Features.None
                 });
             }
-            var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly(),
-                textureAtlasManager);
+            var cursor = new Render.Cursor(renderView, gameData.CursorHotspots, textureAtlasManager);
 
             RunTask(() =>
             {

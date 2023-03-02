@@ -49,7 +49,7 @@ namespace Ambermoon.Renderer
             $"",
             $"void main()",
             $"{{",
-            $"    vec4 pixelColor;",
+            $"    vec4 pixelColor = vec4(0);",
             $"    if ({DefaultUsePaletteName} > 0.5f)",
             $"    {{",
             $"        float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
@@ -119,7 +119,7 @@ namespace Ambermoon.Renderer
 
         public void UsePalette(bool use)
         {
-            shaderProgram.SetInput(DefaultPaletteName, use ? 1.0f : 0.0f);
+            shaderProgram.SetInput(DefaultUsePaletteName, use ? 1.0f : 0.0f);
         }
 
         public void SetSampler(int textureUnit = 0)

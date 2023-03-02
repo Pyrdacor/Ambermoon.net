@@ -37,7 +37,9 @@ namespace Ambermoon.Renderer
             $"flat in float maskColIndex;",
             $"flat in float a;",
             $"",
-            $"    vec4 pixelColor;",
+            $"void main()",
+            $"{{",
+            $"    vec4 pixelColor = vec4(0);",
             $"    if ({DefaultUsePaletteName} > 0.5f)",
             $"    {{",
             $"        float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
@@ -61,6 +63,7 @@ namespace Ambermoon.Renderer
             $"    if (maskColIndex > 0.5f)",
             $"        pixelColor = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
             $"    {DefaultFragmentOutColorName} = vec4(pixelColor.rgb, pixelColor.a * a);",
+            $"}}"
         };
 
         protected static string[] AlphaTextureVertexShader(State state) => new string[]

@@ -1,4 +1,5 @@
-﻿using Ambermoon.Data.Legacy.Serialization;
+﻿using Ambermoon.Data;
+using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
@@ -30,7 +31,7 @@ namespace Ambermoon
         bool playFairyAnimation = false;
         uint fairyAnimationIndex = 0;
 
-        static void EnsureTextures(IRenderView renderView, FantasyIntroData fantasyIntroData)
+        static void EnsureTextures(IRenderView renderView, IFantasyIntroData fantasyIntroData)
         {
             if (textureAtlas == null)
             {
@@ -41,7 +42,7 @@ namespace Ambermoon
             }
         }
 
-        public FantasyIntro(IRenderView renderView, FantasyIntroData fantasyIntroData, Action finishAction)
+        public FantasyIntro(IRenderView renderView, IFantasyIntroData fantasyIntroData, Action finishAction)
         {
             this.finishAction = finishAction;
             this.renderView = renderView;

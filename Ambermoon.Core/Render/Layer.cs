@@ -23,6 +23,7 @@ namespace Ambermoon
 {
     public enum Layer
     {
+        // Note: Don't add aliases here as this is used for enumerating over all layers.
         None = -1,
         Map3DBackground, // Color floor, sky, etc
         Map3DCeiling,
@@ -66,13 +67,13 @@ namespace Ambermoon
         Cursor,
         DrugEffect,
         Misc, // general purpose layer
-        Images, // non-palette high-resolution images
-        Last = Images
+        Images // non-palette high-resolution images
     }
 
     public partial class Global
     {
         public const Layer First2DLayer = Layer.MapBackground1;
         public const Layer Last2DLayer = Layer.MapForeground10;
+        public const Layer LastLayer = Layer.Images;
     }
 }

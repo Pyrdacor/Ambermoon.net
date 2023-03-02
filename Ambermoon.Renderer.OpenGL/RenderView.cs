@@ -612,7 +612,7 @@ namespace Ambermoon.Renderer.OpenGL
                         set2DViewport = true;
                     }
 
-                    if (useEffectFrameBuffer && layer.Key == Layer.Last)
+                    if (useEffectFrameBuffer && layer.Key == Global.LastLayer)
                     {
                         State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
                         var viewport = frameBufferWindowArea;

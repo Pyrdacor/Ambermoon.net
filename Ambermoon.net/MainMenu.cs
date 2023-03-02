@@ -1,5 +1,5 @@
-﻿using Ambermoon.Data.Enumerations;
-using Ambermoon.Data.Legacy.Serialization;
+﻿using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
@@ -26,7 +26,7 @@ namespace Ambermoon
         Fader fader;
         Fader mainMenuFader;
         UI.UIText loadingText;
-        List<KeyValuePair<Rect, Text>> mainMenuTexts = new List<KeyValuePair<Rect, Text>>(4);
+        List<KeyValuePair<Rect, Text>> mainMenuTexts = new(4);
         int hoveredTextIndex = -1;
         DateTime? hoverStartTime = null;
         const int HoverColorTime = 125;

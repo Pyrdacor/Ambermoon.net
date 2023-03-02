@@ -51,7 +51,7 @@ namespace Ambermoon.Renderer
             $"    }}",
             $"    else",
             $"    {{",
-            $"        vec4 pixelColor = texture({DefaultSamplerName}, varTexCoor);",
+            $"        vec4 pixelColor = texture({DefaultSamplerName}, varTexCoord);",
             $"        if (pixelColor.a < 0.5f)",
             $"            discard;",
             $"        else",
