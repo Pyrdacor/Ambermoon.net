@@ -178,7 +178,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                                 Command = OutroCommand.PrintTextAndScroll,
                                 LargeText = largeText,
                                 TextIndex = textIndex,
-                                ScrollAmount = scrollAmount + 1
+                                ScrollAmount = scrollAmount + 1,
+                                TextDisplayX = textDisplayX
                             });
                         }
 

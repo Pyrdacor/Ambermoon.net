@@ -17,8 +17,8 @@ namespace Ambermoon
         readonly IRenderView renderView;
         readonly IRenderLayer renderLayer;
         long ticks = 0;
-        static readonly double[] PixelScrollPerSecond = new double[5] { 10.0, 20.0, 60.0, 100.0, 200.0 };
-        int speedIndex = 1;
+        static readonly double[] PixelScrollPerSecond = new double[6] { 0.0, 6.0, 12.0, 24.0, 48.0, 96.0 };
+        int speedIndex = 2;
         IReadOnlyList<OutroAction> actions = null;
         int actionIndex = 0;
         int scrolledAmount = 0;
@@ -83,7 +83,7 @@ namespace Ambermoon
             scrollStartTicks = 0;
             nextActionTicks = 0;
             waitForClick = false;
-            speedIndex = 1;
+            speedIndex = 2;
 
             var option = OutroOption.ValdynNotInParty;
 
@@ -102,7 +102,8 @@ namespace Ambermoon
 
         public void Update(double deltaTime)
         {
-            ticks += (long)Math.Round(Game.TicksPerSecond * deltaTime);
+            if (waitForClick || fadeMidAction != null || speedIndex != 0)
+                ticks += (long)Math.Round(Game.TicksPerSecond * deltaTime);
 
             if (fadeArea.Visible || fadeMidAction != null)
             {
@@ -162,6 +163,9 @@ namespace Ambermoon
                 --speedIndex;
             }
 
+            if (speedIndex == 0)
+                return; // paused
+
             double pixelsPerTick = PixelScrollPerSecond[speedIndex] / Game.TicksPerSecond;
             long scrollTicks = (long)Math.Round((actions[actionIndex - 1].ScrollAmount - scrolledAmount) / pixelsPerTick);
             scrolledAmount = 0;
@@ -195,7 +199,7 @@ namespace Ambermoon
 
         void Process()
         {
-            if (waitForClick || fadeMidAction != null)
+            if (waitForClick || fadeMidAction != null || speedIndex == 0)
                 return;
 
             if (nextActionTicks > ticks)
@@ -266,12 +270,12 @@ namespace Ambermoon
             if (large)
             {
                 textEntry = outroFontLarge.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 22), text, 10);
+                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 22), text, 10, TextAlign.Left, 208);
             }
             else
             {
                 textEntry = outroFont.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 11), text, 10);
+                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 11), text, 10, TextAlign.Left, 208);
             }
 
             textEntry.Visible = true;
