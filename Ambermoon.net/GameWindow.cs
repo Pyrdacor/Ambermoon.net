@@ -1585,7 +1585,7 @@ namespace Ambermoon
 
 #if GLES
             var api = new GraphicsAPI
-                (ContextAPI.OpenGLES, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(2, 0));
+                (ContextAPI.OpenGLES, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(3, 0));
 #else
             var api = GraphicsAPI.Default;
 #endif
