@@ -15,4 +15,16 @@
 
         public Graphic GetDigitGlyphGraphic(uint glyphIndex) => digitFont.Value.GetGlyphGraphic(glyphIndex);
     }
+
+    internal class IngameFontProvider : IFontProvider
+    {
+        private readonly IngameFont ingameFont;
+
+        public IngameFontProvider(IngameFont ingameFont)
+        {
+            this.ingameFont = ingameFont;
+        }
+
+        public IFont GetFont() => ingameFont;
+    }
 }

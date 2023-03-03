@@ -13,7 +13,7 @@ namespace Ambermoon.Data.Pyrdacor
         {
             loader = () =>
             {
-                var item = new PADF().Read(dataReader, gameData);
+                var item = PADF.Read(dataReader, gameData);
 
                 if (item is T typedItem)
                     return typedItem;
@@ -37,22 +37,20 @@ namespace Ambermoon.Data.Pyrdacor
 
         public LazyContainerLoader(IDataReader dataReader, GameData gameData, Func<T, U> valueProvider)
         {
-            loader = () => new PADP().Read<T>(dataReader, gameData);
+            loader = () => PADP.Read<T>(dataReader, gameData);
             this.valueProvider = valueProvider;
         }
 
         public U Load(ushort key)
         {
-            if (items == null)
-                items = loader();
+            items ??= loader();
 
             return valueProvider(items[key]);
         }
 
         public Dictionary<uint, U> LoadAll()
         {
-            if (items == null)
-                items = loader();
+            items ??= loader();
 
             return items.ToDictionary(i => (uint)i.Key, i => valueProvider(i.Value));
         }

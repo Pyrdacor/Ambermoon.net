@@ -7,7 +7,7 @@ namespace Ambermoon.Data.Pyrdacor
     /// <summary>
     /// Pyrdacor's Ambermoon Data File
     /// </summary>
-    internal class PADF
+    internal static class PADF
     {
         public const string Header = "PADF";
 
@@ -43,7 +43,7 @@ namespace Ambermoon.Data.Pyrdacor
             Compressions.Add(ICompression.RLE0.Identifier, ICompression.RLE0);
         }
 
-        public IFileSpec Read(IDataReader reader, GameData gameData)
+        public static IFileSpec Read(IDataReader reader, GameData gameData)
         {
             if (!FileHeader.CheckHeader(reader, Header, true))
                 throw new AmbermoonException(ExceptionScope.Data, "The file is no PADF");
@@ -72,7 +72,7 @@ namespace Ambermoon.Data.Pyrdacor
             return fileSpec;
         }
 
-        public void Write(IDataWriter writer, IFileSpec fileSpec, ICompression? compression = null)
+        public static void Write(IDataWriter writer, IFileSpec fileSpec, ICompression? compression = null)
         {
             writer.WriteWithoutLength(Header);
             writer.WriteWithoutLength(fileSpec.Magic);

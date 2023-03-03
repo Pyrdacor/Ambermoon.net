@@ -48,7 +48,7 @@ namespace Ambermoon.Data
     {
         public List<Place> Entries { get; } = new List<Place>();
 
-        private Places()
+        public Places()
         {
 
         }

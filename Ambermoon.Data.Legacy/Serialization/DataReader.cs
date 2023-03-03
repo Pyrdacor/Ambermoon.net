@@ -139,6 +139,9 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public string ReadString(int length, Encoding encoding)
         {
+            if (length == 0)
+                return string.Empty;
+
             CheckOutOfRange(length);
             var str = encoding.GetString(data, Position, length);
             str = str.Replace(encoding.GetString(new byte[] { 0xb4 }), "'");

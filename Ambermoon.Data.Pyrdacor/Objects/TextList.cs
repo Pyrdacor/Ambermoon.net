@@ -16,6 +16,8 @@ namespace Ambermoon.Data.Pyrdacor.Objects
                 texts.Add(dataReader.ReadString());
         }
 
+        public string? First() => GetText(0);
+
         public string? GetText(int index) => index >= texts.Count ? null : texts[index];
 
         public void Write(IDataWriter dataWriter)

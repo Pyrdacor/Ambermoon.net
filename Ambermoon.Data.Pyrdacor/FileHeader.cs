@@ -13,7 +13,7 @@ namespace Ambermoon.Data.Pyrdacor
 
             bool match = dataReader.ReadString(header.Length) == header;
 
-            if (!skipIfMatch)
+            if (!skipIfMatch || !match)
                 dataReader.Position = position;
 
             return match;

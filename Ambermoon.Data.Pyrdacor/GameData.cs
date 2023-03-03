@@ -19,10 +19,10 @@ namespace Ambermoon.Data.Pyrdacor
         LazyContainerLoader<Texts, TextList> npcTextLoader;
         LazyContainerLoader<Texts, TextList> partyTextLoader;
         LazyContainerLoader<ItemData, Item> itemLoader;
-        LazyContainerLoader<Texts, TextList> itemNameLoader;
+        LazyContainerLoader<Texts, string> itemNameLoader;
         LazyContainerLoader<Texts, TextList> itemTextLoader;
         LazyContainerLoader<LocationData, Place> locationLoader;
-        LazyContainerLoader<Texts, TextList> locationNameLoader;
+        LazyContainerLoader<Texts, string> locationNameLoader;
         LazyContainerLoader<TilesetData, Tileset> tilesetLoader;
         LazyFileLoader<Texts, TextList> gotoPointNameLoader;
         readonly Dictionary<string, Action<IDataReader>> fileHandlers = new Dictionary<string, Action<IDataReader>>();
@@ -35,6 +35,8 @@ namespace Ambermoon.Data.Pyrdacor
         readonly Lazy<Font> outroLargeFont;
         readonly Lazy<Font> introSmallFont;
         readonly Lazy<Font> introLargeFont;
+        readonly Lazy<Places> places;
+        readonly Lazy<IngameFontProvider> ingameFontProvider;
 
         public bool Loaded { get; } = false;
 
@@ -56,11 +58,11 @@ namespace Ambermoon.Data.Pyrdacor
 
         public IReadOnlyList<Position> CursorHotspots => throw new NotImplementedException();
 
-        public Places Places => throw new NotImplementedException();
+        public Places Places => places!.Value;
 
         public IItemManager ItemManager => itemManager!.Value;
 
-        public IFontProvider FontProvider => throw new NotImplementedException();
+        public IFontProvider FontProvider => ingameFontProvider!.Value;
 
         public IDataNameProvider DataNameProvider => throw new NotImplementedException();
 
@@ -176,6 +178,27 @@ namespace Ambermoon.Data.Pyrdacor
             outroLargeFont = new Lazy<Font>(() => fontLoader!.Load(FontData.OutroLargeFontIndex));
             introSmallFont = new Lazy<Font>(() => fontLoader!.Load(FontData.IntroSmallFontIndex));
             introLargeFont = new Lazy<Font>(() => fontLoader!.Load(FontData.IntroLargeFontIndex));
+            ingameFontProvider = new Lazy<IngameFontProvider>(() => new(ingameFont!.Value));
+            places = new Lazy<Places>(() =>
+            {
+                var places = new Places();
+                var locationData = locationLoader!.LoadAll();
+                var locationNames = locationNameLoader!.LoadAll();
+
+                if (locationData.Count != locationNames.Count)
+                    throw new AmbermoonException(ExceptionScope.Data, "Mismatch between number of location data and location name entries.");
+
+                foreach (var location in locationData)
+                {
+                    if (!locationNames.TryGetValue(location.Key, out var name))
+                        throw new AmbermoonException(ExceptionScope.Data, $"Missing location name for location data {location.Key}.");
+
+                    location.Value.Name = name;
+
+                    places.Entries.Add(location.Value);
+                }
+                return places;
+            });
 
             // Read all files
             int fileCount = reader.ReadWord();
@@ -244,7 +267,7 @@ namespace Ambermoon.Data.Pyrdacor
 
         void LoadItemNames(IDataReader dataReader)
         {
-            itemNameLoader = new LazyContainerLoader<Texts, TextList>(dataReader, this, t => t.TextList);
+            itemNameLoader = new LazyContainerLoader<Texts, string>(dataReader, this, t => t.TextList.First()!);
         }
 
         void LoadItemTexts(IDataReader dataReader)
@@ -259,7 +282,7 @@ namespace Ambermoon.Data.Pyrdacor
 
         void LoadLocationNames(IDataReader dataReader)
         {
-
+            locationNameLoader = new LazyContainerLoader<Texts, string>(dataReader, this, t => t.TextList.First()!);
         }
 
         void LoadOutro(IDataReader dataReader)

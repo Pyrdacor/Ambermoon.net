@@ -8,20 +8,17 @@ namespace Ambermoon.Data.Pyrdacor
     /// <summary>
     /// Pyrdacor's Ambermoon Data Package
     /// </summary>
-    internal class PADP
+    internal static class PADP
     {
         // Note: The max file count is 0xffff-1. As file indices are 1-based, file 0 is not valid.
         // So only indices 1 to 0xffff can be stored. In sum there is space for the given file count.
 
         public const string Header = "PADP";
 
-        bool writeNoFileIndices = false;
-        bool wasPADF = false;
-
-        public Dictionary<ushort, T> Read<T>(IDataReader reader, GameData gameData) where T : IFileSpec, new()
+        public static Dictionary<ushort, T> Read<T>(IDataReader reader, GameData gameData) where T : IFileSpec, new()
         {
-            wasPADF = false;
-            var result = InternalRead(reader, gameData, IFileSpec.GetSupportedVersion<T>());
+            bool wasPADF = false;
+            var result = InternalRead(reader, gameData, ref wasPADF, IFileSpec.GetSupportedVersion<T>());
 
             if (result.Count == 0)
                 return new Dictionary<ushort, T>();
@@ -38,17 +35,18 @@ namespace Ambermoon.Data.Pyrdacor
             return result.ToDictionary(r => r.Key, r => (T)r.Value);
         }
 
-        public Dictionary<ushort, IFileSpec> Read(IDataReader reader, GameData gameData)
+        public static Dictionary<ushort, IFileSpec> Read(IDataReader reader, GameData gameData)
         {
-            return InternalRead(reader, gameData);
+            bool wasPADF = false;
+            return InternalRead(reader, gameData, ref wasPADF);
         }
 
-        Dictionary<ushort, IFileSpec> InternalRead(IDataReader reader, GameData gameData, byte? supportedVersion = null)
+        private static Dictionary<ushort, IFileSpec> InternalRead(IDataReader reader, GameData gameData, ref bool wasPADF, byte? supportedVersion = null)
         {
             if (FileHeader.CheckHeader(reader, PADF.Header, false))
             {
                 wasPADF = true;
-                var spec = new PADF().Read(reader, gameData);
+                var spec = PADF.Read(reader, gameData);
                 return new Dictionary<ushort, IFileSpec> { { (ushort)1u, spec } };
             }
 
@@ -111,7 +109,20 @@ namespace Ambermoon.Data.Pyrdacor
             return files;
         }
 
-        public void Write<T>(IDataWriter writer, IDictionary<ushort, T> fileSpecs, ICompression? compression = null) where T : IFileSpec, new()
+        public static void Write<T>(IDataWriter writer, IDictionary<ushort, T> fileSpecs, ICompression? compression = null) where T : IFileSpec, new()
+        {
+            InternalWrite<T>(writer, fileSpecs, compression, false);
+        }
+
+        public static void Write<T>(IDataWriter writer, IEnumerable<T> fileSpecs, ICompression? compression = null) where T : IFileSpec, new()
+        {
+            if (fileSpecs.Count() >= ushort.MaxValue)
+                throw new AmbermoonException(ExceptionScope.Data, $"Too many files given for PADP. Allowed are {ushort.MaxValue - 1}, given are {fileSpecs.Count()}.");
+
+            InternalWrite(writer, fileSpecs.Select((s, i) => new { i, s }).ToDictionary(s => (ushort)(1 + s.i), s => s.s), compression, true);
+        }
+
+        private static void InternalWrite<T>(IDataWriter writer, IDictionary<ushort, T> fileSpecs, ICompression? compression, bool writeNoFileIndices) where T : IFileSpec, new()
         {
             if (fileSpecs.Count >= ushort.MaxValue)
                 throw new AmbermoonException(ExceptionScope.Data, $"Too many files given for PADP. Allowed are {ushort.MaxValue - 1}, given are {fileSpecs.Count}.");
@@ -163,23 +174,6 @@ namespace Ambermoon.Data.Pyrdacor
 
             // Write data
             writer.Write(dataWriter.ToArray());
-        }
-
-        public void Write<T>(IDataWriter writer, IEnumerable<T> fileSpecs, ICompression? compression = null) where T : IFileSpec, new()
-        {
-            if (fileSpecs.Count() >= ushort.MaxValue)
-                throw new AmbermoonException(ExceptionScope.Data, $"Too many files given for PADP. Allowed are {ushort.MaxValue - 1}, given are {fileSpecs.Count()}.");
-
-            writeNoFileIndices = true;
-
-            try
-            {
-                Write(writer, fileSpecs.Select((s, i) => new { i, s }).ToDictionary(s => (ushort)(1 + s.i), s => s.s), compression);
-            }
-            finally
-            {
-                writeNoFileIndices = false;
-            }
         }
     }
 }
