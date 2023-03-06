@@ -69,7 +69,7 @@ namespace Ambermoon.Renderer
         protected static string[] AlphaTextureVertexShader(State state) => new string[]
         {
             GetVertexShaderHeader(state),
-            $"in ivec2 {DefaultPositionName};",
+            $"in vec2 {DefaultPositionName};",
             $"in ivec2 {DefaultTexCoordName};",
             $"in uint {DefaultLayerName};",
             $"in uint {DefaultPaletteIndexName};",
@@ -87,7 +87,7 @@ namespace Ambermoon.Renderer
             $"void main()",
             $"{{",
             $"    vec2 atlasFactor = vec2(1.0f / float({DefaultAtlasSizeName}.x), 1.0f / float({DefaultAtlasSizeName}.y));",
-            $"    vec2 pos = vec2(float({DefaultPositionName}.x) + 0.49f, float({DefaultPositionName}.y) + 0.49f);",
+            $"    vec2 pos = vec2({DefaultPositionName}.x + 0.49f, {DefaultPositionName}.y + 0.49f);",
             $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
             $"    palIndex = float({DefaultPaletteIndexName});",
             $"    a = float({DefaultAlphaName}) / 255.0f;",

@@ -355,7 +355,7 @@ namespace Ambermoon.Renderer
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3DCeiling || layer == Layer.Map3D || layer == Layer.Billboards3D,
                 supportAnimations, layered, !Config.SupportTextures, layer == Layer.Billboards3D, layer == Layer.Text,
                 opaque, layer == Layer.FOW, layer == Layer.Map3DBackground, layer == Layer.Misc || layer == Layer.OutroText, layer == Layer.Images,
-                Config.UsePalette, Config.TextureFactor);
+                Config.TextureFactor);
 
             if (Config.SupportColoredRects)
                 renderBufferColorRects = new RenderBuffer(state, false, false, true, true);
@@ -371,7 +371,6 @@ namespace Ambermoon.Renderer
                 return;
 
             Config = Config with { UsePalette = use };
-            RenderBuffer.UsePalette(use);
         }
 
         public void SetTextureFactor(uint factor)

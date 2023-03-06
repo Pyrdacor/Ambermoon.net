@@ -76,7 +76,7 @@ namespace Ambermoon.Renderer
         static string[] ColorVertexShader(State state) => new string[]
         {
             GetVertexShaderHeader(state),
-            $"in ivec2 {DefaultPositionName};",
+            $"in vec2 {DefaultPositionName};",
             $"in uint {DefaultLayerName};",
             $"in uvec4 {DefaultColorName};",
             $"uniform float {DefaultZName};",
@@ -86,7 +86,7 @@ namespace Ambermoon.Renderer
             $"",
             $"void main()",
             $"{{",
-            $"    vec2 pos = vec2(float({DefaultPositionName}.x) + 0.49f, float({DefaultPositionName}.y) + 0.49f);",
+            $"    vec2 pos = vec2({DefaultPositionName}.x + 0.49f, {DefaultPositionName}.y + 0.49f);",
             $"    pixelColor = vec4(float({DefaultColorName}.r) / 255.0f, float({DefaultColorName}.g) / 255.0f, float({DefaultColorName}.b) / 255.0f, float({DefaultColorName}.a) / 255.0f);",
             $"    ",
             $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f, 1.0f);",

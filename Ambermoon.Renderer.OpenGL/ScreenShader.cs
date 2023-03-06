@@ -291,7 +291,7 @@ namespace Ambermoon.Renderer
         {
             GetVertexShaderHeader(state),
             $"uniform float {DefaultPrimaryModeName};",
-            $"in ivec2 {DefaultPositionName};",
+            $"in vec2 {DefaultPositionName};",
             $"uniform mat4 {DefaultProjectionMatrixName};",
             $"uniform mat4 {DefaultModelViewMatrixName};",
             $"uniform vec2 {DefaultResolutionName};",
@@ -300,7 +300,7 @@ namespace Ambermoon.Renderer
             $"",
             $"void main()",
             $"{{",
-            $"    vec2 pos = vec2(float({DefaultPositionName}.x), float({DefaultPositionName}.y));",
+            $"    vec2 pos = vec2({DefaultPositionName}.x, {DefaultPositionName}.y);",
             $"    float u = pos.x > 0.5f ? endUV.x : 0.0f;",
             $"    float v = pos.y > 0.5f ? endUV.y : 0.0f;",
             $"    varTexCoord = vec2(u, 1.0f - v);",

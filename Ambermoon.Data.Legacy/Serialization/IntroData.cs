@@ -3,8 +3,6 @@ using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
-    
-
     public class IntroData : IIntroData
     {
         readonly List<Graphic> introPalettes = new();

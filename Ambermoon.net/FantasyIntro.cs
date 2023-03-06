@@ -57,23 +57,22 @@ namespace Ambermoon
             background.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Background);
             background.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Background);
             background.X = 0;
-            background.Y = -28;
+            background.Y = 0;
             background.Visible = false;
 
             fairy = renderView.SpriteFactory.Create(64, 71, true, 7) as ILayerSprite;
             fairy.Layer = renderLayer;
             fairy.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Fairy);
             fairy.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Fairy);
-            fairy.ClipArea = new Rect(0, 0, 320, 200);
+            fairy.ClipArea = new Rect(0, 0, 320, 256);
             fairy.Visible = false;
 
-            writing = renderView.SpriteFactory.Create(208, 83, true, 4) as ILayerSprite;
+            writing = renderView.SpriteFactory.Create(0, 83, true, 4) as ILayerSprite; // width will be increased later up to 208
             writing.Layer = renderLayer;
             writing.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Writing);
             writing.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Writing);
             writing.X = 64;
-            writing.Y = 146 - 28; // - 28 because screen height is only 200
-            writing.ClipArea = new Rect(64, 0, 64, 200); // width will be increased later
+            writing.Y = 146;
             writing.Visible = false;
 
             fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
@@ -291,7 +290,7 @@ namespace Ambermoon
                 case FantasyIntroCommand.MoveFairy:
                 {
                     fairy.X = action.Parameters[0];
-                    fairy.Y = action.Parameters[1] - 28;
+                    fairy.Y = action.Parameters[1];
                     fairy.Visible = true;
                     playFairyAnimation = false;
                     break;
@@ -304,7 +303,7 @@ namespace Ambermoon
                 case FantasyIntroCommand.AddWritingPart:
                 {
                     // Each time by 4 pixels
-                    writing.ClipArea = writing.ClipArea.CreateModified(0, 0, 4, 0);
+                    writing.Resize(writing.Width + 4, writing.Height);
                     writing.Visible = true;
                     break;
                 }

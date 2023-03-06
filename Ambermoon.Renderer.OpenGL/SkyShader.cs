@@ -65,7 +65,7 @@ namespace Ambermoon.Renderer
         protected static string[] SkyVertexShader(State state) => new string[]
         {
             GetVertexShaderHeader(state),
-            $"in ivec2 {DefaultPositionName};",
+            $"in vec2 {DefaultPositionName};",
             $"in ivec2 {DefaultTexCoordName};",
             $"in uint {DefaultLayerName};",
             $"in uint {DefaultPaletteIndexName};",
@@ -83,7 +83,7 @@ namespace Ambermoon.Renderer
             $"    int index = int(mod(gl_VertexID, 4));",
             $"    float dx = index == 0 || index == 3 ? -0.49f : 0.49f;",
             $"    float dy = index < 2 ? -0.49f : 0.49f;",
-            $"    vec2 pos = vec2(float({DefaultPositionName}.x) + dx, float({DefaultPositionName}.y) + dy);",
+            $"    vec2 pos = vec2({DefaultPositionName}.x + dx, {DefaultPositionName}.y + dy);",
             $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
             $"    palIndex = float({DefaultPaletteIndexName});",
             $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f, 1.0f);",

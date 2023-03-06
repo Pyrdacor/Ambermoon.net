@@ -36,11 +36,10 @@ namespace Ambermoon.Renderer
         bool disposed = false;
         readonly State state;
         uint textureFactor = 1;
-        bool usePalette = true;
 
         readonly VertexArrayObject vertexArrayObject = null;
         readonly VectorBuffer vectorBuffer = null;
-        readonly PositionBuffer positionBuffer = null;
+        readonly FloatPositionBuffer positionBuffer = null;
         readonly PositionBuffer textureAtlasOffsetBuffer = null;
         readonly WordBuffer baseLineBuffer = null;
         readonly ColorBuffer colorBuffer = null;
@@ -55,7 +54,7 @@ namespace Ambermoon.Renderer
         readonly ByteBuffer billboardOrientationBuffer = null;
         readonly ByteBuffer alphaBuffer = null;
         readonly FloatBuffer extrudeBuffer = null;
-        readonly PositionBuffer centerBuffer = null;
+        readonly FloatPositionBuffer centerBuffer = null;
         readonly ByteBuffer radiusBuffer = null;
         static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
@@ -71,11 +70,10 @@ namespace Ambermoon.Renderer
         public RenderBuffer(State state, bool is3D, bool supportAnimations, bool layered,
             bool noTexture = false, bool isBillboard = false, bool isText = false, bool opaque = false,
             bool fow = false, bool sky = false, bool texturesWithAlpha = false, bool noPaletteImage = false,
-            bool usePalette = true, uint textureFactor = 1)
+            uint textureFactor = 1)
         {
             this.state = state;
             this.textureFactor = textureFactor;
-            this.usePalette = usePalette;
             Opaque = opaque;
 
             if (is3D)
@@ -160,7 +158,7 @@ namespace Ambermoon.Renderer
                 alphaBuffer = new ByteBuffer(state, true);
             }
             else
-                positionBuffer = new PositionBuffer(state, false);
+                positionBuffer = new FloatPositionBuffer(state, false);
             indexBuffer = new IndexBuffer(state);
 
             if (texturesWithAlpha || noPaletteImage)
@@ -169,7 +167,7 @@ namespace Ambermoon.Renderer
             if (fow)
             {
                 baseLineBuffer = new WordBuffer(state, true);
-                centerBuffer = new PositionBuffer(state, false);
+                centerBuffer = new FloatPositionBuffer(state, false);
                 radiusBuffer = new ByteBuffer(state, false);
 
                 vertexArrayObject.AddBuffer(ColorShader.DefaultLayerName, baseLineBuffer);
@@ -273,11 +271,6 @@ namespace Ambermoon.Renderer
             }
         }
 
-        internal void UsePalette(bool use)
-        {
-            usePalette = use;
-        }
-
         internal ColorShader ColorShader => colorShaders[state];
         internal TextureShader TextureShader => textureShaders[state];
         internal OpaqueTextureShader OpaqueTextureShader => opaqueTextureShaders[state];
@@ -293,9 +286,9 @@ namespace Ambermoon.Renderer
             Render.PositionTransformation positionTransformation,
             Render.SizeTransformation sizeTransformation)
         {
-            var position = new Position(fow.X, fow.Y);
-            var size = new Size(fow.Width, fow.Height);
-            var center = new Position(fow.Center);
+            var position = new FloatPosition(fow.X, fow.Y);
+            var size = new FloatSize(fow.Width, fow.Height);
+            var center = new FloatPosition(fow.Center);
 
             if (positionTransformation != null)
             {
@@ -306,29 +299,29 @@ namespace Ambermoon.Renderer
             if (sizeTransformation != null)
                 size = sizeTransformation(size);
 
-            int index = positionBuffer.Add((short)position.X, (short)position.Y);
-            positionBuffer.Add((short)(position.X + size.Width), (short)position.Y, index + 1);
-            positionBuffer.Add((short)(position.X + size.Width), (short)(position.Y + size.Height), index + 2);
-            positionBuffer.Add((short)position.X, (short)(position.Y + size.Height), index + 3);
+            int index = positionBuffer.Add(position.X, position.Y);
+            positionBuffer.Add(position.X + size.Width, position.Y, index + 1);
+            positionBuffer.Add(position.X + size.Width, position.Y + size.Height, index + 2);
+            positionBuffer.Add(position.X, position.Y + size.Height, index + 3);
 
             indexBuffer.InsertQuad(index / 4);
 
-            var baseLineOffsetSize = new Size(0, fow.BaseLineOffset);
+            var baseLineOffsetSize = new FloatSize(0, fow.BaseLineOffset);
 
             if (sizeTransformation != null)
                 baseLineOffsetSize = sizeTransformation(baseLineOffsetSize);
 
-            ushort baseLine = (ushort)Math.Min(ushort.MaxValue, position.Y + size.Height + baseLineOffsetSize.Height);
+            ushort baseLine = (ushort)Math.Min(ushort.MaxValue, position.Y + size.Height + Util.Round(baseLineOffsetSize.Height));
 
             baseLineBuffer.Add(baseLine, index);
             baseLineBuffer.Add(baseLine, index + 1);
             baseLineBuffer.Add(baseLine, index + 2);
             baseLineBuffer.Add(baseLine, index + 3);
 
-            centerBuffer.Add((short)center.X, (short)center.Y, index);
-            centerBuffer.Add((short)center.X, (short)center.Y, index + 1);
-            centerBuffer.Add((short)center.X, (short)center.Y, index + 2);
-            centerBuffer.Add((short)center.X, (short)center.Y, index + 3);
+            centerBuffer.Add(center.X, center.Y, index);
+            centerBuffer.Add(center.X, center.Y, index + 1);
+            centerBuffer.Add(center.X, center.Y, index + 2);
+            centerBuffer.Add(center.X, center.Y, index + 3);
 
             radiusBuffer.Add(fow.Radius, index);
             radiusBuffer.Add(fow.Radius, index + 1);
@@ -342,8 +335,8 @@ namespace Ambermoon.Renderer
             Render.PositionTransformation positionTransformation,
             Render.SizeTransformation sizeTransformation)
         {
-            var position = new Position(coloredRect.X, coloredRect.Y);
-            var size = new Size(coloredRect.Width, coloredRect.Height);
+            var position = new FloatPosition(coloredRect.X, coloredRect.Y);
+            var size = new FloatSize(coloredRect.Width, coloredRect.Height);
 
             if (positionTransformation != null)
                 position = positionTransformation(position);
@@ -351,10 +344,10 @@ namespace Ambermoon.Renderer
             if (sizeTransformation != null)
                 size = sizeTransformation(size);
 
-            int index = positionBuffer.Add((short)position.X, (short)position.Y);
-            positionBuffer.Add((short)(position.X + size.Width), (short)position.Y, index + 1);
-            positionBuffer.Add((short)(position.X + size.Width), (short)(position.Y + size.Height), index + 2);
-            positionBuffer.Add((short)position.X, (short)(position.Y + size.Height), index + 3);
+            int index = positionBuffer.Add(position.X, position.Y);
+            positionBuffer.Add(position.X + size.Width, position.Y, index + 1);
+            positionBuffer.Add(position.X + size.Width, position.Y + size.Height, index + 2);
+            positionBuffer.Add(position.X, position.Y + size.Height, index + 3);
 
             indexBuffer.InsertQuad(index / 4);
 
@@ -382,7 +375,7 @@ namespace Ambermoon.Renderer
         public int GetDrawIndex(Render.ISprite sprite, Render.PositionTransformation positionTransformation,
             Render.SizeTransformation sizeTransformation, byte? textColorIndex = null)
         {
-            var position = new Position(sprite.X, sprite.Y);
+            var position = new FloatPosition(sprite.X, sprite.Y);
             var spriteSize = new Size(sprite.Width, sprite.Height);
             var textureAtlasOffset = new Position(sprite.TextureAtlasOffset);
             var textureSize = new Size(sprite.TextureSize ?? spriteSize);
@@ -391,8 +384,8 @@ namespace Ambermoon.Renderer
             {
                 float textureWidthFactor = spriteSize.Width / textureSize.Width;
                 float textureHeightFactor = spriteSize.Height / textureSize.Height;
-                int oldX = position.X;
-                int oldY = position.Y;
+                float oldX = position.X;
+                float oldY = position.Y;
                 int oldWidth = spriteSize.Width;
                 int oldHeight = spriteSize.Height;
                 sprite.ClipArea.ClipRect(position, spriteSize);
@@ -402,8 +395,8 @@ namespace Ambermoon.Renderer
 
                 if (sprite.MirrorX)
                 {
-                    int oldRight = oldX + oldWidth;
-                    int newRight = position.X + spriteSize.Width;
+                    float oldRight = oldX + oldWidth;
+                    float newRight = position.X + spriteSize.Width;
                     textureAtlasOffset.X += Util.Round((oldRight - newRight) / textureWidthFactor);
                 }
                 else
@@ -412,7 +405,7 @@ namespace Ambermoon.Renderer
                 }
             }
 
-            var size = new Size(spriteSize);
+            var size = new FloatSize(spriteSize);
 
             if (positionTransformation != null)
                 position = positionTransformation(position);
@@ -420,10 +413,10 @@ namespace Ambermoon.Renderer
             if (sizeTransformation != null)
                 size = sizeTransformation(size);
 
-            int index = positionBuffer.Add((short)position.X, (short)position.Y);
-            positionBuffer.Add((short)(position.X + size.Width), (short)position.Y, index + 1);
-            positionBuffer.Add((short)(position.X + size.Width), (short)(position.Y + size.Height), index + 2);
-            positionBuffer.Add((short)position.X, (short)(position.Y + size.Height), index + 3);
+            int index = positionBuffer.Add(position.X, position.Y);
+            positionBuffer.Add(position.X + size.Width, position.Y, index + 1);
+            positionBuffer.Add(position.X + size.Width, position.Y + size.Height, index + 2);
+            positionBuffer.Add(position.X, position.Y + size.Height, index + 3);
 
             indexBuffer.InsertQuad(index / 4);
 
@@ -455,12 +448,12 @@ namespace Ambermoon.Renderer
 
             if (baseLineBuffer != null)
             {
-                var baseLineOffsetSize = new Size(0, sprite.BaseLineOffset);
+                var baseLineOffsetSize = new FloatSize(0, sprite.BaseLineOffset);
 
                 if (sizeTransformation != null)
                     baseLineOffsetSize = sizeTransformation(baseLineOffsetSize);
 
-                ushort baseLine = (ushort)Math.Min(ushort.MaxValue, position.Y + size.Height + baseLineOffsetSize.Height);
+                ushort baseLine = (ushort)Math.Min(ushort.MaxValue, position.Y + size.Height + Util.Round(baseLineOffsetSize.Height));
                 int baseLineBufferIndex = baseLineBuffer.Add(baseLine, index);
                 baseLineBuffer.Add(baseLine, baseLineBufferIndex + 1);
                 baseLineBuffer.Add(baseLine, baseLineBufferIndex + 2);
@@ -668,11 +661,10 @@ namespace Ambermoon.Renderer
         public void UpdatePosition(int index, Render.IRenderNode renderNode, int baseLineOffset,
             Render.PositionTransformation positionTransformation, Render.SizeTransformation sizeTransformation)
         {
-            var position = new Position(renderNode.X, renderNode.Y);
-            var size = new Size(renderNode.Width, renderNode.Height);
+            var position = new FloatPosition(renderNode.X, renderNode.Y);
+            var size = new FloatSize(renderNode.Width, renderNode.Height);
 
-            if (renderNode.ClipArea != null)
-                renderNode.ClipArea.ClipRect(position, size);
+            renderNode.ClipArea?.ClipRect(position, size);
 
             if (positionTransformation != null)
                 position = positionTransformation(position);
@@ -680,17 +672,17 @@ namespace Ambermoon.Renderer
             if (sizeTransformation != null)
                 size = sizeTransformation(size);
 
-            positionBuffer.Update(index, (short)position.X, (short)position.Y);
-            positionBuffer.Update(index + 1, (short)(position.X + size.Width), (short)position.Y);
-            positionBuffer.Update(index + 2, (short)(position.X + size.Width), (short)(position.Y + size.Height));
-            positionBuffer.Update(index + 3, (short)position.X, (short)(position.Y + size.Height));
+            positionBuffer.Update(index, position.X, position.Y);
+            positionBuffer.Update(index + 1, position.X + size.Width, position.Y);
+            positionBuffer.Update(index + 2, position.X + size.Width, position.Y + size.Height);
+            positionBuffer.Update(index + 3, position.X, position.Y + size.Height);
 
             if (baseLineBuffer != null)
             {
                 var baseLineOffsetSize = new Size(0, baseLineOffset);
 
                 if (sizeTransformation != null)
-                    baseLineOffsetSize = sizeTransformation(baseLineOffsetSize);
+                    baseLineOffsetSize = sizeTransformation(new FloatSize(baseLineOffsetSize)).ToSize();
 
                 ushort baseLine = (ushort)Math.Min(ushort.MaxValue, position.Y + size.Height + baseLineOffsetSize.Height);
 
@@ -822,7 +814,7 @@ namespace Ambermoon.Renderer
             var position = new Position(sprite.X, sprite.Y);
             var spriteSize = new Size(sprite.Width, sprite.Height);
             var textureAtlasOffset = new Position(sprite.TextureAtlasOffset);
-            var textureSize = new Size(sprite.TextureSize ?? new Size(sprite.Width, sprite.Height));
+            var textureSize = new Size(sprite.TextureSize ?? new Size(spriteSize));
 
             if (sprite.ClipArea != null)
             {
@@ -975,15 +967,15 @@ namespace Ambermoon.Renderer
         {
             if (centerBuffer != null)
             {
-                center = new Position(center);
+                var floatCenter = new FloatPosition(center);
 
                 if (positionTransformation != null)
-                    center = positionTransformation(center);
+                    floatCenter = positionTransformation(floatCenter);
 
-                centerBuffer.Update(index, (short)center.X, (short)center.Y);
-                centerBuffer.Update(index + 1, (short)center.X, (short)center.Y);
-                centerBuffer.Update(index + 2, (short)center.X, (short)center.Y);
-                centerBuffer.Update(index + 3, (short)center.X, (short)center.Y);
+                centerBuffer.Update(index, floatCenter.X, floatCenter.Y);
+                centerBuffer.Update(index + 1, floatCenter.X, floatCenter.Y);
+                centerBuffer.Update(index + 2, floatCenter.X, floatCenter.Y);
+                centerBuffer.Update(index + 3, floatCenter.X, floatCenter.Y);
             }
         }
 
@@ -1008,7 +1000,7 @@ namespace Ambermoon.Renderer
 
                 if (positionBuffer != null)
                 {
-                    positionBuffer.Update(index + i, short.MaxValue, short.MaxValue); // ensure it is not visible
+                    positionBuffer.Update(index + i, float.MaxValue, float.MaxValue); // ensure it is not visible
                     positionBuffer.Remove(index + i);
                 }
                 else if (vectorBuffer != null)

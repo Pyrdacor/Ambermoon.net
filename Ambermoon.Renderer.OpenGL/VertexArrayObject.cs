@@ -30,7 +30,8 @@ namespace Ambermoon.Renderer
     internal class VertexArrayObject : IDisposable
     {
         uint index = 0;
-        readonly Dictionary<string, PositionBuffer> positionBuffers = new Dictionary<string, PositionBuffer>(4);
+        readonly Dictionary<string, PositionBuffer> positionBuffers = new Dictionary<string, PositionBuffer>(3);
+        readonly Dictionary<string, FloatPositionBuffer> floatPositionBuffers = new Dictionary<string, FloatPositionBuffer>(3);
         readonly Dictionary<string, WordBuffer> wordBuffers = new Dictionary<string, WordBuffer>(4);
         readonly Dictionary<string, ColorBuffer> colorBuffers = new Dictionary<string, ColorBuffer>(4);
         readonly Dictionary<string, ByteBuffer> byteBuffers = new Dictionary<string, ByteBuffer>(4);
@@ -74,6 +75,11 @@ namespace Ambermoon.Renderer
             positionBuffers.Add(name, buffer);
         }
 
+        public void AddBuffer(string name, FloatPositionBuffer buffer)
+        {
+            floatPositionBuffers.Add(name, buffer);
+        }
+
         public void AddBuffer(string name, VectorBuffer buffer)
         {
             vectorBuffers.Add(name, buffer);
@@ -115,6 +121,11 @@ namespace Ambermoon.Renderer
                 InternalBind(true);
 
                 foreach (var buffer in positionBuffers)
+                {
+                    bufferLocations[buffer.Key] = (int)program.BindInputBuffer(buffer.Key, buffer.Value);
+                }
+
+                foreach (var buffer in floatPositionBuffers)
                 {
                     bufferLocations[buffer.Key] = (int)program.BindInputBuffer(buffer.Key, buffer.Value);
                 }
@@ -164,6 +175,12 @@ namespace Ambermoon.Renderer
                 InternalBind(true);
 
                 foreach (var buffer in positionBuffers)
+                {
+                    program.UnbindInputBuffer((uint)bufferLocations[buffer.Key]);
+                    bufferLocations[buffer.Key] = -1;
+                }
+
+                foreach (var buffer in floatPositionBuffers)
                 {
                     program.UnbindInputBuffer((uint)bufferLocations[buffer.Key]);
                     bufferLocations[buffer.Key] = -1;
@@ -230,6 +247,12 @@ namespace Ambermoon.Renderer
 
                     // ensure that all buffers are up to date
                     foreach (var buffer in positionBuffers)
+                    {
+                        if (buffer.Value.RecreateUnbound())
+                            buffersChanged = true;
+                    }
+
+                    foreach (var buffer in floatPositionBuffers)
                     {
                         if (buffer.Value.RecreateUnbound())
                             buffersChanged = true;

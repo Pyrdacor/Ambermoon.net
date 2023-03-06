@@ -111,17 +111,11 @@ namespace Ambermoon.Renderer.OpenGL
 
         #region Coordinate transformations
 
-        PositionTransformation PositionTransformation => (Position position) =>
-            new Position(Misc.Round(position.X * RenderFactorX), Misc.Round(position.Y * RenderFactorY));
+        PositionTransformation PositionTransformation => (FloatPosition position) =>
+            new FloatPosition(position.X * RenderFactorX, position.Y * RenderFactorY);
 
-        SizeTransformation SizeTransformation => (Size size) =>
-        {
-            // don't scale a dimension of 0
-            int width = (size.Width == 0) ? 0 : Misc.Ceiling(size.Width * RenderFactorX);
-            int height = (size.Height == 0) ? 0 : Misc.Ceiling(size.Height * RenderFactorY);
-
-            return new Size(width, height);
-        };
+        SizeTransformation SizeTransformation => (FloatSize size) =>
+            new FloatSize(size.Width * RenderFactorX, size.Height * RenderFactorY);
 
         #endregion
 
@@ -168,6 +162,23 @@ namespace Ambermoon.Renderer.OpenGL
             var textureAtlasManager = textureAtlasManagerProvider?.Invoke();
             var palette = textureAtlasManager.CreatePalette(graphicProvider, additionalPalettes);
 
+            static void Set320x256View(IRenderLayer renderLayer)
+            {
+                // To keep the aspect ration of 16:10 we use a virtual screen of 409,6 x 256.
+                // All positions are in this screen even though position values will only be
+                // in the range 320 x 256. There will be a black border left and right.
+                // The factor 200/256 is used to transform all positions. All X coordinates
+                // are increased by (409,6 - 320) / 2 (44.8) to center the display. But this
+                // values has to be factored by 200/256 as well and will become exactly 35.
+                const float factorY = 200.0f / 256.0f;
+                const float factorX = factorY;// factorY * (1.0f + 0.4f / 410.0f);
+
+                renderLayer.PositionTransformation = (FloatPosition position) =>
+                    new FloatPosition(35.0f + position.X * factorX, position.Y * factorY);
+                renderLayer.SizeTransformation = (FloatSize size) =>
+                    new FloatSize(size.Width * factorX, size.Height * factorY);
+            }
+
             foreach (var layer in Enum.GetValues<Layer>())
             {
                 if (layer == Layer.None)
@@ -180,6 +191,9 @@ namespace Ambermoon.Renderer.OpenGL
 
                     if (layer != Layer.Map3DBackground && layer != Layer.Map3DCeiling && layer != Layer.Map3D && layer != Layer.Billboards3D)
                         renderLayer.Visible = true;
+
+                    if (layer == Layer.FantasyIntroGraphics)
+                        Set320x256View(renderLayer);
 
                     AddLayer(renderLayer);
                 }
@@ -534,8 +548,8 @@ namespace Ambermoon.Renderer.OpenGL
                             camera3D.Activate();
                             State.RestoreProjectionMatrix(State.ProjectionMatrix3D);
                             var mapViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY, Global.Map3DViewWidth + 1, Global.Map3DViewHeight + 1);
-                            mapViewArea.Position = PositionTransformation(mapViewArea.Position);
-                            mapViewArea.Size = SizeTransformation(mapViewArea.Size);
+                            mapViewArea.Position = PositionTransformation(mapViewArea.Position).Round();
+                            mapViewArea.Size = SizeTransformation(mapViewArea.Size).ToSize();
                             var viewport = frameBufferWindowArea;
                             if (useEffectFrameBuffer)
                             {

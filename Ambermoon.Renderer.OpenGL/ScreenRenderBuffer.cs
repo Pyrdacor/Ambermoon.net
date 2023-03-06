@@ -34,7 +34,7 @@ namespace Ambermoon.Renderer
         readonly State state;
 
         readonly VertexArrayObject vertexArrayObject = null;
-        readonly PositionBuffer positionBuffer = null;
+        readonly FloatPositionBuffer positionBuffer = null;
         readonly IndexBuffer indexBuffer = null;
 
         Size size = null;
@@ -44,7 +44,7 @@ namespace Ambermoon.Renderer
         {
             this.state = state;
             vertexArrayObject = new VertexArrayObject(state, screenShader.ShaderProgram);
-            positionBuffer = new PositionBuffer(state, true);
+            positionBuffer = new FloatPositionBuffer(state, true);
             positionBuffer.Add(0, 0, 0);
             positionBuffer.Add(Global.VirtualScreenWidth, 0, 1);
             positionBuffer.Add(Global.VirtualScreenWidth, Global.VirtualScreenHeight, 2);

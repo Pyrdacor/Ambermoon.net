@@ -65,7 +65,7 @@ namespace Ambermoon.Renderer
         static string[] EffectVertexShader(State state) => new string[]
         {
             GetVertexShaderHeader(state),
-            $"in ivec2 {DefaultPositionName};",
+            $"in vec2 {DefaultPositionName};",
             $"uniform mat4 {DefaultProjectionMatrixName};",
             $"uniform mat4 {DefaultModelViewMatrixName};",
             $"uniform vec2 {DefaultResolutionName};",
@@ -73,7 +73,7 @@ namespace Ambermoon.Renderer
             $"",
             $"void main()",
             $"{{",
-            $"    vec2 pos = vec2(float({DefaultPositionName}.x), float({DefaultPositionName}.y));",
+            $"    vec2 pos = vec2({DefaultPositionName}.x, {DefaultPositionName}.y);",
             $"    varTexCoord = vec2(pos.x / {DefaultResolutionName}.x, ({DefaultResolutionName}.y - pos.y) / {DefaultResolutionName}.y);",
             $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 0.001f, 1.0f);",
             $"}}"

@@ -1,7 +1,7 @@
 ﻿/*
  * IRenderLayer.cs - Render layer interface
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -21,8 +21,8 @@
 
 namespace Ambermoon.Render
 {
-    public delegate Position PositionTransformation(Position position);
-    public delegate Size SizeTransformation(Size size);
+    public delegate FloatPosition PositionTransformation(FloatPosition position);
+    public delegate FloatSize SizeTransformation(FloatSize size);
 
     public interface IRenderLayer
     {

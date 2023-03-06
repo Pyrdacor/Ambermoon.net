@@ -42,7 +42,7 @@ namespace Ambermoon.Renderer
         static string[] ImageVertexShader(State state) => new string[]
         {
             GetVertexShaderHeader(state),
-            $"in ivec2 {DefaultPositionName};",
+            $"in vec2 {DefaultPositionName};",
             $"in ivec2 {DefaultTexCoordName};",
             $"in uint {DefaultLayerName};",
             $"in uint {DefaultAlphaName};",
@@ -56,7 +56,7 @@ namespace Ambermoon.Renderer
             $"void main()",
             $"{{",
             $"    vec2 atlasFactor = vec2(1.0f / float({DefaultAtlasSizeName}.x), 1.0f / float({DefaultAtlasSizeName}.y));",
-            $"    vec2 pos = vec2(float({DefaultPositionName}.x), float({DefaultPositionName}.y));",
+            $"    vec2 pos = vec2({DefaultPositionName}.x, {DefaultPositionName}.y);",
             $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
             $"    float z = 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f;",
             $"    a = float({DefaultAlphaName}) / 255.0f;",
