@@ -3,7 +3,6 @@ using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace Ambermoon
@@ -74,13 +73,15 @@ namespace Ambermoon
 
             EnsureTextures(renderView, fantasyIntroData);
 
+            var extendedScreenArea = new Rect(-45, 0, 410, 256);
+
             backgroundLeftBorder = renderView.SpriteFactory.Create(45, 256, true, 1) as ILayerSprite;
             backgroundLeftBorder.Layer = renderLayer;
             backgroundLeftBorder.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Background);
             backgroundLeftBorder.TextureAtlasOffset = textureAtlas.GetOffset(borderTextureIndexOffset);
             backgroundLeftBorder.X = -45;
             backgroundLeftBorder.Y = 0;
-            backgroundLeftBorder.ClipArea = new Rect(-45, 0, 366, 256);
+            backgroundLeftBorder.ClipArea = extendedScreenArea;
             backgroundLeftBorder.Visible = false;
 
             backgroundRightBorder = renderView.SpriteFactory.Create(45, 256, true, 1) as ILayerSprite;
@@ -89,7 +90,7 @@ namespace Ambermoon
             backgroundRightBorder.TextureAtlasOffset = textureAtlas.GetOffset(borderTextureIndexOffset + 1);
             backgroundRightBorder.X = 320;
             backgroundRightBorder.Y = 0;
-            backgroundRightBorder.ClipArea = new Rect(-45, 0, 366, 256);
+            backgroundRightBorder.ClipArea = extendedScreenArea;
             backgroundRightBorder.Visible = false;
 
             background = renderView.SpriteFactory.Create(320, 256, true, 1) as ILayerSprite;
@@ -104,7 +105,7 @@ namespace Ambermoon
             fairy.Layer = renderLayer;
             fairy.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Fairy);
             fairy.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Fairy);
-            fairy.ClipArea = new Rect(0, 0, 320, 256);
+            fairy.ClipArea = extendedScreenArea;
             fairy.Visible = false;
 
             writing = renderView.SpriteFactory.Create(0, 83, true, 4) as ILayerSprite; // width will be increased later up to 208
@@ -115,10 +116,11 @@ namespace Ambermoon
             writing.Y = 146;
             writing.Visible = false;
 
-            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
+            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth + 2, Global.VirtualScreenHeight + 2, Color.Black, 255);
             fadeArea.Layer = colorLayer;
-            fadeArea.X = 0;
-            fadeArea.Y = 0;
+            fadeArea.X = -1;
+            fadeArea.Y = -1;
+            fadeArea.ClipArea = new Rect(-1, -1, Global.VirtualScreenWidth + 2, Global.VirtualScreenHeight + 2);
             fadeArea.Visible = true; // start with a black screen
 
             // Note: all colors beside the background graphic use the
@@ -133,7 +135,33 @@ namespace Ambermoon
                     colors[i] = new Color(colorPaletteData[i * 4 + 0], colorPaletteData[i * 4 + 1], colorPaletteData[i * 4 + 2]);
             }
 
-            actions = fantasyIntroData.Actions;
+            // As we have a larger viewport we let the fairy fly a bit further in the end.
+            var fantasyIntroActions = new List<FantasyIntroAction>(fantasyIntroData.Actions);
+            var lastFairyMovements = fantasyIntroActions.Where(a => a.Command == FantasyIntroCommand.MoveFairy).Reverse().Take(5).ToList();
+            uint lastFrames = lastFairyMovements[4].Frames;
+            int lastX = lastFairyMovements[4].Parameters[0];
+            int lastY = lastFairyMovements[4].Parameters[1];
+            int additionalFrameCount = 365 - lastX;
+            var actionList = new List<FantasyIntroAction>(fantasyIntroData.Actions.Count + additionalFrameCount);
+
+            for (int i = 0; i < 4; ++i)
+                fantasyIntroActions.Remove(lastFairyMovements[i]);
+
+            foreach (var action in fantasyIntroActions)
+                actionList.Add(action);
+
+            for (int i = 0; i < additionalFrameCount; ++i)
+            {
+                lastFrames += (uint)(1 + i % 2);
+                ++lastX;
+                if (i % 2 == 1)
+                    --lastY;
+                actionList.Add(new FantasyIntroAction(lastFrames, FantasyIntroCommand.MoveFairy, lastX, lastY));
+            }
+
+            actionList.Sort((a, b) => a.Frames.CompareTo(b.Frames));
+
+            actions = new Queue<FantasyIntroAction>(actionList);
         }
 
         public bool Active { get; private set; }
@@ -259,7 +287,7 @@ namespace Ambermoon
             }
 
             time += deltaTime;
-            long frame = Util.Floor(time / 0.1); // 10 ms per frame (= 100 fps, 50 interleaved screen renders)
+            long frame = Util.Floor(time / 0.02); // 20 ms per frame (= 50 interleaved screen renders)
 
             lock (actions)
             {
@@ -279,7 +307,7 @@ namespace Ambermoon
                 }
             }
 
-            if (fairy != null)
+            if (fairy != null && frame % 2 == 0)
             {
                 if (playFairyAnimation)
                 {
@@ -288,7 +316,10 @@ namespace Ambermoon
                     if (fairyAnimationIndex == 3) // skip frame 3 at transition
                         fairyAnimationIndex = 4;
                     else if (fairyAnimationIndex == 23)
+                    {
                         fairyAnimationIndex = 0;
+                        playFairyAnimation = false;
+                    }
                 }
                 else
                 {
@@ -301,7 +332,9 @@ namespace Ambermoon
 
             if (fadeStartFrames >= 0 && frame - fadeStartFrames < 32)
             {
-                byte alpha = (byte)Util.Limit(0, fadeOut ? frame * 8 : 255 - frame * 8, 255);
+                long factor = frame - fadeStartFrames;
+                factor = (factor * factor) / 4;
+                byte alpha = (byte)Util.Limit(0, fadeOut ? factor : 255 - factor, 255);
                 fadeArea.Color = new Color(fadeArea.Color, alpha);
                 fadeArea.Visible = true;
             }

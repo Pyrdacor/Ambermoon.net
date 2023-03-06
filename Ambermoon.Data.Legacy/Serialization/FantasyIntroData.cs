@@ -177,11 +177,9 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             #region Progress
 
-            const uint fadeFrames = 16;
-
             actions.Enqueue(new(0, FantasyIntroCommand.FadeIn));
 
-            uint frames = fadeFrames; // start after fade in
+            uint frames = 0;
             int fairyMode = 0; // 0: Move, 1: Special animation, 2: Wait in place (idle animation)
             int endTimer = 0;
             int spriteDelay = 0;
@@ -465,7 +463,10 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
 
             for (int i = 0; i < 32; ++i)
+            {
                 Cycle();
+                ++frames;
+            }
 
             while (true)
             {
@@ -475,12 +476,15 @@ namespace Ambermoon.Data.Legacy.Serialization
                 DrawFairySparks1();
                 DrawWriting();
                 while (cycleCounter < 2)
+                {
+                    ++frames;
                     Cycle();
+                }
 
                 ++frames;
 
                 // TODO: Remove later
-                if (frames == 761)
+                if (frames == 2 * 761)
                     break;
 
                 if (endTimer > 0)

@@ -112,7 +112,7 @@ namespace Ambermoon.Renderer
                 if (clipArea == value)
                     return;
 
-                clipArea = value;
+                clipArea = new(value);
                 bool handled = CheckOnScreen();
                 OnClipAreaChanged(!notOnScreen, !handled);
             }
