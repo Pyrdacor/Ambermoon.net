@@ -68,7 +68,7 @@ namespace Ambermoon
             this.finishAction = finishAction;
             this.renderView = renderView;
             renderLayer = renderView.GetLayer(Layer.FantasyIntroGraphics);
-            colorLayer = renderView.GetLayer(Layer.Effects);
+            colorLayer = renderView.GetLayer(Layer.FantasyIntroGraphics);
             paletteOffset = renderView.GraphicProvider.FirstFantasyIntroPaletteIndex;
 
             EnsureTextures(renderView, fantasyIntroData);
@@ -101,7 +101,7 @@ namespace Ambermoon
             background.Y = 0;
             background.Visible = false;
 
-            fairy = renderView.SpriteFactory.Create(64, 71, true, 7) as ILayerSprite;
+            fairy = renderView.SpriteFactory.Create(64, 71, true, 50) as ILayerSprite;
             fairy.Layer = renderLayer;
             fairy.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Fairy);
             fairy.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Fairy);
@@ -116,11 +116,11 @@ namespace Ambermoon
             writing.Y = 146;
             writing.Visible = false;
 
-            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth + 2, Global.VirtualScreenHeight + 2, Color.Black, 255);
+            fadeArea = renderView.ColoredRectFactory.Create(extendedScreenArea.Width + 2, extendedScreenArea.Height + 2, Color.Black, 255);
             fadeArea.Layer = colorLayer;
-            fadeArea.X = -1;
+            fadeArea.X = -46;
             fadeArea.Y = -1;
-            fadeArea.ClipArea = new Rect(-1, -1, Global.VirtualScreenWidth + 2, Global.VirtualScreenHeight + 2);
+            fadeArea.ClipArea = extendedScreenArea.CreateModified(-1, -1, 2, 2);
             fadeArea.Visible = true; // start with a black screen
 
             // Note: all colors beside the background graphic use the
@@ -185,6 +185,7 @@ namespace Ambermoon
             {
                 sparkLine = renderView.ColoredRectFactory.Create(2, 1, Color.Transparent, 10);
                 sparkLine.Layer = colorLayer;
+                sparkLine.ClipArea = new Rect(0, 0, 320, 256);
                 sparkLines.Add(index, sparkLine);
             }
 
@@ -197,6 +198,7 @@ namespace Ambermoon
             {
                 sparkDot = renderView.ColoredRectFactory.Create(1, 1, Color.Transparent, 10);
                 sparkDot.Layer = colorLayer;
+                sparkDot.ClipArea = new Rect(0, 0, 320, 256);
                 sparkDots.Add(index, sparkDot);
             }
 
@@ -216,6 +218,7 @@ namespace Ambermoon
             {
                 spark = renderView.SpriteFactory.Create(16, 5, true, 10) as ILayerSprite;
                 spark.Layer = renderLayer;
+                spark.ClipArea = new Rect(0, 0, 320, 256);
                 spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.FairySparks);
                 spark.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.FairySparks);
                 spark.Visible = spark.X >= 0;
@@ -234,8 +237,7 @@ namespace Ambermoon
 
         private void UpdateSparkLine(int index, int x, int y)
         {
-            EnsureSparkLine(index);
-            var sparkLine = sparkLines[index];
+            var sparkLine = EnsureSparkLine(index);
             sparkLine.X = x;
             sparkLine.Y = y;
             sparkLine.Visible = x >= 0;
@@ -243,37 +245,37 @@ namespace Ambermoon
 
         private void UpdateSparkOrDot(int index, int x, int y)
         {
-            // We always enable both, sparks and dots
-            EnsureSpark(index);
-            EnsureSparkDot(index);
-
-            var spark = sparks[index];
-            var sparkDot = sparkDots[index];
-
-            spark.X = sparkDot.X = x;
-            spark.Y = sparkDot.Y = y;
-
-            if (x < 0)
+            if (sparks.TryGetValue(index, out var spark))
             {
-                spark.Visible = false;
-                sparkDot.Visible = false;
+                spark.X = x;
+                spark.Y = y;
+                spark.Visible = x >= 0;
+            }
+            else
+            {
+                var sparkDot = EnsureSparkDot(index);
+                sparkDot.X = x;
+                sparkDot.Y = y;
+                sparkDot.Visible = x >= 0;
             }
         }
 
         private void UpdateSparkLineColor(int index, int colorIndex)
         {
-            EnsureSparkLine(index);
-            sparkLines[index].Color = colors[colorIndex & 0x1f];
+            EnsureSparkLine(index).Color = colors[colorIndex & 0x1f];
         }
 
         private void UpdateSparkOrDotColor(int index, int colorIndex)
         {
-            // We always enable both, sparks and dots
-            EnsureSpark(index);
-            EnsureSparkDot(index);
-
-            sparkDots[index].Color = colors[colorIndex & 0x1f];
-            // TODO: also change image color?
+            if (sparks.TryGetValue(index, out var spark))
+            {
+                // TODO: also change image color?
+                // spark.Color = colors[colorIndex & 0x1f];
+            }
+            else
+            {
+                EnsureSparkDot(index).Color = colors[colorIndex & 0x1f];
+            }
         }
 
         public void Update(double deltaTime)
@@ -381,8 +383,45 @@ namespace Ambermoon
                     writing.Visible = true;
                     break;
                 }
+                case FantasyIntroCommand.DrawSparkLine:
+                {
+                    int index = action.Parameters[0];
+                    var sparkLine = EnsureSparkLine(index);
+                    sparkLine.Visible = true;
+                    break;
+                }
+                case FantasyIntroCommand.DrawSparkStar:
+                {
+                    int index = action.Parameters[0];
+                    var spark = EnsureSpark(index);
+                    spark.Visible = true;
+                    break;
+                }
                 case FantasyIntroCommand.DrawSparkDot:
                 {
+                    int index = action.Parameters[0];
+                    var sparkDot = EnsureSparkDot(index);
+                    sparkDot.Visible = true;
+                    break;
+                }
+                case FantasyIntroCommand.UpdateSparkLine:
+                {
+                    UpdateSparkLine(action.Parameters[0], action.Parameters[1], action.Parameters[2]);
+                    break;
+                }
+                case FantasyIntroCommand.UpdateSparkStar:
+                {
+                    UpdateSparkOrDot(action.Parameters[0], action.Parameters[1], action.Parameters[2]);
+                    break;
+                }
+                case FantasyIntroCommand.SetSparkLineColor:
+                {
+                    UpdateSparkLineColor(action.Parameters[0], action.Parameters[1]);
+                    break;
+                }
+                case FantasyIntroCommand.SetSparkStarColor:
+                {
+                    UpdateSparkOrDotColor(action.Parameters[0], action.Parameters[1]);
                     break;
                 }
             }

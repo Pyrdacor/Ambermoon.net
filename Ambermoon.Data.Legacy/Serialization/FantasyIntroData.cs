@@ -7,20 +7,6 @@ namespace Ambermoon.Data.Legacy.Serialization
     {
         static readonly Position[] WandSparkPositions = new[]
         {
-            new Position(38 + 125, 13 + 70), new Position(40 + 125, 14 + 70),
-			new Position(41 + 125, 13 + 70), new Position(43 + 125, 14 + 70),
-			new Position(45 + 125, 16 + 70), new Position(41 + 125, 13 + 70),
-			new Position(39 + 125, 14 + 70), new Position(37 + 125, 14 + 70),
-			new Position(38 + 125, 17 + 70), new Position(44 + 125, 16 + 70),
-			new Position(53 + 125, 22 + 70), new Position(56 + 125, 28 + 70),
-			new Position(58 + 125, 33 + 70), new Position(58 + 125, 36 + 70),
-			new Position(58 + 125, 37 + 70), new Position(55 + 125, 30 + 70),
-			new Position(54 + 125, 29 + 70), new Position(50 + 125, 23 + 70),
-			new Position(45 + 125, 18 + 70)
-        };
-
-        static readonly Position[] WandPositions = new[]
-        {
             new Position(38, 13), new Position(40, 14), new Position(41, 13),
             new Position(43, 14), new Position(45, 16), new Position(41, 13),
             new Position(39, 14), new Position(37, 14), new Position(38, 17),
@@ -67,14 +53,19 @@ namespace Ambermoon.Data.Legacy.Serialization
             {
                 CurrentStep += YStep;
 
-                if (CurrentStep == 16)
+                while (CurrentStep >= 16)
                 {
-                    if (++Y >= 256)
-                        X = -1;
+                    CurrentStep -= 16;
 
-                    Update(frames, actions, index);
+                    if (++Y >= 256)
+                    {
+                        X = -1;
+                        break;
+                    }
                 }
 
+                Update(frames, actions, index);
+ 
                 return X >= 0;
             }
 
@@ -247,7 +238,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                 if (index != -1)
                 {
-                    var sparkSprite = spark0Sprites[index];
+                    var sparkSprite = spark1Sprites[index];
                     var r = Random();
                     sparkSprite.X = x + (int)((r & 0x60) >> 5);
                     sparkSprite.Y = y;
@@ -267,7 +258,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             void DrawFairySparks0()
             {
                 var r = Random();
-                var spawnDelay = r & 0x3;
+                int spawnDelay = (int)r & 0x3;
                 int index = 0;
 
                 foreach (var spark in spark0Sprites)
@@ -430,8 +421,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 if (fairyMode == 1 && spriteSparkPosIndex >= 0 && spriteDelay == 0)
                 {
                     var sparkPosition = WandSparkPositions[spriteSparkPosIndex];
-                    int sparkX = currentFairyX + sparkPosition.X - 125;
-                    int sparkY = currentFairyY + sparkPosition.Y - 70;
+                    int sparkX = currentFairyX + sparkPosition.X;
+                    int sparkY = currentFairyY + sparkPosition.Y;
                     if (spriteIndex == 16)
                     {
                         sparkPosX = sparkX;
