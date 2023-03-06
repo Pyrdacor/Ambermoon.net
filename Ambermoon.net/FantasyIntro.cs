@@ -3,6 +3,7 @@ using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Ambermoon
@@ -15,6 +16,8 @@ namespace Ambermoon
         readonly IRenderLayer renderLayer;
         readonly IRenderLayer colorLayer;
         readonly Queue<FantasyIntroAction> actions = null;
+        readonly ILayerSprite backgroundLeftBorder;
+        readonly ILayerSprite backgroundRightBorder;
         readonly ILayerSprite background;
         readonly ILayerSprite fairy;
         readonly ILayerSprite writing;
@@ -30,6 +33,7 @@ namespace Ambermoon
         long lastFrame = -1;
         bool playFairyAnimation = false;
         uint fairyAnimationIndex = 0;
+        static uint borderTextureIndexOffset = 0;
 
         static void EnsureTextures(IRenderView renderView, IFantasyIntroData fantasyIntroData)
         {
@@ -37,6 +41,24 @@ namespace Ambermoon
             {
                 TextureAtlasManager.Instance.AddFromGraphics(Layer.FantasyIntroGraphics,
                     fantasyIntroData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
+                var borders256 = new DataReader(Resources.Borders256);
+                borderTextureIndexOffset = (uint)fantasyIntroData.Graphics.Keys.Max() + 1;
+                var borderGraphicInfo = new GraphicInfo
+                {
+                    Width = 45,
+                    Height = 256,
+                    GraphicFormat = GraphicFormat.Palette5Bit,
+                    Alpha = false
+                };
+                var graphicReader = new GraphicReader();
+                Graphic LoadBorder()
+                {
+                    var border = new Graphic();
+                    graphicReader.ReadGraphic(border, borders256, borderGraphicInfo);
+                    return border;
+                }
+                TextureAtlasManager.Instance.AddFromGraphics(Layer.FantasyIntroGraphics,
+                    Enumerable.Range(0, 2).ToDictionary(i => (uint)(borderTextureIndexOffset + i), _ => LoadBorder()));
                 textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.FantasyIntroGraphics);
                 renderView.GetLayer(Layer.FantasyIntroGraphics).Texture = textureAtlas.Texture;
             }
@@ -51,6 +73,24 @@ namespace Ambermoon
             paletteOffset = renderView.GraphicProvider.FirstFantasyIntroPaletteIndex;
 
             EnsureTextures(renderView, fantasyIntroData);
+
+            backgroundLeftBorder = renderView.SpriteFactory.Create(45, 256, true, 1) as ILayerSprite;
+            backgroundLeftBorder.Layer = renderLayer;
+            backgroundLeftBorder.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Background);
+            backgroundLeftBorder.TextureAtlasOffset = textureAtlas.GetOffset(borderTextureIndexOffset);
+            backgroundLeftBorder.X = -45;
+            backgroundLeftBorder.Y = 0;
+            backgroundLeftBorder.ClipArea = new Rect(-45, 0, 366, 256);
+            backgroundLeftBorder.Visible = false;
+
+            backgroundRightBorder = renderView.SpriteFactory.Create(45, 256, true, 1) as ILayerSprite;
+            backgroundRightBorder.Layer = renderLayer;
+            backgroundRightBorder.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Background);
+            backgroundRightBorder.TextureAtlasOffset = textureAtlas.GetOffset(borderTextureIndexOffset + 1);
+            backgroundRightBorder.X = 320;
+            backgroundRightBorder.Y = 0;
+            backgroundRightBorder.ClipArea = new Rect(-45, 0, 366, 256);
+            backgroundRightBorder.Visible = false;
 
             background = renderView.SpriteFactory.Create(320, 256, true, 1) as ILayerSprite;
             background.Layer = renderLayer;
@@ -213,7 +253,8 @@ namespace Ambermoon
             if (time == 0)
             {
                 Active = true;
-
+                backgroundLeftBorder.Visible = true;
+                backgroundRightBorder.Visible = true;
                 background.Visible = true;
             }
 
@@ -328,6 +369,8 @@ namespace Ambermoon
         private void Destroy()
         {
             Active = false;
+            backgroundLeftBorder?.Delete();
+            backgroundRightBorder?.Delete();
             background?.Delete();
             fairy?.Delete();
             writing?.Delete();

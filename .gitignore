@@ -4,3 +4,9 @@ obj
 /Ambermoon.net/Saves
 /Ambermoon.net/Screenshots
 /Ambermoon.net/music
+*.cache
+/Ambermoon.net/error.txt
+/Ambermoon.net/diffs.dat
+/Ambermoon.net/ambermoon.cfg
+/publish-win64
+/ambermoon.cfg
