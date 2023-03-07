@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System;
 
 namespace Ambermoon.Data
 {
@@ -9,6 +8,7 @@ namespace Ambermoon.Data
         MoveFairy,
         PlayFairyAnimation,
         AddWritingPart,
+        UpdateWritingSpark,
         UpdateSparkLine,
         UpdateSparkStar,
         SetSparkLineColor,

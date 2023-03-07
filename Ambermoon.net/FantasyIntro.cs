@@ -4,7 +4,6 @@ using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Ambermoon.Data.Legacy.ExecutableData.Messages;
 
 namespace Ambermoon
 {
@@ -21,6 +20,7 @@ namespace Ambermoon
         readonly ILayerSprite background;
         readonly ILayerSprite fairy;
         readonly ILayerSprite writing;
+        readonly Dictionary<int, ILayerSprite> writingSparks = new(400);
         readonly Dictionary<int, ILayerSprite> sparks = new(512);
         readonly Dictionary<int, IColoredRect> sparkLines = new(96);
         readonly Dictionary<int, IColoredRect> sparkDots = new(512);
@@ -213,6 +213,22 @@ namespace Ambermoon
             return sparkDot;
         }
 
+        private ILayerSprite EnsureWritingSpark(int index)
+        {
+            if (!writingSparks.TryGetValue(index, out var spark))
+            {
+                spark = renderView.SpriteFactory.Create(16, 9, true, 30) as ILayerSprite;
+                spark.Layer = renderLayer;
+                spark.ClipArea = new Rect(0, 0, 320, 256);
+                spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.WritingSparks);
+                spark.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.WritingSparks);
+                spark.Visible = false;
+                writingSparks.Add(index, spark);
+            }
+
+            return spark;
+        }
+
         private ILayerSprite EnsureSpark(int index)
         {
             if (!sparks.TryGetValue(index, out var spark))
@@ -222,7 +238,7 @@ namespace Ambermoon
                 spark.ClipArea = new Rect(0, 0, 320, 256);
                 spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.FairySparks);
                 spark.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.FairySparks);
-                spark.Visible = spark.X >= 0;
+                spark.Visible = false;
                 sparks.Add(index, spark);
             }
 
@@ -234,6 +250,15 @@ namespace Ambermoon
             }
 
             return spark;
+        }
+
+        private void UpdateWritingSpark(int index, int x, int y, int frameIndex)
+        {
+            var spark = EnsureWritingSpark(index);
+            spark.X = x;
+            spark.Y = y;
+            spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.WritingSparks) + new Position(0, frameIndex * 9);
+            spark.Visible = true;
         }
 
         private void UpdateSparkLine(int index, int x, int y)
@@ -424,6 +449,22 @@ namespace Ambermoon
                     int frameIndex = action.Parameters[1];
                     var spark = EnsureSpark(index);
                     spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.FairySparks) + new Position(0, frameIndex * 5);
+                    break;
+                }
+                case FantasyIntroCommand.UpdateWritingSpark:
+                {
+                    int index = action.Parameters[0];
+                    int x = action.Parameters[1];
+                    int y = action.Parameters[2];
+                    int frameIndex = action.Parameters[3];
+                    if (x < 0 && writingSparks.TryGetValue(index, out var spark))
+                    {
+                        spark.Visible = false;
+                    }
+                    else if (x >= 0)
+                    {
+                        UpdateWritingSpark(index, x, y, frameIndex);
+                    }
                     break;
                 }
             }

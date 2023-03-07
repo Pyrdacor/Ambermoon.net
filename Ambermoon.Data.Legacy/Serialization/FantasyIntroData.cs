@@ -40,6 +40,14 @@ namespace Ambermoon.Data.Legacy.Serialization
             9, 10, 11, 12, 11, 10, 9, 9, 9, 11, 14, -1, -2, -3, 0
         };
 
+        record WritingSparkDummy
+        {
+            public int Index { get; set; }
+            public int X { get; set; }
+            public int Y { get; set; }
+            public int FrameArrayIndex { get; set; } // into WritingSparkImageIndex
+        }
+
         record SparkSpriteDummy
         {
             public FantasyIntroCommand UpdateCommand { get; init; }
@@ -104,6 +112,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 .Where(h => h.Type == AmigaExecutable.HunkType.Data).Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data))
                 .ToList();
             var graphicReader = new GraphicReader();
+            int i;
 
             #region Hunk 0 - Palettes and graphics
 
@@ -116,17 +125,17 @@ namespace Ambermoon.Data.Legacy.Serialization
                 return paletteGraphic;
             }
 
-            for (int i = 0; i < 2; ++i)
+            for (i = 0; i < 2; ++i)
                 fantasyIntroPalettes.Add(LoadPalette());
 
             AddGraphic(FantasyIntroGraphic.FairySparks, 32, 15, true);
 
             var fairyGraphic = new Graphic(384, 284, 0);
 
-            for (uint i = 0; i < 23; ++i) // 23 frames
+            for (uint g = 0; g < 23; ++g) // 23 frames
             {
                 var graphic = LoadGraphic(64, 71, true, GraphicFormat.AttachedSprite);
-                fairyGraphic.AddOverlay((i % 6) * 64, (i / 6) * 71, graphic, false);
+                fairyGraphic.AddOverlay((g % 6) * 64, (g / 6) * 71, graphic, false);
             }
 
             graphics.Add(FantasyIntroGraphic.Fairy, fairyGraphic);
@@ -185,14 +194,22 @@ namespace Ambermoon.Data.Legacy.Serialization
             ushort randomState = 17;
             var spark0Sprites = new SparkSpriteDummy[96];
             var spark1Sprites = new SparkSpriteDummy[512];
+            var writingSparks = new WritingSparkDummy[400];
 
-            for (int i = 0; i < 96; ++i)
+            for (i = 0; i < 96; ++i)
             {
                 spark0Sprites[i] = new SparkSpriteDummy() { X = -1, UpdateCommand = FantasyIntroCommand.UpdateSparkLine };
                 spark1Sprites[i] = new SparkSpriteDummy() { X = -1, UpdateCommand = FantasyIntroCommand.UpdateSparkStar };
+                writingSparks[i] = new WritingSparkDummy() { X = -1 };
             }
 
-            for (int i = 96; i < 512; ++i)
+            for (; i < 400; ++i)
+            {
+                spark1Sprites[i] = new SparkSpriteDummy() { X = -1, UpdateCommand = FantasyIntroCommand.UpdateSparkStar };
+                writingSparks[i] = new WritingSparkDummy() { X = -1 };
+            }
+
+            for (; i < 512; ++i)
             {
                 spark1Sprites[i] = new SparkSpriteDummy() { X = -1, UpdateCommand = FantasyIntroCommand.UpdateSparkStar };
             }
@@ -317,6 +334,20 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
             }
 
+            void AddWritingSpark(int x, int y, int frameArrayIndex)
+            {
+                int index = writingSparks.ToList().FindIndex(s => s.X < 0);
+
+                if (index != -1)
+                {
+                    var sparkSprite = writingSparks[index];
+                    sparkSprite.Index = index;
+                    sparkSprite.X = x;
+                    sparkSprite.Y = y;
+                    sparkSprite.FrameArrayIndex = frameArrayIndex;
+                }
+            }
+
             void DrawWriting()
             {
                 if (writingPosition >= 0)
@@ -329,14 +360,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                     for (int i = 0; i < 24; ++i)
                     {
                         var r = Random();
-                        long y = 140 + (r % 88);
+                        int y = 140 + (int)(r % 88);
                         r = Random();
-                        long x = writingPosition + (r & 0x7) - 4;
-                        //long i = r & 0xe0;
-                        /*find_if (s : WritingSparkItem, s.x < 0) {
-                        s.x = x
-                        s.y = y
-                        s.i = i*/
+                        int x = writingPosition + (int)(r & 0x7) - 4;
+                        int frameArrayIndex = (int)(r & 0xe0) >> 1;
+                        AddWritingSpark(x, y, frameArrayIndex);
                     }
 
                     writingPosition += 4;
@@ -345,8 +373,19 @@ namespace Ambermoon.Data.Legacy.Serialization
                     {
                         writingPosition = -1;
                         fairyMode = 0;
-
                     }
+                }
+
+                foreach (var writingSpark in writingSparks.Where(s => s.X >= 0))
+                {
+                    int i = WritingSparkImageIndex[writingSpark.FrameArrayIndex];
+                    if (i < 0)
+                        writingSpark.X = -1;
+
+                    else
+                        ++writingSpark.FrameArrayIndex;
+
+                    actions.Enqueue(new(frames, FantasyIntroCommand.UpdateWritingSpark, writingSpark.Index, writingSpark.X, writingSpark.Y, i));
                 }
             }
 
@@ -449,7 +488,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
             }
 
-            for (int i = 0; i < 32; ++i)
+            for (i = 0; i < 32; ++i)
             {
                 Cycle();
                 ++frames;
