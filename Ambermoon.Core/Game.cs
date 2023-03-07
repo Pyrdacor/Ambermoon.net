@@ -3013,7 +3013,7 @@ namespace Ambermoon
                     break;
                 }
                 default:
-                    if (currentWindow.Window == Window.Automap && key == Key.Space)
+                    if (currentWindow.Window == Window.Automap && (key == Key.Space || key == Key.M))
                     {
                         nextClickHandler?.Invoke(MouseButtons.Right);
                         nextClickHandler = null;
@@ -3128,7 +3128,11 @@ namespace Ambermoon
                     schnism = "";
                     ShowMessagePopup(DataNameProvider.TurnOnTuneInAndDropOut, () =>
                         DamageAllPartyMembers(p => 0u, p => p.Alive, null, null, Condition.Drugged));
+                    return;
                 }
+
+                if (char.ToLower(keyChar) == 'm' && ingame && is3D)
+                    ShowAutomap();
             }
         }
 
@@ -14333,7 +14337,7 @@ namespace Ambermoon
 
         internal void ShowAutomap(AutomapOptions automapOptions, Action finishAction = null)
         {
-            Action create = () =>
+            void Create()
             {
                 Fade(() =>
                 {
@@ -15084,12 +15088,12 @@ namespace Ambermoon
                     TrapMouse(Global.AutomapArea);
                     UpdateCursor();
                 });
-            };
+            }
 
             if (currentWindow.Window == Window.Automap)
-                create?.Invoke();
+                Create();
             else
-                CloseWindow(create);
+                CloseWindow(Create);
         }
 
         internal void ShowRiddlemouth(Map map, RiddlemouthEvent riddlemouthEvent, Action solvedHandler, bool showRiddle = true)
