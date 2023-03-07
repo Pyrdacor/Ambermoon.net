@@ -247,11 +247,6 @@ namespace Ambermoon.Data.Legacy.Serialization
                     sparkSprite.CurrentStep = 0;
 
                     sparkSprite.Update(frames, actions, index);
-
-                    var color = Spark1ColorIndices[sparkSprite.ColorIndex];
-                    if (color < 0)
-                        color = Spark1ColorIndices[0];
-                    actions.Enqueue(new(frames, FantasyIntroCommand.SetSparkStarColor, index, color));
                 }
             }
 
@@ -307,12 +302,13 @@ namespace Ambermoon.Data.Legacy.Serialization
                         {
                             if (spark.Y <= 250)
                             {
-                                actions.Enqueue(new(frames, FantasyIntroCommand.SetSparkStarColor, index, color));
+                                actions.Enqueue(new(frames, FantasyIntroCommand.SetSparkStarFrame, index, -1 - color));
                                 actions.Enqueue(new(frames, FantasyIntroCommand.DrawSparkStar, index));
                             }
                         }
                         else
                         {
+                            actions.Enqueue(new(frames, FantasyIntroCommand.SetSparkDotColor, index, color));
                             actions.Enqueue(new(frames, FantasyIntroCommand.DrawSparkDot, index));
                         }
                     }

@@ -4,6 +4,7 @@ using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static Ambermoon.Data.Legacy.ExecutableData.Messages;
 
 namespace Ambermoon
 {
@@ -68,7 +69,7 @@ namespace Ambermoon
             this.finishAction = finishAction;
             this.renderView = renderView;
             renderLayer = renderView.GetLayer(Layer.FantasyIntroGraphics);
-            colorLayer = renderView.GetLayer(Layer.FantasyIntroGraphics);
+            colorLayer = renderView.GetLayer(Layer.FantasyIntroEffects);
             paletteOffset = renderView.GraphicProvider.FirstFantasyIntroPaletteIndex;
 
             EnsureTextures(renderView, fantasyIntroData);
@@ -108,7 +109,7 @@ namespace Ambermoon
             fairy.ClipArea = extendedScreenArea;
             fairy.Visible = false;
 
-            writing = renderView.SpriteFactory.Create(0, 83, true, 4) as ILayerSprite; // width will be increased later up to 208
+            writing = renderView.SpriteFactory.Create(0, 83, true, 10) as ILayerSprite; // width will be increased later up to 208
             writing.Layer = renderLayer;
             writing.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Writing);
             writing.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Writing);
@@ -116,12 +117,12 @@ namespace Ambermoon
             writing.Y = 146;
             writing.Visible = false;
 
-            fadeArea = renderView.ColoredRectFactory.Create(extendedScreenArea.Width + 2, extendedScreenArea.Height + 2, Color.Black, 255);
+            fadeArea = renderView.ColoredRectFactory.Create(extendedScreenArea.Width, extendedScreenArea.Height, Color.Black, 255);
             fadeArea.Layer = colorLayer;
-            fadeArea.X = -46;
-            fadeArea.Y = -1;
+            fadeArea.X = -45;
+            fadeArea.Y = -0;
             fadeArea.ClipArea = extendedScreenArea.CreateModified(-1, -1, 2, 2);
-            fadeArea.Visible = true; // start with a black screen
+            fadeArea.Visible = false; // start with a black screen
 
             // Note: all colors beside the background graphic use the
             // first palette so we just use paletteOffset here.
@@ -183,7 +184,7 @@ namespace Ambermoon
         {
             if (!sparkLines.TryGetValue(index, out var sparkLine))
             {
-                sparkLine = renderView.ColoredRectFactory.Create(2, 1, Color.Transparent, 10);
+                sparkLine = renderView.ColoredRectFactory.Create(2, 1, Color.Transparent, 25);
                 sparkLine.Layer = colorLayer;
                 sparkLine.ClipArea = new Rect(0, 0, 320, 256);
                 sparkLines.Add(index, sparkLine);
@@ -196,7 +197,7 @@ namespace Ambermoon
         {
             if (!sparkDots.TryGetValue(index, out var sparkDot))
             {
-                sparkDot = renderView.ColoredRectFactory.Create(1, 1, Color.Transparent, 10);
+                sparkDot = renderView.ColoredRectFactory.Create(1, 1, Color.Transparent, 20);
                 sparkDot.Layer = colorLayer;
                 sparkDot.ClipArea = new Rect(0, 0, 320, 256);
                 sparkDots.Add(index, sparkDot);
@@ -216,7 +217,7 @@ namespace Ambermoon
         {
             if (!sparks.TryGetValue(index, out var spark))
             {
-                spark = renderView.SpriteFactory.Create(16, 5, true, 10) as ILayerSprite;
+                spark = renderView.SpriteFactory.Create(16, 5, true, 30) as ILayerSprite;
                 spark.Layer = renderLayer;
                 spark.ClipArea = new Rect(0, 0, 320, 256);
                 spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.FairySparks);
@@ -265,17 +266,9 @@ namespace Ambermoon
             EnsureSparkLine(index).Color = colors[colorIndex & 0x1f];
         }
 
-        private void UpdateSparkOrDotColor(int index, int colorIndex)
+        private void UpdateSparkDotColor(int index, int colorIndex)
         {
-            if (sparks.TryGetValue(index, out var spark))
-            {
-                // TODO: also change image color?
-                // spark.Color = colors[colorIndex & 0x1f];
-            }
-            else
-            {
-                EnsureSparkDot(index).Color = colors[colorIndex & 0x1f];
-            }
+            EnsureSparkDot(index).Color = colors[colorIndex & 0x1f];
         }
 
         public void Update(double deltaTime)
@@ -286,6 +279,7 @@ namespace Ambermoon
                 backgroundLeftBorder.Visible = true;
                 backgroundRightBorder.Visible = true;
                 background.Visible = true;
+                fadeArea.Visible = true;
             }
 
             time += deltaTime;
@@ -419,9 +413,17 @@ namespace Ambermoon
                     UpdateSparkLineColor(action.Parameters[0], action.Parameters[1]);
                     break;
                 }
-                case FantasyIntroCommand.SetSparkStarColor:
+                case FantasyIntroCommand.SetSparkDotColor:
                 {
-                    UpdateSparkOrDotColor(action.Parameters[0], action.Parameters[1]);
+                    UpdateSparkDotColor(action.Parameters[0], action.Parameters[1]);
+                    break;
+                }
+                case FantasyIntroCommand.SetSparkStarFrame:
+                {
+                    int index = action.Parameters[0];
+                    int frameIndex = action.Parameters[1];
+                    var spark = EnsureSpark(index);
+                    spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.FairySparks) + new Position(0, frameIndex * 5);
                     break;
                 }
             }

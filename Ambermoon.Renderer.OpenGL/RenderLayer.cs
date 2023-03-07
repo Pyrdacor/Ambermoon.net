@@ -270,9 +270,14 @@ namespace Ambermoon.Renderer
             } },
             { Layer.FantasyIntroGraphics, new ()
             {
+                BaseZ = 0.70f
+            } },
+            { Layer.FantasyIntroEffects, new ()
+            {
                 BaseZ = 0.70f,
                 EnableBlending = true,
-                SupportColoredRects = true
+                SupportColoredRects = true,
+                SupportTextures = false
             } },
             { Layer.Effects, new ()
             {
