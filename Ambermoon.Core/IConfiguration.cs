@@ -140,7 +140,8 @@ namespace Ambermoon
         Effects Effects { get; set; }
         bool ShowPlayerStatsTooltips { get; set; }
         bool ShowPyrdacorLogo { get; set; }
-        bool ShowThalionLogo { get; set; }
+        [Obsolete("Now the fantasy intro is shown instead.")]
+        bool? ShowThalionLogo { get; set; }
         bool ShowFloor { get; set; }
         bool ShowCeiling { get; set; }
         bool ExtendedSavegameSlots { get; set; }

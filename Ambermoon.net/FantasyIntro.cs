@@ -478,7 +478,7 @@ namespace Ambermoon
 
         public void Abort()
         {
-            Active = false;
+            Destroy();
         }
 
         private void Destroy()

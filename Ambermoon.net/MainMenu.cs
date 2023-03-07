@@ -22,8 +22,6 @@ namespace Ambermoon
         readonly string continueLoadingText;
         readonly string newLoadingText;
         ILayerSprite background;
-        ILayerSprite thalionLogo;
-        Fader fader;
         Fader mainMenuFader;
         UI.UIText loadingText;
         List<KeyValuePair<Rect, Text>> mainMenuTexts = new(4);
@@ -32,9 +30,6 @@ namespace Ambermoon
         const int HoverColorTime = 125;
         const int FadeInTime = 1000;
         const int FadeOutTime = 1000;
-        const int LogoFadeInTime = 1000;
-        const int LogoDisplayDuration = 5000;
-        const int LogoFadeOutTime = 1000;
         readonly Action<Song> playMusicAction;
         internal bool GameDataLoaded { get; set; } = false;
         static readonly byte[] hoveredColorIndices = new byte[]
@@ -54,7 +49,7 @@ namespace Ambermoon
 
         public MainMenu(IRenderView renderView, Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             Font introFont, string[] texts, bool canContinue, string continueLoadingText, string newLoadingText,
-            Action<Song> playMusicAction, bool showLogo)
+            Action<Song> playMusicAction)
         {
             this.renderView = renderView;
             this.cursor = cursor;
@@ -63,20 +58,7 @@ namespace Ambermoon
             this.playMusicAction = playMusicAction;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
 
-            if (showLogo)
-                fader = new Fader(renderView, 0xff, 0x00, 253, false, true);
             mainMenuFader = new Fader(renderView, 0xff, 0x00, 50, false, true);
-
-            if (showLogo)
-            {
-                thalionLogo = renderView.SpriteFactory.Create(128, 82, true, 252) as ILayerSprite;
-                thalionLogo.Layer = renderView.GetLayer(Layer.IntroGraphics);
-                thalionLogo.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + paletteIndices[IntroGraphic.ThalionLogo] - 1);
-                thalionLogo.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.ThalionLogo);
-                thalionLogo.X = (Global.VirtualScreenWidth - 128) / 2;
-                thalionLogo.Y = (Global.VirtualScreenHeight - 82) / 2;
-                thalionLogo.Visible = false;
-            }
 
             background = renderView.SpriteFactory.Create(320, 256, true) as ILayerSprite;
             background.Layer = renderView.GetLayer(Layer.IntroGraphics);
@@ -84,7 +66,7 @@ namespace Ambermoon
             background.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MainMenuBackground);
             background.X = 0;
             background.Y = 0;
-            background.Visible = !showLogo;
+            background.Visible = true;
 
             // For now we use a font where each glyph has a height of 28. But the base glyph is inside a
             // 16 pixel height area in the y-center (from y=6 to y=22). So basically these 16 pixels are
@@ -110,57 +92,27 @@ namespace Ambermoon
                 new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), 254, TextColor.White, false, TextAlign.Center);
             loadingText.Visible = false;
             
-            if (showLogo)
-            {
-                ShowMainMenu(false);
-                playMusicAction?.Invoke(Song.Intro);
-                cursor.Type = Data.CursorType.Sword;                
-                fader.AttachFinishEvent(() =>
-                {
-                    fader.AttachFinishEvent(SkipThalionLogo);
-                    fader.StartAt(DateTime.Now + TimeSpan.FromMilliseconds(LogoDisplayDuration), LogoFadeOutTime, true);
-                });
-                fader.Start(LogoFadeInTime);
-                thalionLogo.Visible = true;
-            }
-            else
-            {
-                cursor.Type = Data.CursorType.Sword;
-                FadeInMainMenu();
-            }
+            cursor.Type = CursorType.Sword;
+            FadeInMainMenu();
         }
 
-        void ShowMainMenu(bool show)
+        void ShowMainMenu()
         {
             if (background != null)
-                background.Visible = show;
-            renderView.GetLayer(Layer.IntroText).Visible = show;
+                background.Visible = true;
+            renderView.GetLayer(Layer.IntroText).Visible = true;
         }
 
         void FadeInMainMenu()
         {
             playMusicAction?.Invoke(Song.Menu);
-            ShowMainMenu(true);
+            ShowMainMenu();
             mainMenuFader.Start(FadeInTime);
-        }
-
-        void SkipThalionLogo()
-        {
-            fader?.DetachFinishEvent();
-            fader?.Destroy();
-            fader = null;
-            thalionLogo?.Delete();
-            thalionLogo = null;
-            FadeInMainMenu();
         }
 
         public void Destroy()
         {
             closed = true;
-            thalionLogo?.Delete();
-            thalionLogo = null;
-            fader?.Destroy();
-            fader = null;
             mainMenuFader?.Destroy();
             mainMenuFader = null;
             background?.Delete();
@@ -193,30 +145,26 @@ namespace Ambermoon
             if (closed)
                 return;
 
-            fader?.Update();
             mainMenuFader?.Update();
 
-            if (thalionLogo == null)
+            for (int i = 0; i < mainMenuTexts.Count; ++i)
             {
-                for (int i = 0; i < mainMenuTexts.Count; ++i)
+                if (i == hoveredTextIndex)
                 {
-                    if (i == hoveredTextIndex)
-                    {
-                        int duration = (int)(DateTime.Now - hoverStartTime.Value).TotalMilliseconds / HoverColorTime;
-                        byte colorIndex = hoveredColorIndices[duration % hoveredColorIndices.Length];
-                        mainMenuTexts[i].Value.TextColor = (TextColor)colorIndex;
-                    }
-                    else
-                    {
-                        mainMenuTexts[i].Value.TextColor = TextColor.White;
-                    }
+                    int duration = (int)(DateTime.Now - hoverStartTime.Value).TotalMilliseconds / HoverColorTime;
+                    byte colorIndex = hoveredColorIndices[duration % hoveredColorIndices.Length];
+                    mainMenuTexts[i].Value.TextColor = (TextColor)colorIndex;
                 }
+                else
+                {
+                    mainMenuTexts[i].Value.TextColor = TextColor.White;
+                }
+            }
 
-                if (background != null)
-                {
-                    if (GameDataLoaded)
-                        Destroy();
-                }
+            if (background != null)
+            {
+                if (GameDataLoaded)
+                    Destroy();
             }
         }
 
@@ -232,12 +180,6 @@ namespace Ambermoon
 
             if (buttons == MouseButtons.Left)
             {
-                if (thalionLogo != null)
-                {
-                    SkipThalionLogo();
-                    return;
-                }
-
                 position = renderView.ScreenToGame(position);
 
                 for (int i = 0; i < mainMenuTexts.Count; ++i)
@@ -258,9 +200,6 @@ namespace Ambermoon
                 return;
 
             cursor.UpdatePosition(position, null);
-
-            if (thalionLogo != null)
-                return;
 
             position = renderView.ScreenToGame(position);
 

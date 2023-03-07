@@ -1,7 +1,6 @@
 ﻿using Ambermoon.Data.Legacy;
 using Newtonsoft.Json;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -67,7 +66,9 @@ namespace Ambermoon
         public Effects Effects { get; set; } = Effects.None;
         public bool ShowPlayerStatsTooltips { get; set; } = true;
         public bool ShowPyrdacorLogo { get; set; } = true;
-        public bool ShowThalionLogo { get; set; } = true;
+        [Obsolete("Now the fantasy intro is shown instead.")]
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public bool? ShowThalionLogo { get; set; } = null;
         public bool ShowFloor { get; set; } = true;
         public bool ShowCeiling { get; set; } = true;
         public bool ExtendedSavegameSlots { get; set; } = true;
@@ -432,6 +433,11 @@ namespace Ambermoon
             }
 
             configuration.FastBattleMode = null;
+
+            if (configuration.ShowThalionLogo == true && !configuration.ShowFantasyIntro)
+                configuration.ShowFantasyIntro = true;
+
+            configuration.ShowThalionLogo = null;
 #pragma warning restore CS0618
 
             return configuration;

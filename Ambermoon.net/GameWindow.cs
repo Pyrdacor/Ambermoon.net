@@ -401,7 +401,6 @@ namespace Ambermoon
             }
             else
             {
-                
                 if (logoPyrdacor != null)
                 {
                     logoPyrdacor?.Cleanup();
@@ -418,8 +417,8 @@ namespace Ambermoon
                 }
                 else if (versionSelector != null)
                     versionSelector.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
-                else if (Game != null)
-                    Game.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
+                else
+                    Game?.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
             }
         }
 
@@ -485,8 +484,8 @@ namespace Ambermoon
                 versionSelector.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
             else if (mainMenu != null)
                 mainMenu.OnMouseDown(ConvertMousePosition(position), ConvertMouseButtons(button));
-            else if (Game != null)
-                Game.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse), GetModifiers(keyboard));
+            else
+                Game?.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse), GetModifiers(keyboard));
         }
 
         void Mouse_MouseUp(IMouse mouse, MouseButton button)
@@ -640,7 +639,7 @@ namespace Ambermoon
             }
 
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
-                GetText(gameLanguage, 0), GetText(gameLanguage, 1), PlayMusic, configuration.ShowThalionLogo);
+                GetText(gameLanguage, 0), GetText(gameLanguage, 1), PlayMusic);
             mainMenu.Closed += closeAction =>
             {
                 switch (closeAction)

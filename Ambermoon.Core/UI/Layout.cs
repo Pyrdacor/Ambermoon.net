@@ -1194,11 +1194,10 @@ namespace Ambermoon.UI
                     "Zusätzliche Spielstände",
                     "Externe Musik",
                     "Pyrdacor Logo zeigen",
-                    "Thalion Logo zeigen",
+                    "Fantasy Intro zeigen",
                     "Info beim Speichern/Laden"
                     // TODO
                     //"Intro anzeigen",
-                    //"Fantasy Intro anzeigen",
                 }
             },
             {
@@ -1225,11 +1224,10 @@ namespace Ambermoon.UI
                     "Additional saveslots",
                     "External music",
                     "Show Pyrdacor logo",
-                    "Show Thalion logo",
+                    "Show fantasy intro",
                     "Show save/load info"
                     // TODO
                     //"Show intro",
-                    //"Show fantasy intro",
                 }
             }
         };
@@ -1322,11 +1320,10 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExternalMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleThalionLogo())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFantasyIntro())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleSaveLoadInfo()))
                 // TODO: later
                 //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleIntro())),              
-                //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFantasyIntro())),
             };
             listBox = activePopup.AddOptionsListBox(options.Take(OptionsPerPage).ToList());
 
@@ -1386,10 +1383,9 @@ namespace Ambermoon.UI
             void SetExtendedSaves() => SetOptionString(14, game.Configuration.ExtendedSavegameSlots ? on : off);
             void SetExternalMusic() => SetOptionString(15, game.Configuration.ExternalMusic ? on : off);
             void SetPyrdacorLogo() => SetOptionString(16, game.Configuration.ShowPyrdacorLogo ? on : off);
-            void SetThalionLogo() => SetOptionString(17, game.Configuration.ShowThalionLogo ? on : off);
+            void SetFantasyIntro() => SetOptionString(17, game.Configuration.ShowFantasyIntro ? on : off);
             void SetSaveLoadInfo() => SetOptionString(18, game.Configuration.ShowSaveLoadMessage ? on : off);
             // TODO: void SetIntro() => SetOptionString(?, game.Configuration.ShowIntro ? on : off);
-            // TODO: void SetFantasyIntro() => SetOptionString(?, game.Configuration.ShowFantasyIntro ? on : off);
 
             void ShowOptions()
             {
@@ -1418,12 +1414,11 @@ namespace Ambermoon.UI
                         SetExtendedSaves();
                         SetExternalMusic();
                         SetPyrdacorLogo();
-                        SetThalionLogo();
+                        SetFantasyIntro();
                         SetSaveLoadInfo();
                         break;
                     // TODO
                     //SetIntro();
-                    //SetFantasyIntro();
                 }
             }
 
@@ -1566,10 +1561,10 @@ namespace Ambermoon.UI
                 SetPyrdacorLogo();
                 changedConfiguration = true;
             }
-            void ToggleThalionLogo()
+            void ToggleFantasyIntro()
             {
-                game.Configuration.ShowThalionLogo = !game.Configuration.ShowThalionLogo;
-                SetThalionLogo();
+                game.Configuration.ShowFantasyIntro = !game.Configuration.ShowFantasyIntro;
+                SetFantasyIntro();
                 changedConfiguration = true;
             }
             void ToggleEffects()
