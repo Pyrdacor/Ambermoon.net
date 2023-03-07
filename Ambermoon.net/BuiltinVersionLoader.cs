@@ -10,6 +10,7 @@ namespace Ambermoon
         public string Language;
         public string Info;
         public Features Features;
+        public bool MergeWithPrevious;
         public uint Offset;
         public uint Size;
         public Stream SourceStream;
@@ -39,7 +40,8 @@ namespace Ambermoon
                     Version = reader.ReadString(),
                     Language = reader.ReadString(),
                     Info = reader.ReadString(),
-                    Features = (Features)reader.ReadByte(),
+                    Features = (Features)ReadWord(reader),
+                    MergeWithPrevious = reader.ReadByte() != 0,
                     Size = ReadDword(reader),
                     SourceStream = reader.BaseStream
                 });

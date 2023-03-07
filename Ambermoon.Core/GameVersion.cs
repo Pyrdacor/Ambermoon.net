@@ -27,8 +27,9 @@ namespace Ambermoon
 {
     public enum GameLanguage
     {
-        German,
-        English
+        English,
+        German,        
+        French
     }
 
     public class GameVersion
@@ -37,6 +38,7 @@ namespace Ambermoon
         public string Language;
         public string Info;
         public Features Features;
+        public bool MergeWithPrevious;
         public Func<IGameData> DataProvider;
 
         internal const string RemakeReleaseDate = "01-02-2023";

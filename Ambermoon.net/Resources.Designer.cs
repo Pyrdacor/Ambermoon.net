@@ -30,5 +30,7 @@ namespace Ambermoon
         internal static byte[] Advanced => (byte[])ResourceManager.GetObject("advanced", Culture);
 
         internal static byte[] Borders256 => (byte[])ResourceManager.GetObject("borders256", Culture);
+
+        internal static byte[] Flags => (byte[])ResourceManager.GetObject("flags", Culture);
     }
 }

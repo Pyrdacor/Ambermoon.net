@@ -468,6 +468,10 @@ namespace AmbermoonAndroid
                 textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
                     introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
                 logoPyrdacor?.Initialize(textureAtlasManager);
+                textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
+                {
+                    { 0u, logoGraphic }
+                });
                 return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;
@@ -715,6 +719,7 @@ namespace AmbermoonAndroid
             {
                 textureAtlasManager.AddUIOnly(graphicProvider, fontProvider);
                 logoPyrdacor?.Initialize(textureAtlasManager);
+                versionSelector.Initialize(textureAtlasManager);
                 return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;

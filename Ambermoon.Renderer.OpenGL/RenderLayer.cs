@@ -279,6 +279,18 @@ namespace Ambermoon.Renderer
                 SupportColoredRects = true,
                 SupportTextures = false
             } },
+            { Layer.Misc, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = true,
+                SupportColoredRects = true
+            } },
+            { Layer.Images, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = true,
+                RenderToVirtualScreen = false
+            } },
             { Layer.Effects, new ()
             {
                 BaseZ = 0.97f,
@@ -297,18 +309,6 @@ namespace Ambermoon.Renderer
                 EnableBlending = true,
                 SupportColoredRects = true,
                 SupportTextures = false
-            } },
-            { Layer.Misc, new ()
-            {
-                BaseZ = 0.70f,
-                EnableBlending = true,
-                SupportColoredRects = true
-            } },
-            { Layer.Images, new ()
-            {
-                BaseZ = 0.70f,
-                EnableBlending = true,
-                RenderToVirtualScreen = false
             } }
         };
 

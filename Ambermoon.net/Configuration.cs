@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Legacy;
 using Newtonsoft.Json;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -81,6 +82,12 @@ namespace Ambermoon
         public AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
         public bool ShowSaveLoadMessage { get; set; } = false;
         public Movement3D Movement3D { get; set; } = Movement3D.WASD;
+        public GameLanguage Language { get; set; } = (CultureInfo.DefaultThreadCurrentCulture ?? CultureInfo.CurrentCulture)?.Name?.ToLower() switch
+        {
+            string l when l.StartsWith("de") => GameLanguage.German,
+            string l when l.StartsWith("fr") => GameLanguage.French,
+            _ => GameLanguage.English
+        };
 
         public void RequestSave() => SaveRequested?.Invoke();
 

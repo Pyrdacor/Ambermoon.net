@@ -64,11 +64,11 @@ namespace Ambermoon
         OutroText,
         FantasyIntroGraphics,
         FantasyIntroEffects,
+        Misc, // general purpose layer
+        Images, // non-palette high-resolution images
         Effects,
         Cursor,
-        DrugEffect,
-        Misc, // general purpose layer
-        Images // non-palette high-resolution images
+        DrugEffect
     }
 
     public partial class Global

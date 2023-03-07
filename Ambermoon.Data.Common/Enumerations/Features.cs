@@ -3,7 +3,7 @@
 namespace Ambermoon.Data.Enumerations
 {
     [Flags]
-    public enum Features
+    public enum Features : ushort
     {
         None = 0x00,
         Elements = 0x01,

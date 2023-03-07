@@ -182,7 +182,7 @@ namespace Ambermoon
                 sprite.Layer = renderView.GetLayer(Layer.Misc);
                 sprite.X = (Global.VirtualScreenWidth - frameSize.Width) / 2;
                 sprite.Y = (Global.VirtualScreenHeight - frameSize.Height) / 2;
-                sprite.PaletteIndex = 71;
+                sprite.PaletteIndex = 70;
                 return sprite;
             }
 
@@ -240,7 +240,7 @@ namespace Ambermoon
                         {
                             sprite1.Alpha = 0x00;
                             sprite1.TextureAtlasOffset = GetImageOffset(command.ImageIndex);
-                            sprite1.Visible = true;
+                            sprite1.Visible = false;
                             sprite1.ClipArea = new Rect(sprite1.X + startPosition.X, sprite1.Y + startPosition.Y, 0, 0);
                         }
                         else
@@ -253,7 +253,7 @@ namespace Ambermoon
                             sprite2.TextureAtlasOffset = GetImageOffset(command.ImageIndex);
                             sprite2.ClipArea = new Rect(sprite2.X + startPosition.X, sprite2.Y + startPosition.Y, 0, 0);
                             sprite1.Visible = true;
-                            sprite2.Visible = true;
+                            sprite2.Visible = false;
                         }
                     }
                     else
@@ -269,6 +269,7 @@ namespace Ambermoon
                         var sprite = sprite2 ?? sprite1;
                         sprite.Alpha = (byte)Util.Round(elapsed * 0xff);
                         sprite.ClipArea = new Rect(sprite.X + startX, sprite.Y + minY, endX - startX, maxY - minY);
+                        sprite.Visible = sprite.Alpha > 0;
 
                         if (elapsed >= 1)
                             currentCommand = null;
@@ -287,7 +288,7 @@ namespace Ambermoon
                             sprite1.TextureAtlasOffset = GetImageOffset(command.ImageIndex);
                             sprite1.Alpha = 0x00;
                             sprite1.ClipArea = new Rect(sprite1.X, sprite1.Y, sprite1.Width, sprite1.Height);
-                            sprite1.Visible = true;                            
+                            sprite1.Visible = false;                            
                         }
                         else
                         {
@@ -299,7 +300,7 @@ namespace Ambermoon
                             sprite1.ClipArea = new Rect(sprite1.X, sprite1.Y, sprite1.Width, sprite1.Height);
                             sprite2.ClipArea = new Rect(sprite2.X, sprite2.Y, sprite2.Width, sprite2.Height);
                             sprite1.Visible = true;
-                            sprite2.Visible = true;
+                            sprite2.Visible = false;
                         }
                     }
                     else
@@ -307,11 +308,16 @@ namespace Ambermoon
                         var elapsed = command.Time == 0 ? 1.0 : Math.Min(1.0, (DateTime.Now - currentCommandStartTime).TotalMilliseconds / command.Time);
 
                         if (sprite2 == null)
+                        {
                             sprite1.Alpha = (byte)Util.Round(elapsed * 0xff);
+                            sprite1.Visible = sprite1.Alpha > 0;
+                        }
                         else
                         {
                             sprite2.Alpha = (byte)Util.Round(elapsed * 0xff);
                             sprite1.Alpha = (byte)(0xff - sprite2.Alpha);
+                            sprite1.Visible = sprite1.Alpha > 0;
+                            sprite2.Visible = sprite2.Alpha > 0;
                         }
 
                         if (elapsed >= 1)
@@ -344,6 +350,7 @@ namespace Ambermoon
                     {
                         var elapsed = command.Time == 0 ? 1.0 : Math.Min(1.0, (DateTime.Now - currentCommandStartTime).TotalMilliseconds / command.Time);
                         sprite1.Alpha = (byte)Util.Round(0xff - elapsed * 0xff);
+                        sprite1.Visible = sprite1.Alpha > 0;
                         audioOutput.Volume = (float)(1.0 - elapsed) * oldVolume;
 
                         if (textOverlay != null)

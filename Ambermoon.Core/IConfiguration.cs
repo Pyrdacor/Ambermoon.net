@@ -152,6 +152,7 @@ namespace Ambermoon
         AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
         bool ShowSaveLoadMessage { get; set; }
         Movement3D Movement3D { get; set; }
+        GameLanguage Language { get; set; }
 
         void RequestSave();
         void UpgradeAdditionalSavegameSlots();

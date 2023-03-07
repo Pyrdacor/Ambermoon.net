@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using TextColor = Ambermoon.Data.Enumerations.Color;
+using Color = Ambermoon.Render.Color;
 
 namespace Ambermoon.UI
 {
@@ -32,7 +33,8 @@ namespace Ambermoon.UI
     {
         readonly IRenderView renderView;
         readonly ITextureAtlas textureAtlas;
-
+        readonly ITextureAtlas flagsTextureAtlas;
+        readonly IConfiguration configuration;
         readonly List<ILayerSprite> borders = new List<ILayerSprite>();
         readonly Cursor cursor = null;
         readonly IRenderText[] versionTexts = new IRenderText[5];
@@ -48,6 +50,7 @@ namespace Ambermoon.UI
             = new Dictionary<Button, IColoredRect[]>();
         IColoredRect tooltipBorder = null;
         IColoredRect tooltipBackground = null;
+        List<ILayerSprite> languageChangeButtons = new List<ILayerSprite>();
         IText currentSaveTooltipText = null;
         readonly Button okButton = null;
         readonly List<Rect> versionAreas = new List<Rect>(5);
@@ -76,13 +79,14 @@ namespace Ambermoon.UI
         public event Action<int, IGameData, bool> Closed;
 
         public VersionSelector(string ambermoonNetVersion, IRenderView renderView, TextureAtlasManager textureAtlasManager,
-            List<GameVersion> gameVersions, Cursor cursor, int selectedVersion, SaveOption saveOption)
+            List<GameVersion> gameVersions, Cursor cursor, int selectedVersion, SaveOption saveOption, IConfiguration configuration)
         {
             var culture = CultureInfo.DefaultThreadCurrentCulture ?? CultureInfo.CurrentCulture;
             var cultureName = culture?.Name ?? "";
-            var language = cultureName == "de" || cultureName.StartsWith("de-") ? GameLanguage.German : GameLanguage.English;
             this.renderView = renderView;
+            this.configuration = configuration;
             textureAtlas = textureAtlasManager.GetOrCreate(Layer.UI);
+            flagsTextureAtlas = textureAtlasManager.GetOrCreate(Layer.Misc);
             var fontTextureAtlas = textureAtlasManager.GetOrCreate(Layer.Text);
             var spriteFactory = renderView.SpriteFactory;
             var layer = renderView.GetLayer(Layer.UI);
@@ -148,15 +152,11 @@ namespace Ambermoon.UI
             AddText(new Position(x, Global.VirtualScreenHeight - 10),
                 ambermoonNetVersion, TextColor.DarkerGray);
             var headerPosition = new Position(versionListArea.X, versionListArea.Y - 12);
-            var headerText = language == GameLanguage.German
-                ? "Wähle eine Spieldaten-Version:     (?)"
-                : "Select a game data version:        (?)";
+            var headerText = GetHeaderText();
             AddText(headerPosition, headerText, TextColor.BrightGray);
             gameDataVersionTooltipArea = new Rect(new Position(headerPosition.X + (headerText.Length - 3) * Global.GlyphWidth, headerPosition.Y),
                 new Size(3 * Global.GlyphWidth, Global.GlyphLineHeight - 1));
-            gameDataVersionTooltipText = renderView.TextProcessor.CreateText(language == GameLanguage.German
-                ? "Die Spieldaten-Version bezieht sich auf die Amiga-Basisdaten. Diese Versionierung ist unabhängig von der Ambermoon.net Version."
-                : "The game data version relates to the Amiga base data. This version is independent of the Ambermoon.net version.");
+            gameDataVersionTooltipText = renderView.TextProcessor.CreateText(GetVersionInfoTooltip());
             gameDataVersionTooltipText = renderView.TextProcessor.WrapText(gameDataVersionTooltipText,
                 new Rect(0, 0, 300, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             AddSunkenBox(versionListArea.CreateModified(-1, -1, 2, 2));
@@ -178,19 +178,19 @@ namespace Ambermoon.UI
             #region Savegame option and OK button
             var savegameOptions = new string[2]
             {
-                language == GameLanguage.German
+                configuration.Language == GameLanguage.German
                     ? "Speichere beim Programm"
                     : "Save games in program path",
-                language == GameLanguage.German
+                configuration.Language == GameLanguage.German
                     ? "Speichere bei den Daten"
                     : "Save games in data path"
             };
             var savegameOptionTooltips = new string[2]
             {
-                language == GameLanguage.German
+                configuration.Language == GameLanguage.German
                     ? "Spielstände werden neben der Ambermoon.net.exe im Unterorder 'Saves' gespeichert."
                     : "Savegames are stored next to the Ambermoon.net.exe inside the sub-folder 'Saves'.",
-                language == GameLanguage.German
+                configuration.Language == GameLanguage.German
                     ? "Spielstände werden im Pfad der Originaldaten gespeichert und überschreiben die Originalspielstände!"
                     : "Savegames are stored in the original data path and may overwrite original savegames!"
             };
@@ -213,10 +213,52 @@ namespace Ambermoon.UI
             UpdateSaveOptionTooltip(savegameOptionTooltips);
             #endregion
 
+            #region Language change button
+            int languageCount = Enum.GetValues<GameLanguage>().Length;
+            var languageButtonArea = new Rect(versionListArea.Center.X - languageCount * 24 / 2, okButton.Area.Top + 1, 20, 20);
+            for (int i = 0; i < languageCount; ++i)
+            {
+                var language = (GameLanguage)i;
+                if (configuration.Language == language)
+                    AddSunkenBox(languageButtonArea.CreateModified(-2, -2, 4, 4), 1, 28);
+                var languageChangeButton = renderView.SpriteFactory.Create(20, 20, true, 3) as ILayerSprite;
+                languageChangeButton.Layer = renderView.GetLayer(Layer.Misc);
+                languageChangeButton.TextureAtlasOffset = GetFlagImageOffset(language);
+                languageChangeButton.X = languageButtonArea.X;
+                languageChangeButton.Y = languageButtonArea.Y;
+                languageChangeButton.PaletteIndex = 71;
+                languageChangeButton.Visible = true;
+                languageChangeButtons.Add(languageChangeButton);
+                languageButtonArea.Position.X += 24;
+            }
+            #endregion
+
             tooltipText = AddText(new Position(), "", TextColor.White, true, 250);
             tooltipText.Visible = false;
 
             SelectedVersion = selectedVersion;
+        }
+
+        Position GetFlagImageOffset(GameLanguage language) => flagsTextureAtlas.GetOffset(1) + new Position((int)language * 20, 0); // TODO: maybe later the image has multiple rows
+
+        string GetHeaderText()
+        {
+            return configuration.Language switch
+            {
+                GameLanguage.German => "Wähle eine Spieldaten-Version:     (?)",
+                GameLanguage.French => "Choisir une version de données:    (?)",
+                _ => "Select a game data version:        (?)",
+            };
+        }
+
+        string GetVersionInfoTooltip()
+        {
+            return configuration.Language switch
+            {
+                GameLanguage.German => "Die Spieldaten-Version bezieht sich auf die Amiga-Basisdaten. Diese Versionierung ist unabhängig von der Ambermoon.net Version.",
+                GameLanguage.French => "La version des données concerne les données de base de l'Amiga. Cette version est indépendante de la version d'Ambermoon.net.",
+                _ => "The game data version relates to the Amiga base data. This version is independent of the Ambermoon.net version."
+            };
         }
 
         void ShowSaveOptionButton(bool show)

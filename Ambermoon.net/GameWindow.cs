@@ -49,7 +49,7 @@ namespace Ambermoon
         FantasyIntro fantasyIntro = null;
         LogoPyrdacor logoPyrdacor = null;
         AdvancedLogo advancedLogo = null;
-        Graphic[] logoPalettes;
+        Graphic[] additionalPalettes;
         bool initialized = false;
         Patcher patcher = null;
         bool checkPatcher = true;
@@ -711,11 +711,11 @@ namespace Ambermoon
                 if (configuration.ShowPyrdacorLogo)
                 {
                     logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
-                    logoPalettes = logoPyrdacor.Palettes;
+                    additionalPalettes = logoPyrdacor.Palettes;
                 }
                 else
                 {
-                    logoPalettes = new Graphic[1] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] } };
+                    additionalPalettes = new Graphic[1] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] } };
                 }
             }
 
@@ -725,7 +725,7 @@ namespace Ambermoon
             musicManager = new MusicManager(configuration, gameData);
 
             // Create render view
-            renderView = CreateRenderView(gameData, configuration, graphicProvider, logoPalettes, () =>
+            renderView = CreateRenderView(gameData, configuration, graphicProvider, additionalPalettes, () =>
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;
                 textureAtlasManager.AddAll(gameData, graphicProvider, gameData.FontProvider, introFont.GlyphGraphics,
@@ -1011,24 +1011,44 @@ namespace Ambermoon
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
             createdTextureAtlasManager = textureAtlasManager;
 
+            var flagsData = new DataReader(Resources.Flags);
+            var flagsPalette = new Graphic
+            {
+                Width = 32,
+                Height = 1,
+                Data = flagsData.ReadBytes(32 * 4),
+                IndexedGraphic = false
+            };
+            var flagsGraphic = new Graphic
+            {
+                Width = flagsData.ReadWord(),
+                Height = flagsData.ReadWord(),
+                IndexedGraphic = true
+            };
+            flagsGraphic.Data = flagsData.ReadBytes(flagsGraphic.Width * flagsGraphic.Height);
+
             audioOutput = new AudioOutput();
             audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
             audioOutput.Enabled = audioOutput.Available && configuration.Music;
             if (configuration.ShowPyrdacorLogo)
             {
                 logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
-                logoPalettes = logoPyrdacor.Palettes;
+                additionalPalettes = new Graphic[2] { logoPyrdacor.Palettes[0], flagsPalette };
             }
             else
             {
-                logoPalettes = new Graphic[1] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] } };
+                additionalPalettes = new Graphic[2] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] }, flagsPalette };
             }
 
-            renderView = CreateRenderView(gameData, configuration, gameData.GraphicProvider, logoPalettes, () =>
+            renderView = CreateRenderView(gameData, configuration, gameData.GraphicProvider, additionalPalettes, () =>
             {
                 textureAtlasManager.AddUIOnly(gameData.GraphicProvider, gameData.FontProvider);
                 logoPyrdacor?.Initialize(textureAtlasManager);
                 AdvancedLogo.Initialize(textureAtlasManager);
+                textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
+                {
+                    { 1u, flagsGraphic }
+                });
                 return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;
@@ -1043,7 +1063,8 @@ namespace Ambermoon
                     Language = builtinVersion.Language,
                     Info = builtinVersion.Info,
                     DataProvider = builtinVersionDataProviders[i],
-                    Features = builtinVersion.Features
+                    Features = builtinVersion.Features,
+                    MergeWithPrevious = builtinVersion.MergeWithPrevious
                 });
             }
             if (additionalVersionInfo != null)
@@ -1053,8 +1074,9 @@ namespace Ambermoon
                     Version = additionalVersionInfo.Value.Version,
                     Language = additionalVersionInfo.Value.Language,
                     Info = "From external data",
-                    DataProvider = configuration.GameVersionIndex == 4 ? (Func<IGameData>)(() => gameData) : LoadGameDataFromDataPath,
-                    Features = additionalVersionInfo.Value.Advanced ? Features.AmbermoonAdvanced : Features.None
+                    DataProvider = configuration.GameVersionIndex == 4 ? (() => gameData) : LoadGameDataFromDataPath,
+                    Features = additionalVersionInfo.Value.Advanced ? Features.AmbermoonAdvanced : Features.None,
+                    MergeWithPrevious = false
                 });
             }
             var cursor = new Render.Cursor(renderView, gameData.CursorHotspots, textureAtlasManager);
@@ -1064,7 +1086,8 @@ namespace Ambermoon
                 while (checkPatcher || patcher != null || logoPyrdacor != null)
                     Thread.Sleep(100);
 
-                versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager, gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption);
+                versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager,
+                    gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption, configuration);
                 versionSelector.Closed += (gameVersionIndex, gameData, saveInDataPath) =>
                 {
                     configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
