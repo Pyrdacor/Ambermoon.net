@@ -490,6 +490,8 @@ namespace Ambermoon
             fairy?.Delete();
             writing?.Delete();
             fadeArea?.Delete();
+            foreach (var writingSpark in writingSparks)
+                writingSpark.Value?.Delete();
             foreach (var spark in sparks)
                 spark.Value?.Delete();
             foreach (var sparkLine in sparkLines)
