@@ -391,7 +391,7 @@ namespace Ambermoon
                 }
                 try
                 {
-                    WritePNG(path, imageData, renderView.FramebufferSize);
+                    WritePNG(path, imageData, renderView.FramebufferSize, false, true);
                 }
                 catch
                 {
@@ -533,13 +533,14 @@ namespace Ambermoon
                 Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
         }
 
-        static void WritePNG(string filename, byte[] rgbData, Size imageSize)
+        static void WritePNG(string filename, byte[] rgbData, Size imageSize, bool alpha, bool upsideDown)
         {
             if (File.Exists(filename))
                 filename += Guid.NewGuid().ToString();
 
             filename += ".png";
 
+            int bpp = alpha ? 4 : 3;
             var writer = new DataWriter();
 
             void WriteChunk(string name, Action<DataWriter> dataWriter)
@@ -572,7 +573,7 @@ namespace Ambermoon
                 writer.Write((uint)imageSize.Width);
                 writer.Write((uint)imageSize.Height);
                 writer.Write(8); // 8 bits per color
-                writer.Write(2); // Color only (RGB)
+                writer.Write((byte)(alpha ? 6 : 2)); // With alpha (RGBA) or color only (RGB)
                 writer.Write(0); // Deflate compression
                 writer.Write(0); // Default filtering
                 writer.Write(0); // No interlace
@@ -583,8 +584,8 @@ namespace Ambermoon
                 byte[] dataWithFilterBytes = new byte[rgbData.Length + imageSize.Height];
                 for (int y = 0; y < imageSize.Height; ++y)
                 {
-                    int i = imageSize.Height - y - 1;
-                    Buffer.BlockCopy(rgbData, y * imageSize.Width * 3, dataWithFilterBytes, 1 + i + i * imageSize.Width * 3, imageSize.Width * 3);
+                    int i = upsideDown ? imageSize.Height - y - 1 : y;
+                    Buffer.BlockCopy(rgbData, y * imageSize.Width * bpp, dataWithFilterBytes, 1 + i + i * imageSize.Width * bpp, imageSize.Width * bpp);
                 }
                 // Note: Data is initialized with 0 bytes so the filter bytes are already 0.
                 using var uncompressedStream = new MemoryStream(dataWithFilterBytes);
