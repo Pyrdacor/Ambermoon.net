@@ -1,7 +1,7 @@
 ﻿/*
  * GameVersion.cs - Game version and language
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -35,10 +35,11 @@ namespace Ambermoon
     public class GameVersion
     {
         public string Version;
-        public string Language;
+        public GameLanguage Language;
         public string Info;
         public Features Features;
         public bool MergeWithPrevious;
+        public bool ExternalData;
         public Func<IGameData> DataProvider;
 
         internal const string RemakeReleaseDate = "01-02-2023";
@@ -48,10 +49,15 @@ namespace Ambermoon
     {
         public static GameLanguage ToGameLanguage(this string languageString)
         {
+            if (System.Enum.TryParse(languageString, out GameLanguage gameLanguage))
+                return gameLanguage;
+
             languageString = languageString.ToLower().Trim();
 
-            if (languageString == "deutsch" || languageString == "german" || languageString == "deu" || languageString == "de")
+            if (languageString == "german" || languageString == "deutsch" || languageString == "deu" || languageString == "de")
                 return GameLanguage.German;
+            if (languageString == "french" || languageString == "französisch" || languageString == "fra" || languageString == "fr")
+                return GameLanguage.French;
 
             return GameLanguage.English;
         }

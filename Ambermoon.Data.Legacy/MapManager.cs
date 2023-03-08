@@ -33,6 +33,7 @@ namespace Ambermoon.Data.Legacy
                 {
                     if (mapFile.Value.Size != 0)
                     {
+                        mapFile.Value.Position = 0;
                         uint index = (uint)mapFile.Key;
                         var textFile = textFiles.Files.ContainsKey(mapFile.Key) ? textFiles.Files[mapFile.Key] : null;
                         maps.Add(index, Map.Load(index, mapReader, mapFile.Value, textFile, tilesets));
@@ -44,6 +45,7 @@ namespace Ambermoon.Data.Legacy
             {
                 if (labdataFile.Value.Size != 0)
                 {
+                    labdataFile.Value.Position = 0;
                     var labdata = Labdata.Load(labdataReader, labdataFile.Value, gameData);
                     labdatas.Add((uint)labdataFile.Key, labdata);
                 }

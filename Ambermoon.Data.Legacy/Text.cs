@@ -91,7 +91,7 @@ namespace Ambermoon.Data.Legacy
                 return 59;
             else if (ch == 'é' || ch == 'è' || ch == 'ê' || ch == 'É' || ch == 'È' || ch == 'Ê')
                 return 60;
-            else if (ch == '¢')
+            else if (ch == 'ç' || ch == 'Ç')
                 return 61;
             else if (ch == 'û' || ch == 'Û')
                 return 62;

@@ -3,7 +3,6 @@ using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Audio;
-using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
@@ -20,7 +19,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using MousePosition = System.Numerics.Vector2;
-using TextReader = Ambermoon.Data.Legacy.Serialization.TextReader;
 using WindowDimension = Silk.NET.Maths.Vector2D<int>;
 
 namespace Ambermoon
@@ -937,8 +935,9 @@ namespace Ambermoon
             if (versions == null || versions.Count == 0)
             {
                 // no versions
+                configuration.GameVersionIndex = 0;
                 gameData.Load(dataPath);
-                selectHandler?.Invoke(gameData, Configuration.GetSavePath(Configuration.VersionSavegameFolders[4]), gameData.Language.ToGameLanguage(),
+                selectHandler?.Invoke(gameData, Configuration.GetSavePath(Configuration.ExternalSavegameFolder), gameData.Language.ToGameLanguage(),
                     gameData.Advanced ? Features.AmbermoonAdvanced : Features.None);
                 return false;
             }
@@ -961,12 +960,8 @@ namespace Ambermoon
                 return gameData;
             }
 
-            if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex > 4)
-#if DEBUG
-                configuration.GameVersionIndex = 4;
-#else
+            if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex > versions.Count) // == versions.Count is ok as it could be external data
                 configuration.GameVersionIndex = 0;
-#endif
 
             GameData.GameDataInfo? additionalVersionInfo = null;
 
@@ -976,19 +971,19 @@ namespace Ambermoon
             }
             catch
             {
-                if (configuration.GameVersionIndex == 4)
+                if (configuration.GameVersionIndex == versions.Count)
                     configuration.GameVersionIndex = 0;
             }
 
-            if (configuration.GameVersionIndex < 4)
+            // Some versions merge with another one. Here only the basis versions are stored.
+            var baseVersionIndices = versions.Select((version, index) => new { version, index }).Where(v => !v.version.MergeWithPrevious).Select(v => v.index).ToList();
+
+            if (configuration.GameVersionIndex < versions.Count)
             {
-                gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex],
-                    configuration.GameVersionIndex switch
-                    {
-                        1 => () => LoadBuiltinVersionData(versions[0], null),
-                        3 => () => LoadBuiltinVersionData(versions[2], null),
-                        _ => null
-                    });
+                Func<ILegacyGameData> fallbackGameDataProvider = baseVersionIndices.Contains(configuration.GameVersionIndex)
+                    ? null
+                    : () => LoadBuiltinVersionData(versions[baseVersionIndices.Last(idx => idx < configuration.GameVersionIndex)], null);
+                gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex], fallbackGameDataProvider);
             }
             else
             {
@@ -1003,11 +998,18 @@ namespace Ambermoon
                 }
             }
 
-            var builtinVersionDataProviders = new Func<ILegacyGameData>[4];
-            builtinVersionDataProviders[0] = () => configuration.GameVersionIndex == 0 ? gameData : LoadBuiltinVersionData(versions[0], null);
-            builtinVersionDataProviders[1] = () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1], builtinVersionDataProviders[0]);
-            builtinVersionDataProviders[2] = () => configuration.GameVersionIndex == 2 ? gameData : LoadBuiltinVersionData(versions[2], null);
-            builtinVersionDataProviders[3] = () => configuration.GameVersionIndex == 3 ? gameData : LoadBuiltinVersionData(versions[3], builtinVersionDataProviders[2]);
+            var builtinVersionDataProviders = new Func<ILegacyGameData>[versions.Count];
+            for (int i = 0; i < versions.Count; ++i)
+            {
+                int index = i;
+                if (baseVersionIndices.Contains(i))
+                    builtinVersionDataProviders[i] = () => configuration.GameVersionIndex == index ? gameData : LoadBuiltinVersionData(versions[index], null);
+                else
+                {
+                    var lastBaseVersion = baseVersionIndices.Last(idx => idx < index);
+                    builtinVersionDataProviders[i] = () => configuration.GameVersionIndex == index ? gameData : LoadBuiltinVersionData(versions[index], builtinVersionDataProviders[lastBaseVersion]);
+                }
+            }
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
             createdTextureAtlasManager = textureAtlasManager;
 
@@ -1060,25 +1062,33 @@ namespace Ambermoon
                 gameVersions.Add(new GameVersion
                 {
                     Version = builtinVersion.Version,
-                    Language = builtinVersion.Language,
+                    Language = builtinVersion.Language.ToGameLanguage(),
                     Info = builtinVersion.Info,
                     DataProvider = builtinVersionDataProviders[i],
                     Features = builtinVersion.Features,
-                    MergeWithPrevious = builtinVersion.MergeWithPrevious
+                    MergeWithPrevious = builtinVersion.MergeWithPrevious,
+                    ExternalData = false
                 });
             }
             if (additionalVersionInfo != null)
-            {
+            {                
                 gameVersions.Add(new GameVersion
                 {
                     Version = additionalVersionInfo.Value.Version,
-                    Language = additionalVersionInfo.Value.Language,
+                    Language = additionalVersionInfo.Value.Language.ToGameLanguage(),
                     Info = "From external data",
                     DataProvider = configuration.GameVersionIndex == 4 ? (() => gameData) : LoadGameDataFromDataPath,
                     Features = additionalVersionInfo.Value.Advanced ? Features.AmbermoonAdvanced : Features.None,
-                    MergeWithPrevious = false
+                    MergeWithPrevious = false,
+                    ExternalData = true
                 });
             }
+            if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex >= gameVersions.Count)
+#if DEBUG
+                configuration.GameVersionIndex = additionalVersionInfo != null ? gameVersions.Count - 1 : 0;
+#else
+                configuration.GameVersionIndex = 0;
+#endif
             var cursor = new Render.Cursor(renderView, gameData.CursorHotspots, textureAtlasManager);
 
             RunTask(() =>
@@ -1090,10 +1100,11 @@ namespace Ambermoon
                     gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption, configuration);
                 versionSelector.Closed += (gameVersionIndex, gameData, saveInDataPath) =>
                 {
+                    var gameVersion = gameVersions[gameVersionIndex];
                     configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
                     configuration.GameVersionIndex = gameVersionIndex;
-                    selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : Configuration.GetSavePath(Configuration.VersionSavegameFolders[gameVersionIndex]),
-                        gameVersions[gameVersionIndex].Language.ToGameLanguage(), gameVersions[gameVersionIndex].Features);
+                    selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : Configuration.GetSavePath(Configuration.GetVersionSavegameFolder(gameVersion)),
+                        gameVersion.Language, gameVersion.Features);
                 };
             });
 

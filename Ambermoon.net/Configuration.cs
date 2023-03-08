@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Legacy;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -11,15 +12,26 @@ namespace Ambermoon
 {
     internal class Configuration : IConfiguration
     {
-        [JsonIgnore]
-        internal static readonly string[] VersionSavegameFolders = new string[5]
+        internal const string ExternalSavegameFolder = "external";
+
+        internal static string GetVersionSavegameFolder(GameVersion gameVersion)
         {
-            "german",
-            "english",
-            "advanced_german",
-            "advanced_english",
-            "external"
-        };
+            if (gameVersion.ExternalData)
+                return ExternalSavegameFolder;
+
+            if (gameVersion.Info.ToLower().Contains("advanced"))
+                return $"advanced_{gameVersion.Language.ToString().ToLower()}";
+
+            return gameVersion.Language.ToString().ToLower();
+        }
+
+        internal static IEnumerable<string> GetAllPossibleSavegameFolders()
+        {
+            var folders = new List<string> { ExternalSavegameFolder };
+            folders.AddRange(Enum.GetValues<GameLanguage>().Select(l => l.ToString().ToLower()));
+            folders.AddRange(Enum.GetValues<GameLanguage>().Select(l => $"advanced_{l.ToString().ToLower()}"));
+            return folders;
+        }
 
         public event Action SaveRequested;
         [JsonIgnore]
@@ -152,7 +164,7 @@ namespace Ambermoon
             if (AdditionalSavegameSlots != null)
                 return;
 
-            AdditionalSavegameSlots = VersionSavegameFolders.Select(f => new AdditionalSavegameSlots
+            AdditionalSavegameSlots = GetAllPossibleSavegameFolders().Select(f => new AdditionalSavegameSlots
             {
                 GameVersionName = f,
                 ContinueSavegameSlot = 0,
@@ -160,6 +172,7 @@ namespace Ambermoon
             }).ToArray();
 
             // Copy old savegame names to new format
+            // Note: The amount of version slots is now dynamic but this upgrade is for older configs where it was fixed. So this is ok.
             if (AdditionalSavegameNames != null && GameVersionIndex >= 0 && GameVersionIndex < 3)
             {
                 // "external" moved from slot 2 to 4
@@ -177,26 +190,23 @@ namespace Ambermoon
 
         public AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots()
         {
-            if (GameVersionIndex < 0 || GameVersionIndex >= VersionSavegameFolders.Length)
-#if DEBUG
-                GameVersionIndex = VersionSavegameFolders.Length - 1; // external
-#else
+            if (GameVersionIndex < 0)
                 GameVersionIndex = 0;
-#endif
 
             if (AdditionalSavegameSlots == null)
                 UpgradeAdditionalSavegameSlots();
             else if (GameVersionIndex >= AdditionalSavegameSlots.Length)
             {
-                var versionSlots = new AdditionalSavegameSlots[VersionSavegameFolders.Length];
+                var versionSavegameFolders = GetAllPossibleSavegameFolders().ToArray();
+                var versionSlots = new AdditionalSavegameSlots[versionSavegameFolders.Length];
 
                 Array.Copy(AdditionalSavegameSlots, versionSlots, AdditionalSavegameSlots.Length);
 
-                for (int i = AdditionalSavegameSlots.Length; i < VersionSavegameFolders.Length; ++i)
+                for (int i = AdditionalSavegameSlots.Length; i < versionSavegameFolders.Length; ++i)
                 {
                     versionSlots[i] = new AdditionalSavegameSlots
                     {
-                        GameVersionName = VersionSavegameFolders[i],
+                        GameVersionName = versionSavegameFolders[i],
                         ContinueSavegameSlot = 0,
                         Names = new string[Game.NumAdditionalSavegameSlots]
                     };
@@ -357,10 +367,11 @@ namespace Ambermoon
 
                 try
                 {
-                    var savegameSlots = configuration.AdditionalSavegameSlots = new AdditionalSavegameSlots[VersionSavegameFolders.Length];
+                    var versionSavegameFolders = GetAllPossibleSavegameFolders().ToArray();
+                    var savegameSlots = configuration.AdditionalSavegameSlots = new AdditionalSavegameSlots[versionSavegameFolders.Length];
                     int versionIndex = 0;
 
-                    foreach (var savegameFolder in VersionSavegameFolders)
+                    foreach (var savegameFolder in versionSavegameFolders)
                     {
                         // Ticks of last saving, slot index (1 .. 30)
                         Tuple<long, int> mostRecentSavegameSlotOfVersion = Tuple.Create(0L, -1);

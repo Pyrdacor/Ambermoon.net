@@ -1,7 +1,7 @@
 ﻿/*
  * VersionSelector.cs - Version selector window
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -26,21 +26,26 @@ using System.Collections.Generic;
 using System.Globalization;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 using Color = Ambermoon.Render.Color;
+using System.Linq;
 
 namespace Ambermoon.UI
 {
     public class VersionSelector
     {
+        const int FlagWidth = 16;
+        const int FlagHeight = 16;
+        const TextColor NormalTooltipColor = TextColor.White;
         readonly IRenderView renderView;
         readonly ITextureAtlas textureAtlas;
         readonly ITextureAtlas flagsTextureAtlas;
         readonly IConfiguration configuration;
         readonly List<ILayerSprite> borders = new List<ILayerSprite>();
         readonly Cursor cursor = null;
+        readonly IRenderText headerRenderText = null;
         readonly IRenderText[] versionTexts = new IRenderText[5];
         readonly IColoredRect[] versionHighlights = new IColoredRect[5];
         readonly Rect gameDataVersionTooltipArea = null;
-        readonly IText gameDataVersionTooltipText = null;
+        IText gameDataVersionTooltipText = null;
         readonly IColoredRect selectedVersionMarker = null;
         readonly Button changeSaveOptionButton = null;
         readonly IRenderText saveOptionText = null;
@@ -48,6 +53,9 @@ namespace Ambermoon.UI
         readonly IRenderText tooltipText = null;
         readonly Dictionary<Button, IColoredRect[]> buttonBackgrounds
             = new Dictionary<Button, IColoredRect[]>();
+        readonly List<List<GameVersion>> mergedGameVersions = new List<List<GameVersion>>();
+        readonly List<GameLanguage> selectedVersionLanguages = new List<GameLanguage>();
+        IColoredRect[] flagSunkenBox = null;
         IColoredRect tooltipBorder = null;
         IColoredRect tooltipBackground = null;
         List<ILayerSprite> languageChangeButtons = new List<ILayerSprite>();
@@ -56,7 +64,7 @@ namespace Ambermoon.UI
         readonly List<Rect> versionAreas = new List<Rect>(5);
         int selectedSaveOption = 0;
         int selectedVersion = 0;
-        readonly int versionCount = 4;
+        readonly int versionCount;
         int SelectedVersion
         {
             get => selectedVersion;
@@ -65,8 +73,8 @@ namespace Ambermoon.UI
                 if (selectedVersion != value)
                 {
                     selectedVersion = value;
-                    bool externalVersion = selectedVersion == 4;
 
+                    bool externalVersion = IsSelectedVersionFromExternalData();
                     ShowSaveOptionButton(externalVersion);
                     saveOptionText.Visible = externalVersion;
                     selectedVersionMarker.X = versionAreas[value].X;
@@ -81,8 +89,6 @@ namespace Ambermoon.UI
         public VersionSelector(string ambermoonNetVersion, IRenderView renderView, TextureAtlasManager textureAtlasManager,
             List<GameVersion> gameVersions, Cursor cursor, int selectedVersion, SaveOption saveOption, IConfiguration configuration)
         {
-            var culture = CultureInfo.DefaultThreadCurrentCulture ?? CultureInfo.CurrentCulture;
-            var cultureName = culture?.Name ?? "";
             this.renderView = renderView;
             this.configuration = configuration;
             textureAtlas = textureAtlasManager.GetOrCreate(Layer.UI);
@@ -91,10 +97,6 @@ namespace Ambermoon.UI
             var spriteFactory = renderView.SpriteFactory;
             var layer = renderView.GetLayer(Layer.UI);
             this.cursor = cursor;
-            versionCount = gameVersions.Count;
-
-            if (versionCount < 1 || versionCount > 5)
-                throw new AmbermoonException(ExceptionScope.Application, $"Invalid game version count: {versionCount}");
 
             #region Window
             var windowSize = new Size(16, 8);
@@ -153,75 +155,94 @@ namespace Ambermoon.UI
                 ambermoonNetVersion, TextColor.DarkerGray);
             var headerPosition = new Position(versionListArea.X, versionListArea.Y - 12);
             var headerText = GetHeaderText();
-            AddText(headerPosition, headerText, TextColor.BrightGray);
+            headerRenderText = AddText(headerPosition, headerText, TextColor.BrightGray);
             gameDataVersionTooltipArea = new Rect(new Position(headerPosition.X + (headerText.Length - 3) * Global.GlyphWidth, headerPosition.Y),
                 new Size(3 * Global.GlyphWidth, Global.GlyphLineHeight - 1));
             gameDataVersionTooltipText = renderView.TextProcessor.CreateText(GetVersionInfoTooltip());
             gameDataVersionTooltipText = renderView.TextProcessor.WrapText(gameDataVersionTooltipText,
                 new Rect(0, 0, 300, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             AddSunkenBox(versionListArea.CreateModified(-1, -1, 2, 2));
+            int versionToSelect = 0;
             for (int i = 0; i < gameVersions.Count; ++i)
             {
                 var gameVersion = gameVersions[i];
-                string text = $"{gameVersion.Info[..Math.Min(24, gameVersion.Info.Length)],-24} {gameVersion.Version,-4} {gameVersion.Language[..Math.Min(7, gameVersion.Language.Length)]}";
-                var versionArea = new Rect(versionListArea.X, versionListArea.Y + i * 10, versionListArea.Width, 10);
-                var markerArea = versionArea.CreateModified(0, 0, 0, -1);
-                var highlight = versionHighlights[i] = FillArea(markerArea, Color.White, 2);
-                highlight.Visible = false;
-                versionTexts[i] = AddText(new Position(versionArea.X + 1, versionArea.Y + 2), text, TextColor.White, true, 3);
-                if (SelectedVersion == i)
-                    selectedVersionMarker = FillArea(markerArea, Color.Green, 1);
-                versionAreas.Add(versionArea);
+
+                if (gameVersion.MergeWithPrevious && mergedGameVersions.Count != 0)
+                {
+                    mergedGameVersions[^1].Add(gameVersion);
+                }
+                else
+                {
+                    int index = mergedGameVersions.Count;
+                    string text = BuildVersionEntryText(gameVersion);
+                    var versionArea = new Rect(versionListArea.X, versionListArea.Y + index * 10, versionListArea.Width, 10);
+                    var markerArea = versionArea.CreateModified(0, 0, 0, -1);
+                    var highlight = versionHighlights[index] = FillArea(markerArea, Color.White, 2);
+                    highlight.Visible = false;
+                    versionTexts[index] = AddText(new Position(versionArea.X + 1, versionArea.Y + 2), text, TextColor.White, true, 3);
+                    if (SelectedVersion == index)
+                        selectedVersionMarker = FillArea(markerArea, Color.Green, 1);
+                    versionAreas.Add(versionArea);
+
+                    mergedGameVersions.Add(new List<GameVersion>() { gameVersion });
+                }
+
+                if (selectedVersion == i)
+                    versionToSelect = mergedGameVersions.Count - 1;
+            }
+            versionCount = mergedGameVersions.Count;
+            foreach (var mergedGameVersion in mergedGameVersions)
+            {
+                if (mergedGameVersion.Any(v => v.Language == configuration.Language))
+                    selectedVersionLanguages.Add(configuration.Language);
+                else if (configuration.Language != GameLanguage.English && mergedGameVersion.Any(v => v.Language == GameLanguage.English))
+                    selectedVersionLanguages.Add(GameLanguage.English);
+                else
+                    selectedVersionLanguages.Add(mergedGameVersion.First().Language);
             }
             #endregion
 
             #region Savegame option and OK button
-            var savegameOptions = new string[2]
-            {
-                configuration.Language == GameLanguage.German
-                    ? "Speichere beim Programm"
-                    : "Save games in program path",
-                configuration.Language == GameLanguage.German
-                    ? "Speichere bei den Daten"
-                    : "Save games in data path"
-            };
-            var savegameOptionTooltips = new string[2]
-            {
-                configuration.Language == GameLanguage.German
-                    ? "Spielstände werden neben der Ambermoon.net.exe im Unterorder 'Saves' gespeichert."
-                    : "Savegames are stored next to the Ambermoon.net.exe inside the sub-folder 'Saves'.",
-                configuration.Language == GameLanguage.German
-                    ? "Spielstände werden im Pfad der Originaldaten gespeichert und überschreiben die Originalspielstände!"
-                    : "Savegames are stored in the original data path and may overwrite original savegames!"
-            };
             selectedSaveOption = (int)saveOption % 2;
             changeSaveOptionButton = CreateButton(new Position(versionListArea.X, versionListArea.Bottom + 3), textureAtlasManager);
             changeSaveOptionButton.ButtonType = Data.Enumerations.ButtonType.MoveRight;
             ShowSaveOptionButton(false);
-            changeSaveOptionButton.LeftClickAction = () => ToggleSaveOption(savegameOptions, savegameOptionTooltips);
-            var saveOptionPosition = new Position(versionListArea.X + 34, versionListArea.Bottom + 9);
-            saveOptionText = AddText(saveOptionPosition, savegameOptions[selectedSaveOption], TextColor.BrightGray);
+            changeSaveOptionButton.LeftClickAction = () => ToggleSaveOption();
+            var saveOptionPosition = new Position(versionListArea.X + 34, versionListArea.Bottom + 4);
+            string savegameOptionText = GetSavegameOptionText(selectedSaveOption);
+            saveOptionText = AddText(saveOptionPosition, savegameOptionText, TextColor.BrightGray);
             saveOptionText.Visible = false;
             okButton = CreateButton(new Position(versionListArea.Right - 32, versionListArea.Bottom + 3), textureAtlasManager);
             okButton.ButtonType = Data.Enumerations.ButtonType.Ok;
             okButton.Visible = true;
             okButton.LeftClickAction = () =>
             {
-                Closed?.Invoke(this.selectedVersion, gameVersions[this.selectedVersion].DataProvider?.Invoke(), this.selectedVersion == 4 && selectedSaveOption == 1);
+                int totalSelectedIndex = 0;
+
+                for (int i = 0; i < this.selectedVersion; ++i)
+                {
+                    totalSelectedIndex += mergedGameVersions[i].Count;
+                }
+
+                totalSelectedIndex += mergedGameVersions[this.selectedVersion].FindIndex(v => v.Language == selectedVersionLanguages[this.selectedVersion]);
+
+                Closed?.Invoke(totalSelectedIndex,
+                    mergedGameVersions[this.selectedVersion].First(v => v.Language == selectedVersionLanguages[this.selectedVersion]).DataProvider?.Invoke(),
+                    IsSelectedVersionFromExternalData() && selectedSaveOption == 1);
             };
-            saveOptionTooltip.Area = new Rect(saveOptionPosition, new Size(savegameOptions[selectedSaveOption].Length * Global.GlyphWidth, Global.GlyphLineHeight));
-            UpdateSaveOptionTooltip(savegameOptionTooltips);
+            saveOptionTooltip.Area = new Rect(saveOptionPosition, new Size(savegameOptionText.Length * Global.GlyphWidth, Global.GlyphLineHeight));
+            UpdateSaveOptionTooltip();
             #endregion
 
             #region Language change button
             int languageCount = Enum.GetValues<GameLanguage>().Length;
-            var languageButtonArea = new Rect(versionListArea.Center.X - languageCount * 24 / 2, okButton.Area.Top + 1, 20, 20);
+            var languageButtonArea = new Rect(versionListArea.Center.X - languageCount * (FlagWidth + 4) / 2, okButton.Area.Top + 12, FlagWidth, FlagHeight);
             for (int i = 0; i < languageCount; ++i)
             {
                 var language = (GameLanguage)i;
                 if (configuration.Language == language)
-                    AddSunkenBox(languageButtonArea.CreateModified(-2, -2, 4, 4), 1, 28);
-                var languageChangeButton = renderView.SpriteFactory.Create(20, 20, true, 3) as ILayerSprite;
+                    flagSunkenBox = AddSunkenBox(languageButtonArea.CreateModified(-2, -2, 4, 4), 1, 28);
+                var languageChangeButton = renderView.SpriteFactory.Create(FlagWidth, FlagHeight, true, 3) as ILayerSprite;
                 languageChangeButton.Layer = renderView.GetLayer(Layer.Misc);
                 languageChangeButton.TextureAtlasOffset = GetFlagImageOffset(language);
                 languageChangeButton.X = languageButtonArea.X;
@@ -229,25 +250,141 @@ namespace Ambermoon.UI
                 languageChangeButton.PaletteIndex = 71;
                 languageChangeButton.Visible = true;
                 languageChangeButtons.Add(languageChangeButton);
-                languageButtonArea.Position.X += 24;
+                languageButtonArea.Position.X += FlagWidth + 4;
             }
             #endregion
 
             tooltipText = AddText(new Position(), "", TextColor.White, true, 250);
             tooltipText.Visible = false;
 
-            SelectedVersion = selectedVersion;
+            SelectedVersion = versionToSelect;
+            UpdateLanguageDependentValues();
         }
 
-        Position GetFlagImageOffset(GameLanguage language) => flagsTextureAtlas.GetOffset(1) + new Position((int)language * 20, 0); // TODO: maybe later the image has multiple rows
+        bool IsSelectedVersionFromExternalData() => mergedGameVersions[selectedVersion].First().ExternalData;
+
+        string BuildVersionEntryText(GameVersion gameVersion)
+        {
+            string languageText = GetLanguageText(gameVersion.Language);
+            return $"{gameVersion.Info[..Math.Min(20, gameVersion.Info.Length)],-20} {gameVersion.Version,-4} {languageText[..Math.Min(11, languageText.Length)]}";
+        }
+
+        void UpdateVersionText(int index, GameLanguage language)
+        {
+            var gameVersions = mergedGameVersions[index];
+            var gameVersion = gameVersions.FirstOrDefault(v => v.Language == language) ?? gameVersions.FirstOrDefault(v => v.Language == GameLanguage.English) ?? gameVersions.First();
+
+            selectedVersionLanguages[index] = gameVersion.Language;
+
+            versionTexts[index].Text = renderView.TextProcessor.CreateText(BuildVersionEntryText(gameVersion));
+        }
+
+        void UpdateVersionTexts(GameLanguage language)
+        {
+            for (int i = 0; i < mergedGameVersions.Count; ++i)
+            {
+                UpdateVersionText(i, language);
+            }
+        }
+
+        void UpdateFlags()
+        {
+            int languageCount = Enum.GetValues<GameLanguage>().Length;
+            int x = languageChangeButtons[0].X;
+            int sunkenBoxDist = flagSunkenBox[0].X - x;
+
+            for (int i = 0; i < languageCount; ++i)
+            {
+                var language = (GameLanguage)i;
+
+                if (configuration.Language == language)
+                {
+                    for (int b = 0; b < 5; ++b)
+                    {
+                        flagSunkenBox[b].X -= sunkenBoxDist;
+                        flagSunkenBox[b].X += i * (FlagWidth + 4) - 2;
+                    }
+                }
+
+                languageChangeButtons[i].TextureAtlasOffset = GetFlagImageOffset(language);
+            }
+        }
+
+        Position GetFlagImageOffset(GameLanguage language) => flagsTextureAtlas.GetOffset(1) + new Position((int)language * FlagWidth, 0); // TODO: maybe later the image has multiple rows
+
+        static string ProcessFrench(string text)
+        {
+            // There are glyph for the french letters but they really look ugly.
+            // Therefore we avoid them here by replacing them just by similar letters.
+            // I use this function instead of modifying the texts directly to keep
+            // the original letters here in code. Maybe later the font is improved.
+            return text
+                .Replace('à', 'a')
+                .Replace('â', 'a')
+                .Replace("æ", "ae")
+                .Replace('ç', 'c')
+                .Replace('è', 'e')
+                .Replace('é', 'e')
+                .Replace('ê', 'e')
+                .Replace('ë', 'e')
+                .Replace('î', 'i')
+                .Replace('ï', 'i')
+                .Replace('ô', 'o')
+                .Replace("œ", "oe")
+                .Replace('ù', 'u')
+                .Replace('û', 'u')
+                .Replace('ü', 'u')
+                .Replace('ÿ', 'y')
+                .Replace('À', 'A')
+                .Replace('Â', 'A')
+                .Replace("Æ", "Ae")
+                .Replace('Ç', 'C')
+                .Replace('È', 'E')
+                .Replace('É', 'E')
+                .Replace('Ê', 'E')
+                .Replace('Ë', 'E')
+                .Replace('Î', 'I')
+                .Replace('Ï', 'I')
+                .Replace('Ô', 'O')
+                .Replace("Œ", "Oe")
+                .Replace('Ù', 'U')
+                .Replace('Û', 'U')
+                .Replace('Ü', 'U')
+                .Replace('Ÿ', 'Y');
+        }
+
+        string GetLanguageText(GameLanguage gameLanguage)
+        {
+            return configuration.Language switch
+            {
+                GameLanguage.German => gameLanguage switch
+                {
+                    GameLanguage.German => "Deutsch",
+                    GameLanguage.French => "Französisch",
+                    _ => "Englisch"
+                },
+                GameLanguage.French => gameLanguage switch
+                {
+                    GameLanguage.German => "Allemand",
+                    GameLanguage.French => "Français",
+                    _ => "Anglais"
+                },
+                _ => gameLanguage switch
+                {
+                    GameLanguage.German => "German",
+                    GameLanguage.French => "French",
+                    _ => "English"
+                }
+            };
+        }
 
         string GetHeaderText()
         {
             return configuration.Language switch
             {
-                GameLanguage.German => "Wähle eine Spieldaten-Version:     (?)",
-                GameLanguage.French => "Choisir une version de données:    (?)",
-                _ => "Select a game data version:        (?)",
+                GameLanguage.German =>               "Wähle eine Spieldaten-Version:     (?)",
+                GameLanguage.French => ProcessFrench("Choisir une version de données:    (?)"),
+                _ =>                                 "Select a game data version:        (?)"
             };
         }
 
@@ -255,10 +392,50 @@ namespace Ambermoon.UI
         {
             return configuration.Language switch
             {
-                GameLanguage.German => "Die Spieldaten-Version bezieht sich auf die Amiga-Basisdaten. Diese Versionierung ist unabhängig von der Ambermoon.net Version.",
-                GameLanguage.French => "La version des données concerne les données de base de l'Amiga. Cette version est indépendante de la version d'Ambermoon.net.",
-                _ => "The game data version relates to the Amiga base data. This version is independent of the Ambermoon.net version."
+                GameLanguage.German =>               "Die Spieldaten-Version bezieht sich auf die Amiga-Basisdaten. Diese Versionierung ist unabhängig von der Ambermoon.net Version.",
+                GameLanguage.French => ProcessFrench("La version des données concerne les données de base de l'Amiga. Cette version est indépendante de la version d'Ambermoon.net."),
+                _ =>                                 "The game data version relates to the Amiga base data. This version is independent of the Ambermoon.net version."
             };
+        }
+
+        string GetSavegameOptionText(int option)
+        {
+            return option == 0
+                ? configuration.Language switch
+                {
+                    GameLanguage.German =>               "Speichere beim Programm",
+                    GameLanguage.French => ProcessFrench("Sauvegarder au programme"),
+                    _ =>                                 "Save games in program path"
+                }
+                : configuration.Language switch
+                {
+                    GameLanguage.German =>               "Speichere bei den Daten",
+                    GameLanguage.French => ProcessFrench("Sauvegarder aux données"),
+                    _ =>                                 "Save games in data path"
+                };
+        }
+
+        string GetSavegameOptionTooltip(int option)
+        {
+            return option == 0
+                ? configuration.Language switch
+                {
+                    GameLanguage.German =>
+                        "Spielstände werden neben der Ambermoon.net.exe im Unterorder 'Saves' gespeichert.",
+                    GameLanguage.French =>
+                        ProcessFrench("Les sauvegardes sont stockées à côté d'Ambermoon.net.exe dans le sous-dossier 'Saves'."),
+                    _ =>
+                        "Savegames are stored next to the Ambermoon.net.exe inside the sub-folder 'Saves'."
+                }
+                : configuration.Language switch
+                {
+                    GameLanguage.German =>
+                        "Spielstände werden im Pfad der Originaldaten gespeichert und überschreiben die Originalspielstände!",
+                    GameLanguage.French =>
+                        ProcessFrench("Les sauvegardes sont stockées dans le chemin de données d'origine et peuvent écraser les sauvegardes d'origine!"),
+                    _ =>
+                        "Savegames are stored in the original data path and may overwrite original savegames!"
+                };
         }
 
         void ShowSaveOptionButton(bool show)
@@ -278,18 +455,33 @@ namespace Ambermoon.UI
             return button;
         }
 
-        void ToggleSaveOption(string[] savegameOptions, string[] savegameOptionTooltips)
+        void UpdateHeaderText()
         {
-            selectedSaveOption = 1 - selectedSaveOption;
-            saveOptionText.Text = renderView.TextProcessor.CreateText(savegameOptions[selectedSaveOption]);
-            saveOptionTooltip.Area.Size.Width = savegameOptions[selectedSaveOption].Length * Global.GlyphWidth;
-            UpdateSaveOptionTooltip(savegameOptionTooltips);
+            var headerText = GetHeaderText();
+            headerRenderText.Text = renderView.TextProcessor.CreateText(headerText);
+            gameDataVersionTooltipText = renderView.TextProcessor.CreateText(GetVersionInfoTooltip());
+            gameDataVersionTooltipText = renderView.TextProcessor.WrapText(gameDataVersionTooltipText,
+                new Rect(0, 0, 300, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
         }
 
-        void UpdateSaveOptionTooltip(string[] savegameOptionTooltips)
+        void UpdateSaveOptionTexts()
         {
-            saveOptionTooltip.Text = savegameOptionTooltips[selectedSaveOption];
-            saveOptionTooltip.TextColor = selectedSaveOption == 0 ? TextColor.White : TextColor.LightRed;
+            string optionText = GetSavegameOptionText(selectedSaveOption);
+            saveOptionText.Text = renderView.TextProcessor.CreateText(optionText);
+            saveOptionTooltip.Area.Size.Width = optionText.Length * Global.GlyphWidth;
+            UpdateSaveOptionTooltip();
+        }
+
+        void ToggleSaveOption()
+        {
+            selectedSaveOption = 1 - selectedSaveOption;
+            UpdateSaveOptionTexts();
+        }
+
+        void UpdateSaveOptionTooltip()
+        {
+            saveOptionTooltip.Text = GetSavegameOptionTooltip(selectedSaveOption);
+            saveOptionTooltip.TextColor = selectedSaveOption == 0 ? NormalTooltipColor : TextColor.LightRed;
             currentSaveTooltipText = renderView.TextProcessor.CreateText(saveOptionTooltip.Text);
             currentSaveTooltipText = renderView.TextProcessor.WrapText(currentSaveTooltipText,
                 new Rect(0, 0, 200, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
@@ -307,7 +499,7 @@ namespace Ambermoon.UI
             );
         }
 
-        void AddSunkenBox(Rect area, byte displayLayer = 1, byte fillColorIndex = 27,
+        IColoredRect[] AddSunkenBox(Rect area, byte displayLayer = 1, byte fillColorIndex = 27,
             Button associatedButton = null)
         {
             var darkBorderColor = GetPaletteColor(26);
@@ -327,7 +519,14 @@ namespace Ambermoon.UI
 
             if (associatedButton != null)
             {
-                buttonBackgrounds[associatedButton] = new IColoredRect[]
+                return buttonBackgrounds[associatedButton] = new IColoredRect[]
+                {
+                    upperArea, leftArea, fillArea, rightArea, lowerArea
+                };
+            }
+            else
+            {
+                return new IColoredRect[]
                 {
                     upperArea, leftArea, fillArea, rightArea, lowerArea
                 };
@@ -403,7 +602,7 @@ namespace Ambermoon.UI
                 }
             }
 
-            if (SelectedVersion != 4)
+            if (!IsSelectedVersionFromExternalData())
                 HideTooltip();
         }
 
@@ -442,9 +641,32 @@ namespace Ambermoon.UI
                     }
                 }
 
+                for (int i = 0; i < languageChangeButtons.Count; ++i)
+                {
+                    var button = languageChangeButtons[i];
+
+                    if (position.X >= button.X && position.X < button.X + button.Width &&
+                        position.Y >= button.Y && position.Y < button.Y + button.Height)
+                    {
+                        if ((int)configuration.Language != i)
+                        {
+                            configuration.Language = (GameLanguage)i;
+                            UpdateLanguageDependentValues();
+                        }
+                    }
+                }
+
                 okButton.LeftMouseDown(position, 0u);
                 changeSaveOptionButton.LeftMouseDown(position, 0u);
             }
+        }
+
+        void UpdateLanguageDependentValues()
+        {
+            UpdateHeaderText();
+            UpdateFlags();
+            UpdateSaveOptionTexts();
+            UpdateVersionTexts(configuration.Language);
         }
 
         void HighlightVersion(int index)
@@ -488,7 +710,7 @@ namespace Ambermoon.UI
                 int textHeight = text.LineCount * Global.GlyphLineHeight;
                 int y = up ? position.Y - textHeight - 8 : position.Y + 16;
 
-                var backgroundColor = textColor == TextColor.White ? GetPaletteColor(15) : GetPaletteColor(19);
+                var backgroundColor = textColor == NormalTooltipColor ? GetPaletteColor((byte)TextColor.Green) : GetPaletteColor((byte)TextColor.Pink);
 
                 tooltipText.Place(new Rect(x, y, textWidth, textHeight), TextAlign.Center);
                 tooltipText.Visible = true;
@@ -498,13 +720,13 @@ namespace Ambermoon.UI
                 tooltipBackground = FillArea(new Rect(x - 1, y - 2, textWidth + 2, textHeight + 2), backgroundColor, 249);
             }
 
-            if (selectedVersion == 4 && currentSaveTooltipText != null && saveOptionTooltip.Area.Contains(position))
+            if (IsSelectedVersionFromExternalData() && currentSaveTooltipText != null && saveOptionTooltip.Area.Contains(position))
             {
                 ShowTooltip(currentSaveTooltipText, saveOptionTooltip.TextColor, false);
             }
             else if (gameDataVersionTooltipArea.Contains(position))
             {
-                ShowTooltip(gameDataVersionTooltipText, TextColor.White, true);
+                ShowTooltip(gameDataVersionTooltipText, NormalTooltipColor, true);
             }
             else
             {
@@ -528,7 +750,7 @@ namespace Ambermoon.UI
                 else
                     SelectedVersion = (SelectedVersion + 1) % versionCount;
 
-                if (SelectedVersion != 4)
+                if (!IsSelectedVersionFromExternalData())
                     HideTooltip();
             }
         }
