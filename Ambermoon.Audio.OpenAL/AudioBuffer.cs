@@ -45,17 +45,12 @@ namespace Ambermoon.Audio.OpenAL
                     var error = al.GetError();
                     if (error != AudioError.NoError)
                     {
-                        Console.WriteLine($"OpenAL error while deleting buffer: " + error);
+                        Console.WriteLine($"OpenAL error while deleting buffer with index {bufferIndex}: " + error);
                     }
                 }
                 Size = 0;
                 disposed = true;
             }
-        }
-
-        public void Queue(uint source)
-        {
-            al.SourceQueueBuffers(source, new uint[1] { bufferIndex });
         }
     }
 }

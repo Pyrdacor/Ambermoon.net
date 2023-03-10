@@ -18,7 +18,7 @@ namespace Ambermoon.Audio.OpenAL
         bool enabled = true;
         readonly Dictionary<IAudioStream, AudioBuffers> audioBuffers = new Dictionary<IAudioStream, AudioBuffers>();
         AudioBuffers currentBuffer = null;
-        readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        CancellationTokenSource cancellationTokenSource;
 
         public AudioOutput()
         {
@@ -121,7 +121,7 @@ namespace Ambermoon.Audio.OpenAL
             if (disposed)
                 return;
 
-            cancellationTokenSource.Cancel();
+            cancellationTokenSource?.Dispose();
 
             if (Available)
             {
@@ -159,6 +159,9 @@ namespace Ambermoon.Audio.OpenAL
 
             Streaming = true;
 
+            cancellationTokenSource?.Dispose();
+            cancellationTokenSource = new CancellationTokenSource();
+
             currentBuffer?.Play(cancellationTokenSource.Token);
         }
 
@@ -177,11 +180,14 @@ namespace Ambermoon.Audio.OpenAL
                 throw new NotSupportedException("Stop was called without a valid source.");
 
             Streaming = false;
+            cancellationTokenSource?.Cancel();
 
             if (currentBuffer != null)
                 currentBuffer.Stop();
             else
                 al.SourceStop(source);
+
+            cancellationTokenSource?.Dispose();
         }
 
         /// <summary>
