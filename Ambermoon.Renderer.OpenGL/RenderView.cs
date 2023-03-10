@@ -106,6 +106,7 @@ namespace Ambermoon.Renderer.OpenGL
         public ICamera3D Camera3D => camera3D;
         public IGameData GameData { get; }
         public IGraphicProvider GraphicProvider { get; }
+        public IFontProvider FontProvider { get; }
         public ITextProcessor TextProcessor { get; }
         public Action<float> AspectProcessor { get; }
 
@@ -121,7 +122,7 @@ namespace Ambermoon.Renderer.OpenGL
 
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
-            ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
+            IFontProvider fontProvider, ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
             int framebufferWidth, int framebufferHeight, Size windowSize, ref bool useFrameBuffer, ref bool useEffectFrameBuffer,
             Func<KeyValuePair<int, int>> screenBufferModeProvider, Func<int> effectProvider, Graphic[] additionalPalettes,
             DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
@@ -131,6 +132,7 @@ namespace Ambermoon.Renderer.OpenGL
             AspectProcessor = UpdateAspect;
             GameData = gameData;
             GraphicProvider = graphicProvider;
+            FontProvider = fontProvider;
             TextProcessor = textProcessor;
             frameBufferSize = new Size(framebufferWidth, framebufferHeight);
             renderDisplayArea = new Rect(new Position(0, 0), windowSize);

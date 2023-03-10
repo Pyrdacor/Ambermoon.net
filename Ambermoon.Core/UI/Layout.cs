@@ -539,6 +539,7 @@ namespace Ambermoon.UI
         public bool TransportEnabled { get; set; } = false;
         public event Action<int, int, MouseButtons> BattleFieldSlotClicked;
         public event Action DraggedItemDropped;
+        public int GlyphHeight { get; }
 
         public Layout(Game game, IRenderView renderView, IItemManager itemManager)
         {
@@ -549,6 +550,8 @@ namespace Ambermoon.UI
             textLayer = renderView.GetLayer(Layer.Text);
             this.itemManager = itemManager;
             byte paletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
+
+            GlyphHeight = renderView.FontProvider.GetFont().GlyphHeight;
 
             sprite = RenderView.SpriteFactory.Create(320, 163, true) as ILayerSprite;
             sprite.Layer = renderLayer;
@@ -573,6 +576,12 @@ namespace Ambermoon.UI
 
             SetLayout(LayoutType.None);
         }
+
+        public Rect GetTextRect(Rect rect) => Global.GetTextRect(GlyphHeight, rect);
+
+        public Rect GetTextRect(Position position, Size size) => GetTextRect(new Rect(position, size));
+
+        public Rect GetTextRect(int x, int y, int width, int height) => GetTextRect(new Rect(x, y, width, height));
 
         public void ShowPortraitArea(bool show)
         {
@@ -966,7 +975,7 @@ namespace Ambermoon.UI
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             var textBounds = new Rect(48, 95, maxTextWidth, Math.Max(minLines + 1, processedText.LineCount) * Global.GlyphLineHeight);
             var renderText = RenderView.RenderTextFactory.Create(textLayer,
-                processedText, TextColor.BrightGray, true, textBounds, textAlign);
+                processedText, TextColor.BrightGray, true, GetTextRect(textBounds), textAlign);
             renderText.PaletteIndex = game.TextPaletteIndex;
             int popupRows = Math.Max(minLines + 2, 2 + (textBounds.Height + 36) / 16);
             activePopup = new Popup(game, RenderView, new Position(32, 74), 14, popupRows, false, displayLayerOffset)
@@ -3841,7 +3850,7 @@ namespace Ambermoon.UI
                     if (text == null)
                     {
                         text = portraitNames[slot] = RenderView.RenderTextFactory.Create(textLayer, name, TextColor.PartyMember, true,
-                            new Rect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6),
+                            GetTextRect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6),
                             TextAlign.Center);
                     }
                     else
@@ -4250,7 +4259,7 @@ namespace Ambermoon.UI
                 if (y < 2 && cursorPosition.Y + text.LineCount * Global.GlyphLineHeight + 16 <= Global.VirtualScreenHeight)
                     y = cursorPosition.Y + 16;
                 var textArea = new Rect(x, y, textWidth, text.LineCount * Global.GlyphLineHeight);
-                activeTooltipText.Place(textArea, tooltip.TextAlign);
+                activeTooltipText.Place(GetTextRect(textArea), tooltip.TextAlign);
 
                 if (tooltip.BackgroundColor != null)
                 {
@@ -4321,7 +4330,7 @@ namespace Ambermoon.UI
         public UIText AddText(Rect rect, IText text, TextColor color = TextColor.White,
             TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
-            var uiText = new UIText(RenderView, game.UIPaletteIndex, text, rect, displayLayer, color, true, textAlign, false);
+            var uiText = new UIText(RenderView, game.UIPaletteIndex, text, GetTextRect(rect), displayLayer, color, true, textAlign, false);
             texts.Add(uiText);
             return uiText;
         }
@@ -4337,7 +4346,7 @@ namespace Ambermoon.UI
         public UIText CreateScrollableText(Rect rect, IText text, TextColor color = TextColor.White,
             TextAlign textAlign = TextAlign.Left, byte displayLayer = 2, bool shadow = true, byte? paletteIndex = null)
         {
-            var scrollableText = new UIText(RenderView, paletteIndex ?? game.UIPaletteIndex, text, rect,
+            var scrollableText = new UIText(RenderView, paletteIndex ?? game.UIPaletteIndex, text, GetTextRect(rect),
                 displayLayer, color, shadow, textAlign, true, game.AddTimedEvent);
             scrollableText.FreeScrollingStarted += () =>
             {

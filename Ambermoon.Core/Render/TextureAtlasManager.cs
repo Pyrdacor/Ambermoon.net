@@ -173,12 +173,12 @@ namespace Ambermoon.Render
         {
             var font = fontProvider.GetFont();
 
-            for (uint i = 0; i < 94; ++i)
+            for (uint i = 0; i < font.GlyphCount; ++i)
                 AddTexture(Layer.Text, i, font.GetGlyphGraphic(i));
 
             // Add simple digits for damage display
             for (uint i = 0; i < 10; ++i)
-                AddTexture(Layer.Text, 100 + i, font.GetDigitGlyphGraphic(i));
+                AddTexture(Layer.SmallDigits, i, font.GetDigitGlyphGraphic(i));
         }
 
         public void AddAll(IGameData gameData, IGraphicProvider graphicProvider, IFontProvider fontProvider,

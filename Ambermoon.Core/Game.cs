@@ -331,6 +331,7 @@ namespace Ambermoon
         readonly ISavegameSerializer savegameSerializer;
         Player player;
         internal IRenderPlayer RenderPlayer => is3D ? (IRenderPlayer)player3D : player2D;
+        internal Layout Layout => layout;
         public PartyMember CurrentPartyMember { get; private set; } = null;
         bool pickingNewLeader = false;
         bool pickingTargetPlayer = false;
@@ -576,7 +577,9 @@ namespace Ambermoon
             ItemManager = renderView.GameData.ItemManager;
             CharacterManager = renderView.GameData.CharacterManager;
             SavegameManager = savegameManager;
-            this.places = renderView.GameData.Places;
+            layout = new Layout(this, renderView, ItemManager);
+            layout.BattleFieldSlotClicked += BattleFieldSlotClicked;
+            places = renderView.GameData.Places;
             this.savegameSerializer = savegameSerializer;
             DataNameProvider = renderView.GameData.DataNameProvider;
             this.textDictionary = textDictionary;
@@ -585,10 +588,8 @@ namespace Ambermoon
             camera3D = renderView.Camera3D;
             windowTitle = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(""), TextColor.BrightGray, true,
-                new Rect(8, 40, 192, 10), TextAlign.Center);
+                layout.GetTextRect(8, 40, 192, 10), TextAlign.Center);
             windowTitle.DisplayLayer = 2;
-            layout = new Layout(this, renderView, ItemManager);
-            layout.BattleFieldSlotClicked += BattleFieldSlotClicked;
             fow2D = renderView.FowFactory.Create(Global.Map2DViewWidth, Global.Map2DViewHeight,
                 new Position(Global.Map2DViewX + Global.Map2DViewWidth / 2, Global.Map2DViewY + Global.Map2DViewHeight / 2), 255);
             fow2D.BaseLineOffset = FowBaseLine;
@@ -2810,6 +2811,10 @@ namespace Ambermoon
 
         public void OnKeyDown(Key key, KeyModifiers modifiers)
         {
+#if DEBUG
+            if (key == Key.F5 && modifiers == KeyModifiers.Control)
+                System.Diagnostics.Debugger.Break();
+#endif
             if (characterCreator != null)
             {
                 characterCreator.OnKeyDown(key, modifiers);
@@ -14217,7 +14222,8 @@ namespace Ambermoon
                 {
                     if (!closed)
                     {
-                        positionMarker.TextureAtlasOffset = positionMarkerBaseTextureOffset + new Position(0, positionMarkerFrame * 10);
+                        int textureFactor = (int)(positionMarker.Layer?.TextureFactor ?? 1);
+                        positionMarker.TextureAtlasOffset = positionMarkerBaseTextureOffset + new Position(0, positionMarkerFrame * textureFactor);
                         positionMarkerFrame = (positionMarkerFrame + 1) % 4; // 4 frames in total
                         AddTimedEvent(TimeSpan.FromMilliseconds(75), AnimatePosition);
                     }
@@ -14859,7 +14865,8 @@ namespace Ambermoon
                             }
 
                             var sprite = layout.AddSprite(new Rect(dx, dy, 8, 8), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.AutomapWallFrames), paletteIndex, 2);
-                            sprite.TextureAtlasOffset = new Position(sprite.TextureAtlasOffset.X + wallGraphicType * 8, sprite.TextureAtlasOffset.Y);
+                            int textureFactor = (int)renderView.GetLayer(Layer.UI).TextureFactor;
+                            sprite.TextureAtlasOffset = new Position(sprite.TextureAtlasOffset.X + wallGraphicType * 8 * textureFactor, sprite.TextureAtlasOffset.Y);
                             sprite.ClipArea = Global.AutomapArea;
                             sprites.Add(sprite);
 

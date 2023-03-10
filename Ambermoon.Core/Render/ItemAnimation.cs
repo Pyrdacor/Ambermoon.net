@@ -68,6 +68,7 @@ namespace Ambermoon.Render
             var sprites = new ISprite[128];
             var animationPositionIndices = new int[128];
             var offset = TextureAtlasManager.Instance.GetOrCreate(Layer.Items).GetOffset(graphicIndex);
+            var layer = renderView.GetLayer(Layer.Items);
 
             for (int y = 0; y < 8; ++y)
             {
@@ -77,8 +78,9 @@ namespace Ambermoon.Render
                     {
                         int index = i * 64 + x + y * 8;
                         var sprite = sprites[index] = renderView.SpriteFactory.Create(1, 1, true, 255);
-                        sprite.TextureAtlasOffset = offset + new Position(x * 2 + y % 2, y * 2 + x % 2);
-                        sprite.Layer = renderView.GetLayer(Layer.Items);
+                        sprite.Layer = layer;
+                        int textureFactor = (int)layer.TextureFactor;
+                        sprite.TextureAtlasOffset = offset + new Position(x * 2 + y % 2, y * 2 + x % 2) * textureFactor;
                         sprite.PaletteIndex = game.UIPaletteIndex;
                         sprite.X = position.X + x * 2 + y % 2;
                         sprite.Y = position.Y + y * 2 + x % 2;
@@ -192,7 +194,8 @@ namespace Ambermoon.Render
                             }
                             else
                             {
-                                sprite.TextureAtlasOffset = new Position(sprite.TextureAtlasOffset.X + 16, sprite.TextureAtlasOffset.Y);                                
+                                int textureFactor = (int)sprite.Layer.TextureFactor;
+                                sprite.TextureAtlasOffset = new Position(sprite.TextureAtlasOffset.X + 16 * textureFactor, sprite.TextureAtlasOffset.Y);                                
                                 game.AddTimedEvent(TimeSpan.FromMilliseconds(timePerFrame), Animate);                                
                             }
                         }

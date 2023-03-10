@@ -51,6 +51,7 @@ namespace Ambermoon.Render
         Position baseSpriteLocation;
         Size baseSpriteSize;
         readonly ILayerSprite sprite;
+        readonly int textureFactor;
         Position baseTextureCoords;
         uint startAnimationTicks;
         uint ticksPerFrame;
@@ -80,6 +81,7 @@ namespace Ambermoon.Render
             baseSpriteLocation = new Position(sprite.X + sprite.Width / 2, sprite.Y + sprite.Height / 2);
             baseSpriteSize = new Size(sprite.Width, sprite.Height);
             this.sprite = sprite;
+            textureFactor = (int)(sprite.Layer?.TextureFactor ?? 1);
             baseTextureCoords = new Position(sprite.TextureAtlasOffset);
             sprite.TextureSize ??= baseSpriteSize;
             Scale = 1.0f;
@@ -199,7 +201,7 @@ namespace Ambermoon.Render
 
         public void Reset(int frame = 0)
         {
-            sprite.TextureAtlasOffset = baseTextureCoords + new Position(frame * baseSpriteSize.Width, 0);
+            sprite.TextureAtlasOffset = baseTextureCoords + new Position(frame * baseSpriteSize.Width * textureFactor, 0);
             Finished = true;
         }
 
@@ -240,7 +242,7 @@ namespace Ambermoon.Render
             baseSpriteLocation.X = startX + Util.Round((endX - startX) * factor);
             baseSpriteLocation.Y = startY + Util.Round((endY - startY) * factor);
             Scale = startScale + (endScale - startScale) * factor; // Note: scale will also set the new position
-            sprite.TextureAtlasOffset = baseTextureCoords + new Position(frameIndices[frame] * sprite.TextureSize.Width, 0);
+            sprite.TextureAtlasOffset = baseTextureCoords + new Position(frameIndices[frame] * sprite.TextureSize.Width * textureFactor, 0);
             AnimationUpdated?.Invoke(factor);
 
             return true;

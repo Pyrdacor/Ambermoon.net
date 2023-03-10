@@ -4,7 +4,7 @@ namespace Ambermoon.Data
 {
     public enum SpecialGlyph
     {
-        SoftSpace = 94, // expressed with a normal space character
+        SoftSpace = 128, // expressed with a normal space character
         HardSpace, // expressed with $
         NewLine, // expressed with ^
         NoTrim,

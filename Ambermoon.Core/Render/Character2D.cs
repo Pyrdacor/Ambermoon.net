@@ -130,7 +130,8 @@ namespace Ambermoon.Render
                 topSprite = spriteFactory.CreateAnimated(currentAnimationInfo.FrameWidth, Math.Max(0, currentAnimationInfo.FrameHeight - RenderMap2D.TILE_HEIGHT),
                     textureAtlas.Texture.Width, currentAnimationInfo.NumStandFrames);
                 topSprite.TextureAtlasOffset = textureOffset;
-                sprite.TextureAtlasOffset = textureOffset + new Position(0, currentAnimationInfo.FrameHeight - RenderMap2D.TILE_HEIGHT);
+                int textureFactor = (int)layer.TextureFactor;
+                sprite.TextureAtlasOffset = textureOffset + new Position(0, (currentAnimationInfo.FrameHeight - RenderMap2D.TILE_HEIGHT) * textureFactor);
                 topSprite.Layer = layer;
                 topSprite.PaletteIndex = (byte)paletteIndexProvider();
                 topSprite.ClipArea = Game.Map2DViewArea;
@@ -167,7 +168,8 @@ namespace Ambermoon.Render
                     topSprite = spriteFactory.CreateAnimated(currentAnimationInfo.FrameWidth, Math.Max(0, currentAnimationInfo.FrameHeight - RenderMap2D.TILE_HEIGHT),
                         textureAtlas.Texture.Width, currentAnimationInfo.NumStandFrames);
                     topSprite.TextureAtlasOffset = sprite.TextureAtlasOffset;
-                    sprite.TextureAtlasOffset += new Position(0, topSprite.Height);
+                    int textureFactor = (int)(sprite.Layer?.TextureFactor ?? 1);
+                    sprite.TextureAtlasOffset += new Position(0, topSprite.Height * textureFactor);
                     topSprite.Layer = sprite.Layer;
                     topSprite.PaletteIndex = sprite.PaletteIndex;
                     topSprite.ClipArea = Game.Map2DViewArea;
@@ -333,7 +335,8 @@ namespace Ambermoon.Render
                 else
                 {
                     topSprite.TextureAtlasOffset = textureAtlas.GetOffset(CurrentFrameIndex);
-                    sprite.TextureAtlasOffset = topSprite.TextureAtlasOffset + new Position(0, topSprite.Height);
+                    int textureFactor = (int)(sprite.Layer?.TextureFactor ?? 1);
+                    sprite.TextureAtlasOffset = topSprite.TextureAtlasOffset + new Position(0, topSprite.Height * textureFactor);
                 }
                 if (frameReset)
                 {

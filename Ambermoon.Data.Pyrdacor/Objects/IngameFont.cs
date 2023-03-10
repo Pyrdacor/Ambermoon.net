@@ -5,6 +5,9 @@
         readonly Lazy<Font> font;
         readonly Lazy<Font> digitFont;
 
+        public int GlyphCount => font.Value.GlyphCount;
+        public int GlyphHeight => font.Value.GlyphHeight;
+
         public IngameFont(Func<Font> fontProvider, Func<Font> digitFontProvider)
         {
             font = new Lazy<Font>(fontProvider);

@@ -308,7 +308,7 @@ namespace Ambermoon.Render
             game.Pause();
             game.StartSequence();
             game.CursorType = CursorType.None;
-            credits = new Credits(renderView, preAction =>
+            credits = new Credits(renderView, layout, preAction =>
             {
                 credits = null;
                 game.SetClickHandler(() =>
@@ -401,35 +401,12 @@ namespace Ambermoon.Render
             return popup;
         }
 
-        UIText AddText(string text, Rect rect, TextColor color, TextAlign textAlign = TextAlign.Left, byte displayLayer = 0)
-        {
-            var uiText = layout.AddText(rect, game.ProcessText(text, rect), color, textAlign, displayLayer);
-            uiText.PaletteIndex = game.PrimaryUIPaletteIndex;
-            texts.Add(uiText);
-            return uiText;
-        }
-
         UIText AddText(IText text, Rect rect, TextColor color, TextAlign textAlign = TextAlign.Left, byte displayLayer = 0)
         {
             var uiText = layout.AddText(rect, text, color, textAlign, displayLayer);
             uiText.PaletteIndex = game.PrimaryUIPaletteIndex;
             texts.Add(uiText);
             return uiText;
-        }
-
-        void AddArea(Rect rect, Color color, byte displayLayer = 0)
-        {
-            var area = renderView.ColoredRectFactory.Create(rect.Width, rect.Height, color, displayLayer);
-            area.Layer = renderView.GetLayer(Layer.UI);
-            area.X = rect.X;
-            area.Y = rect.Y;
-            area.Visible = true;
-            areas.Add(area);
-        }
-
-        void AddPanel(Rect rect, byte displayLayer = 0)
-        {
-            panels.Add(layout.AddPanel(rect, displayLayer));
         }
 
         interface IAction
@@ -504,7 +481,7 @@ namespace Ambermoon.Render
                 int processedLineCharacters = 1;
                 int processedTextLength = 1;
                 var textRect = rect.CreateShrinked(2);
-                var clip = new Rect(textRect.Position, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+                var clip = outro.layout.GetTextRect(textRect.Position, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
                 var wrappedText = outro.game.ProcessText(text, textRect);
                 UIText[] texts = new UIText[wrappedText.LineCount];
                 var position = new Position(textRect.Position);

@@ -75,5 +75,15 @@ namespace Ambermoon
         );
         public static Rect BattleFieldSlotArea(int index) => BattleFieldSlotArea(index % 6, index / 6);
         public static readonly Rect AutomapArea = new Rect(0, 37, 208, 163);
+
+        internal static Rect GetTextRect(int glyphHeight, Rect rect)
+        {
+            if (glyphHeight == Global.GlyphLineHeight)
+                return rect;
+
+            return rect.CreateModified(0, Global.GlyphLineHeight - glyphHeight, 0, glyphHeight - Global.GlyphLineHeight);
+        }
+
+        public static Rect GetTextRect(IRenderView renderView, Rect rect) => GetTextRect(renderView.FontProvider.GetFont().GlyphHeight, rect);
     }
 }

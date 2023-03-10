@@ -28,7 +28,6 @@ using Silk.NET.OpenGL;
 #endif
 using System;
 using System.Collections.Generic;
-using System.Runtime.Intrinsics.X86;
 
 namespace Ambermoon.Renderer
 {
@@ -240,6 +239,11 @@ namespace Ambermoon.Renderer
                 BaseZ = 0.70f,
                 EnableBlending = false
             } },
+            { Layer.SmallDigits, new ()
+            {
+                BaseZ = 0.70f,
+                EnableBlending = false
+            } },
             { Layer.IntroGraphics, new ()
             {
                 BaseZ = 0.70f,
@@ -339,6 +343,7 @@ namespace Ambermoon.Renderer
         } = null;
 
         public LayerConfig Config { get; private set; }
+        public uint TextureFactor => Config.TextureFactor;
 
         internal RenderBuffer RenderBuffer { get; } = null;
 
@@ -359,7 +364,7 @@ namespace Ambermoon.Renderer
             bool opaque = Config.Opaque;
 
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3DCeiling || layer == Layer.Map3D || layer == Layer.Billboards3D,
-                supportAnimations, layered, !Config.SupportTextures, layer == Layer.Billboards3D, layer == Layer.Text,
+                supportAnimations, layered, !Config.SupportTextures, layer == Layer.Billboards3D, layer == Layer.Text || layer == Layer.SmallDigits,
                 opaque, layer == Layer.FOW, layer == Layer.Map3DBackground, layer == Layer.Misc || layer == Layer.OutroText, layer == Layer.Images,
                 Config.TextureFactor);
 
@@ -457,7 +462,7 @@ namespace Ambermoon.Renderer
 
                         shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
                     }
-                    else if (Layer == Layer.Text)
+                    else if (Layer == Layer.Text || Layer == Layer.SmallDigits)
                     {
                         TextShader shader = RenderBuffer.TextShader;
 

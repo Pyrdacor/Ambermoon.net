@@ -1,7 +1,7 @@
 ﻿/*
  * Layer.cs - Render layer enumeration
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -57,6 +57,7 @@ namespace Ambermoon
         UI,
         Items,
         Text,
+        SmallDigits,
         IntroGraphics,
         IntroText,
         IntroEffects,

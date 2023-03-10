@@ -32,13 +32,15 @@ namespace Ambermoon.Data.Pyrdacor.Objects
         readonly List<Glyph> glyphs;
         
         public bool Monospace { get; }
+        public int GlyphCount => glyphs.Count;
+        public int GlyphHeight { get; }
 
         public Font(IDataReader dataReader)
         {
             // If 0, this is no monospace font and the width and advance
             // are given as 1 or 2 header bytes for each glyph.
             int glyphWidth = dataReader.ReadByte();
-            int glyphHeight = dataReader.ReadByte();
+            GlyphHeight = dataReader.ReadByte();
             int advance = glyphWidth;
             int count = dataReader.ReadWord();
 
@@ -78,12 +80,12 @@ namespace Ambermoon.Data.Pyrdacor.Objects
                 var graphic = new Graphic
                 {
                     Width = glyphWidth,
-                    Height = glyphHeight,
-                    Data = new byte[glyphWidth * glyphHeight],
+                    Height = GlyphHeight,
+                    Data = new byte[glyphWidth * GlyphHeight],
                     IndexedGraphic = true
                 };
 
-                for (int y = 0; y < glyphHeight; ++y)
+                for (int y = 0; y < GlyphHeight; ++y)
                 {
                     var lineBytes = dataReader.ReadBytes((glyphWidth + 7) / 8);
 

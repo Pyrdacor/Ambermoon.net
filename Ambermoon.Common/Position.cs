@@ -87,6 +87,16 @@ namespace Ambermoon
             return position * factor;
         }
 
+        public static Position operator *(Position position, int factor)
+        {
+            return new Position(position.X * factor, position.Y * factor);
+        }
+
+        public static Position operator *(int factor, Position position)
+        {
+            return position * factor;
+        }
+
         public static bool operator ==(Position position1, Position position2)
         {
             if (ReferenceEquals(position1, position2))

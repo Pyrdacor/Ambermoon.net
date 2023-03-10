@@ -21,6 +21,7 @@
 
 using System;
 using System.Collections.Generic;
+using Ambermoon.UI;
 
 namespace Ambermoon.Render
 {
@@ -33,6 +34,7 @@ namespace Ambermoon.Render
         }
 
         readonly IRenderView renderView;
+        readonly Layout layout;
         readonly Action<Action> finishAction;
         readonly List<IRenderText> texts = new List<IRenderText>();
         readonly Queue<CreditsText> creditsTexts = new Queue<CreditsText>();
@@ -43,9 +45,10 @@ namespace Ambermoon.Render
         const long TicksPerLine = 6 * Global.GlyphLineHeight;
         CreditsText lastText;
 
-        public Credits(IRenderView renderView, Action<Action> finishAction)
+        public Credits(IRenderView renderView, Layout layout, Action<Action> finishAction)
         {
             this.renderView = renderView;
+            this.layout = layout;
             this.finishAction = finishAction;
 
             AddHeader("Ambermoon");
@@ -175,7 +178,7 @@ namespace Ambermoon.Render
 
         void CreateText(string text)
         {
-            var bounds = new Rect(0, Global.VirtualScreenHeight, Global.VirtualScreenWidth, Global.GlyphLineHeight);
+            var bounds = layout.GetTextRect(0, Global.VirtualScreenHeight, Global.VirtualScreenWidth, Global.GlyphLineHeight);
             var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.ProcessText(text, null, null), Data.Enumerations.Color.Bright, false, bounds, TextAlign.Center);
             texts.Add(renderText);

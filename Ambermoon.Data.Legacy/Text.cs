@@ -32,9 +32,23 @@ namespace Ambermoon.Data.Legacy
 
     public class TextProcessor : ITextProcessor
     {
-        // TODO: Load this from AM2_CPU later
-        static byte CharToGlyph(char ch, bool rune, char? fallbackChar = null)
+        readonly int glyphCount;
+
+        public TextProcessor(int glyphCount)
         {
+            // The original version has 94 glyphs.
+            // CHaracters like á, à and â share the same glyph
+            // as it wasn't possible to distinguish them in such
+            // small resolution. But with modern fonts there might
+            // by distinct glyphs for all of them. So when this
+            // count is > 94, we have more character glyphs available.
+            this.glyphCount = glyphCount;
+        }
+
+        byte CharToGlyph(char ch, bool rune, char? fallbackChar = null)
+        {
+            bool extended = glyphCount > 94;
+
             if (ch >= 'a' && ch <= 'z')
                 return (byte)(ch - 'a' + (rune ? 64 : 0));
             else if (ch >= 'A' && ch <= 'Z')
@@ -87,12 +101,22 @@ namespace Ambermoon.Data.Legacy
                 return (byte)(ch - '0' + 48);
             else if (ch == '&')
                 return 58;
-            else if (ch == 'á' || ch == 'à' || ch == 'â' || ch == 'Á' || ch == 'À' || ch == 'Â')
+            else if (ch == 'á' || ch == 'Á')
+                return (byte)(extended ? 94 : 59);
+            else if (ch == 'à' || ch == 'À')
                 return 59;
-            else if (ch == 'é' || ch == 'è' || ch == 'ê' || ch == 'É' || ch == 'È' || ch == 'Ê')
+            else if (ch == 'â' || ch == 'Â')
+                return (byte)(extended ? 95 : 59);
+            else if (ch == 'ê' || ch == 'Ê')
                 return 60;
+            else if (ch == 'è' || ch == 'È')
+                return (byte)(extended ? 96 : 60);
+            else if (ch == 'é' || ch == 'É')
+                return (byte)(extended ? 97 : 60);
             else if (ch == 'ç' || ch == 'Ç')
                 return 61;
+            else if (ch == '¢')
+                return (byte)(extended ? 98 : 61);
             else if (ch == 'û' || ch == 'Û')
                 return 62;
             else if (ch == 'ô' || ch == 'Ô')

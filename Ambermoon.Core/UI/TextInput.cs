@@ -152,7 +152,7 @@ namespace Ambermoon.UI
             // Note: There is always 1 char-slot more as the input length.
             area = new Rect(position.X, position.Y, (inputLength + 1) * Global.GlyphWidth - 2, Global.GlyphLineHeight);
             text = new UIText(renderView, game?.UIPaletteIndex ?? (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1),
-                renderView.TextProcessor.CreateText(""), area, displayLayer, TextColor.BrightGray, true, textAlign);
+                renderView.TextProcessor.CreateText(""), Global.GetTextRect(renderView, area), displayLayer, TextColor.BrightGray, true, textAlign);
 
             blinkingCursor = renderView.ColoredRectFactory.Create(5, 5, game?.GetUIColor(28) ?? new Color(0x66, 0x66, 0x55), displayLayer);
             blinkingCursor.Layer = renderView.GetLayer(Layer.UI);

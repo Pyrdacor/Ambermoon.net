@@ -7,6 +7,10 @@ namespace Ambermoon.Data.Legacy
         readonly ExecutableData.Glyphs glyphs;
         readonly ExecutableData.DigitGlyphs digitGlyphs;
 
+        public int GlyphCount => glyphs.Entries.Count;
+
+        public int GlyphHeight => 7;
+
         public Font(ExecutableData.Glyphs glyphs, ExecutableData.DigitGlyphs digitGlyphs)
         {
             this.glyphs = glyphs;

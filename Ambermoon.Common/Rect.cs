@@ -120,6 +120,26 @@ namespace Ambermoon
             size.Height = bottom - position.Y;
         }
 
+        public void ClipRect(FloatPosition position, Size size)
+        {
+            float right = Math.Min(position.X + size.Width, Right);
+            float bottom = Math.Min(position.Y + size.Height, Bottom);
+            position.X = Math.Max(position.X, X);
+            position.Y = Math.Max(position.Y, Y);
+            size.Width = Util.Round(right - position.X);
+            size.Height = Util.Round(bottom - position.Y);
+        }
+
+        public void ClipRect(Position position, FloatSize size)
+        {
+            int right = Math.Min(Util.Round(position.X + size.Width), Right);
+            int bottom = Math.Min(Util.Round(position.Y + size.Height), Bottom);
+            position.X = Math.Max(position.X, X);
+            position.Y = Math.Max(position.Y, Y);
+            size.Width = right - position.X;
+            size.Height = bottom - position.Y;
+        }
+
         public void Trap(Position position)
         {
             position.X = Util.Limit(Left, position.X, Right);

@@ -53,6 +53,9 @@ namespace Ambermoon.Render
         bool AllowFramebuffer { get; }
         bool AllowEffects { get; }
 
+        IGameData GameData { get; }
+        IGraphicProvider GraphicProvider { get; }
+        IFontProvider FontProvider { get; }
         ISpriteFactory SpriteFactory { get; }
         IColoredRectFactory ColoredRectFactory { get; }
         ISurface3DFactory Surface3DFactory { get; }
@@ -65,8 +68,5 @@ namespace Ambermoon.Render
         void SetSkyColorReplacement(uint? skyColor, Color replaceColor);
         PaletteReplacement PaletteReplacement { get; set; }
         int? DrugColorComponent { get; set; }
-
-        IGameData GameData { get; }
-        IGraphicProvider GraphicProvider { get; }
     }
 }

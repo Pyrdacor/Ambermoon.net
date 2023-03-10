@@ -2,6 +2,7 @@
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -174,9 +175,10 @@ namespace Ambermoon
 
         private Position GetFairyFrameTextureOffset()
         {
+            int textureFactor = (int)renderLayer.TextureFactor;
             var position = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Fairy);
-            position.X += (int)(fairyAnimationIndex % 6) * 64;
-            position.Y += (int)(fairyAnimationIndex / 6) * 71;
+            position.X += (int)(fairyAnimationIndex % 6) * 64 * textureFactor;
+            position.Y += (int)(fairyAnimationIndex / 6) * 71 * textureFactor;
             return position;
         }
 
@@ -257,7 +259,8 @@ namespace Ambermoon
             var spark = EnsureWritingSpark(index);
             spark.X = x;
             spark.Y = y;
-            spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.WritingSparks) + new Position(0, frameIndex * 9);
+            int textureFactor = (int)spark.Layer.TextureFactor;
+            spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.WritingSparks) + new Position(0, frameIndex * 9 * textureFactor);
             spark.Visible = true;
         }
 
@@ -448,7 +451,8 @@ namespace Ambermoon
                     int index = action.Parameters[0];
                     int frameIndex = action.Parameters[1];
                     var spark = EnsureSpark(index);
-                    spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.FairySparks) + new Position(0, frameIndex * 5);
+                    int textureFactor = (int)spark.Layer.TextureFactor;
+                    spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.FairySparks) + new Position(0, frameIndex * 5 * textureFactor);
                     break;
                 }
                 case FantasyIntroCommand.UpdateWritingSpark:

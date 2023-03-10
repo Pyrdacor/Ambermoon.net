@@ -259,15 +259,12 @@ namespace Ambermoon.Renderer
         {
             if (textureFactor != factor)
             {
-                uint oldFactor = textureFactor;
+                if (textureAtlasOffsetBuffer?.Size > 0 ||
+                    textureEndCoordBuffer?.Size > 0 ||
+                    textureSizeBuffer?.Size > 0)
+                    throw new AmbermoonException(ExceptionScope.Application, "Texture factors cannot be changed after texture coordinates have been added.");
+
                 textureFactor = factor;
-
-                short Transform(short value) => (short)((value / oldFactor) * factor);
-                Tuple<short, short> TransformPosition(Tuple<short, short> position) => Tuple.Create(Transform(position.Item1), Transform(position.Item2));
-
-                textureAtlasOffsetBuffer?.TransformAll((_, position) => TransformPosition(position));
-                textureEndCoordBuffer?.TransformAll((_, position) => TransformPosition(position));
-                textureSizeBuffer?.TransformAll((_, position) => TransformPosition(position));
             }
         }
 
@@ -430,6 +427,8 @@ namespace Ambermoon.Renderer
 
             if (textureAtlasOffsetBuffer != null)
             {
+                textureSize *= (int)textureFactor;
+
                 if (sprite.MirrorX)
                 {
                     int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y, index);
@@ -582,40 +581,44 @@ namespace Ambermoon.Renderer
 
             if (textureAtlasOffsetBuffer != null)
             {
+                var mappedTextureSize = new Size((int)(surface.MappedTextureWidth * textureFactor), (int)(surface.MappedTextureHeight * textureFactor));
+
                 if (surface.Type == Ambermoon.Render.SurfaceType.Floor)
                 {
-                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), index);
+                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height), index);
                     textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
-                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 2);
-                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 3);
+                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 2);
+                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height), textureAtlasOffsetBufferIndex + 3);
                 }
                 else if (surface.Type == Ambermoon.Render.SurfaceType.Ceiling)
                 {
                     int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y, index);
-                    textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 1);
-                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 2);
-                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 3);
+                    textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height), textureAtlasOffsetBufferIndex + 1);
+                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height), textureAtlasOffsetBufferIndex + 2);
+                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 3);
                 }
                 else if (surface.Type == Ambermoon.Render.SurfaceType.Billboard || surface.Type == Ambermoon.Render.SurfaceType.BillboardFloor)
                 {
                     int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y, index);
-                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
-                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 2);
-                    textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 3);
+                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
+                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height), textureAtlasOffsetBufferIndex + 2);
+                    textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height), textureAtlasOffsetBufferIndex + 3);
                 }
                 else if (surface.Type == Ambermoon.Render.SurfaceType.Wall)
                 {
-                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y, index);
+                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)surface.TextureAtlasOffset.Y, index);
                     textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
-                    textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 2);
-                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 3);
+                    textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height), textureAtlasOffsetBufferIndex + 2);
+                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height), textureAtlasOffsetBufferIndex + 3);
                 }
             }
 
+            var textureSize = new Size((int)(surface.TextureWidth * textureFactor), (int)(surface.TextureHeight * textureFactor));
+
             if (textureEndCoordBuffer != null)
             {
-                short endX = (short)(surface.TextureAtlasOffset.X + surface.FrameCount * surface.TextureWidth);
-                short endY = (short)(surface.TextureAtlasOffset.Y + surface.TextureHeight);
+                short endX = (short)(surface.TextureAtlasOffset.X + surface.FrameCount * textureSize.Width);
+                short endY = (short)(surface.TextureAtlasOffset.Y + textureSize.Height);
                 int textureEndCoordBufferIndex = textureEndCoordBuffer.Add(endX, endY, index);
                 textureEndCoordBuffer.Add(endX, endY, textureEndCoordBufferIndex + 1);
                 textureEndCoordBuffer.Add(endX, endY, textureEndCoordBufferIndex + 2);
@@ -624,10 +627,10 @@ namespace Ambermoon.Renderer
 
             if (textureSizeBuffer != null)
             {
-                int textureSizeBufferIndex = textureSizeBuffer.Add((short)surface.TextureWidth, (short)surface.TextureHeight, index);
-                textureSizeBuffer.Add((short)surface.TextureWidth, (short)surface.TextureHeight, textureSizeBufferIndex + 1);
-                textureSizeBuffer.Add((short)surface.TextureWidth, (short)surface.TextureHeight, textureSizeBufferIndex + 2);
-                textureSizeBuffer.Add((short)surface.TextureWidth, (short)surface.TextureHeight, textureSizeBufferIndex + 3);
+                int textureSizeBufferIndex = textureSizeBuffer.Add((short)textureSize.Width, (short)textureSize.Height, index);
+                textureSizeBuffer.Add((short)textureSize.Width, (short)textureSize.Height, textureSizeBufferIndex + 1);
+                textureSizeBuffer.Add((short)textureSize.Width, (short)textureSize.Height, textureSizeBufferIndex + 2);
+                textureSizeBuffer.Add((short)textureSize.Width, (short)textureSize.Height, textureSizeBufferIndex + 3);
             }
 
             if (billboardCenterBuffer != null)
@@ -811,17 +814,17 @@ namespace Ambermoon.Renderer
             if (textureAtlasOffsetBuffer == null)
                 return;
 
-            var position = new Position(sprite.X, sprite.Y);
+            var position = new FloatPosition(sprite.X, sprite.Y);
             var spriteSize = new Size(sprite.Width, sprite.Height);
             var textureAtlasOffset = new Position(sprite.TextureAtlasOffset);
-            var textureSize = new Size(sprite.TextureSize ?? new Size(spriteSize));
+            var textureSize = new Size(sprite.TextureSize ?? spriteSize);
 
             if (sprite.ClipArea != null)
             {
                 float textureWidthFactor = spriteSize.Width / textureSize.Width;
                 float textureHeightFactor = spriteSize.Height / textureSize.Height;
-                int oldX = position.X;
-                int oldY = position.Y;
+                float oldX = position.X;
+                float oldY = position.Y;
                 int oldWidth = spriteSize.Width;
                 int oldHeight = spriteSize.Height;
                 sprite.ClipArea.ClipRect(position, spriteSize);
@@ -831,8 +834,8 @@ namespace Ambermoon.Renderer
 
                 if (sprite.MirrorX)
                 {
-                    int oldRight = oldX + oldWidth;
-                    int newRight = position.X + spriteSize.Width;
+                    float oldRight = oldX + oldWidth;
+                    float newRight = position.X + spriteSize.Width;
                     textureAtlasOffset.X += Util.Round((oldRight - newRight) / textureWidthFactor);
                 }
                 else
@@ -840,6 +843,8 @@ namespace Ambermoon.Renderer
                     textureAtlasOffset.X += Util.Round((position.X - oldX) / textureWidthFactor);
                 }
             }
+
+            textureSize *= (int)textureFactor;
 
             if (sprite.MirrorX)
             {
@@ -859,29 +864,42 @@ namespace Ambermoon.Renderer
 
         public void UpdateTextureAtlasOffset(int index, Render.ISurface3D surface)
         {
-            if (textureAtlasOffsetBuffer == null)
-                return;
+            if (textureAtlasOffsetBuffer != null)
+            {
+                var mappedTextureSize = new Size((int)(surface.MappedTextureWidth * textureFactor), (int)(surface.MappedTextureHeight * textureFactor));
 
-            if (surface.Type == Ambermoon.Render.SurfaceType.Floor)
-            {
-                textureAtlasOffsetBuffer.Update(index, (short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight));
-                textureAtlasOffsetBuffer.Update(index + 1, (short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
-                textureAtlasOffsetBuffer.Update(index + 2, (short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y);
-                textureAtlasOffsetBuffer.Update(index + 3, (short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight));
+                if (surface.Type == Ambermoon.Render.SurfaceType.Floor)
+                {
+                    textureAtlasOffsetBuffer.Update(index, (short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height));
+                    textureAtlasOffsetBuffer.Update(index + 1, (short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
+                    textureAtlasOffsetBuffer.Update(index + 2, (short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)surface.TextureAtlasOffset.Y);
+                    textureAtlasOffsetBuffer.Update(index + 3, (short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height));
+                }
+                else if (surface.Type == Ambermoon.Render.SurfaceType.Ceiling)
+                {
+                    textureAtlasOffsetBuffer.Update(index, (short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height));
+                    textureAtlasOffsetBuffer.Update(index + 1, (short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
+                    textureAtlasOffsetBuffer.Update(index + 2, (short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)surface.TextureAtlasOffset.Y);
+                    textureAtlasOffsetBuffer.Update(index + 3, (short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height));
+                }
+                else
+                {
+                    textureAtlasOffsetBuffer.Update(index, (short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
+                    textureAtlasOffsetBuffer.Update(index + 1, (short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)surface.TextureAtlasOffset.Y);
+                    textureAtlasOffsetBuffer.Update(index + 2, (short)(surface.TextureAtlasOffset.X + mappedTextureSize.Width), (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height));
+                    textureAtlasOffsetBuffer.Update(index + 3, (short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + mappedTextureSize.Height));
+                }
             }
-            else if (surface.Type == Ambermoon.Render.SurfaceType.Ceiling)
+
+            if (textureEndCoordBuffer != null)
             {
-                textureAtlasOffsetBuffer.Update(index, (short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight));
-                textureAtlasOffsetBuffer.Update(index + 1, (short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
-                textureAtlasOffsetBuffer.Update(index + 2, (short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y);
-                textureAtlasOffsetBuffer.Update(index + 3, (short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight));
-            }
-            else
-            {
-                textureAtlasOffsetBuffer.Update(index, (short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
-                textureAtlasOffsetBuffer.Update(index + 1, (short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y);
-                textureAtlasOffsetBuffer.Update(index + 2, (short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight));
-                textureAtlasOffsetBuffer.Update(index + 3, (short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight));
+                var textureSize = new Size((int)(surface.TextureWidth * textureFactor), (int)(surface.TextureHeight * textureFactor));
+                short endX = (short)(surface.TextureAtlasOffset.X + surface.FrameCount * textureSize.Width);
+                short endY = (short)(surface.TextureAtlasOffset.Y + textureSize.Height);
+                textureEndCoordBuffer.Update(index, endX, endY);
+                textureEndCoordBuffer.Update(index + 1, endX, endY);
+                textureEndCoordBuffer.Update(index + 2, endX, endY);
+                textureEndCoordBuffer.Update(index + 3, endX, endY);
             }
         }
 
@@ -1143,14 +1161,25 @@ namespace Ambermoon.Renderer
             if (!disposed)
             {
                 vertexArrayObject?.Dispose();
-                positionBuffer?.Dispose();
+
+                alphaBuffer?.Dispose();
+                baseLineBuffer?.Dispose();
+                billboardCenterBuffer?.Dispose();
+                billboardOrientationBuffer?.Dispose();
+                centerBuffer?.Dispose();
+                colorBuffer?.Dispose();
+                extrudeBuffer?.Dispose();
+                layerBuffer?.Dispose();
+                maskColorBuffer?.Dispose();
                 paletteIndexBuffer?.Dispose();
+                positionBuffer?.Dispose();                
+                radiusBuffer?.Dispose();                
                 textColorIndexBuffer?.Dispose();
                 textureAtlasOffsetBuffer?.Dispose();
-                baseLineBuffer?.Dispose();
-                colorBuffer?.Dispose();
-                maskColorBuffer?.Dispose();
-                layerBuffer?.Dispose();
+                textureEndCoordBuffer?.Dispose();
+                textureSizeBuffer?.Dispose();
+                vectorBuffer?.Dispose();
+
                 indexBuffer?.Dispose();
 
                 disposed = true;

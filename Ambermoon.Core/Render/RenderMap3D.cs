@@ -78,6 +78,7 @@ namespace Ambermoon.Render
                 }
                 else
                     frame %= numFrames;
+                // TODO: If this layer is scaled, this won't work anymore.
                 surface.TextureAtlasOffset = map.GetObjectTextureOffset(objectIndex) +
                     new Position((int)(frame * surface.TextureWidth), 0);
             }
@@ -212,6 +213,7 @@ namespace Ambermoon.Render
             void ResetFrame()
             {
                 uint frame = numFrames / 2;
+                // TODO: If this layer is scaled, this won't work anymore.
                 surface.TextureAtlasOffset = map.GetObjectTextureOffset(textureIndex) +
                     new Position((int)(frame * surface.TextureWidth), 0);
             }
@@ -478,6 +480,7 @@ namespace Ambermoon.Render
                         else
                             frame %= numFrames;
 
+                        // TODO: If this layer is scaled, this won't work anymore.
                         surface.TextureAtlasOffset = map.GetObjectTextureOffset(textureIndex) +
                             new Position((int)(frame * surface.TextureWidth), 0);
                     }

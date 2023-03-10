@@ -38,6 +38,7 @@ namespace Ambermoon.UI
         readonly TextInput editInput;
         readonly int maxItems;
         readonly Func<string, TextColor> colorProvider;
+        readonly int hoverBoxYOffset = 0;
         int hoveredItem = -1;
         int scrollOffset = 0;
         int editingItem = -1;
@@ -63,9 +64,10 @@ namespace Ambermoon.UI
             this.canEdit = canEdit;
             this.colorProvider = colorProvider;
             Bounds = new Rect(area);
+            hoverBoxYOffset = renderView.FontProvider.GetFont().GlyphHeight - Global.GlyphLineHeight;
 
             popup.AddSunkenBox(area);
-            hoverBox = popup.FillArea(new Rect(itemBasePosition + relativeHoverBoxOffset, new Size(hoverBoxWidth, itemHeight)),
+            hoverBox = popup.FillArea(new Rect(itemBasePosition + relativeHoverBoxOffset + new Position(0, hoverBoxYOffset), new Size(hoverBoxWidth, itemHeight)),
                 game.GetTextColor(TextColor.Bright), 3);
             hoverBox.Visible = false;
 
@@ -183,7 +185,7 @@ namespace Ambermoon.UI
                 int realIndex = scrollOffset + hoveredItem;
                 bool enabled = items[realIndex].Value != null;
                 SetTextHovered(itemTexts[hoveredItem], true, enabled, items[realIndex].Key);
-                hoverBox.Y = itemAreas[index].Y + relativeHoverBoxOffset.Y;
+                hoverBox.Y = itemAreas[index].Y + relativeHoverBoxOffset.Y + hoverBoxYOffset;
                 hoverBox.Visible = enabled;
 
                 if (hoverBox.Visible)

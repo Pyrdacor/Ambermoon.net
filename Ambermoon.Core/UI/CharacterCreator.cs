@@ -297,7 +297,7 @@ namespace Ambermoon.UI
                 renderView.TextProcessor.CreateText(text, fallbackChar), textColor, shadow);
             renderText.DisplayLayer = displayLayer;
             renderText.X = position.X;
-            renderText.Y = position.Y;
+            renderText.Y = position.Y + Global.GlyphLineHeight - renderView.FontProvider.GetFont().GlyphHeight;
             renderText.Visible = true;
             return renderText;
         }

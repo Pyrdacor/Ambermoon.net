@@ -2038,7 +2038,7 @@ namespace Ambermoon
 
         void ShowBattleFieldDamage(int tile, uint damage)
         {
-            var layer = layout.RenderView.GetLayer(Layer.Text);
+            var layer = layout.RenderView.GetLayer(Layer.SmallDigits);
             // Note: Don't use *** as the digit font has no such character.
             var text = layout.RenderView.TextProcessor.CreateText(damage >= 999 ? "999" : $"{damage:000}");
             var area = Global.BattleFieldSlotArea(tile).CreateModified(-5, 9, 12, 0);

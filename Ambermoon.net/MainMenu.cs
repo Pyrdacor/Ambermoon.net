@@ -89,7 +89,8 @@ namespace Ambermoon
 
             var text = renderView.TextProcessor.CreateText("");
             loadingText = new UI.UIText(renderView, 51, text,
-                new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), 254, TextColor.White, false, TextAlign.Center);
+                Global.GetTextRect(renderView, new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6)),
+                254, TextColor.White, false, TextAlign.Center);
             loadingText.Visible = false;
             
             cursor.Type = CursorType.Sword;

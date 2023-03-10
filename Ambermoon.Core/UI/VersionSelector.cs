@@ -230,21 +230,23 @@ namespace Ambermoon.UI
                     mergedGameVersions[this.selectedVersion].First(v => v.Language == selectedVersionLanguages[this.selectedVersion]).DataProvider?.Invoke(),
                     IsSelectedVersionFromExternalData() && selectedSaveOption == 1);
             };
-            saveOptionTooltip.Area = new Rect(saveOptionPosition, new Size(savegameOptionText.Length * Global.GlyphWidth, Global.GlyphLineHeight));
+            saveOptionTooltip.Area = Global.GetTextRect(renderView, new Rect(saveOptionPosition, new Size(savegameOptionText.Length * Global.GlyphWidth, Global.GlyphLineHeight)));
             UpdateSaveOptionTooltip();
             #endregion
 
             #region Language change button
             int languageCount = Enum.GetValues<GameLanguage>().Length;
             var languageButtonArea = new Rect(versionListArea.Center.X - languageCount * (FlagWidth + 4) / 2, okButton.Area.Top + 12, FlagWidth, FlagHeight);
+            var renderLayer = renderView.GetLayer(Layer.Misc);
+            int textureFactor = (int)renderLayer.TextureFactor;
             for (int i = 0; i < languageCount; ++i)
             {
                 var language = (GameLanguage)i;
                 if (configuration.Language == language)
                     flagSunkenBox = AddSunkenBox(languageButtonArea.CreateModified(-2, -2, 4, 4), 1, 28);
                 var languageChangeButton = renderView.SpriteFactory.Create(FlagWidth, FlagHeight, true, 3) as ILayerSprite;
-                languageChangeButton.Layer = renderView.GetLayer(Layer.Misc);
-                languageChangeButton.TextureAtlasOffset = GetFlagImageOffset(language);
+                languageChangeButton.Layer = renderLayer;
+                languageChangeButton.TextureAtlasOffset = GetFlagImageOffset(language, textureFactor);
                 languageChangeButton.X = languageButtonArea.X;
                 languageChangeButton.Y = languageButtonArea.Y;
                 languageChangeButton.PaletteIndex = 71;
@@ -292,6 +294,7 @@ namespace Ambermoon.UI
             int languageCount = Enum.GetValues<GameLanguage>().Length;
             int x = languageChangeButtons[0].X;
             int sunkenBoxDist = flagSunkenBox[0].X - x;
+            int textureFactor = (int)renderView.GetLayer(Layer.Misc).TextureFactor;
 
             for (int i = 0; i < languageCount; ++i)
             {
@@ -306,14 +309,15 @@ namespace Ambermoon.UI
                     }
                 }
 
-                languageChangeButtons[i].TextureAtlasOffset = GetFlagImageOffset(language);
+                languageChangeButtons[i].TextureAtlasOffset = GetFlagImageOffset(language, textureFactor);
             }
         }
 
-        Position GetFlagImageOffset(GameLanguage language) => flagsTextureAtlas.GetOffset(1) + new Position((int)language * FlagWidth, 0); // TODO: maybe later the image has multiple rows
+        Position GetFlagImageOffset(GameLanguage language, int textureFactor) => flagsTextureAtlas.GetOffset(1) + new Position((int)language * FlagWidth * textureFactor, 0); // TODO: maybe later the image has multiple rows
 
         static string ProcessFrench(string text)
         {
+            return text;
             // There are glyph for the french letters but they really look ugly.
             // Therefore we avoid them here by replacing them just by similar letters.
             // I use this function instead of modifying the texts directly to keep
@@ -546,6 +550,7 @@ namespace Ambermoon.UI
         IRenderText AddText(Position position, string text, TextColor textColor, bool shadow = true,
             byte displayLayer = 1, char? fallbackChar = null)
         {
+            position = Global.GetTextRect(renderView, new Rect(position, new Size(Global.GlyphWidth, Global.GlyphLineHeight))).Position;
             var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(text, fallbackChar), textColor, shadow);
             renderText.DisplayLayer = displayLayer;
@@ -712,7 +717,7 @@ namespace Ambermoon.UI
 
                 var backgroundColor = textColor == NormalTooltipColor ? GetPaletteColor((byte)TextColor.Green) : GetPaletteColor((byte)TextColor.Pink);
 
-                tooltipText.Place(new Rect(x, y, textWidth, textHeight), TextAlign.Center);
+                tooltipText.Place(Global.GetTextRect(renderView, new Rect(x, y, textWidth, textHeight)), TextAlign.Center);
                 tooltipText.Visible = true;
                 tooltipBorder?.Delete();
                 tooltipBackground?.Delete();

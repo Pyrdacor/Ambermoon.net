@@ -37,6 +37,7 @@ namespace Ambermoon
         MusicManager musicManager = null;
         AudioOutput audioOutput = null;
         IRenderText infoText = null;
+        IFontProvider fontProvider = null;
         DateTime? initializeErrorTime = null;
         List<Size> availableFullscreenModes = null;
         DateTime lastRenderTime = DateTime.MinValue;
@@ -722,29 +723,31 @@ namespace Ambermoon
                 advancedLogo = new AdvancedLogo(); // TODO: later add it to options
 
             musicManager = new MusicManager(configuration, gameData);
+            fontProvider ??= new IngameFontProvider(new DataReader(Resources.IngameFont), gameData.FontProvider.GetFont());
 
             // Create render view
-            renderView = CreateRenderView(gameData, configuration, graphicProvider, additionalPalettes, () =>
+            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, additionalPalettes, () =>
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;
-                textureAtlasManager.AddAll(gameData, graphicProvider, gameData.FontProvider, introFont.GlyphGraphics,
+                textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
                     introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
                 logoPyrdacor?.Initialize(textureAtlasManager);
                 AdvancedLogo.Initialize(textureAtlasManager);
                 return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;
+            renderView.SetTextureFactor(Layer.Text, 2);
 
             if (configuration.ShowFantasyIntro)
             {
                 fantasyIntro = new FantasyIntro(renderView, fantasyIntroData, () => fantasyIntro = null);
             }
 
-            InitGlyphs();
+            InitGlyphs(fontProvider);
 
             var text = renderView.TextProcessor.CreateText("");
             infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
-                new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
+                Global.GetTextRect(renderView, new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6)), TextAlign.Center);
             infoText.DisplayLayer = 254;
             infoText.Visible = false;
 
@@ -1043,9 +1046,11 @@ namespace Ambermoon
                 additionalPalettes = new Graphic[2] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] }, flagsPalette };
             }
 
-            renderView = CreateRenderView(gameData, configuration, gameData.GraphicProvider, additionalPalettes, () =>
+            fontProvider ??= new IngameFontProvider(new DataReader(Resources.IngameFont), gameData.FontProvider.GetFont());
+
+            renderView = CreateRenderView(gameData, configuration, gameData.GraphicProvider, fontProvider, additionalPalettes, () =>
             {
-                textureAtlasManager.AddUIOnly(gameData.GraphicProvider, gameData.FontProvider);
+                textureAtlasManager.AddUIOnly(gameData.GraphicProvider, fontProvider);
                 logoPyrdacor?.Initialize(textureAtlasManager);
                 AdvancedLogo.Initialize(textureAtlasManager);
                 textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
@@ -1055,7 +1060,8 @@ namespace Ambermoon
                 return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;
-            InitGlyphs(textureAtlasManager);
+            renderView.SetTextureFactor(Layer.Text, 2);
+            InitGlyphs(fontProvider, textureAtlasManager);
             var gameVersions = new List<GameVersion>(5);
             for (int i = 0; i < versions.Count; ++i)
             {
@@ -1112,21 +1118,23 @@ namespace Ambermoon
             return true;
         }
 
-        void InitGlyphs(TextureAtlasManager textureAtlasManager = null)
+        void InitGlyphs(IFontProvider fontProvider, TextureAtlasManager textureAtlasManager = null)
         {
+            int glyphCount = fontProvider.GetFont().GlyphCount;
             var textureAtlas = (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.Text);
-            renderView.RenderTextFactory.GlyphTextureMapping = Enumerable.Range(0, 94).ToDictionary(x => (byte)x, x => textureAtlas.GetOffset((uint)x));
-            renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => textureAtlas.GetOffset(100 + (uint)x));
+            renderView.RenderTextFactory.GlyphTextureMapping = Enumerable.Range(0, glyphCount).ToDictionary(x => (byte)x, x => textureAtlas.GetOffset((uint)x));
+            var digitTextureAtlas = (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.SmallDigits);
+            renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => digitTextureAtlas.GetOffset((uint)x));
         }
 
         RenderView CreateRenderView(IGameData gameData, IConfiguration configuration, IGraphicProvider graphicProvider,
-            Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
+            IFontProvider fontProvider, Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
             bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;
             var useFrameBuffer = true;
             var useEffects = configuration.Effects != Effects.None;
-            var renderView = new RenderView(this, gameData, graphicProvider,
-                new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
+            var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
+                new TextProcessor(fontProvider.GetFont().GlyphCount), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
                 new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
                 () => KeyValuePair.Create(AnyIntroActive() ? 0 : (int)configuration.GraphicFilter, AnyIntroActive() ? 0 : (int)configuration.GraphicFilterOverlay),
                 () => AnyIntroActive() ? 0 : (int)configuration.Effects,

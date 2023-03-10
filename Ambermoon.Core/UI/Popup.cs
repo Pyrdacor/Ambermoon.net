@@ -162,6 +162,7 @@ namespace Ambermoon.UI
         public IRenderText AddText(Position position, string text, TextColor textColor, bool shadow = true,
             byte displayLayer = 1, char? fallbackChar = null)
         {
+            position = Global.GetTextRect(renderView, new Rect(position, new Size(Global.GlyphWidth, Global.GlyphLineHeight))).Position;
             var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(text, fallbackChar), textColor, shadow);
             renderText.DisplayLayer = (byte)Util.Min(255, this.DisplayLayer + displayLayer);
@@ -190,7 +191,7 @@ namespace Ambermoon.UI
                 uiText = layout.CreateScrollableText(bounds, text, textColor, textAlign, displayLayer, shadow, game.TextPaletteIndex);
             else
             {
-                uiText = new UIText(renderView, game.TextPaletteIndex, text, bounds, displayLayer,
+                uiText = new UIText(renderView, game.TextPaletteIndex, text, Global.GetTextRect(renderView, bounds), displayLayer,
                     textColor, shadow, textAlign, scrolling, game.AddTimedEvent);
             }
             texts.Add(uiText);

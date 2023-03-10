@@ -47,6 +47,7 @@ namespace Ambermoon.Render
             get;
             set;
         }
+        uint TextureFactor { get; }
 
         void Render();
     }

@@ -244,6 +244,7 @@ namespace Ambermoon.UI
         readonly ILayerSprite disableOverlay;
         readonly ILayerSprite iconSprite; // 32x13
         readonly ITextureAtlas textureAtlas;
+        readonly int tooltipYOffset = 0;
         bool pressed = false;
         bool released = true;
         bool rightMouse = false;
@@ -292,6 +293,7 @@ namespace Ambermoon.UI
             disableOverlay.Visible = false;
             iconSprite.Visible = true;
 
+            tooltipYOffset = Global.GlyphLineHeight - renderView.FontProvider.GetFont().GlyphHeight;
             var text = renderView.TextProcessor.CreateText("");
             tooltip = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, true);
             tooltip.DisplayLayer = 254;
@@ -333,7 +335,7 @@ namespace Ambermoon.UI
                 tooltip.TextColor = TooltipColor;
                 int width = tooltip.Text.MaxLineSize * Global.GlyphWidth;
                 tooltip.X = Math.Min(Global.VirtualScreenWidth - width, offset.X + Area.Center.X - width / 2);
-                tooltip.Y = offset.Y + Area.Top - tooltip.Text.LineCount * Global.GlyphLineHeight + 1;
+                tooltip.Y = offset.Y + Area.Top - tooltip.Text.LineCount * Global.GlyphLineHeight + 1 + tooltipYOffset;
             }
 
             tooltip.Visible = visible;
