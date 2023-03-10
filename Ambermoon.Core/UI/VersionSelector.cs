@@ -43,6 +43,7 @@ namespace Ambermoon.UI
         readonly Cursor cursor = null;
         readonly IRenderText headerRenderText = null;
         readonly IRenderText[] versionTexts = new IRenderText[5];
+        readonly IRenderText[] versionTextHighlightShadows = new IRenderText[5];
         readonly IColoredRect[] versionHighlights = new IColoredRect[5];
         readonly Rect gameDataVersionTooltipArea = null;
         IText gameDataVersionTooltipText = null;
@@ -177,9 +178,11 @@ namespace Ambermoon.UI
                     string text = BuildVersionEntryText(gameVersion);
                     var versionArea = new Rect(versionListArea.X, versionListArea.Y + index * 10, versionListArea.Width, 10);
                     var markerArea = versionArea.CreateModified(0, 0, 0, -1);
-                    var highlight = versionHighlights[index] = FillArea(markerArea, Color.White, 2);
+                    var highlight = versionHighlights[index] = FillArea(markerArea, Color.White, 3);
                     highlight.Visible = false;
-                    versionTexts[index] = AddText(new Position(versionArea.X + 1, versionArea.Y + 2), text, TextColor.White, true, 3);
+                    versionTexts[index] = AddText(new Position(versionArea.X + 1, versionArea.Y + 2), text, TextColor.White, true, 7);
+                    versionTextHighlightShadows[index] = AddText(new Position(versionArea.X + 2, versionArea.Y + 3), text, TextColor.LightGray, false, 5);
+                    versionTextHighlightShadows[index].Visible = false;
                     if (SelectedVersion == index)
                         selectedVersionMarker = FillArea(markerArea, Color.Green, 1);
                     versionAreas.Add(versionArea);
@@ -278,7 +281,7 @@ namespace Ambermoon.UI
 
             selectedVersionLanguages[index] = gameVersion.Language;
 
-            versionTexts[index].Text = renderView.TextProcessor.CreateText(BuildVersionEntryText(gameVersion));
+            versionTexts[index].Text = versionTextHighlightShadows[index].Text = renderView.TextProcessor.CreateText(BuildVersionEntryText(gameVersion));
         }
 
         void UpdateVersionTexts(GameLanguage language)
@@ -685,6 +688,7 @@ namespace Ambermoon.UI
                 versionHighlights[i].Visible = active;
                 versionTexts[i].TextColor = active ? TextColor.Black : TextColor.White;
                 versionTexts[i].Shadow = !active;
+                versionTextHighlightShadows[i].Visible = active;
             }
         }
 
