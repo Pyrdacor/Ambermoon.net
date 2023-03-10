@@ -1,7 +1,7 @@
 ﻿/*
  * CustomOutro.cs - Remake outro sequence
  *
- * Copyright (C) 2021-2022  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2021-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -248,13 +248,29 @@ namespace Ambermoon.Render
                     " ^Stranger: Not so fast ~HERO~!",
                     " ^~HERO~: Who are you?",
                     "Stranger: My name is ~INK17~Pyrdacor~INK31~. I don't have much time.",
-                    "Stranger: But I can tell you this: The adventure is not yet over.",
+                    "Stranger: But I can tell you this: The adventure is not over yet.",
                     " ^~HERO~: What are you talking about?",
                     " ^~INK17~The third part of the Amber trilogy~INK31~ is planned.",
                     " ^~HERO~: Awesome!",
                     "Pyrdacor: Thank you for playing ~INK22~Ambermoon~INK31~! I hope you had fun."
                 }
             },
+            { GameLanguage.French, new List<string>
+                {
+                    "Egil: Ce fut une aventure extraordinaire, mais je dois maintenant dire au revoir..",
+                    "Egil: Les nains de Gemstone ont besoin de volontaires pour reconstruire leur capitale.",
+                    "~HERO~: J'espère que nous nous reverrons. Bon voyage mon ami !",
+                    " ^~HERO~: ...",
+                    " ^Inconnu: Pas si vite ~HERO~!",
+                    " ^~HERO~: Qui êtes-vous ?",
+                    "Inconnu: Je m'appelle ~INK17~Pyrdacor~INK31~. Je n'ai pas beaucoup de temps.",
+                    "Inconnu: Mais je peux vous dire ceci : L'aventure n'est pas encore terminée.",
+                    " ^~HERO~: De quoi parlez-vous ?",
+                    " ^~INK17~Le troisième volet de la trilogie Amber~INK31~ est prévu.",
+                    " ^~HERO~: Épatant !",
+                    "Pyrdacor: Merci d'avoir joué à ~INK22~Ambermoon~INK31~ ! J'espère que vous vous êtes bien amusés."
+                }
+            }
         };
 
         readonly Queue<KeyValuePair<TimeSpan, IAction>> actions = new Queue<KeyValuePair<TimeSpan, IAction>>();

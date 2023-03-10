@@ -1,7 +1,7 @@
 ﻿/*
  * CustomTexts.cs - Additional texts only used in the remake
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -70,6 +70,21 @@ namespace Ambermoon
                     { Index.GameSaved, "Saved as ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "~INK 22~Savegame {0}~INK 31~ was loaded."},
                     { Index.InitialGameLoaded, "~INK 22~Initial savegame~INK 31~ was loaded."}
+                }
+            },
+            { GameLanguage.French, new Dictionary<Index, string>
+                {
+                    { Index.ReallyStartNewGame, "Voulez-vous vraiment commencer un nouveau jeu ?" },
+                    { Index.FailedToLoadSavegame, "Échec du chargement de la sauvegarde." },
+                    { Index.FailedToLoadInitialSavegame, "Échec du chargement de la sauvegarde initiale." },
+                    { Index.FailedToLoadSavegameUseInitial, "Échec du chargement de la sauvegarde. Chargement de la sauvegarde initiale à la place." },
+                    { Index.StartNewGameOrQuit, "Voulez-vous commencer une nouvelle partie ou quitter le jeu ?" },
+                    { Index.RuneTableUsage, "Tant que vous avez la table des runes dans votre inventaire, toutes les runes s'affichent automatiquement sous forme de texte." },
+                    { Index.LoadCrashedGame, "Une sauvegarde avant le crash a été détectée. Voulez-vous la charger ?" },
+                    { Index.FailedToRemoveCrashSavegame, "La sauvegarde du crash n'a pas pu être supprimée automatiquement. Veuillez le faire vous-même. Elle est stockée dans le sous-dossier 'Save.99'." },
+                    { Index.GameSaved, "Sauvegardé en tant que ~INK 22~'{0}'~INK 31~."},
+                    { Index.GameLoaded, "La ~INK 22~sauvegarde {0}~INK 31~ a été chargée."},
+                    { Index.InitialGameLoaded, "La ~INK 22~sauvegarde initiale~INK 31~ a été chargée."}
                 }
             }
         };

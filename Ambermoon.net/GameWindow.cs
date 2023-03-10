@@ -681,6 +681,12 @@ namespace Ambermoon
                     "Starting game ...",
                     "Preparing new game ..."
                 }
+            },
+            { GameLanguage.French, new string[]
+                {
+                    "Démarrage du jeu ...",
+                    "Démarrage un nouveau jeu ..."
+                }
             }
         };
 

@@ -1,7 +1,7 @@
 ﻿/*
  * Layout.cs - Handles most of the UI interactions
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -1238,6 +1238,36 @@ namespace Ambermoon.UI
                     // TODO
                     //"Show intro",
                 }
+            },
+            {
+                GameLanguage.French,
+                new string[OptionCount]
+                {
+                    // Page 1
+                    "Musique",
+                    "Volume",
+                    "Résolution",
+                    "Plein écran",
+                    "Filtre graphique",
+                    "L'incrustation graphique",
+                    "Effet",
+                    // Page 2
+                    "Vitesse de combat",
+                    "Mouvement 3D",
+                    "Afficher les infos des boutons",
+                    "Afficher les infos des statistiques",
+                    "Afficher les runes en texte",
+                    "Activer les cheats",
+                    "Sol et plafond en 3D",
+                    // Page 3
+                    "Sauvegardes additionnelles",
+                    "Musique externe",
+                    "Afficher Pyrdacor logo",
+                    "Afficher fantasy intro",
+                    "Afficher les infos de sauvegarde"
+                    // TODO
+                    //"Show intro",
+                }
             }
         };
         static readonly Dictionary<GameLanguage, string[]> FloorAndCeilingValues = new Dictionary<GameLanguage, string[]>
@@ -1261,6 +1291,16 @@ namespace Ambermoon.UI
                     "Ceiling",
                     "Both"
                 }
+            },
+            {
+                GameLanguage.French,
+                new string[4]
+                {
+                    "Aucun",
+                    "Sol",
+                    "Plafond",
+                    "Les deux "
+                }
             }
         };
         static readonly Dictionary<GameLanguage, string> DefaultBattleSpeedName = new Dictionary<GameLanguage, string>
@@ -1270,6 +1310,9 @@ namespace Ambermoon.UI
             },
             {
                 GameLanguage.English, "Default"
+            },
+            {
+                GameLanguage.French, "Défaut"
             }
         };
         static readonly Dictionary<GameLanguage, string[]> Movement3DValues = new Dictionary<GameLanguage, string[]>
@@ -1284,6 +1327,14 @@ namespace Ambermoon.UI
             },
             {
                 GameLanguage.English,
+                new string[2]
+                {
+                    "WASD",
+                    "QWEASD"
+                }
+            },
+            {
+                GameLanguage.French,
                 new string[2]
                 {
                     "WASD",
