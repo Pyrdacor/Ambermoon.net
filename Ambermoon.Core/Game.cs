@@ -6659,10 +6659,16 @@ namespace Ambermoon
             {
                 uint chestIndex = chestEvent.RealChestIndex;
 
-                // Refill chest (is important if it is used elsewhere too)
+                // Refill chest (is important if it is used elsewhere too).
+                // Only do this if there is only 1 item, 1 gold or 1 food.
+                // This is used for plants on the forest moon or the
+                // wandering mushrooms in Dor Grestin. Otherwise this should
+                // not be done as it leads to restocking in maps which use
+                // multiple versions like the airship, Kire's residence,
+                // the dwarf test mine or the Tornak cave.
                 var initialChest = GetInitialChest(chestIndex);
 
-                if (initialChest != null)
+                if (initialChest != null && initialChest.Slots.OfType<ItemSlot>().Sum(item => item.Amount) + initialChest.Gold + initialChest.Food == 1)
                 {
                     var chest = GetChest(chestIndex);
 
