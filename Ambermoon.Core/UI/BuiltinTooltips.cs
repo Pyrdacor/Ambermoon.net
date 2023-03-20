@@ -278,7 +278,7 @@ namespace Ambermoon.UI
                 // Disarm traps
                 "Désarmer pièges^^Chance de désarmer un piège à serrure trouvé.^^Chance actuelle : {0}%\"",
                 // Lockpick
-                "Crocheter^^Chance de crocheter une serrure sans objet.^Ne fonctionne pas pour les portes nécessitant une clé.^^Chance actuelle : {0}%",
+                "Crocheter^^Chance de crocheter une serrure sans passe-partout.^Ne fonctionne pas pour les portes nécessitant une clé.^^Chance actuelle : {0}%",
                 // Search
                 "Chercher^^Chance de trouver des trésors secrets.^Les valeurs les plus élevées vous permettent^de trouver des coffres spécifiques.",
                 // Read magic
@@ -480,7 +480,7 @@ namespace Ambermoon.UI
                 // SLP
                 "Points d'apprentissage de sorts^^Ils sont utilisés pour apprendre des sorts.",
                 // TP
-                "Points d'exercice^^Sont utilisés pour améliorer les compétences^lors des visites aux entraîneurs.",
+                "Points d'entrainement^^Sont utilisés pour améliorer les compétences^lors des visites aux entraîneurs.",
                 // Gold
                 "Or^^Monnaie d'Ambermoon. Il est utilisé^pour acheter des marchandises.",
                 // Food
