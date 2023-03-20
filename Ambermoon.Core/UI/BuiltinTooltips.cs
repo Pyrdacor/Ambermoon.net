@@ -193,6 +193,25 @@ namespace Ambermoon.UI
                 "Luck^^Chance in percent to avoid the effect^of an already triggered trap.^Adds, together with Dexterity,^to the chance of avoiding fights.^^Currently {0}% trap effect avoid chance^          {1}% fight avoid chance",
                 // Anti-Magic
                 "Anti-Magic^^Chance in percent to block enemy spells.^^Currently {0}% spell block chance"
+            } },
+            { GameLanguage.French, new string[]
+            {
+                // Strength
+                "Force^^Augmente le poids maximum de 1kg par point.^Augmente également les dégâts de^1 tous les 25 points.^^Actuellement +{0}kg et +{1} dégâts",
+                // Intelligence
+                "Intelligence^^Ajoute 1 PS et 1 PAS supplémentaire^au niveau supérieur pour chaque^tranche de 25 points.^^Actuellement +{0} PS et +{0} PAS",
+                // Dexterity
+                "Dextérité^^Chance en pourcentage de ne pas^déclencher un piège en manipulant^des serrures.^Ajoute, avec la Chance,^aux chances d'éviter les combats.^^Actuellement {0}% de chances d'éviter les pièges^             {1}% de chances d'éviter les combats",
+                // Speed
+                "Vitesse^^Des valeurs de vitesse plus élevées vous^permettent d'agir plus tôt dans la bataille.^Tous les 80 points, vous pouvez vous déplacer^d'un champ supplémentaire par round.^^Actuellement, vous pouvez vous déplacer de {0} champ(s).",
+                // Stamina
+                "Énergie^^Augmente la défense de 1 tous les 25 points.^^Actuellement +{0} défense",
+                // Charisma
+                "Charisme^^Augmente le prix de vente de 1%^à chaque tranche de 10 points.^^Actuellement +{0}% de prix de vente",
+                // Luck
+                "Chance^^Chance en pourcentage d'éviter^l'effet d'un piège déjà déclenché.^Ajoute, avec la Dextérité,^aux chances d'éviter les combats.^^Actuellement {0}% de chance d'éviter l'effet d'un piège^             {1}% de chance d'éviter un combat",
+                // Anti-Magic
+                "Anti-magie^^Chance en pourcentage de bloquer les sorts ennemis.^^Actuellement {0}% de chances de bloquer les sorts"
             } }
         };
 
@@ -243,6 +262,29 @@ namespace Ambermoon.UI
                 "Read Magic^^Chance to learn a spell from a scroll.^Otherwise the scroll is destroyed.^^Current chance: {0}%",
                 // Use magic
                 "Use Magic^^Chance to cast a spell successfully.^Some spells have negative effects if the cast fails.^^Current chance: {0}%",
+            } },
+            { GameLanguage.French, new string[]
+            {
+                // Attack
+                "Attaquer^^Chance de toucher un ennemi.^^Actuellement {0}% de chance de toucher",
+                // Parry
+                "Parer^^Chance de bloquer une attaque ennemie.^L'action de combat 'Parer' est nécessaire pour cela.^^ Actuellement {0}% de chances de blocage",
+                // Swim
+                "Nager^^Réduction des dégâts en nageant.^^Actuellement {0}% de réduction des dégâts",
+                // Crit
+                "Coup fatal^^Chance de tuer un adversaire d'un seul coup.^Ne fonctionne pas contre les boss.^^Chance actuelle : {0}%",
+                // Find traps
+                "Trouver pièges^^Chance de trouver un piège à serrure.^^Chance actuelle : {0}%",
+                // Disarm traps
+                "Désarmer pièges^^Chance de désarmer un piège à serrure trouvé.^^Chance actuelle : {0}%\"",
+                // Lockpick
+                "Crocheter^^Chance de crocheter une serrure sans objet.^Ne fonctionne pas pour les portes nécessitant une clé.^^Chance actuelle : {0}%",
+                // Search
+                "Chercher^^Chance de trouver des trésors secrets.^Les valeurs les plus élevées vous permettent^de trouver des coffres spécifiques.",
+                // Read magic
+                "Lire magie^^Chance d'apprendre un sort à partir d'un parchemin.^En cas d'échec, le parchemin est détruit.^^Chance actuelle : {0}%.",
+                // Use magic
+                "Utiliser magie^^Chance de lancer un sort avec succès.^Certains sorts ont des effets négatifs en cas d'échec.^^Chance actuelle : {0}%",
             } }
         };
 
@@ -296,7 +338,7 @@ namespace Ambermoon.UI
                 // Blind
                 { Condition.Blind, "The character can not see.^Light radius on 2D maps is disabled.^Complete darkness on 3D maps." },
                 // Drugged
-                { Condition.Drugged, "The charater is under the influence of drugs.^Complicated control and visual effects.." },
+                { Condition.Drugged, "The charater is under the influence of drugs.^Complicated control and visual effects." },
                 // Exhausted
                 { Condition.Exhausted, "All attributes halved temporarly.^Can be removed by sleeping." },
                 // Unused
@@ -317,6 +359,41 @@ namespace Ambermoon.UI
                 { Condition.DeadAshes, "The character does not participate in battles.^He can not communicate.^His ashes must be converted to^flesh first to resurrect him." },
                 // DeadDust
                 { Condition.DeadDust, "The character does not participate in battles.^He can not communicate.^His dust must be converted to ashes^and then to flesh to resurrect him." }
+            } },
+            { GameLanguage.French, new Dictionary<Condition, string>
+            {
+                // Irritated
+                { Condition.Irritated,"Le personnage ne peut pas lancer de sorts.^^Uniquement actif pendant le combat." },
+                // Crazy
+                { Condition.Crazy, "Le personnage effectue des actions aléatoires au cours du combat.^L'inventaire n'est pas accessible." },
+                // Sleep
+                { Condition.Sleep, "Le personnage ne peut pas effectuer d'actions de combat.^Tout dommage annulera le statut.^^Uniquement actif pendant le combat." },
+                // Panic
+                { Condition.Panic, "Le personnage tente de fuir.^Aucune action de combat possible.^Inventaire non accessible.^Actif uniquement pendant le combat." },
+                // Blind
+                { Condition.Blind, "Le personnage ne peut pas voir.^La zone lumineuse sur les cartes 2D est désactivée.^Les cartes 3D sont complètement sombres." },
+                // Drugged
+                { Condition.Drugged, "Le personnage est sous l'influence de drogues.^Le contrôle est difficile et il y a des effets visuels." },
+                // Exhausted
+                { Condition.Exhausted, "Tous les attributs sont temporairement réduits de moitié.^Cette réduction peut être supprimée en dormant." },
+                // Unused
+                { Condition.Unused, "" },
+                // Lamed
+                { Condition.Lamed, "Aucun mouvement ou attaque n'est possible." },
+                // Poisoned
+                { Condition.Poisoned, "Le personnage reçoit des dégâts^à chaque round ou heure de combat." },
+                // Petrified
+                { Condition.Petrified, "L'inventaire n'est pas accessible.^Le personnage ne peut faire aucune^action et ne vieillit pas." },
+                // Diseased
+                { Condition.Diseased, "Le personnage perd un point d'un^attribut aléatoire chaque jour." },
+                // Aging
+                { Condition.Aging, "Le personnage vieillit chaque jour.^En fonction de sa race, il finira^par mourir à un âge précis.^^Age maximum : {0}" },
+                // DeadCorpse
+                { Condition.DeadCorpse, "Le personnage ne participe pas aux combats,^il ne peut pas communiquer." },
+                // DeadAshes
+                { Condition.DeadAshes, "Le personnage ne participe pas aux combats,^il ne peut pas communiquer.^Ses cendres doivent d'abord être transformées^en corps pour qu'il puisse être ressuscité." },
+                // DeadDust
+                { Condition.DeadDust, "Le personnage ne participe pas aux combats,^il ne peut pas communiquer.^Sa poussière doit être transformée en cendres^et ensuite en corps pour le ressusciter." }
             } }
         };
 
@@ -391,6 +468,41 @@ namespace Ambermoon.UI
                 " to ",
                 // MagicIntBonus
                 "^ Bonus: SP and SLP +INT/25 ({0})"
+            } },
+            { GameLanguage.French, new string[]
+            {
+                // Age
+                "Âge du personnage^^Il meurt à l'âge maximum de {0}.",
+                // LP
+                "Points de vie^^Lorsqu'ils atteignent^0 le personnage meurt.",
+                // SP
+                "Points de sorts^^Sont utilisés pour lancer des sorts.",
+                // SLP
+                "Points d'apprentissage de sorts^^Ils sont utilisés pour apprendre des sorts.",
+                // TP
+                "Points d'exercice^^Sont utilisés pour améliorer les compétences^lors des visites aux entraîneurs.",
+                // Gold
+                "Or^^Monnaie d'Ambermoon. Il est utilisé^pour acheter des marchandises.",
+                // Food
+                "Rations^^Pour chaque repos (en dehors des auberges),^1 ration est consommée par personnage^pour remplir les PV et les PS.",
+                // Damage
+                "Dégâts^^Valeur de base pour les^dégâts lors des combats.^^Se compose de l'équipement^et de la force.",
+                // Defense
+                "Défense^^Valeur de base pour la réduction^des dégâts physiques au combat.^^Se compose de l'équipement^et d'énergie.",
+                // EPPre50
+                "Points d'expérience^^Nécessaires pour gagner des niveaux.^^Prochain niveau à {0} XP.",
+                // EP50
+                "Points d'expérience^^Nécessaires pour gagner des niveaux.^^Le niveau maximum a déjà été atteint.",
+                // LevelWithAPRIncrease
+                "Niveau du personnage^^Chaque augmentation de niveau accroît^les valeurs du personnage de :^^ PV : {0,-10}{1} PE : {2}{3}^^Les attaques par round augmentent^à des niveaux spécifiques:^^ {5}^^Les attaques par round sont {4}",
+                // LevelWithoutAPRIncrease
+                "Niveau du personnage^^Chaque augmentation de niveau accroît^les valeurs du personnage de :^^ PV : {0,-10}{1} PE : {2}{3}^^Les attaques par round sont {4}",
+                // MagicLevelUpValues
+                " PS : {0}^ PAS: {1,-10}",
+                // RangeOperator
+                " à ",
+                // MagicIntBonus
+                "^ Bonus: PS et PAS +INT/25 ({0})"
             } }
         };
     }

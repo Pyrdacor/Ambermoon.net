@@ -6,8 +6,9 @@ namespace Ambermoon.Data.Legacy
 {
     public class AmbermoonEncoding : Encoding
     {
-        static readonly Encoding BaseEncoding = Encoding.GetEncoding("iso-8859-1");
-        static readonly Dictionary<char, byte> CharsToBytes = new Dictionary<char, byte>
+        // See https://gitlab.com/ambermoon/research/-/wikis/font
+        static readonly Encoding BaseEncoding = GetEncoding("iso-8859-1");
+        static readonly Dictionary<char, byte> CharsToBytes = new()
         {
             { '\u00fc', 0x81 }, // ü
             { '\u00e9', 0x82 }, // é
@@ -28,7 +29,7 @@ namespace Ambermoon.Data.Legacy
             { '\u00e1', 0xa0 }, // á
             { '\u00c0', 0xb6 }, // À
         };
-        static readonly Dictionary<byte, char> BytesToChars = new Dictionary<byte, char>
+        static readonly Dictionary<byte, char> BytesToChars = new()
         {
             { 0x81, '\u00fc' }, // ü
             { 0x82, '\u00e9' }, // é

@@ -102,25 +102,29 @@ namespace Ambermoon.Data.Legacy
             else if (ch == '&')
                 return 58;
             else if (ch == 'á' || ch == 'Á')
-                return (byte)(extended ? 94 : 59);
+                return (byte)(rune ? 64 : extended ? 94 : 59);
             else if (ch == 'à' || ch == 'À')
-                return 59;
+                return (byte)(rune ? 64 : 59);
             else if (ch == 'â' || ch == 'Â')
-                return (byte)(extended ? 95 : 59);
+                return (byte)(rune ? 64 : extended ? 95 : 59);
             else if (ch == 'ê' || ch == 'Ê')
-                return 60;
+                return (byte)(rune ? 68 : 60);
             else if (ch == 'è' || ch == 'È')
-                return (byte)(extended ? 96 : 60);
+                return (byte)(rune ? 68 : extended ? 96 : 60);
             else if (ch == 'é' || ch == 'É')
-                return (byte)(extended ? 97 : 60);
-            else if (ch == 'ç' || ch == 'Ç')
-                return 61;
+                return (byte)(rune ? 68 : extended ? 97 : 60);
+            else if (ch == 'ç' || ch == '\u0063')
+                return (byte)(rune ? 66 : 61);
             else if (ch == '¢')
-                return (byte)(extended ? 98 : 61);
+                return (byte)(rune ? 66 : extended ? 98 : 61);
             else if (ch == 'û' || ch == 'Û')
-                return 62;
+                return (byte)(rune ? 84 : 62);
             else if (ch == 'ô' || ch == 'Ô')
-                return 63;
+                return (byte)(rune ? 78 : 63);
+            else if (ch == 'î' || ch == 'Î')
+                return (byte)(rune ? 72 : extended ? 99 : 8);
+            else if (ch == 'ë' || ch == 'Ë')
+                return (byte)(rune ? 68 : extended ? 100 : 60);
             else if (ch == ' ')
                 return (byte)SpecialGlyph.SoftSpace;
             else if (ch == '$')
