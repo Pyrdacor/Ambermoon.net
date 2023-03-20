@@ -45,9 +45,9 @@ A completely new game extension was also released called [Ambermoon Advanced](ht
 ### Need help?
 
 - (*English*) New to Ambermoon? Please have a look [here](FirstPlay.md). \
-If you have questions feel free to ask via [email](mailto:trobt@web.de), on [Twitter](https://twitter.com/Pyrdacor2) or here on GitHub on the [issues page](https://github.com/Pyrdacor/Ambermoon.net/issues). Some more info follows below as well.
+If you have questions feel free to ask via [email](mailto:trobt@web.de), on [Twitter](https://twitter.com/Pyrdacor) or here on GitHub on the [issues page](https://github.com/Pyrdacor/Ambermoon.net/issues). Some more info follows below as well.
 - (*German*) Du kennst Ambermoon noch nicht? Schau bitte [hier](FirstPlay.md). \
-Wenn du Fragen hast, meld dich einfach per [Email](mailto:trobt@web.de), auf [Twitter](https://twitter.com/Pyrdacor2) oder hier auf GitHub unter [Issues](https://github.com/Pyrdacor/Ambermoon.net/issues). Weiter unten gibt es auch noch einige Infos.
+Wenn du Fragen hast, meld dich einfach per [Email](mailto:trobt@web.de), auf [Twitter](https://twitter.com/Pyrdacor) oder hier auf GitHub unter [Issues](https://github.com/Pyrdacor/Ambermoon.net/issues). Weiter unten gibt es auch noch einige Infos.
 
 ### Support the project
 
@@ -59,7 +59,7 @@ I appreciate all kind of support for this project. If you want to donate to help
 - [![Flattr](https://ambermoon-net.pyrdacor.net/assets/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=Pyrdacor&url=https://github.com/Pyrdacor/Ambermoon.net&title=Ambermoon.net&language=C#&tags=github&category=software) \
 Thank you very much.
 
-I will also post updates about releases and interesting stuff on twitter: https://twitter.com/Pyrdacor2
+I will also post updates about releases and interesting stuff on twitter: https://twitter.com/Pyrdacor
 
 ## Screenshots
 

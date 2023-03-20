@@ -151,7 +151,7 @@ namespace Ambermoon.Render
             AddText("Pyrdacor - trobt(at)web.de", 2);
             AddText("github.com/Pyrdacor");
             AddText("www.patreon.com/Pyrdacor");
-            AddText("twitter.com/Pyrdacor2");
+            AddText("twitter.com/Pyrdacor");
             AddText("www.pyrdacor.net");
 
             AddText("December 2022", 2);
