@@ -1,12 +1,22 @@
 Version 1.8
 ===========
 
-- Added Ambermoon Advanced 1.02 (first official release with 2 episodes)
+- Added Ambermoon Advanced 1.03 (first official release with 2 episodes)
 - Added a lot of stuff to support the new Advanced features
+- Added the fantasy intro from the original
+- Added the first french version of the original game
+- Added an improved language selection to the version selector
+- Outro text is now semi-transparent and left-aligend like in the original
+- Outro scroll speed reduced and it can now be paused
+- Ingame font now supports french letters
 - When saving a game, a backup of the last save is created if possible
 - Added optional 3D movement layout with strafe keys (QWEASD) instead of WASD
+- The dungeon map can now be opened with the M key
+- Hopefully music playback is a bit more robust now
+- Airship bone chest no longer restocks
 - A lot of bug and crash fixes
 - Added some useful cheats
+- Integrated original version 1.17
 
 
 Version 1.7

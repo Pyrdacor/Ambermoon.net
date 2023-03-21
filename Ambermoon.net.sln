@@ -61,6 +61,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AmbermoonAdditionalDataLoad
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.Data.Pyrdacor", "Ambermoon.Data.Pyrdacor\Ambermoon.Data.Pyrdacor.csproj", "{1C5A1503-625B-4350-8381-2A9DC169CD09}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{20E4F4C3-CD06-4BA6-9C71-EC0AA65BDF6D}"
+	ProjectSection(SolutionItems) = preProject
+		Package\AmbermoonManualEnglish.pdf = Package\AmbermoonManualEnglish.pdf
+		Package\AmbermoonMap.pdf = Package\AmbermoonMap.pdf
+		Package\AmbermoonRuneTable.png = Package\AmbermoonRuneTable.png
+		Package\changelog.txt = Package\changelog.txt
+		Package\Controls.pdf = Package\Controls.pdf
+		Package\readme.txt = Package\readme.txt
+		Package\Walkthrough.txt = Package\Walkthrough.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -688,6 +699,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E2692FCA-174D-4723-A04C-4C6245321934} = {6D2AB877-1253-42C6-8ACF-0DACC23AC2F4}
+		{20E4F4C3-CD06-4BA6-9C71-EC0AA65BDF6D} = {6D2AB877-1253-42C6-8ACF-0DACC23AC2F4}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3995CD35-9B7F-4C04-B75D-E24ECC154A2A}

@@ -7,7 +7,7 @@
 
 
             ------------------------------------------------------------------
-            |  Ambermoon rewrite by Pyrdacor - Version 1.8.1 - January 2023  |
+            |   Ambermoon rewrite by Pyrdacor - Version 1.8.2 - March 2023   |
             ------------------------------------------------------------------
 
 
@@ -45,10 +45,10 @@ Note: The manual is meant for the original so especially for the controls or Ami
         |___/    
 
 
-----------------------------------
-| Website: www.pyrdacor.net      |
-| Email:   trobt@web.de          |
-| GitHub:  github.com/Pyrdacor   |
-| Twitter: twitter.com/Pyrdacor2 |
-| Patreon: patreon.com/Pyrdacor  |
-----------------------------------
+---------------------------------
+| Website: www.pyrdacor.net     |
+| Email:   trobt@web.de         |
+| GitHub:  github.com/Pyrdacor  |
+| Twitter: twitter.com/Pyrdacor |
+| Patreon: patreon.com/Pyrdacor |
+---------------------------------
