@@ -2757,6 +2757,7 @@ namespace Ambermoon
         {
             pickingTargetPlayer = false;
             TargetPlayerPicked?.Invoke(-1);
+            ClosePopup();
         }
 
         internal bool FinishPickingTargetInventory(int characterSlot)
@@ -2787,6 +2788,7 @@ namespace Ambermoon
                     CloseWindow();
 
                 layout.ShowChestMessage(null);
+                ClosePopup();
                 UntrapMouse();
             }
         }
@@ -2803,6 +2805,7 @@ namespace Ambermoon
                         CloseWindow();
 
                     layout.ShowChestMessage(null);
+                    ClosePopup();
                     EndSequence();
                     UntrapMouse();
                 }
@@ -13182,7 +13185,8 @@ namespace Ambermoon
                                     EndSequence();
                                     layout.ShowChestMessage(null);
                                     layout.SetInventoryMessage(null);
-                                 }
+                                    ClosePopup();
+                                }
 
                                 this.TargetItemPicked -= TargetItemPicked;
                                 Consume();
@@ -13199,6 +13203,7 @@ namespace Ambermoon
                         this.TargetItemPicked -= TargetItemPicked;
                         itemGrid?.HideTooltip();
                         layout.SetInventoryMessage(null);
+                        ClosePopup();
                         if (itemSlot != null)
                         {
                             Consume();
