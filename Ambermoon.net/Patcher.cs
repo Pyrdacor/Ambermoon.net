@@ -100,9 +100,9 @@ namespace Ambermoon
 
             var culture = CultureInfo.DefaultThreadCurrentCulture ?? CultureInfo.CurrentCulture;
             var cultureName = culture?.Name ?? "";
-            language = cultureName == "de" || cultureName.StartsWith("de-") ? GameLanguage.German : GameLanguage.English;
+            language = cultureName == "de" || cultureName.StartsWith("de-") ? GameLanguage.German :
+                cultureName == "fr" || cultureName.StartsWith("fr-") ? GameLanguage.French : GameLanguage.English;
             var textureAtlas = textureAtlasManager.GetOrCreate(Layer.UI);
-            var fontTextureAtlas = textureAtlasManager.GetOrCreate(Layer.Text);
             var spriteFactory = renderView.SpriteFactory;
             var layer = renderView.GetLayer(Layer.UI);
             cursor = new Render.Cursor(renderView, renderView.GameData.CursorHotspots, textureAtlasManager);
@@ -141,7 +141,7 @@ namespace Ambermoon
             #endregion
         }
 
-        static readonly Dictionary<GameLanguage, string[]> Texts = new Dictionary<GameLanguage, string[]>
+        static readonly Dictionary<GameLanguage, string[]> Texts = new()
         {
             { GameLanguage.German, new string[]
                 {
@@ -169,6 +169,20 @@ namespace Ambermoon
                     "{0} of {1}",
                     "Done",
                     "Cancel download"
+                }
+            },
+            { GameLanguage.French, new string[]
+                {
+                    "Voulez-vous utiliser le patcheur ? Cela augmente légèrement le temps de démarrage et vous avez besoin d'un accès à l'internet. Mais les nouvelles versions seront alors détectées automatiquement et pourront être installées directement.",
+                    "Si vous décidez d'utiliser le patcheur plus tard, vous pouvez l'activer manuellement dans le fichier de configuration 'ambermoon.cfg'.",
+                    "Cliquez pour continuer",
+                    "Une nouvelle version est disponible ! Voulez-vous la télécharger et l'installer maintenant ?",
+                    "La nouvelle version n'a pas été trouvée. Veuillez le signaler à Pyrdacor (trobt(at)web.de).",
+                    "Le téléchargement de la nouvelle version a échoué. Veuillez réessayer plus tard ou la télécharger manuellement.",
+                    "Télécharger Ambermoon {0} ...",
+                    "{0} de {1}",
+                    "Terminé",
+                    "Annuler"
                 }
             }
         };
