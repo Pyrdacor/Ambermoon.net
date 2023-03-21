@@ -15501,6 +15501,7 @@ namespace Ambermoon
                             // Special case, we show a small game introduction
                             // when playing for the first time and closing the
                             // initial event with grandfather.
+                            Configuration.FirstStart = true; // TODO: REMOVE
                             if (Configuration.FirstStart && imageIndex == 1)
                             {
                                 // This avoids asking for introduction twice in the same sessions.
