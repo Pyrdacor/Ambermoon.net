@@ -1249,13 +1249,13 @@ namespace Ambermoon.UI
                     "Résolution",
                     "Plein écran",
                     "Filtre graphique",
-                    "L'incrustation graphique",
+                    "Incrustation graphique",
                     "Effet",
                     // Page 2
                     "Vitesse de combat",
                     "Mouvement 3D",
-                    "Afficher les infos des boutons",
-                    "Afficher les infos des statistiques",
+                    "Infobulles des boutons",
+                    "Infobulles des statistiques",
                     "Afficher les runes en texte",
                     "Activer les cheats",
                     "Sol et plafond en 3D",
@@ -1264,7 +1264,7 @@ namespace Ambermoon.UI
                     "Musique externe",
                     "Afficher Pyrdacor logo",
                     "Afficher fantasy intro",
-                    "Afficher les infos de sauvegarde"
+                    "Messages de sauvegarde"
                     // TODO
                     //"Show intro",
                 }
@@ -1299,7 +1299,7 @@ namespace Ambermoon.UI
                     "Aucun",
                     "Sol",
                     "Plafond",
-                    "Les deux "
+                    "Les deux"
                 }
             }
         };

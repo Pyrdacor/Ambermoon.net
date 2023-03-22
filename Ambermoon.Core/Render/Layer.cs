@@ -76,6 +76,6 @@ namespace Ambermoon
     {
         public const Layer First2DLayer = Layer.MapBackground1;
         public const Layer Last2DLayer = Layer.MapForeground10;
-        public const Layer LastLayer = Layer.Images;
+        public const Layer LastLayer = Layer.DrugEffect;
     }
 }

@@ -87,7 +87,7 @@ namespace Ambermoon
         None,
         Lines,
         Grid,
-        Scanlines,
+        Scanline,
         CRT
     }
 
