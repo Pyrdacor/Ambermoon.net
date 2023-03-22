@@ -323,7 +323,7 @@ namespace Ambermoon.UI
 
             ch = char.ToLower(ch);
 
-            if (ch == 'y' || ch == 'j')
+            if (ch == 'y' || ch == 'j' || ch == 'o')
             {
                 var yesButton = buttons.FirstOrDefault(button => button.ButtonType == Data.Enumerations.ButtonType.Yes);
 
