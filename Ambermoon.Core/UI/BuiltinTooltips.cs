@@ -201,17 +201,17 @@ namespace Ambermoon.UI
                 // Intelligence
                 "Intelligence^^Ajoute 1 PS et 1 PAS supplémentaire^au niveau supérieur pour chaque^tranche de 25 points.^^Actuellement +{0} PS et +{0} PAS",
                 // Dexterity
-                "Dextérité^^Chance en pourcentage de ne pas^déclencher un piège en manipulant^des serrures.^Ajoute, avec la Chance,^aux chances d'éviter les combats.^^Actuellement {0}% de chances d'éviter les pièges^             {1}% de chances d'éviter les combats",
+                "Dextérité^^Chance en pourcentage de ne pas^déclencher un piège en manipulant^des serrures.^Ajoute, avec la Chance,^aux chances d'éviter les combats.^^Actuellement:^  {0}% de chances d'éviter les pièges^  {1}% de chances d'éviter les combats",
                 // Speed
-                "Vitesse^^Des valeurs de vitesse plus élevées vous^permettent d'agir plus tôt dans la bataille.^Tous les 80 points, vous pouvez vous déplacer^d'un champ supplémentaire par round.^^Actuellement, vous pouvez vous déplacer de {0} champ(s).",
+                "Vitesse^^Des valeurs de vitesse plus élevées vous^permettent d'agir plus tôt dans la bataille.^Tous les 80 points, vous pouvez vous déplacer^d'un champ supplémentaire par round.^^Actuellement, vous pouvez vous^déplacer de {0} champ(s).",
                 // Stamina
                 "Énergie^^Augmente la défense de 1 tous les 25 points.^^Actuellement +{0} défense",
                 // Charisma
                 "Charisme^^Augmente le prix de vente de 1%^à chaque tranche de 10 points.^^Actuellement +{0}% de prix de vente",
                 // Luck
-                "Chance^^Chance en pourcentage d'éviter^l'effet d'un piège déjà déclenché.^Ajoute, avec la Dextérité,^aux chances d'éviter les combats.^^Actuellement {0}% de chance d'éviter l'effet d'un piège^             {1}% de chance d'éviter un combat",
+                "Chance^^Chance en pourcentage d'éviter^l'effet d'un piège déjà déclenché.^Ajoute, avec la Dextérité,^aux chances d'éviter les combats.^^Actuellement:^  {0}% de chance d'éviter l'effet d'un piège^  {1}% de chance d'éviter un combat",
                 // Anti-Magic
-                "Anti-magie^^Chance en pourcentage de bloquer les sorts ennemis.^^Actuellement {0}% de chances de bloquer les sorts"
+                "Anti-magie^^Chance en pourcentage de bloquer les sorts ennemis.^^Actuellement:^  {0}% de chances de bloquer les sorts"
             } }
         };
 
@@ -278,13 +278,13 @@ namespace Ambermoon.UI
                 // Disarm traps
                 "Désarmer pièges^^Chance de désarmer un piège à serrure trouvé.^^Chance actuelle : {0}%\"",
                 // Lockpick
-                "Crocheter^^Chance de crocheter une serrure sans passe-partout.^Ne fonctionne pas pour les portes nécessitant une clé.^^Chance actuelle : {0}%",
+                "Crocheter^^Chance de crocheter une serrure^sans passe-partout.^Ne fonctionne pas pour les^portes nécessitant une clé.^^Chance actuelle : {0}%",
                 // Search
                 "Chercher^^Chance de trouver des trésors secrets.^Les valeurs les plus élevées vous permettent^de trouver des coffres spécifiques.",
                 // Read magic
                 "Lire magie^^Chance d'apprendre un sort à partir d'un parchemin.^En cas d'échec, le parchemin est détruit.^^Chance actuelle : {0}%.",
                 // Use magic
-                "Utiliser magie^^Chance de lancer un sort avec succès.^Certains sorts ont des effets négatifs en cas d'échec.^^Chance actuelle : {0}%",
+                "Utiliser magie^^Chance de lancer un sort avec succès.^Certains sorts ont des effets^négatifs en cas d'échec.^^Chance actuelle : {0}%",
             } }
         };
 
