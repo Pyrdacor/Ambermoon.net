@@ -11509,7 +11509,7 @@ namespace Ambermoon
                                     if (scrollIdentification)
                                     {
                                         var item = ItemManager.GetItem(itemSlot.ItemIndex);
-                                        var slp = SpellInfos.Entries[item.Spell].SLP;
+                                        var slp = SpellInfos.GetSLPCost(Features, item.Spell);
                                         Message(DataNameProvider.SageIdentifyScroll + slp.ToString() + DataNameProvider.SageSLP, true);
                                     }
                                     else
