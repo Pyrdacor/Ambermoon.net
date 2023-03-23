@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -326,6 +327,13 @@ namespace Ambermoon
                     Console.WriteLine("Error determining available patches: " + ex.ToString());
                 }
 
+                noPatchAction?.Invoke();
+                return;
+            }
+
+            if (!TestWritePermission())
+            {
+                Console.WriteLine($"There is a new version but the patcher has no write permission to the installation directory \"{Configuration.ExecutableDirectoryPath}\". Try to start the game as an administrator to allow the patcher to update the files.");
                 noPatchAction?.Invoke();
                 return;
             }
@@ -730,6 +738,44 @@ namespace Ambermoon
             {
                 renderView.Render(new FloatPosition());
             }
+        }
+
+        static bool TestWritePermission()
+        {
+            var installDirectory = Configuration.ExecutableDirectoryPath;
+            string dummyFile = Path.Combine(installDirectory, "patcher-test.txt");
+
+            // First we try to create a dummy file in the install directory.
+            // If this fails, the patcher won't be able to replace the files.
+            try
+            {
+                if (File.Exists(dummyFile))
+                    File.Delete(dummyFile);
+                File.WriteAllText(dummyFile, "write access test");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (ex is SecurityException || ex is IOException || ex is UnauthorizedAccessException)
+                    return false; // we expect one of these when the user has no write permission
+
+                Console.WriteLine($"Unexpected file write error: {ex}"); // this would be an unexpected error, so we log it
+
+                return false;
+            }
+            finally
+            {
+                try
+                {
+                    if (File.Exists(dummyFile))
+                        File.Delete(dummyFile);
+                }
+                catch
+                {
+                    // ignore
+                }
+            }
+
         }
 
         bool WriteAndRunInstaller(string downloadPath)
