@@ -1,8 +1,9 @@
 # Changelog
 
 
-## 1.8.2 - Eighth patch (July 2022 - March 2023)
+## 1.8.3 - Eighth patch (July 2022 - March 2023)
 
+- Version [1.8.3](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.8.3): Bugfixes
 - Version [1.8.2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.8.2): Added fantasy intro, french version and language selection
 - Version [1.8.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.8.1): Bugfixes
 - Version [1.8.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.8.0): Added Ambermoon Advanced Ep II, many bugfixes
