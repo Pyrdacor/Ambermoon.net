@@ -133,17 +133,19 @@ namespace Ambermoon.Render
         }
 
         public static void Play(Game game, IRenderView renderView, Type type, Position startPosition,
-            Action finishAction = null, TimeSpan? initialDelay = null, int pixelsPerSecond = 300)
+            Action finishAction = null, TimeSpan? initialDelay = null, int pixelsPerSecond = 300,
+            Func<bool> visibilityChecker = null)
         {
             Play(game, renderView, type, startPosition, finishAction, initialDelay, null,
-                GetGraphicIndex(game, type, null), null, pixelsPerSecond);
+                GetGraphicIndex(game, type, null), null, pixelsPerSecond, visibilityChecker);
         }
 
         public static void Play(Game game, IRenderView renderView, Type type, Position startPosition,
-            Action finishAction, TimeSpan? initialDelay, Position targetPosition, Item item, int pixelsPerSecond = 300)
+            Action finishAction, TimeSpan? initialDelay, Position targetPosition, Item item,
+            int pixelsPerSecond = 300, Func<bool> visibilityChecker = null)
         {
             Play(game, renderView, type, startPosition, finishAction, initialDelay, targetPosition,
-                GetGraphicIndex(game, type, item?.Index), null, pixelsPerSecond);
+                GetGraphicIndex(game, type, item?.Index), null, pixelsPerSecond, visibilityChecker);
         }
 
         public static void Play(Game game, IRenderView renderView, Type type, Position startPosition,
@@ -155,10 +157,16 @@ namespace Ambermoon.Render
 
         static void Play(Game game, IRenderView renderView, Type type, Position startPosition,
             Action finishAction, TimeSpan? initialDelay, Position targetPosition, uint graphicIndex,
-            UIItem item, int pixelsPerSecond = 300)
+            UIItem item, int pixelsPerSecond = 300, Func<bool> visibilityChecker = null)
         {
             void Start()
             {
+                if (visibilityChecker?.Invoke() == false)
+                {
+                    finishAction?.Invoke();
+                    return;
+                }
+
                 game.StartSequence();
                 int typeIndex = (int)type;
                 var layer = Layers[typeIndex];

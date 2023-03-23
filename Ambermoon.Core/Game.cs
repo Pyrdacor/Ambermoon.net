@@ -9311,7 +9311,7 @@ namespace Ambermoon
 
             void PlayItemMagicAnimation(Action animationFinishAction = null)
             {
-                ItemAnimation.Play(this, renderView, ItemAnimation.Type.Enchant, layout.GetItemSlotPosition(itemSlot),
+                ItemAnimation.Play(this, renderView, ItemAnimation.Type.Enchant, layout.GetItemSlotPosition(itemSlot, true),
                     animationFinishAction ?? finishAction, TimeSpan.FromMilliseconds(50));
             }
 
@@ -11522,7 +11522,7 @@ namespace Ambermoon
 
                             if (answer)
                             {
-                                ItemAnimation.Play(this, renderView, ItemAnimation.Type.Enchant, layout.GetItemSlotPosition(itemSlot),
+                                ItemAnimation.Play(this, renderView, ItemAnimation.Type.Enchant, layout.GetItemSlotPosition(itemSlot, true),
                                     Finish, TimeSpan.FromMilliseconds(50));
                             }
                             else

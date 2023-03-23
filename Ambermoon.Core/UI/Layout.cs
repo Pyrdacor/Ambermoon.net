@@ -2783,7 +2783,9 @@ namespace Ambermoon.UI
                             if (itemSlot.NumRemainingCharges <= 1 && CanConsumeItem(item, itemSlot))
                             {
                                 if (game.CurrentInventory == usingPlayer)
+                                {
                                     DestroyItem(itemSlot, TimeSpan.FromMilliseconds(25), true, Done);
+                                }
                                 else
                                 {
                                     var item = itemManager.GetItem(itemSlot.ItemIndex);
@@ -3790,7 +3792,7 @@ namespace Ambermoon.UI
             if (consumed)
             {
                 ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Consume, animationPosition ?? itemGrid.GetSlotPosition(slotIndex),
-                    finishAction, initialDelay);
+                    finishAction, initialDelay, 300, () => itemGrid.SlotVisible(slotIndex));
                 if (applyRemoveEffects)
                 {
                     game.AddTimedEvent(initialDelay + TimeSpan.FromMilliseconds(200), () =>
@@ -3804,7 +3806,7 @@ namespace Ambermoon.UI
             else
             {
                 ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Destroy, animationPosition ?? itemGrid.GetSlotPosition(slotIndex),
-                    finishAction, initialDelay, null, itemManager.GetItem(itemSlot.ItemIndex));
+                    finishAction, initialDelay, null, itemManager.GetItem(itemSlot.ItemIndex), 300, () => itemGrid.SlotVisible(slotIndex));
                 if (applyRemoveEffects)
                 {
                     game.AddTimedEvent(initialDelay, () =>
@@ -3830,14 +3832,30 @@ namespace Ambermoon.UI
             return null;
         }
 
-        public Position GetItemSlotPosition(ItemSlot itemSlot)
+        public Position GetItemSlotPosition(ItemSlot itemSlot, bool allowScrollIntoView)
         {
             foreach (var itemGrid in itemGrids)
             {
                 int slotIndex = itemGrid.SlotFromItemSlot(itemSlot);
 
                 if (slotIndex != -1)
+                {
+                    if (allowScrollIntoView && !itemGrid.SlotVisible(slotIndex))
+                    {
+                        int scrollOffset = slotIndex;
+
+                        if (scrollOffset % Inventory.VisibleWidth != 0)
+                            scrollOffset -= scrollOffset % Inventory.VisibleWidth;
+
+                        itemGrid.ScrollTo(scrollOffset);
+                    }
+                    else if (!itemGrid.SlotVisible(slotIndex))
+                    {
+                        return null;
+                    }
+
                     return itemGrid.GetSlotPosition(slotIndex);
+                }
             }
 
             return null;
@@ -4870,8 +4888,16 @@ namespace Ambermoon.UI
         {
             if (game.CurrentWindow.Window == Window.Inventory)
             {
-                itemGrids[0]?.ClearItemClickEventHandlers();
-                itemGrids[1]?.ClearItemClickEventHandlers();
+                if (itemGrids[0] != null)
+                {
+                    itemGrids[0].ClearItemClickEventHandlers();
+                    itemGrids[0].DisableDrag = false;
+                }
+                if (itemGrids[1] != null)
+                {
+                    itemGrids[1].ClearItemClickEventHandlers();
+                    itemGrids[1].DisableDrag = false;
+                }
             }
             game.AbortPickingTargetInventory();
         }
