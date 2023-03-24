@@ -164,7 +164,7 @@ namespace Ambermoon.Data.Legacy
         {
             try
             {
-                CharToGlyph(ch, false);
+                CharToGlyph(ch, false).Any(); // Any is needed to evaluate the IEnumerable immediately
                 return true;
             }
             catch (AmbermoonException)
