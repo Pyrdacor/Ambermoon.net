@@ -81,7 +81,7 @@
 
   <ItemGroup>
     <PackageReference Include="glfw" Version="3.3.8" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NLayer" Version="1.14.0" />
     <PackageReference Include="Silk.NET.GLFW" Version="2.16.0" />
     <PackageReference Include="Silk.NET.Input" Version="2.16.0" />

@@ -35,6 +35,7 @@ namespace Ambermoon.Renderer.OpenGL
 
     public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     {
+        Action<byte[]> screenshotDataHandler = null;
         bool disposed = false;
         readonly Context context;
         bool useFrameBuffer = false;
@@ -461,17 +462,15 @@ namespace Ambermoon.Renderer.OpenGL
             State.Gl.Viewport(viewport.X, viewport.Y, (uint)viewport.Width, (uint)viewport.Height);
         }
 
-        public byte[] TakeScreenshot()
+        public void TakeScreenshot(Action<byte[]> dataHandler)
         {
-            var area = frameBufferWindowArea;
-            byte[] buffer = new byte[area.Width * area.Height * 3];
-            State.Gl.ReadPixels<byte>(area.X, area.Y, (uint)area.Width, (uint)area.Height, GLEnum.Rgb, GLEnum.UnsignedByte, buffer);
-            return buffer;
+            if (screenshotDataHandler == null)
+                screenshotDataHandler = dataHandler;
         }
 
         public void AddLayer(IRenderLayer layer)
         {
-            if (!(layer is RenderLayer))
+            if (layer is not RenderLayer)
                 throw new InvalidCastException("The given layer is not valid for this renderer.");
 
             layers.Add(layer.Layer, layer as RenderLayer);
@@ -501,6 +500,24 @@ namespace Ambermoon.Renderer.OpenGL
         {
             if (disposed)
                 return;
+            
+            if (screenshotDataHandler != null)
+            {
+                try
+                {
+                    var area = frameBufferWindowArea;
+                    byte[] buffer = new byte[area.Width * area.Height * 3];
+                    State.Gl.ReadBuffer(GLEnum.Back);
+                    State.Gl.PixelStore(PixelStoreParameter.PackAlignment, 1);
+                    State.Gl.ReadPixels<byte>(area.X, area.Y, (uint)area.Width, (uint)area.Height, GLEnum.Rgb, GLEnum.UnsignedByte, buffer);
+                    screenshotDataHandler(buffer);
+                    screenshotDataHandler = null;
+                }
+                catch
+                {
+                    // ignore
+                }
+            }
 
             try
             {

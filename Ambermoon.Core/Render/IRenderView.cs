@@ -44,7 +44,7 @@ namespace Ambermoon.Render
         Position ScreenToView(Position position);
         Size ScreenToView(Size size);
         Rect ScreenToView(Rect rect);
-        byte[] TakeScreenshot();
+        void TakeScreenshot(Action<byte[]> dataHandler);
 
         Size FramebufferSize { get; }
         Size MaxScreenSize { get; }

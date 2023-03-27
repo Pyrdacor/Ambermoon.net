@@ -367,19 +367,11 @@ namespace Ambermoon
                 (key == Silk.NET.Input.Key.P && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
                  keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))))
             {
-                var imageData = renderView.TakeScreenshot();
-                string directory = Path.Combine(Configuration.BundleDirectory, "Screenshots");
-                string path;
-                static string GetFileName() => "Screenshot_" + DateTime.Now.ToString("dd-MM-yyyy.HH-mm-ss");
-                try
+                renderView.TakeScreenshot(imageData =>
                 {
-                    Directory.CreateDirectory(directory);
-                    path = Path.Combine(directory, GetFileName());
-                }
-                catch
-                {
-                    directory = Path.Combine(Configuration.FallbackConfigDirectory, "Screenshots");
-
+                    string directory = Path.Combine(Configuration.BundleDirectory, "Screenshots");
+                    string path;
+                    static string GetFileName() => "Screenshot_" + DateTime.Now.ToString("dd-MM-yyyy.HH-mm-ss");
                     try
                     {
                         Directory.CreateDirectory(directory);
@@ -387,17 +379,27 @@ namespace Ambermoon
                     }
                     catch
                     {
-                        path = Path.Combine(Path.GetTempPath(), GetFileName());
+                        directory = Path.Combine(Configuration.FallbackConfigDirectory, "Screenshots");
+
+                        try
+                        {
+                            Directory.CreateDirectory(directory);
+                            path = Path.Combine(directory, GetFileName());
+                        }
+                        catch
+                        {
+                            path = Path.Combine(Path.GetTempPath(), GetFileName());
+                        }
                     }
-                }
-                try
-                {
-                    WritePNG(path, imageData, renderView.FramebufferSize, false, true);
-                }
-                catch
-                {
-                    Console.WriteLine($"Failed to create screenshot at '{path}'.");
-                }
+                    try
+                    {
+                        WritePNG(path, imageData, renderView.FramebufferSize, false, true);
+                    }
+                    catch
+                    {
+                        Console.WriteLine($"Failed to create screenshot at '{path}'.");
+                    }
+                });
             }
             else
             {
