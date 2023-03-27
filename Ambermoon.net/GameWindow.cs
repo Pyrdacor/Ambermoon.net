@@ -764,7 +764,7 @@ namespace Ambermoon
                     var savegameManager = new SavegameManager(savePath);
                     savegameManager.GetSavegameNames(gameData, out int currentSavegame, 10);
                     if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
-                        currentSavegame = configuration.GetOrCreateCurrentAdditionalSavegameSlots()?.ContinueSavegameSlot ?? 0;
+                        currentSavegame = configuration.GetOrCreateCurrentAdditionalSavegameSlots(Path.GetFileName(savePath))?.ContinueSavegameSlot ?? 0;
                     bool canContinue = currentSavegame != 0;
                     var cursor = new Render.Cursor(renderView, gameData.CursorHotspots);
                     cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
@@ -781,7 +781,8 @@ namespace Ambermoon
                                 var game = new Game(configuration, gameLanguage, renderView, graphicProvider,
                                     savegameManager, savegameSerializer, gameData.Dictionary, cursor, audioOutput,
                                     musicManager, FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
-                                    new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features);
+                                    new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
+                                    Path.GetFileName(savePath));
                                 game.QuitRequested += window.Close;
                                 game.MousePositionChanged += position =>
                                 {

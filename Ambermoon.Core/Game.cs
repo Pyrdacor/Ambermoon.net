@@ -32,8 +32,6 @@ using TextColor = Ambermoon.Data.Enumerations.Color;
 using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 using Ambermoon.Data.Audio;
 using static Ambermoon.UI.BuiltinTooltips;
-using System.Security;
-using System.IO;
 
 namespace Ambermoon
 {
@@ -241,6 +239,7 @@ namespace Ambermoon
         readonly Random random = new Random();
         bool disableMusicChange = false;
         bool disableTimeEvents = false;
+        readonly string gameVersionName;
         public Features Features { get; }
         public const int NumAdditionalSavegameSlots = 20;
         internal SavegameTime GameTime { get; private set; } = null;
@@ -554,9 +553,10 @@ namespace Ambermoon
             ISavegameManager savegameManager, ISavegameSerializer savegameSerializer, TextDictionary textDictionary,
             Cursor cursor, IAudioOutput audioOutput, ISongManager songManager, FullscreenChangeHandler fullscreenChangeHandler,
             ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory,
-            Features features)
+            Features features, string gameVersionName)
         {
             Features = features;
+            this.gameVersionName = gameVersionName;
             Character.FoodWeight = Features.HasFlag(Features.ReducedFoodWeight) ? 25u : 250u;
             currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
             SecondaryUIPaletteIndex = (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1);
@@ -2121,7 +2121,7 @@ namespace Ambermoon
 
                 if (Configuration.AdditionalSavegameSlots != null)
                 {
-                    var additionalSavegameSlots = Configuration.GetOrCreateCurrentAdditionalSavegameSlots();
+                    var additionalSavegameSlots = GetAdditionalSavegameSlots();
                     additionalSavegameSlots.ContinueSavegameSlot = slot;
                 }
             }
@@ -2207,6 +2207,8 @@ namespace Ambermoon
             }
         }
 
+        internal AdditionalSavegameSlots GetAdditionalSavegameSlots() => Configuration.GetOrCreateCurrentAdditionalSavegameSlots(gameVersionName);
+
         public void SaveCrashedGame()
         {
             PrepareSaving(() => SavegameManager.SaveCrashedGame(savegameSerializer, CurrentSavegame));
@@ -2220,7 +2222,7 @@ namespace Ambermoon
 
                 if (Configuration.ExtendedSavegameSlots) // extended slots
                 {
-                    var additionalSavegameSlots = Configuration.GetOrCreateCurrentAdditionalSavegameSlots();
+                    var additionalSavegameSlots = GetAdditionalSavegameSlots();
 
                     if (additionalSavegameSlots.Names == null)
                         additionalSavegameSlots.Names = new string[NumAdditionalSavegameSlots];
@@ -2265,7 +2267,7 @@ namespace Ambermoon
 
             void Continue()
             {
-                int current = Configuration.ExtendedSavegameSlots ? Configuration.GetOrCreateCurrentAdditionalSavegameSlots()?.ContinueSavegameSlot ?? 0 : 0;
+                int current = Configuration.ExtendedSavegameSlots ? GetAdditionalSavegameSlots()?.ContinueSavegameSlot ?? 0 : 0;
 
                 if (current <= 0)
                     SavegameManager.GetSavegameNames(renderView.GameData, out current, 10);
@@ -15526,7 +15528,7 @@ namespace Ambermoon
                     InputEnable = true;
                     bool hasSavegames = SavegameManager.GetSavegameNames(renderView.GameData, out _, 10).Any(n => !string.IsNullOrWhiteSpace(n));
                     if (!hasSavegames)
-                        hasSavegames = Configuration.ExtendedSavegameSlots && Configuration.GetOrCreateCurrentAdditionalSavegameSlots()?.Names?.Any(s => !string.IsNullOrWhiteSpace(s)) == true;
+                        hasSavegames = Configuration.ExtendedSavegameSlots && GetAdditionalSavegameSlots()?.Names?.Any(s => !string.IsNullOrWhiteSpace(s)) == true;
                     layout.AddText(textArea, ProcessText(hasSavegames
                         ? DataNameProvider.GameOverLoadOrQuit
                         : GetCustomText(CustomTexts.Index.StartNewGameOrQuit)),

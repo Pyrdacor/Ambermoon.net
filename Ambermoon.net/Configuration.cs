@@ -188,34 +188,28 @@ namespace Ambermoon
             ContinueSavegameSlot = null;
         }
 
-        public AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots()
+        public AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots(string gameVersionName)
         {
-            if (GameVersionIndex < 0)
-                GameVersionIndex = 0;
-
             if (AdditionalSavegameSlots == null)
                 UpgradeAdditionalSavegameSlots();
-            else if (GameVersionIndex >= AdditionalSavegameSlots.Length)
+
+            gameVersionName = gameVersionName.ToLower();
+
+            var savegameSlots = AdditionalSavegameSlots.FirstOrDefault(s => s.GameVersionName.ToLower() == gameVersionName);
+
+            if (savegameSlots == null)
             {
-                var versionSavegameFolders = GetAllPossibleSavegameFolders().ToArray();
-                var versionSlots = new AdditionalSavegameSlots[versionSavegameFolders.Length];
-
-                Array.Copy(AdditionalSavegameSlots, versionSlots, AdditionalSavegameSlots.Length);
-
-                for (int i = AdditionalSavegameSlots.Length; i < versionSavegameFolders.Length; ++i)
+                savegameSlots = new AdditionalSavegameSlots
                 {
-                    versionSlots[i] = new AdditionalSavegameSlots
-                    {
-                        GameVersionName = versionSavegameFolders[i],
-                        ContinueSavegameSlot = 0,
-                        Names = new string[Game.NumAdditionalSavegameSlots]
-                    };
-                }
+                    GameVersionName = gameVersionName,
+                    ContinueSavegameSlot = 0,
+                    Names = new string[Game.NumAdditionalSavegameSlots]
+                };
 
-                AdditionalSavegameSlots = versionSlots;
+                AdditionalSavegameSlots = Enumerable.Concat(AdditionalSavegameSlots, new[] { savegameSlots }).ToArray();
             }
 
-            return AdditionalSavegameSlots[GameVersionIndex];
+            return savegameSlots;
         }
 #pragma warning restore CS0618
 
@@ -362,9 +356,6 @@ namespace Ambermoon
                 configuration = defaultValue ?? new Configuration();
                 configuration.FirstStart = false;
 
-                // Ticks of last saving, version index
-                Tuple<long, int> mostRecentSavegameSlot = Tuple.Create(0L, -1);
-
                 try
                 {
                     var versionSavegameFolders = GetAllPossibleSavegameFolders().ToArray();
@@ -411,9 +402,6 @@ namespace Ambermoon
                                         {
                                             long lastWriteTicks = Math.Max(saveFolder.LastWriteTime.Ticks, GetLastWriteTicksOfSaveFiles(saveFolder));
 
-                                            if (lastWriteTicks > mostRecentSavegameSlot.Item1)
-                                                mostRecentSavegameSlot = Tuple.Create(lastWriteTicks, versionIndex);
-
                                             if (lastWriteTicks > mostRecentSavegameSlotOfVersion.Item1)
                                                 mostRecentSavegameSlotOfVersion = Tuple.Create(lastWriteTicks, index);
                                         }
@@ -426,8 +414,6 @@ namespace Ambermoon
 
                         ++versionIndex;
                     }
-
-                    configuration.GameVersionIndex = Math.Max(0, mostRecentSavegameSlot.Item2);
                 }
                 catch
                 {

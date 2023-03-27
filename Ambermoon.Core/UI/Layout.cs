@@ -1052,7 +1052,7 @@ namespace Ambermoon.UI
             bool extended = game.Configuration.ExtendedSavegameSlots;
             if (extended)
             {
-                var additionalSavegameSlots = game.Configuration.GetOrCreateCurrentAdditionalSavegameSlots();
+                var additionalSavegameSlots = game.GetAdditionalSavegameSlots();
                 int remaining = Game.NumAdditionalSavegameSlots - Math.Min(Game.NumAdditionalSavegameSlots, additionalSavegameSlots?.Names?.Length ?? 0);
                 if (additionalSavegameSlots?.Names != null)
                     savegameNames = Enumerable.Concat(savegameNames, additionalSavegameSlots.Names.Take(Game.NumAdditionalSavegameSlots).Select(n => n ?? "")).ToArray();
@@ -1111,7 +1111,7 @@ namespace Ambermoon.UI
             bool extended = game.Configuration.ExtendedSavegameSlots;
             if (extended)
             {
-                var additionalSavegameSlots = game.Configuration.GetOrCreateCurrentAdditionalSavegameSlots();
+                var additionalSavegameSlots = game.GetAdditionalSavegameSlots();
                 int remaining = Game.NumAdditionalSavegameSlots - Math.Min(Game.NumAdditionalSavegameSlots, additionalSavegameSlots?.Names?.Length ?? 0);
                 if (additionalSavegameSlots?.Names != null)
                     savegameNames = Enumerable.Concat(savegameNames, additionalSavegameSlots.Names.Take(Game.NumAdditionalSavegameSlots).Select(n => n ?? "")).ToArray();
@@ -1143,7 +1143,7 @@ namespace Ambermoon.UI
                     return;
                 }
 
-                var additionalSavegameSlots = game.Configuration.GetOrCreateCurrentAdditionalSavegameSlots();
+                var additionalSavegameSlots = game.GetAdditionalSavegameSlots();
 
                 if (string.IsNullOrEmpty(savegameNames[slot - 1]))
                 {

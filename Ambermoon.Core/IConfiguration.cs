@@ -156,7 +156,7 @@ namespace Ambermoon
 
         void RequestSave();
         void UpgradeAdditionalSavegameSlots();
-        AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots();
+        AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots(string gameVersionName);
     }
 
     public static class ConfigurationExtensions
