@@ -33,7 +33,7 @@ namespace Ambermoon
         Rafting, // raft
         Sailing, // boat, sand ship
         WitchBroom,
-        Eagle,
+        Eagle, // also used for wasp
         Flying
     }
 
@@ -53,6 +53,7 @@ namespace Ambermoon
             TravelType.WitchBroom => PlayerMovementAbility.WitchBroom,
             TravelType.Fly => PlayerMovementAbility.Flying,
             TravelType.Eagle => PlayerMovementAbility.Eagle,
+            TravelType.Wasp => PlayerMovementAbility.Eagle,
             _ => PlayerMovementAbility.NoMovement
         };
     }

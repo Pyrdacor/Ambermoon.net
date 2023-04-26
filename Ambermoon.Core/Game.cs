@@ -124,7 +124,8 @@ namespace Ambermoon
                     4,  // Swim
                     10, // Witch broom
                     8,  // Sand lizard
-                    8   // Sand ship
+                    8,  // Sand ship
+                    15, // Wasp
                 };
                 MoveSpeed3D = GetMoveSpeed3D(legacyMode);
                 TurnSpeed3D = GetTurnSpeed3D(legacyMode);
@@ -2414,8 +2415,8 @@ namespace Ambermoon
 
         public bool CanRevive() => CurrentWindow.Window == Window.Camp;
 
-        // Note: Eagle allows movement even with overweight.
-        bool CanPartyMove() => TravelType == TravelType.Eagle || !PartyMembers.Any(p => !p.CanMove(false));
+        // Note: Eagle and wasp allow movement even with overweight.
+        bool CanPartyMove() => TravelType == TravelType.Eagle || TravelType == TravelType.Wasp || !PartyMembers.Any(p => !p.CanMove(false));
 
         internal void Move(bool fromNumpadButton, float speedFactor3D, params CursorType[] cursorTypes)
         {

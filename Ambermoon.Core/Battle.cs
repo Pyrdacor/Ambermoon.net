@@ -3659,7 +3659,31 @@ namespace Ambermoon
                         var maxRowPrio = rows.Max(r => r.Prio);
                         targetTileOrRow = (uint)rows.First(row => row.Prio == maxRowPrio).Row;
                     }
-                    if (averagePrio >= 75 && spells.Any(s => SpellInfos.Entries[s].Target == SpellTarget.AllEnemies))
+                    if (partyMembers.Count(p => p != null && p.Alive && !fledCharacters.Contains(p)) == 1)
+                    {
+                        // Only 1 player in battle
+                        // Prefer single target spells
+                        var singleTargetSpells = spells.Where(s => SpellInfos.Entries[s].Target == SpellTarget.SingleEnemy).ToList();
+
+                        if (singleTargetSpells.Count != 0)
+                        {
+                            PickBestTargetTile();
+                            spells = singleTargetSpells;
+                        }
+                        else
+                        {
+                            var rowTargetSpells = spells.Where(s => SpellInfos.Entries[s].Target == SpellTarget.EnemyRow).ToList();
+
+                            if (rowTargetSpells.Count != 0)
+                            {
+                                PickBestTargetRow();
+                                spells = rowTargetSpells;
+                            }
+
+                            // Otherwise pick from all spells
+                        }
+                    }
+                    else if (averagePrio >= 75 && spells.Any(s => SpellInfos.Entries[s].Target == SpellTarget.AllEnemies))
                     {
                         spells = spells.Where(s => SpellInfos.Entries[s].Target == SpellTarget.AllEnemies).ToList();
                     }

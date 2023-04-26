@@ -263,6 +263,7 @@ namespace Ambermoon
                     TravelType.WitchBroom => 4,
                     TravelType.SandLizard => 3,
                     TravelType.SandShip => 4,
+                    TravelType.Wasp => 6,
                     _ => 2
                 };
 

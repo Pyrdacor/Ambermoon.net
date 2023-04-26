@@ -29,7 +29,7 @@ namespace Ambermoon.Render
     {
         // Characters
         public const uint TravelGraphicOffset = 3 * 17;
-        public const uint TransportGraphicOffset = TravelGraphicOffset + 11 * 4;
+        public const uint TransportGraphicOffset = TravelGraphicOffset + 12 * 4;
         public const uint NPCGraphicOffset = TransportGraphicOffset + 5;
 
         // UI layer
