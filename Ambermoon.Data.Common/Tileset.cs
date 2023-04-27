@@ -105,7 +105,7 @@ namespace Ambermoon.Data
 
                 uint flagValue = (uint)flags;
 
-                tile.AllowedTravelTypes = (ushort)((flagValue >> 8) & 0x7ff);
+                tile.AllowedTravelTypes = (ushort)((flagValue >> 8) & 0xfff);
                 var sitSleepValue = (flagValue >> 23) & 0x07;
                 tile.SitDirection = (sitSleepValue == 0 || sitSleepValue > 4) ? (CharacterDirection?)null : (CharacterDirection)(sitSleepValue - 1);
                 tile.Sleep = sitSleepValue == 5;
