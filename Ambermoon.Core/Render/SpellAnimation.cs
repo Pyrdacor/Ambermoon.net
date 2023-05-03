@@ -332,6 +332,7 @@ namespace Ambermoon.Render
                     // never be called for those spells so we throw here.
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a source position.");
                 case Spell.GhostWeapon:
+                case Spell.GhostInferno:
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.Firebeam:
@@ -436,6 +437,7 @@ namespace Ambermoon.Render
                     // GetTargetPosition should never be called for those spells so we throw here.
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
                 case Spell.GhostWeapon:
+                case Spell.GhostInferno:
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
@@ -732,6 +734,7 @@ namespace Ambermoon.Render
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.GhostWeapon:
+                case Spell.GhostInferno:
                 case Spell.MonsterKnowledge:
                     // Those spells use only the MoveTo method.
                     this.finishAction?.Invoke();
@@ -1512,6 +1515,7 @@ namespace Ambermoon.Render
                     this.finishAction?.Invoke();
                     break;
                 case Spell.GhostWeapon:
+                case Spell.GhostInferno:
                 {
                     var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
                     var monsterRow = (MonsterRow)(fromMonster ? this.startPosition / 6 : tile / 6);

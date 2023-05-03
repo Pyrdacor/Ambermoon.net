@@ -62,7 +62,7 @@
         DuplicateItem,
         LPStealer,
         SPStealer,
-        UnusedAlchemistic30,
+        GhostInferno, // Advanced only
         MonsterKnowledge,
         Identification,
         Knowledge,
@@ -218,7 +218,7 @@
         DuplicateItem,
         LPStealer,
         SPStealer,
-        Unused30
+        GhostInferno // Advanced only
     }
 
     public enum MysticSpell
@@ -298,6 +298,7 @@
             // Most damage dealing spells except for
             // dissolving spells fail against petrified enemies.
             return  spell == Spell.GhostWeapon ||
+                    spell == Spell.GhostInferno ||
                     spell == Spell.LPStealer ||
                     spell == Spell.SPStealer ||
                     spell == Spell.MagicalProjectile ||
@@ -309,6 +310,7 @@
         {
             // No dissolve spells.
             return spell == Spell.GhostWeapon ||
+                    spell == Spell.GhostInferno ||
                    spell == Spell.LPStealer ||
                    spell == Spell.SPStealer ||
                    spell == Spell.MagicalProjectile ||

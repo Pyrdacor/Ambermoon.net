@@ -2517,6 +2517,7 @@ namespace Ambermoon
             switch (spell)
             {
                 case Spell.GhostWeapon:
+                case Spell.GhostInferno:
                 {
                     bool ignoreDamageBonus = caster is PartyMember p && p.Index < 16;
                     var damage = (uint)Math.Max(1, caster.BaseAttack + caster.VariableAttack);

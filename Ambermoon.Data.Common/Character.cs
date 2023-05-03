@@ -105,6 +105,7 @@ namespace Ambermoon.Data
                 Spell.DestroyUndead => !undead || boss,
                 Spell.HolyWord => !undead || boss,
                 Spell.GhostWeapon => Element == CharacterElement.Spirit,
+                Spell.GhostInferno => Element == CharacterElement.Spirit,
                 Spell.LPStealer => Element == CharacterElement.Undead,
                 Spell.SPStealer => Element == CharacterElement.Spirit,
                 Spell.MonsterKnowledge => Element == CharacterElement.Mental,

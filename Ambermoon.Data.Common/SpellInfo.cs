@@ -163,7 +163,7 @@ namespace Ambermoon.Data
             { Spell.DuplicateItem, new SpellInfo { SP = 250, SLP = 25, Target = SpellTarget.Item, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.All } },
             { Spell.LPStealer, new SpellInfo { SP = 25, SLP = 5, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.SPStealer, new SpellInfo { SP = 25, SLP = 5, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
-            { Spell.UnusedAlchemistic30, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
+            { Spell.GhostInferno, new SpellInfo { SP = 35, SLP = 55, Target = SpellTarget.AllEnemies, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } }, // Advanced only
             { Spell.MonsterKnowledge, new SpellInfo { SP = 5, SLP = 3, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.Identification, new SpellInfo { SP = 50, SLP = 15, Target = SpellTarget.Item, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.All } },
             { Spell.Knowledge, new SpellInfo { SP = 15, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle, Worlds = WorldFlag.All } },
