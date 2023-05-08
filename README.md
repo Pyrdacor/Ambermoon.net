@@ -205,6 +205,7 @@ Special thanks to my top patreons and github sponsors:
 - Teladi (@Levidega)
 - Sebberick
 - Kaspar
+- [StayForever](https://www.stayforever.de/)
 
 Special thanks to some special contributors and testers as well:
 - kermitfrog
@@ -215,6 +216,8 @@ Special thanks to some special contributors and testers as well:
 - Nephilim
 - skdubg
 - crediar
+- nicode
+- Jurie Horneman
 
 
 ## Other projects

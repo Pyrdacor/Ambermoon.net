@@ -76,6 +76,12 @@ namespace Ambermoon.Render
             AddText("Ambermoon would not be possible without Alex I guess.");
             AddText("Thank you so much for all you have done!");
 
+            AddText("I also want to thank Nico Bendlin and Jurie Horneman.", 3);
+            AddText("Even though they don't have much time, they support");
+            AddText("where they can. Nico decoded the fantasy intro");
+            AddText("and Jurie finally found and released the original");
+            AddText("Ambermoon source code and docs in May 2023.");
+
             AddText("And of course I want to thank my wife.", 3);
             AddText("She was very patient and supportive with me.");
 
@@ -102,6 +108,7 @@ namespace Ambermoon.Render
             AddText("Teladi");
             AddText("Sebberick");
             AddText("Kaspar");
+            AddText("StayForever");
 
             AddHeader("Contributors", 12);
             AddText("Over the years many people contributed to Ambermoon.", 1);
