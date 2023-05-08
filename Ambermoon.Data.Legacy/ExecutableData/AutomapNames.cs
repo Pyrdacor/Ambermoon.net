@@ -24,7 +24,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid number of automap type names.");
 
             for (int i = 0; i < names.Count; ++i)
-                entries.Add(AutomapType.Riddlemouth + i, names[i]);
+                entries.Add(AutomapType.Riddlemouth + (ushort)i, names[i]);
         }
 
         /// <summary>

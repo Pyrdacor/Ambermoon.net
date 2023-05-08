@@ -22,7 +22,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid number of songs.");
 
             for (int i = 0; i < names.Count; ++i)
-                entries.Add(Song.WhoSaidHiHo + i, names[i]);
+                entries.Add(Song.WhoSaidHiHo + (byte)i, names[i]);
         }
 
         /// <summary>
