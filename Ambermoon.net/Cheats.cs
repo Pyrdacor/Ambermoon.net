@@ -503,7 +503,7 @@ namespace Ambermoon
                 {
                     case Class.Adventurer:
                     case Class.Alchemist:
-                        partyMember.LearnedAlchemisticSpells = 0xffffffff;
+                        partyMember.LearnedAlchemisticSpells = 0x3ffffffe;
                         break;
                     case Class.Healer:
                     case Class.Paladin:
@@ -511,7 +511,7 @@ namespace Ambermoon
                         break;
                     case Class.Ranger:
                     case Class.Mystic:
-                        partyMember.LearnedMysticSpells = 0xffffffff;
+                        partyMember.LearnedMysticSpells = 0x0003fffe;
                         break;
                     case Class.Mage:
                         partyMember.LearnedDestructionSpells = 0xffffffff;
