@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data
 {
-    public enum Attribute
+    public enum Attribute : byte
     {
         Strength,
         Intelligence,

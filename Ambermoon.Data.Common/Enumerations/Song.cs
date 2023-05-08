@@ -1,7 +1,7 @@
 ﻿namespace Ambermoon.Data.Enumerations
 {
     // Note: Menu and Intro songs are not part of this.
-    public enum Song
+    public enum Song : byte
     {
         Default,
         /// <summary>

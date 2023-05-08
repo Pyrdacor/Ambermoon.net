@@ -3,7 +3,7 @@
 namespace Ambermoon.Data
 {
     [Flags]
-    public enum BattleFlags
+    public enum BattleFlags : byte
     {
         None = 0,
         Undead = 0x01, // can be killed by holy spells

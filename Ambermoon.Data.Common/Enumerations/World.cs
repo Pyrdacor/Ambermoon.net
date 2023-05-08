@@ -1,13 +1,13 @@
 ﻿namespace Ambermoon.Data
 {
-    public enum World
+    public enum World : byte
     {
         Lyramion,
         ForestMoon,
         Morag
     }
 
-    public enum WorldFlag
+    public enum WorldFlag : byte
     {
         None = 0,
         Lyramion = 0x01,

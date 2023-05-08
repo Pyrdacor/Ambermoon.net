@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data.Enumerations
 {
-    public enum AutomapType
+    public enum AutomapType : ushort
     {
         None, // not in legend / no text
         Wall, // not in legend / no text

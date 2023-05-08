@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data
 {
-    public enum Skill
+    public enum Skill : byte
     {
         Attack,
         Parry,

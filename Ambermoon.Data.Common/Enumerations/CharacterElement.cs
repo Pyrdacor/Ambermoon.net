@@ -3,7 +3,7 @@
 namespace Ambermoon.Data
 {
     [Flags]
-    public enum CharacterElement
+    public enum CharacterElement : byte
     {
         None = 0,
         Mental = 0x01,

@@ -2,7 +2,7 @@
 
 namespace Ambermoon.Data
 {
-    public enum SpellSchool
+    public enum SpellSchool : byte
     {
         Healing,
         Alchemistic,
@@ -29,7 +29,7 @@ namespace Ambermoon.Data
     }
 
     [Flags]
-    public enum SpellTypeMastery
+    public enum SpellTypeMastery : byte
     {
         None = 0x00,
         Healing = 0x01,
@@ -44,7 +44,7 @@ namespace Ambermoon.Data
     }
 
     [Flags]
-    public enum SpellTypeImmunity
+    public enum SpellTypeImmunity : byte
     {
         None = 0x00,
         Healing = 0x01,

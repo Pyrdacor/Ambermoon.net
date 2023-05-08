@@ -151,7 +151,7 @@
         ExpExchange = 204 // Advanced only
     }
 
-    public enum HealingSpell
+    public enum HealingSpell : byte
     {
         None,
         HealingHand,
@@ -186,7 +186,7 @@
         RestoreStamina
     }
 
-    public enum AlchemisticSpell
+    public enum AlchemisticSpell : byte
     {
         None,
         ChargeItem,
@@ -221,7 +221,7 @@
         GhostInferno // Advanced only
     }
 
-    public enum MysticSpell
+    public enum MysticSpell : byte
     {
         None,
         MonsterKnowledge,
@@ -256,7 +256,7 @@
         Unused30
     }
 
-    public enum DestructionSpell
+    public enum DestructionSpell : byte
     {
         None,
         MagicalProjectile,

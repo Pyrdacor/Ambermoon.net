@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data.Enumerations
 {
-    public enum PlaceType
+    public enum PlaceType : byte
     {
         Trainer,
         Healer,

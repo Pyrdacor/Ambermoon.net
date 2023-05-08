@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data.Enumerations
 {
-    public enum Option
+    public enum Option : byte
     {
         Music = 0x01,
         FastBattleMode = 0x02,

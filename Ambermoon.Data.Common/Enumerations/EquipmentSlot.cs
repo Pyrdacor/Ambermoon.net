@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data
 {
-    public enum EquipmentSlot
+    public enum EquipmentSlot : byte
     {
         None,
         Neck, // chains

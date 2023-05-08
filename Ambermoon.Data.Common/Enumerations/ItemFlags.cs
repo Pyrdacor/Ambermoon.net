@@ -3,7 +3,7 @@
 namespace Ambermoon.Data
 {
     [Flags]
-    public enum ItemFlags
+    public enum ItemFlags : byte
     {
         None = 0,
         /// <summary>

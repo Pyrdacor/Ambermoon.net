@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data
 {
-    public enum Transportation
+    public enum Transportation : byte
     {
         FlyingDisc = 4,
         WitchBroom = 8

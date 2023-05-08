@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data
 {
-    public enum SpecialItemPurpose
+    public enum SpecialItemPurpose : byte
     {
         Compass,
         MonsterEye,

@@ -3,7 +3,7 @@
 namespace Ambermoon.Data
 {
     [Flags]
-    public enum Language
+    public enum Language : byte
     {
         None = 0,
         Human = 0x01,

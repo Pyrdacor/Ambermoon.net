@@ -3,7 +3,7 @@
 namespace Ambermoon.Data
 {
     [Flags]
-    public enum ItemSlotFlags
+    public enum ItemSlotFlags : byte
     {
         None = 0,
         Identified = 0x01, // only used for magic items

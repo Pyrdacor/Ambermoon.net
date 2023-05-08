@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data.Enumerations
 {
-    public enum ActiveSpellType
+    public enum ActiveSpellType : byte
     {
         Light,
         Protection,

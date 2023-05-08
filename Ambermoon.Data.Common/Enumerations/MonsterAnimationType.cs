@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data.Enumerations
 {
-    public enum MonsterAnimationType
+    public enum MonsterAnimationType : byte
     {
         Move, // also used for random idle animation
         Attack,
