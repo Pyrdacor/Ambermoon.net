@@ -13,6 +13,7 @@ namespace Ambermoon.Data.Enumerations
         AdjustedSPAndSLP = 0x10,
         AdjustedEPFactors = 0x20,
         SageScrollIdentification = 0x40,
-        AmbermoonAdvanced = Elements | AdjustedSpellDamage | SpellDamageBonus | ReducedFoodWeight | AdjustedSPAndSLP | AdjustedEPFactors | SageScrollIdentification
+        AdvancedSpells = 0x80,
+        AmbermoonAdvanced = Elements | AdjustedSpellDamage | SpellDamageBonus | ReducedFoodWeight | AdjustedSPAndSLP | AdjustedEPFactors | SageScrollIdentification | AdvancedSpells
     }
 }

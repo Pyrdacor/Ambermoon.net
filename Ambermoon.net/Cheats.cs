@@ -503,18 +503,18 @@ namespace Ambermoon
                 {
                     case Class.Adventurer:
                     case Class.Alchemist:
-                        partyMember.LearnedAlchemisticSpells = 0x3ffffffe;
+                        partyMember.LearnedAlchemisticSpells = game.Features.HasFlag(Data.Enumerations.Features.AdvancedSpells) ? 0x7ffffffeu : 0x3ffffffeu;
                         break;
                     case Class.Healer:
                     case Class.Paladin:
-                        partyMember.LearnedHealingSpells = 0xffffffff;
+                        partyMember.LearnedHealingSpells = 0x7ffffffeu;
                         break;
                     case Class.Ranger:
                     case Class.Mystic:
-                        partyMember.LearnedMysticSpells = 0x0003fffe;
+                        partyMember.LearnedMysticSpells = game.Features.HasFlag(Data.Enumerations.Features.AdvancedSpells) ? 0x7ffffffeu : 0x0003fffe;
                         break;
                     case Class.Mage:
-                        partyMember.LearnedDestructionSpells = 0xffffffff;
+                        partyMember.LearnedDestructionSpells = 0x7ffffffeu;
                         break;
                 }
             }
