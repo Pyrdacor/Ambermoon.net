@@ -1900,7 +1900,7 @@ namespace Ambermoon
                                 }
                             }
 
-                            if (monster.BaseAttack == 0)
+                            if (monster.BaseAttackDamage == 0)
                                 monsterMorale[initialMonsters.IndexOf(monster)] /= 2;
                         }
                         Proceed(() => ActionFinished(true), true);
@@ -2364,13 +2364,13 @@ namespace Ambermoon
                 TextColor.BrightGray);
             position.Y += Global.GlyphLineHeight;
             popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), Layer.UI, 1, game.UIPaletteIndex);
-            int damage = monster.BaseAttack + monster.VariableAttack;
+            int damage = monster.BaseAttackDamage + monster.BonusAttackDamage;
             popup.AddText(position + new Position(6, 2),
                 string.Format(game.DataNameProvider.CharacterInfoDamageString.Replace(' ', damage < 0 ? '-' : '+'), Math.Abs(damage)),
                 TextColor.BrightGray);
             position.X = area.X + panelWidth + Global.GlyphWidth;
             popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), Layer.UI, 1, game.UIPaletteIndex);
-            int defense = monster.BaseDefense + monster.VariableDefense;
+            int defense = monster.BaseDefense + monster.BonusDefense;
             popup.AddText(position + new Position(7, 2),
                 string.Format(game.DataNameProvider.CharacterInfoDefenseString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense)),
                 TextColor.BrightGray);
@@ -2520,7 +2520,7 @@ namespace Ambermoon
                 case Spell.GhostInferno:
                 {
                     bool ignoreDamageBonus = caster is PartyMember p && p.Index < 16;
-                    var damage = (uint)Math.Max(1, caster.BaseAttack + caster.VariableAttack);
+                    var damage = (uint)Math.Max(1, caster.BaseAttackDamage + caster.BonusAttackDamage);
                     var bonusDamage = caster.Attributes[Attribute.BonusSpellDamage];
                     uint minDamage = damage;
                     uint maxDamage = damage;
@@ -3057,7 +3057,7 @@ namespace Ambermoon
                                     emptyInventorySlot.Replace(weaponSlot);
                                 weaponSlot.Clear();
 
-                                if (monster.BaseAttack == 0)
+                                if (monster.BaseAttackDamage == 0)
                                     monsterMorale[initialMonsters.IndexOf(monster)] /= 2;
                             }
                         }
@@ -3940,16 +3940,18 @@ namespace Ambermoon
 
         int CalculatePhysicalDamage(Character attacker, Character target)
         {
-            int baseAttack = attacker is PartyMember ? game.AdjustAttackForNotUsedAmmunition(attacker, attacker.BaseAttack) : attacker.BaseAttack;
-            int damage = baseAttack + game.RandomInt(0, attacker.VariableAttack) + (int)target.Attributes[Attribute.Strength].TotalCurrentValue / 25;
-            int defense = target.BaseDefense + game.RandomInt(0, target.VariableDefense) + (int)target.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
+            int attackDamage = attacker.BaseAttackDamage + attacker.BonusAttackDamage;
+            if (attacker is PartyMember)
+                attackDamage = game.AdjustAttackForNotUsedAmmunition(attacker, attackDamage);
+            attackDamage += (int)target.Attributes[Attribute.Strength].TotalCurrentValue / 25;
+            int defense = target.BaseDefense + target.BonusDefense + (int)target.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
 
-            if (damage > 0)
-                damage = (damage * (100 + (int)game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
+            if (attackDamage > 0)
+                attackDamage = (attackDamage * (100 + (int)game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
             if (defense > 0)
                 defense = (defense * (100 + (int)game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection))) / 100;
 
-            return (game.RandomInt(50, 100) * damage) / 100 - (game.RandomInt(50, 100) * defense) / 100;
+            return (game.RandomInt(50, 100) * attackDamage) / 100 - (game.RandomInt(50, 100) * defense) / 100;
         }
 
         uint CalculateSpellDamage(Character caster, Character target, uint baseDamage, uint variableDamage)
