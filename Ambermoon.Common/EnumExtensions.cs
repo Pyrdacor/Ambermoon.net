@@ -11,10 +11,30 @@ namespace Ambermoon
 
         public static int NameCount<TEnum>() => System.Enum.GetNames(typeof(TEnum)).Length;
 
-        public static string GetFlagNames<TEnum>(TEnum value)
+        public static string GetFlagNames<TEnum>(TEnum value, int bytes)
         {
-            var values = GetValues<TEnum>().Select(v => (uint)Convert.ChangeType(v, typeof(uint))).Where(v => v != 0).Distinct().ToList();
-            uint flags = (uint)Convert.ChangeType(value, typeof(uint));
+            uint ToUint(TEnum value)
+            {
+                return bytes switch
+                {
+                    1 => (byte)Convert.ChangeType(value, typeof(byte)),
+                    2 => (ushort)Convert.ChangeType(value, typeof(ushort)),
+                    _ => (uint)Convert.ChangeType(value, typeof(uint))
+                };
+            }
+
+            TEnum FromUint(uint value)
+            {
+                return bytes switch
+                {
+                    1 => (TEnum)Convert.ChangeType((byte)value, typeof(TEnum)),
+                    2 => (TEnum)Convert.ChangeType((ushort)value, typeof(TEnum)),
+                    _ => (TEnum)Convert.ChangeType(value, typeof(TEnum))
+                };
+            }
+
+            var values = GetValues<TEnum>().Select(v => ToUint(v)).Where(v => v != 0).Distinct().ToList();
+            uint flags = ToUint(value);
 
             if (values.Count == 0 || flags == 0)
             {
@@ -38,7 +58,7 @@ namespace Ambermoon
 
                 if (result.Length != 0)
                     result += " | ";
-                result += GetName(v);
+                result += GetName(FromUint(v));
             }
 
             return result;

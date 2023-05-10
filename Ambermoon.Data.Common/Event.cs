@@ -848,7 +848,7 @@ namespace Ambermoon.Data
                 ConditionType.DoorOpen => $"{Type}: Door {ObjectIndex} {(Value == 0 ? "closed" : "open")}, {falseHandling}",
                 ConditionType.ChestOpen => $"{Type}: Chest {ObjectIndex} {(Value == 0 ? "closed" : "open")}, {falseHandling}",
                 ConditionType.CharacterBit => $"{Type}: Character bit {ObjectIndex / 32 + 1}:{1 + ObjectIndex % 32} = {Value}, {falseHandling}",
-                ConditionType.PartyMember => $"{Type}: Has party member {ObjectIndex} without ailments {Enum.GetFlagNames(DisallowedAilments)}, {falseHandling}",
+                ConditionType.PartyMember => $"{Type}: Has party member {ObjectIndex} without ailments {Enum.GetFlagNames(DisallowedAilments, 2)}, {falseHandling}",
                 ConditionType.ItemOwned => $"{Type}: {(Value == 0 ? $"Not own item" : $"Own item {Math.Max(1, Count)}x")} {ObjectIndex}, {falseHandling}",
                 ConditionType.UseItem => $"{Type}: Use item {ObjectIndex}, {falseHandling}",
                 ConditionType.KnowsKeyword => $"{Type}: {(Value == 0 ? "Not know" : "Know")} keyword {ObjectIndex}, {falseHandling}",
