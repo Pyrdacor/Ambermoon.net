@@ -27,9 +27,9 @@ namespace Ambermoon
             {
                 return bytes switch
                 {
-                    1 => (TEnum)Convert.ChangeType((byte)value, typeof(TEnum)),
-                    2 => (TEnum)Convert.ChangeType((ushort)value, typeof(TEnum)),
-                    _ => (TEnum)Convert.ChangeType(value, typeof(TEnum))
+                    1 => (TEnum)System.Enum.ToObject(typeof(TEnum), (byte)value),
+                    2 => (TEnum)System.Enum.ToObject(typeof(TEnum), (ushort)value),
+                    _ => (TEnum)System.Enum.ToObject(typeof(TEnum), value)
                 };
             }
 
