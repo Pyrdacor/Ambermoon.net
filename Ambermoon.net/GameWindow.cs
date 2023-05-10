@@ -738,7 +738,7 @@ namespace Ambermoon
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;
                 textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
-                    introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
+                    introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value), features);
                 logoPyrdacor?.Initialize(textureAtlasManager);
                 AdvancedLogo.Initialize(textureAtlasManager);
                 return textureAtlasManager;
@@ -1381,17 +1381,20 @@ namespace Ambermoon
                 {
                     configuration.PatcherTimeout ??= 1250;                    
                     int timeout = configuration.PatcherTimeout.Value;
-                    patcher.CheckPatches(afterCloseAction =>
+                    patcher.CheckPatches(ok =>
                     {
-                        if (afterCloseAction?.Invoke() == true)
+                        if (ok)
                             window.Close();
-                    }, () =>
+                        else
+                            NotPatched();
+                    }, NotPatched, ref timeout);
+                    configuration.PatcherTimeout = timeout;
+                    void NotPatched()
                     {
                         patcher?.CleanUp(true);
                         patcher = null;
                         logoPyrdacor?.PlayMusic();
-                    }, ref timeout);
-                    configuration.PatcherTimeout = timeout;
+                    }
                 }
             }
             else

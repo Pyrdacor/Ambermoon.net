@@ -153,7 +153,8 @@ namespace Ambermoon
                     "Ambermoon {0} wird heruntergeladen ...",
                     "{0} von {1}",
                     "Fertig",
-                    "Download abbrechen"
+                    "Download abbrechen",
+                    "Fehler beim Patchen. Bitte lade dir die neuste Version manuell herunter."
                 }
             },
             { GameLanguage.English, new string[]
@@ -167,7 +168,8 @@ namespace Ambermoon
                     "Downloading Ambermoon {0} ...",
                     "{0} of {1}",
                     "Done",
-                    "Cancel download"
+                    "Cancel download",
+                    "Failed to apply patch. Please download the most recent version manually."
                 }
             },
             { GameLanguage.French, new string[]
@@ -181,7 +183,8 @@ namespace Ambermoon
                     "Télécharger Ambermoon {0} ...",
                     "{0} de {1}",
                     "Terminé",
-                    "Annuler"
+                    "Annuler",
+                    "Échec de l'application du correctif. Veuillez télécharger manuellement la version la plus récente."
                 }
             }
         };
@@ -197,7 +200,8 @@ namespace Ambermoon
             Downloading,
             Progress,
             Done,
-            AbortButton
+            AbortButton,
+            FailedToPatch
         }
 
         string GetText(TextId index)
@@ -250,7 +254,7 @@ namespace Ambermoon
             }
         }
 
-        public void CheckPatches(Action<Func<bool>> closeAppAction, Action noPatchAction, ref int timeout)
+        public void CheckPatches(Action<bool> closeAppAction, Action noPatchAction, ref int timeout)
         {
             string version;
             using var httpClient = new HttpClient();
@@ -449,7 +453,7 @@ namespace Ambermoon
 
                             clickHandler = () =>
                             {
-                                closeAppAction(() => WriteAndRunInstaller(tempPath));
+                                WriteAndRunInstaller(tempPath, closeAppAction);
                             };
                         }
                         else if (!finished)
@@ -667,8 +671,10 @@ namespace Ambermoon
         {
             if (clickHandler != null)
             {
+                var oldHandler = clickHandler;
                 clickHandler();
-                clickHandler = null;
+                if (clickHandler == oldHandler)
+                    clickHandler = null;
                 return;
             }
 
@@ -778,18 +784,33 @@ namespace Ambermoon
 
         }
 
-        bool WriteAndRunInstaller(string downloadPath)
+        void WriteAndRunInstaller(string downloadPath, Action<bool> resultHandler)
         {
             try
             {
                 var installDirectory = Configuration.ExecutableDirectoryPath;
-                Process.Start(patcherPath, $"\"{downloadPath}\" \"{installDirectory}\"");
-                return true;
+                ExecuteAsAdmin(patcherPath, $"\"{downloadPath}\" \"{installDirectory}\"");
+                resultHandler?.Invoke(true);
             }
             catch
             {
                 Console.WriteLine("Unable to write or start the patcher script. Please update the game manually.");
-                return false;
+                CleanUpTextsAndButtons(true);
+                AddText(GetText(TextId.FailedToPatch),
+                    new Rect(clientArea.X + 4, clientArea.Y + 18, clientArea.Width - 8, 42), Data.Enumerations.Color.LightRed, TextAlign.Left, 50, true);
+                AddText(GetText(TextId.ContinueWithClick), new Rect(clientArea.X, clientArea.Y + 64, clientArea.Width, 7),
+                    Data.Enumerations.Color.White, TextAlign.Center, 50, true);
+                clickHandler = () => resultHandler?.Invoke(false);
+            }
+
+            static void ExecuteAsAdmin(string fileName, string args)
+            {
+                var proc = new Process();
+                proc.StartInfo.FileName = fileName;
+                proc.StartInfo.Arguments = args;
+                proc.StartInfo.UseShellExecute = true;
+                proc.StartInfo.Verb = "runas";
+                proc.Start();
             }
         }
     }

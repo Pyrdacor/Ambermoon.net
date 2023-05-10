@@ -182,7 +182,7 @@ namespace Ambermoon.Render
         }
 
         public void AddAll(IGameData gameData, IGraphicProvider graphicProvider, IFontProvider fontProvider,
-            Dictionary<uint, Graphic> introTextGlyphs, Dictionary<uint, Graphic> introGraphics)
+            Dictionary<uint, Graphic> introTextGlyphs, Dictionary<uint, Graphic> introGraphics, Features features)
         {
             if (gameData == null)
                 throw new ArgumentNullException(nameof(gameData));
@@ -221,7 +221,7 @@ namespace Ambermoon.Render
             // On world maps the travel graphics are used.
             // Only 4 sprites are used (one for each direction).
             var travelGraphics = graphicProvider.GetGraphics(GraphicType.TravelGfx);
-            int count = gameData.Advanced ? 12 : 11;
+            int count = features.HasFlag(Features.WaspTransport) ? 12 : 11;
 
             if (travelGraphics.Count != count * 4)
                 throw new AmbermoonException(ExceptionScope.Data, "Wrong number of travel graphics.");

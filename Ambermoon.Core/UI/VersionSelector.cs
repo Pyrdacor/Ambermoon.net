@@ -178,13 +178,13 @@ namespace Ambermoon.UI
                     string text = BuildVersionEntryText(gameVersion);
                     var versionArea = new Rect(versionListArea.X, versionListArea.Y + index * 10, versionListArea.Width, 10);
                     var markerArea = versionArea.CreateModified(0, 0, 0, -1);
-                    var highlight = versionHighlights[index] = FillArea(markerArea, Color.White, 3);
+                    var highlight = versionHighlights[index] = FillArea(markerArea, Color.White, 6);
                     highlight.Visible = false;
-                    versionTexts[index] = AddText(new Position(versionArea.X + 1, versionArea.Y + 2), text, TextColor.White, true, 7);
-                    versionTextHighlightShadows[index] = AddText(new Position(versionArea.X + 2, versionArea.Y + 3), text, TextColor.LightGray, false, 5);
+                    versionTexts[index] = AddText(new Position(versionArea.X + 1, versionArea.Y + 2), text, TextColor.White, true, 14);
+                    versionTextHighlightShadows[index] = AddText(new Position(versionArea.X + 2, versionArea.Y + 3), text, TextColor.LightGray, false, 10);
                     versionTextHighlightShadows[index].Visible = false;
                     if (SelectedVersion == index)
-                        selectedVersionMarker = FillArea(markerArea, Color.Green, 1);
+                        selectedVersionMarker = FillArea(markerArea, Color.Green, 2);
                     versionAreas.Add(versionArea);
 
                     mergedGameVersions.Add(new List<GameVersion>() { gameVersion });
