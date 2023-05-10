@@ -4,9 +4,9 @@ if ($isWindows) {
   Write-Host Publish Windows executables
   dotnet publish -c Release ./Ambermoon.ConcatFiles/Ambermoon.ConcatFiles.csproj -r win-x64 --nologo --self-contained
   dotnet publish -c Release ./AmbermoonPatcher/AmbermoonPatcher.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true  -r win-x86 --nologo --self-contained
-  dotnet publish -c Release ./AmbermoonPatcher/AmbermoonPatcher.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true  -r win-x64 --nologo --self-contained
-  dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r win-x86 --no-restore --nologo --self-contained
-  dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r win-x64 --no-restore --nologo --self-contained
+  dotnet publish -c Release ./AmbermoonPatcher/AmbermoonPatcher.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true  -r win-x64 --no-restore --no-build --nologo --self-contained
+  dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r win-x86 --no-restore --no-build --nologo --self-contained
+  dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r win-x64 --no-restore --no-build --nologo --self-contained
   Write-Host Pack zips for Windows
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/net7.0/win-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList 'versions','"./Ambermoon.net/versions.dat"','diffs','./Ambermoon.net/diffs.dat','"./Ambermoon.net/bin/Any CPU/Release/net7.0/win-x64/publish/Ambermoon.net.exe"'
   cmd /c copy "Ambermoon.net\bin\Any CPU\Release\net7.0\win-x64\publish\Ambermoon.net.exe" "Ambermoon.net\Ambermoon.net.exe"
@@ -17,9 +17,9 @@ if ($isWindows) {
 } elseif ($isLinux) {
   Write-Host Publish Linux executable
   Set-Variable -Name UseGLES -Value false
-  dotnet build -c Release "./Ambermoon.Renderer.OpenGL/Ambermoon.Renderer.OpenGL.csproj"
-  dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r linux-x64 --no-restore --self-contained
-  dotnet publish -c Release ./Ambermoon.ConcatFiles/Ambermoon.ConcatFiles.csproj -r linux-x64 --no-restore
+  dotnet build -c Release "./Ambermoon.Renderer.OpenGL/Ambermoon.Renderer.OpenGL.csproj" --no-restore
+  dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r linux-x64 --no-restore --no-build --self-contained
+  dotnet publish -c Release ./Ambermoon.ConcatFiles/Ambermoon.ConcatFiles.csproj -r linux-x64
   dotnet publish -c Release ./AmbermoonPatcher/AmbermoonPatcher.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true  -r linux-x64 --nologo --self-contained
   Write-Host Pack tar for Linux
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/net7.0/linux-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList 'versions','"./Ambermoon.net/versions.dat"','diffs','./Ambermoon.net/diffs.dat','"./Ambermoon.net/bin/Any CPU/Release/net7.0/linux-x64/publish/Ambermoon.net"'
@@ -29,11 +29,12 @@ if ($isWindows) {
 } else {
   Write-Host Publish Mac executables
   dotnet publish -c Release ./AmbermoonPatcher/AmbermoonPatcher.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true  -r osx-x64 --nologo --self-contained
-  dotnet publish -c Release ./AmbermoonPatcher/AmbermoonPatcher.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true  -r osx-arm64 --nologo --self-contained
-  dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r osx-x64 --no-restore --self-contained
-  dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r osx-arm64 --no-restore --self-contained
+  dotnet publish -c Release ./AmbermoonPatcher/AmbermoonPatcher.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true  -r osx-arm64 --nologo --no-restore --no-build --self-contained
+  dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r osx-x64 --no-restore --no-build --self-contained
+  dotnet publish -c Release ./Ambermoon.net/Ambermoon.net.csproj -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r osx-arm64 --no-restore --no-build --self-contained
   dotnet publish -c Release ./Ambermoon.ConcatFiles/Ambermoon.ConcatFiles.csproj -r osx-x64 --no-restore
   Write-Host Pack zips for Mac
+  sudo xcode-select -p
   sudo xcode-select -s /Applications/Xcode-13.2.1.app
   mkdir -p ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   cp -r ./Ambermoon.net/Mac/* ./bundle/Ambermoon.net/
@@ -41,7 +42,7 @@ if ($isWindows) {
   #cp "./AmbermoonPatcher/bin/Any CPU/Release/net7.0/osx-x64/publish/AmbermoonPatcher" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   cp "./Ambermoon.net/versions.dat" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/Resources/
   cp "./Ambermoon.net/diffs.dat" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/Resources/
-    cp -r ./Package/* ./bundle/Ambermoon.net/
+  cp -r ./Package/* ./bundle/Ambermoon.net/
   Start-Process -FilePath codesign -Wait -WorkingDirectory . -ArgumentList '-s','-','--force','--verbose','--deep','--no-strict','"./bundle/Ambermoon.net/Ambermoon.net.app"'
   7z a Ambermoon.net-Mac.zip ./bundle/Ambermoon.net/ -mx9
   cp -r ./bundle ./bundle-arm
