@@ -236,8 +236,8 @@ namespace Ambermoon
                 if (!OperatingSystem.IsMacOS())
                     return bundleDirectory;
 
-                if (OperatingSystem.IsMacOSVersionAtLeast(13) || new DirectoryInfo(bundleDirectory).Attributes.HasFlag(FileAttributes.ReadOnly))
-                    bundleDirectory = FallbackConfigDirectory;
+                if (OperatingSystem.IsMacOSVersionAtLeast(12) || new DirectoryInfo(bundleDirectory).Attributes.HasFlag(FileAttributes.ReadOnly))
+                    bundleDirectory = "~/Library/Application Support";
 
                 return bundleDirectory;
             }
