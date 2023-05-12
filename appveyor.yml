@@ -1,11 +1,43 @@
 environment:
   matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    - job_name: Windows build
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
       configuration: Release
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - job_name: Linux build
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       configuration: Release
-    - APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
+    - job_name: macOS build
+      APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
       configuration: Release
+
+for:
+-
+  matrix:
+    only:
+      - job_name: Windows build
+
+  branches:
+    only:
+    - master
+    - test-windows
+-
+  matrix:
+    only:
+      - job_name: Linux build
+
+  branches:
+    only:
+    - master
+    - test-linux
+-
+  matrix:
+    only:
+      - job_name: macOS build
+
+  branches:
+    only:
+    - master
+    - test-macos
 
 platform: Any CPU
 
