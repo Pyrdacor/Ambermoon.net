@@ -63,6 +63,19 @@ namespace Ambermoon.Data
             Array.Fill(Data, colorIndex);
         }
 
+        public Graphic Clone()
+        {
+            var dataCopy = new byte[Data.Length];
+            Buffer.BlockCopy(Data, 0, dataCopy, 0, dataCopy.Length);
+            return new Graphic
+            {
+                Width = Width,
+                Height = Height,
+                Data = dataCopy,
+                IndexedGraphic = IndexedGraphic
+            };
+        }
+
         public Graphic CreateScaled(float factor)
         {
             if (Util.FloatEqual(factor, 1.0f))
@@ -201,7 +214,7 @@ namespace Ambermoon.Data
             if (IndexedGraphic)
             {
                 if (palette == null)
-                    throw new ArgumentNullException("Palette for indexed graphic was null.");
+                    throw new ArgumentNullException(nameof(palette));
 
                 byte[] data = new byte[Width * Height * 4];
 
@@ -213,11 +226,6 @@ namespace Ambermoon.Data
                     {
                         for (int c = 0; c < 4; ++c)
                             data[i * 4 + c] = palette.Data[index * 4 + c];
-                    }
-                    else
-                    {
-                        data[i * 4 + 1] = 80;
-                        data[i * 4 + 3] = 1;
                     }
                 }
 
