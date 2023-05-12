@@ -1,13 +1,23 @@
-environment:
-  matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-      configuration: Release
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      configuration: Release
-    - APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
-      configuration: Release
+for:
+-
+    branches:
+        only:
+            - master
+
+    image:
+        - Visual Studio 2022
+        - Ubuntu
+        - macos-monterey
+-
+    branches:
+        only:
+            - test-macos
+
+    image:
+        - macos-monterey
 
 platform: Any CPU
+configuration: Release
 
 before_build:
   - ps: if ($env:CONFIGURATION -eq 'ReleaseAndroid') { dotnet workload install android }
@@ -32,7 +42,7 @@ artifacts:
     name: NugetPackages
 
 after_build:
-    - ps: if ($env:APPVEYOR_REPO_TAG -eq $true) { ./publish.ps1 }
+    - ps: if (($env:APPVEYOR_REPO_TAG -eq $true) -or ($env:APPVEYOR_REPO_BRANCH -eq 'test-macos')) { ./publish.ps1 }
     - ps: ./nuget.ps1
 
 test: off
@@ -103,6 +113,18 @@ deploy:
     force_update: true
     on:
       APPVEYOR_REPO_TAG: true
+  - provider: GitHub
+    name: Ambermoon.net-Mac-ARM Test
+    artifact: Ambermoon.net-Mac-ARM
+    release: 'Mac Test Release'
+    description: 'Mac Test Release'
+    auth_token:
+      secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
+    draft: true
+    prerelease: true
+    force_update: true
+    on:
+      branch: 'test-macos'
   - provider: NuGet
     name: NugetPackages
     api_key:
