@@ -12,6 +12,7 @@ namespace Ambermoon
 {
     internal class Configuration : IConfiguration
     {
+        internal const string ConfigurationFileName = "ambermoon.cfg";
         internal const string ExternalSavegameFolder = "external";
 
         internal static string GetVersionSavegameFolder(GameVersion gameVersion)
@@ -158,6 +159,68 @@ namespace Ambermoon
             }
         }
 
+        public static void FixMacOSPaths()
+        {
+            try
+            {
+                if (OperatingSystem.IsMacOS() && OperatingSystem.IsMacOSVersionAtLeast(12))
+                {
+                    // As we changed the place where the config, saves and other files are
+                    // stored for macOS 12 and higher we have to check if there were old configs
+                    // or saves beforehand and move them over.
+
+                    static void CheckAndMovePath(string relativePath, Func<string, bool> existChecker,
+                        Action<string, string> moveAction, bool catchException)
+                    {
+                        try
+                        {
+                            string newPath = Path.Combine(BundleDirectory, relativePath);
+
+                            if (!existChecker(newPath))
+                            {
+                                string oldConfigPath = Path.Combine(ReadonlyBundleDirectory, relativePath);
+
+                                if (existChecker(oldConfigPath))
+                                    moveAction(oldConfigPath, newPath);
+                                else
+                                {
+                                    oldConfigPath = Path.Combine(FallbackConfigDirectory, relativePath);
+
+                                    if (existChecker(oldConfigPath))
+                                        moveAction(oldConfigPath, newPath);
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            if (!catchException)
+                                throw;
+                        }
+                    }
+
+                    // Move old config over
+                    CheckAndMovePath(ConfigurationFileName, File.Exists, File.Move, true);
+
+                    // Move old save folder over
+                    try
+                    {
+                        CheckAndMovePath("Saves", Directory.Exists, Directory.Move, false);
+                    }
+                    catch
+                    {
+                        CheckAndMovePath("SavesRemake", Directory.Exists, Directory.Move, true);
+                    }
+
+                    // Move screenshots folder
+                    CheckAndMovePath("Screenshots", Directory.Exists, Directory.Move, true);
+                }
+            }
+            catch
+            {
+                // ignore errors
+            }
+        }
+
 #pragma warning disable CS0618
         public void UpgradeAdditionalSavegameSlots()
         {
@@ -237,7 +300,7 @@ namespace Ambermoon
                     return bundleDirectory;
 
                 if (OperatingSystem.IsMacOSVersionAtLeast(12) || new DirectoryInfo(bundleDirectory).Attributes.HasFlag(FileAttributes.ReadOnly))
-                    bundleDirectory = "~/Library/Application Support";
+                    bundleDirectory = "~/Library/Application Support/Ambermoon.net";
 
                 return bundleDirectory;
             }

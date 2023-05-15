@@ -7,7 +7,7 @@ namespace Ambermoon
 {
     class Program
     {
-        const string ConfigurationFileName = "ambermoon.cfg";
+        const string ConfigurationFileName = Configuration.ConfigurationFileName;
 
         static Configuration LoadConfig()
         {
@@ -57,6 +57,7 @@ namespace Ambermoon
                 // ignore
             }
 
+            Configuration.FixMacOSPaths();
             var configuration = LoadConfig();
             configuration.UpgradeAdditionalSavegameSlots();
             configuration.SaveRequested += () => SaveConfig(configuration);
