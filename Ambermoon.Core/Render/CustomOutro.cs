@@ -147,7 +147,7 @@ namespace Ambermoon.Render
 
                 var travelInfoEagle = renderView.GameData.GetTravelGraphicInfo(TravelType.Eagle, CharacterDirection.Left);
                 eagle = layout.AddMapCharacterSprite(new Rect(new Position(198, 58), new Size((int)travelInfoEagle.Width, (int)travelInfoEagle.Height)),
-                    3 * 17 + (uint)TravelType.Eagle * 4 + 3, ushort.MaxValue);
+                    Graphics.TravelGraphicOffset + (uint)TravelType.Eagle * 4 + 3, ushort.MaxValue);
                 eagle.ClipArea = Game.Map2DViewArea;
 
                 void MoveEagleDownLeft()

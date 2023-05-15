@@ -499,7 +499,7 @@ namespace Ambermoon.Render
             sprite.ClipArea = Game.Map2DViewArea;
             sprite.BaseLineOffset = TILE_HEIGHT / 2;
             sprite.PaletteIndex = (byte)game.GetPlayerPaletteIndex();
-            sprite.TextureAtlasOffset = textureAtlas.GetOffset(3 * 17 + 11 * 4 + travelType.AsStationaryImageIndex());
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.TransportGraphicOffset + travelType.AsStationaryImageIndex());
             sprite.X = Global.Map2DViewX + (position.X - (int)ScrollX) * TILE_WIDTH + offset.X;
             sprite.Y = Global.Map2DViewY + (position.Y - (int)ScrollY) * TILE_HEIGHT + offset.Y;
             sprite.Visible = true;

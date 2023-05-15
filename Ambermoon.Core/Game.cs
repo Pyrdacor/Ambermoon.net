@@ -9241,7 +9241,7 @@ namespace Ambermoon
                             var targetPosition = player2D.DisplayArea.Position + new Position(diffX, diffY);
                             var position = new Position(Global.Map2DViewX - (int)travelInfoEagle.Width, targetPosition.Y - (int)travelInfoEagle.Height);
                             var eagle = layout.AddMapCharacterSprite(new Rect(position, new Size((int)travelInfoEagle.Width, (int)travelInfoEagle.Height)),
-                                3 * 17 + (uint)TravelType.Eagle * 4 + 1, ushort.MaxValue);
+                                Graphics.TravelGraphicOffset + (uint)TravelType.Eagle * 4 + 1, ushort.MaxValue);
                             eagle.ClipArea = Map2DViewArea;
                             AddTimedEvent(TimeSpan.FromMilliseconds(200), AnimateEagle);
                             void AnimateEagle()
@@ -15267,7 +15267,7 @@ namespace Ambermoon
                 {
                     FrameWidth = (int)travelInfo.Width,
                     FrameHeight = (int)travelInfo.Height,
-                    StandFrameIndex = 3 * 17 + (uint)TravelType * 4,
+                    StandFrameIndex = Graphics.TravelGraphicOffset + (uint)TravelType * 4,
                     SitFrameIndex = 0,
                     SleepFrameIndex = 0,
                     NumStandFrames = 1,
