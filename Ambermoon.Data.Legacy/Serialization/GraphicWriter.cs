@@ -108,12 +108,12 @@ namespace Ambermoon.Data.Legacy.Serialization
             int numChunks = pixelsPerPlane == null ? 1 : (graphic.Width + 7) / pixelsPerPlane.Value;
             int calcWidth = ToNextBoundary(pixelsPerPlane ?? graphicInfo.Width);
 
-            for (int n = 0; n < numChunks; ++n)
+            for (int y = 0; y < graphic.Height; ++y)
             {
-                int xOffset = n * pixelsPerPlane ?? 0;
-
-                for (int y = 0; y < graphic.Height; ++y)
+                for (int n = 0; n < numChunks; ++n)
                 {
+                    int xOffset = n * pixelsPerPlane ?? 0;
+
                     for (int p = 0; p < planes; ++p)
                     {
                         int pmask = 1 << p;
@@ -130,17 +130,15 @@ namespace Ambermoon.Data.Legacy.Serialization
                             }
 
                             int index = graphic.Data[realX + y * graphic.Width];
+                            int bit = 7 - x % 8;
 
                             if ((index & pmask) != 0)
-                            {
-                                int bit = x % 8;
                                 b |= (byte)(1 << bit);
 
-                                if (bit == 7)
-                                {
-                                    dataWriter.Write(b);
-                                    b = 0;
-                                }
+                            if (bit == 0)
+                            {
+                                dataWriter.Write(b);
+                                b = 0;
                             }
                         }
                     }
