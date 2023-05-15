@@ -17,6 +17,7 @@ Version 1.8
 - A lot of bug and crash fixes
 - Added some useful cheats
 - Integrated original version 1.18
+- Fixed crash on macOS due to gate keeper restrictions
 
 
 Version 1.7
