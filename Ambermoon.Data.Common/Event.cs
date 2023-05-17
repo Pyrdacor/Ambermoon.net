@@ -785,7 +785,9 @@ namespace Ambermoon.Data
             TravelType = 0x18,
             LeadClass = 0x19,
             SpellEmpowered = 0x1a,
-            IsNight = 0x1b
+            IsNight = 0x1b,
+            Attribute = 0x1c,
+            Skill = 0x1d
         }
 
         public ConditionType TypeOfCondition { get; set; }
@@ -870,6 +872,8 @@ namespace Ambermoon.Data
                 ConditionType.LeadClass => $"{Type}: Active party member has class {Enum.GetName((Class)ObjectIndex)}, {falseHandling}",
                 ConditionType.SpellEmpowered => $"{Type}: Active party member has {((CharacterElement)(1 << (4 + (int)Util.Limit(0, ObjectIndex, 2)))).ToString().ToLower()} spells empowered, {falseHandling}",
                 ConditionType.IsNight => $"{Type}: Is night, {falseHandling}",
+                ConditionType.Attribute => $"{Type}: {(Attribute)ObjectIndex} {(Value == 0 ? "<" : ">=")} {Count}, {falseHandling}",
+                ConditionType.Skill => $"{Type}: {(Skill)ObjectIndex} {(Value == 0 ? "<" : ">=")} {Count}, {falseHandling}",
                 _ => $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, {falseHandling}",
             };
         }

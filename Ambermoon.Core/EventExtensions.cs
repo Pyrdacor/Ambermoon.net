@@ -726,6 +726,30 @@ namespace Ambermoon
                                 return mapEventIfFalse;
                             }
                             break;
+                        case ConditionEvent.ConditionType.Attribute:
+                        {
+                            var attribute = game.CurrentPartyMember.Attributes[(Data.Attribute)conditionEvent.ObjectIndex];
+                            var totalValue = attribute.CurrentValue + attribute.BonusValue;
+                            if ((totalValue >= conditionEvent.Count) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        }
+                        case ConditionEvent.ConditionType.Skill:
+                        {
+                            var skill = game.CurrentPartyMember.Skills[(Skill)conditionEvent.ObjectIndex];
+                            var totalValue = skill.CurrentValue + skill.BonusValue;
+                            if ((totalValue >= conditionEvent.Count) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        }
                     }
 
                     // For some follow-up events we won't proceed by using Eye, Hand or Mouth.
