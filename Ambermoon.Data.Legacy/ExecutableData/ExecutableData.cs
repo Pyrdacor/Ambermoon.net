@@ -172,6 +172,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
             if (textAmbReader != null)
             {
+                textAmbReader.Position = 0;
                 textContainer = new TextContainer();
                 var textContainerReader = new TextContainerReader();
                 textContainerReader.ReadTextContainer(textContainer, textAmbReader, true);
@@ -370,8 +371,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 ItemTypeNames = new ItemTypeNames(textContainer.ItemTypeNames);
                 ConditionNames = new ConditionNames(textContainer.ConditionNames);
                 UITexts = new UITexts(textContainer.UITexts);
+                buttonGraphicsReader.Position = 0;
                 Buttons = new Buttons(buttonGraphicsReader);
 
+                objectsAmbReader.Position = 0;
                 int itemCount = objectsAmbReader.ReadWord();
                 var itemReader = new ItemReader();
                 var items = new Dictionary<uint, Item>();
