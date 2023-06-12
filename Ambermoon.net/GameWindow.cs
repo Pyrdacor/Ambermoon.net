@@ -1094,7 +1094,7 @@ namespace Ambermoon
                     Language = additionalVersionInfo.Value.Language.ToGameLanguage(),
                     Info = "From external data",
                     DataProvider = configuration.GameVersionIndex == 4 ? (() => gameData) : LoadGameDataFromDataPath,
-                    Features = additionalVersionInfo.Value.Advanced ? Features.AmbermoonAdvanced : Features.None,
+                    Features = additionalVersionInfo.Value.Advanced ? Features.AmbermoonAdvanced | Features.WaspTransport | Features.AdvancedSpells : Features.None, // TODO
                     MergeWithPrevious = false,
                     ExternalData = true
                 });
