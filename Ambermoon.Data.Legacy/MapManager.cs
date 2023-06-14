@@ -12,7 +12,7 @@ namespace Ambermoon.Data.Legacy
 
         public IReadOnlyList<Map> Maps => maps.Values.ToList();
 
-        public MapManager(ILegacyGameData gameData, IMapReader mapReader, ITilesetReader tilesetReader, ILabdataReader labdataReader)
+        public MapManager(ILegacyGameData gameData, IMapReader mapReader, ITilesetReader tilesetReader, ILabdataReader labdataReader, bool stopAtFirstError)
         {
             foreach (var tilesetFile in gameData.Files["Icon_data.amb"].Files)
             {
@@ -26,16 +26,27 @@ namespace Ambermoon.Data.Legacy
             // Map 257-299, 400-455, 513-528 -> File 3
             for (int i = 1; i <= 3; ++i)
             {
-                var file = gameData.Files[$"{i}Map_data.amb"];
-                var textFiles = gameData.Files[$"{i}Map_texts.amb"];
+                string containerName = $"{i}Map_data.amb";
+                string textContainerName = $"{i}Map_texts.amb";
 
-                foreach (var mapFile in file.Files)
+                if (!gameData.Files.TryGetValue(containerName, out var mapContainer))
+                {
+                    if (stopAtFirstError)
+                        throw new KeyNotFoundException($"Map container {containerName} is missing.");
+                    else
+                        continue;
+                }
+
+                if (!gameData.Files.TryGetValue(textContainerName, out var textContainer) && stopAtFirstError)
+                    throw new KeyNotFoundException($"Map text container {textContainerName} is missing.");
+
+                foreach (var mapFile in mapContainer.Files)
                 {
                     if (mapFile.Value.Size != 0)
                     {
                         mapFile.Value.Position = 0;
                         uint index = (uint)mapFile.Key;
-                        var textFile = textFiles.Files.ContainsKey(mapFile.Key) ? textFiles.Files[mapFile.Key] : null;
+                        var textFile = textContainer == null ? null : textContainer.Files.ContainsKey(mapFile.Key) ? textContainer.Files[mapFile.Key] : null;
                         maps.Add(index, Map.Load(index, mapReader, mapFile.Value, textFile, tilesets));
                     }
                 }

@@ -724,24 +724,45 @@ namespace Ambermoon.Data.Legacy
             if (executableData.FileList == null && stopAtFirstError)
                 throw new AmbermoonException(ExceptionScope.Data, "Incomplete game data. AM2_CPU is missing.");
 
-            IntroData = new IntroData(this);
-            FantasyIntroData = new FantasyIntroData(this);
-            OutroData = new OutroData(this);
+            T TryLoad<T>(Func<T> provider) where T : class
+            {
+                try
+                {
+                    return provider();
+                }
+                catch
+                {
+                    if (stopAtFirstError)
+                        throw;
+
+                    return null;
+                }
+            }
+
+            IntroData = TryLoad(() => new IntroData(this));
+            FantasyIntroData = TryLoad(() => new FantasyIntroData(this));
+            OutroData = TryLoad(() => new OutroData(this));
             var additionalPalettes = new List<Graphic>();
-            additionalPalettes.AddRange(IntroData.IntroPalettes);
-            additionalPalettes.AddRange(OutroData.OutroPalettes);
-            additionalPalettes.AddRange(FantasyIntroData.FantasyIntroPalettes);
-            GraphicProvider = new GraphicProvider(this, executableData, additionalPalettes);
-            CharacterManager = new CharacterManager(this, GraphicProvider);
-            foreach (var objectTextFile in Files["Object_texts.amb"].Files)
-                executableData.ItemManager.AddTexts((uint)objectTextFile.Key, Serialization.TextReader.ReadTexts(objectTextFile.Value));
-            FontProvider = new FontProvider(executableData);
-            DataNameProvider = new DataNameProvider(executableData);
-            LightEffectProvider = new LightEffectProvider(executableData);
-            MapManager = new MapManager(this, new MapReader(), new TilesetReader(), new LabdataReader());
-            SongManager = new SongManager(this);
-            Dictionary = TextDictionary.Load(new TextDictionaryReader(), GetDictionary());
-            Places = Places.Load(new PlacesReader(), Files["Place_data"].Files[1]);
+            if (IntroData?.IntroPalettes != null)
+                additionalPalettes.AddRange(IntroData.IntroPalettes);
+            if (OutroData?.OutroPalettes != null)
+                additionalPalettes.AddRange(OutroData.OutroPalettes);
+            if (FantasyIntroData?.FantasyIntroPalettes != null)
+                additionalPalettes.AddRange(FantasyIntroData.FantasyIntroPalettes);
+            GraphicProvider = TryLoad(() => new GraphicProvider(this, executableData, additionalPalettes));
+            CharacterManager = TryLoad(() => new CharacterManager(this, GraphicProvider));
+            if (executableData.ItemManager != null && Files.TryGetValue("Object_texts.amb", out var objTexts))
+            {
+                foreach (var objectTextFile in objTexts.Files)
+                    executableData.ItemManager.AddTexts((uint)objectTextFile.Key, Serialization.TextReader.ReadTexts(objectTextFile.Value));
+            }
+            FontProvider = TryLoad(() => new FontProvider(executableData));
+            DataNameProvider = TryLoad(() => new DataNameProvider(executableData));
+            LightEffectProvider = TryLoad(() => new LightEffectProvider(executableData));
+            MapManager = TryLoad(() => new MapManager(this, new MapReader(), new TilesetReader(), new LabdataReader(), stopAtFirstError));
+            SongManager = TryLoad(() => new SongManager(this));
+            Dictionary = TryLoad(() => TextDictionary.Load(new TextDictionaryReader(), GetDictionary()));
+            Places = TryLoad(() => Places.Load(new PlacesReader(), Files["Place_data"].Files[1]));
 
             Loaded = true;
         }
