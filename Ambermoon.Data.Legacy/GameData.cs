@@ -720,6 +720,10 @@ namespace Ambermoon.Data.Legacy
             }
 
             executableData = ExecutableData.ExecutableData.FromGameData(this);
+
+            if (executableData.FileList == null && stopAtFirstError)
+                throw new AmbermoonException(ExceptionScope.Data, "Incomplete game data. AM2_CPU is missing.");
+
             IntroData = new IntroData(this);
             FantasyIntroData = new FantasyIntroData(this);
             OutroData = new OutroData(this);

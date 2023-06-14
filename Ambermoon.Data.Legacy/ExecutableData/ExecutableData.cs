@@ -125,7 +125,9 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
         public static ExecutableData FromGameData(ILegacyGameData gameData)
         {
-            var hunks = AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]);
+            var hunks = gameData.Files.TryGetValue("AM2_CPU", out var exe)
+                ? AmigaExecutable.Read(exe.Files[1])
+                : new List<IHunk>();
 
             gameData.Files.TryGetValue("Text.amb", out var textAmb);
             gameData.Files.TryGetValue("Objects.amb", out var objectsAmb);
@@ -159,15 +161,15 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         public ExecutableData(List<AmigaExecutable.IHunk> hunks, IDataReader textAmbReader, IDataReader objectsAmbReader,
             IDataReader buttonGraphicsReader)
         {
-            var firstCodeHunk = hunks.FirstOrDefault(h => h.Type == AmigaExecutable.HunkType.Code);
+            var firstCodeHunk = hunks?.FirstOrDefault(h => h.Type == AmigaExecutable.HunkType.Code);
 
-            if (firstCodeHunk == null)
+            if (firstCodeHunk == null && textAmbReader == null)
             {
                 DataInfoString = "Unknown data version";
                 return;
             }
 
-            var codeReader = new DataReader((firstCodeHunk as AmigaExecutable.Hunk?)?.Data);
+            var codeReader = firstCodeHunk == null ? null : new DataReader((firstCodeHunk as AmigaExecutable.Hunk?)?.Data);
             TextContainer textContainer = null;
 
             if (textAmbReader != null)
@@ -186,94 +188,97 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 DataInfoString = codeReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
             }
 
-            var dataHunkReaders = hunks.Where(h => h.Type == AmigaExecutable.HunkType.Data)
-                .Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data)).ToArray();
+            DataReader[] dataHunkReaders = null;
             int dataHunkIndex = 0;
 
-            dataHunkIndex = 0;
-
-            // Note: First 160 bytes are copper commands which can be dynamically filled
-            // to move data to some Amiga registers. The area is permanently used by the
-            // copper.
-            dataHunkReaders[dataHunkIndex].Position = 160;
-
-            UIGraphics = Read<UIGraphics>(dataHunkReaders, ref dataHunkIndex);
-            // Here follows the note period table for Sonic Arranger (110 words)
-            // Then the vibrato table (258 bytes)
-            // Then track data and many more SA tables
-
-            dataHunkIndex = 1;
-            var reader = dataHunkReaders[1];
-            codeReader.Position = 115000;
-            reader.Position = (int)ReadOffsetAfterByteSequence(codeReader, 0x34, 0x3c, 0x03, 0xe7, 0x41, 0xf9);            
-            DigitGlyphs = Read<DigitGlyphs>(dataHunkReaders, ref dataHunkIndex);
-
-            // TODO ...
-
-            codeReader.Position += 29000;
-            reader.Position = (int)ReadOffsetAfterByteSequence(codeReader, 0x22, 0x48, 0x41, 0xf9);
-            Glyphs = Read<Glyphs>(dataHunkReaders, ref dataHunkIndex);
-            Cursors = Read<Cursors>(dataHunkReaders, ref dataHunkIndex);
-
-            // Here are the 3 builtin palettes for primary UI, automap and secondary UI.
-            for (int i = 0; i < 3; ++i)
+            if (hunks.Count > 0)
             {
-                BuiltinPalettes[i] = GraphicProvider.ReadPalette(dataHunkReaders[dataHunkIndex]);
+                dataHunkReaders = hunks.Where(h => h.Type == AmigaExecutable.HunkType.Data)
+                    .Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data)).ToArray();
+
+                // Note: First 160 bytes are copper commands which can be dynamically filled
+                // to move data to some Amiga registers. The area is permanently used by the
+                // copper.
+                dataHunkReaders[dataHunkIndex].Position = 160;
+
+                UIGraphics = Read<UIGraphics>(dataHunkReaders, ref dataHunkIndex);
+                // Here follows the note period table for Sonic Arranger (110 words)
+                // Then the vibrato table (258 bytes)
+                // Then track data and many more SA tables
+
+                dataHunkIndex = 1;
+                var reader = dataHunkReaders[1];
+                codeReader.Position = 115000;
+                reader.Position = (int)ReadOffsetAfterByteSequence(codeReader, 0x34, 0x3c, 0x03, 0xe7, 0x41, 0xf9);
+                DigitGlyphs = Read<DigitGlyphs>(dataHunkReaders, ref dataHunkIndex);
+
+                // TODO ...
+
+                codeReader.Position += 29000;
+                reader.Position = (int)ReadOffsetAfterByteSequence(codeReader, 0x22, 0x48, 0x41, 0xf9);
+                Glyphs = Read<Glyphs>(dataHunkReaders, ref dataHunkIndex);
+                Cursors = Read<Cursors>(dataHunkReaders, ref dataHunkIndex);
+
+                // Here are the 3 builtin palettes for primary UI, automap and secondary UI.
+                for (int i = 0; i < 3; ++i)
+                {
+                    BuiltinPalettes[i] = GraphicProvider.ReadPalette(dataHunkReaders[dataHunkIndex]);
+                }
+
+                // Then 9 vertical color gradients used for skies are stored. They are stored
+                // as 16 bit XRGB colors and not color indices!
+                // The first 3 skies are for Lyramion, the next 3 for the forest moon and the last
+                // 3 for Morag. The first sky is night, the second twilight and the third day.
+                // Transitions blend night with twilight or day with twilight.
+                var skyGraphicInfo = new GraphicInfo
+                {
+                    Alpha = false,
+                    GraphicFormat = GraphicFormat.XRGB16,
+                    Width = 1,
+                    Height = 72
+                };
+                var graphicReader = new GraphicReader();
+
+                for (int i = 0; i < 9; ++i)
+                {
+                    var sky = SkyGradients[i] = new Graphic();
+                    graphicReader.ReadGraphic(sky, dataHunkReaders[dataHunkIndex], skyGraphicInfo);
+                }
+
+                // After the 9 sky gradients there are 6 partial palettes (16 colors).
+                // Two of them per world (first for night, second for twilight).
+                // They are also blended together (the first 16 colors of the map's palette is
+                // used for day) and then replaces the first 16 colors of the map's palette.
+                var daytimePaletteReplacementInfo = new GraphicInfo
+                {
+                    Alpha = false,
+                    GraphicFormat = GraphicFormat.XRGB16,
+                    Width = 1,
+                    Height = 16
+                };
+                for (int i = 0; i < 6; ++i)
+                {
+                    var replacement = DaytimePaletteReplacements[i] = new Graphic();
+                    graphicReader.ReadGraphic(replacement, dataHunkReaders[dataHunkIndex], daytimePaletteReplacementInfo);
+                }
+
+                // TODO: Here the spell infos for all 210 possible spells follow (5 byte each).
+                // TODO: Then 1024 words follow. Most likely some 3D stuff (cos/sin values). 101, 201, 302, 402, 503, ...
+                // TODO: Then 1025 words follow. Also 3D stuff I guess. 0, 1, 1, 2, 3, 3, 4, 4, 5, ...
+                // TODO: Then the class exp factors follow (11 words).
+                // TODO: Then for each travel type a number of additional ticks per step follows (11 bytes). 0 means move directly, 1 means pause for 1 additional tick after movement, etc.
+                // TODO: Then for each travel type a number follows which specifies how many steps are needed to increase the time by 5 minutes (11 bytes).
+                // TODO: Then for each travel type the music index follows (11 bytes).
+                // TODO: Then a fill byte to get to a even word boundary.
+                // TODO: Then there are 3 world infos. They contain 7 words each: MapsPerRow, MapsPerCol, MapWidth, MapHeight, MapIndexOffset, DayBeginHour, DayEndHour (not sure about the latter two).
+                // TODO: Then 2x16 combat background infos follow. First 16 for 2D, then 16 for 3D. Each info has 4 bytes. Image index and then 3 palette indices for day, twilight and night.
+                // TODO: Then the 9 character heights for the races follow (word each). The first (human -> 180) is also the reference height.
+
+                // TODO ...
+
+                const string search = "Amberfiles/";
+                dataHunkReaders[1].Position = (int)dataHunkReaders[1].FindString(search, dataHunkReaders[1].Position) + search.Length + 54;
             }
-
-            // Then 9 vertical color gradients used for skies are stored. They are stored
-            // as 16 bit XRGB colors and not color indices!
-            // The first 3 skies are for Lyramion, the next 3 for the forest moon and the last
-            // 3 for Morag. The first sky is night, the second twilight and the third day.
-            // Transitions blend night with twilight or day with twilight.
-            var skyGraphicInfo = new GraphicInfo
-            {
-                Alpha = false,
-                GraphicFormat = GraphicFormat.XRGB16,
-                Width = 1,
-                Height = 72
-            };
-            var graphicReader = new GraphicReader();
-
-            for (int i = 0; i < 9; ++i)
-            {
-                var sky = SkyGradients[i] = new Graphic();
-                graphicReader.ReadGraphic(sky, dataHunkReaders[dataHunkIndex], skyGraphicInfo);
-            }
-
-            // After the 9 sky gradients there are 6 partial palettes (16 colors).
-            // Two of them per world (first for night, second for twilight).
-            // They are also blended together (the first 16 colors of the map's palette is
-            // used for day) and then replaces the first 16 colors of the map's palette.
-            var daytimePaletteReplacementInfo = new GraphicInfo
-            {
-                Alpha = false,
-                GraphicFormat = GraphicFormat.XRGB16,
-                Width = 1,
-                Height = 16
-            };
-            for (int i = 0; i < 6; ++i)
-            {
-                var replacement = DaytimePaletteReplacements[i] = new Graphic();
-                graphicReader.ReadGraphic(replacement, dataHunkReaders[dataHunkIndex], daytimePaletteReplacementInfo);
-            }
-
-            // TODO: Here the spell infos for all 210 possible spells follow (5 byte each).
-            // TODO: Then 1024 words follow. Most likely some 3D stuff (cos/sin values). 101, 201, 302, 402, 503, ...
-            // TODO: Then 1025 words follow. Also 3D stuff I guess. 0, 1, 1, 2, 3, 3, 4, 4, 5, ...
-            // TODO: Then the class exp factors follow (11 words).
-            // TODO: Then for each travel type a number of additional ticks per step follows (11 bytes). 0 means move directly, 1 means pause for 1 additional tick after movement, etc.
-            // TODO: Then for each travel type a number follows which specifies how many steps are needed to increase the time by 5 minutes (11 bytes).
-            // TODO: Then for each travel type the music index follows (11 bytes).
-            // TODO: Then a fill byte to get to a even word boundary.
-            // TODO: Then there are 3 world infos. They contain 7 words each: MapsPerRow, MapsPerCol, MapWidth, MapHeight, MapIndexOffset, DayBeginHour, DayEndHour (not sure about the latter two).
-            // TODO: Then 2x16 combat background infos follow. First 16 for 2D, then 16 for 3D. Each info has 4 bytes. Image index and then 3 palette indices for day, twilight and night.
-            // TODO: Then the 9 character heights for the races follow (word each). The first (human -> 180) is also the reference height.
-
-            // TODO ...
-
-            const string search = "Amberfiles/";
-            dataHunkReaders[1].Position = (int)dataHunkReaders[1].FindString(search, dataHunkReaders[1].Position) + search.Length + 54;
 
             if (textContainer == null)
             {
@@ -311,49 +316,52 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             }
             else
             {
-                var hunkReader = dataHunkReaders[1];
-                int dataHunks = 0;
-                AmigaExecutable.Reloc32Hunk? relocHunk = null;
-                foreach (var hunk in hunks)
+                if (dataHunkReaders != null)
                 {
-                    if (hunk.Type == AmigaExecutable.HunkType.Data)
-                        ++dataHunks;
-
-                    if (hunk.Type == AmigaExecutable.HunkType.RELOC32 && dataHunks == 2)
+                    var hunkReader = dataHunkReaders[1];
+                    int dataHunks = 0;
+                    AmigaExecutable.Reloc32Hunk? relocHunk = null;
+                    foreach (var hunk in hunks)
                     {
-                        relocHunk = (AmigaExecutable.Reloc32Hunk)hunk;
-                        break;
-                    }
-                }
+                        if (hunk.Type == AmigaExecutable.HunkType.Data)
+                            ++dataHunks;
 
-                if (relocHunk == null)
-                    throw new AmbermoonException(ExceptionScope.Data, "Invalid executable file.");
-
-                int FindHunk(uint offset)
-                {
-                    foreach (var relocTable in relocHunk.Value.Entries)
-                    {
-                        if (relocTable.Value.Contains(offset))
-                            return (int)relocTable.Key;
+                        if (hunk.Type == AmigaExecutable.HunkType.RELOC32 && dataHunks == 2)
+                        {
+                            relocHunk = (AmigaExecutable.Reloc32Hunk)hunk;
+                            break;
+                        }
                     }
 
-                    return -1;
-                }
-
-                FileList = new FileList();
-
-                while (hunkReader.PeekWord() != 0)
-                {
-                    int hunkIndex = FindHunk((uint)hunkReader.Position);
-
-                    if (hunkIndex == -1)
+                    if (relocHunk == null)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid executable file.");
 
-                    uint offset = hunkReader.ReadDword();
+                    int FindHunk(uint offset)
+                    {
+                        foreach (var relocTable in relocHunk.Value.Entries)
+                        {
+                            if (relocTable.Value.Contains(offset))
+                                return (int)relocTable.Key;
+                        }
 
-                    var fileNameReader = new DataReader(((Hunk)hunks[hunkIndex]).Data);
-                    fileNameReader.Position = (int)offset;
-                    FileList.ReadFileEntry(fileNameReader);
+                        return -1;
+                    }
+
+                    FileList = new FileList();
+
+                    while (hunkReader.PeekWord() != 0)
+                    {
+                        int hunkIndex = FindHunk((uint)hunkReader.Position);
+
+                        if (hunkIndex == -1)
+                            throw new AmbermoonException(ExceptionScope.Data, "Invalid executable file.");
+
+                        uint offset = hunkReader.ReadDword();
+
+                        var fileNameReader = new DataReader(((Hunk)hunks[hunkIndex]).Data);
+                        fileNameReader.Position = (int)offset;
+                        FileList.ReadFileEntry(fileNameReader);
+                    }
                 }
 
                 WorldNames = new WorldNames(textContainer.WorldNames);
