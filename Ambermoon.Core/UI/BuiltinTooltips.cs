@@ -245,7 +245,7 @@ namespace Ambermoon.UI
                 // Attack
                 "Attack^^Chance to hit an enemy.^^Currently {0}% hit chance",
                 // Parry
-                "Parry^^Chance to block an enemy attack.^The battle action 'Parry' is necessary for this.^^Currently {0}% block chance",
+                "Parry^^Chance to block an enemy attack.^The battle action 'Defend' is necessary for this.^^Currently {0}% block chance",
                 // Swim
                 "Swim^^Damage reduction while swimming.^^Currently {0}% damage reduction",
                 // Crit
