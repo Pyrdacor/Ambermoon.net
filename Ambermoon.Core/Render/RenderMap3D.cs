@@ -706,7 +706,7 @@ namespace Ambermoon.Render
 
                 bool randomMovement = characterReference.CharacterFlags.HasFlag(Flags.RandomMovement);
 
-                if (!randomMovement && characterReference.Type != CharacterType.Monster)
+                if (!randomMovement && characterReference.Type != CharacterType.Monster && !characterReference.Stationary)
                 {
                     // Walk a given path every day time slot
                     uint lastTimeSlot = gameTime.TimeSlot == 0 ? 287 : gameTime.TimeSlot - 1;
