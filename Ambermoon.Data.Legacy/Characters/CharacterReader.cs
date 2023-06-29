@@ -39,7 +39,7 @@ namespace Ambermoon.Data.Legacy.Characters
             character.CharacterBitIndex = dataReader.ReadWord();
             character.Conditions = (Condition)dataReader.ReadWord();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.DefeatExperience = value);
-            character.UnknownWord34 = dataReader.ReadWord(); // Unknown
+            character.UnusedWord34 = dataReader.ReadWord(); // Unknown
             // mark of return location is stored here: word x, word y, word mapIndex
             ProcessIfPartyMember(dataReader, character, (PartyMember member, ushort value) => member.MarkOfReturnX = value);
             ProcessIfPartyMember(dataReader, character, (PartyMember member, ushort value) => member.MarkOfReturnY = value);
@@ -75,7 +75,7 @@ namespace Ambermoon.Data.Legacy.Characters
             character.SpellPointsPerLevel = dataReader.ReadWord();
             character.SpellLearningPointsPerLevel = dataReader.ReadWord();
             character.TrainingPointsPerLevel = dataReader.ReadWord();
-            character.UnknownWord236 = dataReader.ReadWord(); // Unknown
+            character.LookAtCharTextIndex = dataReader.ReadWord(); // Unknown
             character.ExperiencePoints = dataReader.ReadDword();
             character.LearnedHealingSpells = dataReader.ReadDword();
             character.LearnedAlchemisticSpells = dataReader.ReadDword();

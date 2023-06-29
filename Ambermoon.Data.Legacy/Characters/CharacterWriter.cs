@@ -33,7 +33,7 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write(character.CharacterBitIndex);
             dataWriter.WriteEnumAsWord(character.Conditions);
             dataWriter.Write(GetIfMonster<ushort>(character, monster => monster.DefeatExperience, 0));
-            dataWriter.Write(character.UnknownWord34); // Unknown
+            dataWriter.Write(character.UnusedWord34); // Unknown
             dataWriter.Write(GetIfPartyMember<ushort>(character, member => member.MarkOfReturnX, 0));
             dataWriter.Write(GetIfPartyMember<ushort>(character, member => member.MarkOfReturnY, 0));
             dataWriter.Write(GetIfPartyMember<ushort>(character, member => member.MarkOfReturnMapIndex, 0));
@@ -68,7 +68,7 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write(character.SpellPointsPerLevel);
             dataWriter.Write(character.SpellLearningPointsPerLevel);
             dataWriter.Write(character.TrainingPointsPerLevel);
-            dataWriter.Write(character.UnknownWord236); // Unknown
+            dataWriter.Write(character.LookAtCharTextIndex); // Unknown
             dataWriter.Write(character.ExperiencePoints);
             dataWriter.Write(character.LearnedHealingSpells);
             dataWriter.Write(character.LearnedAlchemisticSpells);

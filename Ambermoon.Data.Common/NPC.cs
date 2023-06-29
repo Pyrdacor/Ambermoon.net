@@ -5,6 +5,7 @@ namespace Ambermoon.Data
 {
     public class NPC : Character, IConversationPartner
     {
+        public int LookAtTextIndex => LookAtCharTextIndex;
         public List<string> Texts { get; set; }
         public List<Event> Events { get; } = new List<Event>();
         public List<Event> EventList { get; } = new List<Event>();

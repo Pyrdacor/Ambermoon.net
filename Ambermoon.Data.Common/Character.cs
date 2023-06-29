@@ -40,7 +40,10 @@ namespace Ambermoon.Data
         /// </summary>
         public ushort CharacterBitIndex { get; set; }
         public Condition Conditions { get; set; }
-        public ushort UnknownWord34 { get; set; }
+        /// <summary>
+        /// This was called "Battle round spell point usage".
+        /// </summary>
+        public ushort UnusedWord34 { get; set; }
         public CharacterValueCollection<Attribute> Attributes { get; } = new CharacterValueCollection<Attribute>(10); // 8 attribute + age + a hidden attribute
         public CharacterValueCollection<Skill> Skills { get; } = new CharacterValueCollection<Skill>(10);
         public CharacterValue HitPoints { get; } = new CharacterValue();
@@ -56,7 +59,8 @@ namespace Ambermoon.Data
         public ushort SpellPointsPerLevel { get; set; }
         public ushort SpellLearningPointsPerLevel { get; set; }
         public ushort TrainingPointsPerLevel { get; set; }
-        public ushort UnknownWord236 { get; set; }
+        // 0 for most chars but there are exceptions like Dönner
+        public ushort LookAtCharTextIndex { get; set; }
         public uint ExperiencePoints { get; set; }
         public uint LearnedHealingSpells { get; set; }
         public uint LearnedAlchemisticSpells { get; set; }

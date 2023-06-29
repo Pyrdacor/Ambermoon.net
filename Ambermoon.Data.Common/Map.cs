@@ -180,6 +180,7 @@ namespace Ambermoon.Data
                 RandomMovement = 0x01,
                 UseTileset = 0x02,
                 TextPopup = 0x04,
+                NPCTalksToYou = 0x08,
                 Stationary = 0x20, // new in Ambermoon Advanced
                 MoveOnlyWhenSeePlayer = 0x20 // new in Ambermoon Advanced
             }
@@ -188,6 +189,7 @@ namespace Ambermoon.Data
             public Flags CharacterFlags { get; set; }
             public bool OnlyMoveWhenSeePlayer => Type == CharacterType.Monster && CharacterFlags.HasFlag(Flags.MoveOnlyWhenSeePlayer);
             public bool Stationary => Type != CharacterType.Monster && CharacterFlags.HasFlag(Flags.Stationary);
+            public bool NPCTalksToYou => Type == CharacterType.NPC && !CharacterFlags.HasFlag(Flags.TextPopup) && CharacterFlags.HasFlag(Flags.NPCTalksToYou);
             /// <summary>
             /// Equals travel type.
             /// </summary>

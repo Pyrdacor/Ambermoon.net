@@ -410,13 +410,15 @@ namespace Ambermoon.Render
                     {
                         if (trigger == EventTrigger.Eye)
                         {
-                            game.ShowTextPopup(game.ProcessText(conversationPartner.Texts[0]), null);
+                            game.ShowTextPopup(game.ProcessText(conversationPartner.Texts[conversationPartner.LookAtTextIndex]), null);
                             return true;
                         }
-                        else if (trigger == EventTrigger.Mouth)
+                        else if (trigger == EventTrigger.Mouth || (trigger == EventTrigger.Move && characterReference.NPCTalksToYou))
                         {
                             if (conversationPartner == null)
                                 throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC or party member index.");
+
+                            trigger = EventTrigger.Mouth; // important if the NPC talks to you
 
                             conversationPartner.ExecuteEvents(game, trigger, characterIndex);
                             return true;

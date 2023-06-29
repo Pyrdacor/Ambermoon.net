@@ -8,6 +8,7 @@ namespace Ambermoon.Data
 {
     public class PartyMember : Character, IConversationPartner
     {
+        public int LookAtTextIndex => LookAtCharTextIndex;
         public ushort MarkOfReturnMapIndex { get; set; }
         public ushort MarkOfReturnX { get; set; }
         public ushort MarkOfReturnY { get; set; }
