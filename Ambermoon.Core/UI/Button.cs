@@ -159,7 +159,7 @@ namespace Ambermoon.UI
                     "Bewegen",
                     "Vorrücken",
                     "Angreifen",
-                    "Abwehren",
+                    "Verteidigen",
                     "Zaubern",
                     "Nötige Spruchlernpunkte ermitteln"
                 }
