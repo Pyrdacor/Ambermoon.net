@@ -298,7 +298,7 @@ namespace Ambermoon
             picture.Visible = false;
             texts.ForEach(text => text.Destroy());
             texts.Clear();
-            fadeArea.Visible = false;
+            fadeArea.Delete();
         }
     }
 

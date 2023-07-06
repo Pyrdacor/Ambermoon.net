@@ -248,18 +248,21 @@ namespace Ambermoon.Renderer
             {
                 BaseZ = 0.70f,
                 EnableBlending = false,
-                SupportColoredRects = true
+                SupportColoredRects = true,
+                Use320x256 = true
             } },
             { Layer.IntroText, new ()
             {
                 BaseZ = 0.70f,
-                EnableBlending = false
+                EnableBlending = false,
+                Use320x256 = true
             } },
             { Layer.IntroEffects, new ()
             {
                 BaseZ = 0.70f,
                 EnableBlending = true,
-                SupportColoredRects = true
+                SupportColoredRects = true,
+                Use320x256 = true
             } },
             { Layer.OutroGraphics, new ()
             {
@@ -274,14 +277,16 @@ namespace Ambermoon.Renderer
             } },
             { Layer.FantasyIntroGraphics, new ()
             {
-                BaseZ = 0.70f
+                BaseZ = 0.70f,
+                Use320x256 = true
             } },
             { Layer.FantasyIntroEffects, new ()
             {
                 BaseZ = 0.70f,
                 EnableBlending = true,
                 SupportColoredRects = true,
-                SupportTextures = false
+                SupportTextures = false,
+                Use320x256 = true
             } },
             { Layer.Misc, new ()
             {

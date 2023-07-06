@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
@@ -31,9 +32,10 @@ namespace Ambermoon
             }
 
             public IntroActionType Type { get; }
-            public abstract void Update(uint ticks, int frameCounter);
+            public abstract void Update(long ticks, int frameCounter);
+            public abstract void Destroy();
 
-            public IntroAction CreateAction(IntroActionType actionType, IRenderView renderView, uint startTicks, Func<int, int, int> rng)
+            public static IntroAction CreateAction(IntroActionType actionType, IRenderView renderView, long startTicks, Func<int, int, int> rng)
             {
                 return actionType switch
                 {
@@ -49,15 +51,14 @@ namespace Ambermoon
             private readonly IRenderView renderView;
             private readonly Queue<IColoredRect> stars = new();
             private readonly Queue<int> starTicks = new();
-            private readonly uint startTicks;
+            private readonly long startTicks;
             private readonly Func<int, int, int> rng;
 
-            public IntroActionStarfield(IRenderView renderView, uint startTicks, Func<int, int, int> rng)
+            public IntroActionStarfield(IRenderView renderView, long startTicks, Func<int, int, int> rng)
                 : base(IntroActionType.Starfield)
             {
                 this.renderView = renderView;
                 this.startTicks = startTicks;
-                this.duration = duration;
                 this.rng = rng;
             }
 
@@ -67,7 +68,12 @@ namespace Ambermoon
                 starTicks.Enqueue(rng(10, 20));
             }
 
-            public override void Update(uint ticks, int frameCounter)
+            public override void Update(long ticks, int frameCounter)
+            {
+                // TODO
+            }
+
+            public override void Destroy()
             {
                 // TODO
             }
@@ -180,28 +186,30 @@ namespace Ambermoon
 
             private readonly IRenderView renderView;
             private readonly ILayerSprite[] objects = new ILayerSprite[5];
-            private readonly uint startTicks;
+            private readonly long startTicks;
             // TODO: somewhere the zoom is also set to 14000
             private int currentZoom = 7000; // start value
             private int zoomWaitCounter = -1;
             private const int MaxZoom = 22248;
-            private uint lastTicks = 0;
+            private long lastTicks = 0;
             private int zoomTransitionInfoIndex = 0;
 
-            public IntroActionZoomingObjects(IRenderView renderView, uint startTicks, Func<int, int, int> _)
+            public IntroActionZoomingObjects(IRenderView renderView, long startTicks, Func<int, int, int> _)
                 : base(IntroActionType.Starfield)
             {
                 this.renderView = renderView;
                 this.startTicks = startTicks;
                 lastTicks = startTicks;
                 var layer = renderView.GetLayer(Layer.IntroGraphics);
-                int textureAtlasWidth = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics).Texture.Width;
+                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
+                int textureAtlasWidth = textureAtlas.Texture.Width;
 
                 // Note: The objects are ordered in render order so the
                 // last one is drawn over the others. Thus we use the
                 // index for the display layer and multiply it by 50.
                 for (int i = 0; i < 5; i++)
                 {
+                    var graphicIndex = IntroGraphic.SunAnimation + i;
                     var info = ZoomInfos[i];
                     objects[i] = i == 4
                         ? renderView.SpriteFactory.CreateAnimated(0, 0, textureAtlasWidth, 12, true, (byte)(i * 50)) as IAnimatedLayerSprite
@@ -209,11 +217,13 @@ namespace Ambermoon
                     objects[i].TextureSize = new Size(info.ImageWidth, info.ImageHeight);
                     objects[i].Layer = layer;
                     objects[i].ClipArea = new Rect(0, 0, 320, 200);
+                    objects[i].TextureAtlasOffset = textureAtlas.GetOffset((uint)graphicIndex);
+                    objects[i].PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[graphicIndex] - 1);
                     objects[i].Visible = false;
                 }
             }
 
-            public override void Update(uint ticks, int frameCounter)
+            public override void Update(long ticks, int frameCounter)
             {
                 // Update the sun frame
                 (objects[4] as IAnimatedLayerSprite).CurrentFrame = (uint)frameCounter / 4;
@@ -222,7 +232,13 @@ namespace Ambermoon
                 lastTicks = ticks;
             }
 
-            private void ProcessTicks(uint ticks)
+            public override void Destroy()
+            {
+                foreach (var obj in objects)
+                    obj?.Delete();
+            }
+
+            private void ProcessTicks(long ticks)
             {
                 for (int i = 0; i < ticks; i++)
                 {
@@ -256,15 +272,46 @@ namespace Ambermoon
 
                     for (int n = 0; n < 5; n++)
                     {
+                        var obj = objects[n];
                         var info = ZoomInfos[n];
                         int distance = info.InitialDistance - currentZoom;
-                        // TODO
+
+                        if (distance > 0)
+                        {
+                            distance += 256;
+
+                            if (distance <= 0xffff)
+                            {
+                                float offsetX = info.EndOffsetX * 256.0f;
+                                float offsetY = info.EndOffsetY * 256.0f;
+                                offsetX /= distance;
+                                offsetY /= distance;
+                                offsetX += 160;
+                                offsetY = 100 - offsetY;
+
+                                float width = info.ZoomToWidth * 256.0f;
+                                float height = info.ZoomToHeight * 256.0f;
+                                width /= distance;
+                                height /= distance;
+
+                                offsetX -= 0.5f * width;
+                                offsetY -= 0.5f * height;
+
+                                obj.Visible = width >= 1.0f && height >= 1.0f;
+                                obj.Resize(Util.Round(width), Util.Round(height));
+                                obj.X = Util.Round(offsetX);
+                                obj.Y = Util.Round(offsetY);
+                            }
+                        }
+                        else
+                        {
+                            obj.Visible = false;
+                        }
                     }
                 }
             }
         }
 
-        static ITextureAtlas textureAtlas = null;
         readonly Action finishAction;
         readonly IIntroData introData;
         readonly Font introFont;
@@ -272,16 +319,8 @@ namespace Ambermoon
         readonly IRenderView renderView;
         readonly IRenderLayer renderLayer;
         long ticks = 0;
-        IReadOnlyList<OutroAction> actions = null;
-        int actionIndex = 0;
-        int scrolledAmount = 0;
-        long scrollStartTicks = 0;
-        long nextActionTicks = 0;
-        readonly ILayerSprite picture;
-        readonly IReadOnlyDictionary<uint, OutroGraphicInfo> graphicInfos;
-        readonly byte paletteOffset;
-        bool waitForClick = false;
-        readonly List<Text> texts = new List<Text>();
+        readonly List<Text> texts = new();
+        readonly List<IntroAction> actions = new();
         readonly IColoredRect fadeArea;
         Action fadeMidAction = null;
         long fadeStartTicks = 0;
@@ -289,32 +328,14 @@ namespace Ambermoon
         const double TicksPerSecond = 60.0; // or test with 50 if not ok
         int animationFrameCounter = 0;
 
-        static void EnsureTextures(IRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge)
-        {
-            if (textureAtlas == null)
-            {
-                TextureAtlasManager.Instance.AddFromGraphics(Layer.OutroGraphics,
-                    outroData.Graphics.Select((g, i) => new { Graphic = g, Index = i }).ToDictionary(g => (uint)g.Index, g => g.Graphic));
-                textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.OutroGraphics);
-                renderView.GetLayer(Layer.OutroGraphics).Texture = textureAtlas.Texture;
-                TextureAtlasManager.Instance.AddFromGraphics(Layer.OutroText, outroFont.GlyphGraphics);
-                TextureAtlasManager.Instance.AddFromGraphics(Layer.OutroText, outroFontLarge.GlyphGraphics);
-                renderView.GetLayer(Layer.OutroText).Texture = TextureAtlasManager.Instance.GetOrCreate(Layer.OutroText).Texture;
-            }
-        }
-
-        public Intro(IRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge, Action finishAction)
+        public Intro(IRenderView renderView, IIntroData introData, Font introFont, Font introFontLarge, Action finishAction)
         {
             this.finishAction = finishAction;
-            this.introData = outroData;
-            this.introFont = outroFont;
-            this.introFontLarge = outroFontLarge;
+            this.introData = introData;
+            this.introFont = introFont;
+            this.introFontLarge = introFontLarge;
             this.renderView = renderView;
-            renderLayer = renderView.GetLayer(Layer.OutroGraphics);
-            picture = renderView.SpriteFactory.Create(160, 128, true, 1) as ILayerSprite;
-            picture.Layer = renderLayer;
-            picture.PaletteIndex = paletteOffset = renderView.GraphicProvider.FirstOutroPaletteIndex;
-            picture.Visible = false;
+            renderLayer = renderView.GetLayer(Layer.IntroGraphics);
 
             fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
             fadeArea.Layer = renderView.GetLayer(Layer.Effects);
@@ -322,37 +343,8 @@ namespace Ambermoon
             fadeArea.Y = 0;
             fadeArea.Visible = false;
 
-            graphicInfos = outroData.GraphicInfos;
-
-            EnsureTextures(renderView, outroData, outroFont, outroFontLarge);
-        }
-
-        public bool Active { get; private set; }
-
-        public void Start(Savegame savegame)
-        {
-            ticks = 0;
-            Active = true;
-            actionIndex = 0;
-            scrolledAmount = 0;
-            scrollStartTicks = 0;
-            nextActionTicks = 0;
-            waitForClick = false;
-            speedIndex = 2;
-
-            var option = OutroOption.ValdynNotInParty;
-
-            if (savegame.CurrentPartyMemberIndices.Contains(12u)) // Valdyn in party
-            {
-                if (savegame.IsGameOptionActive(Data.Enumerations.Option.FoundYellowSphere))
-                    option = OutroOption.ValdynInPartyWithYellowSphere;
-                else
-                    option = OutroOption.ValdynInPartyNoYellowSphere;
-            }
-
-            actions = introData.OutroActions[option];
-
-            Process();
+            // TODO
+            actions.Add(IntroAction.CreateAction(IntroActionType.SpawnZoomObjects, renderView, 0, (min, max) => 0));
         }
 
         public void Update(double deltaTime)
@@ -362,7 +354,7 @@ namespace Ambermoon
 
             animationFrameCounter = (int)((animationFrameCounter + (ticks - oldTicks)) % 48);
 
-            /*if (fadeArea.Visible || fadeMidAction != null)
+            if (fadeArea.Visible || fadeMidAction != null)
             {
                 long fadeDuration = ticks - fadeStartTicks;
 
@@ -370,7 +362,6 @@ namespace Ambermoon
                 {
                     fadeMidAction = null;
                     fadeArea.Visible = false;
-                    nextActionTicks = ticks;
                 }
                 else
                 {
@@ -386,133 +377,23 @@ namespace Ambermoon
 
                     return;
                 }
-            }*/
-
-
-            Process();
-        }
-
-        public void Click(bool right)
-        {
-            if (!waitForClick)
-            {
-                ToggleSpeed(!right);
-                return;
             }
 
-            waitForClick = false;
-            nextActionTicks = 0; // this ensures immediate processing of next action
-        }
-
-        void ToggleSpeed(bool up)
-        {
-            if (up)
+            foreach (var action in actions)
             {
-                if (speedIndex == PixelScrollPerSecond.Length - 1)
-                    return;
-
-                ++speedIndex;
-            }
-            else // down
-            {
-                if (speedIndex == 0)
-                    return;
-
-                --speedIndex;
-            }
-
-            if (speedIndex == 0)
-                return; // paused
-
-            double pixelsPerTick = PixelScrollPerSecond[speedIndex] / Game.TicksPerSecond;
-            long scrollTicks = (long)Math.Round((actions[actionIndex - 1].ScrollAmount - scrolledAmount) / pixelsPerTick);
-            scrolledAmount = 0;
-            scrollStartTicks = ticks;
-            nextActionTicks = ticks + scrollTicks;
-        }
-
-        void Scroll()
-        {
-            long scrollTicks = ticks - scrollStartTicks;
-            double pixelsPerTick = PixelScrollPerSecond[speedIndex] / Game.TicksPerSecond;
-            int scrollAmount = (int)Math.Round(scrollTicks * pixelsPerTick);
-            int delta = scrollAmount - scrolledAmount;
-
-            if (delta == 0)
-                return;
-
-            scrolledAmount = scrollAmount;
-            
-            foreach (var text in texts.ToList())
-            {
-                text.Move(0, -delta);
-
-                if (!text.OnScreen) // not on screen anymore
-                {
-                    text.Destroy();
-                    texts.Remove(text);
-                }
+                action.Update(ticks, animationFrameCounter);
             }
         }
 
-        void Process()
+        public void Click()
         {
-            if (waitForClick || fadeMidAction != null || speedIndex == 0)
-                return;
+            End();
+        }
 
-            if (nextActionTicks > ticks)
-            {
-                Scroll();
-                return;
-            }
-
-            if (actionIndex == actions.Count)
-            {
-                Active = false;
-                finishAction?.Invoke();
-                return;
-            }
-
-            var action = actions[actionIndex];
-
-            switch (action.Command)
-            {
-                case OutroCommand.ChangePicture:
-                {
-                    Fade(() =>
-                    {
-                        texts.ForEach(text => text.Destroy());
-                        texts.Clear();
-                        var graphicInfo = graphicInfos[action.ImageOffset.Value];
-                        picture.PaletteIndex = (byte)(paletteOffset + graphicInfo.PaletteIndex - 1);
-                        picture.TextureAtlasOffset = textureAtlas.GetOffset(graphicInfo.GraphicIndex);
-                        picture.Resize(graphicInfo.Width, graphicInfo.Height);
-                        picture.X = (Global.VirtualScreenWidth - graphicInfo.Width) / 2;
-                        picture.Y = (Global.VirtualScreenHeight - graphicInfo.Height) / 2;
-                        picture.Visible = true;
-                        ++actionIndex;
-                    });
-                    break;
-                }
-                case OutroCommand.WaitForClick:
-                {
-                    ++actionIndex;
-                    waitForClick = true;
-                    break;
-                }
-                case OutroCommand.PrintTextAndScroll:
-                {
-                    if (action.TextIndex != null)
-                        PrintText(action.TextDisplayX, introData.Texts[action.TextIndex.Value], action.LargeText);
-                    double pixelsPerTick = PixelScrollPerSecond[speedIndex] / Game.TicksPerSecond;
-                    long scrollTicks = (long)Math.Round(action.ScrollAmount / pixelsPerTick);
-                    ++actionIndex;
-                    scrolledAmount = 0;
-                    scrollStartTicks = ticks;
-                    nextActionTicks = ticks + scrollTicks;
-                    break;
-                }
-            }
+        void End()
+        {
+            Destroy();
+            finishAction?.Invoke();
         }
 
         void Fade(Action midAction)
@@ -521,19 +402,19 @@ namespace Ambermoon
             fadeMidAction = midAction;
         }
 
-        void PrintText(int x, string text, bool large)
+        void PrintText(int x, int y, string text, bool large)
         {
             Text textEntry;
 
             if (large)
             {
                 textEntry = introFontLarge.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 22), text, 10, TextAlign.Left, 208);
+                    new Rect(x, y, Global.VirtualScreenWidth - x, 22), text, 10, TextAlign.Left, 208);
             }
             else
             {
                 textEntry = introFont.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 11), text, 10, TextAlign.Left, 208);
+                    new Rect(x, y, Global.VirtualScreenWidth - x, 11), text, 10, TextAlign.Left, 208);
             }
 
             textEntry.Visible = true;
@@ -541,40 +422,13 @@ namespace Ambermoon
             texts.Add(textEntry);
         }
 
-        public void Abort()
-        {
-            if (Active)
-            {
-                Active = false;
-                finishAction?.Invoke();
-            }
-        }
-
         public void Destroy()
         {
-            Active = false;
-            picture.Visible = false;
+            actions.ForEach(action => action.Destroy());
+            actions.Clear();
             texts.ForEach(text => text.Destroy());
             texts.Clear();
-            fadeArea.Visible = false;
+            fadeArea.Delete();
         }
-    }
-
-    internal class OutroFactory : IOutroFactory
-    {
-        readonly IRenderView renderView;
-        readonly IOutroData outroData;
-        readonly Font outroFont;
-        readonly Font outroFontLarge;
-
-        public OutroFactory(IRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge)
-        {
-            this.renderView = renderView;
-            this.outroData = outroData;
-            this.outroFont = outroFont;
-            this.outroFontLarge = outroFontLarge;
-        }
-
-        public IOutro Create(Action finishAction) => new Outro(renderView, outroData, outroFont, outroFontLarge, finishAction);
     }
 }

@@ -14,6 +14,7 @@
             RenderToVirtualScreen = true;
             TextureFactor = 1;
             BaseZ = 0.0f;
+            Use320x256 = false;
         }
 
         /// <summary>
@@ -81,5 +82,13 @@
         /// 3D layers should use a value of 0.0f here.
         /// </summary>
         public float BaseZ { get; set; }
+        /// <summary>
+        /// Uses a slightly bigger resolution of 320x256 instead
+        /// of 320x200. This will be mapped to 409,6 x 256 which
+        /// has the same ratio as 320x200. Positions are then
+        /// in the range 320x256 and a black border is shown at
+        /// left and right. Used for the intros mainly.
+        /// </summary>
+        public bool Use320x256 { get; set;  }
     }
 }

@@ -13,7 +13,7 @@ namespace Ambermoon
         {
             Continue,
             NewGame,
-            //Intro,
+            Intro,
             Exit
         }
 
@@ -74,13 +74,10 @@ namespace Ambermoon
             int y = 56 + 12;
             for (int i = 0; i < 4; ++i)
             {
-                if (i == 2) // TODO: for now we don't show the intro option as it is not implemented
-                    continue;
-
                 int textWidth = introFont.MeasureTextWidth(texts[i]);
                 int offsetX = (Global.VirtualScreenWidth - textWidth) / 2;
                 var area = new Rect(0, y - 6, Global.VirtualScreenWidth, 24);
-                var clickArea = new Rect(offsetX, y, textWidth, 16);
+                var clickArea = new Rect(offsetX, y, textWidth, 22);
                 var mainMenuText = introFont.CreateText(renderView, Layer.IntroText, area, texts[i], 1);
                 mainMenuText.Visible = i != 0 || canContinue;
                 mainMenuTexts.Add(KeyValuePair.Create(clickArea, mainMenuText));
@@ -181,7 +178,7 @@ namespace Ambermoon
 
             if (buttons == MouseButtons.Left)
             {
-                position = renderView.ScreenToGame(position);
+                position = renderView.ScreenToLayer(position, Layer.IntroGraphics);
 
                 for (int i = 0; i < mainMenuTexts.Count; ++i)
                 {
@@ -202,7 +199,7 @@ namespace Ambermoon
 
             cursor.UpdatePosition(position, null);
 
-            position = renderView.ScreenToGame(position);
+            position = renderView.ScreenToLayer(position, Layer.IntroGraphics);
 
             for (int i = 0; i < mainMenuTexts.Count; ++i)
             {

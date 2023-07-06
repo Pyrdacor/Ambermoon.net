@@ -44,5 +44,7 @@ namespace Ambermoon.Data
         static abstract IReadOnlyDictionary<IntroGraphic, byte> GraphicPalettes { get; }
         IReadOnlyDictionary<IntroGraphic, Graphic> Graphics { get; }
         IReadOnlyDictionary<IntroText, string> Texts { get; }
+        IReadOnlyDictionary<char, Glyph> Glyphs { get; }
+        IReadOnlyDictionary<char, Glyph> LargeGlyphs { get; }
     }
 }

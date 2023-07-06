@@ -58,6 +58,7 @@ namespace Ambermoon
         public int Width { get; private set; }
         public int Height { get; private set; }
         VersionSelector versionSelector = null;
+        Intro intro = null;
         public Game Game { get; private set; }
         public bool Fullscreen
         {
@@ -630,7 +631,8 @@ namespace Ambermoon
         }
 
         void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
-            Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage)
+            Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage,
+            Action showIntroAction)
         {
             void PlayMusic(Song song)
             {
@@ -655,10 +657,9 @@ namespace Ambermoon
                         configuration.FirstStart = false;
                         startGameAction?.Invoke(true);
                         break;
-                    /*case MainMenu.CloseAction.Intro:
-                        // TODO
-                        musicCache.GetSong(Data.Enumerations.Song.Intro)?.Play(audioOutput);
-                        break;*/
+                    case MainMenu.CloseAction.Intro:
+                        showIntroAction?.Invoke();
+                        break;
                     case MainMenu.CloseAction.Exit:
                         mainMenu?.Destroy();
                         mainMenu = null;
@@ -701,7 +702,8 @@ namespace Ambermoon
 
             // Load intro data
             var introData = gameData.IntroData;
-            var introFont = new Font(Resources.IntroFont, 12);
+            var introFont = new Font(introData.Glyphs, 6, 0);
+            var introFontLarge = new Font(introData.LargeGlyphs, 10, (uint)introData.Glyphs.Count);
 
             // Load outro data
             var outroData = gameData.OutroData;
@@ -738,7 +740,7 @@ namespace Ambermoon
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;
                 textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
-                    introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value), features);
+                    introFontLarge.GlyphGraphics, introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value), features);
                 logoPyrdacor?.Initialize(textureAtlasManager);
                 AdvancedLogo.Initialize(textureAtlasManager);
                 return textureAtlasManager;
@@ -886,12 +888,21 @@ namespace Ambermoon
                     while (advancedLogo != null)
                         Thread.Sleep(100);
 
-                    ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFont,
-                        introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
+                    void ShowMainMenu()
                     {
-                        cursor.Type = Data.CursorType.None;
-                        mainMenu.FadeOutAndDestroy(continueGame, () => RunTask(() => SetupGameCreator(continueGame)));
-                    }, gameLanguage);
+                        this.ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFontLarge,
+                            introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
+                            {
+                                cursor.Type = Data.CursorType.None;
+                                mainMenu.FadeOutAndDestroy(continueGame, () => RunTask(() => SetupGameCreator(continueGame)));
+                            }, gameLanguage, () =>
+                            {
+                                cursor.Type = Data.CursorType.None;
+                                ShowIntro(ShowMainMenu, introData, introFont, introFontLarge);
+                            });
+                    }
+
+                    ShowMainMenu();
                 }
                 catch (Exception ex)
                 {
@@ -928,6 +939,18 @@ namespace Ambermoon
                         window.Close();
                     }
                 }
+            });
+        }
+
+        void ShowIntro(Action showMainMenuAction, IIntroData introData, Font introFont, Font introFontLarge)
+        {
+            mainMenu?.Destroy();
+            mainMenu = null;
+
+            intro = new Intro(renderView, introData, introFont, introFontLarge, () =>
+            {
+                intro = null;
+                showMainMenuAction?.Invoke();
             });
         }
 
@@ -1462,6 +1485,8 @@ namespace Ambermoon
                 fantasyIntro.Update(delta);
             else if (logoPyrdacor == null && advancedLogo != null)
                 advancedLogo.Update(renderView, () => advancedLogo = null);
+            else if (intro != null)
+                intro.Update(delta);
             else if (mainMenu != null)
             {
                 mainMenu.Update();

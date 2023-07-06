@@ -40,6 +40,7 @@ namespace Ambermoon.Render
         Size ViewToScreen(Size size);
         Rect GameToScreen(Rect rect);
         Rect ViewToScreen(Rect rect);
+        Position ScreenToLayer(Position position, Layer layer);
         Position ScreenToGame(Position position);
         Position ScreenToView(Position position);
         Size ScreenToView(Size size);

@@ -182,7 +182,8 @@ namespace Ambermoon.Render
         }
 
         public void AddAll(IGameData gameData, IGraphicProvider graphicProvider, IFontProvider fontProvider,
-            Dictionary<uint, Graphic> introTextGlyphs, Dictionary<uint, Graphic> introGraphics, Features features)
+            Dictionary<uint, Graphic> introTextGlyphs, Dictionary<uint, Graphic> introLargeTextGlyphs,
+            Dictionary<uint, Graphic> introGraphics, Features features)
         {
             if (gameData == null)
                 throw new ArgumentNullException(nameof(gameData));
@@ -357,6 +358,8 @@ namespace Ambermoon.Render
             #region Intro Text
 
             foreach (var introTextGlyph in introTextGlyphs)
+                AddTexture(Layer.IntroText, introTextGlyph.Key, introTextGlyph.Value);
+            foreach (var introTextGlyph in introLargeTextGlyphs)
                 AddTexture(Layer.IntroText, introTextGlyph.Key, introTextGlyph.Value);
 
             #endregion

@@ -195,8 +195,7 @@ namespace Ambermoon.Renderer.OpenGL
                     if (layer != Layer.Map3DBackground && layer != Layer.Map3DCeiling && layer != Layer.Map3D && layer != Layer.Billboards3D)
                         renderLayer.Visible = true;
 
-                    if (layer == Layer.FantasyIntroGraphics || layer == Layer.FantasyIntroEffects ||
-                        layer == Layer.IntroGraphics || layer == Layer.IntroEffects || layer == Layer.IntroText)
+                    if (RenderLayer.DefaultLayerConfigs[layer].Use320x256)
                         Set320x256View(renderLayer);
 
                     AddLayer(renderLayer);
@@ -833,6 +832,23 @@ namespace Ambermoon.Renderer.OpenGL
                 return null;
 
             return rect;
+        }
+
+        public Position ScreenToLayer(Position position, Layer layer)
+        {
+            if (RenderLayer.DefaultLayerConfigs[layer].Use320x256)
+            {
+                position = ScreenToView(position);
+
+                float WindowFactorX = renderDisplayArea.Width / 409.6f;
+                float WindowFactorY = renderDisplayArea.Height / 256.0f;
+
+                return new Position(Misc.Round(position.X / WindowFactorX - 44.8f), Misc.Round(position.Y / WindowFactorY));
+            }
+            else
+            {
+                return ScreenToGame(position);
+            }
         }
 
         // This is used to convert mouse coordinates to game coordinates
