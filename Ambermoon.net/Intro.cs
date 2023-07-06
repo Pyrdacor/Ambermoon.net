@@ -209,11 +209,11 @@ namespace Ambermoon
                 // index for the display layer and multiply it by 50.
                 for (int i = 0; i < 5; i++)
                 {
-                    var graphicIndex = IntroGraphic.SunAnimation + i;
+                    var graphicIndex = i == 4 ? IntroGraphic.SunAnimation : IntroGraphic.Lyramion + i;
                     var info = ZoomInfos[i];
                     objects[i] = i == 4
-                        ? renderView.SpriteFactory.CreateAnimated(0, 0, textureAtlasWidth, 12, true, (byte)(i * 50)) as IAnimatedLayerSprite
-                        : renderView.SpriteFactory.Create(0, 0, true, (byte)(i * 50)) as ILayerSprite;
+                        ? renderView.SpriteFactory.CreateAnimated(info.ImageWidth, info.ImageHeight, textureAtlasWidth, 12, true, (byte)(i * 50)) as IAnimatedLayerSprite
+                        : renderView.SpriteFactory.Create(info.ImageWidth, info.ImageHeight, true, (byte)(i * 50)) as ILayerSprite;
                     objects[i].TextureSize = new Size(info.ImageWidth, info.ImageHeight);
                     objects[i].Layer = layer;
                     objects[i].ClipArea = new Rect(0, 0, 320, 200);
@@ -282,25 +282,25 @@ namespace Ambermoon
 
                             if (distance <= 0xffff)
                             {
-                                float offsetX = info.EndOffsetX * 256.0f;
-                                float offsetY = info.EndOffsetY * 256.0f;
+                                int offsetX = info.EndOffsetX * 256;
+                                int offsetY = info.EndOffsetY * 256;
                                 offsetX /= distance;
                                 offsetY /= distance;
                                 offsetX += 160;
                                 offsetY = 100 - offsetY;
 
-                                float width = info.ZoomToWidth * 256.0f;
-                                float height = info.ZoomToHeight * 256.0f;
+                                int width = info.ZoomToWidth * 256;
+                                int height = info.ZoomToHeight * 256;
                                 width /= distance;
                                 height /= distance;
 
-                                offsetX -= 0.5f * width;
-                                offsetY -= 0.5f * height;
+                                offsetX -= width / 2;
+                                offsetY -= height / 2;
 
-                                obj.Visible = width >= 1.0f && height >= 1.0f;
-                                obj.Resize(Util.Round(width), Util.Round(height));
-                                obj.X = Util.Round(offsetX);
-                                obj.Y = Util.Round(offsetY);
+                                obj.Resize(width, height);
+                                obj.X = offsetX;
+                                obj.Y = offsetY;
+                                obj.Visible = width >= 1.0f && height >= 1.0f;                                
                             }
                         }
                         else
