@@ -128,18 +128,20 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             #region Hunk 3 - Intro graphics (planets, etc)
 
-            Size[] hunk3ImageSizes = new Size[6]
+            Size[] hunk3ImageSizes = new Size[7]
             {
                 new Size(128, 82), // Thalion Logo
+                new Size(272, 87), // Ambermoon
                 new Size(64, 64), // Sun
                 new Size(128, 128), // Lyramion
                 new Size(64, 64), // Morag
                 new Size(64, 64), // Forest Moon
-                new Size(96, 96), // Meteor
+                new Size(96, 88), // Meteor
                 // TODO ...
             };
-            int[] hunk3FrameCounts = new int[6]
+            int[] hunk3FrameCounts = new int[7]
             {
+                1,
                 1,
                 12,
                 1,
@@ -149,7 +151,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 // TODO ...
             };
 
-            for (int i = 0; i < 6; ++i)
+            for (int i = 0; i < 7; ++i)
             {
                 var graphicInfo = new GraphicInfo
                 {
@@ -178,8 +180,6 @@ namespace Ambermoon.Data.Legacy.Serialization
                     }
                 }
                 graphics.Add(IntroGraphic.ThalionLogo + i, graphic);
-                if (i == 0) // The other graphics start at 0x42B8 (the data between is unknown yet)
-                    introHunks[3].Position = 0x42B8;
             }
 
             // TODO ...

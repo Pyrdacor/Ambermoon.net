@@ -13,11 +13,12 @@ namespace Ambermoon.Data
         DestroyedIllien,
         DestroyedSnakesign,
         ThalionLogo,
+        Ambermoon,
         SunAnimation,
         Lyramion,
         Morag,
         ForestMoon,
-        Meteor
+        Meteor,        
     }
 
     public enum IntroText

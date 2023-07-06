@@ -195,7 +195,8 @@ namespace Ambermoon.Renderer.OpenGL
                     if (layer != Layer.Map3DBackground && layer != Layer.Map3DCeiling && layer != Layer.Map3D && layer != Layer.Billboards3D)
                         renderLayer.Visible = true;
 
-                    if (layer == Layer.FantasyIntroGraphics || layer == Layer.FantasyIntroEffects)
+                    if (layer == Layer.FantasyIntroGraphics || layer == Layer.FantasyIntroEffects ||
+                        layer == Layer.IntroGraphics || layer == Layer.IntroEffects || layer == Layer.IntroText)
                         Set320x256View(renderLayer);
 
                     AddLayer(renderLayer);
