@@ -31,7 +31,7 @@ namespace Ambermoon
             }
 
             public IntroActionType Type { get; }
-            public abstract void Update(long ticks, int frameCounter, int meteorSparkFrameCounter);
+            public abstract void Update(long ticks, int frameCounter);
             public abstract void Destroy();
 
             public static IntroAction CreateAction(IntroActionType actionType, IRenderView renderView, long startTicks, Func<int, int, int> rng)
@@ -67,7 +67,7 @@ namespace Ambermoon
                 starTicks.Enqueue(rng(10, 20));
             }
 
-            public override void Update(long ticks, int frameCounter, int meteorSparkFrameCounter)
+            public override void Update(long ticks, int frameCounter)
             {
                 // TODO
             }
@@ -197,6 +197,7 @@ namespace Ambermoon
             private const int SunObjectIndex = 4;
             private long lastTicks = 0;
             private int zoomTransitionInfoIndex = 0;
+            private int meteorSparkFrameCounter = -1;
 
             public IntroActionZoomingObjects(IRenderView renderView, long startTicks, Func<int, int, int> _)
                 : base(IntroActionType.Starfield)
@@ -234,12 +235,12 @@ namespace Ambermoon
                     meteorSparks[i].BaseFrame = (uint)i * 15;
                     meteorSparks[i].PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.MeteorSparks] - 1);
                     meteorSparks[i].Visible = false;
-                    meteorSparks[i].X = 192 - i * 144;
+                    meteorSparks[i].X = 48 + i * 144;
                     meteorSparks[i].Y = 153;
                 }
             }
 
-            public override void Update(long ticks, int frameCounter, int meteorSparkFrameCounter)
+            public override void Update(long ticks, int frameCounter)
             {
                 // Update the sun frame
                 (objects[SunObjectIndex] as IAnimatedLayerSprite).CurrentFrame = (uint)frameCounter / 4;
@@ -298,6 +299,12 @@ namespace Ambermoon
                             if (--zoomWaitCounter == 0)
                                 zoomWaitCounter = -1;
                         }
+                    }
+
+                    if (meteorSparkFrameCounter != -1)
+                    {
+                        if (++meteorSparkFrameCounter == 60)
+                            meteorSparkFrameCounter = 28;
                     }
 
                     for (int n = 0; n < 5; n++)
@@ -360,7 +367,6 @@ namespace Ambermoon
         const long HalfFadeDurationInTicks = 3 * Game.TicksPerSecond / 4;
         const double TicksPerSecond = 60.0; // or test with 50 if not ok
         int animationFrameCounter = 0;
-        int meteorSparkFrameCounter = -1;
 
         public Intro(IRenderView renderView, IIntroData introData, Font introFont, Font introFontLarge, Action finishAction)
         {
@@ -387,11 +393,6 @@ namespace Ambermoon
             ticks += (long)Math.Round(TicksPerSecond * deltaTime);
 
             animationFrameCounter = (int)((animationFrameCounter + (ticks - oldTicks)) % 48);
-            if (meteorSparkFrameCounter != -1)
-            {
-                if (++meteorSparkFrameCounter == 60)
-                    meteorSparkFrameCounter = 28;
-            }
 
             if (fadeArea.Visible || fadeMidAction != null)
             {
@@ -420,7 +421,7 @@ namespace Ambermoon
 
             foreach (var action in actions)
             {
-                action.Update(ticks, animationFrameCounter, meteorSparkFrameCounter);
+                action.Update(ticks, animationFrameCounter);
             }
         }
 

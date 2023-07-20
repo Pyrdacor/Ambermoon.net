@@ -27,7 +27,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             { IntroGraphic.Morag, 3 },
             { IntroGraphic.ForestMoon, 3 },
             { IntroGraphic.Meteor, 3 },
-            { IntroGraphic.MeteorSparks, 3 },
+            { IntroGraphic.MeteorSparks, 8 },
             // TODO ...
         };
         static GraphicInfo paletteGraphicInfo = new()
