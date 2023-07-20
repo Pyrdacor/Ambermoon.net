@@ -379,8 +379,8 @@ namespace Ambermoon.Renderer
 
             if (sprite.ClipArea != null)
             {
-                float textureWidthFactor = spriteSize.Width / textureSize.Width;
-                float textureHeightFactor = spriteSize.Height / textureSize.Height;
+                float textureWidthFactor = (float)spriteSize.Width / textureSize.Width;
+                float textureHeightFactor = (float)spriteSize.Height / textureSize.Height;
                 float oldX = position.X;
                 float oldY = position.Y;
                 int oldWidth = spriteSize.Width;
@@ -821,8 +821,8 @@ namespace Ambermoon.Renderer
 
             if (sprite.ClipArea != null)
             {
-                float textureWidthFactor = spriteSize.Width / textureSize.Width;
-                float textureHeightFactor = spriteSize.Height / textureSize.Height;
+                float textureWidthFactor = (float)spriteSize.Width / textureSize.Width;
+                float textureHeightFactor = (float)spriteSize.Height / textureSize.Height;
                 float oldX = position.X;
                 float oldY = position.Y;
                 int oldWidth = spriteSize.Width;
