@@ -188,7 +188,7 @@ namespace Ambermoon
             private readonly ILayerSprite[] objects = new ILayerSprite[5];
             private readonly long startTicks;
             // TODO: somewhere the zoom is also set to 14000
-            private int currentZoom = 7000; // start value
+            private int currentZoom = 0; // 7000, start value
             private int zoomWaitCounter = -1;
             private const int MaxZoom = 22248;
             private long lastTicks = 0;
