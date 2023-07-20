@@ -18,7 +18,8 @@ namespace Ambermoon.Data
         Lyramion,
         Morag,
         ForestMoon,
-        Meteor,        
+        Meteor,
+        MeteorSparks
     }
 
     public enum IntroText

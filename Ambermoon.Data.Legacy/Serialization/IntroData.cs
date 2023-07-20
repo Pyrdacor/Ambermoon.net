@@ -27,6 +27,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             { IntroGraphic.Morag, 3 },
             { IntroGraphic.ForestMoon, 3 },
             { IntroGraphic.Meteor, 3 },
+            { IntroGraphic.MeteorSparks, 3 },
             // TODO ...
         };
         static GraphicInfo paletteGraphicInfo = new()
@@ -153,7 +154,9 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             #region Hunk 3 - Intro graphics (planets, etc)
 
-            Size[] hunk3ImageSizes = new Size[7]
+            const int hunk3ImageCount = 8;
+
+            Size[] hunk3ImageSizes = new Size[hunk3ImageCount]
             {
                 new Size(128, 82), // Thalion Logo
                 new Size(272, 87), // Ambermoon
@@ -162,9 +165,10 @@ namespace Ambermoon.Data.Legacy.Serialization
                 new Size(64, 64), // Morag
                 new Size(64, 64), // Forest Moon
                 new Size(96, 88), // Meteor
+                new Size(64, 47), // Meteor Sparks
                 // TODO ...
             };
-            int[] hunk3FrameCounts = new int[7]
+            int[] hunk3FrameCounts = new int[hunk3ImageCount]
             {
                 1,
                 1,
@@ -173,10 +177,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                 1,
                 1,
                 1,
+                30,
                 // TODO ...
             };
+            const int MeteorSparkId = 7;
 
-            for (int i = 0; i < 7; ++i)
+            for (int i = 0; i < hunk3ImageCount; ++i)
             {
                 var graphicInfo = new GraphicInfo
                 {
@@ -199,6 +205,13 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                     for (int f = 0; f < frames; ++f)
                     {
+                        if (i == MeteorSparkId)
+                        {
+                            // This has a bit mask for the blitter (1 bit per pixel).
+                            // But we don't need it in the remake.
+                            introDataHunks[3].Position += 376; // 64x47 bits (divided by 8 for byte count)
+                        }
+
                         var frameGraphic = new Graphic();
                         graphicReader.ReadGraphic(frameGraphic, introDataHunks[3], graphicInfo);
                         graphic.AddOverlay((uint)(f * frameGraphic.Width), 0, frameGraphic, false);
