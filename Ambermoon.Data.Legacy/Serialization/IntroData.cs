@@ -83,10 +83,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                 return paletteGraphic;
             }
 
+            // TODO: There are only 8 palettes and the other 64 bytes have some other meaning!
             for (int i = 0; i < 9; ++i)
                 introPalettes.Add(LoadPalette());
 
-            hunk0.Position += 8; // 8 unknown bytes
+            hunk0.Position += 8; // 2 byte end marker (0xffff) + 3 words (offset from the position of the word to the associated town name: Gemstone: 6, Illien: 14, Snakesign: 20)
 
             for (int i = 0; i < 8; ++i)
             {
