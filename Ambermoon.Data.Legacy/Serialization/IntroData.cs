@@ -1,18 +1,29 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Serialization;
 using static Ambermoon.Data.Legacy.Serialization.AmigaExecutable;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
+    internal class IntroTwinlakeImagePart : IIntroTwinlakeImagePart
+    {
+        public Position Position { get; init; }
+
+        public Graphic Graphic { get; init; }
+    }
+
+    // IReadOnlyList<IIntroTwinlakeImagePart> TwinlakeImageParts { get; }
+
     public class IntroData : IIntroData
     {
+        readonly List<IntroTwinlakeImagePart> twinlakeImageParts = new();
         readonly List<Graphic> introPalettes = new();
         readonly Dictionary<IntroGraphic, Graphic> graphics = new();
         static readonly Dictionary<IntroGraphic, byte> graphicPalettes = new()
         {
-            { IntroGraphic.Frame, 0 }, // unknown
+            { IntroGraphic.Frame, 4 },
             { IntroGraphic.MainMenuBackground, 6 }, // 7 will work too
             { IntroGraphic.Gemstone, 4 },
             { IntroGraphic.Illien, 4 },
@@ -28,6 +39,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             { IntroGraphic.ForestMoon, 3 },
             { IntroGraphic.Meteor, 3 },
             { IntroGraphic.MeteorSparks, 8 },
+            { IntroGraphic.Twinlake, 4 },
             // TODO ...
         };
         static GraphicInfo paletteGraphicInfo = new()
@@ -46,6 +58,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         public IReadOnlyDictionary<IntroText, string> Texts => texts;
         public IReadOnlyDictionary<char, Glyph> Glyphs => glyphs;
         public IReadOnlyDictionary<char, Glyph> LargeGlyphs => largeGlyphs;
+        public IReadOnlyList<IIntroTwinlakeImagePart> TwinlakeImageParts => twinlakeImageParts;
 
         // This is somewhere in the code hunk so we just define it static here.
         private static readonly byte[] GlyphMapping = new byte[96]
@@ -84,6 +97,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
 
             // TODO: There are only 8 palettes and the other 64 bytes have some other meaning!
+            // It seems it is some kind of color palette as well but used in a different way (maybe a changing palette or some color replacement table which is activated over time?)
             for (int i = 0; i < 9; ++i)
                 introPalettes.Add(LoadPalette());
 
@@ -115,7 +129,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             Size[] hunk1ImageSizes = new Size[8]
             {
-                new Size(96, 300), // not sure
+                new Size(288, 200),
                 new Size(320, 256),
                 new Size(160, 128),
                 new Size(160, 128),
@@ -147,9 +161,171 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             #endregion
 
-            #region Hunk 2 - Unknown
+            #region Hunk 2 - Twinlage image and animation data
 
-            // TODO
+            // This is encoded data
+            var hunk2Data = new List<byte[]>();
+            var encodedReader = introDataHunks[2];
+            int off = 0;
+            var currentData = new List<byte>();
+
+            while (encodedReader.Position < encodedReader.Size)
+            {
+                int size = encodedReader.ReadWord();
+                int endOffset = off + size;
+
+                while (off < endOffset)
+                {
+                    sbyte header = unchecked((sbyte)encodedReader.ReadByte());
+
+                    if (header >= 0)
+                    {
+                        for (int i = 0; i < header + 1; i++)
+                            currentData.Add(encodedReader.ReadByte());
+
+                        off += header + 1;
+                    }
+                    else
+                    {
+                        byte literal = encodedReader.ReadByte();
+                        int count = ~header + 1;
+
+                        for (int i = 0; i < count; i++)
+                            currentData.Add(literal);
+
+                        off += count;
+                    }
+                }
+
+                if (size != 0)
+                {
+                    hunk2Data.Add(currentData.ToArray());
+                    currentData.Clear();
+
+                    if (encodedReader.Position % 2 == 1)
+                        encodedReader.Position++;
+                }
+            }
+
+            // There are 177 iterations per data block
+            // First a long is read. If 0, the iteration is skipped.
+            // Otherwise the value is doubled and checked for 32-bit overflow.
+            // If overflow occurs, some code is executed, otherwise skipped.
+            // This continues 32 times.
+
+            if (hunk2Data.Count != 95)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid intro hunk.");
+
+            int blockIndex = 0;
+            var graphicData = new byte[(256 * 177) / 2]; // max size and 4bpp
+
+            foreach (var dataBlock in hunk2Data)
+            {
+                var blockReader = new DataReader(dataBlock);
+                int left = int.MaxValue;
+                int right = -1;
+                int top = int.MaxValue;
+                int bottom = -1;
+
+                for (int i = 0; i < 177; i++)
+                {
+                    long changeHeader = blockReader.ReadDword();
+
+                    if (changeHeader == 0)
+                        continue;
+
+                    for (int n = 0; n < 32; n++)
+                    {
+                        changeHeader *= 2;
+
+                        if (changeHeader >= uint.MaxValue)
+                        {
+                            int x = n * 8;
+
+                            if (left > x)
+                                left = x;
+                            if (right < x + 8)
+                                right = x + 8;
+                            if (top > i)
+                                top = i;
+                            if (bottom < i + 1)
+                                bottom = i + 1;
+
+                            changeHeader &= uint.MaxValue;
+
+                            // I think this changes the Twinlake picture to add
+                            // the animations of fleeing people of impacts.
+
+                            byte a = blockReader.ReadByte();
+                            byte b = blockReader.ReadByte();
+                            byte c = blockReader.ReadByte();
+                            byte d = blockReader.ReadByte();
+
+                            int offset = i * 32 + n;
+
+                            graphicData[offset] ^= a;
+                            offset += 32;
+                            graphicData[offset] ^= b;
+                            offset += 32;
+                            graphicData[offset] ^= c;
+                            offset += 32;
+                            graphicData[offset] ^= d;
+
+                            // Basically an exclusive OR (^) is performed on the
+                            // image data at offset 0, 40, 80 and 120 (40 bytes per row, 320 bits).
+                            // 4 values as there are 4 bits per pixel.
+                            // For every iteration, the offset is increased by 1 to the next byte.
+                            // Each byte holds 8 pixels basically.
+
+                            // I guess the image is only 256 pixels wide, therefore only 32 instead of 40 iterations.
+                            // 177 is most likely the height.
+
+                            // The changes are performed on the screen buffer starting at 32, 7
+                            // and so it goes up to 288, 184.
+
+                            // In contrast to the Amiga version we will generate and store the graphic parts
+                            // together with the locations once when loading the data and then display them later.
+
+                            // The first frame seems to hold the base graphic. With a header of 0xffffffff you
+                            // ensure that every pixel is updated in a row. The first data block uses this header
+                            // all the time and as the screen is 0 beforehand, it will just print the base graphic.
+                            // Later blocks often use a header of 0 to just skip large parts of the image and then
+                            // for example use 0x1000. A doubling means a left shift. So the position of the first 1
+                            // (from left) basically determines when something is changed. For 0x80000000 or greater
+                            // the first pixel is directly changed, for 0x40000000 only the second one and so on.
+                            // 0x1000 means 18 pixels are not changed and then it starts. Then the amount of 1 bits
+                            // in a row keeps changing pixels. So 0xf0000000 will change the first 4 pixels in a row.
+                        }
+                    }
+                }
+
+                Graphic CreateGraphic()
+                {
+                    var graphic = new Graphic();
+                    var graphicInfo = new GraphicInfo
+                    {
+                        Width = 256,
+                        Height = 177,
+                        GraphicFormat = GraphicFormat.Palette4Bit
+                    };
+                    var graphicDataReader = new DataReader(graphicData);
+                    graphicReader.ReadGraphic(graphic, graphicDataReader, graphicInfo);
+                    return graphic;
+                }
+
+                if (blockIndex++ == 0)
+                {
+                    graphics.Add(IntroGraphic.Twinlake, CreateGraphic());
+                }
+                else
+                {
+                    twinlakeImageParts.Add(new IntroTwinlakeImagePart
+                    {
+                        Graphic = CreateGraphic().GetArea(left, top, right - left, bottom - top),
+                        Position = new Position(left, top)
+                    });
+                }
+            }
 
             #endregion
 

@@ -739,8 +739,12 @@ namespace Ambermoon
             renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, additionalPalettes, () =>
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;
+                var introGraphics = introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value);
+                uint twinlakeFrameOffset = (uint)introData.Graphics.Keys.Max();
+                foreach (var twinlakeImagePart in introData.TwinlakeImageParts)
+                    introGraphics.Add(++twinlakeFrameOffset, twinlakeImagePart.Graphic);
                 textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
-                    introFontLarge.GlyphGraphics, introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value), features);
+                    introFontLarge.GlyphGraphics, introGraphics, features);
                 logoPyrdacor?.Initialize(textureAtlasManager);
                 AdvancedLogo.Initialize(textureAtlasManager);
                 return textureAtlasManager;

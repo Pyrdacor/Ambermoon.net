@@ -19,7 +19,8 @@ namespace Ambermoon.Data
         Morag,
         ForestMoon,
         Meteor,
-        MeteorSparks
+        MeteorSparks,
+        Twinlake
     }
 
     public enum IntroText
@@ -39,6 +40,12 @@ namespace Ambermoon.Data
         // TODO: also extract credits?
     }
 
+    public interface IIntroTwinlakeImagePart
+    {
+        public Position Position { get; }
+        public Graphic Graphic { get; }
+    }
+
     public interface IIntroData
     {
         IReadOnlyList<Graphic> IntroPalettes { get; }
@@ -47,5 +54,6 @@ namespace Ambermoon.Data
         IReadOnlyDictionary<IntroText, string> Texts { get; }
         IReadOnlyDictionary<char, Glyph> Glyphs { get; }
         IReadOnlyDictionary<char, Glyph> LargeGlyphs { get; }
+        IReadOnlyList<IIntroTwinlakeImagePart> TwinlakeImageParts { get; }
     }
 }

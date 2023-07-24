@@ -137,6 +137,31 @@ namespace Ambermoon.Data
             }
         }
 
+        public Graphic GetArea(int x, int y, int width, int height)
+        {
+            if (!IndexedGraphic)
+                throw new AmbermoonException(ExceptionScope.Application, "GetArea cannot be used on non-indexed graphics.");
+
+            if (x < 0 || y < 0 || x + width > Width || y + height > Height)
+                throw new AmbermoonException(ExceptionScope.Application, "Invalid area provided for Graphic.GetArea.");
+
+            var graphic = new Graphic(width, height, 0);
+
+            for (int ty = 0; ty < height; ++ty)
+            {
+                int sx = x;
+
+                for (int tx = 0; tx < width; ++tx, ++sx)
+                {
+                    graphic.Data[tx + ty * width] = Data[sx + y * Width];
+                }
+
+                ++y;
+            }
+
+            return graphic;
+        }
+
         public void AddOverlay(uint x, uint y, Graphic overlay, bool blend = true)
         {
             if (!overlay.IndexedGraphic || !IndexedGraphic)

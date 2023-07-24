@@ -3,6 +3,7 @@ using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon
 {
@@ -18,8 +19,7 @@ namespace Ambermoon
             ShowText,
             TextFadeOut,
             SpawnZoomObjects,
-            ShowImage,
-            HideImage,
+            TwinlakeAnimation,
             ColorEffect
         }
 
@@ -34,12 +34,13 @@ namespace Ambermoon
             public abstract void Update(long ticks, int frameCounter);
             public abstract void Destroy();
 
-            public static IntroAction CreateAction(IntroActionType actionType, IRenderView renderView, long startTicks, Func<int, int, int> rng)
+            public static IntroAction CreateAction(IntroActionType actionType, IRenderView renderView, long startTicks, IIntroData introData, Func<int, int, int> rng)
             {
                 return actionType switch
                 {
-                    IntroActionType.Starfield => new IntroActionStarfield(renderView, startTicks, rng),
-                    IntroActionType.SpawnZoomObjects => new IntroActionZoomingObjects(renderView, startTicks, rng),
+                    IntroActionType.Starfield => new IntroActionStarfield(renderView, startTicks, introData,rng),
+                    IntroActionType.SpawnZoomObjects => new IntroActionZoomingObjects(renderView, startTicks, introData, rng),
+                    IntroActionType.TwinlakeAnimation => new IntroActionTwinlake(renderView, startTicks, introData, rng),
                     _ => throw new NotImplementedException()
                 };
             }
@@ -53,7 +54,7 @@ namespace Ambermoon
             private readonly long startTicks;
             private readonly Func<int, int, int> rng;
 
-            public IntroActionStarfield(IRenderView renderView, long startTicks, Func<int, int, int> rng)
+            public IntroActionStarfield(IRenderView renderView, long startTicks, IIntroData _, Func<int, int, int> rng)
                 : base(IntroActionType.Starfield)
             {
                 this.renderView = renderView;
@@ -181,11 +182,31 @@ namespace Ambermoon
                 new ZoomTransitionInfo(0x04, 0x4a9c),
             };
 
+            private readonly struct TownShowInfo
+            {
+                public int ZoomLevel { get; init; }
+                public int Duration { get; init; }
+            }
+
+            // This is stored between code in the ambermoon_intro.
+            // If the current zoom is above the given zoom, the town
+            // image and text is shown for the given duration.
+            private static readonly TownShowInfo[] TownShowInfos = new TownShowInfo[3]
+            {
+                new TownShowInfo { ZoomLevel= 0x52f0, Duration = 200 }, // Gemstone
+                new TownShowInfo { ZoomLevel= 0x54c4, Duration = 150 }, // Illien
+                new TownShowInfo { ZoomLevel= 0x5654, Duration = 100 }, // Snakesign
+            };
+
             // Sun is using animationFrameCounter / 4 to get the frame index
 
             private readonly IRenderView renderView;
+            private readonly ITextureAtlas textureAtlas;
             private readonly ILayerSprite[] objects = new ILayerSprite[5];
             private readonly IAnimatedLayerSprite[] meteorSparks = new IAnimatedLayerSprite[2];
+            private readonly ILayerSprite town;
+            private readonly IRenderText text;
+            private readonly IColoredRect black;
             private readonly long startTicks;
             // TODO: somewhere the zoom is also set to 14000
             private int currentZoom = 0; // 7000, start value
@@ -198,15 +219,17 @@ namespace Ambermoon
             private long lastTicks = 0;
             private int zoomTransitionInfoIndex = 0;
             private int meteorSparkFrameCounter = -1;
+            private int currentTownIndex = -1;
+            private long currentTownStartTicks = -1;
 
-            public IntroActionZoomingObjects(IRenderView renderView, long startTicks, Func<int, int, int> _)
+            public IntroActionZoomingObjects(IRenderView renderView, long startTicks, IIntroData _, Func<int, int, int> __)
                 : base(IntroActionType.Starfield)
             {
                 this.renderView = renderView;
                 this.startTicks = startTicks;
                 lastTicks = startTicks;
                 var layer = renderView.GetLayer(Layer.IntroGraphics);
-                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
+                textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
                 int textureAtlasWidth = textureAtlas.Texture.Width;
 
                 // Note: The objects are ordered in render order so the
@@ -238,28 +261,58 @@ namespace Ambermoon
                     meteorSparks[i].X = 48 + i * 144;
                     meteorSparks[i].Y = 153;
                 }
+
+                town = renderView.SpriteFactory.Create(160, 128, true, 150) as ILayerSprite;
+                town.Layer = layer;
+                town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone);
+                town.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Gemstone] - 1);
+                town.Visible = false;
+
+                black = renderView.ColoredRectFactory.Create(320, 256, Color.Black, 120);
+                black.Layer = layer;
+                black.X = 0;
+                black.Y = 0;
+                black.Visible = false;
+
+                // TODO: text
             }
 
             public override void Update(long ticks, int frameCounter)
             {
-                // Update the sun frame
-                (objects[SunObjectIndex] as IAnimatedLayerSprite).CurrentFrame = (uint)frameCounter / 4;
+                CheckTownDisplay(ticks);
 
-                if (meteorSparkFrameCounter == -1)
+                if (!town.Visible)
                 {
-                    if (currentZoom >= MeteorSparkAppearZoom)
-                        meteorSparkFrameCounter = 0;
+                    // Update the sun frame
+                    (objects[SunObjectIndex] as IAnimatedLayerSprite).CurrentFrame = (uint)frameCounter / 4;
+
+                    if (meteorSparkFrameCounter == -1)
+                    {
+                        if (currentZoom >= MeteorSparkAppearZoom)
+                            meteorSparkFrameCounter = 0;
+                    }
+
+                    for (int i = 0; i < 2; i++)
+                    {
+                        if (meteorSparkFrameCounter != -1)
+                            meteorSparks[i].CurrentFrame = (uint)meteorSparkFrameCounter / 4;
+
+                        meteorSparks[i].Visible = meteorSparkFrameCounter != -1;
+                    }
+
+                    ProcessTicks(ticks - lastTicks);
+                }
+                else
+                {
+                    foreach (var obj in objects)
+                    {
+                        obj.Visible = false;
+                    }
+
+                    meteorSparks[0].Visible = false;
+                    meteorSparks[1].Visible = false;
                 }
 
-                for (int i = 0; i < 2; i++)
-                {
-                    if (meteorSparkFrameCounter != -1)
-                        meteorSparks[i].CurrentFrame = (uint)meteorSparkFrameCounter / 4;
-                    
-                    meteorSparks[i].Visible = meteorSparkFrameCounter != -1;
-                }
-
-                ProcessTicks(ticks - lastTicks);
                 lastTicks = ticks;
             }
 
@@ -267,6 +320,48 @@ namespace Ambermoon
             {
                 foreach (var obj in objects)
                     obj?.Delete();
+
+                foreach (var spark in meteorSparks)
+                    spark?.Delete();
+
+                town?.Delete();
+                text?.Delete();
+            }
+
+            private void CheckTownDisplay(long ticks)
+            {
+                if (currentTownIndex == 3)
+                    return;
+
+                int nextTownIndex = currentTownIndex + 1;
+
+                if (nextTownIndex < 3 && currentZoom >= TownShowInfos[nextTownIndex].ZoomLevel)
+                {
+                    currentTownIndex = nextTownIndex;
+                    currentTownStartTicks = ticks;
+                    town.X = 80;
+                    town.Y = 10; // TODO
+                    town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone + (uint)currentTownIndex);
+                    town.Visible = true;
+                    black.Visible = true;
+                }
+                else if (currentTownIndex >= 0)
+                {
+                    town.Visible = TownShowInfos[currentTownIndex].Duration > (ticks - currentTownStartTicks);
+                    black.Visible = town.Visible;
+
+                    if (nextTownIndex == 3 && !town.Visible)
+                        currentTownIndex = 3;
+
+                    if (!town.Visible)
+                    {
+                        for (int i = 0; i < objects.Length; i++)
+                        {
+                            if (i != SunObjectIndex)
+                                objects[i].Visible = true;
+                        }
+                    }
+                }
             }
 
             private void ProcessTicks(long ticks)
@@ -352,6 +447,86 @@ namespace Ambermoon
             }
         }
 
+        private class IntroActionTwinlake : IntroAction
+        {
+            private readonly IRenderView renderView;
+            private readonly ITextureAtlas textureAtlas;
+            private readonly long startTicks;
+            private readonly ILayerSprite frame;
+            private readonly ILayerSprite[] images = new ILayerSprite[95];
+            private int activeFrame = -1;
+
+            public IntroActionTwinlake(IRenderView renderView, long startTicks, IIntroData introData, Func<int, int, int> _)
+                : base(IntroActionType.Starfield)
+            {
+                this.renderView = renderView;
+                this.startTicks = startTicks;
+                var layer = renderView.GetLayer(Layer.IntroGraphics);
+                textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
+                byte paletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Twinlake] - 1);
+                uint partAtlasOffset = (uint)introData.Graphics.Keys.Max();
+
+                frame = renderView.SpriteFactory.Create(288, 200, true, 0) as ILayerSprite;
+                frame.Layer = layer;
+                frame.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Frame);
+                frame.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Frame] - 1);
+                frame.X = 16;
+                frame.Y = 0;
+                frame.Visible = true;
+
+                images[0] = renderView.SpriteFactory.Create(256, 177, true, 20) as ILayerSprite;
+                images[0].Layer = layer;
+                images[0].TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Twinlake);
+                images[0].PaletteIndex = paletteIndex;
+                images[0].X = 32;
+                images[0].Y = 7;
+                images[0].Visible = true;
+
+                for (int i = 1; i < 95; i++)
+                {
+                    var twinlakePart = introData.TwinlakeImageParts[i - 1];
+                    var graphic = twinlakePart.Graphic;
+                    images[i] = renderView.SpriteFactory.Create(graphic.Width, graphic.Height, true, (byte)(50 + i * 2)) as ILayerSprite;
+                    images[i].Layer = layer;
+                    images[i].TextureAtlasOffset = textureAtlas.GetOffset(++partAtlasOffset);
+                    images[i].PaletteIndex = paletteIndex;
+                    images[i].X = 32 + twinlakePart.Position.X;
+                    images[i].Y = 7 + twinlakePart.Position.Y;
+                    images[i].Visible = false;
+                }
+            }
+
+            public override void Destroy()
+            {
+                frame.Delete();
+
+                foreach (var image in images)
+                    image?.Delete();
+            }
+
+            public override void Update(long ticks, int frameCounter)
+            {
+                long elapsed = ticks - startTicks;
+
+                if (elapsed >= 250)
+                {
+                    elapsed -= 250;
+                    int frame = (int)(elapsed / 4);
+
+                    if (frame < 94)
+                    {
+                        if (frame != activeFrame)
+                        {
+                            /*if (activeFrame != -1)
+                                images[activeFrame + 1].Visible = false;*/
+
+                            images[frame + 1].Visible = true;
+                        }
+                    }
+                }
+            }
+        }
+
         readonly Action finishAction;
         readonly IIntroData introData;
         readonly Font introFont;
@@ -384,7 +559,8 @@ namespace Ambermoon
             fadeArea.Visible = false;
 
             // TODO
-            actions.Add(IntroAction.CreateAction(IntroActionType.SpawnZoomObjects, renderView, 0, (min, max) => 0));
+            //actions.Add(IntroAction.CreateAction(IntroActionType.SpawnZoomObjects, renderView, 0, introData, (min, max) => 0));
+            actions.Add(IntroAction.CreateAction(IntroActionType.TwinlakeAnimation, renderView, 0, introData, (min, max) => 0));
         }
 
         public void Update(double deltaTime)
