@@ -475,6 +475,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         static int FindByteSequence(IDataReader reader, int offset, params byte[] sequence)
         {
             int matchLength = 0;
+            reader.Position = offset;
 
             while (reader.Position < reader.Size)
             {
@@ -505,9 +506,10 @@ namespace Ambermoon.Data.Legacy.Serialization
                 // hunk so not at a fixed offset necessarily. So we search for the first
                 // bytes which should be unique: 15 11 10 13
                 // Should be safe to only start at offset 10000. In reality it is above 11000.
+                // Same for small glyphs. Offset is 18262 so we pick 17000 for safety.
                 int glyphWidthOffset = large
                     ? FindByteSequence(dataReader, 10000, 0x15, 0x11, 0x10, 0x13)
-                    : 0; // TODO
+                    : FindByteSequence(dataReader, 17000, 0x0b, 0x09, 0x09, 0x0a);
 
                 // Read glyph widths
                 dataReader.Position = glyphWidthOffset;
