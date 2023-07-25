@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data
 {
@@ -46,6 +47,22 @@ namespace Ambermoon.Data
         public Graphic Graphic { get; }
     }
 
+    public enum IntroTextCommandType
+    {
+        Clear,
+        Add,
+        Render,
+        Wait,
+        SetTextColor,
+        Unknown
+    }
+
+    public interface IIntroTextCommand
+    {
+        IntroTextCommandType Type { get; }
+        int[] Args { get; }
+    }
+
     public interface IIntroData
     {
         IReadOnlyList<Graphic> IntroPalettes { get; }
@@ -55,5 +72,7 @@ namespace Ambermoon.Data
         IReadOnlyDictionary<char, Glyph> Glyphs { get; }
         IReadOnlyDictionary<char, Glyph> LargeGlyphs { get; }
         IReadOnlyList<IIntroTwinlakeImagePart> TwinlakeImageParts { get; }
+        IReadOnlyList<IIntroTextCommand> TextCommands { get; }
+        IReadOnlyList<string> TextCommandTexts { get; }
     }
 }

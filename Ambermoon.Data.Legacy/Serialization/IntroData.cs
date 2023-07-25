@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Ambermoon.Data.Serialization;
 using static Ambermoon.Data.Legacy.Serialization.AmigaExecutable;
@@ -12,9 +13,62 @@ namespace Ambermoon.Data.Legacy.Serialization
         public Graphic Graphic { get; init; }
     }
 
+    internal readonly struct TextCommand : IIntroTextCommand
+    {
+        public IntroTextCommandType Type { get; private init; }
+        public int[] Args { get; private init; }
+
+        internal static bool TryParse(IDataReader dataReader, List<string> texts, out TextCommand? textCommand)
+        {
+            textCommand = null;
+            var command = (IntroTextCommandType)dataReader.ReadByte();
+
+            if (command > IntroTextCommandType.Unknown)
+            {
+                if ((int)command == 255)
+                    return false; // End marker
+
+                // Otherwise the data is invalid
+                throw new AmbermoonException(ExceptionScope.Data, "Unsupported intro text command.");
+            }
+
+            int[] args;
+
+            switch (command)
+            {
+                case IntroTextCommandType.Add:
+                    args = new int[3];
+                    args[0] = dataReader.ReadByte(); // X
+                    args[1] = dataReader.ReadByte(); // Y
+                    args[2] = texts.Count; // Text index
+                    texts.Add(dataReader.ReadNullTerminatedString());
+                    break;
+                case IntroTextCommandType.Wait:
+                    args = new int[1] { dataReader.ReadByte() }; // Ticks
+                    break;
+                case IntroTextCommandType.SetTextColor:
+                    args = new int[1] { dataReader.ReadWord() }; // Color
+                    break;
+                default:
+                    args = Array.Empty<int>();
+                    break;
+            }
+
+            textCommand = new TextCommand
+            {
+                Type = command,
+                Args = args
+            };
+
+            return true;
+        }
+    }
+
     public class IntroData : IIntroData
     {
         readonly List<IntroTwinlakeImagePart> twinlakeImageParts = new();
+        readonly List<IIntroTextCommand> textCommands = new();
+        readonly List<string> textCommandTexts = new();
         readonly List<Graphic> introPalettes = new();
         readonly Dictionary<IntroGraphic, Graphic> graphics = new();
         static readonly Dictionary<IntroGraphic, byte> graphicPalettes = new()
@@ -34,8 +88,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             { IntroGraphic.Morag, 3 },
             { IntroGraphic.ForestMoon, 3 },
             { IntroGraphic.Meteor, 3 },
-            { IntroGraphic.MeteorSparks, 8 },
-            { IntroGraphic.Twinlake, 4 },
+            { IntroGraphic.MeteorSparks, 3 },
+            { IntroGraphic.Twinlake, 8 },
             // TODO ...
         };
         static GraphicInfo paletteGraphicInfo = new()
@@ -55,6 +109,8 @@ namespace Ambermoon.Data.Legacy.Serialization
         public IReadOnlyDictionary<char, Glyph> Glyphs => glyphs;
         public IReadOnlyDictionary<char, Glyph> LargeGlyphs => largeGlyphs;
         public IReadOnlyList<IIntroTwinlakeImagePart> TwinlakeImageParts => twinlakeImageParts;
+        public IReadOnlyList<IIntroTextCommand> TextCommands => textCommands;
+        public IReadOnlyList<string> TextCommandTexts => textCommandTexts;
 
         // This is somewhere in the code hunk so we just define it static here.
         private static readonly byte[] GlyphMapping = new byte[96]
@@ -94,22 +150,28 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             // TODO: There are only 8 palettes and the other 64 bytes have some other meaning!
             // It seems it is some kind of color palette as well but used in a different way (maybe a changing palette or some color replacement table which is activated over time?)
-            for (int i = 0; i < 9; ++i)
+            for (int i = 0; i < 8; ++i)
                 introPalettes.Add(LoadPalette());
+            hunk0.Position += 64;
 
+            // We still use 9 palettes here.
             // The intro uses the last 16 colors to fade the first 16 colors when starting the intro and vice versa.
             // As we fade with a black overlay we need the color palette when the images are fully visible (faded in).
             // At this point the 16 last colors are also the first 16 colors, so here we just copy them over.
-            System.Array.Copy(introPalettes[4].Data, 16 * 4, introPalettes[4].Data, 0, 16 * 4);
+            var palette9 = introPalettes[4].Clone();
+            System.Array.Copy(introPalettes[4].Data, 16 * 4, palette9.Data, 0, 16 * 4);
+            introPalettes.Add(palette9);
 
             hunk0.Position += 8; // 2 byte end marker (0xffff) + 3 words (offset from the position of the word to the associated town name: Gemstone: 6, Illien: 14, Snakesign: 20)
 
             for (int i = 0; i < 8; ++i)
             {
-                byte startByte = hunk0.PeekByte();
-                if (startByte != 0x20 && (startByte < 'A' || startByte > 'Z'))
-                    ++hunk0.Position; // Sometimes there is an unknown start byte
-                texts.Add((IntroText)i, hunk0.ReadNullTerminatedString());
+                var introText = (IntroText)i;
+
+                if (introText >= IntroText.Gemstone && introText <= IntroText.Snakesign)
+                    hunk0.Position++; // skip X byte
+
+                texts.Add(introText, hunk0.ReadNullTerminatedString());
             }
 
             if (hunk0.ReadByte() != 4) // Should contain the amount of main menu text (= 4)
@@ -122,7 +184,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                 texts.Add((IntroText)(8 + i), hunk0.ReadNullTerminatedString());
             }
 
-            // TODO: the credits will follow
+            while (TextCommand.TryParse(hunk0, textCommandTexts, out var textCommand))
+            {
+                textCommands.Add(textCommand);
+            }
+
+            // TODO: here the zoom infos start with the header 00 05 which gives the amount of objects
 
             #endregion
 
@@ -162,7 +229,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             #endregion
 
-            #region Hunk 2 - Twinlage image and animation data
+            #region Hunk 2 - Twinlake image and animation data
 
             // This is encoded data
             var hunk2Data = new List<byte[]>();

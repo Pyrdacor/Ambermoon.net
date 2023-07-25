@@ -1,9 +1,11 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Ambermoon
 {
@@ -16,8 +18,7 @@ namespace Ambermoon
             LogoFadeOut,
             AmbermoonFlyIn,
             AmbermoonFadeOut,
-            ShowText,
-            TextFadeOut,
+            TextCommands,
             SpawnZoomObjects,
             TwinlakeAnimation,
             ColorEffect
@@ -34,13 +35,14 @@ namespace Ambermoon
             public abstract void Update(long ticks, int frameCounter);
             public abstract void Destroy();
 
-            public static IntroAction CreateAction(IntroActionType actionType, IRenderView renderView, long startTicks, IIntroData introData, Func<int, int, int> rng)
+            public static IntroAction CreateAction(IntroActionType actionType, IRenderView renderView, long startTicks, IIntroData introData, Func<int, int, int> rng, Font introFont, Font introFontLarge)
             {
                 return actionType switch
                 {
-                    IntroActionType.Starfield => new IntroActionStarfield(renderView, startTicks, introData,rng),
-                    IntroActionType.SpawnZoomObjects => new IntroActionZoomingObjects(renderView, startTicks, introData, rng),
-                    IntroActionType.TwinlakeAnimation => new IntroActionTwinlake(renderView, startTicks, introData, rng),
+                    IntroActionType.Starfield => new IntroActionStarfield(renderView, startTicks, rng),
+                    IntroActionType.SpawnZoomObjects => new IntroActionZoomingObjects(renderView, startTicks),
+                    IntroActionType.TwinlakeAnimation => new IntroActionTwinlake(renderView, startTicks, introData),
+                    IntroActionType.TextCommands => new IntroActionTextCommands(renderView, startTicks, introData, introFont),
                     _ => throw new NotImplementedException()
                 };
             }
@@ -54,7 +56,7 @@ namespace Ambermoon
             private readonly long startTicks;
             private readonly Func<int, int, int> rng;
 
-            public IntroActionStarfield(IRenderView renderView, long startTicks, IIntroData _, Func<int, int, int> rng)
+            public IntroActionStarfield(IRenderView renderView, long startTicks, Func<int, int, int> rng)
                 : base(IntroActionType.Starfield)
             {
                 this.renderView = renderView;
@@ -76,6 +78,99 @@ namespace Ambermoon
             public override void Destroy()
             {
                 // TODO
+            }
+        }
+
+        private class IntroActionTextCommands : IntroAction
+        {
+            private readonly IRenderView renderView;
+            private readonly IIntroData introData;
+            private readonly List<Text> texts = new();
+            private readonly Queue<IIntroTextCommand> commands = new();
+            private readonly long startTicks;
+            private readonly Font introFont;
+            private readonly int lineHeight;
+            private Data.Enumerations.Color currentTextColor = Data.Enumerations.Color.Black;
+            private long waitEndTicks = -1;
+
+            // To avoid the need for additional palettes just to mimic the dynamic
+            // text coloring of the Amiga version, we just map the colors to an
+            // appropriate index in the primary UI palette.
+            // We know which colors are possible anyway.
+            private readonly Dictionary<int, Data.Enumerations.Color> colorMapping = new()
+            {
+                { 0x0000, Data.Enumerations.Color.Black },
+                { 0x0ccc, Data.Enumerations.Color.BrightGray }, // it almost fits with ccb instead of ccc
+                { 0x0e92, Data.Enumerations.Color.LightOrange } // it almost fits with f90 instead of e92
+            };
+
+            public IntroActionTextCommands(IRenderView renderView, long startTicks, IIntroData introData, Font introFont)
+                : base(IntroActionType.Starfield)
+            {
+                this.renderView = renderView;
+                this.startTicks = startTicks;
+                this.introFont = introFont;
+                this.introData = introData;
+                lineHeight = introFont.GlyphGraphics.Values.Select(g => g.Height).Max();
+
+                foreach (var command in introData.TextCommands)
+                    commands.Enqueue(command);
+            }
+
+            public override void Update(long ticks, int frameCounter)
+            {
+                if (waitEndTicks > ticks)
+                    return;
+
+                if (commands.Count != 0)
+                {
+                    var nextCommand = commands.Dequeue();
+
+                    switch (nextCommand.Type)
+                    {
+                        case IntroTextCommandType.Clear:
+                            texts.ForEach(text => text?.Destroy());
+                            texts.Clear();
+                            break;
+                        case IntroTextCommandType.Add:
+                            // Texts are displayed in the lower area starting at Y=200
+                            AddText(nextCommand.Args[0], 200 + nextCommand.Args[1], nextCommand.Args[2]);
+                            break;
+                        case IntroTextCommandType.Render:
+                            texts.ForEach(text => text.Visible = true);
+                            break;
+                        case IntroTextCommandType.Wait:
+                            waitEndTicks = ticks + nextCommand.Args[0];
+                            break;
+                        case IntroTextCommandType.SetTextColor:
+                            if (!colorMapping.TryGetValue(nextCommand.Args[0], out currentTextColor))
+                                throw new AmbermoonException(ExceptionScope.Data, "Unsupported intro text color.");
+                            texts.ForEach(text => text.TextColor = currentTextColor);
+                            break;
+                        case IntroTextCommandType.Unknown:
+                            // TODO
+                            break;
+                        default:
+                            throw new AmbermoonException(ExceptionScope.Data, "Unsupported intro text command.");
+                    }
+                }
+                
+            }
+
+            private void AddText(int x, int y, int index)
+            {
+                // The clip area is important. Otherwise the virtual screen is used which is only 320x200 and the text only starts at Y = 200.
+                var text = introFont.CreateText(renderView, Layer.IntroText, new Rect(), introData.TextCommandTexts[index], 200, TextAlign.Left, 255, new Rect(0, 200, 320, 256));
+                text.Visible = false;
+                text.Place(new Rect(x, y, 320 - x, lineHeight), TextAlign.Left);
+                text.TextColor = currentTextColor;
+                texts.Add(text);
+            }
+
+            public override void Destroy()
+            {
+                texts.ForEach(text => text?.Destroy());
+                texts.Clear();
             }
         }
 
@@ -205,7 +300,6 @@ namespace Ambermoon
             private readonly ILayerSprite[] objects = new ILayerSprite[5];
             private readonly IAnimatedLayerSprite[] meteorSparks = new IAnimatedLayerSprite[2];
             private readonly ILayerSprite town;
-            private readonly IRenderText text;
             private readonly IColoredRect black;
             private readonly long startTicks;
             // TODO: somewhere the zoom is also set to 14000
@@ -222,7 +316,7 @@ namespace Ambermoon
             private int currentTownIndex = -1;
             private long currentTownStartTicks = -1;
 
-            public IntroActionZoomingObjects(IRenderView renderView, long startTicks, IIntroData _, Func<int, int, int> __)
+            public IntroActionZoomingObjects(IRenderView renderView, long startTicks)
                 : base(IntroActionType.Starfield)
             {
                 this.renderView = renderView;
@@ -325,7 +419,6 @@ namespace Ambermoon
                     spark?.Delete();
 
                 town?.Delete();
-                text?.Delete();
             }
 
             private void CheckTownDisplay(long ticks)
@@ -456,7 +549,7 @@ namespace Ambermoon
             private readonly ILayerSprite[] images = new ILayerSprite[95];
             private int activeFrame = -1;
 
-            public IntroActionTwinlake(IRenderView renderView, long startTicks, IIntroData introData, Func<int, int, int> _)
+            public IntroActionTwinlake(IRenderView renderView, long startTicks, IIntroData introData)
                 : base(IntroActionType.Starfield)
             {
                 this.renderView = renderView;
@@ -558,9 +651,15 @@ namespace Ambermoon
             fadeArea.Y = 0;
             fadeArea.Visible = false;
 
+            void AddAction(IntroActionType actionType)
+            {
+                actions.Add(IntroAction.CreateAction(actionType, renderView, 0, introData, (min, max) => 0, introFont, introFontLarge));
+            }
+
             // TODO
-            //actions.Add(IntroAction.CreateAction(IntroActionType.SpawnZoomObjects, renderView, 0, introData, (min, max) => 0));
-            actions.Add(IntroAction.CreateAction(IntroActionType.TwinlakeAnimation, renderView, 0, introData, (min, max) => 0));
+            AddAction(IntroActionType.SpawnZoomObjects);
+            AddAction(IntroActionType.TextCommands);
+            //AddAction(IntroActionType.TwinlakeAnimation);
         }
 
         public void Update(double deltaTime)
