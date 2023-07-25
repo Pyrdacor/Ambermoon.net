@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Ambermoon.Data.Enumerations;
-using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Serialization;
 using static Ambermoon.Data.Legacy.Serialization.AmigaExecutable;
 
@@ -13,8 +11,6 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public Graphic Graphic { get; init; }
     }
-
-    // IReadOnlyList<IIntroTwinlakeImagePart> TwinlakeImageParts { get; }
 
     public class IntroData : IIntroData
     {
@@ -100,6 +96,11 @@ namespace Ambermoon.Data.Legacy.Serialization
             // It seems it is some kind of color palette as well but used in a different way (maybe a changing palette or some color replacement table which is activated over time?)
             for (int i = 0; i < 9; ++i)
                 introPalettes.Add(LoadPalette());
+
+            // The intro uses the last 16 colors to fade the first 16 colors when starting the intro and vice versa.
+            // As we fade with a black overlay we need the color palette when the images are fully visible (faded in).
+            // At this point the 16 last colors are also the first 16 colors, so here we just copy them over.
+            System.Array.Copy(introPalettes[4].Data, 16 * 4, introPalettes[4].Data, 0, 16 * 4);
 
             hunk0.Position += 8; // 2 byte end marker (0xffff) + 3 words (offset from the position of the word to the associated town name: Gemstone: 6, Illien: 14, Snakesign: 20)
 
@@ -236,9 +237,9 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                     for (int n = 0; n < 32; n++)
                     {
-                        changeHeader *= 2;
+                        changeHeader <<= 1;
 
-                        if (changeHeader >= uint.MaxValue)
+                        if ((changeHeader & 0x1_0000_0000) != 0)
                         {
                             int x = n * 8;
 
@@ -251,7 +252,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                             if (bottom < i + 1)
                                 bottom = i + 1;
 
-                            changeHeader &= uint.MaxValue;
+                            changeHeader &= 0x0_ffff_ffff;
 
                             // I think this changes the Twinlake picture to add
                             // the animations of fleeing people of impacts.
@@ -261,7 +262,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                             byte c = blockReader.ReadByte();
                             byte d = blockReader.ReadByte();
 
-                            int offset = i * 32 + n;
+                            int offset = i * 32 * 4 + n;
 
                             graphicData[offset] ^= a;
                             offset += 32;
