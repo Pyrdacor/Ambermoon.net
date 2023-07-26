@@ -247,14 +247,14 @@ namespace Ambermoon.Renderer
             { Layer.IntroGraphics, new ()
             {
                 BaseZ = 0.70f,
-                EnableBlending = false,
+                EnableBlending = true,
                 SupportColoredRects = true,
                 Use320x256 = true
             } },
             { Layer.IntroText, new ()
             {
                 BaseZ = 0.70f,
-                EnableBlending = false,
+                EnableBlending = true,
                 Use320x256 = true
             } },
             { Layer.IntroEffects, new ()
@@ -370,7 +370,9 @@ namespace Ambermoon.Renderer
 
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3DCeiling || layer == Layer.Map3D || layer == Layer.Billboards3D,
                 supportAnimations, layered, !Config.SupportTextures, layer == Layer.Billboards3D, layer == Layer.Text || layer == Layer.SmallDigits,
-                opaque, layer == Layer.FOW, layer == Layer.Map3DBackground, layer == Layer.Misc || layer == Layer.OutroText, layer == Layer.Images,
+                opaque, layer == Layer.FOW, layer == Layer.Map3DBackground,
+                layer == Layer.Misc || layer == Layer.OutroText || layer == Layer.IntroText || layer == Layer.IntroGraphics, // textures with alpha
+                layer == Layer.Images,
                 Config.TextureFactor);
 
             if (Config.SupportColoredRects)
@@ -503,7 +505,7 @@ namespace Ambermoon.Renderer
                     }
                     else
                     {
-                        bool special = Layer == Layer.Misc || Layer == Layer.OutroText;
+                        bool special = Layer == Layer.Misc || Layer == Layer.OutroText || Layer == Layer.IntroText || Layer == Layer.IntroGraphics;
                         bool sky = Layer == Layer.Map3DBackground;
                         TextureShader shader = special ? RenderBuffer.AlphaTextureShader : sky ? RenderBuffer.SkyShader :
                             RenderBuffer.Opaque ? RenderBuffer.OpaqueTextureShader : RenderBuffer.TextureShader;

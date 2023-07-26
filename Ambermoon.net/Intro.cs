@@ -1,11 +1,9 @@
 ﻿using Ambermoon.Data;
-using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Ambermoon
 {
@@ -14,12 +12,10 @@ namespace Ambermoon
         private enum IntroActionType
         {
             Starfield,
-            LogoFlyIn,
-            LogoFadeOut,
+            ThalionLogoFlyIn,
             AmbermoonFlyIn,
-            AmbermoonFadeOut,
             TextCommands,
-            SpawnZoomObjects,
+            DisplayObjects,
             TwinlakeAnimation,
             ColorEffect
         }
@@ -35,14 +31,16 @@ namespace Ambermoon
             public abstract void Update(long ticks, int frameCounter);
             public abstract void Destroy();
 
-            public static IntroAction CreateAction(IntroActionType actionType, IRenderView renderView, long startTicks, IIntroData introData, Func<int, int, int> rng, Font introFont, Font introFontLarge)
+            public static IntroAction CreateAction(IntroActionType actionType, Intro intro, Action finishHandler, IRenderView renderView, long startTicks, IIntroData introData, Func<int, int, int> rng, Font introFont, Font introFontLarge)
             {
                 return actionType switch
                 {
-                    IntroActionType.Starfield => new IntroActionStarfield(renderView, startTicks, rng),
-                    IntroActionType.SpawnZoomObjects => new IntroActionZoomingObjects(renderView, startTicks),
-                    IntroActionType.TwinlakeAnimation => new IntroActionTwinlake(renderView, startTicks, introData),
-                    IntroActionType.TextCommands => new IntroActionTextCommands(renderView, startTicks, introData, introFont),
+                    IntroActionType.Starfield => new IntroActionStarfield(renderView, startTicks, rng, finishHandler),
+                    IntroActionType.ThalionLogoFlyIn => new IntroActionLogoFlyin(IntroGraphic.ThalionLogo, actionType, renderView, startTicks, finishHandler),
+                    IntroActionType.AmbermoonFlyIn => new IntroActionLogoFlyin(IntroGraphic.Ambermoon, actionType, renderView, startTicks, finishHandler),
+                    IntroActionType.DisplayObjects => new IntroActionDisplayObjects(renderView, startTicks, introFontLarge, introData, finishHandler),
+                    IntroActionType.TwinlakeAnimation => new IntroActionTwinlake(renderView, startTicks, introData, finishHandler),
+                    IntroActionType.TextCommands => new IntroActionTextCommands(renderView, introData, introFont, intro, finishHandler),
                     _ => throw new NotImplementedException()
                 };
             }
@@ -55,13 +53,15 @@ namespace Ambermoon
             private readonly Queue<int> starTicks = new();
             private readonly long startTicks;
             private readonly Func<int, int, int> rng;
+            private readonly Action finishHandler;
 
-            public IntroActionStarfield(IRenderView renderView, long startTicks, Func<int, int, int> rng)
+            public IntroActionStarfield(IRenderView renderView, long startTicks, Func<int, int, int> rng, Action finishHandler)
                 : base(IntroActionType.Starfield)
             {
                 this.renderView = renderView;
                 this.startTicks = startTicks;
                 this.rng = rng;
+                this.finishHandler = finishHandler;
             }
 
             private void SpawnStar()
@@ -81,17 +81,82 @@ namespace Ambermoon
             }
         }
 
+        private class IntroActionLogoFlyin : IntroAction
+        {
+            private readonly ILayerSprite logo;
+            private readonly long startTicks;
+            private int scalingFactor = 2048; // start value 0x800
+            private readonly int scalingPerTick = 32;
+            private readonly int imageWidth;
+            private readonly int imageHeight;
+            private readonly Action finishHandler;
+
+            public IntroActionLogoFlyin(IntroGraphic introGraphic, IntroActionType actionType, IRenderView renderView, long startTicks, Action finishHandler)
+                : base(actionType)
+            {
+                this.startTicks = startTicks;
+                this.finishHandler = finishHandler;
+
+                var size = introGraphic == IntroGraphic.ThalionLogo
+                    ? new Size(128, 82) // Thalion logo
+                    : new Size(272, 87); // Ambermoon text
+                scalingPerTick = introGraphic == IntroGraphic.ThalionLogo
+                    ? 32 // Thalion logo
+                    : 64; // Ambermoon text
+                logo = renderView.SpriteFactory.Create(0, 0, true, 200) as ILayerSprite;
+                logo.Layer = renderView.GetLayer(Layer.IntroGraphics);
+                logo.TextureSize = size;
+                logo.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics).GetOffset((uint)introGraphic);
+                logo.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[introGraphic] - 1);
+                logo.X = 160; // start in the center
+                logo.Y = 100; // start in the center of the 200 height portion
+                logo.Visible = true;
+
+                imageWidth = size.Width;
+                imageHeight = size.Height;
+            }
+
+            public override void Update(long ticks, int frameCounter)
+            {
+                if (scalingFactor >= 256)
+                {
+                    scalingFactor = 256 + (int)(2048 - (ticks - startTicks) * scalingPerTick);
+
+                    if (scalingFactor < 256)
+                    {
+                        finishHandler?.Invoke();
+                        return;
+                    }
+
+                    int width = Math.Max(1, (imageWidth * 256) / scalingFactor);
+                    int height = Math.Max(1, (imageHeight * 256) / scalingFactor);
+                    logo.Resize(width, height);
+                    logo.X = 160 - width / 2;
+                    logo.Y = 100 - height / 2;
+                }
+            }
+
+            public override void Destroy()
+            {
+                logo?.Delete();
+            }
+        }
+
         private class IntroActionTextCommands : IntroAction
         {
             private readonly IRenderView renderView;
             private readonly IIntroData introData;
             private readonly List<Text> texts = new();
             private readonly Queue<IIntroTextCommand> commands = new();
-            private readonly long startTicks;
             private readonly Font introFont;
             private readonly int lineHeight;
+            private readonly Intro intro;
             private Data.Enumerations.Color currentTextColor = Data.Enumerations.Color.Black;
             private long waitEndTicks = -1;
+            private bool fading = false;
+            private int fadeAlphaChange = 0;
+            private long lastFadeTicks = 0;
+            private Action finishHandler;
 
             // To avoid the need for additional palettes just to mimic the dynamic
             // text coloring of the Amiga version, we just map the colors to an
@@ -104,21 +169,72 @@ namespace Ambermoon
                 { 0x0e92, Data.Enumerations.Color.LightOrange } // it almost fits with f90 instead of e92
             };
 
-            public IntroActionTextCommands(IRenderView renderView, long startTicks, IIntroData introData, Font introFont)
-                : base(IntroActionType.Starfield)
+            public IntroActionTextCommands(IRenderView renderView, IIntroData introData, Font introFont, Intro intro, Action finishHandler)
+                : base(IntroActionType.TextCommands)
             {
                 this.renderView = renderView;
-                this.startTicks = startTicks;
                 this.introFont = introFont;
                 this.introData = introData;
+                this.intro = intro;
+                this.finishHandler = finishHandler;
                 lineHeight = introFont.GlyphGraphics.Values.Select(g => g.Height).Max();
 
                 foreach (var command in introData.TextCommands)
-                    commands.Enqueue(command);
+                    commands.Enqueue(command);                
+            }
+
+            private static int GetColorFadeDuration(Data.Enumerations.Color color)
+            {
+                // Dependent on color, the distance in the Amiga differs.
+                // Per 4 ticks, 1 component is increased at max until the target color is reached.
+                // There are only 4 cases:
+                // ccc -> 000
+                // e92 -> 000
+                // 000 -> ccc
+                // 000 -> e92
+                // The last two have the same dist and duration than the first two.
+                // So the parameter color just gives the non-black color
+
+                return color == Data.Enumerations.Color.BrightGray
+                    ? 0xc * 4
+                    : 0xe * 4;
             }
 
             public override void Update(long ticks, int frameCounter)
             {
+                if (waitEndTicks == -1)
+                    waitEndTicks = ticks + 50; // start value
+
+                if (fading)
+                {
+                    if (fadeAlphaChange != 0)
+                    {
+                        long fadeIncrements = (ticks - lastFadeTicks) / 4;
+                        lastFadeTicks += fadeIncrements * 4;
+
+                        for (int i = 0; i < fadeIncrements && fading; i++)
+                        {
+                            // update alpha here
+                            foreach (var text in texts)
+                            {
+                                if (fadeAlphaChange > 0 && text.Alpha < 255)
+                                    text.Alpha = (byte)Math.Min(255, text.Alpha + fadeAlphaChange);
+                                else if (fadeAlphaChange < 0 && text.Alpha > 0)
+                                    text.Alpha = (byte)Math.Max(0, text.Alpha + fadeAlphaChange);
+                            }
+
+                            int endAlpha = fadeAlphaChange > 0 ? 255 : 0;
+
+                            if (!texts.Any(text => text.Alpha != endAlpha))
+                                fading = false;
+                        }
+                    }
+                    else
+                    {
+                        fading = false;
+                    }
+                }
+
                 if (waitEndTicks > ticks)
                     return;
 
@@ -138,29 +254,59 @@ namespace Ambermoon
                             break;
                         case IntroTextCommandType.Render:
                             texts.ForEach(text => text.Visible = true);
+                            if (currentTextColor != Data.Enumerations.Color.Black)
+                                HandleTextColorChange(Data.Enumerations.Color.Black);
                             break;
                         case IntroTextCommandType.Wait:
                             waitEndTicks = ticks + nextCommand.Args[0];
                             break;
                         case IntroTextCommandType.SetTextColor:
+                            var oldColor = currentTextColor;
                             if (!colorMapping.TryGetValue(nextCommand.Args[0], out currentTextColor))
                                 throw new AmbermoonException(ExceptionScope.Data, "Unsupported intro text color.");
-                            texts.ForEach(text => text.TextColor = currentTextColor);
+                            HandleTextColorChange(oldColor);
                             break;
-                        case IntroTextCommandType.Unknown:
-                            // TODO
+                        case IntroTextCommandType.ActivatePaletteFading:
+                            intro.StartMeteorGlowing(ticks);
                             break;
                         default:
                             throw new AmbermoonException(ExceptionScope.Data, "Unsupported intro text command.");
                     }
+
+                    void HandleTextColorChange(Data.Enumerations.Color oldColor)
+                    {
+                        // Note: Black can't be used as a color as index 0 is ignored as a mask color.
+                        // Instead use the alpha then. Black is always used for text fade out and
+                        // every other color for fade in.
+                        if (currentTextColor == Data.Enumerations.Color.Black)
+                        {
+                            int duration = GetColorFadeDuration(oldColor);
+                            fadeAlphaChange = 4 * -255 / duration;
+                            fading = true;
+                            lastFadeTicks = ticks;
+                        }
+                        else
+                        {
+                            int duration = GetColorFadeDuration(currentTextColor);
+                            texts.ForEach(text => text.TextColor = currentTextColor);
+                            fadeAlphaChange = 4 * 255 / duration;
+                            fading = true;
+                            lastFadeTicks = ticks;
+                        }
+                    }
                 }
-                
+                else
+                {
+                    finishHandler?.Invoke();
+                    finishHandler = null;
+                }
             }
 
             private void AddText(int x, int y, int index)
             {
                 // The clip area is important. Otherwise the virtual screen is used which is only 320x200 and the text only starts at Y = 200.
-                var text = introFont.CreateText(renderView, Layer.IntroText, new Rect(), introData.TextCommandTexts[index], 200, TextAlign.Left, 255, new Rect(0, 200, 320, 256));
+                var text = introFont.CreateText(renderView, Layer.IntroText, new Rect(), introData.TextCommandTexts[index], 200, TextAlign.Left,
+                    0, new Rect(0, 200, 320, 256));
                 text.Visible = false;
                 text.Place(new Rect(x, y, 320 - x, lineHeight), TextAlign.Left);
                 text.TextColor = currentTextColor;
@@ -174,7 +320,7 @@ namespace Ambermoon
             }
         }
 
-        private class IntroActionZoomingObjects : IntroAction
+        private class IntroActionDisplayObjects : IntroAction
         {
             private readonly struct ZoomInfo
             {
@@ -292,18 +438,27 @@ namespace Ambermoon
                 new TownShowInfo { ZoomLevel= 0x54c4, Duration = 150 }, // Illien
                 new TownShowInfo { ZoomLevel= 0x5654, Duration = 100 }, // Snakesign
             };
+            private static readonly int[] TownNameXValues = new int[3]
+            {
+                92,
+                120,
+                91
+            };
 
             // Sun is using animationFrameCounter / 4 to get the frame index
 
             private readonly IRenderView renderView;
             private readonly ITextureAtlas textureAtlas;
             private readonly ILayerSprite[] objects = new ILayerSprite[5];
+            private IAlphaSprite glowingMeteorOverlay;
             private readonly IAnimatedLayerSprite[] meteorSparks = new IAnimatedLayerSprite[2];
             private readonly ILayerSprite town;
             private readonly IColoredRect black;
-            private readonly long startTicks;
+            private readonly Font largeFont;
+            private readonly IIntroData introData;
+            private Text townText = null;
             // TODO: somewhere the zoom is also set to 14000
-            private int currentZoom = 0; // 7000, start value
+            private int currentZoom = -7000; // start value
             private int zoomWaitCounter = -1;
             private const int MaxZoom = 22248;
             private const int MeteorEndZoom = 18868;
@@ -315,12 +470,26 @@ namespace Ambermoon
             private int meteorSparkFrameCounter = -1;
             private int currentTownIndex = -1;
             private long currentTownStartTicks = -1;
+            private int meteorGlowTarget = -1;
+            private long lastGlowTicks = 0;
+            private readonly int numGlowFadeIncrements = 0; // the amount of changes to fully go from no glow to full glow
+            private Action finishHandler;
 
-            public IntroActionZoomingObjects(IRenderView renderView, long startTicks)
-                : base(IntroActionType.Starfield)
+            private void CreateTownText(int townIndex)
+            {
+                townText?.Destroy();
+                townText = largeFont.CreateText(renderView, Layer.IntroText, new Rect(TownNameXValues[townIndex], 170, 160, 128),
+                    introData.Texts[IntroText.Gemstone + townIndex], 200, TextAlign.Left, 255, new Rect(0, 170, 320, 256));
+                townText.Visible = true;
+            }
+
+            public IntroActionDisplayObjects(IRenderView renderView, long startTicks, Font largeFont, IIntroData introData, Action finishHandler)
+                : base(IntroActionType.DisplayObjects)
             {
                 this.renderView = renderView;
-                this.startTicks = startTicks;
+                this.largeFont = largeFont;
+                this.introData = introData;
+                this.finishHandler = finishHandler;
                 lastTicks = startTicks;
                 var layer = renderView.GetLayer(Layer.IntroGraphics);
                 textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
@@ -368,7 +537,40 @@ namespace Ambermoon
                 black.Y = 0;
                 black.Visible = false;
 
-                // TODO: text
+                var meteorPalette = introData.IntroPalettes[IntroData.GraphicPalettes[IntroGraphic.Meteor]];
+
+                for (int i = 0; i < 16; ++i)
+                {
+                    int lr = meteorPalette.Data[i * 4 + 0] >> 4;
+                    int rr = meteorPalette.Data[(16 + i) * 4 + 0] >> 4;
+                    int lg = meteorPalette.Data[i * 4 + 1] >> 4;
+                    int rg = meteorPalette.Data[(16 + i) * 4 + 1] >> 4;
+                    int lb = meteorPalette.Data[i * 4 + 2] >> 4;
+                    int rb = meteorPalette.Data[(16 + i) * 4 + 2] >> 4;
+
+                    int dist = Util.Max(Math.Abs(rr - lr), Math.Abs(rg - lg), Math.Abs(rb - lb));
+
+                    if (dist > numGlowFadeIncrements)
+                        numGlowFadeIncrements = dist; // this can be at max 15
+                }
+            }
+
+            public void StartMeteorGlowing(long ticks)
+            {
+                meteorGlowTarget = 255;
+                var meteor = objects[MeteorObjectIndex];
+                glowingMeteorOverlay?.Delete();
+                glowingMeteorOverlay = renderView.SpriteFactory.CreateWithAlpha(meteor.Width, meteor.Height, 250);
+                glowingMeteorOverlay.TextureSize = new Size(meteor.TextureSize);
+                glowingMeteorOverlay.Alpha = 0;
+                glowingMeteorOverlay.Layer = meteor.Layer;
+                glowingMeteorOverlay.ClipArea = new Rect(0, 0, 320, 200);
+                glowingMeteorOverlay.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.GlowingMeteor);
+                glowingMeteorOverlay.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.GlowingMeteor] - 1);
+                glowingMeteorOverlay.X = meteor.X;
+                glowingMeteorOverlay.Y = meteor.Y;
+                glowingMeteorOverlay.Visible = true;
+                lastGlowTicks = ticks;
             }
 
             public override void Update(long ticks, int frameCounter)
@@ -395,6 +597,45 @@ namespace Ambermoon
                     }
 
                     ProcessTicks(ticks - lastTicks);
+
+                    // Meteor glowing
+                    if (meteorGlowTarget != -1)
+                    {
+                        long glowTicks = (ticks - lastGlowTicks) / 8;
+                        lastGlowTicks += glowTicks * 8;
+
+                        for (int t = 0; t < glowTicks; t++)
+                        {
+                            if (glowingMeteorOverlay.Alpha < meteorGlowTarget)
+                            {
+                                int add = 255 / numGlowFadeIncrements;
+
+                                if (glowingMeteorOverlay.Alpha + add >= meteorGlowTarget)
+                                {
+                                    glowingMeteorOverlay.Alpha = (byte)meteorGlowTarget;
+                                    meteorGlowTarget = 0;
+                                }
+                                else
+                                {
+                                    glowingMeteorOverlay.Alpha = (byte)Math.Min(255, glowingMeteorOverlay.Alpha + add);
+                                }
+                            }
+                            else if (glowingMeteorOverlay.Alpha > meteorGlowTarget)
+                            {
+                                int add = -255 / numGlowFadeIncrements;
+
+                                if (glowingMeteorOverlay.Alpha + add <= meteorGlowTarget)
+                                {
+                                    glowingMeteorOverlay.Alpha = (byte)meteorGlowTarget;
+                                    meteorGlowTarget = 255;
+                                }
+                                else
+                                {
+                                    glowingMeteorOverlay.Alpha = (byte)Math.Max(0, glowingMeteorOverlay.Alpha + add);
+                                }
+                            }
+                        }
+                    }
                 }
                 else
                 {
@@ -405,9 +646,14 @@ namespace Ambermoon
 
                     meteorSparks[0].Visible = false;
                     meteorSparks[1].Visible = false;
+
+                    if (glowingMeteorOverlay != null)
+                        glowingMeteorOverlay.Visible = false;
                 }
 
                 lastTicks = ticks;
+
+                // TODO: call finishHandler when a zoom level is reached an reset to null afterwards
             }
 
             public override void Destroy()
@@ -419,6 +665,8 @@ namespace Ambermoon
                     spark?.Delete();
 
                 town?.Delete();
+                townText?.Destroy();
+                glowingMeteorOverlay?.Delete();
             }
 
             private void CheckTownDisplay(long ticks)
@@ -433,10 +681,11 @@ namespace Ambermoon
                     currentTownIndex = nextTownIndex;
                     currentTownStartTicks = ticks;
                     town.X = 80;
-                    town.Y = 10; // TODO
+                    town.Y = 36;
                     town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone + (uint)currentTownIndex);
                     town.Visible = true;
                     black.Visible = true;
+                    CreateTownText(currentTownIndex);
                 }
                 else if (currentTownIndex >= 0)
                 {
@@ -453,6 +702,9 @@ namespace Ambermoon
                             if (i != SunObjectIndex)
                                 objects[i].Visible = true;
                         }
+
+                        townText?.Destroy();
+                        townText = null;
                     }
                 }
             }
@@ -495,6 +747,7 @@ namespace Ambermoon
                             meteorSparkFrameCounter = 28;
                     }
 
+                    // Zoom / Move
                     for (int n = 0; n < 5; n++)
                     {
                         if (n == MeteorObjectIndex && currentZoom >= MeteorEndZoom)
@@ -504,11 +757,11 @@ namespace Ambermoon
                         var info = ZoomInfos[n];
                         int distance = info.InitialDistance - currentZoom;
 
-                        if (distance >= short.MinValue)
+                        if (distance >= 0 && distance <= short.MaxValue)
                         {
                             distance += 256;
 
-                            if (distance > 0 && distance <= short.MaxValue)
+                            if (distance >= 0 && distance <= short.MaxValue)
                             {
                                 int offsetX = info.EndOffsetX * 256;
                                 int offsetY = info.EndOffsetY * 256;
@@ -528,7 +781,14 @@ namespace Ambermoon
                                 obj.Resize(width, height);
                                 obj.X = offsetX;
                                 obj.Y = offsetY;
-                                obj.Visible = width >= 1.0f && height >= 1.0f;                                
+                                obj.Visible = width >= 1.0f && height >= 1.0f;
+
+                                if (n == MeteorObjectIndex && glowingMeteorOverlay != null)
+                                {
+                                    glowingMeteorOverlay.X = obj.X;
+                                    glowingMeteorOverlay.Y = obj.Y;
+                                    glowingMeteorOverlay.Resize(width, height);
+                                }
                             }
                         }
                         else
@@ -548,9 +808,10 @@ namespace Ambermoon
             private readonly ILayerSprite frame;
             private readonly ILayerSprite[] images = new ILayerSprite[95];
             private int activeFrame = -1;
+            private Action finishHandler; // TODO
 
-            public IntroActionTwinlake(IRenderView renderView, long startTicks, IIntroData introData)
-                : base(IntroActionType.Starfield)
+            public IntroActionTwinlake(IRenderView renderView, long startTicks, IIntroData introData, Action finishHandler)
+                : base(IntroActionType.TwinlakeAnimation)
             {
                 this.renderView = renderView;
                 this.startTicks = startTicks;
@@ -587,6 +848,8 @@ namespace Ambermoon
                     images[i].Y = 7 + twinlakePart.Position.Y;
                     images[i].Visible = false;
                 }
+
+                this.finishHandler = finishHandler;
             }
 
             public override void Destroy()
@@ -625,16 +888,17 @@ namespace Ambermoon
         readonly Font introFont;
         readonly Font introFontLarge;
         readonly IRenderView renderView;
-        readonly IRenderLayer renderLayer;
+        readonly IRenderLayer renderLayer; // TODO: needed?
         long ticks = 0;
-        readonly List<Text> texts = new();
+        readonly List<Text> texts = new(); // TODO: needed?
         readonly List<IntroAction> actions = new();
-        readonly IColoredRect fadeArea;
-        Action fadeMidAction = null;
+        readonly IColoredRect fadeArea; // TODO: needed?
+        Action fadeMidAction = null; // TODO: needed?
         long fadeStartTicks = 0;
         const long HalfFadeDurationInTicks = 3 * Game.TicksPerSecond / 4;
         const double TicksPerSecond = 60.0; // or test with 50 if not ok
         int animationFrameCounter = 0;
+        readonly Queue<KeyValuePair<long, Func<IntroAction>>> actionQueue = new();
 
         public Intro(IRenderView renderView, IIntroData introData, Font introFont, Font introFontLarge, Action finishAction)
         {
@@ -651,21 +915,56 @@ namespace Ambermoon
             fadeArea.Y = 0;
             fadeArea.Visible = false;
 
-            void AddAction(IntroActionType actionType)
-            {
-                actions.Add(IntroAction.CreateAction(actionType, renderView, 0, introData, (min, max) => 0, introFont, introFontLarge));
-            }
-
             // TODO
-            AddAction(IntroActionType.SpawnZoomObjects);
-            AddAction(IntroActionType.TextCommands);
-            //AddAction(IntroActionType.TwinlakeAnimation);
+            ScheduleAction(0, IntroActionType.ThalionLogoFlyIn, () =>
+            {
+                ScheduleAction(ticks + 250, IntroActionType.AmbermoonFlyIn, () =>
+                {
+                    // TODO: this timing is just to adjust some differences, adjust later
+                    ScheduleAction(ticks + 480, IntroActionType.TextCommands, null, () => DestroyAction(IntroActionType.AmbermoonFlyIn));
+                    ScheduleAction(ticks + 480, IntroActionType.DisplayObjects);
+                    //ScheduleAction(0, IntroActionType.TwinlakeAnimation);
+                }, () => DestroyAction(IntroActionType.ThalionLogoFlyIn));
+            });            
+        }
+
+        private void DestroyAction(IntroActionType actionType)
+        {
+            foreach (var action in actions.Where(a => a.Type == actionType).ToArray())
+            {
+                action.Destroy();
+                actions.Remove(action);
+            }
+        }
+
+        private void ScheduleAction(long startTicks, IntroActionType actionType, Action finishHandler = null, Action additionalAction = null)
+        {
+            var adder = () =>
+            {
+                additionalAction?.Invoke();
+                return IntroAction.CreateAction(actionType, this, finishHandler, renderView, startTicks, introData, (min, max) => 0, introFont, introFontLarge);
+            };
+
+            actionQueue.Enqueue(KeyValuePair.Create(startTicks, adder));
+        }
+
+        internal void StartMeteorGlowing(long ticks)
+        {
+            (actions.FirstOrDefault(a => a.Type == IntroActionType.DisplayObjects) as IntroActionDisplayObjects)?.StartMeteorGlowing(ticks);
         }
 
         public void Update(double deltaTime)
         {
             long oldTicks = ticks;
             ticks += (long)Math.Round(TicksPerSecond * deltaTime);
+
+            while (actionQueue.Count > 0)
+            {
+                if (actionQueue.Peek().Key <= ticks)
+                    actions.Add(actionQueue.Dequeue().Value());
+                else
+                    break;
+            }
 
             animationFrameCounter = (int)((animationFrameCounter + (ticks - oldTicks)) % 48);
 
@@ -723,12 +1022,12 @@ namespace Ambermoon
 
             if (large)
             {
-                textEntry = introFontLarge.CreateText(renderView, Layer.OutroText,
+                textEntry = introFontLarge.CreateText(renderView, Layer.IntroText,
                     new Rect(x, y, Global.VirtualScreenWidth - x, 22), text, 10, TextAlign.Left, 208);
             }
             else
             {
-                textEntry = introFont.CreateText(renderView, Layer.OutroText,
+                textEntry = introFont.CreateText(renderView, Layer.IntroText,
                     new Rect(x, y, Global.VirtualScreenWidth - x, 11), text, 10, TextAlign.Left, 208);
             }
 

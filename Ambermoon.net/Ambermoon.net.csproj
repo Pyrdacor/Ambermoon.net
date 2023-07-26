@@ -40,7 +40,6 @@
   <ItemGroup>
     <None Remove="ambermoon.cfg" />
     <None Remove="Resources\app.ico" />
-    <None Remove="Resources\IntroFont.dat" />
     <None Remove="Resources\logo.pyr" />
     <None Remove="Resources\song.pyr" />
     <None Remove="Resources\windowIcon.png" />
@@ -72,9 +71,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\windowIcon.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\IntroFont.dat">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>

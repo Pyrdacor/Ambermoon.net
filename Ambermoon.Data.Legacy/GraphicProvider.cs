@@ -70,7 +70,7 @@ namespace Ambermoon.Data.Legacy
         public byte AutomapPaletteIndex { get; } = 51;
         public byte FirstIntroPaletteIndex { get; } = 54;
         public byte FirstOutroPaletteIndex { get; } = 63;
-        public byte FirstFantasyIntroPaletteIndex { get; } = 69; 
+        public byte FirstFantasyIntroPaletteIndex { get; } = 69;
 
         public GraphicProvider(GameData gameData, ExecutableData.ExecutableData executableData, List<Graphic> additionalPalettes)
         {

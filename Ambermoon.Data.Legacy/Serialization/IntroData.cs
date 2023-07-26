@@ -23,7 +23,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             textCommand = null;
             var command = (IntroTextCommandType)dataReader.ReadByte();
 
-            if (command > IntroTextCommandType.Unknown)
+            if (command > IntroTextCommandType.ActivatePaletteFading)
             {
                 if ((int)command == 255)
                     return false; // End marker
@@ -82,13 +82,14 @@ namespace Ambermoon.Data.Legacy.Serialization
             { IntroGraphic.DestroyedIllien, 4 },
             { IntroGraphic.DestroyedSnakesign, 4 },
             { IntroGraphic.ThalionLogo, 0 },
-            { IntroGraphic.Ambermoon, 0 }, // TODO: not sure
+            { IntroGraphic.Ambermoon, 1 },
             { IntroGraphic.SunAnimation, 3 },
             { IntroGraphic.Lyramion, 3 },
             { IntroGraphic.Morag, 3 },
             { IntroGraphic.ForestMoon, 3 },
             { IntroGraphic.Meteor, 3 },
             { IntroGraphic.MeteorSparks, 3 },
+            { IntroGraphic.GlowingMeteor, 3 },
             { IntroGraphic.Twinlake, 8 },
             // TODO ...
         };
@@ -159,7 +160,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             // As we fade with a black overlay we need the color palette when the images are fully visible (faded in).
             // At this point the 16 last colors are also the first 16 colors, so here we just copy them over.
             var palette9 = introPalettes[4].Clone();
-            System.Array.Copy(introPalettes[4].Data, 16 * 4, palette9.Data, 0, 16 * 4);
+            Array.Copy(introPalettes[4].Data, 16 * 4, palette9.Data, 0, 16 * 4);
             introPalettes.Add(palette9);
 
             hunk0.Position += 8; // 2 byte end marker (0xffff) + 3 words (offset from the position of the word to the associated town name: Gemstone: 6, Illien: 14, Snakesign: 20)
@@ -464,6 +465,21 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 graphics.Add(IntroGraphic.ThalionLogo + i, graphic);
             }
+
+            // In the original version the glowing of the meteor is performed by fading the upper 16 colors
+            // of the palette to the lower 16 colors of the palette and vice versa. The meteor always uses
+            // colors from the first 16 colors though.
+            // As we can't do this here we add another meteor graphic where all color indices are increased
+            // by 16. This way they point to the bright color in the upper 16 colors and show the meteor
+            // in full glow brightness. To fade we just display the glow image above the normal meteor with
+            // some level of transparency.
+            var glowingMeteorGraphic = graphics[IntroGraphic.Meteor].Clone();
+            for (int i = 0; i < glowingMeteorGraphic.Data.Length; ++i)
+            {
+                if (glowingMeteorGraphic.Data[i] != 0) // keep index 0 as it is full transparency!
+                    glowingMeteorGraphic.Data[i] += 16;
+            }
+            graphics.Add(IntroGraphic.GlowingMeteor, glowingMeteorGraphic);
 
             // TODO ...
 

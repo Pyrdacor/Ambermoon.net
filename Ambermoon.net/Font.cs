@@ -15,12 +15,14 @@ namespace Ambermoon
         readonly int totalWidth = 0;
         int baseX = 0;
         TextColor textColor = TextColor.White;
+        byte alpha = 255;
 
         public Text(IRenderView renderView, Layer layer, string text, IReadOnlyDictionary<char, Glyph> glyphs,
             List<char> characters, byte displayLayer, int spaceWidth, bool upperOnly, uint textureAtlasIndexOffset,
             byte alpha = 255, Rect clipArea = null)
         {
             totalWidth = 0;
+            this.alpha = alpha;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
 
             if (upperOnly)
@@ -32,7 +34,7 @@ namespace Ambermoon
                     totalWidth += spaceWidth;
                 else if (glyphs.TryGetValue(ch, out var glyph))
                 {
-                    var sprite = renderView.SpriteFactory.CreateWithAlpha(glyph.Graphic.Width, glyph.Graphic.Height, displayLayer) as IAlphaSprite;
+                    var sprite = renderView.SpriteFactory.CreateWithAlpha(glyph.Graphic.Width, glyph.Graphic.Height, displayLayer);
                     sprite.TextureAtlasOffset = textureAtlas.GetOffset((uint)characters.IndexOf(ch) + textureAtlasIndexOffset);
                     sprite.Alpha = alpha;
                     sprite.ClipArea = clipArea;
@@ -57,6 +59,19 @@ namespace Ambermoon
 
                 textColor = value;
                 renderGlyphs?.ForEach(g => { if (g != null) g.MaskColor = (byte)textColor; });
+            }
+        }
+
+        public byte Alpha
+        {
+            get => alpha;
+            set
+            {
+                if (alpha == value)
+                    return;
+
+                alpha = value;
+                renderGlyphs?.ForEach(g => { if (g != null) g.Alpha = alpha; });
             }
         }
 

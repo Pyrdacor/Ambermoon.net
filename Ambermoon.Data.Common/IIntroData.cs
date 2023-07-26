@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data
 {
@@ -21,6 +20,7 @@ namespace Ambermoon.Data
         ForestMoon,
         Meteor,
         MeteorSparks,
+        GlowingMeteor,
         Twinlake
     }
 
@@ -54,7 +54,7 @@ namespace Ambermoon.Data
         Render,
         Wait,
         SetTextColor,
-        Unknown
+        ActivatePaletteFading // In original this activates palette fading which let's the meteor glow
     }
 
     public interface IIntroTextCommand
