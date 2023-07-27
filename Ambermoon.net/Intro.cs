@@ -4,6 +4,7 @@ using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static Ambermoon.Data.ActionEvent;
 
 namespace Ambermoon
 {
@@ -54,6 +55,7 @@ namespace Ambermoon
             private readonly static List<int> scaleValues = new();
             private const int StartScale = 0x7630;
             private const int ScaleDecrease = 250;
+            private bool stopped = false;
 
             static IntroActionStarfield()
             {
@@ -107,8 +109,13 @@ namespace Ambermoon
                 }
             }
 
+            public void Stop() => stopped = true;
+
             public override void Update(long ticks, int frameCounter)
             {
+                if (stopped)
+                    return;
+
                 for (int i = 0; i < stars.Length; i++)
                 {
                     while (true)
@@ -1070,12 +1077,19 @@ namespace Ambermoon
 
             // TODO
             ScheduleAction(0, IntroActionType.Starfield);
-            ScheduleAction(0, IntroActionType.ThalionLogoFlyIn, () =>
+            // Palette 2 (half black and half white) is faded in here.
+            // As the later colors (white) need 15 color change ticks
+            // and 4 ticks per color change are used, we need 15 * 4 ticks here.
+            ScheduleAction(15 * 4, IntroActionType.ThalionLogoFlyIn, () =>
             {
                 ScheduleAction(ticks + 250, IntroActionType.AmbermoonFlyIn, () =>
                 {
                     // TODO: this timing is just to adjust some differences, adjust later
-                    ScheduleAction(ticks + 480, IntroActionType.TextCommands, null, () => DestroyAction(IntroActionType.AmbermoonFlyIn));
+                    ScheduleAction(ticks + 480, IntroActionType.TextCommands, null, () =>
+                    {
+                        DestroyAction(IntroActionType.AmbermoonFlyIn);
+                        (actions.First(a => a.Type == IntroActionType.Starfield) as IntroActionStarfield)!.Stop();
+                    });
                     ScheduleAction(ticks + 480, IntroActionType.DisplayObjects);
                     //ScheduleAction(0, IntroActionType.TwinlakeAnimation);
                 }, () => DestroyAction(IntroActionType.ThalionLogoFlyIn));

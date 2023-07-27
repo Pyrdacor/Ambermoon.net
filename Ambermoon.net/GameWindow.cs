@@ -11,6 +11,7 @@ using Ambermoon.UI;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Input;
 using Silk.NET.Windowing;
+using SonicArranger;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -634,7 +635,7 @@ namespace Ambermoon
             Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage,
             Action showIntroAction)
         {
-            void PlayMusic(Song song)
+            void PlayMusic(Data.Enumerations.Song song)
             {
                 if (configuration.Music)
                     musicManager.GetSong(song)?.Play(audioOutput);
@@ -950,6 +951,11 @@ namespace Ambermoon
         {
             mainMenu?.Destroy();
             mainMenu = null;
+            if (configuration.Music)
+            {
+                musicManager.Stop();
+                musicManager.GetSong(Data.Enumerations.Song.Intro)?.Play(audioOutput);
+            }
 
             intro = new Intro(renderView, introData, introFont, introFontLarge, () =>
             {
