@@ -31,13 +31,13 @@ namespace Ambermoon
             public abstract void Update(long ticks, int frameCounter);
             public abstract void Destroy();
 
-            public static IntroAction CreateAction(IntroActionType actionType, Intro intro, Action finishHandler, IRenderView renderView, long startTicks, IIntroData introData, Func<int, int, int> rng, Font introFont, Font introFontLarge)
+            public static IntroAction CreateAction(IntroActionType actionType, Intro intro, Action finishHandler, IRenderView renderView, long startTicks, IIntroData introData, Func<short> rng, Font introFont, Font introFontLarge)
             {
                 return actionType switch
                 {
                     IntroActionType.Starfield => new IntroActionStarfield(renderView, startTicks, rng, finishHandler),
-                    IntroActionType.ThalionLogoFlyIn => new IntroActionLogoFlyin(IntroGraphic.ThalionLogo, actionType, renderView, startTicks, finishHandler),
-                    IntroActionType.AmbermoonFlyIn => new IntroActionLogoFlyin(IntroGraphic.Ambermoon, actionType, renderView, startTicks, finishHandler),
+                    IntroActionType.ThalionLogoFlyIn => new IntroActionLogoFlyin(IntroGraphic.ThalionLogo, actionType, renderView, startTicks, finishHandler, introData),
+                    IntroActionType.AmbermoonFlyIn => new IntroActionLogoFlyin(IntroGraphic.Ambermoon, actionType, renderView, startTicks, finishHandler, introData),
                     IntroActionType.DisplayObjects => new IntroActionDisplayObjects(renderView, startTicks, introFontLarge, introData, finishHandler),
                     IntroActionType.TwinlakeAnimation => new IntroActionTwinlake(renderView, startTicks, introData, finishHandler),
                     IntroActionType.TextCommands => new IntroActionTextCommands(renderView, introData, introFont, intro, finishHandler),
@@ -49,53 +49,125 @@ namespace Ambermoon
         private class IntroActionStarfield : IntroAction
         {
             private readonly IRenderView renderView;
-            private readonly Queue<IColoredRect> stars = new();
             private readonly Queue<int> starTicks = new();
             private readonly long startTicks;
-            private readonly Func<int, int, int> rng;
             private readonly Action finishHandler;
+            private readonly IColoredRect[] stars = new IColoredRect[150];
+            private readonly Position[] starBasePositions = new Position[150];
+            private readonly int[] starScaleValues = new int[150];
+            private readonly static List<int> scaleValues = new();
+            private const int StartScale = 0x7630;
+            private const int ScaleDecrease = 250;
 
-            public IntroActionStarfield(IRenderView renderView, long startTicks, Func<int, int, int> rng, Action finishHandler)
+            static IntroActionStarfield()
+            {
+                int scale = StartScale;
+
+                do
+                {
+                    scaleValues.Add(scale);
+                    scale -= ScaleDecrease;
+                } while (scale >= 0);
+            }
+
+            public IntroActionStarfield(IRenderView renderView, long startTicks, Func<short> rng, Action finishHandler)
                 : base(IntroActionType.Starfield)
             {
                 this.renderView = renderView;
                 this.startTicks = startTicks;
-                this.rng = rng;
                 this.finishHandler = finishHandler;
-            }
 
-            private void SpawnStar()
-            {
-                stars.Enqueue(renderView.ColoredRectFactory.Create(1, 1, Color.White, 10));
-                starTicks.Enqueue(rng(10, 20));
+                var layer = renderView.GetLayer(Layer.IntroEffects);
+
+                for (int i = 0; i < stars.Length; i++)
+                {
+                    var star = stars[i] = renderView.ColoredRectFactory.Create(1, 1, Color.White, 0);
+                    star.Layer = layer;
+                    star.Visible = false;
+
+                    var r1 = (rng() % 0x3e80) - 0x1f40;
+                    var r2 = (rng() % 0x6400) - 0x3200;
+
+                    r1 *= 256;
+                    r2 *= 256;
+
+                    var basePosition = starBasePositions[i] = new Position(r2, r1); // note: they are swapped in original as well!
+
+                    // The original code works a bit different. We need the amount of visible positions per star for some calculation.
+                    int currentScale = StartScale;
+                    int validPositionCount = 0;
+
+                    while (currentScale > 0)
+                    {
+                        int x = 160 + basePosition.X / currentScale;
+                        int y = 100 + basePosition.Y / currentScale;
+
+                        if (x >= 0 && y >= 0 && x < 320 && y < 200)
+                            ++validPositionCount;
+
+                        currentScale -= ScaleDecrease;
+                    }
+
+                    // This is the start frame or start scale
+                    // of this star.
+                    var r = rng() % validPositionCount;
+                    starScaleValues[i] = scaleValues[r];
+                }
             }
 
             public override void Update(long ticks, int frameCounter)
             {
-                // TODO
+                for (int i = 0; i < stars.Length; i++)
+                {
+                    var basePosition = starBasePositions[i];
+                    var scale = starScaleValues[i];
+
+                    int x = 160 + basePosition.X / scale;
+                    int y = 100 + basePosition.Y / scale;
+
+                    stars[i].Visible = x >= 0 && y >= 0 && x < 320 && y < 200;
+                    stars[i].X = x;
+                    stars[i].Y = 4 + y;
+
+                    scale -= ScaleDecrease;
+
+                    if (scale < 0)
+                        scale = StartScale;
+
+                    starScaleValues[i] = scale;
+                }
+
+                // TODO: as we have black borders we might to want to extrapolate the
+                // stars to that area. I guess we need 150 more stars which continue at
+                // the border. But it's fine for the first version this way.
             }
 
             public override void Destroy()
             {
-                // TODO
+                for (int i = 0; i < stars.Length; i++)
+                    stars[i]?.Delete();
             }
         }
 
         private class IntroActionLogoFlyin : IntroAction
         {
-            private readonly ILayerSprite logo;
+            private readonly IAlphaSprite logo;
             private readonly long startTicks;
             private int scalingFactor = 2048; // start value 0x800
             private readonly int scalingPerTick = 32;
             private readonly int imageWidth;
             private readonly int imageHeight;
             private readonly Action finishHandler;
+            private readonly int fadeDuration;
+            private long fadeOutStartTicks = -1;
+            private readonly long fadeOutDelay;
 
-            public IntroActionLogoFlyin(IntroGraphic introGraphic, IntroActionType actionType, IRenderView renderView, long startTicks, Action finishHandler)
+            public IntroActionLogoFlyin(IntroGraphic introGraphic, IntroActionType actionType, IRenderView renderView, long startTicks, Action finishHandler, IIntroData introData)
                 : base(actionType)
             {
-                this.startTicks = startTicks;
+                this.startTicks = startTicks + 1; // see description in Update
                 this.finishHandler = finishHandler;
+                fadeDuration = GetPaletteFadeDuration(introData.IntroPalettes[IntroData.GraphicPalettes[introGraphic]], 32, 4);
 
                 var size = introGraphic == IntroGraphic.ThalionLogo
                     ? new Size(128, 82) // Thalion logo
@@ -103,13 +175,17 @@ namespace Ambermoon
                 scalingPerTick = introGraphic == IntroGraphic.ThalionLogo
                     ? 32 // Thalion logo
                     : 64; // Ambermoon text
-                logo = renderView.SpriteFactory.Create(0, 0, true, 200) as ILayerSprite;
+                fadeOutDelay = introGraphic == IntroGraphic.ThalionLogo
+                    ? 250  // Thalion logo
+                    : 64; // Ambermoon text
+                logo = renderView.SpriteFactory.CreateWithAlpha(0, 0, 200);
                 logo.Layer = renderView.GetLayer(Layer.IntroGraphics);
                 logo.TextureSize = size;
                 logo.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics).GetOffset((uint)introGraphic);
                 logo.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[introGraphic] - 1);
                 logo.X = 160; // start in the center
                 logo.Y = 100; // start in the center of the 200 height portion
+                logo.Alpha = 0;
                 logo.Visible = true;
 
                 imageWidth = size.Width;
@@ -118,21 +194,55 @@ namespace Ambermoon
 
             public override void Update(long ticks, int frameCounter)
             {
-                if (scalingFactor >= 256)
+                if (ticks < startTicks)
+                    return;
+
+                // The original prepares all frames in a buffer.
+                // Then
+                //   Wait 1 tick
+                //   Start palette fade (= fade in)
+                //   Wait 1 tick
+                // Then for each frame it does:
+                //   Wait 1 tick
+                //   Render frame (and prepare next)
+                //
+                // So essentially it starts 1 tick later and then starts the fade.
+                // Therefore we increased startTicks by 1 in the constructor.
+                // The scaling should only start at 3 ticks (2 ticks as we adjusted startTicks).
+                // But our logic just halves the scalingPerTick which has the same effect.
+                // But we have to skip only 1 more tick instead of 2 to make it work then.
+                // Thus we added "if (elapsed >= 1)" and "--elapsed" below.
+
+                long elapsed = ticks - startTicks;
+
+                logo.Alpha = (byte)Math.Min(255, elapsed * 255 / fadeDuration);
+
+                if (elapsed >= 1)
                 {
-                    scalingFactor = 256 + (int)(2048 - (ticks - startTicks) * scalingPerTick);
+                    --elapsed;
 
-                    if (scalingFactor < 256)
+                    if (scalingFactor >= 256)
                     {
-                        finishHandler?.Invoke();
-                        return;
-                    }
+                        scalingFactor = 256 + (int)(2048 - elapsed * scalingPerTick / 2); // half scaling as there is an extra tick before displaying it
 
-                    int width = Math.Max(1, (imageWidth * 256) / scalingFactor);
-                    int height = Math.Max(1, (imageHeight * 256) / scalingFactor);
-                    logo.Resize(width, height);
-                    logo.X = 160 - width / 2;
-                    logo.Y = 100 - height / 2;
+                        if (scalingFactor < 256)
+                        {
+                            fadeOutStartTicks = ticks + 250; // There is a delay of 250 ticks after fully displaying and then the "PRESENT" texts
+                            finishHandler?.Invoke();
+                            return;
+                        }
+
+                        int width = Math.Max(1, (imageWidth * 256) / scalingFactor);
+                        int height = Math.Max(1, (imageHeight * 256) / scalingFactor);
+                        logo.Resize(width, height);
+                        logo.X = 160 - width / 2;
+                        logo.Y = 100 - height / 2;
+                    }
+                }
+                
+                if (fadeOutStartTicks != -1)
+                {
+
                 }
             }
 
@@ -531,28 +641,14 @@ namespace Ambermoon
                 town.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Gemstone] - 1);
                 town.Visible = false;
 
-                black = renderView.ColoredRectFactory.Create(320, 256, Color.Black, 120);
+                black = renderView.ColoredRectFactory.Create(320, 256, Render.Color.Black, 120);
                 black.Layer = layer;
                 black.X = 0;
                 black.Y = 0;
                 black.Visible = false;
 
                 var meteorPalette = introData.IntroPalettes[IntroData.GraphicPalettes[IntroGraphic.Meteor]];
-
-                for (int i = 0; i < 16; ++i)
-                {
-                    int lr = meteorPalette.Data[i * 4 + 0] >> 4;
-                    int rr = meteorPalette.Data[(16 + i) * 4 + 0] >> 4;
-                    int lg = meteorPalette.Data[i * 4 + 1] >> 4;
-                    int rg = meteorPalette.Data[(16 + i) * 4 + 1] >> 4;
-                    int lb = meteorPalette.Data[i * 4 + 2] >> 4;
-                    int rb = meteorPalette.Data[(16 + i) * 4 + 2] >> 4;
-
-                    int dist = Util.Max(Math.Abs(rr - lr), Math.Abs(rg - lg), Math.Abs(rb - lb));
-
-                    if (dist > numGlowFadeIncrements)
-                        numGlowFadeIncrements = dist; // this can be at max 15
-                }
+                numGlowFadeIncrements = GetPaletteFadeDuration(meteorPalette, 0, meteorPalette, 16, 16, 1);
             }
 
             public void StartMeteorGlowing(long ticks)
@@ -601,8 +697,8 @@ namespace Ambermoon
                     // Meteor glowing
                     if (meteorGlowTarget != -1)
                     {
-                        long glowTicks = (ticks - lastGlowTicks) / 8;
-                        lastGlowTicks += glowTicks * 8;
+                        long glowTicks = (ticks - lastGlowTicks) / 6; // I guess original uses 4 but I am not 100% sure. Looks better with 6 though.
+                        lastGlowTicks += glowTicks * 6;
 
                         for (int t = 0; t < glowTicks; t++)
                         {
@@ -899,6 +995,65 @@ namespace Ambermoon
         const double TicksPerSecond = 60.0; // or test with 50 if not ok
         int animationFrameCounter = 0;
         readonly Queue<KeyValuePair<long, Func<IntroAction>>> actionQueue = new();
+        ushort randomSeed = 0x0011;
+
+        private short Random()
+        {
+            long next = randomSeed * 0xd117;
+            randomSeed = (ushort)(next & 0xffff);
+            return (short)((next >> 8) & 0x7fff);
+        }
+
+        private static int GetPaletteFadeDuration(Graphic palette, int numColors, int ticksPerColorChange, int paletteOffset = 0)
+        {
+            int colorChanges = 0;
+
+            for (int i = 0; i < numColors; ++i)
+            {
+                int r = palette.Data[(paletteOffset + i) * 4 + 0] >> 4;
+                int g = palette.Data[(paletteOffset + i) * 4 + 1] >> 4;
+                int b = palette.Data[(paletteOffset + i) * 4 + 2] >> 4;
+
+                int dist = Util.Max(r, g, b);
+
+                if (dist > colorChanges)
+                {
+                    colorChanges = dist; // this can be at max 15
+
+                    if (colorChanges == 15)
+                        break;
+                }
+            }
+
+            return colorChanges * ticksPerColorChange;
+        }
+
+        private static int GetPaletteFadeDuration(Graphic palette1, int paletteOffset1, Graphic palette2, int paletteOffset2, int numColors, int ticksPerColorChange)
+        {
+            int colorChanges = 0;
+
+            for (int i = 0; i < numColors; ++i)
+            {
+                int lr = palette1.Data[(paletteOffset1 + i) * 4 + 0] >> 4;
+                int rr = palette2.Data[(paletteOffset2 + i) * 4 + 0] >> 4;
+                int lg = palette1.Data[(paletteOffset1 + i) * 4 + 1] >> 4;
+                int rg = palette2.Data[(paletteOffset2 + i) * 4 + 1] >> 4;
+                int lb = palette1.Data[(paletteOffset1 + i) * 4 + 2] >> 4;
+                int rb = palette2.Data[(paletteOffset2 + i) * 4 + 2] >> 4;
+
+                int dist = Util.Max(Math.Abs(rr - lr), Math.Abs(rg - lg), Math.Abs(rb - lb));
+
+                if (dist > colorChanges)
+                {
+                    colorChanges = dist; // this can be at max 15
+
+                    if (colorChanges == 15)
+                        break;
+                }
+            }
+
+            return colorChanges * ticksPerColorChange;
+        }
 
         public Intro(IRenderView renderView, IIntroData introData, Font introFont, Font introFontLarge, Action finishAction)
         {
@@ -909,13 +1064,14 @@ namespace Ambermoon
             this.renderView = renderView;
             renderLayer = renderView.GetLayer(Layer.IntroGraphics);
 
-            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
+            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Render.Color.Black, 255);
             fadeArea.Layer = renderView.GetLayer(Layer.Effects);
             fadeArea.X = 0;
             fadeArea.Y = 0;
             fadeArea.Visible = false;
 
             // TODO
+            ScheduleAction(0, IntroActionType.Starfield);
             ScheduleAction(0, IntroActionType.ThalionLogoFlyIn, () =>
             {
                 ScheduleAction(ticks + 250, IntroActionType.AmbermoonFlyIn, () =>
@@ -942,7 +1098,7 @@ namespace Ambermoon
             var adder = () =>
             {
                 additionalAction?.Invoke();
-                return IntroAction.CreateAction(actionType, this, finishHandler, renderView, startTicks, introData, (min, max) => 0, introFont, introFontLarge);
+                return IntroAction.CreateAction(actionType, this, finishHandler, renderView, startTicks, introData, Random, introFont, introFontLarge);
             };
 
             actionQueue.Enqueue(KeyValuePair.Create(startTicks, adder));
@@ -980,7 +1136,7 @@ namespace Ambermoon
                 else
                 {
                     byte alpha = (byte)(255 - Math.Abs(HalfFadeDurationInTicks - fadeDuration) * 255 / HalfFadeDurationInTicks);
-                    fadeArea.Color = new Color(fadeArea.Color, alpha);
+                    fadeArea.Color = new Render.Color(fadeArea.Color, alpha);
                     fadeArea.Visible = true;
 
                     if (fadeMidAction != null && fadeDuration >= HalfFadeDurationInTicks)
