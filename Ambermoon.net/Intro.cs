@@ -35,7 +35,7 @@ namespace Ambermoon
             {
                 return actionType switch
                 {
-                    IntroActionType.Starfield => new IntroActionStarfield(renderView, startTicks, rng, finishHandler),
+                    IntroActionType.Starfield => new IntroActionStarfield(renderView, rng),
                     IntroActionType.ThalionLogoFlyIn => new IntroActionLogoFlyin(IntroGraphic.ThalionLogo, actionType, renderView, startTicks, finishHandler, introData),
                     IntroActionType.AmbermoonFlyIn => new IntroActionLogoFlyin(IntroGraphic.Ambermoon, actionType, renderView, startTicks, finishHandler, introData),
                     IntroActionType.DisplayObjects => new IntroActionDisplayObjects(renderView, startTicks, introFontLarge, introData, finishHandler),
@@ -48,10 +48,6 @@ namespace Ambermoon
 
         private class IntroActionStarfield : IntroAction
         {
-            private readonly IRenderView renderView;
-            private readonly Queue<int> starTicks = new();
-            private readonly long startTicks;
-            private readonly Action finishHandler;
             private readonly IColoredRect[] stars = new IColoredRect[150];
             private readonly Position[] starBasePositions = new Position[150];
             private readonly int[] starScaleValues = new int[150];
@@ -70,20 +66,16 @@ namespace Ambermoon
                 } while (scale >= 0);
             }
 
-            public IntroActionStarfield(IRenderView renderView, long startTicks, Func<short> rng, Action finishHandler)
+            public IntroActionStarfield(IRenderView renderView, Func<short> rng)
                 : base(IntroActionType.Starfield)
             {
-                this.renderView = renderView;
-                this.startTicks = startTicks;
-                this.finishHandler = finishHandler;
-
                 var layer = renderView.GetLayer(Layer.IntroEffects);
 
                 for (int i = 0; i < stars.Length; i++)
                 {
                     var star = stars[i] = renderView.ColoredRectFactory.Create(1, 1, Color.White, 0);
                     star.Layer = layer;
-                    star.Visible = false;
+                    star.Visible = true;
 
                     var r1 = (rng() % 0x3e80) - 0x1f40;
                     var r2 = (rng() % 0x6400) - 0x3200;
@@ -119,22 +111,28 @@ namespace Ambermoon
             {
                 for (int i = 0; i < stars.Length; i++)
                 {
-                    var basePosition = starBasePositions[i];
-                    var scale = starScaleValues[i];
+                    while (true)
+                    {
+                        var basePosition = starBasePositions[i];
+                        var scale = starScaleValues[i];
 
-                    int x = 160 + basePosition.X / scale;
-                    int y = 100 + basePosition.Y / scale;
+                        int x = 160 + basePosition.X / scale;
+                        int y = 100 + basePosition.Y / scale;
 
-                    stars[i].Visible = x >= 0 && y >= 0 && x < 320 && y < 200;
-                    stars[i].X = x;
-                    stars[i].Y = 4 + y;
+                        scale -= ScaleDecrease;
 
-                    scale -= ScaleDecrease;
+                        if (scale < 0)
+                            scale = StartScale;
 
-                    if (scale < 0)
-                        scale = StartScale;
+                        starScaleValues[i] = scale;
 
-                    starScaleValues[i] = scale;
+                        if (x >= 0 && y >= 0 && x < 320 && y < 200)
+                        {
+                            stars[i].X = x;
+                            stars[i].Y = 4 + y;
+                            break;
+                        }
+                    }
                 }
 
                 // TODO: as we have black borders we might to want to extrapolate the
@@ -999,7 +997,7 @@ namespace Ambermoon
 
         private short Random()
         {
-            long next = randomSeed * 0xd117;
+            long next = (long)randomSeed * 0xd117;
             randomSeed = (ushort)(next & 0xffff);
             return (short)((next >> 8) & 0x7fff);
         }
