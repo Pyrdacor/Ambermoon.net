@@ -40,7 +40,7 @@ namespace Ambermoon
                     IntroActionType.AmbermoonFlyIn => new IntroActionLogoFlyin(IntroGraphic.Ambermoon, actionType, renderView, startTicks, finishHandler, introData, introFontLarge),
                     IntroActionType.DisplayObjects => new IntroActionDisplayObjects(renderView, startTicks, introFontLarge, introData, finishHandler),
                     IntroActionType.TwinlakeAnimation => new IntroActionTwinlake(renderView, startTicks, introData, finishHandler),
-                    IntroActionType.TextCommands => new IntroActionTextCommands(renderView, introData, introFont, intro, finishHandler),
+                    IntroActionType.TextCommands => new IntroActionTextCommands(renderView, introData, introFont, intro, finishHandler, startTicks),
                     _ => throw new NotImplementedException()
                 };
             }
@@ -52,9 +52,10 @@ namespace Ambermoon
             private readonly Position[] starBasePositions = new Position[150];
             private readonly int[] starScaleValues = new int[150];
             private readonly static List<int> scaleValues = new();
+            private readonly int star1InitialScaleValue;
             private const int StartScale = 0x7630;
             private const int ScaleDecrease = 250;
-            private bool stopped = false;
+            private long stopTicks = -1;
 
             static IntroActionStarfield()
             {
@@ -105,14 +106,17 @@ namespace Ambermoon
                     // of this star.
                     var r = rng() % validPositionCount;
                     starScaleValues[i] = scaleValues[r];
+
+                    if (i == 1)
+                        star1InitialScaleValue = starScaleValues[i];
                 }
             }
 
-            public void Stop() => stopped = true;
+            public void StopAt(long ticks) => stopTicks = ticks;
 
             public override void Update(long ticks, int frameCounter)
             {
-                if (stopped)
+                if (stopTicks != -1 && ticks >= stopTicks && starScaleValues[1] == star1InitialScaleValue)
                     return;
 
                 for (int i = 0; i < stars.Length; i++)
@@ -162,7 +166,7 @@ namespace Ambermoon
             private readonly int scalingPerTick = 32;
             private readonly int imageWidth;
             private readonly int imageHeight;
-            private readonly Action finishHandler;
+            private Action finishHandler;
             private long fadeOutStartTicks = -1;
             private Rect textClipArea;
             private int frameCount;
@@ -282,7 +286,8 @@ namespace Ambermoon
                         {
                             // Ambermoon logo has no additional text. It's handled here.
                             // The delay is 260 but this includes the fade out of the previous Thalion logo.
-                            if (elapsed >= 260 - 60)
+                            // So it would be 260 - 60. But it does not fit. So we use a different value.
+                            if (elapsed >= 260 + 4/* + 120*/)
                                 fadeOutStartTicks = ticks;
                         }
                     }
@@ -299,6 +304,7 @@ namespace Ambermoon
                             presentsText.Visible = false;
 
                         finishHandler?.Invoke();
+                        finishHandler = null;
                     }
                     else
                     {
@@ -333,6 +339,8 @@ namespace Ambermoon
             private bool fading = false;
             private int fadeAlphaChange = 0;
             private long lastFadeTicks = 0;
+            private readonly long startTicks;
+            private long lastTicks;
             private Action finishHandler;
 
             // To avoid the need for additional palettes just to mimic the dynamic
@@ -346,7 +354,7 @@ namespace Ambermoon
                 { 0x0e92, Data.Enumerations.Color.LightOrange } // it almost fits with f90 instead of e92
             };
 
-            public IntroActionTextCommands(IRenderView renderView, IIntroData introData, Font introFont, Intro intro, Action finishHandler)
+            public IntroActionTextCommands(IRenderView renderView, IIntroData introData, Font introFont, Intro intro, Action finishHandler, long startTicks)
                 : base(IntroActionType.TextCommands)
             {
                 this.renderView = renderView;
@@ -354,6 +362,8 @@ namespace Ambermoon
                 this.introData = introData;
                 this.intro = intro;
                 this.finishHandler = finishHandler;
+                this.startTicks = startTicks;
+                lastTicks = startTicks;
                 lineHeight = introFont.GlyphGraphics.Values.Select(g => g.Height).Max();
 
                 foreach (var command in introData.TextCommands)
@@ -379,6 +389,14 @@ namespace Ambermoon
 
             public override void Update(long ticks, int frameCounter)
             {
+                if (ticks != lastTicks && (ticks - startTicks) % 4 == 3)
+                {
+                    lastTicks = ticks;
+                    return;
+                }
+
+                lastTicks = ticks;
+
                 if (waitEndTicks == -1)
                     waitEndTicks = ticks + 50; // start value
 
@@ -481,13 +499,28 @@ namespace Ambermoon
 
             private void AddText(int x, int y, int index)
             {
+                if (index == 3 || index == 4) // My name must fit in there :D
+                    x -= 20;
+
                 // The clip area is important. Otherwise the virtual screen is used which is only 320x200 and the text only starts at Y = 200.
-                var text = introFont.CreateText(renderView, Layer.IntroText, new Rect(), introData.TextCommandTexts[index], 200, TextAlign.Left,
+                var text = introFont.CreateText(renderView, Layer.IntroText, new Rect(x, y, 320 - x, 12), introData.TextCommandTexts[index], 200, TextAlign.Left,
                     0, new Rect(0, 200, 320, 256));
                 text.Visible = false;
                 text.Place(new Rect(x, y, 320 - x, lineHeight), TextAlign.Left);
                 text.TextColor = currentTextColor;
                 texts.Add(text);
+
+                if (index == 4) // "Jurie Horneman"
+                {
+                    // Some self credit for all the hard work. :P
+                    y += 14;
+                    text = introFont.CreateText(renderView, Layer.IntroText, new Rect(x, y, 320 - x, 12), "ROBERT SCHNECKENHAUS", 200, TextAlign.Left,
+                        0, new Rect(0, 200, 320, 256));
+                    text.Visible = false;
+                    text.Place(new Rect(x, y, 320 - x, lineHeight), TextAlign.Left);
+                    text.TextColor = currentTextColor;
+                    texts.Add(text);
+                }
             }
 
             public override void Destroy()
@@ -635,13 +668,14 @@ namespace Ambermoon
             private readonly IIntroData introData;
             private Text townText = null;
             // TODO: somewhere the zoom is also set to 14000
-            private int currentZoom = -7000; // start value
+            private int currentZoom = -6500; // start value
             private int zoomWaitCounter = -1;
             private const int MaxZoom = 22248;
             private const int MeteorEndZoom = 18868;
             private const int MeteorSparkAppearZoom = 21000;
             private const int MeteorObjectIndex = 3;
             private const int SunObjectIndex = 4;
+            private long startTicks = 0;
             private long lastTicks = 0;
             private int zoomTransitionInfoIndex = 0;
             private int meteorSparkFrameCounter = -1;
@@ -667,6 +701,7 @@ namespace Ambermoon
                 this.largeFont = largeFont;
                 this.introData = introData;
                 this.finishHandler = finishHandler;
+                this.startTicks = startTicks;
                 lastTicks = startTicks;
                 var layer = renderView.GetLayer(Layer.IntroGraphics);
                 textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
@@ -680,8 +715,8 @@ namespace Ambermoon
                     var graphicIndex = i == SunObjectIndex ? IntroGraphic.SunAnimation : IntroGraphic.Lyramion + i;
                     var info = ZoomInfos[i];
                     objects[i] = i == SunObjectIndex
-                        ? renderView.SpriteFactory.CreateAnimated(info.ImageWidth, info.ImageHeight, textureAtlasWidth, 12, true, (byte)(2 + i * 50)) as IAnimatedLayerSprite
-                        : renderView.SpriteFactory.Create(info.ImageWidth, info.ImageHeight, true, (byte)(i * 50)) as ILayerSprite;
+                        ? renderView.SpriteFactory.CreateAnimated(info.ImageWidth, info.ImageHeight, textureAtlasWidth, 12, true, (byte)(4 + i * 50)) as IAnimatedLayerSprite
+                        : renderView.SpriteFactory.Create(info.ImageWidth, info.ImageHeight, true, (byte)(4 + i * 50)) as ILayerSprite;
                     objects[i].TextureSize = new Size(info.ImageWidth, info.ImageHeight);
                     objects[i].Layer = layer;
                     objects[i].ClipArea = new Rect(0, 0, 320, 200);
@@ -738,6 +773,15 @@ namespace Ambermoon
 
             public override void Update(long ticks, int frameCounter)
             {
+                if (ticks != lastTicks && (ticks - startTicks) % 4 == 3)
+                {
+                    lastTicks = ticks;
+                    return;
+                }
+
+                long elapsed = ticks - lastTicks;
+                lastTicks = ticks;
+
                 CheckTownDisplay(ticks);
 
                 if (!town.Visible)
@@ -759,7 +803,7 @@ namespace Ambermoon
                         meteorSparks[i].Visible = meteorSparkFrameCounter != -1;
                     }
 
-                    ProcessTicks(ticks - lastTicks);
+                    ProcessTicks(elapsed);
 
                     // Meteor glowing
                     if (meteorGlowTarget != -1)
@@ -813,8 +857,6 @@ namespace Ambermoon
                     if (glowingMeteorOverlay != null)
                         glowingMeteorOverlay.Visible = false;
                 }
-
-                lastTicks = ticks;
 
                 // TODO: call finishHandler when a zoom level is reached an reset to null afterwards
             }
@@ -889,7 +931,7 @@ namespace Ambermoon
 
                             if (zoomTransition.Increase == 0)
                             {
-                                zoomWaitCounter = 150;
+                                zoomWaitCounter = 150 * 3 / 4; // Added offset to improve timing
                                 ++zoomTransitionInfoIndex;
                             }
                             else
@@ -1062,8 +1104,10 @@ namespace Ambermoon
         const double TicksPerSecond = 60.0; // or test with 50 if not ok
         int animationFrameCounter = 0;
         readonly Queue<KeyValuePair<long, Func<IntroAction>>> actionQueue = new();
+        readonly Queue<KeyValuePair<long, Action>> simpleActionQueue = new();
         ushort randomSeed = 0x0011;
         Action startMusicAction;
+        double time = 0.0;
 
         private short Random()
         {
@@ -1140,28 +1184,35 @@ namespace Ambermoon
             fadeArea.Y = 0;
             fadeArea.Visible = false;
 
-            // TODO
             ScheduleAction(0, IntroActionType.Starfield);
             // Between the starfield setup and Thalion logo, the palette
             // is faded which takes 15 color changes with 4 ticks per change.
             ScheduleAction(15 * 4, IntroActionType.ThalionLogoFlyIn, () =>
             {
+                DestroyAction(IntroActionType.ThalionLogoFlyIn);
+
                 ScheduleAction(ticks, IntroActionType.AmbermoonFlyIn, () =>
                 {
+                    DestroyAction(IntroActionType.AmbermoonFlyIn);
+
+                    // It seems we might be 1 tick off and this will affect the static star image.
+                    // Try to use 973 if possible as it is mostly 972 or 973. This way we always
+                    // show the same stars in the background (hopefully).
+                    long baseTicks = 973;
                     // After Ambermoon logo there is a delay of 150 ticks.
                     // But this includes the 60 ticks for fading out.
                     // There are 3 more ticks in-between.
                     // So in total 93 ticks.
+                    int delay = 93;
 
-                    // TODO: this timing is just to adjust some differences, adjust later
-                    ScheduleAction(ticks + 93, IntroActionType.TextCommands, null, () =>
-                    {
-                        DestroyAction(IntroActionType.AmbermoonFlyIn);
-                        (actions.First(a => a.Type == IntroActionType.Starfield) as IntroActionStarfield)!.Stop();
-                    });
-                    ScheduleAction(ticks + 93, IntroActionType.DisplayObjects);
+                    // Stop the starfield animation at exaclty the right ticks
+                    (actions.First(a => a.Type == IntroActionType.Starfield) as IntroActionStarfield)!.StopAt(baseTicks + delay);
+                    // Planets and texts appear 20 ticks later
+                    delay += 20;
+                    ScheduleAction(baseTicks + delay, IntroActionType.TextCommands);
+                    ScheduleAction(baseTicks + delay, IntroActionType.DisplayObjects);
                     //ScheduleAction(0, IntroActionType.TwinlakeAnimation);
-                }, () => DestroyAction(IntroActionType.ThalionLogoFlyIn));
+                });
             });            
         }
 
@@ -1185,6 +1236,11 @@ namespace Ambermoon
             actionQueue.Enqueue(KeyValuePair.Create(startTicks, adder));
         }
 
+        private void ScheduleAction(long startTicks, Action action)
+        {
+            simpleActionQueue.Enqueue(KeyValuePair.Create(startTicks, action));
+        }
+
         internal void StartMeteorGlowing(long ticks)
         {
             (actions.FirstOrDefault(a => a.Type == IntroActionType.DisplayObjects) as IntroActionDisplayObjects)?.StartMeteorGlowing(ticks);
@@ -1192,14 +1248,24 @@ namespace Ambermoon
 
         public void Update(double deltaTime)
         {
-            long oldTicks = ticks;
-            ticks += (long)Math.Round(TicksPerSecond * deltaTime);
+            double lastTime = time;
+            time += deltaTime;
+            long oldTicks = (long)Math.Round(TicksPerSecond * lastTime);
+            ticks = (long)Math.Round(TicksPerSecond * time);
 
             if (startMusicAction != null && ticks >= 1)
             {
                 // Music starts after 1 tick
                 startMusicAction?.Invoke();
                 startMusicAction = null;
+            }
+
+            while (simpleActionQueue.Count > 0)
+            {
+                if (simpleActionQueue.Peek().Key <= ticks)
+                    simpleActionQueue.Dequeue().Value();
+                else
+                    break;
             }
 
             while (actionQueue.Count > 0)
@@ -1237,7 +1303,7 @@ namespace Ambermoon
                 }
             }
 
-            foreach (var action in actions)
+            foreach (var action in actions.ToArray())
             {
                 action.Update(ticks, animationFrameCounter);
             }

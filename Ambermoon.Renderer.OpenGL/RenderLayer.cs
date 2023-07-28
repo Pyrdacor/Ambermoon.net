@@ -262,6 +262,7 @@ namespace Ambermoon.Renderer
             {
                 BaseZ = 0.70f,
                 EnableBlending = true,
+                SupportColoredRects = true,
                 Use320x256 = true
             } },
             { Layer.IntroText, new ()
