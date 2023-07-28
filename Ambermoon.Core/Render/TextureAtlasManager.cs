@@ -360,14 +360,22 @@ namespace Ambermoon.Render
             foreach (var introTextGlyph in introTextGlyphs)
                 AddTexture(Layer.IntroText, introTextGlyph.Key, introTextGlyph.Value);
             foreach (var introTextGlyph in introLargeTextGlyphs)
+            {
                 AddTexture(Layer.IntroText, introTextGlyph.Key, introTextGlyph.Value);
+                AddTexture(Layer.MainMenuText, introTextGlyph.Key, introTextGlyph.Value);
+            }
 
             #endregion
 
             #region Intro Graphics
 
             foreach (var introGraphic in introGraphics)
-                AddTexture(Layer.IntroGraphics, introGraphic.Key, introGraphic.Value);
+            {
+                if (introGraphic.Key == (uint)IntroGraphic.MainMenuBackground)
+                    AddTexture(Layer.MainMenuGraphics, introGraphic.Key, introGraphic.Value); // We only need the background for the main menu
+                else
+                    AddTexture(Layer.IntroGraphics, introGraphic.Key, introGraphic.Value);
+            }
 
             #endregion
         }

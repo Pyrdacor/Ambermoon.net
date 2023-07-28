@@ -56,32 +56,29 @@ namespace Ambermoon
             this.continueLoadingText = continueLoadingText;
             this.newLoadingText = newLoadingText;
             this.playMusicAction = playMusicAction;
-            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MainMenuGraphics);
 
             mainMenuFader = new Fader(renderView, 0xff, 0x00, 50, false, true);
 
-            background = renderView.SpriteFactory.Create(320, 256, true) as ILayerSprite;
-            background.Layer = renderView.GetLayer(Layer.IntroGraphics);
+            background = renderView.SpriteFactory.Create(320, 200, true) as ILayerSprite;
+            background.Layer = renderView.GetLayer(Layer.MainMenuGraphics);
             background.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + paletteIndices[IntroGraphic.MainMenuBackground] - 1);
             background.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MainMenuBackground);
+            background.TextureSize = new Size(320, 256);
             background.X = 0;
             background.Y = 0;
             background.Visible = true;
 
-            // For now we use a font where each glyph has a height of 28. But the base glyph is inside a
-            // 16 pixel height area in the y-center (from y=6 to y=22). So basically these 16 pixels are
-            // the height we use for calculations.
-            int y = 56 + 12;
+            int y = 48;
             for (int i = 0; i < 4; ++i)
             {
                 int textWidth = introFont.MeasureTextWidth(texts[i]);
-                int offsetX = (Global.VirtualScreenWidth - textWidth) / 2;
-                var area = new Rect(0, y - 6, Global.VirtualScreenWidth, 24);
-                var clickArea = new Rect(offsetX, y, textWidth, 22);
-                var mainMenuText = introFont.CreateText(renderView, Layer.IntroText, area, texts[i], 1);
+                var area = new Rect(0, y, Global.VirtualScreenWidth, 22);
+                var clickArea = new Rect(0, y - 5, Global.VirtualScreenWidth, 22 + 8);
+                var mainMenuText = introFont.CreateText(renderView, Layer.MainMenuText, area, texts[i], 1);
                 mainMenuText.Visible = i != 0 || canContinue;
                 mainMenuTexts.Add(KeyValuePair.Create(clickArea, mainMenuText));
-                y += 16 + 8;
+                y += 22 + 8;
             }
 
             var text = renderView.TextProcessor.CreateText("");
@@ -98,7 +95,6 @@ namespace Ambermoon
         {
             if (background != null)
                 background.Visible = true;
-            renderView.GetLayer(Layer.IntroText).Visible = true;
         }
 
         void FadeInMainMenu()
@@ -178,7 +174,7 @@ namespace Ambermoon
 
             if (buttons == MouseButtons.Left)
             {
-                position = renderView.ScreenToLayer(position, Layer.IntroGraphics);
+                position = renderView.ScreenToLayer(position, Layer.MainMenuText);
 
                 for (int i = 0; i < mainMenuTexts.Count; ++i)
                 {
@@ -199,7 +195,7 @@ namespace Ambermoon
 
             cursor.UpdatePosition(position, null);
 
-            position = renderView.ScreenToLayer(position, Layer.IntroGraphics);
+            position = renderView.ScreenToLayer(position, Layer.MainMenuText);
 
             for (int i = 0; i < mainMenuTexts.Count; ++i)
             {

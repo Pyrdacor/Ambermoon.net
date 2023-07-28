@@ -4337,7 +4337,7 @@ namespace Ambermoon.UI
                     if (activeTooltipBackground == null)
                     {
                         activeTooltipBackground = RenderView.ColoredRectFactory.Create(textArea.Width, textArea.Height, tooltip.BackgroundColor, 248);
-                        activeTooltipBackground.Layer = RenderView.GetLayer(Layer.IntroEffects);
+                        activeTooltipBackground.Layer = RenderView.GetLayer(Layer.MainMenuEffects);
                         activeTooltipBackground.Visible = true;
 
                         activeTooltipBorders[0] = RenderView.ColoredRectFactory.Create(textArea.Width, 1, Render.Color.Black, 249);

@@ -952,15 +952,16 @@ namespace Ambermoon
             mainMenu?.Destroy();
             mainMenu = null;
             if (configuration.Music)
-            {
                 musicManager.Stop();
-                musicManager.GetSong(Data.Enumerations.Song.Intro)?.Play(audioOutput);
-            }
 
             intro = new Intro(renderView, introData, introFont, introFontLarge, () =>
             {
                 intro = null;
                 showMainMenuAction?.Invoke();
+            }, () =>
+            {
+                if (configuration.Music)
+                musicManager.GetSong(Data.Enumerations.Song.Intro)?.Play(audioOutput);
             });
         }
 

@@ -40,7 +40,7 @@ namespace Ambermoon
             this.baseColor = baseColor ?? Color.Black;
             coloredRect = renderView.ColoredRectFactory.Create(320, 256,
                 this.baseColor, displayLayer);
-            coloredRect.Layer = renderView.GetLayer(Layer.IntroEffects);
+            coloredRect.Layer = renderView.GetLayer(Layer.MainMenuEffects);
             coloredRect.X = 0;
             coloredRect.Y = 0;
             coloredRect.Visible = initialVisible;

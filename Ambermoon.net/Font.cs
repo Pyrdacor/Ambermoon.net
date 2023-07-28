@@ -16,6 +16,7 @@ namespace Ambermoon
         int baseX = 0;
         TextColor textColor = TextColor.White;
         byte alpha = 255;
+        Rect clipArea;
 
         public Text(IRenderView renderView, Layer layer, string text, IReadOnlyDictionary<char, Glyph> glyphs,
             List<char> characters, byte displayLayer, int spaceWidth, bool upperOnly, uint textureAtlasIndexOffset,
@@ -23,6 +24,7 @@ namespace Ambermoon
         {
             totalWidth = 0;
             this.alpha = alpha;
+            this.clipArea = clipArea;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
 
             if (upperOnly)
@@ -72,6 +74,19 @@ namespace Ambermoon
 
                 alpha = value;
                 renderGlyphs?.ForEach(g => { if (g != null) g.Alpha = alpha; });
+            }
+        }
+
+        public Rect ClipArea
+        {
+            get => clipArea;
+            set
+            {
+                if (clipArea == value)
+                    return;
+
+                clipArea = value;
+                renderGlyphs?.ForEach(g => { if (g != null) g.ClipArea = clipArea; });
             }
         }
 

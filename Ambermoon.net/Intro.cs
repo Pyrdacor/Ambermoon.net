@@ -4,7 +4,6 @@ using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Ambermoon.Data.ActionEvent;
 
 namespace Ambermoon
 {
@@ -37,8 +36,8 @@ namespace Ambermoon
                 return actionType switch
                 {
                     IntroActionType.Starfield => new IntroActionStarfield(renderView, rng),
-                    IntroActionType.ThalionLogoFlyIn => new IntroActionLogoFlyin(IntroGraphic.ThalionLogo, actionType, renderView, startTicks, finishHandler, introData),
-                    IntroActionType.AmbermoonFlyIn => new IntroActionLogoFlyin(IntroGraphic.Ambermoon, actionType, renderView, startTicks, finishHandler, introData),
+                    IntroActionType.ThalionLogoFlyIn => new IntroActionLogoFlyin(IntroGraphic.ThalionLogo, actionType, renderView, startTicks, finishHandler, introData, introFontLarge),
+                    IntroActionType.AmbermoonFlyIn => new IntroActionLogoFlyin(IntroGraphic.Ambermoon, actionType, renderView, startTicks, finishHandler, introData, introFontLarge),
                     IntroActionType.DisplayObjects => new IntroActionDisplayObjects(renderView, startTicks, introFontLarge, introData, finishHandler),
                     IntroActionType.TwinlakeAnimation => new IntroActionTwinlake(renderView, startTicks, introData, finishHandler),
                     IntroActionType.TextCommands => new IntroActionTextCommands(renderView, introData, introFont, intro, finishHandler),
@@ -157,32 +156,38 @@ namespace Ambermoon
         private class IntroActionLogoFlyin : IntroAction
         {
             private readonly IAlphaSprite logo;
+            private readonly Text presentsText;
             private readonly long startTicks;
             private int scalingFactor = 2048; // start value 0x800
             private readonly int scalingPerTick = 32;
             private readonly int imageWidth;
             private readonly int imageHeight;
             private readonly Action finishHandler;
-            private readonly int fadeDuration;
             private long fadeOutStartTicks = -1;
-            private readonly long fadeOutDelay;
+            private Rect textClipArea;
+            private int frameCount;
+            // Note: For fade out always palette[2] is used as the target.
+            // As it is all white in colors 10 to 1F and there is at least
+            // 1 full black color in this area for palette[0] and palette[1]
+            // which are used for the logos, we have always the full 15 color
+            // change ticks and therefore the fade duration is 15*4 = 60.
+            private const int FadeDuration = 60;
 
-            public IntroActionLogoFlyin(IntroGraphic introGraphic, IntroActionType actionType, IRenderView renderView, long startTicks, Action finishHandler, IIntroData introData)
+            public IntroActionLogoFlyin(IntroGraphic introGraphic, IntroActionType actionType, IRenderView renderView, long startTicks, Action finishHandler, IIntroData introData, Font largeFont)
                 : base(actionType)
             {
-                this.startTicks = startTicks + 1; // see description in Update
+                // Before starting the scaling, the palette is faded.
+                // Nothing is displayed in this time so we can just increase the start ticks.
+                this.startTicks = startTicks + 1; // for the +1 see description in Update
                 this.finishHandler = finishHandler;
-                fadeDuration = GetPaletteFadeDuration(introData.IntroPalettes[IntroData.GraphicPalettes[introGraphic]], 32, 4);
 
                 var size = introGraphic == IntroGraphic.ThalionLogo
                     ? new Size(128, 82) // Thalion logo
                     : new Size(272, 87); // Ambermoon text
-                scalingPerTick = introGraphic == IntroGraphic.ThalionLogo
+                scalingPerTick = actionType == IntroActionType.ThalionLogoFlyIn
                     ? 32 // Thalion logo
                     : 64; // Ambermoon text
-                fadeOutDelay = introGraphic == IntroGraphic.ThalionLogo
-                    ? 250  // Thalion logo
-                    : 64; // Ambermoon text
+                frameCount = 2048 / scalingPerTick;
                 logo = renderView.SpriteFactory.CreateWithAlpha(0, 0, 200);
                 logo.Layer = renderView.GetLayer(Layer.IntroGraphics);
                 logo.TextureSize = size;
@@ -195,6 +200,13 @@ namespace Ambermoon
 
                 imageWidth = size.Width;
                 imageHeight = size.Height;
+
+                if (actionType == IntroActionType.ThalionLogoFlyIn)
+                {
+                    textClipArea = new Rect(100, 160, 220, 0);
+                    presentsText = largeFont.CreateText(renderView, Layer.IntroText, new Rect(100, 160, 220, 22), introData.Texts[IntroText.Presents], 20, TextAlign.Left, 255, textClipArea);
+                    presentsText.Visible = false;
+                }
             }
 
             public override void Update(long ticks, int frameCounter)
@@ -213,47 +225,97 @@ namespace Ambermoon
                 //
                 // So essentially it starts 1 tick later and then starts the fade.
                 // Therefore we increased startTicks by 1 in the constructor.
-                // The scaling should only start at 3 ticks (2 ticks as we adjusted startTicks).
-                // But our logic just halves the scalingPerTick which has the same effect.
-                // But we have to skip only 1 more tick instead of 2 to make it work then.
-                // Thus we added "if (elapsed >= 1)" and "--elapsed" below.
+                // The scaling should only start after 3 ticks (2 ticks as we adjusted startTicks).
+                // Thus we added "if (elapsed >= 2)" and "elapsed -= 2" below.
 
-                long elapsed = ticks - startTicks;
-
-                logo.Alpha = (byte)Math.Min(255, elapsed * 255 / fadeDuration);
-
-                if (elapsed >= 1)
+                if (fadeOutStartTicks == -1) // not fading out yet
                 {
-                    --elapsed;
+                    long elapsed = ticks - startTicks;
 
-                    if (scalingFactor >= 256)
+                    logo.Alpha = (byte)Math.Min(255, elapsed * 255 / FadeDuration);
+
+                    if (elapsed >= 2)
                     {
-                        scalingFactor = 256 + (int)(2048 - elapsed * scalingPerTick / 2); // half scaling as there is an extra tick before displaying it
+                        elapsed -= 2;
 
-                        if (scalingFactor < 256)
+                        logo.Visible = true;
+
+                        if (scalingFactor >= 256)
                         {
-                            fadeOutStartTicks = ticks + 250; // There is a delay of 250 ticks after fully displaying and then the "PRESENT" texts
-                            finishHandler?.Invoke();
-                            return;
+                            scalingFactor = 256 + (int)(2048 - (elapsed * scalingPerTick * 3 / 4)); // I added the 3/4 as the exact timing is a bit off
+
+                            if (scalingFactor >= 256)
+                            {
+                                int width = Math.Max(1, (imageWidth * 256) / scalingFactor);
+                                int height = Math.Max(1, (imageHeight * 256) / scalingFactor);
+                                logo.Resize(width, height);
+                                logo.X = 160 - width / 2;
+                                logo.Y = 100 - height / 2;
+                            }
                         }
 
-                        int width = Math.Max(1, (imageWidth * 256) / scalingFactor);
-                        int height = Math.Max(1, (imageHeight * 256) / scalingFactor);
-                        logo.Resize(width, height);
-                        logo.X = 160 - width / 2;
-                        logo.Y = 100 - height / 2;
+                        // The text is shown after 250 ticks.
+                        // The tick counter is reset after the first tick after
+                        // starfield setup so it matches our startTicks.
+                        elapsed = ticks - startTicks; // use normal value again
+                        if (presentsText != null && elapsed >= 250)
+                        {
+                            // Thalion logo has the additional text "PRESENTS". It is handled here.
+                            // After 250 ticks, the PRESENTS text is shown.
+                            presentsText.Visible = true;
+                            int oldTextHeight = textClipArea.Height;
+                            int newTextHeight = (int)Math.Min(22, 1 + (elapsed - 250) / 2); // 2 ticks per pixel line (it reveals directly the first line so use "1 + " here.
+
+                            if (newTextHeight != oldTextHeight)
+                            {
+                                textClipArea = textClipArea.SetHeight(newTextHeight);
+                                presentsText.ClipArea = textClipArea;
+                            }
+
+                            // If text was fully displayed,
+                            // wait for 220 additional ticks.
+                            // Then fade out starts.
+                            if (elapsed >= 250 + 220 + 48) // I added the 48 as the exact timing is a bit off
+                                fadeOutStartTicks = ticks;
+                        }
+                        else if (presentsText == null)
+                        {
+                            // Ambermoon logo has no additional text. It's handled here.
+                            // The delay is 260 but this includes the fade out of the previous Thalion logo.
+                            if (elapsed >= 260 - 60)
+                                fadeOutStartTicks = ticks;
+                        }
                     }
                 }
-                
-                if (fadeOutStartTicks != -1)
+                else // fading out
                 {
+                    int fadeAmount = (int)Math.Min(1 + FadeDuration / 4, (ticks - fadeOutStartTicks) / 4);
 
+                    if (fadeAmount == 1 + FadeDuration / 4)
+                    {
+                        logo.Visible = false;
+
+                        if (presentsText != null)
+                            presentsText.Visible = false;
+
+                        finishHandler?.Invoke();
+                    }
+                    else
+                    {
+                        byte alpha = (byte)Math.Max(0, 255 - fadeAmount * 16);
+
+                        logo.Alpha = alpha;
+
+                        if (presentsText != null)
+                            presentsText.Alpha = alpha;
+                    }
                 }
             }
 
             public override void Destroy()
             {
                 logo?.Delete();
+                presentsText?.Destroy();
             }
         }
 
@@ -618,7 +680,7 @@ namespace Ambermoon
                     var graphicIndex = i == SunObjectIndex ? IntroGraphic.SunAnimation : IntroGraphic.Lyramion + i;
                     var info = ZoomInfos[i];
                     objects[i] = i == SunObjectIndex
-                        ? renderView.SpriteFactory.CreateAnimated(info.ImageWidth, info.ImageHeight, textureAtlasWidth, 12, true, (byte)(i * 50)) as IAnimatedLayerSprite
+                        ? renderView.SpriteFactory.CreateAnimated(info.ImageWidth, info.ImageHeight, textureAtlasWidth, 12, true, (byte)(2 + i * 50)) as IAnimatedLayerSprite
                         : renderView.SpriteFactory.Create(info.ImageWidth, info.ImageHeight, true, (byte)(i * 50)) as ILayerSprite;
                     objects[i].TextureSize = new Size(info.ImageWidth, info.ImageHeight);
                     objects[i].Layer = layer;
@@ -1001,6 +1063,7 @@ namespace Ambermoon
         int animationFrameCounter = 0;
         readonly Queue<KeyValuePair<long, Func<IntroAction>>> actionQueue = new();
         ushort randomSeed = 0x0011;
+        Action startMusicAction;
 
         private short Random()
         {
@@ -1009,6 +1072,7 @@ namespace Ambermoon
             return (short)((next >> 8) & 0x7fff);
         }
 
+        // TODO: REMOVE?
         private static int GetPaletteFadeDuration(Graphic palette, int numColors, int ticksPerColorChange, int paletteOffset = 0)
         {
             int colorChanges = 0;
@@ -1060,16 +1124,17 @@ namespace Ambermoon
             return colorChanges * ticksPerColorChange;
         }
 
-        public Intro(IRenderView renderView, IIntroData introData, Font introFont, Font introFontLarge, Action finishAction)
+        public Intro(IRenderView renderView, IIntroData introData, Font introFont, Font introFontLarge, Action finishAction, Action startMusicAction)
         {
             this.finishAction = finishAction;
             this.introData = introData;
             this.introFont = introFont;
             this.introFontLarge = introFontLarge;
             this.renderView = renderView;
+            this.startMusicAction = startMusicAction;
             renderLayer = renderView.GetLayer(Layer.IntroGraphics);
 
-            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Render.Color.Black, 255);
+            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
             fadeArea.Layer = renderView.GetLayer(Layer.Effects);
             fadeArea.X = 0;
             fadeArea.Y = 0;
@@ -1077,20 +1142,24 @@ namespace Ambermoon
 
             // TODO
             ScheduleAction(0, IntroActionType.Starfield);
-            // Palette 2 (half black and half white) is faded in here.
-            // As the later colors (white) need 15 color change ticks
-            // and 4 ticks per color change are used, we need 15 * 4 ticks here.
+            // Between the starfield setup and Thalion logo, the palette
+            // is faded which takes 15 color changes with 4 ticks per change.
             ScheduleAction(15 * 4, IntroActionType.ThalionLogoFlyIn, () =>
             {
-                ScheduleAction(ticks + 250, IntroActionType.AmbermoonFlyIn, () =>
+                ScheduleAction(ticks, IntroActionType.AmbermoonFlyIn, () =>
                 {
+                    // After Ambermoon logo there is a delay of 150 ticks.
+                    // But this includes the 60 ticks for fading out.
+                    // There are 3 more ticks in-between.
+                    // So in total 93 ticks.
+
                     // TODO: this timing is just to adjust some differences, adjust later
-                    ScheduleAction(ticks + 480, IntroActionType.TextCommands, null, () =>
+                    ScheduleAction(ticks + 93, IntroActionType.TextCommands, null, () =>
                     {
                         DestroyAction(IntroActionType.AmbermoonFlyIn);
                         (actions.First(a => a.Type == IntroActionType.Starfield) as IntroActionStarfield)!.Stop();
                     });
-                    ScheduleAction(ticks + 480, IntroActionType.DisplayObjects);
+                    ScheduleAction(ticks + 93, IntroActionType.DisplayObjects);
                     //ScheduleAction(0, IntroActionType.TwinlakeAnimation);
                 }, () => DestroyAction(IntroActionType.ThalionLogoFlyIn));
             });            
@@ -1125,6 +1194,13 @@ namespace Ambermoon
         {
             long oldTicks = ticks;
             ticks += (long)Math.Round(TicksPerSecond * deltaTime);
+
+            if (startMusicAction != null && ticks >= 1)
+            {
+                // Music starts after 1 tick
+                startMusicAction?.Invoke();
+                startMusicAction = null;
+            }
 
             while (actionQueue.Count > 0)
             {
