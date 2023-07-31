@@ -116,7 +116,7 @@ namespace Ambermoon
 
             public override void Update(long ticks, int frameCounter)
             {
-                if (stopTicks != -1 && ticks >= stopTicks && starScaleValues[1] == star1InitialScaleValue)
+                if (stopTicks != -1 && ticks >= stopTicks && stars[0].X == 0)
                     return;
 
                 for (int i = 0; i < stars.Length; i++)
@@ -246,7 +246,7 @@ namespace Ambermoon
 
                         if (scalingFactor >= 256)
                         {
-                            scalingFactor = 256 + (int)(2048 - (elapsed * scalingPerTick * 3 / 4)); // I added the 3/4 as the exact timing is a bit off
+                            scalingFactor = 256 + (int)(2048 - (elapsed * scalingPerTick));
 
                             if (scalingFactor >= 256)
                             {
@@ -262,13 +262,14 @@ namespace Ambermoon
                         // The tick counter is reset after the first tick after
                         // starfield setup so it matches our startTicks.
                         elapsed = ticks - startTicks; // use normal value again
-                        if (presentsText != null && elapsed >= 250)
+                        const int presentShowDelay = 192; // In original it was 250
+                        if (presentsText != null && elapsed >= presentShowDelay)
                         {
                             // Thalion logo has the additional text "PRESENTS". It is handled here.
                             // After 250 ticks, the PRESENTS text is shown.
                             presentsText.Visible = true;
                             int oldTextHeight = textClipArea.Height;
-                            int newTextHeight = (int)Math.Min(22, 1 + (elapsed - 250) / 2); // 2 ticks per pixel line (it reveals directly the first line so use "1 + " here.
+                            int newTextHeight = (int)Math.Min(22, 1 + (elapsed - presentShowDelay) / 2); // 2 ticks per pixel line (it reveals directly the first line so use "1 + " here.
 
                             if (newTextHeight != oldTextHeight)
                             {
@@ -279,15 +280,15 @@ namespace Ambermoon
                             // If text was fully displayed,
                             // wait for 220 additional ticks.
                             // Then fade out starts.
-                            if (elapsed >= 250 + 220 + 48) // I added the 48 as the exact timing is a bit off
+                            if (elapsed >= presentShowDelay + 220)
                                 fadeOutStartTicks = ticks;
                         }
                         else if (presentsText == null)
                         {
                             // Ambermoon logo has no additional text. It's handled here.
                             // The delay is 260 but this includes the fade out of the previous Thalion logo.
-                            // So it would be 260 - 60. But it does not fit. So we use a different value.
-                            if (elapsed >= 260 + 4/* + 120*/)
+                            // So it would be 260 - 60. But it does not fit exactly so we use a different value.
+                            if (elapsed >= 260 - 60 + 20)
                                 fadeOutStartTicks = ticks;
                         }
                     }
@@ -389,7 +390,10 @@ namespace Ambermoon
 
             public override void Update(long ticks, int frameCounter)
             {
-                if (ticks != lastTicks && (ticks - startTicks) % 4 == 3)
+                if (ticks == lastTicks)
+                    return;
+
+                if ((ticks - startTicks) % 4 == 3)
                 {
                     lastTicks = ticks;
                     return;
@@ -671,11 +675,11 @@ namespace Ambermoon
             private int currentZoom = -6500; // start value
             private int zoomWaitCounter = -1;
             private const int MaxZoom = 22248;
+            private const int FadeOutZoom = 22184;
             private const int MeteorEndZoom = 18868;
             private const int MeteorSparkAppearZoom = 21000;
             private const int MeteorObjectIndex = 3;
             private const int SunObjectIndex = 4;
-            private long startTicks = 0;
             private long lastTicks = 0;
             private int zoomTransitionInfoIndex = 0;
             private int meteorSparkFrameCounter = -1;
@@ -701,7 +705,6 @@ namespace Ambermoon
                 this.largeFont = largeFont;
                 this.introData = introData;
                 this.finishHandler = finishHandler;
-                this.startTicks = startTicks;
                 lastTicks = startTicks;
                 var layer = renderView.GetLayer(Layer.IntroGraphics);
                 textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
@@ -727,7 +730,7 @@ namespace Ambermoon
 
                 for (int i = 0; i < 2; i++)
                 {
-                    meteorSparks[i] = renderView.SpriteFactory.CreateAnimated(64, 47, textureAtlasWidth, 15, true, (byte)(i * 25)) as IAnimatedLayerSprite;
+                    meteorSparks[i] = renderView.SpriteFactory.CreateAnimated(64, 47, textureAtlasWidth, 15, true, (byte)(30 + i * 25)) as IAnimatedLayerSprite;
                     meteorSparks[i].Layer = layer;
                     meteorSparks[i].TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MeteorSparks);
                     meteorSparks[i].BaseFrame = (uint)i * 15;
@@ -773,11 +776,8 @@ namespace Ambermoon
 
             public override void Update(long ticks, int frameCounter)
             {
-                if (ticks != lastTicks && (ticks - startTicks) % 4 == 3)
-                {
-                    lastTicks = ticks;
+                if (ticks == lastTicks)
                     return;
-                }
 
                 long elapsed = ticks - lastTicks;
                 lastTicks = ticks;
@@ -808,8 +808,8 @@ namespace Ambermoon
                     // Meteor glowing
                     if (meteorGlowTarget != -1)
                     {
-                        long glowTicks = (ticks - lastGlowTicks) / 6; // I guess original uses 4 but I am not 100% sure. Looks better with 6 though.
-                        lastGlowTicks += glowTicks * 6;
+                        long glowTicks = (ticks - lastGlowTicks) / 4;
+                        lastGlowTicks += glowTicks * 4;
 
                         for (int t = 0; t < glowTicks; t++)
                         {
@@ -918,87 +918,90 @@ namespace Ambermoon
             {
                 for (int i = 0; i < ticks; i++)
                 {
-                    if (zoomWaitCounter != 0)
+                    if (!town.Visible)
                     {
-                        if (zoomWaitCounter < 0)
+                        if (zoomWaitCounter != 0)
                         {
-                            var zoomTransition = ZoomTransitionInfos[zoomTransitionInfoIndex];
-
-                            while (currentZoom >= zoomTransition.MaxZoom && zoomTransitionInfoIndex < 15)
+                            if (zoomWaitCounter < 0)
                             {
-                                zoomTransition = ZoomTransitionInfos[++zoomTransitionInfoIndex];
-                            }
+                                var zoomTransition = ZoomTransitionInfos[zoomTransitionInfoIndex];
 
-                            if (zoomTransition.Increase == 0)
-                            {
-                                zoomWaitCounter = 150 * 3 / 4; // Added offset to improve timing
-                                ++zoomTransitionInfoIndex;
+                                while (currentZoom >= zoomTransition.MaxZoom && zoomTransitionInfoIndex < 15)
+                                {
+                                    zoomTransition = ZoomTransitionInfos[++zoomTransitionInfoIndex];
+                                }
+
+                                if (zoomTransition.Increase == 0)
+                                {
+                                    zoomWaitCounter = 150; // Added offset to improve timing
+                                    ++zoomTransitionInfoIndex;
+                                }
+                                else
+                                {
+                                    currentZoom = Math.Min(currentZoom + zoomTransition.Increase, MaxZoom);
+                                }
                             }
                             else
                             {
-                                currentZoom = Math.Min(currentZoom + zoomTransition.Increase, MaxZoom);
+                                if (--zoomWaitCounter == 0)
+                                    zoomWaitCounter = -1;
                             }
                         }
-                        else
+
+                        if (meteorSparkFrameCounter != -1)
                         {
-                            if (--zoomWaitCounter == 0)
-                                zoomWaitCounter = -1;
+                            if (++meteorSparkFrameCounter == 60)
+                                meteorSparkFrameCounter = 28;
                         }
-                    }
 
-                    if (meteorSparkFrameCounter != -1)
-                    {
-                        if (++meteorSparkFrameCounter == 60)
-                            meteorSparkFrameCounter = 28;
-                    }
-
-                    // Zoom / Move
-                    for (int n = 0; n < 5; n++)
-                    {
-                        if (n == MeteorObjectIndex && currentZoom >= MeteorEndZoom)
-                            continue;
-
-                        var obj = objects[n];
-                        var info = ZoomInfos[n];
-                        int distance = info.InitialDistance - currentZoom;
-
-                        if (distance >= 0 && distance <= short.MaxValue)
+                        // Zoom / Move
+                        for (int n = 0; n < 5; n++)
                         {
-                            distance += 256;
+                            if (n == MeteorObjectIndex && currentZoom >= MeteorEndZoom)
+                                continue;
+
+                            var obj = objects[n];
+                            var info = ZoomInfos[n];
+                            int distance = info.InitialDistance - currentZoom;
 
                             if (distance >= 0 && distance <= short.MaxValue)
                             {
-                                int offsetX = info.EndOffsetX * 256;
-                                int offsetY = info.EndOffsetY * 256;
-                                offsetX /= distance;
-                                offsetY /= distance;
-                                offsetX += 160;
-                                offsetY = 100 - offsetY;
+                                distance += 256;
 
-                                int width = info.ZoomToWidth * 256;
-                                int height = info.ZoomToHeight * 256;
-                                width /= distance;
-                                height /= distance;
-
-                                offsetX -= width / 2;
-                                offsetY -= height / 2;
-
-                                obj.Resize(width, height);
-                                obj.X = offsetX;
-                                obj.Y = offsetY;
-                                obj.Visible = width >= 1.0f && height >= 1.0f;
-
-                                if (n == MeteorObjectIndex && glowingMeteorOverlay != null)
+                                if (distance >= 0 && distance <= short.MaxValue)
                                 {
-                                    glowingMeteorOverlay.X = obj.X;
-                                    glowingMeteorOverlay.Y = obj.Y;
-                                    glowingMeteorOverlay.Resize(width, height);
+                                    int offsetX = info.EndOffsetX * 256;
+                                    int offsetY = info.EndOffsetY * 256;
+                                    offsetX /= distance;
+                                    offsetY /= distance;
+                                    offsetX += 160;
+                                    offsetY = 100 - offsetY;
+
+                                    int width = info.ZoomToWidth * 256;
+                                    int height = info.ZoomToHeight * 256;
+                                    width /= distance;
+                                    height /= distance;
+
+                                    offsetX -= width / 2;
+                                    offsetY -= height / 2;
+
+                                    obj.Resize(width, height);
+                                    obj.X = offsetX;
+                                    obj.Y = offsetY;
+                                    obj.Visible = width >= 1.0f && height >= 1.0f;
+
+                                    if (n == MeteorObjectIndex && glowingMeteorOverlay != null)
+                                    {
+                                        glowingMeteorOverlay.X = obj.X;
+                                        glowingMeteorOverlay.Y = obj.Y;
+                                        glowingMeteorOverlay.Resize(width, height);
+                                    }
                                 }
                             }
-                        }
-                        else
-                        {
-                            obj.Visible = false;
+                            else
+                            {
+                                obj.Visible = false;
+                            }
                         }
                     }
                 }
@@ -1196,9 +1199,9 @@ namespace Ambermoon
                     DestroyAction(IntroActionType.AmbermoonFlyIn);
 
                     // It seems we might be 1 tick off and this will affect the static star image.
-                    // Try to use 973 if possible as it is mostly 972 or 973. This way we always
-                    // show the same stars in the background (hopefully).
-                    long baseTicks = 973;
+                    // Try to use 802 if possible. This way we always show the same stars in the background (hopefully).
+                    const long baseTicks = 812;
+
                     // After Ambermoon logo there is a delay of 150 ticks.
                     // But this includes the 60 ticks for fading out.
                     // There are 3 more ticks in-between.
@@ -1249,7 +1252,7 @@ namespace Ambermoon
         public void Update(double deltaTime)
         {
             double lastTime = time;
-            time += deltaTime;
+            time += deltaTime * 5.0 / 6.0; // We have to match the music and it runs with 50Hz while the update cycle runs with 60Hz.
             long oldTicks = (long)Math.Round(TicksPerSecond * lastTime);
             ticks = (long)Math.Round(TicksPerSecond * time);
 
