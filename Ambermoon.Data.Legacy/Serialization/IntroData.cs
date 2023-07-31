@@ -73,7 +73,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         readonly Dictionary<IntroGraphic, Graphic> graphics = new();
         static readonly Dictionary<IntroGraphic, byte> graphicPalettes = new()
         {
-            { IntroGraphic.Frame, 4 },
+            { IntroGraphic.Frame, 8 },
             { IntroGraphic.MainMenuBackground, 6 }, // 7 will work too
             { IntroGraphic.Gemstone, 4 },
             { IntroGraphic.Illien, 4 },
@@ -379,6 +379,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     var graphicDataReader = new DataReader(graphicData);
                     graphicReader.ReadGraphic(graphic, graphicDataReader, graphicInfo);
+                    // Note: Color index 0 is treated as transparent. But we need this for black
+                    // color here. As index 16 also has black, we just replace index 0 by 16.
+                    graphic.ReplaceColor(0, 16);
                     return graphic;
                 }
 

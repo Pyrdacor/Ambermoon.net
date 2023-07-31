@@ -822,8 +822,14 @@ namespace Ambermoon
                             black.Color = new Color(0, (byte)Math.Min(255, (ticks - fadeOutTicks + 1) * 15 / 2)); // every odd tick
                         meteorGlowTarget = -1; // stop meteor glowing
 
-                        if (black.Color.A >= 195)
+                        if (black.Color.A >= 210)
                             zoomWaitCounter = 0; // stop zooming
+
+                        if (black.Color.A == 255 && finishHandler != null)
+                        {
+                            finishHandler();
+                            finishHandler = null;
+                        }
                     }
 
                     // Meteor glowing
@@ -878,8 +884,6 @@ namespace Ambermoon
                     if (glowingMeteorOverlay != null)
                         glowingMeteorOverlay.Visible = false;
                 }
-
-                // TODO: call finishHandler when a zoom level is reached an reset to null afterwards
             }
 
             public override void Destroy()
@@ -1037,6 +1041,7 @@ namespace Ambermoon
             private readonly long startTicks;
             private readonly ILayerSprite frame;
             private readonly ILayerSprite[] images = new ILayerSprite[95];
+            private readonly IColoredRect black;
             private int activeFrame = -1;
             private Action finishHandler; // TODO
 
@@ -1057,6 +1062,12 @@ namespace Ambermoon
                 frame.X = 16;
                 frame.Y = 0;
                 frame.Visible = true;
+
+                black = renderView.ColoredRectFactory.Create(320, 200, Color.Black, 255);
+                black.Layer = renderView.GetLayer(Layer.IntroEffects);
+                black.X = 0;
+                black.Y = 0;
+                black.Visible = true;
 
                 images[0] = renderView.SpriteFactory.Create(256, 177, true, 20) as ILayerSprite;
                 images[0].Layer = layer;
@@ -1085,6 +1096,7 @@ namespace Ambermoon
             public override void Destroy()
             {
                 frame.Delete();
+                black.Delete();
 
                 foreach (var image in images)
                     image?.Delete();
@@ -1093,6 +1105,8 @@ namespace Ambermoon
             public override void Update(long ticks, int frameCounter)
             {
                 long elapsed = ticks - startTicks;
+
+                black.Color = new Color(0, (byte)Math.Max(0, 255 - elapsed * 8));
 
                 if (elapsed >= 250)
                 {
@@ -1235,8 +1249,13 @@ namespace Ambermoon
                     // Planets and texts appear 20 ticks later
                     delay += 20;
                     ScheduleAction(baseTicks + delay, IntroActionType.TextCommands);
-                    ScheduleAction(baseTicks + delay, IntroActionType.DisplayObjects);
-                    //ScheduleAction(0, IntroActionType.TwinlakeAnimation);
+                    ScheduleAction(baseTicks + delay, IntroActionType.DisplayObjects, () =>
+                    {
+                        DestroyAction(IntroActionType.Starfield);
+                        DestroyAction(IntroActionType.TextCommands);
+                        DestroyAction(IntroActionType.DisplayObjects);
+                        ScheduleAction(ticks, IntroActionType.TwinlakeAnimation);
+                    });
                 });
             });            
         }
