@@ -41,7 +41,7 @@ namespace Ambermoon.Renderer
             get => color;
             set
             {
-                if (color == value) // TODO: add comparison operator to Color!
+                if (color == value)
                     return;
 
                 color = value;

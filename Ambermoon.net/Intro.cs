@@ -4,6 +4,7 @@ using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static SonicArranger.Instrument;
 
 namespace Ambermoon
 {
@@ -17,7 +18,7 @@ namespace Ambermoon
             TextCommands,
             DisplayObjects,
             TwinlakeAnimation,
-            ColorEffect
+            TownDestruction
         }
 
         private abstract class IntroAction
@@ -41,6 +42,7 @@ namespace Ambermoon
                     IntroActionType.DisplayObjects => new IntroActionDisplayObjects(renderView, startTicks, introFontLarge, introData, finishHandler),
                     IntroActionType.TwinlakeAnimation => new IntroActionTwinlake(renderView, startTicks, introData, finishHandler),
                     IntroActionType.TextCommands => new IntroActionTextCommands(renderView, introData, introFont, intro, finishHandler, startTicks),
+                    IntroActionType.TownDestruction => new IntroActionTownDestruction(renderView, startTicks, introFontLarge, introData, finishHandler),
                     _ => throw new NotImplementedException()
                 };
             }
@@ -288,7 +290,7 @@ namespace Ambermoon
                             // Ambermoon logo has no additional text. It's handled here.
                             // The delay is 260 but this includes the fade out of the previous Thalion logo.
                             // So it would be 260 - 60. But it does not fit exactly so we use a different value.
-                            if (elapsed >= 260 - 60 + 30)
+                            if (elapsed >= 260 - 60)
                                 fadeOutStartTicks = ticks;
                         }
                     }
@@ -648,9 +650,9 @@ namespace Ambermoon
             // image and text is shown for the given duration.
             private static readonly TownShowInfo[] TownShowInfos = new TownShowInfo[3]
             {
-                new TownShowInfo { ZoomLevel= 0x52f0, Duration = 200 }, // Gemstone
-                new TownShowInfo { ZoomLevel= 0x54c4, Duration = 150 }, // Illien
-                new TownShowInfo { ZoomLevel= 0x5654, Duration = 100 }, // Snakesign
+                new TownShowInfo { ZoomLevel= 0x52f0 - 100 /* Adjusted a little */, Duration = 200 - 10 /* Adjusted a little */ }, // Gemstone
+                new TownShowInfo { ZoomLevel= 0x54c4 - 50 /* Adjusted a little */, Duration = 150 + 5 /* Adjusted a little */ }, // Illien
+                new TownShowInfo { ZoomLevel= 0x5654 /* Adjusted a little */, Duration = 100 - 10 /* Adjusted a little */ }, // Snakesign
             };
             private static readonly int[] TownNameXValues = new int[3]
             {
@@ -671,8 +673,7 @@ namespace Ambermoon
             private readonly Font largeFont;
             private readonly IIntroData introData;
             private Text townText = null;
-            // TODO: somewhere the zoom is also set to 14000
-            private int currentZoom = -6500; // start value
+            private int currentZoom = -7000; // start value
             private int zoomWaitCounter = -1;
             private const int MaxZoom = 22248;
             private const int FadeOutZoom = 22184;
@@ -959,7 +960,7 @@ namespace Ambermoon
 
                                 if (zoomTransition.Increase == 0)
                                 {
-                                    zoomWaitCounter = 150; // Added offset to improve timing
+                                    zoomWaitCounter = 150;
                                     ++zoomTransitionInfoIndex;
                                 }
                                 else
@@ -1043,7 +1044,7 @@ namespace Ambermoon
             private readonly ILayerSprite[] images = new ILayerSprite[95];
             private readonly IColoredRect black;
             private int activeFrame = -1;
-            private Action finishHandler; // TODO
+            private Action finishHandler;
 
             public IntroActionTwinlake(IRenderView renderView, long startTicks, IIntroData introData, Action finishHandler)
                 : base(IntroActionType.TwinlakeAnimation)
@@ -1117,12 +1118,207 @@ namespace Ambermoon
                     {
                         if (frame != activeFrame)
                         {
-                            /*if (activeFrame != -1)
-                                images[activeFrame + 1].Visible = false;*/
+                            if (activeFrame != -1)
+                                images[activeFrame + 1].Visible = false;
 
                             images[frame + 1].Visible = true;
                         }
                     }
+                    else
+                    {
+                        elapsed -= 94 * 4;
+                        black.Color = new Color(0, (byte)Math.Min(255, elapsed * 15 / 4));
+
+                        if (black.Color.A == 255 && finishHandler != null)
+                        {
+                            finishHandler();
+                            finishHandler = null;
+                        }
+                    }
+                }
+            }
+        }
+
+        private class IntroActionTownDestruction : IntroAction
+        {
+            private readonly IRenderView renderView;
+            private readonly ITextureAtlas textureAtlas;
+            private readonly ILayerSprite meteor;
+            private readonly ILayerSprite town;
+            private readonly IColoredRect effect;
+            private readonly IIntroData introData;
+            private long lastTicks = 0;
+            private int currentZoom = 14000; // start value
+            private int meteorX = 9700; // start value
+            private int meteorY = 5700; // start value
+            private int currentTownIndex = 0;
+            private Action finishHandler;
+            private const int MinZoom = 0x7b0;
+            private int townImageOffset = 0; // 0: normal, 3: destroyed version
+            private readonly Color flashColor;
+            private long nextTownTicks;
+            private long fadeInStartTicks = -1;
+            private long fadeOutStartTicks = -1;
+
+            public IntroActionTownDestruction(IRenderView renderView, long startTicks, Font largeFont, IIntroData introData, Action finishHandler)
+                : base(IntroActionType.TownDestruction)
+            {
+                this.renderView = renderView;
+                this.introData = introData;
+                this.finishHandler = finishHandler;
+                lastTicks = startTicks;
+                var layer = renderView.GetLayer(Layer.IntroGraphics);
+                textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
+                int textureAtlasWidth = textureAtlas.Texture.Width;
+
+                meteor = renderView.SpriteFactory.Create(96, 88, true, 100) as ILayerSprite;
+                meteor.TextureSize = new Size(96, 88);
+                meteor.Layer = layer;
+                meteor.ClipArea = new Rect(0, 0, 320, 200);
+                meteor.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Meteor);
+                meteor.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Meteor] - 1);
+                meteor.Visible = false;
+
+                town = renderView.SpriteFactory.Create(160, 128, true, 50) as ILayerSprite;
+                town.Layer = layer;
+                town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone);
+                town.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Gemstone] - 1);
+                town.X = 80;
+                town.Y = 36;
+                town.Visible = true;
+
+                effect = renderView.ColoredRectFactory.Create(420, 256, Color.Black, 250);
+                effect.Layer = renderView.GetLayer(Layer.IntroEffects);
+                effect.ClipArea = new Rect(0, 0, 420, 256);
+                effect.X = -50;
+                effect.Y = 0;
+                effect.Visible = true;
+
+                var paletteData = introData.IntroPalettes[5].Data;
+                flashColor = new Color
+                (
+                    paletteData[4],
+                    paletteData[5],
+                    paletteData[6],
+                    paletteData[7]
+                );
+
+                nextTownTicks = startTicks + 350;
+                fadeInStartTicks = startTicks;
+            }
+
+            public override void Update(long ticks, int frameCounter)
+            {
+                if (ticks == lastTicks)
+                    return;
+
+                long elapsed = ticks - lastTicks;
+                lastTicks = ticks;
+
+                ProcessTicks(elapsed, ticks);
+
+                if (fadeInStartTicks != -1)
+                {
+                    effect.Color = new Color(0, (byte)Math.Max(0, 255 - (ticks - fadeOutStartTicks) * 8));
+
+                    if (effect.Color.A == 0)
+                        fadeInStartTicks = -1;
+                }
+                else if (fadeOutStartTicks != -1)
+                {
+                    effect.Color = new Color(0, (byte)Math.Min(255, (ticks - fadeInStartTicks) * 8));
+
+                    if (effect.Color.A == 255)
+                    {
+                        fadeOutStartTicks = -1;
+                        fadeInStartTicks = ticks;
+                    }
+                }
+            }
+
+            public override void Destroy()
+            {
+                meteor?.Delete();
+                town?.Delete();
+                effect?.Delete();
+            }           
+
+            private void ProcessTicks(long ticks, long totalTicks)
+            {
+                // Fade flash
+                if (townImageOffset == 3 && effect.Color.R != 0 && effect.Color.A > 0)
+                {
+                    effect.Color = new Color(flashColor, (byte)Math.Max(0, effect.Color.A - 8));
+                }
+
+                if (currentZoom <= -512)
+                {
+                    if (totalTicks < nextTownTicks)
+                        return;
+
+                    if (effect.Color.A == 0)
+                    {
+                        if (++currentTownIndex == 3)
+                        {
+                            if (finishHandler != null)
+                            {
+                                finishHandler();
+                                finishHandler = null;
+                                nextTownTicks = long.MaxValue;
+                                return;
+                            }
+                        }
+
+                        // Start fading out
+                        effect.Color = Color.Transparent;
+                        fadeOutStartTicks = totalTicks - 2; // start with first color change
+                        // Reset meteor
+                        currentZoom = 14000;
+                        meteorX = currentTownIndex == 1 ? -9700 : 9700;
+                        meteorY = 5700;
+                        // Reset town image
+                        townImageOffset = 0;
+                        nextTownTicks = totalTicks + 350;
+                        town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone + (uint)currentTownIndex);
+                    }
+                }
+
+                int xChange = currentTownIndex == 1 ? -208 : 208;
+
+                for (int i = 0; i < ticks; i++)
+                {
+                    meteorX -= xChange;
+                    meteorY -= 124;
+                    currentZoom -= 256;
+
+                    if (currentZoom < MinZoom)
+                    {
+                        if (townImageOffset != 3)
+                        {
+                            townImageOffset = 3; // show destroyed version now
+                            town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone + (uint)currentTownIndex + (uint)townImageOffset);
+                            effect.Color = new Color(flashColor); // flash the screen
+                        }
+                    }
+
+                    int factor = currentZoom + 256;
+                    int offsetX = meteorX * 256;
+                    int offsetY = meteorY * 256;
+                    offsetX /= factor;
+                    offsetY /= factor;
+                    offsetX += 160;
+                    offsetY = 100 - offsetY;
+
+                    int width = 0x60000 / factor;
+                    int height = 0x60000 / factor;
+
+                    offsetX -= width / 2;
+                    offsetY -= height / 2;
+
+                    meteor.Resize(width, height);
+                    meteor.X = offsetX;
+                    meteor.Y = offsetY;
+                    meteor.Visible = width >= 1 && height >= 1;
                 }
             }
         }
@@ -1223,6 +1419,10 @@ namespace Ambermoon
             fadeArea.Y = 0;
             fadeArea.Visible = false;
 
+            // TODO: REMOVE
+            ScheduleAction(ticks, IntroActionType.TownDestruction);
+            return;
+
             ScheduleAction(0, IntroActionType.Starfield);
             // Between the starfield setup and Thalion logo, the palette
             // is faded which takes 15 color changes with 4 ticks per change.
@@ -1236,7 +1436,7 @@ namespace Ambermoon
 
                     // It seems we might be 1 tick off and this will affect the static star image.
                     // Try to use 812 if possible. This way we always show the same stars in the background (hopefully).
-                    const long baseTicks = 812;
+                    const long baseTicks = 802;
 
                     // After Ambermoon logo there is a delay of 150 ticks.
                     // But this includes the 60 ticks for fading out.
@@ -1254,7 +1454,10 @@ namespace Ambermoon
                         DestroyAction(IntroActionType.Starfield);
                         DestroyAction(IntroActionType.TextCommands);
                         DestroyAction(IntroActionType.DisplayObjects);
-                        ScheduleAction(ticks, IntroActionType.TwinlakeAnimation);
+                        ScheduleAction(ticks, IntroActionType.TwinlakeAnimation, () =>
+                        {
+                            ScheduleAction(ticks, IntroActionType.TownDestruction);
+                        });
                     });
                 });
             });            
