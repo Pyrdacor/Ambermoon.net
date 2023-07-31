@@ -288,7 +288,7 @@ namespace Ambermoon
                             // Ambermoon logo has no additional text. It's handled here.
                             // The delay is 260 but this includes the fade out of the previous Thalion logo.
                             // So it would be 260 - 60. But it does not fit exactly so we use a different value.
-                            if (elapsed >= 260 - 60 + 20)
+                            if (elapsed >= 260 - 60 + 30)
                                 fadeOutStartTicks = ticks;
                         }
                     }
@@ -689,6 +689,7 @@ namespace Ambermoon
             private long lastGlowTicks = 0;
             private readonly int numGlowFadeIncrements = 0; // the amount of changes to fully go from no glow to full glow
             private Action finishHandler;
+            private long fadeOutTicks = -1;
 
             private void CreateTownText(int townIndex)
             {
@@ -730,7 +731,7 @@ namespace Ambermoon
 
                 for (int i = 0; i < 2; i++)
                 {
-                    meteorSparks[i] = renderView.SpriteFactory.CreateAnimated(64, 47, textureAtlasWidth, 15, true, (byte)(30 + i * 25)) as IAnimatedLayerSprite;
+                    meteorSparks[i] = renderView.SpriteFactory.CreateAnimated(64, 47, textureAtlasWidth, 15, true, 210) as IAnimatedLayerSprite;
                     meteorSparks[i].Layer = layer;
                     meteorSparks[i].TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MeteorSparks);
                     meteorSparks[i].BaseFrame = (uint)i * 15;
@@ -746,8 +747,8 @@ namespace Ambermoon
                 town.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Gemstone] - 1);
                 town.Visible = false;
 
-                black = renderView.ColoredRectFactory.Create(320, 256, Render.Color.Black, 120);
-                black.Layer = layer;
+                black = renderView.ColoredRectFactory.Create(320, 256, Color.Black, 120);
+                black.Layer = renderView.GetLayer(Layer.IntroEffects);
                 black.X = 0;
                 black.Y = 0;
                 black.Visible = false;
@@ -804,6 +805,26 @@ namespace Ambermoon
                     }
 
                     ProcessTicks(elapsed);
+
+                    if (currentZoom >= FadeOutZoom)
+                    {
+                        if (fadeOutTicks == -1)
+                        {
+                            fadeOutTicks = ticks;
+                            black.Color = Color.Transparent;
+                        }
+
+                        long elapsedFadeTicks = ticks - fadeOutTicks;
+
+                        black.DisplayLayer = 255;
+                        black.Visible = true;
+                        if (elapsedFadeTicks >= 1)
+                            black.Color = new Color(0, (byte)Math.Min(255, (ticks - fadeOutTicks + 1) * 15 / 2)); // every odd tick
+                        meteorGlowTarget = -1; // stop meteor glowing
+
+                        if (black.Color.A >= 195)
+                            zoomWaitCounter = 0; // stop zooming
+                    }
 
                     // Meteor glowing
                     if (meteorGlowTarget != -1)
@@ -872,6 +893,7 @@ namespace Ambermoon
                 town?.Delete();
                 townText?.Destroy();
                 glowingMeteorOverlay?.Delete();
+                black?.Delete();
             }
 
             private void CheckTownDisplay(long ticks)
@@ -894,8 +916,8 @@ namespace Ambermoon
                 }
                 else if (currentTownIndex >= 0)
                 {
-                    town.Visible = TownShowInfos[currentTownIndex].Duration > (ticks - currentTownStartTicks);
-                    black.Visible = town.Visible;
+                    town.Visible = TownShowInfos[currentTownIndex].Duration + 1 > (ticks - currentTownStartTicks);
+                    black.Visible = town.Visible || currentZoom >= FadeOutZoom;
 
                     if (nextTownIndex == 3 && !town.Visible)
                         currentTownIndex = 3;
@@ -964,11 +986,11 @@ namespace Ambermoon
                             var info = ZoomInfos[n];
                             int distance = info.InitialDistance - currentZoom;
 
-                            if (distance >= 0 && distance <= short.MaxValue)
+                            if (distance <= short.MaxValue)
                             {
                                 distance += 256;
 
-                                if (distance >= 0 && distance <= short.MaxValue)
+                                if (distance > 0 && distance <= short.MaxValue)
                                 {
                                     int offsetX = info.EndOffsetX * 256;
                                     int offsetY = info.EndOffsetY * 256;
@@ -988,7 +1010,7 @@ namespace Ambermoon
                                     obj.Resize(width, height);
                                     obj.X = offsetX;
                                     obj.Y = offsetY;
-                                    obj.Visible = width >= 1.0f && height >= 1.0f;
+                                    obj.Visible = width >= 1 && height >= 1;
 
                                     if (n == MeteorObjectIndex && glowingMeteorOverlay != null)
                                     {
@@ -997,10 +1019,10 @@ namespace Ambermoon
                                         glowingMeteorOverlay.Resize(width, height);
                                     }
                                 }
-                            }
-                            else
-                            {
-                                obj.Visible = false;
+                                else if (n != 0)
+                                {
+                                    obj.Visible = false; // Hide objects beside Lyramion
+                                }
                             }
                         }
                     }
@@ -1199,7 +1221,7 @@ namespace Ambermoon
                     DestroyAction(IntroActionType.AmbermoonFlyIn);
 
                     // It seems we might be 1 tick off and this will affect the static star image.
-                    // Try to use 802 if possible. This way we always show the same stars in the background (hopefully).
+                    // Try to use 812 if possible. This way we always show the same stars in the background (hopefully).
                     const long baseTicks = 812;
 
                     // After Ambermoon logo there is a delay of 150 ticks.

@@ -274,7 +274,9 @@ namespace Ambermoon.Renderer
             { Layer.IntroEffects, new ()
             {
                 BaseZ = 0.70f,
+                EnableBlending = true,
                 SupportColoredRects = true,
+                SupportTextures = false,
                 Use320x256 = true
             } },
             { Layer.OutroGraphics, new ()
