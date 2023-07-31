@@ -454,15 +454,41 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                     for (int f = 0; f < frames; ++f)
                     {
+                        var frameGraphic = new Graphic();
+
                         if (i == MeteorSparkId)
                         {
-                            // This has a bit mask for the blitter (1 bit per pixel).
-                            // But we don't need it in the remake.
-                            introDataHunks[3].Position += 376; // 64x47 bits (divided by 8 for byte count)
-                        }
+                            // This has a bit mask plane for the blitter (1 bit per pixel).
+                            // The image itself is 4bpp. So for easier handling we just load
+                            // this as a 5 bpp image.                            
+                            graphicInfo.GraphicFormat = GraphicFormat.Palette5Bit;
+                            graphicReader.ReadGraphic(frameGraphic, introDataHunks[3], graphicInfo);
 
-                        var frameGraphic = new Graphic();
-                        graphicReader.ReadGraphic(frameGraphic, introDataHunks[3], graphicInfo);
+                            // No we have to consider the bit mask.
+                            // The lowest bit is the mask. If it is 0
+                            // the whole pixel should be transparent.
+                            // Otherwise we use the color.
+                            for (int b = 0; b < frameGraphic.Data.Length; b++)
+                            {
+                                // This means opaque and color index 0. This would be black but we
+                                // use color index 0 for transparent pixels, so switch to color 16
+                                // here which is also black.
+                                if (frameGraphic.Data[b] == 1)
+                                    frameGraphic.Data[b] = 16;
+                                // In this case the lowest bit is not set, so use color index 0
+                                // here to achieve a transparent pixel.
+                                else if ((frameGraphic.Data[b] & 0x1) == 0)
+                                    frameGraphic.Data[b] = 0;
+                                // In all other cases we just have to shift the color value right
+                                // by 1 to get rid of the mask bit and get the real color.
+                                else
+                                    frameGraphic.Data[b] >>= 1;
+                            }
+                        }
+                        else
+                        {
+                            graphicReader.ReadGraphic(frameGraphic, introDataHunks[3], graphicInfo);
+                        }
                         graphic.AddOverlay((uint)(f * frameGraphic.Width), 0, frameGraphic, false);
                     }
                 }
