@@ -1166,7 +1166,7 @@ namespace Ambermoon
                 var layer = renderView.GetLayer(Layer.IntroGraphics);
                 textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
 
-                meteor = renderView.SpriteFactory.Create(96, 88, true, 100) as ILayerSprite;
+                meteor = renderView.SpriteFactory.Create(96, 88, true, 120) as ILayerSprite;
                 meteor.TextureSize = new Size(96, 88);
                 meteor.Layer = layer;
                 meteor.ClipArea = new Rect(0, 0, 320, 200);
@@ -1200,6 +1200,7 @@ namespace Ambermoon
 
                 nextTownTicks = startTicks + 350;
                 fadeInStartTicks = startTicks;
+                fadeOutStartTicks = startTicks + 350 - 64;
             }
 
             public override void Update(long ticks, int frameCounter)
@@ -1208,20 +1209,24 @@ namespace Ambermoon
                     return;
 
                 long elapsed = ticks - lastTicks;
-                lastTicks = ticks;
 
-                ProcessTicks(elapsed, ticks);
+                if (elapsed >= 2)
+                {
+                    lastTicks = ticks - elapsed % 1;
+
+                    ProcessTicks(elapsed, ticks);
+                }
 
                 if (fadeInStartTicks != -1)
                 {
-                    effect.Color = new Color(0, (byte)Math.Max(0, 255 - (ticks - fadeInStartTicks) * 8));
+                    effect.Color = new Color(0, (byte)Math.Max(0, 255 - (ticks - fadeInStartTicks) * 2));
 
                     if (effect.Color.A == 0)
                         fadeInStartTicks = -1;
                 }
-                else if (fadeOutStartTicks != -1)
+                else if (fadeOutStartTicks != -1 && ticks > fadeOutStartTicks)
                 {
-                    effect.Color = new Color(0, (byte)Math.Min(255, (ticks - fadeOutStartTicks) * 8));
+                    effect.Color = new Color(0, (byte)Math.Min(255, (ticks - fadeOutStartTicks) * 2));
 
                     if (effect.Color.A == 255)
                     {
@@ -1243,7 +1248,7 @@ namespace Ambermoon
                 // Fade flash
                 if (townImageOffset == 3 && effect.Color.R != 0 && effect.Color.A > 0)
                 {
-                    effect.Color = new Color(flashColor, (byte)Math.Max(0, effect.Color.A - 8));
+                    effect.Color = new Color(flashColor, (byte)Math.Max(0, effect.Color.A - 48));
                 }
 
                 if (currentZoom <= -512)
@@ -1251,7 +1256,7 @@ namespace Ambermoon
                     if (totalTicks < nextTownTicks)
                         return;
 
-                    if (effect.Color.A == 0)
+                    if (fadeOutStartTicks == -1)
                     {
                         if (++currentTownIndex == 3)
                         {
@@ -1265,8 +1270,7 @@ namespace Ambermoon
                         }
 
                         // Start fading out
-                        effect.Color = new Color(0, 1);
-                        fadeOutStartTicks = totalTicks - 1;
+                        effect.Color = new Color(0, 0);
                         // Reset meteor
                         currentZoom = 14000;
                         meteorX = currentTownIndex == 1 ? -9700 : 9700;
@@ -1274,46 +1278,49 @@ namespace Ambermoon
                         // Reset town image
                         townImageOffset = 0;
                         nextTownTicks = totalTicks + 350;
+                        fadeOutStartTicks = totalTicks + 350 - 64;
                         town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone + (uint)currentTownIndex);
                     }
                 }
-
-                int xChange = currentTownIndex == 1 ? -208 : 208;
-
-                for (int i = 0; i < ticks; i++)
+                else
                 {
-                    meteorX -= xChange;
-                    meteorY -= 124;
-                    currentZoom -= 256;
+                    int xChange = currentTownIndex == 1 ? -208 : 208;
 
-                    if (currentZoom < MinZoom)
+                    for (int i = 0; i < ticks / 2; i++)
                     {
-                        if (townImageOffset != 3)
+                        meteorX -= xChange;
+                        meteorY -= 124;
+                        currentZoom -= 256;
+
+                        if (currentZoom < MinZoom)
                         {
-                            townImageOffset = 3; // show destroyed version now
-                            town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone + (uint)currentTownIndex + (uint)townImageOffset);
-                            effect.Color = new Color(flashColor); // flash the screen
+                            if (townImageOffset != 3)
+                            {
+                                townImageOffset = 3; // show destroyed version now
+                                town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone + (uint)currentTownIndex + (uint)townImageOffset);
+                                effect.Color = new Color(flashColor); // flash the screen
+                            }
                         }
+
+                        int factor = currentZoom + 256;
+                        int offsetX = meteorX * 256;
+                        int offsetY = meteorY * 256;
+                        offsetX /= factor;
+                        offsetY /= factor;
+                        offsetX += 160;
+                        offsetY = 100 - offsetY;
+
+                        int width = 0x60000 / factor;
+                        int height = 0x60000 / factor;
+
+                        offsetX -= width / 2;
+                        offsetY -= height / 2;
+
+                        meteor.Resize(width, height);
+                        meteor.X = offsetX;
+                        meteor.Y = offsetY;
+                        meteor.Visible = width >= 1 && height >= 1;
                     }
-
-                    int factor = currentZoom + 256;
-                    int offsetX = meteorX * 256;
-                    int offsetY = meteorY * 256;
-                    offsetX /= factor;
-                    offsetY /= factor;
-                    offsetX += 160;
-                    offsetY = 100 - offsetY;
-
-                    int width = 0x60000 / factor;
-                    int height = 0x60000 / factor;
-
-                    offsetX -= width / 2;
-                    offsetY -= height / 2;
-
-                    meteor.Resize(width, height);
-                    meteor.X = offsetX;
-                    meteor.Y = offsetY;
-                    meteor.Visible = width >= 1 && height >= 1;
                 }
             }
         }
@@ -1568,7 +1575,7 @@ namespace Ambermoon
                         ScheduleAction(ticks, IntroActionType.TwinlakeAnimation, () =>
                         {
                             DestroyAction(IntroActionType.TwinlakeAnimation);
-                            ScheduleAction(ticks, IntroActionType.TownDestruction, () =>
+                            ScheduleAction(ticks + 40, IntroActionType.TownDestruction, () =>
                             {
                                 DestroyAction(IntroActionType.TownDestruction);
                                 ScheduleAction(ticks, IntroActionType.EndScreen, () =>
@@ -1580,7 +1587,7 @@ namespace Ambermoon
                         });
                     });
                 });
-            });            
+            });
         }
 
         private void DestroyAction(IntroActionType actionType)
