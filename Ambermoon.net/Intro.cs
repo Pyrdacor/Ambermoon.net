@@ -4,7 +4,6 @@ using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static SonicArranger.Instrument;
 
 namespace Ambermoon
 {
@@ -18,7 +17,8 @@ namespace Ambermoon
             TextCommands,
             DisplayObjects,
             TwinlakeAnimation,
-            TownDestruction
+            TownDestruction,
+            EndScreen
         }
 
         private abstract class IntroAction
@@ -43,6 +43,7 @@ namespace Ambermoon
                     IntroActionType.TwinlakeAnimation => new IntroActionTwinlake(renderView, startTicks, introData, finishHandler),
                     IntroActionType.TextCommands => new IntroActionTextCommands(renderView, introData, introFont, intro, finishHandler, startTicks),
                     IntroActionType.TownDestruction => new IntroActionTownDestruction(renderView, startTicks, introFontLarge, introData, finishHandler),
+                    IntroActionType.EndScreen => new IntroActionEndScreen(renderView, startTicks, introFontLarge, introData, finishHandler),
                     _ => throw new NotImplementedException()
                 };
             }
@@ -171,7 +172,6 @@ namespace Ambermoon
             private Action finishHandler;
             private long fadeOutStartTicks = -1;
             private Rect textClipArea;
-            private int frameCount;
             // Note: For fade out always palette[2] is used as the target.
             // As it is all white in colors 10 to 1F and there is at least
             // 1 full black color in this area for palette[0] and palette[1]
@@ -193,7 +193,6 @@ namespace Ambermoon
                 scalingPerTick = actionType == IntroActionType.ThalionLogoFlyIn
                     ? 32 // Thalion logo
                     : 64; // Ambermoon text
-                frameCount = 2048 / scalingPerTick;
                 logo = renderView.SpriteFactory.CreateWithAlpha(0, 0, 200);
                 logo.Layer = renderView.GetLayer(Layer.IntroGraphics);
                 logo.TextureSize = size;
@@ -1141,12 +1140,10 @@ namespace Ambermoon
 
         private class IntroActionTownDestruction : IntroAction
         {
-            private readonly IRenderView renderView;
             private readonly ITextureAtlas textureAtlas;
             private readonly ILayerSprite meteor;
             private readonly ILayerSprite town;
             private readonly IColoredRect effect;
-            private readonly IIntroData introData;
             private long lastTicks = 0;
             private int currentZoom = 14000; // start value
             private int meteorX = 9700; // start value
@@ -1163,13 +1160,10 @@ namespace Ambermoon
             public IntroActionTownDestruction(IRenderView renderView, long startTicks, Font largeFont, IIntroData introData, Action finishHandler)
                 : base(IntroActionType.TownDestruction)
             {
-                this.renderView = renderView;
-                this.introData = introData;
                 this.finishHandler = finishHandler;
                 lastTicks = startTicks;
                 var layer = renderView.GetLayer(Layer.IntroGraphics);
                 textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
-                int textureAtlasWidth = textureAtlas.Texture.Width;
 
                 meteor = renderView.SpriteFactory.Create(96, 88, true, 100) as ILayerSprite;
                 meteor.TextureSize = new Size(96, 88);
@@ -1270,8 +1264,8 @@ namespace Ambermoon
                         }
 
                         // Start fading out
-                        effect.Color = Color.Transparent;
-                        fadeOutStartTicks = totalTicks - 2; // start with first color change
+                        effect.Color = new Color(0, 1);
+                        fadeOutStartTicks = totalTicks - 1;
                         // Reset meteor
                         currentZoom = 14000;
                         meteorX = currentTownIndex == 1 ? -9700 : 9700;
@@ -1323,57 +1317,158 @@ namespace Ambermoon
             }
         }
 
+        private class IntroActionEndScreen : IntroAction
+        {
+            private readonly IRenderView renderView;
+            private readonly ITextureAtlas textureAtlas;
+            private readonly ILayerSprite background;
+            private readonly ILayerSprite[] clouds = new ILayerSprite[4];
+            private readonly IColoredRect[] black = new IColoredRect[3];
+            private readonly Text[] texts = new Text[2];
+            private long lastTicks = 0;
+            private Action finishHandler;
+            private long fadeInStartTicks = -1;
+            private long fadeOutStartTicks = -1;
+            private readonly Color startBlack;
+            private readonly Color endBlack;
+
+            public IntroActionEndScreen(IRenderView renderView, long startTicks, Font largeFont, IIntroData introData, Action finishHandler)
+                : base(IntroActionType.EndScreen)
+            {
+                this.renderView = renderView;
+                this.finishHandler = finishHandler;
+                lastTicks = startTicks;
+                var layer = renderView.GetLayer(Layer.MainMenuGraphics); // use 320x200 here
+                textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MainMenuGraphics);
+
+                background = renderView.SpriteFactory.Create(320, 200, true, 0) as ILayerSprite;
+                background.Layer = layer;
+                background.TextureSize = new Size(320, 256);
+                background.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MainMenuBackground);
+                background.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.MainMenuBackground] - 1);
+                background.X = 0;
+                background.Y = 0;
+                background.Visible = true;
+
+                for (int i = 0; i < 4; i++)
+                {
+                    var cloud = clouds[i] = renderView.SpriteFactory.Create(112, 100, true, 50) as ILayerSprite;
+                    cloud.Layer = layer;
+                    cloud.TextureSize = new Size(112, 128);
+                    cloud.TextureAtlasOffset = textureAtlas.GetOffset(i < 2 ? (uint)IntroGraphic.CloudsLeft : (uint)IntroGraphic.CloudsRight);
+                    cloud.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.CloudsLeft] - 1);
+                    cloud.X = i < 2 ? 80 : 208 - 80;
+                    cloud.Y = (i % 2) * 100;
+                    cloud.Visible = true;
+                }
+
+                for (int i = 0; i < 3; i++)
+                {
+                    var black = this.black[i] = renderView.ColoredRectFactory.Create(i == 0 ? 320 : 80, 200, Color.Black, 250);
+                    black.Layer = renderView.GetLayer(Layer.MainMenuEffects); // use 320x200 here
+                    black.X = i < 2 ? 0 : 240;
+                    black.Y = 0;
+                    black.Visible = true;
+                }
+
+                fadeInStartTicks = startTicks;
+
+                var paletteData = introData.IntroPalettes[5].Data;
+                // color[31]
+                startBlack = new Color
+                (
+                    paletteData[124],
+                    paletteData[125],
+                    paletteData[126],
+                    paletteData[127]
+                );
+                paletteData = introData.IntroPalettes[IntroData.GraphicPalettes[IntroGraphic.MainMenuBackground]].Data;
+                // color[15]
+                endBlack = new Color
+                (
+                    paletteData[60],
+                    paletteData[61],
+                    paletteData[62],
+                    paletteData[63]
+                );
+            }
+
+            public override void Update(long ticks, int frameCounter)
+            {
+                float factor = Util.Limit(0.0f, (ticks - lastTicks - 100.0f) / (4f * 50.0f), 1.0f);
+
+                renderView.PaletteFading = new()
+                {
+                    SourcePalette = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + 5 - 1),
+                    DestinationPalette = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.MainMenuBackground] - 1),
+                    SourceFactor = 1.0f - factor,
+                };
+
+                var currentBlack = endBlack * factor + startBlack * (1.0f - factor);
+                black[1].Color = currentBlack;
+                black[2].Color = currentBlack;
+
+                /*if (ticks == lastTicks)
+                    return;
+
+                long elapsed = ticks - lastTicks;
+                lastTicks = ticks;
+
+                ProcessTicks(elapsed, ticks);*/
+
+                if (fadeInStartTicks != -1)
+                {
+                    black[0].Color = new Color(0, (byte)Math.Max(0, 255 - (ticks - fadeOutStartTicks) * 4));
+
+                    if (black[0].Color.A == 0)
+                        fadeInStartTicks = -1;
+                }
+                else if (fadeOutStartTicks != -1)
+                {
+                    black[0].Color = new Color(0, (byte)Math.Min(255, (ticks - fadeInStartTicks) * 4));
+
+                    if (black[0].Color.A == 255)
+                    {
+                        fadeOutStartTicks = -1;
+                        fadeInStartTicks = ticks;
+                    }
+                }
+            }
+
+            public override void Destroy()
+            {
+                background?.Delete();
+                //clouds?.Delete();
+                foreach (var b in black)
+                    b?.Delete();
+            }
+
+            private void ProcessTicks(long ticks, long totalTicks)
+            {
+            }
+        }
+
         readonly Action finishAction;
         readonly IIntroData introData;
         readonly Font introFont;
         readonly Font introFontLarge;
         readonly IRenderView renderView;
-        readonly IRenderLayer renderLayer; // TODO: needed?
         long ticks = 0;
-        readonly List<Text> texts = new(); // TODO: needed?
         readonly List<IntroAction> actions = new();
-        readonly IColoredRect fadeArea; // TODO: needed?
-        Action fadeMidAction = null; // TODO: needed?
-        long fadeStartTicks = 0;
-        const long HalfFadeDurationInTicks = 3 * Game.TicksPerSecond / 4;
-        const double TicksPerSecond = 60.0; // or test with 50 if not ok
+        const double TicksPerSecond = 50.0;
         int animationFrameCounter = 0;
         readonly Queue<KeyValuePair<long, Func<IntroAction>>> actionQueue = new();
         readonly Queue<KeyValuePair<long, Action>> simpleActionQueue = new();
         ushort randomSeed = 0x0011;
         Action startMusicAction;
         double time = 0.0;
+        bool destroyed = false;
 
         private short Random()
         {
             long next = (long)randomSeed * 0xd117;
             randomSeed = (ushort)(next & 0xffff);
             return (short)((next >> 8) & 0x7fff);
-        }
-
-        // TODO: REMOVE?
-        private static int GetPaletteFadeDuration(Graphic palette, int numColors, int ticksPerColorChange, int paletteOffset = 0)
-        {
-            int colorChanges = 0;
-
-            for (int i = 0; i < numColors; ++i)
-            {
-                int r = palette.Data[(paletteOffset + i) * 4 + 0] >> 4;
-                int g = palette.Data[(paletteOffset + i) * 4 + 1] >> 4;
-                int b = palette.Data[(paletteOffset + i) * 4 + 2] >> 4;
-
-                int dist = Util.Max(r, g, b);
-
-                if (dist > colorChanges)
-                {
-                    colorChanges = dist; // this can be at max 15
-
-                    if (colorChanges == 15)
-                        break;
-                }
-            }
-
-            return colorChanges * ticksPerColorChange;
         }
 
         private static int GetPaletteFadeDuration(Graphic palette1, int paletteOffset1, Graphic palette2, int paletteOffset2, int numColors, int ticksPerColorChange)
@@ -1411,16 +1506,12 @@ namespace Ambermoon
             this.introFontLarge = introFontLarge;
             this.renderView = renderView;
             this.startMusicAction = startMusicAction;
-            renderLayer = renderView.GetLayer(Layer.IntroGraphics);
-
-            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
-            fadeArea.Layer = renderView.GetLayer(Layer.Effects);
-            fadeArea.X = 0;
-            fadeArea.Y = 0;
-            fadeArea.Visible = false;
 
             // TODO: REMOVE
-            ScheduleAction(ticks, IntroActionType.TownDestruction);
+            /*ScheduleAction(ticks, IntroActionType.TownDestruction, () =>
+            {*/
+                ScheduleAction(ticks, IntroActionType.EndScreen, End);
+            //});
             return;
 
             ScheduleAction(0, IntroActionType.Starfield);
@@ -1496,7 +1587,7 @@ namespace Ambermoon
         public void Update(double deltaTime)
         {
             double lastTime = time;
-            time += deltaTime * 5.0 / 6.0; // We have to match the music and it runs with 50Hz while the update cycle runs with 60Hz.
+            time += deltaTime;
             long oldTicks = (long)Math.Round(TicksPerSecond * lastTime);
             ticks = (long)Math.Round(TicksPerSecond * time);
 
@@ -1525,31 +1616,6 @@ namespace Ambermoon
 
             animationFrameCounter = (int)((animationFrameCounter + (ticks - oldTicks)) % 48);
 
-            if (fadeArea.Visible || fadeMidAction != null)
-            {
-                long fadeDuration = ticks - fadeStartTicks;
-
-                if (fadeDuration >= HalfFadeDurationInTicks * 2)
-                {
-                    fadeMidAction = null;
-                    fadeArea.Visible = false;
-                }
-                else
-                {
-                    byte alpha = (byte)(255 - Math.Abs(HalfFadeDurationInTicks - fadeDuration) * 255 / HalfFadeDurationInTicks);
-                    fadeArea.Color = new Render.Color(fadeArea.Color, alpha);
-                    fadeArea.Visible = true;
-
-                    if (fadeMidAction != null && fadeDuration >= HalfFadeDurationInTicks)
-                    {
-                        fadeMidAction?.Invoke();
-                        fadeMidAction = null;
-                    }
-
-                    return;
-                }
-            }
-
             foreach (var action in actions.ToArray())
             {
                 action.Update(ticks, animationFrameCounter);
@@ -1563,43 +1629,21 @@ namespace Ambermoon
 
         void End()
         {
-            Destroy();
-            finishAction?.Invoke();
-        }
-
-        void Fade(Action midAction)
-        {
-            fadeStartTicks = ticks;
-            fadeMidAction = midAction;
-        }
-
-        void PrintText(int x, int y, string text, bool large)
-        {
-            Text textEntry;
-
-            if (large)
+            if (!destroyed)
             {
-                textEntry = introFontLarge.CreateText(renderView, Layer.IntroText,
-                    new Rect(x, y, Global.VirtualScreenWidth - x, 22), text, 10, TextAlign.Left, 208);
+                Destroy();
+                finishAction?.Invoke();
             }
-            else
-            {
-                textEntry = introFont.CreateText(renderView, Layer.IntroText,
-                    new Rect(x, y, Global.VirtualScreenWidth - x, 11), text, 10, TextAlign.Left, 208);
-            }
-
-            textEntry.Visible = true;
-
-            texts.Add(textEntry);
         }
 
         public void Destroy()
         {
-            actions.ForEach(action => action.Destroy());
-            actions.Clear();
-            texts.ForEach(text => text.Destroy());
-            texts.Clear();
-            fadeArea.Delete();
+            if (!destroyed)
+            {
+                actions.ForEach(action => action.Destroy());
+                actions.Clear();
+                destroyed = true;
+            }
         }
     }
 }

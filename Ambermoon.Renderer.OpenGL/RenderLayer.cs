@@ -246,7 +246,8 @@ namespace Ambermoon.Renderer
             } },
             { Layer.MainMenuGraphics, new ()
             {
-                BaseZ = 0.70f
+                BaseZ = 0.70f,
+                SupportPaletteFading = true
             } },
             { Layer.MainMenuText, new ()
             {
@@ -388,7 +389,8 @@ namespace Ambermoon.Renderer
                 opaque, layer == Layer.FOW, layer == Layer.Map3DBackground,
                 layer == Layer.Misc || layer == Layer.OutroText || layer == Layer.IntroText || layer == Layer.IntroGraphics, // textures with alpha
                 layer == Layer.Images,
-                Config.TextureFactor);
+                Config.TextureFactor,
+                Config.SupportPaletteFading);
 
             if (Config.SupportColoredRects)
                 renderBufferColorRects = new RenderBuffer(state, false, false, true, true);
@@ -522,8 +524,16 @@ namespace Ambermoon.Renderer
                     {
                         bool special = Layer == Layer.Misc || Layer == Layer.OutroText || Layer == Layer.IntroText || Layer == Layer.IntroGraphics;
                         bool sky = Layer == Layer.Map3DBackground;
-                        TextureShader shader = special ? RenderBuffer.AlphaTextureShader : sky ? RenderBuffer.SkyShader :
-                            RenderBuffer.Opaque ? RenderBuffer.OpaqueTextureShader : RenderBuffer.TextureShader;
+                        TextureShader shader =
+                                Config.SupportPaletteFading
+                                    ? RenderBuffer.FadingTextureShader
+                                    : special
+                                        ? RenderBuffer.AlphaTextureShader
+                                        : sky
+                                            ? RenderBuffer.SkyShader
+                                            : RenderBuffer.Opaque
+                                                ? RenderBuffer.OpaqueTextureShader
+                                                : RenderBuffer.TextureShader;
 
                         shader.UsePalette(Config.UsePalette);
                         shader.UpdateMatrices(state);

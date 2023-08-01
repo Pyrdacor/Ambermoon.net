@@ -166,7 +166,7 @@ namespace Ambermoon.Render
             if (factor > 1.0f)
                 factor = 1.0f;
 
-            return new Color(factor * R / 255.0f, factor * G / 255.0f, factor * B / 255.0f, A);
+            return new Color(factor * R / 255.0f, factor * G / 255.0f, factor * B / 255.0f, A / 255.0f);
         }
 
         public Color WithLight(float light)
@@ -179,7 +179,22 @@ namespace Ambermoon.Render
 
             float add = light - 1.0f;
 
-            return new Color(Util.Limit(0.0f, add + R / 255.0f, 1.0f), Util.Limit(0.0f, add + G / 255.0f, 1.0f), Util.Limit(0.0f, add + B / 255.0f, 1.0f), A);
+            return new Color(Util.Limit(0.0f, add + R / 255.0f, 1.0f), Util.Limit(0.0f, add + G / 255.0f, 1.0f), Util.Limit(0.0f, add + B / 255.0f, 1.0f), A / 255.0f);
+        }
+
+        public static Color operator+(Color a, Color b)
+        {
+            return new Color(a.R + b.R, a.G + b.G, a.B + b.B, (a.A + b.A) / 2);
+        }
+
+        public static Color operator *(Color color, float factor)
+        {
+            return color.WithFactor(factor);
+        }
+
+        public static Color operator *(float factor, Color color)
+        {
+            return color.WithFactor(factor);
         }
     }
 }

@@ -371,10 +371,19 @@ namespace Ambermoon.Render
 
             foreach (var introGraphic in introGraphics)
             {
-                if (introGraphic.Key == (uint)IntroGraphic.MainMenuBackground)
-                    AddTexture(Layer.MainMenuGraphics, introGraphic.Key, introGraphic.Value); // We only need the background for the main menu
-                else
-                    AddTexture(Layer.IntroGraphics, introGraphic.Key, introGraphic.Value);
+                switch (introGraphic.Key)
+                {
+                    case (uint)IntroGraphic.MainMenuBackground:
+                    case (uint)IntroGraphic.CloudsLeft:
+                    case (uint)IntroGraphic.CloudsRight:
+                        // We only need the background for the main menu and the clouds from the intro.
+                        // The intro does not need them as they only use the main menu layers.
+                        AddTexture(Layer.MainMenuGraphics, introGraphic.Key, introGraphic.Value);
+                        break;
+                    default:
+                        AddTexture(Layer.IntroGraphics, introGraphic.Key, introGraphic.Value);
+                        break;
+                }
             }
 
             #endregion

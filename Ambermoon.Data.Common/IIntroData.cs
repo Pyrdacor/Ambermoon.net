@@ -20,8 +20,10 @@ namespace Ambermoon.Data
         ForestMoon,
         Meteor,
         MeteorSparks,
+        CloudsLeft,
+        CloudsRight,
         GlowingMeteor,
-        Twinlake
+        Twinlake,       
     }
 
     public enum IntroText
@@ -38,7 +40,6 @@ namespace Ambermoon.Data
         NewGame,
         Intro,
         Quit
-        // TODO: also extract credits?
     }
 
     public interface IIntroTwinlakeImagePart

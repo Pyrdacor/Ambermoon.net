@@ -89,9 +89,10 @@ namespace Ambermoon.Data.Legacy.Serialization
             { IntroGraphic.ForestMoon, 3 },
             { IntroGraphic.Meteor, 3 },
             { IntroGraphic.MeteorSparks, 3 },
+            { IntroGraphic.CloudsLeft, 4 }, // TODO
+            { IntroGraphic.CloudsRight, 4 }, // TODO
             { IntroGraphic.GlowingMeteor, 3 },
             { IntroGraphic.Twinlake, 8 },
-            // TODO ...
         };
         static GraphicInfo paletteGraphicInfo = new()
         {
@@ -205,7 +206,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 new Size(160, 128),
                 new Size(160, 128),
                 new Size(160, 128),
-                new Size(160, 128)
+                new Size(160, 128),
             };
 
             for (int i = 0; i < 8; ++i)
@@ -403,7 +404,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             #region Hunk 3 - Intro graphics (planets, etc)
 
-            const int hunk3ImageCount = 8;
+            const int hunk3ImageCount = 10;
 
             Size[] hunk3ImageSizes = new Size[hunk3ImageCount]
             {
@@ -415,7 +416,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 new Size(64, 64), // Forest Moon
                 new Size(96, 88), // Meteor
                 new Size(64, 47), // Meteor Sparks
-                // TODO ...
+                new Size(112, 128), // Left cloud
+                new Size(112, 128), // right cloud
             };
             int[] hunk3FrameCounts = new int[hunk3ImageCount]
             {
@@ -427,7 +429,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 1,
                 1,
                 30,
-                // TODO ...
+                1,
+                1
             };
             const int MeteorSparkId = 7;
 
@@ -442,29 +445,21 @@ namespace Ambermoon.Data.Legacy.Serialization
                     Alpha = false
                 };
                 Graphic graphic;
-                int frames = hunk3FrameCounts[i];
-                if (frames == 1)
+                Graphic ReadFrame()
                 {
-                    graphic = new Graphic();
-                    graphicReader.ReadGraphic(graphic, introDataHunks[3], graphicInfo);
-                }
-                else
-                {
-                    graphic = new Graphic(frames * graphicInfo.Width, graphicInfo.Height, 0);
+                    var frameGraphic = new Graphic();
 
-                    for (int f = 0; f < frames; ++f)
+                    if (i >= MeteorSparkId) // meteor spark and both cloud images use this
                     {
-                        var frameGraphic = new Graphic();
+                        // This has a bit mask plane for the blitter (1 bit per pixel).
+                        // The image itself is 4bpp. So for easier handling we just load
+                        // this as a 5 bpp image.                            
+                        graphicInfo.GraphicFormat = GraphicFormat.Palette5Bit;
+                        graphicReader.ReadGraphic(frameGraphic, introDataHunks[3], graphicInfo);
 
                         if (i == MeteorSparkId)
                         {
-                            // This has a bit mask plane for the blitter (1 bit per pixel).
-                            // The image itself is 4bpp. So for easier handling we just load
-                            // this as a 5 bpp image.                            
-                            graphicInfo.GraphicFormat = GraphicFormat.Palette5Bit;
-                            graphicReader.ReadGraphic(frameGraphic, introDataHunks[3], graphicInfo);
-
-                            // No we have to consider the bit mask.
+                            // Now we have to consider the bit mask.
                             // The lowest bit is the mask. If it is 0
                             // the whole pixel should be transparent.
                             // Otherwise we use the color.
@@ -473,7 +468,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                                 // This means opaque and color index 0. This would be black but we
                                 // use color index 0 for transparent pixels, so switch to color 16
                                 // here which is also black.
-                                if (frameGraphic.Data[b] == 1)
+                                if (frameGraphic.Data[b] == 0x1)
                                     frameGraphic.Data[b] = 16;
                                 // In this case the lowest bit is not set, so use color index 0
                                 // here to achieve a transparent pixel.
@@ -487,8 +482,45 @@ namespace Ambermoon.Data.Legacy.Serialization
                         }
                         else
                         {
-                            graphicReader.ReadGraphic(frameGraphic, introDataHunks[3], graphicInfo);
+                            // The cloud images do it the other way around.
+                            // First the 4 bit planes and then the mask.
+                            for (int b = 0; b < frameGraphic.Data.Length; b++)
+                            {
+                                // This means opaque and color index 0. This would be black but we
+                                // use color index 0 for transparent pixels, so switch to color 16
+                                // here which is also black.
+                                if (frameGraphic.Data[b] == 0x10)
+                                    frameGraphic.Data[b] = 16;
+                                // In this case the mask bit is not set, so use color index 0
+                                // here to achieve a transparent pixel.
+                                else if ((frameGraphic.Data[b] & 0x10) == 0)
+                                    frameGraphic.Data[b] = 0;
+                                // In all other cases we just have to AND the color value
+                                // by 0xf to get rid of the mask bit and get the real color.
+                                else
+                                    frameGraphic.Data[b] &= 0xf;
+                            }
                         }
+                    }
+                    else
+                    {
+                        graphicReader.ReadGraphic(frameGraphic, introDataHunks[3], graphicInfo);
+                    }
+
+                    return frameGraphic;
+                }
+                int frames = hunk3FrameCounts[i];
+                if (frames == 1)
+                {
+                    graphic = ReadFrame();
+                }
+                else
+                {
+                    graphic = new Graphic(frames * graphicInfo.Width, graphicInfo.Height, 0);
+
+                    for (int f = 0; f < frames; ++f)
+                    {
+                        var frameGraphic = ReadFrame();
                         graphic.AddOverlay((uint)(f * frameGraphic.Width), 0, frameGraphic, false);
                     }
                 }
@@ -509,8 +541,6 @@ namespace Ambermoon.Data.Legacy.Serialization
                     glowingMeteorGraphic.Data[i] += 16;
             }
             graphics.Add(IntroGraphic.GlowingMeteor, glowingMeteorGraphic);
-
-            // TODO ...
 
             #endregion
 

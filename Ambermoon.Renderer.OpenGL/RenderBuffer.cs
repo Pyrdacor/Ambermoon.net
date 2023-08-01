@@ -66,11 +66,12 @@ namespace Ambermoon.Renderer
         static readonly Dictionary<State, SkyShader> skyShaders = new Dictionary<State, SkyShader>();
         static readonly Dictionary<State, AlphaTextureShader> alphaTextureShaders = new Dictionary<State, AlphaTextureShader>();
         static readonly Dictionary<State, ImageShader> imageShaders = new Dictionary<State, ImageShader>();
+        static readonly Dictionary<State, FadingTextureShader> fadingTextureShaders = new Dictionary<State, FadingTextureShader>();
 
         public RenderBuffer(State state, bool is3D, bool supportAnimations, bool layered,
             bool noTexture = false, bool isBillboard = false, bool isText = false, bool opaque = false,
             bool fow = false, bool sky = false, bool texturesWithAlpha = false, bool noPaletteImage = false,
-            uint textureFactor = 1)
+            uint textureFactor = 1, bool fading = false)
         {
             this.state = state;
             this.textureFactor = textureFactor;
@@ -82,7 +83,13 @@ namespace Ambermoon.Renderer
                     throw new AmbermoonException(ExceptionScope.Render, "3D render buffers can't be masked nor layered and must not lack a texture.");
             }
 
-            if (noPaletteImage)
+            if (fading)
+            {
+                if (!fadingTextureShaders.ContainsKey(state))
+                    fadingTextureShaders[state] = FadingTextureShader.Create(state);
+                vertexArrayObject = new VertexArrayObject(state, fadingTextureShaders[state].ShaderProgram);
+            }
+            else if (noPaletteImage)
             {
                 if (!imageShaders.ContainsKey(state))
                     imageShaders[state] = ImageShader.Create(state);
@@ -278,6 +285,7 @@ namespace Ambermoon.Renderer
         internal SkyShader SkyShader => skyShaders[state];
         internal AlphaTextureShader AlphaTextureShader => alphaTextureShaders[state];
         internal ImageShader ImageShader => imageShaders[state];
+        internal FadingTextureShader FadingTextureShader => fadingTextureShaders[state];
 
         public int GetDrawIndex(Render.IFow fow,
             Render.PositionTransformation positionTransformation,

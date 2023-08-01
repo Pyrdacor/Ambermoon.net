@@ -421,6 +421,8 @@ namespace Ambermoon
                 }
                 else if (versionSelector != null)
                     versionSelector.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
+                else if (intro != null && key == Silk.NET.Input.Key.Escape)
+                    intro.Click();
                 else
                     Game?.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
             }
@@ -488,6 +490,8 @@ namespace Ambermoon
                 versionSelector.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
             else if (mainMenu != null)
                 mainMenu.OnMouseDown(ConvertMousePosition(position), ConvertMouseButtons(button));
+            else if (intro != null)
+                intro.Click();
             else
                 Game?.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse), GetModifiers(keyboard));
         }
@@ -635,6 +639,8 @@ namespace Ambermoon
             Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage,
             Action showIntroAction)
         {
+            renderView.PaletteFading = null; // Reset palette fading
+
             void PlayMusic(Data.Enumerations.Song song)
             {
                 if (configuration.Music)

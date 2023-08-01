@@ -69,5 +69,6 @@ namespace Ambermoon.Render
         void SetSkyColorReplacement(uint? skyColor, Color replaceColor);
         PaletteReplacement PaletteReplacement { get; set; }
         int? DrugColorComponent { get; set; }
+        PaletteFading PaletteFading { get; set; }
     }
 }

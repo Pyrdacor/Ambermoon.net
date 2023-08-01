@@ -71,6 +71,7 @@ namespace Ambermoon.Renderer.OpenGL
         readonly FowFactory fowFactory = null;
         readonly Camera3D camera3D = null;
         PaletteReplacement paletteReplacement = null;
+        PaletteFading paletteFading = null;
         bool fullscreen = false;
         const float VirtualAspectRatio = Global.VirtualAspectRatio;
         float sizeFactorX = 1.0f;
@@ -940,6 +941,20 @@ namespace Ambermoon.Renderer.OpenGL
                     (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetPaletteReplacement(paletteReplacement);
                     (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetPaletteReplacement(paletteReplacement);
                     (GetLayer(Layer.Map3DBackground) as RenderLayer).RenderBuffer.SkyShader.SetPaletteReplacement(paletteReplacement);
+                }
+            }
+        }
+
+        public PaletteFading PaletteFading
+        {
+            get => paletteFading;
+            set
+            {
+                if (paletteFading != value)
+                {
+                    paletteFading = value;
+
+                    (GetLayer(Layer.MainMenuGraphics) as RenderLayer).RenderBuffer.FadingTextureShader.SetPaletteFading(paletteFading);
                 }
             }
         }

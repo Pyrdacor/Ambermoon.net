@@ -14,6 +14,13 @@ namespace Ambermoon.Data
         public byte[] ColorData { get; } = new byte[16 * 4];
     }
 
+    public class PaletteFading
+    {
+        public byte SourcePalette { get; set; }
+        public byte DestinationPalette { get; set; }
+        public float SourceFactor { get; set; }
+    }
+
     public interface ILightEffectProvider
     {
         IEnumerable<SkyPart> GetSkyParts(Map map, uint hour, uint minute,

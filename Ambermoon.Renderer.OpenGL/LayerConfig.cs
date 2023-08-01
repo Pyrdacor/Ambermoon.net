@@ -15,6 +15,7 @@
             TextureFactor = 1;
             BaseZ = 0.0f;
             Use320x256 = false;
+            SupportPaletteFading = false;
         }
 
         /// <summary>
@@ -90,5 +91,11 @@
         /// left and right. Used for the intros mainly.
         /// </summary>
         public bool Use320x256 { get; set;  }
+        /// <summary>
+        /// Used by the main menu layer (actually the intro end
+        /// screen) to fade the background image from yellowish
+        /// to normal.
+        /// </summary>
+        public bool SupportPaletteFading { get; set; }
     }
 }
