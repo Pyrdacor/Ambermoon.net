@@ -1572,7 +1572,7 @@ namespace Ambermoon
                         DestroyAction(IntroActionType.Starfield);
                         DestroyAction(IntroActionType.TextCommands);
                         DestroyAction(IntroActionType.DisplayObjects);
-                        ScheduleAction(ticks, IntroActionType.TwinlakeAnimation, () =>
+                        ScheduleAction(ticks + 6, IntroActionType.TwinlakeAnimation, () =>
                         {
                             DestroyAction(IntroActionType.TwinlakeAnimation);
                             ScheduleAction(ticks + 40, IntroActionType.TownDestruction, () =>
