@@ -1475,7 +1475,7 @@ namespace Ambermoon
             }
         }
 
-        readonly Action finishAction;
+        readonly Action<bool> finishAction;
         readonly IIntroData introData;
         readonly Font introFont;
         readonly Font introFontLarge;
@@ -1525,7 +1525,7 @@ namespace Ambermoon
             return colorChanges * ticksPerColorChange;
         }
 
-        public Intro(IRenderView renderView, IIntroData introData, Font introFont, Font introFontLarge, Action finishAction, Action startMusicAction)
+        public Intro(IRenderView renderView, IIntroData introData, Font introFont, Font introFontLarge, Action<bool> finishAction, Action startMusicAction)
         {
             this.finishAction = finishAction;
             this.introData = introData;
@@ -1533,18 +1533,6 @@ namespace Ambermoon
             this.introFontLarge = introFontLarge;
             this.renderView = renderView;
             this.startMusicAction = startMusicAction;
-
-            // TODO: REMOVE
-            /*ScheduleAction(ticks, IntroActionType.TownDestruction, () =>
-            {*/
-                //DestroyAction(IntroActionType.TownDestruction);
-                ScheduleAction(ticks, IntroActionType.EndScreen, () =>
-                {
-                    DestroyAction(IntroActionType.EndScreen);
-                    End();
-                });
-            //});
-            return;
 
             ScheduleAction(0, IntroActionType.Starfield);
             // Between the starfield setup and Thalion logo, the palette
@@ -1579,7 +1567,16 @@ namespace Ambermoon
                         DestroyAction(IntroActionType.DisplayObjects);
                         ScheduleAction(ticks, IntroActionType.TwinlakeAnimation, () =>
                         {
-                            ScheduleAction(ticks, IntroActionType.TownDestruction);
+                            DestroyAction(IntroActionType.TwinlakeAnimation);
+                            ScheduleAction(ticks, IntroActionType.TownDestruction, () =>
+                            {
+                                DestroyAction(IntroActionType.TownDestruction);
+                                ScheduleAction(ticks, IntroActionType.EndScreen, () =>
+                                {
+                                    DestroyAction(IntroActionType.EndScreen);
+                                    End();
+                                });
+                            });
                         });
                     });
                 });
@@ -1656,15 +1653,15 @@ namespace Ambermoon
 
         public void Click()
         {
-            End();
+            End(true);
         }
 
-        void End()
+        void End(bool byClick = false)
         {
             if (!destroyed)
             {
                 Destroy();
-                finishAction?.Invoke();
+                finishAction?.Invoke(byClick);
             }
         }
 

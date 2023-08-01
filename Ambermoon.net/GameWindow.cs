@@ -909,7 +909,7 @@ namespace Ambermoon
                             }, gameLanguage, () =>
                             {
                                 cursor.Type = Data.CursorType.None;
-                                ShowIntro(() => ShowMainMenu(true), introData, introFont, introFontLarge);
+                                ShowIntro(byClick => ShowMainMenu(!byClick), introData, introFont, introFontLarge);
                             });
                     }
 
@@ -953,17 +953,17 @@ namespace Ambermoon
             });
         }
 
-        void ShowIntro(Action showMainMenuAction, IIntroData introData, Font introFont, Font introFontLarge)
+        void ShowIntro(Action<bool> showMainMenuAction, IIntroData introData, Font introFont, Font introFontLarge)
         {
             mainMenu?.Destroy();
             mainMenu = null;
             if (configuration.Music)
                 musicManager.Stop();
 
-            intro = new Intro(renderView, introData, introFont, introFontLarge, () =>
+            intro = new Intro(renderView, introData, introFont, introFontLarge, byClick =>
             {
                 intro = null;
-                showMainMenuAction?.Invoke();
+                showMainMenuAction?.Invoke(byClick);
             }, () =>
             {
                 if (configuration.Music)
