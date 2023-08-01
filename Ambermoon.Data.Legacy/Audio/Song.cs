@@ -29,6 +29,7 @@ namespace Ambermoon.Data.Legacy.Audio
         Stream stream = null;
         int bytesPerSecond = 0;
         TimeSpan? songDuration = null;
+        Action followupSongAction = null;
 
         public int SongLength => sonicArrangerSong.StopPos - sonicArrangerSong.StartPos;
         public int PatternLength => sonicArrangerSong.PatternLength;
@@ -62,14 +63,23 @@ namespace Ambermoon.Data.Legacy.Audio
 
         public bool EndOfStream => stream != null && stream.EndOfStream;
 
-        public void Play(IAudioOutput audioOutput)
+        public void Play(IAudioOutput audioOutput, ISong followupSong = null)
         {
             songPlayer.Start(audioOutput, this);
+
+            if (followupSong != null)
+            {
+                followupSongAction = () =>
+                {
+                    followupSong.Play(audioOutput, null);
+                };
+            }
         }
 
         public void Stop()
         {
             songPlayer.Stop();
+            followupSongAction = null;
         }
 
         public byte[] GetData()
@@ -88,6 +98,12 @@ namespace Ambermoon.Data.Legacy.Audio
                 buffer.AddRange(stream.ReadUnsigned(Util.Round(readDuration), false));
                 remainingDuration -= readDuration;
             } while (remainingDuration > 0 && !stream.EndOfStream);
+
+            if (stream.EndOfStream)
+            {
+                followupSongAction?.Invoke();
+                followupSongAction = null;
+            }
 
             return buffer.ToArray();
         }

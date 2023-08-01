@@ -967,7 +967,7 @@ namespace Ambermoon
             }, () =>
             {
                 if (configuration.Music)
-                musicManager.GetSong(Data.Enumerations.Song.Intro)?.Play(audioOutput);
+                    musicManager.GetSong(Data.Enumerations.Song.Intro)?.Play(audioOutput, musicManager.GetSong(Data.Enumerations.Song.Menu));
             });
         }
 

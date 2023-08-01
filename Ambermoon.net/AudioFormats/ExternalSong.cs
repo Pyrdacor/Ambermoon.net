@@ -1,7 +1,6 @@
 ﻿using Ambermoon.Data.Audio;
 using Ambermoon.Data.Enumerations;
 using System;
-using System.Threading.Tasks;
 
 namespace Ambermoon.AudioFormats
 {
@@ -11,7 +10,7 @@ namespace Ambermoon.AudioFormats
 
         public abstract TimeSpan? SongDuration { get; protected set; }
 
-        public abstract void Play(IAudioOutput audioOutput);
+        public abstract void Play(IAudioOutput audioOutput, ISong followupSong = null);
 
         public abstract void Stop();
 
