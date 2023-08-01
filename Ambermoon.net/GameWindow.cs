@@ -635,7 +635,7 @@ namespace Ambermoon
             writer.CopyTo(file);
         }
 
-        void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
+        void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, bool fromIntro, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage,
             Action showIntroAction)
         {
@@ -651,7 +651,7 @@ namespace Ambermoon
             }
 
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
-                GetText(gameLanguage, 0), GetText(gameLanguage, 1), PlayMusic);
+                GetText(gameLanguage, 0), GetText(gameLanguage, 1), PlayMusic, fromIntro);
             mainMenu.Closed += closeAction =>
             {
                 switch (closeAction)
@@ -899,9 +899,9 @@ namespace Ambermoon
                     while (advancedLogo != null)
                         Thread.Sleep(100);
 
-                    void ShowMainMenu()
+                    void ShowMainMenu(bool fromIntro)
                     {
-                        this.ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFontLarge,
+                        this.ShowMainMenu(renderView, cursor, fromIntro, IntroData.GraphicPalettes, introFontLarge,
                             introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
                             {
                                 cursor.Type = Data.CursorType.None;
@@ -909,11 +909,11 @@ namespace Ambermoon
                             }, gameLanguage, () =>
                             {
                                 cursor.Type = Data.CursorType.None;
-                                ShowIntro(ShowMainMenu, introData, introFont, introFontLarge);
+                                ShowIntro(() => ShowMainMenu(true), introData, introFont, introFontLarge);
                             });
                     }
 
-                    ShowMainMenu();
+                    ShowMainMenu(false);
                 }
                 catch (Exception ex)
                 {

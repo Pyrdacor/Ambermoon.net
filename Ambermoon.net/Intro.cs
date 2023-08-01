@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Data.Legacy.Compression;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System;
@@ -1213,14 +1214,14 @@ namespace Ambermoon
 
                 if (fadeInStartTicks != -1)
                 {
-                    effect.Color = new Color(0, (byte)Math.Max(0, 255 - (ticks - fadeOutStartTicks) * 8));
+                    effect.Color = new Color(0, (byte)Math.Max(0, 255 - (ticks - fadeInStartTicks) * 8));
 
                     if (effect.Color.A == 0)
                         fadeInStartTicks = -1;
                 }
                 else if (fadeOutStartTicks != -1)
                 {
-                    effect.Color = new Color(0, (byte)Math.Min(255, (ticks - fadeInStartTicks) * 8));
+                    effect.Color = new Color(0, (byte)Math.Min(255, (ticks - fadeOutStartTicks) * 8));
 
                     if (effect.Color.A == 255)
                     {
@@ -1324,11 +1325,11 @@ namespace Ambermoon
             private readonly ILayerSprite background;
             private readonly ILayerSprite[] clouds = new ILayerSprite[4];
             private readonly IColoredRect[] black = new IColoredRect[3];
-            private readonly Text[] texts = new Text[2];
-            private long lastTicks = 0;
+            private readonly Text[] texts = new Text[3];
+            private long startTicks = 0;
             private Action finishHandler;
             private long fadeInStartTicks = -1;
-            private long fadeOutStartTicks = -1;
+            private long paletteFadeStartTicks = -1;
             private readonly Color startBlack;
             private readonly Color endBlack;
 
@@ -1337,7 +1338,7 @@ namespace Ambermoon
             {
                 this.renderView = renderView;
                 this.finishHandler = finishHandler;
-                lastTicks = startTicks;
+                this.startTicks = startTicks;
                 var layer = renderView.GetLayer(Layer.MainMenuGraphics); // use 320x200 here
                 textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MainMenuGraphics);
 
@@ -1371,8 +1372,6 @@ namespace Ambermoon
                     black.Visible = true;
                 }
 
-                fadeInStartTicks = startTicks;
-
                 var paletteData = introData.IntroPalettes[5].Data;
                 // color[31]
                 startBlack = new Color
@@ -1391,11 +1390,23 @@ namespace Ambermoon
                     paletteData[62],
                     paletteData[63]
                 );
+
+                int[] yOffsetsText = new int[3] { 85, 114, 136 };
+
+                for (int i = 0; i < 3; i++)
+                {
+                    var text = texts[i] = largeFont.CreateText(renderView, Layer.MainMenuText, new Rect(0, yOffsetsText[i] * 200 / 256 + (i - 1) * 4, 320, 22),
+                        introData.Texts[IntroText.Lyramion + i], 200, TextAlign.Center);
+                    text.TextColor = Data.Enumerations.Color.BrightBrown; // almost the right color with FC9 instead of FC8 (close enough)
+                    text.Visible = true;
+                }
+
+                fadeInStartTicks = startTicks;                
             }
 
             public override void Update(long ticks, int frameCounter)
             {
-                float factor = Util.Limit(0.0f, (ticks - lastTicks - 100.0f) / (4f * 50.0f), 1.0f);
+                float factor = paletteFadeStartTicks == -1 ? 0.0f : Util.Limit(0.0f, (ticks - paletteFadeStartTicks) / (4f * 50.0f), 1.0f);
 
                 renderView.PaletteFading = new()
                 {
@@ -1408,43 +1419,59 @@ namespace Ambermoon
                 black[1].Color = currentBlack;
                 black[2].Color = currentBlack;
 
-                /*if (ticks == lastTicks)
-                    return;
+                long elapsed = ticks - startTicks;
+                
+                if (elapsed >= 300)
+                {
+                    foreach (var text in texts)
+                        text.Visible = false;
 
-                long elapsed = ticks - lastTicks;
-                lastTicks = ticks;
+                    elapsed -= 300;
 
-                ProcessTicks(elapsed, ticks);*/
+                    int xOffset = 80 - (int)(1 + elapsed / 2);
+
+                    if (xOffset <= -170)
+                    {
+                        if (Util.FloatEqual(factor, 1.0f) && finishHandler != null)
+                        {
+                            finishHandler();
+                            finishHandler = null;
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < 4; i++)
+                        {
+                            clouds[i].X = i < 2 ? xOffset : 208 - xOffset;
+                        }
+
+                        black[1].X = clouds[0].X - 80;
+                        black[2].X = clouds[2].X + 112;
+
+                        if (xOffset <= -27 && paletteFadeStartTicks == -1)
+                            paletteFadeStartTicks = ticks;
+                    }
+                }
 
                 if (fadeInStartTicks != -1)
                 {
-                    black[0].Color = new Color(0, (byte)Math.Max(0, 255 - (ticks - fadeOutStartTicks) * 4));
+                    black[0].Color = new Color(0, (byte)Math.Max(0, 255 - (ticks - fadeInStartTicks) * 4));
 
                     if (black[0].Color.A == 0)
                         fadeInStartTicks = -1;
-                }
-                else if (fadeOutStartTicks != -1)
-                {
-                    black[0].Color = new Color(0, (byte)Math.Min(255, (ticks - fadeInStartTicks) * 4));
-
-                    if (black[0].Color.A == 255)
-                    {
-                        fadeOutStartTicks = -1;
-                        fadeInStartTicks = ticks;
-                    }
                 }
             }
 
             public override void Destroy()
             {
                 background?.Delete();
-                //clouds?.Delete();
+                foreach (var cloud in clouds)
+                    cloud?.Delete();
                 foreach (var b in black)
                     b?.Delete();
-            }
-
-            private void ProcessTicks(long ticks, long totalTicks)
-            {
+                foreach (var text in texts)
+                    text?.Destroy();
             }
         }
 
@@ -1510,7 +1537,12 @@ namespace Ambermoon
             // TODO: REMOVE
             /*ScheduleAction(ticks, IntroActionType.TownDestruction, () =>
             {*/
-                ScheduleAction(ticks, IntroActionType.EndScreen, End);
+                //DestroyAction(IntroActionType.TownDestruction);
+                ScheduleAction(ticks, IntroActionType.EndScreen, () =>
+                {
+                    DestroyAction(IntroActionType.EndScreen);
+                    End();
+                });
             //});
             return;
 

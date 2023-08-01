@@ -53,6 +53,12 @@ namespace Ambermoon
             coloredRect = null;
         }
 
+        public void SetColor(Color color)
+        {
+            if (coloredRect != null)
+                coloredRect.Color = color;
+        }
+
         public void Start(int durationInMs, bool reverse = false)
         {
             StartAt(DateTime.Now, duration, reverse);

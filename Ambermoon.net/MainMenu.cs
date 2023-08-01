@@ -49,7 +49,7 @@ namespace Ambermoon
 
         public MainMenu(IRenderView renderView, Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             Font introFont, string[] texts, bool canContinue, string continueLoadingText, string newLoadingText,
-            Action<Song> playMusicAction)
+            Action<Song> playMusicAction, bool fromIntro)
         {
             this.renderView = renderView;
             this.cursor = cursor;
@@ -72,7 +72,6 @@ namespace Ambermoon
             int y = 48;
             for (int i = 0; i < 4; ++i)
             {
-                int textWidth = introFont.MeasureTextWidth(texts[i]);
                 var area = new Rect(0, y, Global.VirtualScreenWidth, 22);
                 var clickArea = new Rect(0, y - 5, Global.VirtualScreenWidth, 22 + 8);
                 var mainMenuText = introFont.CreateText(renderView, Layer.MainMenuText, area, texts[i], 1);
@@ -88,7 +87,14 @@ namespace Ambermoon
             loadingText.Visible = false;
             
             cursor.Type = CursorType.Sword;
-            FadeInMainMenu();
+
+            if (fromIntro)
+            {
+                ShowMainMenu();
+                mainMenuFader?.SetColor(Ambermoon.Render.Color.Transparent);
+            }
+            else
+                FadeInMainMenu();
         }
 
         void ShowMainMenu()
