@@ -23,8 +23,6 @@ namespace Ambermoon.Audio.OpenAL
         readonly object mutex = new();
         Task playbackTask;
 
-        public event Action StreamEnded;
-
         public AudioBuffers(AL al, uint source, int channels, int sampleRate, bool sample8Bit, IAudioStream audioStream)
         {
             this.al = al;
@@ -96,7 +94,6 @@ namespace Ambermoon.Audio.OpenAL
                     {
                         audioStream.Reset();
                         bufferPosition = 0;
-                        StreamEnded?.Invoke();
                     }
                     else
                     {
