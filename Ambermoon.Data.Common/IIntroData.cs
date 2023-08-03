@@ -23,7 +23,7 @@ namespace Ambermoon.Data
         CloudsLeft,
         CloudsRight,
         GlowingMeteor,
-        Twinlake,       
+        Twinlake,
     }
 
     public enum IntroText

@@ -11,7 +11,6 @@ using Ambermoon.UI;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Input;
 using Silk.NET.Windowing;
-using SonicArranger;
 using System;
 using System.Collections.Generic;
 using System.IO;

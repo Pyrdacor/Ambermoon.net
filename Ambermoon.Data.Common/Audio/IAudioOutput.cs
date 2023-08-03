@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Ambermoon.Data.Audio
+﻿namespace Ambermoon.Data.Audio
 {
     public interface IAudioOutput
     {

@@ -89,8 +89,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             { IntroGraphic.ForestMoon, 3 },
             { IntroGraphic.Meteor, 3 },
             { IntroGraphic.MeteorSparks, 3 },
-            { IntroGraphic.CloudsLeft, 4 }, // TODO
-            { IntroGraphic.CloudsRight, 4 }, // TODO
+            { IntroGraphic.CloudsLeft, 4 },
+            { IntroGraphic.CloudsRight, 4 },
             { IntroGraphic.GlowingMeteor, 3 },
             { IntroGraphic.Twinlake, 8 },
         };
@@ -133,9 +133,9 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public IntroData(GameData gameData)
         {
-            var introHunks = AmigaExecutable.Read(gameData.Files["Ambermoon_intro"].Files[1]);
+            var introHunks = Read(gameData.Files["Ambermoon_intro"].Files[1]);
             var introDataHunks = introHunks
-                .Where(h => h.Type == AmigaExecutable.HunkType.Data).Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data))
+                .Where(h => h.Type == HunkType.Data).Select(h => new DataReader(((Hunk)h).Data))
                 .ToList();
             var graphicReader = new GraphicReader();
 
@@ -150,7 +150,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 return paletteGraphic;
             }
 
-            // TODO: There are only 8 palettes and the other 64 bytes have some other meaning!
+            // There are only 8 palettes and the other 64 bytes have some other meaning!
             // It seems it is some kind of color palette as well but used in a different way (maybe a changing palette or some color replacement table which is activated over time?)
             for (int i = 0; i < 8; ++i)
                 introPalettes.Add(LoadPalette());
@@ -453,7 +453,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     {
                         // This has a bit mask plane for the blitter (1 bit per pixel).
                         // The image itself is 4bpp. So for easier handling we just load
-                        // this as a 5 bpp image.                            
+                        // this as a 5 bpp image.
                         graphicInfo.GraphicFormat = GraphicFormat.Palette5Bit;
                         graphicReader.ReadGraphic(frameGraphic, introDataHunks[3], graphicInfo);
 

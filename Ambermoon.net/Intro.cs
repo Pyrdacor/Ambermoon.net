@@ -366,7 +366,7 @@ namespace Ambermoon
                 lineHeight = introFont.GlyphGraphics.Values.Select(g => g.Height).Max();
 
                 foreach (var command in introData.TextCommands)
-                    commands.Enqueue(command);                
+                    commands.Enqueue(command);
             }
 
             private static int GetColorFadeDuration(Data.Enumerations.Color color)
@@ -1238,7 +1238,7 @@ namespace Ambermoon
                 meteor?.Delete();
                 town?.Delete();
                 effect?.Delete();
-            }           
+            }
 
             private void ProcessTicks(long ticks, long totalTicks)
             {
@@ -1404,7 +1404,7 @@ namespace Ambermoon
                     text.Visible = true;
                 }
 
-                fadeInStartTicks = startTicks;                
+                fadeInStartTicks = startTicks;
             }
 
             public override void Update(long ticks, int frameCounter)
@@ -1423,7 +1423,7 @@ namespace Ambermoon
                 black[2].Color = currentBlack;
 
                 long elapsed = ticks - startTicks;
-                
+
                 if (elapsed >= 300)
                 {
                     foreach (var text in texts)
