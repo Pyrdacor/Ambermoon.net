@@ -11,7 +11,7 @@ namespace Ambermoon.Data.Audio
         /// <summary>
         /// Stops streaming audio data.
         /// </summary>
-        void Stop(bool keepStreamEndedEvent = false);
+        void Stop();
         /// <summary>
         /// Streams new data.
         /// </summary>
@@ -36,10 +36,5 @@ namespace Ambermoon.Data.Audio
         /// Output volume (0.0 to 1.0)
         /// </summary>
         float Volume { get; set; }
-        /// <summary>
-        /// Stream ended event. This happens also
-        /// while looping.
-        /// </summary>
-        event Action StreamEnded;
     }
 }

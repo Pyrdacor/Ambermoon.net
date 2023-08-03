@@ -967,16 +967,7 @@ namespace Ambermoon
             }, () =>
             {
                 if (configuration.Music)
-                {
-                    audioOutput.StreamEnded += PlayMainMenuMusic;
                     musicManager.GetSong(Data.Enumerations.Song.Intro)?.Play(audioOutput);
-
-                    void PlayMainMenuMusic()
-                    {
-                        audioOutput.StreamEnded -= PlayMainMenuMusic;
-                        mainMenu.Enqueue(() => musicManager.GetSong(Data.Enumerations.Song.Menu)?.Play(audioOutput));
-                    }                    
-                }
             });
         }
 

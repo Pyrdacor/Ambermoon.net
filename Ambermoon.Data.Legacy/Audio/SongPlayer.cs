@@ -7,7 +7,7 @@ namespace Ambermoon.Data.Legacy.Audio
     {
         IAudioStream currentStream = null;
         IAudioOutput audioOutput = null;
-        readonly object startMutex = new object();
+        readonly object startMutex = new();
 
         public void Start(IAudioOutput audioOutput, IAudioStream audioStream)
         {
@@ -17,7 +17,7 @@ namespace Ambermoon.Data.Legacy.Audio
 
                 if (currentStream != audioStream)
                 {
-                    Stop(true);
+                    Stop();
                     currentStream = audioStream;
                     audioOutput.StreamData(audioStream, 1, 44100, true);
                 }
@@ -26,9 +26,9 @@ namespace Ambermoon.Data.Legacy.Audio
             }
         }
 
-        public void Stop(bool keepStreamEndedEvent = false)
+        public void Stop()
         {
-            audioOutput?.Stop(keepStreamEndedEvent);
+            audioOutput?.Stop();
             audioOutput?.Reset();
             currentStream = null;
         }

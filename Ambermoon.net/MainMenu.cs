@@ -46,7 +46,6 @@ namespace Ambermoon
         bool closed = false;
         public event Action<CloseAction> Closed;
         bool started = false;
-        Action enqueuedAction = null;
 
         public MainMenu(IRenderView renderView, Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             Font introFont, string[] texts, bool canContinue, string continueLoadingText, string newLoadingText,
@@ -98,11 +97,6 @@ namespace Ambermoon
                 FadeInMainMenu();
         }
 
-        internal void Enqueue(Action action)
-        {
-            enqueuedAction = action;
-        }
-
         void ShowMainMenu()
         {
             if (background != null)
@@ -150,12 +144,6 @@ namespace Ambermoon
         {
             if (closed)
                 return;
-
-            if (enqueuedAction != null)
-            {
-                enqueuedAction();
-                enqueuedAction = null;
-            }
 
             mainMenuFader?.Update();
 

@@ -87,7 +87,7 @@ namespace Ambermoon.Data.Legacy.Audio
             do
             {
                 var readDuration = Math.Min(remainingDuration, 1000.0);
-                buffer.AddRange(stream.ReadUnsigned(Util.Round(readDuration), loop && stream.LoopCounter == 0)); // loop at max once
+                buffer.AddRange(stream.ReadUnsigned(Util.Round(readDuration), loop));
                 remainingDuration -= readDuration;
             } while (remainingDuration > 0 && !stream.EndOfStream);
 
