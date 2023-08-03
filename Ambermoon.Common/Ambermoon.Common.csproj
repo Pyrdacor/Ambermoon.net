@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <RootNamespace>Ambermoon</RootNamespace>
     <Authors>Robert Schneckenhaus</Authors>
     <RepositoryUrl>https://github.com/Pyrdacor/Ambermoon.net</RepositoryUrl>
