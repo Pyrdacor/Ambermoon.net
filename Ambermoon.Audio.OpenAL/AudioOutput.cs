@@ -127,10 +127,7 @@ namespace Ambermoon.Audio.OpenAL
             {
                 al.DeleteSource(source);
                 foreach (var audioBuffer in audioBuffers)
-                {
-                    if (audioBuffer.Value != null)
-                        audioBuffer.Value.Dispose();
-                }
+                    audioBuffer.Value?.Dispose();
                 alContext.DestroyContext(context);
                 alContext.CloseDevice(device);
                 al.Dispose();
