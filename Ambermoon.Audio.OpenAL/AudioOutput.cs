@@ -127,13 +127,20 @@ namespace Ambermoon.Audio.OpenAL
             {
                 al.DeleteSource(source);
                 foreach (var audioBuffer in audioBuffers)
-                    audioBuffer.Value?.Dispose();
+                {
+                    if (audioBuffer.Value != null)
+                    {
+                        audioBuffer.Value.StreamEnded -= StreamEnded;
+                        audioBuffer.Value.Dispose();
+                    }
+                }
                 alContext.DestroyContext(context);
                 alContext.CloseDevice(device);
                 al.Dispose();
                 alContext.Dispose();
             }
 
+            StreamEnded = null;
             Streaming = false;
             Enabled = false;
             Available = false;
@@ -168,7 +175,7 @@ namespace Ambermoon.Audio.OpenAL
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public void Stop()
+        public void Stop(bool keepStreamEndedEvent = false)
         {
             if (!Available || !Enabled)
                 return;
@@ -180,10 +187,15 @@ namespace Ambermoon.Audio.OpenAL
                 throw new NotSupportedException("Stop was called without a valid source.");
 
             Streaming = false;
+            if (!keepStreamEndedEvent)
+                StreamEnded = null;
             cancellationTokenSource?.Cancel();
 
             if (currentBuffer != null)
+            {
+                currentBuffer.StreamEnded -= StreamEnded;
                 currentBuffer.Stop();
+            }
             else
                 al.SourceStop(source);
 
@@ -198,10 +210,18 @@ namespace Ambermoon.Audio.OpenAL
             if (!Available)
                 return;
 
+            if (currentBuffer != null)
+                currentBuffer.StreamEnded -= StreamEnded;
+
             if (!audioBuffers.TryGetValue(audioStream, out var buffer))
                 currentBuffer = audioBuffers[audioStream] = new AudioBuffers(al, source, channels, sampleRate, sample8Bit, audioStream);
             else
+            {
                 currentBuffer = buffer;
+                currentBuffer.StreamEnded -= StreamEnded;
+            }
+
+            currentBuffer.StreamEnded += StreamEnded;
         }
 
         /// <summary>
@@ -214,5 +234,10 @@ namespace Ambermoon.Audio.OpenAL
 
             al.SetSourceProperty(source, SourceInteger.Buffer, 0u);
         }
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public event Action StreamEnded;
     }
 }

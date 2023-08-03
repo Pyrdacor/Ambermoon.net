@@ -29,7 +29,7 @@ namespace Ambermoon.Data.Legacy.Audio
         Stream stream = null;
         int bytesPerSecond = 0;
         TimeSpan? songDuration = null;
-        Action followupSongAction = null;
+        readonly bool loop = false;
 
         public int SongLength => sonicArrangerSong.StopPos - sonicArrangerSong.StartPos;
         public int PatternLength => sonicArrangerSong.PatternLength;
@@ -52,6 +52,7 @@ namespace Ambermoon.Data.Legacy.Audio
         {
             this.song = song;
             this.songPlayer = songPlayer;
+            loop = song == Enumerations.Song.Intro; // this loops to provide the start of the main menu song
             reader.Position = 0;
             sonicArrangerFile = new SonicArrangerFile(reader);
             sonicArrangerSong = sonicArrangerFile.Songs[songIndex];
@@ -63,23 +64,14 @@ namespace Ambermoon.Data.Legacy.Audio
 
         public bool EndOfStream => stream != null && stream.EndOfStream;
 
-        public void Play(IAudioOutput audioOutput, ISong followupSong = null)
+        public void Play(IAudioOutput audioOutput)
         {
             songPlayer.Start(audioOutput, this);
-
-            if (followupSong != null)
-            {
-                followupSongAction = () =>
-                {
-                    followupSong.Play(audioOutput, null);
-                };
-            }
         }
 
         public void Stop()
         {
             songPlayer.Stop();
-            followupSongAction = null;
         }
 
         public byte[] GetData()
@@ -95,15 +87,9 @@ namespace Ambermoon.Data.Legacy.Audio
             do
             {
                 var readDuration = Math.Min(remainingDuration, 1000.0);
-                buffer.AddRange(stream.ReadUnsigned(Util.Round(readDuration), false));
+                buffer.AddRange(stream.ReadUnsigned(Util.Round(readDuration), loop && stream.LoopCounter == 0)); // loop at max once
                 remainingDuration -= readDuration;
             } while (remainingDuration > 0 && !stream.EndOfStream);
-
-            if (stream.EndOfStream)
-            {
-                followupSongAction?.Invoke();
-                followupSongAction = null;
-            }
 
             return buffer.ToArray();
         }

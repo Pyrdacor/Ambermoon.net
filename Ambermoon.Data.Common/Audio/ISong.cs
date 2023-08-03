@@ -7,7 +7,7 @@ namespace Ambermoon.Data.Audio
     {
         Song Song { get; }
         TimeSpan? SongDuration { get; }
-        void Play(IAudioOutput audioOutput, ISong followupSong = null);
+        void Play(IAudioOutput audioOutput);
         void Stop();
     }
 }

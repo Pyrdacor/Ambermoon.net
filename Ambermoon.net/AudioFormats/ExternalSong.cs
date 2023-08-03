@@ -10,7 +10,7 @@ namespace Ambermoon.AudioFormats
 
         public abstract TimeSpan? SongDuration { get; protected set; }
 
-        public abstract void Play(IAudioOutput audioOutput, ISong followupSong = null);
+        public abstract void Play(IAudioOutput audioOutput);
 
         public abstract void Stop();
 

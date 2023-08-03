@@ -41,9 +41,9 @@ namespace Ambermoon
                     IntroActionType.ThalionLogoFlyIn => new IntroActionLogoFlyin(IntroGraphic.ThalionLogo, actionType, renderView, startTicks, finishHandler, introData, introFontLarge),
                     IntroActionType.AmbermoonFlyIn => new IntroActionLogoFlyin(IntroGraphic.Ambermoon, actionType, renderView, startTicks, finishHandler, introData, introFontLarge),
                     IntroActionType.DisplayObjects => new IntroActionDisplayObjects(renderView, startTicks, introFontLarge, introData, finishHandler),
-                    IntroActionType.TwinlakeAnimation => new IntroActionTwinlake(renderView, startTicks, introData, finishHandler),
+                    IntroActionType.TwinlakeAnimation => new IntroActionTwinlake(renderView, startTicks, introData, finishHandler, introFontLarge),
                     IntroActionType.TextCommands => new IntroActionTextCommands(renderView, introData, introFont, intro, finishHandler, startTicks),
-                    IntroActionType.TownDestruction => new IntroActionTownDestruction(renderView, startTicks, introFontLarge, introData, finishHandler),
+                    IntroActionType.TownDestruction => new IntroActionTownDestruction(renderView, startTicks, introData, finishHandler),
                     IntroActionType.EndScreen => new IntroActionEndScreen(renderView, startTicks, introFontLarge, introData, finishHandler),
                     _ => throw new NotImplementedException()
                 };
@@ -56,7 +56,6 @@ namespace Ambermoon
             private readonly Position[] starBasePositions = new Position[150];
             private readonly int[] starScaleValues = new int[150];
             private readonly static List<int> scaleValues = new();
-            private readonly int star1InitialScaleValue;
             private const int StartScale = 0x7630;
             private const int ScaleDecrease = 250;
             private long stopTicks = -1;
@@ -110,9 +109,6 @@ namespace Ambermoon
                     // of this star.
                     var r = rng() % validPositionCount;
                     starScaleValues[i] = scaleValues[r];
-
-                    if (i == 1)
-                        star1InitialScaleValue = starScaleValues[i];
                 }
             }
 
@@ -1037,19 +1033,18 @@ namespace Ambermoon
 
         private class IntroActionTwinlake : IntroAction
         {
-            private readonly IRenderView renderView;
             private readonly ITextureAtlas textureAtlas;
             private readonly long startTicks;
             private readonly ILayerSprite frame;
             private readonly ILayerSprite[] images = new ILayerSprite[95];
             private readonly IColoredRect black;
+            private readonly Text twinlakeText;
             private int activeFrame = -1;
             private Action finishHandler;
 
-            public IntroActionTwinlake(IRenderView renderView, long startTicks, IIntroData introData, Action finishHandler)
+            public IntroActionTwinlake(IRenderView renderView, long startTicks, IIntroData introData, Action finishHandler, Font largeFont)
                 : base(IntroActionType.TwinlakeAnimation)
             {
-                this.renderView = renderView;
                 this.startTicks = startTicks;
                 var layer = renderView.GetLayer(Layer.IntroGraphics);
                 textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
@@ -1091,6 +1086,9 @@ namespace Ambermoon
                     images[i].Visible = false;
                 }
 
+                twinlakeText = largeFont.CreateText(renderView, Layer.IntroText, new Rect(90, 203, 320 - 90, 22), introData.Texts[IntroText.Twinlake], 20, TextAlign.Left, 255, new Rect(90, 203, 320, 225));
+                twinlakeText.Visible = true;
+
                 this.finishHandler = finishHandler;
             }
 
@@ -1098,6 +1096,7 @@ namespace Ambermoon
             {
                 frame.Delete();
                 black.Delete();
+                twinlakeText.Destroy();
 
                 foreach (var image in images)
                     image?.Delete();
@@ -1157,8 +1156,9 @@ namespace Ambermoon
             private long nextTownTicks;
             private long fadeInStartTicks = -1;
             private long fadeOutStartTicks = -1;
+            private const int TimePerTown = 350 + 64;
 
-            public IntroActionTownDestruction(IRenderView renderView, long startTicks, Font largeFont, IIntroData introData, Action finishHandler)
+            public IntroActionTownDestruction(IRenderView renderView, long startTicks, IIntroData introData, Action finishHandler)
                 : base(IntroActionType.TownDestruction)
             {
                 this.finishHandler = finishHandler;
@@ -1198,9 +1198,9 @@ namespace Ambermoon
                     paletteData[7]
                 );
 
-                nextTownTicks = startTicks + 350;
+                nextTownTicks = startTicks + TimePerTown;
                 fadeInStartTicks = startTicks;
-                fadeOutStartTicks = startTicks + 350 - 64;
+                fadeOutStartTicks = startTicks + TimePerTown - 64;
             }
 
             public override void Update(long ticks, int frameCounter)
@@ -1219,20 +1219,17 @@ namespace Ambermoon
 
                 if (fadeInStartTicks != -1)
                 {
-                    effect.Color = new Color(0, (byte)Math.Max(0, 255 - (ticks - fadeInStartTicks) * 2));
+                    effect.Color = new Color(0, (byte)Math.Max(0, 255 - (ticks - fadeInStartTicks) * 4));
 
                     if (effect.Color.A == 0)
                         fadeInStartTicks = -1;
                 }
-                else if (fadeOutStartTicks != -1 && ticks > fadeOutStartTicks)
+                else if (fadeOutStartTicks != -1 && ticks >= fadeOutStartTicks)
                 {
-                    effect.Color = new Color(0, (byte)Math.Min(255, (ticks - fadeOutStartTicks) * 2));
+                    effect.Color = new Color(0, (byte)Math.Min(255, (ticks - fadeOutStartTicks) * 4));
 
                     if (effect.Color.A == 255)
-                    {
                         fadeOutStartTicks = -1;
-                        fadeInStartTicks = ticks;
-                    }
                 }
             }
 
@@ -1248,7 +1245,7 @@ namespace Ambermoon
                 // Fade flash
                 if (townImageOffset == 3 && effect.Color.R != 0 && effect.Color.A > 0)
                 {
-                    effect.Color = new Color(flashColor, (byte)Math.Max(0, effect.Color.A - 48));
+                    effect.Color = new Color(flashColor, (byte)Math.Max(0, effect.Color.A - 16));
                 }
 
                 if (currentZoom <= -512)
@@ -1269,16 +1266,15 @@ namespace Ambermoon
                             }
                         }
 
-                        // Start fading out
-                        effect.Color = new Color(0, 0);
                         // Reset meteor
                         currentZoom = 14000;
                         meteorX = currentTownIndex == 1 ? -9700 : 9700;
                         meteorY = 5700;
                         // Reset town image
                         townImageOffset = 0;
-                        nextTownTicks = totalTicks + 350;
-                        fadeOutStartTicks = totalTicks + 350 - 64;
+                        nextTownTicks = totalTicks + TimePerTown;
+                        fadeOutStartTicks = totalTicks + TimePerTown - 64;
+                        fadeInStartTicks = totalTicks;
                         town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone + (uint)currentTownIndex);
                     }
                 }
@@ -1298,7 +1294,7 @@ namespace Ambermoon
                             {
                                 townImageOffset = 3; // show destroyed version now
                                 town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone + (uint)currentTownIndex + (uint)townImageOffset);
-                                effect.Color = new Color(flashColor); // flash the screen
+                                effect.Color = new Color(flashColor, 192); // flash the screen
                             }
                         }
 
@@ -1492,7 +1488,6 @@ namespace Ambermoon
         const double TicksPerSecond = 50.0;
         int animationFrameCounter = 0;
         readonly Queue<KeyValuePair<long, Func<IntroAction>>> actionQueue = new();
-        readonly Queue<KeyValuePair<long, Action>> simpleActionQueue = new();
         ushort randomSeed = 0x0011;
         Action startMusicAction;
         double time = 0.0;
@@ -1572,7 +1567,7 @@ namespace Ambermoon
                         DestroyAction(IntroActionType.Starfield);
                         DestroyAction(IntroActionType.TextCommands);
                         DestroyAction(IntroActionType.DisplayObjects);
-                        ScheduleAction(ticks + 6, IntroActionType.TwinlakeAnimation, () =>
+                        ScheduleAction(ticks + 2, IntroActionType.TwinlakeAnimation, () =>
                         {
                             DestroyAction(IntroActionType.TwinlakeAnimation);
                             ScheduleAction(ticks + 40, IntroActionType.TownDestruction, () =>
@@ -1610,11 +1605,6 @@ namespace Ambermoon
             actionQueue.Enqueue(KeyValuePair.Create(startTicks, adder));
         }
 
-        private void ScheduleAction(long startTicks, Action action)
-        {
-            simpleActionQueue.Enqueue(KeyValuePair.Create(startTicks, action));
-        }
-
         internal void StartMeteorGlowing(long ticks)
         {
             (actions.FirstOrDefault(a => a.Type == IntroActionType.DisplayObjects) as IntroActionDisplayObjects)?.StartMeteorGlowing(ticks);
@@ -1632,14 +1622,6 @@ namespace Ambermoon
                 // Music starts after 1 tick
                 startMusicAction?.Invoke();
                 startMusicAction = null;
-            }
-
-            while (simpleActionQueue.Count > 0)
-            {
-                if (simpleActionQueue.Peek().Key <= ticks)
-                    simpleActionQueue.Dequeue().Value();
-                else
-                    break;
             }
 
             while (actionQueue.Count > 0)

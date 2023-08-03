@@ -1,38 +1,45 @@
-﻿namespace Ambermoon.Data.Audio
+﻿using System;
+
+namespace Ambermoon.Data.Audio
 {
     public interface IAudioOutput
     {
         /// <summary>
         /// Starts streaming audio data.
         /// </summary>
-        public void Start();
+        void Start();
         /// <summary>
         /// Stops streaming audio data.
         /// </summary>
-        public void Stop();
+        void Stop(bool keepStreamEndedEvent = false);
         /// <summary>
         /// Streams new data.
         /// </summary>
-        public void StreamData(IAudioStream audioStream, int channels = 1, int sampleRate = 44100, bool sample8Bit = true);
+        void StreamData(IAudioStream audioStream, int channels = 1, int sampleRate = 44100, bool sample8Bit = true);
         /// <summary>
         /// Resets the audio data.
         /// </summary>
-        public void Reset();
+        void Reset();
         /// <summary>
         /// Indicates if an audio output is available.
         /// </summary>
-        public bool Available { get; }
+        bool Available { get; }
         /// <summary>
         /// Enables audio output.
         /// </summary>
-        public bool Enabled { get; set; }
+        bool Enabled { get; set; }
         /// <summary>
         /// Indicates if currently audio data is streamed.
         /// </summary>
-        public bool Streaming { get; }
+        bool Streaming { get; }
         /// <summary>
         /// Output volume (0.0 to 1.0)
         /// </summary>
-        public float Volume { get; set; }
+        float Volume { get; set; }
+        /// <summary>
+        /// Stream ended event. This happens also
+        /// while looping.
+        /// </summary>
+        event Action StreamEnded;
     }
 }

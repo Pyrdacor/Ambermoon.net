@@ -13,7 +13,6 @@ namespace Ambermoon.AudioFormats
         readonly int channels;
         readonly int sampleRate;
         readonly bool sample8Bit;
-        Action followupSongAction = null;
 
         public void Dispose()
         {
@@ -50,23 +49,14 @@ namespace Ambermoon.AudioFormats
 
         public bool EndOfStream => file != null && file.Position == file.Length;
 
-        public override void Play(IAudioOutput audioOutput, ISong followupSong = null)
+        public override void Play(IAudioOutput audioOutput)
         {
             musicManager.Start(audioOutput, this, channels, sampleRate, sample8Bit);
-
-            if (followupSong != null)
-            {
-                followupSongAction = () =>
-                {
-                    followupSong.Play(audioOutput, null);
-                };
-            }
         }
 
         public override void Stop()
         {
             musicManager.Stop();
-            followupSongAction = null;
         }
 
         public byte[] Stream(TimeSpan duration)
@@ -77,8 +67,6 @@ namespace Ambermoon.AudioFormats
             file.ReadSamples(floatBuffer, 0, floatBuffer.Length);
             if (prevPosition == file.Position) // no read
             {
-                followupSongAction?.Invoke();
-                followupSongAction = null;
                 file.Position = 0;
                 file.ReadSamples(floatBuffer, 0, floatBuffer.Length);
             }
