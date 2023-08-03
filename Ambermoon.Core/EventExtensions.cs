@@ -186,7 +186,6 @@ namespace Ambermoon
                     if (trigger == EventTrigger.Eye)
                     {
                         game.ShowMessagePopup(game.DataNameProvider.SeeRoundDiskInFloor);
-                        aborted = true;
                         return null;
                     }
 

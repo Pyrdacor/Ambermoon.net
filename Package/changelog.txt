@@ -1,3 +1,9 @@
+Version 1.9
+===========
+
+- Added the intro
+
+
 Version 1.8
 ===========
 

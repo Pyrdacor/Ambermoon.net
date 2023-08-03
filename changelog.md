@@ -1,8 +1,12 @@
 # Changelog
 
+## 1.9.0 - Eighth patch (August 2023)
+
+- Version [1.9.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.0): Added the intro
 
 ## 1.8.0 - Eighth patch (July 2022 - May 2023)
 
+- Version [1.8.8](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.8.8): Integrated original game version 1.19
 - Version [1.8.7](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.8.7): Fixed some crashes, improved handling of the Mac gatekeeper
 - Version [1.8.6](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.8.6): Advanced start crash fix for 1.8.5 and patcher improvements
 - Version [1.8.5](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.8.5): Added game data version 1.18, fixed dmg/def calculation
