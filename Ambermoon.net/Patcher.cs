@@ -186,6 +186,21 @@ namespace Ambermoon
                     "Annuler",
                     "Échec de l'application du correctif. Veuillez télécharger manuellement la version la plus récente."
                 }
+            },
+            { GameLanguage.Polish, new string[]
+                {
+                    "Czy chcesz używać patchera? Nieznacznie wydłuża to czas uruchamiania i wymaga dostępu do Internetu. Nowe wersje będą jednak wykrywane i możliwe do pobrania  automatycznie.",
+                    "Jeśli zdecydujesz się użyć patchera później, możesz aktywować go ręcznie w pliku konfiguracyjnym \"ambermoon.cfg\".",
+                    "Kliknij, aby kontynuować",
+                    "Dostępna jest nowa wersja! Czy chcesz ją pobrać i zainstalować?",
+                    "Nowa wersja nie została znaleziona. Prosimy o zgłoszenie tego do Pyrdacora (trobt(at)web.de).",
+                    "Nie udało się pobrać nowej wersji. Spróbuj ponownie później lub pobierz ją ręcznie.",
+                    "Pobieranie Ambermoon {0} ...",
+                    "{0} z {1}",
+                    "Gotowe",
+                    "Anuluj pobieranie",
+                    "Nie udało się zastosować poprawki. Pobierz najnowszą wersję ręcznie."
+                }
             }
         };
 

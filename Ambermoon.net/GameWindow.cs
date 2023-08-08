@@ -696,6 +696,12 @@ namespace Ambermoon
                     "Démarrage du jeu ...",
                     "Démarrage un nouveau jeu ..."
                 }
+            },
+            { GameLanguage.Polish, new string[]
+                {
+                    "Rozpoczynanie gry ...",
+                    "Przygotowanie nowej gry ..."
+                }
             }
         };
 
@@ -760,7 +766,17 @@ namespace Ambermoon
 
             if (configuration.ShowFantasyIntro)
             {
-                fantasyIntro = new FantasyIntro(renderView, fantasyIntroData, () => fantasyIntro = null);
+                fantasyIntro = new FantasyIntro(renderView, fantasyIntroData, () =>
+                {
+                    fantasyIntro = null;
+
+                    if (configuration.ShowIntro)
+                        StartIntro();
+                });
+            }
+            else if (configuration.ShowIntro)
+            {
+                ShowIntro();                
             }
 
             InitGlyphs(fontProvider);

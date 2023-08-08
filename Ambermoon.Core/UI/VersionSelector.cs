@@ -368,18 +368,28 @@ namespace Ambermoon.UI
                 {
                     GameLanguage.German => "Deutsch",
                     GameLanguage.French => "Französisch",
+                    GameLanguage.Polish => "Polnisch",
                     _ => "Englisch"
                 },
                 GameLanguage.French => gameLanguage switch
                 {
                     GameLanguage.German => "Allemand",
                     GameLanguage.French => "Français",
+                    GameLanguage.Polish => "Polonais",
                     _ => "Anglais"
+                },
+                GameLanguage.Polish => gameLanguage switch
+                {
+                    GameLanguage.German => "Niemiecki",
+                    GameLanguage.French => "Francuski",
+                    GameLanguage.Polish => "Polski",
+                    _ => "Angielski"
                 },
                 _ => gameLanguage switch
                 {
                     GameLanguage.German => "German",
                     GameLanguage.French => "French",
+                    GameLanguage.Polish => "Polish",
                     _ => "English"
                 }
             };
@@ -391,6 +401,7 @@ namespace Ambermoon.UI
             {
                 GameLanguage.German =>               "Wähle eine Spieldaten-Version:     (?)",
                 GameLanguage.French => ProcessFrench("Choisir une version de données:    (?)"),
+                GameLanguage.Polish =>               "Wybierz wersję gry:                (?)",
                 _ =>                                 "Select a game data version:        (?)"
             };
         }
@@ -401,6 +412,7 @@ namespace Ambermoon.UI
             {
                 GameLanguage.German =>               "Die Spieldaten-Version bezieht sich auf die Amiga-Basisdaten. Diese Versionierung ist unabhängig von der Ambermoon.net Version.",
                 GameLanguage.French => ProcessFrench("La version des données concerne les données de base de l'Amiga. Cette version est indépendante de la version d'Ambermoon.net."),
+                GameLanguage.Polish =>               "Wersja danych gry odnosi się do danych bazowych Amigi. Ta wersja jest niezależna od wersji Ambermoon.net.",
                 _ =>                                 "The game data version relates to the Amiga base data. This version is independent of the Ambermoon.net version."
             };
         }
@@ -412,12 +424,14 @@ namespace Ambermoon.UI
                 {
                     GameLanguage.German =>               "Speichere beim Programm",
                     GameLanguage.French => ProcessFrench("Sauvegarder au programme"),
+                    GameLanguage.Polish =>               "Zapis gry w ścieżce progr.",
                     _ =>                                 "Save games in program path"
                 }
                 : configuration.Language switch
                 {
                     GameLanguage.German =>               "Speichere bei den Daten",
                     GameLanguage.French => ProcessFrench("Sauvegarder aux données"),
+                    GameLanguage.Polish =>               "Zapis gry w ścieżce danych",
                     _ =>                                 "Save games in data path"
                 };
         }
@@ -431,6 +445,8 @@ namespace Ambermoon.UI
                         "Spielstände werden neben der Ambermoon.net.exe im Unterorder 'Saves' gespeichert.",
                     GameLanguage.French =>
                         ProcessFrench("Les sauvegardes sont stockées à côté d'Ambermoon.net.exe dans le sous-dossier 'Saves'."),
+                    GameLanguage.Polish =>
+                        "Zapisane gry są przechowywane obok pliku Ambermoon.net.exe w podfolderze 'Saves'.",
                     _ =>
                         "Savegames are stored next to the Ambermoon.net.exe inside the sub-folder 'Saves'."
                 }
@@ -440,6 +456,8 @@ namespace Ambermoon.UI
                         "Spielstände werden im Pfad der Originaldaten gespeichert und überschreiben die Originalspielstände!",
                     GameLanguage.French =>
                         ProcessFrench("Les sauvegardes sont stockées dans le chemin de données d'origine et peuvent écraser les sauvegardes d'origine!"),
+                    GameLanguage.Polish =>
+                        "Zapisane gry są przechowywane w oryginalnej ścieżce danych i mogą nadpisywać oryginalne zapisy!",
                     _ =>
                         "Savegames are stored in the original data path and may overwrite original savegames!"
                 };

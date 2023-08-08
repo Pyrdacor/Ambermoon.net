@@ -70,8 +70,7 @@ namespace Ambermoon
         public bool EnableCheats { get; set; } = false;
         public bool ShowButtonTooltips { get; set; } = true;
         public bool ShowFantasyIntro { get; set; } = true;
-        [JsonIgnore] // TODO: remove attribute later
-        public bool ShowIntro { get; set; } = false; // TODO: change to true later
+        public bool ShowIntro { get; set; } = true;
         [Obsolete("Use GraphicFilter instead.")]
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? UseGraphicFilter { get; set; } = null;

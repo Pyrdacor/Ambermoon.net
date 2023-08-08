@@ -1175,7 +1175,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 19;
+        const int OptionCount = 20;
         const int OptionsPerPage = 7;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
@@ -1204,9 +1204,8 @@ namespace Ambermoon.UI
                     "Externe Musik",
                     "Pyrdacor Logo zeigen",
                     "Fantasy Intro zeigen",
+                    "Intro anzeigen",
                     "Info beim Speichern/Laden"
-                    // TODO
-                    //"Intro anzeigen",
                 }
             },
             {
@@ -1234,9 +1233,8 @@ namespace Ambermoon.UI
                     "External music",
                     "Show Pyrdacor logo",
                     "Show fantasy intro",
+                    "Show intro",
                     "Show save/load info"
-                    // TODO
-                    //"Show intro",
                 }
             },
             {
@@ -1264,11 +1262,39 @@ namespace Ambermoon.UI
                     "Musique externe",
                     "Afficher Pyrdacor logo",
                     "Afficher fantasy intro",
+                    "Afficher intro",
                     "Messages de sauvegarde"
-                    // TODO
-                    //"Show intro",
                 }
-            }
+            },
+            {
+                GameLanguage.Polish,
+                new string[OptionCount]
+                {
+                    // Page 1
+                    "Muzyka",
+                    "Głośność",
+                    "Rozdzielczość",
+                    "Pełny ekran",
+                    "Filtr graficzny",
+                    "Nakładka graficzna",
+                    "Efekt",
+                    // Page 2
+                    "Szybkość walki",
+                    "Ruch 3D",
+                    "Pokaż opisy przycisków",
+                    "Pokaż opisy statystyk",
+                    "Pokaż runy jako tekst",
+                    "Włącz cheaty",
+                    "Podłoga i sufit 3D",
+                    // Page 3
+                    "Dodatkowe miejsca zapisu",
+                    "Zewnętrzna muzyka",
+                    "Pokaż logo Pyrdacora",
+                    "Pokaż fantasy intro",
+                    "Pokaż intro",
+                    "Pokaż inf. zapis/odczyt"
+                }
+            }            
         };
         static readonly Dictionary<GameLanguage, string[]> FloorAndCeilingValues = new Dictionary<GameLanguage, string[]>
         {
@@ -1301,6 +1327,16 @@ namespace Ambermoon.UI
                     "Plafond",
                     "Les deux"
                 }
+            },
+            {
+                GameLanguage.Polish,
+                new string[4]
+                {
+                    "Żadna",
+                    "Podłoga",
+                    "Sufit",
+                    "Obie"
+                }
             }
         };
         static readonly Dictionary<GameLanguage, string> DefaultBattleSpeedName = new Dictionary<GameLanguage, string>
@@ -1313,6 +1349,9 @@ namespace Ambermoon.UI
             },
             {
                 GameLanguage.French, "Défaut"
+            },
+            {
+                GameLanguage.Polish, "Domyślna"
             }
         };
         static readonly Dictionary<GameLanguage, string[]> Movement3DValues = new Dictionary<GameLanguage, string[]>
@@ -1335,6 +1374,14 @@ namespace Ambermoon.UI
             },
             {
                 GameLanguage.French,
+                new string[2]
+                {
+                    "WASD",
+                    "QWEASD"
+                }
+            },
+            {
+                GameLanguage.Polish,
                 new string[2]
                 {
                     "WASD",
@@ -1381,9 +1428,8 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExternalMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFantasyIntro())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleIntro())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleSaveLoadInfo()))
-                // TODO: later
-                //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleIntro())),              
             };
             listBox = activePopup.AddOptionsListBox(options.Take(OptionsPerPage).ToList());
 
@@ -1444,8 +1490,8 @@ namespace Ambermoon.UI
             void SetExternalMusic() => SetOptionString(15, game.Configuration.ExternalMusic ? on : off);
             void SetPyrdacorLogo() => SetOptionString(16, game.Configuration.ShowPyrdacorLogo ? on : off);
             void SetFantasyIntro() => SetOptionString(17, game.Configuration.ShowFantasyIntro ? on : off);
-            void SetSaveLoadInfo() => SetOptionString(18, game.Configuration.ShowSaveLoadMessage ? on : off);
-            // TODO: void SetIntro() => SetOptionString(?, game.Configuration.ShowIntro ? on : off);
+            void SetIntro() => SetOptionString(18, game.Configuration.ShowIntro ? on : off);
+            void SetSaveLoadInfo() => SetOptionString(19, game.Configuration.ShowSaveLoadMessage ? on : off);
 
             void ShowOptions()
             {
@@ -1475,10 +1521,9 @@ namespace Ambermoon.UI
                         SetExternalMusic();
                         SetPyrdacorLogo();
                         SetFantasyIntro();
+                        SetIntro();
                         SetSaveLoadInfo();
                         break;
-                    // TODO
-                    //SetIntro();
                 }
             }
 
@@ -1625,6 +1670,12 @@ namespace Ambermoon.UI
             {
                 game.Configuration.ShowFantasyIntro = !game.Configuration.ShowFantasyIntro;
                 SetFantasyIntro();
+                changedConfiguration = true;
+            }
+            void ToggleIntro()
+            {
+                game.Configuration.ShowIntro = !game.Configuration.ShowIntro;
+                SetIntro();
                 changedConfiguration = true;
             }
             void ToggleEffects()

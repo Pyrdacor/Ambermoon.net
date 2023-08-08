@@ -29,7 +29,8 @@ namespace Ambermoon
     {
         English,
         German,        
-        French
+        French,
+        Polish
     }
 
     public class GameVersion
@@ -54,10 +55,12 @@ namespace Ambermoon
 
             languageString = languageString.ToLower().Trim();
 
-            if (languageString == "german" || languageString == "deutsch" || languageString == "deu" || languageString == "de")
+            if (languageString == "german" || languageString == "deutsch" || languageString == "ger" || languageString == "de")
                 return GameLanguage.German;
-            if (languageString == "french" || languageString == "französisch" || languageString == "fra" || languageString == "fr")
+            if (languageString == "french" || languageString == "français" || languageString == "fre" || languageString == "fr")
                 return GameLanguage.French;
+            if (languageString == "polish" || languageString == "polski" || languageString == "pol" || languageString == "pl")
+                return GameLanguage.Polish;
 
             return GameLanguage.English;
         }
