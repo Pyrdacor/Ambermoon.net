@@ -1059,7 +1059,8 @@ namespace Ambermoon
                 frame.Y = 0;
                 frame.Visible = true;
 
-                black = renderView.ColoredRectFactory.Create(320, 200, Color.Black, 255);
+                black = renderView.ColoredRectFactory.Create(320, 256, Color.Black, 255);
+                black.ClipArea = new Rect(0, 0, 320, 256);
                 black.Layer = renderView.GetLayer(Layer.IntroEffects);
                 black.X = 0;
                 black.Y = 0;
