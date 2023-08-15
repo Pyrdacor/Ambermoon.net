@@ -30,7 +30,7 @@ namespace Ambermoon.Renderer
     internal class RenderText : RenderNode, IRenderText
     {
         const int CharacterWidth = 6;
-        const int CharacterHeight = 6;
+        const int CharacterHeight = LineHeight; // important to show lower diacritics
         const int LineHeight = 7;
         const byte ShadowColorIndex = (byte)TextColor.Black;
         protected int drawIndex = -1;

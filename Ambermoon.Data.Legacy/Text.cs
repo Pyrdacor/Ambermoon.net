@@ -37,7 +37,7 @@ namespace Ambermoon.Data.Legacy
         public TextProcessor(int glyphCount)
         {
             // The original version has 94 glyphs.
-            // CHaracters like á, à and â share the same glyph
+            // Characters like á, à and â share the same glyph
             // as it wasn't possible to distinguish them in such
             // small resolution. But with modern fonts there might
             // by distinct glyphs for all of them. So when this
@@ -145,6 +145,24 @@ namespace Ambermoon.Data.Legacy
                 yield return (byte)(rune ? 72 : extended ? 99 : 8);
             else if (ch == 'ë' || ch == 'Ë')
                 yield return (byte)(rune ? 68 : extended ? 100 : 60);
+            else if (ch == 'ą' || ch == 'Ą')
+                yield return (byte)(rune ? 64 : extended ? 103 : 0);
+            else if (ch == 'ć' || ch == 'Ć')
+                yield return (byte)(rune ? 66 : extended ? 104 : 2);
+            else if (ch == 'ę' || ch == 'Ę')
+                yield return (byte)(rune ? 68 : extended ? 105 : 4);
+            else if (ch == 'ł' || ch == 'Ł')
+                yield return (byte)(rune ? 75 : extended ? 106 : 11);
+            else if (ch == 'ń' || ch == 'Ń')
+                yield return (byte)(rune ? 77 : extended ? 107 : 13);
+            else if (ch == 'ó' || ch == 'Ó')
+                yield return (byte)(rune ? 78 : extended ? 108 : 63);
+            else if (ch == 'ś' || ch == 'Ś')
+                yield return (byte)(rune ? 82 : extended ? 109 : 18);
+            else if (ch == 'ź' || ch == 'Ź')
+                yield return (byte)(rune ? 89 : extended ? 110 : 25);
+            else if (ch == 'ż' || ch == 'Ż')
+                yield return (byte)(rune ? 89 : extended ? 111 : 25);
             else if (ch == ' ')
                 yield return (byte)SpecialGlyph.SoftSpace;
             else if (ch == '$')
