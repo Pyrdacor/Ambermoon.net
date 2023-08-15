@@ -212,6 +212,25 @@ namespace Ambermoon.UI
                 "Chance^^Chance en pourcentage d'éviter^l'effet d'un piège déjà déclenché.^Ajoute, avec la Dextérité,^aux chances d'éviter les combats.^^Actuellement:^  {0}% de chance d'éviter l'effet d'un piège^  {1}% de chance d'éviter un combat",
                 // Anti-Magic
                 "Anti-magie^^Chance en pourcentage de bloquer les sorts ennemis.^^Actuellement:^  {0}% de chances de bloquer les sorts"
+            } },
+            { GameLanguage.Polish, new string[]
+            {
+                // Strength
+                "Siła^^Zwiększa maksymalny udźwig o 1 kg na punkt.^ Zwiększa również obrażenia o 1 co 25 punktów.^^ Obecnie +{0} kg i +{1} obrażeń.",
+                // Intelligence
+                "Inteligencja^^Dodaje 1 dodatkowy PM i PNM^na poziom, za każde 25 punktów.^^Obecnie +{0} PM i PNM",
+                // Dexterity
+                "Zręczność^^Szansa w procentach, by nie uruchomić pułapki^podczas majstrowania przy zamkach.^Dodaje się, wraz ze szczęściem,^do szansy na uniknięcie walki.^^Obecnie {0}% szansy na uniknięcie pułapki^        {1}% szansy na uniknięcie walki.",
+                // Speed
+                "Szybkość^^Wyższa wartość szybkości pozwala działać wcześniej w walce.^Za każde 80 punktów możesz poruszyć się o 1 dodatkowe pole^na rundę.^^ Obecnie możesz poruszyć się o {0} pól.",
+                // Stamina
+                "Wytrzymałość^^Zwiększa obronę o 1 co 25 punktów.^^Obecnie +{0} do obrony",
+                // Charisma
+                "Charyzma^^Zwiększa cenę sprzedaży o 1%^za każde pełne 10 punktów.^^Obecnie +{0}% ceny sprzedaży",
+                // Luck
+                "Szczęście^^Szansa w procentach na uniknięcie efektu już uruchomionej pułapki.^Dodaje się, wraz ze Zręcznością, do szansy na uniknięcie walki.^^Obecnie {0}% szansy na uniknięcie efektu pułapki^        {1}% szansy na uniknięcie walki.",
+                // Anti-Magic
+                "Anty-magia^^Procentowa szansa na zablokowanie zaklęć przeciwnika.^^Obecnie {0}% szansy na zablokowanie zaklęć."
             } }
         };
 
@@ -285,6 +304,29 @@ namespace Ambermoon.UI
                 "Lire magie^^Chance d'apprendre un sort à partir d'un parchemin.^En cas d'échec, le parchemin est détruit.^^Chance actuelle : {0}%.",
                 // Use magic
                 "Utiliser magie^^Chance de lancer un sort avec succès.^Certains sorts ont des effets^négatifs en cas d'échec.^^Chance actuelle : {0}%",
+            } },
+            { GameLanguage.Polish, new string[]
+            {
+                // Attack
+                "Atak^^Szansa na trafienie przeciwnika.^^ Obecnie {0}% szansy na trafienie",
+                // Parry
+                "Parowanie^^Szansa na zablokowanie ataku przeciwnika.^Konieczne jest wykonanie w trakcie walki akcji 'Obrona'.^^Obecnie {0}% szansy na zablokowanie.",
+                // Swim
+                "Pływanie^^Redukcja obrażeń podczas pływania.^^Obecnie {0}% redukcji obrażeń",
+                // Crit
+                "Krytyczne uderzenie^^Szansa na zabicie przeciwnika jednym uderzeniem.^^Nie działa przeciwko bossom.^^Aktualna szansa: {0}%",
+                // Find traps
+                "Znajdowanie pułapek^^Szansa na znalezienie pułapki w zamku.^^Aktualna szansa: {0}%",
+                // Disarm traps
+                "Rozbrajanie pułapek^^Szansa na rozbrojenie znalezionej pułapki.^^Aktualna szansa: {0}%",
+                // Lockpick
+                "Otwieranie zamków^^Szansa na otwarcie zamka bez wytrycha.^^Nie działa w przypadku drzwi wymagających klucza.^^Aktualna szansa: {0}%",
+                // Search
+                "Przeszukiwanie^^Szansa na znalezienie ukrytych skarbów.^Wyższe wartości pozwalają znaleźć określone skrzynie.",
+                // Read magic
+                "Czytanie magii^^Szansa na nauczenie się zaklęcia ze zwoju.^W przeciwnym razie zwój zostanie zniszczony.^^Aktualna szansa: {0}%",
+                // Use magic
+                "Używanie magii^^Szansa na pomyślne rzucenie zaklęcia.^Niektóre zaklęcia mają negatywne efekty, jeśli rzucenie nie powiedzie się^^Aktualna szansa: {0}%",
             } }
         };
 
@@ -394,6 +436,41 @@ namespace Ambermoon.UI
                 { Condition.DeadAshes, "Le personnage ne participe pas aux combats,^il ne peut pas communiquer.^Ses cendres doivent d'abord être transformées^en corps pour qu'il puisse être ressuscité." },
                 // DeadDust
                 { Condition.DeadDust, "Le personnage ne participe pas aux combats,^il ne peut pas communiquer.^Sa poussière doit être transformée en cendres^et ensuite en corps pour le ressusciter." }
+            } },
+            { GameLanguage.Polish, new Dictionary<Condition, string>
+            {
+                // Irritated
+                { Condition.Irritated,"Postać nie może rzucać zaklęć.^^Aktywne tylko podczas walki." },
+                // Crazy
+                { Condition.Crazy, "Postać wykonuje losowe akcje w walce.^Jej ekwipunek jest niedostępny." },
+                // Sleep
+                { Condition.Sleep, "Postać nie może wykonywać akcji w walce.^Jakiekolwiek obrażenia anulują ten status.^^Aktywne tylko podczas walki." },
+                // Panic
+                { Condition.Panic, "Postać próbuje uciec.^Brak możliwości wykonania akcji w walce.^Brak dostępu do ekwipunku.^^Aktywne tylko podczas walki." },
+                // Blind
+                { Condition.Blind, "Postać nie widzi.^Zasięg wzroku na mapach 2D jest wyzerowany.^Całkowita ciemność na mapach 3D." },
+                // Drugged
+                { Condition.Drugged, "Postać jest pod wpływem narkotyków.^Utrudnion sterowanie i efekty wizualne." },
+                // Exhausted
+                { Condition.Exhausted, "Wszystkie atrybuty są tymczasowo zmniejszone o połowę.^Można usunąć przez przespanie się." },
+                // Unused
+                { Condition.Unused, "" },
+                // Lamed
+                { Condition.Lamed, "Nie jest możliwy ruch ani atak." },
+                // Poisoned
+                { Condition.Poisoned, "Postać otrzymuje obrażenia^co rundę lub co godzinę." },
+                // Petrified
+                { Condition.Petrified, "Ekwipunek jest niedostępny.^Postać nie może wykonać żadnej^ akcji i nie starzeje się." },
+                // Diseased
+                { Condition.Diseased, "Postać traci codziennie punkt^losowo wybranej cechy." },
+                // Aging
+                { Condition.Aging, "Postać starzeje się każdego dnia.^W zależności od rasy ostatecznie umrze w określonym wieku.^^Maksymalny wiek: {0}" },
+                // DeadCorpse
+                { Condition.DeadCorpse, "Postać nie bierze udziału w walce.^Nie może się komunikować." },
+                // DeadAshes
+                { Condition.DeadAshes, "Postać nie bierze udziału w walce.^Nie może się komunikować.^By ją wskrzesić, najpierw popioły^muszą zostać przekształcone w ciało." },
+                // DeadDust
+                { Condition.DeadDust, "Postać nie bierze udziału w walce.^Nie może się komunikować.^By ją wskrzesić, proch musi zostać^przekształcony w popiół, a następnie w ciało." }
             } }
         };
 
@@ -503,6 +580,41 @@ namespace Ambermoon.UI
                 " à ",
                 // MagicIntBonus
                 "^ Bonus: PS et PAS +INT/25 ({0})"
+            } },
+            { GameLanguage.Polish, new string[]
+            {
+                // Age
+                "Wiek postaci^^Umiera w maksymalnym wieku {0} lat.",
+                // LP
+                "Punkty życia^^Gdy osiągną 0^, postać umiera.",
+                // SP
+                "Punkty magii^^Służą do rzucania zaklęć.",
+                // SLP
+                "Punkty nauki magii^^Służą do nauki zaklęć.",
+                // TP
+                "Punkty treningu^^Są używane do zwiększania umiejętności u trenerów.",
+                // Gold
+                "Złoto^^Waluta Ambermoon.^Służy do kupowania towarów.",
+                // Food
+                "Racje żywnościowe^^Każdy odpoczynek (poza spaniem w karczmach)^zużywa 1 rację żywnościową na postać w celu^uzupełnienia PŻ i PM.",
+                // Damage
+                "Obrażenia^^Podstawowa wartość obrażeń w walce.^^Składowa wyposażenia i siły.",
+                // Defense
+                "Osłona^^Podstawowa wartość redukcji obrażeń fizycznych w walce.^^Składowa wyposażenia i wytrzymałości.",
+                // EPPre50
+                "Punkty doświadczenia^^Potrzebne do zdobywania poziomów.^^Następny poziom przy {0} EP.",
+                // EP50
+                "Punkty doświadczenia^^Potrzebne do zdobywania poziomów.^^Maksymalny poziom został już osiągnięty.",
+                // LevelWithAPRIncrease
+                "Poziom postaci^^Każde podniesienie poziomu zwiększa cechy postaci o:^^ PŻ : {0,-10}{1} PT : {2}{3}^^Ataki na rundę wzrastają^na określonych poziomach:^^ {5}^^Ataki na rundę wynoszą {4}",
+                // LevelWithoutAPRIncrease
+                "Poziom postaci^^Każde podniesienie poziomu zwiększa cechy postaci o:^^ PŻ : {0,-10}{1} PT : {2}{3}^^Ataki na rundę wynoszą {4}.",
+                // MagicLevelUpValues
+                " PM : {0}^ PNM: {1,-10}",
+                // RangeOperator
+                " do ",
+                // MagicIntBonus
+                "^ Premia: PM i PNM +INT/25 ({0})"
             } }
         };
     }
