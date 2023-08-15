@@ -977,7 +977,10 @@ namespace Ambermoon
             mainMenu?.Destroy();
             mainMenu = null;
             if (configuration.Music)
+            {
                 musicManager.Stop();
+                musicManager.GetSong(Song.Intro)?.Stop(); // might be looping in the main menu, so we need to stop and reset it here
+            }
 
             intro = new Intro(renderView, introData, introFont, introFontLarge, byClick =>
             {
@@ -986,7 +989,7 @@ namespace Ambermoon
             }, () =>
             {
                 if (configuration.Music)
-                    musicManager.GetSong(Data.Enumerations.Song.Intro)?.Play(audioOutput);
+                    musicManager.GetSong(Song.Intro)?.Play(audioOutput);
             });
         }
 
