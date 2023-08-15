@@ -52,6 +52,7 @@ namespace Ambermoon
         bool initialized = false;
         Patcher patcher = null;
         bool checkPatcher = true;
+        bool initialIntroEndedByClick = false;
 
         public string Identifier { get; }
         public IGLContext GLContext => window?.GLContext;
@@ -771,12 +772,12 @@ namespace Ambermoon
                     fantasyIntro = null;
 
                     if (configuration.ShowIntro)
-                        StartIntro();
+                        ShowIntro(byClick => initialIntroEndedByClick = byClick, introData, introFont, introFontLarge);
                 });
             }
             else if (configuration.ShowIntro)
             {
-                ShowIntro();                
+                ShowIntro(byClick => initialIntroEndedByClick = byClick, introData, introFont, introFontLarge);
             }
 
             InitGlyphs(fontProvider);
@@ -911,6 +912,9 @@ namespace Ambermoon
                     while (fantasyIntro != null)
                         Thread.Sleep(100);
 
+                    while (intro != null)
+                        Thread.Sleep(100);
+
                     while (advancedLogo != null)
                         Thread.Sleep(100);
 
@@ -928,7 +932,7 @@ namespace Ambermoon
                             });
                     }
 
-                    ShowMainMenu(false);
+                    ShowMainMenu(configuration.ShowIntro && !initialIntroEndedByClick);
                 }
                 catch (Exception ex)
                 {
