@@ -514,7 +514,7 @@ namespace Ambermoon.UI
             { GameLanguage.English, new string[]
             {
                 // Age
-                "Age of the character^^He dies at the max age of {0}.",
+                "Age of the character^^They die at the max age of {0}.",
                 // LP
                 "Life Points^^When they reach 0^the character dies.",
                 // SP
