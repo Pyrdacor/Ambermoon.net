@@ -301,6 +301,7 @@ namespace Ambermoon
         internal uint CurrentTicks { get; private set; } = 0;
         internal uint CurrentMapTicks { get; private set; } = 0;
         internal uint CurrentBattleTicks { get; private set; } = 0;
+        internal uint CurrentNormalizedBattleTicks { get; private set; } = 0;
         internal uint CurrentPopupTicks { get; private set; } = 0;
         internal uint CurrentAnimationTicks { get; private set; } = 0;
         uint lastMapTicksReset = 0;
@@ -924,6 +925,7 @@ namespace Ambermoon
                     {
                         double timeFactor = BattleTimeFactor;
                         CurrentBattleTicks = UpdateTicks(CurrentBattleTicks, deltaTime * timeFactor);
+                        CurrentNormalizedBattleTicks = UpdateTicks(CurrentNormalizedBattleTicks, deltaTime);
                         UpdateBattle(1.0 / timeFactor);
 
                         // Note: The null check for currentBattle is important here even if checking above.
@@ -957,6 +959,7 @@ namespace Ambermoon
                 else
                 {
                     CurrentBattleTicks = 0;
+                    CurrentNormalizedBattleTicks = 0;
                 }
 
                 if (!WindowActive && layout.ButtonGridPage == 0)
@@ -3224,6 +3227,14 @@ namespace Ambermoon
 
             lastMousePosition = new Position(position);
 
+            // Special case to abort multiple monster start animations in battle
+            if (ingame && allInputDisabled && !pickingNewLeader && currentWindow.Window == Window.Battle &&
+                currentBattle.StartAnimationPlaying && currentBattle.WaitForClick)
+            {
+                currentBattle.Click(CurrentBattleTicks);
+                return;
+            }
+
             if (allInputDisabled)
                 return;
 
@@ -3343,7 +3354,7 @@ namespace Ambermoon
                 {
                     if (!pickingNewLeader && currentWindow.Window == Window.Battle)
                     {
-                        if (currentBattle?.WaitForClick == true)
+                        if (currentBattle.WaitForClick)
                         {
                             CursorType = CursorType.Sword;
                             currentBattle.Click(CurrentBattleTicks);
@@ -8220,7 +8231,7 @@ namespace Ambermoon
             }
             else
             {
-                currentBattle.Update(CurrentBattleTicks);
+                currentBattle.Update(CurrentBattleTicks, CurrentNormalizedBattleTicks);
             }
 
             if (highlightBattleFieldSprites.Count != 0)
@@ -10320,8 +10331,8 @@ namespace Ambermoon
                             {
                                 int blinkCharacterSlot = (int)Battle.GetBlinkCharacterPosition(action.Parameter);
                                 bool selfBlink = currentBattle.GetSlotFromCharacter(CurrentPartyMember) == blinkCharacterSlot;
-                                layout.SetBattleFieldSlotColor(blinkCharacterSlot, selfBlink ? BattleFieldSlotColor.Both : BattleFieldSlotColor.Orange, CurrentBattleTicks);
-                                layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileOrRowFromParameter(action.Parameter), BattleFieldSlotColor.Orange, CurrentBattleTicks + Layout.TicksPerBlink);
+                                layout.SetBattleFieldSlotColor(blinkCharacterSlot, selfBlink ? BattleFieldSlotColor.Both : BattleFieldSlotColor.Orange, CurrentNormalizedBattleTicks);
+                                layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileOrRowFromParameter(action.Parameter), BattleFieldSlotColor.Orange, CurrentNormalizedBattleTicks + Layout.TicksPerBlink);
                                 break;
                             }
                         }
@@ -10604,8 +10615,8 @@ namespace Ambermoon
                         {
                             int casterSlot = currentBattle.GetSlotFromCharacter(currentPickingActionMember);
                             bool selfBlink = casterSlot == blinkCharacterPosition.Value;
-                            layout.SetBattleFieldSlotColor((int)blinkCharacterPosition.Value, selfBlink ? BattleFieldSlotColor.Both : BattleFieldSlotColor.Orange, CurrentBattleTicks);
-                            layout.SetBattleFieldSlotColor(column, row, BattleFieldSlotColor.Orange, CurrentBattleTicks + Layout.TicksPerBlink);
+                            layout.SetBattleFieldSlotColor((int)blinkCharacterPosition.Value, selfBlink ? BattleFieldSlotColor.Both : BattleFieldSlotColor.Orange, CurrentNormalizedBattleTicks);
+                            layout.SetBattleFieldSlotColor(column, row, BattleFieldSlotColor.Orange, CurrentNormalizedBattleTicks + Layout.TicksPerBlink);
                             if (!selfBlink)
                                 layout.SetBattleFieldSlotColor(casterSlot, BattleFieldSlotColor.Yellow);
                         }

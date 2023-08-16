@@ -3742,7 +3742,7 @@ namespace Ambermoon.UI
 
                 portraitAnimation = new PortraitAnimation
                 {
-                    StartTicks = game.BattleActive ? game.CurrentBattleTicks : game.CurrentAnimationTicks,
+                    StartTicks = game.BattleActive ? game.CurrentNormalizedBattleTicks : game.CurrentAnimationTicks,
                     Offset = yOffset,
                     InitialOffset = yOffset,
                     PrimarySprite = sprite,
@@ -4703,7 +4703,7 @@ namespace Ambermoon.UI
             if (portraitAnimation != null)
             {
                 const int animationTime = (int)Game.TicksPerSecond;
-                uint elapsed = (game.BattleActive ? game.CurrentBattleTicks : game.CurrentAnimationTicks) - portraitAnimation.StartTicks;
+                uint elapsed = (game.BattleActive ? game.CurrentNormalizedBattleTicks : game.CurrentAnimationTicks) - portraitAnimation.StartTicks;
 
                 if (elapsed > animationTime)
                 {
@@ -4744,7 +4744,7 @@ namespace Ambermoon.UI
                     slotMarker.Sprite.Visible = true;
                 else
                 {
-                    uint diff = game.CurrentBattleTicks - slotMarker.BlinkStartTicks.Value;
+                    uint diff = game.CurrentNormalizedBattleTicks - slotMarker.BlinkStartTicks.Value;
                     if (slotMarker.ToggleColors)
                     {
                         var slotColor = (diff % (TicksPerBlink * 2) < TicksPerBlink) ? BattleFieldSlotColor.Orange : BattleFieldSlotColor.Yellow;

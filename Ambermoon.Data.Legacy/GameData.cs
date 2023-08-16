@@ -7,11 +7,9 @@ using Ambermoon.Data.Serialization;
 using Ambermoon.Data.Serialization.FileSystem;
 using Ambermoon.Render;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 

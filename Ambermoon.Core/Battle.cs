@@ -232,6 +232,7 @@ namespace Ambermoon
         BattleAnimation currentBattleAnimation = null;
         bool startAnimationRunning = false;
         bool idleAnimationRunning = false;
+        int finishedStartAnimationCount = 0;
         uint nextIdleAnimationTicks = 0;
         Queue<Monster> startAnimationMonsters = new Queue<Monster>();
         List<BattleAnimation> effectAnimations = null;
@@ -281,6 +282,7 @@ namespace Ambermoon
             !battleField.Skip(18).Take(6).Any(c => c?.Type == CharacterType.Monster); // and no monster in front row
         public bool CanMonstersMoveForward => !battleField.Skip(18).Take(6).Any(c => c != null); // 4th row empty
         public bool HasStartAnimation { get; } = false;
+        public bool StartAnimationPlaying => startAnimationRunning;
 
         public Battle(Game game, Layout layout, PartyMember[] partyMembers, MonsterGroup monsterGroup,
             Dictionary<int, BattleAnimation> monsterBattleAnimations, bool needsClickForNextAction)
@@ -384,7 +386,7 @@ namespace Ambermoon
             nextIdleAnimationTicks = battleTicks + (uint)game.RandomInt(1, 16) * Game.TicksPerSecond / 4;
         }
 
-        public void Update(uint battleTicks)
+        public void Update(uint battleTicks, uint normalizedBattleTicks)
         {
             if (RoundActive && roundBattleActions.Count != 0 && (currentlyAnimatedMonster == null || idleAnimationRunning))
             {
@@ -414,61 +416,67 @@ namespace Ambermoon
                 }
             }
 
+            if (!RoundActive && startAnimationRunning && finishedStartAnimationCount > 0)
+                WaitForClick = true;
+
             if (startAnimationRunning)
             {
-                var animationTicks = battleTicks - animationStartTicks.Value;
+                var animationTicks = normalizedBattleTicks - animationStartTicks.Value;
 
-                if (layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Start, animationTicks, battleTicks)?.Finished != false)
+                if (layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Start, animationTicks, normalizedBattleTicks)?.Finished != false)
                 {
                     // start animation finished
+                    ++finishedStartAnimationCount;
+
                     if (startAnimationMonsters.Any())
                     {
                         // still more start animations to play
-                        animationStartTicks = battleTicks;
+                        animationStartTicks = normalizedBattleTicks;
                         if (currentlyAnimatedMonster != null)
                             layout.ResetMonsterCombatSprite(currentlyAnimatedMonster);
                         currentlyAnimatedMonster = startAnimationMonsters.Dequeue();
-                        layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Start, 0, battleTicks);
+                        layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Start, 0, normalizedBattleTicks);
                     }
                     else
                     {
+                        WaitForClick = false;
                         game.EndSequence();
                         animationStartTicks = null;
                         startAnimationRunning = false;
                         if (currentlyAnimatedMonster != null)
                             layout.ResetMonsterCombatSprite(currentlyAnimatedMonster);
-                        SetupNextIdleAnimation(battleTicks);
+                        SetupNextIdleAnimation(normalizedBattleTicks);
                         StartAnimationFinished?.Invoke();
                     }
                 }
             }
             else if (idleAnimationRunning)
             {
-                var animationTicks = battleTicks - animationStartTicks.Value;
+                var animationTicks = normalizedBattleTicks - animationStartTicks.Value;
 
                 // Note: Idle animations use the move animation.
-                if (layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Move, animationTicks, battleTicks)?.Finished != false)
+                if (layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Move, animationTicks, normalizedBattleTicks)?.Finished != false)
                 {
                     animationStartTicks = null;
                     idleAnimationRunning = false;
                     if (currentlyAnimatedMonster != null)
                         layout.ResetMonsterCombatSprite(currentlyAnimatedMonster);
-                    SetupNextIdleAnimation(battleTicks);
+                    SetupNextIdleAnimation(normalizedBattleTicks);
                 }
             }
             else if (!RoundActive)
             {
-                if (battleTicks >= nextIdleAnimationTicks)
+                if (normalizedBattleTicks >= nextIdleAnimationTicks)
                 {
                     var monsters = Monsters.Where(m => m.Conditions.CanMove()).ToList();
 
                     if (monsters.Count != 0)
                     {
                         int index = game.RandomInt(0, monsters.Count - 1);
-                        animationStartTicks = battleTicks;
+                        animationStartTicks = normalizedBattleTicks;
                         idleAnimationRunning = true;
                         currentlyAnimatedMonster = monsters[index];
-                        layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Move, 0, battleTicks);
+                        layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Move, 0, normalizedBattleTicks);
                     }
                 }
             }
@@ -595,6 +603,19 @@ namespace Ambermoon
 
         public void Click(uint battleTicks)
         {
+            if (HasStartAnimation && startAnimationRunning && currentlyAnimatedMonster != null && finishedStartAnimationCount > 0)
+            {
+                // You can abort start animations after the first character by clicking
+                startAnimationMonsters.Clear(); // clear all other start animation monsters
+                foreach (var monster in Monsters.Where(m => m.Animations[(int)MonsterAnimationType.Start].UsedAmount != 0))
+                {
+                    if (monster != currentlyAnimatedMonster)
+                        layout.GetMonsterBattleAnimation(monster).Reset();
+                }
+                layout.GetMonsterBattleAnimation(currentlyAnimatedMonster).Reset(); // this finishes the animation
+                return;
+            }
+
             SkipNextBattleFieldClick = false;
 
             if (!WaitForClick)
