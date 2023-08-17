@@ -171,7 +171,17 @@ namespace Ambermoon
                     "If you omit the party member index, the selected one gets the levels.",
                     Level
                 )
-            }
+            },
+            { "invite",
+                Create
+                (
+                    "Invites a party member into the party." + Environment.NewLine +
+                    "Usage: invite <party_member_id | party_member_name>" + Environment.NewLine + Environment.NewLine +
+                    "Note: For 'Tar the dark' you can just type Tar." + Environment.NewLine +
+                    "Note: You can also only type the first few letters like 'Sab' for 'Sabine'.",
+                    Invite
+                )
+            },
         };
 
         static KeyValuePair<string, Action<Game, string[]>> Create(string help, Action<Game, string[]> action)
@@ -1264,6 +1274,101 @@ namespace Ambermoon
             )).ToArray();
 
             actions[0]();
+        }
+
+        static void Invite(Game game, string[] args)
+        {
+            Console.WriteLine();
+
+            if (args.Length < 1)
+            {
+                Console.WriteLine("No party member id or name was given.");
+                Console.WriteLine();
+                return;
+            }
+
+            string partyMemberIdOrName = args[0];
+            PartyMember partyMember = null;
+            
+            if (uint.TryParse(partyMemberIdOrName, out uint partyMemberId))
+            {
+                var entries = game.GetCurrentSavegame().PartyMembers;
+
+                if (!entries.TryGetValue(partyMemberId, out partyMember))
+                {
+                    Console.WriteLine($"The given party member id does not exist. Use a value from {entries.Keys.Min()} to {entries.Keys.Max()}.");
+                    Console.WriteLine();
+                    return;
+                }
+            }
+            else
+            {
+                string name = partyMemberIdOrName.ToLower();
+
+                if (name == "tar")
+                {
+                    // There is a problem when entering "Tar" as it will match
+                    // "Tar the dark" and "Targot". But most likey you mean Tar.
+                    // So by adding the space to the search text it should work.
+                    name = "tar ";
+                }
+
+                var partyMembers = game.GetCurrentSavegame().PartyMembers.Values.Where(p => p.Name.ToLower().StartsWith(name)).ToArray();
+
+                if (partyMembers.Length == 0)
+                {
+                    Console.WriteLine("No party member matches the given name.");
+                    Console.WriteLine();
+                    return;
+                }
+                else if (partyMembers.Length > 1)
+                {
+                    if (partyMembers.Length == 2 && partyMembers[0].Index == 1)
+                    {
+                        // If the name matches 2 party members and one of them is the hero,
+                        // just use the other party member for invitation.
+                        partyMember = partyMembers[1];
+                    }
+                    else
+                    {
+                        Console.WriteLine("More than one party member matches the given name.");
+                        Console.WriteLine("Please specify more precise. Here are the matches:");
+                        foreach (var p in partyMembers.Where(x => x.Index != 1))
+                            Console.WriteLine("  - " + p.Name);
+                        Console.WriteLine();
+                        return;
+                    }
+                }
+                else
+                {
+                    partyMember = partyMembers[0];
+                }
+            }
+
+            if (game.PartyMembers.Contains(partyMember))
+            {
+                Console.WriteLine($"{partyMember.Name} is already in the party.");
+                Console.WriteLine();
+                return;
+            }
+
+            int result = game.AddPartyMember(partyMember);
+
+            if (result == -1)
+            {
+                Console.WriteLine($"Wrong window. Please invite party members on the map screen.");
+                Console.WriteLine();
+            }
+            else if (result == -2)
+            {
+                Console.WriteLine($"There are no free party slots.");
+                Console.WriteLine();
+            }
+            else
+            {
+                Console.WriteLine($"{partyMember.Name} joined the party.");
+                Console.WriteLine();
+            }
         }
     }
 }

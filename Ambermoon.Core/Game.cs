@@ -32,6 +32,7 @@ using TextColor = Ambermoon.Data.Enumerations.Color;
 using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 using Ambermoon.Data.Audio;
 using static Ambermoon.UI.BuiltinTooltips;
+using Ambermoon.Geometry;
 
 namespace Ambermoon
 {
@@ -1448,6 +1449,51 @@ namespace Ambermoon
                         partyMember.Skills[item.Skill.Value].BonusValue += factor * item.SkillValue;
                 }
             }
+        }
+
+        /// <summary>
+        /// Is used for external cheats.
+        /// </summary>
+        /// <param name="partyMember">The party member to add</param>
+        /// <returns>0: Success, -1: Wrong window, -2: No free slot</returns>
+        public int AddPartyMember(PartyMember partyMember)
+        {
+            if (CurrentWindow.Window != Window.MapView || WindowActive)
+            {
+                return -1; // Wrong window
+            }
+
+            for (int i = 0; i < MaxPartyMembers; ++i)
+            {
+                if (GetPartyMember(i) == null)
+                {
+                    CurrentSavegame.CurrentPartyMemberIndices[i] =
+                        CurrentSavegame.PartyMembers.FirstOrDefault(p => p.Value == partyMember).Key;
+                    this.AddPartyMember(i, partyMember, null, true);
+                    // Set battle position
+                    CurrentSavegame.BattlePositions[i] = 0xff;
+                    var usePositions = CurrentSavegame.BattlePositions.ToList();
+                    for (int p = 11; p >= 0; --p)
+                    {
+                        if (!usePositions.Contains((byte)p))
+                        {
+                            CurrentSavegame.BattlePositions[i] = (byte)p;
+                            break;
+                        }
+                    }
+                    ushort characterBit;
+                    if (IsMapCharacterActive(PartyMemberInitialCharacterBits[partyMember.Index]))
+                        characterBit = PartyMemberInitialCharacterBits[partyMember.Index];
+                    else
+                        characterBit = PartyMemberCharacterBits[partyMember.Index];
+                    SetMapCharacterBit(characterBit, true);
+                    if (partyMember.CharacterBitIndex == 0xffff || partyMember.CharacterBitIndex == 0x0000)
+                        partyMember.CharacterBitIndex = characterBit;
+                    break;
+                }
+            }
+
+            return -2; // No free slot
         }
 
         void AddPartyMember(int slot, PartyMember partyMember, Action followAction = null, bool forceAnimation = false)
@@ -6651,6 +6697,22 @@ namespace Ambermoon
             }
         }
 
+        internal void SetMapCharacterBit(uint characterBit, bool bit)
+        {
+            var mapIndex = 1 + characterBit / 32;
+            var characterIndex = characterBit % 32;
+
+            SetMapCharacterBit(mapIndex, characterIndex, bit);
+        }
+
+        private bool IsMapCharacterActive(uint characterBit)
+        {
+            var mapIndex = 1 + characterBit / 32;
+            var characterIndex = characterBit % 32;
+
+            return !CurrentSavegame.GetCharacterBit(mapIndex, characterIndex);
+        }
+
         internal void ChestClosed()
         {
             // This is called by manually close the chest window via the Exit button
@@ -7327,21 +7389,59 @@ namespace Ambermoon
             // Tar the dark
             { 7,  0x2141 },
             // Egil
-            { 8, 0x2163 },
+            { 8,  0x2163 },
             // Selena
             { 9,  0x22c2 },
             // Nelvin
-            { 10,  0x2321 },
+            { 10, 0x2321 },
             // Sabine
-            { 11,  0x23a0 },
+            { 11, 0x23a0 },
             // Valdyn
-            { 12,  0x2400 },
+            { 12, 0x2400 },
             // Targor
-            { 13,  0x3320 },
+            { 13, 0x3320 },
             // Leonaria
-            { 14,  0x3440 },
+            { 14, 0x3440 },
             // Gryban
-            { 15,  0x35a0 }
+            { 15, 0x35a0 },
+            // Kasimir
+            { 16, 0x2203 }
+        };
+
+        // Some party members like Sabine appear at some different location first (e.g. Luminor's torture chamber)
+        // and will spawn somewhere else later (Burnville healers). This stores the initial location bit.
+        static readonly Dictionary<uint, ushort> PartyMemberInitialCharacterBits = new Dictionary<uint, ushort>
+        {
+            // Netsrak
+            { 2,  0x2000 },
+            // Mando
+            { 3,  0x2001 },
+            // Erik
+            { 4,  0x2002 },
+            // Chris
+            { 5,  0x2003 },
+            // Monika
+            { 6,  0x2004 },
+            // Tar the dark
+            { 7,  0x2141 },
+            // Egil
+            { 8,  0x2163 },
+            // Selena
+            { 9,  0x22e0 },
+            // Nelvin
+            { 10, 0x2321 },
+            // Sabine
+            { 11, 0x2485 },
+            // Valdyn
+            { 12, 0x24e0 },
+            // Targor
+            { 13, 0x3320 },
+            // Leonaria
+            { 14, 0x3440 },
+            // Gryban
+            { 15, 0x35a0 },
+            // Kasimir
+            { 16, 0x2203 }
         };
 
         /// <summary>
