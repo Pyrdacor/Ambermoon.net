@@ -1221,6 +1221,7 @@ namespace Ambermoon
             {
                 Console.WriteLine("There is no alive target party member.");
                 Console.WriteLine();
+                return;
             }
 
             partyMembers = partyMembers.Where(p => p.Level < 50).ToList();
@@ -1229,6 +1230,7 @@ namespace Ambermoon
             {
                 Console.WriteLine("There is no target party member below max level.");
                 Console.WriteLine();
+                return;
             }
 
             void Finish()
@@ -1262,7 +1264,6 @@ namespace Ambermoon
             )).ToArray();
 
             actions[0]();
-
         }
     }
 }

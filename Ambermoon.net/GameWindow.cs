@@ -650,6 +650,8 @@ namespace Ambermoon
                     infoText.Visible = false;
             }
 
+            // Fast clicking might create the main menu while the intro is also created and so both would be active.
+            // This will ensure that the intro is destroyed if the main menu opens.
             intro?.Destroy();
             intro = null;
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
