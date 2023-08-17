@@ -186,7 +186,6 @@ namespace Ambermoon.Data.Legacy.Serialization
                 for (int i = 0; i < numberOfTexts; ++i)
                 {
                     int textLength = textLengths[i];
-                    textDataSize += textLength;
 
                     if ((textLength & 0xff00) == 0xff00)
                     {
@@ -198,6 +197,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     }
                     else
                     {
+                        textDataSize += textLength;
                         string text = dataReader.ReadString(textLength);
 
                         if (text[^1] == '\0')
