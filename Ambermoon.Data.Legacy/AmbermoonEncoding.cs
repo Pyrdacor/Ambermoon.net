@@ -49,6 +49,7 @@ namespace Ambermoon.Data.Legacy
             { 0x9e, '\u00df' }, // ß
             { 0xa0, '\u00e1' }, // á
             { 0xb6, '\u00c0' }, // À
+            { 0xb4, '\'' }, // ´ -> '
         };
 
         public override int GetByteCount(char[] chars, int index, int count)
