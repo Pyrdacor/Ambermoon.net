@@ -545,6 +545,61 @@ namespace Ambermoon.Data.Legacy.Serialization
             #endregion
 
             LoadFonts(new DataReader(((Hunk)introHunks[0]).Data));
+
+            // Special handling of the new "remake-only" Intro_texts.amb
+            if (gameData.Files.TryGetValue("Intro_texts.amb", out var introTextsContainer))
+            {
+                var introTextsReader = introTextsContainer.Files[1];
+                int nonCommandTextCount = introTextsReader.ReadByte();
+
+                for (int i = 0; i < nonCommandTextCount; ++i)
+                {
+                    string text = introTextsReader.ReadNullTerminatedString(System.Text.Encoding.UTF8);
+
+                    if (i < 12) // In case the count is too high
+                        texts[(IntroText)i] = text;
+                }
+
+                int commandCount = introTextsReader.ReadByte();
+                var textCommandGroups = new List<int[]>(commandCount);
+                var currentTextCommandGroup = new List<int>(3);
+                int index = 0;
+
+                foreach (var textCommand in textCommands)
+                {
+                    if (textCommand.Type == IntroTextCommandType.Add)
+                    {
+                        currentTextCommandGroup.Add(index);
+                    }
+                    else if (textCommand.Type == IntroTextCommandType.Render)
+                    {
+                        if (currentTextCommandGroup.Count != 0)
+                        {
+                            textCommandGroups.Add(currentTextCommandGroup.ToArray());
+                            currentTextCommandGroup.Clear();
+                        }
+                    }
+
+                    ++index;
+                }
+
+                for (int i = 0; i < commandCount; ++i)
+                {
+                    var commandTexts = new string[introTextsReader.ReadByte()];
+
+                    for (int t = 0; t < commandTexts.Length; ++t)
+                        commandTexts[t] = introTextsReader.ReadNullTerminatedString(System.Text.Encoding.UTF8);
+
+                    if (i < textCommandGroups.Count)
+                    {
+                        for (int t = 0; t < commandTexts.Length; ++t)
+                        {
+                            if (t < textCommandGroups[i].Length)
+                                textCommandTexts[textCommands[textCommandGroups[i][t]].Args[2]] = commandTexts[t];
+                        }
+                    }
+                }
+            }
         }
 
         static int FindByteSequence(IDataReader reader, int offset, params byte[] sequence)

@@ -1028,7 +1028,10 @@ namespace Ambermoon
                 var buffer = new byte[(int)builtinVersion.Size];
                 builtinVersion.SourceStream.Read(buffer, 0, buffer.Length);
                 var tempStream = new MemoryStream(buffer);
-                gameData.LoadFromMemoryZip(tempStream, fallbackGameDataProvider);
+                // If the builtin version has a base version, it can provide a file called "Intro_texts.amb" which only
+                // contains the intro texts. It is then merged with the base version's Ambermoon_intro file.
+                var optionalAdditionalFiles = fallbackGameDataProvider == null ? null : new Dictionary<string, char>() { { "Intro_texts.amb", 'A' } };
+                gameData.LoadFromMemoryZip(tempStream, fallbackGameDataProvider, optionalAdditionalFiles);
                 return gameData;
             }
 

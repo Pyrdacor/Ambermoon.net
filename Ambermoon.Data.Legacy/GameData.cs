@@ -141,7 +141,8 @@ namespace Ambermoon.Data.Legacy
             Load(LoadFile, null, CheckFileExists);
         }
 
-        public void LoadFromMemoryZip(Stream stream, Func<ILegacyGameData> fallbackGameDataProvider = null)
+        public void LoadFromMemoryZip(Stream stream, Func<ILegacyGameData> fallbackGameDataProvider = null,
+            Dictionary<string, char> optionalAdditionalFiles = null)
         {
             Loaded = false;
             GameDataSource = GameDataSource.Memory;
@@ -171,7 +172,7 @@ namespace Ambermoon.Data.Legacy
                 return archive.GetEntry(name) != null ||
                     EnsureFallbackData()?.Files?.ContainsKey(name) == true;
             }
-            Load(LoadFile, null, CheckFileExists);
+            Load(LoadFile, null, CheckFileExists, false, optionalAdditionalFiles);
         }
 
         public class GameDataWriter
@@ -496,9 +497,16 @@ namespace Ambermoon.Data.Legacy
         }
 
         void Load(Func<string, IFileContainer> fileLoader, Func<char, Dictionary<string, byte[]>> diskLoader,
-            Func<string, bool> fileExistChecker, bool savesOnly = false)
+            Func<string, bool> fileExistChecker, bool savesOnly = false, Dictionary<string, char> optionalAdditionalFiles = null)
         {
             var ambermoonFiles = new Dictionary<string, char>(savesOnly ? Legacy.Files.AmigaSaveFiles : Legacy.Files.AmigaFiles);
+
+            if (optionalAdditionalFiles != null)
+            {
+                foreach (var additionalFile in optionalAdditionalFiles)
+                    ambermoonFiles.Add(additionalFile.Key, additionalFile.Value);
+            }
+
             var fileReader = new FileReader();
             bool foundNoDictionary = true;
 
@@ -544,6 +552,9 @@ namespace Ambermoon.Data.Legacy
 
             void HandleFileNotFound(string file, char disk)
             {
+                if (optionalAdditionalFiles?.ContainsKey(file) == true)
+                    return; // Don't error on missing optional files
+
                 if (log != null)
                 {
                     log.AppendLine("failed");
