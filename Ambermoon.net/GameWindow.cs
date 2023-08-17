@@ -641,7 +641,7 @@ namespace Ambermoon
         {
             renderView.PaletteFading = null; // Reset palette fading
 
-            void PlayMusic(Data.Enumerations.Song song)
+            void PlayMusic(Song song)
             {
                 if (configuration.Music)
                     musicManager.GetSong(song)?.Play(audioOutput);
@@ -650,6 +650,8 @@ namespace Ambermoon
                     infoText.Visible = false;
             }
 
+            intro?.Destroy();
+            intro = null;
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
                 GetText(gameLanguage, 0), GetText(gameLanguage, 1), PlayMusic, fromIntro);
             mainMenu.Closed += closeAction =>
