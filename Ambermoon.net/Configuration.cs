@@ -276,7 +276,7 @@ namespace Ambermoon
 #pragma warning restore CS0618
 
         public static readonly string FallbackConfigDirectory =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon.net");
 
         private static string bundleDirectory = null;
         /// <summary>
@@ -512,8 +512,13 @@ namespace Ambermoon
         public void Save(string filename)
         {
 #pragma warning disable CS0618
-            UseGraphicFilter = null; // not used anymore
-            FastBattleMode = null; // not used anymore
+            // not used anymore
+            UseGraphicFilter = null;
+            FastBattleMode = null;
+            CacheMusic = null;
+            ShowThalionLogo = null;
+            AdditionalSavegameNames = null;
+            ContinueSavegameSlot = null;
 #pragma warning restore CS0618
 
             Directory.CreateDirectory(Path.GetDirectoryName(filename));

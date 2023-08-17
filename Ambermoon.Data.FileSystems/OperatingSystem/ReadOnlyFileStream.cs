@@ -1,10 +1,5 @@
-﻿using Ambermoon.Data.Legacy.Serialization;
-using Ambermoon.Data.Serialization;
-using Ambermoon.Data.Serialization.FileSystem;
-using System;
-using System.Collections.Generic;
+﻿using Ambermoon.Data.Serialization.FileSystem;
 using System.IO;
-using System.Text;
 
 namespace Ambermoon.Data.FileSystems.OperatingSystem
 {

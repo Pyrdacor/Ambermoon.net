@@ -11,7 +11,7 @@ namespace Ambermoon
 
         static Configuration LoadConfig()
         {
-            var path = Path.Combine(Configuration.ExecutableDirectoryPath, ConfigurationFileName);
+            var path = Path.Combine(Configuration.BundleDirectory, ConfigurationFileName);
             var configuration = Configuration.Load(path);
 
             if (configuration != null)
@@ -23,7 +23,7 @@ namespace Ambermoon
 
         static void SaveConfig(Configuration configuration)
         {
-            var path = Path.Combine(Configuration.ExecutableDirectoryPath, ConfigurationFileName);
+            var path = Path.Combine(Configuration.BundleDirectory, ConfigurationFileName);
 
             try
             {
@@ -50,7 +50,7 @@ namespace Ambermoon
 
             try
             {
-                Environment.CurrentDirectory = Configuration.ExecutableDirectoryPath;
+                Environment.CurrentDirectory = Configuration.ReadonlyBundleDirectory;
             }
             catch
             {
