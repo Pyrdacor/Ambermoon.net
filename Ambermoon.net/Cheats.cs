@@ -73,6 +73,15 @@ namespace Ambermoon
                     ShowMonsters
                 )
             },
+            { "members",
+                Create
+                (
+                    "Shows a list of all available party members." + Environment.NewLine +
+                    "Usage: members" + Environment.NewLine +
+                    "Usage: members <partial_name>",
+                    ShowPartyMembers
+                )
+            },
             { "fight",
                 Create
                 (
@@ -768,6 +777,13 @@ namespace Ambermoon
 
                 return string.Join(", ", monsterNames.Select(m => $"{m.Value}x{m.Key}"));
             }
+        }
+
+        static void ShowPartyMembers(Game game, string[] args)
+        {
+            var partyMembers = game.GetCurrentSavegame().PartyMembers;
+
+            ShowList(args, partyMembers, p => p.Value.Name, p => p.Key, false);
         }
 
         static void StartBattle(Game game, string[] args)
