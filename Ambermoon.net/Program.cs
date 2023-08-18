@@ -62,6 +62,7 @@ namespace Ambermoon
             configuration.UpgradeAdditionalSavegameSlots();
             configuration.SaveRequested += () => SaveConfig(configuration);
             var gameWindow = new GameWindow();
+            int exitCode = 0;
 
             try
             {
@@ -70,12 +71,13 @@ namespace Ambermoon
             catch (Exception ex)
             {
                 PrintException(ex);
-                Environment.Exit(1);
+                exitCode = 1;
             }
             finally
             {
                 SaveConfig(configuration);
                 DotnetCleanup();
+                Environment.Exit(exitCode);
             }
         }
 
