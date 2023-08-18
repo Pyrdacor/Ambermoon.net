@@ -1,5 +1,4 @@
 ﻿using Ambermoon.Data;
-using Ambermoon.Data.Audio;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 using Ambermoon.Render;
@@ -29,7 +28,6 @@ namespace Ambermoon
         readonly Queue<Command> commands;
         Command? currentCommand = null;
         DateTime currentCommandStartTime = DateTime.MaxValue;
-        readonly Size frameSize = null;
         IAlphaSprite sprite = null;
         //readonly float oldVolume;
         //readonly Audio.OpenAL.AudioOutput audioOutput;
