@@ -357,10 +357,10 @@ namespace Ambermoon.UI
         {
             return configuration.Language switch
             {
-                GameLanguage.German =>               "Wähle eine Spieldaten-Version:     (?)",
-                GameLanguage.French => ProcessFrench("Choisir une version de données:    (?)"),
-                GameLanguage.Polish =>               "Wybierz wersję gry:                (?)",
-                _ =>                                 "Select a game data version:        (?)"
+                GameLanguage.German => "Wähle eine Spieldaten-Version:     (?)",
+                GameLanguage.French => "Choisir une version de données:    (?)",
+                GameLanguage.Polish => "Wybierz wersję gry:                (?)",
+                _ =>                   "Select a game data version:        (?)"
             };
         }
 
@@ -368,10 +368,10 @@ namespace Ambermoon.UI
         {
             return configuration.Language switch
             {
-                GameLanguage.German =>               "Die Spieldaten-Version bezieht sich auf die Amiga-Basisdaten. Diese Versionierung ist unabhängig von der Ambermoon.net Version.",
-                GameLanguage.French => ProcessFrench("La version des données concerne les données de base de l'Amiga. Cette version est indépendante de la version d'Ambermoon.net."),
-                GameLanguage.Polish =>               "Wersja danych gry odnosi się do danych bazowych Amigi. Ta wersja jest niezależna od wersji Ambermoon.net.",
-                _ =>                                 "The game data version relates to the Amiga base data. This version is independent of the Ambermoon.net version."
+                GameLanguage.German => "Die Spieldaten-Version bezieht sich auf die Amiga-Basisdaten. Diese Versionierung ist unabhängig von der Ambermoon.net Version.",
+                GameLanguage.French => "La version des données concerne les données de base de l'Amiga. Cette version est indépendante de la version d'Ambermoon.net.",
+                GameLanguage.Polish => "Wersja danych gry odnosi się do danych bazowych Amigi. Ta wersja jest niezależna od wersji Ambermoon.net.",
+                _ =>                   "The game data version relates to the Amiga base data. This version is independent of the Ambermoon.net version."
             };
         }
 
