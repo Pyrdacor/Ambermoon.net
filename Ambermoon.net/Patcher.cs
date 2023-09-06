@@ -100,7 +100,8 @@ namespace Ambermoon
             var culture = CultureInfo.DefaultThreadCurrentCulture ?? CultureInfo.CurrentCulture;
             var cultureName = culture?.Name ?? "";
             language = cultureName == "de" || cultureName.StartsWith("de-") ? GameLanguage.German :
-                cultureName == "fr" || cultureName.StartsWith("fr-") ? GameLanguage.French : GameLanguage.English;
+                cultureName == "fr" || cultureName.StartsWith("fr-") ? GameLanguage.French :
+                cultureName == "pl" || cultureName.StartsWith("pl-") ? GameLanguage.Polish : GameLanguage.English;
             var textureAtlas = textureAtlasManager.GetOrCreate(Layer.UI);
             var spriteFactory = renderView.SpriteFactory;
             var layer = renderView.GetLayer(Layer.UI);

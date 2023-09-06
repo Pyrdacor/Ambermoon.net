@@ -270,6 +270,22 @@ namespace Ambermoon.Render
                     " ^~HERO~: Épatant !",
                     "Pyrdacor: Merci d'avoir joué à ~INK22~Ambermoon~INK31~ ! J'espère que vous vous êtes bien amusés."
                 }
+            },
+            { GameLanguage.Polish, new List<string>
+                {
+                    "Egil: To była niesamowita przygoda, ale teraz muszę się pożegnać.",
+                    "Egil: Krasnoludy z Gemstone potrzebują ochotników do odbudowy swojej stolicy.",
+                    "~HERO~: Mam nadzieję, że jeszcze się spotkamy. Udanej podróży przyjacielu!",
+                    " ^~HERO~: ...",
+                    " ^Nieznajomy: Nie tak szybko ~HERO~!",
+                    " ^~HERO~: Kim jesteś?",
+                    "Nieznajomy: Moje imię to ~INK17~Pyrdacor~INK31~. Nie mam zbyt wiele czasu.",
+                    "Nieznajomy: Ale mogę powiedzieć jedno: Przygoda jeszcze się nie skończyła.",
+                    " ^~HERO~: O czym ty mówisz?",
+                    " ^Planowana jest ~INK17~Trzecia część trylogii Amber~INK31~.",
+                    " ^~HERO~: Wspaniale!",
+                    "Pyrdacor: Dziękuję za grę w ~INK22~Ambermoon~INK31~! Mam nadzieję, że dobrze się bawiliście."
+                }
             }
         };
 

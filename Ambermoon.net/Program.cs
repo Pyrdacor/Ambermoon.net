@@ -27,14 +27,12 @@ namespace Ambermoon
 
             try
             {
-                Console.WriteLine($"Trying to save config to {path}");
                 configuration.Save(path);
             }
             catch
             {
                 try
                 {
-                    Console.WriteLine($"Trying to save config to {path}");
                     path = Path.Combine(Configuration.FallbackConfigDirectory, ConfigurationFileName);
                     configuration.Save(path);
                 }

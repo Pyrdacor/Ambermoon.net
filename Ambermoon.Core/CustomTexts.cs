@@ -86,6 +86,21 @@ namespace Ambermoon
                     { Index.GameLoaded, "La ~INK 22~sauvegarde {0}~INK 31~ a été chargée."},
                     { Index.InitialGameLoaded, "La ~INK 22~sauvegarde initiale~INK 31~ a été chargée."}
                 }
+            },
+            { GameLanguage.Polish, new Dictionary<Index, string>
+                {
+                    { Index.ReallyStartNewGame, "Czy naprawdę chcesz rozpocząć nową grę?" },
+                    { Index.FailedToLoadSavegame, "Nie udało się wczytać gry." },
+                    { Index.FailedToLoadInitialSavegame, "Nie udało się wczytać startowego stanu gry." },
+                    { Index.FailedToLoadSavegameUseInitial, "Nie udało się wczytać gry. Zamiast tego załadowano startowy zapis gry." },
+                    { Index.StartNewGameOrQuit, "Chcesz rozpocząć nową grę czy wyjść z gry?" },
+                    { Index.RuneTableUsage, "Tak długo, jak masz tabelę run w ekwipunku, wszystkie runy będą automatycznie wyświetlane jako tekst." },
+                    { Index.LoadCrashedGame, "Wykryto kopię awaryjną zapisu gry. Czy chcesz ją załadować?" },
+                    { Index.FailedToRemoveCrashSavegame, "Awaryjna kopia zapisu gry nie może zostać usunięta automatycznie. Należy to zrobić samodzielnie. Jest ona przechowywana w podkatalogu 'Save.99'." },
+                    { Index.GameSaved, "Zapisano jako ~INK 22~'{0}'~INK 31~."},
+                    { Index.GameLoaded, "~INK 22~Zapis {0}~INK 31~ został wczytany."},
+                    { Index.InitialGameLoaded, "~INK 22~Zapis startowy~INK 31~ został wczytany."}
+                }
             }
         };
 

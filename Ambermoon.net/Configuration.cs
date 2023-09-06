@@ -98,6 +98,7 @@ namespace Ambermoon
         {
             string l when l.StartsWith("de") => GameLanguage.German,
             string l when l.StartsWith("fr") => GameLanguage.French,
+            string l when l.StartsWith("pl") => GameLanguage.Polish,
             _ => GameLanguage.English
         };
 

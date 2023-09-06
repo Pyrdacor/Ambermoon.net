@@ -1,13 +1,54 @@
 ﻿using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Numerics;
+using static Ambermoon.Data.Legacy.ExecutableData.Messages;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
+    // The intro texts are grouped by sections which
+    // are divided by clicks.
+    //
+    // 1. Destruction of the temple of brotherhood
+    // 2. End of brotherhood Tarbos and peace with Moranians
+    // 3. Travel to Kire's moon and rescue of the dwarves
+    // 4. Valdyn leaves (no yellow teleporter stone)
+    // 5. Valdyn leaves (with yellow teleporter stone)
+    // 6. End texts and credits
+    //
+    // There are 3 sequences:
+    //
+    // 1. Uses 1 2 3 4 6
+    // 2. Uses 1 2 3 5 6
+    // 3. Uses 1 2 3 6
+    //
+    // In each group there are some large texts which
+    // should match translations and which can help to
+    // group normal texts in-between.
+    //
+    // For translations the last german credit texts
+    // are not used where you should send feedback to
+    // the Thalion office. Basically after the large
+    // text "HARALD UENZELMANN" there should be 1 more
+    // large text and then only normal texts to the end.
+    // Everything else should be removed for translations.
+    //
+    // The new file Outro_texts.amb has the following format:
+    //
+    // word NumberOfTextGroups
+    // word[n] TextCount (for each group)
+    // byte[x] Null-terminated texts for all groups
+    // (byte) Padding (if needed there is a padding byte)
+    // word NumberOfTranslators
+    // byte[x] Null-terminated translator names
+    // byte[x] Null-terminated text for the click message
+    // (byte) Padding (if needed there is a padding byte)
+
     public class OutroData : IOutroData
     {
-        readonly Dictionary<OutroOption, IReadOnlyList<OutroAction>> outroActions = new();
+        readonly Dictionary<OutroOption, List<OutroAction>> outroActions = new();
         readonly List<Graphic> outroPalettes = new();
         // The key is the offset inside the image hunk (it is reference by it from the data hunk).
         // The byte of the pair is the 0-based palette index (in relation to the OutroPalettes).
@@ -22,9 +63,9 @@ namespace Ambermoon.Data.Legacy.Serialization
         readonly Dictionary<char, Glyph> glyphs = new();
         readonly Dictionary<char, Glyph> largeGlyphs = new();
 
-        public IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>> OutroActions => outroActions;
+        public IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>> OutroActions => outroActions.ToDictionary(a => a.Key, a => (IReadOnlyList<OutroAction>)a.Value.AsReadOnly()).AsReadOnly();
         public IReadOnlyList<Graphic> OutroPalettes => outroPalettes.AsReadOnly();
-        public IReadOnlyList<Graphic> Graphics => graphics.OrderBy(g => g.Key).Select(g => g.Value.Key).ToList();
+        public IReadOnlyList<Graphic> Graphics => graphics.OrderBy(g => g.Key).Select(g => g.Value.Key).ToList().AsReadOnly();
         public IReadOnlyList<string> Texts => texts.AsReadOnly();
         public IReadOnlyDictionary<uint, OutroGraphicInfo> GraphicInfos => graphics.OrderBy(g => g.Key).Select((g, i) => new { GraphicEntry = g, Index = i })
             .ToDictionary(g => g.GraphicEntry.Key, g => new OutroGraphicInfo
@@ -34,376 +75,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                 Height = g.GraphicEntry.Value.Key.Height,
                 PaletteIndex = g.GraphicEntry.Value.Value
             }
-        );
-        public IReadOnlyDictionary<char, Glyph> Glyphs => glyphs;
-        public IReadOnlyDictionary<char, Glyph> LargeGlyphs => largeGlyphs;
+        ).AsReadOnly();
+        public IReadOnlyDictionary<char, Glyph> Glyphs => glyphs.AsReadOnly();
+        public IReadOnlyDictionary<char, Glyph> LargeGlyphs => largeGlyphs.AsReadOnly();
 
         public delegate void FontOffsetProvider(bool large, out int glyphMappingOffset,
             out int advanceValueOffset, out int glyphDataOffset);
-
-        public static IDataWriter PatchTexts(ILegacyGameData gameData, List<string> texts)
-        {
-            // TODO: Note that this is work in progress and was used to create the french outro for
-            // the first time. It has some hardcode stuff for that purpose in it which should be
-            // removed later. Maybe we don't need this at all later as the original outro should be
-            // changed so that the texts and glyphs are moved to an external file.
-            // Still I want to preserve the work if we need to recreate the outro before that.
-            var outroHunks = AmigaExecutable.Read(gameData.Files["Ambermoon_extro"].Files[1]);
-            var dataHunkInfo = outroHunks
-                .Where(h => h.Type == AmigaExecutable.HunkType.Data)
-                .First();
-            var dataHunk = new DataReader(((AmigaExecutable.Hunk)dataHunkInfo).Data);
-            var writer = new DataWriter();
-
-            Dictionary<char, int>[] LoadGlyphAdvanceValues()
-            {
-                var codeHunkReader = new DataReader(((AmigaExecutable.Hunk)outroHunks.Where(h => h.Type == AmigaExecutable.HunkType.Code).First()).Data);
-                codeHunkReader.Position = 0x600; // The data won't be located before that
-                int glyphMappingOffset = FindByteSequence(codeHunkReader, GlyphMappingSearchBytes);
-                int advanceValueOffset = FindByteSequence(codeHunkReader, AdvanceValuesSearchBytes);
-                int largeAdvanceValueOffset = FindByteSequence(codeHunkReader, LargeAdvanceValuesSearchBytes);
-
-                if (glyphMappingOffset == -1 || advanceValueOffset == -1 || largeAdvanceValueOffset == -1)
-                    throw new AmbermoonException(ExceptionScope.Data, "Invalid outro data");
-
-                // Read glyph mapping
-                codeHunkReader.Position = glyphMappingOffset;
-                byte[] glyphMapping = codeHunkReader.ReadBytes(96); // 96 chars (first is space)
-
-                // Read advance positions
-                codeHunkReader.Position = advanceValueOffset;
-                byte[] advanceValues = codeHunkReader.ReadBytes(76); // for 76 valid chars
-
-                // Read advance positions
-                codeHunkReader.Position = largeAdvanceValueOffset;
-                byte[] largeAdvanceValues = codeHunkReader.ReadBytes(76); // for 76 valid chars
-
-                var normalAdvanceValueDictionary = new Dictionary<char, int>();
-                var largeAdvanceValueDictionary = new Dictionary<char, int>();
-
-                for (int i = 1; i < glyphMapping.Length; ++i)
-                {
-                    int index = glyphMapping[i];
-
-                    if (index == 0xff)
-                        continue;
-
-                    char ch = (char)(0x20 + i);
-
-                    normalAdvanceValueDictionary[ch] = advanceValues[index];
-                    largeAdvanceValueDictionary[ch] = largeAdvanceValues[index];
-                }
-
-                normalAdvanceValueDictionary[' '] = 6;
-                largeAdvanceValueDictionary[' '] = 10;
-
-                return new[] { normalAdvanceValueDictionary, largeAdvanceValueDictionary };
-            }
-
-            var advanceValueDictionaries = LoadGlyphAdvanceValues();
-
-            int GetTextLength(string text, bool large)
-            {
-                var dicts = advanceValueDictionaries;
-                var dict = large ? dicts[1] : dicts[0];
-                int width = 0;
-
-                foreach (var ch in text)
-                    width += dict[ch];
-
-                return width;
-            }
-
-            writer.Write(dataHunk.ReadBytes(64)); // skip the palette (all zeros)
-
-            var actionListOffsets = new List<uint>();
-            var initialActionListOffsets = new List<uint>();
-
-            void AdjustOffsets(uint minOffset, int change)
-            {
-                if (change == 0)
-                    return;
-
-                for (int i = 0; i < actionListOffsets.Count; ++i)
-                {
-                    if (initialActionListOffsets[i] >= minOffset)
-                        actionListOffsets[i] = (uint)(actionListOffsets[i] + change);
-                }
-            }
-
-            void FixOffsets()
-            {
-                int offset = 64;
-
-                foreach (var actionListOffset in actionListOffsets)
-                {
-                    if (actionListOffset != 0)
-                    {
-                        writer.Replace(offset, actionListOffset);
-                        offset += 8;
-                    }
-                    else
-                        offset += 4;
-                }
-            }
-
-            // 3 address lists
-            for (int i = 0; i < 3; ++i)
-            {
-                // each list is terminated by a 0-long
-                // everything else is an address relative to the hunk start
-
-                while (true)
-                {
-                    uint actionListOffset = dataHunk.ReadBEUInt32();
-                    writer.Write(actionListOffset);
-                    actionListOffsets.Add(actionListOffset);
-
-                    if (actionListOffset == 0)
-                        break;
-
-                    writer.Write(dataHunk.ReadBEUInt32()); // this is the image offset relative to the second hunk (this won't change so keep it)
-                }
-            }
-
-            // Skip 9 unknown bytes
-            writer.Write(dataHunk.ReadBytes(9));
-
-            // reorder the texts first
-            var reorderedTexts = new Dictionary<uint, Dictionary<int, string>>();
-
-            int position = dataHunk.Position;
-            var checkedOffsets = new HashSet<uint>();
-            int textIndex = 0;
-
-            foreach (var offset in actionListOffsets)
-            {
-                if (offset == 0)
-                    continue;
-
-                if (!checkedOffsets.Add(offset))
-                    continue;
-
-                reorderedTexts.Add(offset, new());
-                dataHunk.Position = (int)offset;
-
-                int index = 0;
-
-                while (true)
-                {
-                    if (dataHunk.ReadByte() == 0xff)
-                        break;
-
-                    int x = dataHunk.ReadByte();
-                    bool large = dataHunk.ReadByte() != 0;
-                    string oldText = dataHunk.ReadNullTerminatedString().Trim();
-                    string newText = texts[textIndex++].Trim();
-                    bool nextNormalText = dataHunk.PeekByte() != 0xff && (dataHunk.PeekDword() & 0x0000ff00) == 0;
-                    if (!large && textIndex < texts.Count && texts[textIndex] != "<CLIQUEZ>" && texts[textIndex] != "{{CLICK}}")
-                    {
-                        string nextText = texts[textIndex];
-                        int baseX = x;
-                        do
-                        {
-                            x = baseX + GetTextLength(newText, large);
-
-                            if (x <= 320)
-                                break;
-
-                            if (!nextNormalText)
-                                throw new Exception($"Text {textIndex} is {x - 320} pixels too large");
-
-                            int lastSpaceIndex = newText.LastIndexOf(' ');
-
-                            if (lastSpaceIndex == -1)
-                                break;
-
-                            if (newText.Length > lastSpaceIndex + 1 && newText[lastSpaceIndex + 1] == ':')
-                            {
-                                lastSpaceIndex = newText[0..lastSpaceIndex].LastIndexOf(' ');
-
-                                if (lastSpaceIndex == -1)
-                                    break;
-                            }
-
-                            if (nextText.Length == 0)
-                                nextText = newText[(lastSpaceIndex + 1)..];
-                            else
-                            {
-                                if (!nextText.StartsWith(' '))
-                                    nextText = " " + nextText;
-                                nextText = nextText.Insert(0, newText[lastSpaceIndex..]);
-                            }
-                            newText = newText[0..lastSpaceIndex];
-                        } while (x > 320);
-                        texts[textIndex] = nextText;
-                    }
-                    else if (!large)
-                    {
-                        x += GetTextLength(newText, large);
-                        if (x > 320)
-                            throw new Exception($"Text {textIndex} is {x - 320} pixels too large");
-                    }
-                    reorderedTexts[offset].Add(index++, newText);
-                    Console.WriteLine(textIndex);
-                    Console.WriteLine(oldText);
-                    Console.WriteLine(newText);
-                }
-            }
-
-            dataHunk.Position = position;
-
-            initialActionListOffsets.AddRange(actionListOffsets);
-
-            // We will process the action lists in order
-            var sortedActionListOffsets = actionListOffsets.Distinct().ToList();
-            sortedActionListOffsets.Sort();
-            textIndex = 0;
-
-            foreach (var offset in sortedActionListOffsets)
-            {
-                if (offset == 0)
-                    continue;
-
-                if (offset != dataHunk.Position)
-                    throw new AmbermoonException(ExceptionScope.Data, "Unexpected action list offset.");
-
-                int totalTextLengthChange = 0;
-                int index = 0;
-
-                while (true)
-                {
-                    byte scrollAmount = dataHunk.ReadByte();
-                    writer.Write(scrollAmount);
-
-                    if (scrollAmount == 0xff) // click marker
-                        break;
-
-                    ushort xAndSize = dataHunk.ReadWord();
-                    string oldText = dataHunk.ReadNullTerminatedString();
-                    string newText = reorderedTexts[offset][index++];
-
-                    if (offset == 5552 && index >= 115 && newText != "<CLIQUEZ>")
-                    {
-                        writer.Replace(writer.Position - 1, (byte)(index == 123 ? 66 : 6));
-                    }
-                    else if (offset == 5552 && newText == "<CLIQUEZ>")
-                    {
-                        writer.Replace(writer.Position - 1, (byte)12);
-                        xAndSize = 0x8600;
-                    }
-                    else if (newText.StartsWith("Steinwachs, pour"))
-                    {
-                        xAndSize = 0x0a00;
-                        writer.Replace(writer.Position - 1, (byte)12);
-                    }
-                    else if (newText.StartsWith("musiques. Au"))
-                    {
-                        xAndSize = 0x0a00;
-                        writer.Replace(writer.Position - 1, (byte)12);
-
-                        int spaceIndex = newText.IndexOf(' ');
-
-                        reorderedTexts[offset][index] = newText[(spaceIndex + 1)..] + " " + reorderedTexts[offset][index];
-                        newText = newText[0..spaceIndex];
-                    }
-                    else if (newText.Contains("niveau cache?"))
-                    {
-                        xAndSize = 0x0a00;
-                        writer.Replace(writer.Position - 1, (byte)12);
-
-                        int spaceIndex = newText.IndexOf("? ") + 1;
-
-                        string nextText = newText[(spaceIndex + 1)..];
-                        newText = newText[0..spaceIndex];
-
-                        spaceIndex = reorderedTexts[offset][index].IndexOf(' ');
-                        nextText += " " + reorderedTexts[offset][index][0..spaceIndex];
-                        reorderedTexts[offset][index] = reorderedTexts[offset][index][(spaceIndex+1)..];
-
-                        writer.Write(xAndSize);
-                        writer.WriteNullTerminated(newText);
-                        totalTextLengthChange += newText.Length - oldText.Length;
-
-                        writer.Write(scrollAmount);
-                        writer.Write(xAndSize);
-                        totalTextLengthChange += 3;
-
-                        writer.WriteNullTerminated(nextText);
-                        totalTextLengthChange += nextText.Length + 1;
-
-                        continue;
-                    }
-
-                    writer.Write(xAndSize); // X pos and large text flag
-
-                    Console.WriteLine(textIndex);
-                    Console.WriteLine(oldText);
-                    Console.WriteLine(newText);
-                    Console.WriteLine();
-                    writer.WriteNullTerminated(newText);
-                    totalTextLengthChange += newText.Length - oldText.Length;
-
-                    if (newText.Contains("DENIS"))
-                    {
-                        byte smallScoll = dataHunk.ReadByte();
-                        ushort smallX = dataHunk.ReadWord();
-
-                        void AddText(bool large, string text, byte scrollAmount)
-                        {
-                            writer.Write(scrollAmount);
-                            totalTextLengthChange += 3;
-
-                            if (large)
-                            {
-                                writer.Write(xAndSize);
-                            }
-                            else
-                            {
-                                writer.Write(smallX);
-                            }
-
-                            writer.WriteNullTerminated(text);
-                            totalTextLengthChange += text.Length + 1;
-                        }
-
-                        AddText(false, "(aka dlfrsilver)", 12);
-                        // Denis description
-                        writer.Write(smallScoll);
-                        writer.Write(smallX);
-                        oldText = dataHunk.ReadNullTerminatedString();
-                        newText = reorderedTexts[offset][index++];
-                        Console.WriteLine(textIndex);
-                        Console.WriteLine(oldText);
-                        Console.WriteLine(newText);
-                        Console.WriteLine();
-                        writer.WriteNullTerminated(newText);
-                        totalTextLengthChange += newText.Length - oldText.Length;
-                        // CFOU!
-                        AddText(true, "BERTRAND JARDEL", scrollAmount);
-                        AddText(false, "(aka CFOU!)", 12);
-                        AddText(false, "Aide au ressourcage du programme,", 12);
-                        AddText(false, "Correctif sur le programme,", 12);
-                        AddText(false, "creation d'un ressourceur de texte", 12);
-                        AddText(false, "sous whdload, concassage des blocs", 12);
-                        AddText(false, "de donnees du programme dans", 12);
-                        AddText(false, "le cadre de la traduction.", smallScoll);
-                    }
-                }
-
-                AdjustOffsets(offset + 1, totalTextLengthChange);
-            }
-
-            FixOffsets();
-
-            var exeWriter = new DataWriter();
-            int hunkIndex = outroHunks.IndexOf(dataHunkInfo);
-            while (writer.Size % 4 != 0)
-                writer.Write((byte)0);
-            outroHunks[hunkIndex] = new AmigaExecutable.Hunk(AmigaExecutable.HunkType.Data, dataHunkInfo.MemoryFlags, writer.ToArray());
-            AmigaExecutable.Write(exeWriter, outroHunks);
-            return exeWriter;
-        }
 
         public OutroData(ILegacyGameData gameData)
         {
@@ -490,7 +167,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                             int textDisplayX = dataHunk.ReadByte();
                             bool largeText = dataHunk.ReadByte() != 0;
                             string text = dataHunk.ReadNullTerminatedString();
-                            int? textIndex = text.Length == 0 ? (int?)null : texts.Count;
+                            int? textIndex = text.Length == 0 ? null : texts.Count;
 
                             if (text.Length != 0)
                                 texts.Add(text);
@@ -511,7 +188,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     }
                 }
 
-                outroActions.Add((OutroOption)i, sequence.AsReadOnly());
+                outroActions.Add((OutroOption)i, sequence);
             }
 
             #endregion
@@ -539,6 +216,520 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
 
             #endregion
+
+            // Special handling of the new "remake-only" Extro_texts.amb
+            if (gameData.Files.TryGetValue("Extro_texts.amb", out var outroTextsContainer))
+            {
+                var outroTextsReader = outroTextsContainer.Files[1];
+                outroTextsReader.Position = 0;
+                int clickGroupCount = outroTextsReader.ReadWord();
+                var clickGroupSizes = new int[clickGroupCount];
+                var newTextClickGroups = new List<List<string>>[clickGroupCount];
+
+                for (int i = 0; i < clickGroupCount; ++i)
+                {
+                    int count = clickGroupSizes[i] = outroTextsReader.ReadWord();
+                    newTextClickGroups[i] = new(count);
+                }
+
+                for (int i = 0; i < clickGroupCount; ++i)
+                {
+                    int groupCount = clickGroupSizes[i];
+                    var groupSizes = new int[groupCount];
+
+                    for (int g = 0; g < groupCount; ++g)
+                    {
+                        int count = groupSizes[g] = outroTextsReader.ReadWord();
+                        newTextClickGroups[i].Add(new(count));
+                    }
+
+                    for (int g = 0; g < groupCount; ++g)
+                    {
+                        var newTextGroups = newTextClickGroups[i][g];
+                        int count = groupSizes[g];
+
+                        for (int t = 0; t < count; ++t)
+                            newTextGroups.Add(outroTextsReader.ReadNullTerminatedString(System.Text.Encoding.UTF8));
+
+                        newTextClickGroups[i].Add(newTextGroups);
+                    }
+
+                    if (outroTextsReader.Position % 2 == 1)
+                        ++outroTextsReader.Position;
+                }
+
+                int translatorCount = outroTextsReader.ReadWord();
+                var translators = new List<string>();
+
+                for (int i = 0; i < translatorCount; ++i)
+                    translators.Add(outroTextsReader.ReadNullTerminatedString(System.Text.Encoding.UTF8));
+
+                var clickText = outroTextsReader.ReadNullTerminatedString(System.Text.Encoding.UTF8);
+
+                if (outroTextsReader.Position % 2 == 1)
+                    ++outroTextsReader.Position;
+
+                PatchTexts(newTextClickGroups, translators, clickText, 44);
+            }
+        }
+
+        void PatchTexts(List<List<string>>[] newTextGroups, List<string> translators, string clickText, int maxLineLength)
+        {
+            if (newTextGroups.Length != 6)
+                throw new AmbermoonException(ExceptionScope.Data, "Wrong count of outro text groups.");
+
+            // Texts starting with an underscore are large texts.
+            // Texts starting with a single dollar sign mark the name of the translator dummy.
+            // Texts starting with two dollar signs mark the description of the translator.
+            var processedTexts = new List<string[]>[6];
+
+            string[] GetWords(string line)
+            {
+                if (string.IsNullOrWhiteSpace(line))
+                    return Array.Empty<string>();
+
+                if (line.StartsWith(' '))
+                {
+                    int wordStartIndex = 0;
+
+                    while (line[wordStartIndex++] == ' ')
+                        ;
+
+                    int wordEndIndex = line.IndexOf(' ', wordStartIndex + 1);
+
+                    if (wordEndIndex == -1) // only one word
+                        return new string[1] { line };
+
+                    return Enumerable.Concat(new string[1] { line[0..wordEndIndex] }, line[(wordEndIndex + 1)..].Split(' ')).ToArray();
+                }
+                else
+                {
+                    return line.Split(' ');
+                }
+            }
+
+            bool IsLarge(string text)
+            {
+                if (text.Length == 0) return false;
+                if (text[0] == '_') return true;
+                return text.StartsWith("$_");
+            }
+
+            // This will re-arrange text lines to fit into the max line length-
+            // It may add or remove some lines but won't touch large text lines
+            // (headings) or the click texts.
+            #region Process text lines
+            int clickGroupIndex = 0;
+            foreach (var clickGroup in newTextGroups)
+            {
+                var processedClickGroup = new List<string[]>(clickGroup.Count);
+
+                foreach (var group in clickGroup)
+                {
+                    var processedGroup = new List<string>(group.Count);
+
+                    for (int i = 0; i < group.Count; ++i)
+                    {
+                        group[i] = group[i].TrimEnd();
+                        var text = group[i];
+
+                        if (text.StartsWith('$'))
+                        {
+                            processedGroup.Add(text);
+                            continue;
+                        }
+
+                        if (IsLarge(text))
+                        {
+                            processedGroup.Add(text);
+                            continue;
+                        }
+
+                        if (i == group.Count - 1) // can't move excess text to next line in this case
+                        {
+                            string remainingText = text.Trim();
+
+                            while (remainingText.Length != 0)
+                            {
+                                if (remainingText.Length > maxLineLength)
+                                {
+                                    var words = GetWords(remainingText);
+
+                                    if (words[0].Length > maxLineLength)
+                                        throw new AmbermoonException(ExceptionScope.Data, "Outro text could not be fit in.");
+
+                                    string fitText = words[0];
+
+                                    for (int w = 1; w < words.Length; ++w)
+                                    {
+                                        if (fitText.Length + 1 + words[w].Length > maxLineLength)
+                                            break;
+
+                                        fitText += " " + words[w];
+                                    }
+
+                                    remainingText = remainingText[fitText.Length..].TrimStart();
+                                    processedGroup.Add(fitText);
+                                }
+                                else
+                                {
+                                    processedGroup.Add(remainingText);
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            bool moveExceedingWordsToNextLine = true;
+
+                            // Check if words of the next line fit into the current line
+                            var nextWords = GetWords(group[i + 1].TrimEnd());
+
+                            if (nextWords.Length != 0)
+                            {
+                                var words = GetWords(text);
+                                int lineLength = text.Length;
+                                int consumedNextWords = 0;
+
+                                // + 1 as we need a space character in between
+                                while (consumedNextWords < nextWords.Length && lineLength + 1 + nextWords[consumedNextWords].Length <= maxLineLength)
+                                {
+                                    // Add the word to the current line
+                                    group[i] += " " + nextWords[consumedNextWords++];
+                                    lineLength = group[i].Length;
+                                }
+
+                                // Remove moved words from next line
+                                if (consumedNextWords != 0)
+                                {
+                                    group[i + 1] = string.Join(' ', nextWords.Skip(consumedNextWords));
+
+                                    // Note: in this case it does not make sense to move words of
+                                    // the current line to the next line.
+                                    moveExceedingWordsToNextLine = false;
+                                }
+                            }
+
+                            if (moveExceedingWordsToNextLine)
+                            {
+                                var words = new List<string>(GetWords(text));
+
+                                while (group[i].Length > maxLineLength)
+                                {
+                                    if (words.Count == 1)
+                                        throw new AmbermoonException(ExceptionScope.Data, "Outro text could not be fit in.");
+
+                                    group[i + 1] = words[^1] + " " + group[i + 1];
+                                    words.RemoveAt(words.Count - 1);
+                                    group[i] = string.Join(' ', words);
+                                }
+                            }
+
+                            if (group[i].Trim().Length != 0)
+                                processedGroup.Add(group[i]);
+                        }
+                    }
+
+                    processedClickGroup.Add(processedGroup.ToArray());
+                }
+
+                processedTexts[clickGroupIndex++] = processedClickGroup;
+            }
+            #endregion
+
+            var baseTextGroups = GroupActions(outroActions.SelectMany(action => action.Value.Select(a => KeyValuePair.Create(action.Key, a))));
+            var groups = new ClickGroup[6]
+            {
+                baseTextGroups[OutroOption.ValdynInPartyNoYellowSphere][0],
+                baseTextGroups[OutroOption.ValdynInPartyNoYellowSphere][1],
+                baseTextGroups[OutroOption.ValdynInPartyNoYellowSphere][2],
+                baseTextGroups[OutroOption.ValdynInPartyNoYellowSphere][3],
+                baseTextGroups[OutroOption.ValdynInPartyWithYellowSphere][3],
+                baseTextGroups[OutroOption.ValdynInPartyNoYellowSphere][4]
+            };
+            var newActionLists = new List<OutroAction>[6] { new(), new(), new(), new(), new(), new() };
+            texts.Clear();
+
+            static string ProcessText(string text)
+            {
+                return (text[0] == '_' ? text[1..] : text).Trim();
+            }
+
+            // If in the source there was only 1 line of text but
+            // we have to split it into 2 or more lines due to its
+            // length in the translation, we need to know how much
+            // the first text should scroll.
+            const int defaultSmallTextScroll = 13;
+
+            for (int i = 0; i < 6; ++i)
+            {
+                var clickGroup = groups[i];
+                var newTexts = processedTexts[i];
+                int groupIndex = 0;
+                var newActions = newActionLists[i];
+
+                foreach (var textGroup in clickGroup.Groups)
+                {
+                    if (textGroup.ChangePictureAction != null)
+                        newActions.Add(textGroup.ChangePictureAction.Value);
+
+                    var texts = newTexts[groupIndex++];
+                    int t;
+
+                    for (t = 0; t < textGroup.TextActions.Count; ++t)
+                    {
+                        if (t == texts.Length)
+                        {
+                            // The translation needs fewer text lines.
+                            // We need to use the last scroll amount.
+                            var lastTextAction = textGroup.TextActions.Skip(t).LastOrDefault(a => a.Command == OutroCommand.PrintTextAndScroll && a.TextIndex != null);
+                            if (lastTextAction.TextIndex != null)
+                                newActions[^1] = newActions[^1] with { ScrollAmount = lastTextAction.ScrollAmount };
+                            break;
+                        }
+
+                        var textAction = textGroup.TextActions[t];
+
+                        if (textAction.Command == OutroCommand.WaitForClick ||
+                            textAction.TextIndex == null)
+                            break;
+
+                        bool largeText = texts[t][0] == '_';
+
+                        if (largeText && !textAction.LargeText)
+                            break;
+
+                        textAction = textAction with { TextIndex = this.texts.Count };
+                        if (translators.Count > 0 && texts[t].StartsWith("$") && !texts[t].StartsWith("$$"))
+                        {
+                            this.texts.Add(ProcessText(translators[0]));
+                            newActions.Add(textAction);
+                        }
+                        else if (translators.Count > 1 && texts[t].StartsWith("$$"))
+                        {
+                            this.texts.Add(ProcessText(texts[t]));
+                            newActions.Add(textAction);
+
+                            for (int tr = 1; tr < translators.Count; ++tr)
+                            {
+                                var translatorTextAction = newActions[^2] with { TextIndex = this.texts.Count };
+                                var translatorDescAction = newActions[^1];
+                                this.texts.Add(ProcessText(translators[tr]));
+                                newActions.Add(translatorTextAction);
+                                newActions.Add(translatorDescAction);
+                            }
+                        }
+                        else
+                        {
+                            this.texts.Add(ProcessText(texts[t]));
+                            newActions.Add(textAction);
+                        }
+
+                        if (t != 0 && largeText)
+                            throw new AmbermoonException(ExceptionScope.Data, "Invalid text patch data.");
+                    }
+
+                    int preT = t;
+
+                    if (t < texts.Length)
+                    {
+                        var lastAction = newActions[^1];
+
+                        // More texts but not enough actions.
+                        if (newActions.Count(a => a.Command == OutroCommand.PrintTextAndScroll) > 1 && !newActions[^2].LargeText)
+                        {
+                            // At least two small text lines
+                            var secondLastAction = newActions[^2];
+                            int lastScrollAmount = lastAction.ScrollAmount;
+                            newActions[^1] = lastAction with { ScrollAmount = secondLastAction.ScrollAmount };
+                            OutroAction textAction;
+
+                            while (t < texts.Length - 1)
+                            {
+                                textAction = secondLastAction with { TextIndex = this.texts.Count };
+                                this.texts.Add(texts[t++]); // no need for ProcessText as the text is always small
+                                newActions.Add(textAction);
+                            }
+
+                            textAction = secondLastAction with { TextIndex = this.texts.Count, ScrollAmount = lastScrollAmount };
+                            this.texts.Add(texts[t++]); // no need for ProcessText as the text is always small
+                            newActions.Add(textAction);
+                        }
+                        else
+                        {
+                            // Single small text line
+                            int lastScrollAmount = lastAction.ScrollAmount;
+                            lastAction = newActions[^1] = lastAction with { ScrollAmount = defaultSmallTextScroll };
+                            OutroAction textAction;
+
+                            while (t < texts.Length - 1)
+                            {
+                                textAction = lastAction with { TextIndex = this.texts.Count };
+                                this.texts.Add(texts[t++]); // no need for ProcessText as the text is always small
+                                newActions.Add(textAction);
+                            }
+
+                            textAction = lastAction with { TextIndex = this.texts.Count, ScrollAmount = lastScrollAmount };
+                            this.texts.Add(texts[t++]); // no need for ProcessText as the text is always small
+                            newActions.Add(textAction);
+                        }
+                    }
+
+                    if (preT < textGroup.TextActions.Count)
+                    {
+                        var emptyTextActions = textGroup.TextActions.Skip(preT).Where(x => x.TextIndex == null);
+                        
+                        if (emptyTextActions.Any())
+                        {
+                            if (emptyTextActions.Count() != 1)
+                                throw new AmbermoonException(ExceptionScope.Data, "Invalid text patch data.");
+
+                            newActions.Add(emptyTextActions.First());
+                        }
+                        else if (textGroup.TextActions.Any(a => a.Command == OutroCommand.PrintTextAndScroll && a.TextIndex == null))
+                            throw new AmbermoonException(ExceptionScope.Data, "Invalid text patch data.");
+                    }
+                    else if (textGroup.TextActions.Any(a => a.Command == OutroCommand.PrintTextAndScroll && a.TextIndex == null))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid text patch data.");
+                }
+
+                newActions.Add(new OutroAction()
+                {
+                    Command = OutroCommand.WaitForClick
+                });
+            }
+
+            var groupMappings = new List<int>[3]
+            {
+                new() { 0, 1, 2, 3, 5 },
+                new() { 0, 1, 2, 4, 5 },
+                new() { 0, 1, 2, 5 },
+            };
+
+            // Re-assign the new action lists
+            for (int i = 0; i < 3; ++i)
+            {
+                outroActions[(OutroOption)i] = groupMappings[i].SelectMany(index => newActionLists[index]).ToList();
+            }
+        }
+
+        struct ClickGroup
+        {
+            public struct Group
+            {
+                public OutroAction? ChangePictureAction;
+                public bool Large;
+                public List<OutroAction> TextActions;
+            }
+
+            public List<Group> Groups;
+        }
+
+        Dictionary<OutroOption, List<ClickGroup>> GroupActions(IEnumerable<KeyValuePair<OutroOption, OutroAction>> input)
+        {
+            var inputList = new List<KeyValuePair<OutroOption, OutroAction>>(input);
+            var firstTextItem = inputList.First(item => item.Value.TextIndex != null);
+            int firstTextItemIndex = inputList.IndexOf(firstTextItem);
+            var clickGroups = new Dictionary<OutroOption, List<ClickGroup>>();
+            var currentGroups = new List<ClickGroup.Group>();
+            var currentGroup = new ClickGroup.Group()
+            {
+                TextActions = new List<OutroAction>()
+                {
+                    firstTextItem.Value,
+                },
+                Large = firstTextItem.Value.LargeText,
+                ChangePictureAction = inputList[0].Value.Command == OutroCommand.ChangePicture ? inputList[0].Value : null,
+            };
+
+            void FinishCurrentGroup()
+            {
+                // If the group only consists of a single empty scroll action
+                // we just add it to the last group instead.
+                if (currentGroup.TextActions.Count == 1 &&
+                    currentGroup.TextActions[0].Command == OutroCommand.PrintTextAndScroll &&
+                    currentGroup.TextActions[0].TextIndex == null)
+                {
+                    currentGroups[^1].TextActions.Add(currentGroup.TextActions[0]);
+                }
+                else
+                {
+                    currentGroups.Add(currentGroup);
+                }
+                currentGroup = new()
+                {
+                    TextActions = new()
+                };
+            }
+
+            void FinishCurrentClickGroup(OutroOption option)
+            {
+                FinishCurrentGroup();
+                var clickGroup = new ClickGroup() { Groups = new(currentGroups) };
+                if (!clickGroups.TryGetValue(option, out var optionClickGroups))
+                    clickGroups.Add(option, new() { clickGroup });
+                else
+                    optionClickGroups.Add(clickGroup);
+                currentGroups.Clear();
+            }
+
+            foreach (var item in inputList.Skip(firstTextItemIndex + 1))
+            {
+                if (item.Value.Command == OutroCommand.WaitForClick)
+                {
+                    currentGroup.TextActions.Add(item.Value);
+                    FinishCurrentClickGroup(item.Key);
+                    continue;
+                }
+
+                if (item.Value.Command == OutroCommand.ChangePicture)
+                {
+                    currentGroup.ChangePictureAction = item.Value;
+                    continue;
+                }
+
+                if (item.Value.LargeText)
+                {
+                    if (currentGroup.TextActions.Count > 0)
+                        FinishCurrentGroup();
+                    currentGroup.Large = true;
+                }
+                else if (currentGroup.TextActions.Count > 0)
+                {
+                    var lastAction = currentGroup.TextActions[^1];
+
+                    if (lastAction.Command == OutroCommand.PrintTextAndScroll && !lastAction.LargeText)
+                    {
+                        // When text indentation changes or the previous text is an empty scroll
+                        // action, we will create a new paragraph group. Also if the last scroll
+                        // amount was greater than the current one.
+                        if (item.Value.TextIndex != null && (lastAction.TextIndex == null || lastAction.TextDisplayX != item.Value.TextDisplayX || lastAction.ScrollAmount > item.Value.ScrollAmount))
+                        {
+                            FinishCurrentGroup();
+                        }
+
+                        // At the end of a paragraph there is a different scroll offset but this is
+                        // provide by the last line of the paragraph so this line must be included
+                        // in the current group. So in this case first add the action and then finish
+                        // the group. We only do this if the scroll amount gets bigger as this indicates
+                        // the paragraph end. If it gets smaller it was a single line of text in the
+                        // paragraph which is handled above.
+                        else if (item.Value.TextIndex != null && lastAction.ScrollAmount < item.Value.ScrollAmount)
+                        {
+                            currentGroup.TextActions.Add(item.Value);
+                            FinishCurrentGroup();
+                            continue;
+                        }
+                    }
+                }
+
+                currentGroup.TextActions.Add(item.Value);
+            }
+
+            if (currentGroup.TextActions.Count > 0)
+                FinishCurrentClickGroup(input.Last().Key);
+
+            return clickGroups;
         }
 
         static readonly byte[] GlyphMappingSearchBytes = new byte[4] { 0xff, 0x42, 0xff, 0xff };

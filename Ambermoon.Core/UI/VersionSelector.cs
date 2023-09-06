@@ -318,48 +318,6 @@ namespace Ambermoon.UI
 
         Position GetFlagImageOffset(GameLanguage language, int textureFactor) => flagsTextureAtlas.GetOffset(1) + new Position((int)language * FlagWidth * textureFactor, 0); // TODO: maybe later the image has multiple rows
 
-        static string ProcessFrench(string text)
-        {
-            return text;
-            // There are glyph for the french letters but they really look ugly.
-            // Therefore we avoid them here by replacing them just by similar letters.
-            // I use this function instead of modifying the texts directly to keep
-            // the original letters here in code. Maybe later the font is improved.
-            return text
-                .Replace('à', 'a')
-                .Replace('â', 'a')
-                .Replace("æ", "ae")
-                .Replace('ç', 'c')
-                .Replace('è', 'e')
-                .Replace('é', 'e')
-                .Replace('ê', 'e')
-                .Replace('ë', 'e')
-                .Replace('î', 'i')
-                .Replace('ï', 'i')
-                .Replace('ô', 'o')
-                .Replace("œ", "oe")
-                .Replace('ù', 'u')
-                .Replace('û', 'u')
-                .Replace('ü', 'u')
-                .Replace('ÿ', 'y')
-                .Replace('À', 'A')
-                .Replace('Â', 'A')
-                .Replace("Æ", "Ae")
-                .Replace('Ç', 'C')
-                .Replace('È', 'E')
-                .Replace('É', 'E')
-                .Replace('Ê', 'E')
-                .Replace('Ë', 'E')
-                .Replace('Î', 'I')
-                .Replace('Ï', 'I')
-                .Replace('Ô', 'O')
-                .Replace("Œ", "Oe")
-                .Replace('Ù', 'U')
-                .Replace('Û', 'U')
-                .Replace('Ü', 'U')
-                .Replace('Ÿ', 'Y');
-        }
-
         string GetLanguageText(GameLanguage gameLanguage)
         {
             return configuration.Language switch
@@ -422,17 +380,17 @@ namespace Ambermoon.UI
             return option == 0
                 ? configuration.Language switch
                 {
-                    GameLanguage.German =>               "Speichere beim Programm",
-                    GameLanguage.French => ProcessFrench("Sauvegarder au programme"),
-                    GameLanguage.Polish =>               "Zapis gry w ścieżce progr.",
-                    _ =>                                 "Save games in program path"
+                    GameLanguage.German => "Speichere beim Programm",
+                    GameLanguage.French => "Sauvegarder au programme",
+                    GameLanguage.Polish => "Zapis gry w ścieżce progr.",
+                    _ =>                   "Save games in program path"
                 }
                 : configuration.Language switch
                 {
-                    GameLanguage.German =>               "Speichere bei den Daten",
-                    GameLanguage.French => ProcessFrench("Sauvegarder aux données"),
-                    GameLanguage.Polish =>               "Zapis gry w ścieżce danych",
-                    _ =>                                 "Save games in data path"
+                    GameLanguage.German => "Speichere bei den Daten",
+                    GameLanguage.French => "Sauvegarder aux données",
+                    GameLanguage.Polish => "Zapis gry w ścieżce danych",
+                    _ =>                   "Save games in data path"
                 };
         }
 
@@ -444,7 +402,7 @@ namespace Ambermoon.UI
                     GameLanguage.German =>
                         "Spielstände werden neben der Ambermoon.net.exe im Unterorder 'Saves' gespeichert.",
                     GameLanguage.French =>
-                        ProcessFrench("Les sauvegardes sont stockées à côté d'Ambermoon.net.exe dans le sous-dossier 'Saves'."),
+                        "Les sauvegardes sont stockées à côté d'Ambermoon.net.exe dans le sous-dossier 'Saves'.",
                     GameLanguage.Polish =>
                         "Zapisane gry są przechowywane obok pliku Ambermoon.net.exe w podfolderze 'Saves'.",
                     _ =>
@@ -455,7 +413,7 @@ namespace Ambermoon.UI
                     GameLanguage.German =>
                         "Spielstände werden im Pfad der Originaldaten gespeichert und überschreiben die Originalspielstände!",
                     GameLanguage.French =>
-                        ProcessFrench("Les sauvegardes sont stockées dans le chemin de données d'origine et peuvent écraser les sauvegardes d'origine!"),
+                        "Les sauvegardes sont stockées dans le chemin de données d'origine et peuvent écraser les sauvegardes d'origine!",
                     GameLanguage.Polish =>
                         "Zapisane gry są przechowywane w oryginalnej ścieżce danych i mogą nadpisywać oryginalne zapisy!",
                     _ =>

@@ -29,7 +29,6 @@ namespace Ambermoon
 {
     internal class Tutorial
     {
-        // TODO: add other languages later
         static readonly Dictionary<GameLanguage, string[]> texts = new Dictionary<GameLanguage, string[]>
         {
             { GameLanguage.German, new string[]
@@ -105,6 +104,30 @@ namespace Ambermoon
                 "le curseur en curseur d'action afin d'interagir avec des objets ou des personnages comme les PNJ.",
                 // End
                 "Maintenant, je suis silencieux. Amusez-vous bien avec Ambermoon !"
+            } },
+            { GameLanguage.Polish, new string[]
+            {
+                // Introduction
+                "Cześć ~SELF~, witaj w Ambermoon Remake.^^Potrzebujesz małego wprowadzenia?",
+                // Tip 1
+                "Przyciski w prawym dolnym rogu ekranu zapewniają wiele przydatnych funkcji " +
+                "w grze. Na głównym ekranie można je przełączać , naciskając prawy " +
+                "przycisk myszki nad ich obszarem lub wciskając klawisz Return. To pokaże " +
+                "dodatkowe funkcje.",
+                // Tip 2
+                "Do obsługi tych przycisków możesz też użyć klawiatury numerycznej. Układ " +
+                "jest dokładnie taki sam jak przycisków w grze. Tak więc klawisz 7 odpowiada " +
+                "górnemu lewemu przyciskowi (oko).",
+                // Tip 3
+                "W górnej części znajdują się portrety postaci. Kliknięcie w jeden z nich wybiera " +
+                "aktywną postać a prawy klik otwiera ekwipunek. Z klawiatury, klawisze 1-6 wybierają " +
+                "aktywną postać a F1-F6 otworzą ekwipunek.",
+                // Tip 4
+                "Po mapie możesz się poruszać używając myszy, klawiszy W, A, S, D lub strzałek." +
+                "W widoku 2D prawy klik na mapie zmienia kursor w ikonę interakcji z obiektami " +
+                "lub postaciami takimi jak NPC.",
+                // End
+                "Teraz zamilknę. baw się dobrze grając w Ambermoon!"
             } }
         };
 
