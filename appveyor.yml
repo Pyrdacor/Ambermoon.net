@@ -129,5 +129,5 @@ deploy:
   - provider: NuGet
     name: NugetPackages
     api_key:
-      secure: UrA/r0IO8UdL3u1kSb0ssskbIl5mvXwKbymZ8AEpnW6nDw4El+Gqnr5L+42MJRF5
+      secure: oL/d8rm+IPuxW+jM+Wse6Jydr38ctRcYj6Exot+ISFw4UGJbAoFeORwGQn7c8NQo
     skip_symbols: true
