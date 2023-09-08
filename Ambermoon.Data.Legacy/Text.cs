@@ -174,6 +174,15 @@ namespace Ambermoon.Data.Legacy
                 foreach (var glyph in CharToGlyph(fallbackChar.Value, rune))
                     yield return glyph;
             }
+            else if (ch.ToString().Normalize().Any(c => c > 32 && c < 128))
+            {
+                var glyph = CharToGlyph(ch.ToString().Normalize().First(c => c > 32 && c < 128), rune, ' ').First();
+
+                if (glyph == (byte)SpecialGlyph.SoftSpace)
+                    throw new AmbermoonException(ExceptionScope.Data, $"Unsupported text character '{ch}'.");
+
+                yield return glyph;
+            }
             else
                 throw new AmbermoonException(ExceptionScope.Data, $"Unsupported text character '{ch}'.");
         }

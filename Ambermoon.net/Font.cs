@@ -281,6 +281,7 @@ namespace Ambermoon
         public Text CreateText(IRenderView renderView, Layer layer, Rect area, string text,
             byte displayLayer, TextAlign textAlign = TextAlign.Center, byte alpha = 255, Rect clipArea = null)
         {
+            text = new string(text.Normalize().Where(ch => ch == ' ' || glyphs.ContainsKey(upperOnly ? char.ToUpper(ch) : ch)).ToArray());
             var renderText = new Text(renderView, layer, text, glyphs, characters, displayLayer, spaceWidth, upperOnly,
                 textureAtlasIndexOffset, alpha, clipArea);
             renderText.Place(area, textAlign);

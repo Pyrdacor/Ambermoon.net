@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Serialization;
 using static Ambermoon.Data.Legacy.Serialization.AmigaExecutable;
 
@@ -16,7 +17,7 @@ namespace Ambermoon.Data.Legacy.Serialization
     internal readonly struct TextCommand : IIntroTextCommand
     {
         public IntroTextCommandType Type { get; private init; }
-        public int[] Args { get; private init; }
+        public int[] Args { get; internal init; }
 
         internal static bool TryParse(IDataReader dataReader, List<string> texts, out TextCommand? textCommand)
         {
@@ -564,6 +565,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 var textCommandGroups = new List<int[]>(commandCount);
                 var currentTextCommandGroup = new List<int>(3);
                 int index = 0;
+                int firstWhiteTextCommandIndex = -1;
 
                 foreach (var textCommand in textCommands)
                 {
@@ -578,6 +580,15 @@ namespace Ambermoon.Data.Legacy.Serialization
                             textCommandGroups.Add(currentTextCommandGroup.ToArray());
                             currentTextCommandGroup.Clear();
                         }
+                    }
+                    else if (firstWhiteTextCommandIndex == -1 &&
+                        textCommand.Type == IntroTextCommandType.SetTextColor &&
+                        textCommand.Args[0] == 0x0ccc)
+                    {
+                        firstWhiteTextCommandIndex = index;
+
+                        while (firstWhiteTextCommandIndex > 0 && textCommands[firstWhiteTextCommandIndex - 1].Type != IntroTextCommandType.Clear)
+                            --firstWhiteTextCommandIndex;
                     }
 
                     ++index;
@@ -595,7 +606,20 @@ namespace Ambermoon.Data.Legacy.Serialization
                         for (int t = 0; t < commandTexts.Length; ++t)
                         {
                             if (t < textCommandGroups[i].Length)
-                                textCommandTexts[textCommands[textCommandGroups[i][t]].Args[2]] = commandTexts[t];
+                            {
+                                int commandIndex = textCommandGroups[i][t];
+                                var command = (TextCommand)textCommands[commandIndex];
+                                string commandText = new string(commandTexts[t].Normalize().Where(ch => ch == ' ' || glyphs.ContainsKey(ch)).ToArray());
+                                textCommandTexts[command.Args[2]] = commandText;
+
+                                if (commandText.Length != 0 && firstWhiteTextCommandIndex != -1 && commandIndex >= firstWhiteTextCommandIndex)
+                                {
+                                    var args = command.Args;
+                                    int width = commandText.Sum(ch => ch == ' ' ? 6 : glyphs[ch].Advance);
+                                    args[0] = 160 - width / 2;
+                                    textCommands[commandIndex] = command with { Args = args };
+                                }
+                            }
                         }
                     }
                 }

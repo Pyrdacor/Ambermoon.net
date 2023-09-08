@@ -205,8 +205,8 @@ namespace Ambermoon
 
                 if (actionType == IntroActionType.ThalionLogoFlyIn)
                 {
-                    textClipArea = new Rect(100, 160, 220, 0);
-                    presentsText = largeFont.CreateText(renderView, Layer.IntroText, new Rect(100, 160, 220, 22), introData.Texts[IntroText.Presents], 20, TextAlign.Left, 255, textClipArea);
+                    textClipArea = new Rect(0, 160, 320, 0);
+                    presentsText = largeFont.CreateText(renderView, Layer.IntroText, new Rect(0, 160, 320, 22), introData.Texts[IntroText.Presents], 20, TextAlign.Center, 255, textClipArea);
                     presentsText.Visible = false;
                 }
             }
