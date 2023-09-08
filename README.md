@@ -218,6 +218,8 @@ Special thanks to some special contributors and testers as well:
 - crediar
 - nicode
 - Jurie Horneman
+- dlfrsilver and CFOU! (French translation)
+- galon3 (Polish translation)
 
 
 ## Other projects
