@@ -480,6 +480,34 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
+                case EventType.RemovePartyMember:
+                {
+                    var characterIndex = dataReader.ReadByte();
+                    var chestIndexEquipment = dataReader.ReadByte();
+                    var chestIndexInventory = dataReader.ReadByte();
+                    var unused = dataReader.ReadBytes(6);
+                    @event = new RemovePartyMemberEvent
+                    {
+                        CharacterIndex = characterIndex,
+                        ChestIndexEquipment = chestIndexEquipment,
+                        ChestIndexInventory = chestIndexInventory,
+                        Unused = unused
+                    };
+                    break;
+                }
+                case EventType.Delay:
+                {
+                    var unused1 = dataReader.ReadBytes(5);
+                    var milliseconds = dataReader.ReadWord();
+                    var unused2 = dataReader.ReadWord();
+                    @event = new DelayEvent
+                    {
+                        Unused1 = unused1,
+                        Milliseconds = milliseconds,
+                        Unused2 = unused2
+                    };
+                    break;
+                }
                 default:
                 {
                     @event = new DebugEvent

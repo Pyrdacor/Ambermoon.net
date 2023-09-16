@@ -1108,8 +1108,14 @@ namespace Ambermoon
                         spawnEvent.X, spawnEvent.Y, spawnEvent.TravelType);
                     lastEventStatus = true;
                     break;
-                case EventType.Unknown:
+                case EventType.RemovePartyMember:
                     // TODO
+                    break;
+                case EventType.Delay:
+                    if (!(@event is DelayEvent delayEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid delay event.");
+                    game.StartSequence();
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(delayEvent.Milliseconds), () => game.EndSequence(false));
                     break;
                 default:
                     Console.WriteLine($"Unknown event type found: {@event.Type}");

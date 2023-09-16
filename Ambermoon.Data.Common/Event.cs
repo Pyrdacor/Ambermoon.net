@@ -105,7 +105,14 @@ namespace Ambermoon.Data
         /// Executes conversation actions like giving the item/gold/food or join/leave the party (conversation only)
         /// </summary>
         Interact,
-        Unknown
+        /// <summary>
+        /// Removes a party member and optionally stores its belongings in one or two chests.
+        /// </summary>
+        RemovePartyMember,
+        /// <summary>
+        /// Adds a non-interactive game delay (Ambermoon Advanced only).
+        /// </summary>
+        Delay
     }
 
     public class Event
@@ -1250,6 +1257,56 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return $"{Type}";
+        }
+    }
+
+    public class RemovePartyMemberEvent : Event
+    {
+        public byte CharacterIndex { get; set; }
+        public byte ChestIndexEquipment { get; set; }
+        public byte ChestIndexInventory { get; set; }
+        public byte[] Unused { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new RemovePartyMemberEvent
+            {
+                CharacterIndex = CharacterIndex,
+                ChestIndexEquipment = ChestIndexEquipment,
+                ChestIndexInventory = ChestIndexInventory,
+                Unused = CloneBytes(Unused),
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
+        public override string ToString()
+        {
+            return $"{Type} {CharacterIndex} (Equip -> Chest {ChestIndexEquipment}, Items -> Chest {ChestIndexInventory})";
+        }
+    }
+
+    public class DelayEvent : Event
+    {
+        public uint Milliseconds { get; set; }
+        public byte[] Unused1 { get; set; }
+        public ushort Unused2 { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new DelayEvent
+            {
+                Milliseconds = Milliseconds,
+                Unused1 = CloneBytes(Unused1),
+                Unused2 = Unused2,
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
+        public override string ToString()
+        {
+            return $"{Type} {Milliseconds} ms";
         }
     }
 

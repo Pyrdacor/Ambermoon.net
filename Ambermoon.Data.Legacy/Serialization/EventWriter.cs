@@ -275,6 +275,23 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write(interactEvent.Unused);
                     break;
                 }
+                case EventType.RemovePartyMember:
+                {
+                    var removePartyMemberEvent = @event as RemovePartyMemberEvent;
+                    dataWriter.Write(removePartyMemberEvent.CharacterIndex);
+                    dataWriter.Write(removePartyMemberEvent.ChestIndexEquipment);
+                    dataWriter.Write(removePartyMemberEvent.ChestIndexInventory);
+                    dataWriter.Write(removePartyMemberEvent.Unused);
+                    break;
+                }
+                case EventType.Delay:
+                {
+                    var delayEvent = @event as DelayEvent;
+                    dataWriter.Write(delayEvent.Unused1);
+                    dataWriter.Write((ushort)delayEvent.Milliseconds);
+                    dataWriter.Write(delayEvent.Unused2);
+                    break;
+                }
                 default:
                 {
                     var debugEvent = @event as DebugEvent;
