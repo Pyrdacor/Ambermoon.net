@@ -1115,8 +1115,14 @@ namespace Ambermoon
                     if (!(@event is DelayEvent delayEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid delay event.");
                     game.StartSequence();
-                    game.AddTimedEvent(TimeSpan.FromMilliseconds(delayEvent.Milliseconds), () => game.EndSequence(false));
-                    break;
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(delayEvent.Milliseconds), () =>
+                    {
+                        game.EndSequence(false);
+
+                        if (@event.Next != null)
+                            TriggerEventChain(map, game, EventTrigger.Always, x, y, @event.Next, true);
+                    });
+                    return null;
                 default:
                     Console.WriteLine($"Unknown event type found: {@event.Type}");
                     return @event.Next;
