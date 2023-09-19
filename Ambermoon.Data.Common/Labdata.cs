@@ -98,7 +98,7 @@ namespace Ambermoon.Data
         public Graphic FloorGraphic { get; set; } = null;
         public Graphic CeilingGraphic { get; set; } = null;
 
-        private Labdata()
+        public Labdata()
         {
 
         }
