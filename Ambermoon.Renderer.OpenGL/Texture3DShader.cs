@@ -40,6 +40,7 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultUseColorReplaceName = "useReplace";
         internal static readonly string DefaultSkyColorIndexName = "skyColorIndex";
         internal static readonly string DefaultSkyReplaceColorName = "skyColorReplace";
+        internal static readonly string DefaultPaletteCountName = TextureShader.DefaultPaletteCountName;
 
         // The palette has a size of 32xNumPalettes pixels.
         // Each row represents one palette of 32 colors.
@@ -51,6 +52,7 @@ namespace Ambermoon.Renderer
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform sampler2D {DefaultPaletteName};",
             $"uniform float {DefaultLightName};",
+            $"uniform float {DefaultPaletteCountName};",
             $"uniform vec4 {DefaultColorReplaceName}[16];",
             $"uniform float {DefaultUseColorReplaceName};",
             $"uniform float {DefaultSkyColorIndexName};",
@@ -70,7 +72,7 @@ namespace Ambermoon.Renderer
             $"        realTexCoord.y -= floor((textureSize.y + realTexCoord.y - textureEndCoord.y) / textureSize.y) * textureSize.y;",
             $"    float colorIndex = texture({DefaultSamplerName}, realTexCoord).r * 255.0f;",
             $"    vec4 pixelColor = {DefaultUseColorReplaceName} > 0.5f && colorIndex < 15.5f ? {DefaultColorReplaceName}[int(colorIndex + 0.5f)]",
-            $"        : texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"        : texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}));",
             $"    ",
             $"    if (alphaEnabled > 0.5f && alphaEnabled < 1.5f && (colorIndex < 0.5f || pixelColor.a < 0.5f) || {DefaultLightName} < 0.01f)",
             $"        discard;",
@@ -174,6 +176,11 @@ namespace Ambermoon.Renderer
                 shaderProgram.SetInputVector4(DefaultSkyReplaceColorName, replaceColor.R / 255.0f,
                     replaceColor.G / 255.0f, replaceColor.B / 255.0f, replaceColor.A / 255.0f);
             }
+        }
+
+        public void SetPaletteCount(int count)
+        {
+            shaderProgram.SetInput(DefaultPaletteCountName, (float)count);
         }
 
         public new static Texture3DShader Create(State state) => new Texture3DShader(state);

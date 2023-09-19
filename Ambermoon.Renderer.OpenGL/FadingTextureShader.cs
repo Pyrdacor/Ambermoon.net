@@ -36,6 +36,7 @@ namespace Ambermoon.Renderer
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform sampler2D {DefaultPaletteName};",
             $"uniform float {DefaultColorKeyName};",
+            $"uniform float {DefaultPaletteCountName};",
             $"uniform float {DefaultPaletteFadingSourceName};",
             $"uniform float {DefaultPaletteFadingDestinationName};",
             $"uniform float {DefaultPaletteFadingSourceFactorName};",
@@ -58,13 +59,13 @@ namespace Ambermoon.Renderer
             $"                colorIndex = 0.0f;",
             $"            if (colorIndex < 15.5f && {DefaultPaletteFadingSourceName} > 0.5f)",
             $"            {{",
-            $"                vec4 srcPixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 16.5f) / 32.0f, ({DefaultPaletteFadingSourceName} - 0.5f) / {Shader.PaletteCount}));",
-            $"                vec4 dstPixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, ({DefaultPaletteFadingDestinationName} - 0.5f) / {Shader.PaletteCount}));",
+            $"                vec4 srcPixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 16.5f) / 32.0f, ({DefaultPaletteFadingSourceName} - 0.5f) / {DefaultPaletteCountName}));",
+            $"                vec4 dstPixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, ({DefaultPaletteFadingDestinationName} - 0.5f) / {DefaultPaletteCountName}));",
             $"                pixelColor = mix(dstPixelColor, srcPixelColor, {DefaultPaletteFadingSourceFactorName});",
             $"            }}",
             $"            else",
             $"            {{",
-            $"                pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"                pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}));",
             $"            }}",
             $"        }}",
             $"    }}",
@@ -78,7 +79,7 @@ namespace Ambermoon.Renderer
             $"    if (maskColIndex < 0.5f)",
             $"        {DefaultFragmentOutColorName} = pixelColor;",
             $"    else",
-            $"        {DefaultFragmentOutColorName} = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"        {DefaultFragmentOutColorName} = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}));",
             $"}}"
         };
 

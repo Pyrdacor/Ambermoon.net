@@ -451,6 +451,7 @@ namespace Ambermoon.Renderer
                         Texture3DShader shader = RenderBuffer.Texture3DShader;
 
                         shader.UsePalette(Config.UsePalette);
+                        shader.SetPaletteCount(palette.Height);
                         shader.UpdateMatrices(state);
 
                         shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
@@ -471,6 +472,7 @@ namespace Ambermoon.Renderer
                         Billboard3DShader shader = RenderBuffer.Billboard3DShader;
 
                         shader.UsePalette(Config.UsePalette);
+                        shader.SetPaletteCount(palette.Height);
                         shader.UpdateMatrices(state);
 
                         shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
@@ -491,6 +493,7 @@ namespace Ambermoon.Renderer
                         TextShader shader = RenderBuffer.TextShader;
 
                         shader.UsePalette(Config.UsePalette);
+                        shader.SetPaletteCount(palette.Height);
                         shader.UpdateMatrices(state);
 
                         shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
@@ -536,6 +539,7 @@ namespace Ambermoon.Renderer
                                                 : RenderBuffer.TextureShader;
 
                         shader.UsePalette(Config.UsePalette);
+                        shader.SetPaletteCount(palette.Height);
                         shader.UpdateMatrices(state);
 
                         shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below

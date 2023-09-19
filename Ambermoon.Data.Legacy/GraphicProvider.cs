@@ -65,12 +65,12 @@ namespace Ambermoon.Data.Legacy
             return ColorIndexMapping[offset + colorIndex % 16];
         }
 
-        public byte PrimaryUIPaletteIndex { get; } = 50;
-        public byte SecondaryUIPaletteIndex { get; } = 52;
-        public byte AutomapPaletteIndex { get; } = 51;
-        public byte FirstIntroPaletteIndex { get; } = 54;
-        public byte FirstOutroPaletteIndex { get; } = 63;
-        public byte FirstFantasyIntroPaletteIndex { get; } = 69;
+        public byte PrimaryUIPaletteIndex { get; }
+        public byte SecondaryUIPaletteIndex { get; }
+        public byte AutomapPaletteIndex { get; }
+        public byte FirstIntroPaletteIndex { get; }
+        public byte FirstOutroPaletteIndex { get; }
+        public byte FirstFantasyIntroPaletteIndex { get; }
 
         public GraphicProvider(GameData gameData, ExecutableData.ExecutableData executableData, List<Graphic> additionalPalettes)
         {
@@ -79,16 +79,23 @@ namespace Ambermoon.Data.Legacy
             Palettes = gameData.Files[paletteFile].Files.ToDictionary(f => f.Key, f => ReadPalette(graphicReader, f.Value));
             int i;
 
+            PrimaryUIPaletteIndex = (byte)(1 + Palettes.Count);
+            AutomapPaletteIndex = (byte)(PrimaryUIPaletteIndex + 1);
+            SecondaryUIPaletteIndex = (byte)(PrimaryUIPaletteIndex + 2);
+            FirstIntroPaletteIndex = (byte)(PrimaryUIPaletteIndex + 4);
+            FirstOutroPaletteIndex = (byte)(FirstIntroPaletteIndex + 9);
+            FirstFantasyIntroPaletteIndex = (byte)(FirstOutroPaletteIndex + 6);
+
             // Add builtin palettes
             for (i = 0; i < 3; ++i)
-                Palettes.Add(50 + i, executableData.BuiltinPalettes[i]);
+                Palettes.Add(PrimaryUIPaletteIndex + i, executableData.BuiltinPalettes[i]);
 
             // And another palette for some UI graphics.
             // The portraits have a blue gradient as background. It is also 32x34 pixels in size and the gradient
             // is in y-direction. All colors have R=0x00 and G=0x11. The blue component is increased by 0x11
             // every 2 pixels starting at y=4 (first 4 pixel rows have B=0x00, next 2 have B=0x11, etc).
             // Last 2 rows have B=0xff.
-            Palettes.Add(53, new Graphic
+            Palettes.Add(PrimaryUIPaletteIndex + 3, new Graphic
             {
                 Width = 32,
                 Height = 1,
@@ -116,11 +123,11 @@ namespace Ambermoon.Data.Legacy
             i = 0;
             for (; i < Math.Min(additionalPaletteCount, additionalPalettes.Count); ++i)
             {
-                Palettes.Add(54 + i, additionalPalettes[i]);
+                Palettes.Add(FirstIntroPaletteIndex + i, additionalPalettes[i]);
             }
             for (; i < additionalPaletteCount; ++i)
             {
-                Palettes.Add(54 + i, new Graphic
+                Palettes.Add(FirstIntroPaletteIndex + i, new Graphic
                 {
                     Width = 32,
                     Height = 1,

@@ -31,6 +31,7 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultPaletteIndexName = "paletteIndex";
         internal static readonly string DefaultColorKeyName = "colorKeyIndex";
         internal static readonly string DefaultMaskColorIndexName = "maskColorIndex";
+        internal static readonly string DefaultPaletteCountName = "palCount";
 
         // The palette has a size of 32xNumPalettes pixels.
         // Each row represents one palette of 32 colors.
@@ -40,6 +41,7 @@ namespace Ambermoon.Renderer
         {
             GetFragmentShaderHeader(state),
             $"uniform float {DefaultUsePaletteName};",
+            $"uniform float {DefaultPaletteCountName};",
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform sampler2D {DefaultPaletteName};",
             $"uniform float {DefaultColorKeyName};",
@@ -60,7 +62,7 @@ namespace Ambermoon.Renderer
             $"        {{",
             $"            if (colorIndex >= 31.5f)",
             $"                colorIndex = 0.0f;",
-            $"            pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"            pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}));",
             $"        }}",
             $"    }}",
             $"    else",
@@ -73,7 +75,7 @@ namespace Ambermoon.Renderer
             $"    if (maskColIndex < 0.5f)",
             $"        {DefaultFragmentOutColorName} = pixelColor;",
             $"    else",
-            $"        {DefaultFragmentOutColorName} = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"        {DefaultFragmentOutColorName} = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}));",
             $"}}"
         };
 
@@ -143,6 +145,11 @@ namespace Ambermoon.Renderer
                 throw new AmbermoonException(ExceptionScope.Render, "Color index must be in the range 0 to 31.");
 
             shaderProgram.SetInput(DefaultColorKeyName, (float)colorIndex);
+        }
+
+        public void SetPaletteCount(int count)
+        {
+            shaderProgram.SetInput(DefaultPaletteCountName, (float)count);
         }
 
         public new static TextureShader Create(State state) => new TextureShader(state);

@@ -27,6 +27,7 @@ namespace Ambermoon.Renderer
         {
             GetFragmentShaderHeader(state),
             $"uniform float {DefaultUsePaletteName};",
+            $"uniform float {DefaultPaletteCountName};",
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform sampler2D {DefaultPaletteName};",
             $"in vec2 varTexCoord;",
@@ -38,7 +39,7 @@ namespace Ambermoon.Renderer
             $"    if ({DefaultUsePaletteName} > 0.5f)",
             $"    {{",
             $"        float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
-            $"        pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"        pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}));",
             $"    }}",
             $"    else",
             $"    {{",

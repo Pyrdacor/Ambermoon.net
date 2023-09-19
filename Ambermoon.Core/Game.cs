@@ -1175,6 +1175,8 @@ namespace Ambermoon
             );
         }
 
+        public Render.Color GetPrimaryUIColor(int colorIndex) => GetPaletteColor(renderView.GraphicProvider.PrimaryUIPaletteIndex, colorIndex);
+
         public Render.Color GetUIColor(int colorIndex) => GetPaletteColor(1 + UIPaletteIndex, colorIndex);
 
         internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction, bool initial, Action<Map> mapInitAction = null)
@@ -4453,7 +4455,7 @@ namespace Ambermoon
 
                 void AddTooltip(Rect area, string tooltip)
                 {
-                    layout.AddTooltip(area, tooltip, TextColor.White, TextAlign.Left, new Render.Color(GetPaletteColor(50, 15), 0xb0));
+                    layout.AddTooltip(area, tooltip, TextColor.White, TextAlign.Left, new Render.Color(GetPrimaryUIColor(15), 0xb0));
                 }
 
                 #region Character info
@@ -4584,7 +4586,7 @@ namespace Ambermoon
             if (character is PartyMember partyMember && Configuration.ShowPlayerStatsTooltips)
             {
                 var tooltip = GetSecondaryStatTooltip(Features, GameLanguage, secondaryStat, partyMember);
-                return layout.AddTooltip(area, tooltip, TextColor.White, TextAlign.Left, new Render.Color(GetPaletteColor(50, 15), 0xb0));
+                return layout.AddTooltip(area, tooltip, TextColor.White, TextAlign.Left, new Render.Color(GetPrimaryUIColor(15), 0xb0));
             }
 
             return null;

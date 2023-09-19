@@ -42,6 +42,7 @@ namespace Ambermoon.Renderer
             $"uniform sampler2D {DefaultPaletteName};",
             $"uniform float {DefaultColorKeyName};",
             $"uniform float {DefaultLightName};",
+            $"uniform float {DefaultPaletteCountName};",
             $"uniform vec4 {DefaultColorReplaceName}[16];",
             $"uniform float {DefaultUseColorReplaceName};",
             $"in vec2 varTexCoord;",
@@ -56,7 +57,7 @@ namespace Ambermoon.Renderer
             $"    else",
             $"    {{",
             $"        vec4 pixelColor = {DefaultUseColorReplaceName} > 0.5f && colorIndex < 15.5f ? {DefaultColorReplaceName}[int(colorIndex + 0.5f)]",
-            $"            : texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"            : texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}));",
             $"        {DefaultFragmentOutColorName} = vec4(max(vec3(0), pixelColor.rgb + vec3({DefaultLightName}) - 1.0f), pixelColor.a);",
             $"    }}",
             $"}}"

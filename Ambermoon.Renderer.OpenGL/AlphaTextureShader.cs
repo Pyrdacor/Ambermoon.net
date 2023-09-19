@@ -32,6 +32,7 @@ namespace Ambermoon.Renderer
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform sampler2D {DefaultPaletteName};",
             $"uniform float {DefaultColorKeyName};",
+            $"uniform float {DefaultPaletteCountName};",
             $"in vec2 varTexCoord;",
             $"flat in float palIndex;",
             $"flat in float maskColIndex;",
@@ -50,7 +51,7 @@ namespace Ambermoon.Renderer
             $"        {{",
             $"            if (colorIndex >= 31.5f)",
             $"                colorIndex = 0.0f;",
-            $"            pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"            pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}));",
             $"        }}",
             $"    }}",
             $"    else",
@@ -61,7 +62,7 @@ namespace Ambermoon.Renderer
             $"    }}",
             $"    ",
             $"    if (maskColIndex > 0.5f)",
-            $"        pixelColor = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"        pixelColor = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}));",
             $"    {DefaultFragmentOutColorName} = vec4(pixelColor.rgb, pixelColor.a * a);",
             $"}}"
         };
