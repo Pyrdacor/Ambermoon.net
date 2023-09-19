@@ -8,7 +8,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 {
     public class LabdataReader : ILabdataReader
     {
-        public void ReadLabdata(Labdata labdata, IDataReader dataReader, IGameData gameData)
+        public void ReadLabdataWithoutGraphics(Labdata labdata, IDataReader dataReader)
         {
             labdata.WallHeight = dataReader.ReadWord();
             labdata.Flags = dataReader.ReadWord();
@@ -121,6 +121,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 labdata.Walls.Add(wallData);
             }
+        }
+
+        public void ReadLabdata(Labdata labdata, IDataReader dataReader, IGameData gameData)
+        {
+            ReadLabdataWithoutGraphics(labdata, dataReader);
 
             // Load labyrinth graphics
             var legacyGameData = gameData as ILegacyGameData;
