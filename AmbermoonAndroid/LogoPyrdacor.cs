@@ -174,7 +174,7 @@ namespace AmbermoonAndroid
                 sprite.Layer = renderView.GetLayer(Layer.Misc);
                 sprite.X = (Global.VirtualScreenWidth - frameSize.Width) / 2;
                 sprite.Y = (Global.VirtualScreenHeight - frameSize.Height) / 2;
-                sprite.PaletteIndex = 69;
+                sprite.PaletteIndex = (byte)(renderView.GraphicProvider.FirstFantasyIntroPaletteIndex + 1);
                 return sprite;
             }
 

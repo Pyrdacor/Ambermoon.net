@@ -252,7 +252,7 @@ namespace Ambermoon.UI
                 languageChangeButton.TextureAtlasOffset = GetFlagImageOffset(language, textureFactor);
                 languageChangeButton.X = languageButtonArea.X;
                 languageChangeButton.Y = languageButtonArea.Y;
-                languageChangeButton.PaletteIndex = 71;
+                languageChangeButton.PaletteIndex = (byte)(renderView.GraphicProvider.FirstFantasyIntroPaletteIndex + 2);
                 languageChangeButton.Visible = true;
                 languageChangeButtons.Add(languageChangeButton);
                 languageButtonArea.Position.X += FlagWidth + 4;

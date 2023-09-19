@@ -3998,7 +3998,7 @@ namespace Ambermoon.UI
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground);
-                sprite.PaletteIndex = 52;
+                sprite.PaletteIndex = (byte)(RenderView.GraphicProvider.PrimaryUIPaletteIndex + 2);
                 sprite.Visible = true;
             }
 

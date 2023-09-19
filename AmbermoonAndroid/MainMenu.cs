@@ -107,7 +107,7 @@ namespace AmbermoonAndroid
             }
 
             var text = renderView.TextProcessor.CreateText("");
-            loadingText = new Ambermoon.UI.UIText(renderView, 51, text,
+            loadingText = new Ambermoon.UI.UIText(renderView, renderView.GraphicProvider.SecondaryUIPaletteIndex, text,
                 new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), 254, TextColor.White, false, TextAlign.Center);
             loadingText.Visible = false;
             

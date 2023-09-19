@@ -153,7 +153,7 @@ namespace Ambermoon.UI
             portraitBackground.X = offset.X + 112;
             portraitBackground.Y = offset.Y + 32;
             portraitBackground.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground);
-            portraitBackground.PaletteIndex = 52;
+            portraitBackground.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex + 2);
             portraitBackground.Visible = true;
 
             portrait = spriteFactory.Create(32, 34, true, 2) as ILayerSprite;

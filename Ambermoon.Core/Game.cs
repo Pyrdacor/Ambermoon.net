@@ -494,6 +494,7 @@ namespace Ambermoon
         internal byte PrimaryUIPaletteIndex { get; }
         internal byte SecondaryUIPaletteIndex { get; }
         internal byte AutomapPaletteIndex { get; }
+        internal byte CustomGraphicPaletteIndex => (byte)(PrimaryUIPaletteIndex + 2);
         /// <summary>
         /// Open chest which can be used to store items.
         /// </summary>
@@ -4641,7 +4642,7 @@ namespace Ambermoon
             characterInfoPanels.Clear();
             characterInfoStatTooltips.Clear();
             layout.FillArea(new Rect(208, offsetY + 49, 96, 80), GetUIColor(28), false);
-            layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 52, 1);
+            layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, CustomGraphicPaletteIndex, 1);
             layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.PortraitOffset + character.PortraitIndex - 1, PrimaryUIPaletteIndex, 2);
             if (!string.IsNullOrEmpty(DataNameProvider.GetRaceName(character.Race)))
                 layout.AddText(new Rect(242, offsetY + 49, 62, 7), DataNameProvider.GetRaceName(character.Race));

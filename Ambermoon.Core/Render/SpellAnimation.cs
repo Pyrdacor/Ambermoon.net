@@ -1130,8 +1130,9 @@ namespace Ambermoon.Render
             // It used the following color sequence which is encoded in palette 52 at index 1-6:
             // Black -> dark red -> light purple -> dark purple -> dark beige -> light beige.
             // See materializeColorIndices above.
+            byte paletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex + 1);
             var animation = AddMaskedAnimation(combatGraphicIndex, position, endPosition ?? position, duration,
-                scale, endScale ?? scale, displayLayer, finishAction, materializeColorIndices, 51);
+                scale, endScale ?? scale, displayLayer, finishAction, materializeColorIndices, paletteIndex);
             setupAnimation?.Invoke(animation);
         }
 
