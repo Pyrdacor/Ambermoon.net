@@ -530,7 +530,9 @@ namespace Ambermoon.UI
             byte displayLayer = 1, char? fallbackChar = null)
         {
             position = Global.GetTextRect(renderView, new Rect(position, new Size(Global.GlyphWidth, Global.GlyphLineHeight))).Position;
-            var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
+            var renderText = renderView.RenderTextFactory.Create(
+                renderView.GraphicProvider.DefaultTextPaletteIndex,
+                renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(text, fallbackChar), textColor, shadow);
             renderText.DisplayLayer = displayLayer;
             renderText.X = position.X;

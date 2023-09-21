@@ -186,8 +186,11 @@ namespace Ambermoon.Render
         void CreateText(string text)
         {
             var bounds = layout.GetTextRect(0, Global.VirtualScreenHeight, Global.VirtualScreenWidth, Global.GlyphLineHeight);
-            var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
-                renderView.TextProcessor.ProcessText(text, null, null), Data.Enumerations.Color.Bright, false, bounds, TextAlign.Center);
+            var renderText = renderView.RenderTextFactory.Create(
+                renderView.GraphicProvider.DefaultTextPaletteIndex, 
+                renderView.GetLayer(Layer.Text),
+                renderView.TextProcessor.ProcessText(text, null, null),
+                Data.Enumerations.Color.Bright, false, bounds, TextAlign.Center);
             texts.Add(renderText);
             renderText.Visible = true;
         }

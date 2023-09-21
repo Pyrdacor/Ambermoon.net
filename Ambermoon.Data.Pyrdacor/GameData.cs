@@ -84,6 +84,8 @@ namespace Ambermoon.Data.Pyrdacor
 
         public Dictionary<int, int> NPCGraphicOffsets => throw new NotImplementedException();
 
+        public byte DefaultTextPaletteIndex => throw new NotImplementedException();
+
         public byte PrimaryUIPaletteIndex => throw new NotImplementedException();
 
         public byte SecondaryUIPaletteIndex => throw new NotImplementedException();

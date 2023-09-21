@@ -416,7 +416,7 @@ namespace Ambermoon.Render
             if (withPortraitBackground)
             {
                 images.Add(layout.AddSprite(rect, Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground,
-                    52, displayLayer));
+                    (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex + 3 - 1), displayLayer));
             }
 
             images.Add(layout.AddSprite(rect, index, paletteIndex ?? game.PrimaryUIPaletteIndex,

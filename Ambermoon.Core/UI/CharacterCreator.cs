@@ -153,7 +153,7 @@ namespace Ambermoon.UI
             portraitBackground.X = offset.X + 112;
             portraitBackground.Y = offset.Y + 32;
             portraitBackground.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground);
-            portraitBackground.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex + 2);
+            portraitBackground.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex + 3 - 1);
             portraitBackground.Visible = true;
 
             portrait = spriteFactory.Create(32, 34, true, 2) as ILayerSprite;
@@ -293,7 +293,9 @@ namespace Ambermoon.UI
         IRenderText AddText(Position position, string text, TextColor textColor, bool shadow = true,
             byte displayLayer = 1, char? fallbackChar = null)
         {
-            var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
+            var renderText = renderView.RenderTextFactory.Create(
+                renderView.GraphicProvider.DefaultTextPaletteIndex,
+                renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(text, fallbackChar), textColor, shadow);
             renderText.DisplayLayer = displayLayer;
             renderText.X = position.X;

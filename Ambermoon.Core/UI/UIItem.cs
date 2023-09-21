@@ -114,7 +114,7 @@ namespace Ambermoon.UI
 
                     if (amountDisplay == null && stackable)
                     {
-                        amountDisplay = renderView.RenderTextFactory.Create();
+                        amountDisplay = renderView.RenderTextFactory.Create(renderView.GraphicProvider.DefaultTextPaletteIndex);
                         amountDisplay.Layer = renderView.GetLayer(Layer.Text);
                         amountDisplay.TextColor = TextColor.White;
                         amountDisplay.Shadow = true;
@@ -150,7 +150,7 @@ namespace Ambermoon.UI
             }
             else if (Item.Stacked)
             {
-                amountDisplay = renderView.RenderTextFactory.Create();
+                amountDisplay = renderView.RenderTextFactory.Create(renderView.GraphicProvider.DefaultTextPaletteIndex);
                 amountDisplay.Layer = renderView.GetLayer(Layer.Text);
                 amountDisplay.TextColor = TextColor.White;
                 amountDisplay.Shadow = true;

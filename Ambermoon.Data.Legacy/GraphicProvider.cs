@@ -65,6 +65,7 @@ namespace Ambermoon.Data.Legacy
             return ColorIndexMapping[offset + colorIndex % 16];
         }
 
+        public byte DefaultTextPaletteIndex => PrimaryUIPaletteIndex;
         public byte PrimaryUIPaletteIndex { get; }
         public byte SecondaryUIPaletteIndex { get; }
         public byte AutomapPaletteIndex { get; }

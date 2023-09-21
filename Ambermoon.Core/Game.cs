@@ -494,7 +494,7 @@ namespace Ambermoon
         internal byte PrimaryUIPaletteIndex { get; }
         internal byte SecondaryUIPaletteIndex { get; }
         internal byte AutomapPaletteIndex { get; }
-        internal byte CustomGraphicPaletteIndex => (byte)(PrimaryUIPaletteIndex + 2);
+        internal byte CustomGraphicPaletteIndex => (byte)(PrimaryUIPaletteIndex + 3);
         /// <summary>
         /// Open chest which can be used to store items.
         /// </summary>
@@ -590,7 +590,9 @@ namespace Ambermoon
             this.lightEffectProvider = renderView.GameData.LightEffectProvider;
             this.outroFactory = outroFactory;
             camera3D = renderView.Camera3D;
-            windowTitle = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
+            windowTitle = renderView.RenderTextFactory.Create(
+                renderView.GraphicProvider.DefaultTextPaletteIndex,
+                renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(""), TextColor.BrightGray, true,
                 layout.GetTextRect(8, 40, 192, 10), TextAlign.Center);
             windowTitle.DisplayLayer = 2;
@@ -620,7 +622,7 @@ namespace Ambermoon
                 hurtPlayerSprites[i].PaletteIndex = PrimaryUIPaletteIndex;
                 hurtPlayerSprites[i].TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.DamageSplash));
                 hurtPlayerSprites[i].Visible = false;
-                hurtPlayerDamageTexts[i] = renderView.RenderTextFactory.Create();
+                hurtPlayerDamageTexts[i] = renderView.RenderTextFactory.Create(renderView.GraphicProvider.DefaultTextPaletteIndex);
                 hurtPlayerDamageTexts[i].Layer = renderView.GetLayer(Layer.Text);
                 hurtPlayerDamageTexts[i].DisplayLayer = 201;
                 hurtPlayerDamageTexts[i].TextAlign = TextAlign.Center;

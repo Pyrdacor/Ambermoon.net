@@ -35,7 +35,7 @@ namespace Ambermoon.Renderer
         const byte ShadowColorIndex = (byte)TextColor.Black;
         protected int drawIndex = -1;
         byte displayLayer = 0;
-        byte paletteIndex = 49;
+        readonly byte paletteIndex;
         TextColor textColor;
         bool shadow;
         IText text;
@@ -50,17 +50,19 @@ namespace Ambermoon.Renderer
         protected readonly int characterWidth = CharacterWidth;
         protected readonly int characterHeight = CharacterHeight;
 
-        public RenderText(Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping)
+        public RenderText(byte defaultTextPaletteIndex, Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping)
             : base(0, 0, virtualScreen)
         {
+            paletteIndex = defaultTextPaletteIndex;
             this.glyphTextureMapping = glyphTextureMapping;
             bounds = virtualScreen;
         }
 
-        public RenderText(Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
+        public RenderText(byte defaultTextPaletteIndex, Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
             IRenderLayer layer, IText text, TextColor textColor, bool shadow)
             : base(text.MaxLineSize * CharacterWidth, text.LineCount * CharacterHeight - (LineHeight - CharacterHeight), virtualScreen)
         {
+            paletteIndex = defaultTextPaletteIndex;
             this.glyphTextureMapping = glyphTextureMapping;
             bounds = virtualScreen;
             Layer = layer;
@@ -69,11 +71,12 @@ namespace Ambermoon.Renderer
             Shadow = shadow;
         }
 
-        public RenderText(Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
+        public RenderText(byte defaultTextPaletteIndex, Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
             IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign,
             int characterWidth = CharacterWidth, int characterHeight = CharacterHeight)
             : base(text.MaxLineSize * characterWidth, text.LineCount * characterHeight - (LineHeight - characterHeight), virtualScreen)
         {
+            paletteIndex = defaultTextPaletteIndex;
             this.glyphTextureMapping = glyphTextureMapping;
             this.bounds = bounds;
             this.textAlign = textAlign;
@@ -513,24 +516,24 @@ namespace Ambermoon.Renderer
         /// <inheritdoc/>
         public Dictionary<byte, Position> DigitGlyphTextureMapping { get; set; }
 
-        public IRenderText Create()
+        public IRenderText Create(byte defaultTextPaletteIndex)
         {
-            return new RenderText(VirtualScreen, GlyphTextureMapping);
+            return new RenderText(defaultTextPaletteIndex, VirtualScreen, GlyphTextureMapping);
         }
 
-        public IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow)
+        public IRenderText Create(byte defaultTextPaletteIndex, IRenderLayer layer, IText text, TextColor textColor, bool shadow)
         {
-            return new RenderText(VirtualScreen, GlyphTextureMapping, layer, text, textColor, shadow);
+            return new RenderText(defaultTextPaletteIndex, VirtualScreen, GlyphTextureMapping, layer, text, textColor, shadow);
         }
 
-        public IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)
+        public IRenderText Create(byte defaultTextPaletteIndex, IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)
         {
-            return new RenderText(VirtualScreen, GlyphTextureMapping, layer, text, textColor, shadow, bounds, textAlign);
+            return new RenderText(defaultTextPaletteIndex, VirtualScreen, GlyphTextureMapping, layer, text, textColor, shadow, bounds, textAlign);
         }
 
-        public IRenderText CreateDigits(IRenderLayer layer, IText digits, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)
+        public IRenderText CreateDigits(byte defaultTextPaletteIndex, IRenderLayer layer, IText digits, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)
         {
-            return new DigitText(VirtualScreen, DigitGlyphTextureMapping, layer, digits, textColor, shadow, bounds, textAlign);
+            return new DigitText(defaultTextPaletteIndex, VirtualScreen, DigitGlyphTextureMapping, layer, digits, textColor, shadow, bounds, textAlign);
         }
 
         private class DigitText : RenderText
@@ -538,9 +541,9 @@ namespace Ambermoon.Renderer
             const int DigitWidth = 5;
             const int DigitHeight = 5;
 
-            public DigitText(Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
+            public DigitText(byte defaultTextPaletteIndex, Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
                 IRenderLayer layer, IText digits, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign)
-                : base(virtualScreen, glyphTextureMapping, layer, digits, textColor, shadow, bounds, textAlign, DigitWidth, DigitHeight)
+                : base(defaultTextPaletteIndex, virtualScreen, glyphTextureMapping, layer, digits, textColor, shadow, bounds, textAlign, DigitWidth, DigitHeight)
             {
 
             }

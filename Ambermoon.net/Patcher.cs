@@ -607,7 +607,7 @@ namespace Ambermoon
 
             try
             {
-                var uiText = new UI.UIText(renderView, 49,
+                var uiText = new UI.UIText(renderView, (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
                     renderView.TextProcessor.WrapText(renderView.TextProcessor.CreateText(text, '?'),
                     area, new Size(Global.GlyphWidth, Global.GlyphLineHeight)), Global.GetTextRect(renderView, area), displayLayer);
                 uiText.SetTextColor(color);

@@ -904,6 +904,7 @@ namespace Ambermoon.UI
                 {
                     hoveredItemName = renderView.RenderTextFactory.Create
                     (
+                        renderView.GraphicProvider.DefaultTextPaletteIndex,
                         renderView.GetLayer(Layer.Text),
                         itemNameText,
                         Data.Enumerations.Color.White, true
@@ -927,6 +928,7 @@ namespace Ambermoon.UI
                     {
                         hoveredItemPrice = renderView.RenderTextFactory.Create
                         (
+                            renderView.GraphicProvider.DefaultTextPaletteIndex,
                             renderView.GetLayer(Layer.Text),
                             itemPriceText,
                             color, true

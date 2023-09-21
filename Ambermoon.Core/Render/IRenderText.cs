@@ -48,11 +48,11 @@ namespace Ambermoon.Render
         /// Mapping from digit (0 to 9) to texture index.
         /// </summary>
         Dictionary<byte, Position> DigitGlyphTextureMapping { get; set; }
-        IRenderText Create();
-        IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow);
-        IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow,
+        IRenderText Create(byte defaultTextPaletteIndex);
+        IRenderText Create(byte defaultTextPaletteIndex, IRenderLayer layer, IText text, TextColor textColor, bool shadow);
+        IRenderText Create(byte defaultTextPaletteIndex, IRenderLayer layer, IText text, TextColor textColor, bool shadow,
             Rect bounds, TextAlign textAlign = TextAlign.Left);
-        IRenderText CreateDigits(IRenderLayer layer, IText digits, TextColor textColor,
+        IRenderText CreateDigits(byte defaultTextPaletteIndex, IRenderLayer layer, IText digits, TextColor textColor,
             bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left);
     }
 }

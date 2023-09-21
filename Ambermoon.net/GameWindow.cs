@@ -787,7 +787,9 @@ namespace Ambermoon
             InitGlyphs(fontProvider);
 
             var text = renderView.TextProcessor.CreateText("");
-            infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
+            infoText = renderView.RenderTextFactory.Create(
+                renderView.GraphicProvider.DefaultTextPaletteIndex, 
+                renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
                 Global.GetTextRect(renderView, new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6)), TextAlign.Center);
             infoText.DisplayLayer = 254;
             infoText.Visible = false;

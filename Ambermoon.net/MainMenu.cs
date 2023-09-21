@@ -81,7 +81,7 @@ namespace Ambermoon
             }
 
             var text = renderView.TextProcessor.CreateText("");
-            loadingText = new UI.UIText(renderView, renderView.GraphicProvider.SecondaryUIPaletteIndex, text,
+            loadingText = new UI.UIText(renderView, (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1), text,
                 Global.GetTextRect(renderView, new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6)),
                 254, TextColor.White, false, TextAlign.Center);
             loadingText.Visible = false;

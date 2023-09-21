@@ -974,7 +974,8 @@ namespace Ambermoon.UI
                 new Rect(48, 0, maxTextWidth, int.MaxValue),
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             var textBounds = new Rect(48, 95, maxTextWidth, Math.Max(minLines + 1, processedText.LineCount) * Global.GlyphLineHeight);
-            var renderText = RenderView.RenderTextFactory.Create(textLayer,
+            var renderText = RenderView.RenderTextFactory.Create(
+                RenderView.GraphicProvider.DefaultTextPaletteIndex, textLayer,
                 processedText, TextColor.BrightGray, true, GetTextRect(textBounds), textAlign);
             renderText.PaletteIndex = game.TextPaletteIndex;
             int popupRows = Math.Max(minLines + 2, 2 + (textBounds.Height + 36) / 16);
@@ -3969,7 +3970,9 @@ namespace Ambermoon.UI
 
                     if (text == null)
                     {
-                        text = portraitNames[slot] = RenderView.RenderTextFactory.Create(textLayer, name, TextColor.PartyMember, true,
+                        text = portraitNames[slot] = RenderView.RenderTextFactory.Create(
+                            RenderView.GraphicProvider.DefaultTextPaletteIndex, 
+                            textLayer, name, TextColor.PartyMember, true,
                             GetTextRect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6),
                             TextAlign.Center);
                     }
@@ -3998,7 +4001,7 @@ namespace Ambermoon.UI
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground);
-                sprite.PaletteIndex = (byte)(RenderView.GraphicProvider.PrimaryUIPaletteIndex + 2);
+                sprite.PaletteIndex = (byte)(RenderView.GraphicProvider.PrimaryUIPaletteIndex + 3 - 1);
                 sprite.Visible = true;
             }
 
@@ -4349,7 +4352,7 @@ namespace Ambermoon.UI
             {
                 if (activeTooltipText == null)
                 {
-                    activeTooltipText = RenderView.RenderTextFactory.Create();
+                    activeTooltipText = RenderView.RenderTextFactory.Create(RenderView.GraphicProvider.DefaultTextPaletteIndex);
                     activeTooltipText.Shadow = true;
                     activeTooltipText.DisplayLayer = 250;
                     activeTooltipText.Layer = RenderView.GetLayer(Layer.Text);

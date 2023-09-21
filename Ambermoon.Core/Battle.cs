@@ -2063,7 +2063,9 @@ namespace Ambermoon
             // Note: Don't use *** as the digit font has no such character.
             var text = layout.RenderView.TextProcessor.CreateText(damage >= 999 ? "999" : $"{damage:000}");
             var area = Global.BattleFieldSlotArea(tile).CreateModified(-5, 9, 12, 0);
-            var damageText = layout.RenderView.RenderTextFactory.CreateDigits(layer, text, TextColor.Red, false, area, TextAlign.Center);
+            var damageText = layout.RenderView.RenderTextFactory.CreateDigits(
+                layout.RenderView.GraphicProvider.DefaultTextPaletteIndex,
+                layer, text, TextColor.Red, false, area, TextAlign.Center);
             damageText.PaletteIndex = game.UIPaletteIndex;
             var colors = TextColors.TextAnimationColors;
             int colorCycle = 0;
