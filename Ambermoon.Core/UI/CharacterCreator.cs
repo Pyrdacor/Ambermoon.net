@@ -294,7 +294,7 @@ namespace Ambermoon.UI
             byte displayLayer = 1, char? fallbackChar = null)
         {
             var renderText = renderView.RenderTextFactory.Create(
-                renderView.GraphicProvider.DefaultTextPaletteIndex,
+                (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
                 renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(text, fallbackChar), textColor, shadow);
             renderText.DisplayLayer = displayLayer;

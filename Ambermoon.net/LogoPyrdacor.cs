@@ -200,7 +200,7 @@ namespace Ambermoon
                 var emptyText = renderView.TextProcessor.CreateText(text, '?');
                 var position = Global.GetTextRect(renderView, textArea).Position;
                 renderText = renderView.RenderTextFactory.Create(
-                    renderView.GraphicProvider.DefaultTextPaletteIndex, 
+                    (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1), 
                     renderView.GetLayer(Layer.Text), emptyText, Data.Enumerations.Color.White, false);
                 renderText.Place(Global.GetTextRect(renderView, textArea), TextAlign.Center);
                 textOverlay = renderView.ColoredRectFactory.Create(textArea.Width, textArea.Height + 2, Color.Black, 255);

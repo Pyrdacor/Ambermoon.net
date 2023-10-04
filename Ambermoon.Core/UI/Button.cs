@@ -427,7 +427,8 @@ namespace Ambermoon.UI
 
             tooltipYOffset = Global.GlyphLineHeight - renderView.FontProvider.GetFont().GlyphHeight;
             var text = renderView.TextProcessor.CreateText("");
-            tooltip = renderView.RenderTextFactory.Create(renderView.GraphicProvider.DefaultTextPaletteIndex, renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, true);
+            tooltip = renderView.RenderTextFactory.Create((byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
+                renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, true);
             tooltip.DisplayLayer = 254;
             tooltip.Visible = false;
         }

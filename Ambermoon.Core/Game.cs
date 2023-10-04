@@ -592,7 +592,7 @@ namespace Ambermoon
             this.outroFactory = outroFactory;
             camera3D = renderView.Camera3D;
             windowTitle = renderView.RenderTextFactory.Create(
-                renderView.GraphicProvider.DefaultTextPaletteIndex,
+                (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
                 renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(""), TextColor.BrightGray, true,
                 layout.GetTextRect(8, 40, 192, 10), TextAlign.Center);
@@ -623,7 +623,7 @@ namespace Ambermoon
                 hurtPlayerSprites[i].PaletteIndex = PrimaryUIPaletteIndex;
                 hurtPlayerSprites[i].TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.DamageSplash));
                 hurtPlayerSprites[i].Visible = false;
-                hurtPlayerDamageTexts[i] = renderView.RenderTextFactory.Create(renderView.GraphicProvider.DefaultTextPaletteIndex);
+                hurtPlayerDamageTexts[i] = renderView.RenderTextFactory.Create((byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1));
                 hurtPlayerDamageTexts[i].Layer = renderView.GetLayer(Layer.Text);
                 hurtPlayerDamageTexts[i].DisplayLayer = 201;
                 hurtPlayerDamageTexts[i].TextAlign = TextAlign.Center;

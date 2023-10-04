@@ -975,7 +975,7 @@ namespace Ambermoon.UI
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             var textBounds = new Rect(48, 95, maxTextWidth, Math.Max(minLines + 1, processedText.LineCount) * Global.GlyphLineHeight);
             var renderText = RenderView.RenderTextFactory.Create(
-                RenderView.GraphicProvider.DefaultTextPaletteIndex, textLayer,
+                (byte)(RenderView.GraphicProvider.DefaultTextPaletteIndex - 1), textLayer,
                 processedText, TextColor.BrightGray, true, GetTextRect(textBounds), textAlign);
             renderText.PaletteIndex = game.TextPaletteIndex;
             int popupRows = Math.Max(minLines + 2, 2 + (textBounds.Height + 36) / 16);
@@ -3971,7 +3971,7 @@ namespace Ambermoon.UI
                     if (text == null)
                     {
                         text = portraitNames[slot] = RenderView.RenderTextFactory.Create(
-                            RenderView.GraphicProvider.DefaultTextPaletteIndex, 
+                            game.PrimaryUIPaletteIndex, 
                             textLayer, name, TextColor.PartyMember, true,
                             GetTextRect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6),
                             TextAlign.Center);
@@ -4352,7 +4352,7 @@ namespace Ambermoon.UI
             {
                 if (activeTooltipText == null)
                 {
-                    activeTooltipText = RenderView.RenderTextFactory.Create(RenderView.GraphicProvider.DefaultTextPaletteIndex);
+                    activeTooltipText = RenderView.RenderTextFactory.Create((byte)(RenderView.GraphicProvider.DefaultTextPaletteIndex - 1));
                     activeTooltipText.Shadow = true;
                     activeTooltipText.DisplayLayer = 250;
                     activeTooltipText.Layer = RenderView.GetLayer(Layer.Text);
