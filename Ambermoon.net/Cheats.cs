@@ -1204,6 +1204,14 @@ namespace Ambermoon
         {
             Console.WriteLine();
 
+            if (game.WindowOrPopupActive)
+            {
+                Console.WriteLine("Please close all popups and ensure you are on the map screen.");
+                Console.WriteLine("Otherwise the level cheat won't work.");
+                Console.WriteLine();
+                return;
+            }
+
             PartyMember[] GetPartyMembers(int argIndex)
             {
                 int? partyMemberIndex = args.Length < argIndex + 1 ? (int?)null : int.TryParse(args[argIndex], out int i) ? i : -1;

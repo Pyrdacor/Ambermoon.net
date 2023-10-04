@@ -290,6 +290,7 @@ namespace Ambermoon
         internal bool GameOverButtonsVisible { get; private set; } = false;
         internal bool WindowActive => currentWindow.Window != Window.MapView;
         internal bool PopupActive => layout?.PopupActive ?? false;
+        public bool WindowOrPopupActive => WindowActive || PopupActive;
         static readonly WindowInfo DefaultWindow = new WindowInfo { Window = Window.MapView };
         WindowInfo currentWindow = DefaultWindow;
         internal WindowInfo LastWindow { get; private set; } = DefaultWindow;

@@ -35,7 +35,7 @@ namespace Ambermoon.Renderer
         const byte ShadowColorIndex = (byte)TextColor.Black;
         protected int drawIndex = -1;
         byte displayLayer = 0;
-        readonly byte paletteIndex;
+        byte paletteIndex;
         TextColor textColor;
         bool shadow;
         IText text;
