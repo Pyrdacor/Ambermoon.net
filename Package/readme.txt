@@ -7,7 +7,7 @@
 
 
             ------------------------------------------------------------------
-            | Ambermoon rewrite by Pyrdacor - Version 1.9.1 - September 2023 |
+            |  Ambermoon rewrite by Pyrdacor - Version 1.9.2 - October 2023  |
             ------------------------------------------------------------------
 
 

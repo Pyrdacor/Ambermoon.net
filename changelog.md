@@ -1,7 +1,8 @@
 # Changelog
 
-## 1.9.0 - Eighth patch (August 2023)
+## 1.9.0 - Eighth patch (August - October 2023)
 
+- Version [1.9.2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.2): Fixed polish version, bugfixes
 - Version [1.9.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.1): Added the polish version
 - Version [1.9.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.0): Added the intro
 
