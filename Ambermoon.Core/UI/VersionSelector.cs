@@ -27,6 +27,7 @@ using System.Globalization;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 using Color = Ambermoon.Render.Color;
 using System.Linq;
+using System.Reflection;
 
 namespace Ambermoon.UI
 {
@@ -442,7 +443,9 @@ namespace Ambermoon.UI
         {
             var headerText = GetHeaderText();
             headerRenderText.Text = renderView.TextProcessor.CreateText(headerText);
-            gameDataVersionTooltipText = renderView.TextProcessor.CreateText(GetVersionInfoTooltip());
+            var configType = Assembly.GetEntryAssembly().GetType("Ambermoon.Configuration");
+            var bundleDir = configType.GetProperty("BundleDirectory").GetValue(configuration)!.ToString();
+            gameDataVersionTooltipText = renderView.TextProcessor.CreateText(bundleDir.Replace('\\', '/')); //renderView.TextProcessor.CreateText(GetVersionInfoTooltip());
             gameDataVersionTooltipText = renderView.TextProcessor.WrapText(gameDataVersionTooltipText,
                 new Rect(0, 0, 300, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
         }
