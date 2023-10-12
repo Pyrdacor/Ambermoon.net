@@ -443,11 +443,18 @@ namespace Ambermoon.UI
         {
             var headerText = GetHeaderText();
             headerRenderText.Text = renderView.TextProcessor.CreateText(headerText);
-            var configType = Assembly.GetEntryAssembly().GetType("Ambermoon.Configuration");
-            var bundleDir = configType.GetProperty("BundleDirectory").GetValue(configuration)!.ToString();
-            gameDataVersionTooltipText = renderView.TextProcessor.CreateText(bundleDir.Replace('\\', '/')); //renderView.TextProcessor.CreateText(GetVersionInfoTooltip());
-            gameDataVersionTooltipText = renderView.TextProcessor.WrapText(gameDataVersionTooltipText,
-                new Rect(0, 0, 300, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+            try
+            {
+                var configType = Assembly.GetEntryAssembly().GetType("Ambermoon.Configuration");
+                var bundleDir = configType.GetProperty("BundleDirectory").GetValue(configuration)!.ToString();
+                gameDataVersionTooltipText = renderView.TextProcessor.CreateText(bundleDir.Replace('\\', '/')); //renderView.TextProcessor.CreateText(GetVersionInfoTooltip());
+                gameDataVersionTooltipText = renderView.TextProcessor.WrapText(gameDataVersionTooltipText,
+                    new Rect(0, 0, 300, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+            }
+            catch
+            {
+                // ignore
+            }
         }
 
         void UpdateSaveOptionTexts()
