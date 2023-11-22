@@ -392,6 +392,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             ElementLabel,
             SageIdentifyScroll,
             SageSLP,
+            MountTheWasp,
             Count
         }
 

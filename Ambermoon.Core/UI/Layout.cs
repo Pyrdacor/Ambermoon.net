@@ -2784,6 +2784,24 @@ namespace Ambermoon.UI
                             game.InputEnable = true;
                         return;
                     }
+                    else if (item.Spell == Spell.MountWasp)
+                    {
+                        if (game.TravelType != TravelType.Walk)
+                        {
+                            SetInventoryMessage(game.DataNameProvider.WrongPlaceToUseItem, true);
+                        }
+                        else
+                        {
+                            itemGrid.HideTooltip();
+                            ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Enchant, itemGrid.GetSlotPosition(slot), () =>
+                            {
+                                if (wasInputEnabled)
+                                    game.InputEnable = true;
+                                game.UpdateCursor();
+                                game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true);
+                            });
+                        }
+                    }
                     else if (item.Spell == Spell.CallEagle)
                     {
                         if (game.TravelType != TravelType.Walk)

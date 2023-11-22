@@ -9345,6 +9345,9 @@ namespace Ambermoon
                     // Do nothing. Can be used by Thief/Ranger but has no effect in Ambermoon.
                     finishAction?.Invoke();
                     break;
+                case Spell.MountWasp:
+                    ShowMessagePopup(DataNameProvider.MountTheWasp, () => CloseWindow(() => ActivateTransport(TravelType.Wasp)), TextAlign.Left);
+                    break;
                 case Spell.CallEagle:
                     ShowMessagePopup(DataNameProvider.BlowsTheFlute, () =>
                     {

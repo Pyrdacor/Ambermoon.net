@@ -148,7 +148,8 @@
         Drugs = 201, // stinking mushroom
         SelfHealing = 202, // Advanced only
         SelfReviving = 203, // Advanced only
-        ExpExchange = 204 // Advanced only
+        ExpExchange = 204, // Advanced only
+        MountWasp = 205 // Advanced only
     }
 
     public enum HealingSpell : byte

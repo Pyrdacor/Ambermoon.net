@@ -214,6 +214,7 @@ namespace Ambermoon.Data
         string CannotExchangeExpWithDead { get; }
         string ThisCantBeMoved { get; }
         string ElementLabel { get; }
+        string MountTheWasp { get; }
 
 
         #region Conversations

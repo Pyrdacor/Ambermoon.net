@@ -248,7 +248,8 @@ namespace Ambermoon.Data
             { Spell.Drugs, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.SelfHealing, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.SelfReviving, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.All } },
-            { Spell.ExpExchange, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.Lyramion } }
+            { Spell.ExpExchange, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.Lyramion } },
+            { Spell.MountWasp, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.WorldMapOnly, Worlds = WorldFlag.ForestMoon } },
         };
 
         static readonly Dictionary<Spell, uint> adjustedSLP = new Dictionary<Spell, uint>

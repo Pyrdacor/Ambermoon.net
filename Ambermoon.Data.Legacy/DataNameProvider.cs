@@ -236,6 +236,7 @@
         public string NoChargesLeft => executableData.Messages.GetEntry(Messages.Index.NoChargesLeft);
         public string CannotCallEagleIfNotOnFoot => executableData.Messages.GetEntry(Messages.Index.CannotCallEagleIfNotOnFoot);
         public string BlowsTheFlute => executableData.Messages.GetEntry(Messages.Index.BlowsTheFlute);
+        public string MountTheWasp => executableData.Messages.GetEntry(Messages.Index.MountTheWasp);
         public string CannotUseItHere => executableData.Messages.GetEntry(Messages.Index.CannotUseItHere);
         public string CannotUseMagicDiscHere => executableData.Messages.GetEntry(Messages.Index.CannotUseMagicDiscHere);
         public string CannotJumpThroughWalls => executableData.Messages.GetEntry(Messages.Index.CannotJumpThroughWalls);
