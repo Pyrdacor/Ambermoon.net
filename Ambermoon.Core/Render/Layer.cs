@@ -26,6 +26,7 @@ namespace Ambermoon
         // Note: Don't add aliases here as this is used for enumerating over all layers.
         None = -1,
         Map3DBackground, // Color floor, sky, etc
+        Map3DBackgroundFog,
         Map3DCeiling,
         Map3D,
         Billboards3D,

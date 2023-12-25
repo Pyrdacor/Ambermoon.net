@@ -973,5 +973,11 @@ namespace Ambermoon.Renderer.OpenGL
             (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetSkyColorReplacement(skyColor, replaceColor);
             (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetSkyColorReplacement(skyColor, replaceColor);
         }
+
+        public void SetFogColor(Color fogColor)
+        {
+            (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetFogColor(fogColor);
+            (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetFogColor(fogColor);
+        }
     }
 }

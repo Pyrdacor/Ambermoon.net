@@ -144,6 +144,7 @@ namespace Ambermoon
         bool? ShowThalionLogo { get; set; }
         bool ShowFloor { get; set; }
         bool ShowCeiling { get; set; }
+        bool ShowFog { get; set; }
         bool ExtendedSavegameSlots { get; set; }
         [Obsolete("Use AdditionalSavegameSlots instead.")]
         string[] AdditionalSavegameNames { get; set; }

@@ -807,6 +807,7 @@ namespace Ambermoon.Render
         List<IColoredRect> skyColors = null;
         readonly List<KeyValuePair<Position, IColoredRect>> stars = new List<KeyValuePair<Position, IColoredRect>>();
         SkySprite horizonSprite = null;
+        IColoredRect horizonFog = null;
         ISurface3D floor = null;
         ISurface3D ceiling = null;
         Labdata labdata = null;
@@ -944,6 +945,11 @@ namespace Ambermoon.Render
                     sprite.Y = y;
                     return sprite;
                 });
+                horizonFog = renderView.ColoredRectFactory.Create(144, 21, Color.Transparent, 50);
+                horizonFog.Layer = renderView.GetLayer(Layer.Map3DBackgroundFog);
+                horizonFog.X = Global.Map3DViewX;
+                horizonFog.Y = Global.Map3DViewY + ceilingColor.Height - 21;
+                horizonFog.Visible = false;
             }
         }
 
@@ -986,6 +992,7 @@ namespace Ambermoon.Render
 
                 Map = map;
                 labdata = mapManager.GetLabdataForMap(map);
+                SetFog(map, labdata);
                 EnsureLabdataTextureAtlas();
                 EnsureChangeableBlocks();
                 UpdateSurfaces();
@@ -1001,6 +1008,67 @@ namespace Ambermoon.Render
 
             camera.SetPosition(playerX * Global.DistancePerBlock, (map.Height - playerY) * Global.DistancePerBlock);
             camera.TurnTowards((float)playerDirection * 90.0f);
+        }
+
+        internal void SetFog(Map map, Labdata labdata)
+        {
+            Color fogColor;
+
+            if (game.Configuration.ShowFog && !map.Flags.HasFlag(MapFlags.Indoor))
+            {
+                if (map.Flags.HasFlag(MapFlags.Sky))
+                {
+                    byte component = 0;
+                    byte alpha = 255;
+
+                    if (game.GameTime.Hour < 4) // 0-3 (black fog)
+                    {
+                        alpha = 255;
+                        component = 0;
+                    }
+                    else if (game.GameTime.Hour < 9) // 4-8 (black to white fog)
+                    {
+                        alpha = 255;
+                        component = (byte)((game.GameTime.Hour - 3) * 255 / 6);
+                    }
+                    else if (game.GameTime.Hour < 12) // 9-11 (white to no fog)
+                    {
+                        alpha = (byte)((12 - game.GameTime.Hour) * 255 / 4);
+                        component = 255;
+                    }
+                    else if (game.GameTime.Hour < 17) // 12-16 (no fog)
+                    {
+                        alpha = 0;
+                        component = 0;
+                    }
+                    else // 17-23 (no to black fog)
+                    {
+                        alpha = (byte)((game.GameTime.Hour - 16) * 255 / 8);
+                        component = 0;
+                    }
+                    byte r = Map.World == World.Morag ? (byte)Math.Min(component * 3 / 2, 255) : component;
+                    byte g = Map.World != World.Lyramion ? (byte)Math.Min(component * 3 / 2, 255) : component;
+                    fogColor = new Color(r, g, component, alpha);
+                }
+                else
+                {
+                    fogColor = game.GetPaletteColor((byte)map.PaletteIndex, labdata.CeilingColorIndex);
+                }
+
+                if (horizonFog != null)
+                {
+                    horizonFog.Color = new Color(fogColor, Math.Min(fogColor.A, (byte)128));
+                    horizonFog.Visible = true;
+                }
+            }
+            else
+            {
+                fogColor = Color.Transparent;
+                if (horizonFog != null)
+                    horizonFog.Visible = false;
+            }
+
+            renderView.SetFogColor(fogColor);
         }
 
         public float GetFloorY() => -0.25f * ReferenceWallHeight / BlockSize;
@@ -1040,6 +1108,7 @@ namespace Ambermoon.Render
             floor?.Delete();
             ceiling?.Delete();
             horizonSprite?.Destroy();
+            horizonFog?.Delete();
             skyColors?.ForEach(c => c?.Delete());
             if (reset)
             {
@@ -1052,6 +1121,7 @@ namespace Ambermoon.Render
             floor = null;
             ceiling = null;
             horizonSprite = null;
+            horizonFog = null;
             skyColors = null;
 
             walls.Values.ToList().ForEach(walls => walls.ForEach(wall => wall?.Delete()));

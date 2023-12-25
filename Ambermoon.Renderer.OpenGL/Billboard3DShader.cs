@@ -40,7 +40,10 @@ namespace Ambermoon.Renderer
             $"uniform float {DefaultUseColorReplaceName};",
             $"uniform float {DefaultSkyColorIndexName};",
             $"uniform vec4 {DefaultSkyReplaceColorName};",
+            $"uniform vec4 {DefaultFogColorName} = vec4(0);",
             $"in vec2 varTexCoord;",
+            $"in float distance;",
+            $"in float drawY;",
             $"flat in float palIndex;",
             $"flat in vec2 textureEndCoord;",
             $"flat in vec2 textureSize;",
@@ -63,6 +66,12 @@ namespace Ambermoon.Renderer
             $"        {DefaultFragmentOutColorName} = {DefaultSkyReplaceColorName};",
             $"    else",
             $"        {DefaultFragmentOutColorName} = vec4(pixelColor.rgb + vec3({DefaultLightName}) - vec3(1), pixelColor.a);",
+            $"    ",
+            $"    if ({DefaultFogColorName}.a > 0.001f)",
+            $"    {{",
+            $"        float fogFactor = {DefaultFogColorName}.a * ({DefaultSkyColorIndexName} < 31.5f && drawY > 0 ? min({DefaultSkyColorIndexName} < 31.5f ? 0.75f : 1.0f, distance * ({DefaultSkyColorIndexName} < 31.5f ? 0.5f : 1.0f) / ({Global.DistancePerBlock * 8.0f} * (1.0f + 2.5f * drawY))) : min({DefaultSkyColorIndexName} < 31.5f ? 0.75f : 1.0f, distance * ({DefaultSkyColorIndexName} < 31.5f ? 0.5f : 1.0f) / {Global.DistancePerBlock * 8.0f}));",
+            $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * (1.0f - fogFactor) + fogFactor * {DefaultFogColorName};",
+            $"    }}",
             $"}}"
         };
         // Note: gl_FragDepth = 0.5 * depth + 0.5 is basically (far-near)/2 * depth + (far+near)/2 with far = 1.0 and near = 0.0 (gl_DepthRange uses 0.0 to 1.0).
@@ -83,6 +92,8 @@ namespace Ambermoon.Renderer
             $"uniform mat4 {DefaultProjectionMatrixName};",
             $"uniform mat4 {DefaultModelViewMatrixName};",
             $"out vec2 varTexCoord;",
+            $"out float distance;",
+            $"out float drawY;",
             $"flat out float palIndex;",
             $"flat out vec2 textureEndCoord;",
             $"flat out vec2 textureSize;",
@@ -105,6 +116,8 @@ namespace Ambermoon.Renderer
             $"    textureEndCoord = atlasFactor * vec2({DefaultTexEndCoordName}.x, {DefaultTexEndCoordName}.y);",
             $"    textureSize = atlasFactor * vec2({DefaultTexSizeName}.x, {DefaultTexSizeName}.y);",
             $"    gl_Position = {DefaultProjectionMatrixName} * localPos;",
+            $"    distance = gl_Position.z;",
+            $"    drawY = localPos.y;",
             $"}}"
         };
 

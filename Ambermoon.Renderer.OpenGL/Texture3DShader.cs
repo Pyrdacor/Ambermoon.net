@@ -1,7 +1,7 @@
 ﻿/*
  * Texture3DShader.cs - Shader for textured 3D objects
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -41,6 +41,7 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultSkyColorIndexName = "skyColorIndex";
         internal static readonly string DefaultSkyReplaceColorName = "skyColorReplace";
         internal static readonly string DefaultPaletteCountName = TextureShader.DefaultPaletteCountName;
+        internal static readonly string DefaultFogColorName = "fogColor";
 
         // The palette has a size of 32xNumPalettes pixels.
         // Each row represents one palette of 32 colors.
@@ -57,7 +58,9 @@ namespace Ambermoon.Renderer
             $"uniform float {DefaultUseColorReplaceName};",
             $"uniform float {DefaultSkyColorIndexName};",
             $"uniform vec4 {DefaultSkyReplaceColorName};",
+            $"uniform vec4 {DefaultFogColorName} = vec4(0);",
             $"in vec2 varTexCoord;",
+            $"in float distance;",
             $"flat in float palIndex;",
             $"flat in vec2 textureEndCoord;",
             $"flat in vec2 textureSize;",
@@ -85,6 +88,12 @@ namespace Ambermoon.Renderer
             $"    }}",
             $"    else",
             $"        {DefaultFragmentOutColorName} = vec4(max(vec3(0), pixelColor.rgb + vec3({DefaultLightName}) - vec3(1)), pixelColor.a);",
+            $"    ",
+            $"    if ({DefaultFogColorName}.a > 0.001f)",
+            $"    {{",
+            $"        float fogFactor = {DefaultFogColorName}.a * min({DefaultSkyColorIndexName} < 31.5f ? 0.75f : 1.0f, distance * ({DefaultSkyColorIndexName} < 31.5f ? 0.5f : 1.0f) / {Global.DistancePerBlock * 8.0f});",
+            $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * (1.0f - fogFactor) + fogFactor * {DefaultFogColorName};",
+            $"    }}",
             $"}}"
         };
 
@@ -101,6 +110,7 @@ namespace Ambermoon.Renderer
             $"uniform mat4 {DefaultProjectionMatrixName};",
             $"uniform mat4 {DefaultModelViewMatrixName};",
             $"out vec2 varTexCoord;",
+            $"out float distance;",
             $"flat out float palIndex;",
             $"flat out vec2 textureEndCoord;",
             $"flat out vec2 textureSize;",
@@ -115,6 +125,7 @@ namespace Ambermoon.Renderer
             $"    textureSize = atlasFactor * vec2({DefaultTexSizeName}.x, {DefaultTexSizeName}.y);",
             $"    alphaEnabled = float({DefaultAlphaName});",
             $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4({DefaultPositionName}, 1.0f);",
+            $"    distance = gl_Position.z;",
             $"}}"
         };
 
@@ -181,6 +192,12 @@ namespace Ambermoon.Renderer
         public void SetPaletteCount(int count)
         {
             shaderProgram.SetInput(DefaultPaletteCountName, (float)count);
+        }
+
+        public void SetFogColor(Render.Color fogColor)
+        {
+            shaderProgram.SetInputVector4(DefaultFogColorName, fogColor.R / 255.0f,
+                fogColor.G / 255.0f, fogColor.B / 255.0f, fogColor.A / 255.0f);
         }
 
         public new static Texture3DShader Create(State state) => new Texture3DShader(state);

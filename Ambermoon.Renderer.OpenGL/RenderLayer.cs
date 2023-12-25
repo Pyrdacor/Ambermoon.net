@@ -43,6 +43,14 @@ namespace Ambermoon.Renderer
                 SupportColoredRects = true,
                 Opaque = true
             } },
+            { Layer.Map3DBackgroundFog, new ()
+            {
+                BaseZ = 0.00f,
+                EnableBlending = true,
+                SupportAnimations = false,
+                SupportColoredRects = true,
+                Opaque = false
+            } },
             { Layer.Map3DCeiling, new ()
             {
                 Layered = false,

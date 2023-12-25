@@ -1176,7 +1176,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 20;
+        const int OptionCount = 21;
         const int OptionsPerPage = 7;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
@@ -1198,15 +1198,16 @@ namespace Ambermoon.UI
                     "Button Tooltips anzeigen",
                     "Stats Tooltips anzeigen",
                     "Runen als Text anzeigen",
-                    "Cheats aktivieren",
                     "3D Boden und Decke",
+                    "3D Distanz-Nebel",
                     // Page3
                     "Zusätzliche Spielstände",
                     "Externe Musik",
                     "Pyrdacor Logo zeigen",
                     "Fantasy Intro zeigen",
                     "Intro anzeigen",
-                    "Info beim Speichern/Laden"
+                    "Info beim Speichern/Laden",
+                    "Cheats aktivieren",
                 }
             },
             {
@@ -1227,7 +1228,7 @@ namespace Ambermoon.UI
                     "Show button tooltips",
                     "Show stats tooltips",
                     "Show runes as text",
-                    "Enable cheats",
+                    "3D distance fog",
                     "3D floor and ceiling",
                     // Page 3
                     "Additional saveslots",
@@ -1235,7 +1236,8 @@ namespace Ambermoon.UI
                     "Show Pyrdacor logo",
                     "Show fantasy intro",
                     "Show intro",
-                    "Show save/load info"
+                    "Show save/load info",
+                    "Enable cheats",
                 }
             },
             {
@@ -1255,16 +1257,17 @@ namespace Ambermoon.UI
                     "Mouvement 3D",
                     "Infobulles des boutons",
                     "Infobulles des statistiques",
-                    "Afficher les runes en texte",
-                    "Activer les cheats",
+                    "Afficher les runes en texte",                    
                     "Sol et plafond en 3D",
+                    "Brouillard de distance 3D",
                     // Page 3
                     "Sauvegardes additionnelles",
                     "Musique externe",
                     "Afficher Pyrdacor logo",
                     "Afficher fantasy intro",
                     "Afficher intro",
-                    "Messages de sauvegarde"
+                    "Messages de sauvegarde",
+                    "Activer les cheats",
                 }
             },
             {
@@ -1285,15 +1288,16 @@ namespace Ambermoon.UI
                     "Pokaż opisy przycisków",
                     "Pokaż opisy statystyk",
                     "Pokaż runy jako tekst",
-                    "Włącz cheaty",
                     "Podłoga i sufit 3D",
+                    "Mgła dystansowa 3D",
                     // Page 3
                     "Dodatkowe miejsca zapisu",
                     "Zewnętrzna muzyka",
                     "Pokaż logo Pyrdacora",
                     "Pokaż fantasy intro",
                     "Pokaż intro",
-                    "Pokaż inf. zapis/odczyt"
+                    "Pokaż inf. zapis/odczyt",
+                    "Włącz cheaty",
                 }
             }            
         };
@@ -1422,15 +1426,16 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePlayerStatsTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
-                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleCheats())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFloorAndCeiling())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFog())),
                 // Page 3
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExternalMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFantasyIntro())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleIntro())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleSaveLoadInfo()))
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleSaveLoadInfo())),
+                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleCheats())),
             };
             listBox = activePopup.AddOptionsListBox(options.Take(OptionsPerPage).ToList());
 
@@ -1484,8 +1489,8 @@ namespace Ambermoon.UI
             void SetTooltips() => SetOptionString(9, game.Configuration.ShowButtonTooltips ? on : off);
             void SetPlayerStatsTooltips() => SetOptionString(10, game.Configuration.ShowPlayerStatsTooltips ? on : off);
             void SetAutoDerune() => SetOptionString(11, game.Configuration.AutoDerune ? on : off);
-            void SetCheats() => SetOptionString(12, cheatsEnabled ? on : off);
-            void SetFloorAndCeiling() => SetOptionString(13, GetFloorAndCeilingValueString());
+            void SetFloorAndCeiling() => SetOptionString(12, GetFloorAndCeilingValueString());
+            void SetFog() => SetOptionString(13, game.Configuration.ShowFog ? on : off);
             // Page 3
             void SetExtendedSaves() => SetOptionString(14, game.Configuration.ExtendedSavegameSlots ? on : off);
             void SetExternalMusic() => SetOptionString(15, game.Configuration.ExternalMusic ? on : off);
@@ -1493,6 +1498,7 @@ namespace Ambermoon.UI
             void SetFantasyIntro() => SetOptionString(17, game.Configuration.ShowFantasyIntro ? on : off);
             void SetIntro() => SetOptionString(18, game.Configuration.ShowIntro ? on : off);
             void SetSaveLoadInfo() => SetOptionString(19, game.Configuration.ShowSaveLoadMessage ? on : off);
+            void SetCheats() => SetOptionString(20, cheatsEnabled ? on : off);
 
             void ShowOptions()
             {
@@ -1513,9 +1519,9 @@ namespace Ambermoon.UI
                         Set3DMovement();
                         SetTooltips();
                         SetPlayerStatsTooltips();
-                        SetAutoDerune();
-                        SetCheats();
-                        SetFloorAndCeiling();                        
+                        SetAutoDerune();                        
+                        SetFloorAndCeiling();
+                        SetFog();
                         break;
                     case 2:
                         SetExtendedSaves();
@@ -1524,6 +1530,7 @@ namespace Ambermoon.UI
                         SetFantasyIntro();
                         SetIntro();
                         SetSaveLoadInfo();
+                        SetCheats();
                         break;
                 }
             }
@@ -1612,6 +1619,12 @@ namespace Ambermoon.UI
             {
                 game.Configuration.ShowPlayerStatsTooltips = !game.Configuration.ShowPlayerStatsTooltips;
                 SetPlayerStatsTooltips();
+                changedConfiguration = true;
+            }
+            void ToggleFog()
+            {
+                game.Configuration.ShowFog = !game.Configuration.ShowFog;
+                SetFog();
                 changedConfiguration = true;
             }
             void ToggleFloorAndCeiling()

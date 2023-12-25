@@ -32,7 +32,6 @@ using TextColor = Ambermoon.Data.Enumerations.Color;
 using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 using Ambermoon.Data.Audio;
 using static Ambermoon.UI.BuiltinTooltips;
-using Ambermoon.Geometry;
 
 namespace Ambermoon
 {
@@ -1029,7 +1028,10 @@ namespace Ambermoon
         internal void NotifyConfigurationChange(bool windowChange)
         {
             if (is3D)
+            {
                 renderMap3D?.UpdateFloorAndCeilingVisibility(Configuration.ShowFloor, Configuration.ShowCeiling);
+                renderMap3D?.SetFog(Map, MapManager.GetLabdataForMap(Map));
+            }
 
             ConfigurationChanged?.Invoke(Configuration, windowChange);
 
@@ -1950,6 +1952,9 @@ namespace Ambermoon
                     });
                 }
             });
+
+            if (Configuration.ShowFog && is3D && Map.Flags.HasFlag(MapFlags.Sky))
+                renderMap3D?.SetFog(Map, MapManager.GetLabdataForMap(Map));
         }
 
         void AgePlayer(PartyMember partyMember, Action finishAction, uint ageIncrease)

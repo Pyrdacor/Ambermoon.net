@@ -84,6 +84,7 @@ namespace Ambermoon
         public bool? ShowThalionLogo { get; set; } = null;
         public bool ShowFloor { get; set; } = true;
         public bool ShowCeiling { get; set; } = true;
+        public bool ShowFog { get; set; } = false;
         public bool ExtendedSavegameSlots { get; set; } = true;
         [Obsolete("Use AdditionalSavegameSlots instead.")]
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

@@ -70,5 +70,6 @@ namespace Ambermoon.Render
         PaletteReplacement PaletteReplacement { get; set; }
         int? DrugColorComponent { get; set; }
         PaletteFading PaletteFading { get; set; }
+        void SetFogColor(Color fogColor);
     }
 }
