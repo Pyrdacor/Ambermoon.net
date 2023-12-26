@@ -991,12 +991,12 @@ namespace Ambermoon.Render
                 Destroy();
 
                 Map = map;
-                labdata = mapManager.GetLabdataForMap(map);
-                SetFog(map, labdata);
+                labdata = mapManager.GetLabdataForMap(map);                
                 EnsureLabdataTextureAtlas();
                 EnsureChangeableBlocks();
                 UpdateSurfaces();
                 SetupBackground();
+                SetFog(map, labdata);
                 AddCharacters();
 
                 SetCameraHeight(race);

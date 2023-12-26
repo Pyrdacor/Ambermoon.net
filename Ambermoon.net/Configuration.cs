@@ -508,6 +508,9 @@ namespace Ambermoon
             configuration.ShowThalionLogo = null;
 #pragma warning restore CS0618
 
+            if (configuration.ShowFog && (!configuration.ShowFloor || !configuration.ShowCeiling))
+                configuration.ShowFog = false;
+
             return configuration;
         }
 

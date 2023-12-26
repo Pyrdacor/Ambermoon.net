@@ -194,7 +194,7 @@ namespace Ambermoon.Renderer.OpenGL
                     var texture = textureAtlasManager.GetOrCreate(layer)?.Texture;
                     var renderLayer = Create(layer, texture, palette);
 
-                    if (layer != Layer.Map3DBackground && layer != Layer.Map3DCeiling && layer != Layer.Map3D && layer != Layer.Billboards3D)
+                    if (layer != Layer.Map3DBackground && layer != Layer.Map3DBackgroundFog && layer != Layer.Map3DCeiling && layer != Layer.Map3D && layer != Layer.Billboards3D)
                         renderLayer.Visible = true;
 
                     if (RenderLayer.DefaultLayerConfigs[layer].Use320x256)

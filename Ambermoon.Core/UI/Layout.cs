@@ -1427,7 +1427,7 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePlayerStatsTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFloorAndCeiling())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFog())),
+                KeyValuePair.Create("", game.Configuration.ShowFloor && game.Configuration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction),
                 // Page 3
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExternalMusic())),
@@ -1456,6 +1456,15 @@ namespace Ambermoon.UI
                 optionString += new string(' ', remainingSpace);
                 optionString += value;
                 listBox.SetItemText(index, optionString);
+            }
+            void SetOptionAction(int optionIndex, Action<int, string> action)
+            {
+                int index = optionIndex - page * OptionsPerPage;
+
+                if (index < 0 || index >= OptionsPerPage)
+                    return;
+
+                listBox.SetItemAction(index, action);
             }
             string GetFloorAndCeilingValueString()
             {
@@ -1499,6 +1508,8 @@ namespace Ambermoon.UI
             void SetIntro() => SetOptionString(18, game.Configuration.ShowIntro ? on : off);
             void SetSaveLoadInfo() => SetOptionString(19, game.Configuration.ShowSaveLoadMessage ? on : off);
             void SetCheats() => SetOptionString(20, cheatsEnabled ? on : off);
+
+            void UpdateShowFogOption() => SetOptionAction(13, game.Configuration.ShowFloor && game.Configuration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
 
             void ShowOptions()
             {
@@ -1648,6 +1659,9 @@ namespace Ambermoon.UI
                     game.Configuration.ShowCeiling = false;
                 }
                 SetFloorAndCeiling();
+                if ((!game.Configuration.ShowFloor || !game.Configuration.ShowCeiling) && game.Configuration.ShowFog)
+                    ToggleFog();
+                UpdateShowFogOption();
                 changedConfiguration = true;
             }
             void ToggleExtendedSaves()

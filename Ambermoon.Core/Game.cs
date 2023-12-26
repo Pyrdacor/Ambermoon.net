@@ -1246,6 +1246,7 @@ namespace Ambermoon
             renderMap2D.CheckIfMonstersSeePlayer();
 
             renderView.GetLayer(Layer.Map3DBackground).Visible = false;
+            renderView.GetLayer(Layer.Map3DBackgroundFog).Visible = false;
             renderView.GetLayer(Layer.Map3DCeiling).Visible = false;
             renderView.GetLayer(Layer.Map3D).Visible = false;
             renderView.GetLayer(Layer.Billboards3D).Visible = false;
@@ -1279,6 +1280,7 @@ namespace Ambermoon
             player.Direction = direction;
 
             renderView.GetLayer(Layer.Map3DBackground).Visible = true;
+            renderView.GetLayer(Layer.Map3DBackgroundFog).Visible = true;
             renderView.GetLayer(Layer.Map3DCeiling).Visible = true;
             renderView.GetLayer(Layer.Map3D).Visible = true;
             renderView.GetLayer(Layer.Billboards3D).Visible = true;
@@ -4044,6 +4046,7 @@ namespace Ambermoon
                 if (show)
                     layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true, false, TravelType.Walk));
                 renderView.GetLayer(Layer.Map3DBackground).Visible = show;
+                renderView.GetLayer(Layer.Map3DBackgroundFog).Visible = show;
                 renderView.GetLayer(Layer.Map3DCeiling).Visible = show;
                 renderView.GetLayer(Layer.Map3D).Visible = show;
                 renderView.GetLayer(Layer.Billboards3D).Visible = show;
