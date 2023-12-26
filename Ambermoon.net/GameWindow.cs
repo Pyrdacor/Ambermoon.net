@@ -1296,6 +1296,12 @@ namespace Ambermoon
                 ChangeFullscreenMode(true); // This will adjust the window
             }
 
+            var gl = Silk.NET.OpenGL.GL.GetApi(GLContext);
+            gl.Viewport(new System.Drawing.Size(window.FramebufferSize.X, window.FramebufferSize.Y));
+            gl.ClearColor(System.Drawing.Color.Black);
+            gl.Clear(Silk.NET.OpenGL.ClearBufferMask.ColorBufferBit);
+            GLContext.SwapBuffers();
+
             if (configuration.Width == null || configuration.Height == null)
             {
                 var monitorSize = window.Monitor.Bounds.Size;
