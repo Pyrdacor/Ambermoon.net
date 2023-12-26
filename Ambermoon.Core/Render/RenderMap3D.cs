@@ -1010,9 +1010,11 @@ namespace Ambermoon.Render
             camera.TurnTowards((float)playerDirection * 90.0f);
         }
 
-        internal void SetFog(Map map, Labdata labdata)
+        internal void SetFog(Map map, Labdata labdata, bool lightOff = false)
         {
             Color fogColor;
+            float fogDistance;
+            bool lightActive = !lightOff && game.CurrentSavegame.IsSpellActive(ActiveSpellType.Light);
 
             if (game.Configuration.ShowFog && game.CanSee())
             {
@@ -1023,40 +1025,46 @@ namespace Ambermoon.Render
 
                     if (game.GameTime.Hour < 4) // 0-3 (black fog)
                     {
-                        alpha = (byte)(game.CurrentSavegame.IsSpellActive(ActiveSpellType.Light) ? 255 : 128);
+                        alpha = (byte)(game.GameTime.Hour < 3 ? 192 : 192 - game.GameTime.Minute);
                         component = 0;
+                        fogDistance = 6;
                     }
                     else if (game.GameTime.Hour < 9) // 4-8 (black to white fog)
                     {
-                        uint minutes = (game.GameTime.Hour - 4) * 60 + game.GameTime.Minute;
-                        alpha = (byte)(game.CurrentSavegame.IsSpellActive(ActiveSpellType.Light) ? 255 : 128);
-                        if (game.CurrentSavegame.IsSpellActive(ActiveSpellType.Light))
-                            alpha = (byte)Math.Max(0, alpha - (int)minutes / 3);
+                        alpha = 128;
                         component = (byte)(((game.GameTime.Hour - 4) * 255 + game.GameTime.Minute) / 5);
+                        fogDistance = 7;
                     }
                     else if (game.GameTime.Hour < 12) // 9-11 (white to no fog)
                     {
                         alpha = (byte)((12 - game.GameTime.Hour) * 255 / 6);
                         component = 255;
+                        fogDistance = 8;
                     }
                     else if (game.GameTime.Hour < 17) // 12-16 (no fog)
                     {
                         alpha = 0;
                         component = 0;
+                        fogDistance = 8;
                     }
                     else // 17-23 (no to black fog)
                     {
-                        int factor = game.CurrentSavegame.IsSpellActive(ActiveSpellType.Light) ? 8 : 24;
+                        int factor = 11;
                         alpha = (byte)((game.GameTime.Hour - 16) * 255 / factor);
                         component = 0;
+                        fogDistance = 7;
                     }
                     byte r = Map.World == World.Morag ? (byte)Math.Min(component * 3 / 2, 255) : component;
                     byte g = Map.World != World.Lyramion ? (byte)Math.Min(component * 3 / 2, 255) : component;
-                    fogColor = new Color(r, g, component, alpha);
+                    fogColor = new Color(r, g, component, alpha);                    
+                    if (lightActive && fogDistance < 7.5f)
+                        fogDistance += game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 2.0f - 1.0f;
+                    fogDistance *= Global.DistancePerBlock;
                 }
                 else if (map.Flags.HasFlag(MapFlags.Indoor))
                 {
                     fogColor = new Color(128, 128, 96, 112);
+                    fogDistance = Global.DistancePerBlock * 8.0f;
                 }
                 else
                 {
@@ -1064,6 +1072,7 @@ namespace Ambermoon.Render
                     fogColor.R /= 2;
                     fogColor.G /= 2;
                     fogColor.B /= 2;
+                    fogDistance = Global.DistancePerBlock * (4 + game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 2);
                 }
 
                 if (horizonFog != null)
@@ -1075,18 +1084,19 @@ namespace Ambermoon.Render
             else
             {
                 fogColor = Color.Transparent;
+                fogDistance = 100.0f;
                 if (horizonFog != null)
                     horizonFog.Visible = false;
             }
 
-            renderView.SetFogColor(fogColor);
+            renderView.SetFog(fogColor, fogDistance);
         }
 
-        public float GetFloorY() => -0.25f * ReferenceWallHeight / BlockSize;
+        public static float GetFloorY() => -0.25f * ReferenceWallHeight / BlockSize;
 
-        public float GetLevitatingY() => -0.75f * ReferenceWallHeight / BlockSize;
+        public static float GetLevitatingY() => -0.75f * ReferenceWallHeight / BlockSize;
 
-        public float GetLevitatingStepSize() => ReferenceWallHeight / (BlockSize * 40.0f);
+        public static float GetLevitatingStepSize() => ReferenceWallHeight / (BlockSize * 40.0f);
 
         public void SetCameraHeight(Race race)
         {

@@ -1540,7 +1540,7 @@ namespace Ambermoon
             return null;
         }
 
-        private void UpdateOutdoorLight(uint minutesPassed)
+        private void UpdateOutdoorLight(uint minutesPassed, bool lightOff)
         {
             bool lightBuffBurningOut = false;
 
@@ -1571,6 +1571,9 @@ namespace Ambermoon
                 lightIntensity = newExpectedLightIntensity;
 
             UpdateLight(false, false, false, null, lightBuffBurningOut ? lightIntensity : (uint?)null);
+
+            if (lightOff)
+                renderMap3D?.SetFog(Map, MapManager.GetLabdataForMap(Map), lightOff);
         }
 
         public void Start(Savegame savegame, Action postAction = null)
@@ -1629,7 +1632,10 @@ namespace Ambermoon
                 else if (Map.Flags.HasFlag(MapFlags.Outdoor))
                 {
                     if (this.is3D)
-                        UpdateOutdoorLight(amount);
+                    {
+                        bool lightOff = CurrentSavegame.IsSpellActive(ActiveSpellType.Light) && CurrentSavegame.GetActiveSpellDuration(ActiveSpellType.Light) * 5 < amount;
+                        UpdateOutdoorLight(amount, lightOff);
+                    }
                     else if (GameTime.Minute % 60 == 0 || amount > GameTime.Minute % 60) // hour changed
                         UpdateLight();
                 }
@@ -5780,10 +5786,10 @@ namespace Ambermoon
                 return;
             }
 
-            var sourceY = !mapChange ? camera3D.Y : (up ? renderMap3D.GetFloorY() : renderMap3D.GetLevitatingY());
+            var sourceY = !mapChange ? camera3D.Y : (up ? RenderMap3D.GetFloorY() : RenderMap3D.GetLevitatingY());
             player3D.SetY(sourceY);
-            var targetY = mapChange ? camera3D.GroundY : (up ? renderMap3D.GetLevitatingY() : renderMap3D.GetFloorY());
-            float stepSize = renderMap3D.GetLevitatingStepSize();
+            var targetY = mapChange ? camera3D.GroundY : (up ? RenderMap3D.GetLevitatingY() : RenderMap3D.GetFloorY());
+            float stepSize = RenderMap3D.GetLevitatingStepSize();
             float dist = Math.Abs(targetY - camera3D.Y);
             int steps = Math.Max(1, Util.Round(dist / stepSize));
 
@@ -11243,9 +11249,7 @@ namespace Ambermoon
                     : lightIntensity;
                 renderMap3D.UpdateSky(lightEffectProvider, GameTime, lightBuffIntensity);
                 renderMap3D.SetColorLightFactor(light3D);
-
-                if (Map.Flags.HasFlag(MapFlags.Sky))
-                    renderMap3D?.SetFog(Map, MapManager.GetLabdataForMap(Map));
+                renderMap3D?.SetFog(Map, MapManager.GetLabdataForMap(Map));
             }
             else // 2D
             {

@@ -42,7 +42,7 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultSkyReplaceColorName = "skyColorReplace";
         internal static readonly string DefaultPaletteCountName = TextureShader.DefaultPaletteCountName;
         internal static readonly string DefaultFogColorName = "fogColor";
-        private protected const float FogDistanceFactor = 7.0f;
+        internal static readonly string DefaultFogDistanceName = "fogDist";
 
         // The palette has a size of 32xNumPalettes pixels.
         // Each row represents one palette of 32 colors.
@@ -60,6 +60,7 @@ namespace Ambermoon.Renderer
             $"uniform float {DefaultSkyColorIndexName};",
             $"uniform vec4 {DefaultSkyReplaceColorName};",
             $"uniform vec4 {DefaultFogColorName} = vec4(0);",
+            $"uniform float {DefaultFogDistanceName};",
             $"in vec2 varTexCoord;",
             $"in float distance;",
             $"flat in float palIndex;",
@@ -92,7 +93,7 @@ namespace Ambermoon.Renderer
             $"    ",
             $"    if ({DefaultFogColorName}.a > 0.001f)",
             $"    {{",
-            $"        float fogFactor = {DefaultFogColorName}.a * min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, distance / {Global.DistancePerBlock * FogDistanceFactor});",
+            $"        float fogFactor = {DefaultFogColorName}.a * min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, distance / {DefaultFogDistanceName});",
             $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * (1.0f - fogFactor) + fogFactor * {DefaultFogColorName};",
             $"    }}",
             $"}}"
@@ -195,10 +196,11 @@ namespace Ambermoon.Renderer
             shaderProgram.SetInput(DefaultPaletteCountName, (float)count);
         }
 
-        public void SetFogColor(Render.Color fogColor)
+        public void SetFog(Render.Color fogColor, float distance)
         {
             shaderProgram.SetInputVector4(DefaultFogColorName, fogColor.R / 255.0f,
                 fogColor.G / 255.0f, fogColor.B / 255.0f, fogColor.A / 255.0f);
+            shaderProgram.SetInput(DefaultFogDistanceName, distance);
         }
 
         public new static Texture3DShader Create(State state) => new Texture3DShader(state);

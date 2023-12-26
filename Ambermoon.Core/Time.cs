@@ -283,10 +283,10 @@ namespace Ambermoon
         {
             savegame.HoursWithoutSleep += hours;
             savegame.Hour += hours;
-            HandleTimePassed(hours, 0);
             MinuteChanged?.Invoke(hours * 60);
             PostIncreaseUpdate(hours);
-            ResetTickTimer();            
+            ResetTickTimer();
+            HandleTimePassed(hours, 0);
         }
 
         void PostIncreaseUpdate(uint hours = 1)

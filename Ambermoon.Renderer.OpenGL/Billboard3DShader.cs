@@ -41,6 +41,7 @@ namespace Ambermoon.Renderer
             $"uniform float {DefaultSkyColorIndexName};",
             $"uniform vec4 {DefaultSkyReplaceColorName};",
             $"uniform vec4 {DefaultFogColorName} = vec4(0);",
+            $"uniform float {DefaultFogDistanceName};",
             $"in vec2 varTexCoord;",
             $"in float distance;",
             $"in float drawY;",
@@ -69,7 +70,7 @@ namespace Ambermoon.Renderer
             $"    ",
             $"    if ({DefaultFogColorName}.a > 0.001f)",
             $"    {{",
-            $"        float fogFactor = {DefaultFogColorName}.a * ({DefaultSkyColorIndexName} < 31.5f && drawY > 0 ? min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, distance / ({Global.DistancePerBlock * FogDistanceFactor} * (1.0f + 2.5f * drawY))) : min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, distance / {Global.DistancePerBlock * FogDistanceFactor}));",
+            $"        float fogFactor = {DefaultFogColorName}.a * ({DefaultSkyColorIndexName} < 31.5f && drawY > 0 ? min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, distance / ({DefaultFogDistanceName} * (1.0f + 2.5f * drawY))) : min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, distance / {DefaultFogDistanceName}));",
             $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * (1.0f - fogFactor) + fogFactor * {DefaultFogColorName};",
             $"    }}",
             $"}}"

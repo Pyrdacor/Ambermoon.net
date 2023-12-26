@@ -988,10 +988,10 @@ namespace Ambermoon.Renderer.OpenGL
             (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetSkyColorReplacement(skyColor, replaceColor);
         }
 
-        public void SetFogColor(Color fogColor)
+        public void SetFog(Color fogColor, float distance)
         {
-            (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetFogColor(fogColor);
-            (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetFogColor(fogColor);
+            (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetFog(fogColor, distance);
+            (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetFog(fogColor, distance);
         }
     }
 }
