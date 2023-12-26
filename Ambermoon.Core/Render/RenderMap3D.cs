@@ -1014,26 +1014,29 @@ namespace Ambermoon.Render
         {
             Color fogColor;
 
-            if (game.Configuration.ShowFog && !map.Flags.HasFlag(MapFlags.Indoor))
+            if (game.Configuration.ShowFog && game.CanSee())
             {
                 if (map.Flags.HasFlag(MapFlags.Sky))
                 {
-                    byte component = 0;
-                    byte alpha = 255;
+                    byte component;
+                    byte alpha;
 
                     if (game.GameTime.Hour < 4) // 0-3 (black fog)
                     {
-                        alpha = 255;
+                        alpha = (byte)(game.CurrentSavegame.IsSpellActive(ActiveSpellType.Light) ? 255 : 128);
                         component = 0;
                     }
                     else if (game.GameTime.Hour < 9) // 4-8 (black to white fog)
                     {
-                        alpha = 255;
-                        component = (byte)((game.GameTime.Hour - 3) * 255 / 6);
+                        uint minutes = (game.GameTime.Hour - 4) * 60 + game.GameTime.Minute;
+                        alpha = (byte)(game.CurrentSavegame.IsSpellActive(ActiveSpellType.Light) ? 255 : 128);
+                        if (game.CurrentSavegame.IsSpellActive(ActiveSpellType.Light))
+                            alpha = (byte)Math.Max(0, alpha - (int)minutes / 3);
+                        component = (byte)(((game.GameTime.Hour - 4) * 255 + game.GameTime.Minute) / 5);
                     }
                     else if (game.GameTime.Hour < 12) // 9-11 (white to no fog)
                     {
-                        alpha = (byte)((12 - game.GameTime.Hour) * 255 / 4);
+                        alpha = (byte)((12 - game.GameTime.Hour) * 255 / 6);
                         component = 255;
                     }
                     else if (game.GameTime.Hour < 17) // 12-16 (no fog)
@@ -1043,7 +1046,8 @@ namespace Ambermoon.Render
                     }
                     else // 17-23 (no to black fog)
                     {
-                        alpha = (byte)((game.GameTime.Hour - 16) * 255 / 8);
+                        int factor = game.CurrentSavegame.IsSpellActive(ActiveSpellType.Light) ? 8 : 24;
+                        alpha = (byte)((game.GameTime.Hour - 16) * 255 / factor);
                         component = 0;
                     }
                     byte r = Map.World == World.Morag ? (byte)Math.Min(component * 3 / 2, 255) : component;
@@ -1053,12 +1057,15 @@ namespace Ambermoon.Render
                 else
                 {
                     fogColor = game.GetPaletteColor((byte)map.PaletteIndex, labdata.CeilingColorIndex);
+
+                    if (map.Flags.HasFlag(MapFlags.Indoor))
+                        fogColor.A = 192;
                 }
 
                 if (horizonFog != null)
                 {
-                    horizonFog.Color = new Color(fogColor, Math.Min(fogColor.A, (byte)128));
-                    horizonFog.Visible = true;
+                    horizonFog.Color = new Color(fogColor, (byte)(Util.Min(fogColor.A / 2, 32 + fogColor.R, 32 + fogColor.G, 32 + fogColor.B)));
+                    horizonFog.Visible = fogColor.A != 0;
                 }
             }
             else
@@ -1709,6 +1716,7 @@ namespace Ambermoon.Render
         public void HideSky()
         {
             renderView.PaletteReplacement = null;
+            renderView.HorizonPaletteReplacement = null;
             renderView.SetSkyColorReplacement(null, null);
             stars.ForEach(s => s.Value.Visible = false);
             if (skyColors != null)
@@ -1736,8 +1744,11 @@ namespace Ambermoon.Render
                 renderView.GraphicProvider);
             var paletteReplacement = lightEffectProvider.GetLightPaletteReplacement(Map, time.Hour, time.Minute,
                 buffLightIntensity, renderView.GraphicProvider);
+            var horizonPaletteReplacement = lightEffectProvider.GetLightPaletteReplacement(Map, time.Hour, time.Minute,
+                0, renderView.GraphicProvider);
 
             renderView.PaletteReplacement = paletteReplacement;
+            renderView.HorizonPaletteReplacement = horizonPaletteReplacement;
 
             SetColors(paletteReplacement);
 

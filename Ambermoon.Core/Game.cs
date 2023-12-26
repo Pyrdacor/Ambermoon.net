@@ -1952,9 +1952,6 @@ namespace Ambermoon
                     });
                 }
             });
-
-            if (Configuration.ShowFog && is3D && Map.Flags.HasFlag(MapFlags.Sky))
-                renderMap3D?.SetFog(Map, MapManager.GetLabdataForMap(Map));
         }
 
         void AgePlayer(PartyMember partyMember, Action finishAction, uint ageIncrease)
@@ -11246,6 +11243,9 @@ namespace Ambermoon
                     : lightIntensity;
                 renderMap3D.UpdateSky(lightEffectProvider, GameTime, lightBuffIntensity);
                 renderMap3D.SetColorLightFactor(light3D);
+
+                if (Map.Flags.HasFlag(MapFlags.Sky))
+                    renderMap3D?.SetFog(Map, MapManager.GetLabdataForMap(Map));
             }
             else // 2D
             {
