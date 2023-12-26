@@ -1054,12 +1054,16 @@ namespace Ambermoon.Render
                     byte g = Map.World != World.Lyramion ? (byte)Math.Min(component * 3 / 2, 255) : component;
                     fogColor = new Color(r, g, component, alpha);
                 }
+                else if (map.Flags.HasFlag(MapFlags.Indoor))
+                {
+                    fogColor = new Color(128, 128, 96, 112);
+                }
                 else
                 {
                     fogColor = game.GetPaletteColor((byte)map.PaletteIndex, labdata.CeilingColorIndex);
-
-                    if (map.Flags.HasFlag(MapFlags.Indoor))
-                        fogColor.A = 192;
+                    fogColor.R /= 2;
+                    fogColor.G /= 2;
+                    fogColor.B /= 2;
                 }
 
                 if (horizonFog != null)
