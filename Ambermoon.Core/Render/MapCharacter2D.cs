@@ -149,7 +149,7 @@ namespace Ambermoon.Render
             if (!Active || Paused)
                 return;
 
-            Position newPosition = Position;
+            Position newPosition = new Position(Position);
 
             bool TestPosition(Position position)
             {
