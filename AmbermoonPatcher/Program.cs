@@ -64,10 +64,12 @@ Console.WriteLine("Starting the updated game ...");
 
 try
 {
-    if (OperatingSystem.IsWindows())
-        Process.Start(Path.Combine(args[1], "Ambermoon.net.exe"));
-    else
-        Process.Start(Path.Combine(args[1], "Ambermoon.net"));
+    var startInfo = new ProcessStartInfo
+    {
+        FileName = Path.Combine(args[1], OperatingSystem.IsWindows() ? "Ambermoon.net.exe" : "Ambermoon.net"),
+        UseShellExecute = false
+    };
+    Process.Start(startInfo);
 }
 catch (Exception ex)
 {
