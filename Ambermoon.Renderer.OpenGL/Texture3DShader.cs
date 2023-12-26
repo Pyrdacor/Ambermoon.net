@@ -42,6 +42,7 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultSkyReplaceColorName = "skyColorReplace";
         internal static readonly string DefaultPaletteCountName = TextureShader.DefaultPaletteCountName;
         internal static readonly string DefaultFogColorName = "fogColor";
+        private protected const float FogDistanceFactor = 7.0f;
 
         // The palette has a size of 32xNumPalettes pixels.
         // Each row represents one palette of 32 colors.
@@ -91,7 +92,7 @@ namespace Ambermoon.Renderer
             $"    ",
             $"    if ({DefaultFogColorName}.a > 0.001f)",
             $"    {{",
-            $"        float fogFactor = {DefaultFogColorName}.a * min({DefaultSkyColorIndexName} < 31.5f ? 0.75f : 1.0f, distance * ({DefaultSkyColorIndexName} < 31.5f ? 0.5f : 1.0f) / {Global.DistancePerBlock * 8.0f});",
+            $"        float fogFactor = {DefaultFogColorName}.a * min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, distance / {Global.DistancePerBlock * FogDistanceFactor});",
             $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * (1.0f - fogFactor) + fogFactor * {DefaultFogColorName};",
             $"    }}",
             $"}}"

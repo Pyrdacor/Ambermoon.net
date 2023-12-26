@@ -69,7 +69,7 @@ namespace Ambermoon.Renderer
             $"    ",
             $"    if ({DefaultFogColorName}.a > 0.001f)",
             $"    {{",
-            $"        float fogFactor = {DefaultFogColorName}.a * ({DefaultSkyColorIndexName} < 31.5f && drawY > 0 ? min({DefaultSkyColorIndexName} < 31.5f ? 0.75f : 1.0f, distance * ({DefaultSkyColorIndexName} < 31.5f ? 0.5f : 1.0f) / ({Global.DistancePerBlock * 8.0f} * (1.0f + 2.5f * drawY))) : min({DefaultSkyColorIndexName} < 31.5f ? 0.75f : 1.0f, distance * ({DefaultSkyColorIndexName} < 31.5f ? 0.5f : 1.0f) / {Global.DistancePerBlock * 8.0f}));",
+            $"        float fogFactor = {DefaultFogColorName}.a * ({DefaultSkyColorIndexName} < 31.5f && drawY > 0 ? min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, distance / ({Global.DistancePerBlock * FogDistanceFactor} * (1.0f + 2.5f * drawY))) : min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, distance / {Global.DistancePerBlock * FogDistanceFactor}));",
             $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * (1.0f - fogFactor) + fogFactor * {DefaultFogColorName};",
             $"    }}",
             $"}}"
