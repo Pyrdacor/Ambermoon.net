@@ -1032,20 +1032,20 @@ namespace Ambermoon.Render
                     else if (game.GameTime.Hour < 9) // 4-8 (black to white fog)
                     {
                         alpha = 128;
-                        component = (byte)(((game.GameTime.Hour - 4) * 255 + game.GameTime.Minute) / 5);
+                        component = (byte)Math.Min(255, (game.GameTime.Hour - 4) * 60 + game.GameTime.Minute);
                         fogDistance = 7;
                     }
                     else if (game.GameTime.Hour < 12) // 9-11 (white to no fog)
                     {
                         alpha = (byte)((12 - game.GameTime.Hour) * 255 / 6);
                         component = 255;
-                        fogDistance = 8;
+                        fogDistance = game.GameTime.Hour - 1;
                     }
                     else if (game.GameTime.Hour < 17) // 12-16 (no fog)
                     {
                         alpha = 0;
                         component = 0;
-                        fogDistance = 8;
+                        fogDistance = 10;
                     }
                     else // 17-23 (no to black fog)
                     {
