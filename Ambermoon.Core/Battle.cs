@@ -3204,6 +3204,32 @@ namespace Ambermoon
                             // Note: This can only happen if the monster doesn't want to flee
                             if (character.Type != CharacterType.Monster || IsPlayerNearby(x + y * 6)) // only move left/right to reach a player
                                 return true;
+                            else if (currentRow == 3) // monster in second lowest row
+                            {
+                                int currentX = characterPosition % 6;
+                                int xDir = x - currentX; // >0 = right, <0 = left
+                                int leftEnemyCount = 0;
+                                int rightEnemyCount = 0;
+
+                                for (int py = 3; py <= 4; py++)
+                                {
+                                    for (int px = 0; px < 6; px++)
+                                    {
+                                        if (battleField[px + py * 6]?.Type == CharacterType.PartyMember)
+                                        {
+                                            if (px < currentX)
+                                                leftEnemyCount++;
+                                            else if (px > currentX)
+                                                rightEnemyCount++;
+                                        }
+                                    }
+                                }
+
+                                if (xDir < 0 && leftEnemyCount >= rightEnemyCount)
+                                    return true;
+                                else if (xDir > 0 && rightEnemyCount >= leftEnemyCount)
+                                    return true;
+                            }
                         }
                         else
                         {
@@ -3373,6 +3399,32 @@ namespace Ambermoon
                             // Note: This can only happen if the monster doesn't want to flee
                             if (IsPlayerNearby(position)) // only move left/right to reach a player
                                 possiblePositions.Add(position);
+                            else if (currentRow == 3) // monster in second lowest row
+                            {
+                                int currentX = characterPosition % 6;
+                                int xDir = x - currentX; // >0 = right, <0 = left
+                                int leftEnemyCount = 0;
+                                int rightEnemyCount = 0;
+
+                                for (int py = 3; py <= 4; py++)
+                                {
+                                    for (int px = 0; px < 6; px++)
+                                    {
+                                        if (battleField[px + py * 6]?.Type == CharacterType.PartyMember)
+                                        {
+                                            if (px < currentX)
+                                                leftEnemyCount++;
+                                            else if (px > currentX)
+                                                rightEnemyCount++;
+                                        }
+                                    }
+                                }
+
+                                if (xDir < 0 && leftEnemyCount >= rightEnemyCount)
+                                    possiblePositions.Add(position);
+                                else if (xDir > 0 && rightEnemyCount >= leftEnemyCount)
+                                    possiblePositions.Add(position);
+                            }
                         }
                         else
                         {
