@@ -1068,11 +1068,8 @@ namespace Ambermoon.Render
                 }
                 else
                 {
-                    fogColor = game.GetPaletteColor((byte)map.PaletteIndex, labdata.CeilingColorIndex);
-                    fogColor.R /= 2;
-                    fogColor.G /= 2;
-                    fogColor.B /= 2;
-                    fogDistance = Global.DistancePerBlock * (4 + game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 2);
+                    fogColor = game.GetPaletteColor((byte)map.PaletteIndex, labdata.CeilingColorIndex).WithFactor(0.25f);
+                    fogDistance = Global.DistancePerBlock * (5 + game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 2);
                 }
 
                 if (horizonFog != null)
