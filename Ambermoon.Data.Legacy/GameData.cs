@@ -728,9 +728,9 @@ namespace Ambermoon.Data.Legacy
                 // ignore
             }
 
-            executableData = ExecutableData.ExecutableData.FromGameData(this);
+            executableData = TryLoad(() => ExecutableData.ExecutableData.FromGameData(this));
 
-            if (executableData.FileList == null && stopAtFirstError)
+            if (executableData?.FileList == null && stopAtFirstError)
                 throw new AmbermoonException(ExceptionScope.Data, "Incomplete game data. AM2_CPU is missing.");
 
             T TryLoad<T>(Func<T> provider) where T : class
@@ -760,7 +760,7 @@ namespace Ambermoon.Data.Legacy
                 additionalPalettes.AddRange(FantasyIntroData.FantasyIntroPalettes);
             GraphicProvider = TryLoad(() => new GraphicProvider(this, executableData, additionalPalettes));
             CharacterManager = TryLoad(() => new CharacterManager(this, GraphicProvider));
-            if (executableData.ItemManager != null && Files.TryGetValue("Object_texts.amb", out var objTexts))
+            if (executableData?.ItemManager != null && Files.TryGetValue("Object_texts.amb", out var objTexts))
             {
                 foreach (var objectTextFile in objTexts.Files)
                     executableData.ItemManager.AddTexts((uint)objectTextFile.Key, Serialization.TextReader.ReadTexts(objectTextFile.Value));

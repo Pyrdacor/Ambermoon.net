@@ -300,19 +300,6 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 ItemTypeNames = Read<ItemTypeNames>(dataHunkReaders, ref dataHunkIndex);
                 ConditionNames = Read<ConditionNames>(dataHunkReaders, ref dataHunkIndex);
                 UITexts = Read<UITexts>(dataHunkReaders, ref dataHunkIndex);
-                Buttons = Read<Buttons>(dataHunkReaders, ref dataHunkIndex);
-
-                int itemCount = dataHunkReaders[dataHunkIndex].ReadWord();
-                if (dataHunkReaders[dataHunkIndex].ReadWord() != itemCount)
-                    throw new AmbermoonException(ExceptionScope.Data, "Invalid item data.");
-
-                var itemReader = new ItemReader();
-                var items = new Dictionary<uint, Item>();
-
-                for (uint i = 1; i <= itemCount; ++i) // in original Ambermoon there are 402 items
-                    items.Add(i, Item.Load(i, itemReader, dataHunkReaders[dataHunkIndex]));
-
-                ItemManager = new ItemManager(items);
             }
             else
             {
@@ -379,9 +366,34 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 ItemTypeNames = new ItemTypeNames(textContainer.ItemTypeNames);
                 ConditionNames = new ConditionNames(textContainer.ConditionNames);
                 UITexts = new UITexts(textContainer.UITexts);
+            }
+
+            if (buttonGraphicsReader != null)
+            {
                 buttonGraphicsReader.Position = 0;
                 Buttons = new Buttons(buttonGraphicsReader);
+            }
+            else
+            {
+                Buttons = Read<Buttons>(dataHunkReaders, ref dataHunkIndex);
+            }
 
+            if (objectsAmbReader == null)
+            {
+                int itemCount = dataHunkReaders[dataHunkIndex].ReadWord();
+                if (dataHunkReaders[dataHunkIndex].ReadWord() != itemCount)
+                    throw new AmbermoonException(ExceptionScope.Data, "Invalid item data.");
+
+                var itemReader = new ItemReader();
+                var items = new Dictionary<uint, Item>();
+
+                for (uint i = 1; i <= itemCount; ++i) // in original Ambermoon there are 402 items
+                    items.Add(i, Item.Load(i, itemReader, dataHunkReaders[dataHunkIndex]));
+
+                ItemManager = new ItemManager(items);
+            }
+            else
+            {
                 objectsAmbReader.Position = 0;
                 int itemCount = objectsAmbReader.ReadWord();
                 var itemReader = new ItemReader();
