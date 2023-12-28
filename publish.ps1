@@ -33,7 +33,7 @@ if ($isWindows) {
   dotnet publish -c Release ./Ambermoon.ConcatFiles/Ambermoon.ConcatFiles.csproj -r osx-x64 --no-restore
   Write-Host Pack zips for Mac
   sudo xcode-select -p
-  sudo xcode-select -s /Applications/Xcode-13.2.1.app
+  sudo xcode-select -s /Applications/Xcode-14.1.app
   mkdir -p ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   cp -r ./Ambermoon.net/Mac/* ./bundle/Ambermoon.net/
   cp "./Ambermoon.net/bin/Any CPU/Release/net7.0/osx-x64/publish/Ambermoon.net" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
