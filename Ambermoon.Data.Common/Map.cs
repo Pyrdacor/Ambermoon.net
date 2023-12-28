@@ -181,14 +181,24 @@ namespace Ambermoon.Data
                 UseTileset = 0x02,
                 TextPopup = 0x04,
                 NPCTalksToYou = 0x08,
+                SpecialMovement = 0x10,
                 Stationary = 0x20, // new in Ambermoon Advanced
                 MoveOnlyWhenSeePlayer = 0x20 // new in Ambermoon Advanced
+            }
+
+            public enum SpecialMovementType
+            {
+                CyclicPath,
+                AlternatingPath,
+                ReuseCyclicPath, // of other character with offset
+                CircleCenterPosition
             }
 
             public CharacterType Type { get; set; }
             public Flags CharacterFlags { get; set; }
             public bool OnlyMoveWhenSeePlayer => Type == CharacterType.Monster && CharacterFlags.HasFlag(Flags.MoveOnlyWhenSeePlayer);
             public bool Stationary => Type != CharacterType.Monster && CharacterFlags.HasFlag(Flags.Stationary);
+            public bool SpecialMovement => Type != CharacterType.Monster && CharacterFlags.HasFlag(Flags.SpecialMovement);
             public bool NPCTalksToYou => Type == CharacterType.NPC && !CharacterFlags.HasFlag(Flags.TextPopup) && CharacterFlags.HasFlag(Flags.NPCTalksToYou);
             /// <summary>
             /// Equals travel type.
@@ -209,6 +219,9 @@ namespace Ambermoon.Data
             public uint GraphicIndex { get; set; }
             public uint CombatBackgroundIndex { get; set; }
             public List<Position> Positions { get; } = new List<Position>(288);
+            public SpecialMovementType? SpecialMoveType { get; set; }
+            public uint? SpecialMoveCharacterIndex { get; set; }
+            public uint? SpecialMoveOffset { get; set; }
 
             public CharacterReference Clone()
             {
@@ -221,7 +234,8 @@ namespace Ambermoon.Data
                     TileFlags = TileFlags,
                     EventIndex = EventIndex,
                     GraphicIndex = GraphicIndex,
-                    CombatBackgroundIndex = CombatBackgroundIndex
+                    CombatBackgroundIndex = CombatBackgroundIndex,
+                    SpecialMoveType = SpecialMoveType
                 };
 
                 clone.Positions.AddRange(Positions.Select(p => new Position(p)));

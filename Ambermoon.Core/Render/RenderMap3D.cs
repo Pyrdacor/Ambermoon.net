@@ -204,7 +204,7 @@ namespace Ambermoon.Render
             {
                 var position = new Position(characterReference.Positions.Count == 1
                     ? characterReference.Positions[0]
-                    : characterReference.Positions[(int)gameTime.TimeSlot]);
+                    : characterReference.Positions[(int)gameTime.TimeSlot % characterReference.Positions.Count]);
                 position.Offset(-1, -1); // positions are 1-based
                 Position = position;
                 ResetFrame();
@@ -712,8 +712,8 @@ namespace Ambermoon.Render
                 {
                     // Walk a given path every day time slot
                     uint lastTimeSlot = gameTime.TimeSlot == 0 ? 287 : gameTime.TimeSlot - 1;
-                    var lastPosition = new Position(characterReference.Positions[(int)lastTimeSlot]);
-                    var newPosition = new Position(characterReference.Positions[(int)gameTime.TimeSlot]);
+                    var lastPosition = new Position(characterReference.Positions[(int)lastTimeSlot % characterReference.Positions.Count]);
+                    var newPosition = new Position(characterReference.Positions[(int)gameTime.TimeSlot % characterReference.Positions.Count]);
                     if (newPosition.X != 0 && newPosition.Y != 0)
                         newPosition.Offset(-1, -1); // positions are 1-based
                     if (lastPosition.X == 0 && lastPosition.Y == 0)

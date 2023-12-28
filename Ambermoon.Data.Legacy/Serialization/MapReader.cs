@@ -103,6 +103,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             EventReader.ReadEvents(dataReader, map.Events, map.EventList);
 
+            int characterPositionOffset = dataReader.Position;
+
             // For each character reference the positions or movement paths are stored here.
             // For random movement there are 2 bytes (x and y). Otherwise there are 288 positions
             // each has 2 bytes (x and y). Each position is for one 5 minute chunk of the day.
@@ -117,8 +119,60 @@ namespace Ambermoon.Data.Legacy.Serialization
                     characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.RandomMovement) ||
                     characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.Stationary))
                 {
-                    // For random movement only the start position is given.
+                    // For monsters, random movement or stationary only the start position is given.
                     characterReference.Positions.Add(new Position(dataReader.ReadByte(), dataReader.ReadByte()));
+                }
+                else if (characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.SpecialMovement))
+                {
+                    var header = dataReader.ReadWord();
+                    var type = header >> 12;
+
+                    if (type >= 0 && type < 4)
+                    {
+                        var moveType = (Map.CharacterReference.SpecialMovementType)type;
+                        characterReference.SpecialMoveType = moveType;
+
+                        switch (moveType)
+                        {
+                            case Map.CharacterReference.SpecialMovementType.CyclicPath:
+                            case Map.CharacterReference.SpecialMovementType.AlternatingPath:
+                            {
+                                int readerPosition = dataReader.Position;
+                                dataReader.Position = characterPositionOffset + (header & 0xfff);
+                                int numPositions = Math.Min(288, (int)dataReader.ReadWord());
+
+                                for (int i = 0; i < numPositions; i++)
+                                {
+                                    characterReference.Positions.Add(new Position(dataReader.ReadByte(), dataReader.ReadByte()));
+                                }
+
+                                dataReader.Position = readerPosition;
+
+                                break;
+                            }
+                            case Map.CharacterReference.SpecialMovementType.ReuseCyclicPath:
+                            {
+                                int otherCharacterIndex = header & 0x1f;
+                                int offset = (header >> 5) & 0x7f;
+                                int positionCount = map.CharacterReferences[otherCharacterIndex].Positions.Count;
+
+                                for (int i = 0; i < positionCount; i++)
+                                {
+                                    characterReference.Positions.Add(new Position(map.CharacterReferences[otherCharacterIndex].Positions[(i + offset) % positionCount]));
+                                }
+
+                                characterReference.SpecialMoveCharacterIndex = (uint)otherCharacterIndex;
+                                characterReference.SpecialMoveOffset = (uint)offset;
+
+                                break;
+                            }
+                            case Map.CharacterReference.SpecialMovementType.CircleCenterPosition:
+                            {
+                                // TODO
+                                throw new NotImplementedException();
+                            }
+                        }
+                    }
                 }
                 else
                 {

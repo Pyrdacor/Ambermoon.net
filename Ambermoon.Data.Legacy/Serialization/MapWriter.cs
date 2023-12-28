@@ -1,4 +1,7 @@
-﻿using Ambermoon.Data.Enumerations;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Legacy.Serialization
@@ -76,6 +79,9 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             EventWriter.WriteEvents(dataWriter, map.Events, map.EventList);
 
+            int characterDataOffset = dataWriter.Position;
+            var characterPositionDataHeaderLocations = new Dictionary<int, byte[]>();
+
             // For each character reference the positions or movement paths are stored here.
             // For random movement there are 2 bytes (x and y). Otherwise there are 288 positions
             // each has 2 bytes (x and y). Each position is for one 5 minute chunk of the day.
@@ -90,9 +96,56 @@ namespace Ambermoon.Data.Legacy.Serialization
                     characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.RandomMovement) ||
                     characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.Stationary))
                 {
-                    // For random movement only the start position is given.
+                    // For monsters, random movement or stationary only the start position is given.
                     dataWriter.Write((byte)characterReference.Positions[0].X);
                     dataWriter.Write((byte)characterReference.Positions[0].Y);
+                }
+                else if (characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.SpecialMovement))
+                {
+                    switch (characterReference.SpecialMoveType)
+                    {
+                        case Map.CharacterReference.SpecialMovementType.CyclicPath:
+                        case Map.CharacterReference.SpecialMovementType.AlternatingPath:
+                        {
+                            ushort numPositions = (ushort)characterReference.Positions.Count;
+                            var positionData = new byte[2 + numPositions * 2];
+
+                            positionData[0] = (byte)(numPositions >> 8);
+                            positionData[1] = (byte)(numPositions & 0xff);
+
+                            for (int i = 0; i < numPositions; i++)
+                            {
+                                positionData[2 + i * 2] = (byte)characterReference.Positions[i].X;
+                                positionData[3 + i * 2] = (byte)characterReference.Positions[i].Y;
+                            }
+
+                            characterPositionDataHeaderLocations.Add(dataWriter.Position, positionData);
+                            dataWriter.Write((ushort)((int)characterReference.SpecialMoveType << 12));
+
+                            break;
+                        }
+                        case Map.CharacterReference.SpecialMovementType.ReuseCyclicPath:
+                        {
+                            ushort header = (ushort)(characterReference.SpecialMoveCharacterIndex ?? throw new NullReferenceException(nameof(characterReference.SpecialMoveCharacterIndex)));
+                            header |= (ushort)((characterReference.SpecialMoveOffset ?? throw new NullReferenceException(nameof(characterReference.SpecialMoveOffset))) << 5);
+
+                            dataWriter.Write(header);
+
+                            break;
+                        }
+                        case Map.CharacterReference.SpecialMovementType.CircleCenterPosition:
+                        {
+                            // TODO
+                            throw new NotImplementedException();
+                        }
+                    }
+
+                    foreach (var location in characterPositionDataHeaderLocations.OrderBy(l => l.Key))
+                    {
+                        int type = dataWriter.GetBytes(location.Key, 1)[0];
+                        dataWriter.Replace(location.Key, (ushort)((type << 8) | dataWriter.Position));
+                        dataWriter.Write(location.Value);
+                    }
                 }
                 else
                 {
