@@ -70,6 +70,7 @@ namespace Ambermoon.Renderer
             $"",
             $"void main()",
             $"{{",
+            $"    {DefaultFragmentOutColorName} = vec4(0);",
             $"    vec2 realTexCoord = varTexCoord;",
             $"    if (realTexCoord.x >= textureEndCoord.x)",
             $"        realTexCoord.x -= floor((textureSize.x + realTexCoord.x - textureEndCoord.x) / textureSize.x) * textureSize.x;",
