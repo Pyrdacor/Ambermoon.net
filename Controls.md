@@ -17,7 +17,7 @@ Ctrl + , | Lower volume
 Ctrl + . | Increase volume
 Escape | Generally aborts or closes things
 Return | Generally submits or closes things, toggle the action buttons in map view
-Space | Generally closes things
+Space | Generally closes things, in 3D you can active events or NPCs with it
 Ctrl + 0 to 9 | Quick save in slots 1 to 10 (0 is slot 10)
 Ctrl + Shift + 0 to 9 | Quick load from slots 1 to 10 (0 is slot 10)
 Ctrl + Shift + C | Center the window on the main monitor
