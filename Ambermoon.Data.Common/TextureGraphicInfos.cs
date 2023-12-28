@@ -13,7 +13,7 @@ namespace Ambermoon.Data
             Height = 80
         };
 
-        public static readonly GraphicInfo[] ObjectGraphicInfos = ObjectGraphicFrameCountsAndSizes.Select(size =>
+        public static GraphicInfo[] ObjectGraphicInfos => ObjectGraphicFrameCountsAndSizes.Select(size =>
             new GraphicInfo
             {
                 Alpha = true,
@@ -22,7 +22,7 @@ namespace Ambermoon.Data
                 Height = size.Value.Height,
             }).ToArray();
 
-        public static readonly GraphicInfo[] OverlayGraphicInfos = OverlayGraphicSizes.Select(size =>
+        public static GraphicInfo[] OverlayGraphicInfos => OverlayGraphicSizes.Select(size =>
             new GraphicInfo
             {
                 Alpha = true,
