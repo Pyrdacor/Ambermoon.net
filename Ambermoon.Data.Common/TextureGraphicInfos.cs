@@ -33,6 +33,7 @@ namespace Ambermoon.Data
 
         public static readonly Size[] OverlayGraphicSizes = new Size[]
         {
+            new Size(16, 80), // 1
             new Size(16, 80),
             new Size(16, 80),
             new Size(16, 80),
@@ -41,8 +42,7 @@ namespace Ambermoon.Data
             new Size(16, 80),
             new Size(16, 80),
             new Size(16, 80),
-            new Size(16, 80),
-            new Size(16, 80),
+            new Size(16, 80), // 10
             new Size(48, 80),
             new Size(48, 80),
             new Size(16, 80),
@@ -52,7 +52,7 @@ namespace Ambermoon.Data
             new Size(32, 80),
             new Size(32, 80),
             new Size(16, 80),
-            new Size(16, 80),
+            new Size(16, 80), // 20
             new Size(16, 80),
             new Size(16, 80),
             new Size(16, 16),
@@ -62,7 +62,7 @@ namespace Ambermoon.Data
             new Size(32, 80),
             new Size(32, 80),
             new Size(32, 80),
-            new Size(32, 80),
+            new Size(32, 80), // 30
             new Size(32, 80),
             new Size(64, 61),
             new Size(16, 32),
@@ -72,7 +72,7 @@ namespace Ambermoon.Data
             new Size(32, 32),
             new Size(32, 32),
             new Size(64, 45),
-            new Size(32, 19),
+            new Size(32, 19), // 40
             new Size(16, 27),
             new Size(16, 80),
             new Size(16, 80),
@@ -82,7 +82,7 @@ namespace Ambermoon.Data
             new Size(32, 80),
             new Size(32, 80),
             new Size(48, 80),
-            new Size(32, 80),
+            new Size(32, 80), // 50
             new Size(48, 80),
             new Size(64, 80),
             new Size(16, 23),
@@ -92,7 +92,7 @@ namespace Ambermoon.Data
             new Size(16, 13),
             new Size(64, 60),
             new Size(64, 60),
-            new Size(64, 60),
+            new Size(64, 60), // 60
             new Size(64, 60),
             new Size(64, 60),
             new Size(64, 60),
@@ -102,7 +102,7 @@ namespace Ambermoon.Data
             new Size(32, 48),
             new Size(32, 32),
             new Size(32, 32),
-            new Size(48, 48),
+            new Size(48, 48), // 70
             new Size(64, 64),
             new Size(32, 58),
             new Size(32, 32),
@@ -112,7 +112,7 @@ namespace Ambermoon.Data
             new Size(64, 64),
             new Size(64, 64),
             new Size(64, 64),
-            new Size(64, 25),
+            new Size(64, 25), // 80
             new Size(64, 25),
             new Size(64, 25),
             new Size(64, 25),
@@ -122,7 +122,7 @@ namespace Ambermoon.Data
             new Size(64, 36),
             new Size(64, 36),
             new Size(64, 41),
-            new Size(64, 41),
+            new Size(64, 41), // 90
             new Size(64, 41),
             // Advanced graphics
             new Size(16, 80),
@@ -133,14 +133,15 @@ namespace Ambermoon.Data
             new Size(32, 80),
             new Size(64, 45),
             new Size(96, 72),
-            new Size(16, 8),
+            new Size(16, 8), // 100
             new Size(16, 8),
             new Size(128, 13),
+            new Size(64, 60),
         };
 
         public static readonly KeyValuePair<int, Size>[] ObjectGraphicFrameCountsAndSizes = new KeyValuePair<int, Size>[]
         {
-            KeyValuePair.Create(1, new Size(80, 80)),
+            KeyValuePair.Create(1, new Size(80, 80)), // 1
             KeyValuePair.Create(1, new Size(80, 76)),
             KeyValuePair.Create(1, new Size(48, 69)),
             KeyValuePair.Create(1, new Size(32, 36)),
@@ -149,7 +150,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(32, 30)),
             KeyValuePair.Create(1, new Size(16, 12)),
             KeyValuePair.Create(1, new Size(16, 11)),
-            KeyValuePair.Create(1, new Size(16, 42)),
+            KeyValuePair.Create(1, new Size(16, 42)), // 10
             KeyValuePair.Create(1, new Size(32, 32)),
             KeyValuePair.Create(1, new Size(16, 8)),
             KeyValuePair.Create(1, new Size(32, 65)),
@@ -159,7 +160,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(16, 32)),
             KeyValuePair.Create(1, new Size(16, 41)),
             KeyValuePair.Create(1, new Size(64, 80)),
-            KeyValuePair.Create(1, new Size(64, 80)),
+            KeyValuePair.Create(1, new Size(64, 80)), // 20
             KeyValuePair.Create(1, new Size(32, 46)),
             KeyValuePair.Create(1, new Size(48, 50)),
             KeyValuePair.Create(1, new Size(16, 30)),
@@ -169,7 +170,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(64, 80)),
             KeyValuePair.Create(1, new Size(96, 80)),
             KeyValuePair.Create(1, new Size(96, 80)),
-            KeyValuePair.Create(1, new Size(48, 80)),
+            KeyValuePair.Create(1, new Size(48, 80)), // 30
             KeyValuePair.Create(3, new Size(96, 80)),
             KeyValuePair.Create(1, new Size(80, 21)),
             KeyValuePair.Create(1, new Size(48, 39)),
@@ -179,7 +180,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(3, new Size(64, 83)),
             KeyValuePair.Create(7, new Size(96, 67)),
             KeyValuePair.Create(3, new Size(80, 84)),
-            KeyValuePair.Create(3, new Size(64, 71)),
+            KeyValuePair.Create(3, new Size(64, 71)), // 40
             KeyValuePair.Create(3, new Size(64, 68)),
             KeyValuePair.Create(3, new Size(96, 80)),
             KeyValuePair.Create(3, new Size(64, 86)),
@@ -189,7 +190,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(3, new Size(64, 73)),
             KeyValuePair.Create(3, new Size(80, 54)),
             KeyValuePair.Create(3, new Size(64, 67)),
-            KeyValuePair.Create(3, new Size(64, 69)),
+            KeyValuePair.Create(3, new Size(64, 69)), // 50
             KeyValuePair.Create(3, new Size(64, 86)),
             KeyValuePair.Create(3, new Size(80, 54)),
             KeyValuePair.Create(3, new Size(48, 69)),
@@ -199,7 +200,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(3, new Size(64, 67)),
             KeyValuePair.Create(1, new Size(16, 51)),
             KeyValuePair.Create(1, new Size(32, 21)),
-            KeyValuePair.Create(1, new Size(32, 26)),
+            KeyValuePair.Create(1, new Size(32, 26)), // 60
             KeyValuePair.Create(4, new Size(32, 20)),
             KeyValuePair.Create(1, new Size(16, 19)),
             KeyValuePair.Create(1, new Size(16, 22)),
@@ -209,6 +210,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(16, 16)),
             KeyValuePair.Create(1, new Size(16, 16)),
             KeyValuePair.Create(1, new Size(16, 16)),
+            KeyValuePair.Create(1, new Size(16, 16)), // 70
             KeyValuePair.Create(1, new Size(16, 16)),
             KeyValuePair.Create(1, new Size(16, 16)),
             KeyValuePair.Create(1, new Size(16, 16)),
@@ -218,8 +220,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(16, 16)),
             KeyValuePair.Create(1, new Size(16, 16)),
             KeyValuePair.Create(1, new Size(16, 16)),
-            KeyValuePair.Create(1, new Size(16, 16)),
-            KeyValuePair.Create(1, new Size(16, 16)),
+            KeyValuePair.Create(1, new Size(16, 16)), // 80
             KeyValuePair.Create(1, new Size(16, 16)),
             KeyValuePair.Create(1, new Size(32, 21)),
             KeyValuePair.Create(1, new Size(48, 31)),
@@ -229,7 +230,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(32, 30)),
             KeyValuePair.Create(1, new Size(32, 31)),
             KeyValuePair.Create(1, new Size(64, 60)),
-            KeyValuePair.Create(1, new Size(47, 43)),
+            KeyValuePair.Create(1, new Size(47, 43)), // 90
             KeyValuePair.Create(1, new Size(32, 29)),
             KeyValuePair.Create(1, new Size(16, 11)),
             KeyValuePair.Create(1, new Size(16, 19)),
@@ -239,7 +240,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(80, 78)),
             KeyValuePair.Create(1, new Size(64, 64)),
             KeyValuePair.Create(1, new Size(64, 63)),
-            KeyValuePair.Create(1, new Size(16, 80)),
+            KeyValuePair.Create(1, new Size(16, 80)), // 100
             KeyValuePair.Create(1, new Size(16, 80)),
             KeyValuePair.Create(1, new Size(16, 80)),
             KeyValuePair.Create(1, new Size(16, 80)),
@@ -249,7 +250,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(16, 25)),
             KeyValuePair.Create(1, new Size(64, 64)),
             KeyValuePair.Create(1, new Size(32, 51)),
-            KeyValuePair.Create(1, new Size(32, 51)),
+            KeyValuePair.Create(1, new Size(32, 51)), // 110
             KeyValuePair.Create(1, new Size(16, 17)),
             KeyValuePair.Create(1, new Size(16, 18)),
             KeyValuePair.Create(1, new Size(16, 23)),
@@ -259,7 +260,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(32, 80)),
             KeyValuePair.Create(1, new Size(32, 81)),
             KeyValuePair.Create(1, new Size(96, 39)),
-            KeyValuePair.Create(1, new Size(32, 35)),
+            KeyValuePair.Create(1, new Size(32, 35)), // 120
             KeyValuePair.Create(1, new Size(48, 25)),
             KeyValuePair.Create(8, new Size(128, 80)),
             KeyValuePair.Create(6, new Size(128, 29)),
@@ -269,7 +270,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(32, 45)),
             KeyValuePair.Create(1, new Size(32, 45)),
             KeyValuePair.Create(1, new Size(32, 45)),
-            KeyValuePair.Create(1, new Size(32, 45)),
+            KeyValuePair.Create(1, new Size(32, 45)), // 130
             KeyValuePair.Create(1, new Size(32, 49)),
             KeyValuePair.Create(1, new Size(32, 45)),
             KeyValuePair.Create(1, new Size(32, 67)),
@@ -279,7 +280,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(32, 32)),
             KeyValuePair.Create(6, new Size(48, 48)),
             KeyValuePair.Create(1, new Size(48, 32)),
-            KeyValuePair.Create(1, new Size(48, 32)),
+            KeyValuePair.Create(1, new Size(48, 32)), // 140
             KeyValuePair.Create(4, new Size(48, 29)),
             KeyValuePair.Create(4, new Size(16, 86)),
             KeyValuePair.Create(1, new Size(32, 74)),
@@ -289,7 +290,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(16, 26)),
             KeyValuePair.Create(1, new Size(16, 46)),
             KeyValuePair.Create(4, new Size(16, 25)),
-            KeyValuePair.Create(1, new Size(32, 41)),
+            KeyValuePair.Create(1, new Size(32, 41)), // 150
             KeyValuePair.Create(4, new Size(16, 18)),
             KeyValuePair.Create(1, new Size(16, 69)),
             KeyValuePair.Create(1, new Size(32, 23)),
@@ -299,7 +300,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(48, 35)),
             KeyValuePair.Create(1, new Size(48, 35)),
             KeyValuePair.Create(1, new Size(32, 26)),
-            KeyValuePair.Create(1, new Size(16, 22)),
+            KeyValuePair.Create(1, new Size(16, 22)), // 160
             KeyValuePair.Create(1, new Size(16, 17)),
             KeyValuePair.Create(1, new Size(32, 36)),
             KeyValuePair.Create(1, new Size(32, 22)),
@@ -309,7 +310,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(16, 28)),
             KeyValuePair.Create(1, new Size(16, 28)),
             KeyValuePair.Create(1, new Size(16, 28)),
-            KeyValuePair.Create(1, new Size(16, 28)),
+            KeyValuePair.Create(1, new Size(16, 28)), // 170
             KeyValuePair.Create(1, new Size(16, 28)),
             KeyValuePair.Create(1, new Size(48, 41)),
             KeyValuePair.Create(1, new Size(48, 39)),
@@ -319,7 +320,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(48, 45)),
             KeyValuePair.Create(1, new Size(32, 22)),
             KeyValuePair.Create(1, new Size(32, 18)),
-            KeyValuePair.Create(1, new Size(32, 80)),
+            KeyValuePair.Create(1, new Size(32, 80)), // 180
             KeyValuePair.Create(7, new Size(64, 63)),
             KeyValuePair.Create(1, new Size(32, 61)),
             KeyValuePair.Create(1, new Size(32, 38)),
@@ -329,7 +330,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(16, 48)),
             KeyValuePair.Create(1, new Size(16, 20)),
             KeyValuePair.Create(1, new Size(16, 33)),
-            KeyValuePair.Create(1, new Size(16, 31)),
+            KeyValuePair.Create(1, new Size(16, 31)), // 190
             KeyValuePair.Create(1, new Size(16, 22)),
             KeyValuePair.Create(1, new Size(32, 20)),
             KeyValuePair.Create(1, new Size(32, 15)),
@@ -339,7 +340,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(16, 11)),
             KeyValuePair.Create(1, new Size(16, 14)),
             KeyValuePair.Create(1, new Size(16, 7)),
-            KeyValuePair.Create(1, new Size(16, 7)),
+            KeyValuePair.Create(1, new Size(16, 7)), // 200
             KeyValuePair.Create(1, new Size(80, 80)),
             KeyValuePair.Create(5, new Size(32, 37)),
             KeyValuePair.Create(3, new Size(16, 72)),
@@ -349,7 +350,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(16, 7)),
             KeyValuePair.Create(1, new Size(48, 50)),
             KeyValuePair.Create(1, new Size(48, 48)),
-            KeyValuePair.Create(1, new Size(16, 31)),
+            KeyValuePair.Create(1, new Size(16, 31)), // 210
             KeyValuePair.Create(1, new Size(16, 33)),
             KeyValuePair.Create(1, new Size(48, 48)),
             KeyValuePair.Create(1, new Size(48, 48)),
@@ -359,7 +360,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(32, 80)),
             KeyValuePair.Create(1, new Size(32, 32)),
             KeyValuePair.Create(1, new Size(32, 80)),
-            KeyValuePair.Create(1, new Size(32, 32)),
+            KeyValuePair.Create(1, new Size(32, 32)), // 220
             KeyValuePair.Create(1, new Size(32, 66)),
             KeyValuePair.Create(1, new Size(64, 64)),
             KeyValuePair.Create(1, new Size(64, 64)),
@@ -369,7 +370,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(32, 84)),
             KeyValuePair.Create(1, new Size(32, 45)),
             KeyValuePair.Create(1, new Size(48, 80)),
-            KeyValuePair.Create(1, new Size(32, 79)),
+            KeyValuePair.Create(1, new Size(32, 79)), // 230
             KeyValuePair.Create(1, new Size(16, 47)),
             KeyValuePair.Create(1, new Size(32, 60)),
             KeyValuePair.Create(1, new Size(32, 32)),
@@ -379,7 +380,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(32, 36)),
             KeyValuePair.Create(1, new Size(16, 22)),
             KeyValuePair.Create(1, new Size(16, 23)),
-            KeyValuePair.Create(1, new Size(16, 24)),
+            KeyValuePair.Create(1, new Size(16, 24)), // 240
             KeyValuePair.Create(1, new Size(16, 16)),
             KeyValuePair.Create(1, new Size(16, 26)),
             KeyValuePair.Create(1, new Size(32, 22)),
@@ -389,7 +390,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(16, 22)),
             KeyValuePair.Create(1, new Size(16, 29)),
             KeyValuePair.Create(1, new Size(48, 50)),
-            KeyValuePair.Create(1, new Size(48, 48)),
+            KeyValuePair.Create(1, new Size(48, 48)), // 250
             KeyValuePair.Create(1, new Size(48, 48)),
             KeyValuePair.Create(1, new Size(48, 48)),
             KeyValuePair.Create(1, new Size(16, 41)),
@@ -399,7 +400,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(4, new Size(64, 64)),
             KeyValuePair.Create(5, new Size(32, 48)),
             KeyValuePair.Create(1, new Size(64, 64)),
-            KeyValuePair.Create(1, new Size(32, 32)),
+            KeyValuePair.Create(1, new Size(32, 32)), // 260
             KeyValuePair.Create(1, new Size(32, 32)),
             KeyValuePair.Create(1, new Size(32, 32)),
             KeyValuePair.Create(1, new Size(32, 32)),
@@ -409,7 +410,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(32, 24)),
             KeyValuePair.Create(1, new Size(32, 19)),
             KeyValuePair.Create(1, new Size(32, 21)),
-            KeyValuePair.Create(1, new Size(16, 15)),
+            KeyValuePair.Create(1, new Size(16, 15)), // 270
             KeyValuePair.Create(1, new Size(16, 12)),
             KeyValuePair.Create(1, new Size(16, 9)),
             KeyValuePair.Create(1, new Size(16, 7)),
@@ -419,7 +420,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(3, new Size(48, 48)),
             KeyValuePair.Create(1, new Size(32, 27)),
             KeyValuePair.Create(1, new Size(32, 19)),
-            KeyValuePair.Create(1, new Size(32, 29)),
+            KeyValuePair.Create(1, new Size(32, 29)), // 280
             KeyValuePair.Create(1, new Size(16, 16)),
             KeyValuePair.Create(1, new Size(16, 13)),
             KeyValuePair.Create(1, new Size(16, 10)),
@@ -429,7 +430,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(16, 12)),
             KeyValuePair.Create(1, new Size(16, 11)),
             KeyValuePair.Create(1, new Size(16, 11)),
-            KeyValuePair.Create(1, new Size(16, 17)),
+            KeyValuePair.Create(1, new Size(16, 17)), // 290
             KeyValuePair.Create(1, new Size(16, 21)),
             KeyValuePair.Create(1, new Size(16, 11)),
             KeyValuePair.Create(1, new Size(16, 12)),
@@ -439,7 +440,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(16, 11)),
             KeyValuePair.Create(1, new Size(16, 11)),
             KeyValuePair.Create(1, new Size(32, 28)),
-            KeyValuePair.Create(1, new Size(32, 23)),
+            KeyValuePair.Create(1, new Size(32, 23)), // 300
             KeyValuePair.Create(1, new Size(32, 25)),
             KeyValuePair.Create(1, new Size(16, 19)),
             KeyValuePair.Create(1, new Size(16, 16)),
@@ -449,7 +450,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(48, 48)),
             KeyValuePair.Create(1, new Size(48, 48)),
             KeyValuePair.Create(1, new Size(48, 48)),
-            KeyValuePair.Create(1, new Size(48, 48)),
+            KeyValuePair.Create(1, new Size(48, 48)), // 310
             KeyValuePair.Create(1, new Size(48, 48)),
             KeyValuePair.Create(1, new Size(32, 32)),
             KeyValuePair.Create(1, new Size(16, 80)),
@@ -459,7 +460,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(3, new Size(48, 74)),
             KeyValuePair.Create(3, new Size(64, 72)),
             KeyValuePair.Create(3, new Size(48, 73)),
-            KeyValuePair.Create(3, new Size(64, 69)),
+            KeyValuePair.Create(3, new Size(64, 69)), // 320
             KeyValuePair.Create(3, new Size(48, 68)),
             KeyValuePair.Create(3, new Size(48, 69)),
             KeyValuePair.Create(1, new Size(48, 48)),
@@ -469,7 +470,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(64, 63)),
             KeyValuePair.Create(1, new Size(32, 35)),
             KeyValuePair.Create(1, new Size(32, 35)),
-            KeyValuePair.Create(1, new Size(16, 16)),
+            KeyValuePair.Create(1, new Size(16, 16)), // 330
             KeyValuePair.Create(1, new Size(32, 34)),
             KeyValuePair.Create(3, new Size(48, 70)),
             KeyValuePair.Create(1, new Size(48, 68)),
@@ -479,7 +480,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(3, new Size(48, 70)),
             KeyValuePair.Create(3, new Size(48, 69)),
             KeyValuePair.Create(3, new Size(48, 68)),
-            KeyValuePair.Create(3, new Size(48, 68)),
+            KeyValuePair.Create(3, new Size(48, 68)), // 340
             KeyValuePair.Create(3, new Size(48, 68)),
             KeyValuePair.Create(3, new Size(48, 78)),
             KeyValuePair.Create(3, new Size(48, 78)),
@@ -489,7 +490,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(48, 29)),
             KeyValuePair.Create(1, new Size(32, 25)),
             KeyValuePair.Create(1, new Size(32, 21)),
-            KeyValuePair.Create(1, new Size(32, 16)),
+            KeyValuePair.Create(1, new Size(32, 16)), // 350
             KeyValuePair.Create(1, new Size(48, 23)),
             KeyValuePair.Create(1, new Size(16, 17)),
             KeyValuePair.Create(1, new Size(16, 18)),
@@ -499,7 +500,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(64, 26)),
             KeyValuePair.Create(1, new Size(32, 58)),
             KeyValuePair.Create(1, new Size(32, 58)),
-            KeyValuePair.Create(1, new Size(32, 33)),
+            KeyValuePair.Create(1, new Size(32, 33)), // 360
             KeyValuePair.Create(1, new Size(32, 32)),
             KeyValuePair.Create(1, new Size(32, 32)),
             KeyValuePair.Create(8, new Size(16, 11)),
@@ -509,7 +510,7 @@ namespace Ambermoon.Data
             KeyValuePair.Create(1, new Size(48, 59)),
             KeyValuePair.Create(3, new Size(32, 50)),
             KeyValuePair.Create(3, new Size(32, 50)),
-            KeyValuePair.Create(1, new Size(48, 69)),
+            KeyValuePair.Create(1, new Size(48, 69)), // 370
             KeyValuePair.Create(3, new Size(96, 88)),
             KeyValuePair.Create(3, new Size(96, 75)),
             KeyValuePair.Create(1, new Size(80, 66)),
@@ -520,9 +521,16 @@ namespace Ambermoon.Data
             KeyValuePair.Create(8, new Size(16, 36)),
             KeyValuePair.Create(1, new Size(48, 28)),
             KeyValuePair.Create(1, new Size(32, 77)),
-            KeyValuePair.Create(2, new Size(64, 48)),
+            KeyValuePair.Create(2, new Size(64, 48)), // 380
             KeyValuePair.Create(1, new Size(32, 38)),
             KeyValuePair.Create(1, new Size(32, 38)),
+            KeyValuePair.Create(1, new Size(64, 60)),
+            KeyValuePair.Create(4, new Size(16, 80)),
+            KeyValuePair.Create(8, new Size(128, 80)),
+            KeyValuePair.Create(1, new Size(48, 70)),
+            KeyValuePair.Create(4, new Size(64, 80)),
+            KeyValuePair.Create(1, new Size(32, 32)),
+            KeyValuePair.Create(4, new Size(32, 32)),
         };
     }
 }
