@@ -323,7 +323,8 @@ namespace Ambermoon.Render
                         float extrude = surface.Extrude = (-BlockSize / 10.0f) * Math.Max(0.0f, 1.0f - distance) * Global.DistancePerBlock / BlockSize;
                         children.ForEach(c =>
                         {
-                            extrude -= ExtrudeStep;
+                            if (!c.TileFlags.HasFlag(Tileset.TileFlags.Floor))
+                                extrude -= ExtrudeStep;
                             c.surface.Extrude = extrude;
                         });
                         void RestoreExtrude()
@@ -331,7 +332,8 @@ namespace Ambermoon.Render
                             float extrude = surface.Extrude = 8.0f * ExtrudeStep;
                             children.ForEach(c =>
                             {
-                                extrude -= ExtrudeStep;
+                                if (!c.TileFlags.HasFlag(Tileset.TileFlags.Floor))
+                                    extrude -= ExtrudeStep;
                                 c.surface.Extrude = extrude;
                             });
                         }
