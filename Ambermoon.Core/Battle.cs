@@ -989,6 +989,35 @@ namespace Ambermoon
             currentSpellAnimation = null;
         }
 
+        /// <summary>
+        /// Note: This is only use to end a battle externally (e.g. through a cheat code).
+        /// </summary>
+        /// <param name="flee"></param>
+        internal void EndBattle(bool flee)
+        {
+            if (flee)
+            {
+                fledCharacters.AddRange(battleField.Where(c => c?.Type == CharacterType.PartyMember));
+                EndBattleCleanup();
+                BattleEnded?.Invoke(new Game.BattleEndInfo
+                {
+                    MonstersDefeated = false
+                });
+            }
+            else
+            {
+                EndBattleCleanup();
+                BattleEnded?.Invoke(new Game.BattleEndInfo
+                {
+                    MonstersDefeated = true,
+                    KilledMonsters = initialMonsters.Where(m => !fledCharacters.Contains(m)).ToList(),
+                    FledPartyMembers = fledCharacters.Where(c => c?.Type == CharacterType.PartyMember).Cast<PartyMember>().ToList(),
+                    TotalExperience = initialMonsters.Sum(m => m.DefeatExperience),
+                    BrokenItems = brokenItems
+                });
+            }
+        }
+
         void KillPlayer(Character target)
         {
             CharacterDied?.Invoke(target);

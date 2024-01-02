@@ -682,14 +682,11 @@ namespace Ambermoon.Render
                     character3D.MoveToTile((uint)newPosition.X, (uint)newPosition.Y);
             }
 
-            public void Update(uint ticks, ITime gameTime)
+            public void Update(uint ticks, ITime gameTime, FloatPosition playerPosition)
             {
                 if (!Active || character3D.Paused || parent != null)
                     return;
 
-                var camera = (game.RenderPlayer as Player3D).Camera;
-                Geometry.Geometry.CameraToMapPosition(map.Map, camera.X, camera.Z, out float mapX, out float mapY);
-                var playerPosition = new FloatPosition(mapX - 0.5f * Global.DistancePerBlock, mapY - 0.5f * Global.DistancePerBlock);
                 var distance = GetDistance(playerPosition.X, playerPosition.Y, character3D.RealPosition.X, character3D.RealPosition.Y) / Global.DistancePerBlock;
                 var obj = map.labdata.Objects[(int)characterReference.GraphicIndex - 1];
                 var subObject = obj.SubObjects[0];
@@ -1825,8 +1822,15 @@ namespace Ambermoon.Render
             foreach (var mapObject in objects)
                 mapObject.Value.ForEach(obj => obj.Update(ticks));
 
-            foreach (var mapCharacter in mapCharacters.Values)
-                mapCharacter.Update(ticks, gameTime);
+            if (mapCharacters.Any(c => c.Value.Active))
+            {
+                var camera = (game.RenderPlayer as Player3D).Camera;
+                Geometry.Geometry.CameraToMapPosition(Map, camera.X, camera.Z, out float mapX, out float mapY);
+                var playerPosition = new FloatPosition(mapX - 0.5f * Global.DistancePerBlock, mapY - 0.5f * Global.DistancePerBlock);
+
+                foreach (var mapCharacter in mapCharacters.Values)
+                    mapCharacter.Update(ticks, gameTime, playerPosition);
+            }
         }
 
         public void UpdateCharacterVisibility(uint characterIndex)

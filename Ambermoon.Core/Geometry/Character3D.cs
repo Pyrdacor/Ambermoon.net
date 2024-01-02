@@ -199,7 +199,12 @@ namespace Ambermoon.Geometry
             switch (currentState)
             {
             case State.IdleOnTile:
-                if (canSeePlayer)
+                if (monster && !moveRandom)
+                {
+                    // Such monster do not move at all
+                    return;
+                }
+                else if (canSeePlayer)
                 {
                     if (monster)
                     {

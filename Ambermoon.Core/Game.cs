@@ -9044,6 +9044,18 @@ namespace Ambermoon
             }
         }
 
+        public bool EndBattle(bool flee)
+        {
+            if (currentBattle == null || currentBattle.RoundActive)
+                return false;
+
+            if (PopupActive)
+                ClosePopup();
+
+            currentBattle.EndBattle(flee);
+            return true;
+        }
+
         public Savegame GetCurrentSavegame()
         {
             return CurrentSavegame;

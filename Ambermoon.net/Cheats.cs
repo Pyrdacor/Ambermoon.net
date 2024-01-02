@@ -153,6 +153,22 @@ namespace Ambermoon
                     Berserk
                 )
             },
+            { "win",
+                Create
+                (
+                    "Wins the current fight immediately." + Environment.NewLine +
+                    "Usage: win",
+                    Win
+                )
+            },
+            { "flee",
+                Create
+                (
+                    "Flees the current fight immediately." + Environment.NewLine +
+                    "Usage: flee",
+                    Flee
+                )
+            },
             { "light",
                 Create
                 (
@@ -1177,6 +1193,21 @@ namespace Ambermoon
             Console.WriteLine("The map was cleared from all monsters.");
             Console.WriteLine();
         }
+
+        static void EndFight(Game game, bool flee)
+        {
+            Console.WriteLine();
+
+            if (!game.EndBattle(flee))
+            {
+                Console.WriteLine("There is no active fight, or the fight round is still active or another window is opened.");
+                Console.WriteLine();
+            }
+        }
+
+        static void Win(Game game, string[] args) => EndFight(game, false);
+
+        static void Flee(Game game, string[] args) => EndFight(game, true);
 
         static void Light(Game game, string[] args)
         {
