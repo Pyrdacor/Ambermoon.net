@@ -110,7 +110,7 @@ namespace Ambermoon.Renderer
             $"    }}",
             $"    else // floor or ceiling billboard",
             $"    {{",
-            $"        vec4 rotatedOffset = {DefaultModelViewMatrixName} * vec4(offset.x, 0, offset.y, 0);",
+            $"        vec4 rotatedOffset = -1.0f * {DefaultModelViewMatrixName} * vec4(offset.x, 0, offset.y, 0);",
             $"        localPos += vec4(rotatedOffset.x, 0, rotatedOffset.z, 0);",
             $"    }}",
             $"    vec2 atlasFactor = vec2(1.0f / float({DefaultAtlasSizeName}.x), 1.0f / float({DefaultAtlasSizeName}.y));",
