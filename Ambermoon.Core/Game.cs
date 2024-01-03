@@ -3091,7 +3091,7 @@ namespace Ambermoon
                 default:
                     if (InputEnable && is3D && currentWindow.Window == Window.MapView && key == Key.Space)
                         TriggerMapEvents(null);
-                    if (currentWindow.Window == Window.Automap && (key == Key.Space || key == Key.M))
+                    else if (currentWindow.Window == Window.Automap && (key == Key.Space || key == Key.M))
                     {
                         nextClickHandler?.Invoke(MouseButtons.Right);
                         nextClickHandler = null;
