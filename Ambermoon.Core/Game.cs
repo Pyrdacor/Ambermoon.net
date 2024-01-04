@@ -13312,7 +13312,7 @@ namespace Ambermoon
                             if (consumeHandler != null)
                             {
                                 // Don't waste items on dead players
-                                if (fromItem && !reviveSpell && target?.Alive != true)
+                                if (fromItem && !reviveSpell && spell != Spell.AllHealing && target?.Alive != true)
                                     return;
                                 consumeHandler(Consume);
                             }
