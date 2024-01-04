@@ -13250,6 +13250,9 @@ namespace Ambermoon
 
                         if (characterSlot != -1)
                         {
+                            bool reviveSpell = spell >= Spell.WakeTheDead && spell <= Spell.ChangeDust;
+                            var target = GetPartyMember(characterSlot);
+
                             void Consume()
                             {
                                 ConsumeSP();
@@ -13278,11 +13281,8 @@ namespace Ambermoon
                                     }
                                 }
 
-                                bool reviveSpell = spell >= Spell.WakeTheDead && spell <= Spell.ChangeDust;
                                 void Cast()
                                 {
-                                    var target = GetPartyMember(characterSlot);
-
                                     if (target != null && (reviveSpell || spell == Spell.AllHealing || target.Alive))
                                     {
                                         if (reviveSpell)
@@ -13302,13 +13302,20 @@ namespace Ambermoon
                                         }
                                     }
                                 }
+
                                 if (!reviveSpell && checkFail)
                                     TrySpell(Cast, SpellFinished);
                                 else
                                     Cast();
                             }
+
                             if (consumeHandler != null)
+                            {
+                                // Don't waste items on dead players
+                                if (fromItem && !reviveSpell && target?.Alive != true)
+                                    return;
                                 consumeHandler(Consume);
+                            }
                             else
                                 Consume();
                         }
