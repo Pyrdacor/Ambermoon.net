@@ -3,6 +3,9 @@ Version 1.9
 
 - Added the intro
 - Added the polish version
+- Added distance fog
+- Added some cheats
+- Bugfixes and improvements
 
 
 Version 1.8

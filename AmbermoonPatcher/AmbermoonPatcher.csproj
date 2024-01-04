@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PublishTrimmed>true</PublishTrimmed>
-	<Version>1.9.4</Version>
+	<Version>1.9.5</Version>
 	<Configurations>Debug;Release;DebugES;ReleaseES</Configurations>
 	<ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
