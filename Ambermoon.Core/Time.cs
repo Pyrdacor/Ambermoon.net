@@ -218,17 +218,20 @@ namespace Ambermoon
         public void Ticks(uint amount)
         {
             uint minutes = amount * 5;
+            uint hours = 0;
             savegame.Minute += minutes;
-            MinuteChanged?.Invoke(minutes);
 
             while (savegame.Minute >= 60)
             {
                 savegame.Minute -= 60;
                 ++savegame.Hour;
                 ++savegame.HoursWithoutSleep;
-                PostIncreaseUpdate();
+                ++hours;
             }
 
+            MinuteChanged?.Invoke(minutes);
+            if (hours != 0)
+                PostIncreaseUpdate(hours);
             currentMoveTicks = 0;
             ResetTickTimer();
             HandleTimePassed(minutes / 60, minutes % 60);
