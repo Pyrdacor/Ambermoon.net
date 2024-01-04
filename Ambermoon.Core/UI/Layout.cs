@@ -335,6 +335,7 @@ namespace Ambermoon.UI
                         {
                             game.InventoryItemAdded(Item.Item.ItemIndex, Item.Item.Amount, partyMember);
                             game.UpdateCharacterInfo();
+                            layout.FillCharacterBars(partyMember);
                             partyMember.Inventory.Slots[SourceSlot].Add(Item.Item);
                             updateSlot = partyMember.Inventory.Slots[SourceSlot];
                         }
@@ -4031,13 +4032,13 @@ namespace Ambermoon.UI
                     text.Visible = true;
                     UpdateCharacterStatus(partyMember);
                 }
-
-                FillCharacterBars(slot, partyMember);
             }
             else if (partyMember != null)
             {
                 AddPortraitBackground();
             }
+
+            FillCharacterBars(slot, partyMember);
 
             void AddPortraitBackground()
             {
@@ -4108,11 +4109,12 @@ namespace Ambermoon.UI
 
         public void FillCharacterBars(int slot, PartyMember partyMember)
         {
-            uint hp = partyMember?.Alive == false ? 0 : partyMember?.HitPoints.CurrentValue ?? 0;
-            uint sp = partyMember?.Alive == false ? 0 : partyMember?.SpellPoints.CurrentValue ?? 0;
-            float lpPercentage = partyMember == null || !partyMember.Alive ? 0.0f
+            bool alive = partyMember?.Alive == true;
+            uint hp = !alive ? 0 : partyMember.HitPoints.CurrentValue;
+            uint sp = !alive ? 0 : partyMember.SpellPoints.CurrentValue;
+            float lpPercentage = !alive ? 0.0f
                 : Math.Min(1.0f, (float)hp / partyMember.HitPoints.TotalMaxValue);
-            float spPercentage = partyMember == null || !partyMember.Alive || !partyMember.Class.IsMagic() ? 0.0f
+            float spPercentage = !alive || !partyMember.Class.IsMagic() ? 0.0f
                 : Math.Min(1.0f, (float)sp / partyMember.SpellPoints.TotalMaxValue);
 
             characterBars[slot * 4 + 0]?.Fill(lpPercentage, hp != 0);

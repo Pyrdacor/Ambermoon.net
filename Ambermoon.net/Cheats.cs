@@ -1063,6 +1063,28 @@ namespace Ambermoon
         {
             Console.WriteLine();
 
+            if ((!game.BattleActive && !game.CampActive && game.WindowActive) || game.PopupActive)
+            {
+                Console.WriteLine("Killing a party member is only possible on the map screen, in battle or in camp.");
+                Console.WriteLine("Moreover all popups should be closed.");
+                Console.WriteLine();
+                return;
+            }
+
+            if (game.BattleRoundActive)
+            {
+                Console.WriteLine("Killing party members in battle is only possible between rounds.");
+                Console.WriteLine();
+                return;
+            }
+
+            if (game.PlayerIsPickingABattleAction)
+            {
+                Console.WriteLine("Please finish the current battle action picking first.");
+                Console.WriteLine();
+                return;
+            }
+
             int? partyMemberIndex = args.Length < 1 ? (int?)null : int.TryParse(args[0], out int i) ? i : null;
 
             var partyMember = partyMemberIndex == null ? game.CurrentPartyMember : game.GetPartyMember(partyMemberIndex.Value - 1);
@@ -1109,19 +1131,28 @@ namespace Ambermoon
                 return;
             }
 
+            if (game.HasPartyMemberFled(partyMember))
+            {
+                Console.WriteLine($"{partyMember.Name} has fled the fight. Please try again after the fight has ended.");
+                Console.WriteLine();
+                return;
+            }
+
             bool wasActive = game.CurrentPartyMember == partyMember;
 
-            partyMember.Damage(partyMember.HitPoints.TotalCurrentValue, _ =>
+            void Died(Character _)
             {
+                partyMember.Died -= Died;
+                Console.WriteLine($"{partyMember.Name} was killed!");
+                Console.WriteLine();
+
                 if (wasActive)
-                {
+                    game.RecheckActivePlayer();
+            }
 
-                }
+            partyMember.Died += Died;
 
-            }, deathCondition);
-
-            Console.WriteLine($"{partyMember.Name} was killed!");
-            Console.WriteLine();
+            game.KillPartyMember(partyMember, deathCondition);
         }
 
         static void Revive(Game game, string[] args)

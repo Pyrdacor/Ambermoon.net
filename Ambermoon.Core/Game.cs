@@ -287,9 +287,10 @@ namespace Ambermoon
         internal bool CanSee() => !CurrentPartyMember.Conditions.HasFlag(Condition.Blind) &&
             (!Map.Flags.HasFlag(MapFlags.Dungeon) || lightIntensity > 0);
         internal bool GameOverButtonsVisible { get; private set; } = false;
-        internal bool WindowActive => currentWindow.Window != Window.MapView;
-        internal bool PopupActive => layout?.PopupActive ?? false;
+        public bool WindowActive => currentWindow.Window != Window.MapView;
+        public bool PopupActive => layout?.PopupActive ?? false;
         public bool WindowOrPopupActive => WindowActive || PopupActive;
+        public bool CampActive => WindowActive && CurrentWindow.Window == Window.Camp;
         static readonly WindowInfo DefaultWindow = new WindowInfo { Window = Window.MapView };
         WindowInfo currentWindow = DefaultWindow;
         internal WindowInfo LastWindow { get; private set; } = DefaultWindow;
@@ -367,8 +368,9 @@ namespace Ambermoon
         Position lastPlayerPosition = null;
         BattleInfo currentBattleInfo = null;
         Battle currentBattle = null;
-        internal bool BattleActive => currentBattle != null;
+        public bool BattleActive => currentBattle != null;
         public bool BattleRoundActive => currentBattle?.RoundActive == true;
+        public bool PlayerIsPickingABattleAction => BattleActive && !BattleRoundActive && currentPlayerBattleAction != PlayerBattleAction.PickPlayerAction;
         readonly ILayerSprite[] partyMemberBattleFieldSprites = new ILayerSprite[MaxPartyMembers];
         readonly Tooltip[] partyMemberBattleFieldTooltips = new Tooltip[MaxPartyMembers];
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
@@ -1368,6 +1370,8 @@ namespace Ambermoon
             if (!(partyMember is PartyMember member))
                 throw new AmbermoonException(ExceptionScope.Application, "PartyMemberDied with a character which is not a party member.");
 
+            member.HitPoints.CurrentValue = 0;
+
             int? slot = SlotFromPartyMember(member);
 
             if (slot != null)
@@ -1414,6 +1418,8 @@ namespace Ambermoon
 
                     if (currentWindow.Window == Window.Inventory && partyMember == CurrentInventory)
                         UpdateCharacterInfo();
+
+                    layout.FillCharacterBars(partyMember);
                 });
             }
         }
@@ -1990,10 +1996,30 @@ namespace Ambermoon
             }
         }
 
-        internal void KillPartyMember(PartyMember partyMember, Condition deathCondition = Condition.DeadCorpse)
+        public void KillPartyMember(PartyMember partyMember, Condition deathCondition = Condition.DeadCorpse)
         {
             RemoveCondition(Condition.Exhausted, partyMember);
             partyMember.Die(deathCondition);
+        }
+
+        // Note: Only used external for cheats
+        public void RecheckActivePlayer()
+        {
+            if (RecheckActivePartyMember(out bool gameOver))
+            {
+                if (gameOver || !BattleActive)
+                    return;
+                BattlePlayerSwitched();
+            }
+            else if (BattleActive)
+            {
+                AddCurrentPlayerActionVisuals();
+            }
+        }
+
+        public bool HasPartyMemberFled(PartyMember partyMember)
+        {
+            return currentBattle?.HasPartyMemberFled(partyMember) ?? false;
         }
 
         /// <summary>
@@ -4363,6 +4389,7 @@ namespace Ambermoon
                     }
 
                     UpdateCharacterInfo();
+                    layout.FillCharacterBars(partyMember);
                 }
                 void AddEquipment(int slotIndex, ItemSlot itemSlot, int amount)
                 {
@@ -9692,6 +9719,8 @@ namespace Ambermoon
                 AddExperience(target, casterExp, () =>
                 {
                     UpdateCharacterInfo();
+                    layout.FillCharacterBars(caster);
+                    layout.FillCharacterBars(target);
                     finishAction?.Invoke();
                 });
             });
@@ -15813,7 +15842,7 @@ namespace Ambermoon
             {
                 layout.ClearBattleFieldSlotColors();
 
-                if (!PartyMembers.Any(p => p.Conditions.CanSelect() && currentBattle?.HasPartyMemberFled(p) != true))
+                if (!PartyMembers.Any(p => p.Conditions.CanSelect()))
                 {
                     if (battleRoundActiveSprite != null)
                         battleRoundActiveSprite.Visible = false;
@@ -15826,6 +15855,12 @@ namespace Ambermoon
                     });
                     gameOver = true;
                     return true;
+                }
+                else if (BattleActive && !PartyMembers.Any(p => p.Conditions.CanSelect() && !currentBattle.HasPartyMemberFled(p)))
+                {
+                    // All dead or fled but at least one is still alive but fled.
+                    EndBattle(true);
+                    return false;
                 }
 
                 Pause();
@@ -15848,11 +15883,6 @@ namespace Ambermoon
                 layout.UpdateCharacterNameColors(SlotFromPartyMember(CurrentPartyMember).Value);
                 return true;
             }
-        }
-
-        internal bool HasPartyMemberFled(PartyMember partyMember)
-        {
-            return currentBattle?.HasPartyMemberFled(partyMember) == true;
         }
 
         internal void SetPlayerDirection(CharacterDirection direction)
@@ -15890,7 +15920,7 @@ namespace Ambermoon
                 return;
             if (LastWindow.Window == Window.Conversation && !TestConversationLanguage(LastWindow))
                 return;
-            if (BattleActive && !BattleRoundActive && currentPlayerBattleAction != PlayerBattleAction.PickPlayerAction)
+            if (PlayerIsPickingABattleAction)
                 return;
 
             if (partyMember != null && (partyMember.Conditions.CanSelect() || currentWindow.Window == Window.Healer))
