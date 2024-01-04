@@ -7,6 +7,12 @@ Console.WriteLine("*** Ambermoon.net Patcher ***");
 Console.WriteLine();
 Console.WriteLine("Waiting for Ambermoon.net to close ...");
 
+static void WaitForKey()
+{
+    Console.Write("Close with enter.");
+    Console.ReadLine();
+}
+
 while (true)
 {
     Thread.Sleep(500);
@@ -20,6 +26,7 @@ while (true)
     {
         Console.WriteLine("Unable to update Ambermoon.net as it is still running.");
         Console.WriteLine("Please close all instances and run only a single Ambermoon.net instance.");
+        WaitForKey();
         return;
     }
 }
@@ -41,6 +48,7 @@ try
         {
             Console.WriteLine("The downloaded zip does not contain the game exe.");
             Console.WriteLine("Please report that to Pyrdacor (trobt@web.de).");
+            WaitForKey();
             return;
         }
 
@@ -57,6 +65,7 @@ catch (Exception ex)
 #if DEBUG
     Console.WriteLine(ex.ToString());
 #endif
+    WaitForKey();
     return;
 }
 
@@ -77,5 +86,5 @@ catch (Exception ex)
 #if DEBUG
     Console.WriteLine(ex.ToString());
 #endif
-    Console.ReadLine();
+    WaitForKey();
 }
