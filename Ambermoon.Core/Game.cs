@@ -10080,6 +10080,7 @@ namespace Ambermoon
                 {
                     var value = target.Attributes[attribute];
                     value.CurrentValue = Math.Min(value.CurrentValue + (uint)RandomInt(1, 5), value.MaxValue);
+                    UpdateCharacterInfo();
                 }
             }
 
