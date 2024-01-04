@@ -98,11 +98,14 @@ namespace Ambermoon.Render
             AddText("Tschorle");
             AddText("Daniel Egger");
             AddText("Kaspar");
+            AddText("NeXuS-Arts");
             AddText("timbo t");
             AddText("Other Retro Matt");
             AddText("Anton Huber");
             AddText("Lars");
+            AddText("Robin Mattheussen");
             AddText("giom");
+            AddText("Levidega");
             AddText("Lorenz P.");
             AddText("LoneRaider");
             AddText("MD");
@@ -117,17 +120,18 @@ namespace Ambermoon.Render
             AddText("Stephan Mankie");
             AddText("André Wösten");
             AddText("Benno");
+            AddText("orgi");
             AddText("JR_Riketz");
             AddText("Wolfgang");
             AddText("Sprudel");
             AddText("NLS");
             AddText("Benjamin Ziebert");
             AddText("David Geiger");
+            AddText("skobry");
             AddText("crediar");
-            AddText("AMike");            
+            AddText("AMike");
             AddText("soulsuckingjerk");
             AddText("Mahen");            
-            AddText("Robin Mattheussen");
             AddText("Teladi");
 
             AddHeader("Contributors", 12);
