@@ -2696,12 +2696,12 @@ namespace Ambermoon
             if (paused || WindowActive || !InputEnable || allInputDisabled || pickingNewLeader || pickingTargetPlayer || pickingTargetInventory)
                 return;
 
-            bool left = keys[(int)Key.Left] || keys[(int)Key.A];
-            bool right = keys[(int)Key.Right] || keys[(int)Key.D];
+            bool left = (!Configuration.TurnWithArrowKeys && keys[(int)Key.Left]) || (Configuration.Movement3D == Movement3D.WASDQE && keys[(int)Key.A]);
+            bool right = (!Configuration.TurnWithArrowKeys && keys[(int)Key.Right]) || (Configuration.Movement3D == Movement3D.WASDQE && keys[(int)Key.D]);
             bool up = keys[(int)Key.Up] || keys[(int)Key.W];
             bool down = keys[(int)Key.Down] || keys[(int)Key.S];
-            bool turnLeft = Configuration.Movement3D == Movement3D.WASDQE ? keys[(int)Key.Q] : keys[(int)Key.A];
-            bool turnRight = Configuration.Movement3D == Movement3D.WASDQE ? keys[(int)Key.E] : keys[(int)Key.D];
+            bool turnLeft = (Configuration.TurnWithArrowKeys && keys[(int)Key.Left]) || (Configuration.Movement3D == Movement3D.WASDQE ? keys[(int)Key.Q] : keys[(int)Key.A]);
+            bool turnRight = (Configuration.TurnWithArrowKeys && keys[(int)Key.Right]) || (Configuration.Movement3D == Movement3D.WASDQE ? keys[(int)Key.E] : keys[(int)Key.D]);
 
             if (left && !right)
             {
@@ -2711,7 +2711,7 @@ namespace Ambermoon
                     if (!up && !down)
                         Move2D(-1, 0);
                 }
-                else if (Configuration.Movement3D == Movement3D.WASDQE)
+                else
                 {
                     player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                     CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
@@ -2725,7 +2725,7 @@ namespace Ambermoon
                     if (!up && !down)
                         Move2D(1, 0);
                 }
-                else if (Configuration.Movement3D == Movement3D.WASDQE)
+                else
                 {
                     player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                     CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;

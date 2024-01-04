@@ -1179,7 +1179,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 21;
+        const int OptionCount = 22;
         const int OptionsPerPage = 7;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
@@ -1198,18 +1198,20 @@ namespace Ambermoon.UI
                     // Page 2
                     "Kampfgeschwindigkeit",
                     "3D-Bewegung",
+                    "Drehen mit Pfeiltasten",
                     "Button Tooltips anzeigen",
                     "Stats Tooltips anzeigen",
-                    "Runen als Text anzeigen",
                     "3D Boden und Decke",
                     "3D Distanz-Nebel",
-                    // Page3
+                    // Page 3
+                    "Runen als Text anzeigen",
                     "Zusätzliche Spielstände",
                     "Externe Musik",
                     "Pyrdacor Logo zeigen",
                     "Fantasy Intro zeigen",
                     "Intro anzeigen",
                     "Info beim Speichern/Laden",
+                    // Page 4
                     "Cheats aktivieren",
                 }
             },
@@ -1228,18 +1230,20 @@ namespace Ambermoon.UI
                     // Page 2
                     "Battle speed",
                     "3D Movement",
+                    "Turn with arrow keys",
                     "Show button tooltips",
                     "Show stats tooltips",
-                    "Show runes as text",
                     "3D distance fog",
                     "3D floor and ceiling",
                     // Page 3
+                    "Show runes as text",
                     "Additional saveslots",
                     "External music",
                     "Show Pyrdacor logo",
                     "Show fantasy intro",
                     "Show intro",
                     "Show save/load info",
+                    // Page 4
                     "Enable cheats",
                 }
             },
@@ -1258,18 +1262,20 @@ namespace Ambermoon.UI
                     // Page 2
                     "Vitesse de combat",
                     "Mouvement 3D",
+                    "Tourner avec flèches",
                     "Infobulles des boutons",
                     "Infobulles des statistiques",
-                    "Afficher les runes en texte",                    
                     "Sol et plafond en 3D",
                     "Brouillard de distance 3D",
                     // Page 3
+                    "Afficher les runes en texte",
                     "Sauvegardes additionnelles",
                     "Musique externe",
                     "Afficher Pyrdacor logo",
                     "Afficher fantasy intro",
                     "Afficher intro",
                     "Messages de sauvegarde",
+                    // Page 4
                     "Activer les cheats",
                 }
             },
@@ -1288,18 +1294,20 @@ namespace Ambermoon.UI
                     // Page 2
                     "Szybkość walki",
                     "Ruch 3D",
+                    "Obrót strzałkami",
                     "Pokaż opisy przycisków",
                     "Pokaż opisy statystyk",
-                    "Pokaż runy jako tekst",
                     "Podłoga i sufit 3D",
                     "Mgła dystansowa 3D",
                     // Page 3
+                    "Pokaż runy jako tekst",
                     "Dodatkowe miejsca zapisu",
                     "Zewnętrzna muzyka",
                     "Pokaż logo Pyrdacora",
                     "Pokaż fantasy intro",
                     "Pokaż intro",
                     "Pokaż inf. zapis/odczyt",
+                    // Page 4
                     "Włącz cheaty",
                 }
             }            
@@ -1426,18 +1434,20 @@ namespace Ambermoon.UI
                 // Page 2
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleBattleSpeed())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => Toggle3DMovement())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTurnWithArrowKeys())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePlayerStatsTooltips())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFloorAndCeiling())),
                 KeyValuePair.Create("", game.Configuration.ShowFloor && game.Configuration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction),
                 // Page 3
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExternalMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFantasyIntro())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleIntro())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleSaveLoadInfo())),
+                // Page 4
                 KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleCheats())),
             };
             listBox = activePopup.AddOptionsListBox(options.Take(OptionsPerPage).ToList());
@@ -1498,19 +1508,21 @@ namespace Ambermoon.UI
             // Page 2
             void SetBattleSpeed() => SetOptionString(7, game.Configuration.BattleSpeed == 0 ? DefaultBattleSpeedName[game.GameLanguage] : $"+{game.Configuration.BattleSpeed}%");
             void Set3DMovement() => SetOptionString(8, Movement3DValues[game.GameLanguage][Util.Limit(0, (int)game.Configuration.Movement3D, 1)]);
-            void SetTooltips() => SetOptionString(9, game.Configuration.ShowButtonTooltips ? on : off);
-            void SetPlayerStatsTooltips() => SetOptionString(10, game.Configuration.ShowPlayerStatsTooltips ? on : off);
-            void SetAutoDerune() => SetOptionString(11, game.Configuration.AutoDerune ? on : off);
+            void SetTurnWithArrowKeys() => SetOptionString(9, game.Configuration.TurnWithArrowKeys ? on : off);
+            void SetTooltips() => SetOptionString(10, game.Configuration.ShowButtonTooltips ? on : off);
+            void SetPlayerStatsTooltips() => SetOptionString(11, game.Configuration.ShowPlayerStatsTooltips ? on : off);
             void SetFloorAndCeiling() => SetOptionString(12, GetFloorAndCeilingValueString());
             void SetFog() => SetOptionString(13, game.Configuration.ShowFog ? on : off);
             // Page 3
-            void SetExtendedSaves() => SetOptionString(14, game.Configuration.ExtendedSavegameSlots ? on : off);
-            void SetExternalMusic() => SetOptionString(15, game.Configuration.ExternalMusic ? on : off);
-            void SetPyrdacorLogo() => SetOptionString(16, game.Configuration.ShowPyrdacorLogo ? on : off);
-            void SetFantasyIntro() => SetOptionString(17, game.Configuration.ShowFantasyIntro ? on : off);
-            void SetIntro() => SetOptionString(18, game.Configuration.ShowIntro ? on : off);
-            void SetSaveLoadInfo() => SetOptionString(19, game.Configuration.ShowSaveLoadMessage ? on : off);
-            void SetCheats() => SetOptionString(20, cheatsEnabled ? on : off);
+            void SetAutoDerune() => SetOptionString(14, game.Configuration.AutoDerune ? on : off);
+            void SetExtendedSaves() => SetOptionString(15, game.Configuration.ExtendedSavegameSlots ? on : off);
+            void SetExternalMusic() => SetOptionString(16, game.Configuration.ExternalMusic ? on : off);
+            void SetPyrdacorLogo() => SetOptionString(17, game.Configuration.ShowPyrdacorLogo ? on : off);
+            void SetFantasyIntro() => SetOptionString(18, game.Configuration.ShowFantasyIntro ? on : off);
+            void SetIntro() => SetOptionString(19, game.Configuration.ShowIntro ? on : off);
+            void SetSaveLoadInfo() => SetOptionString(20, game.Configuration.ShowSaveLoadMessage ? on : off);
+            // Page 4
+            void SetCheats() => SetOptionString(21, cheatsEnabled ? on : off);
 
             void UpdateShowFogOption() => SetOptionAction(13, game.Configuration.ShowFloor && game.Configuration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
 
@@ -1531,19 +1543,22 @@ namespace Ambermoon.UI
                     case 1:
                         SetBattleSpeed();
                         Set3DMovement();
+                        SetTurnWithArrowKeys();
                         SetTooltips();
                         SetPlayerStatsTooltips();
-                        SetAutoDerune();                        
                         SetFloorAndCeiling();
                         SetFog();
                         break;
                     case 2:
+                        SetAutoDerune();
                         SetExtendedSaves();
                         SetExternalMusic();
                         SetPyrdacorLogo();
                         SetFantasyIntro();
                         SetIntro();
                         SetSaveLoadInfo();
+                        break;
+                    case 3:
                         SetCheats();
                         break;
                 }
@@ -1621,6 +1636,12 @@ namespace Ambermoon.UI
             {
                 game.Configuration.Movement3D = (Movement3D)(((int)game.Configuration.Movement3D + 1) % 2);
                 Set3DMovement();
+                changedConfiguration = true;
+            }
+            void ToggleTurnWithArrowKeys()
+            {
+                game.Configuration.TurnWithArrowKeys = !game.Configuration.TurnWithArrowKeys;
+                SetTurnWithArrowKeys();
                 changedConfiguration = true;
             }
             void ToggleTooltips()
