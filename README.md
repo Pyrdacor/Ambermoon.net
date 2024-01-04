@@ -6,11 +6,11 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.9.4 is the most recent version from December 28th 2023. It includes [original version 1.19](https://github.com/Pyrdacor/Ambermoon) and also [Ambermoon Advanced 1.03](https://github.com/Pyrdacor/Ambermoon-Advanced).
+Version 1.9.5 is the most recent version from January 04th 2023. It includes [original version 1.19](https://github.com/Pyrdacor/Ambermoon) and also [Ambermoon Advanced 1.03](https://github.com/Pyrdacor/Ambermoon-Advanced).
 
 You can also download the game on my website at www.pyrdacor.net!
 
-Platform | Download 1.9.4
+Platform | Download 1.9.5
 --- | :-:
 **Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows.zip)
 **Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Linux.tar.gz)
@@ -188,24 +188,49 @@ I also provide the Atari tracks [here](https://ambermoon-net.pyrdacor.net/downlo
 ## Special thanks
 
 Special thanks to my top patreons and github sponsors:
-- [Other Retro Matt](https://twitter.com/GothmogPlays)
-- Lorenz P.
-- Stephan [Mankie](https://twitter.com/MankiesWorkshop)
-- JR_Riketz
-- Benjamin Ziebert
+
+- Philip Breitsprecher
 - Mike Valtix
+- Sebberick
 - Thomas Ritschel
+- Tschorle
+- Daniel Egger
+- Kaspar
+- NeXuS-Arts
+- timbo t
+- Other Retro Matt
+- Anton Huber
+- Lars
+- Robin Mattheussen
+- giom
+- Levidega
+- Lorenz P.
+- LoneRaider
+- MD
+- Unreality
+- Milan
+- Peter Holtgrewe
+- frostworx
+- meok meok
+- Martin Tramm
+- [Stay Forever](https://www.stayforever.de/)
+- Alexander Holland
+- Stephan Mankie
+- André Wösten
+- Benno
+- orgi
+- JR_Riketz
+- Wolfgang
+- Sprudel
+- NLS
+- Benjamin Ziebert
+- David Geiger
+- skobry
 - crediar
 - AMike
-- frostwork
 - soulsuckingjerk
-- Mahen
-- timbo t
-- Robin Mattheussen (@romatthe)
-- Teladi (@Levidega)
-- Sebberick
-- Kaspar
-- [StayForever](https://www.stayforever.de/)
+- Mahen            
+- Teladi
 
 Special thanks to some special contributors and testers as well:
 - kermitfrog
