@@ -5690,19 +5690,34 @@ namespace Ambermoon
 
         internal void SayWord(Map map, uint x, uint y, List<Event> events, ConditionEvent conditionEvent)
         {
+            bool wasPaused = paused;
+            Pause();
+            void CheckResume()
+            {
+                if (!wasPaused)
+                    Resume();
+            }
             OpenDictionary(word =>
             {
                 bool match = string.Compare(textDictionary.Entries[(int)conditionEvent.ObjectIndex], word, true) == 0;
                 var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
                     ? null : events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
                 var @event = match ? conditionEvent.Next : mapEventIfFalse;
+                CheckResume();
                 if (@event != null)
                     EventExtensions.TriggerEventChain(map, this, EventTrigger.Always, x, y, @event, true);
-            });
+            }, null, CheckResume);
         }
 
         internal void EnterNumber(Map map, uint x, uint y, List<Event> events, ConditionEvent conditionEvent)
         {
+            bool wasPaused = paused;
+            Pause();
+            void CheckResume()
+            {
+                if (!wasPaused)
+                    Resume();
+            }
             layout.OpenAmountInputBox(DataNameProvider.WhichNumber, null, null, 9999, number =>
             {
                 ClosePopup();
@@ -5710,9 +5725,10 @@ namespace Ambermoon
                     ? null : events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
                 var @event = (number == conditionEvent.ObjectIndex) == (conditionEvent.Value != 0)
                     ? conditionEvent.Next : mapEventIfFalse;
+                CheckResume();
                 if (@event != null)
                     EventExtensions.TriggerEventChain(map, this, EventTrigger.Always, x, y, @event, true);
-            });
+            }, CheckResume);
         }
 
         void Levitate(Action failAction, bool climbIfNoEvent = true)
@@ -15499,7 +15515,7 @@ namespace Ambermoon
             }
         }
 
-        internal void OpenDictionary(Action<string> choiceHandler, Func<string, TextColor> colorProvider = null)
+        internal void OpenDictionary(Action<string> choiceHandler, Func<string, TextColor> colorProvider = null, Action abortAction = null)
         {
             void WordEntered(string word)
             {
@@ -15525,7 +15541,11 @@ namespace Ambermoon
             exitButton.DisplayLayer = 200;
             mouthButton.LeftClickAction = () =>
                 layout.OpenInputPopup(new Position(51, 87), 20, WordEntered);
-            exitButton.LeftClickAction = () => layout.ClosePopup();
+            exitButton.LeftClickAction = () =>
+            {
+                layout.ClosePopup();
+                abortAction?.Invoke();
+            };
             var dictionaryList = popup.AddDictionaryListBox(Dictionary.OrderBy(entry => entry).Select(entry => new KeyValuePair<string, Action<int, string>>
             (
                 entry, (int _, string text) =>

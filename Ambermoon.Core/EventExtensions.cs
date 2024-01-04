@@ -583,12 +583,15 @@ namespace Ambermoon
                             break;
                         case ConditionEvent.ConditionType.SayWord:
                         {
-                            if ((trigger == EventTrigger.Mouth) != (conditionEvent.Value != 0))
+                            bool isStartEvent = conversationPartner?.EventList?.Contains(@event) == true ||
+                                map.EventList.Contains(@event);
+
+                            if (isStartEvent && (trigger == EventTrigger.Mouth) != (conditionEvent.Value != 0))
                             {
                                 aborted = true;
                                 return null;
                             }
-                            if (trigger == EventTrigger.Mouth)
+                            if (!isStartEvent || trigger == EventTrigger.Mouth)
                             {
                                 game.SayWord(map, x, y, events, conditionEvent);
                                 return null;
