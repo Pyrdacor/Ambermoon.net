@@ -3063,6 +3063,10 @@ namespace Ambermoon
                             {
                                 nextClickHandler = null;
                             }
+                            else if (layout.OptionMenuOpen)
+                            {
+                                layout.PressButton(2, CurrentTicks);
+                            }
                             else if (InputEnable)
                             {
                                 if (currentWindow.Closable)
@@ -6220,7 +6224,7 @@ namespace Ambermoon
                 }
             }
 
-            if (currentWindow.Window == Window.Automap)
+            if (currentWindow.Window == Window.Automap && nextClickHandler != null)
             {
                 var automapOptions = (AutomapOptions)currentWindow.WindowParameters[0];
                 var oldCloseWindowHandler = closeWindowHandler;
@@ -6229,6 +6233,8 @@ namespace Ambermoon
                     oldCloseWindowHandler?.Invoke(backToMap);
                     ShowAutomap(automapOptions);
                 };
+                var nextClickHandler = this.nextClickHandler;
+                this.nextClickHandler = null;
                 nextClickHandler(MouseButtons.Right); // This closes the automap
             }
 
