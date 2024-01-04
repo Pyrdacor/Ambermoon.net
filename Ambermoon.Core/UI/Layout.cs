@@ -1000,6 +1000,8 @@ namespace Ambermoon.UI
             yesButton.LeftClickAction = yesAction;
             noButton.LeftClickAction = noAction;
 
+            activePopup.ReturnAction = () => yesButton.PressImmediately(game, false, true);
+
             return activePopup;
         }
 
@@ -4830,8 +4832,24 @@ namespace Ambermoon.UI
             return false;
         }
 
+        public bool HasQuestionYesButton() => questionYesButton != null;
+
+        public bool HasQuestionNoButton() => questionYesButton != null;
+
         public void KeyDown(Key key, KeyModifiers keyModifiers)
         {
+            if (HasQuestionYesButton() && key == Key.Return)
+            {
+                questionYesButton.PressImmediately(game, false, true);
+                return;
+            }
+
+            if (HasQuestionNoButton() && key == Key.Escape)
+            {
+                questionNoButton.PressImmediately(game, false, true);
+                return;
+            }
+
             if (PopupActive && activePopup.KeyDown(key))
                 return;
 

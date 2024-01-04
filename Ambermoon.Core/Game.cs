@@ -2964,6 +2964,12 @@ namespace Ambermoon
                     return;
                 }
 
+                if (key == Key.Return && layout.HasQuestionYesButton())
+                {
+                    layout.KeyDown(Key.Return, KeyModifiers.None);
+                    return;
+                }
+
                 if (key != Key.Escape && !(key >= Key.Num1 && key <= Key.Num9))
                     return;
 
@@ -3075,6 +3081,8 @@ namespace Ambermoon
                             }
                             else
                             {
+                                if (layout.HasQuestionNoButton())
+                                    layout.KeyDown(Key.Escape, KeyModifiers.None);
                                 return;
                             }
                         }
