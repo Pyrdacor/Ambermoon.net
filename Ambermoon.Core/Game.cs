@@ -6212,6 +6212,18 @@ namespace Ambermoon
                 }
             }
 
+            if (currentWindow.Window == Window.Automap)
+            {
+                var automapOptions = (AutomapOptions)currentWindow.WindowParameters[0];
+                var oldCloseWindowHandler = closeWindowHandler;
+                closeWindowHandler = backToMap =>
+                {
+                    oldCloseWindowHandler?.Invoke(backToMap);
+                    ShowAutomap(automapOptions);
+                };
+                nextClickHandler(MouseButtons.Right); // This closes the automap
+            }
+
             return true;
         }
 
