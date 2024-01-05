@@ -432,7 +432,7 @@ namespace Ambermoon.UI
         {
             var button = new Button(renderView, position, textureAtlasManager);
             button.Disabled = false;
-            button.DisplayLayer = 3;
+            button.DisplayLayer = 8;
             AddSunkenBox(new Rect(position.X - 1, position.Y - 1, Button.Width + 2, Button.Height + 2), 2, 0,
                 button);
             return button;
