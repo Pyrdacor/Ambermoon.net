@@ -2,6 +2,7 @@
 
 ## 1.9.0 - Eighth patch (August 2023 - January 2024)
 
+- Version [1.9.6](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.6): 2D movement quick fix
 - Version [1.9.5](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.5): Many small fixes and improvements
 - Version [1.9.4](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.4): Shader quick fix
 - Version [1.9.3](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.3): Distance fog, bugfixes
