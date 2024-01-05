@@ -160,6 +160,9 @@ namespace Ambermoon.Render
             AddText("Especially to Thallyrion, Uukrull, Nephilim, crediar");
             AddText("and skdubg who also helped fixing translation bugs.");
 
+            AddText("Thanks to Czudak who created the app icon, convinced", 1);
+            AddText("me to create a patreon page and wrote about my project.");
+
             AddText("Matthias Steinwachs (the guy who made the incredible", 6);
             AddText("music for Ambermoon) started creating remixes of");
             AddText("all the beautiful tracks. Check his work out at:");
