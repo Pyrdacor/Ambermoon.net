@@ -5718,7 +5718,7 @@ namespace Ambermoon
                 if (!wasPaused)
                     Resume();
             }
-            layout.OpenAmountInputBox(DataNameProvider.WhichNumber, null, null, 99999, number =>
+            layout.OpenAmountInputBox(DataNameProvider.WhichNumber, null, null, 9999, number =>
             {
                 ClosePopup();
                 var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
