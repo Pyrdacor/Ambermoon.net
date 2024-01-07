@@ -231,12 +231,12 @@ namespace Ambermoon.Render
                     " ^~HERO~: ...",
                     " ^Unbekannter: Nicht so schnell ~HERO~!",
                     " ^~HERO~: Wer bist du?",
-                    "Unbekannter: Mein Name ist ~INK17~Pyrdacor~INK31~. Ich habe nicht viel Zeit.",
+                    "Unbekannter: Mein Name ist ~INK 17~Pyrdacor~INK 31~. Ich habe nicht viel Zeit.",
                     "Unbekannter: Aber so viel sei gesagt: Das Abenteuer ist noch nicht vorbei.",
                     " ^~HERO~: Was meinst du damit?",
-                    " ^~INK17~Der dritte Teil der Amber-Triologie~INK31~ ist geplant.",
+                    " ^~INK 17~Der dritte Teil der Amber-Triologie~INK 31~ ist geplant.",
                     " ^~HERO~: Krass!",
-                    "Pyrdacor: Danke, dass du ~INK22~Ambermoon~INK31~ gespielt hast! Ich hoffe du hattest Spaß."
+                    "Pyrdacor: Danke, dass du ~INK 22~Ambermoon~INK 31~ gespielt hast! Ich hoffe du hattest Spaß."
                 }
             },
             { GameLanguage.English, new List<string>
@@ -247,12 +247,12 @@ namespace Ambermoon.Render
                     " ^~HERO~: ...",
                     " ^Stranger: Not so fast ~HERO~!",
                     " ^~HERO~: Who are you?",
-                    "Stranger: My name is ~INK17~Pyrdacor~INK31~. I don't have much time.",
+                    "Stranger: My name is ~INK 17~Pyrdacor~INK 31~. I don't have much time.",
                     "Stranger: But I can tell you this: The adventure is not over yet.",
                     " ^~HERO~: What are you talking about?",
-                    " ^~INK17~The third part of the Amber trilogy~INK31~ is planned.",
+                    " ^~INK 17~The third part of the Amber trilogy~INK 31~ is planned.",
                     " ^~HERO~: Awesome!",
-                    "Pyrdacor: Thank you for playing ~INK22~Ambermoon~INK31~! I hope you had fun."
+                    "Pyrdacor: Thank you for playing ~INK 22~Ambermoon~INK 31~! I hope you had fun."
                 }
             },
             { GameLanguage.French, new List<string>
@@ -263,12 +263,12 @@ namespace Ambermoon.Render
                     " ^~HERO~: ...",
                     " ^Inconnu: Pas si vite ~HERO~!",
                     " ^~HERO~: Qui êtes-vous ?",
-                    "Inconnu: Je m'appelle ~INK17~Pyrdacor~INK31~. Je n'ai pas beaucoup de temps.",
+                    "Inconnu: Je m'appelle ~INK 17~Pyrdacor~INK 31~. Je n'ai pas beaucoup de temps.",
                     "Inconnu: Mais je peux vous dire ceci : L'aventure n'est pas encore terminée.",
                     " ^~HERO~: De quoi parlez-vous ?",
-                    " ^~INK17~Le troisième volet de la trilogie Amber~INK31~ est prévu.",
+                    " ^~INK 17~Le troisième volet de la trilogie Amber~INK 31~ est prévu.",
                     " ^~HERO~: Épatant !",
-                    "Pyrdacor: Merci d'avoir joué à ~INK22~Ambermoon~INK31~ ! J'espère que vous vous êtes bien amusés."
+                    "Pyrdacor: Merci d'avoir joué à ~INK 22~Ambermoon~INK 31~ ! J'espère que vous vous êtes bien amusés."
                 }
             },
             { GameLanguage.Polish, new List<string>
@@ -279,12 +279,12 @@ namespace Ambermoon.Render
                     " ^~HERO~: ...",
                     " ^Nieznajomy: Nie tak szybko ~HERO~!",
                     " ^~HERO~: Kim jesteś?",
-                    "Nieznajomy: Moje imię to ~INK17~Pyrdacor~INK31~. Nie mam zbyt wiele czasu.",
+                    "Nieznajomy: Moje imię to ~INK 17~Pyrdacor~INK 31~. Nie mam zbyt wiele czasu.",
                     "Nieznajomy: Ale mogę powiedzieć jedno: Przygoda jeszcze się nie skończyła.",
                     " ^~HERO~: O czym ty mówisz?",
-                    " ^Planowana jest ~INK17~Trzecia część trylogii Amber~INK31~.",
+                    " ^Planowana jest ~INK 17~Trzecia część trylogii Amber~INK 31~.",
                     " ^~HERO~: Wspaniale!",
-                    "Pyrdacor: Dziękuję za grę w ~INK22~Ambermoon~INK31~! Mam nadzieję, że dobrze się bawiliście."
+                    "Pyrdacor: Dziękuję za grę w ~INK 22~Ambermoon~INK 31~! Mam nadzieję, że dobrze się bawiliście."
                 }
             }
         };

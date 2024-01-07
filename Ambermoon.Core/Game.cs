@@ -2379,12 +2379,12 @@ namespace Ambermoon
         {
             if (text.Contains("~RUN1~") && AutoDerune) // has rune alphabet and auto derune is active
             {
-                // ~INK32~ resets to default color (at least in our implementation)
-                // ~INKcc~
+                // ~INK 32~ resets to default color (at least in our implementation)
+                // ~INK cc~
                 // ~RUN1~text~NORM~ or ~"text"~
                 text = text
-                    .Replace("~RUN1~", $"~INK{(int)TextColor.Beige}~")
-                    .Replace("~NORM~", "~INK32~");
+                    .Replace("~RUN1~", $"~INK {(int)TextColor.Beige}~")
+                    .Replace("~NORM~", "~INK 32~");
             }
 
             return renderView.TextProcessor.ProcessText(text, nameProvider, Dictionary);

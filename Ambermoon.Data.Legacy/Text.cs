@@ -407,9 +407,9 @@ namespace Ambermoon.Data.Legacy
                     rune = true;
                 else if (name == "NORM")
                     rune = false;
-                else if (name.StartsWith("INK"))
+                else if (name.StartsWith("INK "))
                 {
-                    if (!int.TryParse(name.Substring(3), out int colorIndex) || colorIndex < 0 || colorIndex > 32)
+                    if (!int.TryParse(name.Substring(4), out int colorIndex) || colorIndex < 0 || colorIndex > 32)
                         throw new AmbermoonException(ExceptionScope.Data, $"Invalid ink tag: ~{name}~");
 
                     glyphIndices.Add((byte)(SpecialGlyph.FirstColor + colorIndex));

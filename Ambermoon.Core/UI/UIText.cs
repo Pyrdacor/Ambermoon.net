@@ -40,6 +40,7 @@ namespace Ambermoon.UI
         readonly int numVisibleLines;
         readonly Action<TimeSpan, Action> timedEventCreator;
         IReadOnlyList<TextColor> textColorsPerLine;
+        TextColor defaultTextColor = TextColor.BrightGray;
         public bool WithScrolling { get; internal set; }
 
         public event Action FreeScrollingStarted;
@@ -73,6 +74,7 @@ namespace Ambermoon.UI
         {
             allowScrolling = false;
             this.renderText = renderText;
+            defaultTextColor = renderText.TextColor;
             textColorsPerLine = renderText.GetTextColorPerLine(null);
         }
 
@@ -91,6 +93,7 @@ namespace Ambermoon.UI
             renderText.DisplayLayer = displayLayer;
             renderText.PaletteIndex = paletteIndex;
             renderText.Visible = true;
+            defaultTextColor = textColor;
             numVisibleLines = (bounds.Height + 1) / Global.GlyphLineHeight;
             WithScrolling = allowScrolling;
             this.timedEventCreator = timedEventCreator;
@@ -120,6 +123,7 @@ namespace Ambermoon.UI
         public void SetText(IText text)
         {
             this.text = renderView.TextProcessor.WrapText(text, bounds, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+            renderText.TextColor = defaultTextColor;
             textColorsPerLine = renderText.GetTextColorPerLine(this.text);
             allowScrolling = WithScrolling;
             freeScrolling = false;
@@ -136,7 +140,7 @@ namespace Ambermoon.UI
 
         public void SetTextColor(TextColor textColor)
         {
-            renderText.TextColor = textColor;
+            renderText.TextColor = defaultTextColor = textColor;
             textColorsPerLine = renderText.GetTextColorPerLine(text);
         }
 

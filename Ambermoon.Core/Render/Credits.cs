@@ -169,13 +169,13 @@ namespace Ambermoon.Render
             AddText("https://soundcloud.com/audiotexturat/sets");
 
             AddHeader("Projects to come", 16);
-            AddText("The next project will be ~INK17~Ambermoon Advanced~INK31~.", 1);
+            AddText("The next project will be ~INK 17~Ambermoon Advanced~INK 31~.", 1);
             AddText("It will balance the game, add new quests, places,");
             AddText("monsters, NPCs, items and much more.");
             AddText("You can play it on the Amiga or with Ambermoon.net.");
 
-            AddText("After this I will start creating the ~INK17~third part~INK31~.", 3);
-            AddText("~INK17~of the Amber trilogy~INK31~. This will be a huge project.");
+            AddText("After this I will start creating the ~INK 17~third part~INK 31~.", 3);
+            AddText("~INK 17~of the Amber trilogy~INK 31~. This will be a huge project.");
 
             AddText("To stay informed visit me on github, follow me on", 3);
             AddText("twitter or just stay in touch.");
