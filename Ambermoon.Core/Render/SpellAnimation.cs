@@ -284,6 +284,7 @@ namespace Ambermoon.Render
                 case Spell.MassHurry:
                 case Spell.MonsterKnowledge:
                 case Spell.ShowMonsterLP:
+                case Spell.MysticImitation:
                 case Spell.Lame:
                 case Spell.Poison:
                 case Spell.Petrify:
@@ -441,6 +442,7 @@ namespace Ambermoon.Render
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
+                case Spell.MysticImitation:
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
                 case Spell.Lame:
@@ -740,6 +742,7 @@ namespace Ambermoon.Render
                     this.finishAction?.Invoke();
                     break;
                 case Spell.ShowMonsterLP:
+                case Spell.MysticImitation:
                 {
                     if (fromMonster)
                     {
@@ -1583,6 +1586,7 @@ namespace Ambermoon.Render
                     this.finishAction?.Invoke();
                     break;
                 case Spell.MonsterKnowledge:
+                case Spell.MysticImitation:
                     PlayKnowledge();
                     break;
                 case Spell.LPStealer:

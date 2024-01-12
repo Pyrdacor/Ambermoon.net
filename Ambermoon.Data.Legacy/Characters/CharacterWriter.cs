@@ -57,10 +57,10 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write((ushort)character.SpellPoints.CurrentValue);
             dataWriter.Write((ushort)character.SpellPoints.MaxValue);
             dataWriter.Write((ushort)character.SpellPoints.BonusValue);
-            dataWriter.Write((ushort)character.BonusDefense);
             dataWriter.Write((ushort)character.BaseDefense);
-            dataWriter.Write((ushort)character.BonusAttackDamage);
+            dataWriter.Write((ushort)character.BonusDefense);
             dataWriter.Write((ushort)character.BaseAttackDamage);
+            dataWriter.Write((ushort)character.BonusAttackDamage);            
             dataWriter.Write((ushort)character.MagicAttack);
             dataWriter.Write((ushort)character.MagicDefense);
             dataWriter.Write(character.AttacksPerRoundIncreaseLevels);
@@ -68,7 +68,7 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write(character.SpellPointsPerLevel);
             dataWriter.Write(character.SpellLearningPointsPerLevel);
             dataWriter.Write(character.TrainingPointsPerLevel);
-            dataWriter.Write(character.LookAtCharTextIndex); // Unknown
+            dataWriter.Write(character.LookAtCharTextIndex);
             dataWriter.Write(character.ExperiencePoints);
             dataWriter.Write(character.LearnedHealingSpells);
             dataWriter.Write(character.LearnedAlchemisticSpells);

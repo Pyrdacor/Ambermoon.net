@@ -32,6 +32,8 @@ using TextColor = Ambermoon.Data.Enumerations.Color;
 using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 using Ambermoon.Data.Audio;
 using static Ambermoon.UI.BuiltinTooltips;
+using System.Data.Common;
+using System.Threading;
 
 namespace Ambermoon
 {
@@ -1434,8 +1436,8 @@ namespace Ambermoon
             // We set the bonus values here dependent on equipment.
             partyMember.HitPoints.BonusValue = 0;
             partyMember.SpellPoints.BonusValue = 0;
-            partyMember.BaseDefense = 0;
-            partyMember.BaseAttackDamage = 0;
+            partyMember.BonusDefense = 0;
+            partyMember.BonusAttackDamage = 0;
 
             foreach (var attribute in Enum.GetValues<Attribute>())
             {
@@ -1456,8 +1458,8 @@ namespace Ambermoon
 
                     partyMember.HitPoints.BonusValue += factor * item.HitPoints;
                     partyMember.SpellPoints.BonusValue += factor * item.SpellPoints;
-                    partyMember.BaseDefense = (short)(partyMember.BaseDefense + factor * item.Defense);
-                    partyMember.BaseAttackDamage = (short)(partyMember.BaseAttackDamage + factor * item.Damage);
+                    partyMember.BonusDefense = (short)(partyMember.BonusDefense + factor * item.Defense);
+                    partyMember.BonusAttackDamage = (short)(partyMember.BonusAttackDamage + factor * item.Damage);
 
                     if (item.Attribute != null)
                         partyMember.Attributes[item.Attribute.Value].BonusValue += factor * item.AttributeValue;
@@ -2265,15 +2267,6 @@ namespace Ambermoon
             catch
             {
                 // ignore
-            }
-
-            // Update inventory accessible flag for the original (we don't use it in the remake)
-            foreach (var partyMember in CurrentSavegame.PartyMembers)
-            {
-                if (partyMember.Value != null)
-                {
-                    partyMember.Value.InventoryInaccessible = !partyMember.Value.Conditions.CanOpenInventory();
-                }
             }
 
             // If a crash save is stored and the game crashes inside a place (like merchants),
@@ -4161,8 +4154,21 @@ namespace Ambermoon
             if (CurrentSavegame.CurrentPartyMemberIndices[slot] == 0)
                 return false;
 
-            bool switchedFromOtherPartyMember = CurrentInventory != null;
             var partyMember = GetPartyMember(slot);
+
+            if (partyMember.InventoryInaccessible)
+            {
+                // Note: In original you can't access the player stats as well so
+                // we do it the same way here even though the message is misleading.
+                // This feature is now used in AA for mystic imitation spell.
+                var oldActivePartyMember = CurrentPartyMember;
+                CurrentPartyMember = partyMember; // Needed to display the right name here
+                ShowMessagePopup(DataNameProvider.NotAllowingToLookIntoBackpack);
+                CurrentPartyMember = oldActivePartyMember;
+                return false;
+            }
+
+            bool switchedFromOtherPartyMember = CurrentInventory != null;
             bool canAccessInventory = !HasPartyMemberFled(partyMember) && partyMember.Conditions.CanOpenInventory();
 
             if (canAccessInventory && partyMember.Race == Race.Animal && layout.IsDragging)
@@ -4759,7 +4765,7 @@ namespace Ambermoon
                 SetupSecondaryStatTooltip(new Rect(214, 113, 42, 7), SecondaryStat.Gold);
                 SetupSecondaryStatTooltip(new Rect(262, 113, 36, 7), SecondaryStat.Food);
                 layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), UIPaletteIndex);
-                int attack = AdjustAttackForNotUsedAmmunition(character, character.BaseAttackDamage) + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
+                int attack = character.BaseAttackDamage + AdjustAttackForNotUsedAmmunition(character, character.BonusAttackDamage) + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
                 {
                     if (attack > 0)
@@ -4775,7 +4781,7 @@ namespace Ambermoon
                 }
                 SetupSecondaryStatTooltip(new Rect(214, 120, 36, 9), SecondaryStat.Damage);
                 layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), UIPaletteIndex);
-                int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
+                int defense = character.BaseDefense + character.BonusDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Protection))
                 {
                     if (defense > 0)
@@ -4872,7 +4878,7 @@ namespace Ambermoon
                 string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food));
             UpdateSecondaryStatTooltip(SecondaryStat.Gold);
             UpdateSecondaryStatTooltip(SecondaryStat.Food);
-            int attack = AdjustAttackForNotUsedAmmunition(character, character.BaseAttackDamage) + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
+            int attack = character.BaseAttackDamage + AdjustAttackForNotUsedAmmunition(character, character.BonusAttackDamage) + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
             if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
             {
                 if (attack > 0)
@@ -4984,8 +4990,8 @@ namespace Ambermoon
 
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
-            character.BaseAttackDamage = (short)(character.BaseAttackDamage + (cursed ? -1 : 1) * item.Damage);
-            character.BaseDefense = (short)(character.BaseDefense + (cursed ? -1 : 1) * item.Defense);
+            character.BonusAttackDamage = (short)(character.BonusAttackDamage + (cursed ? -1 : 1) * item.Damage);
+            character.BonusDefense = (short)(character.BonusDefense + (cursed ? -1 : 1) * item.Defense);
             character.MagicAttack = (short)(character.MagicAttack + item.MagicAttackLevel);
             character.MagicDefense = (short)(character.MagicDefense + item.MagicArmorLevel);
             character.HitPoints.BonusValue += (cursed ? -1 : 1) * item.HitPoints;
@@ -5017,8 +5023,8 @@ namespace Ambermoon
         {
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
-            character.BaseAttackDamage = (short)(character.BaseAttackDamage - (cursed ? -1 : 1) * item.Damage);
-            character.BaseDefense = (short)(character.BaseDefense - (cursed ? -1 : 1) * item.Defense);
+            character.BonusAttackDamage = (short)(character.BonusAttackDamage - (cursed ? -1 : 1) * item.Damage);
+            character.BonusDefense = (short)(character.BonusDefense - (cursed ? -1 : 1) * item.Defense);
             character.MagicAttack = (short)(character.MagicAttack - item.MagicAttackLevel);
             character.MagicDefense = (short)(character.MagicDefense - item.MagicArmorLevel);
             character.HitPoints.BonusValue -= (cursed ? -1 : 1) * item.HitPoints;
@@ -5610,7 +5616,7 @@ namespace Ambermoon
                             partyMember.BaseAttackDamage = (short)Util.Min(short.MaxValue, partyMember.BaseAttackDamage + RandomizeIfNecessary(rewardEvent.Value));
                             break;
                         case RewardEvent.RewardOperation.Decrease:
-                            partyMember.BaseAttackDamage = (short)Util.Max(0, (int)partyMember.BaseAttackDamage - (int)RandomizeIfNecessary(rewardEvent.Value));
+                            partyMember.BaseAttackDamage = (short)Util.Max(0, partyMember.BaseAttackDamage - (int)RandomizeIfNecessary(rewardEvent.Value));
                             break;
                     }
                     break;
@@ -5623,7 +5629,7 @@ namespace Ambermoon
                             partyMember.BaseDefense = (short)Util.Min(short.MaxValue, partyMember.BaseDefense + RandomizeIfNecessary(rewardEvent.Value));
                             break;
                         case RewardEvent.RewardOperation.Decrease:
-                            partyMember.BaseDefense = (short)Util.Max(0, (int)partyMember.BaseDefense - (int)RandomizeIfNecessary(rewardEvent.Value));
+                            partyMember.BaseDefense = (short)Util.Max(0, partyMember.BaseDefense - (int)RandomizeIfNecessary(rewardEvent.Value));
                             break;
                     }
                     break;
@@ -8776,6 +8782,17 @@ namespace Ambermoon
             SetupBattleButtons();
         }
 
+        internal void ReplacePartyMemberBattleFieldSprite(PartyMember partyMember, Monster monster)
+        {
+            int index = PartyMembers.ToList().IndexOf(partyMember);
+
+            if (index != -1)
+            {
+                var textureIndex = Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1;
+                partyMemberBattleFieldSprites[index].TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(textureIndex);
+            }
+        }
+
         internal void SetupBattleButtons()
         {
             // Flee button
@@ -10481,7 +10498,7 @@ namespace Ambermoon
             layout.EnableButton(0, battleFieldSlot >= 24 && CurrentPartyMember.CanFlee()); // flee button, only enable in last row
             layout.EnableButton(3, CurrentPartyMember.CanMove()); // Note: If no slot is available the button still is enabled but after clicking you get "You can't move anywhere".
             layout.EnableButton(4, currentBattle.CanPartyMoveForward);
-            layout.EnableButton(6, CurrentPartyMember.BaseAttackDamage > 0 && CurrentPartyMember.Conditions.CanAttack());
+            layout.EnableButton(6, CurrentPartyMember.BaseAttackDamage + CurrentPartyMember.BonusAttackDamage > 0 && CurrentPartyMember.Conditions.CanAttack());
             layout.EnableButton(7, CurrentPartyMember.Conditions.CanParry());
             layout.EnableButton(8, CurrentPartyMember.Conditions.CanCastSpell() && CurrentPartyMember.HasAnySpell());
         }
@@ -10587,7 +10604,7 @@ namespace Ambermoon
                         remove = true;
                         break;
                     case Battle.BattleActionType.Attack:
-                        if (partyMember.BaseAttackDamage <= 0 || !partyMember.Conditions.CanAttack())
+                        if (partyMember.BaseAttackDamage + partyMember.BonusAttackDamage <= 0 || !partyMember.Conditions.CanAttack())
                             remove = true;
                         break;
                     case Battle.BattleActionType.Parry:
@@ -10949,7 +10966,7 @@ namespace Ambermoon
                 return false;
             }
 
-            if (currentPickingActionMember.BaseAttackDamage <= 0 || !currentPickingActionMember.Conditions.CanAttack())
+            if (currentPickingActionMember.BaseAttackDamage + currentPickingActionMember.BonusAttackDamage <= 0 || !currentPickingActionMember.Conditions.CanAttack())
             {
                 CancelSpecificPlayerAction();
                 if (!silent)

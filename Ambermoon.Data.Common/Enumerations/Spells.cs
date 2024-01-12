@@ -92,7 +92,7 @@
         UnusedMystic27,
         UnusedMystic28,
         UnusedMystic29,
-        UnusedMystic30,
+        MysticImitation, // Advanced only
         MagicalProjectile,
         MagicalArrows,
         Lame,

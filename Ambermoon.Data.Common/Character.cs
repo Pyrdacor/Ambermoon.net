@@ -20,7 +20,7 @@ namespace Ambermoon.Data
         public byte NumberOfFreeHands { get; set; }
         public byte NumberOfFreeFingers { get; set; }
         public Language SpokenLanguages { get; set; }
-        public bool InventoryInaccessible { get; set; }
+        public bool InventoryInaccessible { get; set; } // This is not bound to conditions but its own "inventory is secret" flag
         public byte PortraitIndex { get; set; }
         public byte[] UnknownBytes13 { get; set; } // Unknown 2 bytes
         public SpellTypeImmunity SpellTypeImmunity { get; set; }
@@ -113,6 +113,7 @@ namespace Ambermoon.Data
                 Spell.LPStealer => Element == CharacterElement.Undead,
                 Spell.SPStealer => Element == CharacterElement.Spirit,
                 Spell.MonsterKnowledge => Element == CharacterElement.Mental,
+                Spell.MysticImitation => Element == CharacterElement.Spirit,
                 Spell.MagicalProjectile => Element == CharacterElement.Spirit,
                 Spell.MagicalArrows => Element == CharacterElement.Spirit,
                 Spell.Lame => boss || Element == CharacterElement.Physical,

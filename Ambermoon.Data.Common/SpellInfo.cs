@@ -193,7 +193,7 @@ namespace Ambermoon.Data
             { Spell.UnusedMystic27, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
             { Spell.UnusedMystic28, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
             { Spell.UnusedMystic29, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
-            { Spell.UnusedMystic30, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
+            { Spell.MysticImitation, new SpellInfo { SP = 100, SLP = 100, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.MagicalProjectile, new SpellInfo { SP = 5, SLP = 5, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.MagicalArrows, new SpellInfo { SP = 15, SLP = 10, Target = SpellTarget.EnemyRow, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.Lame, new SpellInfo { SP = 10, SLP = 5, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },

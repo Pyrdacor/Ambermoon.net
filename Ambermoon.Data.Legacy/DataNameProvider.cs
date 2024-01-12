@@ -97,6 +97,7 @@
         public string ReallyLoad => executableData.Messages.GetEntry(Messages.Index.ReallyLoad);
         public string ReallyOverwriteSave => executableData.Messages.GetEntry(Messages.Index.ReallyOverwriteSave);
         public string WrongRiddlemouthSolutionText => executableData.Messages.GetEntry(Messages.Index.IsNotTheRightAnswer);
+        public string NotAllowingToLookIntoBackpack => executableData.Messages.GetEntry(Messages.Index.NotAllowingToLookIntoBackpack);
         /// <summary>
         /// This is used if the entered word is not part of the dictionary.
         /// </summary>

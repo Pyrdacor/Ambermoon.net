@@ -89,6 +89,7 @@ namespace Ambermoon
             {
                 var ev = @event;
                 bool hasRandomness = false;
+                bool changesTiles = false;
 
                 while (ev?.Type == EventType.Condition ||
                        ev?.Type == EventType.Dice100Roll)
@@ -117,6 +118,7 @@ namespace Ambermoon
                     ev.Type != EventType.Riddlemouth &&
                     ev.Type != EventType.Reward &&
                     ev.Type != EventType.Action &&
+                    ev.Type != EventType.ChangeTile &&
                     ((LastMapEventPosition == new Position((int)x, (int)y) && map.Type == MapType.Map3D) || ev.Type != EventType.Trap) &&
                     (ev.Type != EventType.StartBattle || !hasRandomness))
                 {

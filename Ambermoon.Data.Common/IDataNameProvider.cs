@@ -51,6 +51,7 @@ namespace Ambermoon.Data
         string ReallyLoad { get; }
         string ReallyOverwriteSave { get; }
         string WrongRiddlemouthSolutionText { get; }
+        string NotAllowingToLookIntoBackpack { get; }
         string That { get; }
         string DropItemQuestion { get; }
         string DropGoldQuestion { get; }

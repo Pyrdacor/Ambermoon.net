@@ -25,7 +25,9 @@ using Ambermoon.Render;
 using Ambermoon.UI;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
+using System.Threading;
 using Attribute = Ambermoon.Data.Attribute;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
@@ -987,6 +989,7 @@ namespace Ambermoon
             battleFieldDamageTexts.Clear();
             currentSpellAnimation?.Destroy();
             currentSpellAnimation = null;
+            RestoreImitatingPartyMembers();
         }
 
         /// <summary>
@@ -1950,7 +1953,7 @@ namespace Ambermoon
                                 }
                             }
 
-                            if (monster.BaseAttackDamage == 0)
+                            if (monster.BaseAttackDamage + monster.BonusAttackDamage == 0)
                                 monsterMorale[initialMonsters.IndexOf(monster)] /= 2;
                         }
                         Proceed(() => ActionFinished(true), true);
@@ -2361,6 +2364,151 @@ namespace Ambermoon
             }
         }
 
+
+        private class ImitationBackupData
+        {
+            readonly byte attacksPerRound;
+            readonly CharacterElement element;
+            readonly uint currentHitPoints;
+            readonly uint maxHitPoints;
+            readonly uint currentSpellPoints;
+            readonly uint maxSpellPoints;
+            readonly short magicAttack;
+            readonly short magicDefense;
+            readonly uint[] currentAttributes = new uint[8];
+            readonly uint[] maxAttributes = new uint[8];
+            readonly uint[] currentSkills = new uint[4];
+            readonly uint[] maxSkills = new uint[4];
+            readonly uint learnedSpells;
+            static readonly Skill[] SkillIndexMapping = new Skill[4] { Skill.Attack, Skill.Parry, Skill.CriticalHit, Skill.UseMagic };
+
+            public ImitationBackupData(PartyMember partyMember)
+            {
+                attacksPerRound = partyMember.AttacksPerRound;
+                element = partyMember.Element;
+                currentHitPoints = partyMember.HitPoints.CurrentValue;
+                maxHitPoints = partyMember.HitPoints.MaxValue;
+                currentSpellPoints = partyMember.SpellPoints.CurrentValue;
+                maxSpellPoints = partyMember.SpellPoints.MaxValue;
+                magicAttack = partyMember.MagicAttack;
+                magicDefense = partyMember.MagicDefense;
+                for (int i = 0; i < 8; ++i)
+                {
+                    var attribute = partyMember.Attributes[(Attribute)i];
+                    maxAttributes[i] = attribute.MaxValue;
+                    currentAttributes[i] = attribute.CurrentValue;
+                }
+                for (int i = 0; i < 4; ++i)
+                {
+                    var skill = partyMember.Skills[SkillIndexMapping[i]];
+                    maxSkills[i] = skill.MaxValue;
+                    currentSkills[i] = skill.CurrentValue;
+                }
+                learnedSpells = partyMember.LearnedMysticSpells;
+            }
+
+            public void ApplyToPartyMember(PartyMember partyMember)
+            {
+                partyMember.AttacksPerRound = attacksPerRound;
+                partyMember.Element = element;
+                if (partyMember.HitPoints.CurrentValue > currentHitPoints)
+                    partyMember.HitPoints.CurrentValue = currentHitPoints;
+                partyMember.HitPoints.MaxValue = maxHitPoints;
+                if (partyMember.SpellPoints.MaxValue == 0 || partyMember.SpellPoints.CurrentValue > currentSpellPoints)
+                    partyMember.SpellPoints.CurrentValue =  currentSpellPoints;
+                partyMember.SpellPoints.MaxValue = maxSpellPoints;
+                for (int i = 0; i < 8; ++i)
+                {
+                    var attribute = partyMember.Attributes[(Attribute)i];
+                    attribute.MaxValue = maxAttributes[i];
+                    attribute.CurrentValue = currentAttributes[i];
+                }
+                for (int i = 0; i < 4; ++i)
+                {
+                    var skill = partyMember.Skills[SkillIndexMapping[i]];
+                    skill.MaxValue = maxSkills[i];
+                    skill.CurrentValue = currentSkills[i];
+                }
+                partyMember.LearnedHealingSpells = 0;
+                partyMember.LearnedAlchemisticSpells = 0;
+                partyMember.LearnedMysticSpells = learnedSpells;
+                partyMember.LearnedDestructionSpells = 0;
+                partyMember.SpellMastery = partyMember.Class == Class.Mystic ? SpellTypeMastery.Mystic | SpellTypeMastery.Mastered : SpellTypeMastery.Mystic;
+                // Note: In theory the base values can be increased via reward events. This would then be a problem.
+                // But currently those events are only used on Kasimir and the spell is only usable by mystics.
+                // TODO: Ensure that the scroll is not usable by animals or thieves if it is added!
+                partyMember.BaseDefense = 0;
+                partyMember.BonusAttackDamage = 0;
+                partyMember.MagicAttack = magicAttack;
+                partyMember.MagicDefense = magicDefense;
+                partyMember.InventoryInaccessible = false;
+            }
+        }
+
+        readonly Dictionary<uint, ImitationBackupData> imitationBackupData = new Dictionary<uint, ImitationBackupData>();
+
+        void ImitateMonster(PartyMember caster, Monster monster, Action finishAction)
+        {
+            if ((caster.Class != Class.Mystic && caster.Class != Class.Ranger) || caster.Index >= 13)
+            {
+                // This is for safety. For example it should be avoided that Kasimir or a thief can use
+                // the spell from a scroll as the Amiga implementation only allows specific characters
+                // which are Chris, Targor and Valdyn. In addition there should be no scroll for this
+                // spell or it should not be usable by animals and thieves.
+                finishAction?.Invoke();
+                return;
+            }    
+
+            imitationBackupData.Add(caster.Index, new ImitationBackupData(caster));
+
+            game.ReplacePartyMemberBattleFieldSprite(caster, monster);
+
+            caster.AttacksPerRound = monster.AttacksPerRound;
+            caster.Element = monster.Element;
+            caster.HitPoints.MaxValue = monster.HitPoints.MaxValue;
+            caster.HitPoints.CurrentValue = monster.HitPoints.CurrentValue;
+            caster.SpellPoints.MaxValue = monster.SpellPoints.MaxValue;
+            caster.SpellPoints.CurrentValue = monster.SpellPoints.CurrentValue;
+            caster.MagicAttack = monster.MagicAttack;
+            caster.MagicDefense = monster.MagicDefense;
+            foreach (var attribute in Enum.GetValues<Attribute>().Take(8))
+            {
+                caster.Attributes[attribute].MaxValue = monster.Attributes[attribute].MaxValue;
+                caster.Attributes[attribute].CurrentValue = monster.Attributes[attribute].CurrentValue;
+            }
+            caster.Skills[Skill.Attack].MaxValue = monster.Skills[Skill.Attack].MaxValue;
+            caster.Skills[Skill.Attack].CurrentValue = monster.Skills[Skill.Attack].CurrentValue;
+            caster.Skills[Skill.Parry].MaxValue = monster.Skills[Skill.Parry].MaxValue;
+            caster.Skills[Skill.Parry].CurrentValue = monster.Skills[Skill.Parry].CurrentValue;
+            caster.Skills[Skill.CriticalHit].MaxValue = monster.Skills[Skill.CriticalHit].MaxValue;
+            caster.Skills[Skill.CriticalHit].CurrentValue = monster.Skills[Skill.CriticalHit].CurrentValue;
+            caster.Skills[Skill.UseMagic].MaxValue = monster.Skills[Skill.UseMagic].MaxValue;
+            caster.Skills[Skill.UseMagic].CurrentValue = monster.Skills[Skill.UseMagic].CurrentValue;
+            caster.LearnedHealingSpells = monster.LearnedHealingSpells;
+            caster.LearnedAlchemisticSpells = monster.LearnedAlchemisticSpells;
+            caster.LearnedMysticSpells = monster.LearnedMysticSpells;
+            caster.LearnedDestructionSpells = monster.LearnedDestructionSpells;
+            caster.SpellMastery = monster.SpellMastery;
+            caster.BaseDefense = monster.BaseDefense;
+            caster.BaseAttackDamage = monster.BaseAttackDamage;
+            caster.InventoryInaccessible = true;
+
+            finishAction?.Invoke();
+        }
+
+        void RestoreImitatingPartyMembers()
+        {
+            foreach (var partyMember in game.PartyMembers)
+            {
+                if (imitationBackupData.ContainsKey(partyMember.Index))
+                {
+                    // TODO
+                }
+            }
+
+            imitationBackupData.Clear();
+        }
+
         void ShowMonsterInfo(Monster monster, Action finishAction)
         {
             game.StartSequence();
@@ -2413,13 +2561,13 @@ namespace Ambermoon
                 string.Format(game.DataNameProvider.CharacterInfoGoldAndFoodString.Replace(" ", "      "), monster.Gold, monster.Food),
                 TextColor.BrightGray);
             position.Y += Global.GlyphLineHeight;
-            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), Layer.UI, 1, game.UIPaletteIndex);
+            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Render.Graphics.GetUIGraphicIndex(UIGraphic.Attack), Layer.UI, 1, game.UIPaletteIndex);
             int damage = monster.BaseAttackDamage + monster.BonusAttackDamage;
             popup.AddText(position + new Position(6, 2),
                 string.Format(game.DataNameProvider.CharacterInfoDamageString.Replace(' ', damage < 0 ? '-' : '+'), Math.Abs(damage)),
                 TextColor.BrightGray);
             position.X = area.X + panelWidth + Global.GlyphWidth;
-            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), Layer.UI, 1, game.UIPaletteIndex);
+            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Render.Graphics.GetUIGraphicIndex(UIGraphic.Defense), Layer.UI, 1, game.UIPaletteIndex);
             int defense = monster.BaseDefense + monster.BonusDefense;
             popup.AddText(position + new Position(7, 2),
                 string.Format(game.DataNameProvider.CharacterInfoDefenseString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense)),
@@ -2431,7 +2579,7 @@ namespace Ambermoon
             --position.X;
             position.Y += Global.GlyphLineHeight;
             popup.AddSunkenBox(new Rect(position, new Size(18, 18)));
-            popup.AddImage(new Rect(position.X + 1, position.Y + 2, 16, 14), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
+            popup.AddImage(new Rect(position.X + 1, position.Y + 2, 16, 14), Render.Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
                 Layer.UI, 2, game.PrimaryUIPaletteIndex);
             if (game.Features.HasFlag(Features.Elements))
             {
@@ -2727,6 +2875,15 @@ namespace Ambermoon
                         layout.FillCharacterBars(targetMember);
                     else if (caster is PartyMember castingMember)
                         layout.FillCharacterBars(castingMember);
+                    break;
+                }
+                case Spell.MysticImitation:
+                {
+                    if (target is Monster monster)
+                    {
+                        ImitateMonster(caster as PartyMember, monster, finishAction);
+                        return;
+                    }
                     break;
                 }
                 case Spell.MonsterKnowledge:
@@ -3107,7 +3264,7 @@ namespace Ambermoon
                                     emptyInventorySlot.Replace(weaponSlot);
                                 weaponSlot.Clear();
 
-                                if (monster.BaseAttackDamage == 0)
+                                if (monster.BaseAttackDamage + monster.BonusAttackDamage == 0)
                                     monsterMorale[initialMonsters.IndexOf(monster)] /= 2;
                             }
                         }
