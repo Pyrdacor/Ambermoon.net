@@ -8,9 +8,10 @@ namespace Ambermoon.Data.Legacy
     {
         readonly Dictionary<uint, Map> maps = new Dictionary<uint, Map>();
         readonly Dictionary<uint, Tileset> tilesets = new Dictionary<uint, Tileset>(8);
-        readonly Dictionary<uint, Labdata> labdatas = new Dictionary<uint, Labdata>(29);
+        readonly Dictionary<uint, Labdata> labdata = new Dictionary<uint, Labdata>(29);
 
         public IReadOnlyList<Map> Maps => maps.Values.ToList();
+        public IReadOnlyList<Labdata> Labdata => labdata.Values.ToList();
 
         public MapManager(ILegacyGameData gameData, IMapReader mapReader, ITilesetReader tilesetReader, ILabdataReader labdataReader, bool stopAtFirstError)
         {
@@ -57,14 +58,14 @@ namespace Ambermoon.Data.Legacy
                 if (labdataFile.Value.Size != 0)
                 {
                     labdataFile.Value.Position = 0;
-                    var labdata = Labdata.Load(labdataReader, labdataFile.Value, gameData);
-                    labdatas.Add((uint)labdataFile.Key, labdata);
+                    var labdata = Data.Labdata.Load(labdataReader, labdataFile.Value, gameData);
+                    this.labdata.Add((uint)labdataFile.Key, labdata);
                 }
             }
         }
 
         public Map GetMap(uint index) => maps.TryGetValue(index, out var map) ? map : null;
         public Tileset GetTilesetForMap(Map map) => tilesets[map.TilesetOrLabdataIndex];
-        public Labdata GetLabdataForMap(Map map) => labdatas[map.TilesetOrLabdataIndex];
+        public Labdata GetLabdataForMap(Map map) => labdata[map.TilesetOrLabdataIndex];
     }
 }
