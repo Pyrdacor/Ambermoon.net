@@ -208,6 +208,9 @@ namespace Ambermoon.Data.FileSystems.Virtual
 
         public IFolder CreateFolder(string path)
         {
+            if (string.IsNullOrWhiteSpace(path))
+                return rootFolder;
+
             var parts = GetPathParts(path);
             var parent = GetNode(parts, 0, rootFolder, true) as Folder;
 

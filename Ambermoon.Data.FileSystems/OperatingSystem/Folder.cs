@@ -48,9 +48,9 @@ namespace Ambermoon.Data.FileSystems.OperatingSystem
 
         public IFolder AddFolder(string name)
         {
-            if (files.ContainsKey(name))
+            if (Files.ContainsKey(name))
                 throw new InvalidOperationException("A file with the same path already exists.");
-            if (folders.ContainsKey(name))
+            if (Folders.ContainsKey(name))
                 throw new InvalidOperationException("A folder with the same path already exists.");
 
             string newPath = System.IO.Path.Combine(Path, name);
@@ -70,9 +70,9 @@ namespace Ambermoon.Data.FileSystems.OperatingSystem
 
         public IFile AddFile(string name, byte[] data)
         {
-            if (files.ContainsKey(name))
+            if (Files.ContainsKey(name))
                 throw new InvalidOperationException("A file with the same path already exists.");
-            if (folders.ContainsKey(name))
+            if (Folders.ContainsKey(name))
                 throw new InvalidOperationException("A folder with the same path already exists.");
 
             string newPath = System.IO.Path.Combine(Path, name);

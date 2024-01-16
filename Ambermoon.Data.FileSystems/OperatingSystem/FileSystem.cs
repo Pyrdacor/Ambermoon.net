@@ -17,6 +17,9 @@ namespace Ambermoon.Data.FileSystems.OperatingSystem
             if (!this.rootPath.EndsWith(DirectorySeparatorChar) && !this.rootPath.EndsWith(AltDirectorySeparatorChar))
                 this.rootPath += DirectorySeparatorChar;
 
+            if (!System.IO.Directory.Exists(rootPath))
+                System.IO.Directory.CreateDirectory(rootPath);
+
             rootFolder = new Folder(new System.IO.DirectoryInfo(this.rootPath), null);
         }
 
@@ -79,6 +82,9 @@ namespace Ambermoon.Data.FileSystems.OperatingSystem
 
         public IFolder CreateFolder(string path)
         {
+            if (string.IsNullOrWhiteSpace(path))
+                return rootFolder;
+
             path = ToRelativePath(path);
             var parts = GetPathParts(path);
             var parent = GetNode(parts, 0, rootFolder, true) as Folder;
