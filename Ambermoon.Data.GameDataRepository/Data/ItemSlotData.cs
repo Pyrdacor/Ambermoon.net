@@ -58,7 +58,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _itemIndex;
             set
             {
-                if (value > byte.MaxValue)
+                if (value > ushort.MaxValue)
                     throw new ArgumentOutOfRangeException(nameof(ItemIndex), $"Item index is limited to the range 0 to {ushort.MaxValue}.");
 
                 _itemIndex = value;

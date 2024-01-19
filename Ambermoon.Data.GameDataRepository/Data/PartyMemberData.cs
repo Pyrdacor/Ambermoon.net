@@ -1,9 +1,13 @@
 ﻿using Ambermoon.Data.Serialization;
+using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
     public class PartyMemberData : BattleCharacterData, IConversationCharacter, IIndexedData
     {
+        private uint _age = 1;
+        private uint _maxAge = 1;
+
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {
             throw new NotImplementedException();
@@ -25,6 +29,30 @@ namespace Ambermoon.Data.GameDataRepository.Data
         }
 
         public override CharacterType Type => CharacterType.PartyMember;
+        [Range(1, ushort.MaxValue)]
+        public uint Age
+        {
+            get => _age;
+            set
+            {
+                if (value == 0 || value > ushort.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(Age), $"Age is limited to the range 1 to {ushort.MaxValue}.");
+
+                _age = value;
+            }
+        }
+        [Range(1, ushort.MaxValue)]
+        public uint MaxAge
+        {
+            get => _maxAge;
+            set
+            {
+                if (value == 0 || value > ushort.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(MaxAge), $"Max age is limited to the range 1 to {ushort.MaxValue}.");
+
+                _maxAge = value;
+            }
+        }
         public byte NumberOfFreeHands { get; set; }
         public byte NumberOfFreeFingers { get; set; }
         public Language SpokenLanguages { get; set; }

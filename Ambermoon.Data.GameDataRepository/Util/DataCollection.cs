@@ -39,7 +39,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
                 item.Serialize(dataWriter, advanced);
         }
 
-        public IEnumerator<T> GetEnumerator() => (IEnumerator<T>)_elements.GetEnumerator();
+        public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>)_elements).GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => _elements.GetEnumerator();
 
@@ -86,7 +86,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
                 item.Serialize(dataWriter, advanced);
         }
 
-        public IEnumerator<T> GetEnumerator() => (IEnumerator<T>)_elements.GetEnumerator();
+        public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>)_elements).GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => _elements.GetEnumerator();
 

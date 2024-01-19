@@ -30,12 +30,14 @@ namespace Ambermoon.Data.GameDataRepository
         private GameDataRepository(Func<string, IFileContainer> fileContainerProvider)
         {
             Dictionary<int, IDataReader> ReadFileContainer(string name)
-                => fileContainerProvider(name).Files;
+                => fileContainerProvider(name).Files.Where(f => f.Value.Size != 0)
+                    .ToDictionary(f => f.Key, f => f.Value);
             Dictionary<int, IDataReader> ReadFileContainers(params string[] names)
-                => names.SelectMany(name => fileContainerProvider(name).Files).ToDictionary(f => f.Key, f => f.Value);
+                => names.SelectMany(name => fileContainerProvider(name).Files).Where(f => f.Value.Size != 0)
+                    .ToDictionary(f => f.Key, f => f.Value);
 
             #region General Texts
-            _textContainer = TextContainer.Load(new TextContainerReader(), ReadFileContainer("Text.amb")[0], false);
+            _textContainer = TextContainer.Load(new TextContainerReader(), ReadFileContainer("Text.amb")[1], false);
             Advanced = _textContainer.VersionString.ToLower().Contains("adv");
             #endregion
 
@@ -43,7 +45,7 @@ namespace Ambermoon.Data.GameDataRepository
             var mapFiles = ReadFileContainers("1Map_data.amb", "2Map_data.amb", "3Map_data.amb");
             Maps = mapFiles.Select(mapFile => (MapData)MapData.Deserialize(mapFile.Value, (uint)mapFile.Key, Advanced)).ToDictionaryList();
             var mapTextFiles = ReadFileContainers("1Map_texts.amb", "2Map_texts.amb", "3Map_texts.amb");
-            MapTexts = mapTextFiles.Select((mapTextFile, index) => (TextList<MapData>)TextList<MapData>.Deserialize(mapTextFile.Value, (uint)mapTextFile.Key, Maps[(uint)index], Advanced)).ToDictionaryList();
+            MapTexts = mapTextFiles.Select(mapTextFile => (TextList<MapData>)TextList<MapData>.Deserialize(mapTextFile.Value, (uint)mapTextFile.Key, Maps[(uint)mapTextFile.Key], Advanced)).ToDictionaryList();
 
             // Monsters
             var monsterFiles = ReadFileContainer("Monster_char.amb");

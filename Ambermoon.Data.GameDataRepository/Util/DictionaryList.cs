@@ -80,7 +80,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
         public DictionaryList(IEnumerable<T> enumerable)
         {
             _list = new(enumerable);
-            _dictionary = enumerable.ToDictionary(item => item.Index, Item => Item);
+            _dictionary = _list.ToDictionary(item => item.Index, Item => Item);
         }
 
         public void Add(T item)

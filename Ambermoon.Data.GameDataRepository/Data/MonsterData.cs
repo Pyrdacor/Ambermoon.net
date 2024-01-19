@@ -106,9 +106,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 attribute.BonusValue = dataReader.ReadSignedWord();
                 attribute.StoredValue = dataReader.ReadWord();
             }
-            monsterData.Age = dataReader.ReadWord();
-            monsterData.MaxAge = dataReader.ReadWord();
-            SkipBytes(4);
+            SkipBytes(8);
             if (advanced)
             {
                 monsterData.BonusSpellDamage = dataReader.ReadWord();
@@ -237,9 +235,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 dataWriter.WriteSignedWord(attribute.BonusValue);
                 dataWriter.Write((ushort)attribute.StoredValue);
             }
-            dataWriter.Write((ushort)Age);
-            dataWriter.Write((ushort)MaxAge);
-            WriteFillBytes(4);
+            WriteFillBytes(8);
             if (advanced)
             {
                 dataWriter.Write((ushort)BonusSpellDamage);

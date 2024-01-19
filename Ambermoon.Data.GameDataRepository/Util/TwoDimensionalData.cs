@@ -50,7 +50,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
 
         public void Set(int x, int y, TElement element) => _elements[y * Width + x] = element;
 
-        public IEnumerator<TElement> GetEnumerator() => (IEnumerator<TElement>)_elements.GetEnumerator();
+        public IEnumerator<TElement> GetEnumerator() => ((IEnumerable<TElement>)_elements).GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => _elements.GetEnumerator();
 
