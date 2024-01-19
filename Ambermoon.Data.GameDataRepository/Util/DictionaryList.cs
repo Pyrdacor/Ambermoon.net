@@ -3,9 +3,10 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Ambermoon.Data.GameDataRepository.Util
 {
-    using Entities;
+    using Data;
 
-    public class DictionaryList<T> : ICollection<T>, IEnumerable<T>, IEnumerable, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>, ICollection, IList where T : IIndexedEntity
+    public class DictionaryList<T> : ICollection<T>, IEnumerable<T>, IEnumerable, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>, ICollection, IList
+        where T : IIndexed
     {
         private readonly List<T> _list;
         private readonly Dictionary<uint, T> _dictionary;
@@ -46,10 +47,10 @@ namespace Ambermoon.Data.GameDataRepository.Util
             }
         }
 
-        object IList.this[int index]
+        object? IList.this[int index]
         {
             get => this[index];
-            set => this[index] = (T)value;
+            set => this[index] = (T)value!;
         }
 
         public ICollection<uint> Keys => _dictionary.Keys;
@@ -88,9 +89,9 @@ namespace Ambermoon.Data.GameDataRepository.Util
             _list.Add(item);
         }
 
-        public int Add(object value)
+        public int Add(object? value)
         {
-            Add((T)value);
+            Add((T)value!);
             return Count - 1;
         }
 
@@ -102,7 +103,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
 
         public bool Contains(T item) => _list.Contains(item);
 
-        public bool Contains(object value) => Contains((T)value);
+        public bool Contains(object? value) => Contains((T)value!);
 
         public bool ContainsKey(uint key) => _dictionary.ContainsKey(key);
 
@@ -120,7 +121,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
 
         public int IndexOf(T item) => _list.IndexOf(item);
 
-        public int IndexOf(object value) => (_list as IList).IndexOf(value);
+        public int IndexOf(object? value) => (_list as IList).IndexOf((T)value!);
 
         public void Insert(int index, T item)
         {
@@ -128,7 +129,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
             _list.Insert(index, item);
         }
 
-        public void Insert(int index, object value) => Insert(index, (T)value);
+        public void Insert(int index, object? value) => Insert(index, (T)value!);
 
         public bool Remove(uint key)
         {
@@ -148,7 +149,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
             return _dictionary.Remove(item.Index);
         }
 
-        public void Remove(object value) => Remove((T)value);
+        public void Remove(object? value) => Remove((T)value!);
 
         public void RemoveAt(int index)
         {
@@ -159,10 +160,12 @@ namespace Ambermoon.Data.GameDataRepository.Util
         public bool TryGetValue(uint key, [MaybeNullWhen(false)] out T value) => _dictionary.TryGetValue(key, out value);
 
         IEnumerator IEnumerable.GetEnumerator() => _list.GetEnumerator();
+
+        public Dictionary<uint, T> AsDictionary() => new(_dictionary);
     }
 
     public static class DictionaryListExtensions
     {
-        public static DictionaryList<T> ToDictionaryList<T>(this IEnumerable<T> enumerable) where T : IIndexedEntity => new DictionaryList<T>(enumerable);
+        public static DictionaryList<T> ToDictionaryList<T>(this IEnumerable<T> enumerable) where T : IIndexed => new DictionaryList<T>(enumerable);
     }
 }

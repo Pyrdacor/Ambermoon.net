@@ -7,77 +7,69 @@ using SonicArranger;
 
 namespace Ambermoon.Data.GameDataRepository
 {
-    using Entities;
+    using Data;
     using Util;
     using MonsterGroup = List<KeyValuePair<uint, Position>>;
-    using TextWriter = Serialization.TextWriter;
 
     public class GameDataRepository
     {
-        private readonly GameData _gameData;
+        private const ushort DefaultJHKey = 0xd2e7;
+        private readonly TextContainer _textContainer = new();
 
-        public GameDataRepository(string path, bool allowPartialData = false)
-            : this(LoadGameData(path, allowPartialData))
+        public GameDataRepository(string path)
+            : this(FileContainerFromPath(path))
         {
         }
 
-        public GameDataRepository(IReadOnlyFileSystem fileSystem, bool allowPartialData = false)
-            : this(LoadGameData(fileSystem, allowPartialData))
+        public GameDataRepository(IReadOnlyFileSystem fileSystem)
+            : this(FileContainerFromFileSystem(fileSystem))
         {
+
         }
 
-        public GameDataRepository(GameData gameData)
+        private GameDataRepository(Func<string, IFileContainer> fileContainerProvider)
         {
-            _gameData = gameData;
+            Dictionary<int, IDataReader> ReadFileContainer(string name)
+                => fileContainerProvider(name).Files;
+            Dictionary<int, IDataReader> ReadFileContainers(params string[] names)
+                => names.SelectMany(name => fileContainerProvider(name).Files).ToDictionary(f => f.Key, f => f.Value);
+
+            #region General Texts
+            _textContainer = TextContainer.Load(new TextContainerReader(), ReadFileContainer("Text.amb")[0], false);
+            Advanced = _textContainer.VersionString.ToLower().Contains("adv");
+            #endregion
 
             // Maps
-            LoadEntitiesWithTexts<Map, MapEntity>(gameData.MapManager.Maps, out var maps, out var mapTexts, map => map.Texts, gameData);
-            Maps = maps;
-            MapTexts = mapTexts;
-            LabyrinthData = gameData.MapManager.Labdata.Select((labdata, index) => new { Labdata = labdata, Index = (uint)index + 1 }).ToDictionary(l => l.Index, l => l.Labdata);
+            var mapFiles = ReadFileContainers("1Map_data.amb", "2Map_data.amb", "3Map_data.amb");
+            Maps = mapFiles.Select(mapFile => (MapData)MapData.Deserialize(mapFile.Value, (uint)mapFile.Key, Advanced)).ToDictionaryList();
+            var mapTextFiles = ReadFileContainers("1Map_texts.amb", "2Map_texts.amb", "3Map_texts.amb");
+            MapTexts = mapTextFiles.Select((mapTextFile, index) => (TextList<MapData>)TextList<MapData>.Deserialize(mapTextFile.Value, (uint)mapTextFile.Key, Maps[(uint)index], Advanced)).ToDictionaryList();
 
-            // Characters
-            LoadEntitiesWithTexts<NPC, NpcEntity>(gameData.CharacterManager.NPCs, out var npcs, out var npcTexts, npc => npc.Texts, gameData);
-            Npcs = npcs;
-            NpcTexts = npcTexts;
-            var partyMemberObjects = LoadPartyMembers(gameData);
-            LoadEntitiesWithTexts<PartyMember, PartyMemberEntity>(partyMemberObjects, out var partyMembers, out var partyMemberTexts, partyMember => partyMember.Texts, gameData);
-            PartyMembers = partyMembers;
-            PartyMemberTexts = partyMemberTexts;
-            Monsters = gameData.CharacterManager.Monsters.ToDictionary(monster => monster.Index, monster => monster);
-            MonsterGroups = gameData.CharacterManager.MonsterGroups.ToDictionary(group => group.Key, group => ConvertMonsterGroup(group.Value));
-            
-            // ...
-            Items = gameData.ItemManager.Items.Select((item, index) => new { Item = item, Index = (uint)index + 1 }).ToDictionary(item => item.Index, item => item.Item);
-            Places = gameData.Places.Entries.Select((place, index) => new { Place = place, Index = (uint)index + 1 }).ToDictionary(item => item.Index, item => item.Place);
-            Songs = LoadSongs(gameData);
-            Portraits = gameData.GraphicProvider.GetGraphics(GraphicType.Portrait)
-                .Select((gfx, index) => new { Graphic = gfx, Index = (uint)index + 1 })
-                .ToDictionary(g => g.Index, g => new ImageWithPaletteIndex(gameData.GraphicProvider.PrimaryUIPaletteIndex, g.Graphic));
-            Dictionary = new TextList(gameData.Dictionary.Entries);
-            // to be continued ...
+            // Monsters
+            var monsterFiles = ReadFileContainer("Monster_char.amb");
+            Monsters = monsterFiles.Select(monsterFile => (MonsterData)MonsterData.Deserialize(monsterFile.Value, (uint)monsterFile.Key, Advanced)).ToDictionaryList();
+            var monsterGroupFiles = ReadFileContainer("Monster_groups.amb");
+            MonsterGroups = monsterGroupFiles.Select(monsterGroupFile => (MonsterGroupData)MonsterGroupData.Deserialize(monsterGroupFile.Value, (uint)monsterGroupFile.Key, Advanced)).ToDictionaryList();
+
+            // TODO ...
         }
 
-        public static GameDataRepository FromContainer(string containerPath, bool allowPartialData = false)
+        private static Func<string, IFileContainer> FileContainerFromPath(string rootPath)
+        {
+            return containerPath => new FileReader().ReadRawFile(containerPath, File.ReadAllBytes(Path.Combine(rootPath, containerPath)));
+        }
+
+        private static Func<string, IFileContainer> FileContainerFromFileSystem(IReadOnlyFileSystem fileSystem)
+        {
+            return containerPath => new FileReader().ReadFile(containerPath, fileSystem.GetFileReader(containerPath).GetReader());
+        }
+
+        public static GameDataRepository FromContainer(string containerPath)
         {
             using var file = File.OpenRead(containerPath);
             var container = FileSystem.LoadVirtual(file, false);
 
-            return new GameDataRepository(container.AsReadOnly(), allowPartialData);
-        }
-
-        private static GameData LoadGameData(string path, bool allowPartialData)
-        {
-            var gameData = new GameData(GameData.LoadPreference.PreferExtracted, null, !allowPartialData);
-            gameData.Load(path);
-            return gameData;
-        }
-
-        private static GameData LoadGameData(IReadOnlyFileSystem fileSystem, bool allowPartialData)
-        {
-            var gameData = new GameData(GameData.LoadPreference.PreferExtracted, null, !allowPartialData);
-            gameData.LoadFromFileSystem(fileSystem);
-            return gameData;
+            return new GameDataRepository(container.AsReadOnly());
         }
 
         public void Save(string path)
@@ -96,6 +88,18 @@ namespace Ambermoon.Data.GameDataRepository
 
         public void Save(IFileSystem fileSystem)
         {
+            void WriteSingleFileContainer(string containerName, FileType fileType, IDataWriter dataWriter)
+            {
+                var writer = new DataWriter();
+                if (fileType == FileType.LOB)
+                    FileWriter.WriteLob(writer, dataWriter.ToArray(), Legacy.Compression.LobCompression.LobType.Ambermoon);
+                else if (fileType == FileType.JH)
+                    FileWriter.WriteJH(writer, dataWriter.ToArray(), DefaultJHKey, false);
+                else if (fileType == FileType.JHPlusLOB)
+                    FileWriter.WriteJH(writer, dataWriter.ToArray(), DefaultJHKey, true);
+                else
+                    throw new InvalidOperationException($"Format {Enum.GetName(fileType)} is not supported for writing single files.");
+            }
             void WriteContainer(string containerName, FileType fileType, Dictionary<uint, byte[]> files)
             {
                 var writer = new DataWriter();
@@ -103,13 +107,19 @@ namespace Ambermoon.Data.GameDataRepository
                 fileSystem.CreateFile(containerName, writer.ToArray());
             }
 
+            #region General Texts
+            var textContainerWriter = new DataWriter();
+            new TextContainerWriter().WriteTextContainer(_textContainer, textContainerWriter, false);
+            WriteSingleFileContainer("Text.amb", FileType.JHPlusLOB, textContainerWriter);
+            #endregion
+
             #region Maps
-            /*var mapGroups = GroupMapRelatedEntities(Maps);
+            var mapGroups = GroupMapRelatedEntities(Maps);
             foreach (var mapGroup in mapGroups)
             {
                 var containerName = $"{mapGroup.Key}Map_data.amb";
-                WriteContainer(containerName, FileType.AMPC, mapGroup.ToDictionary(m => m.Index, m => SerializeEntity(m, _gameData)));
-            }*/
+                WriteContainer(containerName, FileType.AMPC, mapGroup.ToDictionary(m => m.Index, m => SerializeEntity(m, Advanced)));
+            }
             var mapTextGroups = GroupMapRelatedEntities(MapTexts);
             foreach (var mapTextGroup in mapTextGroups)
             {
@@ -119,74 +129,13 @@ namespace Ambermoon.Data.GameDataRepository
             // ...
             #endregion
 
-            #region Characters
-            //WriteContainer("NPC_char.amb", FileType.AMPC, Npcs.ToDictionary(m => m.Index, m => SerializeEntity(m, _gameData)));
-            WriteContainer("NPC_texts.amb", FileType.AMNP, NpcTexts.ToDictionary(t => t.Index, SerializeTextList));
-            //var partyMemberFiles = PartyMembers.ToDictionary(m => m.Index, m => SerializeEntity(m, _gameData));
-            //WriteContainer("Save.00/Party_char.amb", FileType.AMBR, partyMemberFiles);
-            //WriteContainer("Initial/Party_char.amb", FileType.AMBR, partyMemberFiles);
-            WriteContainer("Party_texts.amb", FileType.AMNP, PartyMemberTexts.ToDictionary(t => t.Index, SerializeTextList));
+            #region Monsters
+            WriteContainer("Monster_char.amb", FileType.AMPC, Monsters.ToDictionary(m => m.Index, m => SerializeEntity(m, Advanced)));
+            WriteContainer("Monster_groups.amb", FileType.AMPC, MonsterGroups.ToDictionary(m => m.Index, m => SerializeEntity(m, Advanced)));
             #endregion
         }
 
-        private static void LoadEntitiesWithTexts<TGameObject, TEntity>(IEnumerable<TGameObject> gameObjects,
-            out DictionaryList<TEntity> entities, out DictionaryList<TextList<TEntity>> textEntities,
-            Func<TGameObject, IEnumerable<string>> textProvider, IGameData gameData)
-            where TEntity : class, IIndexedEntity<TGameObject>, new()
-        {
-            var entitiesWithTexts = gameObjects.Select(gameObject =>
-            {
-                TEntity entity = new();
-                entity.Index = (uint)gameObject.GetType().GetProperty("Index").GetValue(gameObject)!;
-                // TODO
-                //var entity = gameObject.ToEntity<TGameObject, TEntity>(gameData);
-
-                return new
-                {
-                    Entity = entity,
-                    Texts = new TextList<TEntity>(entity, textProvider(gameObject))
-                };
-            });
-
-            entities = entitiesWithTexts.Select(e => e.Entity).ToDictionaryList();
-            textEntities = entitiesWithTexts.Select(e => e.Texts).ToDictionaryList();
-        }
-
-        private static IEnumerable<PartyMember> LoadPartyMembers(GameData gameData)
-        {
-            var partyMemberContainer = gameData.Files.TryGetValue("Initial/Party_char.amb", out var container) ? container : gameData.Files["Save.00/Party_char.amb"];
-            var partyTextFiles = gameData.Files["Party_texts.amb"].Files;
-            var partyMemberReader = new PartyMemberReader();
-
-            PartyMember ReadPartyMember(int index, IDataReader dataReader)
-            {
-                var partyTextReader = partyTextFiles.TryGetValue(index, out var textReader) && textReader.Size != 0 ? textReader : null;
-                return PartyMember.Load((uint)index, partyMemberReader, dataReader, partyTextReader);
-            }
-
-            return partyMemberContainer.Files.Select(file => ReadPartyMember(file.Key, file.Value));
-        }
-
-        private static MonsterGroup ConvertMonsterGroup(Data.MonsterGroup monsterGroup)
-        {
-            var group = new MonsterGroup(18); // max 18
-
-            // 6x3
-            for (int y = 0; y < 3; y++)
-            {
-                for (int x = 0; x < 6; x++)
-                {
-                    var monster = monsterGroup.Monsters[x, y];
-
-                    if (monster != null)
-                        group.Add(KeyValuePair.Create(monster.Index, new Position(x, y)));
-                }
-            }
-
-            return group;
-        }
-
-        private static Dictionary<uint, KeyValuePair<string, Song>> LoadSongs(GameData gameData)
+        /*private static Dictionary<uint, KeyValuePair<string, Song>> LoadSongs(GameData gameData)
         {
             var introContainer = gameData.Files["Intro_music"];
             var extroContainer = gameData.Files["Extro_music"];
@@ -215,27 +164,57 @@ namespace Ambermoon.Data.GameDataRepository
             AddSong(Enumerations.Song.Outro, LoadSong(extroContainer.Files[1]).Songs[0]);
 
             return songs;
-        }
+        }*/
 
-        public DictionaryList<MapEntity> Maps { get; } = new();
-        public DictionaryList<TextList<MapEntity>> MapTexts { get; } = new();
-        public Dictionary<uint, Labdata> LabyrinthData { get; } = new();
-        public DictionaryList<NpcEntity> Npcs { get; } = new();
-        public DictionaryList<TextList<NpcEntity>> NpcTexts { get; } = new();
-        public DictionaryList<PartyMemberEntity> PartyMembers { get; } = new();
-        public DictionaryList<TextList<PartyMemberEntity>> PartyMemberTexts { get; } = new();
-        public Dictionary<uint, Monster> Monsters { get; } = new();
-        public Dictionary<uint, MonsterGroup> MonsterGroups { get; } = new();
-        public Dictionary<uint, ImageList> MonsterImages { get; } = new();
+        public bool Advanced { get; private set; } = false;
+        public DictionaryList<MapData> Maps { get; } = new();
+        public DictionaryList<TextList<MapData>> MapTexts { get; } = new();
+        //public Dictionary<uint, Labdata> LabyrinthData { get; } = new();
+        public DictionaryList<NpcData> Npcs { get; } = new();
+        public DictionaryList<TextList<NpcData>> NpcTexts { get; } = new();
+        public DictionaryList<PartyMemberData> PartyMembers { get; } = new();
+        public DictionaryList<TextList<PartyMemberData>> PartyMemberTexts { get; } = new();
+        public DictionaryList<MonsterData> Monsters { get; } = new();
+        public DictionaryList<MonsterGroupData> MonsterGroups { get; } = new();
+        /*public Dictionary<uint, ImageList> MonsterImages { get; } = new();
         public IReadOnlyDictionary<uint, ImageList<Monster>> ColoredMonsterImages => throw new NotImplementedException();
         public Dictionary<uint, Place> Places { get; } = new();
         public Dictionary<uint, Item> Items { get; } = new();
         public Dictionary<uint, KeyValuePair<string, Song>> Songs { get; } = new();
         public TextList Dictionary { get; } = new();
-        public Dictionary<uint, ImageWithPaletteIndex> Portraits { get; } = new();
+        public Dictionary<uint, ImageWithPaletteIndex> Portraits { get; } = new();*/
+        public List<string> WorldNames => _textContainer.WorldNames;
+        public List<string> FormatMessages => _textContainer.FormatMessages;
+        public List<string> Messages => _textContainer.Messages;
+        public List<string> AutomapTypeNames => _textContainer.AutomapTypeNames;
+        public List<string> OptionNames => _textContainer.OptionNames;
+        public List<string> SongNames => _textContainer.MusicNames;
+        public List<string> SpellClassNames => _textContainer.SpellClassNames;
+        public List<string> SpellNames => _textContainer.SpellNames;
+        public List<string> LanguageNames => _textContainer.LanguageNames;
+        public List<string> ClassNames => _textContainer.ClassNames;
+        public List<string> RaceNames => _textContainer.RaceNames;
+        public List<string> SkillNames => _textContainer.SkillNames;
+        public List<string> AttributeNames => _textContainer.AttributeNames;
+        public List<string> SkillShortNames => _textContainer.SkillShortNames;
+        public List<string> AttributeShortNames => _textContainer.AttributeShortNames;
+        public List<string> ItemTypeNames => _textContainer.ItemTypeNames;
+        public List<string> ConditionNames => _textContainer.ConditionNames;
+        public List<string> UITexts => _textContainer.UITexts;
+        public List<int> UITextWithPlaceholderIndices => _textContainer.UITextWithPlaceholderIndices;
+        public string VersionString
+        {
+            get => _textContainer.VersionString;
+            set => _textContainer.VersionString = value;
+        }
+        public string DateAndLanguageString
+        {
+            get => _textContainer.DateAndLanguageString;
+            set => _textContainer.DateAndLanguageString = value;
+        }
 
         private static IEnumerable<IGrouping<int, T>> GroupMapRelatedEntities<T>(DictionaryList<T> mapRelatedEntities)
-            where T : IIndexedEntity
+            where T : IIndexed
         {
             return mapRelatedEntities.GroupBy(mapRelatedEntity=> mapRelatedEntity.Index switch
             {
@@ -245,17 +224,26 @@ namespace Ambermoon.Data.GameDataRepository
             });
         }
 
-        private static byte[] SerializeEntity<T>(T entity, IGameData gameData) where T : IEntity
+        private static byte[] SerializeEntity<T>(T entity, bool advanced) where T : IData
         {
             var writer = new DataWriter();
-            entity.Serialize(writer, gameData);
+            entity.Serialize(writer, advanced);
+            return writer.ToArray();
+        }
+
+        private static byte[] SerializeDependentEntity<T, D>(T entity, bool advanced)
+            where T : IDependentData<D>
+            where D : IData
+        {
+            var writer = new DataWriter();
+            entity.Serialize(writer, advanced);
             return writer.ToArray();
         }
 
         private static byte[] SerializeTextList(TextList textList)
         {
             var writer = new DataWriter();
-            TextWriter.WriteTexts(writer, textList);
+            Legacy.Serialization.TextWriter.WriteTexts(writer, textList);
             return writer.ToArray();
         }
     }

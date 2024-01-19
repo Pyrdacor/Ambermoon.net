@@ -525,7 +525,7 @@ namespace Ambermoon.Render
                 backgroundTileSprites[spriteIndex].TextureAtlasOffset = textureAtlas.GetOffset(backGraphicIndex - 1);
                 backgroundTileSprites[spriteIndex].NumFrames = (uint)backTile.NumAnimationFrames;
                 backgroundTileSprites[spriteIndex].CurrentFrame = 0;
-                backgroundTileSprites[spriteIndex].Alternate = backTile.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation);
+                backgroundTileSprites[spriteIndex].Alternate = backTile.Flags.HasFlag(Tileset.TileFlags.WaveAnimation);
                 backgroundTileSprites[spriteIndex].Visible = true;
             }
 
@@ -540,7 +540,7 @@ namespace Ambermoon.Render
                 foregroundTileSprites[spriteIndex].TextureAtlasOffset = textureAtlas.GetOffset(frontGraphicIndex - 1);
                 foregroundTileSprites[spriteIndex].NumFrames = (uint)frontTile.NumAnimationFrames;
                 foregroundTileSprites[spriteIndex].CurrentFrame = 0;
-                foregroundTileSprites[spriteIndex].Alternate = frontTile.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation);
+                foregroundTileSprites[spriteIndex].Alternate = frontTile.Flags.HasFlag(Tileset.TileFlags.WaveAnimation);
                 foregroundTileSprites[spriteIndex].Visible = true;
                 foregroundTileSprites[spriteIndex].BaseLineOffset = frontTile.BringToFront ? TILE_HEIGHT + 2 : frontTile.Background ? -1 : 0;
             }
@@ -594,7 +594,7 @@ namespace Ambermoon.Render
                         backgroundTileSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(backGraphicIndex - 1);
                         backgroundTileSprites[index].NumFrames = (uint)backTile.NumAnimationFrames;
                         backgroundTileSprites[index].CurrentFrame = 0;
-                        backgroundTileSprites[index].Alternate = backTile.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation);
+                        backgroundTileSprites[index].Alternate = backTile.Flags.HasFlag(Tileset.TileFlags.WaveAnimation);
                         backgroundTileSprites[index].Visible = true;
                         backgroundTileSprites[index].BaseLineOffset = 0;
 
@@ -620,7 +620,7 @@ namespace Ambermoon.Render
                         foregroundTileSprites[index].NumFrames = (uint)frontTile.NumAnimationFrames;
                         foregroundTileSprites[index].CurrentFrame = 0;
                         foregroundTileSprites[index].Visible = true;
-                        foregroundTileSprites[index].Alternate = frontTile.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation);
+                        foregroundTileSprites[index].Alternate = frontTile.Flags.HasFlag(Tileset.TileFlags.WaveAnimation);
                         foregroundTileSprites[index].BaseLineOffset = frontTile.BringToFront ? (Map.UseTravelTypes ? TILE_HEIGHT : 2 * TILE_HEIGHT) + 2 : frontTile.Background ? -1 : 0;
 
                         if (frontTile.Flags.HasFlag(Tileset.TileFlags.RandomAnimationStart))

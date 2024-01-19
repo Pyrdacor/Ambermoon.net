@@ -2,7 +2,7 @@
 
 namespace Ambermoon.Data.GameDataRepository.Util
 {
-    public class TwoDimensionalData<TElement> : IEnumerable, IEnumerable<TElement>
+    public class TwoDimensionalData<TElement> : IEnumerable<TElement>
     {
         private TElement[] _elements;
 
@@ -47,6 +47,8 @@ namespace Ambermoon.Data.GameDataRepository.Util
         }
 
         public TElement Get(int x, int y) => _elements[y * Width + x];
+
+        public void Set(int x, int y, TElement element) => _elements[y * Width + x] = element;
 
         public IEnumerator<TElement> GetEnumerator() => (IEnumerator<TElement>)_elements.GetEnumerator();
 

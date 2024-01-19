@@ -1,9 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using Ambermoon.Data.Serialization;
+using System.Collections.Generic;
 
 namespace Ambermoon.Data
 {
     public class TextContainer
     {
+        public static TextContainer Load(ITextContainerReader reader, IDataReader dataReader, bool processUIPlaceholders)
+        {
+            var textContainer = new TextContainer();
+            reader.ReadTextContainer(textContainer, dataReader, processUIPlaceholders);
+            return textContainer;
+        }
+
         public List<string> WorldNames { get; } = new List<string>();
         public List<string> FormatMessages { get; } = new List<string>();
         public List<string> Messages { get; } = new List<string>();

@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Serialization;
+using System.ComponentModel.DataAnnotations;
 
-namespace Ambermoon.Data.GameDataRepository.Entities
+namespace Ambermoon.Data.GameDataRepository.Data
 {
     public enum MapBlockType
     {
@@ -22,12 +23,13 @@ namespace Ambermoon.Data.GameDataRepository.Entities
         Invalid
     }
 
-    public class MapTile3DEntity : IEntity<Map.Block>, IBackConversionEntity<Map.Block>
+    public class MapTile3DData : IData
     {
         private uint _mapEventId = 0;
 
         public uint? ObjectIndex { get; private set; }
         public uint? WallIndex { get; private set; }
+        [Range(0, byte.MaxValue)]
         public uint MapEventId
         {
             get => _mapEventId;
@@ -41,16 +43,22 @@ namespace Ambermoon.Data.GameDataRepository.Entities
         }
         public MapBlockType MapBlockType { get; private set; } = MapBlockType.Free;
 
+        /// <summary>
+        /// Determines if the map tile contains a map event.
+        /// </summary>
         public bool HasMapEvent => MapEventId != 0;
 
-        public static MapTile3DEntity Empty => new() { MapBlockType = MapBlockType.Free };
+        /// <summary>
+        /// Default empty 3D map tile.
+        /// </summary>
+        public static MapTile3DData Empty => new() { MapBlockType = MapBlockType.Free };
 
         /// <summary>
         /// Sets this map block to become a wall.
         /// </summary>
         /// <param name="wallIndex">The wall index (1 to 154).</param>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
-        public void SetWall(uint wallIndex)
+        public void SetWall([Range(1, 154)] uint wallIndex)
         {
             // Valid wall indices range from 1 to 154.
             // Technically they are stored as index 101 to 254.
@@ -67,7 +75,7 @@ namespace Ambermoon.Data.GameDataRepository.Entities
         /// </summary>
         /// <param name="objectIndex">The object index (1 to 100).</param>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
-        public void SetObject(uint objectIndex)
+        public void SetObject([Range(1, 100)] uint objectIndex)
         {
             // Valid object indices range from 1 to 100.
             // Technically they are stored as index 1 to 100 as well.
@@ -99,11 +107,12 @@ namespace Ambermoon.Data.GameDataRepository.Entities
             WallIndex = null;
         }
 
-        public static IEntity Deserialize(IDataReader dataReader, IGameData gameData)
+        /// <inheritdoc/>
+        public static IData Deserialize(IDataReader dataReader, bool advanced)
         {
             uint index = dataReader.ReadByte();
 
-            var mapBlock = new MapTile3DEntity() { MapEventId = dataReader.ReadByte() };
+            var mapBlock = new MapTile3DData() { MapEventId = dataReader.ReadByte() };
 
             if (index == 0)
                 mapBlock.SetFree();
@@ -115,47 +124,20 @@ namespace Ambermoon.Data.GameDataRepository.Entities
                 mapBlock.SetWall(index - 100);
 
             return mapBlock;
-
         }
 
-        public void Serialize(IDataWriter dataWriter, IGameData gameData)
+        /// <inheritdoc/>
+        public void Serialize(IDataWriter dataWriter, bool advanced)
         {
             byte index = MapBlockType switch
             {
                 MapBlockType.Free => 0,
-                MapBlockType.Object => (byte)ObjectIndex,
-                MapBlockType.Wall => (byte)(100 + WallIndex),
+                MapBlockType.Object => (byte)ObjectIndex!,
+                MapBlockType.Wall => (byte)(100 + WallIndex!),
                 _ => 255
             };
             dataWriter.Write(index);
             dataWriter.Write((byte)MapEventId);
-        }
-
-        public static IEntity<Map.Block> FromGameObject(Map.Block gameObject, IGameData gameData)
-        {
-            var mapBlock = new MapTile3DEntity() { MapEventId = gameObject.MapEventId };
-
-            if (gameObject.ObjectIndex != 0)
-                mapBlock.SetObject(gameObject.ObjectIndex);
-            else if (gameObject.WallIndex != 0)
-                mapBlock.SetWall(gameObject.WallIndex);
-            else if (gameObject.MapBorder)
-                mapBlock.SetInvalid();
-            else
-                mapBlock.SetFree();
-
-            return mapBlock;
-        }
-
-        public Map.Block ToGameObject(IGameData gameData)
-        {
-            return new Map.Block
-            {
-                ObjectIndex = ObjectIndex ?? 0,
-                WallIndex = WallIndex ?? 0,
-                MapBorder = MapBlockType == MapBlockType.Invalid,
-                MapEventId = MapEventId
-            };
         }
     }
 }

@@ -8,16 +8,18 @@ namespace Ambermoon.Data
         public enum TileFlags
         {
             None = 0,
-            AlternateAnimation = 0x00000001, // Animations will go back and forth instead of loop
+            WaveAnimation = 0x00000001, // Animations will go back and forth instead of loop cyclic
             BlockSight = 0x00000002, // TODO: this should be considered for 2D monsters
             Background = 0x00000004,
-            Floor = 0x00000008, // TODO: Is this also true for 2D?
-            RandomAnimationStart = 0x00000010, // Most likely random animation start
+            Floor = 0x00000008, // Only for 3D objects
+            RandomAnimationStart = 0x00000010, // Only randomly trigger the animation from time to time
             UseBackgroundTileFlags = 0x00000020,
             BringToFront = 0x00000040,
             BlockAllMovement = 0x00000080,
+            // On non-world maps this and the below AllowMovement values are just arbitrary collision classes
+            // which can be used by 3D chars (the player always has this first class on non-world maps).
             AllowMovementWalk = 0x00000100,
-            AllowMovementHorse = 0x00000200, // In 3D this means "AllowMovementMonster"
+            AllowMovementHorse = 0x00000200,
             AllowMovementRaft = 0x00000400,
             AllowMovementShip = 0x00000800,
             AllowMovementMagicalDisc = 0x00001000,
@@ -32,8 +34,8 @@ namespace Ambermoon.Data
             AllowMovementUnused14 = 0x00200000,
             AllowMovementUnused15 = 0x00400000,
             PlayerInvisible = 0x04000000,
-            AutoPoison = 0x08000000, // Most likely auto-poisoning (you can dodge the trap with LUK but there will be no popup). It only poisons while the animation is active.
-            Transparency = Floor,
+            AutoPoison = 0x08000000, // Auto-poisoning (you can dodge the trap with LUK but there will be no popup). It only poisons while the animation is active.
+            Transparency = Floor, // Only for 3D walls
             AllowMovementMonster = AllowMovementHorse
         }
 

@@ -12,6 +12,7 @@ namespace Ambermoon.Data.Legacy
 
         public IReadOnlyList<Map> Maps => maps.Values.ToList();
         public IReadOnlyList<Labdata> Labdata => labdata.Values.ToList();
+        public IReadOnlyList<Tileset> Tilesets => tilesets.Values.ToList();
 
         public MapManager(ILegacyGameData gameData, IMapReader mapReader, ITilesetReader tilesetReader, ILabdataReader labdataReader, bool stopAtFirstError)
         {

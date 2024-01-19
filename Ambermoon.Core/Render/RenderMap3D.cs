@@ -1403,7 +1403,7 @@ namespace Ambermoon.Render
             UpdateCharacterSurfaceCoordinates(initialPosition, mapObject, objectPosition);
             mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
             var mapCharacter = new MapCharacter(game, this, mapObject, characterIndex, characterReference,
-                objectPosition, objectInfo.TextureIndex, parent, objectInfo.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation),
+                objectPosition, objectInfo.TextureIndex, parent, objectInfo.Flags.HasFlag(Tileset.TileFlags.WaveAnimation),
                 objectInfo.NumAnimationFrames, 8.0f);
             mapCharacter.Active = !game.CurrentSavegame.GetCharacterBit(Map.Index, characterIndex);
             if (mapCharacter.Active)
@@ -1462,7 +1462,7 @@ namespace Ambermoon.Render
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true;
                 objects.SafeAdd(blockIndex, new MapObject(this, mapObject, objectInfo.TextureIndex,
-                    objectInfo.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation), objectInfo.NumAnimationFrames, 8.0f));
+                    objectInfo.Flags.HasFlag(Tileset.TileFlags.WaveAnimation), objectInfo.NumAnimationFrames, 8.0f));
 
                 // Small objects should not block
                 if (objectInfo.MappedTextureWidth >= BlockSize / 5)

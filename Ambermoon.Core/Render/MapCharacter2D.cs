@@ -308,7 +308,7 @@ namespace Ambermoon.Render
 
             Update(ticks, gameTime, out bool maxFrameReached);
 
-            if (maxFrameReached && characterReference.TileFlags.HasFlag(Tileset.TileFlags.AlternateAnimation))
+            if (maxFrameReached && characterReference.TileFlags.HasFlag(Tileset.TileFlags.WaveAnimation))
                 animateForward = !animateForward;
 
             if (!animateForward)

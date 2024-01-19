@@ -1,13 +1,15 @@
 ﻿using Ambermoon.Data.Serialization;
+using System.ComponentModel.DataAnnotations;
 
-namespace Ambermoon.Data.GameDataRepository.Entities
+namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public class MapTile2DEntity : IEntity<Map.Tile>, IBackConversionEntity<Map.Tile>
+    public class MapTile2DData : IData
     {
         private uint _frontTileIndex = 0;
         private uint _backTileIndex = 0;
         private uint _mapEventId = 0;
 
+        [Range(0, ushort.MaxValue)]
         public uint FrontTileIndex
         {
             get => _frontTileIndex;
@@ -19,6 +21,7 @@ namespace Ambermoon.Data.GameDataRepository.Entities
                 _frontTileIndex = value;
             }
         }
+        [Range(0, byte.MaxValue)]
         public uint BackTileIndex
         {
             get => _backTileIndex;
@@ -30,6 +33,8 @@ namespace Ambermoon.Data.GameDataRepository.Entities
                 _backTileIndex = value;
             }
         }
+        // TODO: The original states that 64 is max. But I guess we already have working maps with more? Needs testing/verification.
+        [Range(0, byte.MaxValue)]
         public uint MapEventId
         {
             get => _mapEventId;
@@ -42,17 +47,24 @@ namespace Ambermoon.Data.GameDataRepository.Entities
             }
         }
 
+        /// <summary>
+        /// Determines if the map tile contains a map event.
+        /// </summary>
         public bool HasMapEvent => MapEventId != 0;
 
-        public static MapTile2DEntity Empty => new();
+        /// <summary>
+        /// Default empty 2D map tile.
+        /// </summary>
+        public static MapTile2DData Empty => new();
 
-        public static IEntity Deserialize(IDataReader dataReader, IGameData gameData)
+        /// <inheritdoc/>
+        public static IData Deserialize(IDataReader dataReader, bool advanced)
         {
             var backTileIndex = dataReader.ReadByte();
             var mapEventId = dataReader.ReadByte();
             var frontTileIndex = dataReader.ReadWord();
 
-            return new MapTile2DEntity
+            return new MapTile2DData
             {
                 BackTileIndex = backTileIndex,
                 FrontTileIndex = frontTileIndex,
@@ -60,31 +72,12 @@ namespace Ambermoon.Data.GameDataRepository.Entities
             };
         }
 
-        public void Serialize(IDataWriter dataWriter, IGameData gameData)
+        /// <inheritdoc/>
+        public void Serialize(IDataWriter dataWriter, bool advanced)
         {
             dataWriter.Write((byte)BackTileIndex);
             dataWriter.Write((byte)MapEventId);
             dataWriter.Write((ushort)FrontTileIndex);
-        }
-
-        public static IEntity<Map.Tile> FromGameObject(Map.Tile gameObject, IGameData gameData)
-        {
-            return new MapTile2DEntity
-            {
-                BackTileIndex = gameObject.BackTileIndex,
-                FrontTileIndex = gameObject.FrontTileIndex,
-                MapEventId = gameObject.MapEventId
-            };
-        }
-
-        public Map.Tile ToGameObject(IGameData gameData)
-        {
-            return new Map.Tile
-            {
-                BackTileIndex = BackTileIndex,
-                FrontTileIndex = FrontTileIndex,
-                MapEventId = MapEventId
-            };
         }
     }
 }

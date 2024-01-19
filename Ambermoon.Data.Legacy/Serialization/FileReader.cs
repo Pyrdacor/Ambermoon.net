@@ -70,6 +70,9 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public IFileContainer ReadFile(string name, IDataReader reader)
         {
+            if (reader.Size == 0)
+                return new FileContainer {  Name = name, Files = new Dictionary<int, IDataReader>(), FileType = FileType.None };
+
             var header = reader.ReadDword();
             var fileType = ((header & 0xffff0000) == (uint)FileType.JH) ? FileType.JH : (FileType)header;
             var fileInfo = new FileInfo { FileType = fileType };
