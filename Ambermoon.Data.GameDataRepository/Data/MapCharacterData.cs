@@ -222,6 +222,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// </summary>
         public uint? CombatBackgroundIndex { get; private set; }
 
+        public static MapCharacterData Create(DictionaryList<MapCharacterData> list, uint? index)
+        {
+            var mapCharacterData = new MapCharacterData { Index = index ?? list.Keys.Max() + 1 };
+            list.Add(mapCharacterData);
+            return mapCharacterData;
+        }
+
         /// <inheritdoc/>
         public void Serialize(IDataWriter dataWriter, bool advanced)
         {

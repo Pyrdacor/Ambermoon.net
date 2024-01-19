@@ -1,4 +1,5 @@
-﻿using Ambermoon.Data.Serialization;
+﻿using Ambermoon.Data.GameDataRepository.Util;
+using Ambermoon.Data.Serialization;
 using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
@@ -7,6 +8,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
     {
         private uint _age = 1;
         private uint _maxAge = 1;
+
+        public static NpcData Create(DictionaryList<NpcData> list, uint? index)
+        {
+            var npcData = new NpcData { Index = index ?? list.Keys.Max() + 1 };
+            list.Add(npcData);
+            return npcData;
+        }
 
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {

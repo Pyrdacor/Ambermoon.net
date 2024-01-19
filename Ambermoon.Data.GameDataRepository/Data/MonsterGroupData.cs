@@ -9,6 +9,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public TwoDimensionalData<uint> MonsterIndices { get; } = new(6, 3);
 
+        public static MonsterGroupData Create(DictionaryList<MonsterGroupData> list, uint? index)
+        {
+            var monsterGroupData = new MonsterGroupData { Index = index ?? list.Keys.Max() + 1 };
+            list.Add(monsterGroupData);
+            return monsterGroupData;
+        }
+
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {
             var monsterGroupData = (MonsterGroupData)Deserialize(dataReader, advanced);

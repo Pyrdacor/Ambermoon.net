@@ -55,6 +55,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
             Tiles3D?.Resize(width, height, () => MapTile3DData.Empty);
         }
 
+        public static MapData Create(DictionaryList<MapData> list, uint? index)
+        {
+            var mapData = new MapData { Index = index ?? list.Keys.Max() + 1 };
+            list.Add(mapData);
+            return mapData;
+        }
+
         /// <inheritdoc/>
         public static IData Deserialize(IDataReader dataReader, bool advanced)
         {

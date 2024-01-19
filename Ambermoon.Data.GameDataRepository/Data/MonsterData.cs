@@ -61,6 +61,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
         private readonly Animation[] _animations = new Animation[8];
         private readonly MonsterAnimationProgression[] _animationProgressions = new MonsterAnimationProgression[8];
 
+        public static MonsterData Create(DictionaryList<MonsterData> list, uint? index)
+        {
+            var monsterData = new MonsterData { Index = index ?? list.Keys.Max() + 1 };
+            list.Add(monsterData);
+            return monsterData;
+        }
+
         #region Serialization
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {

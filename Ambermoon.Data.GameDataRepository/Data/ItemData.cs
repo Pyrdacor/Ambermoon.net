@@ -1,10 +1,18 @@
-﻿using Ambermoon.Data.Serialization;
+﻿using Ambermoon.Data.GameDataRepository.Util;
+using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
     public class ItemData : IIndexedData
     {
         public uint Index { get; private set; }
+
+        public static ItemData Create(DictionaryList<ItemData> list, uint? index)
+        {
+            var itemData = new ItemData { Index = index ?? list.Keys.Max() + 1 };
+            list.Add(itemData);
+            return itemData;
+        }
 
         // TODO
 
