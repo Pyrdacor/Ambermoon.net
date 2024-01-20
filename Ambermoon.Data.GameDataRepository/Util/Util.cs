@@ -6,6 +6,17 @@ namespace Ambermoon.Data.GameDataRepository.Util
 {
     internal static class Util
     {
+        public static CharacterValue Copy(CharacterValue value)
+        {
+            return new()
+            {
+                CurrentValue = value.CurrentValue,
+                MaxValue = value.MaxValue,
+                BonusValue = value.BonusValue,
+                StoredValue = value.StoredValue,
+            };
+        }
+
         public static T EnsureValue<T>(T? value, [CallerArgumentExpression(nameof(value))] string? name = null) where T : struct
         {
             return value ?? throw new NullReferenceException($"{name} is null.");

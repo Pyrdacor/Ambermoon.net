@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public class ItemSlotData : IIndexedData
+    public class ItemSlotData : IIndexed, IMutableIndex, IIndexedData, IEquatable<ItemSlotData>
     {
         public const uint UnlimitedAmount = byte.MaxValue;
         private uint _amount = 0;
@@ -11,7 +11,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
         private uint _numRecharges = 0;
         private uint _itemIndex = 0;
 
-        public uint Index { get; private set; }
+        uint IMutableIndex.Index
+        {
+            get;
+            set;
+        }
+
+        public uint Index => (this as IMutableIndex).Index;
 
         [Range(0, byte.MaxValue)]
         public uint Amount
@@ -70,7 +76,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {
             var itemSlotData = (ItemSlotData)Deserialize(dataReader, advanced);
-            itemSlotData.Index = index;
+            (itemSlotData as IMutableIndex).Index = index;
             return itemSlotData;
         }
 
@@ -85,6 +91,37 @@ namespace Ambermoon.Data.GameDataRepository.Data
             itemSlotData.ItemIndex = dataReader.ReadWord();
 
             return itemSlotData;
+        }
+
+        public ItemSlotData Copy()
+        {
+            ItemSlotData copy = new()
+            {
+                Amount = Amount,
+                NumberOfRemainingCharges = NumberOfRemainingCharges,
+                NumberOfRecharges = NumberOfRecharges,
+                Flags = Flags,
+                ItemIndex = ItemIndex
+            };
+
+            (copy as IMutableIndex).Index = Index;
+
+            return copy;
+        }
+
+        public object Clone() => Copy();
+
+        public bool Equals(ItemSlotData? other)
+        {
+            if (other is null)
+                return false;
+
+            return
+                other.Amount == Amount &&
+                other.NumberOfRemainingCharges == NumberOfRemainingCharges &&
+                other.NumberOfRecharges == NumberOfRecharges &&
+                other.Flags == Flags &&
+                other.ItemIndex == ItemIndex;
         }
 
         public void Serialize(IDataWriter dataWriter, bool advanced)

@@ -1,8 +1,11 @@
 ﻿using Ambermoon.Data.Serialization;
+using System;
+using System.Collections;
+using System.ComponentModel;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public interface IData
+    public interface IData : ICloneable
     {
         /// <summary>
         /// Serializes the data to a data writer.
@@ -24,12 +27,17 @@ namespace Ambermoon.Data.GameDataRepository.Data
     /// This serves as a general interface for indexed data
     /// but without the requirement for specific serialization.
     /// </summary>
-    public interface IIndexed
+    public interface IIndexed : ICloneable
     {
         /// <summary>
         /// Index of the data.
         /// </summary>
         uint Index { get; }
+    }
+
+    internal interface IMutableIndex
+    {
+        uint Index { get;  set; }
     }
 
     /// <summary>
@@ -59,7 +67,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
     /// <summary>
     /// Data which is dependent on some other data to be deserialized.
     /// </summary>
-    public interface IDependentData<T> where T : IData
+    public interface IDependentData<T> : ICloneable where T : IData
     {
         /// <summary>
         /// Serializes the data to a data writer.

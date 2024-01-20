@@ -1,25 +1,48 @@
 ﻿using Ambermoon.Data.GameDataRepository.Util;
 using Ambermoon.Data.Serialization;
+using static Ambermoon.Data.Map.CharacterReference;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public class MonsterGroupData : IIndexedData
+    public class MonsterGroupData : IIndexed, IMutableIndex, IIndexedData, IEquatable<MonsterGroupData>
     {
-        public uint Index { get; private set; }
+        uint IMutableIndex.Index
+        {
+            get;
+            set;
+        }
+
+        public uint Index => (this as IMutableIndex).Index;
 
         public TwoDimensionalData<uint> MonsterIndices { get; } = new(6, 3);
 
-        public static MonsterGroupData Create(DictionaryList<MonsterGroupData> list, uint? index)
+        public MonsterGroupData Copy()
         {
-            var monsterGroupData = new MonsterGroupData { Index = index ?? list.Keys.Max() + 1 };
-            list.Add(monsterGroupData);
-            return monsterGroupData;
+            MonsterGroupData copy = new();
+
+            (copy as IMutableIndex).Index = Index;
+
+            for (int i = 0; i < MonsterIndices.Count; i++)
+                copy.MonsterIndices[i] = MonsterIndices[i];
+
+            return copy;
+        }
+
+        public object Clone() => Copy();
+
+        public bool Equals(MonsterGroupData? other)
+        {
+            if (other is null)
+                return false;
+
+            return !MonsterIndices.Select((item, index) => new { Item = item, Index = index })
+                .Any(entry => other.MonsterIndices[entry.Index] != entry.Item);
         }
 
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {
             var monsterGroupData = (MonsterGroupData)Deserialize(dataReader, advanced);
-            monsterGroupData.Index = index;
+            (monsterGroupData as IMutableIndex).Index = index;
             return monsterGroupData;
         }
 

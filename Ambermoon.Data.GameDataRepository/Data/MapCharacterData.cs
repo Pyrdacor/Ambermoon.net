@@ -28,12 +28,18 @@ namespace Ambermoon.Data.GameDataRepository.Data
         Path
     }
 
-    public class MapCharacterData : IIndexedDependentData<MapData>
+    public class MapCharacterData : IIndexed, IMutableIndex, IIndexedDependentData<MapData>, IEquatable<MapCharacterData>
     {
         private uint _collisionClass = 0;
         private uint _blockedCollisionClasses = 0;
 
-        public uint Index { get; private set; }
+        uint IMutableIndex.Index
+        {
+            get;
+            set;
+        }
+
+        public uint Index => (this as IMutableIndex).Index;
 
         public uint? PartyMemberIndex { get; private set; }
 
@@ -222,11 +228,21 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// </summary>
         public uint? CombatBackgroundIndex { get; private set; }
 
-        public static MapCharacterData Create(DictionaryList<MapCharacterData> list, uint? index)
+        public MapCharacterData Copy()
         {
-            var mapCharacterData = new MapCharacterData { Index = index ?? list.Keys.Max() + 1 };
-            list.Add(mapCharacterData);
-            return mapCharacterData;
+            // TODO
+            return new();
+        }
+
+        public object Clone() => Copy();
+
+        public bool Equals(MapCharacterData? other)
+        {
+            if (other is null)
+                return false;
+
+            // TODO
+            return false;
         }
 
         /// <inheritdoc/>

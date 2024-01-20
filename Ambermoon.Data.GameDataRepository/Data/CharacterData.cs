@@ -3,12 +3,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public abstract class CharacterData : IIndexed
+    public abstract class CharacterData : IIndexed, IMutableIndex
     {
         private string _name = string.Empty;
-        private uint _level = 1;     
+        private uint _level = 1;
 
-        public uint Index { get; private protected set; }
+        uint IMutableIndex.Index
+        {
+            get;
+            set;
+        }
+
+        public uint Index => (this as IMutableIndex).Index;
 
         [StringLength(15)]
         public string Name
@@ -49,5 +55,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 _level = value;
             }
         }
+
+        public abstract object Clone();
     }
 }

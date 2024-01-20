@@ -2,6 +2,8 @@
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using static Ambermoon.Data.Monster;
 
@@ -49,7 +51,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         Wave
     }
 
-    public class MonsterData : BattleCharacterData, IIndexedData
+    public class MonsterData : BattleCharacterData, IIndexedData, IEquatable<MonsterData>
     {
         private uint _morale = 0;
         private uint _defeatExperience = 0;
@@ -61,18 +63,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
         private readonly Animation[] _animations = new Animation[8];
         private readonly MonsterAnimationProgression[] _animationProgressions = new MonsterAnimationProgression[8];
 
-        public static MonsterData Create(DictionaryList<MonsterData> list, uint? index)
-        {
-            var monsterData = new MonsterData { Index = index ?? list.Keys.Max() + 1 };
-            list.Add(monsterData);
-            return monsterData;
-        }
-
         #region Serialization
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {
             var monsterData = (MonsterData)Deserialize(dataReader, advanced);
-            monsterData.Index = index;
+            (monsterData as IMutableIndex).Index = index;
             return monsterData;
         }
 
@@ -365,6 +360,75 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 return (byte)frameIndex;
             }).ToArray();
             animation.UsedAmount = frameIndices.Length;
+        }
+
+        public MonsterData Copy()
+        {
+            MonsterData copy = new()
+            {
+                Gender = Gender,
+                Race = Race,
+                Class = Class,
+                SpellMastery = SpellMastery,
+                Level = Level,
+                CombatGraphicIndex = CombatGraphicIndex,
+                Morale = Morale,
+                SpellTypeImmunity = SpellTypeImmunity,
+                AttacksPerRound = AttacksPerRound,
+                BattleFlags = BattleFlags,
+                Element = Element,
+                Gold = Gold,
+                Food = Food,
+                Conditions = Conditions,
+                DefeatExperience = DefeatExperience,
+                BonusSpellDamage = BonusSpellDamage,
+                BonusMaxSpellDamage = BonusMaxSpellDamage,
+                BonusSpellDamageReduction = BonusSpellDamageReduction,
+                BonusSpellDamagePercentage = BonusSpellDamagePercentage,
+                BaseDefense = BaseDefense,
+                BaseAttackDamage = BaseAttackDamage,
+                MagicAttackLevel = MagicAttackLevel,
+                MagicDefenseLevel = MagicDefenseLevel,
+                LearnedSpellsHealing = LearnedSpellsHealing,
+                LearnedSpellsAlchemistic = LearnedSpellsAlchemistic,
+                LearnedSpellsMystic = LearnedSpellsMystic,
+                LearnedSpellsDestruction = LearnedSpellsDestruction,
+                LearnedSpellsType5 = LearnedSpellsType5,
+                LearnedSpellsType6 = LearnedSpellsType6,
+                LearnedSpellsFunctional = LearnedSpellsFunctional,
+                Name = Name
+
+                // TODO: _equipment
+                // TODO: _items
+
+                // TODO: Monster Display Data
+            };
+
+            for (int i = 0; i < 8; i++)
+                copy.Attributes[(Attribute)i] = Util.Util.Copy(Attributes[(Attribute)i]);
+            for (int i = 0; i < 10; i++)
+                copy.Skills[(Skill)i] = Util.Util.Copy(Skills[(Skill)i]);
+            copy.HitPoints.CurrentValue = HitPoints.CurrentValue;
+            copy.HitPoints.MaxValue = HitPoints.MaxValue;
+            copy.HitPoints.BonusValue = HitPoints.BonusValue;
+            copy.SpellPoints.CurrentValue = SpellPoints.CurrentValue;
+            copy.SpellPoints.MaxValue = SpellPoints.MaxValue;
+            copy.SpellPoints.BonusValue = SpellPoints.BonusValue;
+
+            (copy as IMutableIndex).Index = Index;
+
+            return copy;
+        }
+
+        public override object Clone() => Copy();
+
+        public bool Equals(MonsterData? other)
+        {
+            if (other is null)
+                return false;
+
+            // TODO
+            return false;
         }
         #endregion
 

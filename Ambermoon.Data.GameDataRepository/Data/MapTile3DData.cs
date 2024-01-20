@@ -23,7 +23,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         Invalid
     }
 
-    public class MapTile3DData : IData
+    public class MapTile3DData : IData, IEquatable<MapTile3DData>
     {
         private uint _mapEventId = 0;
 
@@ -52,6 +52,31 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// Default empty 3D map tile.
         /// </summary>
         public static MapTile3DData Empty => new() { MapBlockType = MapBlockType.Free };
+
+        public MapTile3DData Copy()
+        {
+            return new()
+            {
+                WallIndex = WallIndex,
+                ObjectIndex = ObjectIndex,
+                MapBlockType = MapBlockType,
+                MapEventId = MapEventId
+            };
+        }
+
+        public object Clone() => Copy();
+
+        public bool Equals(MapTile3DData? other)
+        {
+            if (other is null)
+                return false;
+
+            return
+                WallIndex == other.WallIndex &&
+                ObjectIndex == other.ObjectIndex &&
+                MapBlockType == other.MapBlockType &&
+                MapEventId == other.MapEventId;
+        }
 
         /// <summary>
         /// Sets this map block to become a wall.

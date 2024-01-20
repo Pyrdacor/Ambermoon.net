@@ -216,7 +216,7 @@ namespace Ambermoon.Data.GameDataRepository
         }
 
         private static IEnumerable<IGrouping<int, T>> GroupMapRelatedEntities<T>(DictionaryList<T> mapRelatedEntities)
-            where T : IIndexed
+            where T : IIndexed, new()
         {
             return mapRelatedEntities.GroupBy(mapRelatedEntity=> mapRelatedEntity.Index switch
             {

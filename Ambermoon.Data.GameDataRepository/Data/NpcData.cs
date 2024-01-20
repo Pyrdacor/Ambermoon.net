@@ -4,16 +4,25 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public class NpcData : CharacterData, IConversationCharacter, IIndexedData
+    public class NpcData : CharacterData, IConversationCharacter, IIndexedData, IEquatable<NpcData>
     {
         private uint _age = 1;
         private uint _maxAge = 1;
 
-        public static NpcData Create(DictionaryList<NpcData> list, uint? index)
+        public NpcData Copy()
         {
-            var npcData = new NpcData { Index = index ?? list.Keys.Max() + 1 };
-            list.Add(npcData);
-            return npcData;
+            return new(); // TODO
+        }
+
+        public override object Clone() => Copy();
+
+        public bool Equals(NpcData? other)
+        {
+            if (other is null)
+                return false;
+
+            // TODO
+            return false;
         }
 
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)

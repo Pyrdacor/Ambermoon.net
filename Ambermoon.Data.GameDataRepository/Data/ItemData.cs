@@ -3,23 +3,38 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public class ItemData : IIndexedData
+    public class ItemData : IIndexed, IMutableIndex, IIndexedData, IEquatable<ItemData>
     {
-        public uint Index { get; private set; }
+        // TODO
 
-        public static ItemData Create(DictionaryList<ItemData> list, uint? index)
+        uint IMutableIndex.Index
         {
-            var itemData = new ItemData { Index = index ?? list.Keys.Max() + 1 };
-            list.Add(itemData);
-            return itemData;
+            get;
+            set;
         }
 
-        // TODO
+        public uint Index => (this as IMutableIndex).Index;
+
+        public ItemData Copy()
+        {
+            return new(); // TODO
+        }
+
+        public object Clone() => Copy();
+
+        public bool Equals(ItemData? other)
+        {
+            if (other is null)
+                return false;
+
+            // TODO
+            return false;
+        }
 
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {
             var itemData = (ItemData)Deserialize(dataReader, advanced);
-            itemData.Index = index;
+            (itemData as IMutableIndex).Index = index;
             return itemData;
         }
 

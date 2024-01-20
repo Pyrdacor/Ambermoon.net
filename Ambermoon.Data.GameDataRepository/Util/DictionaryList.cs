@@ -6,7 +6,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
     using Data;
 
     public class DictionaryList<T> : ICollection<T>, IEnumerable<T>, IEnumerable, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>, ICollection, IList
-        where T : IIndexed
+        where T : IIndexed, new()
     {
         private readonly List<T> _list;
         private readonly Dictionary<uint, T> _dictionary;
@@ -81,6 +81,26 @@ namespace Ambermoon.Data.GameDataRepository.Util
         {
             _list = new(enumerable);
             _dictionary = _list.ToDictionary(item => item.Index, Item => Item);
+        }
+
+        public T Create(uint? index = null)
+        {
+            T obj = new();
+            if (obj is IMutableIndex mutable)
+                mutable.Index = index ?? Keys.Max() + 1;
+            else
+                throw new InvalidOperationException($"Unable to create objects of type {typeof(T)}.");
+            return obj;
+        }
+
+        public T CreateClone(T source, uint? index = null)
+        {
+            var obj = (T)source.Clone();
+            if (obj is IMutableIndex mutable)
+                mutable.Index = index ?? Keys.Max() + 1;
+            else
+                throw new InvalidOperationException($"Unable to create objects of type {typeof(T)}.");
+            return obj;
         }
 
         public void Add(T item)
@@ -166,6 +186,6 @@ namespace Ambermoon.Data.GameDataRepository.Util
 
     public static class DictionaryListExtensions
     {
-        public static DictionaryList<T> ToDictionaryList<T>(this IEnumerable<T> enumerable) where T : IIndexed => new DictionaryList<T>(enumerable);
+        public static DictionaryList<T> ToDictionaryList<T>(this IEnumerable<T> enumerable) where T : IIndexed, new() => new DictionaryList<T>(enumerable);
     }
 }

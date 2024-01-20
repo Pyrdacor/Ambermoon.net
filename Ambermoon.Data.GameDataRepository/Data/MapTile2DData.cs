@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public class MapTile2DData : IData
+    public class MapTile2DData : IData, IEquatable<MapTile2DData>
     {
         private uint _frontTileIndex = 0;
         private uint _backTileIndex = 0;
@@ -56,6 +56,29 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// Default empty 2D map tile.
         /// </summary>
         public static MapTile2DData Empty => new();
+
+        public MapTile2DData Copy()
+        {
+            return new()
+            {
+                BackTileIndex = BackTileIndex,
+                MapEventId = MapEventId,
+                FrontTileIndex = FrontTileIndex
+            };
+        }
+
+        public object Clone() => Copy();
+
+        public bool Equals(MapTile2DData? other)
+        {
+            if (other is null)
+                return false;
+
+            return
+                BackTileIndex == other.BackTileIndex &&
+                MapEventId == other.MapEventId &&
+                FrontTileIndex == other.FrontTileIndex;
+        }
 
         /// <inheritdoc/>
         public static IData Deserialize(IDataReader dataReader, bool advanced)

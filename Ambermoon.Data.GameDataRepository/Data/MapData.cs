@@ -5,9 +5,15 @@ namespace Ambermoon.Data.GameDataRepository.Data
     using Ambermoon.Data.Legacy.Serialization;
     using Util;
 
-    public class MapData : IIndexedData
+    public class MapData : IIndexed, IMutableIndex, IIndexedData, IEquatable<MapData>
     {
-        public uint Index { get; private set; }
+        uint IMutableIndex.Index
+        {
+            get;
+            set;
+        }
+
+        public uint Index => (this as IMutableIndex).Index;
 
         public MapType Type { get; private set; }
 
@@ -55,11 +61,20 @@ namespace Ambermoon.Data.GameDataRepository.Data
             Tiles3D?.Resize(width, height, () => MapTile3DData.Empty);
         }
 
-        public static MapData Create(DictionaryList<MapData> list, uint? index)
+        public MapData Copy()
         {
-            var mapData = new MapData { Index = index ?? list.Keys.Max() + 1 };
-            list.Add(mapData);
-            return mapData;
+            return new(); // TODO
+        }
+
+        public object Clone() => Copy();
+
+        public bool Equals(MapData? other)
+        {
+            if (other is null)
+                return false;
+
+            // TODO
+            return false;
         }
 
         /// <inheritdoc/>
@@ -167,7 +182,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {
             var mapEntity = (MapData)Deserialize(dataReader, advanced);
-            mapEntity.Index = index;
+            (mapEntity as IMutableIndex).Index = index;
             return mapEntity;
         }
     }
