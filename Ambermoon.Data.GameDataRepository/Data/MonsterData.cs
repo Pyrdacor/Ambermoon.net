@@ -1,9 +1,5 @@
 ﻿using Ambermoon.Data.GameDataRepository.Util;
-using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using static Ambermoon.Data.Monster;
 
@@ -53,6 +49,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
     public class MonsterData : BattleCharacterData, IIndexedData, IEquatable<MonsterData>
     {
+
+        #region Fields
+
         private uint _morale = 0;
         private uint _defeatExperience = 0;
         private uint _combatGraphicIndex = 0;
@@ -63,138 +62,139 @@ namespace Ambermoon.Data.GameDataRepository.Data
         private readonly Animation[] _animations = new Animation[8];
         private readonly MonsterAnimationProgression[] _animationProgressions = new MonsterAnimationProgression[8];
 
+        #endregion
+
+
+        #region Properties
+
+        public override CharacterType Type => CharacterType.Monster;
+        [Range(0, byte.MaxValue)]
+        public uint CombatGraphicIndex
+        {
+            get => _combatGraphicIndex;
+            private set
+            {
+                if (value > byte.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(CombatGraphicIndex), $"Combat graphic index is limited to the range 0 to {byte.MaxValue}.");
+
+                _combatGraphicIndex = value;
+            }
+        }
+        [Range(0, 100)]
+        public uint Morale
+        {
+            get => _morale;
+            set
+            {
+                if (value > 100)
+                    throw new ArgumentOutOfRangeException(nameof(Morale), "Morale is limited to the range 0 to 100.");
+
+                _morale = value;
+            }
+        }
+        [Range(0, ushort.MaxValue)]
+        public uint DefeatExperience
+        {
+            get => _defeatExperience;
+            set
+            {
+                if (value > ushort.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(DefeatExperience), $"Defeat experience is limited to the range 0 to {ushort.MaxValue}.");
+
+                _defeatExperience = value;
+            }
+        }
+        public byte[] CustomPalette { get; set; } = new byte[32];
+        [Range(0, ushort.MaxValue)]
+        public uint OriginalFrameWidth
+        {
+            get => _originalFrameWidth;
+            set
+            {
+                if (value > ushort.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(OriginalFrameWidth), $"Original frame width is limited to the range 0 to {ushort.MaxValue}.");
+
+                _originalFrameWidth = value;
+            }
+        }
+        [Range(0, ushort.MaxValue)]
+        public uint OriginalFrameHeight
+        {
+            get => _originalFrameHeight;
+            set
+            {
+                if (value > ushort.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(OriginalFrameHeight), $"Original frame height is limited to the range 0 to {ushort.MaxValue}.");
+
+                _originalFrameHeight = value;
+            }
+        }
+        [Range(0, ushort.MaxValue)]
+        public uint DisplayFrameWidth
+        {
+            get => _displayFrameWidth;
+            set
+            {
+                if (value > ushort.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(DisplayFrameWidth), $"Display frame width is limited to the range 0 to {ushort.MaxValue}.");
+
+                _displayFrameWidth = value;
+            }
+        }
+        [Range(0, ushort.MaxValue)]
+        public uint DisplayFrameHeight
+        {
+            get => _displayFrameHeight;
+            set
+            {
+                if (value > ushort.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(DisplayFrameHeight), $"Display frame height is limited to the range 0 to {ushort.MaxValue}.");
+
+                _displayFrameHeight = value;
+            }
+        }
+
+        #endregion
+
+
+        #region Methods
+
+        public void SetCombatGraphic([Range(0, byte.MaxValue)] uint index,
+            [Range(0, ushort.MaxValue)] uint originalFrameWidth, [Range(0, ushort.MaxValue)] uint originalFrameHeight,
+            [Range(0, ushort.MaxValue)] uint displayFrameWidth, [Range(0, ushort.MaxValue)] uint displayFrameHeight)
+        {
+            CombatGraphicIndex = index;
+            OriginalFrameWidth = originalFrameWidth;
+            OriginalFrameHeight = originalFrameHeight;
+            DisplayFrameWidth = displayFrameWidth;
+            DisplayFrameHeight = displayFrameHeight;
+        }
+
+        public uint[] GetAnimationFrames(MonsterAnimation monsterAnimation)
+        {
+            var animation = _animations[(int)monsterAnimation];
+            return animation.FrameIndices.Take(Math.Min(32, animation.UsedAmount)).Select(f => (uint)f).ToArray();
+        }
+
+        public void SetAnimationFrames(MonsterAnimation monsterAnimation, uint[] frameIndices)
+        {
+            if (frameIndices.Length > 32)
+                throw new ArgumentOutOfRangeException(nameof(frameIndices), "Only 32 frames are possible.");
+
+            var animation = _animations[(int)monsterAnimation];
+            animation.FrameIndices = frameIndices.Select(frameIndex =>
+            {
+                if (frameIndex > byte.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(frameIndices), $"A frame index must not be larger than {byte.MaxValue}.");
+                return (byte)frameIndex;
+            }).ToArray();
+            animation.UsedAmount = frameIndices.Length;
+        }
+
+        #endregion
+
+
         #region Serialization
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
-        {
-            var monsterData = (MonsterData)Deserialize(dataReader, advanced);
-            (monsterData as IMutableIndex).Index = index;
-            return monsterData;
-        }
-
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
-        {
-            if (dataReader.ReadByte() != (byte)CharacterType.Monster)
-                throw new InvalidDataException("The given data is no valid monster data.");
-
-            void SkipBytes(int amount) => dataReader.Position += amount;
-
-            var monsterData = new MonsterData();
-
-            monsterData.Gender = (Gender)dataReader.ReadByte();
-            monsterData.Race = (Race)dataReader.ReadByte();
-            monsterData.Class = (Class)dataReader.ReadByte();
-            monsterData.SpellMastery = (SpellTypeMastery)dataReader.ReadByte();
-            monsterData.Level = dataReader.ReadByte();
-            SkipBytes(6);
-            monsterData.CombatGraphicIndex = dataReader.ReadByte();
-            SkipBytes(2);
-            monsterData.Morale = dataReader.ReadByte();
-            monsterData.SpellTypeImmunity = (SpellTypeImmunity)dataReader.ReadByte();
-            monsterData.AttacksPerRound = dataReader.ReadByte();
-            monsterData.BattleFlags = (BattleFlags)dataReader.ReadByte();
-            monsterData.Element = (CharacterElement)dataReader.ReadByte();
-            SkipBytes(4);
-            monsterData.Gold = dataReader.ReadWord();
-            monsterData.Food = dataReader.ReadWord();
-            SkipBytes(2);
-            monsterData.Conditions = (Condition)dataReader.ReadWord();
-            monsterData.DefeatExperience = dataReader.ReadWord();
-            SkipBytes(8);
-            for (int i = 0; i < 8; i++)
-            {
-                var attribute = monsterData.Attributes[(Attribute)i];
-                attribute.CurrentValue = dataReader.ReadWord();
-                attribute.MaxValue = dataReader.ReadWord();
-                attribute.BonusValue = dataReader.ReadSignedWord();
-                attribute.StoredValue = dataReader.ReadWord();
-            }
-            SkipBytes(8);
-            if (advanced)
-            {
-                monsterData.BonusSpellDamage = dataReader.ReadWord();
-                monsterData.BonusMaxSpellDamage = dataReader.ReadWord();
-                monsterData.BonusSpellDamageReduction = dataReader.ReadSignedWord();
-                monsterData.BonusSpellDamagePercentage = dataReader.ReadSignedWord();
-            }
-            else
-            {
-                SkipBytes(8);
-            }
-            for (int i = 0; i < 10; i++)
-            {
-                var skill = monsterData.Skills[(Skill)i];
-                skill.CurrentValue = dataReader.ReadWord();
-                skill.MaxValue = dataReader.ReadWord();
-                skill.BonusValue = dataReader.ReadSignedWord();
-                skill.StoredValue = dataReader.ReadWord();
-            }
-            var hitPoints = monsterData.HitPoints;
-            hitPoints.CurrentValue = dataReader.ReadWord();
-            hitPoints.MaxValue = dataReader.ReadWord();
-            hitPoints.BonusValue = dataReader.ReadSignedWord();
-            var spellPoints = monsterData.SpellPoints;
-            spellPoints.CurrentValue = dataReader.ReadWord();
-            spellPoints.MaxValue = dataReader.ReadWord();
-            spellPoints.BonusValue = dataReader.ReadSignedWord();
-            monsterData.BaseDefense = dataReader.ReadWord();
-            int bonusDefense = dataReader.ReadSignedWord(); // TODO: check against equipment
-            monsterData.BaseAttackDamage = dataReader.ReadWord();
-            int bonusAttackDamage = dataReader.ReadSignedWord(); // TODO: check against equipment
-            monsterData.MagicAttackLevel = dataReader.ReadSignedWord();
-            monsterData.MagicDefenseLevel = dataReader.ReadSignedWord();
-            SkipBytes(16);
-            monsterData.LearnedSpellsHealing = dataReader.ReadDword();
-            monsterData.LearnedSpellsAlchemistic = dataReader.ReadDword();
-            monsterData.LearnedSpellsMystic = dataReader.ReadDword();
-            monsterData.LearnedSpellsDestruction = dataReader.ReadDword();
-            monsterData.LearnedSpellsType5 = dataReader.ReadDword();
-            monsterData.LearnedSpellsType6 = dataReader.ReadDword();
-            monsterData.LearnedSpellsFunctional = dataReader.ReadDword();
-            SkipBytes(4);
-            monsterData.Name = dataReader.ReadString(16).TrimEnd('\0', ' ');
-
-            #region Equipment and Items
-            monsterData._equipment = DataCollection<ItemSlotData>.Deserialize(dataReader, EquipmentSlotCount, advanced);
-            monsterData._items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, advanced);
-
-            // TODO
-            /*uint calculatedBonusDefense = Util.Util.CalculateItemPropertySum(monsterData._equipment, index => ItemManager.GetItem(index), item => item.Defense);
-            uint calculatedBonusAttackDamage = Util.Util.CalculateItemPropertySum(monsterData._equipment, index => ItemManager.GetItem(index), item => item.Damage);
-            if (bonusDefense != calculatedBonusDefense)
-                throw new InvalidDataException("Invalid monster data. Wrong stored bonus defense.");
-            if (bonusAttackDamage != calculatedBonusAttackDamage)
-                throw new InvalidDataException("Invalid monster data. Wrong stored bonus attack damage.");*/
-            #endregion
-
-            #region Monster Display Data
-            var allFrameIndices = dataReader.ReadBytes(256); // 8 * 32
-            var frameCounts = dataReader.ReadBytes(8);
-            for (int i = 0; i < 8; i++)
-            {
-                var animation = monsterData._animations[i] = new Animation();
-                int count = animation.UsedAmount = frameCounts[i];
-                animation.FrameIndices = count == 0
-                    ? Array.Empty<byte>()
-                    : allFrameIndices.Skip(i * 32).Take(count).ToArray();
-            }
-            SkipBytes(16); // Atari palette
-            monsterData.CustomPalette = dataReader.ReadBytes(32);
-            byte animationProgressions = dataReader.ReadByte();
-            for (int i = 0; i < 8; i++)
-            {
-                monsterData._animationProgressions[i] = (animationProgressions & (1 << i)) == 0
-                    ? MonsterAnimationProgression.Cycle
-                    : MonsterAnimationProgression.Wave;
-            }
-            SkipBytes(1); // padding byte
-            monsterData.OriginalFrameWidth = dataReader.ReadWord();
-            monsterData.OriginalFrameHeight = dataReader.ReadWord();
-            monsterData.DisplayFrameWidth = dataReader.ReadWord();
-            monsterData.DisplayFrameHeight = dataReader.ReadWord();
-            #endregion
-
-            return monsterData;
-        }
 
         public void Serialize(IDataWriter dataWriter, bool advanced)
         {
@@ -327,40 +327,185 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((ushort)DisplayFrameHeight);
             #endregion
         }
+
+        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        {
+            if (dataReader.ReadByte() != (byte)CharacterType.Monster)
+                throw new InvalidDataException("The given data is no valid monster data.");
+
+            void SkipBytes(int amount) => dataReader.Position += amount;
+
+            var monsterData = new MonsterData();
+
+            monsterData.Gender = (Gender)dataReader.ReadByte();
+            monsterData.Race = (Race)dataReader.ReadByte();
+            monsterData.Class = (Class)dataReader.ReadByte();
+            monsterData.SpellMastery = (SpellTypeMastery)dataReader.ReadByte();
+            monsterData.Level = dataReader.ReadByte();
+            SkipBytes(6);
+            monsterData.CombatGraphicIndex = dataReader.ReadByte();
+            SkipBytes(2);
+            monsterData.Morale = dataReader.ReadByte();
+            monsterData.SpellTypeImmunity = (SpellTypeImmunity)dataReader.ReadByte();
+            monsterData.AttacksPerRound = dataReader.ReadByte();
+            monsterData.BattleFlags = (BattleFlags)dataReader.ReadByte();
+            monsterData.Element = (CharacterElement)dataReader.ReadByte();
+            SkipBytes(4);
+            monsterData.Gold = dataReader.ReadWord();
+            monsterData.Food = dataReader.ReadWord();
+            SkipBytes(2);
+            monsterData.Conditions = (Condition)dataReader.ReadWord();
+            monsterData.DefeatExperience = dataReader.ReadWord();
+            SkipBytes(8);
+            for (int i = 0; i < 8; i++)
+            {
+                var attribute = monsterData.Attributes[(Attribute)i];
+                attribute.CurrentValue = dataReader.ReadWord();
+                attribute.MaxValue = dataReader.ReadWord();
+                attribute.BonusValue = dataReader.ReadSignedWord();
+                attribute.StoredValue = dataReader.ReadWord();
+            }
+            SkipBytes(8);
+            if (advanced)
+            {
+                monsterData.BonusSpellDamage = dataReader.ReadWord();
+                monsterData.BonusMaxSpellDamage = dataReader.ReadWord();
+                monsterData.BonusSpellDamageReduction = dataReader.ReadSignedWord();
+                monsterData.BonusSpellDamagePercentage = dataReader.ReadSignedWord();
+            }
+            else
+            {
+                SkipBytes(8);
+            }
+            for (int i = 0; i < 10; i++)
+            {
+                var skill = monsterData.Skills[(Skill)i];
+                skill.CurrentValue = dataReader.ReadWord();
+                skill.MaxValue = dataReader.ReadWord();
+                skill.BonusValue = dataReader.ReadSignedWord();
+                skill.StoredValue = dataReader.ReadWord();
+            }
+            var hitPoints = monsterData.HitPoints;
+            hitPoints.CurrentValue = dataReader.ReadWord();
+            hitPoints.MaxValue = dataReader.ReadWord();
+            hitPoints.BonusValue = dataReader.ReadSignedWord();
+            var spellPoints = monsterData.SpellPoints;
+            spellPoints.CurrentValue = dataReader.ReadWord();
+            spellPoints.MaxValue = dataReader.ReadWord();
+            spellPoints.BonusValue = dataReader.ReadSignedWord();
+            monsterData.BaseDefense = dataReader.ReadWord();
+            int bonusDefense = dataReader.ReadSignedWord(); // TODO: check against equipment
+            monsterData.BaseAttackDamage = dataReader.ReadWord();
+            int bonusAttackDamage = dataReader.ReadSignedWord(); // TODO: check against equipment
+            monsterData.MagicAttackLevel = dataReader.ReadSignedWord();
+            monsterData.MagicDefenseLevel = dataReader.ReadSignedWord();
+            SkipBytes(16);
+            monsterData.LearnedSpellsHealing = dataReader.ReadDword();
+            monsterData.LearnedSpellsAlchemistic = dataReader.ReadDword();
+            monsterData.LearnedSpellsMystic = dataReader.ReadDword();
+            monsterData.LearnedSpellsDestruction = dataReader.ReadDword();
+            monsterData.LearnedSpellsType5 = dataReader.ReadDword();
+            monsterData.LearnedSpellsType6 = dataReader.ReadDword();
+            monsterData.LearnedSpellsFunctional = dataReader.ReadDword();
+            SkipBytes(4);
+            monsterData.Name = dataReader.ReadString(16).TrimEnd('\0', ' ');
+
+            #region Equipment and Items
+            monsterData._equipment = DataCollection<ItemSlotData>.Deserialize(dataReader, EquipmentSlotCount, advanced);
+            monsterData._items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, advanced);
+
+            // TODO
+            /*uint calculatedBonusDefense = Util.Util.CalculateItemPropertySum(monsterData._equipment, index => ItemManager.GetItem(index), item => item.Defense);
+            uint calculatedBonusAttackDamage = Util.Util.CalculateItemPropertySum(monsterData._equipment, index => ItemManager.GetItem(index), item => item.Damage);
+            if (bonusDefense != calculatedBonusDefense)
+                throw new InvalidDataException("Invalid monster data. Wrong stored bonus defense.");
+            if (bonusAttackDamage != calculatedBonusAttackDamage)
+                throw new InvalidDataException("Invalid monster data. Wrong stored bonus attack damage.");*/
+            #endregion
+
+            #region Monster Display Data
+            var allFrameIndices = dataReader.ReadBytes(256); // 8 * 32
+            var frameCounts = dataReader.ReadBytes(8);
+            for (int i = 0; i < 8; i++)
+            {
+                var animation = monsterData._animations[i] = new Animation();
+                int count = animation.UsedAmount = frameCounts[i];
+                animation.FrameIndices = count == 0
+                    ? Array.Empty<byte>()
+                    : allFrameIndices.Skip(i * 32).Take(count).ToArray();
+            }
+            SkipBytes(16); // Atari palette
+            monsterData.CustomPalette = dataReader.ReadBytes(32);
+            byte animationProgressions = dataReader.ReadByte();
+            for (int i = 0; i < 8; i++)
+            {
+                monsterData._animationProgressions[i] = (animationProgressions & (1 << i)) == 0
+                    ? MonsterAnimationProgression.Cycle
+                    : MonsterAnimationProgression.Wave;
+            }
+            SkipBytes(1); // padding byte
+            monsterData.OriginalFrameWidth = dataReader.ReadWord();
+            monsterData.OriginalFrameHeight = dataReader.ReadWord();
+            monsterData.DisplayFrameWidth = dataReader.ReadWord();
+            monsterData.DisplayFrameHeight = dataReader.ReadWord();
+            #endregion
+
+            return monsterData;
+        }
+
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        {
+            var monsterData = (MonsterData)Deserialize(dataReader, advanced);
+            (monsterData as IMutableIndex).Index = index;
+            return monsterData;
+        }
+
         #endregion
 
-        #region Helper Functions
-        public void SetCombatGraphic([Range(0, byte.MaxValue)] uint index,
-            [Range(0, ushort.MaxValue)] uint originalFrameWidth, [Range(0, ushort.MaxValue)] uint originalFrameHeight,
-            [Range(0, ushort.MaxValue)] uint displayFrameWidth, [Range(0, ushort.MaxValue)] uint displayFrameHeight)
+
+        #region Equality
+
+        public bool Equals(MonsterData? other)
         {
-            CombatGraphicIndex = index;
-            OriginalFrameWidth = originalFrameWidth;
-            OriginalFrameHeight = originalFrameHeight;
-            DisplayFrameWidth = displayFrameWidth;
-            DisplayFrameHeight = displayFrameHeight;
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return base.Equals(other) &&
+                    _morale == other._morale &&
+                   _defeatExperience == other._defeatExperience &&
+                   _combatGraphicIndex == other._combatGraphicIndex &&
+                   _originalFrameWidth == other._originalFrameWidth &&
+                   _originalFrameHeight == other._originalFrameHeight &&
+                   _displayFrameWidth == other._displayFrameWidth &&
+                   _displayFrameHeight == other._displayFrameHeight &&
+                   _animations.Equals(other._animations) &&
+                   _animationProgressions.Equals(other._animationProgressions) &&
+                   CustomPalette.Equals(other.CustomPalette);
         }
 
-        public uint[] GetAnimationFrames(MonsterAnimation monsterAnimation)
+        public override bool Equals(object? obj)
         {
-            var animation = _animations[(int)monsterAnimation];
-            return animation.FrameIndices.Take(Math.Min(32, animation.UsedAmount)).Select(f => (uint)f).ToArray();
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MonsterData)obj);
         }
 
-        public void SetAnimationFrames(MonsterAnimation monsterAnimation, uint[] frameIndices)
-        {
-            if (frameIndices.Length > 32)
-                throw new ArgumentOutOfRangeException(nameof(frameIndices), "Only 32 frames are possible.");
+        public override int GetHashCode() => (int)Index;
 
-            var animation = _animations[(int)monsterAnimation];            
-            animation.FrameIndices = frameIndices.Select(frameIndex =>
-            {
-                if (frameIndex > byte.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(frameIndices), $"A frame index must not be larger than {byte.MaxValue}.");
-                return (byte)frameIndex;
-            }).ToArray();
-            animation.UsedAmount = frameIndices.Length;
+        public static bool operator ==(MonsterData? left, MonsterData? right)
+        {
+            return Equals(left, right);
         }
+
+        public static bool operator !=(MonsterData? left, MonsterData? right)
+        {
+            return !Equals(left, right);
+        }
+
+        #endregion
+
+
+        #region Cloning
 
         public MonsterData Copy()
         {
@@ -398,9 +543,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 LearnedSpellsFunctional = LearnedSpellsFunctional,
                 Name = Name
 
-                // TODO: _equipment
-                // TODO: _items
-
                 // TODO: Monster Display Data
             };
 
@@ -415,6 +557,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             copy.SpellPoints.MaxValue = SpellPoints.MaxValue;
             copy.SpellPoints.BonusValue = SpellPoints.BonusValue;
 
+            copy.Equipment = Equipment.Copy();
+            copy.Items = Items.Copy();
+
             (copy as IMutableIndex).Index = Index;
 
             return copy;
@@ -422,103 +567,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override object Clone() => Copy();
 
-        public bool Equals(MonsterData? other)
-        {
-            if (other is null)
-                return false;
-
-            // TODO
-            return false;
-        }
         #endregion
 
-        #region Properties
-        public override CharacterType Type => CharacterType.Monster;
-        [Range(0, byte.MaxValue)]
-        public uint CombatGraphicIndex
-        {
-            get => _combatGraphicIndex;
-            private set
-            {
-                if (value > byte.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(CombatGraphicIndex), $"Combat graphic index is limited to the range 0 to {byte.MaxValue}.");
-
-                _combatGraphicIndex = value;
-            }
-        }
-        [Range(0, 100)]
-        public uint Morale
-        {
-            get => _morale;
-            set
-            {
-                if (value > 100)
-                    throw new ArgumentOutOfRangeException(nameof(Morale), "Morale is limited to the range 0 to 100.");
-
-                _morale = value;
-            }
-        }
-        [Range(0, ushort.MaxValue)]
-        public uint DefeatExperience
-        {
-            get => _defeatExperience;
-            set
-            {
-                if (value > ushort.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(DefeatExperience), $"Defeat experience is limited to the range 0 to {ushort.MaxValue}.");
-
-                _defeatExperience = value;
-            }
-        }
-        public byte[] CustomPalette { get; set; } = new byte[32];
-        [Range(0, ushort.MaxValue)]
-        public uint OriginalFrameWidth
-        {
-            get => _originalFrameWidth;
-            set
-            {
-                if (value > ushort.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(OriginalFrameWidth), $"Original frame width is limited to the range 0 to {ushort.MaxValue}.");
-
-                _originalFrameWidth = value;
-            }
-        }
-        [Range(0, ushort.MaxValue)]
-        public uint OriginalFrameHeight
-        {
-            get => _originalFrameHeight;
-            set
-            {
-                if (value > ushort.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(OriginalFrameHeight), $"Original frame height is limited to the range 0 to {ushort.MaxValue}.");
-
-                _originalFrameHeight = value;
-            }
-        }
-        [Range(0, ushort.MaxValue)]
-        public uint DisplayFrameWidth
-        {
-            get => _displayFrameWidth;
-            set
-            {
-                if (value > ushort.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(DisplayFrameWidth), $"Display frame width is limited to the range 0 to {ushort.MaxValue}.");
-
-                _displayFrameWidth = value;
-            }
-        }
-        [Range(0, ushort.MaxValue)]
-        public uint DisplayFrameHeight
-        {
-            get => _displayFrameHeight;
-            set
-            {
-                if (value > ushort.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(DisplayFrameHeight), $"Display frame height is limited to the range 0 to {ushort.MaxValue}.");
-
-                _displayFrameHeight = value;
-            }
-        }
-        #endregion
     }
 }

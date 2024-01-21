@@ -4,12 +4,18 @@ using System.ComponentModel.DataAnnotations;
 namespace Ambermoon.Data.GameDataRepository.Data
 {
     // TODO: property limits, ranges
-    public abstract class BattleCharacterData : CharacterData
+    public abstract class BattleCharacterData : CharacterData, IEquatable<BattleCharacterData>
     {
+
+        #region Constants
+
         public const int EquipmentSlotCount = 9;
         public const int InventorySlotCount = 24;
-        private protected DataCollection<ItemSlotData> _equipment = new();
-        private protected DataCollection<ItemSlotData> _items = new();
+
+        #endregion
+        
+
+        #region Properties
 
         public SpellTypeMastery SpellMastery { get; set; }
         public SpellTypeImmunity SpellTypeImmunity { get; set; }
@@ -49,21 +55,94 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public uint LearnedSpellsType5 { get; set; }
         public uint LearnedSpellsType6 { get; set; }
         public uint LearnedSpellsFunctional { get; set; }
+        protected DataCollection<ItemSlotData> Equipment { get; private protected set; } = new();
+        protected DataCollection<ItemSlotData> Items { get; private protected set; } = new();
+
+        #endregion
+
+
+        #region Methods
 
         public ItemSlotData GetEquipmentSlot(EquipmentSlot equipmentSlot)
         {
-            return _equipment[(int)equipmentSlot];
+            return Equipment[(int)equipmentSlot];
         }
 
         public ItemSlotData GetInventorySlot([Range(0, InventorySlotCount)] int slot)
         {
-            return _items[slot];
+            return Items[slot];
         }
+
+        #endregion
+
+
+        #region Equality
+
+        public bool Equals(BattleCharacterData? other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return base.Equals(other) &&
+                   SpellMastery == other.SpellMastery &&
+                   SpellTypeImmunity == other.SpellTypeImmunity &&
+                   AttacksPerRound == other.AttacksPerRound &&
+                   Element == other.Element &&
+                   BattleFlags == other.BattleFlags &&
+                   Gold == other.Gold &&
+                   Food == other.Food &&
+                   Conditions == other.Conditions &&
+                   Attributes.Equals(other.Attributes) &&
+                   Skills.Equals(other.Skills) &&
+                   HitPoints.Equals(other.HitPoints) &&
+                   SpellPoints.Equals(other.SpellPoints) &&
+                   BaseAttackDamage == other.BaseAttackDamage &&
+                   BaseDefense == other.BaseDefense &&
+                   BonusAttackDamage == other.BonusAttackDamage &&
+                   BonusDefense == other.BonusDefense &&
+                   MagicAttackLevel == other.MagicAttackLevel &&
+                   MagicDefenseLevel == other.MagicDefenseLevel &&
+                   LearnedSpellsHealing == other.LearnedSpellsHealing &&
+                   LearnedSpellsAlchemistic == other.LearnedSpellsAlchemistic &&
+                   LearnedSpellsMystic == other.LearnedSpellsMystic &&
+                   LearnedSpellsDestruction == other.LearnedSpellsDestruction &&
+                   LearnedSpellsType5 == other.LearnedSpellsType5 &&
+                   LearnedSpellsType6 == other.LearnedSpellsType6 &&
+                   LearnedSpellsFunctional == other.LearnedSpellsFunctional &&
+                   Equipment.Equals(other.Equipment) &&
+                   Items.Equals(other.Items) &&
+                   BonusSpellDamage == other.BonusSpellDamage &&
+                   BonusMaxSpellDamage == other.BonusMaxSpellDamage &&
+                   BonusSpellDamageReduction == other.BonusSpellDamageReduction &&
+                   BonusSpellDamagePercentage == other.BonusSpellDamagePercentage;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((BattleCharacterData)obj);
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
+
+        public static bool operator ==(BattleCharacterData? left, BattleCharacterData? right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(BattleCharacterData? left, BattleCharacterData? right)
+        {
+            return !Equals(left, right);
+        }
+
+        #endregion
+
 
         #region Advanced
         /// <summary>
         /// This is a plain value added to the damage of
-        /// spells. Therefore this affects both the minimum
+        /// spells. Therefore, this affects both the minimum
         /// and maximum of the spell damage.
         /// 
         /// Advanced only.
@@ -72,7 +151,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public uint BonusSpellDamage { get; set; }
         /// <summary>
         /// This is a plain value added to the max damage of
-        /// spells. Therefore this affects only the maximum
+        /// spells. Therefore, this affects only the maximum
         /// of the spell damage. Note that <see cref="BonusSpellDamage"/>
         /// is added in addition to this.
         /// 
@@ -96,7 +175,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// negative values act as a penalty.
         /// Note that any value equal or below -100
         /// would reduce the dealt spell damage to 0.
-        /// However the game logic will deal at least
+        /// However, the game logic will deal at least
         /// 1 point of damage if a spell hits.
         /// 
         /// Advanced only.
@@ -104,5 +183,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
         [AdvancedOnly]
         public int BonusSpellDamagePercentage { get; set; }
         #endregion
+
     }
 }

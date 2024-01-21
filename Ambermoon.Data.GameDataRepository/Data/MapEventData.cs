@@ -2,7 +2,7 @@
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public class MapEventData : IIndexed, IMutableIndex, IIndexedData, IEquatable<MapEventData>
+    public class MapEventData : IMutableIndex, IIndexedData, IEquatable<MapEventData>
     {
         uint IMutableIndex.Index
         {
@@ -18,31 +18,15 @@ namespace Ambermoon.Data.GameDataRepository.Data
         {
             get
             {
-                ushort index = (ushort)EventData[^2];
+                ushort index = EventData[^2];
                 index <<= 8;
-                index |= (ushort)EventData[^1];
+                index |= EventData[^1];
 
                 return index == ushort.MaxValue ? null : index;
             }
         }
 
-        public byte[] EventData { get; private set; } = new byte[12];
-
-        public MapEventData Copy()
-        {
-            return new(); // TODO
-        }
-
-        public object Clone() => Copy();
-
-        public bool Equals(MapEventData? other)
-        {
-            if (other is null)
-                return false;
-
-            // TODO
-            return false;
-        }
+        public byte[] EventData { get; private init; } = new byte[12];
 
         /// <inheritdoc/>
         public static IData Deserialize(IDataReader dataReader, bool advanced)
@@ -65,6 +49,33 @@ namespace Ambermoon.Data.GameDataRepository.Data
             var mapEventData = (MapEventData)Deserialize(dataReader, advanced);
             (mapEventData as IMutableIndex).Index = index;
             return mapEventData;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MapEventData)obj);
+        }
+
+        public override int GetHashCode() => (int)Index;
+
+        public MapEventData Copy()
+        {
+            return new MapEventData
+            {
+                EventData = (byte[])EventData.Clone()
+            };
+        }
+
+        public object Clone() => Copy();
+
+        public bool Equals(MapEventData? other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return EventData.Equals(other.EventData);
         }
     }
 }

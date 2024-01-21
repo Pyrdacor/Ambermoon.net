@@ -28,10 +28,18 @@ namespace Ambermoon.Data.GameDataRepository.Data
         Path
     }
 
-    public class MapCharacterData : IIndexed, IMutableIndex, IIndexedDependentData<MapData>, IEquatable<MapCharacterData>
+    public class MapCharacterData : IMutableIndex, IIndexedDependentData<MapData>, IEquatable<MapCharacterData>
     {
+
+        #region Fields
+
         private uint _collisionClass = 0;
         private uint _blockedCollisionClasses = 0;
+
+        #endregion
+
+
+        #region Properties
 
         uint IMutableIndex.Index
         {
@@ -142,7 +150,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// - 2D character with <see cref="UseTilesetGraphic"/> flag: Tileset tile index (Icon_data.amb)
         /// 
         /// Note that NPC_gfx.amb stores (as of now) 2 subfiles. And the index
-        /// of the used subfile is specified inside the map data in <see cref="MapData.NPCGraphicFileIndex"/>.
+        /// of the used subfile is specified inside the map data in <see cref="MapData.NpcGraphicFileIndex"/>.
         /// Inside the file all graphics are stored in a sequence and they all have the
         /// same size. The graphic index is then the index for the n-th graphic.
         /// </summary>
@@ -228,22 +236,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// </summary>
         public uint? CombatBackgroundIndex { get; private set; }
 
-        public MapCharacterData Copy()
-        {
-            // TODO
-            return new();
-        }
+        #endregion
 
-        public object Clone() => Copy();
 
-        public bool Equals(MapCharacterData? other)
-        {
-            if (other is null)
-                return false;
-
-            // TODO
-            return false;
-        }
+        #region Serialization
 
         /// <inheritdoc/>
         public void Serialize(IDataWriter dataWriter, bool advanced)
@@ -312,7 +308,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public static IIndexedDependentData<MapData> Deserialize(IDataReader dataReader, uint index, MapData providedData, bool advanced)
         {
             var mapCharacterData = (MapCharacterData)Deserialize(dataReader, providedData, advanced);
-            mapCharacterData.Index = index;
+            (mapCharacterData as IMutableIndex).Index = index;
             return mapCharacterData;
         }
 
@@ -387,5 +383,70 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             return mapCharacterData;
         }
+
+        #endregion
+
+
+        #region Equality
+
+        public bool Equals(MapCharacterData? other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return _collisionClass == other._collisionClass &&
+                   _blockedCollisionClasses == other._blockedCollisionClasses &&
+                   Index == other.Index &&
+                   PartyMemberIndex == other.PartyMemberIndex &&
+                   NpcIndex == other.NpcIndex &&
+                   MonsterGroupIndex == other.MonsterGroupIndex &&
+                   TextIndex == other.TextIndex &&
+                   CharacterType == other.CharacterType &&
+                   UseTilesetGraphic == other.UseTilesetGraphic &&
+                   IsTextPopup == other.IsTextPopup &&
+                   NpcStartsConversation == other.NpcStartsConversation &&
+                   OnlyMoveWhenSeePlayer == other.OnlyMoveWhenSeePlayer &&
+                   MovementType == other.MovementType &&
+                   GraphicIndex == other.GraphicIndex &&
+                   EventIndex == other.EventIndex &&
+                   WaveAnimation == other.WaveAnimation &&
+                   RandomAnimation == other.RandomAnimation &&
+                   CombatBackgroundIndex == other.CombatBackgroundIndex;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MapCharacterData)obj);
+        }
+
+        public override int GetHashCode() => (int)Index;
+
+        public static bool operator ==(MapCharacterData? left, MapCharacterData? right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(MapCharacterData? left, MapCharacterData? right)
+        {
+            return !Equals(left, right);
+        }
+
+        #endregion
+
+
+        #region Cloning
+
+        public MapCharacterData Copy()
+        {
+            // TODO
+            return new();
+        }
+
+        public object Clone() => Copy();
+
+        #endregion
+
     }
 }

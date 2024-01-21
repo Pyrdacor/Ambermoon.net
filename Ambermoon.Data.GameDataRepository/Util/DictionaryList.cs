@@ -5,11 +5,36 @@ namespace Ambermoon.Data.GameDataRepository.Util
 {
     using Data;
 
-    public class DictionaryList<T> : ICollection<T>, IEnumerable<T>, IEnumerable, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>, ICollection, IList
+    public class DictionaryList<T> : IList<T>, IReadOnlyList<T>, IList
         where T : IIndexed, new()
     {
+
+        #region Fields
+
         private readonly List<T> _list;
         private readonly Dictionary<uint, T> _dictionary;
+
+        #endregion
+
+
+        #region Properties
+
+        public ICollection<uint> Keys => _dictionary.Keys;
+
+        public int Count => _list.Count;
+
+        public bool IsReadOnly { get; } = false;
+
+        public bool IsSynchronized => (_list as IList).IsSynchronized;
+
+        public object SyncRoot => (_list as IList).SyncRoot;
+
+        public bool IsFixedSize => (_list as IList).IsFixedSize;
+
+        #endregion
+
+
+        #region Indexers
 
         public T this[uint key]
         {
@@ -25,7 +50,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
                 {
                     _list.Add(value);
                 }
-                    
+
                 _dictionary[key] = value;
             }
         }
@@ -53,17 +78,10 @@ namespace Ambermoon.Data.GameDataRepository.Util
             set => this[index] = (T)value!;
         }
 
-        public ICollection<uint> Keys => _dictionary.Keys;
+        #endregion
 
-        public int Count => _list.Count;
 
-        public bool IsReadOnly { get; } = false;
-
-        public bool IsSynchronized => (_list as IList).IsSynchronized;
-
-        public object SyncRoot => (_list as IList).SyncRoot;
-
-        public bool IsFixedSize => (_list as IList).IsFixedSize;
+        #region Constructors
 
         public DictionaryList()
         {
@@ -82,6 +100,11 @@ namespace Ambermoon.Data.GameDataRepository.Util
             _list = new(enumerable);
             _dictionary = _list.ToDictionary(item => item.Index, Item => Item);
         }
+
+        #endregion
+
+
+        #region Methods
 
         public T Create(uint? index = null)
         {
@@ -153,14 +176,9 @@ namespace Ambermoon.Data.GameDataRepository.Util
 
         public bool Remove(uint key)
         {
-            if (_dictionary.TryGetValue(key, out var item))
-            {
-                _dictionary.Remove(key);
-                _list.Remove(item);
-                return true;
-            }
-
-            return false;
+            if (!_dictionary.Remove(key, out var item)) return false;
+            _list.Remove(item);
+            return true;
         }
 
         public bool Remove(T item)
@@ -182,10 +200,19 @@ namespace Ambermoon.Data.GameDataRepository.Util
         IEnumerator IEnumerable.GetEnumerator() => _list.GetEnumerator();
 
         public Dictionary<uint, T> AsDictionary() => new(_dictionary);
+
+        #endregion
+
     }
+
+
+    #region Extensions
 
     public static class DictionaryListExtensions
     {
         public static DictionaryList<T> ToDictionaryList<T>(this IEnumerable<T> enumerable) where T : IIndexed, new() => new DictionaryList<T>(enumerable);
     }
+
+    #endregion
+
 }

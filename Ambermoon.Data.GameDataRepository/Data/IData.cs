@@ -1,7 +1,4 @@
 ﻿using Ambermoon.Data.Serialization;
-using System;
-using System.Collections;
-using System.ComponentModel;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
@@ -67,7 +64,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
     /// <summary>
     /// Data which is dependent on some other data to be deserialized.
     /// </summary>
-    public interface IDependentData<T> : ICloneable where T : IData
+    public interface IDependentData<in T> : ICloneable where T : IData
     {
         /// <summary>
         /// Serializes the data to a data writer.

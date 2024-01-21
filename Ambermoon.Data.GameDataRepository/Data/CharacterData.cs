@@ -3,10 +3,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public abstract class CharacterData : IIndexed, IMutableIndex
+    public abstract class CharacterData : IIndexed, IMutableIndex, IEquatable<CharacterData>
     {
+
+        #region Fields
+
         private string _name = string.Empty;
         private uint _level = 1;
+
+        #endregion
+
+
+        #region Properties
 
         uint IMutableIndex.Index
         {
@@ -49,13 +57,60 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _level;
             set
             {
-                if (value == 0 || value > byte.MaxValue)
+                if (value is 0 or > byte.MaxValue)
                     throw new ArgumentOutOfRangeException(nameof(Level), $"Level is limited to the range 1 to {byte.MaxValue}.");
 
                 _level = value;
             }
         }
 
+        #endregion
+
+
+        #region Equality
+
+        public bool Equals(CharacterData? other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return _name == other._name &&
+                   _level == other._level &&
+                   Index == other.Index &&
+                   Type == other.Type &&
+                   Gender == other.Gender &&
+                   Class == other.Class &&
+                   Race == other.Race;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((CharacterData)obj);
+        }
+
+        public override int GetHashCode() => (int)Index;
+
+        public static bool operator ==(CharacterData? left, CharacterData? right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(CharacterData? left, CharacterData? right)
+        {
+            return !Equals(left, right);
+        }
+
+        #endregion
+
+
+        #region Cloning
+
         public abstract object Clone();
+
+
+        #endregion
+
     }
 }
