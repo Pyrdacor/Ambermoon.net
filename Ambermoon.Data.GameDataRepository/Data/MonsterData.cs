@@ -1,4 +1,4 @@
-﻿using Ambermoon.Data.GameDataRepository.Util;
+﻿using Ambermoon.Data.GameDataRepository.Collections;
 using Ambermoon.Data.Serialization;
 using System.ComponentModel.DataAnnotations;
 using static Ambermoon.Data.Monster;
@@ -290,8 +290,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.WriteWithoutLength(name.PadRight(16, '\0'));
 
             #region Equipment and Items
-            _equipment.Serialize(dataWriter, advanced);
-            _items.Serialize(dataWriter, advanced);
+            Equipment.Serialize(dataWriter, advanced);
+            Items.Serialize(dataWriter, advanced);
             #endregion
 
             #region Monster Display Data
@@ -411,8 +411,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             monsterData.Name = dataReader.ReadString(16).TrimEnd('\0', ' ');
 
             #region Equipment and Items
-            monsterData._equipment = DataCollection<ItemSlotData>.Deserialize(dataReader, EquipmentSlotCount, advanced);
-            monsterData._items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, advanced);
+            monsterData.Equipment = DataCollection<ItemSlotData>.Deserialize(dataReader, EquipmentSlotCount, advanced);
+            monsterData.Items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, advanced);
+            monsterData.InitializeItemSlots();
 
             // TODO
             /*uint calculatedBonusDefense = Util.Util.CalculateItemPropertySum(monsterData._equipment, index => ItemManager.GetItem(index), item => item.Defense);

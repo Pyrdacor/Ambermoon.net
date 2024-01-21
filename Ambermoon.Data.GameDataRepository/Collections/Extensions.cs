@@ -1,7 +1,8 @@
-﻿using Ambermoon.Data.Serialization;
-
-namespace Ambermoon.Data.GameDataRepository.Util
+﻿namespace Ambermoon.Data.GameDataRepository.Collections
 {
+    using Serialization;
+    using Util;
+
     internal static class Extensions
     {
         public static int ReadSignedByte(this IDataReader reader)

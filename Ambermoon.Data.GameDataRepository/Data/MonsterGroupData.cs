@@ -1,4 +1,4 @@
-﻿using Ambermoon.Data.GameDataRepository.Util;
+﻿using Ambermoon.Data.GameDataRepository.Collections;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.GameDataRepository.Data

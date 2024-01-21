@@ -1,8 +1,10 @@
-﻿using Ambermoon.Data.GameDataRepository.Util;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
+    using Collections;
+    using Util;
+
     // TODO: property limits, ranges
     public abstract class BattleCharacterData : CharacterData, IEquatable<BattleCharacterData>
     {
@@ -38,14 +40,16 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public CharacterValue SpellPoints { get; } = new CharacterValue();
         public uint BaseAttackDamage { get; set; }
         public uint BaseDefense { get; set; }
+
         /// <summary>
         /// This is calculated from equipment.
         /// </summary>
-        public int BonusAttackDamage { get; }
+        public int BonusAttackDamage { get; private set; } = 0;
+
         /// <summary>
         /// This is calculated from equipment.
         /// </summary>
-        public int BonusDefense { get; }
+        public int BonusDefense { get; private set; } = 0;
         public int MagicAttackLevel { get; set; }
         public int MagicDefenseLevel { get; set; }
         public uint LearnedSpellsHealing { get; set; }
@@ -55,13 +59,125 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public uint LearnedSpellsType5 { get; set; }
         public uint LearnedSpellsType6 { get; set; }
         public uint LearnedSpellsFunctional { get; set; }
-        protected DataCollection<ItemSlotData> Equipment { get; private protected set; } = new();
-        protected DataCollection<ItemSlotData> Items { get; private protected set; } = new();
+        protected DataCollection<ItemSlotData> Equipment { get; private protected set; } = new(EquipmentSlotCount);
+        protected DataCollection<ItemSlotData> Items { get; private protected set; } = new(InventorySlotCount);
+
+        #endregion
+
+
+        #region Constructors
+
+        private protected BattleCharacterData()
+        {
+            InitializeItemSlots();
+        }
 
         #endregion
 
 
         #region Methods
+
+        private protected void InitializeItemSlots()
+        {
+            ItemSlotData CreateEquipmentSlot(int index)
+            {
+                var slot = new ItemSlotData();
+                slot.ItemChanged += (oldIndex, newIndex) => EquipmentSlotChanged((EquipmentSlot)index, oldIndex, newIndex);
+                slot.CursedChanged += (wasCursed, isCursed) => EquipmentSlotChanged((EquipmentSlot)index, null, null, wasCursed, isCursed);
+                return slot;
+            }
+
+            ItemSlotData CreateItemSlot(int index)
+            {
+                var slot = new ItemSlotData();
+                slot.ItemChanged += (oldIndex, newIndex) => ItemSlotChanged(index, oldIndex, newIndex);
+                slot.AmountChanged += (oldAmount, newAmount) => ItemSlotChanged(index, null, null, oldAmount, newAmount);
+                return slot;
+            }
+
+            for (int i = 0; i < EquipmentSlotCount; ++i)
+                Equipment[i] = CreateEquipmentSlot(i);
+
+            for (int i = 0; i < InventorySlotCount; ++i)
+                Items[i] = CreateItemSlot(i);
+        }
+
+        private protected ItemData? FindItem(uint index)
+        {
+            if (index is 0)
+                return null;
+            Func<GameDataRepository, bool> predicate = Type == CharacterType.Monster
+                ? repo => repo.Monsters.Contains(this)
+                : repo => repo.PartyMembers.Contains(this);
+            var repo = GameDataRepository
+                .GetOpenRepositories()
+                .FirstOrDefault(predicate);
+            return repo?.Items[index];
+        }
+
+        private void EquipmentSlotChanged(EquipmentSlot slot,
+            uint? oldIndex,
+            uint? newIndex,
+            bool? wasCursed = null,
+            bool? isCursed = null)
+        {
+            newIndex ??= Equipment[(int)slot].ItemIndex;
+            oldIndex ??= newIndex;
+            wasCursed ??= Equipment[(int)slot].Flags.HasFlag(ItemSlotFlags.Cursed);
+            isCursed ??= wasCursed;
+
+            if (newIndex is 0)
+            {
+                if (oldIndex is 0)
+                    return;
+
+                var oldItem = FindItem(oldIndex.Value);
+
+                int oldDamage = (int)(oldItem?.Damage ?? 0);
+                if (wasCursed.Value) oldDamage = -oldDamage;
+                BonusAttackDamage -= oldDamage;
+                int oldDefense = (int)(oldItem?.Defense ?? 0);
+                if (wasCursed.Value) oldDefense = -oldDefense;
+                BonusDefense -= oldDefense;
+                int oldMagicAttackLevel = (int)(oldItem?.MagicAttackLevel ?? 0);
+                MagicAttackLevel -= oldMagicAttackLevel;
+                int oldMagicDefenseLevel = (int)(oldItem?.MagicDefenseLevel ?? 0);
+                MagicDefenseLevel -= oldMagicDefenseLevel;
+                // TODO: hp, sp, attributes, skills
+            }
+            else
+            {
+                var newItem = FindItem(newIndex.Value);
+                var oldItem = oldIndex.Value is 0 ? null : FindItem(oldIndex.Value);
+
+                int oldDamage = (int)(oldItem?.Damage ?? 0);
+                if (wasCursed.Value) oldDamage = -oldDamage;
+                int newDamage = (int)(newItem?.Damage ?? 0);
+                if (isCursed.Value) newDamage = -newDamage;
+                BonusAttackDamage += newDamage - oldDamage;
+                int oldDefense = (int)(oldItem?.Defense ?? 0);
+                if (wasCursed.Value) oldDefense = -oldDefense;
+                int newDefense = (int)(newItem?.Defense ?? 0);
+                if (isCursed.Value) newDefense = -newDefense;
+                BonusDefense += newDefense - oldDefense;
+                int oldMagicAttackLevel = (int)(oldItem?.MagicAttackLevel ?? 0);
+                int newMagicAttackLevel = (int)(newItem?.MagicAttackLevel ?? 0);
+                MagicAttackLevel += newMagicAttackLevel - oldMagicAttackLevel;
+                int oldMagicDefenseLevel = (int)(oldItem?.MagicDefenseLevel ?? 0);
+                int newMagicDefenseLevel = (int)(newItem?.MagicDefenseLevel ?? 0);
+                MagicDefenseLevel += newMagicDefenseLevel - oldMagicDefenseLevel;
+                // TODO: hp, sp, attributes, skills
+            }
+        }
+
+        private protected virtual void ItemSlotChanged(int slot,
+            uint? oldIndex,
+            uint? newIndex,
+            uint? oldAmount = null,
+            uint? newAmount = null)
+        {
+            // empty for this base class
+        }
 
         public ItemSlotData GetEquipmentSlot(EquipmentSlot equipmentSlot)
         {

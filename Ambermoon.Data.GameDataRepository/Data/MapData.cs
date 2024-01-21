@@ -2,6 +2,7 @@
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
+    using Ambermoon.Data.GameDataRepository.Collections;
     using Util;
 
     public class MapData : IMutableIndex, IIndexedData, IEquatable<MapData>

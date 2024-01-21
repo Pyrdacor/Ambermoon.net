@@ -1,9 +1,9 @@
-﻿using Ambermoon.Data.GameDataRepository.Util;
-using Ambermoon.Data.Serialization;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
+    using Serialization;
+
     public class PartyMemberData : BattleCharacterData, IConversationCharacter, IIndexedData, IEquatable<PartyMemberData>
     {
         private uint _age = 1;
@@ -96,9 +96,43 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public uint TrainingPointsPerLevel { get; set; }
         public uint LookAtCharTextIndex { get; set; }
         public uint ExperiencePoints { get; set; }
+
         /// <summary>
-        /// This is calculated from the carried items.
+        /// This is calculated from the carried items, gold and rations.
         /// </summary>
-        public uint TotalWeight { get; }
+        public uint TotalWeight { get; private set; } = 0;
+
+        private protected override void ItemSlotChanged(int slot,
+            uint? oldIndex,
+            uint? newIndex,
+            uint? oldAmount = null,
+            uint? newAmount = null)
+        {
+            newIndex ??= Items[slot].ItemIndex;
+            oldIndex ??= newIndex;
+            newAmount ??= Items[slot].Amount;
+            oldAmount ??= newAmount;
+
+            if (newIndex is 0)
+            {
+                if (oldIndex is 0)
+                    return;
+
+                var oldItem = FindItem(oldIndex.Value);
+
+                uint oldWeight = oldAmount.Value * (oldItem?.Weight ?? 0);
+                TotalWeight -= oldWeight;
+            }
+            else
+            {
+                var newItem = FindItem(newIndex.Value);
+                var oldItem = oldIndex.Value is 0 ? null : FindItem(oldIndex.Value);
+
+                uint oldWeight = oldAmount.Value * (oldItem?.Weight ?? 0);
+                uint newWeight = newAmount.Value * (newItem?.Weight ?? 0);
+                TotalWeight += newWeight;
+                TotalWeight -= oldWeight;
+            }
+        }
     }
 }

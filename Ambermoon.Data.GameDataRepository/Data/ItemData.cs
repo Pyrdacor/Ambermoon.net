@@ -15,6 +15,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public uint Index => (this as IMutableIndex).Index;
 
+        // TODO
+        public uint Damage { get; set; }
+        public uint Defense { get; set; }
+        public uint MagicAttackLevel { get; set; }
+        public uint MagicDefenseLevel { get; set; }
+        public uint Weight { get; set; }
+
         public ItemData Copy()
         {
             return new(); // TODO

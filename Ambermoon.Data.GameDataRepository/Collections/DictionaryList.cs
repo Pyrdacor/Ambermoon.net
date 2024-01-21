@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Ambermoon.Data.GameDataRepository.Util
+namespace Ambermoon.Data.GameDataRepository.Collections
 {
     using Data;
 

@@ -1,14 +1,44 @@
 ﻿using System.Collections;
 
-namespace Ambermoon.Data.GameDataRepository.Util
+namespace Ambermoon.Data.GameDataRepository.Collections
 {
     public class TwoDimensionalData<TElement> : IEnumerable<TElement>
     {
+
+        #region Fields
+
         private TElement[] _elements;
+
+        #endregion
+
+
+        #region Properties
 
         public int Width { get; private set; }
         public int Height { get; private set; }
         public int Count => _elements.Length;
+
+        #endregion
+
+
+        #region Indexers
+
+        public TElement this[int index]
+        {
+            get => _elements[index];
+            set => _elements[index] = value;
+        }
+
+        public TElement this[int x, int y]
+        {
+            get => Get(x, y);
+            set => Set(x, y, value);
+        }
+
+        #endregion
+
+
+        #region Constructors
 
         public TwoDimensionalData()
         {
@@ -21,6 +51,11 @@ namespace Ambermoon.Data.GameDataRepository.Util
             Width = width;
             Height = height;
         }
+
+        #endregion
+
+
+        #region Methods
 
         public void Resize(int width, int height, Func<TElement> defaultValueProvider)
         {
@@ -54,10 +89,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
 
         IEnumerator IEnumerable.GetEnumerator() => _elements.GetEnumerator();
 
-        public TElement this[int index]
-        {
-            get => _elements[index];
-            set => _elements[index] = value;
-        }
+        #endregion
+
     }
 }

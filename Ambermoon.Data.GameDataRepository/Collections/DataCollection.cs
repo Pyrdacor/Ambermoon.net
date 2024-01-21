@@ -1,11 +1,12 @@
 ﻿using System.Collections;
-using Ambermoon.Data.Serialization;
 
-namespace Ambermoon.Data.GameDataRepository.Util
+namespace Ambermoon.Data.GameDataRepository.Collections
 {
     using Data;
+    using Serialization;
 
-    public class DataCollection<T> : IEnumerable<T>, IEquatable<DataCollection<T>>, ICloneable where T : IIndexedData, ICloneable
+    public class DataCollection<T> : IEnumerable<T>, IEquatable<DataCollection<T>>, ICloneable
+        where T : IIndexedData, ICloneable
     {
 
         #region Fields
@@ -41,7 +42,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
             _elements = Array.Empty<T>();
         }
 
-        private DataCollection(int size)
+        internal DataCollection(int size)
         {
             Count = size;
             _elements = new T[size];
@@ -93,7 +94,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
+            if (obj.GetType() != GetType()) return false;
             return Equals((DataCollection<T>)obj);
         }
 
@@ -223,7 +224,7 @@ namespace Ambermoon.Data.GameDataRepository.Util
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
+            if (obj.GetType() != GetType()) return false;
             return Equals((DependentDataCollection<T, D>)obj);
         }
 

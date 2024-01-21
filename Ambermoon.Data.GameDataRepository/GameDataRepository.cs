@@ -1,5 +1,4 @@
 ﻿using Ambermoon.Data.FileSystems;
-using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 using Ambermoon.Data.Serialization.FileSystem;
@@ -7,14 +6,15 @@ using SonicArranger;
 
 namespace Ambermoon.Data.GameDataRepository
 {
+    using Collections;
     using Data;
-    using Util;
-    using MonsterGroup = List<KeyValuePair<uint, Position>>;
 
-    public class GameDataRepository
+    public class GameDataRepository : IDisposable
     {
         private const ushort DefaultJHKey = 0xd2e7;
         private readonly TextContainer _textContainer = new();
+        private bool disposed = false;
+        private static readonly List<GameDataRepository> _openRepositories = new();
 
         public GameDataRepository(string path)
             : this(FileContainerFromPath(path))
@@ -54,6 +54,8 @@ namespace Ambermoon.Data.GameDataRepository
             MonsterGroups = monsterGroupFiles.Select(monsterGroupFile => (MonsterGroupData)MonsterGroupData.Deserialize(monsterGroupFile.Value, (uint)monsterGroupFile.Key, Advanced)).ToDictionaryList();
 
             // TODO ...
+
+            _openRepositories.Add(this);
         }
 
         private static Func<string, IFileContainer> FileContainerFromPath(string rootPath)
@@ -76,12 +78,16 @@ namespace Ambermoon.Data.GameDataRepository
 
         public void Save(string path)
         {
+            EnsureNotDisposed();
+
             var fileSystem = FileSystem.FromOperatingSystemPath(path);
             Save(fileSystem);
         }
 
         public void SaveAsContainer(string path)
         {
+            EnsureNotDisposed();
+
             var fileSystem = FileSystem.CreateVirtual();
             Save(fileSystem);
             using var file = File.Create(path);
@@ -90,6 +96,8 @@ namespace Ambermoon.Data.GameDataRepository
 
         public void Save(IFileSystem fileSystem)
         {
+            EnsureNotDisposed();
+
             void WriteSingleFileContainer(string containerName, FileType fileType, IDataWriter dataWriter)
             {
                 var writer = new DataWriter();
@@ -137,6 +145,12 @@ namespace Ambermoon.Data.GameDataRepository
             #endregion
         }
 
+        private void EnsureNotDisposed()
+        {
+            if (disposed)
+                throw new InvalidOperationException("Game data repository was already disposed.");
+        }
+
         /*private static Dictionary<uint, KeyValuePair<string, Song>> LoadSongs(GameData gameData)
         {
             var introContainer = gameData.Files["Intro_music"];
@@ -180,9 +194,9 @@ namespace Ambermoon.Data.GameDataRepository
         public DictionaryList<MonsterGroupData> MonsterGroups { get; } = new();
         /*public Dictionary<uint, ImageList> MonsterImages { get; } = new();
         public IReadOnlyDictionary<uint, ImageList<Monster>> ColoredMonsterImages => throw new NotImplementedException();
-        public Dictionary<uint, Place> Places { get; } = new();
-        public Dictionary<uint, Item> Items { get; } = new();
-        public Dictionary<uint, KeyValuePair<string, Song>> Songs { get; } = new();
+        public Dictionary<uint, Place> Places { get; } = new();*/
+        public DictionaryList<ItemData> Items { get; } = new();
+        /*public Dictionary<uint, KeyValuePair<string, Song>> Songs { get; } = new();
         public TextList Dictionary { get; } = new();
         public Dictionary<uint, ImageWithPaletteIndex> Portraits { get; } = new();*/
         public List<string> WorldNames => _textContainer.WorldNames;
@@ -248,5 +262,24 @@ namespace Ambermoon.Data.GameDataRepository
             Legacy.Serialization.TextWriter.WriteTexts(writer, textList);
             return writer.ToArray();
         }
+
+        public void Close() => Dispose();
+
+        public void Dispose()
+        {
+            if (disposed) return;
+
+            disposed = true;
+            _openRepositories.Remove(this);
+            GC.SuppressFinalize(this);
+        }
+
+        internal static void CloseAll()
+        {
+            foreach (var repository in _openRepositories)
+                repository.Close();
+        }
+
+        internal static IEnumerable<GameDataRepository> GetOpenRepositories() => _openRepositories;
     }
 }
