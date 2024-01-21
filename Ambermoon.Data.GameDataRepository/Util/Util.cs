@@ -1,9 +1,10 @@
-﻿using Ambermoon.Data.GameDataRepository.Data;
-using Ambermoon.Data.Serialization;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Data.GameDataRepository.Util
 {
+    using Data;
+    using Serialization;
+
     internal static class Util
     {
         public static CharacterValue Copy(CharacterValue value)

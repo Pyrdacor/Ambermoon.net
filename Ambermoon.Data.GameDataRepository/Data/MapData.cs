@@ -1,8 +1,7 @@
-﻿using Ambermoon.Data.Serialization;
-
-namespace Ambermoon.Data.GameDataRepository.Data
+﻿namespace Ambermoon.Data.GameDataRepository.Data
 {
-    using Ambermoon.Data.GameDataRepository.Collections;
+    using Collections;
+    using Serialization;
     using Util;
 
     public class MapData : IMutableIndex, IIndexedData, IEquatable<MapData>

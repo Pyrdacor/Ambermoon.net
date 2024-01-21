@@ -4,7 +4,7 @@
     {
         public Image(params Graphic[] frames)
         {
-            Frames = frames == null ? new List<Graphic>() : new List<Graphic>(frames);
+            Frames = new List<Graphic>(frames);
         }
 
         public List<Graphic> Frames { get; }
