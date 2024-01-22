@@ -4,10 +4,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
 {
     using Serialization;
 
-    public class PartyMemberData : BattleCharacterData, IConversationCharacter, IIndexedData, IEquatable<PartyMemberData>
+    public sealed class PartyMemberData : BattleCharacterData, IConversationCharacter, IIndexedData, IEquatable<PartyMemberData>
     {
         private uint _age = 1;
         private uint _maxAge = 1;
+
+        internal PartyMemberData()
+        {
+        }
 
         public PartyMemberData Copy()
         {

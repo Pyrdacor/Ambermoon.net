@@ -1,13 +1,17 @@
-﻿using Ambermoon.Data.GameDataRepository.Util;
-using Ambermoon.Data.Serialization;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public class NpcData : CharacterData, IConversationCharacter, IIndexedData, IEquatable<NpcData>
+    using Serialization;
+
+    public sealed class NpcData : CharacterData, IConversationCharacter, IIndexedData, IEquatable<NpcData>
     {
         private uint _age = 1;
         private uint _maxAge = 1;
+
+        internal NpcData()
+        {
+        }
 
         public NpcData Copy()
         {

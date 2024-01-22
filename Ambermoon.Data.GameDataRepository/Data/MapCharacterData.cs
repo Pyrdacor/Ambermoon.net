@@ -1,8 +1,10 @@
-﻿using Ambermoon.Data.Serialization;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    using System.ComponentModel.DataAnnotations;
+    using Serialization;
     using Util;
 
     public enum MapCharacterMovementType
@@ -28,13 +30,16 @@ namespace Ambermoon.Data.GameDataRepository.Data
         Path
     }
 
-    public class MapCharacterData : IMutableIndex, IIndexedDependentData<MapData>, IEquatable<MapCharacterData>
+    public sealed class MapCharacterData : IMutableIndex, IIndexedDependentData<MapData>, IEquatable<MapCharacterData>, INotifyPropertyChanged
     {
 
         #region Fields
 
         private uint _collisionClass = 0;
-        private uint _blockedCollisionClasses = 0;
+        private uint _allowedCollisionClasses = 0;
+        private bool _waveAnimation;
+        private bool _randomAnimation;
+        private uint _graphicIndex;
 
         #endregion
 
@@ -57,7 +62,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public uint? TextIndex { get; private set; }
 
-        public CharacterType? CharacterType { get; private set; }
+        public CharacterType CharacterType { get; private set; }
 
         /// <summary>
         /// There can be up to 15 collision classes.
@@ -78,10 +83,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _collisionClass;
             set
             {
-                if (value > 14)
-                    throw new ArgumentOutOfRangeException(nameof(CollisionClass), "Collision classes are limited to the range 0 to 14.");
-
-                _collisionClass = value;
+                ValueChecker.Check(value, 0, 14);
+                SetField(ref _collisionClass, value);
             }
         }
 
@@ -92,13 +95,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
         [Range(0, (1 << 15) - 1)]
         public uint AllowedCollisionClasses
         {
-            get => _blockedCollisionClasses;
+            get => _allowedCollisionClasses;
             set
             {
-                if (value >= (1 << 15))
-                    throw new ArgumentOutOfRangeException(nameof(AllowedCollisionClasses), $"Blocked collision classes are limited to the range 0 to {(1 << 15) - 1}.");
-
-                _blockedCollisionClasses = value;
+                ValueChecker.Check(value, 0, (1 << 15) - 1);
+                SetField(ref _allowedCollisionClasses, value);
             }
         }
 
@@ -149,12 +150,16 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// - 2D character without <see cref="UseTilesetGraphic"/> flag: NPC graphic index (NPC_gfx.amb)
         /// - 2D character with <see cref="UseTilesetGraphic"/> flag: Tileset tile index (Icon_data.amb)
         /// 
-        /// Note that NPC_gfx.amb stores (as of now) 2 subfiles. And the index
-        /// of the used subfile is specified inside the map data in <see cref="MapData.NpcGraphicFileIndex"/>.
+        /// Note that NPC_gfx.amb stores (as of now) 2 sub-files. And the index
+        /// of the used sub-file is specified inside the map data in <see cref="MapData.NpcGraphicFileIndex"/>.
         /// Inside the file all graphics are stored in a sequence and they all have the
         /// same size. The graphic index is then the index for the n-th graphic.
         /// </summary>
-        public uint GraphicIndex { get; private set; }
+        public uint GraphicIndex
+        {
+            get => _graphicIndex;
+            set => SetField(ref _graphicIndex, value);
+        }
 
         /// <summary>
         /// Event that should be triggered on contact. This should
@@ -163,7 +168,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// 
         /// The default value of 0 means (no event).
         /// </summary>
-        public uint EventIndex { get; set; }
+        public uint EventIndex { get; private set; }
 
         /// <summary>
         /// Normally animations are cyclic. So if the last frame
@@ -179,10 +184,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// 
         /// 0 -> 1 -> 2 -> 0 -> 1 -> 2 -> 0 -> 1 -> ...
         /// </summary>
-        public bool WaveAnimation { get; set; }
+        public bool WaveAnimation
+        {
+            get => _waveAnimation;
+            set => SetField(ref _waveAnimation, value);
+        }
 
         /// <summary>
-        /// Normally animations will run continously and
+        /// Normally animations will run continuously and
         /// start at the first frame when the map is loaded.
         /// 
         /// If this is active, animations start randomly
@@ -193,9 +202,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// NOTE: Currently this is different in the remake
         /// but should be fixed soon. There it just randomly
         /// picks the start frame on map load and then run
-        /// the animation continously.
+        /// the animation continuously.
         /// </summary>
-        public bool RandomAnimation { get; set; }
+        public bool RandomAnimation
+        {
+            get => _randomAnimation;
+            set => SetField(ref _randomAnimation, value);
+        }
 
         /// <summary>
         /// In original this is called the "Distort_bit".
@@ -235,6 +248,69 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// fighting the monster (group).
         /// </summary>
         public uint? CombatBackgroundIndex { get; private set; }
+
+        #endregion
+
+
+        #region Constructors
+
+        internal MapCharacterData()
+        {
+
+        }
+
+        #endregion
+
+
+        #region Methods
+
+        private void SetMonster([Range(0, byte.MaxValue)] uint monsterGroupIndex,
+            [Range(0, 15)] uint combatBackgroundIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random,
+            bool onlyMoveWhenSeePlayer = false)
+        {
+            ValueChecker.Check(monsterGroupIndex, 0, byte.MaxValue);
+            ValueChecker.Check(combatBackgroundIndex, 0, 15);
+            ValueChecker.Check(graphicIndex, 0, ushort.MaxValue);
+
+            if (movementType == MapCharacterMovementType.Path)
+                throw new ArgumentException("Movement type must not be path for monsters.");
+
+            MonsterGroupIndex = monsterGroupIndex;
+            CombatBackgroundIndex = combatBackgroundIndex;
+            CharacterType = CharacterType.Monster;
+            GraphicIndex = graphicIndex;
+            MovementType = movementType;
+            OnlyMoveWhenSeePlayer = onlyMoveWhenSeePlayer;
+
+            PartyMemberIndex = null;
+            NpcIndex = null;
+            TextIndex = null;
+            EventIndex = 0;
+            IsTextPopup = false;
+            NpcStartsConversation = false;
+        }
+
+        public void SetMonster2D([Range(0, byte.MaxValue)] uint monsterGroupIndex,
+            [Range(0, 15)] uint combatBackgroundIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random,
+            bool useTilesetGraphic = false,
+            bool onlyMoveWhenSeePlayer = false)
+        {
+            SetMonster(monsterGroupIndex, combatBackgroundIndex, graphicIndex, movementType, onlyMoveWhenSeePlayer);
+            UseTilesetGraphic = useTilesetGraphic;
+        }
+
+        public void SetMonster3D([Range(0, byte.MaxValue)] uint monsterGroupIndex,
+            [Range(0, 15)] uint combatBackgroundIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random,
+            bool onlyMoveWhenSeePlayer = false)
+        {
+            SetMonster(monsterGroupIndex, combatBackgroundIndex, graphicIndex, movementType, onlyMoveWhenSeePlayer);
+        }
 
         #endregion
 
@@ -394,7 +470,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return _collisionClass == other._collisionClass &&
-                   _blockedCollisionClasses == other._blockedCollisionClasses &&
+                   _allowedCollisionClasses == other._allowedCollisionClasses &&
                    Index == other.Index &&
                    PartyMemberIndex == other.PartyMemberIndex &&
                    NpcIndex == other.NpcIndex &&
@@ -445,6 +521,26 @@ namespace Ambermoon.Data.GameDataRepository.Data
         }
 
         public object Clone() => Copy();
+
+        #endregion
+
+
+        #region Property Changes
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
 
         #endregion
 

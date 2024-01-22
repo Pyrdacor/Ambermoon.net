@@ -1,10 +1,11 @@
-﻿using Ambermoon.Data.GameDataRepository.Collections;
-using Ambermoon.Data.Serialization;
-using System.ComponentModel.DataAnnotations;
-using static Ambermoon.Data.Monster;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
+    using Collections;
+    using Serialization;
+    using static Monster;
+
     public enum MonsterAnimation
     {
         /// <summary>
@@ -47,7 +48,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         Wave
     }
 
-    public class MonsterData : BattleCharacterData, IIndexedData, IEquatable<MonsterData>
+    public sealed class MonsterData : BattleCharacterData, IIndexedData, IEquatable<MonsterData>
     {
 
         #region Fields
@@ -155,6 +156,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
         }
 
         #endregion
+
+
+        internal MonsterData()
+        {
+            for (int i = 0; i < 8; i++)
+                _animations[i] = new Animation();
+        }
 
 
         #region Methods

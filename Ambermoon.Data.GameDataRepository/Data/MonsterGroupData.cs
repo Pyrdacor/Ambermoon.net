@@ -1,9 +1,12 @@
-﻿using Ambermoon.Data.GameDataRepository.Collections;
-using Ambermoon.Data.Serialization;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public class MonsterGroupData : IMutableIndex, IIndexedData, IEquatable<MonsterGroupData>
+    using Collections;
+    using Serialization;
+
+    public sealed class MonsterGroupData : IMutableIndex, IIndexedData, IEquatable<MonsterGroupData>, INotifyPropertyChanged
     {
 
         #region Properties
@@ -17,6 +20,16 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public uint Index => (this as IMutableIndex).Index;
 
         public TwoDimensionalData<uint> MonsterIndices { get; } = new(6, 3);
+
+        #endregion
+
+
+        #region Constructors
+
+        internal MonsterGroupData()
+        {
+            MonsterIndices.ItemChanged += (_, _) => OnPropertyChanged(nameof(MonsterIndices));
+        }
 
         #endregion
 
@@ -108,6 +121,26 @@ namespace Ambermoon.Data.GameDataRepository.Data
         }
 
         public object Clone() => Copy();
+
+        #endregion
+
+
+        #region Property Changes
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
 
         #endregion
 

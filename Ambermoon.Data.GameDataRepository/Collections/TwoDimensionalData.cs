@@ -3,7 +3,7 @@
 namespace Ambermoon.Data.GameDataRepository.Collections
 {
     public class TwoDimensionalData<TElement> : IEnumerable<TElement>, ICloneable
-        where TElement : ICloneable
+        where TElement : IEquatable<TElement>
     {
 
         #region Fields
@@ -27,7 +27,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         public TElement this[int index]
         {
             get => _elements[index];
-            set => _elements[index] = value;
+            set => Set(index, value);
         }
 
         public TElement this[int x, int y]
@@ -84,7 +84,25 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         public TElement Get(int x, int y) => _elements[y * Width + x];
 
-        public void Set(int x, int y, TElement element) => _elements[y * Width + x] = element;
+        public void Set(int x, int y, TElement element)
+        {
+            int index = y * Width + x;
+
+            if (!_elements[index].Equals(element))
+            {
+                _elements[index] = element;
+                ItemChanged?.Invoke(x, y);
+            }
+        }
+
+        private void Set(int index, TElement element)
+        {
+            if (!_elements[index].Equals(element))
+            {
+                _elements[index] = element;
+                ItemChanged?.Invoke(index % Width, index / Width);
+            }
+        }
 
         public IEnumerator<TElement> GetEnumerator() => ((IEnumerable<TElement>)_elements).GetEnumerator();
 
@@ -95,17 +113,32 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         #region Cloning
 
+        private static TElement CloneElement(TElement element)
+        {
+            if (element is ICloneable cloneable)
+                return (TElement)cloneable.Clone();
+
+            return element;
+        }
+
         public TwoDimensionalData<TElement> Copy(bool cloneElements = true)
         {
             var clone = new TwoDimensionalData<TElement>(Width, Height);
 
             for (int i = 0; i < _elements.Length; ++i)
-                clone._elements[i] = cloneElements ? (TElement)_elements[i].Clone() : _elements[i];
+                clone._elements[i] = cloneElements ? CloneElement(_elements[i]) : _elements[i];
 
             return clone;
         }
 
         public object Clone() => Copy();
+
+        #endregion
+
+
+        #region Property Changes
+
+        public event Action<int, int>? ItemChanged;
 
         #endregion
 

@@ -1,11 +1,13 @@
 ﻿using System.ComponentModel;
-using Ambermoon.Data.Serialization;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+using Ambermoon.Data.GameDataRepository.Util;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public class ItemSlotData : IMutableIndex, IIndexedData, IEquatable<ItemSlotData>
+    using Serialization;
+
+    public sealed class ItemSlotData : IMutableIndex, IIndexedData, IEquatable<ItemSlotData>, INotifyPropertyChanged
     {
 
         #region Constants
@@ -42,11 +44,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _amount;
             set
             {
-                if (value != 255 && value > 99)
-                    throw new ArgumentOutOfRangeException(nameof(Amount), $"Amount is limited to the range 0 to 99 and 255 for unlimited amount.");
+                ValueChecker.Check(value, 0, 99, byte.MaxValue);
 
                 if (_amount == value) return;
 
+                SetField(ref _amount, value);
                 var oldValue = _amount;
                 _amount = value;
                 AmountChanged?.Invoke(oldValue, _amount);
@@ -59,10 +61,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _numRemainingCharges;
             set
             {
-                if (value > byte.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(NumberOfRemainingCharges), $"Number of remaining charges is limited to the range 0 to {byte.MaxValue}.");
-
-                _numRemainingCharges = value;
+                ValueChecker.Check(value, 0, byte.MaxValue);
+                SetField(ref _numRemainingCharges, value);
             }
         }
 
@@ -72,11 +72,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _numRecharges;
             set
             {
-                if (value > byte.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(NumberOfRecharges),
-                        $"Number of recharges is limited to the range 0 to {byte.MaxValue}.");
-
-                _numRecharges = value;
+                ValueChecker.Check(value, 0, byte.MaxValue);
+                SetField(ref _numRecharges, value);
             }
         }
 
@@ -86,11 +83,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _itemIndex;
             set
             {
-                if (value > ushort.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(ItemIndex), $"Item index is limited to the range 0 to {ushort.MaxValue}.");
+                ValueChecker.Check(value, 0, ushort.MaxValue);
 
                 if (_itemIndex == value) return;
 
+                SetField(ref _itemIndex, value);
                 var oldValue = _itemIndex;
                 _itemIndex = value;
                 ItemChanged?.Invoke(oldValue, _itemIndex);
@@ -104,6 +101,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             {
                 if (_flags == value) return;
 
+                SetField(ref _flags, value);
                 bool wasCursed = _flags.HasFlag(ItemSlotFlags.Cursed);
                 _flags = value;
                 bool isCursed = _flags.HasFlag(ItemSlotFlags.Cursed);
@@ -235,5 +233,19 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #endregion
 
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
     }
 }
