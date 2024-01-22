@@ -1,7 +1,7 @@
 ﻿/*
  * Battle.cs - Battle logic and visuals
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -25,9 +25,7 @@ using Ambermoon.Render;
 using Ambermoon.UI;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Threading;
 using Attribute = Ambermoon.Data.Attribute;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
@@ -2561,13 +2559,13 @@ namespace Ambermoon
                 string.Format(game.DataNameProvider.CharacterInfoGoldAndFoodString.Replace(" ", "      "), monster.Gold, monster.Food),
                 TextColor.BrightGray);
             position.Y += Global.GlyphLineHeight;
-            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Render.Graphics.GetUIGraphicIndex(UIGraphic.Attack), Layer.UI, 1, game.UIPaletteIndex);
+            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), Layer.UI, 1, game.UIPaletteIndex);
             int damage = monster.BaseAttackDamage + monster.BonusAttackDamage;
             popup.AddText(position + new Position(6, 2),
                 string.Format(game.DataNameProvider.CharacterInfoDamageString.Replace(' ', damage < 0 ? '-' : '+'), Math.Abs(damage)),
                 TextColor.BrightGray);
             position.X = area.X + panelWidth + Global.GlyphWidth;
-            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Render.Graphics.GetUIGraphicIndex(UIGraphic.Defense), Layer.UI, 1, game.UIPaletteIndex);
+            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), Layer.UI, 1, game.UIPaletteIndex);
             int defense = monster.BaseDefense + monster.BonusDefense;
             popup.AddText(position + new Position(7, 2),
                 string.Format(game.DataNameProvider.CharacterInfoDefenseString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense)),
@@ -2579,7 +2577,7 @@ namespace Ambermoon
             --position.X;
             position.Y += Global.GlyphLineHeight;
             popup.AddSunkenBox(new Rect(position, new Size(18, 18)));
-            popup.AddImage(new Rect(position.X + 1, position.Y + 2, 16, 14), Render.Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
+            popup.AddImage(new Rect(position.X + 1, position.Y + 2, 16, 14), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
                 Layer.UI, 2, game.PrimaryUIPaletteIndex);
             if (game.Features.HasFlag(Features.Elements))
             {
