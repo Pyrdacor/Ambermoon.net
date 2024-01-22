@@ -62,7 +62,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public uint? TextIndex { get; private set; }
 
-        public CharacterType CharacterType { get; private set; }
+        public CharacterType? CharacterType { get; private set; }
 
         /// <summary>
         /// There can be up to 15 collision classes.
@@ -264,13 +264,31 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Methods
 
-        private void SetMonster([Range(0, byte.MaxValue)] uint monsterGroupIndex,
+        public void SetEmpty()
+        {
+            CharacterType = null;
+            GraphicIndex = 0;
+            // Note: For serialization the default character type is PartyMember
+            // and for this type, movement type path is the default of 0.
+            MovementType = MapCharacterMovementType.Path;
+            MonsterGroupIndex = null;
+            PartyMemberIndex = null;
+            NpcIndex = null;
+            TextIndex = null;
+            EventIndex = 0;
+            IsTextPopup = false;
+            NpcStartsConversation = false;
+            OnlyMoveWhenSeePlayer = false;
+            CombatBackgroundIndex = null;
+        }
+
+        private void SetMonster([Range(1, byte.MaxValue)] uint monsterGroupIndex,
             [Range(0, 15)] uint combatBackgroundIndex,
             [Range(0, ushort.MaxValue)] uint graphicIndex,
             MapCharacterMovementType movementType = MapCharacterMovementType.Random,
             bool onlyMoveWhenSeePlayer = false)
         {
-            ValueChecker.Check(monsterGroupIndex, 0, byte.MaxValue);
+            ValueChecker.Check(monsterGroupIndex, 1, byte.MaxValue);
             ValueChecker.Check(combatBackgroundIndex, 0, 15);
             ValueChecker.Check(graphicIndex, 0, ushort.MaxValue);
 
@@ -279,7 +297,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             MonsterGroupIndex = monsterGroupIndex;
             CombatBackgroundIndex = combatBackgroundIndex;
-            CharacterType = CharacterType.Monster;
+            CharacterType = Ambermoon.Data.CharacterType.Monster;
             GraphicIndex = graphicIndex;
             MovementType = movementType;
             OnlyMoveWhenSeePlayer = onlyMoveWhenSeePlayer;
@@ -292,7 +310,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             NpcStartsConversation = false;
         }
 
-        public void SetMonster2D([Range(0, byte.MaxValue)] uint monsterGroupIndex,
+        public void SetMonster2D([Range(1, byte.MaxValue)] uint monsterGroupIndex,
             [Range(0, 15)] uint combatBackgroundIndex,
             [Range(0, ushort.MaxValue)] uint graphicIndex,
             MapCharacterMovementType movementType = MapCharacterMovementType.Random,
@@ -303,13 +321,161 @@ namespace Ambermoon.Data.GameDataRepository.Data
             UseTilesetGraphic = useTilesetGraphic;
         }
 
-        public void SetMonster3D([Range(0, byte.MaxValue)] uint monsterGroupIndex,
+        public void SetMonster3D([Range(1, byte.MaxValue)] uint monsterGroupIndex,
             [Range(0, 15)] uint combatBackgroundIndex,
             [Range(0, ushort.MaxValue)] uint graphicIndex,
             MapCharacterMovementType movementType = MapCharacterMovementType.Random,
             bool onlyMoveWhenSeePlayer = false)
         {
             SetMonster(monsterGroupIndex, combatBackgroundIndex, graphicIndex, movementType, onlyMoveWhenSeePlayer);
+            UseTilesetGraphic = false;
+        }
+
+        private void SetPartyMember([Range(0, byte.MaxValue)] uint partyMemberIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random,
+            bool npcStartsConversation = false)
+        {
+            ValueChecker.Check(partyMemberIndex, 1, byte.MaxValue);
+            ValueChecker.Check(graphicIndex, 0, ushort.MaxValue);
+
+            PartyMemberIndex = partyMemberIndex;
+            CharacterType = Ambermoon.Data.CharacterType.PartyMember;
+            GraphicIndex = graphicIndex;
+            MovementType = movementType;
+            NpcStartsConversation = npcStartsConversation;
+
+            MonsterGroupIndex = null;
+            NpcIndex = null;
+            TextIndex = null;
+            CombatBackgroundIndex = null;
+            EventIndex = 0;
+            IsTextPopup = false;
+            OnlyMoveWhenSeePlayer = false;
+        }
+
+        public void SetPartyMember2D([Range(1, byte.MaxValue)] uint partyMemberIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random,
+            bool useTilesetGraphic = false,
+            bool npcStartsConversation = false)
+        {
+            SetPartyMember(partyMemberIndex, graphicIndex, movementType, npcStartsConversation);
+            UseTilesetGraphic = useTilesetGraphic;
+        }
+
+        public void SetPartyMember3D([Range(1, byte.MaxValue)] uint partyMemberIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random,
+            bool npcStartsConversation = false)
+        {
+            SetPartyMember(partyMemberIndex, graphicIndex, movementType, npcStartsConversation);
+            UseTilesetGraphic = false;
+        }
+
+        private void SetNpc([Range(1, byte.MaxValue)] uint npcIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random,
+            bool npcStartsConversation = false)
+        {
+            ValueChecker.Check(npcIndex, 1, byte.MaxValue);
+            ValueChecker.Check(graphicIndex, 0, ushort.MaxValue);
+
+            NpcIndex = npcIndex;
+            CharacterType = Ambermoon.Data.CharacterType.NPC;
+            GraphicIndex = graphicIndex;
+            MovementType = movementType;
+            NpcStartsConversation = npcStartsConversation;
+
+            MonsterGroupIndex = null;
+            PartyMemberIndex = null;
+            TextIndex = null;
+            CombatBackgroundIndex = null;
+            EventIndex = 0;
+            IsTextPopup = false;
+            OnlyMoveWhenSeePlayer = false;
+        }
+
+        public void SetNpc2D([Range(1, byte.MaxValue)] uint npcIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random,
+            bool useTilesetGraphic = false,
+            bool npcStartsConversation = false)
+        {
+            SetNpc(npcIndex, graphicIndex, movementType, npcStartsConversation);
+            UseTilesetGraphic = useTilesetGraphic;
+        }
+
+        public void SetNpc3D([Range(1, byte.MaxValue)] uint npcIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random,
+            bool npcStartsConversation = false)
+        {
+            SetNpc(npcIndex, graphicIndex, movementType, npcStartsConversation);
+            UseTilesetGraphic = false;
+        }
+
+        // Note: There is no 3D version of this.
+        public void SetTextPopupNpc2D([Range(1, byte.MaxValue)] uint textIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random,
+            bool useTilesetGraphic = false)
+        {
+            ValueChecker.Check(textIndex, 1, byte.MaxValue);
+            ValueChecker.Check(graphicIndex, 0, ushort.MaxValue);
+
+            TextIndex = textIndex;
+            CharacterType = Ambermoon.Data.CharacterType.NPC;
+            GraphicIndex = graphicIndex;
+            MovementType = movementType;
+            IsTextPopup = true;
+
+            MonsterGroupIndex = null;
+            PartyMemberIndex = null;
+            NpcIndex = null;
+            CombatBackgroundIndex = null;
+            EventIndex = 0;
+            OnlyMoveWhenSeePlayer = false;
+            NpcStartsConversation = false;
+        }
+
+        private void SetMapObject([Range(0, byte.MaxValue)] uint eventIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random)
+        {
+            ValueChecker.Check(eventIndex, 0, byte.MaxValue);
+            ValueChecker.Check(graphicIndex, 0, ushort.MaxValue);
+
+            CharacterType = Ambermoon.Data.CharacterType.MapObject;
+            GraphicIndex = graphicIndex;
+            MovementType = movementType;
+
+            MonsterGroupIndex = null;
+            PartyMemberIndex = null;
+            NpcIndex = null;
+            TextIndex = null;
+            CombatBackgroundIndex = null;
+            EventIndex = 0;
+            IsTextPopup = false;
+            OnlyMoveWhenSeePlayer = false;
+            NpcStartsConversation = false;
+        }
+
+        public void SetMapObject2D([Range(0, byte.MaxValue)] uint eventIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random,
+            bool useTilesetGraphic = false)
+        {
+            SetMapObject(eventIndex, graphicIndex, movementType);
+            UseTilesetGraphic = useTilesetGraphic;
+        }
+
+        public void SetMapObject3D([Range(0, byte.MaxValue)] uint eventIndex,
+            [Range(0, ushort.MaxValue)] uint graphicIndex,
+            MapCharacterMovementType movementType = MapCharacterMovementType.Random)
+        {
+            SetMapObject(eventIndex, graphicIndex, movementType);
+            UseTilesetGraphic = false;
         }
 
         #endregion
@@ -345,7 +511,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
                     _ => IsTextPopup ? TextIndex!.Value : NpcIndex!.Value,
                 };
 
-                // TODO
                 uint typeAndFlags = (uint)CharacterType;
                 
                 switch (CharacterType)
@@ -362,13 +527,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
                         break;
                 }
 
-                if (CharacterType == Ambermoon.Data.CharacterType.NPC)
+                if (CharacterType == Ambermoon.Data.CharacterType.NPC && IsTextPopup)
                     typeAndFlags |= 0x10;
 
                 if (UseTilesetGraphic)
                     typeAndFlags |= 0x08;
 
-                if (CharacterType <= Ambermoon.Data.CharacterType.NPC && advanced && NpcStartsConversation)
+                if (!IsTextPopup && CharacterType <= Ambermoon.Data.CharacterType.NPC && advanced && NpcStartsConversation)
                     typeAndFlags |= 0x20;
 
                 dataWriter.Write((byte)characterIndex);
