@@ -2,7 +2,8 @@
 
 namespace Ambermoon.Data.GameDataRepository.Collections
 {
-    public class TwoDimensionalData<TElement> : IEnumerable<TElement>
+    public class TwoDimensionalData<TElement> : IEnumerable<TElement>, ICloneable
+        where TElement : ICloneable
     {
 
         #region Fields
@@ -88,6 +89,23 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         public IEnumerator<TElement> GetEnumerator() => ((IEnumerable<TElement>)_elements).GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => _elements.GetEnumerator();
+
+        #endregion
+
+
+        #region Cloning
+
+        public TwoDimensionalData<TElement> Copy(bool cloneElements = true)
+        {
+            var clone = new TwoDimensionalData<TElement>(Width, Height);
+
+            for (int i = 0; i < _elements.Length; ++i)
+                clone._elements[i] = cloneElements ? (TElement)_elements[i].Clone() : _elements[i];
+
+            return clone;
+        }
+
+        public object Clone() => Copy();
 
         #endregion
 

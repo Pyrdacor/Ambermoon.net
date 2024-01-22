@@ -118,12 +118,12 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         #region Cloning
 
-        public DataCollection<T> Copy()
+        public DataCollection<T> Copy(bool cloneElements = true)
         {
             var copy = new DataCollection<T>(Count);
 
             for (int i = 0; i < Count; ++i)
-                copy._elements[i] = (T)_elements[i].Clone();
+                copy._elements[i] = cloneElements ? (T)_elements[i].Clone() : _elements[i];
 
             return copy;
         }
@@ -248,12 +248,12 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         #region Cloning
 
-        public DependentDataCollection<T, D> Copy()
+        public DependentDataCollection<T, D> Copy(bool cloneElements = true)
         {
             var copy = new DependentDataCollection<T, D>(Count);
 
             for (int i = 0; i < Count; ++i)
-                copy._elements[i] = (T)_elements[i].Clone();
+                copy._elements[i] = cloneElements ? (T)_elements[i].Clone() : _elements[i];
 
             return copy;
         }

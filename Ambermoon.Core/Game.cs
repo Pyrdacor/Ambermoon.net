@@ -9637,7 +9637,7 @@ namespace Ambermoon
                 {
                     // Note: Even broken items can be duplicated. The broken state is also duplicated.
                     var item = ItemManager.GetItem(itemSlot.ItemIndex);
-                    if (!item.Flags.HasFlag(ItemFlags.Clonable))
+                    if (!item.Flags.HasFlag(ItemFlags.Cloneable))
                     {
                         Error(DataNameProvider.CannotBeDuplicated);
                         return;

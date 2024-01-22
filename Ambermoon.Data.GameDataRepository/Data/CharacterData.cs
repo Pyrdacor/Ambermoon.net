@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data.Legacy;
 using System.ComponentModel.DataAnnotations;
+using Ambermoon.Data.GameDataRepository.Util;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
@@ -30,9 +31,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _name;
             set
             {
-                if (new AmbermoonEncoding().GetByteCount(value) > 15)
-                    throw new ArgumentOutOfRangeException(nameof(Name), "Name length is limited to 15 single-byte characters.");
-
+                ValueChecker.Check(value, 15);
                 _name = value;
             }
         }
@@ -57,9 +56,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _level;
             set
             {
-                if (value is 0 or > byte.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(Level), $"Level is limited to the range 1 to {byte.MaxValue}.");
-
+                ValueChecker.Check(value, 1, byte.MaxValue);
                 _level = value;
             }
         }

@@ -284,9 +284,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((ushort)LearnedSpellsType6);
             dataWriter.Write((ushort)LearnedSpellsFunctional);
             WriteFillBytes(4);
-            var name = Name;
+            string name = Name;
             if (name.Length > 15)
-                name = name[0..15];
+                name = name[..15];
             dataWriter.WriteWithoutLength(name.PadRight(16, '\0'));
 
             #region Equipment and Items

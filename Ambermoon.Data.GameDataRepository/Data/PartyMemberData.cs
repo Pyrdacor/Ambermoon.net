@@ -133,6 +133,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 TotalWeight += newWeight;
                 TotalWeight -= oldWeight;
             }
+
+            base.ItemSlotChanged(slot, oldIndex, newIndex, oldAmount, newAmount);
         }
     }
 }

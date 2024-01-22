@@ -232,7 +232,26 @@
 
         public MapData Copy()
         {
-            return new(); // TODO
+            var copy = new MapData();
+
+            copy.Type = Type;
+            copy.PaletteIndex = PaletteIndex;
+            copy.SongIndex = SongIndex;
+            copy.Flags = Flags;
+            copy.World = World;
+            copy.LabdataIndex = LabdataIndex;
+            copy.TilesetIndex = TilesetIndex;
+            copy.SkyBackgroundIndex = SkyBackgroundIndex;
+            copy.NpcGraphicFileIndex = NpcGraphicFileIndex;
+            copy.Tiles2D = Tiles2D?.Copy();
+            copy.Tiles3D = Tiles3D?.Copy();
+            copy.MapCharacters = MapCharacters.Copy();
+            copy.EventEntryList = new(EventEntryList);
+            copy.Events = Events.Copy();
+
+            (copy as IMutableIndex).Index = Index;
+
+            return copy;
         }
 
         public object Clone() => Copy();

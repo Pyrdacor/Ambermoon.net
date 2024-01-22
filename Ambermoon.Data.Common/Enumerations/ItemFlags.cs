@@ -36,6 +36,6 @@ namespace Ambermoon.Data
         /// <summary>
         /// Item can be duplicated.
         /// </summary>
-        Clonable = 0x40
+        Cloneable = 0x40
     }
 }

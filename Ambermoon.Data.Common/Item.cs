@@ -102,7 +102,7 @@ namespace Ambermoon.Data
             }
         }
 
-        public bool IsImportant => !Flags.HasFlag(ItemFlags.NotImportant) && !Flags.HasFlag(ItemFlags.Clonable);
+        public bool IsImportant => !Flags.HasFlag(ItemFlags.NotImportant) && !Flags.HasFlag(ItemFlags.Cloneable);
 
         public bool CanBreak => BreakChance != 0 && !Flags.HasFlag(ItemFlags.Indestructible) &&
             !Flags.HasFlag(ItemFlags.DestroyAfterUsage) && !Flags.HasFlag(ItemFlags.Stackable) && Type switch

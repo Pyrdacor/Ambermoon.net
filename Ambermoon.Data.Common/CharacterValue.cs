@@ -1,33 +1,74 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Data
 {
     [Serializable]
-    public class CharacterValue
+    public class CharacterValue : INotifyPropertyChanged
     {
+        private uint _currentValue;
+        private uint _maxValue;
+        private int _bonusValue;
+        private uint _storedValue;
+
         /// <summary>
         /// Current value without bonus.
         /// While exhausted this will be the exhausted value
         /// (half the previous value) and the actual value
-        /// is stored temporarly in <see cref="StoredValue"/>.
+        /// is stored temporarily in <see cref="StoredValue"/>.
         /// </summary>
-        public uint CurrentValue { get; set; }
+        public uint CurrentValue
+        {
+            get => _currentValue;
+            set => SetField(ref _currentValue, value);
+        }
+
         /// <summary>
         /// Maximum value for the character.
         /// </summary>
-        public uint MaxValue { get; set; }
+        public uint MaxValue
+        {
+            get => _maxValue;
+            set => SetField(ref _maxValue, value);
+        }
+
         /// <summary>
         /// Bonus from equipment.
         /// </summary>
-        public int BonusValue { get; set; } // can be negative if item is cursed
+        public int BonusValue
+        {
+            get => _bonusValue;
+            set => SetField(ref _bonusValue, value);
+        } // can be negative if item is cursed
+
         /// <summary>
         /// This stores the actual value while exhaustion is active.
         /// </summary>
-        public uint StoredValue { get; set; }
+        public uint StoredValue
+        {
+            get => _storedValue;
+            set => SetField(ref _storedValue, value);
+        }
+
         public uint TotalCurrentValue => (uint)Math.Max(0, (int)CurrentValue + BonusValue);
         public uint TotalMaxValue => (uint)Math.Max(0, (int)MaxValue + BonusValue);
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
     }
 
     [Serializable]

@@ -46,6 +46,29 @@ namespace Ambermoon.Data
             _ => false
         };
 
+        public static bool UsesHandCount(this ItemType itemType) => itemType switch
+        {
+            ItemType.Shield => true,
+            ItemType.CloseRangeWeapon => true,
+            ItemType.LongRangeWeapon => true,
+            ItemType.Ammunition => true,
+            _ => false
+        };
+
+        public static bool UsesFingerCount(this ItemType itemType) => itemType == ItemType.Ring;
+
+        public static bool IsBreakable(this ItemType itemType) => itemType switch
+        {
+            ItemType.Armor => true,
+            ItemType.CloseRangeWeapon => true,
+            ItemType.LongRangeWeapon => true,
+            ItemType.Shield => true,
+            ItemType.Tool => true,
+            ItemType.TextScroll => true,
+            ItemType.NormalItem => true,
+            _ => false
+        };
+
         public static EquipmentSlot ToEquipmentSlot(this ItemType itemType) => itemType switch
         {
             ItemType.Armor => EquipmentSlot.Body,
@@ -60,5 +83,32 @@ namespace Ambermoon.Data
             ItemType.Ring => EquipmentSlot.RightFinger,
             _ => EquipmentSlot.None
         };
+
+        private const ItemFlags EquipmentItemFlags = ItemFlags.Accursed | ItemFlags.Cloneable |
+                                                     ItemFlags.Indestructible | ItemFlags.NotImportant |
+                                                     ItemFlags.RemovableDuringFight;
+        private const ItemFlags NormalItemFlags = ItemFlags.Cloneable | ItemFlags.NotImportant |
+                                                  ItemFlags.Stackable | ItemFlags.DestroyAfterUsage;
+
+        public static ItemFlags AllowedFlags(this ItemType itemType) => itemType switch
+        {
+            ItemType.Armor => EquipmentItemFlags,
+            ItemType.Headgear => EquipmentItemFlags,
+            ItemType.Footgear => EquipmentItemFlags,
+            ItemType.Shield => EquipmentItemFlags,
+            ItemType.CloseRangeWeapon => EquipmentItemFlags,
+            ItemType.LongRangeWeapon => EquipmentItemFlags,
+            ItemType.Ammunition => EquipmentItemFlags | ItemFlags.Stackable,
+            ItemType.Amulet => EquipmentItemFlags,
+            ItemType.Brooch => EquipmentItemFlags,
+            ItemType.Ring => EquipmentItemFlags,
+            ItemType.Transportation => ItemFlags.NotImportant,
+            ItemType.Condition => ItemFlags.None,
+            ItemType.TextScroll => ItemFlags.NotImportant | ItemFlags.Stackable | ItemFlags.Indestructible,
+            ItemType.Tool => EquipmentItemFlags | ItemFlags.DestroyAfterUsage,
+            ItemType.NormalItem => NormalItemFlags | ItemFlags.Indestructible,
+            ItemType.SpecialItem => ItemFlags.NotImportant | ItemFlags.DestroyAfterUsage | ItemFlags.Cloneable,
+            _ => NormalItemFlags
+        };
     }
-}
+} 
