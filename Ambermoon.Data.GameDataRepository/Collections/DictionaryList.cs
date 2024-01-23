@@ -5,7 +5,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 {
     using Data;
 
-    public class DictionaryList<T> : IList<T>, IReadOnlyList<T>, IList
+    public sealed class DictionaryList<T> : IList<T>, IReadOnlyList<T>, IList
         where T : IIndexed, new()
     {
 
@@ -130,6 +130,20 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         {
             _dictionary.Add(item.Index, item);
             _list.Add(item);
+        }
+
+        public T AddNew(uint? index)
+        {
+            var newItem = Create(index);
+            Add(newItem);
+            return newItem;
+        }
+
+        public T AddClone(T source, uint index)
+        {
+            var newItem = CreateClone(source, index);
+            Add(newItem);
+            return newItem;
         }
 
         public int Add(object? value)
