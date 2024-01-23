@@ -1,12 +1,10 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using Ambermoon.Data.Enumerations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    using Ambermoon.Data.Legacy.Serialization;
+    using Ambermoon.Data.Enumerations;
     using Collections;
     using Serialization;
     using Util;
@@ -416,6 +414,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 : (uint)world + 1;
             PaletteIndex = paletteIndex;
             GotoPoints = new DictionaryList<MapGotoPointData>();
+            // TODO: change detection
 
             Tiles3D = new(width, height);
 

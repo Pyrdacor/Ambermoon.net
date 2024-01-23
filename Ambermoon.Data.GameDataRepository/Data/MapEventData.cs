@@ -1,12 +1,12 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
-using Ambermoon.Data.Enumerations;
-using Ambermoon.Data.GameDataRepository.Util;
-using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
+    using Serialization;
+    using Util;
+
     public class MapEventData : IMutableIndex, IIndexedData, IEquatable<MapEventData>, INotifyPropertyChanged
     {
 
