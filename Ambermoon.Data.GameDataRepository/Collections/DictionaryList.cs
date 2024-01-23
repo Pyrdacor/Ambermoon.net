@@ -110,7 +110,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         {
             T obj = new();
             if (obj is IMutableIndex mutable)
-                mutable.Index = index ?? Keys.Max() + 1;
+                mutable.Index = index ?? (Count == 0 ? 1 : Keys.Max() + 1);
             else
                 throw new InvalidOperationException($"Unable to create objects of type {typeof(T)}.");
             return obj;
@@ -120,7 +120,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         {
             var obj = (T)source.Clone();
             if (obj is IMutableIndex mutable)
-                mutable.Index = index ?? Keys.Max() + 1;
+                mutable.Index = index ?? (Count == 0 ? 1 : Keys.Max() + 1);
             else
                 throw new InvalidOperationException($"Unable to create objects of type {typeof(T)}.");
             return obj;
