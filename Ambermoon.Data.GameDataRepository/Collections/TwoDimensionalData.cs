@@ -3,7 +3,7 @@
 namespace Ambermoon.Data.GameDataRepository.Collections
 {
     public class TwoDimensionalData<TElement> : IEnumerable<TElement>, ICloneable
-        where TElement : IEquatable<TElement>
+        where TElement : IEquatable<TElement>, new()
     {
 
         #region Fields
@@ -51,6 +51,11 @@ namespace Ambermoon.Data.GameDataRepository.Collections
             _elements = new TElement[width * height];
             Width = width;
             Height = height;
+
+            for (int i = 0; i < width * height; i++)
+            {
+                _elements[i] = new();
+            }
         }
 
         #endregion
