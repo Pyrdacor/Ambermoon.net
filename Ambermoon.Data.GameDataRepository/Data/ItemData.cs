@@ -556,7 +556,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Constructors
 
-        internal ItemData()
+        public ItemData()
         {
         }
 

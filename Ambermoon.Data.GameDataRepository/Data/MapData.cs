@@ -1,11 +1,30 @@
-﻿namespace Ambermoon.Data.GameDataRepository.Data
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
+
+namespace Ambermoon.Data.GameDataRepository.Data
 {
     using Collections;
     using Serialization;
     using Util;
 
-    public class MapData : IMutableIndex, IIndexedData, IEquatable<MapData>
+    public enum MapEnvironment
     {
+        Indoor,
+        Outdoor,
+        Dungeon
+    }
+
+    public sealed class MapData : IMutableIndex, IIndexedData, IEquatable<MapData>, INotifyPropertyChanged
+    {
+        private uint _paletteIndex;
+        private uint _songIndex;
+        private uint? _labdataIndex;
+        private uint? _tilesetIndex1;
+        private uint? _skyBackgroundIndex1;
+        private uint? _npcGraphicFileIndex1;
+        private World _world;
+        private MapType _type;
 
         #region Properties
 
@@ -17,23 +36,119 @@
 
         public uint Index => (this as IMutableIndex).Index;
 
-        public MapType Type { get; private set; }
+        public MapType Type
+        {
+            get => _type;
+            private set => SetField(ref _type, value);
+        }
 
-        public uint PaletteIndex { get; set; }
+        [Range(0, byte.MaxValue)]
+        public uint PaletteIndex
+        {
+            get => _paletteIndex;
+            set
+            {
+                ValueChecker.Check(value, 0, byte.MaxValue);
+                SetField(ref _paletteIndex, value);
+            }
+        }
 
-        public uint SongIndex { get; set; }
+        [Range(0, byte.MaxValue)]
+        public uint SongIndex
+        {
+            get => _songIndex;
+            set
+            {
+                ValueChecker.Check(value, 0, byte.MaxValue);
+                SetField(ref _songIndex, value);
+            }
+        }
 
         public MapFlags Flags { get; private set; }
 
-        public World World { get; private set; }
+        public World World
+        {
+            get => _world;
+            private set => SetField(ref _world, value);
+        }
 
-        public uint? LabdataIndex { get; private set; }
+        [Range(0, byte.MaxValue)]
+        public uint? LabdataIndex
+        {
+            get => _labdataIndex;
+            private set => SetField(ref _labdataIndex, value);
+        }
 
-        public uint? TilesetIndex { get; private set; }
+        [Range(0, byte.MaxValue)]
+        public uint? TilesetIndex
+        {
+            get => _tilesetIndex1;
+            private set => SetField(ref _tilesetIndex1, value);
+        }
 
-        public uint? SkyBackgroundIndex { get; private set; }
+        [Range(0, byte.MaxValue)]
+        public uint? SkyBackgroundIndex
+        {
+            get => _skyBackgroundIndex1;
+            private set => SetField(ref _skyBackgroundIndex1, value);
+        }
 
-        public uint? NpcGraphicFileIndex { get; private set; }        
+        [Range(0, byte.MaxValue)]
+        public uint? NpcGraphicFileIndex
+        {
+            get => _npcGraphicFileIndex1;
+            private set => SetField(ref _npcGraphicFileIndex1, value);
+        }
+
+        public MapEnvironment Environment
+        {
+            get
+            {
+                if (Flags.HasFlag(MapFlags.Indoor))
+                    return MapEnvironment.Indoor;
+                if (Flags.HasFlag(MapFlags.Outdoor))
+                    return MapEnvironment.Outdoor;
+                return MapEnvironment.Dungeon;
+            }
+            set
+            {
+                Flags &= (MapFlags)0xf8; // mask out environment first
+
+                switch (value)
+                {
+                    case MapEnvironment.Indoor:
+                        Flags |= MapFlags.Indoor;
+                        break;
+                    case MapEnvironment.Outdoor:
+                        Flags |= MapFlags.Outdoor;
+                        break;
+                    default:
+                        Flags |= MapFlags.Dungeon;
+                        break;
+                }
+
+                OnPropertyChanged();
+            }
+        }
+
+        /*Indoor = 1 << 0, // Always at full light.
+           Outdoor = 1 << 1, // Light level is given by the daytime.
+           Dungeon = 1 << 2, // Only own light sources will grant light.
+           Automapper = 1 << 3, // If set the map is available and the map has to be explored. It also allows map-related spells. All Morag temples omit this.
+           CanRest = 1 << 4,
+           Unknown1 = 1 << 5, // Unknown. All world maps use that in Ambermoon.
+           Sky = 1 << 6, // All towns have this and the ruin tower. Only considered for 3D maps.
+           NoSleepUntilDawn = 1 << 7, // If active sleep time is always 8 hours.
+           StationaryGraphics = 1 << 8, // Allow stationary graphics (travel type images) and therefore transports. Is set for all world maps. This also controls if the music is taken from the map file or dependent on the travel type.
+           Unknown2 = 1 << 9, // Unknown. Never used in Ambermoon.
+           WorldSurface = 1 << 10, // If set the map doesn't use map text 0 as the title but uses the world name instead. Moreover based on world adjacent maps are shown with a size of 50x50.
+           CanUseMagic = 1 << 11, // Only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug). It just disables the spell book if not set but you still can use scrolls or items.
+           NoTravelMusic = 1 << 12, // Won't use travel music if StationaryGraphics is set
+           NoMarkOrReturn = 1 << 13, // Forbids the use of "Word of marking" and "Word of returning"
+           NoEagleOrBroom = 1 << 14, // Forbids the use of eagle and broom
+           SharedMapData = 1 << 15, // Only used internal by the new game data, do not use in original!
+           SmallPlayer = StationaryGraphics // Display player smaller. Only all world maps have this set. Only considered for 2D maps.
+               */
 
         public TwoDimensionalData<MapTile2DData>? Tiles2D { get; set; }
 
@@ -257,6 +372,26 @@
         public object Clone() => Copy();
 
         #endregion
-        
+
+
+        #region Property Changes
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
+
+        #endregion
+
     }
 }

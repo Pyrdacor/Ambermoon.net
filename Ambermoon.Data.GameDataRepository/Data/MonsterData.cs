@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using Ambermoon.Data.GameDataRepository.Enumerations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
@@ -42,13 +44,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         Invalid
     }
 
-    public enum MonsterAnimationProgression
-    {
-        Cycle,
-        Wave
-    }
-
-    public sealed class MonsterData : BattleCharacterData, IIndexedData, IEquatable<MonsterData>
+    public sealed class MonsterData : BattleCharacterData, IIndexedData, IEquatable<MonsterData>, INotifyPropertyChanged
     {
 
         #region Fields
@@ -61,7 +57,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         private uint _displayFrameWidth = 0;
         private uint _displayFrameHeight = 0;
         private readonly Animation[] _animations = new Animation[8];
-        private readonly MonsterAnimationProgression[] _animationProgressions = new MonsterAnimationProgression[8];
+        private readonly AnimationType[] _animationTypes = new AnimationType[8];
 
         #endregion
 
@@ -158,7 +154,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         #endregion
 
 
-        internal MonsterData()
+        public MonsterData()
         {
             for (int i = 0; i < 8; i++)
                 _animations[i] = new Animation();
@@ -324,7 +320,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             byte animationProgressions = 0;
             for (int i = 0; i < 8; i++)
             {
-                if (_animationProgressions[i] == MonsterAnimationProgression.Wave)
+                if (_animationTypes[i] == AnimationType.Wave)
                     animationProgressions |= (byte)(1 << i);
             }
             dataWriter.Write(animationProgressions);
@@ -448,9 +444,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             byte animationProgressions = dataReader.ReadByte();
             for (int i = 0; i < 8; i++)
             {
-                monsterData._animationProgressions[i] = (animationProgressions & (1 << i)) == 0
-                    ? MonsterAnimationProgression.Cycle
-                    : MonsterAnimationProgression.Wave;
+                monsterData._animationTypes[i] = (animationProgressions & (1 << i)) == 0
+                    ? AnimationType.Cycle
+                    : AnimationType.Wave;
             }
             SkipBytes(1); // padding byte
             monsterData.OriginalFrameWidth = dataReader.ReadWord();
@@ -487,7 +483,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                    _displayFrameWidth == other._displayFrameWidth &&
                    _displayFrameHeight == other._displayFrameHeight &&
                    _animations.Equals(other._animations) &&
-                   _animationProgressions.Equals(other._animationProgressions) &&
+                   _animationTypes.Equals(other._animationTypes) &&
                    CustomPalette.Equals(other.CustomPalette);
         }
 

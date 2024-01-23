@@ -9,7 +9,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         private uint _age = 1;
         private uint _maxAge = 1;
 
-        internal PartyMemberData()
+        public PartyMemberData()
         {
         }
 

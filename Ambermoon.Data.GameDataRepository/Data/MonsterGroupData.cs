@@ -26,7 +26,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Constructors
 
-        internal MonsterGroupData()
+        public MonsterGroupData()
         {
             MonsterIndices.ItemChanged += (_, _) => OnPropertyChanged(nameof(MonsterIndices));
         }
