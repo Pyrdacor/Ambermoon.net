@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.ComponentModel;
 
 namespace Ambermoon.Data.GameDataRepository.Collections
 {
@@ -102,10 +103,23 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         private void Set(int index, TElement element)
         {
-            if (!_elements[index].Equals(element))
+            if (_elements[index].Equals(element)) return;
+            if (_elements[index] is INotifyPropertyChanged oldNotify)
+                oldNotify.PropertyChanged -= ElementPropertyChanged;
+            _elements[index] = element;
+            if (element is INotifyPropertyChanged newNotify)
+                newNotify.PropertyChanged += ElementPropertyChanged;
+            ItemChanged?.Invoke(index % Width, index / Width);
+        }
+
+        private void ElementPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (sender is TElement element)
             {
-                _elements[index] = element;
-                ItemChanged?.Invoke(index % Width, index / Width);
+                var index = _elements.ToList().IndexOf(element);
+
+                if (index >= 0)
+                    ItemChanged?.Invoke(index % Width, index / Width);
             }
         }
 

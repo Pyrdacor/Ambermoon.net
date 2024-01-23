@@ -1,17 +1,18 @@
 ﻿using System.Collections;
+using System.ComponentModel;
 
 namespace Ambermoon.Data.GameDataRepository.Collections
 {
     using Data;
     using Serialization;
 
-    public class DataCollection<T> : IEnumerable<T>, IEquatable<DataCollection<T>>, ICloneable
-        where T : IIndexedData, ICloneable
+    public class DataCollection<TElement> : IEnumerable<TElement>, IEquatable<DataCollection<TElement>>, ICloneable
+        where TElement : IIndexedData, IEquatable<TElement>, new()
     {
 
         #region Fields
 
-        private readonly T[] _elements;
+        private readonly TElement[] _elements;
 
         #endregion
 
@@ -25,10 +26,10 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         #region Indexers
 
-        public T this[int index]
+        public TElement this[int index]
         {
-            get => _elements[index];
-            set => _elements[index] = value;
+            get => Get(index);
+            set => Set(index, value);
         }
 
         #endregion
@@ -39,14 +40,59 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         public DataCollection()
         {
             Count = 0;
-            _elements = Array.Empty<T>();
+            _elements = Array.Empty<TElement>();
         }
 
         internal DataCollection(int size)
         {
             Count = size;
-            _elements = new T[size];
+            _elements = new TElement[size];
+
+            for (int i = 0; i < size; ++i)
+                _elements[i] = new();
         }
+
+        internal DataCollection(int size, Func<int, TElement> valueProvider)
+        {
+            Count = size;
+            _elements = new TElement[size];
+
+            for (int i = 0; i < size; ++i)
+                _elements[i] = valueProvider(i);
+        }
+
+        #endregion
+
+
+        #region Methods
+
+        public TElement Get(int index) => _elements[index];
+
+        public void Set(int index, TElement element)
+        {
+            if (_elements[index].Equals(element)) return;
+            if (_elements[index] is INotifyPropertyChanged oldNotify)
+                oldNotify.PropertyChanged -= ElementPropertyChanged;
+            _elements[index] = element;
+            if (element is INotifyPropertyChanged newNotify)
+                newNotify.PropertyChanged += ElementPropertyChanged;
+            ItemChanged?.Invoke(index);
+        }
+
+        private void ElementPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (sender is TElement element)
+            {
+                var index = _elements.ToList().IndexOf(element);
+
+                if (index >= 0)
+                    ItemChanged?.Invoke(index);
+            }
+        }
+
+        public IEnumerator<TElement> GetEnumerator() => ((IEnumerable<TElement>)_elements).GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => _elements.GetEnumerator();
 
         #endregion
 
@@ -59,12 +105,12 @@ namespace Ambermoon.Data.GameDataRepository.Collections
                 item.Serialize(dataWriter, advanced);
         }
 
-        public static DataCollection<T> Deserialize(IDataReader dataReader, int size, bool advanced)
+        public static DataCollection<TElement> Deserialize(IDataReader dataReader, int size, bool advanced)
         {
-            var collection = new DataCollection<T>(size);
+            var collection = new DataCollection<TElement>(size);
 
             for (uint i = 0; i < size; i++)
-                collection._elements[i] = (T)T.Deserialize(dataReader, i, advanced);
+                collection._elements[i] = (TElement)TElement.Deserialize(dataReader, i, advanced);
 
             return collection;
         }
@@ -72,18 +118,9 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         #endregion
 
 
-        #region Methods
-
-        public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>)_elements).GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => _elements.GetEnumerator();
-
-        #endregion
-
-
         #region Equality
 
-        public bool Equals(DataCollection<T>? other)
+        public bool Equals(DataCollection<TElement>? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -95,7 +132,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals((DataCollection<T>)obj);
+            return Equals((DataCollection<TElement>)obj);
         }
 
         public override int GetHashCode()
@@ -103,12 +140,12 @@ namespace Ambermoon.Data.GameDataRepository.Collections
             return HashCode.Combine(Count, _elements);
         }
 
-        public static bool operator ==(DataCollection<T>? left, DataCollection<T>? right)
+        public static bool operator ==(DataCollection<TElement>? left, DataCollection<TElement>? right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(DataCollection<T>? left, DataCollection<T>? right)
+        public static bool operator !=(DataCollection<TElement>? left, DataCollection<TElement>? right)
         {
             return !Equals(left, right);
         }
@@ -118,12 +155,20 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         #region Cloning
 
-        public DataCollection<T> Copy(bool cloneElements = true)
+        private static TElement CloneElement(TElement element)
         {
-            var copy = new DataCollection<T>(Count);
+            if (element is ICloneable cloneable)
+                return (TElement)cloneable.Clone();
+
+            return element;
+        }
+
+        public DataCollection<TElement> Copy(bool cloneElements = true)
+        {
+            var copy = new DataCollection<TElement>(Count);
 
             for (int i = 0; i < Count; ++i)
-                copy._elements[i] = cloneElements ? (T)_elements[i].Clone() : _elements[i];
+                copy._elements[i] = cloneElements ? CloneElement(_elements[i]) : _elements[i];
 
             return copy;
         }
@@ -132,16 +177,23 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         #endregion
 
+
+        #region Property Changes
+
+        public event Action<int>? ItemChanged;
+
+        #endregion
+
     }
 
-    public class DependentDataCollection<T, D> : IEnumerable<T>, IEquatable<DependentDataCollection<T, D>>, ICloneable
-        where T : IIndexedDependentData<D>, IEquatable<T>, ICloneable
-        where D : IIndexedData
+    public class DependentDataCollection<TElement, TDependency> : IEnumerable<TElement>, IEquatable<DependentDataCollection<TElement, TDependency>>, ICloneable
+        where TElement : IIndexedDependentData<TDependency>, IEquatable<TElement>, new()
+        where TDependency : IIndexedData
     {
 
         #region Fields
 
-        private readonly T[] _elements;
+        private readonly TElement[] _elements;
 
         #endregion
 
@@ -155,10 +207,10 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         #region Indexers
 
-        public T this[int index]
+        public TElement this[int index]
         {
-            get => _elements[index];
-            set => _elements[index] = value;
+            get => Get(index);
+            set => Set(index, value);
         }
 
         #endregion
@@ -169,13 +221,25 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         public DependentDataCollection()
         {
             Count = 0;
-            _elements = Array.Empty<T>();
+            _elements = Array.Empty<TElement>();
         }
 
-        private DependentDataCollection(int size)
+        internal DependentDataCollection(int size)
         {
             Count = size;
-            _elements = new T[size];
+            _elements = new TElement[size];
+
+            for (int i = 0; i < size; ++i)
+                _elements[i] = new();
+        }
+
+        internal DependentDataCollection(int size, Func<int, TElement> valueProvider)
+        {
+            Count = size;
+            _elements = new TElement[size];
+
+            for (int i = 0; i < size; ++i)
+                _elements[i] = valueProvider(i);
         }
 
         #endregion
@@ -189,12 +253,12 @@ namespace Ambermoon.Data.GameDataRepository.Collections
                 item.Serialize(dataWriter, advanced);
         }
 
-        public static DependentDataCollection<T, D> Deserialize(IDataReader dataReader, int size, D providedData, bool advanced)
+        public static DependentDataCollection<TElement, TDependency> Deserialize(IDataReader dataReader, int size, TDependency providedData, bool advanced)
         {
-            var collection = new DependentDataCollection<T, D>(size);
+            var collection = new DependentDataCollection<TElement, TDependency>(size);
 
             for (uint i = 0; i < size; i++)
-                collection._elements[i] = (T)T.Deserialize(dataReader, i, providedData, advanced);
+                collection._elements[i] = (TElement)TElement.Deserialize(dataReader, i, providedData, advanced);
 
             return collection;
         }
@@ -204,7 +268,31 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         #region Methods
 
-        public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>)_elements).GetEnumerator();
+        public TElement Get(int index) => _elements[index];
+
+        public void Set(int index, TElement element)
+        {
+            if (_elements[index].Equals(element)) return;
+            if (_elements[index] is INotifyPropertyChanged oldNotify)
+                oldNotify.PropertyChanged -= ElementPropertyChanged;
+            _elements[index] = element;
+            if (element is INotifyPropertyChanged newNotify)
+                newNotify.PropertyChanged += ElementPropertyChanged;
+            ItemChanged?.Invoke(index);
+        }
+
+        private void ElementPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (sender is TElement element)
+            {
+                var index = _elements.ToList().IndexOf(element);
+
+                if (index >= 0)
+                    ItemChanged?.Invoke(index);
+            }
+        }
+
+        public IEnumerator<TElement> GetEnumerator() => ((IEnumerable<TElement>)_elements).GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => _elements.GetEnumerator();
 
@@ -213,7 +301,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         #region Equality
 
-        public bool Equals(DependentDataCollection<T, D>? other)
+        public bool Equals(DependentDataCollection<TElement, TDependency>? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -225,7 +313,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals((DependentDataCollection<T, D>)obj);
+            return Equals((DependentDataCollection<TElement, TDependency>)obj);
         }
 
         public override int GetHashCode()
@@ -233,12 +321,12 @@ namespace Ambermoon.Data.GameDataRepository.Collections
             return HashCode.Combine(Count, _elements);
         }
 
-        public static bool operator ==(DependentDataCollection<T, D>? left, DependentDataCollection<T, D>? right)
+        public static bool operator ==(DependentDataCollection<TElement, TDependency>? left, DependentDataCollection<TElement, TDependency>? right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(DependentDataCollection<T, D>? left, DependentDataCollection<T, D>? right)
+        public static bool operator !=(DependentDataCollection<TElement, TDependency>? left, DependentDataCollection<TElement, TDependency>? right)
         {
             return !Equals(left, right);
         }
@@ -248,17 +336,32 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         #region Cloning
 
-        public DependentDataCollection<T, D> Copy(bool cloneElements = true)
+        private static TElement CloneElement(TElement element)
         {
-            var copy = new DependentDataCollection<T, D>(Count);
+            if (element is ICloneable cloneable)
+                return (TElement)cloneable.Clone();
+
+            return element;
+        }
+
+        public DependentDataCollection<TElement, TDependency> Copy(bool cloneElements = true)
+        {
+            var copy = new DependentDataCollection<TElement, TDependency>(Count);
 
             for (int i = 0; i < Count; ++i)
-                copy._elements[i] = cloneElements ? (T)_elements[i].Clone() : _elements[i];
+                copy._elements[i] = cloneElements ? CloneElement(_elements[i]) : _elements[i];
 
             return copy;
         }
 
         public object Clone() => Copy();
+
+        #endregion
+
+
+        #region Property Changes
+
+        public event Action<int>? ItemChanged;
 
         #endregion
 

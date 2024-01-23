@@ -221,6 +221,23 @@ namespace Ambermoon.Data.GameDataRepository.Data
             // Events
             Events.Serialize(dataWriter, advanced);
 
+            // Map Character Positions
+            foreach (var mapChar in MapCharacters)
+            {
+                if (mapChar.CharacterType is null)
+                    continue;
+
+                if (mapChar.CharacterType == CharacterType.Monster ||
+                    mapChar.MovementType != MapCharacterMovementType.Path)
+                {
+                    mapChar.Position.Serialize(dataWriter, advanced);
+                }
+                else
+                {
+                    mapChar.Path!.Serialize(dataWriter, advanced);
+                }
+            }
+
             // TODO
         }
 
@@ -244,6 +261,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             // Map characters
             mapData.MapCharacters = DependentDataCollection<MapCharacterData, MapData>.Deserialize(dataReader, 32, mapData, advanced);
+            mapData.MapCharacters.ItemChanged += mapData.MapCharactersChanged;
 
             if (mapData.Type == MapType.Map2D)
             {
@@ -258,6 +276,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
                         mapData.Tiles2D.Set(x, y, (MapTile2DData)MapTile2DData.Deserialize(dataReader, advanced));
                     }
                 }
+
+                mapData.LabdataIndex = null;
+                mapData.Tiles3D = null;
+                mapData.SkyBackgroundIndex = null;
             }
             else
             {
@@ -272,17 +294,45 @@ namespace Ambermoon.Data.GameDataRepository.Data
                         mapData.Tiles3D.Set(x, y, (MapTile3DData)MapTile3DData.Deserialize(dataReader, advanced));
                     }
                 }
+
+                mapData.TilesetIndex = null;
+                mapData.Tiles2D = null;
+                mapData.NpcGraphicFileIndex = null;
             }
 
             // Event entry list
             int eventEntryListSize = dataReader.ReadWord();
             mapData.EventEntryList = new(Util.ReadWordArray(dataReader, eventEntryListSize));
+            // TODO: change detection
 
             // Events
             int numberOfEvents = dataReader.ReadWord();
             mapData.Events = DataCollection<MapEventData>.Deserialize(dataReader, numberOfEvents, advanced);
+            // TODO: make events a mutable collection
+            // TODO: change detection
 
-            // TODO: events, automap icons, goto points, map char positions
+            // Map Character Positions
+            foreach (var mapChar in mapData.MapCharacters)
+            {
+                if (mapChar.CharacterType == CharacterType.Monster)
+                    mapChar.Position = (MapPositionData)MapPositionData.Deserialize(dataReader, advanced);
+                else if (mapChar.CharacterType is not null)
+                {
+                    if (mapChar.MovementType == MapCharacterMovementType.Path)
+                    {
+                        mapChar.Path =
+                            (DataCollection<MapPositionData>)DataCollection<MapPositionData>.Deserialize(dataReader,
+                                288, advanced);
+                        mapChar.Position = mapChar.Path[0];
+                    }
+                    else
+                    {
+                        mapChar.Position = (MapPositionData)MapPositionData.Deserialize(dataReader, advanced);
+                    }
+                }
+            }
+
+            // TODO: automap icons, goto points
 
             return mapData;
         }
@@ -389,6 +439,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
             field = value;
             OnPropertyChanged(propertyName);
             return true;
+        }
+
+        private void MapCharactersChanged(int index)
+        {
+            OnPropertyChanged(nameof(MapCharacters));
         }
 
         #endregion

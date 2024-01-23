@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+using Ambermoon.Data.GameDataRepository.Collections;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
@@ -30,6 +31,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         Path
     }
 
+    
     public sealed class MapCharacterData : IMutableIndex, IIndexedDependentData<MapData>, IEquatable<MapCharacterData>, INotifyPropertyChanged
     {
 
@@ -40,6 +42,19 @@ namespace Ambermoon.Data.GameDataRepository.Data
         private bool _waveAnimation;
         private bool _randomAnimation;
         private uint _graphicIndex;
+        private MapPositionData _position = MapPositionData.Invalid;
+        private uint? _combatBackgroundIndex;
+        private uint _eventIndex;
+        private MapCharacterMovementType _movementType;
+        private bool _onlyMoveWhenSeePlayer;
+        private bool _npcStartsConversation;
+        private bool _isTextPopup;
+        private bool _useTilesetGraphic;
+        private CharacterType? _characterType;
+        private uint? _monsterGroupIndex;
+        private uint? _textIndex;
+        private uint? _npcIndex;
+        private uint? _partyMemberIndex;
 
         #endregion
 
@@ -54,15 +69,35 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public uint Index => (this as IMutableIndex).Index;
 
-        public uint? PartyMemberIndex { get; private set; }
+        public uint? PartyMemberIndex
+        {
+            get => _partyMemberIndex;
+            private set => SetField(ref _partyMemberIndex, value);
+        }
 
-        public uint? NpcIndex { get; private set; }
+        public uint? NpcIndex
+        {
+            get => _npcIndex;
+            private set => SetField(ref _npcIndex, value);
+        }
 
-        public uint? MonsterGroupIndex { get; private set; }
+        public uint? MonsterGroupIndex
+        {
+            get => _monsterGroupIndex;
+            private set => SetField(ref _monsterGroupIndex, value);
+        }
 
-        public uint? TextIndex { get; private set; }
+        public uint? TextIndex
+        {
+            get => _textIndex;
+            private set => SetField(ref _textIndex, value);
+        }
 
-        public CharacterType? CharacterType { get; private set; }
+        public CharacterType? CharacterType
+        {
+            get => _characterType;
+            private set => SetField(ref _characterType, value);
+        }
 
         /// <summary>
         /// There can be up to 15 collision classes.
@@ -108,14 +143,22 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// The <see cref="GraphicIndex"/> will reference a map tile
         /// graphic instead of a NPC or monster graphic in this case.
         /// </summary>
-        public bool UseTilesetGraphic { get; private set; }
+        public bool UseTilesetGraphic
+        {
+            get => _useTilesetGraphic;
+            private set => SetField(ref _useTilesetGraphic, value);
+        }
 
         /// <summary>
         /// This is only used if the character type is an NPC.
         /// Text popup NPCs are just referencing a map text
         /// and simply display it when the player talks to them.
         /// </summary>
-        public bool IsTextPopup { get; private set; }
+        public bool IsTextPopup
+        {
+            get => _isTextPopup;
+            private set => SetField(ref _isTextPopup, value);
+        }
 
         /// <summary>
         /// If active, the NPC window will open automatically
@@ -126,7 +169,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// Advanced only.
         /// </summary>
         [AdvancedOnly]
-        public bool NpcStartsConversation { get; private set; }
+        public bool NpcStartsConversation
+        {
+            get => _npcStartsConversation;
+            private set => SetField(ref _npcStartsConversation, value);
+        }
 
         /// <summary>
         /// This is only used for monsters. If active the monster
@@ -135,13 +182,21 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// Advanced only.
         /// </summary>
         [AdvancedOnly]
-        public bool OnlyMoveWhenSeePlayer { get; private set; }
+        public bool OnlyMoveWhenSeePlayer
+        {
+            get => _onlyMoveWhenSeePlayer;
+            private set => SetField(ref _onlyMoveWhenSeePlayer, value);
+        }
 
         /// <summary>
         /// Movement type of the character. It depends on some
         /// flags but also on the character type.
         /// </summary>
-        public MapCharacterMovementType MovementType { get; private set; }
+        public MapCharacterMovementType MovementType
+        {
+            get => _movementType;
+            private set => SetField(ref _movementType, value);
+        }
 
         /// <summary>
         /// Graphic index for the character. The meaning depends on the
@@ -168,7 +223,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// 
         /// The default value of 0 means (no event).
         /// </summary>
-        public uint EventIndex { get; private set; }
+        public uint EventIndex
+        {
+            get => _eventIndex;
+            private set => SetField(ref _eventIndex, value);
+        }
 
         /// <summary>
         /// Normally animations are cyclic. So if the last frame
@@ -247,16 +306,33 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// Combat background index which is used when
         /// fighting the monster (group).
         /// </summary>
-        public uint? CombatBackgroundIndex { get; private set; }
-
-        #endregion
-
-
-        #region Constructors
-
-        internal MapCharacterData()
+        [Range(0, 15)]
+        public uint? CombatBackgroundIndex
         {
+            get => _combatBackgroundIndex;
+            private set
+            {
+                if (CharacterType != Ambermoon.Data.CharacterType.Monster && value is not null)
+                    throw new InvalidOperationException($"{nameof(CombatBackgroundIndex)} can only be set for monsters.");
+                if (value is not null)
+                    ValueChecker.Check(value.Value, 0, 15);
+                SetField(ref _combatBackgroundIndex, value);
+            }
+        }
 
+        public DataCollection<MapPositionData>? Path { get; internal set; }
+
+        public MapPositionData Position
+        {
+            get => _position;
+            set
+            {
+                if (value.IsInvalid)
+                    throw new InvalidOperationException("The given position is invalid.");
+                SetField(ref _position, value);
+                if (Path is not null)
+                    Path[0] = value;
+            }
         }
 
         #endregion
@@ -280,6 +356,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             NpcStartsConversation = false;
             OnlyMoveWhenSeePlayer = false;
             CombatBackgroundIndex = null;
+            RemovePath();
+            Position = MapPositionData.Invalid;
         }
 
         private void SetMonster([Range(1, byte.MaxValue)] uint monsterGroupIndex,
@@ -308,6 +386,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             EventIndex = 0;
             IsTextPopup = false;
             NpcStartsConversation = false;
+            RemovePath();
         }
 
         public void SetMonster2D([Range(1, byte.MaxValue)] uint monsterGroupIndex,
@@ -352,6 +431,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
             EventIndex = 0;
             IsTextPopup = false;
             OnlyMoveWhenSeePlayer = false;
+            if (movementType == MapCharacterMovementType.Path)
+                InitPath();
+            else
+                RemovePath();
         }
 
         public void SetPartyMember2D([Range(1, byte.MaxValue)] uint partyMemberIndex,
@@ -394,6 +477,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
             EventIndex = 0;
             IsTextPopup = false;
             OnlyMoveWhenSeePlayer = false;
+            if (movementType == MapCharacterMovementType.Path)
+                InitPath();
+            else
+                RemovePath();
         }
 
         public void SetNpc2D([Range(1, byte.MaxValue)] uint npcIndex,
@@ -437,6 +524,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
             EventIndex = 0;
             OnlyMoveWhenSeePlayer = false;
             NpcStartsConversation = false;
+            if (movementType == MapCharacterMovementType.Path)
+                InitPath();
+            else
+                RemovePath();
         }
 
         private void SetMapObject([Range(0, byte.MaxValue)] uint eventIndex,
@@ -459,6 +550,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
             IsTextPopup = false;
             OnlyMoveWhenSeePlayer = false;
             NpcStartsConversation = false;
+            if (movementType == MapCharacterMovementType.Path)
+                InitPath();
+            else
+                RemovePath();
         }
 
         public void SetMapObject2D([Range(0, byte.MaxValue)] uint eventIndex,
@@ -476,6 +571,26 @@ namespace Ambermoon.Data.GameDataRepository.Data
         {
             SetMapObject(eventIndex, graphicIndex, movementType);
             UseTilesetGraphic = false;
+        }
+
+        private void RemovePath()
+        {
+            if (Path != null)
+            {
+                Path.ItemChanged -= PathItemChanged;
+                Path = null;
+                OnPropertyChanged(nameof(Path));
+            }
+        }
+
+        private void InitPath()
+        {
+            if (Path is null)
+            {
+                Path = new DataCollection<MapPositionData>(288, _ => Position.Copy());
+                Path.ItemChanged += PathItemChanged;
+                OnPropertyChanged(nameof(Path));
+            }
         }
 
         #endregion
@@ -622,6 +737,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
             mapCharacterData.RandomAnimation = (tileFlags & 0x10) != 0;
             mapCharacterData.AllowedCollisionClasses = (tileFlags & 0x80) != 0 ? 0 : (tileFlags >> 8) & 0x7fff;
 
+            if (mapCharacterData.MovementType == MapCharacterMovementType.Path)
+            {
+                mapCharacterData.InitPath();
+            }
+
             return mapCharacterData;
         }
 
@@ -651,7 +771,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
                    EventIndex == other.EventIndex &&
                    WaveAnimation == other.WaveAnimation &&
                    RandomAnimation == other.RandomAnimation &&
-                   CombatBackgroundIndex == other.CombatBackgroundIndex;
+                   CombatBackgroundIndex == other.CombatBackgroundIndex &&
+                   Position == other.Position &&
+                   Path == other.Path;
         }
 
         public override bool Equals(object? obj)
@@ -705,6 +827,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
             field = value;
             OnPropertyChanged(propertyName);
             return true;
+        }
+
+        private void PathItemChanged(int index)
+        {
+            if (Path is not null && index == 0)
+                Position = Path[0];
+
+            OnPropertyChanged(nameof(Path));
         }
 
         #endregion
