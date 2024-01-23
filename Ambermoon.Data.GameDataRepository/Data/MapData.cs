@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+using Ambermoon.Data.Enumerations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
@@ -165,12 +166,17 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// 
         /// Each element represents the index of the first event in the event entry.
         /// </summary>
-        public List<uint> EventEntryList { get; private set; } = new();
+        public DictionaryList<MapEventEntryData> EventEntryList { get; private set; } = new();
 
         /// <summary>
         /// List of all existing map events.
         /// </summary>
-        public DataCollection<MapEventData> Events { get; private set; } = new();
+        public DictionaryList<MapEventData> Events { get; private set; } = new();
+
+        /// <summary>
+        /// List of all goto (fast travel) points.
+        /// </summary>
+        public DictionaryList<MapGotoPointData>? GotoPoints { get; private set; }
 
         #endregion
 
@@ -216,10 +222,12 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 (tile as IData)!.Serialize(dataWriter, advanced);
 
             // Event entry list
-            Util.WriteWordCollection(dataWriter, EventEntryList);
+            foreach (var entry in EventEntryList)
+                entry.Serialize(dataWriter, advanced);
 
             // Events
-            Events.Serialize(dataWriter, advanced);
+            foreach (var mapEvent in Events)
+                mapEvent.Serialize(dataWriter, advanced);
 
             // Map Character Positions
             foreach (var mapChar in MapCharacters)
@@ -238,7 +246,21 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 }
             }
 
-            // TODO
+            // Goto Points
+            foreach (var gotoPoint in GotoPoints ?? Enumerable.Empty<MapGotoPointData>())
+                gotoPoint.Serialize(dataWriter, advanced);
+
+            // Event Entry Automap Types
+            if (Type == MapType.Map3D)
+            {
+                foreach (var entry in EventEntryList)
+                {
+                    dataWriter.Write((byte)entry.AutomapType);
+                }
+            }
+
+            if (dataWriter.Position % 2 == 1)
+                dataWriter.Write(0);
         }
 
         public static IData Deserialize(IDataReader dataReader, bool advanced)
@@ -302,13 +324,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             // Event entry list
             int eventEntryListSize = dataReader.ReadWord();
-            mapData.EventEntryList = new(Util.ReadWordArray(dataReader, eventEntryListSize));
+            var eventEntryList = DataCollection<MapEventEntryData>.Deserialize(dataReader, eventEntryListSize, advanced);
+            mapData.EventEntryList = new DictionaryList<MapEventEntryData>(eventEntryList);
             // TODO: change detection
 
             // Events
             int numberOfEvents = dataReader.ReadWord();
-            mapData.Events = DataCollection<MapEventData>.Deserialize(dataReader, numberOfEvents, advanced);
-            // TODO: make events a mutable collection
+            var events = DataCollection<MapEventData>.Deserialize(dataReader, numberOfEvents, advanced);
+            mapData.Events = new DictionaryList<MapEventData>(events);
             // TODO: change detection
 
             // Map Character Positions
@@ -320,10 +343,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 {
                     if (mapChar.MovementType == MapCharacterMovementType.Path)
                     {
-                        mapChar.Path =
-                            (DataCollection<MapPositionData>)DataCollection<MapPositionData>.Deserialize(dataReader,
-                                288, advanced);
-                        mapChar.Position = mapChar.Path[0];
+                        mapChar.InitPath( DataCollection<MapPositionData>.Deserialize(dataReader, 288, advanced));
+                        mapChar.Position = mapChar.Path![0];
                     }
                     else
                     {
@@ -332,7 +353,27 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 }
             }
 
-            // TODO: automap icons, goto points
+            // Goto Points (Fast Travel)
+            int numGotoPoints = dataReader.ReadWord(); // Note: This is always present, even for 2D maps.
+
+            if (mapData.Type == MapType.Map2D)
+            {
+                dataReader.Position += numGotoPoints * 20;
+                mapData.GotoPoints = null;
+            }
+            else
+            {
+                var gotoPoints = DataCollection<MapGotoPointData>.Deserialize(dataReader, numGotoPoints, advanced);
+                mapData.GotoPoints = new DictionaryList<MapGotoPointData>(gotoPoints);
+                // TODO: change detection
+            }
+
+            // Event Entry Automap Types
+            foreach (var entry in mapData.EventEntryList)
+                entry.AutomapType = (AutomapType)dataReader.ReadByte();
+
+            if (dataReader.Position % 2 == 1)
+                dataReader.Position++;
 
             return mapData;
         }
@@ -411,8 +452,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             copy.Tiles2D = Tiles2D?.Copy();
             copy.Tiles3D = Tiles3D?.Copy();
             copy.MapCharacters = MapCharacters.Copy();
-            copy.EventEntryList = new(EventEntryList);
-            copy.Events = Events.Copy();
+            copy.EventEntryList = new(EventEntryList.Select(e => e.Copy()));
+            copy.Events = new(Events.Select(e => e.Copy()));
+            copy.GotoPoints = GotoPoints is null ? null : new(GotoPoints.Select(e => e.Copy()));
 
             (copy as IMutableIndex).Index = Index;
 

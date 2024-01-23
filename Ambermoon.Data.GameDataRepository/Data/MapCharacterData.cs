@@ -583,7 +583,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
         }
 
-        private void InitPath()
+        internal void InitPath(DataCollection<MapPositionData>? path = null)
         {
             if (Path is null)
             {

@@ -7,10 +7,13 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public class MapEventData : IMutableIndex, IIndexedData, IEquatable<MapEventData>, INotifyPropertyChanged
+    public class MapEventEntryData : IMutableIndex, IIndexedData, IEquatable<MapEventEntryData>, INotifyPropertyChanged
     {
 
         #region Fields
+
+        private AutomapType _automapType = AutomapType.None;
+        private uint _eventIndex;
 
         #endregion
 
@@ -25,29 +28,22 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public uint Index => (this as IMutableIndex).Index;
 
-        public EventType Type => (EventType)EventData[0];
-
         [Range(0, ushort.MaxValue)]
-        public uint? NextEventIndex
+        public uint EventIndex
         {
-            get
-            {
-                ushort index = EventData[^2];
-                index <<= 8;
-                index |= EventData[^1];
-
-                return index == ushort.MaxValue ? null : index;
-            }
+            get => _eventIndex;
             set
             {
-                uint index = value ?? ushort.MaxValue;
-                ValueChecker.Check(index, 0, ushort.MaxValue);
-                EventData[^2] = (byte)(index >> 8);
-                EventData[^1] = (byte)(index & 0xff);
+                ValueChecker.Check(value, 0, ushort.MaxValue);
+                SetField(ref _eventIndex, value);
             }
         }
 
-        public byte[] EventData { get; private init; } = new byte[12];
+        public AutomapType AutomapType
+        {
+            get => _automapType;
+            set => SetField(ref _automapType, value);
+        }
 
         #endregion
 
@@ -56,20 +52,20 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public static IData Deserialize(IDataReader dataReader, bool advanced)
         {
-            return new MapEventData
+            return new MapEventEntryData
             {
-                EventData = dataReader.ReadBytes(12)
+                EventIndex = dataReader.ReadWord()
             };
         }
 
         public void Serialize(IDataWriter dataWriter, bool advanced)
         {
-            dataWriter.Write(EventData);
+            dataWriter.Write((ushort)EventIndex);
         }
 
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {
-            var mapEventData = (MapEventData)Deserialize(dataReader, advanced);
+            var mapEventData = (MapEventEntryData)Deserialize(dataReader, advanced);
             (mapEventData as IMutableIndex).Index = index;
             return mapEventData;
         }
@@ -79,11 +75,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Equality
 
-        public bool Equals(MapEventData? other)
+        public bool Equals(MapEventEntryData? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return EventData.Equals(other.EventData);
+            return EventIndex == other.EventIndex && AutomapType == other.AutomapType;
         }
 
         public override bool Equals(object? obj)
@@ -91,17 +87,17 @@ namespace Ambermoon.Data.GameDataRepository.Data
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((MapEventData)obj);
+            return Equals((MapEventEntryData)obj);
         }
 
         public override int GetHashCode() => (int)Index;
 
-        public static bool operator ==(MapEventData? left, MapEventData? right)
+        public static bool operator ==(MapEventEntryData? left, MapEventEntryData? right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(MapEventData? left, MapEventData? right)
+        public static bool operator !=(MapEventEntryData? left, MapEventEntryData? right)
         {
             return !Equals(left, right);
         }
@@ -111,11 +107,12 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Cloning
 
-        public MapEventData Copy()
+        public MapEventEntryData Copy()
         {
-            return new MapEventData
+            return new MapEventEntryData
             {
-                EventData = (byte[])EventData.Clone()
+                EventIndex = EventIndex,
+                AutomapType = AutomapType
             };
         }
 

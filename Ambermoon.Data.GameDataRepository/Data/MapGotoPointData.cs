@@ -1,25 +1,27 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+
 namespace Ambermoon.Data.GameDataRepository.Data
 {
     using Serialization;
     using Util;
 
-    public sealed class MapPositionData : IMutableIndex, IIndexedData, IEquatable<MapPositionData>, INotifyPropertyChanged
+    public sealed class MapGotoPointData : IMutableIndex, IIndexedData, IEquatable<MapGotoPointData>, INotifyPropertyChanged
     {
 
         #region Fields
 
         private uint _x;
         private uint _y;
+        private uint _saveIndex;
+        private string _name = string.Empty;
+        private CharacterDirection _direction;
 
         #endregion
 
 
         #region Properties
-
-        public static MapPositionData Invalid => new() { X = 0, Y = 0 };
 
         uint IMutableIndex.Index
         {
@@ -29,29 +31,55 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public uint Index => (this as IMutableIndex).Index;
 
-        [Range(0, 100)]
+        [Range(1, 100)]
         public uint X
         {
             get => _x;
             set
             {
-                ValueChecker.Check(value, 0, 100);
+                ValueChecker.Check(value, 1, 100);
                 SetField(ref _x, value);
             }
         }
 
-        [Range(0, 100)]
+        [Range(1, 100)]
         public uint Y
         {
             get => _y;
             set
             {
-                ValueChecker.Check(value, 0, 100);
+                ValueChecker.Check(value, 1, 100);
                 SetField(ref _y, value);
             }
         }
 
-        public bool IsInvalid => X == 0 || Y == 0;
+        public CharacterDirection Direction
+        {
+            get => _direction;
+            set => SetField(ref _direction, value);
+        }
+
+        [Range(0, byte.MaxValue)]
+        public uint SaveIndex
+        {
+            get => _saveIndex;
+            set
+            {
+                ValueChecker.Check(value, 0, byte.MaxValue);
+                SetField(ref _saveIndex, value);
+            }
+        }
+
+        [StringLength(15)]
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                ValueChecker.Check(value, 15);
+                _name = value;
+            }
+        }
 
         #endregion
 
@@ -62,23 +90,32 @@ namespace Ambermoon.Data.GameDataRepository.Data
         {
             dataWriter.Write((byte)X);
             dataWriter.Write((byte)Y);
+            dataWriter.Write((byte)Direction);
+            dataWriter.Write((byte)SaveIndex);
+            string name = Name;
+            if (name.Length > 15)
+                name = name[..15];
+            dataWriter.WriteWithoutLength(name.PadRight(16, '\0'));
         }
 
         public static IData Deserialize(IDataReader dataReader, bool advanced)
         {
-            var positionData = new MapPositionData();
+            var gotoPointData = new MapGotoPointData();
 
-            positionData.X = dataReader.ReadByte();
-            positionData.Y = dataReader.ReadByte();
+            gotoPointData.X = dataReader.ReadByte();
+            gotoPointData.Y = dataReader.ReadByte();
+            gotoPointData.Direction = (CharacterDirection)dataReader.ReadByte();
+            gotoPointData.SaveIndex = dataReader.ReadByte();
+            gotoPointData.Name = dataReader.ReadString(16).TrimEnd('\0', ' ');
 
-            return positionData;
+            return gotoPointData;
         }
 
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {
-            var positionData = (MapPositionData)Deserialize(dataReader, advanced);
-            (positionData as IMutableIndex).Index = index;
-            return positionData;
+            var gotoPointData = (MapPositionData)Deserialize(dataReader, advanced);
+            (gotoPointData as IMutableIndex).Index = index;
+            return gotoPointData;
         }
 
         #endregion
@@ -86,12 +123,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Equality
 
-        public bool Equals(MapPositionData? other)
+        public bool Equals(MapGotoPointData? other)
         {
             if (other is null)
                 return false;
 
-            return X == other.X && Y == other.Y;
+            return X == other.X && Y == other.Y && Direction == other.Direction &&
+                   SaveIndex == other.SaveIndex && Name == other.Name;
         }
 
         public override bool Equals(object? obj)
@@ -99,17 +137,17 @@ namespace Ambermoon.Data.GameDataRepository.Data
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((MapPositionData)obj);
+            return Equals((MapGotoPointData)obj);
         }
 
-        public override int GetHashCode() => (int)Index;
+        public override int GetHashCode() => (int)SaveIndex;
 
-        public static bool operator ==(MapPositionData? left, MapPositionData? right)
+        public static bool operator ==(MapGotoPointData? left, MapGotoPointData? right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(MapPositionData? left, MapPositionData? right)
+        public static bool operator !=(MapGotoPointData? left, MapGotoPointData? right)
         {
             return !Equals(left, right);
         }
@@ -119,12 +157,15 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Cloning
 
-        public MapPositionData Copy()
+        public MapGotoPointData Copy()
         {
-            MapPositionData copy = new()
+            MapGotoPointData copy = new()
             {
                 X = X,
-                Y = Y
+                Y = Y,
+                Direction = Direction,
+                SaveIndex = SaveIndex,
+                Name = Name
             };
 
             (copy as IMutableIndex).Index = Index;
