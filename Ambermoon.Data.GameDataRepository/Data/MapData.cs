@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using Ambermoon.Data.Enumerations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
+    using Ambermoon.Data.Legacy.Serialization;
     using Collections;
     using Serialization;
     using Util;
@@ -21,9 +23,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
         private uint _paletteIndex;
         private uint _songIndex;
         private uint? _labdataIndex;
-        private uint? _tilesetIndex1;
-        private uint? _skyBackgroundIndex1;
-        private uint? _npcGraphicFileIndex1;
+        private uint? _tilesetIndex;
+        private uint? _skyBackgroundIndex;
+        private uint? _npcGraphicFileIndex;
         private World _world;
         private MapType _type;
 
@@ -83,22 +85,22 @@ namespace Ambermoon.Data.GameDataRepository.Data
         [Range(0, byte.MaxValue)]
         public uint? TilesetIndex
         {
-            get => _tilesetIndex1;
-            private set => SetField(ref _tilesetIndex1, value);
+            get => _tilesetIndex;
+            private set => SetField(ref _tilesetIndex, value);
         }
 
-        [Range(0, byte.MaxValue)]
+        [Range(1, 3)]
         public uint? SkyBackgroundIndex
         {
-            get => _skyBackgroundIndex1;
-            private set => SetField(ref _skyBackgroundIndex1, value);
+            get => _skyBackgroundIndex;
+            private set => SetField(ref _skyBackgroundIndex, value);
         }
 
         [Range(0, byte.MaxValue)]
         public uint? NpcGraphicFileIndex
         {
-            get => _npcGraphicFileIndex1;
-            private set => SetField(ref _npcGraphicFileIndex1, value);
+            get => _npcGraphicFileIndex;
+            private set => SetField(ref _npcGraphicFileIndex, value);
         }
 
         public MapEnvironment Environment
@@ -115,41 +117,145 @@ namespace Ambermoon.Data.GameDataRepository.Data
             {
                 Flags &= (MapFlags)0xf8; // mask out environment first
 
-                switch (value)
+                Flags |= value switch
                 {
-                    case MapEnvironment.Indoor:
-                        Flags |= MapFlags.Indoor;
-                        break;
-                    case MapEnvironment.Outdoor:
-                        Flags |= MapFlags.Outdoor;
-                        break;
-                    default:
-                        Flags |= MapFlags.Dungeon;
-                        break;
-                }
+                    MapEnvironment.Indoor => MapFlags.Indoor,
+                    MapEnvironment.Outdoor => MapFlags.Outdoor,
+                    _ => MapFlags.Dungeon
+                };
+
+                HandleEnvironmentChanges();
+                OnPropertyChanged();
+            }
+        }
+
+        public bool AllowResting
+        {
+            get => Flags.HasFlag(MapFlags.CanRest);
+            set
+            {
+                if (value)
+                    Flags |= MapFlags.CanRest;
+                else
+                    Flags &= ~MapFlags.CanRest;
 
                 OnPropertyChanged();
             }
         }
 
-        /*Indoor = 1 << 0, // Always at full light.
-           Outdoor = 1 << 1, // Light level is given by the daytime.
-           Dungeon = 1 << 2, // Only own light sources will grant light.
-           Automapper = 1 << 3, // If set the map is available and the map has to be explored. It also allows map-related spells. All Morag temples omit this.
-           CanRest = 1 << 4,
-           Unknown1 = 1 << 5, // Unknown. All world maps use that in Ambermoon.
-           Sky = 1 << 6, // All towns have this and the ruin tower. Only considered for 3D maps.
-           NoSleepUntilDawn = 1 << 7, // If active sleep time is always 8 hours.
-           StationaryGraphics = 1 << 8, // Allow stationary graphics (travel type images) and therefore transports. Is set for all world maps. This also controls if the music is taken from the map file or dependent on the travel type.
-           Unknown2 = 1 << 9, // Unknown. Never used in Ambermoon.
-           WorldSurface = 1 << 10, // If set the map doesn't use map text 0 as the title but uses the world name instead. Moreover based on world adjacent maps are shown with a size of 50x50.
-           CanUseMagic = 1 << 11, // Only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug). It just disables the spell book if not set but you still can use scrolls or items.
-           NoTravelMusic = 1 << 12, // Won't use travel music if StationaryGraphics is set
-           NoMarkOrReturn = 1 << 13, // Forbids the use of "Word of marking" and "Word of returning"
-           NoEagleOrBroom = 1 << 14, // Forbids the use of eagle and broom
-           SharedMapData = 1 << 15, // Only used internal by the new game data, do not use in original!
-           SmallPlayer = StationaryGraphics // Display player smaller. Only all world maps have this set. Only considered for 2D maps.
-               */
+        public bool AllowUsingMagic
+        {
+            get => Flags.HasFlag(MapFlags.CanUseMagic);
+            set
+            {
+                if (value)
+                    Flags |= MapFlags.CanUseMagic;
+                else
+                    Flags &= ~MapFlags.CanUseMagic;
+
+                OnPropertyChanged();
+            }
+        }
+
+        public bool AlwaysSleepEightHours
+        {
+            get => Flags.HasFlag(MapFlags.NoSleepUntilDawn);
+            set
+            {
+                if (value)
+                    Flags |= MapFlags.NoSleepUntilDawn;
+                else
+                    Flags &= ~MapFlags.NoSleepUntilDawn;
+
+                OnPropertyChanged();
+            }
+        }
+
+        public bool WorldMap
+        {
+            get => Type == MapType.Map2D && Flags.HasFlag(MapFlags.WorldSurface);
+            set
+            {
+                if (value)
+                {
+                    if (Type != MapType.Map2D)
+                        throw new InvalidOperationException("Only 2D maps can be world maps.");
+                    Flags |= MapFlags.NoSleepUntilDawn;
+                }
+                else
+                    Flags &= ~MapFlags.NoSleepUntilDawn;
+
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// This disables the travel music on world maps
+        /// and is ignored on all other maps.
+        ///
+        /// Normally on world maps the music depends on the travel type.
+        /// If this is active, the map will instead play the song which
+        /// is specified in the map data.
+        ///
+        /// Advanced only.
+        /// </summary>
+        [AdvancedOnly]
+        public bool DisableTravelMusic
+        {
+            get => Flags.HasFlag(MapFlags.NoTravelMusic);
+            set
+            {
+                if (value)
+                    Flags |= MapFlags.NoTravelMusic;
+                else
+                    Flags &= ~MapFlags.NoTravelMusic;
+
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Disables the usage of the spells "Word of marking" and "Word of returning".
+        ///
+        /// This is always true on the Forest Moon and Morag but
+        /// with this you can also disable it on Lyramion maps.
+        ///
+        /// Advanced only.
+        /// </summary>
+        [AdvancedOnly]
+        public bool DisableMarkAndReturn
+        {
+            get => Flags.HasFlag(MapFlags.NoMarkOrReturn);
+            set
+            {
+                if (value)
+                    Flags |= MapFlags.NoMarkOrReturn;
+                else
+                    Flags &= ~MapFlags.NoMarkOrReturn;
+
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Disables the usage of the eagle and the broom.
+        ///
+        /// Advanced only.
+        /// </summary>
+        [AdvancedOnly]
+        public bool DisableEagleAndBroom
+        {
+            get => Flags.HasFlag(MapFlags.NoEagleOrBroom);
+            set
+            {
+                if (value)
+                    Flags |= MapFlags.NoEagleOrBroom;
+                else
+                    Flags &= ~MapFlags.NoEagleOrBroom;
+
+                OnPropertyChanged();
+            }
+        }
 
         public TwoDimensionalData<MapTile2DData>? Tiles2D { get; set; }
 
@@ -189,6 +295,146 @@ namespace Ambermoon.Data.GameDataRepository.Data
             Tiles3D?.Resize(width, height, () => MapTile3DData.Empty);
         }
 
+        private void HandleEnvironmentChanges()
+        {
+            if (Type == MapType.Map3D)
+            {
+                if (SkyBackgroundIndex is not null && Environment != MapEnvironment.Outdoor)
+                    SkyBackgroundIndex = null;
+                else if (SkyBackgroundIndex is null && Environment == MapEnvironment.Outdoor)
+                    SkyBackgroundIndex = (uint)World + 1;
+            }
+        }
+
+        public void SetupWorldMap(World world)
+        {
+            Type = MapType.Map2D;
+            Flags = MapFlags.Outdoor |
+                    MapFlags.WorldSurface |
+                    MapFlags.CanRest |
+                    MapFlags.CanUseMagic |
+                    MapFlags.StationaryGraphics;
+            World = world;
+            SongIndex = (uint)Song.PloddingAlong;
+            // The tileset and palette indices match the world + 1 for world maps (1, 2, 3)
+            TilesetIndex = (uint)world + 1;
+            PaletteIndex = (uint)world + 1;
+            
+            Tiles2D = new(50, 50);
+
+            // Inputs are X and Y
+            Func<uint, uint, MapTile2DData> defaultTileCreator = world switch
+            {
+                World.ForestMoon => (x, y) => new MapTile2DData() { BackTileIndex = 7 + (x + y) % 8 },
+                World.Morag => (x, y) => new MapTile2DData() { BackTileIndex = 1 + (y % 8) * 6 + x % 6 },
+                _ => (x, _) => new MapTile2DData() { BackTileIndex = 215 + x % 4 }
+            };
+
+            for (int y = 0; y < 50; y++)
+            {
+                for (int x = 0; x < 50; x++)
+                {
+                    Tiles2D.Set(x, y, defaultTileCreator((uint)x, (uint)y));
+                }
+            }
+
+            foreach (var mapChar in MapCharacters)
+                mapChar.SetEmpty();
+
+            NpcGraphicFileIndex = null;
+            LabdataIndex = null;
+            Tiles3D = null;
+            SkyBackgroundIndex = null;
+            GotoPoints = null;
+        }
+
+        public void Setup2DMap(MapEnvironment environment, World world, int width, int height)
+        {
+            Type = MapType.Map2D;
+            Flags = MapFlags.CanUseMagic;
+            if (environment == MapEnvironment.Outdoor)
+                Flags |= MapFlags.StationaryGraphics; // 2D outdoor maps always use this
+            Environment = environment; // Important to set it after Flags is assigned!
+            World = world;
+            SongIndex = (uint)(environment == MapEnvironment.Dungeon
+                ? Song.SapphireFireballsOfPureLove
+                : Song.OwnerOfALonelySword);
+            TilesetIndex = world switch
+            {
+                World.ForestMoon => 8,
+                World.Morag => 7,
+                _ => 4
+            };
+            PaletteIndex = world switch
+            {
+                World.ForestMoon => 10,
+                World.Morag => 9,
+                _ => 7
+            };
+            NpcGraphicFileIndex = world == World.ForestMoon ? 2u : 1u;
+
+            Tiles2D = new(width, height);
+
+            MapTile2DData DefaultTileCreator() => new() { BackTileIndex = 0 };
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    Tiles2D.Set(x, y, DefaultTileCreator());
+                }
+            }
+
+            foreach (var mapChar in MapCharacters)
+                mapChar.SetEmpty();
+
+            LabdataIndex = null;
+            Tiles3D = null;
+            SkyBackgroundIndex = null;
+            GotoPoints = null;
+        }
+
+        public void Setup3DMap(MapEnvironment environment, World world, int width, int height,
+            uint labdataIndex, uint paletteIndex)
+        {
+            Type = MapType.Map3D;
+            Flags = MapFlags.CanUseMagic | MapFlags.Automapper;
+            Environment = environment; // Important to set it after Flags is assigned!
+            if (environment == MapEnvironment.Dungeon)
+                AlwaysSleepEightHours = true;
+            else if (environment == MapEnvironment.Outdoor)
+                Flags |= MapFlags.Sky;
+            World = world;
+            SongIndex = (uint)(environment switch {
+                MapEnvironment.Dungeon => Song.MistyDungeonHop,
+                MapEnvironment.Outdoor => Song.Capital,
+                _ => Song.TheAumRemainsTheSame
+            });
+            LabdataIndex = labdataIndex;
+            SkyBackgroundIndex = environment != MapEnvironment.Outdoor
+                ? null
+                : (uint)world + 1;
+            PaletteIndex = paletteIndex;
+            GotoPoints = new DictionaryList<MapGotoPointData>();
+
+            Tiles3D = new(width, height);
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    Tiles3D.Set(x, y, MapTile3DData.Empty);
+                }
+            }
+
+            foreach (var mapChar in MapCharacters)
+                mapChar.SetEmpty();
+
+            TilesetIndex = null;
+            Tiles2D = null;
+            NpcGraphicFileIndex = null;
+        }
+
         #endregion
 
 
@@ -204,7 +450,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((byte)Height);
             dataWriter.Write((byte)(Type == MapType.Map2D ? Util.EnsureValue(TilesetIndex) : Util.EnsureValue(LabdataIndex)));
             dataWriter.Write((byte)(Type == MapType.Map2D ? Util.EnsureValue(NpcGraphicFileIndex) : 0));
-            dataWriter.Write((byte)(Type == MapType.Map3D ? Util.EnsureValue(SkyBackgroundIndex) : 0));
+            dataWriter.Write((byte)(Type == MapType.Map3D ? (SkyBackgroundIndex ?? 0) : 0));
             dataWriter.Write((byte)PaletteIndex);
             dataWriter.Write((byte)World);
             dataWriter.Write((byte)0);
@@ -306,7 +552,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             else
             {
                 mapData.LabdataIndex = tilesetIndex;
-                mapData.SkyBackgroundIndex = skyBackgroundIndex;
+                mapData.SkyBackgroundIndex = skyBackgroundIndex == 0 ? null : skyBackgroundIndex;
                 mapData.Tiles3D = new(width, height);
 
                 for (int y = 0; y < height; y++)
