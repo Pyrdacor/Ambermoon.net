@@ -16,6 +16,24 @@ namespace Ambermoon.Data.GameDataRepository
         #region Constants
 
         private const ushort DefaultJHKey = 0xd2e7;
+        // Map
+        public const uint MaxMapWidth = 100;
+        public const uint MaxMapHeight = 100;
+        public const int MaxMapCharacters = 32;
+        public const int MinObject3DIndex = 1;
+        public const int MaxObject3DIndex = 100;
+        public const int MinWall3DIndex = 1;
+        public const int MaxWall3DIndex = 154;
+        public const int MaxSubObjects3D = 8;
+        // Fixed Sizes
+        public const int EventDataSize = 12;
+        public const int GotoPointDataSize = 20;
+        public const int ItemDataSize = 60;
+        public const int Object3DDataSize = 66;
+        public const int SubObject3DDataSize = 8;
+        public const int ObjectInfo3DDataSize = 14;
+        public const int Overlay3DDataSize = 6;
+        public const int Wall3DHeaderDataSize = 8;
 
         #endregion
 

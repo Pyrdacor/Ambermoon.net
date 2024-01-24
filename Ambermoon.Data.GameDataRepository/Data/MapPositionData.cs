@@ -29,24 +29,24 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public uint Index => (this as IMutableIndex).Index;
 
-        [Range(0, 100)]
+        [Range(0, GameDataRepository.MaxMapWidth)]
         public uint X
         {
             get => _x;
             set
             {
-                ValueChecker.Check(value, 0, 100);
+                ValueChecker.Check(value, 0, GameDataRepository.MaxMapWidth);
                 SetField(ref _x, value);
             }
         }
 
-        [Range(0, 100)]
+        [Range(0, GameDataRepository.MaxMapHeight)]
         public uint Y
         {
             get => _y;
             set
             {
-                ValueChecker.Check(value, 0, 100);
+                ValueChecker.Check(value, 0, GameDataRepository.MaxMapHeight);
                 SetField(ref _y, value);
             }
         }

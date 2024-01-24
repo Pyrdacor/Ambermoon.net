@@ -5,9 +5,30 @@ namespace Ambermoon.Data.GameDataRepository.Data
 {
     public class MapTile2DData : IData, IEquatable<MapTile2DData>
     {
-        private uint _frontTileIndex = 0;
-        private uint _backTileIndex = 0;
-        private uint _mapEventId = 0;
+
+        #region Fields
+
+        private uint _frontTileIndex;
+        private uint _backTileIndex;
+        private uint _mapEventId;
+
+        #endregion
+
+
+        #region Properties
+
+        [Range(0, byte.MaxValue)]
+        public uint BackTileIndex
+        {
+            get => _backTileIndex;
+            set
+            {
+                if (value > byte.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(BackTileIndex), $"Back tile indices are limited to the range 0 to {byte.MaxValue}.");
+
+                _backTileIndex = value;
+            }
+        }
 
         [Range(0, ushort.MaxValue)]
         public uint FrontTileIndex
@@ -21,18 +42,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 _frontTileIndex = value;
             }
         }
-        [Range(0, byte.MaxValue)]
-        public uint BackTileIndex
-        {
-            get => _backTileIndex;
-            set
-            {
-                if (value > byte.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(BackTileIndex), $"Back tile indices are limited to the range 0 to {byte.MaxValue}.");
 
-                _backTileIndex = value;
-            }
-        }
         // TODO: The original states that 64 is max. But I guess we already have working maps with more? Needs testing/verification.
         [Range(0, byte.MaxValue)]
         public uint MapEventId
@@ -57,17 +67,36 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// </summary>
         public static MapTile2DData Empty => new();
 
-        public MapTile2DData Copy()
+        #endregion
+
+
+        #region Serialization
+
+        public void Serialize(IDataWriter dataWriter, bool advanced)
         {
-            return new()
+            dataWriter.Write((byte)BackTileIndex);
+            dataWriter.Write((byte)MapEventId);
+            dataWriter.Write((ushort)FrontTileIndex);
+        }
+
+        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        {
+            uint backTileIndex = dataReader.ReadByte();
+            uint mapEventId = dataReader.ReadByte();
+            uint frontTileIndex = dataReader.ReadWord();
+
+            return new MapTile2DData
             {
-                BackTileIndex = BackTileIndex,
-                MapEventId = MapEventId,
-                FrontTileIndex = FrontTileIndex
+                BackTileIndex = backTileIndex,
+                FrontTileIndex = frontTileIndex,
+                MapEventId = mapEventId
             };
         }
 
-        public object Clone() => Copy();
+        #endregion
+
+
+        #region Equality
 
         public bool Equals(MapTile2DData? other)
         {
@@ -80,27 +109,47 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 FrontTileIndex == other.FrontTileIndex;
         }
 
-        /// <inheritdoc/>
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public override bool Equals(object? obj)
         {
-            var backTileIndex = dataReader.ReadByte();
-            var mapEventId = dataReader.ReadByte();
-            var frontTileIndex = dataReader.ReadWord();
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MapTile2DData)obj);
+        }
 
-            return new MapTile2DData
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(MapEventId, BackTileIndex, FrontTileIndex);
+        }
+
+        public static bool operator ==(MapTile2DData? left, MapTile2DData? right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(MapTile2DData? left, MapTile2DData? right)
+        {
+            return !Equals(left, right);
+        }
+
+        #endregion
+
+
+        #region Cloning
+
+        public MapTile2DData Copy()
+        {
+            return new()
             {
-                BackTileIndex = backTileIndex,
-                FrontTileIndex = frontTileIndex,
-                MapEventId = mapEventId
+                BackTileIndex = BackTileIndex,
+                MapEventId = MapEventId,
+                FrontTileIndex = FrontTileIndex
             };
         }
 
-        /// <inheritdoc/>
-        public void Serialize(IDataWriter dataWriter, bool advanced)
-        {
-            dataWriter.Write((byte)BackTileIndex);
-            dataWriter.Write((byte)MapEventId);
-            dataWriter.Write((ushort)FrontTileIndex);
-        }
+        public object Clone() => Copy();
+
+        #endregion
+        
     }
 }

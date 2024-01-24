@@ -275,7 +275,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// <summary>
         /// List of all existing map events.
         /// </summary>
-        public DictionaryList<MapEventData> Events { get; private set; } = new();
+        public DictionaryList<EventData> Events { get; private set; } = new();
 
         /// <summary>
         /// List of all goto (fast travel) points.
@@ -575,8 +575,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             // Events
             int numberOfEvents = dataReader.ReadWord();
-            var events = DataCollection<MapEventData>.Deserialize(dataReader, numberOfEvents, advanced);
-            mapData.Events = new DictionaryList<MapEventData>(events);
+            var events = DataCollection<EventData>.Deserialize(dataReader, numberOfEvents, advanced);
+            mapData.Events = new DictionaryList<EventData>(events);
             // TODO: change detection
 
             // Map Character Positions
@@ -603,7 +603,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             if (mapData.Type == MapType.Map2D)
             {
-                dataReader.Position += numGotoPoints * 20;
+                dataReader.Position += numGotoPoints * GameDataRepository.GotoPointDataSize;
                 mapData.GotoPoints = null;
             }
             else
