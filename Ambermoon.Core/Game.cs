@@ -6807,6 +6807,27 @@ namespace Ambermoon
             return !CurrentSavegame.GetCharacterBit(mapIndex, characterIndex);
         }
 
+        void RefillChest(uint chestIndex)
+        {
+            // If not saved, restore initial content
+            var initialChest = GetInitialChest(chestIndex);
+
+            if (initialChest != null && initialChest.Slots.OfType<ItemSlot>().Sum(item => item.Amount) +
+                initialChest.Gold + initialChest.Food == 1)
+            {
+                var chest = GetChest(chestIndex);
+
+                chest.Gold = initialChest.Gold;
+                chest.Food = initialChest.Food;
+
+                for (int y = 0; y < Chest.SlotRows; ++y)
+                {
+                    for (int x = 0; x < Chest.SlotsPerRow; ++x)
+                        chest.Slots[x, y].Replace(initialChest.Slots[x, y]);
+                }
+            }
+        }
+
         internal void ChestClosed()
         {
             // This is called by manually close the chest window via the Exit button
@@ -6815,6 +6836,13 @@ namespace Ambermoon
 
             CloseWindow(() =>
             {
+                uint chestIndex = chestEvent.RealChestIndex;
+
+                if (chestEvent.NoSave)
+                {
+                    RefillChest(chestIndex);
+                }
+
                 if (chestEvent.Next != null)
                 {
                     Map.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
@@ -6832,67 +6860,9 @@ namespace Ambermoon
             {
                 uint chestIndex = chestEvent.RealChestIndex;
 
-                // Refill chest (is important if it is used elsewhere too).
-                // Only do this if there is only 1 item, 1 gold or 1 food.
-                // This is used for plants on the forest moon or the
-                // wandering mushrooms in Dor Grestin. Otherwise this should
-                // not be done as it leads to restocking in maps which use
-                // multiple versions like the airship, Kire's residence,
-                // the dwarf test mine or the Tornak cave.
-                var initialChest = GetInitialChest(chestIndex);
-
-                if (initialChest != null && initialChest.Slots.OfType<ItemSlot>().Sum(item => item.Amount) + initialChest.Gold + initialChest.Food == 1)
+                if (chestEvent.NoSave)
                 {
-                    var chest = GetChest(chestIndex);
-
-                    chest.Gold = initialChest.Gold;
-                    chest.Food = initialChest.Food;
-
-                    for (int y = 0; y < Chest.SlotRows; ++y)
-                    {
-                        for (int x = 0; x < Chest.SlotsPerRow; ++x)
-                            chest.Slots[x, y].Replace(initialChest.Slots[x, y]);
-                    }
-                }
-
-                if (chestEvent.AutoRemove)
-                {
-                    bool RemoveFromMap(Map map)
-                    {
-                        for (int i = 0; i < map.EventList.Count; ++i)
-                        {
-                            var @event = map.EventList[i];
-
-                            while (@event != null)
-                            {
-                                if (@event == chestEvent)
-                                {
-                                    // If the chest event chain was triggered by a character interaction
-                                    // only remove that character but keep the event active as it might
-                                    // be used by other characters (e.g. mushrooms in Dor Grestin).
-                                    // But if this was triggered by a normal map event, just deactivate
-                                    // the map event so that the chest is removed from the map.
-                                    if (CurrentMapCharacter?.CheckDeactivation((uint)i + 1) != true)
-                                        CurrentSavegame.ActivateEvent(map.Index, (uint)i, false);
-                                    return true;
-                                }
-
-                                @event = @event.Next;
-                            }
-                        }
-
-                        return false;
-                    }
-
-                    if (!Map.IsWorldMap)
-                        RemoveFromMap(Map);
-                    else
-                    {
-                        if (!RemoveFromMap(Map) &&
-                            !RemoveFromMap(MapManager.GetMap(Map.RightMapIndex.Value)) &&
-                            !RemoveFromMap(MapManager.GetMap(Map.DownMapIndex.Value)))
-                            RemoveFromMap(MapManager.GetMap(Map.DownRightMapIndex.Value));
-                    }
+                    RefillChest(chestIndex);
                 }
 
                 if (chestEvent.Next != null)
@@ -7008,7 +6978,7 @@ namespace Ambermoon
                 OpenStorage.AllowsItemDrop, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
             itemGrid.Refresh();
             layout.AddItemGrid(itemGrid);
-            bool pile = storage.IsBattleLoot || (storage is Chest chest && chest.Type == ChestType.Pile);
+            bool pile = storage.IsBattleLoot || (storage is Chest chest && chest.Type == ChestType.Junk);
 
             if (pile)
             {
@@ -7064,7 +7034,7 @@ namespace Ambermoon
             if (chestEvent.CloseWhenEmpty && chest.Empty)
                 return false; // Chest has gone due to looting
 
-            chest.Type = chestEvent.CloseWhenEmpty || chestEvent.AutoRemove ? ChestType.Pile : ChestType.Chest;
+            chest.Type = chestEvent.CloseWhenEmpty ? ChestType.Junk : ChestType.Chest;
 
             void OpenChest()
             {
@@ -14178,7 +14148,7 @@ namespace Ambermoon
             var food = battleEndInfo.KilledMonsters.Sum(m => m.Food);
             var loot = new Chest
             {
-                Type = ChestType.Pile,
+                Type = ChestType.Junk,
                 Gold = (uint)gold,
                 Food = (uint)food,
                 AllowsItemDrop = false,

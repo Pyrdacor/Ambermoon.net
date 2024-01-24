@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data.Enumerations;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
@@ -228,31 +229,18 @@ namespace Ambermoon.Data
         public enum ChestFlags : byte
         {
             None = 0,
-            Unknown0 = 0x01,
-            SearchSkillCheck = 0x02,
-            Unknown2 = 0x04,
-            Unknown3 = 0x08,
-            Unknown4 = 0x10,
-            Unknown5 = 0x20
-        }
-
-        [Flags]
-        public enum ChestLootFlags : byte
-        {
-            None = 0,
             /// <summary>
             /// Close the chest window when looted.
-            /// Also remove the event when <see cref="NoAutoRemove"/> is false.
             /// 
             /// This can also be interpreted as "temporary chest" which can't
             /// store any new items.
             /// </summary>
-            CloseWhenEmpty = 0x01,
+            JunkPile = 0x01,
             /// <summary>
-            /// Only considered if <see cref="CloseWhenEmpty"/> is set.
-            /// If true the chest (event) is not removed automatically.
+            /// If true the chest contents are restored after closing the
+            /// window.
             /// </summary>
-            NoAutoRemove = 0x02,
+            NoSave = 0x02,
             /// <summary>
             /// Extended chest (Ambermoon Advanced only)
             /// </summary>
@@ -273,28 +261,30 @@ namespace Ambermoon.Data
         {
             get
             {
-                return LootFlags.HasFlag(ChestLootFlags.ExtendedChest)
+                return Flags.HasFlag(ChestFlags.ExtendedChest)
                     ? 257 + ChestIndex
                     : 1 + ChestIndex;
             }
         }
-        public ChestLootFlags LootFlags { get; set; }
-        public bool CloseWhenEmpty => LootFlags.HasFlag(ChestLootFlags.CloseWhenEmpty);
-        public bool AutoRemove => CloseWhenEmpty && !LootFlags.HasFlag(ChestLootFlags.NoAutoRemove);
+        public ChestFlags Flags { get; set; }
+        public bool CloseWhenEmpty => Flags.HasFlag(ChestFlags.JunkPile);
+        public bool NoSave => Flags.HasFlag(ChestFlags.NoSave);
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
         /// <summary>
-        /// Only 1 chest uses this and it has the following bits set:
-        /// - SearchSkillCheck
-        /// - Unknown4
-        /// - Unknown5
-        /// So at least the lowest 6 bits seem to have some meaning.
-        /// 
-        /// The Ambermoon code just checks the whole byte for != 0 and then performs the search skill check.
-        /// Maybe it had some other meaning in Amberstar.
+        /// This gives the value to reduce the chance to find the chest.
+        /// A value of 0 means that the chest is always available.
+        /// Normally a value above 0 would be subtracted from the
+        /// active player's search skill and then a dice roll is
+        /// performed to check if the chest is found.
+        ///
+        /// However, the original implementation just checks if the
+        /// value is non-zero and just dice rolls against the search
+        /// skill, so this value is not used at all. Only as a switch
+        /// for the search check between off (0) and on (not 0).
         /// </summary>
-        public ChestFlags Flags { get; set; }
-        public bool SearchSkillCheck => Flags != 0;
+        public byte FindChanceReduction { get; set; }
+        public bool SearchSkillCheck => FindChanceReduction != 0;
 
         public override Event Clone(bool keepNext)
         {
@@ -303,10 +293,10 @@ namespace Ambermoon.Data
                 LockpickingChanceReduction = LockpickingChanceReduction,
                 TextIndex = TextIndex,
                 ChestIndex = ChestIndex,
-                LootFlags = LootFlags,
+                Flags = Flags,
                 KeyIndex = KeyIndex,
                 UnlockFailedEventIndex = UnlockFailedEventIndex,
-                Flags = Flags
+                FindChanceReduction = FindChanceReduction
             };
             CloneProperties(clone, keepNext);
             return clone;
@@ -315,7 +305,14 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             string lockType = LockpickingChanceReduction == 0 ? "Open" : LockpickingChanceReduction >= 100 ? "No Lockpicking" : $"-{LockpickingChanceReduction}% Chance";
-            return $"{Type}: Chest {RealChestIndex}, Lock=[{lockType}], LootFlags={LootFlags}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, Flags: {Flags}";
+            string chestType = Flags.HasFlag(ChestFlags.JunkPile) ? "Pile" : "Chest";
+            List<string> flags = new();
+            if (Flags.HasFlag(ChestFlags.NoSave))
+                flags.Add("NoSave");
+            if (SearchSkillCheck)
+                flags.Add("SearchCheck");
+            string flagString = flags.Count == 0 ? "" : "Flags=" + string.Join(",", flags) + ", ";
+            return $"{Type}: {chestType} {RealChestIndex}, Lock=[{lockType}], {flagString}Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}";
         }
     }
 

@@ -4,9 +4,15 @@ using System.Linq;
 namespace Ambermoon.Data
 {
     public enum ChestType
-    {        
-        Pile, // will disappear after full looting, no items can be put back
-        Chest // will stay there and new items can be added by the player
+    {
+        /// <summary>
+        /// Normal chest. You can put items, gold and rations into it.
+        /// </summary>
+        Chest,
+        /// <summary>
+        /// Junk pile or item pickups. You can not put items into it but no gold or rations.
+        /// </summary>
+        Junk
     }
 
     public class Chest : ITreasureStorage
