@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
+    using Events;
     using Serialization;
     using Util;
 
@@ -162,9 +163,15 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public static IData Deserialize(IDataReader dataReader, bool advanced)
         {
-            return new EventData
+            var eventData = new EventData
             {
                 Data = dataReader.ReadBytes(GameDataRepository.EventDataSize)
+            };
+
+            return eventData.Type switch
+            {
+                EventType.Teleport => new TeleportEventData(eventData),
+                _ => eventData
             };
         }
 

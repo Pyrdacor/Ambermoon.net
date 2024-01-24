@@ -26,22 +26,22 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
         [Range(0, GameDataRepository.MaxMapWidth)]
         public uint X
         {
-            get => _mapIndex.Get(this);
+            get => _x.Get(this);
             set
             {
                 ValueChecker.Check(value, 0, GameDataRepository.MaxMapWidth);
-                SetField(_mapIndex, value);
+                SetField(_x, value);
             }
         }
 
         [Range(0, GameDataRepository.MaxMapHeight)]
         public uint Y
         {
-            get => _mapIndex.Get(this);
+            get => _y.Get(this);
             set
             {
                 ValueChecker.Check(value, 0, GameDataRepository.MaxMapHeight);
-                SetField(_mapIndex, value);
+                SetField(_y, value);
             }
         }
 
