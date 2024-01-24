@@ -169,6 +169,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
+        public void Serialize(IDataWriter dataWriter, bool advanced)
+        {
+            dataWriter.Write(Data);
+        }
+
         public static IData Deserialize(IDataReader dataReader, bool advanced)
         {
             var eventData = new EventData
@@ -179,13 +184,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return eventData.Type switch
             {
                 EventType.Teleport => new TeleportEventData(eventData),
+                EventType.Door => new DoorEventData(eventData),
+                EventType.Chest => new ChestEventData(eventData),
                 _ => eventData
             };
-        }
-
-        public void Serialize(IDataWriter dataWriter, bool advanced)
-        {
-            dataWriter.Write(Data);
         }
 
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
