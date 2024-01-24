@@ -17,6 +17,7 @@ namespace Ambermoon.Data.GameDataRepository
 
         private const ushort DefaultJHKey = 0xd2e7;
         // Map
+        public const uint MaxMaps = 1023;
         public const uint MaxMapWidth = 100;
         public const uint MaxMapHeight = 100;
         public const int MaxMapCharacters = 32;
@@ -25,6 +26,13 @@ namespace Ambermoon.Data.GameDataRepository
         public const int MinWall3DIndex = 1;
         public const int MaxWall3DIndex = 154;
         public const int MaxSubObjects3D = 8;
+        // Events
+        public const uint MaxEvents = (uint)short.MaxValue;
+        public const uint MaxDoors = 256;
+        public const uint MaxChest = 256;
+        public const uint MaxExtendedChest = 128;
+        // Items
+        public const uint MaxItems = 1023;
         // Fixed Sizes
         public const int EventDataSize = 12;
         public const int GotoPointDataSize = 20;

@@ -113,6 +113,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
         }
     }
 
+    internal class EventReferenceDataProperty : NullableEventDataProperty<uint>
+    {
+        public EventReferenceDataProperty()
+            : base(new WordEventDataProperty(8), ushort.MaxValue)
+        {
+        }
+    }
+
     public class EventData : IMutableIndex, IIndexedData, IEquatable<EventData>, INotifyPropertyChanged
     {
 

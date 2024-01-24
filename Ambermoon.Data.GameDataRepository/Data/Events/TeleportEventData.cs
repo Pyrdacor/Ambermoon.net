@@ -63,13 +63,13 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
             set => SetField(_transition, value);
         }
 
-        [Range(0, ushort.MaxValue)]
+        [Range(0, GameDataRepository.MaxMaps)]
         public uint MapIndex
         {
             get => _mapIndex.Get(this);
             set
             {
-                ValueChecker.Check(value, 0, ushort.MaxValue);
+                ValueChecker.Check(value, 0, GameDataRepository.MaxMaps);
                 SetField(_mapIndex, value);
             }
         }
@@ -81,15 +81,12 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
 
         internal TeleportEventData(EventData data)
         {
+            _x.Copy(data, this);
+            _y.Copy(data, this);
+            _direction.Copy(data, this);
+            _newTravelType.Copy(data, this);
+            _transition.Copy(data, this);
             _mapIndex.Copy(data, this);
-
-            Data = (byte[])data.Data.Clone();
-            X = data.Data[1];
-            Y = data.Data[2];
-            Direction = (CharacterDirection)data.Data[3];
-            NewTravelType = data.Data[4] == 0xff ? null : (TravelType)data.Data[4];
-            Transition = (TransitionType)data.Data[5];
-            MapIndex = data.FirstWord;
         }
 
         #endregion
