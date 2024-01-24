@@ -39,6 +39,8 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
             set
             {
                 ValueChecker.Check(value, 0, 100);
+                if (value < 100 && KeyIndex is not null)
+                    throw new ArgumentException("Locked percentage must be 100 if a key index is set.");
                 SetField(_lockedPercentage, value);
             }
         }
@@ -54,7 +56,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
             get => _saveIndex.Get(this);
             set
             {
-                ValueChecker.Check(value, 0, GameDataRepository.MaxMapHeight);
+                ValueChecker.Check(value, 0, GameDataRepository.MaxDoors);
                 SetField(_saveIndex, value);
             }
         }
@@ -91,6 +93,9 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
             }
         }
 
+        /// <summary>
+        /// Key index required to open the door.
+        /// </summary>
         [Range(1, GameDataRepository.MaxItems)]
         public uint? KeyIndex
         {
@@ -98,7 +103,10 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
             set
             {
                 if (value is not null)
+                {
                     ValueChecker.Check(value.Value, 1, GameDataRepository.MaxItems);
+                    LockedPercentage = 100; // Always set to 100 when requiring a key
+                }
                 SetField(_keyIndex, value);
             }
         }

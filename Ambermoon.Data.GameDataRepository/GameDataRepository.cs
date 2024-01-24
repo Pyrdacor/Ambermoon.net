@@ -29,7 +29,7 @@ namespace Ambermoon.Data.GameDataRepository
         // Events
         public const uint MaxEvents = (uint)short.MaxValue;
         public const uint MaxDoors = 256;
-        public const uint MaxChest = 256;
+        public const uint MaxChests = 256;
         public const uint MaxExtendedChest = 128;
         // Items
         public const uint MaxItems = 1023;

@@ -131,26 +131,26 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case EventType.Chest:
                 {
                     // 1. byte is a lockpicking chance reduction (0: already open, 100: can't open via lockpicking)
-                    // 2. byte are the chest flags
+                    // 2. byte is a search chance reduction (0: always found)
                     // 3. byte is an optional text index (0xff = no text)
                     // 4. byte is the chest index (0-based)
-                    // 5. byte are the loot flags
+                    // 5. byte are the chest flags
                     // word at position 6 is the key index if a key must unlock it
                     // last word is the event index (0-based) of the event that is called when unlocking fails
                     var lockpickingChanceReduction = dataReader.ReadByte();
-                    var flags = (ChestEvent.ChestFlags)dataReader.ReadByte();
+                    var findChanceReduction = dataReader.ReadByte();
                     var textIndex = dataReader.ReadByte();
                     uint chestIndex = dataReader.ReadByte();
-                    var lootFlags = (ChestEvent.ChestLootFlags)dataReader.ReadByte();
+                    var flags = (ChestEvent.ChestFlags)dataReader.ReadByte();
                     uint keyIndex = dataReader.ReadWord();
                     var unlockFailEventIndex = dataReader.ReadWord();
                     @event = new ChestEvent
                     {
                         LockpickingChanceReduction = lockpickingChanceReduction,
-                        Flags = flags,
+                        FindChanceReduction = findChanceReduction,
                         TextIndex = textIndex,
                         ChestIndex = chestIndex,
-                        LootFlags = lootFlags,
+                        Flags = flags,
                         KeyIndex = keyIndex,
                         UnlockFailedEventIndex = unlockFailEventIndex
                     };
