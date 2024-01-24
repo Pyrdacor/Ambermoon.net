@@ -86,7 +86,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write((ushort)chestEvent.UnlockFailedEventIndex);
                     break;
                 }
-                case EventType.PopupText:
+                case EventType.MapText:
                 {
                     // event image index (0xff = no image)
                     // trigger (1 = move, 2 = cursor, 3 = both)
@@ -97,7 +97,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write((byte)textEvent.EventImageIndex);
                     dataWriter.WriteEnumAsByte(textEvent.PopupTrigger);
                     dataWriter.Write((byte)(textEvent.TriggerIfBlind ? 1 : 0));
-                    dataWriter.Write((ushort)textEvent.TextIndex);
+                    dataWriter.Write((byte)0);
+                    dataWriter.Write((byte)textEvent.TextIndex);
                     dataWriter.Write(textEvent.Unknown);
                     break;
                 }

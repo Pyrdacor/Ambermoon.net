@@ -115,7 +115,7 @@ namespace Ambermoon
                     aborted = !game.ShowChest(chestEvent, false, false, map, new Position((int)x, (int)y), true);
                     return null;
                 }
-                case EventType.PopupText:
+                case EventType.MapText:
                 {
                     if (!(@event is PopupTextEvent popupTextEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid text popup event.");

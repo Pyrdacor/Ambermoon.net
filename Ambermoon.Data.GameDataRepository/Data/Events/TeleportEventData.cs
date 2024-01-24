@@ -6,6 +6,15 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
     using Util;
     using static TeleportEvent;
 
+    public enum TeleportDirection
+    {
+        North,
+        East,
+        South,
+        West,
+        Unchanged
+    }
+
     public class TeleportEventData : EventData
     {
 
@@ -13,7 +22,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
 
         private readonly ByteEventDataProperty _x = new(1);
         private readonly ByteEventDataProperty _y = new(2);
-        private readonly EnumEventDataProperty<CharacterDirection> _direction = new(3);
+        private readonly EnumEventDataProperty<TeleportDirection> _direction = new(3);
         private readonly NullableEventDataProperty<TravelType> _newTravelType = new(new EnumEventDataProperty<TravelType>(4), 0xff);
         private readonly EnumEventDataProperty<TransitionType> _transition = new(5);
         private readonly WordEventDataProperty _mapIndex = new(6);
@@ -45,7 +54,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
             }
         }
 
-        public CharacterDirection Direction
+        public TeleportDirection Direction
         {
             get => _direction.Get(this);
             set => SetField(_direction, value);
@@ -74,6 +83,11 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
             }
         }
 
+        public bool SamePosition => X == 0 && Y == 0;
+        public bool SameDirection => Direction == TeleportDirection.Unchanged;
+        public bool SameMap => MapIndex == 0;
+        public bool Invalid => (X == 0) != (Y == 0) || (SamePosition && SameMap);
+
         #endregion
 
 
@@ -87,6 +101,27 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
             _newTravelType.Copy(data, this);
             _transition.Copy(data, this);
             _mapIndex.Copy(data, this);
+        }
+
+        #endregion
+
+
+        #region Methods
+
+        public void KeepPosition()
+        {
+            X = 0;
+            Y = 0;
+        }
+
+        public void KeepDirection()
+        {
+            Direction = TeleportDirection.Unchanged;
+        }
+
+        public void KeepMap()
+        {
+            MapIndex = 0;
         }
 
         #endregion

@@ -160,9 +160,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         internal byte[] Data { get; private protected init; } = new byte[GameDataRepository.EventDataSize];
 
-        internal ushort FirstWord => (ushort)((Data[6] << 8) | Data[7]);
+        public virtual bool AllowOnMaps => true;
 
-        internal ushort SecondWord => (ushort)((Data[8] << 8) | Data[9]);
+        public virtual bool AllowInConversations => true;
+
+        public virtual bool AllowAsEventEntry => true;
 
         #endregion
 
@@ -186,6 +188,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 EventType.Teleport => new TeleportEventData(eventData),
                 EventType.Door => new DoorEventData(eventData),
                 EventType.Chest => new ChestEventData(eventData),
+                EventType.MapText => new MapTextEventData(eventData),
+                EventType.Spinner => new SpinnerEventData(eventData),
                 _ => eventData
             };
         }

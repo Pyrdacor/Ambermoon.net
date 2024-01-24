@@ -156,7 +156,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
-                case EventType.PopupText:
+                case EventType.MapText:
                 {
                     // event image index (0xff = no image)
                     // trigger (1 = move, 2 = eye cursor, 3 = both)
@@ -166,7 +166,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var eventImageIndex = dataReader.ReadByte();
                     var popupTrigger = (EventTrigger)dataReader.ReadByte();
                     var triggerIfBlind = dataReader.ReadByte() != 0;
-                    var textIndex = dataReader.ReadWord();
+                    // Actually the 4th byte was planned to be
+                    // a search skill check like for chest events.
+                    // However, this is not implemented in the original
+                    // code so we can consider this as unused.
+                    dataReader.Position++;
+                    var textIndex = dataReader.ReadByte();
                     var unknown = dataReader.ReadBytes(4);
                     @event = new PopupTextEvent
                     {

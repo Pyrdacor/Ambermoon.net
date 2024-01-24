@@ -242,6 +242,8 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
 
         uint? IBranchEvent.BranchEventIndex => UnlockFailEventIndex;
 
+        public override bool AllowInConversations => false;
+
         #endregion
 
 

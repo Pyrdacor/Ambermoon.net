@@ -100,7 +100,7 @@ namespace Ambermoon
                     ev = ev.Next;
                 }
 
-                if (ev != null && ev.Type == EventType.PopupText)
+                if (ev != null && ev.Type == EventType.MapText)
                 {
                     if (ev.Next == null)
                         return false;

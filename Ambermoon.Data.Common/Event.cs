@@ -28,7 +28,7 @@ namespace Ambermoon.Data
         /// <summary>
         /// Shows a text popup
         /// </summary>
-        PopupText,
+        MapText,
         /// <summary>
         /// Rotates the player to a random direction
         /// </summary>
