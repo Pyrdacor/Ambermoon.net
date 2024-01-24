@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data.Events
 {
@@ -96,22 +97,13 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
             }
         }
 
-        /// <summary>
-        /// Index of the chest which is used to reference it in the savegame.
-        ///
-        /// This index is 1-based, so the first chest has index 1.
-        ///
-        /// Note: In Ambermoon Advanced extended chests were introduced to
-        /// unlock 128 more chests. If you stick to the original, please ensure
-        /// that the index does not exceed <see cref="GameDataRepository.MaxChests"/>.
-        /// </summary>
-        [Range(1, GameDataRepository.MaxChests + GameDataRepository.MaxExtendedChest)]
-        public uint SaveIndex
+        [Range(1, GameDataRepository.MaxChests)]
+        internal uint SaveIndex
         {
             get => _saveIndex.Get(this);
             set
             {
-                ValueChecker.Check(value, 0, GameDataRepository.MaxChests + GameDataRepository.MaxExtendedChest);
+                ValueChecker.Check(value, 1, GameDataRepository.MaxChests);
                 SetField(_saveIndex, value);
             }
         }
@@ -131,6 +123,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
         /// Junk piles are closed when they are empty. You can't put items,
         /// gold or rations in them.
         /// </summary>
+        [DefaultValue(ChestType.Chest)]
         public ChestType ChestType
         {
             get =>
@@ -147,32 +140,74 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
         }
 
         /// <summary>
-        /// If active, emptied junk piles are removed from the map.
-        /// This means that the associated map event entry is marked
-        /// as inactive.
+        /// If active, the chest contents are restored to their initial
+        /// state after closing the window. Otherwise, the updated
+        /// chest contents are saved inside the savegame.
         ///
-        /// Note: In the original this is more related to storing the
-        /// state of the chest. This means if the contents of the chest
-        /// are written back to the savegame. But for normal chests this
-        /// is always desired and for junk it is only not desired if there
-        /// is a single item and the chest is shared between multiple
-        /// event usages (for example the same plant type on the forest moon).
-        ///
-        /// The original default logic for junk would be that the flag is not
-        /// set and so the data is stored back to the savegame. If it is empty
-        /// this means that every 
+        /// Note: This is never set for stationary chests but only for
+        /// some piles which share the same chest data. For example the
+        /// flowers on the forest moon. If you pick a flower, it resets
+        /// the chest data to the original and won't save the empty
+        /// chest data to the savegame. This way another flower event
+        /// can use the same chest data as it will present the initial
+        /// chest data again.
         /// </summary>
-        public bool AutoRemove
+        [DefaultValue(false)]
+        public bool NoSave
         {
-            get => !Flags.HasFlag(ChestEvent.ChestFlags.NoSave);
+            get => Flags.HasFlag(ChestEvent.ChestFlags.NoSave);
             set
             {
-                if (!value)
+                if (value)
                     Flags |= ChestEvent.ChestFlags.NoSave;
                 else
                     Flags &= ~ChestEvent.ChestFlags.NoSave;
             }
         }
+
+        /// <summary>
+        /// As the original version only supports 256 chests,
+        /// the concept of extended chests was introduced in
+        /// Ambermoon Advanced. This allows 128 more chests
+        /// to use. But it also reduces the maximum number of
+        /// dictionary entries from 256 to 128.
+        ///
+        /// This flag is automatically set dependent on the
+        /// specified chest index. If the chest index exceeds
+        /// 256, it is automatically set to true, otherwise false.
+        /// </summary>
+        [AdvancedOnly]
+        public bool ExtendedChest
+        {
+            get => Flags.HasFlag(ChestEvent.ChestFlags.ExtendedChest);
+            private set
+            {
+                if (value)
+                    Flags |= ChestEvent.ChestFlags.ExtendedChest;
+                else
+                    Flags &= ~ChestEvent.ChestFlags.ExtendedChest;
+            }
+        }
+
+        /// <summary>
+        /// Index of the chest which is used to reference it in the savegame.
+        ///
+        /// This index is 1-based, so the first chest has index 1.
+        ///
+        /// Note: In Ambermoon Advanced extended chests were introduced to
+        /// unlock 128 more chests. If you stick to the original, please ensure
+        /// that the index does not exceed <see cref="GameDataRepository.MaxChests"/>.
+        /// </summary>
+        [Range(1, GameDataRepository.MaxChests + GameDataRepository.MaxExtendedChest)]
+        public uint ChestIndex
+        {
+            get => ExtendedChest ? 256 + SaveIndex : SaveIndex;
+            set
+            {
+                ValueChecker.Check(value, 1, GameDataRepository.MaxChests + GameDataRepository.MaxExtendedChest);
+                SaveIndex = value <= 256 ? value : value - 256;
+                ExtendedChest = value > 256;
+            }
         }
 
         /// <summary>
@@ -215,9 +250,10 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
         internal ChestEventData(EventData data)
         {
             _lockedPercentage.Copy(data, this);
+            _hiddenPercentage.Copy(data, this);
+            _textIndex.Copy(data, this);
             _saveIndex.Copy(data, this);
-            _closedDoorTextIndex.Copy(data, this);
-            _unlockTextIndex.Copy(data, this);
+            _flags.Copy(data, this);
             _keyIndex.Copy(data, this);
             _unlockFailEventIndex.Copy(data, this);
         }

@@ -56,7 +56,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
             get => _saveIndex.Get(this);
             set
             {
-                ValueChecker.Check(value, 0, GameDataRepository.MaxDoors);
+                ValueChecker.Check(value, 1, GameDataRepository.MaxDoors);
                 SetField(_saveIndex, value);
             }
         }
