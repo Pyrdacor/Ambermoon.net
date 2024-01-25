@@ -190,6 +190,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 EventType.Chest => new ChestEventData(eventData),
                 EventType.MapText => new MapTextEventData(eventData),
                 EventType.Spinner => new SpinnerEventData(eventData),
+                EventType.Trap => new TrapEventData(eventData),
                 _ => eventData
             };
         }
