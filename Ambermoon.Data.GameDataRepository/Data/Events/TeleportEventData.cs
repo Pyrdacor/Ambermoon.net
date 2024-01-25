@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data.Events
 {
@@ -15,6 +16,16 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
         Unchanged
     }
 
+    /// <summary>
+    /// Represents any location change on a map.
+    ///
+    /// Mostly used for map exits and teleporters, but also for:
+    /// - Wind gates
+    /// - Starting the outro
+    ///
+    /// Map changes can also be done through floor or ceiling
+    /// to implement falling and climbing or levitation.
+    /// </summary>
     public class TeleportEventData : EventData
     {
 
@@ -60,6 +71,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
             set => SetField(_direction, value);
         }
 
+        [DefaultValue(null)]
         public TravelType? NewTravelType
         {
             get => _newTravelType.Get(this);
@@ -92,6 +104,13 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
 
 
         #region Constructors
+
+        public TeleportEventData()
+        {
+            Data[0] = (byte)EventType.Teleport;
+            NewTravelType = null;
+            NextEventIndex = null;
+        }
 
         internal TeleportEventData(EventData data)
         {

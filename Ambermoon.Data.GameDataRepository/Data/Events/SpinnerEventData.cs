@@ -9,6 +9,9 @@
         Random
     }
 
+    /// <summary>
+    /// Represents a spinner on a 3D map.
+    /// </summary>
     public class SpinnerEventData : EventData
     {
 
@@ -30,10 +33,19 @@
 
         public override bool AllowInConversations => false;
 
+        public override bool AllowOn2DMaps => false;
+
         #endregion
 
 
         #region Constructors
+
+        public SpinnerEventData()
+        {
+            Data[0] = (byte)EventType.Spinner;
+            Direction = SpinnerDirection.Random;
+            NextEventIndex = null;
+        }
 
         internal SpinnerEventData(EventData data)
         {

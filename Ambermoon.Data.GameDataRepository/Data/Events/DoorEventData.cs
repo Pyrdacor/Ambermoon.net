@@ -1,9 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace Ambermoon.Data.GameDataRepository.Data.Events
 {
     using Util;
 
+    /// <summary>
+    /// Show a locked door screen when triggered.
+    /// </summary>
     public class DoorEventData : EventData, IBranchEvent
     {
 
@@ -65,6 +69,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
         /// If given, the text with this index is displayed when the
         /// closed door is approached.
         /// </summary>
+        [DefaultValue(null)]
         [Range(0, byte.MaxValue - 1)]
         public uint? ClosedDoorTextIndex
         {
@@ -81,6 +86,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
         /// If given, the text with this index is displayed when the
         /// door is unlocked.
         /// </summary>
+        [DefaultValue(null)]
         [Range(0, byte.MaxValue - 1)]
         public uint? UnlockTextIndex
         {
@@ -96,6 +102,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
         /// <summary>
         /// Key index required to open the door.
         /// </summary>
+        [DefaultValue(null)]
         [Range(1, GameDataRepository.MaxItems)]
         public uint? KeyIndex
         {
@@ -112,6 +119,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
         }
 
         [Range(0, GameDataRepository.MaxEvents)]
+        [DefaultValue(null)]
         public uint? UnlockFailEventIndex
         {
             get => _unlockFailEventIndex.Get(this);
@@ -131,6 +139,16 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
 
 
         #region Constructors
+
+        public DoorEventData()
+        {
+            Data[0] = (byte)EventType.Door;
+            ClosedDoorTextIndex = null;
+            UnlockTextIndex = null;
+            KeyIndex = null;
+            UnlockFailEventIndex = null;
+            NextEventIndex = null;
+        }
 
         internal DoorEventData(EventData data)
         {

@@ -1,19 +1,22 @@
-﻿namespace Ambermoon.Data.GameDataRepository.Data.Events
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Ambermoon.Data.GameDataRepository.Data.Events
 {
-    using Ambermoon.Data.GameDataRepository.Util;
-    using Ambermoon.Data.Legacy.ExecutableData;
-    using System.ComponentModel.DataAnnotations;
+    using Util;
     using static TrapEvent;
 
-    public enum SpinnerDirection
-    {
-        North,
-        East,
-        South,
-        West,
-        Random
-    }
-
+    /// <summary>
+    /// Adds damage and/or an ailment to the target.
+    ///
+    /// The target can avoid the effect by a successful check against its luck.
+    ///
+    /// The actual damage is calculated as follows: Damage + rand(0, (Damage / 2) - 1)
+    ///
+    /// If Damage is 0, no damage is inflicted, but the ailment is still applied.
+    ///
+    /// This event is often bound to door or chest locks but can also be used for
+    /// map traps, poison or just any form of punishment in the game.
+    /// </summary>
     public class TrapEventData : EventData
     {
 
@@ -65,6 +68,12 @@
 
 
         #region Constructors
+
+        public TrapEventData()
+        {
+            Data[0] = (byte)EventType.Trap;
+            NextEventIndex = null;
+        }
 
         internal TrapEventData(EventData data)
         {

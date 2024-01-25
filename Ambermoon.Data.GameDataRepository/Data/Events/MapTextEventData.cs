@@ -5,6 +5,12 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
 {
     using Util;
 
+    /// <summary>
+    /// This event can be used to show a simple text popup on the map.
+    /// But it is also used for large event picture windows like
+    /// the intro sequence with your grandfather or the event where
+    /// Valdyn enters your world.
+    /// </summary>
     public class MapTextEventData : EventData
     {
 
@@ -43,12 +49,14 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
             }
         }
 
+        [DefaultValue(EventTrigger.Always)]
         public EventTrigger Trigger
         {
             get => _trigger.Get(this);
             set => SetField(_trigger, value);
         }
 
+        [DefaultValue(true)]
         public bool TriggerWhenBlind
         {
             get => _triggerWhenBlind.Get(this) != 0;
@@ -72,6 +80,15 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
 
 
         #region Constructors
+
+        public MapTextEventData()
+        {
+            Data[0] = (byte)EventType.MapText;
+            EventPictureIndex = null;
+            Trigger = EventTrigger.Always;
+            TriggerWhenBlind = true;
+            NextEventIndex = null;
+        }
 
         internal MapTextEventData(EventData data)
         {

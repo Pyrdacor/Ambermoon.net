@@ -46,8 +46,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 value => new[] { (byte)(value & 0xff) },
                 data => data[0])
         {
-            if (index is < 1 or >= 6)
-                throw new ArgumentOutOfRangeException(nameof(index), "Index must be in range 1 to 5.");
+            if (index is < 1 or > 9)
+                throw new ArgumentOutOfRangeException(nameof(index), "Index must be in range 1 to 9.");
         }
     }
 
@@ -62,8 +62,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 },
                 data => (uint)((data[0] << 8) | data[1]))
         {
-            if (index != 6 && index != 8)
-                throw new ArgumentOutOfRangeException(nameof(index), "Index must be 6 or 8.");
+            if (index != 2 && index != 4 && index != 6 && index != 8)
+                throw new ArgumentOutOfRangeException(nameof(index), "Index must be 2, 4, 6 or 8.");
         }
     }
 
@@ -165,6 +165,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public virtual bool AllowInConversations => true;
 
         public virtual bool AllowAsEventEntry => true;
+
+        public virtual bool AllowOn2DMaps => AllowOnMaps;
 
         #endregion
 

@@ -5,6 +5,13 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
 {
     using Util;
 
+    /// <summary>
+    /// Shows a locked or opened chest/loot screen when triggered.
+    ///
+    /// Beside its main purpose of representing chests, this event is also
+    /// used for any item pickup outside of merchants or conversations where
+    /// you can transfer items to your inventory.
+    /// </summary>
     public class ChestEventData : EventData, IBranchEvent
     {
 
@@ -85,6 +92,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
         /// If given, the text with this index is displayed when the
         /// open chest is approached.
         /// </summary>
+        [DefaultValue(null)]
         [Range(0, byte.MaxValue - 1)]
         public uint? TextIndex
         {
@@ -213,6 +221,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
         /// <summary>
         /// Key index required to open the chest.
         /// </summary>
+        [DefaultValue(null)]
         [Range(1, GameDataRepository.MaxItems)]
         public uint? KeyIndex
         {
@@ -229,6 +238,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
         }
 
         [Range(0, GameDataRepository.MaxEvents)]
+        [DefaultValue(null)]
         public uint? UnlockFailEventIndex
         {
             get => _unlockFailEventIndex.Get(this);
@@ -248,6 +258,15 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
 
 
         #region Constructors
+
+        public ChestEventData()
+        {
+            Data[0] = (byte)EventType.Chest;
+            TextIndex = null;
+            KeyIndex = null;
+            NextEventIndex = null;
+            UnlockFailEventIndex = null;
+        }
 
         internal ChestEventData(EventData data)
         {
