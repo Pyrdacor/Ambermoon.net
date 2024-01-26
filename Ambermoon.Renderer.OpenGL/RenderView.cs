@@ -184,7 +184,7 @@ namespace Ambermoon.Renderer.OpenGL
                     new FloatSize(size.Width * factorX, size.Height * factorY);
             }
 
-            foreach (var layer in Enum.GetValues<Layer>())
+            foreach (var layer in EnumHelper.GetValues<Layer>())
             {
                 if (layer == Layer.None)
                     continue;
