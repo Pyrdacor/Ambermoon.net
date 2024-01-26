@@ -6,7 +6,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 {
     using Util;
 
-    public abstract class CharacterData : IIndexed, IMutableIndex, IEquatable<CharacterData>, INotifyPropertyChanged
+    public abstract class CharacterData : IIndexed, IMutableIndex, IEquatable<CharacterData>, INotifyPropertyChanged, ICloneable
     {
 
         #region Fields

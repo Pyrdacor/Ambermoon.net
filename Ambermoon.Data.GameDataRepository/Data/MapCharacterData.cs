@@ -322,13 +322,20 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public DataCollection<MapPositionData>? Path { get; internal set; }
 
+        /// <summary>
+        /// Initial position of the character on the map.
+        ///
+        /// Note that this gives the position at 00:00 for characters
+        /// with a predefined path.
+        /// </summary>
         public MapPositionData Position
         {
             get => _position;
             set
             {
-                if (value.IsInvalid)
-                    throw new InvalidOperationException("The given position is invalid.");
+                // Note: Invalid positions are allowed and at least useful on 2D maps.
+                // Such position means that the character is not visible on the map.
+                // Some NPCs for example leave some maps at specific times, etc.
                 SetField(ref _position, value);
                 if (Path is not null)
                     Path[0] = value;
@@ -585,6 +592,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         internal void InitPath(DataCollection<MapPositionData>? path = null)
         {
+            if (path is not null)
+            {
+                Path = path;
+                Path.ItemChanged += PathItemChanged;
+                OnPropertyChanged(nameof(Path));
+                return;
+            }
+
             if (Path is null)
             {
                 Path = new DataCollection<MapPositionData>(288, _ => Position.Copy());

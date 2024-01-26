@@ -1,10 +1,10 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using Ambermoon.Data.GameDataRepository.Enumerations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
     using Collections;
+    using Enumerations;
     using Serialization;
     using static Monster;
 
@@ -44,7 +44,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         Invalid
     }
 
-    public sealed class MonsterData : BattleCharacterData, IIndexedData, IEquatable<MonsterData>, INotifyPropertyChanged
+    public sealed class MonsterData : BattleCharacterData, IIndexedData, IEquatable<MonsterData>
     {
 
         #region Fields

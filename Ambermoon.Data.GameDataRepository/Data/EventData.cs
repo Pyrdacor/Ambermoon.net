@@ -10,26 +10,41 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
     internal class EventDataProperty<T>
     {
-        internal readonly int Index;
-        internal readonly Func<T, byte[]> Serializer;
-        internal readonly Func<byte[], T> Deserializer;
 
-        public EventDataProperty(int index, Func<T, byte[]> serializer, Func<byte[], T> deserializer)
+        #region Properties
+
+        internal int Index { get; }
+        internal int Size { get; } = 1;
+        internal Func<T, byte[]> Serializer { get; }
+        internal Func<byte[], T> Deserializer { get; }
+
+        #endregion
+
+
+        #region Constructors
+
+        public EventDataProperty(int index, int size, Func<T, byte[]> serializer, Func<byte[], T> deserializer)
         {
+            Size = size;
             Index = index;
             Serializer = serializer;
             Deserializer = deserializer;
         }
 
+        #endregion
+
+
+        #region Methods
+
         public T Get(EventData eventData)
         {
-            var data = new Span<byte>(eventData.Data, Index, Index < 6 ? 1 : 2);
+            var data = new Span<byte>(eventData.Data, Index, Size);
             return Deserializer(data.ToArray());
         }
 
         public void Set(EventData eventData, T value)
         {
-            var data = new Span<byte>(eventData.Data, Index, Index < 6 ? 1 : 2);
+            var data = new Span<byte>(eventData.Data, Index, Size);
             Serializer(value).CopyTo(data);
         }
 
@@ -37,12 +52,15 @@ namespace Ambermoon.Data.GameDataRepository.Data
         {
             Set(target, Get(source));
         }
+
+        #endregion
+
     }
 
     internal class ByteEventDataProperty : EventDataProperty<uint>
     {
         public ByteEventDataProperty(int index)
-            : base(index,
+            : base(index, 1,
                 value => new[] { (byte)(value & 0xff) },
                 data => data[0])
         {
@@ -54,7 +72,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
     internal class WordEventDataProperty : EventDataProperty<uint>
     {
         public WordEventDataProperty(int index)
-            : base(index,
+            : base(index, 2,
                 value => new[]
                 {
                     (byte)(value >> 8),
@@ -76,12 +94,12 @@ namespace Ambermoon.Data.GameDataRepository.Data
         }
 
         public EnumEventDataProperty(int index, Func<TEnum, byte> toByte, Func<byte, TEnum> toEnum)
-            : base(index,
+            : base(index, 1,
                 value => new[] { toByte(value) },
                 data => toEnum(data[0]))
         {
-            if (index is < 1 or >= 6)
-                throw new ArgumentOutOfRangeException(nameof(index), "Index must be in range 1 to 5.");
+            if (index is < 1 or >= 10)
+                throw new ArgumentOutOfRangeException(nameof(index), "Index must be in range 1 to 10.");
         }
     }
 
@@ -89,25 +107,42 @@ namespace Ambermoon.Data.GameDataRepository.Data
         where T : struct
     {
         public NullableEventDataProperty(EventDataProperty<T> baseProperty, ushort nullValue)
-            : base(baseProperty.Index,
-                   CreateSerializer(baseProperty.Serializer, nullValue),
-                   CreateDeserializer(baseProperty.Deserializer, nullValue))
+            : base(baseProperty.Index, baseProperty.Size,
+                   CreateSerializer(baseProperty.Serializer, nullValue, baseProperty.Size),
+                   CreateDeserializer(baseProperty.Deserializer, nullValue, baseProperty.Size))
         {
         }
 
-        private static Func<T?, byte[]> CreateSerializer(Func<T, byte[]> baseSerializer, ushort nullValue)
+        private static byte[] CreateNullValueBytes(ushort nullValue, int size)
         {
-            return value =>
-            {
-                return value == null ? new[] { (byte)(nullValue >> 8), (byte)(nullValue & 0xff) } : baseSerializer(value.Value);
-            };
+            byte lower = (byte)(nullValue & 0xff);
+
+            if (size == 1)
+                return new[] { lower };
+
+            return new[] { (byte)(nullValue >> 8), lower };
         }
 
-        private static Func<byte[], T?> CreateDeserializer(Func<byte[], T> baseDeserializer, ushort nullValue)
+        private static Func<T?, byte[]> CreateSerializer(Func<T, byte[]> baseSerializer, ushort nullValue, int size)
+        {
+            return value => value == null ? CreateNullValueBytes(nullValue, size) : baseSerializer(value.Value);
+        }
+
+        private static ushort CreateNullValueFromBytes(IReadOnlyList<byte> nullValueBytes, int size)
+        {
+            ushort lower = nullValueBytes[size - 1];
+
+            if (size == 1)
+                return lower;
+
+            return (ushort)(lower | (nullValueBytes[0] << 8));
+        }
+
+        private static Func<byte[], T?> CreateDeserializer(Func<byte[], T> baseDeserializer, ushort nullValue, int size)
         {
             return data =>
             {
-                ushort value = (ushort)((data[0] << 8) | data[1]);
+                ushort value = CreateNullValueFromBytes(data, size);
                 return value == nullValue ? null : baseDeserializer(data);
             };
         }

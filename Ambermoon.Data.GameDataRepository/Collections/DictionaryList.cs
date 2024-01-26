@@ -109,20 +109,27 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         public T Create(uint? index = null)
         {
             T obj = new();
+
             if (obj is IMutableIndex mutable)
                 mutable.Index = index ?? (Count == 0 ? 1 : Keys.Max() + 1);
             else
                 throw new InvalidOperationException($"Unable to create objects of type {typeof(T)}.");
+
             return obj;
         }
 
         public T CreateClone(T source, uint? index = null)
         {
-            var obj = (T)source.Clone();
+            if (source is not ICloneable cloneable)
+                throw new InvalidOperationException($"Unable to clone objects of type {typeof(T)}.");
+
+            var obj = (T)cloneable.Clone();
+
             if (obj is IMutableIndex mutable)
                 mutable.Index = index ?? (Count == 0 ? 1 : Keys.Max() + 1);
             else
                 throw new InvalidOperationException($"Unable to create objects of type {typeof(T)}.");
+
             return obj;
         }
 

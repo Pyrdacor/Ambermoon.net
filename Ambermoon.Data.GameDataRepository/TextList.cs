@@ -15,7 +15,7 @@
         }
     }
 
-    public class TextList<T> : TextList, IIndexed, IMutableIndex, IIndexedDependentData<T>, IEquatable<TextList<T>>
+    public class TextList<T> : TextList, IMutableIndex, IIndexedDependentData<T>, IEquatable<TextList<T>>
         where T : IIndexedData, new()
     {
         public TextList()

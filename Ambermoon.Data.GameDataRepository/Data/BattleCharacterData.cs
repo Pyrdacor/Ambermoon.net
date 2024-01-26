@@ -6,7 +6,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
     using Collections;
     using Util;
 
-    public abstract class BattleCharacterData : CharacterData, IEquatable<BattleCharacterData>, INotifyPropertyChanged
+    public abstract class BattleCharacterData : CharacterData, IEquatable<BattleCharacterData>
     {
 
         #region Constants

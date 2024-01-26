@@ -24,7 +24,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
     /// This serves as a general interface for indexed data
     /// but without the requirement for specific serialization.
     /// </summary>
-    public interface IIndexed : ICloneable
+    public interface IIndexed
     {
         /// <summary>
         /// Index of the data.

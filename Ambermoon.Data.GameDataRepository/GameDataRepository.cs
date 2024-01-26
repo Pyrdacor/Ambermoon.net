@@ -1,4 +1,5 @@
-﻿using Ambermoon.Data.FileSystems;
+﻿using System.Numerics;
+using Ambermoon.Data.FileSystems;
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
@@ -58,19 +59,30 @@ namespace Ambermoon.Data.GameDataRepository
         #region Properties
 
         public bool Advanced { get; private set; } = false;
-        public DictionaryList<MapData> Maps { get; } = new();
-        public DictionaryList<TextList<MapData>> MapTexts { get; } = new();
+        public DictionaryList<Palette> Palettes { get; }
+        /// <summary>
+        /// Used for UI elements, items, portraits, etc.
+        /// </summary>
+        public Palette UserInterfacePalette { get; }
+        public Palette DungeonMapPalette { get; }
+        public Palette SecondaryUserInterfacePalette { get; }
+        public DictionaryList<MapData> Maps { get; }
+        public DictionaryList<TextList<MapData>> MapTexts { get; }
         //public Dictionary<uint, Labdata> LabyrinthData { get; } = new();
         public DictionaryList<NpcData> Npcs { get; } = new();
         public DictionaryList<TextList<NpcData>> NpcTexts { get; } = new();
         public DictionaryList<PartyMemberData> PartyMembers { get; } = new();
         public DictionaryList<TextList<PartyMemberData>> PartyMemberTexts { get; } = new();
-        public DictionaryList<MonsterData> Monsters { get; } = new();
-        public DictionaryList<MonsterGroupData> MonsterGroups { get; } = new();
-        /*public Dictionary<uint, ImageList> MonsterImages { get; } = new();
-        public IReadOnlyDictionary<uint, ImageList<Monster>> ColoredMonsterImages => throw new NotImplementedException();
+        public DictionaryList<MonsterData> Monsters { get; }
+        public DictionaryList<MonsterGroupData> MonsterGroups { get; }
+        public DictionaryList<Image> MonsterImages { get; }
+        public CombatBackgroundImage[] CombatBackgroundImages2D { get; } = new CombatBackgroundImage[16];
+        public CombatBackgroundImage[] CombatBackgroundImages3D { get; } = new CombatBackgroundImage[16];
+        //CombatBackgrounds
+
+        /*public IReadOnlyDictionary<uint, ImageList<Monster>> ColoredMonsterImages => throw new NotImplementedException();
         public Dictionary<uint, Place> Places { get; } = new();*/
-        public DictionaryList<ItemData> Items { get; } = new();
+        public DictionaryList<ItemData> Items { get; }
         /*public Dictionary<uint, KeyValuePair<string, Song>> Songs { get; } = new();
         public TextList Dictionary { get; } = new();
         public Dictionary<uint, ImageWithPaletteIndex> Portraits { get; } = new();*/
@@ -122,6 +134,9 @@ namespace Ambermoon.Data.GameDataRepository
 
         private GameDataRepository(Func<string, IFileContainer> fileContainerProvider)
         {
+
+            #region File Container Helpers
+
             Dictionary<int, IDataReader> ReadFileContainer(string name)
                 => fileContainerProvider(name).Files.Where(f => f.Value.Size != 0)
                     .ToDictionary(f => f.Key, f => f.Value);
@@ -129,27 +144,66 @@ namespace Ambermoon.Data.GameDataRepository
                 => names.SelectMany(name => fileContainerProvider(name).Files).Where(f => f.Value.Size != 0)
                     .ToDictionary(f => f.Key, f => f.Value);
 
-            #region General Texts
-            _textContainer = TextContainer.Load(new TextContainerReader(), ReadFileContainer("Text.amb")[1], false);
-            Advanced = _textContainer.VersionString.ToLower().Contains("adv");
             #endregion
 
-            // Maps
+
+            #region Misc Data
+
+            _textContainer = TextContainer.Load(new TextContainerReader(), ReadFileContainer("Text.amb")[1], false);
+            Advanced = _textContainer.VersionString.ToLower().Contains("adv");
+
+            #endregion
+
+
+            #region Palettes
+
+            var paletteFiles = ReadFileContainer("Palettes.amb");
+            Palettes = paletteFiles.Select(paletteFile => Palette.Deserialize((uint)paletteFile.Key, paletteFile.Value)).ToDictionaryList();
+            var builtinPalettesData = new DataReader(StaticData.BuiltinPalettes);
+            UserInterfacePalette = Palette.Deserialize(1000, builtinPalettesData);
+            DungeonMapPalette = Palette.Deserialize(1001, builtinPalettesData);
+            SecondaryUserInterfacePalette = Palette.Deserialize(1002, builtinPalettesData);
+
+            #endregion
+
+
+            #region Maps
+
             var mapFiles = ReadFileContainers("1Map_data.amb", "2Map_data.amb", "3Map_data.amb");
             Maps = mapFiles.Select(mapFile => (MapData)MapData.Deserialize(mapFile.Value, (uint)mapFile.Key, Advanced)).ToDictionaryList();
             var mapTextFiles = ReadFileContainers("1Map_texts.amb", "2Map_texts.amb", "3Map_texts.amb");
             MapTexts = mapTextFiles.Select(mapTextFile => (TextList<MapData>)TextList<MapData>.Deserialize(mapTextFile.Value, (uint)mapTextFile.Key, Maps[(uint)mapTextFile.Key], Advanced)).ToDictionaryList();
+            
+            #endregion
 
-            // Monsters
+
+            #region Monsters
+
             var monsterFiles = ReadFileContainer("Monster_char.amb");
             Monsters = monsterFiles.Select(monsterFile => (MonsterData)MonsterData.Deserialize(monsterFile.Value, (uint)monsterFile.Key, Advanced)).ToDictionaryList();
             var monsterGroupFiles = ReadFileContainer("Monster_groups.amb");
             MonsterGroups = monsterGroupFiles.Select(monsterGroupFile => (MonsterGroupData)MonsterGroupData.Deserialize(monsterGroupFile.Value, (uint)monsterGroupFile.Key, Advanced)).ToDictionaryList();
+            var monsterGraphicFiles = ReadFileContainer("Monster_gfx.amb");
+            var monsterGraphicInfos = Monsters.Select(monster =>
+                Tuple.Create(monster.OriginalFrameWidth, monster.OriginalFrameHeight, monster.CombatGraphicIndex)).Distinct();
+            MonsterImages = monsterGraphicInfos.Select(info =>
+                Image.DeserializeFullData(info.Item3, monsterGraphicFiles[(int)info.Item3], (int)info.Item1, (int)info.Item2, GraphicFormat.Palette5Bit, true)).ToDictionaryList();
+            var combatBackgroundFiles = ReadFileContainers("Combat_background.amb");
+            var combatBackgrounds = combatBackgroundFiles.Select(combatBackgroundFile =>
+                CombatBackgroundImage.DeserializeImage((uint)combatBackgroundFile.Key, combatBackgroundFile.Value)).ToDictionaryList();
+            CombatBackgroundImages2D = CombatBackgrounds.Info2D.Select(info => new CombatBackgroundImage(info.Palettes, combatBackgrounds[info.GraphicIndex].Frames[0])).ToArray();
+            CombatBackgroundImages3D = CombatBackgrounds.Info3D.Select(info => new CombatBackgroundImage(info.Palettes, combatBackgrounds[info.GraphicIndex].Frames[0])).ToArray();
 
-            // Items
+            #endregion
+
+
+            #region Items
+
             var itemFile = ReadFileContainer("Objects.amb")[1];
             int itemCount = itemFile.ReadWord();
             Items = DataCollection<ItemData>.Deserialize(itemFile, itemCount, Advanced).ToDictionaryList();
+
+            #endregion
 
             // TODO ...
 

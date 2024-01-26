@@ -113,7 +113,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {
-            var gotoPointData = (MapPositionData)Deserialize(dataReader, advanced);
+            var gotoPointData = (MapGotoPointData)Deserialize(dataReader, advanced);
             (gotoPointData as IMutableIndex).Index = index;
             return gotoPointData;
         }

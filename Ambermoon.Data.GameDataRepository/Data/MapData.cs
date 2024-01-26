@@ -588,7 +588,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 {
                     if (mapChar.MovementType == MapCharacterMovementType.Path)
                     {
-                        mapChar.InitPath( DataCollection<MapPositionData>.Deserialize(dataReader, 288, advanced));
+                        mapChar.InitPath(DataCollection<MapPositionData>.Deserialize(dataReader, 288, advanced));
                         mapChar.Position = mapChar.Path![0];
                     }
                     else
@@ -611,13 +611,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 var gotoPoints = DataCollection<MapGotoPointData>.Deserialize(dataReader, numGotoPoints, advanced);
                 mapData.GotoPoints = new DictionaryList<MapGotoPointData>(gotoPoints);
                 // TODO: change detection
+
+                // Event Entry Automap Types
+                foreach (var entry in mapData.EventEntryList)
+                    entry.AutomapType = (AutomapType)dataReader.ReadByte();
             }
 
-            // Event Entry Automap Types
-            foreach (var entry in mapData.EventEntryList)
-                entry.AutomapType = (AutomapType)dataReader.ReadByte();
-
-            if (dataReader.Position % 2 == 1)
+            if (dataReader.Position < dataReader.Size && dataReader.Position % 2 == 1)
                 dataReader.Position++;
 
             return mapData;
