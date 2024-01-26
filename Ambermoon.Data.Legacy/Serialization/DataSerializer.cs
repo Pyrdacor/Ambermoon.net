@@ -293,12 +293,12 @@ namespace Ambermoon.Data.Legacy.Serialization
             UseWriter(writer => writer.CopyTo(stream));
         }
 
-        public void AppendEnumAsByte<T>(T value) where T : struct, System.Enum, IConvertible
+        public void AppendEnumAsByte<T>(T value) where T : struct, Enum, IConvertible
         {
             UseWriter(writer => writer.WriteEnumAsByte(value));
         }
 
-        public void AppendEnumAsWord<T>(T value) where T : struct, System.Enum, IConvertible
+        public void AppendEnumAsWord<T>(T value) where T : struct, Enum, IConvertible
         {
             UseWriter(writer => writer.WriteEnumAsWord(value));
         }
@@ -444,12 +444,12 @@ namespace Ambermoon.Data.Legacy.Serialization
             Write(() => Override(bytes), () => Write(bytes));
         }
 
-        public void WriteEnumAsByte<T>(T value) where T : struct, System.Enum, IConvertible
+        public void WriteEnumAsByte<T>(T value) where T : struct, Enum, IConvertible
         {
             Write(value.ToByte(null));
         }
 
-        public void WriteEnumAsWord<T>(T value) where T : struct, System.Enum, IConvertible
+        public void WriteEnumAsWord<T>(T value) where T : struct, Enum, IConvertible
         {
             Write(value.ToUInt16(null));
         }

@@ -2469,7 +2469,7 @@ namespace Ambermoon
             caster.SpellPoints.CurrentValue = monster.SpellPoints.CurrentValue;
             caster.MagicAttack = monster.MagicAttack;
             caster.MagicDefense = monster.MagicDefense;
-            foreach (var attribute in Enum.GetValues<Attribute>().Take(8))
+            foreach (var attribute in EnumHelper.GetValues<Attribute>().Take(8))
             {
                 caster.Attributes[attribute].MaxValue = monster.Attributes[attribute].MaxValue;
                 caster.Attributes[attribute].CurrentValue = monster.Attributes[attribute].CurrentValue;
@@ -2518,7 +2518,7 @@ namespace Ambermoon
             popup.AddText(new Rect(area.Position, new Size(panelWidth, Global.GlyphLineHeight)),
                 game.DataNameProvider.AttributesHeaderString, TextColor.MonsterInfoHeader, TextAlign.Center);
             var position = new Position(area.Position.X, area.Position.Y + Global.GlyphLineHeight + 1);
-            foreach (var attribute in Enum.GetValues<Attribute>())
+            foreach (var attribute in EnumHelper.GetValues<Attribute>())
             {
                 if (attribute == Attribute.Age)
                     break;
@@ -2534,7 +2534,7 @@ namespace Ambermoon
             popup.AddText(new Rect(position, new Size(panelWidth, Global.GlyphLineHeight)),
                 game.DataNameProvider.SkillsHeaderString, TextColor.MonsterInfoHeader, TextAlign.Center);
             position.Y += Global.GlyphLineHeight + 1;
-            foreach (var skill in Enum.GetValues<Skill>())
+            foreach (var skill in EnumHelper.GetValues<Skill>())
             {
                 var skillValues = monster.Skills[skill];
                 popup.AddText(position,

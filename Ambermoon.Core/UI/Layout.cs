@@ -1585,14 +1585,14 @@ namespace Ambermoon.UI
             }
             void ToggleGraphicFilter()
             {
-                game.Configuration.GraphicFilter = (GraphicFilter)(((int)game.Configuration.GraphicFilter + 1) % Enum.GetValues<GraphicFilter>().Length);
+                game.Configuration.GraphicFilter = (GraphicFilter)(((int)game.Configuration.GraphicFilter + 1) % EnumHelper.GetValues<GraphicFilter>().Length);
                 SetGraphicFilter();
                 changedConfiguration = true;
                 game.NotifyConfigurationChange(false);
             }
             void ToggleGraphicFilterAddition()
             {
-                game.Configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)game.Configuration.GraphicFilterOverlay + 1) % Enum.GetValues<GraphicFilterOverlay>().Length);
+                game.Configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)game.Configuration.GraphicFilterOverlay + 1) % EnumHelper.GetValues<GraphicFilterOverlay>().Length);
                 SetGraphicFilterOverlay();
                 changedConfiguration = true;
                 game.NotifyConfigurationChange(false);
@@ -1732,7 +1732,7 @@ namespace Ambermoon.UI
             }
             void ToggleEffects()
             {
-                game.Configuration.Effects = (Effects)(((int)game.Configuration.Effects + 1) % Enum.GetValues<Effects>().Length);
+                game.Configuration.Effects = (Effects)(((int)game.Configuration.Effects + 1) % EnumHelper.GetValues<Effects>().Length);
                 SetEffects();
                 changedConfiguration = true;
                 game.NotifyConfigurationChange(false);
@@ -4166,7 +4166,7 @@ namespace Ambermoon.UI
 
         public void RemoveAllActiveSpells()
         {
-            foreach (var activeSpell in Enum.GetValues<ActiveSpellType>())
+            foreach (var activeSpell in EnumHelper.GetValues<ActiveSpellType>())
                 UpdateActiveSpell(activeSpell, null);
         }
 
@@ -4765,7 +4765,7 @@ namespace Ambermoon.UI
 
             if (Type == LayoutType.Map2D || Type == LayoutType.Map3D)
             {
-                foreach (var activeSpell in Enum.GetValues<ActiveSpellType>())
+                foreach (var activeSpell in EnumHelper.GetValues<ActiveSpellType>())
                 {
                     UpdateActiveSpell(activeSpell, game.CurrentSavegame.ActiveSpells[(int)activeSpell]);
                 }

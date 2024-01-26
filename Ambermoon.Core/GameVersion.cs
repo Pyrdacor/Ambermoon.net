@@ -50,7 +50,7 @@ namespace Ambermoon
     {
         public static GameLanguage ToGameLanguage(this string languageString)
         {
-            if (System.Enum.TryParse(languageString, out GameLanguage gameLanguage))
+            if (Enum.TryParse(languageString, out GameLanguage gameLanguage))
                 return gameLanguage;
 
             languageString = languageString.ToLower().Trim();

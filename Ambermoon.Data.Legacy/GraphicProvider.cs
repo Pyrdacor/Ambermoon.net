@@ -137,7 +137,7 @@ namespace Ambermoon.Data.Legacy
                 });
             }
 
-            foreach (var type in Enum.GetValues<GraphicType>())
+            foreach (var type in EnumHelper.GetValues<GraphicType>())
             {
                 if (type == GraphicType.Cursor)
                 {

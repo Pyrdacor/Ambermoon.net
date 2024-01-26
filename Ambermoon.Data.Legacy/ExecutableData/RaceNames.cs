@@ -33,7 +33,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal RaceNames(IDataReader dataReader)
         {
-            foreach (var type in Enum.GetValues<Race>())
+            foreach (var type in EnumHelper.GetValues<Race>())
             {
                 entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }

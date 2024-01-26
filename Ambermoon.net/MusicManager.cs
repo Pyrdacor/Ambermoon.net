@@ -22,7 +22,7 @@ namespace Ambermoon
         readonly Dictionary<Song, ISong> externalSongs = new();
         IAudioOutput audioOutput = null;
         IAudioStream currentStream = null;
-        protected static readonly Song[] Songs = Enum.GetValues<Song>().Skip(1).ToArray();
+        protected static readonly Song[] Songs = EnumHelper.GetValues<Song>().Skip(1).ToArray();
         readonly ISongManager songManager = null;
         readonly object startMutex = new();
 
@@ -106,7 +106,7 @@ namespace Ambermoon
                 return Tuple.Create(0, (string)null, false);
             }).Where(f => f.Item3).Distinct(comparer).ToDictionary(f => f.Item1, f => f.Item2);
 
-            foreach (var song in Enum.GetValues<Song>())
+            foreach (var song in EnumHelper.GetValues<Song>())
             {
                 if (externalSongs.ContainsKey(song))
                     continue; // already loaded

@@ -3,13 +3,13 @@ using System.Linq;
 
 namespace Ambermoon
 {
-    public static class Enum
+    public static class EnumHelper
     {
-        public static TEnum[] GetValues<TEnum>() => (TEnum[])System.Enum.GetValues(typeof(TEnum));
+        public static TEnum[] GetValues<TEnum>() => (TEnum[])Enum.GetValues(typeof(TEnum));
 
-        public static string GetName<TEnum>(TEnum value) => System.Enum.GetName(typeof(TEnum), value);
+        public static string GetName<TEnum>(TEnum value) => Enum.GetName(typeof(TEnum), value);
 
-        public static int NameCount<TEnum>() => System.Enum.GetNames(typeof(TEnum)).Length;
+        public static int NameCount<TEnum>() => Enum.GetNames(typeof(TEnum)).Length;
 
         public static string GetFlagNames<TEnum>(TEnum value, int bytes)
         {
@@ -27,9 +27,9 @@ namespace Ambermoon
             {
                 return bytes switch
                 {
-                    1 => (TEnum)System.Enum.ToObject(typeof(TEnum), (byte)value),
-                    2 => (TEnum)System.Enum.ToObject(typeof(TEnum), (ushort)value),
-                    _ => (TEnum)System.Enum.ToObject(typeof(TEnum), value)
+                    1 => (TEnum)Enum.ToObject(typeof(TEnum), (byte)value),
+                    2 => (TEnum)Enum.ToObject(typeof(TEnum), (ushort)value),
+                    _ => (TEnum)Enum.ToObject(typeof(TEnum), value)
                 };
             }
 
@@ -66,13 +66,13 @@ namespace Ambermoon
 
         public static string GetFlagNames(Type enumType, object value)
         {
-            var values = System.Enum.GetValues(enumType).Cast<object>().Select(v => (uint)Convert.ChangeType(v, typeof(uint))).Where(v => v != 0).Distinct().ToList();
+            var values = Enum.GetValues(enumType).Cast<object>().Select(v => (uint)Convert.ChangeType(v, typeof(uint))).Where(v => v != 0).Distinct().ToList();
 
             if (values.Count == 0 || (uint)Convert.ChangeType(value, typeof(uint)) == 0)
             {
                 try
                 {
-                    return System.Enum.GetName(enumType, (object)0) ?? "None";
+                    return Enum.GetName(enumType, (object)0) ?? "None";
                 }
                 catch (InvalidCastException)
                 {
@@ -91,7 +91,7 @@ namespace Ambermoon
 
                 if (result.Length != 0)
                     result += " | ";
-                result += System.Enum.GetName(enumType, v);
+                result += Enum.GetName(enumType, v);
             }
 
             return result;

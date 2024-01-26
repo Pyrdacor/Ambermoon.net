@@ -36,8 +36,8 @@ namespace Ambermoon.Data.Serialization
         void CopyTo(Stream stream);
         byte[] ToArray();
         byte[] GetBytes(int offset, int length);
-        void WriteEnumAsByte<T>(T value) where T : struct, System.Enum, IConvertible;
-        void WriteEnumAsWord<T>(T value) where T : struct, System.Enum, IConvertible;
+        void WriteEnumAsByte<T>(T value) where T : struct, Enum, IConvertible;
+        void WriteEnumAsWord<T>(T value) where T : struct, Enum, IConvertible;
         void WriteNullTerminated(string value);
         void WriteNullTerminated(string value, Encoding encoding);
         void WriteWithoutLength(string value);

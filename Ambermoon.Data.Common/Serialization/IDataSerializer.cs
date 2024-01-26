@@ -30,8 +30,8 @@ namespace Ambermoon.Data.Serialization
         void Append(string value, Encoding encoding);
         void Append(string value, Encoding encoding, int length, char fillChar = ' ');
         void Append(byte[] bytes);
-        void AppendEnumAsByte<T>(T value) where T : struct, System.Enum, IConvertible;
-        void AppendEnumAsWord<T>(T value) where T : struct, System.Enum, IConvertible;
+        void AppendEnumAsByte<T>(T value) where T : struct, Enum, IConvertible;
+        void AppendEnumAsWord<T>(T value) where T : struct, Enum, IConvertible;
         void AppendNullTerminated(string value);
         void AppendNullTerminated(string value, Encoding encoding);
         void AppendWithoutLength(string value);

@@ -205,7 +205,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             var placeholderRegex = new Regex("[0-9]+", RegexOptions.Compiled);
 
-            foreach (var type in Enum.GetValues<UITextIndex>())
+            foreach (var type in EnumHelper.GetValues<UITextIndex>())
             {
                 var text = dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
                 var matches = placeholderRegex.Matches(text);

@@ -72,7 +72,7 @@ namespace Ambermoon.Data
     }
 
     [Serializable]
-    public class CharacterValueCollection<TType> : IEnumerable<CharacterValue> where TType : System.Enum
+    public class CharacterValueCollection<TType> : IEnumerable<CharacterValue> where TType : Enum
     {
         readonly CharacterValue[] values = null;
 

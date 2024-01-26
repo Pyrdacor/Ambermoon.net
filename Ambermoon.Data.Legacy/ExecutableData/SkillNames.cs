@@ -36,7 +36,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal SkillNames(IDataReader dataReader)
         {
-            foreach (var type in Enum.GetValues<Skill>())
+            foreach (var type in EnumHelper.GetValues<Skill>())
             {
                 entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
@@ -44,7 +44,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
         internal void AddShortNames(IDataReader dataReader)
         {
-            foreach (var type in Enum.GetValues<Skill>())
+            foreach (var type in EnumHelper.GetValues<Skill>())
             {
                 shortNames.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }

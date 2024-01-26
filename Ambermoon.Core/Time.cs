@@ -338,7 +338,7 @@ namespace Ambermoon
         {
             uint passed5MinuteChunks = passedHours * 12 + passedMinutes / 5;
 
-            foreach (var activeSpellType in Enum.GetValues<ActiveSpellType>())
+            foreach (var activeSpellType in EnumHelper.GetValues<ActiveSpellType>())
             {
                 var activeSpell = savegame.ActiveSpells[(int)activeSpellType];
 

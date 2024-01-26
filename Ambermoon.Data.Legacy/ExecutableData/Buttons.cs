@@ -38,7 +38,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 return graphic;
             }
 
-            foreach (var buttonType in Enum.GetValues<ButtonType>())
+            foreach (var buttonType in EnumHelper.GetValues<ButtonType>())
                 entries.Add(buttonType, ReadGraphic(dataReader));
 
             dataReader.AlignToWord();

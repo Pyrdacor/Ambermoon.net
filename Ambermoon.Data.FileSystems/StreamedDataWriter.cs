@@ -289,14 +289,14 @@ namespace Ambermoon.Data.FileSystems
             AddToStream(offset, writer.Size - offset);
         }
 
-        public void WriteEnumAsByte<T>(T value) where T : struct, System.Enum, IConvertible
+        public void WriteEnumAsByte<T>(T value) where T : struct, Enum, IConvertible
         {
             int offset = writer.Size;
             writer.WriteEnumAsByte(value);
             AddToStream(offset, writer.Size - offset);
         }
 
-        public void WriteEnumAsWord<T>(T value) where T : struct, System.Enum, IConvertible
+        public void WriteEnumAsWord<T>(T value) where T : struct, Enum, IConvertible
         {
             int offset = writer.Size;
             writer.WriteEnumAsWord(value);

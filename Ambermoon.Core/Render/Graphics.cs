@@ -50,8 +50,8 @@ namespace Ambermoon.Render
         // 1. Our own UI elements like scrollbars, etc (see UICustomGraphic)
         // 2. Game UI elements from the executable (see UIGraphic)
         // 3. Game button graphics from the executable (see ButtonType)
-        static readonly uint UIGraphicOffset = UICustomGraphicOffset + (uint)Enum.NameCount<UICustomGraphic>();
-        static readonly uint ButtonOffset = UIGraphicOffset + (uint)Enum.NameCount<UIGraphic>();
+        static readonly uint UIGraphicOffset = UICustomGraphicOffset + (uint)EnumHelper.NameCount<UICustomGraphic>();
+        static readonly uint ButtonOffset = UIGraphicOffset + (uint)EnumHelper.NameCount<UIGraphic>();
         static readonly uint PopupFrameOffset = UIGraphicOffset;
 
         public static uint GetScrollbarGraphicIndex(ScrollbarType scrollbarType) => UICustomGraphicOffset + (uint)scrollbarType;

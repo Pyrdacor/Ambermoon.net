@@ -238,7 +238,7 @@ namespace Ambermoon.UI
             #endregion
 
             #region Language change button
-            int languageCount = Enum.GetValues<GameLanguage>().Length;
+            int languageCount = EnumHelper.GetValues<GameLanguage>().Length;
             var languageButtonArea = new Rect(versionListArea.Center.X - languageCount * (FlagWidth + 4) / 2, okButton.Area.Top + 12, FlagWidth, FlagHeight);
             var renderLayer = renderView.GetLayer(Layer.Misc);
             int textureFactor = (int)renderLayer.TextureFactor;
@@ -294,7 +294,7 @@ namespace Ambermoon.UI
 
         void UpdateFlags()
         {
-            int languageCount = Enum.GetValues<GameLanguage>().Length;
+            int languageCount = EnumHelper.GetValues<GameLanguage>().Length;
             int x = languageChangeButtons[0].X;
             int sunkenBoxDist = flagSunkenBox[0].X - x;
             int textureFactor = (int)renderView.GetLayer(Layer.Misc).TextureFactor;

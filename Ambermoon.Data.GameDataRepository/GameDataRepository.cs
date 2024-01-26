@@ -265,7 +265,7 @@ namespace Ambermoon.Data.GameDataRepository
                 else if (fileType == FileType.JHPlusLOB)
                     FileWriter.WriteJH(writer, dataWriter.ToArray(), DefaultJHKey, true);
                 else
-                    throw new InvalidOperationException($"Format {Enum.GetName(fileType)} is not supported for writing single files.");
+                    throw new InvalidOperationException($"Format {EnumHelper.GetName(fileType)} is not supported for writing single files.");
             }
             void WriteContainer(string containerName, FileType fileType, Dictionary<uint, byte[]> files)
             {

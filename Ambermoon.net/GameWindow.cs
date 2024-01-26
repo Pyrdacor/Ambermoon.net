@@ -291,9 +291,9 @@ namespace Ambermoon
             else if (key == Silk.NET.Input.Key.F8)
             {
                 if (GetModifiers(keyboard) == KeyModifiers.None)
-                    configuration.GraphicFilter = (GraphicFilter)(((int)configuration.GraphicFilter + 1) % Enum.GetValues<GraphicFilter>().Length);
+                    configuration.GraphicFilter = (GraphicFilter)(((int)configuration.GraphicFilter + 1) % EnumHelper.GetValues<GraphicFilter>().Length);
                 else
-                    configuration.GraphicFilter = (GraphicFilter)(((int)configuration.GraphicFilter - 1 + Enum.GetValues<GraphicFilter>().Length) % Enum.GetValues<GraphicFilter>().Length);
+                    configuration.GraphicFilter = (GraphicFilter)(((int)configuration.GraphicFilter - 1 + EnumHelper.GetValues<GraphicFilter>().Length) % EnumHelper.GetValues<GraphicFilter>().Length);
 
                 if (!renderView.TryUseFrameBuffer())
                     configuration.GraphicFilter = GraphicFilter.None;
@@ -303,9 +303,9 @@ namespace Ambermoon
             else if (key == Silk.NET.Input.Key.F9)
             {
                 if (GetModifiers(keyboard) == KeyModifiers.None)
-                    configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)configuration.GraphicFilterOverlay + 1) % Enum.GetValues<GraphicFilterOverlay>().Length);
+                    configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)configuration.GraphicFilterOverlay + 1) % EnumHelper.GetValues<GraphicFilterOverlay>().Length);
                 else
-                    configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)configuration.GraphicFilterOverlay - 1 + Enum.GetValues<GraphicFilterOverlay>().Length) % Enum.GetValues<GraphicFilterOverlay>().Length);
+                    configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)configuration.GraphicFilterOverlay - 1 + EnumHelper.GetValues<GraphicFilterOverlay>().Length) % EnumHelper.GetValues<GraphicFilterOverlay>().Length);
 
                 if (!renderView.TryUseFrameBuffer())
                     configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
@@ -315,9 +315,9 @@ namespace Ambermoon
             else if (key == Silk.NET.Input.Key.F10)
             {
                 if (GetModifiers(keyboard) == KeyModifiers.None)
-                    configuration.Effects = (Effects)(((int)configuration.Effects + 1) % Enum.GetValues<Effects>().Length);
+                    configuration.Effects = (Effects)(((int)configuration.Effects + 1) % EnumHelper.GetValues<Effects>().Length);
                 else
-                    configuration.Effects = (Effects)(((int)configuration.Effects - 1 + Enum.GetValues<Effects>().Length) % Enum.GetValues<Effects>().Length);
+                    configuration.Effects = (Effects)(((int)configuration.Effects - 1 + EnumHelper.GetValues<Effects>().Length) % EnumHelper.GetValues<Effects>().Length);
 
                 if (!renderView.TryUseEffects())
                     configuration.Effects = Effects.None;

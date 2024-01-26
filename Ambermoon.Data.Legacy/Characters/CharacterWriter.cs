@@ -86,7 +86,7 @@ namespace Ambermoon.Data.Legacy.Characters
             if (character.Type != CharacterType.NPC)
             {
                 // Equipment
-                foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>())
+                foreach (var equipmentSlot in EnumHelper.GetValues<EquipmentSlot>())
                 {
                     if (equipmentSlot != EquipmentSlot.None)
                         ItemSlotWriter.WriteItemSlot(character.Equipment.Slots[equipmentSlot], dataWriter);

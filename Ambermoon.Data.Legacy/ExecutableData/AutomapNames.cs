@@ -39,7 +39,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(AutomapType.None, "");
             entries.Add(AutomapType.Wall, "");
 
-            foreach (var type in Enum.GetValues<AutomapType>().Skip(2).Take(17))
+            foreach (var type in EnumHelper.GetValues<AutomapType>().Skip(2).Take(17))
             {
                 entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }

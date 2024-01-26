@@ -47,7 +47,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(Spell.None, "");
             int spellIndex = 1; // we skip Spell.None as it has no text entry
 
-            foreach (var type in Enum.GetValues<SpellSchool>())
+            foreach (var type in EnumHelper.GetValues<SpellSchool>())
             {
                 entriesPerType.Add(type, new List<string>(30));
 

@@ -36,7 +36,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal ClassNames(IDataReader dataReader)
         {
-            foreach (var type in Enum.GetValues<Class>())
+            foreach (var type in EnumHelper.GetValues<Class>())
             {
                 entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }

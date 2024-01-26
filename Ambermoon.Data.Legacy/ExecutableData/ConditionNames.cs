@@ -46,7 +46,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             entries.Add(Condition.None, "");
 
-            foreach (var type in Enum.GetValues<Condition>())
+            foreach (var type in EnumHelper.GetValues<Condition>())
             {
                 if (type != Condition.None)
                     entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));

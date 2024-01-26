@@ -29,8 +29,8 @@ namespace Ambermoon
         internal static IEnumerable<string> GetAllPossibleSavegameFolders()
         {
             var folders = new List<string> { ExternalSavegameFolder };
-            folders.AddRange(Enum.GetValues<GameLanguage>().Select(l => l.ToString().ToLower()));
-            folders.AddRange(Enum.GetValues<GameLanguage>().Select(l => $"advanced_{l.ToString().ToLower()}"));
+            folders.AddRange(EnumHelper.GetValues<GameLanguage>().Select(l => l.ToString().ToLower()));
+            folders.AddRange(EnumHelper.GetValues<GameLanguage>().Select(l => $"advanced_{l.ToString().ToLower()}"));
             return folders;
         }
 

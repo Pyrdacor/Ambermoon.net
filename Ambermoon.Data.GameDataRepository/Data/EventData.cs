@@ -88,7 +88,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
     internal class EnumEventDataProperty<TEnum> : EventDataProperty<TEnum>
     {
         public EnumEventDataProperty(int index)
-            : this(index, e => Convert.ToByte(e), b => (TEnum)System.Enum.ToObject(typeof(TEnum), b))
+            : this(index, e => Convert.ToByte(e), b => (TEnum)Enum.ToObject(typeof(TEnum), b))
         {
 
         }

@@ -519,13 +519,13 @@ namespace Ambermoon
                 partyMember.HitPoints.CurrentValue = partyMember.HitPoints.TotalMaxValue;
                 partyMember.SpellPoints.CurrentValue = partyMember.SpellPoints.TotalMaxValue;
 
-                foreach (var attribute in Enum.GetValues<Data.Attribute>())
+                foreach (var attribute in EnumHelper.GetValues<Data.Attribute>())
                 {
                     if (attribute < Data.Attribute.Age)
                         partyMember.Attributes[attribute].CurrentValue = partyMember.Attributes[attribute].MaxValue;
                 }
 
-                foreach (var skill in Enum.GetValues<Skill>())
+                foreach (var skill in EnumHelper.GetValues<Skill>())
                 {
                     partyMember.Skills[skill].CurrentValue = partyMember.Skills[skill].MaxValue;
                 }
@@ -622,7 +622,7 @@ namespace Ambermoon
 
             if (args.Length >= 3)
             {
-                var world = Enum.GetValues<World>().Cast<World?>().FirstOrDefault(w =>
+                var world = EnumHelper.GetValues<World>().Cast<World?>().FirstOrDefault(w =>
                     string.Compare(args[0].Replace(" ", ""), w.ToString().Replace(" ", ""), true) == 0);
 
                 if (world != null)

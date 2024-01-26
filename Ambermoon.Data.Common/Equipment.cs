@@ -10,7 +10,7 @@ namespace Ambermoon.Data
 
         public Equipment()
         {
-            foreach (EquipmentSlot equipmentSlot in Enum.GetValues<EquipmentSlot>())
+            foreach (EquipmentSlot equipmentSlot in EnumHelper.GetValues<EquipmentSlot>())
             {
                 if (equipmentSlot != EquipmentSlot.None)
                 {

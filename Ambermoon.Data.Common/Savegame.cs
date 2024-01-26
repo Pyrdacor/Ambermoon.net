@@ -194,7 +194,7 @@ namespace Ambermoon.Data
         /// <param name="elapsedSinceLastUpdate">Time elapsed since last update in 5 minute chunks.</param>
         public void UpdateActiveSpells(uint elapsedSinceLastUpdate)
         {
-            foreach (var type in Enum.GetValues<ActiveSpellType>())
+            foreach (var type in EnumHelper.GetValues<ActiveSpellType>())
             {
                 var activeSpell = ActiveSpells[(int)type];
 

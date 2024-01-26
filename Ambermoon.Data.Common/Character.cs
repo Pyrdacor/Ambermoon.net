@@ -282,7 +282,7 @@ namespace Ambermoon.Data
         public Inventory Inventory { get; } = new Inventory();
         public Equipment Equipment { get; } = new Equipment();
 
-        public static readonly List<Condition> PossibleConditions = Enum.GetValues<Condition>()
+        public static readonly List<Condition> PossibleConditions = EnumHelper.GetValues<Condition>()
             .Where(a => a != Condition.None && a != Condition.Unused).ToList();
         public static readonly List<Condition> PossibleVisibleConditions = PossibleConditions
             .Where(a => a != Condition.DeadAshes && a != Condition.DeadDust).ToList();

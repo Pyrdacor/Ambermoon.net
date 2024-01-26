@@ -395,7 +395,7 @@ namespace Ambermoon
         uint lastDrugColorChangeTicks = 0;
         uint lastDrugMouseMoveTicks = 0;
         public Action DrugTicked;
-        readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
+        readonly bool[] keys = new bool[EnumHelper.GetValues<Key>().Length];
         bool allInputWasDisabled = false;
         bool allInputDisabled = false;
         bool inputEnable = true;
@@ -1439,12 +1439,12 @@ namespace Ambermoon
             partyMember.BonusDefense = 0;
             partyMember.BonusAttackDamage = 0;
 
-            foreach (var attribute in Enum.GetValues<Attribute>())
+            foreach (var attribute in EnumHelper.GetValues<Attribute>())
             {
                 partyMember.Attributes[attribute].BonusValue = 0;
             }
 
-            foreach (var skill in Enum.GetValues<Skill>())
+            foreach (var skill in EnumHelper.GetValues<Skill>())
             {
                 partyMember.Skills[skill].BonusValue = 0;
             }
@@ -4096,13 +4096,13 @@ namespace Ambermoon
                 mapViewRightFillArea = layout.FillArea(new Rect(208, 49, 96, 80), GetUIColor(28), false);
                 SetWindow(Window.MapView);
 
-                foreach (var specialItem in Enum.GetValues<SpecialItemPurpose>())
+                foreach (var specialItem in EnumHelper.GetValues<SpecialItemPurpose>())
                 {
                     if (CurrentSavegame.IsSpecialItemActive(specialItem))
                         layout.AddSpecialItem(specialItem);
                 }
 
-                foreach (var activeSpell in Enum.GetValues<ActiveSpellType>())
+                foreach (var activeSpell in EnumHelper.GetValues<ActiveSpellType>())
                 {
                     if (CurrentSavegame.ActiveSpells[(int)activeSpell] != null)
                         layout.AddActiveSpell(activeSpell, CurrentSavegame.ActiveSpells[(int)activeSpell], false);
@@ -4380,7 +4380,7 @@ namespace Ambermoon
                     RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slot + 1), ItemManager.GetItem(targetItemSlot.ItemIndex));
                 }
                 layout.AddItemGrid(equipmentGrid);
-                foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>().Skip(1))
+                foreach (var equipmentSlot in EnumHelper.GetValues<EquipmentSlot>().Skip(1))
                 {
                     if (!partyMember.Equipment.Slots[equipmentSlot].Empty)
                     {
@@ -4526,7 +4526,7 @@ namespace Ambermoon
                 #region Attributes
                 layout.AddText(new Rect(22, 50, 72, Global.GlyphLineHeight), DataNameProvider.AttributesHeaderString, TextColor.LightGreen, TextAlign.Center);
                 index = 0;
-                foreach (var attribute in Enum.GetValues<Attribute>())
+                foreach (var attribute in EnumHelper.GetValues<Attribute>())
                 {
                     if (attribute == Attribute.Age)
                         break;
@@ -4558,7 +4558,7 @@ namespace Ambermoon
                 #region Skills
                 layout.AddText(new Rect(22, 115, 72, Global.GlyphLineHeight), DataNameProvider.SkillsHeaderString, TextColor.LightGreen, TextAlign.Center);
                 index = 0;
-                foreach (var skill in Enum.GetValues<Skill>())
+                foreach (var skill in EnumHelper.GetValues<Skill>())
                 {
                     int y = 122 + index++ * Global.GlyphLineHeight;
                     var skillValues = partyMember.Skills[skill];
@@ -4572,7 +4572,7 @@ namespace Ambermoon
                 #region Languages
                 layout.AddText(new Rect(106, 50, 72, Global.GlyphLineHeight), DataNameProvider.LanguagesHeaderString, TextColor.LightGreen, TextAlign.Center);
                 index = 0;
-                foreach (var language in Enum.GetValues<Language>().Skip(1)) // skip Language.None
+                foreach (var language in EnumHelper.GetValues<Language>().Skip(1)) // skip Language.None
                 {
                     int y = 57 + index++ * Global.GlyphLineHeight;
                     bool learned = partyMember.SpokenLanguages.HasFlag(language);
@@ -8946,7 +8946,7 @@ namespace Ambermoon
 
         internal void UpdateActiveBattleSpells()
         {
-            foreach (var activeSpell in Enum.GetValues<ActiveSpellType>())
+            foreach (var activeSpell in EnumHelper.GetValues<ActiveSpellType>())
             {
                 if (activeSpell.AvailableInBattle() && CurrentSavegame.ActiveSpells[(int)activeSpell] != null)
                     layout.AddActiveSpell(activeSpell, CurrentSavegame.ActiveSpells[(int)activeSpell], true);
@@ -9032,13 +9032,13 @@ namespace Ambermoon
 
             if (crippleAttributes && hitPoints > 0)
             {
-                foreach (var attribute in Enum.GetValues<Attribute>())
+                foreach (var attribute in EnumHelper.GetValues<Attribute>())
                 {
                     partyMember.Attributes[attribute].StoredValue = partyMember.Attributes[attribute].CurrentValue;
                     partyMember.Attributes[attribute].CurrentValue >>= 1;
                 }
 
-                foreach (var skill in Enum.GetValues<Skill>())
+                foreach (var skill in EnumHelper.GetValues<Skill>())
                 {
                     partyMember.Skills[skill].StoredValue = partyMember.Skills[skill].CurrentValue;
                     partyMember.Skills[skill].CurrentValue >>= 1;
@@ -9050,13 +9050,13 @@ namespace Ambermoon
 
         void RemoveExhaustion(PartyMember partyMember)
         {
-            foreach (var attribute in Enum.GetValues<Attribute>())
+            foreach (var attribute in EnumHelper.GetValues<Attribute>())
             {
                 partyMember.Attributes[attribute].CurrentValue = partyMember.Attributes[attribute].StoredValue;
                 partyMember.Attributes[attribute].StoredValue = 0;
             }
 
-            foreach (var skill in Enum.GetValues<Skill>())
+            foreach (var skill in EnumHelper.GetValues<Skill>())
             {
                 partyMember.Skills[skill].CurrentValue = partyMember.Skills[skill].StoredValue;
                 partyMember.Skills[skill].StoredValue = 0;
@@ -10005,7 +10005,7 @@ namespace Ambermoon
                     {
                         // Removes all curses and heals full LP
                         Heal(target.HitPoints.TotalMaxValue);
-                        foreach (var condition in Enum.GetValues<Condition>())
+                        foreach (var condition in EnumHelper.GetValues<Condition>())
                         {
                             if (condition != Condition.None && target.Conditions.HasFlag(condition))
                                 RemoveCondition(condition, target);
@@ -10400,9 +10400,9 @@ namespace Ambermoon
             }
 
             // Attributes, skills, LP and SP is special for monsters.
-            foreach (var attribute in Enum.GetValues<Attribute>().Take(8))
+            foreach (var attribute in EnumHelper.GetValues<Attribute>().Take(8))
                 FixValue(game, monster.Attributes[attribute]);
-            foreach (var skill in Enum.GetValues<Skill>())
+            foreach (var skill in EnumHelper.GetValues<Skill>())
                 FixValue(game, monster.Skills[skill]);
             // TODO: the given max value might be used for something else
             monster.HitPoints.MaxValue = monster.HitPoints.CurrentValue;
@@ -13746,7 +13746,7 @@ namespace Ambermoon
             popup.AddText(new Position(177, 99), DataNameProvider.ClassesHeaderString, TextColor.LightGray);
             int column = 0;
             int row = 0;
-            foreach (var @class in Enum.GetValues<Class>())
+            foreach (var @class in EnumHelper.GetValues<Class>())
             {
                 var classFlag = (ClassFlag)(1 << (int)@class);
 

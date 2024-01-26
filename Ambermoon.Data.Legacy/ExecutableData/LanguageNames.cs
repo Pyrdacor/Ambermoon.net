@@ -33,7 +33,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             entries.Add(Language.None, "");
 
-            foreach (var type in Enum.GetValues<Language>())
+            foreach (var type in EnumHelper.GetValues<Language>())
             {
                 if (type != Language.None)
                     entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));

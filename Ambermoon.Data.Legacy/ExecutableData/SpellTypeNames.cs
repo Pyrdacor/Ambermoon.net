@@ -34,7 +34,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal SpellTypeNames(IDataReader dataReader)
         {
-            foreach (var type in Enum.GetValues<SpellSchool>())
+            foreach (var type in EnumHelper.GetValues<SpellSchool>())
             {
                 entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }

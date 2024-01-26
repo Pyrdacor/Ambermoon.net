@@ -32,7 +32,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             // - 3: Anti-magic barrier (star)
             // - 4: Clairvoyance (eye)
             // - 5: Magic map (map)
-            foreach (var activeSpellType in Enum.GetValues<ActiveSpellType>())
+            foreach (var activeSpellType in EnumHelper.GetValues<ActiveSpellType>())
             {
                 var duration = dataReader.ReadWord();
 
@@ -150,7 +150,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             dataWriter.Write((ushort)savegame.CurrentMapY);
             dataWriter.Write((ushort)savegame.CharacterDirection);
 
-            foreach (var activeSpellType in Enum.GetValues<ActiveSpellType>())
+            foreach (var activeSpellType in EnumHelper.GetValues<ActiveSpellType>())
             {
                 var activeSpell = savegame.ActiveSpells[(int)activeSpellType];
                 dataWriter.Write((ushort)(activeSpell?.Duration ?? 0));
