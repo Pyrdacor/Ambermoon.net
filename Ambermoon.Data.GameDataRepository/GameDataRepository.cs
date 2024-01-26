@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using Ambermoon.Data.FileSystems;
+﻿using Ambermoon.Data.FileSystems;
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
@@ -43,6 +42,11 @@ namespace Ambermoon.Data.GameDataRepository
         public const int ObjectInfo3DDataSize = 14;
         public const int Overlay3DDataSize = 6;
         public const int Wall3DHeaderDataSize = 8;
+        // Palettes and Images
+        internal const int PaletteSize = 32;
+        internal const uint PortraitMaskColorIndex = 25;
+        internal const uint SkyBackgroundMaskColorIndex = 9;
+        public const uint CombatBackgroundCount = 16;
 
         #endregion
 
@@ -58,7 +62,16 @@ namespace Ambermoon.Data.GameDataRepository
 
         #region Properties
 
+
+        #region Misc
+
         public bool Advanced { get; private set; } = false;
+        
+        #endregion
+
+
+        #region Palettes
+        
         public DictionaryList<Palette> Palettes { get; }
         /// <summary>
         /// Used for UI elements, items, portraits, etc.
@@ -66,26 +79,70 @@ namespace Ambermoon.Data.GameDataRepository
         public Palette UserInterfacePalette { get; }
         public Palette DungeonMapPalette { get; }
         public Palette SecondaryUserInterfacePalette { get; }
+        /// <summary>
+        /// Technically it is the same as the <see cref="UserInterfacePalette"/>
+        /// but portraits use color index 25 (purple) as the transparency indicator.
+        /// Most likely as they need a black color which is normally color index 0.
+        /// The repository loads the portraits in a way that it swaps the color
+        /// indices 0 and 25 so that the transparent areas are represented by color
+        /// index 0 (as for all other images). But it also relies on the fact that
+        /// color index 25 is then black. For that reason the portrait palette is
+        /// provided which just is the normal UI palette with color 25 set to black.
+        /// </summary>
+        public Palette PortraitPalette { get; }
+
+        #endregion
+
+
+        #region Maps
+
         public DictionaryList<MapData> Maps { get; }
         public DictionaryList<TextList<MapData>> MapTexts { get; }
         //public Dictionary<uint, Labdata> LabyrinthData { get; } = new();
+        
+        #endregion
+
+        
+        #region NPCs & Party Members
+
         public DictionaryList<NpcData> Npcs { get; } = new();
         public DictionaryList<TextList<NpcData>> NpcTexts { get; } = new();
         public DictionaryList<PartyMemberData> PartyMembers { get; } = new();
         public DictionaryList<TextList<PartyMemberData>> PartyMemberTexts { get; } = new();
+        public DictionaryList<ImageWithPaletteIndex> Portraits { get; }
+
+        #endregion
+
+
+        #region Monsters & Combat
+
         public DictionaryList<MonsterData> Monsters { get; }
         public DictionaryList<MonsterGroupData> MonsterGroups { get; }
         public DictionaryList<Image> MonsterImages { get; }
-        public CombatBackgroundImage[] CombatBackgroundImages2D { get; } = new CombatBackgroundImage[16];
-        public CombatBackgroundImage[] CombatBackgroundImages3D { get; } = new CombatBackgroundImage[16];
-        //CombatBackgrounds
+        public CombatBackgroundImage[] CombatBackgroundImages2D { get; }
+        public CombatBackgroundImage[] CombatBackgroundImages3D { get; }
 
-        /*public IReadOnlyDictionary<uint, ImageList<Monster>> ColoredMonsterImages => throw new NotImplementedException();
-        public Dictionary<uint, Place> Places { get; } = new();*/
+        #endregion
+
+
+        #region Items & Places
+
+        //public Dictionary<uint, Place> Places { get; } = new();
         public DictionaryList<ItemData> Items { get; }
-        /*public Dictionary<uint, KeyValuePair<string, Song>> Songs { get; } = new();
-        public TextList Dictionary { get; } = new();
-        public Dictionary<uint, ImageWithPaletteIndex> Portraits { get; } = new();*/
+
+        #endregion
+
+
+        #region Songs
+
+        //public Dictionary<uint, KeyValuePair<string, Song>> Songs { get; } = new();
+
+        #endregion
+
+
+        #region Texts
+
+        //public TextList Dictionary { get; } = new();
         public List<string> WorldNames => _textContainer.WorldNames;
         public List<string> FormatMessages => _textContainer.FormatMessages;
         public List<string> Messages => _textContainer.Messages;
@@ -115,6 +172,9 @@ namespace Ambermoon.Data.GameDataRepository
             get => _textContainer.DateAndLanguageString;
             set => _textContainer.DateAndLanguageString = value;
         }
+
+        #endregion
+
 
         #endregion
 
@@ -163,6 +223,7 @@ namespace Ambermoon.Data.GameDataRepository
             UserInterfacePalette = Palette.Deserialize(1000, builtinPalettesData);
             DungeonMapPalette = Palette.Deserialize(1001, builtinPalettesData);
             SecondaryUserInterfacePalette = Palette.Deserialize(1002, builtinPalettesData);
+            PortraitPalette = UserInterfacePalette.WithColorReplacement(PortraitMaskColorIndex, 0, 0, 0);
 
             #endregion
 
@@ -173,7 +234,26 @@ namespace Ambermoon.Data.GameDataRepository
             Maps = mapFiles.Select(mapFile => (MapData)MapData.Deserialize(mapFile.Value, (uint)mapFile.Key, Advanced)).ToDictionaryList();
             var mapTextFiles = ReadFileContainers("1Map_texts.amb", "2Map_texts.amb", "3Map_texts.amb");
             MapTexts = mapTextFiles.Select(mapTextFile => (TextList<MapData>)TextList<MapData>.Deserialize(mapTextFile.Value, (uint)mapTextFile.Key, Maps[(uint)mapTextFile.Key], Advanced)).ToDictionaryList();
-            
+
+            #endregion
+
+
+            #region NPCs & Party Members
+
+            /*var npcFiles = ReadFileContainer("NPC_char.amb");
+            Npcs = npcFiles.Select(npcFile => (NpcData)NpcData.Deserialize(npcFile.Value, (uint)npcFile.Key, Advanced)).ToDictionaryList();
+            var npcTextFiles = ReadFileContainer("NPC_texts.amb");
+            NpcTexts = npcTextFiles.Select(npcTextFile => (TextList<NpcData>)TextList<NpcData>.Deserialize(npcTextFile.Value, (uint)npcTextFile.Key, Npcs[(uint)npcTextFile.Key], Advanced)).ToDictionaryList();
+            var partyMemberFiles = ReadFileContainer("Save.00/Party_char.amb"); // TODO: Fallback to Initial/Party_char.amb
+            PartyMembers = partyMemberFiles.Select(partyMemberFile => (PartyMemberData)PartyMemberData.Deserialize(partyMemberFile.Value, (uint)partyMemberFile.Key, Advanced)).ToDictionaryList();
+            var partyMemberTextFiles = ReadFileContainer("Party_texts.amb");
+            PartyMemberTexts = partyMemberTextFiles.Select(partyMemberTextFile => (TextList<PartyMemberData>)TextList<PartyMemberData>.Deserialize(partyMemberTextFile.Value, (uint)partyMemberTextFile.Key, PartyMembers[(uint)partyMemberTextFile.Key], Advanced)).ToDictionaryList();
+            */
+            var portraitFiles = ReadFileContainer("Portraits.amb");
+            Portraits = portraitFiles.Select(portraitFile =>
+                ImageWithPaletteIndex.Deserialize((uint)portraitFile.Key, UserInterfacePalette.Index, portraitFile.Value, 1, 32, 34, GraphicFormat.Palette5Bit)
+                    .WithColorReplacements(new ImageColorReplacement(0, PortraitMaskColorIndex), new ImageColorReplacement(PortraitMaskColorIndex, 0))).ToDictionaryList();
+
             #endregion
 
 

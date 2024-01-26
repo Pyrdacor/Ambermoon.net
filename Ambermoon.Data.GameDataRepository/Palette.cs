@@ -8,7 +8,7 @@ namespace Ambermoon.Data.GameDataRepository
 
         #region Fields
 
-        private readonly byte[] _data = new byte[32 * 4];
+        private readonly byte[] _data = new byte[GameDataRepository.PaletteSize * 4];
 
         #endregion
 
@@ -35,10 +35,10 @@ namespace Ambermoon.Data.GameDataRepository
 
         public Palette(uint index, byte[] amigaPalette)
         {
-            if (amigaPalette.Length != 64)
+            if (amigaPalette.Length != GameDataRepository.PaletteSize * 2)
                 throw new ArgumentException("Invalid Amiga palette size.");
 
-            for (int i = 0; i < 32; ++i)
+            for (int i = 0; i < GameDataRepository.PaletteSize; ++i)
             {
                 int r = amigaPalette[i * 2] & 0xf;
                 int gb = amigaPalette[i * 2 + 1];
@@ -87,7 +87,7 @@ namespace Ambermoon.Data.GameDataRepository
 
         public static Palette Deserialize(uint index, IDataReader dataReader)
         {
-            return new Palette(index, dataReader.ReadBytes(64));
+            return new Palette(index, dataReader.ReadBytes(GameDataRepository.PaletteSize * 2));
         }
 
         #endregion
@@ -110,6 +110,22 @@ namespace Ambermoon.Data.GameDataRepository
 
             var copy = Copy();
             copy._data[transparentColorIndex * 4 + 3] = 0; // Set alpha to 0
+
+            return copy;
+        }
+
+        public Palette WithColorReplacement(uint index, byte r, byte g, byte b)
+        {
+            if (index >= 32)
+                throw new ArgumentOutOfRangeException(nameof(index));
+
+            var copy = Copy();
+
+            index *= 4;
+            copy._data[index++] = r;
+            copy._data[index++] = g;
+            copy._data[index++] = b;
+            copy._data[index] = 0xff;
 
             return copy;
         }

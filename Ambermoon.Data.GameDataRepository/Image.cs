@@ -88,6 +88,17 @@ namespace Ambermoon.Data.GameDataRepository
             return data;
         }
 
+        public void ReplaceColors(params ImageColorReplacement[] colorReplacements)
+        {
+            var lookup = colorReplacements.ToDictionary(cr => cr.ColorIndexToReplace, cr => cr.NewColorIndex);
+
+            for (int i = 0; i < _colorIndices.Length; i++)
+            {
+                if (lookup.TryGetValue(_colorIndices[i], out uint newColorIndex))
+                    _colorIndices[i] = (byte)newColorIndex;
+            }
+        }
+
         #endregion
 
 
@@ -195,7 +206,9 @@ namespace Ambermoon.Data.GameDataRepository
 
         public Image Copy()
         {
-            return new Image(Frames.Select(frame => frame.Copy()).ToArray());
+            var copy = new Image(Frames.Select(frame => frame.Copy()).ToArray());
+            (copy as IMutableIndex).Index = Index;
+            return copy;
         }
 
         public virtual object Clone() => Copy();
@@ -215,6 +228,11 @@ namespace Ambermoon.Data.GameDataRepository
 
 
         #region Constructors
+
+        public ImageWithPaletteIndex()
+        {
+
+        }
 
         internal ImageWithPaletteIndex(uint paletteIndex, IEnumerable<Graphic> frames)
             : base(frames)
@@ -237,14 +255,18 @@ namespace Ambermoon.Data.GameDataRepository
             int width, int height, GraphicFormat format, bool alpha = false, byte colorKey = 0, byte paletteOffset = 0)
         {
             var image = Deserialize(index, dataReader, numFrames, width, height, format, alpha, colorKey, paletteOffset);
-            return new ImageWithPaletteIndex(paletteIndex, image.Frames.ToArray());
+            var imageWithPaletteIndex = new ImageWithPaletteIndex(paletteIndex, image.Frames.ToArray());
+            (imageWithPaletteIndex as IMutableIndex).Index = index;
+            return imageWithPaletteIndex;
         }
 
         public static ImageWithPaletteIndex DeserializeFullData(uint index, uint paletteIndex, IDataReader dataReader,
             int width, int height, GraphicFormat format, bool alpha = false, byte colorKey = 0, byte paletteOffset = 0)
         {
             var image = DeserializeFullData(index, dataReader, width, height, format, alpha, colorKey, paletteOffset);
-            return new ImageWithPaletteIndex(paletteIndex, image.Frames.ToArray());
+            var imageWithPaletteIndex = new ImageWithPaletteIndex(paletteIndex, image.Frames.ToArray());
+            (imageWithPaletteIndex as IMutableIndex).Index = index;
+            return imageWithPaletteIndex;
         }
 
         #endregion
@@ -254,7 +276,9 @@ namespace Ambermoon.Data.GameDataRepository
 
         public new ImageWithPaletteIndex Copy()
         {
-            return new ImageWithPaletteIndex(PaletteIndex, Frames.Select(frame => frame.Copy()).ToArray());
+            var copy = new ImageWithPaletteIndex(PaletteIndex, Frames.Select(frame => frame.Copy()).ToArray());
+            (copy as IMutableIndex).Index = Index;
+            return copy;
         }
 
         public override object Clone() => Copy();
@@ -341,7 +365,9 @@ namespace Ambermoon.Data.GameDataRepository
         public static CombatBackgroundImage Deserialize(uint index, uint[] paletteIndices, IDataReader dataReader)
         {
             var image = DeserializeImage(index, dataReader);
-            return new CombatBackgroundImage(paletteIndices, image.Frames[0]);
+            var combatBackgroundImage = new CombatBackgroundImage(paletteIndices, image.Frames[0]);
+            (combatBackgroundImage as IMutableIndex).Index = index;
+            return combatBackgroundImage;
         }
 
         public static Image DeserializeImage(uint index, IDataReader dataReader)
@@ -356,12 +382,54 @@ namespace Ambermoon.Data.GameDataRepository
 
         public new CombatBackgroundImage Copy()
         {
-            return new CombatBackgroundImage(PaletteIndices, Frames[0].Copy());
+            var copy = new CombatBackgroundImage(PaletteIndices, Frames[0].Copy());
+            (copy as IMutableIndex).Index = Index;
+            return copy;
         }
 
         public override object Clone() => Copy();
 
         #endregion
 
+    }
+
+    public class ImageColorReplacement
+    {
+
+        #region Properties
+
+        public uint ColorIndexToReplace { get; }
+
+        public uint NewColorIndex { get; }
+
+        #endregion
+
+
+        #region Constructors
+
+        public ImageColorReplacement(uint colorIndexToReplace, uint newColorIndex)
+        {
+            ColorIndexToReplace = colorIndexToReplace;
+            NewColorIndex = newColorIndex;
+        }
+
+        #endregion
+
+    }
+
+    public static class ImageExtensions
+    {
+        public static T WithColorReplacements<T>(this T image, params ImageColorReplacement[] colorReplacements)
+            where T : Image, ICloneable
+        {
+            var clone = (T)image.Clone();
+
+            foreach (var frame in clone.Frames)
+            {
+                frame.ReplaceColors(colorReplacements);
+            }
+
+            return clone;
+        }
     }
 }
