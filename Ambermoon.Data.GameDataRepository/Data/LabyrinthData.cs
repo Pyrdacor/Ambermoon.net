@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+using Ambermoon.Data.GameDataRepository.Enumerations;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
@@ -9,26 +10,30 @@ namespace Ambermoon.Data.GameDataRepository.Data
     using Serialization;
     using Util;
 
-    public enum MapEnvironment
-    {
-        Indoor,
-        Outdoor,
-        Dungeon
-    }
-
-    public sealed class MapData : IMutableIndex, IIndexedData, IEquatable<MapData>, INotifyPropertyChanged
+    /*public sealed class LabyrinthWallData : IIndexedData, IEquatable<LabyrinthWallData>
     {
 
         #region Fields
 
-        private uint _paletteIndex;
-        private uint _songIndex;
-        private uint? _labdataIndex;
-        private uint? _tilesetIndex;
-        private uint? _skyBackgroundIndex;
-        private uint? _npcGraphicFileIndex;
-        private World _world;
-        private MapType _type;
+        private Wall3DFlags _flags;
+        private uint _textureIndex;
+        private AutomapType _automapType;
+        private uint _colorIndex;
+
+        #endregion
+    }
+
+    public sealed class LabyrinthData : IMutableIndex, IIndexedData, IEquatable<LabyrinthData>, INotifyPropertyChanged
+    {
+
+        #region Fields
+
+        private uint _wallHeight;
+        private uint _defaultCombatBackgroundIndex;
+        private uint _ceilingColorIndex;
+        private uint _floorColorIndex;
+        private uint _ceilingTextureIndex;
+        private uint _floorTextureIndex;
 
         #endregion
 
@@ -43,241 +48,102 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public uint Index => (this as IMutableIndex).Index;
 
-        public MapType Type
+        /// <summary>
+        /// Wall height in cm.
+        ///
+        /// Usually between 250 and 400.
+        /// 
+        /// 250 is very low and is used for Luminor's tower.
+        /// </summary>
+        [Range(200, 1000)]
+        public uint WallHeight
         {
-            get => _type;
-            private set => SetField(ref _type, value);
+            get => _wallHeight;
+            set
+            {
+                ValueChecker.Check(value, 200, 1000);
+                SetField(ref _wallHeight, value);
+            }
         }
 
-        [Range(0, byte.MaxValue)]
-        public uint PaletteIndex
+        /// <summary>
+        /// This is only used if a fight is started by a
+        /// map event. Monsters on the map have their own
+        /// value. Also map objects and wall have their
+        /// own value, so this will only apply for fights
+        /// which are started from empty map tiles.
+        /// </summary>
+        [Range(0, GameDataRepository.CombatBackgroundCount - 1)]
+        public uint DefaultCombatBackgroundIndex
         {
-            get => _paletteIndex;
+            get => _defaultCombatBackgroundIndex;
+            set
+            {
+                ValueChecker.Check(value, 0, GameDataRepository.CombatBackgroundCount - 1);
+                SetField(ref _defaultCombatBackgroundIndex, value);
+            }
+        }
+
+        /// <summary>
+        /// Color index inside the map palette. The ceiling color is
+        /// shown if the ceiling texture is disabled and there is no sky.
+        ///
+        /// Note: For outdoor maps this specifies the color which is replaced
+        /// by the current sky color. For example the upper border of the
+        /// Spannenberg town park hedge uses this color. You will see the sky
+        /// color there instead of the color which is specified in the palette.
+        /// </summary>
+        [Range(0, GameDataRepository.PaletteSize - 1)]
+        public uint CeilingColorIndex
+        {
+            get => _ceilingColorIndex;
+            set
+            {
+                ValueChecker.Check(value, 0, GameDataRepository.PaletteSize - 1);
+                SetField(ref _ceilingColorIndex, value);
+            }
+        }
+
+        /// <summary>
+        /// Color index inside the map palette. The floor color is
+        /// shown if the floor texture is disabled.
+        /// </summary>
+        [Range(0, GameDataRepository.PaletteSize - 1)]
+        public uint FloorColorIndex
+        {
+            get => _floorColorIndex;
+            set
+            {
+                ValueChecker.Check(value, 0, GameDataRepository.PaletteSize - 1);
+                SetField(ref _floorColorIndex, value);
+            }
+        }
+
+        /// <summary>
+        /// Texture file index inside Floors.amb to use for the ceiling.
+        /// </summary>
+        [Range(0, byte.MaxValue)]
+        public uint CeilingTextureIndex
+        {
+            get => _ceilingTextureIndex;
             set
             {
                 ValueChecker.Check(value, 0, byte.MaxValue);
-                SetField(ref _paletteIndex, value);
+                SetField(ref _ceilingTextureIndex, value);
             }
         }
 
+        /// <summary>
+        /// Texture file index inside Floors.amb to use for the floor.
+        /// </summary>
         [Range(0, byte.MaxValue)]
-        public uint SongIndex
+        public uint FloorTextureIndex
         {
-            get => _songIndex;
+            get => _floorTextureIndex;
             set
             {
                 ValueChecker.Check(value, 0, byte.MaxValue);
-                SetField(ref _songIndex, value);
-            }
-        }
-
-        public MapFlags Flags { get; private set; }
-
-        public World World
-        {
-            get => _world;
-            private set => SetField(ref _world, value);
-        }
-
-        [Range(0, byte.MaxValue)]
-        public uint? LabdataIndex
-        {
-            get => _labdataIndex;
-            set
-            {
-                if (value is not null)
-                    ValueChecker.Check(value.Value, 0, byte.MaxValue);
-                SetField(ref _labdataIndex, value);
-            }
-        }
-
-        [Range(0, byte.MaxValue)]
-        public uint? TilesetIndex
-        {
-            get => _tilesetIndex;
-            set
-            {
-                if (value is not null)
-                    ValueChecker.Check(value.Value, 0, byte.MaxValue);
-                SetField(ref _tilesetIndex, value);
-            }
-        }
-
-        [Range(1, 3)]
-        public uint? SkyBackgroundIndex
-        {
-            get => _skyBackgroundIndex;
-            private set
-            {
-                if (value is not null)
-                    ValueChecker.Check(value.Value, 1, 3);
-                SetField(ref _skyBackgroundIndex, value);
-            }
-        }
-
-        [Range(0, byte.MaxValue)]
-        public uint? NpcGraphicFileIndex
-        {
-            get => _npcGraphicFileIndex;
-            private set
-            {
-                if (value is not null)
-                    ValueChecker.Check(value.Value, 0, byte.MaxValue);
-                SetField(ref _npcGraphicFileIndex, value);
-            }
-        }
-
-        public MapEnvironment Environment
-        {
-            get
-            {
-                if (Flags.HasFlag(MapFlags.Indoor))
-                    return MapEnvironment.Indoor;
-                if (Flags.HasFlag(MapFlags.Outdoor))
-                    return MapEnvironment.Outdoor;
-                return MapEnvironment.Dungeon;
-            }
-            set
-            {
-                Flags &= (MapFlags)0xf8; // mask out environment first
-
-                Flags |= value switch
-                {
-                    MapEnvironment.Indoor => MapFlags.Indoor,
-                    MapEnvironment.Outdoor => MapFlags.Outdoor,
-                    _ => MapFlags.Dungeon
-                };
-
-                HandleEnvironmentChanges();
-                OnPropertyChanged();
-            }
-        }
-
-        public bool AllowResting
-        {
-            get => Flags.HasFlag(MapFlags.CanRest);
-            set
-            {
-                if (value)
-                    Flags |= MapFlags.CanRest;
-                else
-                    Flags &= ~MapFlags.CanRest;
-
-                OnPropertyChanged();
-            }
-        }
-
-        public bool AllowUsingMagic
-        {
-            get => Flags.HasFlag(MapFlags.CanUseMagic);
-            set
-            {
-                if (value)
-                    Flags |= MapFlags.CanUseMagic;
-                else
-                    Flags &= ~MapFlags.CanUseMagic;
-
-                OnPropertyChanged();
-            }
-        }
-
-        public bool AlwaysSleepEightHours
-        {
-            get => Flags.HasFlag(MapFlags.NoSleepUntilDawn);
-            set
-            {
-                if (value)
-                    Flags |= MapFlags.NoSleepUntilDawn;
-                else
-                    Flags &= ~MapFlags.NoSleepUntilDawn;
-
-                OnPropertyChanged();
-            }
-        }
-
-        public bool WorldMap
-        {
-            get => Type == MapType.Map2D && Flags.HasFlag(MapFlags.WorldSurface);
-            set
-            {
-                if (value)
-                {
-                    if (Type != MapType.Map2D)
-                        throw new InvalidOperationException("Only 2D maps can be world maps.");
-                    Flags |= MapFlags.NoSleepUntilDawn;
-                }
-                else
-                    Flags &= ~MapFlags.NoSleepUntilDawn;
-
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// This disables the travel music on world maps
-        /// and is ignored on all other maps.
-        ///
-        /// Normally on world maps the music depends on the travel type.
-        /// If this is active, the map will instead play the song which
-        /// is specified in the map data.
-        ///
-        /// Advanced only.
-        /// </summary>
-        [AdvancedOnly]
-        public bool DisableTravelMusic
-        {
-            get => Flags.HasFlag(MapFlags.NoTravelMusic);
-            set
-            {
-                if (value)
-                    Flags |= MapFlags.NoTravelMusic;
-                else
-                    Flags &= ~MapFlags.NoTravelMusic;
-
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// Disables the usage of the spells "Word of marking" and "Word of returning".
-        ///
-        /// This is always true on the Forest Moon and Morag but
-        /// with this you can also disable it on Lyramion maps.
-        ///
-        /// Advanced only.
-        /// </summary>
-        [AdvancedOnly]
-        public bool DisableMarkAndReturn
-        {
-            get => Flags.HasFlag(MapFlags.NoMarkOrReturn);
-            set
-            {
-                if (value)
-                    Flags |= MapFlags.NoMarkOrReturn;
-                else
-                    Flags &= ~MapFlags.NoMarkOrReturn;
-
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// Disables the usage of the eagle and the broom.
-        ///
-        /// Advanced only.
-        /// </summary>
-        [AdvancedOnly]
-        public bool DisableEagleAndBroom
-        {
-            get => Flags.HasFlag(MapFlags.NoEagleOrBroom);
-            set
-            {
-                if (value)
-                    Flags |= MapFlags.NoEagleOrBroom;
-                else
-                    Flags &= ~MapFlags.NoEagleOrBroom;
-
-                OnPropertyChanged();
+                SetField(ref _floorTextureIndex, value);
             }
         }
 
@@ -761,5 +627,5 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #endregion
 
-    }
+    }*/
 }

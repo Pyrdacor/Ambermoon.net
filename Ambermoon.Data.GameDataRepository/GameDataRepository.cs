@@ -98,11 +98,16 @@ namespace Ambermoon.Data.GameDataRepository
 
         public DictionaryList<MapData> Maps { get; }
         public DictionaryList<TextList<MapData>> MapTexts { get; }
-        //public Dictionary<uint, Labdata> LabyrinthData { get; } = new();
-        
+        //public Dictionary<uint, LabyrinthData> LabyrinthData { get; } = new();
+        public DictionaryList<ImageList> Tile2DImages { get; }
+        public DictionaryList<Image> Wall3DImages { get; }
+        public DictionaryList<Image> Object3DImages { get; }
+        public DictionaryList<Image> Overlay3DImages { get; }
+        public DictionaryList<Image> Floor3DImages { get; }
+
         #endregion
 
-        
+
         #region NPCs & Party Members
 
         public DictionaryList<NpcData> Npcs { get; } = new();
@@ -202,6 +207,7 @@ namespace Ambermoon.Data.GameDataRepository
                     .ToDictionary(f => f.Key, f => f.Value);
             Dictionary<int, IDataReader> ReadFileContainers(params string[] names)
                 => names.SelectMany(name => fileContainerProvider(name).Files).Where(f => f.Value.Size != 0)
+                    .DistinctBy(f => f.Key)
                     .ToDictionary(f => f.Key, f => f.Value);
 
             #endregion
@@ -234,6 +240,30 @@ namespace Ambermoon.Data.GameDataRepository
             Maps = mapFiles.Select(mapFile => (MapData)MapData.Deserialize(mapFile.Value, (uint)mapFile.Key, Advanced)).ToDictionaryList();
             var mapTextFiles = ReadFileContainers("1Map_texts.amb", "2Map_texts.amb", "3Map_texts.amb");
             MapTexts = mapTextFiles.Select(mapTextFile => (TextList<MapData>)TextList<MapData>.Deserialize(mapTextFile.Value, (uint)mapTextFile.Key, Maps[(uint)mapTextFile.Key], Advanced)).ToDictionaryList();
+            var tile2DImageFiles = ReadFileContainers("1Icon_gfx.amb", "2Icon_gfx.amb", "3Icon_gfx.amb");
+            Tile2DImages = tile2DImageFiles.Select(tile2DImageFile => ImageList.Deserialize((uint)tile2DImageFile.Key, tile2DImageFile.Value, 16, 16, GraphicFormat.Palette5Bit)).ToDictionaryList();
+            var labdataFiles = ReadFileContainers("2Lab_data.amb", "3Lab_data.amb");
+            //LabyrinthData = labdataFiles.Select(labdataFile => Labdata.Deserialize((uint)labdataFile.Key, labdataFile.Value)).ToDictionaryList();
+            var wall3DImageFiles = ReadFileContainers("2Wall3D.amb", "3Wall3D.amb");
+            Wall3DImages = wall3DImageFiles.Select(wall3DImageFile => Image.Deserialize((uint)wall3DImageFile.Key, wall3DImageFile.Value, 1, 128, 80, GraphicFormat.Texture4Bit)).ToDictionaryList();
+            var object3DImageFiles = ReadFileContainers("2Object3D.amb", "3Object3D.amb");
+            static Image Load3DObjectImage(uint index, IDataReader dataReader)
+            {
+                var info = //index < TextureGraphicInfos.ObjectGraphicFrameCountsAndSizes.Length
+                    /*? */TextureGraphicInfos.ObjectGraphicFrameCountsAndSizes[index]
+                    /*: 0*/; // TODO
+                return Image.Deserialize(index, dataReader, info.Key, info.Value.Width, info.Value.Height, GraphicFormat.Texture4Bit);
+            }
+            Object3DImages = object3DImageFiles.Select(object3DImageFile => Load3DObjectImage((uint)object3DImageFile.Key, object3DImageFile.Value)).ToDictionaryList();
+            var overlay3DImageFiles = ReadFileContainers("2Overlay3D.amb", "3Overlay3D.amb");
+            static Image Load3DOverlayImage(uint index, IDataReader dataReader)
+            {
+                var size = TextureGraphicInfos.OverlayGraphicSizes[index];
+                return Image.Deserialize(index, dataReader, 1, size.Width, size.Height, GraphicFormat.Texture4Bit);
+            }
+            Overlay3DImages = overlay3DImageFiles.Select(overlay3DImageFile => Load3DOverlayImage((uint)overlay3DImageFile.Key, overlay3DImageFile.Value)).ToDictionaryList();
+            var floor3DImageFiles = ReadFileContainer("Floor.amb");
+            Floor3DImages = floor3DImageFiles.Select(floor3DImageFile => Image.Deserialize((uint)floor3DImageFile.Key, floor3DImageFile.Value, 1, 64, 64, GraphicFormat.Palette4Bit)).ToDictionaryList();
 
             #endregion
 
@@ -257,7 +287,7 @@ namespace Ambermoon.Data.GameDataRepository
             #endregion
 
 
-            #region Monsters
+            #region Monsters & Combat
 
             var monsterFiles = ReadFileContainer("Monster_char.amb");
             Monsters = monsterFiles.Select(monsterFile => (MonsterData)MonsterData.Deserialize(monsterFile.Value, (uint)monsterFile.Key, Advanced)).ToDictionaryList();

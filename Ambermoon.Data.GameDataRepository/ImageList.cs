@@ -33,6 +33,30 @@ namespace Ambermoon.Data.GameDataRepository
 
         #endregion
 
+
+        #region Serialization
+
+        public static ImageList Deserialize(uint index, IDataReader dataReader, int width, int height, GraphicFormat graphicFormat, uint? count = null)
+        {
+            var imageList = new ImageList();
+            count ??= uint.MaxValue;
+            int imageSize = width * height;
+
+            for (uint i = 0; i < count; i++)
+            {
+                if (dataReader.Position >= dataReader.Size)
+                    break;
+
+                imageList.Add(Image.Deserialize(i, dataReader, 1, width, height, graphicFormat));
+            }
+
+            (imageList as IMutableIndex).Index = index;
+
+            return imageList;
+        }
+
+        #endregion
+
     }
 
     public class ImageList<T> : ImageList
