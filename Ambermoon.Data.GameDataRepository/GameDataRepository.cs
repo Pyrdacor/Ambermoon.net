@@ -126,6 +126,7 @@ namespace Ambermoon.Data.GameDataRepository
         public DictionaryList<Image> MonsterImages { get; }
         public CombatBackgroundImage[] CombatBackgroundImages2D { get; }
         public CombatBackgroundImage[] CombatBackgroundImages3D { get; }
+        public List<CombatBackgroundImage> DistinctCombatBackgroundImages { get; }
 
         #endregion
 
@@ -303,7 +304,10 @@ namespace Ambermoon.Data.GameDataRepository
                 CombatBackgroundImage.DeserializeImage((uint)combatBackgroundFile.Key, combatBackgroundFile.Value)).ToDictionaryList();
             CombatBackgroundImages2D = CombatBackgrounds.Info2D.Select(info => new CombatBackgroundImage(info.Palettes, combatBackgrounds[info.GraphicIndex].Frames[0])).ToArray();
             CombatBackgroundImages3D = CombatBackgrounds.Info3D.Select(info => new CombatBackgroundImage(info.Palettes, combatBackgrounds[info.GraphicIndex].Frames[0])).ToArray();
-
+            DistinctCombatBackgroundImages = CombatBackgrounds.Info2D.Concat(CombatBackgrounds.Info3D)
+                .DistinctBy(info => info.GraphicIndex)
+                .Select(info => new CombatBackgroundImage(info.Palettes, combatBackgrounds[info.GraphicIndex].Frames[0]))
+                .ToList();
             #endregion
 
 
