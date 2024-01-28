@@ -270,43 +270,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
         }
 
         /// <summary>
-        /// In original this is called the "Distort_bit".
-        /// If active the 3D object is display in a way
-        /// that it looks like a layer above ground.
-        /// 
-        /// For example a table top or a hole in the
-        /// floor or ceiling.
-        /// 
-        /// Otherwise objects are displayed normally
-        /// as a 2D billboard looking at the player.
-        /// 
-        /// This is only used for 3D objects and
-        /// ignored otherwise.
-        /// </summary>
-        //public bool FloorObject { get; set; }
-        // TODO: Use this in 3D objects but not characters
-
-        /// <summary>
-        /// If active, the wall is rendered with
-        /// fully transparent parts where the
-        /// palette index is 0. Otherwise those
-        /// areas would just use that palette color
-        /// which is in general pure black.
-        /// 
-        /// For example this is used for open doors,
-        /// gates, windows or cob webs.
-        /// 
-        /// This is only used for 3D walls and
-        /// ignored otherwise.
-        /// </summary>
-        //public bool TransparentWall { get; set; }
-        // TODO: Use this in 3D walls but not characters
-
-        /// <summary>
         /// Combat background index which is used when
         /// fighting the monster (group).
         /// </summary>
-        [Range(0, 15)]
+        [Range(0, GameDataRepository.CombatBackgroundCount - 1)]
         public uint? CombatBackgroundIndex
         {
             get => _combatBackgroundIndex;
@@ -315,7 +282,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 if (CharacterType != Ambermoon.Data.CharacterType.Monster && value is not null)
                     throw new InvalidOperationException($"{nameof(CombatBackgroundIndex)} can only be set for monsters.");
                 if (value is not null)
-                    ValueChecker.Check(value.Value, 0, 15);
+                    ValueChecker.Check(value.Value, 0, GameDataRepository.CombatBackgroundCount - 1);
                 SetField(ref _combatBackgroundIndex, value);
             }
         }
@@ -629,9 +596,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
                     tileFlags = 0x80; // shortcut (= block all movement)
 
                 if (CharacterType == Ambermoon.Data.CharacterType.Monster)
-                    tileFlags |= ((CombatBackgroundIndex!.Value & 0xf) << 28);
-                tileFlags |= WaveAnimation ? 0x1u : 0x0u;
-                tileFlags |= RandomAnimation ? 0x10u : 0x10u;
+                    tileFlags |= (CombatBackgroundIndex!.Value & 0xf) << 28;
+                if (WaveAnimation)
+                    tileFlags |= 0x1u;
+                if (RandomAnimation)
+                    tileFlags |= 0x10u;
 
                 uint characterIndex = CharacterType switch
                 {

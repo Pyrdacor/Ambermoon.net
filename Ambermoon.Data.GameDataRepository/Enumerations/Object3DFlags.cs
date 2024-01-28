@@ -1,7 +1,7 @@
 ﻿namespace Ambermoon.Data.GameDataRepository.Enumerations
 {
     [Flags]
-    public enum Object3DFlags : uint
+    internal enum Object3DFlags : uint
     {
         /// <summary>
         /// Normally animations are cyclic. So if the last frame
@@ -110,6 +110,6 @@
         /// <summary>
         /// Mask for the combat background index.
         /// </summary>
-        CombatBackgroundMask = 0xf0000000
+        CombatBackgroundRemoveMask = 0x0fffffff
     }
 }

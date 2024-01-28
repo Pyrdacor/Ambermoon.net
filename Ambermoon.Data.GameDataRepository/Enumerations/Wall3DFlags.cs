@@ -1,9 +1,7 @@
-﻿using Ambermoon.Data.GameDataRepository.Util;
-
-namespace Ambermoon.Data.GameDataRepository.Enumerations
+﻿namespace Ambermoon.Data.GameDataRepository.Enumerations
 {
     [Flags]
-    public enum Wall3DFlags : uint
+    internal enum Wall3DFlags : uint
     {
         /// <summary>
         /// If this is active the tile will block sight.
@@ -87,6 +85,6 @@ namespace Ambermoon.Data.GameDataRepository.Enumerations
         /// <summary>
         /// Mask for the combat background index.
         /// </summary>
-        CombatBackgroundMask = 0xf0000000
+        CombatBackgroundRemoveMask = 0x0fffffff
     }
 }

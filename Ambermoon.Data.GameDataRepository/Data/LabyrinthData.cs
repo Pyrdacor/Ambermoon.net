@@ -9,6 +9,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
     using Serialization;
     using System.ComponentModel.DataAnnotations;
     using Util;
+    using static Ambermoon.Data.Tileset;
 
     /// <summary>
     /// Represents an overlay which can be drawn
@@ -255,10 +256,12 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Fields
 
-        private Wall3DFlags _flags;
         private uint _textureIndex;
         private AutomapType _automapType;
         private uint _colorIndex;
+        private uint _allowedCollisionClasses;
+        private uint _combatBackgroundIndex;
+        private bool _blockSight;
 
         #endregion
 
@@ -272,15 +275,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
         }
 
         public uint Index => (this as IMutableIndex).Index;
-
-        /// <summary>
-        /// Flags of the wall.
-        /// </summary>
-        public Wall3DFlags Flags
-        {
-            get => _flags;
-            set => SetField(ref _flags, value);
-        }
 
         /// <summary>
         /// Texture file index inside XWall3D.amb.
@@ -324,6 +318,53 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// </summary>
         public DictionaryList<LabyrinthOverlayData> Overlays { get; private set; } = new();
 
+        /// <summary>
+        /// If active, the wall is rendered with
+        /// fully transparent parts where the
+        /// palette index is 0. Otherwise, those
+        /// areas would just use that palette color
+        /// which is in general pure black.
+        /// 
+        /// For example this is used for open doors,
+        /// gates, windows or cobwebs.
+        /// </summary>
+        public bool Transparent { get; set; }
+
+        [Range(0, GameDataRepository.CombatBackgroundCount - 1)]
+        public uint CombatBackgroundIndex
+        {
+            get => _combatBackgroundIndex;
+            set
+            {
+                ValueChecker.Check(value, 0, GameDataRepository.CombatBackgroundCount - 1);
+                SetField(ref _combatBackgroundIndex, value);
+            }
+        }
+
+        /// <summary>
+        /// The collision classes this object blocks.
+        /// </summary>
+        [Range(0, (1 << 15) - 1)]
+        public uint AllowedCollisionClasses
+        {
+            get => _allowedCollisionClasses;
+            set
+            {
+                ValueChecker.Check(value, 0, (1 << 15) - 1);
+                SetField(ref _allowedCollisionClasses, value);
+            }
+        }
+
+        /// <summary>
+        /// If this is active the object will block sight.
+        /// Monsters can't see through it.
+        /// </summary>
+        public bool BlockSight
+        {
+            get => _blockSight;
+            set => SetField(ref _blockSight, value);
+        }
+
         #endregion
 
 
@@ -331,8 +372,19 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public void Serialize(IDataWriter dataWriter, bool advanced)
         {
+            uint wallFlags = (AllowedCollisionClasses << 8) & 0x7fff00;
+
+            if (wallFlags == 0) // no collision classes allowed?
+                wallFlags = 0x80; // shortcut (= block all movement)
+
+            wallFlags |= (CombatBackgroundIndex & 0xf) << 28;
+            if (BlockSight)
+                wallFlags |= (uint)Wall3DFlags.BlockSight;
+            if (Transparent)
+                wallFlags |= (uint)Wall3DFlags.Transparency;
+
             // Wall data
-            dataWriter.Write((uint)Flags);
+            dataWriter.Write(wallFlags);
             dataWriter.Write((byte)TextureIndex);
             dataWriter.Write((byte)AutomapType);
             dataWriter.Write((byte)ColorIndex);
@@ -347,7 +399,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
         {
             var wallData = new LabyrinthWallData();
 
-            wallData.Flags = (Wall3DFlags)dataReader.ReadDword();
+            uint flags = dataReader.ReadDword();
+            var wallFlags = (Wall3DFlags)flags & Wall3DFlags.CombatBackgroundRemoveMask;
+            wallData.CombatBackgroundIndex = flags >> 28;
+            wallData.BlockSight = wallFlags.HasFlag(Wall3DFlags.BlockSight);
+            wallData.Transparent = wallFlags.HasFlag(Wall3DFlags.Transparency);
+            wallData.AllowedCollisionClasses = wallFlags.HasFlag(Wall3DFlags.BlockAllMovement)
+                ? 0
+                : (flags >> 8) & 0x7fff;
             wallData.TextureIndex = dataReader.ReadByte();
             wallData.AutomapType = (AutomapType)dataReader.ReadByte();
             wallData.ColorIndex = dataReader.ReadByte();
@@ -378,7 +437,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return Index == other.Index &&
-                   Flags == other.Flags &&
+                   Transparent == other.Transparent &&
+                   BlockSight == other.BlockSight &&
+                   AllowedCollisionClasses == other.AllowedCollisionClasses &&
+                   CombatBackgroundIndex == other.CombatBackgroundIndex &&
                    TextureIndex == other.TextureIndex &&
                    AutomapType == other.AutomapType &&
                    ColorIndex == other.ColorIndex &&
@@ -414,7 +476,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
         {
             var copy = new LabyrinthWallData();
 
-            copy.Flags = Flags;
+            copy.Transparent = Transparent;
+            copy.BlockSight = BlockSight;
+            copy.AllowedCollisionClasses = AllowedCollisionClasses;
+            copy.CombatBackgroundIndex = CombatBackgroundIndex;
             copy.TextureIndex = TextureIndex;
             copy.AutomapType = AutomapType;
             copy.ColorIndex = ColorIndex;
@@ -459,13 +524,18 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Fields
 
-        private Object3DFlags _flags;
+        private bool _waveAnimation;
+        private bool _blockSight;
+        private bool _isFloorObject;
+        private bool _randomAnimation;
+        private uint _allowedCollisionClasses;
         private uint _textureIndex;
         private uint _numberOfFrames;
         private uint _originalWidth;
         private uint _originalHeight;
         private uint _displayWidth;
         private uint _displayHeight;
+        private uint _combatBackgroundIndex;
 
         #endregion
 
@@ -481,18 +551,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public uint Index => (this as IMutableIndex).Index;
 
         /// <summary>
-        /// Flags of the object.
-        /// </summary>
-        public Object3DFlags Flags
-        {
-            get => _flags;
-            set => SetField(ref _flags, value);
-        }
-
-        /// <summary>
         /// Texture file index inside XObject3D.amb.
         /// </summary>
-        [Range(0, byte.MaxValue)]
+        [Range(0, ushort.MaxValue)]
         public uint TextureIndex
         {
             get => _textureIndex;
@@ -523,17 +584,16 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// This is used to load the correct amount of data
         /// from the texture file.
         ///
-        /// This must be a multiple of 16.
+        /// This should be a multiple of 16. But in the original
+        /// texture 90 had a width of 47 for some reason.
         /// </summary>
-        [Range(16, byte.MaxValue)]
+        [Range(1, byte.MaxValue)]
         public uint OriginalWidth
         {
             get => _originalWidth;
             set
             {
-                ValueChecker.Check(value, 16, byte.MaxValue);
-                if (value % 16 != 0)
-                    throw new ArgumentException($"{nameof(OriginalWidth)} must be a multiple of 16.");
+                ValueChecker.Check(value, 1, byte.MaxValue);
                 SetField(ref _originalWidth, value);
             }
         }
@@ -559,15 +619,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// Display width of the object in pixels.
         /// For reference: Tiles in 3D have a width of 512 pixels.
         /// </summary>
-        [Range(16, ushort.MaxValue)]
+        [Range(1, ushort.MaxValue)]
         public uint DisplayWidth
         {
             get => _displayWidth;
             set
             {
-                ValueChecker.Check(value, 16, ushort.MaxValue);
-                if (value % 16 != 0)
-                    throw new ArgumentException($"{nameof(DisplayWidth)} must be a multiple of 16.");
+                ValueChecker.Check(value, 1, ushort.MaxValue);
                 SetField(ref _displayWidth, value);
             }
         }
@@ -587,6 +645,98 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
         }
 
+        [Range(0, GameDataRepository.CombatBackgroundCount - 1)]
+        public uint CombatBackgroundIndex
+        {
+            get => _combatBackgroundIndex;
+            set
+            {
+                ValueChecker.Check(value, 0, GameDataRepository.CombatBackgroundCount - 1);
+                SetField(ref _combatBackgroundIndex, value);
+            }
+        }
+
+        /// <summary>
+        /// Normally animations are cyclic. So if the last frame
+        /// is reached, it starts again at the first frame.
+        /// 
+        /// If this is active the animation instead will decrease
+        /// the frames one by one after reaching the last frame.
+        /// So it will be a forth and back frame iteration.
+        /// 
+        /// 0 -> 1 -> 2 -> 1 -> 0 -> 1 -> 2 -> 1 -> ...
+        /// 
+        /// Instead of:
+        /// 
+        /// 0 -> 1 -> 2 -> 0 -> 1 -> 2 -> 0 -> 1 -> ...
+        /// </summary>
+        public bool WaveAnimation
+        {
+            get => _waveAnimation;
+            set => SetField(ref _waveAnimation, value);
+        }
+
+        /// <summary>
+        /// In original this is called the "Distort_bit".
+        /// If active the 3D object is displayed in a way
+        /// that it looks like a layer above ground.
+        /// 
+        /// For example a tabletop or a hole in the
+        /// ground or ceiling.
+        /// 
+        /// Otherwise, objects are displayed normally
+        /// as a 2D billboard facing the player.
+        /// </summary>
+        public bool IsFloorObject
+        {
+            get => _isFloorObject;
+            set => SetField(ref _isFloorObject, value);
+        }
+
+        /// <summary>
+        /// Normally animations will run continuously and
+        /// start at the first frame when the map is loaded.
+        /// 
+        /// If this is active, animations start randomly
+        /// dependent on some random value and will pause
+        /// after the full animation to start at the next
+        /// random occasion.
+        /// 
+        /// NOTE: Currently this is different in the remake
+        /// but should be fixed soon. There it just randomly
+        /// picks the start frame on map load and then run
+        /// the animation continuously.
+        /// </summary>
+        public bool RandomAnimation
+        {
+            get => _randomAnimation;
+            set => SetField(ref _randomAnimation, value);
+        }
+
+        /// <summary>
+        /// The collision classes this object blocks.
+        /// </summary>
+        [Range(0, (1 << 15) - 1)]
+        public uint AllowedCollisionClasses
+        {
+            get => _allowedCollisionClasses;
+            set
+            {
+                ValueChecker.Check(value, 0, (1 << 15) - 1);
+                SetField(ref _allowedCollisionClasses, value);
+            }
+        }
+
+        /// <summary>
+        /// If this is active the object will block sight.
+        /// Monsters can't see through it.
+        /// </summary>
+        public bool BlockSight
+        {
+            get => _blockSight;
+            set => SetField(ref _blockSight, value);
+        }
+
         #endregion
 
 
@@ -594,9 +744,24 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public void Serialize(IDataWriter dataWriter, bool advanced)
         {
-            // Object data
-            dataWriter.Write((uint)Flags);
-            dataWriter.Write((byte)TextureIndex);
+            uint objectFlags = (AllowedCollisionClasses << 8) & 0x7fff00;
+
+            if (objectFlags == 0) // no collision classes allowed?
+                objectFlags = 0x80; // shortcut (= block all movement)
+
+            objectFlags |= (CombatBackgroundIndex & 0xf) << 28;
+            if (BlockSight)
+                objectFlags |= (uint)Object3DFlags.BlockSight;
+            if (WaveAnimation)
+                objectFlags |= (uint)Object3DFlags.WaveAnimation;
+            if (RandomAnimation)
+                objectFlags |= (uint)Object3DFlags.RandomAnimationStart;
+            if (IsFloorObject)
+                objectFlags |= (uint)Object3DFlags.Floor;
+
+            // Object description data
+            dataWriter.Write(objectFlags);
+            dataWriter.Write((ushort)TextureIndex);
             dataWriter.Write((byte)NumberOfFrames);
             dataWriter.Write((byte)0);
             dataWriter.Write((byte)OriginalWidth);
@@ -609,8 +774,17 @@ namespace Ambermoon.Data.GameDataRepository.Data
         {
             var objectDescriptionData = new LabyrinthObjectDescriptionData();
 
-            objectDescriptionData.Flags = (Object3DFlags)dataReader.ReadDword();
-            objectDescriptionData.TextureIndex = dataReader.ReadByte();
+            uint flags = dataReader.ReadDword();
+            var objectFlags = (Object3DFlags)flags & Object3DFlags.CombatBackgroundRemoveMask;
+            objectDescriptionData.CombatBackgroundIndex = flags >> 28;
+            objectDescriptionData.BlockSight = objectFlags.HasFlag(Object3DFlags.BlockSight);
+            objectDescriptionData.WaveAnimation = objectFlags.HasFlag(Object3DFlags.WaveAnimation);
+            objectDescriptionData.RandomAnimation = objectFlags.HasFlag(Object3DFlags.RandomAnimationStart);
+            objectDescriptionData.IsFloorObject = objectFlags.HasFlag(Object3DFlags.Floor);
+            objectDescriptionData.AllowedCollisionClasses = objectFlags.HasFlag(Object3DFlags.BlockAllMovement)
+                ? 0
+                : (flags >> 8) & 0x7fff;
+            objectDescriptionData.TextureIndex = dataReader.ReadWord();
             objectDescriptionData.NumberOfFrames = dataReader.ReadByte();
             dataReader.Position++; // Unused / padding byte
             objectDescriptionData.OriginalWidth = dataReader.ReadByte();
@@ -638,7 +812,12 @@ namespace Ambermoon.Data.GameDataRepository.Data
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return Index == other.Index &&
-                   Flags == other.Flags &&
+                   WaveAnimation == other.WaveAnimation &&
+                   BlockSight == other.BlockSight &&
+                   IsFloorObject == other.IsFloorObject &&
+                   RandomAnimation == other.RandomAnimation &&
+                   AllowedCollisionClasses == other.AllowedCollisionClasses &&
+                   CombatBackgroundIndex == other.CombatBackgroundIndex &&
                    TextureIndex == other.TextureIndex &&
                    NumberOfFrames == other.NumberOfFrames &&
                    OriginalWidth == other.OriginalWidth &&
@@ -676,7 +855,12 @@ namespace Ambermoon.Data.GameDataRepository.Data
         {
             var copy = new LabyrinthObjectDescriptionData();
 
-            copy.Flags = Flags;
+            copy.BlockSight = BlockSight;
+            copy.WaveAnimation = WaveAnimation;
+            copy.RandomAnimation = RandomAnimation;
+            copy.IsFloorObject = IsFloorObject;
+            copy.AllowedCollisionClasses = AllowedCollisionClasses;
+            copy.CombatBackgroundIndex = CombatBackgroundIndex;
             copy.TextureIndex = TextureIndex;
             copy.NumberOfFrames = NumberOfFrames;
             copy.OriginalWidth = OriginalWidth;
@@ -1209,17 +1393,17 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// <summary>
         /// List of all available objects in the labyrinth data.
         /// </summary>
-        public DictionaryList<LabyrinthObjectData> Objects { get; set; }
+        public DictionaryList<LabyrinthObjectData> Objects { get; set; } = new();
 
         /// <summary>
         /// List of all available object descriptions in the labyrinth data.
         /// </summary>
-        public DictionaryList<LabyrinthObjectDescriptionData> ObjectDescriptions { get; set; }
+        public DictionaryList<LabyrinthObjectDescriptionData> ObjectDescriptions { get; set; } = new();
 
         /// <summary>
         /// List of all available walls in the labyrinth data.
         /// </summary>
-        public DictionaryList<LabyrinthWallData> Walls { get; set; }
+        public DictionaryList<LabyrinthWallData> Walls { get; set; } = new();
 
         #endregion
 

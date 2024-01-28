@@ -256,7 +256,7 @@ namespace Ambermoon.Data.GameDataRepository
             static Image Load3DObjectImage(uint index, IDataReader dataReader)
             {
                 var info = //index < TextureGraphicInfos.ObjectGraphicFrameCountsAndSizes.Length
-                    /*? */TextureGraphicInfos.ObjectGraphicFrameCountsAndSizes[index]
+                    /*? */TextureGraphicInfos.ObjectGraphicFrameCountsAndSizes[index - 1]
                     /*: 0*/; // TODO
                 return Image.Deserialize(index, dataReader, info.Key, info.Value.Width, info.Value.Height, GraphicFormat.Texture4Bit);
             }
@@ -264,7 +264,7 @@ namespace Ambermoon.Data.GameDataRepository
             var overlay3DImageFiles = ReadFileContainers("2Overlay3D.amb", "3Overlay3D.amb");
             static Image Load3DOverlayImage(uint index, IDataReader dataReader)
             {
-                var size = TextureGraphicInfos.OverlayGraphicSizes[index];
+                var size = TextureGraphicInfos.OverlayGraphicSizes[index - 1];
                 return Image.Deserialize(index, dataReader, 1, size.Width, size.Height, GraphicFormat.Texture4Bit);
             }
             Overlay3DImages = overlay3DImageFiles.Select(overlay3DImageFile => Load3DOverlayImage((uint)overlay3DImageFile.Key, overlay3DImageFile.Value)).ToDictionaryList();

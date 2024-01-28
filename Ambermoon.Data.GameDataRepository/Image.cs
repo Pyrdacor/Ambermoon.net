@@ -36,11 +36,21 @@ namespace Ambermoon.Data.GameDataRepository
         internal ImageData(Graphic graphic)
         {
             if (graphic.Width % 16 != 0)
-                throw new ArgumentException("Graphic width must be a multiple of 16.");
+            {
+                int addWidth = 16 - graphic.Width % 16;
+                Width = graphic.Width + addWidth;
+                Height = graphic.Height;
+                _colorIndices = new byte[Width * Height];
 
-            Width = graphic.Width;
-            Height = graphic.Height;
-            _colorIndices = (byte[])graphic.Data.Clone();
+                for (int y = 0; y < Height; y++)
+                    Array.Copy(graphic.Data, y * graphic.Width, _colorIndices, y * Width, graphic.Width);
+            }
+            else
+            {
+                Width = graphic.Width;
+                Height = graphic.Height;
+                _colorIndices = (byte[])graphic.Data.Clone();
+            }
         }
 
         internal ImageData(int width, int height, byte[] data, Palette palette)
