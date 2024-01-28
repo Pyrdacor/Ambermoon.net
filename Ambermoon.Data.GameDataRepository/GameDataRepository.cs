@@ -268,7 +268,7 @@ namespace Ambermoon.Data.GameDataRepository
                 return Image.Deserialize(index, dataReader, 1, size.Width, size.Height, GraphicFormat.Texture4Bit);
             }
             Overlay3DImages = overlay3DImageFiles.Select(overlay3DImageFile => Load3DOverlayImage((uint)overlay3DImageFile.Key, overlay3DImageFile.Value)).ToDictionaryList();
-            var floor3DImageFiles = ReadFileContainer("Floor.amb");
+            var floor3DImageFiles = ReadFileContainer("Floors.amb");
             Floor3DImages = floor3DImageFiles.Select(floor3DImageFile => Image.Deserialize((uint)floor3DImageFile.Key, floor3DImageFile.Value, 1, 64, 64, GraphicFormat.Palette4Bit)).ToDictionaryList();
 
             #endregion
