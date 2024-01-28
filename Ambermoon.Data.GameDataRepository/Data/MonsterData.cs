@@ -65,11 +65,12 @@ namespace Ambermoon.Data.GameDataRepository.Data
         #region Properties
 
         public override CharacterType Type => CharacterType.Monster;
+
         [Range(0, byte.MaxValue)]
         public uint CombatGraphicIndex
         {
             get => _combatGraphicIndex;
-            private set
+            set
             {
                 if (value > byte.MaxValue)
                     throw new ArgumentOutOfRangeException(nameof(CombatGraphicIndex), $"Combat graphic index is limited to the range 0 to {byte.MaxValue}.");
@@ -77,6 +78,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 _combatGraphicIndex = value;
             }
         }
+
         [Range(0, 100)]
         public uint Morale
         {
@@ -89,6 +91,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 _morale = value;
             }
         }
+
         [Range(0, ushort.MaxValue)]
         public uint DefeatExperience
         {
@@ -101,6 +104,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 _defeatExperience = value;
             }
         }
+
         public byte[] CustomPalette { get; set; } = new byte[32];
         [Range(0, ushort.MaxValue)]
         public uint OriginalFrameWidth
@@ -114,6 +118,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 _originalFrameWidth = value;
             }
         }
+
         [Range(0, ushort.MaxValue)]
         public uint OriginalFrameHeight
         {
@@ -126,6 +131,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 _originalFrameHeight = value;
             }
         }
+
         [Range(0, ushort.MaxValue)]
         public uint DisplayFrameWidth
         {
@@ -138,6 +144,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 _displayFrameWidth = value;
             }
         }
+
         [Range(0, ushort.MaxValue)]
         public uint DisplayFrameHeight
         {
