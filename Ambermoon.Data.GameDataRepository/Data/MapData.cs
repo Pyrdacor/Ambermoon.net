@@ -7,6 +7,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
     using Ambermoon.Data.Enumerations;
     using Collections;
     using Serialization;
+    using System.Collections.Generic;
     using Util;
 
     public enum MapEnvironment
@@ -493,10 +494,12 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 (tile as IData)!.Serialize(dataWriter, advanced);
 
             // Event entry list
+            dataWriter.Write((ushort)EventEntryList.Count);
             foreach (var entry in EventEntryList)
                 entry.Serialize(dataWriter, advanced);
 
             // Events
+            dataWriter.Write((ushort)Events.Count);
             foreach (var mapEvent in Events)
                 mapEvent.Serialize(dataWriter, advanced);
 
@@ -518,7 +521,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
 
             // Goto Points
-            foreach (var gotoPoint in GotoPoints ?? Enumerable.Empty<MapGotoPointData>())
+            var gotoPoints = (IList<MapGotoPointData>?)GotoPoints ?? new List<MapGotoPointData>();
+            dataWriter.Write((ushort)gotoPoints.Count);
+            foreach (var gotoPoint in gotoPoints)
                 gotoPoint.Serialize(dataWriter, advanced);
 
             // Event Entry Automap Types
@@ -651,9 +656,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {
-            var mapEntity = (MapData)Deserialize(dataReader, advanced);
-            (mapEntity as IMutableIndex).Index = index;
-            return mapEntity;
+            var mapData = (MapData)Deserialize(dataReader, advanced);
+            (mapData as IMutableIndex).Index = index;
+            return mapData;
         }
 
         #endregion
