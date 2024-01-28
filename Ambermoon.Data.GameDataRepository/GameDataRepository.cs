@@ -90,6 +90,10 @@ namespace Ambermoon.Data.GameDataRepository
         /// provided which just is the normal UI palette with color 25 set to black.
         /// </summary>
         public Palette PortraitPalette { get; }
+        /// <summary>
+        /// Palette for item graphics. It is the same as <see cref="UserInterfacePalette"/>.
+        /// </summary>
+        public Palette ItemPalette => UserInterfacePalette;
 
         #endregion
 
@@ -98,7 +102,7 @@ namespace Ambermoon.Data.GameDataRepository
 
         public DictionaryList<MapData> Maps { get; }
         public DictionaryList<TextList<MapData>> MapTexts { get; }
-        //public Dictionary<uint, LabyrinthData> LabyrinthData { get; } = new();
+        public DictionaryList<LabyrinthData> Labyrinths { get; }
         public DictionaryList<ImageList> Tile2DImages { get; }
         public DictionaryList<Image> Wall3DImages { get; }
         public DictionaryList<Image> Object3DImages { get; }
@@ -135,6 +139,7 @@ namespace Ambermoon.Data.GameDataRepository
 
         //public Dictionary<uint, Place> Places { get; } = new();
         public DictionaryList<ItemData> Items { get; }
+        public DictionaryList<Image> ItemImages { get; }
 
         #endregion
 
@@ -244,7 +249,7 @@ namespace Ambermoon.Data.GameDataRepository
             var tile2DImageFiles = ReadFileContainers("1Icon_gfx.amb", "2Icon_gfx.amb", "3Icon_gfx.amb");
             Tile2DImages = tile2DImageFiles.Select(tile2DImageFile => ImageList.Deserialize((uint)tile2DImageFile.Key, tile2DImageFile.Value, 16, 16, GraphicFormat.Palette5Bit)).ToDictionaryList();
             var labdataFiles = ReadFileContainers("2Lab_data.amb", "3Lab_data.amb");
-            //LabyrinthData = labdataFiles.Select(labdataFile => Labdata.Deserialize((uint)labdataFile.Key, labdataFile.Value)).ToDictionaryList();
+            Labyrinths = labdataFiles.Select(labdataFile => (LabyrinthData)LabyrinthData.Deserialize(labdataFile.Value, (uint)labdataFile.Key, Advanced)).ToDictionaryList();
             var wall3DImageFiles = ReadFileContainers("2Wall3D.amb", "3Wall3D.amb");
             Wall3DImages = wall3DImageFiles.Select(wall3DImageFile => Image.Deserialize((uint)wall3DImageFile.Key, wall3DImageFile.Value, 1, 128, 80, GraphicFormat.Texture4Bit)).ToDictionaryList();
             var object3DImageFiles = ReadFileContainers("2Object3D.amb", "3Object3D.amb");
@@ -316,6 +321,9 @@ namespace Ambermoon.Data.GameDataRepository
             var itemFile = ReadFileContainer("Objects.amb")[1];
             int itemCount = itemFile.ReadWord();
             Items = DataCollection<ItemData>.Deserialize(itemFile, itemCount, Advanced).ToDictionaryList();
+            var itemGraphicFiles = ReadFileContainer("Object_icons");
+            ItemImages = ImageList.Deserialize(0, itemGraphicFiles[1], 16, 16, GraphicFormat.Palette5Bit)
+                .ToDictionaryList();
 
             #endregion
 
