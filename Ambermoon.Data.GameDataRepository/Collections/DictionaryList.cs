@@ -98,7 +98,14 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         public DictionaryList(IEnumerable<T> enumerable)
         {
             _list = new(enumerable);
-            _dictionary = _list.ToDictionary(item => item.Index, Item => Item);
+            _dictionary = _list.ToDictionary(item => item.Index, item => item);
+        }
+
+        public DictionaryList(IEnumerable<T> enumerable, Func<T, int, uint> keySelector)
+        {
+            _list = new(enumerable);
+            _dictionary = _list.Select((e, i) => KeyValuePair.Create(i, e))
+                .ToDictionary(item => keySelector(item.Value, item.Key), item => item.Value);
         }
 
         #endregion
@@ -231,7 +238,9 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
     public static class DictionaryListExtensions
     {
-        public static DictionaryList<T> ToDictionaryList<T>(this IEnumerable<T> enumerable) where T : IIndexed, new() => new DictionaryList<T>(enumerable);
+        public static DictionaryList<T> ToDictionaryList<T>(this IEnumerable<T> enumerable) where T : IIndexed, new() => new(enumerable);
+
+        public static DictionaryList<T> ToDictionaryList<T>(this IEnumerable<T> enumerable, Func<T, int, uint> keySelector) where T : IIndexed, new() => new(enumerable, keySelector);
     }
 
     #endregion

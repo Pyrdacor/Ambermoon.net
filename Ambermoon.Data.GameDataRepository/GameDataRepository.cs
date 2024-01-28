@@ -119,6 +119,11 @@ namespace Ambermoon.Data.GameDataRepository
         public DictionaryList<PartyMemberData> PartyMembers { get; } = new();
         public DictionaryList<TextList<PartyMemberData>> PartyMemberTexts { get; } = new();
         public DictionaryList<ImageWithPaletteIndex> Portraits { get; }
+        /// <summary>
+        /// Small battlefield icons for the party.
+        /// The key is the class of the party member.
+        /// </summary>
+        public DictionaryList<Image> PartyCombatIcons { get; }
 
         #endregion
 
@@ -128,6 +133,7 @@ namespace Ambermoon.Data.GameDataRepository
         public DictionaryList<MonsterData> Monsters { get; }
         public DictionaryList<MonsterGroupData> MonsterGroups { get; }
         public DictionaryList<Image> MonsterImages { get; }
+        public DictionaryList<Image> MonsterCombatIcons { get; }
         public CombatBackgroundImage[] CombatBackgroundImages2D { get; }
         public CombatBackgroundImage[] CombatBackgroundImages3D { get; }
         public List<CombatBackgroundImage> DistinctCombatBackgroundImages { get; }
@@ -219,10 +225,12 @@ namespace Ambermoon.Data.GameDataRepository
             #endregion
 
 
-            #region Misc Data
+            #region Misc & Shared Data
 
             _textContainer = TextContainer.Load(new TextContainerReader(), ReadFileContainer("Text.amb")[1], false);
             Advanced = _textContainer.VersionString.ToLower().Contains("adv");
+            var combatGraphicFiles = ReadFileContainer("Combat_graphics");
+            var combatGraphics = CombatGraphicData.Deserialize(combatGraphicFiles[1]);
 
             #endregion
 
@@ -285,6 +293,7 @@ namespace Ambermoon.Data.GameDataRepository
             var partyMemberTextFiles = ReadFileContainer("Party_texts.amb");
             PartyMemberTexts = partyMemberTextFiles.Select(partyMemberTextFile => (TextList<PartyMemberData>)TextList<PartyMemberData>.Deserialize(partyMemberTextFile.Value, (uint)partyMemberTextFile.Key, PartyMembers[(uint)partyMemberTextFile.Key], Advanced)).ToDictionaryList();
             */
+            PartyCombatIcons = combatGraphics.BattleFieldIcons.Take((int)Class.Monster).ToDictionaryList((_, i) => (uint)i);
             var portraitFiles = ReadFileContainer("Portraits.amb");
             Portraits = portraitFiles.Select(portraitFile =>
                 ImageWithPaletteIndex.Deserialize((uint)portraitFile.Key, UserInterfacePalette.Index, portraitFile.Value, 1, 32, 34, GraphicFormat.Palette5Bit)
@@ -304,6 +313,7 @@ namespace Ambermoon.Data.GameDataRepository
                 Tuple.Create(monster.OriginalFrameWidth, monster.OriginalFrameHeight, monster.CombatGraphicIndex)).Distinct();
             MonsterImages = monsterGraphicInfos.Select(info =>
                 Image.DeserializeFullData(info.Item3, monsterGraphicFiles[(int)info.Item3], (int)info.Item1, (int)info.Item2, GraphicFormat.Palette5Bit, true)).ToDictionaryList();
+            MonsterCombatIcons = combatGraphics.BattleFieldIcons.Skip((int)Class.Monster).ToDictionaryList((_, i) => (uint)i + 1);
             var combatBackgroundFiles = ReadFileContainers("Combat_background.amb");
             var combatBackgrounds = combatBackgroundFiles.Select(combatBackgroundFile =>
                 CombatBackgroundImage.DeserializeImage((uint)combatBackgroundFile.Key, combatBackgroundFile.Value)).ToDictionaryList();
