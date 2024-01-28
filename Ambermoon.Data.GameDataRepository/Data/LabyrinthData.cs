@@ -921,11 +921,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return true;
         }
 
-        private void ObjectsChanged(int index)
-        {
-            OnPropertyChanged(nameof(Objects));
-        }
-
         #endregion
 
     }
