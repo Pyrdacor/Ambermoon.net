@@ -167,9 +167,14 @@ namespace Ambermoon.Data.GameDataRepository
             (this as IMutableIndex).Index = index;
         }
 
+        public Image()
+        {
+            Frames = new List<ImageData>();
+        }
+
         #endregion
 
-        
+
         #region Serialization
 
         public static Image Deserialize(uint index, IDataReader dataReader, int numFrames, int width, int height, GraphicFormat format,
