@@ -199,7 +199,7 @@ namespace Ambermoon.Data.GameDataRepository
                 frames[i] = new ImageData(graphic);
             }
 
-            var image = new Image(frames);
+            var image = new Image(index, frames);
             (image as IMutableIndex).Index = index;
             return image;;
         }
@@ -224,7 +224,7 @@ namespace Ambermoon.Data.GameDataRepository
 
         public Image Copy()
         {
-            var copy = new Image(Frames.Select(frame => frame.Copy()).ToArray());
+            var copy = new Image(Index, Frames.Select(frame => frame.Copy()).ToArray());
             (copy as IMutableIndex).Index = Index;
             return copy;
         }
@@ -252,14 +252,14 @@ namespace Ambermoon.Data.GameDataRepository
 
         }
 
-        internal ImageWithPaletteIndex(uint paletteIndex, IEnumerable<Graphic> frames)
-            : base(frames)
+        internal ImageWithPaletteIndex(uint index, uint paletteIndex, IEnumerable<Graphic> frames)
+            : base(index, frames)
         {
             PaletteIndex = paletteIndex;
         }
 
-        public ImageWithPaletteIndex(uint paletteIndex, params ImageData[] frames)
-            : base(frames)
+        public ImageWithPaletteIndex(uint index, uint paletteIndex, params ImageData[] frames)
+            : base(index, frames)
         {
             PaletteIndex = paletteIndex;
         }
@@ -273,7 +273,7 @@ namespace Ambermoon.Data.GameDataRepository
             int width, int height, GraphicFormat format, bool alpha = false, byte colorKey = 0, byte paletteOffset = 0)
         {
             var image = Deserialize(index, dataReader, numFrames, width, height, format, alpha, colorKey, paletteOffset);
-            var imageWithPaletteIndex = new ImageWithPaletteIndex(paletteIndex, image.Frames.ToArray());
+            var imageWithPaletteIndex = new ImageWithPaletteIndex(index, paletteIndex, image.Frames.ToArray());
             (imageWithPaletteIndex as IMutableIndex).Index = index;
             return imageWithPaletteIndex;
         }
@@ -282,7 +282,7 @@ namespace Ambermoon.Data.GameDataRepository
             int width, int height, GraphicFormat format, bool alpha = false, byte colorKey = 0, byte paletteOffset = 0)
         {
             var image = DeserializeFullData(index, dataReader, width, height, format, alpha, colorKey, paletteOffset);
-            var imageWithPaletteIndex = new ImageWithPaletteIndex(paletteIndex, image.Frames.ToArray());
+            var imageWithPaletteIndex = new ImageWithPaletteIndex(index, paletteIndex, image.Frames.ToArray());
             (imageWithPaletteIndex as IMutableIndex).Index = index;
             return imageWithPaletteIndex;
         }
@@ -294,7 +294,7 @@ namespace Ambermoon.Data.GameDataRepository
 
         public new ImageWithPaletteIndex Copy()
         {
-            var copy = new ImageWithPaletteIndex(PaletteIndex, Frames.Select(frame => frame.Copy()).ToArray());
+            var copy = new ImageWithPaletteIndex(Index, PaletteIndex, Frames.Select(frame => frame.Copy()).ToArray());
             (copy as IMutableIndex).Index = Index;
             return copy;
         }
@@ -322,8 +322,8 @@ namespace Ambermoon.Data.GameDataRepository
 
         }
 
-        internal CombatBackgroundImage(uint[] paletteIndices, Graphic graphic)
-            : base(new[] { graphic })
+        internal CombatBackgroundImage(uint index, uint[] paletteIndices, Graphic graphic)
+            : base(index, new[] { graphic })
         {
             if (paletteIndices.Length == 1)
             {
@@ -341,8 +341,8 @@ namespace Ambermoon.Data.GameDataRepository
             }
         }
 
-        public CombatBackgroundImage(uint[] paletteIndices, ImageData graphic)
-            : base(graphic)
+        public CombatBackgroundImage(uint index, uint[] paletteIndices, ImageData graphic)
+            : base(index, graphic)
         {
             if (paletteIndices.Length == 1)
             {
@@ -383,7 +383,7 @@ namespace Ambermoon.Data.GameDataRepository
         public static CombatBackgroundImage Deserialize(uint index, uint[] paletteIndices, IDataReader dataReader)
         {
             var image = DeserializeImage(index, dataReader);
-            var combatBackgroundImage = new CombatBackgroundImage(paletteIndices, image.Frames[0]);
+            var combatBackgroundImage = new CombatBackgroundImage(index, paletteIndices, image.Frames[0]);
             (combatBackgroundImage as IMutableIndex).Index = index;
             return combatBackgroundImage;
         }
@@ -400,7 +400,7 @@ namespace Ambermoon.Data.GameDataRepository
 
         public new CombatBackgroundImage Copy()
         {
-            var copy = new CombatBackgroundImage(PaletteIndices, Frames[0].Copy());
+            var copy = new CombatBackgroundImage(Index, PaletteIndices, Frames[0].Copy());
             (copy as IMutableIndex).Index = Index;
             return copy;
         }

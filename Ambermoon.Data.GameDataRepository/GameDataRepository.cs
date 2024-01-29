@@ -317,11 +317,11 @@ namespace Ambermoon.Data.GameDataRepository
             var combatBackgroundFiles = ReadFileContainers("Combat_background.amb");
             var combatBackgrounds = combatBackgroundFiles.Select(combatBackgroundFile =>
                 CombatBackgroundImage.DeserializeImage((uint)combatBackgroundFile.Key, combatBackgroundFile.Value)).ToDictionaryList();
-            CombatBackgroundImages2D = CombatBackgrounds.Info2D.Select(info => new CombatBackgroundImage(info.Palettes, combatBackgrounds[info.GraphicIndex].Frames[0])).ToArray();
-            CombatBackgroundImages3D = CombatBackgrounds.Info3D.Select(info => new CombatBackgroundImage(info.Palettes, combatBackgrounds[info.GraphicIndex].Frames[0])).ToArray();
+            CombatBackgroundImages2D = CombatBackgrounds.Info2D.Select((info, index) => new CombatBackgroundImage((uint)index, info.Palettes, combatBackgrounds[info.GraphicIndex].Frames[0])).ToArray();
+            CombatBackgroundImages3D = CombatBackgrounds.Info3D.Select((info, index) => new CombatBackgroundImage((uint)index, info.Palettes, combatBackgrounds[info.GraphicIndex].Frames[0])).ToArray();
             DistinctCombatBackgroundImages = CombatBackgrounds.Info2D.Concat(CombatBackgrounds.Info3D)
                 .DistinctBy(info => info.GraphicIndex)
-                .Select(info => new CombatBackgroundImage(info.Palettes, combatBackgrounds[info.GraphicIndex].Frames[0]))
+                .Select((info, index) => new CombatBackgroundImage((uint)index, info.Palettes, combatBackgrounds[info.GraphicIndex].Frames[0]))
                 .ToList();
             #endregion
 
