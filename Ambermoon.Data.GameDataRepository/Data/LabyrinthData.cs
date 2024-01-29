@@ -97,18 +97,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         /// <summary>
         /// Width of the overlay in pixels.
-        ///
-        /// This must be a multiple of 16.
         /// </summary>
-        [Range(16, byte.MaxValue + 1 - 16)]
+        [Range(1, byte.MaxValue)]
         public uint Width
         {
             get => _width;
             set
             {
-                ValueChecker.Check(value, 16, byte.MaxValue);
-                if (value % 16 != 0)
-                    throw new ArgumentException($"{nameof(Width)} must be a multiple of 16.");
+                ValueChecker.Check(value, 1, byte.MaxValue);
                 SetField(ref _width, value);
             }
         }
@@ -1470,9 +1466,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
         {
-            var mapEntity = (LabyrinthData)Deserialize(dataReader, advanced);
-            (mapEntity as IMutableIndex).Index = index;
-            return mapEntity;
+            var labyrinthData = (LabyrinthData)Deserialize(dataReader, advanced);
+            (labyrinthData as IMutableIndex).Index = index;
+            return labyrinthData;
         }
 
         #endregion
