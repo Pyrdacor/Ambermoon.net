@@ -105,7 +105,18 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         {
             _list = new(enumerable);
             _dictionary = _list.Select((e, i) => KeyValuePair.Create(i, e))
-                .ToDictionary(item => keySelector(item.Value, item.Key), item => item.Value);
+                .ToDictionary(item => keySelector(item.Value, item.Key), item => ItemIdSetter(item.Value, keySelector(item.Value, item.Key)));
+            return;
+
+            static T ItemIdSetter(T item, uint index)
+            {
+                if (item is not IMutableIndex mutable) return item;
+                if (mutable is ICloneable cloneable)
+                    mutable = (IMutableIndex)(T)cloneable.Clone();
+                mutable.Index = index;
+                return (T)mutable;
+
+            }
         }
 
         #endregion
