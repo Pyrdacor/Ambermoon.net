@@ -103,9 +103,9 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         public DictionaryList(IEnumerable<T> enumerable, Func<T, int, uint> keySelector)
         {
-            _list = new(enumerable);
             _dictionary = _list.Select((e, i) => KeyValuePair.Create(i, e))
                 .ToDictionary(item => keySelector(item.Value, item.Key), item => ItemIdSetter(item.Value, keySelector(item.Value, item.Key)));
+            _list = new(_dictionary.Values);
             return;
 
             static T ItemIdSetter(T item, uint index)
