@@ -5,7 +5,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 {
     using Data;
 
-    public sealed class DictionaryList<T> : IList<T>, IReadOnlyList<T>, IList
+    public sealed class DictionaryList<T> : ICollection<T>
         where T : IIndexed, new()
     {
 
@@ -54,29 +54,6 @@ namespace Ambermoon.Data.GameDataRepository.Collections
                 _dictionary[key] = value;
             }
         }
-        public T this[int index]
-        {
-            get => _list[index];
-            set
-            {
-                if (value.Index != _list[index].Index)
-                {
-                    // We replace an item in the list with one with a different index.
-                    // This is ok as long as the new index is not already taken.
-                    if (_dictionary.ContainsKey(value.Index))
-                        throw new ArgumentException("An item with the same key is already present inside the " + nameof(DictionaryList<T>) + ".");
-                }
-                _dictionary.Remove(_list[index].Index);
-                _dictionary[_list[index].Index] = value;
-                _list[index] = value;
-            }
-        }
-
-        object? IList.this[int index]
-        {
-            get => this[index];
-            set => this[index] = (T)value!;
-        }
 
         #endregion
 
@@ -103,7 +80,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         public DictionaryList(IEnumerable<T> enumerable, Func<T, int, uint> keySelector)
         {
-            _dictionary = _list.Select((e, i) => KeyValuePair.Create(i, e))
+            _dictionary = enumerable.Select((e, i) => KeyValuePair.Create(i, e))
                 .ToDictionary(item => keySelector(item.Value, item.Key), item => ItemIdSetter(item.Value, keySelector(item.Value, item.Key)));
             _list = new(_dictionary.Values);
             return;

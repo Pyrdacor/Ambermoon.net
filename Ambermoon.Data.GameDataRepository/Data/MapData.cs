@@ -521,7 +521,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
 
             // Goto Points
-            var gotoPoints = (IList<MapGotoPointData>?)GotoPoints ?? new List<MapGotoPointData>();
+            var gotoPoints = GotoPoints?.ToList() ?? new List<MapGotoPointData>();
             dataWriter.Write((ushort)gotoPoints.Count);
             foreach (var gotoPoint in gotoPoints)
                 gotoPoint.Serialize(dataWriter, advanced);
