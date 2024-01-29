@@ -149,19 +149,22 @@ namespace Ambermoon.Data.GameDataRepository
 
         #region Constructors
 
-        internal Image(IEnumerable<Graphic> frames)
+        internal Image(uint index, IEnumerable<Graphic> frames)
         {
             Frames = new List<ImageData>(frames.Select(frame => new ImageData(frame)));
+            (this as IMutableIndex).Index = index;
         }
 
-        public Image(params ImageData[] frames)
+        public Image(uint index, params ImageData[] frames)
         {
             Frames = new List<ImageData>(frames);
+            (this as IMutableIndex).Index = index;
         }
 
-        public Image()
+        public Image(uint index)
         {
             Frames = new List<ImageData>();
+            (this as IMutableIndex).Index = index;
         }
 
         #endregion

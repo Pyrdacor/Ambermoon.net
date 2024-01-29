@@ -1,5 +1,4 @@
 ﻿using Ambermoon.Data.GameDataRepository.Data;
-using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.GameDataRepository
@@ -40,7 +39,6 @@ namespace Ambermoon.Data.GameDataRepository
         {
             var imageList = new ImageList();
             count ??= uint.MaxValue;
-            int imageSize = width * height;
 
             for (uint i = 0; i < count; i++)
             {

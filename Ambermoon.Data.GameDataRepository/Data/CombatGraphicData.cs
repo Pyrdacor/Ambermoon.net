@@ -32,12 +32,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
                         Alpha = true,
                         PaletteOffset = 0
                     };
+                    uint imageIndex = 0;
 
                     while (dataReader.Position < dataReader.Size)
                     {
                         var graphic = new Graphic();
                         graphicReader.ReadGraphic(graphic, dataReader, iconGraphicInfo);
-                        battleFieldIcons.Add(new Image(new[] { graphic }));
+                        battleFieldIcons.Add(new Image(imageIndex++, new[] { graphic }));
                     }
 
                     combatGraphicData.BattleFieldIcons = new(battleFieldIcons);
@@ -45,7 +46,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 else
                 {
                     var graphic = new Graphic();
-                    var image = new Image(ReadGraphics());
+                    var image = new Image((uint)combatGraphic.Key, ReadGraphics());
 
                     IEnumerable<Graphic> ReadGraphics()
                     {
