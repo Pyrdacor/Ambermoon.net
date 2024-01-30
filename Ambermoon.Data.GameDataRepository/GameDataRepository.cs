@@ -153,24 +153,55 @@ namespace Ambermoon.Data.GameDataRepository
 
                 uint? GetCombatBackgroundFromMapTiles(MapData map, uint eventIndex)
                 {
-                    if (map.Tiles2D != null)
+                    if (map.Tiles2D is not null)
                     {
-                        var tileset = Tilesets[map.TilesetIndex!.Value];
                         var tile = map.Tiles2D.FirstOrDefault(t => t.MapEventId == eventIndex);
 
                         if (tile is null)
                             return null;
 
+                        var tileset = Tilesets[map.TilesetIndex!.Value];
                         var frontTile = tile.FrontTileIndex == 0 ? null : tileset.Icons[tile.FrontTileIndex];
 
-                        if (tile.FrontTileIndex == 0)
+                        if (frontTile != null && !frontTile.UseBackgroundTileFlags)
+                            return frontTile.CombatBackgroundIndex;
+
+                        return tileset.Icons[tile.BackTileIndex].CombatBackgroundIndex;
+                    }
+                    else if (map.Tiles3D is not null)
+                    {
+                        var tile = map.Tiles3D.FirstOrDefault(t => t.MapEventId == eventIndex);
+
+                        if (tile is null)
+                            return null;
+
+                        var labdata = Labyrinths[map.LabdataIndex!.Value];
+
+                        if (tile.WallIndex is not null)
+                            return labdata.Walls[tile.WallIndex.Value].CombatBackgroundIndex;
+
+                        if (tile.ObjectIndex is not null)
+                        {
+                            uint? objectDescriptionIndex = labdata.Objects[tile.ObjectIndex.Value].Objects.FirstOrDefault()?.ObjectDescriptionIndex;
+
+                            if (objectDescriptionIndex is not null)
+                                return labdata.ObjectDescriptions[objectDescriptionIndex.Value].CombatBackgroundIndex;
+                        }
+
+                        return labdata.DefaultCombatBackgroundIndex;
+                    }
+
+                    return null;
                 }
                 var monsterRefs = Maps.SelectMany(map =>
                         map.MapCharacters.Where(mapChar => mapChar.CharacterType == CharacterType.Monster))
                     .Select(mapChar => new { MonsterGroupIndex = mapChar.MonsterGroupIndex, CombatBackgroundIndex = mapChar.CombatBackgroundIndex });
-                monsterRefs = monsterRefs.Concat(Maps.SelectMany(map => map.Events.Select(e => e as StartBattleEventData).Where(e => e != null).Select(battleEvent => new { MonsterGroupIndex = battleEvent.MonsterGroupIndex, CombatBackgroundIndex = map. }));
+                /*monsterRefs = monsterRefs.Concat(Maps.SelectMany(map => map.Events.Select(e => e as StartBattleEventData).Where(e => e != null)
+                    .Select(battleEvent => new { MonsterGroupIndex = battleEvent.MonsterGroupIndex, CombatBackgroundIndex = map. }));
+                GetCombatBackgroundFromMapTiles*/
+                // TODO: ^ find event entries for battle events, then find the combat background index from the map tiles
 
-                foreach (var monster in Monsters)
+                /*foreach (var monster in Monsters)
                 {
                     var monsterImage = MonsterImages[monster.CombatGraphicIndex];
                     var paletteIndex = monsterImage.Frames[0].PaletteIndex;
@@ -180,7 +211,9 @@ namespace Ambermoon.Data.GameDataRepository
                         var palette = Palettes[paletteIndex];
                         defaultMonsterImagePalettes.Add(paletteIndex, palette);
                     }
-                }
+                }*/
+
+                throw new NotImplementedException("WIP");
 
 
                 return defaultMonsterImagePalettes;
@@ -546,7 +579,7 @@ namespace Ambermoon.Data.GameDataRepository
         #region Methods
 
         private static IEnumerable<IGrouping<int, T>> GroupMapRelatedEntities<T>(DictionaryList<T> mapRelatedEntities)
-            where T : IIndexed, new()
+            where T : class, IIndexed, new()
         {
             return mapRelatedEntities.GroupBy(mapRelatedEntity=> mapRelatedEntity.Index switch
             {
