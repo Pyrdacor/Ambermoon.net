@@ -228,6 +228,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 EventType.MapText => new MapTextEventData(eventData),
                 EventType.Spinner => new SpinnerEventData(eventData),
                 EventType.Trap => new TrapEventData(eventData),
+                // TODO ...
+                EventType.StartBattle => new StartBattleEventData(eventData),
+                // TODO ...
                 _ => eventData
             };
         }

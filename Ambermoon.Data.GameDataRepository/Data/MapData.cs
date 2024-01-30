@@ -312,6 +312,38 @@ namespace Ambermoon.Data.GameDataRepository.Data
         #endregion
 
 
+        #region Constructors
+
+        public MapData()
+        {
+            MapCharacters.ItemChanged += MapCharactersChanged;
+        }
+
+        public static MapData CreateWorldMap(World world)
+        {
+            var mapData = new MapData();
+            mapData.SetupWorldMap(world);
+            return mapData;
+        }
+
+        public static MapData Create2DMap(MapEnvironment environment, World world, int width, int height)
+        {
+            var mapData = new MapData();
+            mapData.Setup2DMap(environment, world, width, height);
+            return mapData;
+        }
+
+        public static MapData Create3DMap(MapEnvironment environment, World world, int width, int height,
+            uint labdataIndex, uint paletteIndex)
+        {
+            var mapData = new MapData();
+            mapData.Setup3DMap(environment, world, width, height, labdataIndex, paletteIndex);
+            return mapData;
+        }
+
+        #endregion
+
+
         #region Methods
 
         public void Resize(int width, int height)
@@ -331,7 +363,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
         }
 
-        public void SetupWorldMap(World world)
+        private void SetupWorldMap(World world)
         {
             Type = MapType.Map2D;
             Flags = MapFlags.Outdoor |
@@ -363,6 +395,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 }
             }
 
+            Tiles2D.ItemChanged += TileChanged;
+
             foreach (var mapChar in MapCharacters)
                 mapChar.SetEmpty();
 
@@ -373,7 +407,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             GotoPoints = null;
         }
 
-        public void Setup2DMap(MapEnvironment environment, World world, int width, int height)
+        private void Setup2DMap(MapEnvironment environment, World world, int width, int height)
         {
             Type = MapType.Map2D;
             Flags = MapFlags.CanUseMagic;
@@ -410,6 +444,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 }
             }
 
+            Tiles2D.ItemChanged += TileChanged;
+
             foreach (var mapChar in MapCharacters)
                 mapChar.SetEmpty();
 
@@ -419,7 +455,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             GotoPoints = null;
         }
 
-        public void Setup3DMap(MapEnvironment environment, World world, int width, int height,
+        private void Setup3DMap(MapEnvironment environment, World world, int width, int height,
             uint labdataIndex, uint paletteIndex)
         {
             Type = MapType.Map3D;
@@ -452,6 +488,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                     Tiles3D.Set(x, y, MapTile3DData.Empty);
                 }
             }
+
+            Tiles3D.ItemChanged += TileChanged;
 
             foreach (var mapChar in MapCharacters)
                 mapChar.SetEmpty();
@@ -575,6 +613,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                     }
                 }
 
+                mapData.Tiles2D.ItemChanged += mapData.TileChanged;
+
                 mapData.LabdataIndex = null;
                 mapData.Tiles3D = null;
                 mapData.SkyBackgroundIndex = null;
@@ -592,6 +632,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                         mapData.Tiles3D.Set(x, y, (MapTile3DData)MapTile3DData.Deserialize(dataReader, advanced));
                     }
                 }
+
+                mapData.Tiles3D.ItemChanged += mapData.TileChanged;
 
                 mapData.TilesetIndex = null;
                 mapData.Tiles2D = null;
@@ -762,6 +804,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
         private void MapCharactersChanged(int index)
         {
             OnPropertyChanged(nameof(MapCharacters));
+        }
+
+        private void TileChanged(int x, int y)
+        {
+            if (Tiles2D is not null)
+                OnPropertyChanged(nameof(Tiles2D));
+            else if (Tiles3D is not null)
+                OnPropertyChanged(nameof(Tiles3D));
         }
 
         #endregion

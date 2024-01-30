@@ -1,12 +1,14 @@
-﻿using System.Collections;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Collections;
+using System.ComponentModel;
+
 
 namespace Ambermoon.Data.GameDataRepository.Collections
 {
     using Data;
 
     public sealed class DictionaryList<T> : ICollection<T>
-        where T : IIndexed, new()
+        where T : class, IIndexed, new()
     {
 
         #region Fields
@@ -23,13 +25,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         public int Count => _list.Count;
 
-        public bool IsReadOnly { get; } = false;
-
-        public bool IsSynchronized => (_list as IList).IsSynchronized;
-
-        public object SyncRoot => (_list as IList).SyncRoot;
-
-        public bool IsFixedSize => (_list as IList).IsFixedSize;
+        public bool IsReadOnly => false;
 
         #endregion
 
@@ -41,17 +37,21 @@ namespace Ambermoon.Data.GameDataRepository.Collections
             get => _dictionary[key];
             set
             {
+                T? old = default;
                 if (_dictionary.TryGetValue(key, out var item))
                 {
+                    old = item;
                     int listIndex = _list.IndexOf(item);
                     _list[listIndex] = value;
                 }
                 else
                 {
                     _list.Add(value);
+                    SetupChangeDetection(value);
                 }
 
                 _dictionary[key] = value;
+                Update(value, old);
             }
         }
 
@@ -76,6 +76,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         {
             _list = new(enumerable);
             _dictionary = _list.ToDictionary(item => item.Index, item => item);
+            _list.ForEach(SetupChangeDetection);
         }
 
         public DictionaryList(IEnumerable<T> enumerable, Func<T, int, uint> keySelector)
@@ -83,6 +84,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
             _dictionary = enumerable.Select((e, i) => KeyValuePair.Create(i, e))
                 .ToDictionary(item => keySelector(item.Value, item.Key), item => ItemIdSetter(item.Value, keySelector(item.Value, item.Key)));
             _list = new(_dictionary.Values);
+            _list.ForEach(SetupChangeDetection);
             return;
 
             static T ItemIdSetter(T item, uint index)
@@ -100,6 +102,29 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
 
         #region Methods
+
+        private void SetupChangeDetection(T element)
+        {
+            if (element is INotifyPropertyChanged notify)
+                notify.PropertyChanged += ElementPropertyChanged;
+        }
+
+        private void ClearChangeDetection(T element)
+        {
+            if (element is INotifyPropertyChanged notify)
+                notify.PropertyChanged -= ElementPropertyChanged;
+        }
+
+        private void Update(T? element, T? old)
+        {
+            if ((element is null) != (old is null))
+                ItemChanged?.Invoke((element ?? old)!.Index);
+            else if (element is not null && old is not null)
+            {
+                if (element.Equals(old)) return;
+                ItemChanged?.Invoke(element.Index);
+            }
+        }
 
         public T Create(uint? index = null)
         {
@@ -132,6 +157,8 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         {
             _dictionary.Add(item.Index, item);
             _list.Add(item);
+            SetupChangeDetection(item);
+            Update(item, null);
         }
 
         public T AddNew(uint? index)
@@ -148,21 +175,19 @@ namespace Ambermoon.Data.GameDataRepository.Collections
             return newItem;
         }
 
-        public int Add(object? value)
-        {
-            Add((T)value!);
-            return Count - 1;
-        }
-
         public void Clear()
         {
+            _list.ForEach(item =>
+            {
+                ClearChangeDetection(item);
+                Update(null, item);
+            });
+
             _list.Clear();
             _dictionary.Clear();
         }
 
         public bool Contains(T item) => _list.Contains(item);
-
-        public bool Contains(object? value) => Contains((T)value!);
 
         public bool ContainsKey(uint key) => _dictionary.ContainsKey(key);
 
@@ -171,44 +196,47 @@ namespace Ambermoon.Data.GameDataRepository.Collections
             _list.CopyTo(array, arrayIndex);
         }
 
-        public void CopyTo(Array array, int index)
-        {
-            (_list as IList).CopyTo(array, index);
-        }
-
         public IEnumerator<T> GetEnumerator() => _list.GetEnumerator();
 
         public int IndexOf(T item) => _list.IndexOf(item);
-
-        public int IndexOf(object? value) => (_list as IList).IndexOf((T)value!);
 
         public void Insert(int index, T item)
         {
             _dictionary.Add(item.Index, item);
             _list.Insert(index, item);
-        }
 
-        public void Insert(int index, object? value) => Insert(index, (T)value!);
+            SetupChangeDetection(item);
+            Update(item, null);
+        }
 
         public bool Remove(uint key)
         {
             if (!_dictionary.Remove(key, out var item)) return false;
             _list.Remove(item);
+            ClearChangeDetection(item);
+            Update(null, item);
             return true;
         }
 
         public bool Remove(T item)
         {
             _list.Remove(item);
-            return _dictionary.Remove(item.Index);
-        }
+            if (!_dictionary.Remove(item.Index))
+                return false;
 
-        public void Remove(object? value) => Remove((T)value!);
+            ClearChangeDetection(item);
+            Update(null, item);
+
+            return true;
+        }
 
         public void RemoveAt(int index)
         {
-            _dictionary.Remove(_list[index].Index);
+            var item = _list[index];
+            _dictionary.Remove(item.Index);
             _list.RemoveAt(index);
+            ClearChangeDetection(item);
+            Update(null, item);
         }
 
         public bool TryGetValue(uint key, [MaybeNullWhen(false)] out T value) => _dictionary.TryGetValue(key, out value);
@@ -216,6 +244,21 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         IEnumerator IEnumerable.GetEnumerator() => _list.GetEnumerator();
 
         public Dictionary<uint, T> AsDictionary() => new(_dictionary);
+
+        #endregion
+
+
+        #region Property Changes
+
+        public event Action<uint>? ItemChanged;
+
+        private void ElementPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (sender is T element)
+            {
+                ItemChanged?.Invoke(element.Index);
+            }
+        }
 
         #endregion
 

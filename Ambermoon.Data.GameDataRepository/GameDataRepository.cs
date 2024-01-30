@@ -7,6 +7,7 @@ using SonicArranger;
 
 namespace Ambermoon.Data.GameDataRepository
 {
+    using Ambermoon.Data.GameDataRepository.Data.Events;
     using Collections;
     using Data;
 
@@ -102,6 +103,7 @@ namespace Ambermoon.Data.GameDataRepository
 
         public DictionaryList<MapData> Maps { get; }
         public DictionaryList<TextList<MapData>> MapTexts { get; }
+        public DictionaryList<Tileset2DData> Tilesets { get; }
         public DictionaryList<LabyrinthData> Labyrinths { get; }
         public DictionaryList<ImageList> Tile2DImages { get; }
         public DictionaryList<Image> Wall3DImages { get; }
@@ -137,6 +139,53 @@ namespace Ambermoon.Data.GameDataRepository
         public CombatBackgroundImage[] CombatBackgroundImages2D { get; }
         public CombatBackgroundImage[] CombatBackgroundImages3D { get; }
         public List<CombatBackgroundImage> DistinctCombatBackgroundImages { get; }
+
+        /// <summary>
+        /// Note: This will retrieve the palettes by searching the game data
+        /// for references. So this might take a while and it will be done
+        /// everytime you read this property.
+        /// </summary>
+        public Dictionary<uint, Palette> DefaultMonsterImagePalettes
+        {
+            get
+            {
+                Dictionary<uint, Palette> defaultMonsterImagePalettes = new();
+
+                uint? GetCombatBackgroundFromMapTiles(MapData map, uint eventIndex)
+                {
+                    if (map.Tiles2D != null)
+                    {
+                        var tileset = Tilesets[map.TilesetIndex!.Value];
+                        var tile = map.Tiles2D.FirstOrDefault(t => t.MapEventId == eventIndex);
+
+                        if (tile is null)
+                            return null;
+
+                        var frontTile = tile.FrontTileIndex == 0 ? null : tileset.Icons[tile.FrontTileIndex];
+
+                        if (tile.FrontTileIndex == 0)
+                }
+                var monsterRefs = Maps.SelectMany(map =>
+                        map.MapCharacters.Where(mapChar => mapChar.CharacterType == CharacterType.Monster))
+                    .Select(mapChar => new { MonsterGroupIndex = mapChar.MonsterGroupIndex, CombatBackgroundIndex = mapChar.CombatBackgroundIndex });
+                monsterRefs = monsterRefs.Concat(Maps.SelectMany(map => map.Events.Select(e => e as StartBattleEventData).Where(e => e != null).Select(battleEvent => new { MonsterGroupIndex = battleEvent.MonsterGroupIndex, CombatBackgroundIndex = map. }));
+
+                foreach (var monster in Monsters)
+                {
+                    var monsterImage = MonsterImages[monster.CombatGraphicIndex];
+                    var paletteIndex = monsterImage.Frames[0].PaletteIndex;
+
+                    if (!defaultMonsterImagePalettes.ContainsKey(paletteIndex))
+                    {
+                        var palette = Palettes[paletteIndex];
+                        defaultMonsterImagePalettes.Add(paletteIndex, palette);
+                    }
+                }
+
+
+                return defaultMonsterImagePalettes;
+            }
+        }
 
         #endregion
 
@@ -254,6 +303,8 @@ namespace Ambermoon.Data.GameDataRepository
             Maps = mapFiles.Select(mapFile => (MapData)MapData.Deserialize(mapFile.Value, (uint)mapFile.Key, Advanced)).ToDictionaryList();
             var mapTextFiles = ReadFileContainers("1Map_texts.amb", "2Map_texts.amb", "3Map_texts.amb");
             MapTexts = mapTextFiles.Select(mapTextFile => (TextList<MapData>)TextList<MapData>.Deserialize(mapTextFile.Value, (uint)mapTextFile.Key, Maps[(uint)mapTextFile.Key], Advanced)).ToDictionaryList();
+            var tilesetFiles = ReadFileContainer("Icon_data.amb");
+            Tilesets = tilesetFiles.Select(tilesetFile => (Tileset2DData)Tileset2DData.Deserialize(tilesetFile.Value, (uint)tilesetFile.Key, Advanced)).ToDictionaryList();
             var tile2DImageFiles = ReadFileContainers("1Icon_gfx.amb", "2Icon_gfx.amb", "3Icon_gfx.amb");
             Tile2DImages = tile2DImageFiles.Select(tile2DImageFile => ImageList.Deserialize((uint)tile2DImageFile.Key, tile2DImageFile.Value, 16, 16, GraphicFormat.Palette5Bit)).ToDictionaryList();
             var labdataFiles = ReadFileContainers("2Lab_data.amb", "3Lab_data.amb");

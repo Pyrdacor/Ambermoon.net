@@ -27,7 +27,7 @@ namespace Ambermoon.Data.GameDataRepository.Enumerations
         BlockSight = 0x00000002,
         /// <summary>
         /// Normally the lower half of the player is drawn
-        /// above underlaying tiles but below overlaying tiles.
+        /// above underlying tiles but below overlaying tiles.
         /// But the upper half is drawn above everything.
         ///
         /// If the custom render order is activated,
@@ -45,7 +45,7 @@ namespace Ambermoon.Data.GameDataRepository.Enumerations
         RandomAnimationStart = 0x00000010,
         /// <summary>
         /// This is only considered for overlays. If set, they
-        /// will use the flags of the underlaying tile. This is
+        /// will use the flags of the underlying tile. This is
         /// often used to inherit the blocking modes of the tile.
         /// </summary>
         UseBackgroundTileFlags = 0x00000020,

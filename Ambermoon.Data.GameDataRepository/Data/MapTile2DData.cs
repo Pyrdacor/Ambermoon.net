@@ -1,32 +1,34 @@
-﻿using Ambermoon.Data.Serialization;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public class MapTile2DData : IData, IEquatable<MapTile2DData>
+    using Util;
+    using Serialization;
+
+    public class MapTile2DData : IData, IEquatable<MapTile2DData>, INotifyPropertyChanged
     {
 
         #region Fields
 
         private uint _frontTileIndex;
         private uint _backTileIndex;
-        private uint _mapEventId;
+        private uint? _mapEventId;
 
         #endregion
 
 
         #region Properties
 
-        [Range(0, byte.MaxValue)]
+        [Range(1, byte.MaxValue)]
         public uint BackTileIndex
         {
             get => _backTileIndex;
             set
             {
-                if (value > byte.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(BackTileIndex), $"Back tile indices are limited to the range 0 to {byte.MaxValue}.");
-
-                _backTileIndex = value;
+                ValueChecker.Check(value, 1, byte.MaxValue);
+                SetField(ref _backTileIndex, value);
             }
         }
 
@@ -36,31 +38,31 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _frontTileIndex;
             set
             {
-                if (value > ushort.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(FrontTileIndex), $"Front tile indices are limited to the range 0 to {ushort.MaxValue}.");
-
-                _frontTileIndex = value;
+                ValueChecker.Check(value, 0, ushort.MaxValue);
+                SetField(ref _frontTileIndex, value);
             }
         }
 
         // TODO: The original states that 64 is max. But I guess we already have working maps with more? Needs testing/verification.
-        [Range(0, byte.MaxValue)]
-        public uint MapEventId
+        /// <summary>
+        /// Index of the map event entry associated with this map tile.
+        /// </summary>
+        [Range(1, byte.MaxValue)]
+        public uint? MapEventId
         {
             get => _mapEventId;
             set
             {
-                if (value > byte.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(MapEventId), $"Map event indices are limited to the range 0 to {byte.MaxValue}.");
-
-                _mapEventId = value;
+                if (value is not null)
+                    ValueChecker.Check(value.Value, 1, byte.MaxValue);
+                SetField(ref _mapEventId, value);
             }
         }
 
         /// <summary>
         /// Determines if the map tile contains a map event.
         /// </summary>
-        public bool HasMapEvent => MapEventId != 0;
+        public bool HasMapEvent => MapEventId != null;
 
         /// <summary>
         /// Default empty 2D map tile.
@@ -75,7 +77,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public void Serialize(IDataWriter dataWriter, bool advanced)
         {
             dataWriter.Write((byte)BackTileIndex);
-            dataWriter.Write((byte)MapEventId);
+            dataWriter.Write((byte)(MapEventId ?? 0));
             dataWriter.Write((ushort)FrontTileIndex);
         }
 
@@ -89,7 +91,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             {
                 BackTileIndex = backTileIndex,
                 FrontTileIndex = frontTileIndex,
-                MapEventId = mapEventId
+                MapEventId = mapEventId == 0 ? null : mapEventId
             };
         }
 
@@ -150,6 +152,26 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public object Clone() => Copy();
 
         #endregion
-        
+
+
+        #region Property Changes
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
+
+        #endregion
+
     }
 }

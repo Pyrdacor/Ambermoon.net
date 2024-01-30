@@ -124,7 +124,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         }
 
         /// <summary>
-        /// The collision classes this map character blocks on its own
+        /// The collision classes this map character allows passing on its own
         /// so that some other characters or the player might be blocked by it.
         /// </summary>
         [Range(0, (1 << 15) - 1)]
@@ -210,10 +210,15 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// Inside the file all graphics are stored in a sequence and they all have the
         /// same size. The graphic index is then the index for the n-th graphic.
         /// </summary>
+        [Range(0, ushort.MaxValue)]
         public uint GraphicIndex
         {
             get => _graphicIndex;
-            set => SetField(ref _graphicIndex, value);
+            set
+            {
+                ValueChecker.Check(value, 0, ushort.MaxValue);
+                SetField(ref _graphicIndex, value);
+            }
         }
 
         /// <summary>
@@ -580,7 +585,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        /// <inheritdoc/>
         public void Serialize(IDataWriter dataWriter, bool advanced)
         {
 
@@ -644,7 +648,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
         }
 
-        /// <inheritdoc/>
         public static IIndexedDependentData<MapData> Deserialize(IDataReader dataReader, uint index, MapData providedData, bool advanced)
         {
             var mapCharacterData = (MapCharacterData)Deserialize(dataReader, providedData, advanced);
@@ -652,7 +655,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return mapCharacterData;
         }
 
-        /// <inheritdoc/>
         public static IDependentData<MapData> Deserialize(IDataReader dataReader, MapData providedData, bool advanced)
         {
             var mapCharacterData = new MapCharacterData();
@@ -787,8 +789,31 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public MapCharacterData Copy()
         {
-            // TODO
-            return new();
+            var copy = new MapCharacterData();
+
+            copy.CollisionClass = CollisionClass;
+            copy.AllowedCollisionClasses = AllowedCollisionClasses;
+            copy.PartyMemberIndex = PartyMemberIndex;
+            copy.NpcIndex = NpcIndex;
+            copy.MonsterGroupIndex = MonsterGroupIndex;
+            copy.TextIndex = TextIndex;
+            copy.CharacterType = CharacterType;
+            copy.UseTilesetGraphic = UseTilesetGraphic;
+            copy.IsTextPopup = IsTextPopup;
+            copy.NpcStartsConversation = NpcStartsConversation;
+            copy.OnlyMoveWhenSeePlayer = OnlyMoveWhenSeePlayer;
+            copy.MovementType = MovementType;
+            copy.GraphicIndex = GraphicIndex;
+            copy.EventIndex = EventIndex;
+            copy.WaveAnimation = WaveAnimation;
+            copy.RandomAnimation = RandomAnimation;
+            copy.CombatBackgroundIndex = CombatBackgroundIndex;
+            copy.Position = Position.Copy();
+            copy.Path = Path?.Copy();
+
+            (copy as IMutableIndex).Index = Index;
+
+            return copy;
         }
 
         public object Clone() => Copy();

@@ -1,9 +1,13 @@
-﻿using Ambermoon.Data.Serialization;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
-    public enum MapBlockType
+    using Util;
+    using Serialization;
+
+    public enum MapTile3DType
     {
         /// <summary>
         /// Free 3D tile.
@@ -23,46 +27,74 @@ namespace Ambermoon.Data.GameDataRepository.Data
         Invalid
     }
 
-    public class MapTile3DData : IData, IEquatable<MapTile3DData>
+    public class MapTile3DData : IData, IEquatable<MapTile3DData>, INotifyPropertyChanged
     {
 
         #region Fields
 
-        private uint _mapEventId;
+        private uint? _mapEventId;
+        private uint? _objectIndex;
+        private uint? _wallIndex;
+        private MapTile3DType _type = MapTile3DType.Free;
 
         #endregion
 
 
         #region Properties
 
-        public uint? ObjectIndex { get; private set; }
+        /// <summary>
+        /// Index of the object, representing this tile.
+        /// Will be null, if the tile is not an object.
+        /// </summary>
+        public uint? ObjectIndex
+        {
+            get => _objectIndex;
+            private set => SetField(ref _objectIndex, value);
+        }
 
-        public uint? WallIndex { get; private set; }
+        /// <summary>
+        /// Index of the wall, representing this tile.
+        /// Will be null, if the tile is not a wall.
+        /// </summary>
+        public uint? WallIndex
+        {
+            get => _wallIndex;
+            private set => SetField(ref _wallIndex, value);
+        }
 
-        [Range(0, byte.MaxValue)]
-        public uint MapEventId
+        /// <summary>
+        /// Index of the map event entry associated with this map tile.
+        /// </summary>
+        [Range(1, byte.MaxValue)]
+        public uint? MapEventId
         {
             get => _mapEventId;
             set
             {
-                if (value > byte.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(MapEventId), $"Map event indices are limited to the range 0 to {byte.MaxValue}.");
-
-                _mapEventId = value;
+                if (value is not null)
+                    ValueChecker.Check(value.Value, 1, byte.MaxValue);
+                SetField(ref _mapEventId, value);
             }
         }
 
-        public MapBlockType MapBlockType { get; private set; } = MapBlockType.Free;
+        /// <summary>
+        /// Type of this tile.
+        /// </summary>
+        public MapTile3DType Type
+        {
+            get => _type;
+            private set => SetField(ref _type, value);
+        }
 
         /// <summary>
         /// Determines if the map tile contains a map event.
         /// </summary>
-        public bool HasMapEvent => MapEventId != 0;
+        public bool HasMapEvent => MapEventId != null;
 
         /// <summary>
         /// Default empty 3D map tile.
         /// </summary>
-        public static MapTile3DData Empty => new() { MapBlockType = MapBlockType.Free };
+        public static MapTile3DData Empty => new() { Type = MapTile3DType.Free };
 
         #endregion
 
@@ -81,7 +113,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             if (wallIndex is < GameDataRepository.MinWall3DIndex or > GameDataRepository.MaxWall3DIndex)
                 throw new ArgumentOutOfRangeException(nameof(wallIndex), $"Wall indices must be in the range {GameDataRepository.MinWall3DIndex} to {GameDataRepository.MaxWall3DIndex}.");
 
-            MapBlockType = MapBlockType.Wall;
+            Type = MapTile3DType.Wall;
             WallIndex = wallIndex;
             ObjectIndex = null;
         }
@@ -98,7 +130,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             if (objectIndex is < GameDataRepository.MinObject3DIndex or > GameDataRepository.MaxObject3DIndex)
                 throw new ArgumentOutOfRangeException(nameof(objectIndex), $"Object indices must be in the range {GameDataRepository.MinObject3DIndex} to {GameDataRepository.MaxObject3DIndex}.");
 
-            MapBlockType = MapBlockType.Object;
+            Type = MapTile3DType.Object;
             ObjectIndex = objectIndex;
             WallIndex = null;
         }
@@ -108,7 +140,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// </summary>
         public void SetFree()
         {
-            MapBlockType = MapBlockType.Free;
+            Type = MapTile3DType.Free;
             ObjectIndex = null;
             WallIndex = null;
         }
@@ -118,7 +150,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// </summary>
         public void SetInvalid()
         {
-            MapBlockType = MapBlockType.Invalid;
+            Type = MapTile3DType.Invalid;
             ObjectIndex = null;
             WallIndex = null;
         }
@@ -131,7 +163,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// <returns></returns>
         public bool TryGetObject(out uint? objectIndex)
         {
-            if (MapBlockType == MapBlockType.Object)
+            if (Type == MapTile3DType.Object)
             {
                 objectIndex = ObjectIndex;
                 return true;
@@ -151,7 +183,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// <returns></returns>
         public bool TryGetWall(out uint? wallIndex)
         {
-            if (MapBlockType == MapBlockType.Wall)
+            if (Type == MapTile3DType.Wall)
             {
                 wallIndex = WallIndex;
                 return true;
@@ -170,22 +202,23 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public void Serialize(IDataWriter dataWriter, bool advanced)
         {
-            byte index = MapBlockType switch
+            byte index = Type switch
             {
-                MapBlockType.Free => 0,
-                MapBlockType.Object => (byte)ObjectIndex!,
-                MapBlockType.Wall => (byte)(GameDataRepository.MaxObject3DIndex + WallIndex!),
+                MapTile3DType.Free => 0,
+                MapTile3DType.Object => (byte)ObjectIndex!,
+                MapTile3DType.Wall => (byte)(GameDataRepository.MaxObject3DIndex + WallIndex!),
                 _ => 255
             };
             dataWriter.Write(index);
-            dataWriter.Write((byte)MapEventId);
+            dataWriter.Write((byte)(MapEventId ?? 0));
         }
 
         public static IData Deserialize(IDataReader dataReader, bool advanced)
         {
             uint index = dataReader.ReadByte();
 
-            var mapBlock = new MapTile3DData() { MapEventId = dataReader.ReadByte() };
+            uint mapEventId = dataReader.ReadByte();
+            var mapBlock = new MapTile3DData() { MapEventId = mapEventId == 0 ? null : mapEventId };
 
             switch (index)
             {
@@ -219,7 +252,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return
                 WallIndex == other.WallIndex &&
                 ObjectIndex == other.ObjectIndex &&
-                MapBlockType == other.MapBlockType &&
+                Type == other.Type &&
                 MapEventId == other.MapEventId;
         }
 
@@ -233,7 +266,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(MapEventId, ObjectIndex ?? WallIndex ?? 0, (int)MapBlockType);
+            return HashCode.Combine(MapEventId, ObjectIndex ?? WallIndex ?? 0, (int)Type);
         }
 
         public static bool operator ==(MapTile3DData? left, MapTile3DData? right)
@@ -257,12 +290,32 @@ namespace Ambermoon.Data.GameDataRepository.Data
             {
                 WallIndex = WallIndex,
                 ObjectIndex = ObjectIndex,
-                MapBlockType = MapBlockType,
+                Type = Type,
                 MapEventId = MapEventId
             };
         }
 
         public object Clone() => Copy();
+
+        #endregion
+
+
+        #region Property Changes
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
 
         #endregion
 

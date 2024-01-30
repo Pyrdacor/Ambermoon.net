@@ -338,7 +338,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         }
 
         /// <summary>
-        /// The collision classes this object blocks.
+        /// The collision classes this wall allows passing.
         /// </summary>
         [Range(0, (1 << 15) - 1)]
         public uint AllowedCollisionClasses
@@ -710,7 +710,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         }
 
         /// <summary>
-        /// The collision classes this object blocks.
+        /// The collision classes this object allows passing.
         /// </summary>
         [Range(0, (1 << 15) - 1)]
         public uint AllowedCollisionClasses

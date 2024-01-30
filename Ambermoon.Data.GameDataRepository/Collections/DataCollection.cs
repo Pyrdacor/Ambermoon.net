@@ -79,17 +79,6 @@ namespace Ambermoon.Data.GameDataRepository.Collections
             ItemChanged?.Invoke(index);
         }
 
-        private void ElementPropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            if (sender is TElement element)
-            {
-                var index = _elements.ToList().IndexOf(element);
-
-                if (index >= 0)
-                    ItemChanged?.Invoke(index);
-            }
-        }
-
         public IEnumerator<TElement> GetEnumerator() => ((IEnumerable<TElement>)_elements).GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => _elements.GetEnumerator();
@@ -181,6 +170,17 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         #region Property Changes
 
         public event Action<int>? ItemChanged;
+
+        private void ElementPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (sender is TElement element)
+            {
+                var index = _elements.ToList().IndexOf(element);
+
+                if (index >= 0)
+                    ItemChanged?.Invoke(index);
+            }
+        }
 
         #endregion
 
