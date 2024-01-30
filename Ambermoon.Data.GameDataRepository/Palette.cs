@@ -80,6 +80,25 @@ namespace Ambermoon.Data.GameDataRepository
             return -1;
         }
 
+        public uint GetColor(uint colorIndex)
+        {
+            if (colorIndex >= 32)
+                throw new ArgumentOutOfRangeException(nameof(colorIndex));
+
+            colorIndex *= 4;
+            return (uint)(_data[colorIndex++] | (_data[colorIndex++] << 8) | (_data[colorIndex++] << 16) | (_data[colorIndex] << 24));
+        }
+
+        public uint[] GetColors()
+        {
+            var colors = new uint[32];
+
+            for (int i = 0; i < 32; ++i)
+                colors[i] = GetColor((uint)i);
+
+            return colors;
+        }
+
         #endregion
 
 

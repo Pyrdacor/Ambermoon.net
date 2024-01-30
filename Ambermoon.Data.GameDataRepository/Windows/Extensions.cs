@@ -40,6 +40,16 @@ namespace Ambermoon.Data.GameDataRepository.Windows
 
             return new ImageData(bitmap.Width, bitmap.Height, data, palette);
         }
+
+        public static Color ToColor(this Palette palette, uint colorIndex)
+        {
+            return Color.FromArgb(unchecked((int)palette.GetColor(colorIndex)));
+        }
+
+        public static Color[] ToColors(this Palette palette)
+        {
+            return palette.GetColors().Select(color => Color.FromArgb(unchecked((int)color))).ToArray();
+        }
     }
 }
 
