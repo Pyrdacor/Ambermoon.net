@@ -88,9 +88,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             {
                 SetField(ref _type, value);
                 if (value == Tile2DType.Water)
-                    AllowedCollisionClasses |= (uint)Tileset.TileFlags.AllowMovementSwim;
+                    AllowedCollisionClasses |= (uint)Tileset.TileFlags.AllowMovementSwim >> 8;
                 else
-                    AllowedCollisionClasses &= ~(uint)Tileset.TileFlags.AllowMovementSwim;
+                    AllowedCollisionClasses &= ~(uint)Tileset.TileFlags.AllowMovementSwim >> 8;
             }
         }
 
@@ -182,20 +182,20 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         /// <summary>
         /// Number of frames for this tile animation.
-        /// If 1, this is a normal tile without animation.
+        /// If 1 or 0, this is a normal tile without animation.
         ///
         /// Note that for animations, always those
         /// graphics are used which follow the first frame
         /// graphic provided by <see cref="GraphicIndex"/>.
         /// </summary>
-        [Range(1, byte.MaxValue)]
+        [Range(0, byte.MaxValue)]
         public uint NumberOfFrames
         {
             get => _numberOfFrames;
             set
             {
-                ValueChecker.Check(value, 1, byte.MaxValue);
-                SetField(ref _numberOfFrames, value);
+                ValueChecker.Check(value, 0, byte.MaxValue);
+                SetField(ref _numberOfFrames, value == 0 ? 1 : value);
             }
         }
 

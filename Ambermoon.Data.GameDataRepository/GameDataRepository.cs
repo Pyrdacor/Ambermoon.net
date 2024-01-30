@@ -228,6 +228,7 @@ namespace Ambermoon.Data.GameDataRepository
         //public Dictionary<uint, Place> Places { get; } = new();
         public DictionaryList<ItemData> Items { get; }
         public DictionaryList<Image> ItemImages { get; }
+        public DictionaryList<TextList> ItemTexts { get; } = new();
 
         #endregion
 
@@ -347,6 +348,7 @@ namespace Ambermoon.Data.GameDataRepository
             var object3DImageFiles = ReadFileContainers("2Object3D.amb", "3Object3D.amb");
             static Image Load3DObjectImage(uint index, IDataReader dataReader)
             {
+                // TODO
                 var info = //index < TextureGraphicInfos.ObjectGraphicFrameCountsAndSizes.Length
                     /*? */TextureGraphicInfos.ObjectGraphicFrameCountsAndSizes[index - 1]
                     /*: 0*/; // TODO
@@ -418,6 +420,8 @@ namespace Ambermoon.Data.GameDataRepository
             var itemGraphicFiles = ReadFileContainer("Object_icons");
             ItemImages = ImageList.Deserialize(0, itemGraphicFiles[1], 16, 16, GraphicFormat.Palette5Bit)
                 .ToDictionaryList();
+            var itemTextFiles = ReadFileContainer("Object_texts.amb");
+            ItemTexts = itemTextFiles.Select(itemTextFile => (TextList)TextList.Deserialize(itemTextFile.Value, (uint)itemTextFile.Key, Advanced)).ToDictionaryList();
 
             #endregion
 
