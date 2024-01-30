@@ -47,6 +47,7 @@ namespace Ambermoon.Data
         Unknown3 = 0x2000,
         Unknown4 = 0x4000,
         AllWithUnused = 0x7fff,
+        AllWithoutAnimal = 0x1ff,
         All = 0x03ff
     }
 
