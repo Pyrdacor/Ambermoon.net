@@ -22,6 +22,7 @@
 using Ambermoon.Render;
 using Ambermoon.UI;
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -29,7 +30,7 @@ namespace Ambermoon
 {
     internal class Tutorial
     {
-        static readonly Dictionary<GameLanguage, string[]> texts = new Dictionary<GameLanguage, string[]>
+        static readonly FrozenDictionary<GameLanguage, string[]> texts = new Dictionary<GameLanguage, string[]>
         {
             { GameLanguage.German, new string[]
             {
@@ -129,7 +130,7 @@ namespace Ambermoon
                 // End
                 "Teraz zamilknę. baw się dobrze grając w Ambermoon!"
             } }
-        };
+        }.ToFrozenDictionary();
 
         readonly Game game;
         readonly IColoredRect[] markers = new IColoredRect[4];

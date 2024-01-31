@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Frozen;
+using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -18,7 +19,7 @@ namespace Ambermoon.Data.Legacy
             "Keymap"
         };
 
-        public static readonly Dictionary<string, char> AmigaSaveFiles = new Dictionary<string, char>
+        public static readonly FrozenDictionary<string, char> AmigaSaveFiles = new Dictionary<string, char>
         {
             // Disk A
             { "Initial/Automap.amb", 'A' },
@@ -88,23 +89,23 @@ namespace Ambermoon.Data.Legacy
             { "Save.10/Merchant_data.amb", 'J' },
             { "Save.10/Party_char.amb", 'J' },
             { "Save.10/Party_data.sav", 'J' }
-        };
+        }.ToFrozenDictionary();
 
-        public static Dictionary<string, char> New114Files = new Dictionary<string, char>
+        public static FrozenDictionary<string, char> New114Files = new Dictionary<string, char>
         {
             { "Dict.amb", 'G' },
             { "Button_graphics", 'A' },
             { "Objects.amb", 'A' },
             { "Text.amb", 'A' },
             { "Monster_char.amb", 'H' }
-        };
+        }.ToFrozenDictionary();
 
-        public static Dictionary<string, string> Renamed114Files = new Dictionary<string, string>
+        public static FrozenDictionary<string, string> Renamed114Files = new Dictionary<string, string>
         {
             { "Monster_char_data.amb", "Monster_char.amb" }
-        };
+        }.ToFrozenDictionary();
 
-        public static List<string> Removed114Files = new List<string>
+        public static List<string> Removed114Files = new()
         {
             "Dictionary.english",
             "Dictionary.german",
@@ -113,7 +114,7 @@ namespace Ambermoon.Data.Legacy
         };
 
         // Key: Filename, Value: Disk letter
-        public static readonly Dictionary<string, char> AmigaFiles = new Dictionary<string, char>
+        public static readonly FrozenDictionary<string, char> AmigaFiles = new Dictionary<string, char>
         {
             // Disk A
             { "AM2_BLIT", 'A' },
@@ -244,6 +245,6 @@ namespace Ambermoon.Data.Legacy
             { "Save.10/Merchant_data.amb", 'J' },
             { "Save.10/Party_char.amb", 'J' },
             { "Save.10/Party_data.sav", 'J' }
-        };
+        }.ToFrozenDictionary();
     }
 }

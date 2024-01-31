@@ -23,6 +23,7 @@ using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
 using TextColor = Ambermoon.Data.Enumerations.Color;
@@ -1181,7 +1182,7 @@ namespace Ambermoon.UI
         // TODO: add more languages later and/or add these texts to the new game data format
         const int OptionCount = 22;
         const int OptionsPerPage = 7;
-        static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
+        static readonly FrozenDictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
             {
                 GameLanguage.German,
@@ -1311,8 +1312,9 @@ namespace Ambermoon.UI
                     "Włącz cheaty",
                 }
             }            
-        };
-        static readonly Dictionary<GameLanguage, string[]> FloorAndCeilingValues = new Dictionary<GameLanguage, string[]>
+        }.ToFrozenDictionary();
+
+        static readonly FrozenDictionary<GameLanguage, string[]> FloorAndCeilingValues = new Dictionary<GameLanguage, string[]>
         {
             {
                 GameLanguage.German,
@@ -1354,8 +1356,9 @@ namespace Ambermoon.UI
                     "Obie"
                 }
             }
-        };
-        static readonly Dictionary<GameLanguage, string> DefaultBattleSpeedName = new Dictionary<GameLanguage, string>
+        }.ToFrozenDictionary();
+
+        static readonly FrozenDictionary<GameLanguage, string> DefaultBattleSpeedName = new Dictionary<GameLanguage, string>
         {
             {
                 GameLanguage.German, "Standard"
@@ -1369,8 +1372,9 @@ namespace Ambermoon.UI
             {
                 GameLanguage.Polish, "Domyślna"
             }
-        };
-        static readonly Dictionary<GameLanguage, string[]> Movement3DValues = new Dictionary<GameLanguage, string[]>
+        }.ToFrozenDictionary();
+
+        static readonly FrozenDictionary<GameLanguage, string[]> Movement3DValues = new Dictionary<GameLanguage, string[]>
         {
             {
                 GameLanguage.German,
@@ -1404,7 +1408,7 @@ namespace Ambermoon.UI
                     "QWEASD"
                 }
             }
-        };
+        }.ToFrozenDictionary();
 
         void OpenOptions()
         {

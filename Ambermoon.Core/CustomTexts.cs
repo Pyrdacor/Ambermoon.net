@@ -19,6 +19,7 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System.Collections.Frozen;
 using System.Collections.Generic;
 
 namespace Ambermoon
@@ -40,7 +41,7 @@ namespace Ambermoon
             InitialGameLoaded
         }
 
-        static readonly Dictionary<GameLanguage, Dictionary<Index, string>> entries = new Dictionary<GameLanguage, Dictionary<Index, string>>
+        static readonly FrozenDictionary<GameLanguage, FrozenDictionary<Index, string>> entries = new Dictionary<GameLanguage, FrozenDictionary<Index, string>>
         {
             { GameLanguage.German, new Dictionary<Index, string>
                 {
@@ -55,7 +56,7 @@ namespace Ambermoon
                     { Index.GameSaved, "Gespeichert als ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "~INK 22~Spielstand {0}~INK 31~ wurde geladen."},
                     { Index.InitialGameLoaded, "~INK 22~Initialer Spielstand~INK 31~ wurde geladen."}
-                }
+                }.ToFrozenDictionary()
             },
             { GameLanguage.English, new Dictionary<Index, string>
                 {
@@ -70,7 +71,7 @@ namespace Ambermoon
                     { Index.GameSaved, "Saved as ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "~INK 22~Savegame {0}~INK 31~ was loaded."},
                     { Index.InitialGameLoaded, "~INK 22~Initial savegame~INK 31~ was loaded."}
-                }
+                }.ToFrozenDictionary()
             },
             { GameLanguage.French, new Dictionary<Index, string>
                 {
@@ -85,7 +86,7 @@ namespace Ambermoon
                     { Index.GameSaved, "Sauvegardé en tant que ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "La ~INK 22~sauvegarde {0}~INK 31~ a été chargée."},
                     { Index.InitialGameLoaded, "La ~INK 22~sauvegarde initiale~INK 31~ a été chargée."}
-                }
+                }.ToFrozenDictionary()
             },
             { GameLanguage.Polish, new Dictionary<Index, string>
                 {
@@ -100,9 +101,9 @@ namespace Ambermoon
                     { Index.GameSaved, "Zapisano jako ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "~INK 22~Zapis {0}~INK 31~ został wczytany."},
                     { Index.InitialGameLoaded, "~INK 22~Zapis startowy~INK 31~ został wczytany."}
-                }
+                }.ToFrozenDictionary()
             }
-        };
+        }.ToFrozenDictionary();
 
         public static string GetText(GameLanguage language, Index index) => entries[language][index];
     }

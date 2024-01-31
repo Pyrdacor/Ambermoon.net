@@ -23,6 +23,7 @@ using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 
 namespace Ambermoon.UI
@@ -95,8 +96,7 @@ namespace Ambermoon.UI
             IdentifyScroll
         }
 
-        // TODO: add more languages or add this to some kind of game data
-        static readonly Dictionary<GameLanguage, string[]> tooltips = new Dictionary<GameLanguage, string[]>
+        static readonly FrozenDictionary<GameLanguage, string[]> tooltips = new Dictionary<GameLanguage, string[]>
         {
             { GameLanguage.German, new string[]
                 {
@@ -362,7 +362,7 @@ namespace Ambermoon.UI
                     "Określ wymagane punkty nauki zaklęć"
                 }
             }
-        };
+        }.ToFrozenDictionary();
 
         public static string GetTooltip(GameLanguage gameLanguage, TooltipType type) => tooltips[gameLanguage][(int)type];
 

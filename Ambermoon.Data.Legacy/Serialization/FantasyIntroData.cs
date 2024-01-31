@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Frozen;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
@@ -86,14 +87,14 @@ namespace Ambermoon.Data.Legacy.Serialization
         readonly Queue<FantasyIntroAction> actions = new();
         readonly List<Graphic> fantasyIntroPalettes = new();
         readonly Dictionary<FantasyIntroGraphic, Graphic> graphics = new();
-        static readonly Dictionary<FantasyIntroGraphic, byte> graphicPalettes = new()
+        static readonly FrozenDictionary<FantasyIntroGraphic, byte> graphicPalettes = new Dictionary<FantasyIntroGraphic, byte>
         {
             { FantasyIntroGraphic.FairySparks, 0 },
             { FantasyIntroGraphic.Fairy, 0 },
             { FantasyIntroGraphic.Background, 1 },
             { FantasyIntroGraphic.WritingSparks, 0 },
             { FantasyIntroGraphic.Writing, 0 },
-        };
+        }.ToFrozenDictionary();
         static GraphicInfo paletteGraphicInfo = new()
         {
             Width = 32,

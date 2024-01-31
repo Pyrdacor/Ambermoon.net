@@ -19,6 +19,7 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System.Collections.Frozen;
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using System.Collections.Generic;
@@ -154,7 +155,7 @@ namespace Ambermoon.UI
         public static string GetConditionTooltip(GameLanguage gameLanguage, Condition condition, PartyMember partyMember) => condition == Condition.Aging
             ? string.Format(ConditionTooltips[gameLanguage][condition], partyMember.Attributes[Attribute.Age].MaxValue) : ConditionTooltips[gameLanguage][condition];
 
-        static readonly Dictionary<GameLanguage, string[]> AttributeTooltips = new Dictionary<GameLanguage, string[]>
+        static readonly FrozenDictionary<GameLanguage, string[]> AttributeTooltips = new Dictionary<GameLanguage, string[]>
         {
             { GameLanguage.German, new string[]
             {
@@ -232,9 +233,9 @@ namespace Ambermoon.UI
                 // Anti-Magic
                 "Anty-magia^^Procentowa szansa na zablokowanie zaklęć przeciwnika.^^Obecnie {0}% szansy na zablokowanie zaklęć."
             } }
-        };
+        }.ToFrozenDictionary();
 
-        static readonly Dictionary<GameLanguage, string[]> SkillTooltips = new Dictionary<GameLanguage, string[]>
+        static readonly FrozenDictionary<GameLanguage, string[]> SkillTooltips = new Dictionary<GameLanguage, string[]>
         {
             { GameLanguage.German, new string[]
             {
@@ -328,9 +329,9 @@ namespace Ambermoon.UI
                 // Use magic
                 "Używanie magii^^Szansa na pomyślne rzucenie zaklęcia.^Niektóre zaklęcia mają negatywne efekty, jeśli rzucenie nie powiedzie się^^Aktualna szansa: {0}%",
             } }
-        };
+        }.ToFrozenDictionary();
 
-        static readonly Dictionary<GameLanguage, Dictionary<Condition, string>> ConditionTooltips = new Dictionary<GameLanguage, Dictionary<Condition, string>>
+        static readonly FrozenDictionary<GameLanguage, FrozenDictionary<Condition, string>> ConditionTooltips = new Dictionary<GameLanguage, FrozenDictionary<Condition, string>>
         {
             { GameLanguage.German, new Dictionary<Condition, string>
             {
@@ -366,7 +367,7 @@ namespace Ambermoon.UI
                 { Condition.DeadAshes, "Der Charakter nimmt nicht an Kämpfen teil.^Er kann nicht kommunizieren.^Er muss zunächst in Fleisch verwandelt^werden, um ihn wiederzubeleben." },
                 // DeadDust
                 { Condition.DeadDust, "Der Charakter nimmt nicht an Kämpfen teil.^Er kann nicht kommunizieren.^Er muss zunächst in Asche und danach^in Fleisch verwandelt werden,^um ihn wiederzubeleben." }
-            } },
+            }.ToFrozenDictionary() },
             { GameLanguage.English, new Dictionary<Condition, string>
             {
                 // Irritated
@@ -401,7 +402,7 @@ namespace Ambermoon.UI
                 { Condition.DeadAshes, "The character does not participate in battles.^He can not communicate.^His ashes must be converted to^flesh first to resurrect him." },
                 // DeadDust
                 { Condition.DeadDust, "The character does not participate in battles.^He can not communicate.^His dust must be converted to ashes^and then to flesh to resurrect him." }
-            } },
+            }.ToFrozenDictionary() },
             { GameLanguage.French, new Dictionary<Condition, string>
             {
                 // Irritated
@@ -436,7 +437,7 @@ namespace Ambermoon.UI
                 { Condition.DeadAshes, "Le personnage ne participe pas aux combats,^il ne peut pas communiquer.^Ses cendres doivent d'abord être transformées^en corps pour qu'il puisse être ressuscité." },
                 // DeadDust
                 { Condition.DeadDust, "Le personnage ne participe pas aux combats,^il ne peut pas communiquer.^Sa poussière doit être transformée en cendres^et ensuite en corps pour le ressusciter." }
-            } },
+            }.ToFrozenDictionary() },
             { GameLanguage.Polish, new Dictionary<Condition, string>
             {
                 // Irritated
@@ -471,10 +472,10 @@ namespace Ambermoon.UI
                 { Condition.DeadAshes, "Postać nie bierze udziału w walce.^Nie może się komunikować.^By ją wskrzesić, najpierw popioły^muszą zostać przekształcone w ciało." },
                 // DeadDust
                 { Condition.DeadDust, "Postać nie bierze udziału w walce.^Nie może się komunikować.^By ją wskrzesić, proch musi zostać^przekształcony w popiół, a następnie w ciało." }
-            } }
-        };
+            }.ToFrozenDictionary() }
+        }.ToFrozenDictionary();
 
-        static readonly Dictionary<GameLanguage, string[]> SecondaryStatTooltips = new Dictionary<GameLanguage, string[]>
+        static readonly FrozenDictionary<GameLanguage, string[]> SecondaryStatTooltips = new Dictionary<GameLanguage, string[]>
         {
             { GameLanguage.German, new string[]
             {
@@ -616,6 +617,6 @@ namespace Ambermoon.UI
                 // MagicIntBonus
                 "^ Premia: PM i PNM +INT/25 ({0})"
             } }
-        };
+        }.ToFrozenDictionary();
     }
 }
