@@ -40,8 +40,6 @@ namespace Ambermoon
         IFontProvider fontProvider = null;
         DateTime? initializeErrorTime = null;
         List<Size> availableFullscreenModes = null;
-        DateTime lastRenderTime = DateTime.MinValue;
-        TimeSpan lastRenderDuration = TimeSpan.Zero;
         bool trapMouse = false;
         FloatPosition trappedMouseOffset = null;
         FloatPosition trappedMouseLastPosition = null;
@@ -1495,22 +1493,6 @@ namespace Ambermoon
         {
             if (window.WindowState != WindowState.Minimized)
             {
-                int refreshRate = Util.Limit(1, window.Monitor.VideoMode.RefreshRate ?? 60, 250);
-                var timePerFrame = 1000.0 / refreshRate;
-                bool vsync = lastRenderDuration.TotalMilliseconds <= timePerFrame;
-
-                if (vsync != window.VSync)
-                    window.VSync = vsync;
-                else if (vsync)
-                {
-                    var renderDuration = DateTime.Now - lastRenderTime;
-                    if (lastRenderDuration.TotalMilliseconds < 10 &&
-                        renderDuration.TotalMilliseconds < timePerFrame - 4.0 * delta * 1000.0 - lastRenderDuration.TotalMilliseconds)
-                        return;
-                }
-
-                var startRenderTime = DateTime.Now;
-            
                 if (patcher != null)
                     patcher.Render();
                 else if (versionSelector != null)
@@ -1523,9 +1505,6 @@ namespace Ambermoon
                     renderView.Render(null);
 
                 window.SwapBuffers();
-
-                lastRenderTime = DateTime.Now;
-                lastRenderDuration = lastRenderTime - startRenderTime;
             }
         }
 
@@ -1745,7 +1724,7 @@ namespace Ambermoon
             gameVersion = $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build}";
             var videoMode = new VideoMode(60);
             var options = new WindowOptions(true, new WindowDimension(100, 100),
-                new WindowDimension(Width, Height), 60.0, 60.0, api, gameVersion,
+                new WindowDimension(Width, Height), 60.0, 120.0, api, gameVersion,
                 WindowState.Normal, WindowBorder.Fixed, true, false, videoMode, 24);
             options.WindowClass = "Ambermoon.net";
 
