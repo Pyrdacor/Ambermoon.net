@@ -17,6 +17,7 @@
     <ApplicationIcon>app.ico</ApplicationIcon>
     <Configurations>Debug;Release;DebugAndroid;ReleaseAndroid;ReleaseNative;DebugES;ReleaseES</Configurations>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+	<PublishAot>true</PublishAot>
   </PropertyGroup>
 	
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -76,13 +77,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="glfw" Version="3.3.8" />
+    <PackageReference Include="glfw" Version="3.3.9" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="NLayer" Version="1.14.0" />
-    <PackageReference Include="Silk.NET.GLFW" Version="2.16.0" />
-    <PackageReference Include="Silk.NET.Input" Version="2.16.0" />
-    <PackageReference Include="Silk.NET.Windowing" Version="2.16.0" />
-    <PackageReference Include="System.Resources.Extensions" Version="7.0.0" />
+    <PackageReference Include="NLayer" Version="1.15.0" />
+    <PackageReference Include="Silk.NET.GLFW" Version="2.20.0" />
+    <PackageReference Include="Silk.NET.Input" Version="2.20.0" />
+    <PackageReference Include="Silk.NET.Windowing" Version="2.20.0" />
+    <PackageReference Include="System.Resources.Extensions" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='ReleaseNative'">

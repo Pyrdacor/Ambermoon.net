@@ -108,7 +108,7 @@
             return new(Index, this);
         }
 
-        public object Clone() => Copy();
+        public virtual object Clone() => Copy();
 
         #endregion
 
@@ -218,9 +218,9 @@
             return new(Index, newAssociatedItem, this);
         }
 
-        public TextList<T> Copy() => Copy(AssociatedItem);
+        public new TextList<T> Copy() => Copy(AssociatedItem);
 
-        public object Clone() => Copy();
+        public override object Clone() => Copy();
 
         #endregion
 

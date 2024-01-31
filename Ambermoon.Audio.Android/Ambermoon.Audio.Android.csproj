@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-android30.0</TargetFramework>
-	  <SupportedOSPlatformVersion>30</SupportedOSPlatformVersion>
+    <TargetFramework>net8.0-android</TargetFramework>
+	<SupportedOSPlatformVersion>30</SupportedOSPlatformVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release;DebugAndroid;ReleaseAndroid;DebugES;ReleaseES</Configurations>

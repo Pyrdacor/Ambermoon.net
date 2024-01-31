@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0-android</TargetFramework>
     <SupportedOSPlatformVersion>29.0</SupportedOSPlatformVersion>
-	<RuntimeIdentifiers>android.29-x64;android.29-arm;android.30-x64;android.30-arm</RuntimeIdentifiers>
+	<RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
     <OutputType>Exe</OutputType>
     <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -69,11 +69,11 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-    <PackageReference Include="Silk.NET.Input" Version="2.15.0" />
-    <PackageReference Include="Silk.NET.OpenGL" Version="2.15.0" />
-    <PackageReference Include="Silk.NET.OpenGLES" Version="2.15.0" />
-    <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.15.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Silk.NET.Input" Version="2.20.0" />
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.20.0" />
+    <PackageReference Include="Silk.NET.OpenGLES" Version="2.20.0" />
+    <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.20.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Audio.Android\Ambermoon.Audio.Android.csproj" />
