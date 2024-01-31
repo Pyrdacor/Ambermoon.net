@@ -51,14 +51,14 @@ namespace Ambermoon.Data.GameDataRepository
 
         #region Constructors
 
-        internal GameDataInfo(GameDataRepository repository)
+        internal GameDataInfo(string versionString, string dateAndLanguageString)
         {
             var versionRegex = VersionRegex();
-            var versionMatch = versionRegex.Match(repository.VersionString);
+            var versionMatch = versionRegex.Match(versionString);
             _advanced = versionMatch.Groups.Count >= 1 && versionMatch.Groups[1].Value.ToLower().Contains("adv");
             _version = versionMatch.Groups.Count < 2 ? "Unknown version" : versionMatch.Groups[2].Value;
             var dateLanguageRegex = DateLanguageRegex();
-            var dateLanguageMatch = dateLanguageRegex.Match(repository.DateAndLanguageString);
+            var dateLanguageMatch = dateLanguageRegex.Match(dateAndLanguageString);
             string? releaseDataString = dateLanguageMatch.Groups.Count < 1 ? null : dateLanguageMatch.Groups[1].Value;
             if (releaseDataString is not null)
             {

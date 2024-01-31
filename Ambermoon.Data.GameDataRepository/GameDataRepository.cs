@@ -339,7 +339,7 @@ namespace Ambermoon.Data.GameDataRepository
             #region Info & Shared Data
 
             _textContainer = TextContainer.Load(new TextContainerReader(), ReadFileContainer("Text.amb")[1], false);
-            _info = new(this);
+            _info = new(_textContainer.VersionString, _textContainer.DateAndLanguageString);
             _info.PropertyChanged += PropertyChanged;
 
             var combatGraphicFiles = ReadFileContainer("Combat_graphics");
