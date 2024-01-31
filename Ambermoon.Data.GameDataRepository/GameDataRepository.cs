@@ -1,17 +1,19 @@
-﻿using Ambermoon.Data.FileSystems;
-using Ambermoon.Data.Legacy;
-using Ambermoon.Data.Legacy.Serialization;
-using Ambermoon.Data.Serialization;
-using Ambermoon.Data.Serialization.FileSystem;
+﻿using System.Runtime.CompilerServices;
+using System.ComponentModel;
 using SonicArranger;
 
 namespace Ambermoon.Data.GameDataRepository
 {
-    using Ambermoon.Data.GameDataRepository.Data.Events;
     using Collections;
     using Data;
+    using Enumerations;
+    using FileSystems;
+    using Legacy;
+    using Ambermoon.Data.Legacy.Serialization;
+    using Serialization;
+    using Serialization.FileSystem;
 
-    public class GameDataRepository : IDisposable
+    public class GameDataRepository : IDisposable, INotifyPropertyChanged
     {
 
         #region Constants
@@ -54,6 +56,7 @@ namespace Ambermoon.Data.GameDataRepository
 
         #region Fields
 
+        private readonly GameDataInfo _info;
         private readonly TextContainer _textContainer;
         private bool disposed;
         private static readonly List<GameDataRepository> OpenRepositories = new();
@@ -64,15 +67,50 @@ namespace Ambermoon.Data.GameDataRepository
         #region Properties
 
 
-        #region Misc
+        #region Info
 
-        public bool Advanced { get; private set; } = false;
-        
+        public GameDataInfo Info
+        {
+            get => _info;
+            set
+            {
+                _info.Advanced = value.Advanced;
+                _info.Version = value.Version;
+                _info.ReleaseDate = value.ReleaseDate;
+                _info.Language = value.Language;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool Advanced
+        {
+            get => _info.Advanced;
+            set => _info.Advanced = value;
+        }
+
+        public string Version
+        {
+            get => _info.Version;
+            set => _info.Version = value;
+        }
+
+        public DateTime ReleaseDate
+        {
+            get => _info.ReleaseDate;
+            set => _info.ReleaseDate = value;
+        }
+
+        public GameDataLanguage Language
+        {
+            get => _info.Language;
+            set => _info.Language = value;
+        }
+
         #endregion
 
 
         #region Palettes
-        
+
         public DictionaryList<Palette> Palettes { get; }
         /// <summary>
         /// Used for UI elements, items, portraits, etc.
@@ -262,16 +300,6 @@ namespace Ambermoon.Data.GameDataRepository
         public List<string> ConditionNames => _textContainer.ConditionNames;
         public List<string> UITexts => _textContainer.UITexts;
         public List<int> UITextWithPlaceholderIndices => _textContainer.UITextWithPlaceholderIndices;
-        public string VersionString
-        {
-            get => _textContainer.VersionString;
-            set => _textContainer.VersionString = value;
-        }
-        public string DateAndLanguageString
-        {
-            get => _textContainer.DateAndLanguageString;
-            set => _textContainer.DateAndLanguageString = value;
-        }
 
         #endregion
 
@@ -308,10 +336,12 @@ namespace Ambermoon.Data.GameDataRepository
             #endregion
 
 
-            #region Misc & Shared Data
+            #region Info & Shared Data
 
             _textContainer = TextContainer.Load(new TextContainerReader(), ReadFileContainer("Text.amb")[1], false);
-            Advanced = _textContainer.VersionString.ToLower().Contains("adv");
+            _info = new(this);
+            _info.PropertyChanged += PropertyChanged;
+
             var combatGraphicFiles = ReadFileContainer("Combat_graphics");
             var combatGraphics = CombatGraphicData.Deserialize(combatGraphicFiles[1]);
 
@@ -494,6 +524,13 @@ namespace Ambermoon.Data.GameDataRepository
                 fileSystem.CreateFile(containerName, writer.ToArray());
             }
 
+            #region Info
+
+            _textContainer.VersionString = (Advanced ? "Ambermoon Advanced" : "Ambermoon") + $" {Version}";
+            _textContainer.DateAndLanguageString = $"{ReleaseDate:dd-MM-yy} / {Language}";
+
+            #endregion
+
             #region General Texts
             var textContainerWriter = new DataWriter();
             new TextContainerWriter().WriteTextContainer(_textContainer, textContainerWriter, false);
@@ -595,6 +632,11 @@ namespace Ambermoon.Data.GameDataRepository
 
         internal static IEnumerable<GameDataRepository> GetOpenRepositories() => OpenRepositories;
 
+        /// <summary>
+        /// Sets the release date to the current date and time.
+        /// </summary>
+        public void ReleaseNow() => _info.ReleaseDate = DateTime.Now;
+
         #endregion
 
 
@@ -621,6 +663,26 @@ namespace Ambermoon.Data.GameDataRepository
         {
             foreach (var repository in OpenRepositories)
                 repository.Close();
+        }
+
+        #endregion
+
+
+        #region Property Changes
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
         }
 
         #endregion
