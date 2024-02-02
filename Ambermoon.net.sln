@@ -71,7 +71,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{20E4
 		Package\Walkthrough.txt = Package\Walkthrough.txt
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ambermoon.Data.GameDataRepository", "Ambermoon.Data.GameDataRepository\Ambermoon.Data.GameDataRepository.csproj", "{13CF3B43-A0F7-466F-9CAE-E2184D958393}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.Data.GameDataRepository", "Ambermoon.Data.GameDataRepository\Ambermoon.Data.GameDataRepository.csproj", "{13CF3B43-A0F7-466F-9CAE-E2184D958393}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -671,25 +671,21 @@ Global
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.DebugES|x86.ActiveCfg = DebugES|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.DebugES|x86.Build.0 = DebugES|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1C5A1503-625B-4350-8381-2A9DC169CD09}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.Release|x64.ActiveCfg = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.Release|x64.Build.0 = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.Release|x86.ActiveCfg = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.Release|x86.Build.0 = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseAndroid|Any CPU.ActiveCfg = Release|Any CPU
-		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseAndroid|Any CPU.Build.0 = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseAndroid|x64.ActiveCfg = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseAndroid|x64.Build.0 = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseAndroid|x86.ActiveCfg = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseAndroid|x86.Build.0 = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseES|Any CPU.ActiveCfg = ReleaseES|Any CPU
-		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseES|Any CPU.Build.0 = ReleaseES|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseES|x64.ActiveCfg = ReleaseES|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseES|x64.Build.0 = ReleaseES|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseES|x86.ActiveCfg = ReleaseES|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseES|x86.Build.0 = ReleaseES|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseNative|Any CPU.ActiveCfg = Release|Any CPU
-		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseNative|Any CPU.Build.0 = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseNative|x64.ActiveCfg = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseNative|x64.Build.0 = Release|Any CPU
 		{1C5A1503-625B-4350-8381-2A9DC169CD09}.ReleaseNative|x86.ActiveCfg = Release|Any CPU
