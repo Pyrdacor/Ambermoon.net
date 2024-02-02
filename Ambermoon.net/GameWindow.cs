@@ -10,7 +10,9 @@ using Ambermoon.Renderer.OpenGL;
 using Ambermoon.UI;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Input;
+using Silk.NET.Input.Glfw;
 using Silk.NET.Windowing;
+using Silk.NET.Windowing.Glfw;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -1730,7 +1732,9 @@ namespace Ambermoon
 
             try
             {
-                Silk.NET.Windowing.Glfw.GlfwWindowing.Use();
+                GlfwWindowing.RegisterPlatform();
+                GlfwInput.RegisterPlatform();
+                GlfwWindowing.Use();
                 window = (IWindow)Silk.NET.Windowing.Window.GetView(new ViewOptions(options));
                 window.Title = options.Title;
                 window.Size = options.Size;

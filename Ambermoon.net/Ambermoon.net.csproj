@@ -5,8 +5,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>Ambermoon</RootNamespace>
     <RuntimeIdentifiers>win-x86;win-x64;linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
-    <Version>1.9.6</Version>
-    <Copyright>Copyright (C) 2020-2023 by Robert Schneckenhaus</Copyright>
+    <Version>1.9.7</Version>
+    <Copyright>Copyright (C) 2020-2024 by Robert Schneckenhaus</Copyright>
     <Company>Robert Schneckenhaus</Company>
     <Authors>Robert Schneckenhaus</Authors>
     <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>
@@ -18,6 +18,9 @@
     <Configurations>Debug;Release;DebugAndroid;ReleaseAndroid;ReleaseNative;DebugES;ReleaseES</Configurations>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	<PublishAot>true</PublishAot>
+	<TrimMode>full</TrimMode>
+	<PublishTrimmed>true</PublishTrimmed>
+	<SilkEnableStaticLinking>true</SilkEnableStaticLinking>
   </PropertyGroup>
 	
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">

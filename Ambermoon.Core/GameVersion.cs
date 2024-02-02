@@ -30,7 +30,8 @@ namespace Ambermoon
         English,
         German,        
         French,
-        Polish
+        Polish,
+        Czech
     }
 
     public class GameVersion
@@ -43,7 +44,7 @@ namespace Ambermoon
         public bool ExternalData;
         public Func<IGameData> DataProvider;
 
-        internal const string RemakeReleaseDate = "05-01-2024";
+        internal const string RemakeReleaseDate = "02-02-2024";
     }
 
     public static class GameLanguageExtensions
@@ -61,6 +62,8 @@ namespace Ambermoon
                 return GameLanguage.French;
             if (languageString == "polish" || languageString == "polski" || languageString == "pol" || languageString == "pl")
                 return GameLanguage.Polish;
+            if (languageString == "czech" || languageString == "český" || languageString == "česky" || languageString == "ces" || languageString == "cze" || languageString == "cs")
+                return GameLanguage.Czech;
 
             return GameLanguage.English;
         }
