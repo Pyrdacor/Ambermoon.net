@@ -1,10 +1,9 @@
 ﻿using Ambermoon.Data.Enumerations;
 using System;
-using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Linq;
-using System.Net;
 
 namespace Ambermoon.Data
 {
@@ -103,7 +102,7 @@ namespace Ambermoon.Data
     // TODO: this is stored in AM2_CPU. Load it from there later.
     public static class SpellInfos
     {
-        static readonly FrozenDictionary<Spell, SpellInfo> entries = new Dictionary<Spell, SpellInfo>
+        static readonly ImmutableDictionary<Spell, SpellInfo> entries = new Dictionary<Spell, SpellInfo>
         {
             { Spell.HealingHand, new SpellInfo { SP = 3, SLP = 1, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.RemoveFear, new SpellInfo { SP = 5, SLP = 2, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
@@ -251,9 +250,9 @@ namespace Ambermoon.Data
             { Spell.SelfReviving, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.All } },
             { Spell.ExpExchange, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.Lyramion } },
             { Spell.MountWasp, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.WorldMapOnly, Worlds = WorldFlag.ForestMoon } },
-        }.ToFrozenDictionary();
+        }.ToImmutableDictionary();
 
-        static readonly FrozenDictionary<Spell, uint> adjustedSLP = new Dictionary<Spell, uint>
+        static readonly ImmutableDictionary<Spell, uint> adjustedSLP = new Dictionary<Spell, uint>
         {
             { Spell.RemoveFear, 10 },
             { Spell.RemovePanic, 20 },
@@ -326,9 +325,9 @@ namespace Ambermoon.Data
             { Spell.MysticalMapIII, 85 },
             { Spell.MysticalGlobe, 100 },
             { Spell.ShowMonsterLP, 15 }
-        }.ToFrozenDictionary();
+        }.ToImmutableDictionary();
 
-        static readonly FrozenDictionary<Spell, uint> adjustedSP = new Dictionary<Spell, uint>
+        static readonly ImmutableDictionary<Spell, uint> adjustedSP = new Dictionary<Spell, uint>
         {            
             { Spell.Escape, 100 },
             { Spell.AlchemisticGlobe, 200 },
@@ -343,7 +342,7 @@ namespace Ambermoon.Data
             { Spell.Waterfall, 80 },
             { Spell.Iceball, 120 },
             { Spell.Icestorm, 160 }
-        }.ToFrozenDictionary();
+        }.ToImmutableDictionary();
 
         public static uint GetSPCost(Features features, Spell spell, Character caster)
         {
@@ -395,7 +394,7 @@ namespace Ambermoon.Data
                     Worlds = spell.Value.Worlds
                 };
             }
-            entries = temp.ToFrozenDictionary();
+            entries = temp.ToImmutableDictionary();
         }
 
         static SpellType GetSpellType(Spell spell)

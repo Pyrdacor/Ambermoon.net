@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
 	<RuntimeIdentifiers>win-x86;win-x64;linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -10,7 +10,7 @@
 	<Version>1.9.7</Version>
 	<Configurations>Debug;Release;DebugES;ReleaseES</Configurations>
 	<ApplicationManifest>app.manifest</ApplicationManifest>
-	<PublishAot>true</PublishAot>
+	<!--<PublishAot>true</PublishAot>-->
   </PropertyGroup>
 
 </Project>

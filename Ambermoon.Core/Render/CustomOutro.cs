@@ -23,8 +23,8 @@ using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.UI;
 using System;
-using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
@@ -32,7 +32,7 @@ namespace Ambermoon.Render
 {
     internal class CustomOutro
     {
-        Credits credits = null;
+        Credits credits;
         readonly Game game;
         readonly Layout layout;
         readonly IRenderView renderView;
@@ -222,7 +222,7 @@ namespace Ambermoon.Render
             }));
         }
 
-        static readonly FrozenDictionary<GameLanguage, List<string>> LanguageDependentStrings = new Dictionary<GameLanguage, List<string>>
+        static readonly ImmutableDictionary<GameLanguage, List<string>> LanguageDependentStrings = new Dictionary<GameLanguage, List<string>>
         {
             { GameLanguage.German, new List<string>
                 {
@@ -288,7 +288,7 @@ namespace Ambermoon.Render
                     "Pyrdacor: Dziękuję za grę w ~INK 22~Ambermoon~INK 31~! Mam nadzieję, że dobrze się bawiliście."
                 }
             }
-        }.ToFrozenDictionary();
+        }.ToImmutableDictionary();
 
         readonly Queue<KeyValuePair<TimeSpan, IAction>> actions = new Queue<KeyValuePair<TimeSpan, IAction>>();
 

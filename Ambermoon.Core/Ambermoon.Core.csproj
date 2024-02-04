@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <LangVersion>12</LangVersion>
     <RootNamespace>Ambermoon</RootNamespace>
     <UserSecretsId>5ff861f6-0255-427a-978a-7a8030ee8731</UserSecretsId>

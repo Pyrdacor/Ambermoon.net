@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <Configurations>Debug;Release;DebugAndroid;DebugES;ReleaseES</Configurations>
-    <Version>10.9.3</Version>
+    <Version>10.9.4</Version>
   </PropertyGroup>
 
   <ItemGroup>
