@@ -220,7 +220,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 Data = dataReader.ReadBytes(GameDataRepository.EventDataSize)
             };
 
-            return eventData.Type switch
+            var @event = eventData.Type switch
             {
                 EventType.Teleport => new TeleportEventData(eventData),
                 EventType.Door => new DoorEventData(eventData),
@@ -231,8 +231,18 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 // TODO ...
                 EventType.StartBattle => new StartBattleEventData(eventData),
                 // TODO ...
+                EventType.Condition => new ConditionEventData(eventData),
+                // TODO ...
+                EventType.Decision => new DecisionEventData(eventData),
+                // TODO ...
                 _ => eventData
             };
+
+            @event.Data[0] = eventData.Data[0];
+            @event.Data[^2] = eventData.Data[^2];
+            @event.Data[^1] = eventData.Data[^1];
+
+            return @event;
         }
 
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)

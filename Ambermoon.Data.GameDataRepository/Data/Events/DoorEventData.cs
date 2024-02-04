@@ -6,7 +6,7 @@ namespace Ambermoon.Data.GameDataRepository.Data.Events
     using Util;
 
     /// <summary>
-    /// Show a locked door screen when triggered.
+    /// Shows a locked door screen when triggered.
     /// </summary>
     public class DoorEventData : EventData, IBranchEvent
     {

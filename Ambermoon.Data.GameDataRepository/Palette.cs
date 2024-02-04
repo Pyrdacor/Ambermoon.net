@@ -67,6 +67,11 @@ namespace Ambermoon.Data.GameDataRepository
             _data.AsSpan(colorIndex * 4, 4).CopyTo(target.Slice(targetIndex, 4));
         }
 
+        public void CopyColor(Palette target, int targetColorIndex, int colorIndex)
+        {
+            CopyColor(target._data.AsSpan(), targetColorIndex * 4, colorIndex);
+        }
+
         public int GetColorIndex(ReadOnlySpan<byte> source, int sourceIndex)
         {
             var sourceSlice = source.Slice(sourceIndex, 4);

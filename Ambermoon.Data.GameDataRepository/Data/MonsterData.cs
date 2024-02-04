@@ -1,5 +1,5 @@
-﻿using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using Ambermoon.Data.GameDataRepository.Util;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
@@ -66,16 +66,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override CharacterType Type => CharacterType.Monster;
 
-        [Range(0, byte.MaxValue)]
+        [Range(1, byte.MaxValue)]
         public uint CombatGraphicIndex
         {
             get => _combatGraphicIndex;
             set
             {
-                if (value > byte.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(CombatGraphicIndex), $"Combat graphic index is limited to the range 0 to {byte.MaxValue}.");
-
-                _combatGraphicIndex = value;
+                ValueChecker.Check(value, 1, byte.MaxValue);
+                SetField(ref _combatGraphicIndex, value);
             }
         }
 
@@ -85,10 +83,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _morale;
             set
             {
-                if (value > 100)
-                    throw new ArgumentOutOfRangeException(nameof(Morale), "Morale is limited to the range 0 to 100.");
-
-                _morale = value;
+                ValueChecker.Check(value, 0, 100);
+                SetField(ref _morale, value);
             }
         }
 
@@ -98,63 +94,54 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _defeatExperience;
             set
             {
-                if (value > ushort.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(DefeatExperience), $"Defeat experience is limited to the range 0 to {ushort.MaxValue}.");
-
-                _defeatExperience = value;
+                ValueChecker.Check(value, 0, ushort.MaxValue);
+                SetField(ref _defeatExperience, value);
             }
         }
 
         public byte[] CustomPalette { get; set; } = new byte[32];
-        [Range(0, ushort.MaxValue)]
+
+        [Range(16, ushort.MaxValue)]
         public uint OriginalFrameWidth
         {
             get => _originalFrameWidth;
             set
             {
-                if (value > ushort.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(OriginalFrameWidth), $"Original frame width is limited to the range 0 to {ushort.MaxValue}.");
-
-                _originalFrameWidth = value;
+                ValueChecker.Check(value, 16, ushort.MaxValue);
+                SetField(ref _originalFrameWidth, value);
             }
         }
 
-        [Range(0, ushort.MaxValue)]
+        [Range(16, ushort.MaxValue)]
         public uint OriginalFrameHeight
         {
             get => _originalFrameHeight;
             set
             {
-                if (value > ushort.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(OriginalFrameHeight), $"Original frame height is limited to the range 0 to {ushort.MaxValue}.");
-
-                _originalFrameHeight = value;
+                ValueChecker.Check(value, 16, ushort.MaxValue);
+                SetField(ref _originalFrameHeight, value);
             }
         }
 
-        [Range(0, ushort.MaxValue)]
+        [Range(16, ushort.MaxValue)]
         public uint DisplayFrameWidth
         {
             get => _displayFrameWidth;
             set
             {
-                if (value > ushort.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(DisplayFrameWidth), $"Display frame width is limited to the range 0 to {ushort.MaxValue}.");
-
-                _displayFrameWidth = value;
+                ValueChecker.Check(value, 16, ushort.MaxValue);
+                SetField(ref _displayFrameWidth, value);
             }
         }
 
-        [Range(0, ushort.MaxValue)]
+        [Range(16, ushort.MaxValue)]
         public uint DisplayFrameHeight
         {
             get => _displayFrameHeight;
             set
             {
-                if (value > ushort.MaxValue)
-                    throw new ArgumentOutOfRangeException(nameof(DisplayFrameHeight), $"Display frame height is limited to the range 0 to {ushort.MaxValue}.");
-
-                _displayFrameHeight = value;
+                ValueChecker.Check(value, 16, ushort.MaxValue);
+                SetField(ref _displayFrameHeight, value);
             }
         }
 

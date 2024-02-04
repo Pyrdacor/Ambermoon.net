@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.ComponentModel;
+using Ambermoon.Data.GameDataRepository.Data.Events;
 using SonicArranger;
 
 namespace Ambermoon.Data.GameDataRepository
@@ -179,82 +180,169 @@ namespace Ambermoon.Data.GameDataRepository
         public List<CombatBackgroundImage> DistinctCombatBackgroundImages { get; }
 
         /// <summary>
-        /// Note: This will retrieve the palettes by searching the game data
-        /// for references. So this might take a while and it will be done
-        /// everytime you read this property.
+        /// Queries all maps which reference the given monster.
         /// </summary>
-        public Dictionary<uint, Palette> DefaultMonsterImagePalettes
+        /// <param name="monsterIndex">Index of the monster</param>
+        /// <returns></returns>
+        public IEnumerable<MapData> GetMonsterMapReferences(uint monsterIndex)
         {
-            get
+            return GetMonsterReferences(monsterIndex)
+                .SelectMany(monsterGroup => GetMonsterGroupReferences(monsterGroup.Index))
+                .Distinct();
+        }
+
+        /// <summary>
+        /// Queries all monster groups which reference the given monster.
+        /// </summary>
+        /// <param name="monsterIndex">Index of the monster</param>
+        /// <returns></returns>
+        public IEnumerable<MonsterGroupData> GetMonsterReferences(uint monsterIndex)
+        {
+            return MonsterGroups.Where(group => group.MonsterIndices.Contains(monsterIndex));
+        }
+
+        /// <summary>
+        /// Queries all maps which reference the given monster group.
+        /// </summary>
+        /// <param name="monsterGroupIndex">Index of the monster group</param>
+        /// <returns></returns>
+        public IEnumerable<MapData> GetMonsterGroupReferences(uint monsterGroupIndex)
+        {
+            return Maps.Where(map => IsMonsterGroupReferenced(map, monsterGroupIndex));
+        }
+
+        private static bool IsMonsterGroupReferenced(MapData map, uint monsterGroupIndex)
+        {
+            return map.MapCharacters.Any(mapChar =>
+                mapChar.CharacterType == CharacterType.Monster && mapChar.MonsterGroupIndex == monsterGroupIndex) ||
+                   map.Events.Any(e => e is StartBattleEventData startBattleEvent && startBattleEvent.MonsterGroupIndex == monsterGroupIndex);
+        }
+
+        /// <summary>
+        /// Note: This will retrieve the palettes by searching the game data
+        /// for references. So this might take a while.
+        /// </summary>
+        public Dictionary<uint, Palette> GetDefaultMonsterImagePalettes()
+        {
+            Dictionary<uint, Palette> defaultMonsterImagePalettes = new();
+
+            var monsterGroupImagePalettes = GetCombatBackgroundReferences()
+                .Where(result => result.Item2 != 0 && result.Item3 <= 15)
+                .DistinctBy(result => result.Item2)
+                .ToDictionary(result => result.Item2, result =>
+                {
+                    var infos = result.Item1.Type == MapType.Map2D ? CombatBackgroundImages2D : CombatBackgroundImages3D;
+                    return Palettes[infos[result.Item3].PaletteIndices[0]];
+                });
+
+            foreach (var monster in Monsters)
             {
-                Dictionary<uint, Palette> defaultMonsterImagePalettes = new();
+                var monsterGroups = GetMonsterReferences(monster.Index);
 
-                uint? GetCombatBackgroundFromMapTiles(MapData map, uint eventIndex)
+                foreach (var monsterGroup in monsterGroups)
                 {
-                    if (map.Tiles2D is not null)
+                    if (!monsterGroupImagePalettes.TryGetValue(monsterGroup.Index, out var palette)) continue;
+
+                    var monsterPalette = palette.Copy();
+
+                    for (int i = 0; i < 32; i++)
                     {
-                        var tile = map.Tiles2D.FirstOrDefault(t => t.MapEventId == eventIndex);
-
-                        if (tile is null)
-                            return null;
-
-                        var tileset = Tilesets[map.TilesetIndex!.Value];
-                        var frontTile = tile.FrontTileIndex == 0 ? null : tileset.Icons[tile.FrontTileIndex];
-
-                        if (frontTile != null && !frontTile.UseBackgroundTileFlags)
-                            return frontTile.CombatBackgroundIndex;
-
-                        return tileset.Icons[tile.BackTileIndex].CombatBackgroundIndex;
-                    }
-                    else if (map.Tiles3D is not null)
-                    {
-                        var tile = map.Tiles3D.FirstOrDefault(t => t.MapEventId == eventIndex);
-
-                        if (tile is null)
-                            return null;
-
-                        var labdata = Labyrinths[map.LabdataIndex!.Value];
-
-                        if (tile.WallIndex is not null)
-                            return labdata.Walls[tile.WallIndex.Value].CombatBackgroundIndex;
-
-                        if (tile.ObjectIndex is not null)
+                        if (monster.CustomPalette[i] != i)
                         {
-                            uint? objectDescriptionIndex = labdata.Objects[tile.ObjectIndex.Value].Objects.FirstOrDefault()?.ObjectDescriptionIndex;
-
-                            if (objectDescriptionIndex is not null)
-                                return labdata.ObjectDescriptions[objectDescriptionIndex.Value].CombatBackgroundIndex;
+                            palette.CopyColor(monsterPalette, i, monster.CustomPalette[i] & 0x1f);
                         }
-
-                        return labdata.DefaultCombatBackgroundIndex;
                     }
 
-                    return null;
+                    defaultMonsterImagePalettes.Add(monster.Index, monsterPalette);
+                    break;
                 }
-                var monsterRefs = Maps.SelectMany(map =>
-                        map.MapCharacters.Where(mapChar => mapChar.CharacterType == CharacterType.Monster))
-                    .Select(mapChar => new { MonsterGroupIndex = mapChar.MonsterGroupIndex, CombatBackgroundIndex = mapChar.CombatBackgroundIndex });
-                /*monsterRefs = monsterRefs.Concat(Maps.SelectMany(map => map.Events.Select(e => e as StartBattleEventData).Where(e => e != null)
-                    .Select(battleEvent => new { MonsterGroupIndex = battleEvent.MonsterGroupIndex, CombatBackgroundIndex = map. }));
-                GetCombatBackgroundFromMapTiles*/
-                // TODO: ^ find event entries for battle events, then find the combat background index from the map tiles
+            }
 
-                /*foreach (var monster in Monsters)
+            return defaultMonsterImagePalettes;
+
+            uint? GetCombatBackgroundFromEvent(MapData map, StartBattleEventData battleEvent)
+            {
+                var checkedEvents = new HashSet<uint>();
+
+                uint? eventEntryIndex =
+                    map.EventEntryList.FirstOrDefault(entry => ContainsEvent(map.Events[entry.EventIndex]))?.Index;
+
+                return eventEntryIndex is null ? null : GetCombatBackgroundFromMapTiles(map, eventEntryIndex.Value);
+
+                bool ContainsEvent(EventData data)
                 {
-                    var monsterImage = MonsterImages[monster.CombatGraphicIndex];
-                    var paletteIndex = monsterImage.Frames[0].PaletteIndex;
+                    if (checkedEvents.Contains(data.Index))
+                        return false;
 
-                    if (!defaultMonsterImagePalettes.ContainsKey(paletteIndex))
+                    if (data == battleEvent)
+                        return true;
+
+                    checkedEvents.Add(data.Index);
+
+                    if (data.NextEventIndex != null && ContainsEvent(map.Events[data.NextEventIndex.Value]))
+                        return true;
+
+                    return data is IBranchEvent { BranchEventIndex: not null } branchEvent &&
+                           ContainsEvent(map.Events[branchEvent.BranchEventIndex.Value]);
+                }
+            }
+
+            uint? GetCombatBackgroundFromMapTiles(MapData map, uint eventEntryIndex)
+            {
+                if (map.Tiles2D is not null)
+                {
+                    var tile = map.Tiles2D.FirstOrDefault(t => t.MapEventId == eventEntryIndex);
+
+                    if (tile is null)
+                        return null;
+
+                    var tileset = Tilesets[map.TilesetIndex!.Value];
+                    var frontTile = tile.FrontTileIndex == 0 ? null : tileset.Icons[tile.FrontTileIndex];
+
+                    if (frontTile != null && !frontTile.UseBackgroundTileFlags)
+                        return frontTile.CombatBackgroundIndex;
+
+                    return tileset.Icons[tile.BackTileIndex].CombatBackgroundIndex;
+                }
+                else if (map.Tiles3D is not null)
+                {
+                    var tile = map.Tiles3D.FirstOrDefault(t => t.MapEventId == eventEntryIndex);
+
+                    if (tile is null)
+                        return null;
+
+                    var labdata = Labyrinths[map.LabdataIndex!.Value];
+
+                    if (tile.WallIndex is not null)
+                        return labdata.Walls[tile.WallIndex.Value].CombatBackgroundIndex;
+
+                    if (tile.ObjectIndex is not null)
                     {
-                        var palette = Palettes[paletteIndex];
-                        defaultMonsterImagePalettes.Add(paletteIndex, palette);
+                        uint? objectDescriptionIndex = labdata.Objects[tile.ObjectIndex.Value].Objects.FirstOrDefault()?.ObjectDescriptionIndex;
+
+                        if (objectDescriptionIndex is not null)
+                            return labdata.ObjectDescriptions[objectDescriptionIndex.Value].CombatBackgroundIndex;
                     }
-                }*/
 
-                throw new NotImplementedException("WIP");
+                    return labdata.DefaultCombatBackgroundIndex;
+                }
 
+                return null;
+            }
 
-                return defaultMonsterImagePalettes;
+            // Map, MonsterGroupIndex, CombatBackgroundIndex
+            IEnumerable<Tuple<MapData, uint, uint>> GetCombatBackgroundReferences()
+            {
+                return Maps.SelectMany(map =>
+                    map.MapCharacters.Where(mapChar => mapChar.CharacterType == CharacterType.Monster)
+                    .Select(mapChar => Tuple.Create(map, mapChar.MonsterGroupIndex!.Value, mapChar.CombatBackgroundIndex!.Value)))
+                    .Concat(Maps.SelectMany(map => map.Events.OfType<StartBattleEventData>()
+                       .Select(battleEvent => Tuple.Create(battleEvent.MonsterGroupIndex,
+                            GetCombatBackgroundFromEvent(map, battleEvent)))
+                       .Where(result => result.Item2 != null)
+                       .GroupBy(result => result.Item1)
+                       .Select(result => Tuple.Create(map, result.Key, result.FirstOrDefault()?.Item2 ?? 0u))))
+                    .ToArray();
             }
         }
 
