@@ -1,12 +1,12 @@
-﻿using System.Collections.Frozen;
-using Ambermoon.Data.Enumerations;
+﻿using Ambermoon.Data.Enumerations;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Ambermoon.Data.Legacy
 {
     public static class CombatGraphics
     {
-        public static readonly FrozenDictionary<CombatGraphicIndex, CombatGraphicInfo> Info = new Dictionary<CombatGraphicIndex, CombatGraphicInfo>
+        public static readonly ImmutableDictionary<CombatGraphicIndex, CombatGraphicInfo> Info = new Dictionary<CombatGraphicIndex, CombatGraphicInfo>
         {
             { CombatGraphicIndex.FireBall, new CombatGraphicInfo(8, 16, 16) },
             { CombatGraphicIndex.BigFlame, new CombatGraphicInfo(8, 16, 32) },
@@ -51,6 +51,6 @@ namespace Ambermoon.Data.Legacy
             { CombatGraphicIndex.FlyingSickle, new CombatGraphicInfo(4, 16, 13) },
             { CombatGraphicIndex.UISwordAndMace, new CombatGraphicInfo(1, 32, 36, 1, true) },
             { CombatGraphicIndex.BattleFieldIcons, new CombatGraphicInfo(35, 16, 14, 50) }
-        }.ToFrozenDictionary();
+        }.ToImmutableDictionary();
     }
 }

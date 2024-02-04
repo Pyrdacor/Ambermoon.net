@@ -1,6 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
 using System.ComponentModel;
-using Ambermoon.Data.GameDataRepository.Data.Events;
 using SonicArranger;
 
 namespace Ambermoon.Data.GameDataRepository
@@ -8,6 +7,7 @@ namespace Ambermoon.Data.GameDataRepository
     using Collections;
     using Data;
     using Enumerations;
+    using Data.Events;
     using FileSystems;
     using Legacy;
     using Ambermoon.Data.Legacy.Serialization;

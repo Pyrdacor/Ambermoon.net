@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
-using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Serialization;
 using static Ambermoon.Data.Legacy.Serialization.AmigaExecutable;
 
@@ -73,7 +72,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         readonly List<string> textCommandTexts = new();
         readonly List<Graphic> introPalettes = new();
         readonly Dictionary<IntroGraphic, Graphic> graphics = new();
-        static readonly FrozenDictionary<IntroGraphic, byte> graphicPalettes = new Dictionary<IntroGraphic, byte>
+        static readonly ImmutableDictionary<IntroGraphic, byte> graphicPalettes = new Dictionary<IntroGraphic, byte>
         {
             { IntroGraphic.Frame, 8 },
             { IntroGraphic.MainMenuBackground, 6 }, // 7 will work too
@@ -95,7 +94,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             { IntroGraphic.CloudsRight, 4 },
             { IntroGraphic.GlowingMeteor, 3 },
             { IntroGraphic.Twinlake, 8 },
-        }.ToFrozenDictionary();
+        }.ToImmutableDictionary();
         static GraphicInfo paletteGraphicInfo = new()
         {
             Width = 32,

@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text;
 
 namespace Ambermoon.Data.Legacy
@@ -9,7 +9,7 @@ namespace Ambermoon.Data.Legacy
     {
         // See https://gitlab.com/ambermoon/research/-/wikis/font
         static readonly Encoding BaseEncoding = GetEncoding("iso-8859-1");
-        static readonly FrozenDictionary<char, byte> CharsToBytes = new Dictionary<char, byte>
+        static readonly ImmutableDictionary<char, byte> CharsToBytes = new Dictionary<char, byte>
         {
             { '\u00fc', 0x81 }, // ü
             { '\u00e9', 0x82 }, // é
@@ -29,8 +29,8 @@ namespace Ambermoon.Data.Legacy
             { '\u00df', 0x9e }, // ß
             { '\u00e1', 0xa0 }, // á
             { '\u00c0', 0xb6 }, // À
-        }.ToFrozenDictionary();
-        static readonly FrozenDictionary<byte, char> BytesToChars = new Dictionary<byte, char>
+        }.ToImmutableDictionary();
+        static readonly ImmutableDictionary<byte, char> BytesToChars = new Dictionary<byte, char>
         {
             { 0x81, '\u00fc' }, // ü
             { 0x82, '\u00e9' }, // é
@@ -51,7 +51,7 @@ namespace Ambermoon.Data.Legacy
             { 0xa0, '\u00e1' }, // á
             { 0xb6, '\u00c0' }, // À
             { 0xb4, '\'' }, // ´ -> '
-        }.ToFrozenDictionary();
+        }.ToImmutableDictionary();
 
         public override int GetByteCount(char[] chars, int index, int count)
         {
