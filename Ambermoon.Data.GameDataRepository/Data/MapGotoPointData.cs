@@ -70,13 +70,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
         }
 
-        [StringLength(15)]
+        [StringLength(16)]
         public string Name
         {
             get => _name;
             set
             {
-                ValueChecker.Check(value, 15);
+                ValueChecker.Check(value, 16);
                 _name = value;
             }
         }
@@ -92,9 +92,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((byte)Y);
             dataWriter.Write((byte)Direction);
             dataWriter.Write((byte)SaveIndex);
-            string name = Name;
-            if (name.Length > 15)
-                name = name[..15];
+            string name = Name; // Note: It allows 16 chars and does not require a terminating 0
+            if (name.Length > 16)
+                name = name[..16];
             dataWriter.WriteWithoutLength(name.PadRight(16, '\0'));
         }
 
