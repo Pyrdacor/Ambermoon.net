@@ -21,7 +21,8 @@
 
         public MonsterGroup? GetMonsterGroup(uint index) => index == 0 || !monsterGroups.Value.ContainsKey(index) ? null : monsterGroups.Value[index];
 
-        public IReadOnlyList<Monster> Monsters => monsters.Value.Values.ToList().AsReadOnly();
+        public IReadOnlyList<NPC> NPCs => npcs.Value.Values.ToList().AsReadOnly();
+		public IReadOnlyList<Monster> Monsters => monsters.Value.Values.ToList().AsReadOnly();
         public IReadOnlyDictionary<uint, MonsterGroup> MonsterGroups => monsterGroups.Value.AsReadOnly();
     }
 }
