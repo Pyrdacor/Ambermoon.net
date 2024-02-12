@@ -4,7 +4,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 {
     using Serialization;
 
-    public sealed class PartyMemberData : BattleCharacterData, IConversationCharacter, IIndexedData, IEquatable<PartyMemberData>
+    public sealed class PartyMemberData : BattleCharacterData, IConversationCharacter, IIndexedData, IEquatable<PartyMemberData>, IImageProvidingData
     {
         private uint _age = 1;
         private uint _maxAge = 1;
@@ -89,7 +89,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// the advanced version only if Mystics transform themselves.
         /// </summary>
         public bool InventoryInaccessible { get; set; }
-        public uint PortraitIndex { get; set; }
+        public uint GraphicIndex { get; set; }
         public uint SpellLearningPoints { get; set; }
         public uint TrainingPoints { get; set; }
         public uint CharacterBitIndex { get; set; }

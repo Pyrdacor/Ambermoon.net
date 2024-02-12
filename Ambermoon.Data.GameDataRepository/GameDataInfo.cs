@@ -7,7 +7,7 @@ namespace Ambermoon.Data.GameDataRepository
     using Enumerations;
     using System.Runtime.CompilerServices;
 
-    public sealed partial class GameDataInfo : INotifyPropertyChanged
+    public sealed partial record GameDataInfo : INotifyPropertyChanged
     {
 
         #region Fields
@@ -107,6 +107,16 @@ namespace Ambermoon.Data.GameDataRepository
                 "turkish" => GameDataLanguage.Turkish,
                 _ => GameDataLanguage.Unknown,
             };
+        }
+
+        #endregion
+
+
+        #region Equality
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Language, Version, Advanced);
         }
 
         #endregion

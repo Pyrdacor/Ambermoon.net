@@ -1,6 +1,8 @@
-﻿using System.ComponentModel;
+﻿using Ambermoon.Data.GameDataRepository.Data;
+using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 #if OS_WINDOWS
 
@@ -11,21 +13,33 @@ namespace Ambermoon.Data.GameDataRepository.Windows
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static class WindowsExtensions
     {
+        private static Bitmap DataToBitmap(int width, int height, byte[] imageData)
+        {
+            var bitmap = new Bitmap(width, height,
+                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            var bitmapData = bitmap.LockBits(new Rectangle(0, 0, width, height),
+                System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            Marshal.Copy(imageData, 0, bitmapData.Scan0, imageData.Length);
+
+            bitmap.UnlockBits(bitmapData);
+
+            return bitmap;
+        }
+
         public static Bitmap ToBitmap(this ImageData imageData, Palette palette, bool transparency)
         {
             if (transparency)
                 palette = palette.WithTransparency();
             var data = imageData.GetData(palette);
-            var bitmap = new Bitmap(imageData.Width, imageData.Height,
-                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            var bitmapData = bitmap.LockBits(new Rectangle(0, 0, imageData.Width, imageData.Height),
-                System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
-            Marshal.Copy(data, 0, bitmapData.Scan0, data.Length);
+            return DataToBitmap(imageData.Width, imageData.Height, data);
+        }
 
-            bitmap.UnlockBits(bitmapData);
+        public static Bitmap GetBitmap(this GameDataRepository repository, IImageProvidingData imageProvidingData)
+        {
+            var imageData = repository.GetImage(imageProvidingData, out int width, out int height);
 
-            return bitmap;
+            return DataToBitmap(width, height, imageData);
         }
 
         public static ImageData ToImageData(this Bitmap bitmap, Palette palette)

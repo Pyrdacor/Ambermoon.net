@@ -7,7 +7,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
     using Legacy;
     using Serialization;
     
-    public sealed class ItemData : IMutableIndex, IIndexedData, IEquatable<ItemData>, INotifyPropertyChanged
+    public sealed class ItemData : IMutableIndex, IIndexedData, IEquatable<ItemData>, INotifyPropertyChanged, IImageProvidingData
     {
 
         #region Fields
@@ -549,15 +549,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
                 SetField(ref _name, value);
             }
-        }
-
-        #endregion
-
-
-        #region Constructors
-
-        public ItemData()
-        {
         }
 
         #endregion

@@ -4,14 +4,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
 {
     using Serialization;
 
-    public sealed class NpcData : CharacterData, IConversationCharacter, IIndexedData, IEquatable<NpcData>
+    public sealed class NpcData : CharacterData, IConversationCharacter, IIndexedData, IEquatable<NpcData>, IImageProvidingData
     {
         private uint _age = 1;
         private uint _maxAge = 1;
-
-        public NpcData()
-        {
-        }
 
         public NpcData Copy()
         {
@@ -70,7 +66,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
         }
         public Language SpokenLanguages { get; set; }
-        public uint PortraitIndex { get; set; }
+        public uint GraphicIndex { get; set; }
         public uint LookAtCharTextIndex { get; set; }
 
         // TODO: events

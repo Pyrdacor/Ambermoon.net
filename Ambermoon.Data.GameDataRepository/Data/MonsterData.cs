@@ -44,14 +44,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
         Invalid
     }
 
-    public sealed class MonsterData : BattleCharacterData, IIndexedData, IEquatable<MonsterData>
+    public sealed class MonsterData : BattleCharacterData, IIndexedData, IEquatable<MonsterData>, IImageProvidingData
     {
 
         #region Fields
 
         private uint _morale = 0;
         private uint _defeatExperience = 0;
-        private uint _combatGraphicIndex = 0;
+        private uint _graphicIndex = 0;
         private uint _originalFrameWidth = 0;
         private uint _originalFrameHeight = 0;
         private uint _displayFrameWidth = 0;
@@ -67,13 +67,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
         public override CharacterType Type => CharacterType.Monster;
 
         [Range(1, byte.MaxValue)]
-        public uint CombatGraphicIndex
+        public uint GraphicIndex
         {
-            get => _combatGraphicIndex;
+            get => _graphicIndex;
             set
             {
                 ValueChecker.Check(value, 1, byte.MaxValue);
-                SetField(ref _combatGraphicIndex, value);
+                SetField(ref _graphicIndex, value);
             }
         }
 
@@ -161,7 +161,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             [Range(0, ushort.MaxValue)] uint originalFrameWidth, [Range(0, ushort.MaxValue)] uint originalFrameHeight,
             [Range(0, ushort.MaxValue)] uint displayFrameWidth, [Range(0, ushort.MaxValue)] uint displayFrameHeight)
         {
-            CombatGraphicIndex = index;
+            GraphicIndex = index;
             OriginalFrameWidth = originalFrameWidth;
             OriginalFrameHeight = originalFrameHeight;
             DisplayFrameWidth = displayFrameWidth;
@@ -210,7 +210,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((byte)Level);
             dataWriter.Write((byte)Class);
             WriteFillBytes(6);
-            dataWriter.Write((byte)CombatGraphicIndex);
+            dataWriter.Write((byte)GraphicIndex);
             WriteFillBytes(2);
             dataWriter.Write((byte)Math.Min(Morale, 100));
             dataWriter.Write((byte)SpellTypeImmunity);
@@ -341,7 +341,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             monsterData.SpellMastery = (SpellTypeMastery)dataReader.ReadByte();
             monsterData.Level = dataReader.ReadByte();
             SkipBytes(6);
-            monsterData.CombatGraphicIndex = dataReader.ReadByte();
+            monsterData.GraphicIndex = dataReader.ReadByte();
             SkipBytes(2);
             monsterData.Morale = dataReader.ReadByte();
             monsterData.SpellTypeImmunity = (SpellTypeImmunity)dataReader.ReadByte();
@@ -471,7 +471,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return base.Equals(other) &&
                     _morale == other._morale &&
                    _defeatExperience == other._defeatExperience &&
-                   _combatGraphicIndex == other._combatGraphicIndex &&
+                   _graphicIndex == other._graphicIndex &&
                    _originalFrameWidth == other._originalFrameWidth &&
                    _originalFrameHeight == other._originalFrameHeight &&
                    _displayFrameWidth == other._displayFrameWidth &&
@@ -515,7 +515,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 Class = Class,
                 SpellMastery = SpellMastery,
                 Level = Level,
-                CombatGraphicIndex = CombatGraphicIndex,
+                GraphicIndex = GraphicIndex,
                 Morale = Morale,
                 SpellTypeImmunity = SpellTypeImmunity,
                 AttacksPerRound = AttacksPerRound,

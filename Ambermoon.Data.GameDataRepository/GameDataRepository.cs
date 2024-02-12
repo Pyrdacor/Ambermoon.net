@@ -222,9 +222,9 @@ namespace Ambermoon.Data.GameDataRepository
         /// Note: This will retrieve the palettes by searching the game data
         /// for references. So this might take a while.
         /// </summary>
-        public Dictionary<uint, Palette> GetDefaultMonsterImagePalettes()
+        public Dictionary<uint, Palette[]> GetDefaultMonsterImagePalettes()
         {
-            Dictionary<uint, Palette> defaultMonsterImagePalettes = new();
+            Dictionary<uint, Palette[]> defaultMonsterImagePalettes = new();
 
             var monsterGroupImagePalettes = GetCombatBackgroundReferences()
                 .Where(result => result.Item2 != 0 && result.Item3 <= 15)
@@ -232,7 +232,7 @@ namespace Ambermoon.Data.GameDataRepository
                 .ToDictionary(result => result.Item2, result =>
                 {
                     var infos = result.Item1.Type == MapType.Map2D ? CombatBackgroundImages2D : CombatBackgroundImages3D;
-                    return Palettes[infos[result.Item3].PaletteIndices[0]];
+                    return infos[result.Item3].PaletteIndices.Select(index => Palettes[index]).ToArray();
                 });
 
             foreach (var monster in Monsters)
@@ -241,19 +241,22 @@ namespace Ambermoon.Data.GameDataRepository
 
                 foreach (var monsterGroup in monsterGroups)
                 {
-                    if (!monsterGroupImagePalettes.TryGetValue(monsterGroup.Index, out var palette)) continue;
+                    if (!monsterGroupImagePalettes.TryGetValue(monsterGroup.Index, out var palettes)) continue;
 
-                    var monsterPalette = palette.Copy();
+                    var monsterPalettes = palettes.Select(palette => palette.Copy()).ToArray();
 
-                    for (int i = 0; i < 32; i++)
+                    for (int p = 0; p < monsterPalettes.Length; p++)
                     {
-                        if (monster.CustomPalette[i] != i)
+                        for (int i = 0; i < 32; i++)
                         {
-                            palette.CopyColor(monsterPalette, i, monster.CustomPalette[i] & 0x1f);
+                            if (monster.CustomPalette[i] != i)
+                            {
+                                palettes[p].CopyColor(monsterPalettes[p], i, monster.CustomPalette[i] & 0x1f);
+                            }
                         }
                     }
 
-                    defaultMonsterImagePalettes.Add(monster.Index, monsterPalette);
+                    defaultMonsterImagePalettes.Add(monster.Index, monsterPalettes);
                     break;
                 }
             }
@@ -514,7 +517,7 @@ namespace Ambermoon.Data.GameDataRepository
             MonsterGroups = monsterGroupFiles.Select(monsterGroupFile => (MonsterGroupData)MonsterGroupData.Deserialize(monsterGroupFile.Value, (uint)monsterGroupFile.Key, Advanced)).ToDictionaryList();
             var monsterGraphicFiles = ReadFileContainer("Monster_gfx.amb");
             var monsterGraphicInfos = Monsters.Select(monster =>
-                Tuple.Create(monster.OriginalFrameWidth, monster.OriginalFrameHeight, monster.CombatGraphicIndex)).Distinct();
+                Tuple.Create(monster.OriginalFrameWidth, monster.OriginalFrameHeight, monster.GraphicIndex)).Distinct();
             MonsterImages = monsterGraphicInfos.Select(info =>
                 Image.DeserializeFullData(info.Item3, monsterGraphicFiles[(int)info.Item3], (int)info.Item1, (int)info.Item2, GraphicFormat.Palette5Bit, true)).ToDictionaryList();
             MonsterCombatIcons = combatGraphics.BattleFieldIcons.Skip((int)Class.Monster).ToDictionaryList((_, i) => (uint)i + 1);
