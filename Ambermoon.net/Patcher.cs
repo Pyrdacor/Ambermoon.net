@@ -202,8 +202,23 @@ namespace Ambermoon
                     "Anuluj pobieranie",
                     "Nie udało się zastosować poprawki. Pobierz najnowszą wersję ręcznie."
                 }
+            },
+            { GameLanguage.Czech, new string[]
+	            {
+					"Chcete použít patcher? Mírně prodlužuje dobu spuštění a potřebujete přístup k internetu. Nové verze se pak ale rozpoznají automaticky a lze je nainstalovat přímo.",
+					"Pokud se rozhodnete patcher používat později, můžete jej aktivovat v konfiguračním souboru 'ambermoon.cfg' ručně.",
+					"Klikněte pro pokračování",
+					"Nová verze je k dispozici! Chcete ji stáhnout a nainstalovat nyní?",
+					"Nová verze nebyla nalezena. Nahlaste to prosím společnosti Pyrdacor (trobt(at)web.de).",
+					"Nepodařilo se stáhnout novou verzi. Zkuste to prosím později nebo ji stáhněte ručně.",
+					"Stahuji Ambermoon {0} ...",
+					"{0} z {1}",
+					"Hotovo",
+					"Zrušit stahování",
+					"Nepodařilo se aplikovat záplatu. Stáhněte si prosím nejnovější verzi ručně."
+				}
             }
-        };
+		};
 
         enum TextId
         {

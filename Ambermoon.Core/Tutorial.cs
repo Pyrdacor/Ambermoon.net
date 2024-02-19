@@ -129,8 +129,32 @@ namespace Ambermoon
                 "lub postaciami takimi jak NPC.",
                 // End
                 "Teraz zamilknę. baw się dobrze grając w Ambermoon!"
-            } }
-        }.ToImmutableDictionary();
+            } },
+            { GameLanguage.Czech, new string[]
+            {
+	            // Introduction
+	            "Ahoj ~SELF~ a vítej v remaku původního Ambermoon.^^ Potřebuješ hru trochu představit?",
+				// Tip 1
+	            "Ikony v pravé dolní části obrazovky poskytují mnoho užitečných funkcí ve hře. " +
+	            "Pokud jsi na hlavní obrazovce, můžeš přepínat zobrazení ikon stiskem " +
+	            "pravého tlačítka myši po najetí na oblast, nebo stiskem klávesy Enter. Tím se odemknou " +
+	            "další funkce.",
+				// Tip 2
+	            "Ikony lze ovládat také pomocí klávesnice NumPad. Rozložení " +
+	            "je přesně takové, jaké jsou plochy ikon ve hře. Takže stisknutí klávesy 7 bude ekvivalent stisknutí " +
+	            "levého horního tlačítka (oka).",
+				// Tip 3
+	            "V horní části se zobrazují portréty postav. Kliknutím na ně můžeš vybrat " +
+	            "aktivního hráče a pomocí pravého tlačítka otevřeš inventář. Klávesy 1-6 vyberou " +
+	            "postavu a klávesy F1-F6 oevírají inventář.",
+				// Tip 4
+	            "Na mapě se můžeš pohybovat pomocí myši, kláves W, A, S, D nebo kurzorových kláves. Ve 2D můžeš " +
+	            "kliknutím pravým tlačítkem myši na mapě, změnit kurzor na akční kurzor pro interakci s objekty, " +
+	            "nebo postavami, jako jsou NPC.",
+				// End
+	            "Teď už budu zticha. Bav se při hraní Ambermoonu!"
+			} }
+		}.ToImmutableDictionary();
 
         readonly Game game;
         readonly IColoredRect[] markers = new IColoredRect[4];

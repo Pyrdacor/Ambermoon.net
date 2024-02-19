@@ -327,28 +327,40 @@ namespace Ambermoon.UI
                     GameLanguage.German => "Deutsch",
                     GameLanguage.French => "Französisch",
                     GameLanguage.Polish => "Polnisch",
-                    _ => "Englisch"
+                    GameLanguage.Czech => "Tschechisch",
+					_ => "Englisch"
                 },
                 GameLanguage.French => gameLanguage switch
                 {
                     GameLanguage.German => "Allemand",
                     GameLanguage.French => "Français",
                     GameLanguage.Polish => "Polonais",
-                    _ => "Anglais"
+                    GameLanguage.Czech => "Tchèque",
+					_ => "Anglais"
                 },
                 GameLanguage.Polish => gameLanguage switch
                 {
                     GameLanguage.German => "Niemiecki",
                     GameLanguage.French => "Francuski",
                     GameLanguage.Polish => "Polski",
-                    _ => "Angielski"
+                    GameLanguage.Czech => "Czeski",
+					_ => "Angielski"
                 },
-                _ => gameLanguage switch
+                GameLanguage.Czech => gameLanguage switch
+                {
+	                GameLanguage.German => "Německy",
+	                GameLanguage.French => "Francouzky",
+	                GameLanguage.Polish => "Polsky",
+	                GameLanguage.Czech => "Česky",
+	                _ => "Anglicky"
+				},
+				_ => gameLanguage switch
                 {
                     GameLanguage.German => "German",
                     GameLanguage.French => "French",
                     GameLanguage.Polish => "Polish",
-                    _ => "English"
+                    GameLanguage.Czech => "Czech",
+					_ => "English"
                 }
             };
         }
@@ -360,7 +372,8 @@ namespace Ambermoon.UI
                 GameLanguage.German => "Wähle eine Spieldaten-Version:     (?)",
                 GameLanguage.French => "Choisir une version de données:    (?)",
                 GameLanguage.Polish => "Wybierz wersję gry:                (?)",
-                _ =>                   "Select a game data version:        (?)"
+                GameLanguage.Czech =>  "Vyberte verzi herních dat:         (?)",
+				_ =>                   "Select a game data version:        (?)"
             };
         }
 
@@ -371,7 +384,8 @@ namespace Ambermoon.UI
                 GameLanguage.German => "Die Spieldaten-Version bezieht sich auf die Amiga-Basisdaten. Diese Versionierung ist unabhängig von der Ambermoon.net Version.",
                 GameLanguage.French => "La version des données concerne les données de base de l'Amiga. Cette version est indépendante de la version d'Ambermoon.net.",
                 GameLanguage.Polish => "Wersja danych gry odnosi się do danych bazowych Amigi. Ta wersja jest niezależna od wersji Ambermoon.net.",
-                _ =>                   "The game data version relates to the Amiga base data. This version is independent of the Ambermoon.net version."
+                GameLanguage.Czech =>  "Verze herních dat se vztahuje k základním datům Amigy. Tato verze je nezávislá na verzi Ambermoon.net.",
+				_ =>                   "The game data version relates to the Amiga base data. This version is independent of the Ambermoon.net version."
             };
         }
 
@@ -383,14 +397,16 @@ namespace Ambermoon.UI
                     GameLanguage.German => "Speichere beim Programm",
                     GameLanguage.French => "Sauvegarder au programme",
                     GameLanguage.Polish => "Zapis gry w ścieżce progr.",
-                    _ =>                   "Save games in program path"
+                    GameLanguage.Czech =>  "Ulož do složky s programem",
+					_ =>                   "Save games in program path"
                 }
                 : configuration.Language switch
                 {
                     GameLanguage.German => "Speichere bei den Daten",
                     GameLanguage.French => "Sauvegarder aux données",
                     GameLanguage.Polish => "Zapis gry w ścieżce danych",
-                    _ =>                   "Save games in data path"
+                    GameLanguage.Czech =>  "Ulož do složky s daty",
+					_ =>                   "Save games in data path"
                 };
         }
 
@@ -405,7 +421,9 @@ namespace Ambermoon.UI
                         "Les sauvegardes sont stockées à côté d'Ambermoon.net.exe dans le sous-dossier 'Saves'.",
                     GameLanguage.Polish =>
                         "Zapisane gry są przechowywane obok pliku Ambermoon.net.exe w podfolderze 'Saves'.",
-                    _ =>
+                    GameLanguage.Czech =>
+	                    "Uložené hry jsou uloženy vedle souboru Ambermoon.net.exe v podsložce 'Saves'.",
+					_ =>
                         "Savegames are stored next to the Ambermoon.net.exe inside the sub-folder 'Saves'."
                 }
                 : configuration.Language switch
@@ -416,7 +434,9 @@ namespace Ambermoon.UI
                         "Les sauvegardes sont stockées dans le chemin de données d'origine et peuvent écraser les sauvegardes d'origine!",
                     GameLanguage.Polish =>
                         "Zapisane gry są przechowywane w oryginalnej ścieżce danych i mogą nadpisywać oryginalne zapisy!",
-                    _ =>
+                    GameLanguage.Czech =>
+	                    "Uložené hry jsou uloženy v originálním datovém souboru a mohou přepsat původní uložené hry!",
+					_ =>
                         "Savegames are stored in the original data path and may overwrite original savegames!"
                 };
         }

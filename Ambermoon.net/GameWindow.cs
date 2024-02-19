@@ -707,8 +707,14 @@ namespace Ambermoon
                     "Rozpoczynanie gry ...",
                     "Przygotowanie nowej gry ..."
                 }
+            },
+            { GameLanguage.Czech, new string[]
+	            {
+					"Zahájení hry ...",
+					"Příprava nové hry ..."
+				}
             }
-        };
+		};
 
         string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
 

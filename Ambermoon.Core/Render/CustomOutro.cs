@@ -287,8 +287,24 @@ namespace Ambermoon.Render
                     " ^~HERO~: Wspaniale!",
                     "Pyrdacor: Dziękuję za grę w ~INK 22~Ambermoon~INK 31~! Mam nadzieję, że dobrze się bawiliście."
                 }
+            },
+            { GameLanguage.Czech, new List<string>
+	            {
+					"Egil: Bylo to úžasné dobrodružství, ale teď se musím rozloučit.",
+					"Egil: Trpaslíci z Gemstone potřebují dobrovolníky na obnovu svého hlavního města.",
+					"~HERO~: Doufám, že se ještě uvidíme. Šťastnou cestu, příteli!",
+					" ^~HERO~: ...",
+					" ^Stranger: Ne tak rychle ~HERO~!",
+					" ^~HERO~: Kdo jsi?",
+					"Stranger: Jmenuji se ~INK17~Pyrdacor~INK31~. Nemám mnoho času.",
+					"Stranger: Ale mohu vám říci toto: Dobrodružství ještě nekončí.",
+					" ^~HERO~: O čem to mluvíš?",
+					" ^~INK17~Je v plánu třetí část~INK31~ trilogie Amber.",
+					" ^~HERO~: Úžasné!",
+					"Pyrdacor: Děkuji, že jsi si zahrál ~INK22~Ambermoon~INK31~! Doufám, že jsi se bavil."
+				}
             }
-        }.ToImmutableDictionary();
+		}.ToImmutableDictionary();
 
         readonly Queue<KeyValuePair<TimeSpan, IAction>> actions = new Queue<KeyValuePair<TimeSpan, IAction>>();
 

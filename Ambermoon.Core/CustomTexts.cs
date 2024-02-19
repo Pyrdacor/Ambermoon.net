@@ -102,7 +102,22 @@ namespace Ambermoon
                     { Index.GameLoaded, "~INK 22~Zapis {0}~INK 31~ został wczytany."},
                     { Index.InitialGameLoaded, "~INK 22~Zapis startowy~INK 31~ został wczytany."}
                 }.ToImmutableDictionary()
-            }
+            },
+            { GameLanguage.Czech, new Dictionary<Index, string>
+                {
+					{ Index.ReallyStartNewGame, "Opravdu chcete začít novou hru?" },
+					{ Index.FailedToLoadSavegame, "Nepodařilo se načíst uloženou hru." },
+					{ Index.FailedToLoadInitialSavegame, "Nepodařilo se načíst úvodní uloženou hru." },
+					{ Index.FailedToLoadSavegameUseInitial, "Nepodařilo se načíst uloženou hru. Místo toho se načetla úvodní uložená hra." },
+					{ Index.StartNewGameOrQuit, "Chcete začít novou hru nebo hru ukončit?" },
+					{ Index.RuneTableUsage, "Pokud máte v inventáři tabulku run, všechny runy se nyní automaticky zobrazují jako text." },
+					{ Index.LoadCrashedGame, "Byla nalezena záloha před pádem hry. Chcete ji načíst?" },
+					{ Index.FailedToRemoveCrashSavegame, "Zálohu před pádem hry nebylo možné automaticky odstranit. Udělejte to prosím sami. Je uložena v podsložce 'Save.99'." },
+					{ Index.GameSaved, "Uloženo jako ~INK 22~'{0}'~INK 31~."},
+					{ Index.GameLoaded, "~INK 22~Savegame {0}~INK 31~ načteno."},
+					{ Index.InitialGameLoaded, "~INK 22~Počáteční uložení~INK 31~ načteno."}
+				}.ToImmutableDictionary()
+			}
         }.ToImmutableDictionary();
 
         public static string GetText(GameLanguage language, Index index) => entries[language][index];

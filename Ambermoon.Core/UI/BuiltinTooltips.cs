@@ -232,8 +232,27 @@ namespace Ambermoon.UI
                 "Szczęście^^Szansa w procentach na uniknięcie efektu już uruchomionej pułapki.^Dodaje się, wraz ze Zręcznością, do szansy na uniknięcie walki.^^Obecnie {0}% szansy na uniknięcie efektu pułapki^        {1}% szansy na uniknięcie walki.",
                 // Anti-Magic
                 "Anty-magia^^Procentowa szansa na zablokowanie zaklęć przeciwnika.^^Obecnie {0}% szansy na zablokowanie zaklęć."
-            } }
-        }.ToImmutableDictionary();
+            } },
+            { GameLanguage.Czech, new string[]
+            {
+	            // Strength
+	            "Síla^^Zvyšuje maximální nosnost o 1 kg za bod.^Také zvyšuje poškození o 1 každých 25 bodů.^^V současné době +{0}kg a +{1} poškození",
+				// Intelligence
+	            "Inteligence^^Přidává 1 další SP a SLP na^úrovni za každých 25 bodů.^^Současně +{0} SP a SLP",
+				// Dexterity
+	            "Obratnost^^Šance v procentech nespustit^ past při manipulaci se zámky.^Přidává spolu se štěstím^ k šanci vyhnout se boji.^^V současné době {0}% šance vyhnout se pasti^ {1}% šance vyhnout se boji",
+				// Speed
+	            "Rychlost^^Vyšší hodnoty rychlosti vám umožňují jednat v bitvě dříve.^Každých 80 bodů vám umožní posunout se o 1 pole^za kolo.^^V současné době se můžete posunout o {0} políček",
+				// Stamina
+	            "Výdrž^^Zvyšuje obranu o 1 každých 25 bodů.^^V současné době +{0} obrana",
+				// Charisma
+	            "Charisma^^Zvyšuje prodejní cenu o 1%^každých plných 10 bodů.^^Aktuálně +{0}% prodejní ceny",
+				// Luck
+	            "Štěstí^^Šance v procentech vyhnout se účinku již spuštěné pasti.^Přidává spolu s obratností ^k šanci vyhnout se boji.^^Aktuálně {0}% šance vyhnout se účinku pasti^ {1}% šance vyhnout se boji",
+				// Anti-Magic
+	            "Anti-Magie^^Šance na blokování nepřátelských kouzel v procentech.^^V současné době {0}% šance na blokování kouzel"
+			} }
+		}.ToImmutableDictionary();
 
         static readonly ImmutableDictionary<GameLanguage, string[]> SkillTooltips = new Dictionary<GameLanguage, string[]>
         {
@@ -328,8 +347,31 @@ namespace Ambermoon.UI
                 "Czytanie magii^^Szansa na nauczenie się zaklęcia ze zwoju.^W przeciwnym razie zwój zostanie zniszczony.^^Aktualna szansa: {0}%",
                 // Use magic
                 "Używanie magii^^Szansa na pomyślne rzucenie zaklęcia.^Niektóre zaklęcia mają negatywne efekty, jeśli rzucenie nie powiedzie się^^Aktualna szansa: {0}%",
-            } }
-        }.ToImmutableDictionary();
+            } },
+            { GameLanguage.Czech, new string[]
+            {
+	            // Attack
+	            "Útok^^Šance zasáhnout nepřítele.^^V současné době {0}% šance na zásah",
+				// Parry
+	            "Blokování^^Šance zablokovat nepřátelský útok.^Je k tomu nutná bojová akce 'Blokování'.^^Současná {0}% šance na zablokování",
+				// Swim
+	            "Plavání^^Snížení poškození při plavání.^^V současné době {0}% snížení poškození",
+				// Crit
+	            "Kritický zásah^^Šance zabít protivníka jediným úderem.^Nefunguje proti bossům.^^Aktuální šance: {0}%",
+				// Find traps
+	            "Najdi past^^Šance najít past na zámku.^^Aktuální šance: {0}%",
+				// Disarm traps
+	            "Zneškodni past^^Šance na zneškodnění nalezené pasti na zámku.^^Aktuální šance: {0}%",
+				// Lockpick
+	            "Odemykání^^Šance na odemčení zámku bez paklíče.^Nefunguje u dveří, které vyžadují klíč.^^Aktuální šance: {0}%",
+				// Search
+	            "Průzkum^^Šance najít tajné poklady.^Vyšší hodnoty umožňují najít konkrétní truhly.",
+				// Read magic
+	            "Čtení kouzel^^Šance naučit se kouzlo ze svitku.^Jinak je svitek zničen.^^Aktuální šance: {0}%",
+				// Use magic
+	            "Použít magii^^Šance na úspěšné seslání kouzla.^Některá kouzla mají negativní účinky, pokud se seslání nezdaří.^^Aktuální šance: {0}%",
+			} }
+		}.ToImmutableDictionary();
 
         static readonly ImmutableDictionary<GameLanguage, ImmutableDictionary<Condition, string>> ConditionTooltips = new Dictionary<GameLanguage, ImmutableDictionary<Condition, string>>
         {
@@ -472,8 +514,43 @@ namespace Ambermoon.UI
                 { Condition.DeadAshes, "Postać nie bierze udziału w walce.^Nie może się komunikować.^By ją wskrzesić, najpierw popioły^muszą zostać przekształcone w ciało." },
                 // DeadDust
                 { Condition.DeadDust, "Postać nie bierze udziału w walce.^Nie może się komunikować.^By ją wskrzesić, proch musi zostać^przekształcony w popiół, a następnie w ciało." }
-            }.ToImmutableDictionary() }
-        }.ToImmutableDictionary();
+            }.ToImmutableDictionary() },
+			{ GameLanguage.Czech, new Dictionary<Condition, string>
+			{
+				// Irritated
+				{ Condition.Irritated,"Postava nemůže sesílat kouzla.^^ Aktivní pouze během boje." },
+				// Crazy
+				{ Condition.Crazy, "Postava provádí v boji náhodné akce.^Inventář není přístupný." },
+				// Sleep
+				{ Condition.Sleep, "Postava nemůže provádět bojové akce.^Jakékoli poškození status zruší.^^Aktivní pouze během boje." },
+				// Panic
+				{ Condition.Panic, "Postava se pokusí utéct.^Žádná bojová akce není možná.^Inventář není přístupný.^^Aktivní pouze během boje." },
+				// Blind
+				{ Condition.Blind, "Postava nevidí.^Poloměr světla na 2D mapách je vypnutý.^Úplná tma na 3D mapách." },
+				// Drugged
+				{ Condition.Drugged, "Postava je pod vlivem drog.^Složitější ovládání a vizuální efekty." },
+				// Exhausted
+				{ Condition.Exhausted, "Všechny atributy se dočasně sníží na polovinu.^Může být odstraněno spánkem." },
+				// Unused
+				{ Condition.Unused, "" },
+				// Lamed
+				{ Condition.Lamed, "Není možný žádný pohyb ani útok." },
+				// Poisoned
+				{ Condition.Poisoned, "Postava dostává poškození^každé bojové kolo nebo hodinu." },
+				// Petrified
+				{ Condition.Petrified, "Inventář není přístupný.^Postava nemůže provádět žádné^akce a nestárne." },
+				// Diseased
+				{ Condition.Diseased, "Postava ztrácí každý den bod^náhodného atributu." },
+				// Aging
+				{ Condition.Aging, "Postava stárne každým dnem.^Závisí to na její rase.^nakonec zemře v určitém věku.^^Max. věk: {0}" },
+				// DeadCorpse
+				{ Condition.DeadCorpse, "Postava se neúčastní bitev. ^Nemůže komunikovat." },
+				// DeadAshes
+				{ Condition.DeadAshes, "Postava se neúčastní bitev. ^Nemůže komunikovat.^Jeho popel se musí nejprve přeměnit na^tělo, aby mohl být vzkříšen." },
+				// DeadDust
+				{ Condition.DeadDust, "Postava se neúčastní bitev. ^Nemůže komunikovat.^Jeho prach se musí přeměnit v popel^a pak na tělo, aby mohl být vzkříšen." }
+			}.ToImmutableDictionary() }
+		}.ToImmutableDictionary();
 
         static readonly ImmutableDictionary<GameLanguage, string[]> SecondaryStatTooltips = new Dictionary<GameLanguage, string[]>
         {
@@ -616,7 +693,42 @@ namespace Ambermoon.UI
                 " do ",
                 // MagicIntBonus
                 "^ Premia: PM i PNM +INT/25 ({0})"
-            } }
-        }.ToImmutableDictionary();
+            } },
+			{ GameLanguage.Czech, new string[]
+			{
+				// Age
+				"Věk postavy^^Umírá v maximálním věku {0}.",
+				// LP
+				"Body života^^Když dosáhnou 0^ postava umírá.",
+				// SP
+				"Body magie^^Slouží k sesílání kouzel.",
+				// SLP
+				"Body učení kouzel^^Slouží k učení kouzel.",
+				// TP
+				"Tréninkové body^^Slouží ke zvýšení^dovedností u trenérů.",
+				// Gold
+				"Zlato^^Měna Ambermoonu.^Slouží k nákupu zboží.",
+				// Food
+				"Příděly^^Při každém odpočinku (kromě spaní v hostincích) se spotřebuje ^1 příděl na postavu k^doplnění BŽ a BM.",
+				// Damage
+				"Poškození^^Základní hodnota poškození v bitvách.^^Skládá se z vybavení a síly.",
+				// Defense
+				"Obrana^^Základní hodnota pro snížení fyzického poškození^ v bitvách.^^Skládá se z vybavení a výdrže.",
+				// EPPre50
+				"Zkušenostní body^^Potřebné k získání úrovně.^^Další úroveň na {0} EP.",
+				// EP50
+				"Zkušenostní body^^Jsou potřebné k získání úrovně.^^Max. úrovně již bylo dosaženo.",
+				// LevelWithAPRIncrease
+				"Úroveň postavy^^Každé zvýšení úrovně zvyšuje hodnoty^postavy o:^^ BŽ : {0,-10}{1} TB : {2}{3}^^Útoky za kolo se zvyšují^na určitých úrovních:^^ {5}^^Útoky v jednom kole jsou {4}",
+				// LevelWithoutAPRIncrease
+				"Úroveň postavy^^Každé zvýšení úrovně zvyšuje hodnoty^postavy o:^^ BŽ : {0,-10}{1} TB : {2}{3}^^Útoky v jednom kole jsou {4}",
+				// MagicLevelUpValues
+				" BM : {0}^ BUK: {1,-10}",
+				// RangeOperator
+				" na ",
+				// MagicIntBonus
+				"^ Bonus: BM and BUK +INT/25 ({0})"
+			} }
+		}.ToImmutableDictionary();
     }
 }

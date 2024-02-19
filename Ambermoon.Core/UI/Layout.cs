@@ -1311,8 +1311,40 @@ namespace Ambermoon.UI
                     // Page 4
                     "Włącz cheaty",
                 }
-            }            
-        }.ToImmutableDictionary();
+            },
+            {
+	            GameLanguage.Czech,
+	            new string[OptionCount]
+	            {
+		            // Page 1
+		            "Hudba",
+		            "Hlasitost",
+		            "Rozlišení",
+		            "Celá obrazovka",
+		            "Grafický filtr",
+		            "Grafické překrytí",
+		            "Efekty",
+		            // Page 2
+		            "Rychlost boje",
+		            "3D pohyb",
+		            "Otáčení pomocí šipek",
+					"Zobrazit popisky tlačítek",
+		            "Zobrazit popisky statistik",
+					"Vzdálenost 3D mlhy",
+					"3D podlaha a strop",
+		            // Page 3
+		            "Zobrazit runy jako text",
+		            "Dodatečné pozice pro ukládání",
+		            "Externí hudba",
+		            "Zobrazit logo Pyrdacor",
+		            "Zobrazit fantasy intro",
+		            "Zobrazit intro",
+					"Zobrazit informace o uložení/nahrání",
+		            // Page 4
+		            "Povolit cheaty",
+				}
+            }
+		}.ToImmutableDictionary();
 
         static readonly ImmutableDictionary<GameLanguage, string[]> FloorAndCeilingValues = new Dictionary<GameLanguage, string[]>
         {
@@ -1355,8 +1387,18 @@ namespace Ambermoon.UI
                     "Sufit",
                     "Obie"
                 }
+            },
+            {
+	            GameLanguage.Czech,
+	            new string[4]
+	            {
+					"Žádné",
+					"Podlaha",
+					"Strop",
+					"Obojí"
+				}
             }
-        }.ToImmutableDictionary();
+		}.ToImmutableDictionary();
 
         static readonly ImmutableDictionary<GameLanguage, string> DefaultBattleSpeedName = new Dictionary<GameLanguage, string>
         {
@@ -1371,8 +1413,11 @@ namespace Ambermoon.UI
             },
             {
                 GameLanguage.Polish, "Domyślna"
-            }
-        }.ToImmutableDictionary();
+            },
+            {
+	            GameLanguage.Polish, "Výchozí"
+			}
+		}.ToImmutableDictionary();
 
         static readonly ImmutableDictionary<GameLanguage, string[]> Movement3DValues = new Dictionary<GameLanguage, string[]>
         {
@@ -1407,8 +1452,16 @@ namespace Ambermoon.UI
                     "WASD",
                     "QWEASD"
                 }
+            },
+            {
+	            GameLanguage.Czech,
+	            new string[2]
+	            {
+		            "WASD",
+		            "QWEASD"
+	            }
             }
-        }.ToImmutableDictionary();
+		}.ToImmutableDictionary();
 
         void OpenOptions()
         {
