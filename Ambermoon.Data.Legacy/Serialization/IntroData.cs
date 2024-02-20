@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Text;
 using Ambermoon.Data.Serialization;
 using static Ambermoon.Data.Legacy.Serialization.AmigaExecutable;
 
@@ -609,7 +610,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                             {
                                 int commandIndex = textCommandGroups[i][t];
                                 var command = (TextCommand)textCommands[commandIndex];
-                                string commandText = new string(commandTexts[t].Normalize().Where(ch => ch == ' ' || glyphs.ContainsKey(ch)).ToArray());
+                                string commandText = new string(TextProcessor.RemoveDiacritics(commandTexts[t]).Where(ch => ch == ' ' || glyphs.ContainsKey(ch)).ToArray());
                                 textCommandTexts[command.Args[2]] = commandText;
 
                                 if (commandText.Length != 0 && firstWhiteTextCommandIndex != -1 && commandIndex >= firstWhiteTextCommandIndex)

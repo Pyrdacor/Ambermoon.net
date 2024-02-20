@@ -1,9 +1,11 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Serialization;
 using Ambermoon.Render;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon
@@ -281,7 +283,7 @@ namespace Ambermoon
         public Text CreateText(IRenderView renderView, Layer layer, Rect area, string text,
             byte displayLayer, TextAlign textAlign = TextAlign.Center, byte alpha = 255, Rect clipArea = null)
         {
-            text = new string(text.Normalize().Where(ch => ch == ' ' || glyphs.ContainsKey(upperOnly ? char.ToUpper(ch) : ch)).ToArray());
+            text = new string(TextProcessor.RemoveDiacritics(text).Where(ch => ch == ' ' || glyphs.ContainsKey(upperOnly ? char.ToUpper(ch) : ch)).ToArray());
             var renderText = new Text(renderView, layer, text, glyphs, characters, displayLayer, spaceWidth, upperOnly,
                 textureAtlasIndexOffset, alpha, clipArea);
             renderText.Place(area, textAlign);

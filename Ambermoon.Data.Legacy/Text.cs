@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -45,7 +47,21 @@ namespace Ambermoon.Data.Legacy
             this.glyphCount = glyphCount;
         }
 
-        IEnumerable<byte> CharToGlyph(char ch, bool rune, char? fallbackChar = null)
+        public static string RemoveDiacritics(string text)
+        {
+	        string normalizedText = text.Normalize(NormalizationForm.FormD);
+	        StringBuilder stringBuilder = new StringBuilder();
+
+	        foreach (char c in normalizedText)
+	        {
+		        if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+			        stringBuilder.Append(c);
+	        }
+
+	        return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
+        }
+
+		IEnumerable<byte> CharToGlyph(char ch, bool rune, char? fallbackChar = null)
         {
             bool extended = glyphCount > 94;
 
@@ -198,9 +214,9 @@ namespace Ambermoon.Data.Legacy
                 foreach (var glyph in CharToGlyph(fallbackChar.Value, rune))
                     yield return glyph;
             }
-            else if (ch.ToString().Normalize().Any(c => c > 32 && c < 128))
+            else if (RemoveDiacritics(ch.ToString()).Any(c => c > 32 && c < 128))
             {
-                var glyph = CharToGlyph(ch.ToString().Normalize().First(c => c > 32 && c < 128), rune, ' ').First();
+                var glyph = CharToGlyph(RemoveDiacritics(ch.ToString()).First(c => c > 32 && c < 128), rune, ' ').First();
 
                 if (glyph == (byte)SpecialGlyph.SoftSpace)
                     throw new AmbermoonException(ExceptionScope.Data, $"Unsupported text character '{ch}'.");
