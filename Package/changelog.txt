@@ -3,7 +3,10 @@ Version 1.9
 
 - Added the intro
 - Added the polish version
+- Added the czech version
 - Added distance fog
+- Removed 3D tearing
+- Improved 3D smoothness
 - Added some cheats
 - Bugfixes and improvements
 
