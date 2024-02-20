@@ -45,7 +45,7 @@
         HealPerson,
         RemoveCurse,
         Train,
-        Grid, // TODO (3x3 blocks, not sure were it was used)
+        Equipment, // sage (3x3 grid)
         GiveItem,
         GiveFoodToNPC,
         GiveGoldToNPC,

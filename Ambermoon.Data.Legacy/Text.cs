@@ -163,7 +163,31 @@ namespace Ambermoon.Data.Legacy
                 yield return (byte)(rune ? 89 : extended ? 110 : 25);
             else if (ch == 'ż' || ch == 'Ż')
                 yield return (byte)(rune ? 89 : extended ? 111 : 25);
-            else if (ch == ' ')
+            else if (ch == 'í' || ch == 'Í')
+	            yield return (byte)(rune ? 72 : extended ? 112 : 8);
+            else if (ch == 'ů' || ch == 'Ů')
+	            yield return (byte)(rune ? 84 : extended ? 113 : 62);
+            else if (ch == 'č' || ch == 'Č')
+	            yield return (byte)(rune ? 66 : extended ? 114 : 2);
+            else if (ch == 'ď' || ch == 'Ď')
+	            yield return (byte)(rune ? 67 : extended ? 115 : 3);
+            else if (ch == 'ě' || ch == 'Ě')
+	            yield return (byte)(rune ? 68 : extended ? 116 : 4);
+            else if (ch == 'ň' || ch == 'Ň')
+	            yield return (byte)(rune ? 77 : extended ? 117 : 13);
+            else if (ch == 'ř' || ch == 'Ř')
+	            yield return (byte)(rune ? 81 : extended ? 118 : 17);
+            else if (ch == 'š' || ch == 'Š')
+	            yield return (byte)(rune ? 82 : extended ? 119 : 18);
+            else if (ch == 'ť' || ch == 'Ť')
+	            yield return (byte)(rune ? 83 : extended ? 120 : 19);
+            else if (ch == 'ý' || ch == 'Ý')
+	            yield return (byte)(rune ? 88 : extended ? 121 : 24);
+            else if (ch == 'ž' || ch == 'Ž')
+	            yield return (byte)(rune ? 89 : extended ? 122 : 25);
+            else if (ch == 'ú' || ch == 'Ú')
+	            yield return (byte)(rune ? 84 : extended ? 123 : 62);
+			else if (ch == ' ')
                 yield return (byte)SpecialGlyph.SoftSpace;
             else if (ch == '$')
                 yield return (byte)SpecialGlyph.HardSpace;

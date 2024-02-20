@@ -2328,7 +2328,7 @@ namespace Ambermoon.UI
                                 buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                                 break;
                             case PlaceType.Sage:
-                                buttonGrid.SetButton(0, ButtonType.Grid, false, null, false, GetTooltip(Button.TooltipType.IdentifyEquipment)); // this is set later manually
+                                buttonGrid.SetButton(0, ButtonType.Equipment, false, null, false, GetTooltip(Button.TooltipType.IdentifyEquipment)); // this is set later manually
                                 buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
                                 buttonGrid.SetButton(3, ButtonType.Inventory, false, null, false, GetTooltip(Button.TooltipType.IdentifyInventory)); // this is set later manually
