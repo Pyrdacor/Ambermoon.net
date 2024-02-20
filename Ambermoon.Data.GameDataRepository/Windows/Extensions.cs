@@ -2,7 +2,6 @@
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.InteropServices;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 #if OS_WINDOWS
 

@@ -1,6 +1,4 @@
-﻿using Ambermoon.Data.GameDataRepository.Windows;
-
-namespace Ambermoon.Data.GameDataRepository.Data
+﻿namespace Ambermoon.Data.GameDataRepository.Data
 {
     public static class DataExtensions
     {
