@@ -238,17 +238,17 @@ namespace Ambermoon.UI
 	            // Strength
 	            "Síla^^Zvyšuje maximální nosnost o 1 kg za bod.^Také zvyšuje poškození o 1 každých 25 bodů.^^V současné době +{0}kg a +{1} poškození",
 				// Intelligence
-	            "Inteligence^^Přidává 1 další SP a SLP na^úrovni za každých 25 bodů.^^Současně +{0} SP a SLP",
+	            "Inteligence^^Přidává 1 další SP a SLP na^úrovni za každých 25 bodů.^^Současně +{0} BM a BUK",
 				// Dexterity
 	            "Obratnost^^Šance v procentech nespustit^ past při manipulaci se zámky.^Přidává spolu se štěstím^ k šanci vyhnout se boji.^^V současné době {0}% šance vyhnout se pasti^ {1}% šance vyhnout se boji",
 				// Speed
-	            "Rychlost^^Vyšší hodnoty rychlosti vám umožňují jednat v bitvě dříve.^Každých 80 bodů vám umožní posunout se o 1 pole^za kolo.^^V současné době se můžete posunout o {0} políček",
+	            "Rychlost^^Vyšší hodnoty vám umožňují jednat v bitvě dříve.^Každých 80 bodů vám umožní posunout se o 1 pole^za kolo.^^V současné době se můžete posunout o {0} políček",
 				// Stamina
 	            "Výdrž^^Zvyšuje obranu o 1 každých 25 bodů.^^V současné době +{0} obrana",
 				// Charisma
 	            "Charisma^^Zvyšuje prodejní cenu o 1%^každých plných 10 bodů.^^Aktuálně +{0}% prodejní ceny",
 				// Luck
-	            "Štěstí^^Šance v procentech vyhnout se účinku již spuštěné pasti.^Přidává spolu s obratností ^k šanci vyhnout se boji.^^Aktuálně {0}% šance vyhnout se účinku pasti^ {1}% šance vyhnout se boji",
+	            "Štěstí^^Šance v vyhnout se účinku již spuštěné pasti.^Přidává spolu s obratností ^k šanci vyhnout se boji.^^Aktuálně {0}% šance vyhnout se účinku pasti^ {1}% šance vyhnout se boji",
 				// Anti-Magic
 	            "Anti-Magie^^Šance na blokování nepřátelských kouzel v procentech.^^V současné době {0}% šance na blokování kouzel"
 			} }
@@ -709,7 +709,7 @@ namespace Ambermoon.UI
 				// Gold
 				"Zlato^^Měna Ambermoonu.^Slouží k nákupu zboží.",
 				// Food
-				"Příděly^^Při každém odpočinku (kromě spaní v hostincích) se spotřebuje ^1 příděl na postavu k^doplnění BŽ a BM.",
+				"Jídlo^^Při každém odpočinku (kromě spaní v hostincích)^1 jídlo na postavu k^doplnění BŽ a BM.",
 				// Damage
 				"Poškození^^Základní hodnota poškození v bitvách.^^Skládá se z vybavení a síly.",
 				// Defense
