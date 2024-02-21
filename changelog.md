@@ -2,6 +2,7 @@
 
 ## 1.9.0 - Eighth patch (August 2023 - February 2024)
 
+- Version [1.9.8](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.8): Crash fix
 - Version [1.9.7](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.7): 3D tearing fix, 3D smooth movement, czech version
 - Version [1.9.6](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.6): 2D movement quick fix
 - Version [1.9.5](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.5): Many small fixes and improvements
