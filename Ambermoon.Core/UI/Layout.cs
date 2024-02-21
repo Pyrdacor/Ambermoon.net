@@ -1334,12 +1334,12 @@ namespace Ambermoon.UI
 					"3D podlaha a strop",
 		            // Page 3
 		            "Zobrazit runy jako text",
-		            "Dodatečné pozice pro ukládání",
+					"Dodatečné úložné sloty",
 		            "Externí hudba",
 		            "Zobrazit logo Pyrdacor",
 		            "Zobrazit fantasy intro",
 		            "Zobrazit intro",
-					"Zobrazit informace o uložení/nahrání",
+					"Zobrazit info o ukládání",
 		            // Page 4
 		            "Povolit cheaty",
 				}
@@ -1415,7 +1415,7 @@ namespace Ambermoon.UI
                 GameLanguage.Polish, "Domyślna"
             },
             {
-	            GameLanguage.Polish, "Výchozí"
+	            GameLanguage.Czech, "Výchozí"
 			}
 		}.ToImmutableDictionary();
 
