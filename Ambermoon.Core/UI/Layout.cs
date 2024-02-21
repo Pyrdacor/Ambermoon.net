@@ -1334,12 +1334,12 @@ namespace Ambermoon.UI
 					"3D podlaha a strop",
 		            // Page 3
 		            "Zobrazit runy jako text",
-					"Dodatečné úložné sloty",
+					"Další pozice pro uložení",
 		            "Externí hudba",
 		            "Zobrazit logo Pyrdacor",
 		            "Zobrazit fantasy intro",
 		            "Zobrazit intro",
-					"Zobrazit info o ukládání",
+					"Info o uložení/nahrání",
 		            // Page 4
 		            "Povolit cheaty",
 				}
