@@ -21,7 +21,7 @@ if ($isWindows) {
   $newScriptContent = $scriptContent -replace '#define MyAppVersion "[\d\.]+"', ('#define MyAppVersion "{0}"' -f $versionWithoutPrefix)
   $newScriptPath = "setup.iss"
   $newScriptContent | Set-Content $newScriptPath
-  "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" $newScriptPath
+  Start-Process -FilePath "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" -ArgumentList "/O""."" $newScriptPath"
 } elseif ($isLinux) {
   Write-Host Publish Linux executable
   Set-Variable -Name UseGLES -Value false
