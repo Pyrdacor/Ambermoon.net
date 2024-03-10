@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.GameDataRepository.Data;
 using System.ComponentModel;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 #if OS_WINDOWS
@@ -34,7 +35,35 @@ namespace Ambermoon.Data.GameDataRepository.Windows
             return DataToBitmap(imageData.Width, imageData.Height, data);
         }
 
-        public static Bitmap GetBitmap(this GameDataRepository repository, IImageProvidingData imageProvidingData)
+		public static Bitmap ToBitmap(this Image image, Palette palette, bool transparency)
+		{
+			if (transparency)
+				palette = palette.WithTransparency();
+
+            var data = new byte[image.Width * image.Height * image.Frames.Count * 4];
+            int x = 0;
+            int frameRowSize = image.Width * 4;
+			int rowSize = image.Width * image.Frames.Count * 4;
+			var destination = new Span<byte>(data);
+
+            foreach (var frame in image.Frames)
+            {
+                ReadOnlySpan<byte> frameData = frame.GetData(palette);
+
+                for (int y = 0; y < image.Height; y++)
+                {
+					var sourceRow = frameData.Slice(y * frameRowSize, frameRowSize);
+					var destRow = destination.Slice(y * rowSize + x, rowSize);
+					sourceRow.CopyTo(destRow);
+				}
+
+                x += frameRowSize;
+            }
+
+			return DataToBitmap(image.Width * image.Frames.Count, image.Height, data);
+		}
+
+		public static Bitmap GetBitmap(this GameDataRepository repository, IImageProvidingData imageProvidingData)
         {
             var imageData = repository.GetImage(imageProvidingData, out int width, out int height);
 

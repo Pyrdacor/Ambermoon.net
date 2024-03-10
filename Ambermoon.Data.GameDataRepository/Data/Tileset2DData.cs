@@ -22,6 +22,27 @@ namespace Ambermoon.Data.GameDataRepository.Data
         Water,
     }
 
+    [Flags]
+    public enum AllowedTravelTypes
+    {
+        None = 0,
+		Walk = 0x0001,
+		Horse = 0x0002,
+		Raft = 0x0004,
+		Ship = 0x0008,
+		MagicalDisc = 0x0010,
+		Eagle = 0x0020,
+		Fly = 0x0040,
+		Swim = 0x0080,
+		WitchBroom = 0x0100,
+		SandLizard = 0x0200,
+		SandShip = 0x0400,
+		Wasp = 0x0800,
+		Unused13 = 0x1000,
+		Unused14 = 0x2000,
+		Unused15 = 0x4000,
+	}
+
     /// <summary>
     /// This should only be used for foreground tiles.
     /// It controls the render order of the tile and the player.
@@ -55,6 +76,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         private Tile2DType _type;
         private Tile2DRenderOrder _renderOrder;
         private uint _allowedCollisionClasses;
+        private bool _blockSight;
         private bool _waveAnimation;
         private bool _randomAnimation;
         private bool _autoPoison;
@@ -133,12 +155,12 @@ namespace Ambermoon.Data.GameDataRepository.Data
         ///
         /// Useful for world maps. Otherwise use <see cref="AllowedCollisionClasses"/>.
         /// </summary>
-        public TravelType AllowedTravelTypes
+        public AllowedTravelTypes AllowedTravelTypes
         {
-            get => (TravelType)AllowedCollisionClasses;
+            get => (AllowedTravelTypes)AllowedCollisionClasses;
             set
             {
-                if (value.HasFlag(Tileset.TileFlags.AllowMovementSwim))
+                if (value.HasFlag(AllowedTravelTypes.Swim))
                     Type = Tile2DType.Water;
                 else if (Type == Tile2DType.Water)
                     Type = Tile2DType.Normal;
@@ -199,21 +221,31 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
         }
 
-        /// <summary>
-        /// Normally animations are cyclic. So if the last frame
-        /// is reached, it starts again at the first frame.
-        /// 
-        /// If this is active the animation instead will decrease
-        /// the frames one by one after reaching the last frame.
-        /// So it will be a forth and back frame iteration.
-        /// 
-        /// 0 -> 1 -> 2 -> 1 -> 0 -> 1 -> 2 -> 1 -> ...
-        /// 
-        /// Instead of:
-        /// 
-        /// 0 -> 1 -> 2 -> 0 -> 1 -> 2 -> 0 -> 1 -> ...
-        /// </summary>
-        public bool WaveAnimation
+		/// <summary>
+		/// If this is active the object will block sight.
+		/// Monsters can't see through it.
+		/// </summary>
+		public bool BlockSight
+		{
+			get => _blockSight;
+			set => SetField(ref _blockSight, value);
+		}
+
+		/// <summary>
+		/// Normally animations are cyclic. So if the last frame
+		/// is reached, it starts again at the first frame.
+		/// 
+		/// If this is active the animation instead will decrease
+		/// the frames one by one after reaching the last frame.
+		/// So it will be a forth and back frame iteration.
+		/// 
+		/// 0 -> 1 -> 2 -> 1 -> 0 -> 1 -> 2 -> 1 -> ...
+		/// 
+		/// Instead of:
+		/// 
+		/// 0 -> 1 -> 2 -> 0 -> 1 -> 2 -> 0 -> 1 -> ...
+		/// </summary>
+		public bool WaveAnimation
         {
             get => _waveAnimation;
             set => SetField(ref _waveAnimation, value);
@@ -303,6 +335,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 tileFlags = 0x80; // shortcut (= block all movement)
 
             tileFlags |= (CombatBackgroundIndex & 0xf) << 28;
+            if (BlockSight)
+                tileFlags |= (uint)Tile2DFlags.BlockSight;
             if (WaveAnimation)
                 tileFlags |= (uint)Tile2DFlags.WaveAnimation;
             if (RandomAnimation)
@@ -367,7 +401,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             tile2DIconData.AllowedCollisionClasses = (flags >> 8) & 0x7fff;
             tile2DIconData.CombatBackgroundIndex = (flags >> 28) & 0xf;
             var tileFlags = (Tile2DFlags)flags;
-            tile2DIconData.WaveAnimation = tileFlags.HasFlag(Tile2DFlags.WaveAnimation);
+            tile2DIconData.BlockSight = tileFlags.HasFlag(Tile2DFlags.BlockSight);
+			tile2DIconData.WaveAnimation = tileFlags.HasFlag(Tile2DFlags.WaveAnimation);
             tile2DIconData.RandomAnimation = tileFlags.HasFlag(Tile2DFlags.RandomAnimationStart);
             tile2DIconData.AutoPoison = tileFlags.HasFlag(Tile2DFlags.AutoPoison);
             tile2DIconData.HidePlayer = tileFlags.HasFlag(Tile2DFlags.HidePlayer);
@@ -399,7 +434,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return WaveAnimation == other.WaveAnimation &&
+            return BlockSight == other.BlockSight &&
+                   WaveAnimation == other.WaveAnimation &&
                    RandomAnimation == other.RandomAnimation &&
                    AutoPoison == other.AutoPoison &&
                    HidePlayer == other.HidePlayer &&
@@ -444,7 +480,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             {
                 AllowedCollisionClasses = AllowedCollisionClasses,
                 AutoPoison = AutoPoison,
-                ColorIndex = ColorIndex,
+				BlockSight = BlockSight,
+				ColorIndex = ColorIndex,
                 CombatBackgroundIndex = CombatBackgroundIndex,
                 GraphicIndex = GraphicIndex,
                 HidePlayer = HidePlayer,
