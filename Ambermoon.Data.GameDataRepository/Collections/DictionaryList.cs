@@ -239,6 +239,14 @@ namespace Ambermoon.Data.GameDataRepository.Collections
             Update(null, item);
         }
 
+        public T GetAt(int index) => _list[index];
+
+        public void SetAt(int index, T element)
+        {
+            uint key = GetAt(index).Index;
+            this[key] = element;
+        }
+
         public bool TryGetValue(uint key, [MaybeNullWhen(false)] out T value) => _dictionary.TryGetValue(key, out value);
 
         IEnumerator IEnumerable.GetEnumerator() => _list.GetEnumerator();
