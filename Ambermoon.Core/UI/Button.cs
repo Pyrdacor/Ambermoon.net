@@ -373,9 +373,9 @@ namespace Ambermoon.UI
 					"Zkoumat",
 					"Dotknout",
 					"Mluvit",
-					"Přřepravit",
+					"Přepravit",
 					"Kniha kouzel",
-					"Tábor",
+					"Odpočinek",
 					"Mapa",
 					"Bojové pozice",
 					"Čekat",
@@ -395,7 +395,7 @@ namespace Ambermoon.UI
 					"Vzít jídlo",
 					"Nákup",
 					"Prodej",
-					"Tréning",
+					"Trénink",
 					"Vyléčit osobu",
 					"Odstranit kletbu",
 					"Vyléčit stav",
@@ -423,9 +423,9 @@ namespace Ambermoon.UI
 					"Pohyb",
 					"Postup",
 					"Útok",
-					"Obrana",
+					"Parírování",
 					"Seslat kouzlo",
-					"Určit požadované body učení kouzel"
+					"Určit body kouzel"
 				}
 			}
 		}.ToImmutableDictionary();

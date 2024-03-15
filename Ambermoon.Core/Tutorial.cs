@@ -133,7 +133,7 @@ namespace Ambermoon
             { GameLanguage.Czech, new string[]
             {
 	            // Introduction
-	            "Ahoj ~SELF~ a vítej v remaku původního Ambermoon.^^ Potřebuješ hru trochu představit?",
+	            "Ahoj ~SELF~ a vítej v remaku původního Ambermoon.^^Potřebuješ hru trochu představit?",
 				// Tip 1
 	            "Ikony v pravé dolní části obrazovky poskytují mnoho užitečných funkcí ve hře. " +
 	            "Pokud jsi na hlavní obrazovce, můžeš přepínat zobrazení ikon stiskem " +
@@ -146,7 +146,7 @@ namespace Ambermoon
 				// Tip 3
 	            "V horní části se zobrazují portréty postav. Kliknutím na ně můžeš vybrat " +
 	            "aktivního hráče a pomocí pravého tlačítka otevřeš inventář. Klávesy 1-6 vyberou " +
-	            "postavu a klávesy F1-F6 oevírají inventář.",
+				"postavu a klávesy F1-F6 otevírají inventář.",
 				// Tip 4
 	            "Na mapě se můžeš pohybovat pomocí myši, kláves W, A, S, D nebo kurzorových kláves. Ve 2D můžeš " +
 	            "kliknutím pravým tlačítkem myši na mapě, změnit kurzor na akční kurzor pro interakci s objekty, " +

@@ -238,7 +238,7 @@ namespace Ambermoon.UI
 	            // Strength
 	            "Síla^^Zvyšuje maximální nosnost o 1 kg za bod.^Také zvyšuje poškození o 1 každých 25 bodů.^^V současné době +{0}kg a +{1} poškození",
 				// Intelligence
-	            "Inteligence^^Přidává 1 další SP a SLP na^úrovni za každých 25 bodů.^^Současně +{0} BM a BUK",
+	            "Inteligence^^Přidává 1 další BM a BUK na^úrovni za každých 25 bodů.^^Současně +{0} BM a BUK",
 				// Dexterity
 	            "Obratnost^^Šance v procentech nespustit^ past při manipulaci se zámky.^Přidává spolu se štěstím^ k šanci vyhnout se boji.^^V současné době {0}% šance vyhnout se pasti^ {1}% šance vyhnout se boji",
 				// Speed
@@ -353,7 +353,7 @@ namespace Ambermoon.UI
 	            // Attack
 	            "Útok^^Šance zasáhnout nepřítele.^^V současné době {0}% šance na zásah",
 				// Parry
-	            "Blokování^^Šance zablokovat nepřátelský útok.^Je k tomu nutná bojová akce 'Blokování'.^^Současná {0}% šance na zablokování",
+	            "Blokování^^Šance zablokovat nepřátelský útok.^Je k tomu nutná bojová akce 'Parírování'.^^Současná {0}% šance na zablokování",
 				// Swim
 	            "Plavání^^Snížení poškození při plavání.^^V současné době {0}% snížení poškození",
 				// Crit
@@ -369,7 +369,7 @@ namespace Ambermoon.UI
 				// Read magic
 	            "Čtení kouzel^^Šance naučit se kouzlo ze svitku.^Jinak je svitek zničen.^^Aktuální šance: {0}%",
 				// Use magic
-	            "Použít magii^^Šance na úspěšné seslání kouzla.^Některá kouzla mají negativní účinky, pokud se seslání nezdaří.^^Aktuální šance: {0}%",
+	            "Použít magii^^Šance na úspěšné seslání kouzla.^Některá kouzla mají negativní účinky,^pokud se seslání nezdaří.^^Aktuální šance: {0}%",
 			} }
 		}.ToImmutableDictionary();
 
@@ -518,7 +518,7 @@ namespace Ambermoon.UI
 			{ GameLanguage.Czech, new Dictionary<Condition, string>
 			{
 				// Irritated
-				{ Condition.Irritated,"Postava nemůže sesílat kouzla.^^ Aktivní pouze během boje." },
+				{ Condition.Irritated,"Postava nemůže sesílat kouzla.^^Aktivní pouze během boje." },
 				// Crazy
 				{ Condition.Crazy, "Postava provádí v boji náhodné akce.^Inventář není přístupný." },
 				// Sleep
@@ -544,11 +544,11 @@ namespace Ambermoon.UI
 				// Aging
 				{ Condition.Aging, "Postava stárne každým dnem.^Závisí to na její rase.^nakonec zemře v určitém věku.^^Max. věk: {0}" },
 				// DeadCorpse
-				{ Condition.DeadCorpse, "Postava se neúčastní bitev. ^Nemůže komunikovat." },
+				{ Condition.DeadCorpse, "Postava se neúčastní bitev.^Nemůže komunikovat." },
 				// DeadAshes
-				{ Condition.DeadAshes, "Postava se neúčastní bitev. ^Nemůže komunikovat.^Jeho popel se musí nejprve přeměnit na^tělo, aby mohl být vzkříšen." },
+				{ Condition.DeadAshes, "Postava se neúčastní bitev.^Nemůže komunikovat.^Její popel se musí nejprve přeměnit^na tělo, aby mohla být vzkříšena." },
 				// DeadDust
-				{ Condition.DeadDust, "Postava se neúčastní bitev. ^Nemůže komunikovat.^Jeho prach se musí přeměnit v popel^a pak na tělo, aby mohl být vzkříšen." }
+				{ Condition.DeadDust, "Postava se neúčastní bitev.^Nemůže komunikovat.^Její prach se musí přeměnit v popel^a pak na tělo, aby mohla být vzkříšena." }
 			}.ToImmutableDictionary() }
 		}.ToImmutableDictionary();
 
@@ -699,7 +699,7 @@ namespace Ambermoon.UI
 				// Age
 				"Věk postavy^^Umírá v maximálním věku {0}.",
 				// LP
-				"Body života^^Když dosáhnou 0^ postava umírá.",
+				"Body života^^Když dosáhnou 0^postava umírá.",
 				// SP
 				"Body magie^^Slouží k sesílání kouzel.",
 				// SLP
@@ -713,15 +713,15 @@ namespace Ambermoon.UI
 				// Damage
 				"Poškození^^Základní hodnota poškození v bitvách.^^Skládá se z vybavení a síly.",
 				// Defense
-				"Obrana^^Základní hodnota pro snížení fyzického poškození^ v bitvách.^^Skládá se z vybavení a výdrže.",
+				"Obrana^^Základní hodnota pro snížení fyzického poškození^v bitvách.^^Skládá se z vybavení a výdrže.",
 				// EPPre50
-				"Zkušenostní body^^Potřebné k získání úrovně.^^Další úroveň na {0} EP.",
+				"Zkušenostní body^^Potřebné k získání úrovně.^^Další úroveň na {0} ZB.",
 				// EP50
 				"Zkušenostní body^^Jsou potřebné k získání úrovně.^^Max. úrovně již bylo dosaženo.",
 				// LevelWithAPRIncrease
-				"Úroveň postavy^^Každé zvýšení úrovně zvyšuje hodnoty^postavy o:^^ BŽ : {0,-10}{1} TB : {2}{3}^^Útoky za kolo se zvyšují^na určitých úrovních:^^ {5}^^Útoky v jednom kole jsou {4}",
+				"Úroveň postavy^^Každé zvýšení úrovně zvyšuje hodnoty^postavy o:^^BŽ : {0,-10}{1} TB : {2}{3}^^Útoky za kolo se zvyšují^na určitých úrovních:^^ {5}^^Útoky v jednom kole jsou {4}",
 				// LevelWithoutAPRIncrease
-				"Úroveň postavy^^Každé zvýšení úrovně zvyšuje hodnoty^postavy o:^^ BŽ : {0,-10}{1} TB : {2}{3}^^Útoky v jednom kole jsou {4}",
+				"Úroveň postavy^^Každé zvýšení úrovně zvyšuje hodnoty^postavy o:^^BŽ : {0,-10}{1} TB : {2}{3}^^Útoky v jednom kole jsou {4}",
 				// MagicLevelUpValues
 				" BM : {0}^ BUK: {1,-10}",
 				// RangeOperator
