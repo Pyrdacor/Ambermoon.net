@@ -53,7 +53,7 @@ CopyrightFontSize=8
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "{#MyResourcePath}\Ambermoon.net\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyDistPath}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyResourcePath}\Package\AmbermoonMap.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyResourcePath}\Package\AmbermoonRuneTable.png"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyResourcePath}\Package\Walkthrough.txt"; DestDir: "{app}"; Flags: ignoreversion
