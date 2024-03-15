@@ -719,9 +719,9 @@ namespace Ambermoon.UI
 				// EP50
 				"Zkušenostní body^^Jsou potřebné k získání úrovně.^^Max. úrovně již bylo dosaženo.",
 				// LevelWithAPRIncrease
-				"Úroveň postavy^^Každé zvýšení úrovně zvyšuje hodnoty^postavy o:^^BŽ : {0,-10}{1} TB : {2}{3}^^Útoky za kolo se zvyšují^na určitých úrovních:^^ {5}^^Útoky v jednom kole jsou {4}",
+				"Úroveň postavy^^Každé zvýšení úrovně zvyšuje hodnoty^postavy o:^^ BŽ : {0,-10}{1} TB : {2}{3}^^Útoky za kolo se zvyšují^na určitých úrovních:^^ {5}^^Útoky v jednom kole jsou {4}",
 				// LevelWithoutAPRIncrease
-				"Úroveň postavy^^Každé zvýšení úrovně zvyšuje hodnoty^postavy o:^^BŽ : {0,-10}{1} TB : {2}{3}^^Útoky v jednom kole jsou {4}",
+				"Úroveň postavy^^Každé zvýšení úrovně zvyšuje hodnoty^postavy o:^^ BŽ : {0,-10}{1} TB : {2}{3}^^Útoky v jednom kole jsou {4}",
 				// MagicLevelUpValues
 				" BM : {0}^ BUK: {1,-10}",
 				// RangeOperator
