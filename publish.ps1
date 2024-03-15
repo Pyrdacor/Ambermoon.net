@@ -11,10 +11,12 @@ if ($isWindows) {
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/net7.0/win-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList 'versions','"./Ambermoon.net/versions.dat"','diffs','./Ambermoon.net/diffs.dat','"./Ambermoon.net/bin/Any CPU/Release/net7.0/win-x64/publish/Ambermoon.net.exe"'
   cmd /c copy "Ambermoon.net\bin\Any CPU\Release\net7.0\win-x64\publish\Ambermoon.net.exe" "Ambermoon.net\Ambermoon.net.exe"
   7z a Ambermoon.net-Windows.zip "./Ambermoon.net/Ambermoon.net.exe" "./AmbermoonPatcher/bin/Any CPU/Release/net7.0/win-x64/publish/AmbermoonPatcher.exe" "./Ambermoon.net/x64/api-ms-win-core-winrt-l1-1-0.dll" "./Package/*" -mx9
+  New-Item -ItemType Directory -Name "dist"
+  Copy-Item -Path ".\AmbermoonPatcher\bin\Any CPU\Release\net7.0\win-x64\publish\AmbermoonPatcher.exe" -Destination "dist\"
+  Copy-Item -Path ".\Ambermoon.net\x64\api-ms-win-core-winrt-l1-1-0.dll" -Destination "dist\"
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/net7.0/win-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList 'versions','"./Ambermoon.net/versions.dat"','diffs','./Ambermoon.net/diffs.dat','"./Ambermoon.net/bin/Any CPU/Release/net7.0/win-x86/publish/Ambermoon.net.exe"'
   cmd /c copy "Ambermoon.net\bin\Any CPU\Release\net7.0\win-x86\publish\Ambermoon.net.exe" "Ambermoon.net\Ambermoon.net.exe"
   7z a Ambermoon.net-Windows32Bit.zip "./Ambermoon.net/Ambermoon.net.exe" "./AmbermoonPatcher/bin/Any CPU/Release/net7.0/win-x86/publish/AmbermoonPatcher.exe" "./Ambermoon.net/x86/api-ms-win-core-winrt-l1-1-0.dll" "./Package/*" -mx9
-  7z x -y Ambermoon.net-Windows.zip -oAmbermoon.net
   $scriptPath = "InnoSetupScript.iss"
   $scriptContent = Get-Content $scriptPath -Raw
   $versionWithoutPrefix = $env:APPVEYOR_REPO_TAG_NAME -replace '^v'
@@ -25,7 +27,7 @@ if ($isWindows) {
   Get-Content "setup.iss"
   Write-Host **** modified script content ****
   Write-Host $newScriptContent
-  Start-Process -FilePath "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" -ArgumentList "/O""."" $newScriptPath"
+  & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/O." $newScriptPath
 } elseif ($isLinux) {
   Write-Host Publish Linux executable
   Set-Variable -Name UseGLES -Value false
