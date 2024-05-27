@@ -388,7 +388,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 				var flags = header >> 30;
 				var hunkSize = header & 0x3FFFFFFF;
 
-				// Note: The following is just guessing from analyzing the data but it works quiet good.
+				// Note: The following is just guessing from analyzing the data but it works quite good.
 				// Code hunks seem to have flags = 0.
 				// BSS and DATA have flags = 2 or 3 (BSS has size 0).
 				// 3 is used if no END hunk follows. This is the case for DATA hunks with RELOC32 following or hunks at the end.

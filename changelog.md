@@ -1,7 +1,8 @@
 # Changelog
 
-## 1.9.0 - Eighth patch (August 2023 - March 2024)
+## 1.9.0 - Eighth patch (August 2023 - May 2024)
 
+- Version [1.9.10](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.10): Czech text fixes
 - Version [1.9.9](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.9): Czech text fixes
 - Version [1.9.8](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.8): Crash fix
 - Version [1.9.7](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.9.7): 3D tearing fix, 3D smooth movement, czech version
