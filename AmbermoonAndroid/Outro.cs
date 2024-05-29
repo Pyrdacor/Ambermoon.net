@@ -1,10 +1,7 @@
 ﻿using Ambermoon;
 using Ambermoon.Data;
-using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Data = Ambermoon.Data;
 
 namespace AmbermoonAndroid
 {
@@ -12,14 +9,14 @@ namespace AmbermoonAndroid
     {
         static ITextureAtlas textureAtlas = null;
         readonly Action finishAction;
-        readonly OutroData outroData;
+        readonly IOutroData outroData;
         readonly Font outroFont;
         readonly Font outroFontLarge;
         readonly IRenderView renderView;
         readonly IRenderLayer renderLayer;
         long ticks = 0;
-        static readonly double[] PixelScrollPerSecond = new double[5] { 10.0, 20.0, 60.0, 100.0, 200.0 };
-        int speedIndex = 1;
+        static readonly double[] PixelScrollPerSecond = new double[6] { 0.0, 6.0, 12.0, 24.0, 48.0, 96.0 };
+        int speedIndex = 2;
         IReadOnlyList<OutroAction> actions = null;
         int actionIndex = 0;
         int scrolledAmount = 0;
@@ -35,7 +32,7 @@ namespace AmbermoonAndroid
         long fadeStartTicks = 0;
         const long HalfFadeDurationInTicks = 3 * Game.TicksPerSecond / 4;
 
-        static void EnsureTextures(IRenderView renderView, OutroData outroData, Font outroFont, Font outroFontLarge)
+        static void EnsureTextures(IRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge)
         {
             if (textureAtlas == null)
             {
@@ -49,7 +46,7 @@ namespace AmbermoonAndroid
             }
         }
 
-        public Outro(IRenderView renderView, OutroData outroData, Font outroFont, Font outroFontLarge, Action finishAction)
+        public Outro(IRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge, Action finishAction)
         {
             this.finishAction = finishAction;
             this.outroData = outroData;
@@ -84,13 +81,13 @@ namespace AmbermoonAndroid
             scrollStartTicks = 0;
             nextActionTicks = 0;
             waitForClick = false;
-            speedIndex = 1;
+            speedIndex = 2;
 
             var option = OutroOption.ValdynNotInParty;
 
             if (savegame.CurrentPartyMemberIndices.Contains(12u)) // Valdyn in party
             {
-                if (savegame.IsGameOptionActive(Ambermoon.Data.Enumerations.Option.FoundYellowSphere))
+                if (savegame.IsGameOptionActive(Data.Enumerations.Option.FoundYellowSphere))
                     option = OutroOption.ValdynInPartyWithYellowSphere;
                 else
                     option = OutroOption.ValdynInPartyNoYellowSphere;
@@ -103,7 +100,8 @@ namespace AmbermoonAndroid
 
         public void Update(double deltaTime)
         {
-            ticks += (long)Math.Round(Game.TicksPerSecond * deltaTime);
+            if (waitForClick || fadeMidAction != null || speedIndex != 0)
+                ticks += (long)Math.Round(Game.TicksPerSecond * deltaTime);
 
             if (fadeArea.Visible || fadeMidAction != null)
             {
@@ -163,6 +161,9 @@ namespace AmbermoonAndroid
                 --speedIndex;
             }
 
+            if (speedIndex == 0)
+                return; // paused
+
             double pixelsPerTick = PixelScrollPerSecond[speedIndex] / Game.TicksPerSecond;
             long scrollTicks = (long)Math.Round((actions[actionIndex - 1].ScrollAmount - scrolledAmount) / pixelsPerTick);
             scrolledAmount = 0;
@@ -196,7 +197,7 @@ namespace AmbermoonAndroid
 
         void Process()
         {
-            if (waitForClick || fadeMidAction != null)
+            if (waitForClick || fadeMidAction != null || speedIndex == 0)
                 return;
 
             if (nextActionTicks > ticks)
@@ -267,12 +268,12 @@ namespace AmbermoonAndroid
             if (large)
             {
                 textEntry = outroFontLarge.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 22), text, 10);
+                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 22), text, 10, TextAlign.Left, 208);
             }
             else
             {
                 textEntry = outroFont.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 11), text, 10);
+                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 11), text, 10, TextAlign.Left, 208);
             }
 
             textEntry.Visible = true;
@@ -295,18 +296,18 @@ namespace AmbermoonAndroid
             picture.Visible = false;
             texts.ForEach(text => text.Destroy());
             texts.Clear();
-            fadeArea.Visible = false;
+            fadeArea.Delete();
         }
     }
 
     internal class OutroFactory : IOutroFactory
     {
         readonly IRenderView renderView;
-        readonly OutroData outroData;
+        readonly IOutroData outroData;
         readonly Font outroFont;
         readonly Font outroFontLarge;
 
-        public OutroFactory(IRenderView renderView, OutroData outroData, Font outroFont, Font outroFontLarge)
+        public OutroFactory(IRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge)
         {
             this.renderView = renderView;
             this.outroData = outroData;

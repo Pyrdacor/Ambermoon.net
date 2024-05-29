@@ -19,6 +19,7 @@
     <DefineConstants>$(DefineConstants);GLES</DefineConstants>
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 	<AndroidUseAapt2>True</AndroidUseAapt2>
+	<DebugSymbols>True</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugES|AnyCPU'">
     <DefineConstants>$(DefineConstants);GLES</DefineConstants>
@@ -38,6 +39,7 @@
     <AndroidPackageFormat>aab</AndroidPackageFormat>
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
     <Optimize>True</Optimize>
+    <PublishTrimmed>False</PublishTrimmed>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseES|AnyCPU'">
     <DefineConstants>$(DefineConstants);GLES</DefineConstants>
@@ -53,20 +55,6 @@
     <None Remove="Resources\logo.pyr" />
     <None Remove="Resources\song.pyr" />
     <None Remove="Resources\versions.dat" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\IntroFont.dat">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\logo.pyr">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\song.pyr">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\versions.dat">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />

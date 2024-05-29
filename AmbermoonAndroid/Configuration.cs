@@ -1,35 +1,62 @@
 ﻿using Ambermoon;
 using Newtonsoft.Json;
+using System.Globalization;
 
 namespace AmbermoonAndroid
 {
     internal class Configuration : IConfiguration
     {
-        [JsonIgnore]
-        internal static readonly string[] VersionSavegameFolders = new string[5]
-        {
-            "german",
-            "english",
-            "advanced_german",
-            "advanced_english",
-            "external"
-        };
+		internal const string ConfigurationFileName = "ambermoon.cfg";
+		internal const string ExternalSavegameFolder = "external";
+		internal static string AppDataPath { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "Ambermoon");
 
-        public event Action SaveRequested;
+		internal static string GetVersionSavegameFolder(GameVersion gameVersion)
+		{
+			if (gameVersion.ExternalData)
+				return ExternalSavegameFolder;
+
+			if (gameVersion.Info.ToLower().Contains("advanced"))
+				return $"advanced_{gameVersion.Language.ToString().ToLower()}";
+
+			return gameVersion.Language.ToString().ToLower();
+		}
+
+		internal static IEnumerable<string> GetAllPossibleSavegameFolders()
+		{
+			var folders = new List<string> { ExternalSavegameFolder };
+			folders.AddRange(EnumHelper.GetValues<GameLanguage>().Select(l => l.ToString().ToLower()));
+			folders.AddRange(EnumHelper.GetValues<GameLanguage>().Select(l => $"advanced_{l.ToString().ToLower()}"));
+			return folders;
+		}
+
+		public event Action SaveRequested;
         [JsonIgnore]
         public bool FirstStart { get; set; } = false;
         [JsonIgnore]
         public bool IsMobile { get; } = true;
 
-        public int? Width { get; set; } = null;
+		public bool? UsePatcher { get; set; } = false;
+		public int? PatcherTimeout { get; set; } = null;
+
+		[JsonIgnore] // not needed/supported on Android
+		public int? WindowX { get; set; } = null;
+		[JsonIgnore] // not needed/supported on Android
+		public int? WindowY { get; set; } = null;
+		[JsonIgnore] // not needed/supported on Android
+		public int? MonitorIndex { get; set; } = null;
+		public int? Width { get; set; } = null;
         public int? Height { get; set; } = null;
         public int? FullscreenWidth { get; set; } = null;
         public int? FullscreenHeight { get; set; } = null;
-        public bool Fullscreen { get; set; } = false;
-        public bool UseDataPath { get; set; } = false;
-        public string DataPath { get; set; } = ExecutableDirectoryPath;
-        public SaveOption SaveOption { get; set; } = SaveOption.ProgramFolder;
-        public int GameVersionIndex { get; set; } = 0;
+		[JsonIgnore] // not needed/supported on Android
+		public bool Fullscreen { get; set; } = true;
+		[JsonIgnore] // not needed/supported on Android
+		public bool UseDataPath { get; set; } = false;
+		[JsonIgnore] // not needed/supported on Android
+		public string DataPath { get; set; } = "";
+		[JsonIgnore] // not needed/supported on Android
+		public SaveOption SaveOption { get; set; } = SaveOption.ProgramFolder;
+        public int GameVersionIndex { get; set; } = -1;
         public bool LegacyMode { get; set; } = false;
         public bool Music { get; set; } = true;
         public int Volume { get; set; } = 100;
@@ -43,12 +70,11 @@ namespace AmbermoonAndroid
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? CacheMusic { get; set; } = null;
         public bool AutoDerune { get; set; } = true;
-        public bool EnableCheats { get; set; } = false;
-        public bool ShowButtonTooltips { get; set; } = true;
-        [JsonIgnore] // TODO: remove attribute later
-        public bool ShowFantasyIntro { get; set; } = false; // TODO: change to true later
-        [JsonIgnore] // TODO: remove attribute later
-        public bool ShowIntro { get; set; } = false; // TODO: change to true later
+		[JsonIgnore] // not needed/supported on Android
+		public bool EnableCheats { get; set; } = false;
+		public bool ShowButtonTooltips { get; set; } = true;
+		public bool ShowFantasyIntro { get; set; } = true;
+		public bool ShowIntro { get; set; } = true;
         [Obsolete("Use GraphicFilter instead.")]
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? UseGraphicFilter { get; set; } = null;
@@ -57,10 +83,13 @@ namespace AmbermoonAndroid
         public Effects Effects { get; set; } = Effects.None;
         public bool ShowPlayerStatsTooltips { get; set; } = true;
         public bool ShowPyrdacorLogo { get; set; } = true;
-        public bool ShowThalionLogo { get; set; } = true;
+		[Obsolete("Now the fantasy intro is shown instead.")]
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+		public bool? ShowThalionLogo { get; set; } = null;
         public bool ShowFloor { get; set; } = true;
         public bool ShowCeiling { get; set; } = true;
-        public bool ExtendedSavegameSlots { get; set; } = true;
+		public bool ShowFog { get; set; } = true;
+		public bool ExtendedSavegameSlots { get; set; } = true;
         [Obsolete("Use AdditionalSavegameSlots instead.")]
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string[] AdditionalSavegameNames { get; set; } = null;
@@ -70,105 +99,61 @@ namespace AmbermoonAndroid
         public AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
         public bool ShowSaveLoadMessage { get; set; } = false;
         public Movement3D Movement3D { get; set; } = Movement3D.WASD;
+		public bool TurnWithArrowKeys { get; set; } = true;
+		public GameLanguage Language { get; set; } = (CultureInfo.DefaultThreadCurrentCulture ?? CultureInfo.CurrentCulture)?.Name?.ToLower() switch
+		{
+			string l when l.StartsWith("de") => GameLanguage.German,
+			string l when l.StartsWith("fr") => GameLanguage.French,
+			string l when l.StartsWith("pl") => GameLanguage.Polish,
+			string l when l.StartsWith("cz") => GameLanguage.Czech,
+			_ => GameLanguage.English
+		};
 
-        public void RequestSave() => SaveRequested?.Invoke();
+		public void RequestSave() => SaveRequested?.Invoke();
 
-#pragma warning disable CS0618
-        public void UpgradeAdditionalSavegameSlots()
+		public static string GetSavePath(string version, bool createIfMissing = true)
+		{
+			string suffix = $"Saves{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
+			string alternativeSuffix = $"SavesRemake{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
+
+			var path = Path.Combine(AppDataPath, suffix);
+
+			if (createIfMissing)
+			{
+				try
+				{
+					Directory.CreateDirectory(path);
+				}
+				catch
+				{
+					path = Path.Combine(AppDataPath, alternativeSuffix);
+					Directory.CreateDirectory(path);
+				}
+				return path;
+			}
+			else if (Directory.Exists(path))
+			{
+				return path;
+			}
+
+			return null;
+		}
+
+        public static Configuration Load(Configuration defaultValue = null)
         {
-            if (AdditionalSavegameSlots is not null)
-                return;
+			var filename = Path.Combine(AppDataPath, ConfigurationFileName);
 
-            AdditionalSavegameSlots = VersionSavegameFolders.Select(f => new AdditionalSavegameSlots
-            {
-                GameVersionName = f,
-                ContinueSavegameSlot = 0,
-                Names = new string[Game.NumAdditionalSavegameSlots]
-            }).ToArray();
-
-            // Copy old savegame names to new format
-            if (AdditionalSavegameNames is not null && GameVersionIndex >= 0 && GameVersionIndex < 3)
-            {
-                // "external" moved from slot 2 to 4
-                var additionalSavegameSlot = AdditionalSavegameSlots[GameVersionIndex == 2 ? 4 : GameVersionIndex];
-
-                additionalSavegameSlot.ContinueSavegameSlot = ContinueSavegameSlot ?? 0;
-
-                for (int i = 0; i < Math.Min(Game.NumAdditionalSavegameSlots, AdditionalSavegameNames.Length); ++i)
-                    additionalSavegameSlot.Names[i] = AdditionalSavegameNames[i];
-            }
-
-            AdditionalSavegameNames = null;
-            ContinueSavegameSlot = null;
-        }
-
-        public AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots()
-        {
-            if (GameVersionIndex < 0 || GameVersionIndex >= VersionSavegameFolders.Length)
-                GameVersionIndex = 0;
-
-            if (AdditionalSavegameSlots is null)
-                UpgradeAdditionalSavegameSlots();
-            else if (GameVersionIndex >= AdditionalSavegameSlots.Length)
-            {
-                var versionSlots = new AdditionalSavegameSlots[VersionSavegameFolders.Length];
-
-                Array.Copy(AdditionalSavegameSlots, versionSlots, AdditionalSavegameSlots.Length);
-
-                for (int i = AdditionalSavegameSlots.Length; i < VersionSavegameFolders.Length; ++i)
-                {
-                    versionSlots[i] = new AdditionalSavegameSlots
-                    {
-                        GameVersionName = VersionSavegameFolders[i],
-                        ContinueSavegameSlot = 0,
-                        Names = new string[Game.NumAdditionalSavegameSlots]
-                    };
-                }
-
-                AdditionalSavegameSlots = versionSlots;
-            }
-
-            return AdditionalSavegameSlots[GameVersionIndex];
-        }
-#pragma warning restore CS0618
-
-        public static readonly string FallbackConfigDirectory =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");
-
-        public static string ExecutableDirectoryPath => FallbackConfigDirectory;
-
-        public static Configuration Load(string filename, Configuration defaultValue = null)
-        {
             if (!File.Exists(filename))
                 return defaultValue;
 
-            // TODO: ReadAllText on android possible?
-            var configuration = JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(filename));
-
-#pragma warning disable CS0618
-            if (configuration?.UseGraphicFilter == true && configuration.GraphicFilter == GraphicFilter.None)
-                configuration.GraphicFilter = GraphicFilter.Blur; // matches the old filter
-
-            configuration.UseGraphicFilter = null;
-
-            if (configuration?.FastBattleMode == true && configuration.BattleSpeed == 0)
-                configuration.BattleSpeed = 100;
-            else
-            {
-                if (configuration.BattleSpeed % 10 != 0)
-                    configuration.BattleSpeed += 10 - configuration.BattleSpeed % 10;
-                configuration.BattleSpeed = Util.Limit(0, configuration.BattleSpeed, 100);
-            }
-
-            configuration.FastBattleMode = null;
-#pragma warning restore CS0618
-
-            return configuration;
+            return JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(filename));
         }
 
-        public void Save(string filename)
+        public void Save()
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(filename));
+			var filename = Path.Combine(AppDataPath, ConfigurationFileName);
+
+			Directory.CreateDirectory(AppDataPath);
             File.WriteAllText(filename, JsonConvert.SerializeObject(this,
                 new JsonSerializerSettings
                 {
@@ -176,5 +161,26 @@ namespace AmbermoonAndroid
                 })
             );
         }
-    }
+
+		public AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots(string gameVersionName)
+		{
+			gameVersionName = gameVersionName.ToLower();
+
+			var savegameSlots = AdditionalSavegameSlots.FirstOrDefault(s => s.GameVersionName.ToLower() == gameVersionName);
+
+			if (savegameSlots == null)
+			{
+				savegameSlots = new AdditionalSavegameSlots
+				{
+					GameVersionName = gameVersionName,
+					ContinueSavegameSlot = 0,
+					Names = new string[Game.NumAdditionalSavegameSlots]
+				};
+
+				AdditionalSavegameSlots = Enumerable.Concat(AdditionalSavegameSlots, new[] { savegameSlots }).ToArray();
+			}
+
+			return savegameSlots;
+		}
+	}
 }

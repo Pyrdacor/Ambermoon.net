@@ -2,7 +2,6 @@
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 

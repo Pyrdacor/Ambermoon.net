@@ -81,7 +81,7 @@ namespace Ambermoon.Renderer
             $"void main()",
             $"{{",
             $"    vec2 atlasFactor = vec2(1.0f / float({DefaultAtlasSizeName}.x), 1.0f / float({DefaultAtlasSizeName}.y));",
-            $"    int index = int(mod(gl_VertexID, 4));",
+            $"    int index = int(mod(float(gl_VertexID), 4.0f));",
             $"    float dx = index == 0 || index == 3 ? -0.49f : 0.49f;",
             $"    float dy = index < 2 ? -0.49f : 0.49f;",
             $"    vec2 pos = vec2({DefaultPositionName}.x + dx, {DefaultPositionName}.y + dy);",

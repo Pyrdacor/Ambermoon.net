@@ -20,16 +20,15 @@ namespace AmbermoonAndroid
 
         protected override void OnRun()
         {
-            gestureDetector = new GestureDetector(this, this);
+			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+			RunOnUiThread(() => gestureDetector = new GestureDetector(this, this));            
 
             FileProvider.Initialize(this);
 
-            appDataDir = ApplicationContext!.FilesDir!.AbsolutePath;
+            //appDataDir = ApplicationContext!.FilesDir!.AbsolutePath;
 
             var configuration = LoadConfig();
-            configuration.UpgradeAdditionalSavegameSlots();
             configuration.SaveRequested += () => SaveConfig(configuration);
 
             try
@@ -46,22 +45,16 @@ namespace AmbermoonAndroid
             }
         }
 
-        const string ConfigurationFileName = "ambermoon.cfg";
-        string appDataDir = "";
-
         Configuration LoadConfig()
         {
-            var path = Path.Combine(appDataDir, ConfigurationFileName);
-            return Configuration.Load(path, new Configuration { FirstStart = true });
+            return Configuration.Load(new Configuration { FirstStart = true });
         }
 
         void SaveConfig(Configuration configuration)
         {
-            var path = Path.Combine(appDataDir, ConfigurationFileName);
-
             try
             {
-                configuration.Save(path);
+                configuration.Save();
             }
             catch
             {

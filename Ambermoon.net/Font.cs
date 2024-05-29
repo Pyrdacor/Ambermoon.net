@@ -5,7 +5,6 @@ using Ambermoon.Render;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon

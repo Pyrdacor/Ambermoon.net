@@ -1,26 +1,29 @@
 ﻿using Ambermoon;
 using Ambermoon.Data;
-using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Legacy;
+using Ambermoon.Data.Serialization;
 using Ambermoon.Render;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace AmbermoonAndroid
 {
     class Text
     {
-        readonly List<ILayerSprite> renderGlyphs = new List<ILayerSprite>();
+        readonly List<IAlphaSprite> renderGlyphs = new List<IAlphaSprite>();
         bool visible = false;
         readonly int totalWidth = 0;
         int baseX = 0;
         TextColor textColor = TextColor.White;
+        byte alpha = 255;
+        Rect clipArea;
 
         public Text(IRenderView renderView, Layer layer, string text, IReadOnlyDictionary<char, Glyph> glyphs,
-            List<char> characters, byte displayLayer, int spaceWidth, bool upperOnly, uint textureAtlasIndexOffset)
+            List<char> characters, byte displayLayer, int spaceWidth, bool upperOnly, uint textureAtlasIndexOffset,
+            byte alpha = 255, Rect clipArea = null)
         {
             totalWidth = 0;
+            this.alpha = alpha;
+            this.clipArea = clipArea;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
 
             if (upperOnly)
@@ -32,8 +35,10 @@ namespace AmbermoonAndroid
                     totalWidth += spaceWidth;
                 else if (glyphs.TryGetValue(ch, out var glyph))
                 {
-                    var sprite = renderView.SpriteFactory.Create(glyph.Graphic.Width, glyph.Graphic.Height, true, displayLayer) as ILayerSprite;
+                    var sprite = renderView.SpriteFactory.CreateWithAlpha(glyph.Graphic.Width, glyph.Graphic.Height, displayLayer);
                     sprite.TextureAtlasOffset = textureAtlas.GetOffset((uint)characters.IndexOf(ch) + textureAtlasIndexOffset);
+                    sprite.Alpha = alpha;
+                    sprite.ClipArea = clipArea;
                     sprite.X = totalWidth;
                     sprite.Y = 0;
                     sprite.Layer = renderView.GetLayer(layer);
@@ -55,6 +60,32 @@ namespace AmbermoonAndroid
 
                 textColor = value;
                 renderGlyphs?.ForEach(g => { if (g != null) g.MaskColor = (byte)textColor; });
+            }
+        }
+
+        public byte Alpha
+        {
+            get => alpha;
+            set
+            {
+                if (alpha == value)
+                    return;
+
+                alpha = value;
+                renderGlyphs?.ForEach(g => { if (g != null) g.Alpha = alpha; });
+            }
+        }
+
+        public Rect ClipArea
+        {
+            get => clipArea;
+            set
+            {
+                if (clipArea == value)
+                    return;
+
+                clipArea = value;
+                renderGlyphs?.ForEach(g => { if (g != null) g.ClipArea = clipArea; });
             }
         }
 
@@ -107,6 +138,77 @@ namespace AmbermoonAndroid
         {
             renderGlyphs?.ForEach(g => g?.Delete());
         }
+    }
+
+    class IngameFontProvider : IFontProvider
+    {
+        class IngameFont : IFont
+        {
+            readonly Dictionary<uint, Graphic> glyphGraphics;
+            readonly IFont digitFonts;
+
+            public int GlyphCount => glyphGraphics.Count;
+
+            // We add 1 "pixel" above but as the graphic is double the resolution
+            // we actually have 2 additional pixels inside the graphic to place
+            // accents etc.
+            public int GlyphHeight => 8;
+
+            public IngameFont(IDataReader fontReader, IFont digitFonts)
+            {
+                this.digitFonts = digitFonts;
+                // 12x14 pixels per glyph
+                var data = fontReader.ReadToEnd();
+                int glyphCount = data.Length / (14 * 2); // 14 pixels and 2 bytes per glyph width
+                glyphGraphics = new(glyphCount);
+                // We use 12x16 as it is mapped to the size 6x8.
+                // The lower 2 pixels are empty for every character.
+                for (uint i = 0; i < glyphCount; ++i)
+                    glyphGraphics.Add(i, new Graphic(12, 16, 0));
+                int lineStart = 0;
+                for (int y = 0; y < 14; ++y)
+                {
+                    for (int g = 0; g < glyphCount; ++g)
+                    {
+                        var graphic = glyphGraphics[(uint)g];
+                        byte mask = 0x80;
+                        int index = lineStart + g * 2;
+
+                        for (int x = 0; x < 8; ++x)
+                        {
+                            if ((data[index] & mask) != 0)
+                                graphic.Data[x + y * 12] = 1;
+                            mask >>= 1;
+                        }
+
+                        mask = 0x80;
+                        ++index;
+
+                        for (int x = 8; x < 12; ++x)
+                        {
+                            if ((data[index] & mask) != 0)
+                                graphic.Data[x + y * 12] = 1;
+                            mask >>= 1;
+                        }
+                    }
+
+                    lineStart += glyphCount * 2;
+                }
+            }
+
+            public Graphic GetGlyphGraphic(uint glyphIndex) => glyphGraphics[glyphIndex];
+
+            public Graphic GetDigitGlyphGraphic(uint glyphIndex) => digitFonts.GetDigitGlyphGraphic(glyphIndex);
+        }
+
+        readonly IngameFont ingameFont;
+
+        public IngameFontProvider(IDataReader fontReader, IFont digitFonts)
+        {
+            ingameFont = new IngameFont(fontReader, digitFonts);
+        }
+
+        public IFont GetFont() => ingameFont;
     }
 
     class Font
@@ -176,10 +278,11 @@ namespace AmbermoonAndroid
         }
 
         public Text CreateText(IRenderView renderView, Layer layer, Rect area, string text,
-            byte displayLayer, TextAlign textAlign = TextAlign.Center)
+            byte displayLayer, TextAlign textAlign = TextAlign.Center, byte alpha = 255, Rect clipArea = null)
         {
+            text = new string(TextProcessor.RemoveDiacritics(text).Where(ch => ch == ' ' || glyphs.ContainsKey(upperOnly ? char.ToUpper(ch) : ch)).ToArray());
             var renderText = new Text(renderView, layer, text, glyphs, characters, displayLayer, spaceWidth, upperOnly,
-                textureAtlasIndexOffset);
+                textureAtlasIndexOffset, alpha, clipArea);
             renderText.Place(area, textAlign);
             return renderText;
         }

@@ -1,10 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <ActiveDebugProfile>pixel_5_-_api_30</ActiveDebugProfile>
-    <DefaultDevice>pixel_5_-_api_30</DefaultDevice>
+    <ActiveDebugProfile>Pixel 5 - API 34 (Android 14.0 - API 34)</ActiveDebugProfile>
+    <DefaultDevice>pixel_5_-_api_34</DefaultDevice>
     <AndroidDesignerPreferredDevice>7.3in Foldable</AndroidDesignerPreferredDevice>
     <SelectedPlatformGroup>Emulator</SelectedPlatformGroup>
+    <SelectedDevice>pixel_5_-_api_34</SelectedDevice>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>

@@ -59,7 +59,7 @@ namespace Ambermoon.Renderer
             $"uniform float {DefaultUseColorReplaceName};",
             $"uniform float {DefaultSkyColorIndexName};",
             $"uniform vec4 {DefaultSkyReplaceColorName};",
-            $"uniform vec4 {DefaultFogColorName} = vec4(0);",
+            $"uniform vec4 {DefaultFogColorName};",
             $"uniform float {DefaultFogDistanceName};",
             $"in vec2 varTexCoord;",
             $"in float distance;",

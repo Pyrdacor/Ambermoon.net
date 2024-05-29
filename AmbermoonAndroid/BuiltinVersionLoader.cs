@@ -1,10 +1,4 @@
-﻿using Ambermoon;
-using Ambermoon.Data.Enumerations;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
+﻿using Ambermoon.Data.Enumerations;
 
 namespace AmbermoonAndroid
 {
@@ -14,17 +8,15 @@ namespace AmbermoonAndroid
         public string Language;
         public string Info;
         public Features Features;
+        public bool MergeWithPrevious;
         public uint Offset;
         public uint Size;
         public Stream SourceStream;
     }
 
-    class BuiltinVersionLoader : IDisposable
+    class BuiltinVersionLoader
     {
-        Stream executableStream;
-        bool disposed;
-
-        public List<BuiltinVersion> Load()
+        public List<BuiltinVersion> Load(BinaryReader reader)
         {
             int ReadWord(BinaryReader reader)
             {
@@ -36,18 +28,6 @@ namespace AmbermoonAndroid
                 return ((uint)reader.ReadByte() << 24) | ((uint)reader.ReadByte() << 16) | ((uint)reader.ReadByte() << 8) | reader.ReadByte();
             }
 
-            executableStream = FileProvider.GetVersions();
-            using var reader = new BinaryReader(executableStream, Encoding.UTF8, true);
-
-            executableStream.Position = executableStream.Length - 2;
-
-            if (reader.ReadByte() != 0xB0 || reader.ReadByte() != 0x55)
-                return new List<BuiltinVersion>();
-
-            executableStream.Position -= 6;
-            uint offset = ReadDword(reader);
-            executableStream.Position -= offset + 4;
-
             int versionCount = ReadWord(reader);
             var versions = new List<BuiltinVersion>(versionCount);
 
@@ -58,13 +38,14 @@ namespace AmbermoonAndroid
                     Version = reader.ReadString(),
                     Language = reader.ReadString(),
                     Info = reader.ReadString(),
-                    Features = (Features)reader.ReadByte(),
+                    Features = (Features)ReadWord(reader),
+                    MergeWithPrevious = reader.ReadByte() != 0,
                     Size = ReadDword(reader),
-                    SourceStream = executableStream
+                    SourceStream = reader.BaseStream
                 });
             }
 
-            offset = (uint)executableStream.Position;
+            uint offset = (uint)reader.BaseStream.Position;
 
             for (int i = 0; i < versionCount; ++i)
             {
@@ -73,16 +54,6 @@ namespace AmbermoonAndroid
             }
 
             return versions;
-        }
-
-        public void Dispose()
-        {
-            if (!disposed)
-            {
-                executableStream?.Dispose();
-                executableStream = null;
-                disposed = true;
-            }
         }
     }
 }

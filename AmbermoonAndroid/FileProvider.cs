@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AmbermoonAndroid
+﻿namespace AmbermoonAndroid
 {
     internal static class FileProvider
     {
@@ -39,5 +33,17 @@ namespace AmbermoonAndroid
         public static Stream GetLogoData() => LoadStream(Resource.Raw.logo);
 
         public static byte[] GetIntroFontData() => LoadData(Resource.Raw.IntroFont);
-    }
+
+		public static byte[] GetIngameFontData() => LoadData(Resource.Raw.IngameFont);
+
+		public static byte[] GetAdvancedLogoData() => LoadData(Resource.Raw.advanced);
+
+		public static byte[] GetBorderData() => LoadData(Resource.Raw.borders256);
+
+		public static byte[] GetFlagsData() => LoadData(Resource.Raw.flags);
+
+		public static Stream GetAdvancedDiffsData() => LoadStream(Resource.Raw.diffs);
+
+		public static byte[] GetWindowIcon() => LoadData(Resource.Raw.windowIcon);
+	}
 }

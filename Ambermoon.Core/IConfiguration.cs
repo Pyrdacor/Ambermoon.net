@@ -157,9 +157,9 @@ namespace Ambermoon
         GameLanguage Language { get; set; }
 
         void RequestSave();
-        void UpgradeAdditionalSavegameSlots();
         AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots(string gameVersionName);
-    }
+
+	}
 
     public static class ConfigurationExtensions
     {
