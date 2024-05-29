@@ -5,7 +5,29 @@ using Ambermoon.Data.Enumerations;
 
 namespace AmbermoonAndroid
 {
-    class MusicManager : ISongManager
+	class DummySong : ISong
+	{
+        public DummySong(Song index)
+        {
+            Song = index;
+        }
+
+		public Song Song { get; }
+
+		public TimeSpan? SongDuration => TimeSpan.Zero;
+
+		public void Play(IAudioOutput audioOutput)
+		{
+			
+		}
+
+		public void Stop()
+		{
+			
+		}
+	}
+
+	class MusicManager : ISongManager
     {
         IAudioOutput audioOutput = null;
         IAudioStream currentStream = null;
@@ -20,11 +42,15 @@ namespace AmbermoonAndroid
 
         public ISong GetSong(Song index)
         {
-            return songManager.GetSong(index);
-        }
+			// TODO
+			return new DummySong(index);
+			//return songManager.GetSong(index);
+		}
 
-        public void Start(IAudioOutput audioOutput, IAudioStream audioStream, int channels, int sampleRate, bool sample8Bit)
+		public void Start(IAudioOutput audioOutput, IAudioStream audioStream, int channels, int sampleRate, bool sample8Bit)
         {
+            return; // TODO
+
             lock (startMutex)
             {
                 this.audioOutput = audioOutput ?? throw new ArgumentNullException(nameof(audioOutput));

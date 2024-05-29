@@ -11,9 +11,7 @@ using Ambermoon.Renderer.OpenGL;
 using Ambermoon.UI;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Input;
-using Silk.NET.Input.Glfw;
 using Silk.NET.Windowing;
-using Silk.NET.Windowing.Glfw;
 using System.Reflection;
 using MousePosition = System.Numerics.Vector2;
 using WindowDimension = Silk.NET.Maths.Vector2D<int>;
@@ -1361,7 +1359,7 @@ namespace AmbermoonAndroid
             renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
         }
 
-        public void Run(Configuration configuration)
+        public void Run(Configuration configuration, Action nameResetHandler)
         {
             this.configuration = configuration;
             var screenSize = configuration.GetScreenSize();
@@ -1388,7 +1386,8 @@ namespace AmbermoonAndroid
                 SdlInput.RegisterPlatform();
                 SdlWindowing.Use();
                 window = Silk.NET.Windowing.Window.GetView(new ViewOptions(options));
-                window.Load += Window_Load;
+				window.Load += nameResetHandler;
+				window.Load += Window_Load;
                 window.Render += Window_Render;
                 window.Update += Window_Update;
                 window.Resize += Window_Resize;
@@ -1399,7 +1398,8 @@ namespace AmbermoonAndroid
                     audioOutput.Dispose();
                     cheatTaskCancellationTokenSource.Cancel();
                 };
-                window.Run();
+
+				window.Run();
             }
             catch (Exception ex)
             {

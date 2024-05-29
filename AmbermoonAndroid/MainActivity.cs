@@ -18,11 +18,21 @@ namespace AmbermoonAndroid
             return base.OnTouchEvent(e);
         }
 
+        private void NameResetHandler()
+        {
+			RunOnUiThread(() => Title = "");
+		}
+
         protected override void OnRun()
         {
 			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
-			RunOnUiThread(() => gestureDetector = new GestureDetector(this, this));            
+			RunOnUiThread(() =>
+            {
+                gestureDetector = new GestureDetector(this, this);
+                Title = "";
+            });
+            
 
             FileProvider.Initialize(this);
 
@@ -33,7 +43,7 @@ namespace AmbermoonAndroid
 
             try
             {
-                gameWindow.Run(configuration);
+                gameWindow.Run(configuration, NameResetHandler);
             }
             catch (Exception ex)
             {

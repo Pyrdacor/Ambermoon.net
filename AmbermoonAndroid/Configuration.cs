@@ -166,6 +166,13 @@ namespace AmbermoonAndroid
 		{
 			gameVersionName = gameVersionName.ToLower();
 
+			AdditionalSavegameSlots ??= GetAllPossibleSavegameFolders().Select(f => new AdditionalSavegameSlots
+			{
+				GameVersionName = f,
+				ContinueSavegameSlot = 0,
+				Names = new string[Game.NumAdditionalSavegameSlots]
+			}).ToArray();
+
 			var savegameSlots = AdditionalSavegameSlots.FirstOrDefault(s => s.GameVersionName.ToLower() == gameVersionName);
 
 			if (savegameSlots == null)
