@@ -11,6 +11,7 @@ using Ambermoon.UI;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Input;
 using Silk.NET.Input.Glfw;
+using Silk.NET.SDL;
 using Silk.NET.Windowing;
 using Silk.NET.Windowing.Glfw;
 using System;
@@ -22,6 +23,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MousePosition = System.Numerics.Vector2;
 using WindowDimension = Silk.NET.Maths.Vector2D<int>;
+using Thread = System.Threading.Thread;
 
 namespace Ambermoon
 {
@@ -802,37 +804,40 @@ namespace Ambermoon
 
             RunTask(() =>
             {
-                try
+            try
+            {
+                var savegameManager = new SavegameManager(savePath);
+                savegameManager.GetSavegameNames(gameData, out int currentSavegame, 10);
+                if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
+                    currentSavegame = configuration.GetOrCreateCurrentAdditionalSavegameSlots(Path.GetFileName(savePath))?.ContinueSavegameSlot ?? 0;
+                bool canContinue = currentSavegame != 0;
+                var cursor = new Render.Cursor(renderView, gameData.CursorHotspots);
+                cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
+                cursor.Type = Data.CursorType.None;
+
+                void SetupGameCreator(bool continueGame)
                 {
-                    var savegameManager = new SavegameManager(savePath);
-                    savegameManager.GetSavegameNames(gameData, out int currentSavegame, 10);
-                    if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
-                        currentSavegame = configuration.GetOrCreateCurrentAdditionalSavegameSlots(Path.GetFileName(savePath))?.ContinueSavegameSlot ?? 0;
-                    bool canContinue = currentSavegame != 0;
-                    var cursor = new Render.Cursor(renderView, gameData.CursorHotspots);
-                    cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
-                    cursor.Type = Data.CursorType.None;
-
-                    void SetupGameCreator(bool continueGame)
+                    try
                     {
-                        try
-                        {
-                            var savegameSerializer = new SavegameSerializer();
+                        var savegameSerializer = new SavegameSerializer();
 
-                            gameCreator = () =>
-                            {
-                                var game = new Game(configuration, gameLanguage, renderView, graphicProvider,
-                                    savegameManager, savegameSerializer, gameData.Dictionary, cursor, audioOutput,
-                                    musicManager, FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
-                                    new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
-                                    Path.GetFileName(savePath));
-                                game.QuitRequested += window.Close;
-                                game.MousePositionChanged += position =>
-                                {
-                                    if (mouse != null)
-                                    {
-                                        mouse.MouseMove -= Mouse_MouseMove;
-                                        mouse.Position = new MousePosition(position.X, position.Y);
+                        gameCreator = () =>
+                        {
+                            var version = Assembly.GetEntryAssembly().GetName().Version;
+                            string versionString = $"Ambermoon.net V{version.Major}.{version.Minor}.{version.Build:00}";
+                            var game = new Game(configuration, gameLanguage, renderView, graphicProvider,
+                                savegameManager, savegameSerializer, gameData.Dictionary, cursor, audioOutput,
+                                musicManager, FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
+                                new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
+                                Path.GetFileName(savePath), versionString);
+
+			                    game.QuitRequested += window.Close;
+			                    game.MousePositionChanged += position =>
+			                    {
+				                    if (mouse != null)
+				                    {
+					                    mouse.MouseMove -= Mouse_MouseMove;
+					                    mouse.Position = new MousePosition(position.X, position.Y);
                                         mouse.MouseMove += Mouse_MouseMove;
                                     }
                                 };

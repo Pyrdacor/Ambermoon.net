@@ -32,6 +32,11 @@ namespace Ambermoon.Render
         readonly Dictionary<CursorType, Position> cursorHotspots = new Dictionary<CursorType, Position>();
         CursorType type = CursorType.Sword;
         internal Position Hotspot { get; private set; } = null;
+        protected virtual bool Visible
+        {
+            get => sprite.Visible;
+            set => sprite.Visible = value;
+        }
 
         public Cursor(IRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager textureAtlasManager = null)
         {
@@ -64,12 +69,12 @@ namespace Ambermoon.Render
 
                 if (Type == CursorType.None)
                 {
-                    sprite.Visible = false;
+					Visible = false;
                 }
                 else
                 {
                     UpdateCursor();
-                    sprite.Visible = true;
+					Visible = true;
                 }
             }
         }
@@ -99,7 +104,7 @@ namespace Ambermoon.Render
                     sprite.PaletteIndex = game?.UIPaletteIndex ?? 0;
                     sprite.X = viewPosition.X - Hotspot.X;
                     sprite.Y = viewPosition.Y - Hotspot.Y;
-                    sprite.Visible = Type != CursorType.None;
+					Visible = Type != CursorType.None;
                 }
             }
         }
@@ -112,4 +117,14 @@ namespace Ambermoon.Render
             }
         }
     }
+
+	public class InvisibleCursor : Cursor
+	{
+		public InvisibleCursor(IRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager textureAtlasManager = null)
+            : base(renderView, cursorHotspots, textureAtlasManager)
+		{
+		}
+
+		protected override bool Visible { get => false; set => base.Visible = false; }
+	}
 }

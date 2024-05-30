@@ -1,4 +1,6 @@
-﻿namespace AmbermoonAndroid
+﻿using Ambermoon.Data.Enumerations;
+
+namespace AmbermoonAndroid
 {
     internal static class FileProvider
     {

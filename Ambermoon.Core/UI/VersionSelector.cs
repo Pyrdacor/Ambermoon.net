@@ -23,7 +23,6 @@ using Ambermoon.Data;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 using Color = Ambermoon.Render.Color;
 using System.Linq;

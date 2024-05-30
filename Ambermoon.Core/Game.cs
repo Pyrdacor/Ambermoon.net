@@ -32,13 +32,11 @@ using TextColor = Ambermoon.Data.Enumerations.Color;
 using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 using Ambermoon.Data.Audio;
 using static Ambermoon.UI.BuiltinTooltips;
-using System.Data.Common;
-using System.Threading;
 
 namespace Ambermoon
 {
     public class Game
-    {
+	{
         internal class ConversationItems : IItemStorage
         {
             public const int SlotsPerRow = 6;
@@ -243,7 +241,8 @@ namespace Ambermoon
         bool disableMusicChange = false;
         bool disableTimeEvents = false;
         readonly string gameVersionName;
-        public Features Features { get; }
+        readonly string fullVersion;
+		public Features Features { get; }
         public const int NumAdditionalSavegameSlots = 20;
         internal SavegameTime GameTime { get; private set; } = null;
         readonly List<uint> changedMaps = new List<uint>();
@@ -557,13 +556,16 @@ namespace Ambermoon
         internal void RequestFullscreenChange(bool fullscreen) => fullscreenChangeHandler?.Invoke(fullscreen);
         internal void NotifyResolutionChange(int? oldWidth) => resolutionChangeHandler?.Invoke(oldWidth);
 
+        public string GetFullVersion() => fullVersion;
+
         public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IGraphicProvider graphicProvider,
             ISavegameManager savegameManager, ISavegameSerializer savegameSerializer, TextDictionary textDictionary,
             Cursor cursor, IAudioOutput audioOutput, ISongManager songManager, FullscreenChangeHandler fullscreenChangeHandler,
             ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory,
-            Features features, string gameVersionName)
+            Features features, string gameVersionName, string version)
         {
-            Features = features;
+            
+			Features = features;
             this.gameVersionName = gameVersionName;
             Character.FoodWeight = Features.HasFlag(Features.ReducedFoodWeight) ? 25u : 250u;
             currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
@@ -590,7 +592,8 @@ namespace Ambermoon
             places = renderView.GameData.Places;
             this.savegameSerializer = savegameSerializer;
             DataNameProvider = renderView.GameData.DataNameProvider;
-            this.textDictionary = textDictionary;
+			fullVersion = version + $"^{GameVersion.RemakeReleaseDate}^^{DataNameProvider.DataVersionString}^{DataNameProvider.DataInfoString}";
+			this.textDictionary = textDictionary;
             this.lightEffectProvider = renderView.GameData.LightEffectProvider;
             this.outroFactory = outroFactory;
             camera3D = renderView.Camera3D;

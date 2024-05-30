@@ -1,76 +1,190 @@
 ﻿using Ambermoon;
-using Ambermoon.Data;
 using Ambermoon.Data.Audio;
-using Ambermoon.Data.Enumerations;
+using Android.Content;
+using Android.Media;
+using Song = Ambermoon.Data.Enumerations.Song;
 
 namespace AmbermoonAndroid
 {
-	class DummySong : ISong
-	{
-        public DummySong(Song index)
+	class MusicManager : ISongManager, IAudioOutput
+    {
+        const Song PyrdacorSong = (Song)127;
+
+		class Mp3Song : ISong
+		{
+			private readonly MusicManager musicManager;
+
+			public Mp3Song(MusicManager musicManager, Song song)
+			{
+				this.musicManager = musicManager;
+				Song = song;
+			}
+
+			public Song Song { get; }
+
+			public TimeSpan? SongDuration => musicManager.GetSongDuration(Song);
+
+			public void Play(IAudioOutput _)
+			{
+				musicManager.Play(Song);
+			}
+
+			public void Stop()
+			{
+                musicManager.Stop();
+			}
+		}
+
+		static readonly Dictionary<Song, int> songIds = new()
+		{
+			{ Song.WhoSaidHiHo, Resource.Raw.sonic_whosaidhiho },
+            { Song.MellowCamelFunk, Resource.Raw.sonic_mellowcamelfunk },
+            { Song.CloseToTheHedge, Resource.Raw.sonic_closethehedge },
+            { Song.VoiceOfTheBagpipe, Resource.Raw.sonic_voiceofthebagpipe },
+            { Song.Downtown, Resource.Raw.sonic_downtown },
+            { Song.Ship, Resource.Raw.sonic_ship },
+            { Song.WholeLottaDove, Resource.Raw.sonic_wholelottadove },
+            { Song.HorseIsNoDisgrace, Resource.Raw.sonic_horseisnodisgrace },
+            { Song.DontLookBach, Resource.Raw.sonic_dontlookbach },
+            { Song.RoughWaterfrontTavern, Resource.Raw.sonic_roughwaterfronttavern },
+            { Song.SapphireFireballsOfPureLove, Resource.Raw.sonic_sapphirefireballsofpurelove },
+            { Song.TheAumRemainsTheSame, Resource.Raw.sonic_theaumremainsthesame },
+            { Song.Capital, Resource.Raw.sonic_capital },
+            { Song.PloddingAlong, Resource.Raw.sonic_ploddingalong },
+            { Song.CompactDisc, Resource.Raw.sonic_compactdisc },
+            { Song.RiversideTravellingBlues, Resource.Raw.sonic_riversidetravellingblues },
+            { Song.NobodysVaultButMine, Resource.Raw.sonic_nobodysvaultbutmine },
+            { Song.LaCryptaStrangiato, Resource.Raw.sonic_lacryptastrangiato },
+            { Song.MistyDungeonHop, Resource.Raw.sonic_mistydungeonhop },
+            { Song.BurnBabyBurn, Resource.Raw.sonic_burnbabyburn },
+            { Song.BarBrawlin, Resource.Raw.sonic_barbrawlin },
+            { Song.PsychedelicDuneGroove, Resource.Raw.sonic_psychedelicdunegroove },
+            { Song.StairwayToLevel50, Resource.Raw.sonic_stairway_to_level_50 },
+            { Song.ThatHunchIsBack, Resource.Raw.sonic_thathunchisback },
+            { Song.ChickenSoup, Resource.Raw.sonic_chickensoup },
+            { Song.DragonChaseInCreepyDungeon, Resource.Raw.sonic_dragonchaseincreepydungeon },
+            { Song.HisMastersVoice, Resource.Raw.sonic_hismastersvoice },
+            { Song.NoName, Resource.Raw.sonic_nonamesecret },
+            { Song.OhNoNotAnotherMagicalEvent, Resource.Raw.sonic_ohnonotanothermagevent },
+            { Song.TheUhOhSong, Resource.Raw.sonic_theuhohsong },
+            { Song.OwnerOfALonelySword, Resource.Raw.sonic_ownerofalonelysword },
+            { Song.GameOver, Resource.Raw.sonic_gameover },
+            { Song.Intro, Resource.Raw.sonic_intro },
+            { Song.Outro, Resource.Raw.sonic_extro },
+            { Song.Menu, Resource.Raw.sonic_mainmenu },
+            { PyrdacorSong, Resource.Raw.song }
+		};
+        static readonly Dictionary<Song, TimeSpan> songDurations = new();
+
+		private readonly Context context;
+		private MediaPlayer mediaPlayer;
+        private Song? currentSong = null;
+        private float volume = 1.0f;
+        private bool enabled = true;
+
+		public bool Available => true;
+
+        public bool Enabled
         {
-            Song = index;
+            get => enabled;
+            set
+            {
+                if (enabled == value)
+                    return;
+
+                enabled = value;
+
+                if (!enabled)
+                    Stop();
+                else if (currentSong != null)
+                    Play(currentSong.Value);
+            }
         }
 
-		public Song Song { get; }
+        public bool Streaming { get; private set; } = false;
 
-		public TimeSpan? SongDuration => TimeSpan.Zero;
-
-		public void Play(IAudioOutput audioOutput)
-		{
-			
-		}
-
-		public void Stop()
-		{
-			
-		}
-	}
-
-	class MusicManager : ISongManager
-    {
-        IAudioOutput audioOutput = null;
-        IAudioStream currentStream = null;
-        protected static readonly Song[] Songs = EnumHelper.GetValues<Song>().Skip(1).ToArray();
-        readonly ISongManager songManager = null;
-        readonly object startMutex = new();
-
-        public MusicManager(IGameData gameData)
+        public float Volume
         {
-            songManager = gameData.SongManager;
+            get => volume;
+            set
+            {
+                volume = Util.Limit(0.0f, value, 1.0f);
+				mediaPlayer?.SetVolume(volume, volume);
+			}
+        }
+
+		public MusicManager(Context context)
+        {
+            this.context = context;
         }
 
         public ISong GetSong(Song index)
         {
-			// TODO
-			return new DummySong(index);
-			//return songManager.GetSong(index);
+			return new Mp3Song(this, index);
 		}
 
-		public void Start(IAudioOutput audioOutput, IAudioStream audioStream, int channels, int sampleRate, bool sample8Bit)
+        public ISong GetPyrdacorSong()
         {
-            return; // TODO
-
-            lock (startMutex)
-            {
-                this.audioOutput = audioOutput ?? throw new ArgumentNullException(nameof(audioOutput));
-
-                if (currentStream != audioStream)
-                {
-                    Stop();
-                    currentStream = audioStream;
-                    audioOutput.StreamData(audioStream, channels, sampleRate, sample8Bit);
-                }
-                if (!audioOutput.Streaming)
-                    audioOutput.Start();
-            }
+            return new Mp3Song(this, PyrdacorSong);
         }
+
+		private TimeSpan GetSongDuration(Song song)
+        {
+            if (songDurations.TryGetValue(song, out var duration))
+                return duration;
+
+			MediaPlayer tempMediaPlayer = MediaPlayer.Create(context, songIds[song]);
+			duration = TimeSpan.FromMicroseconds(tempMediaPlayer.Duration);
+			tempMediaPlayer.Release();
+
+            songDurations.Add(song, duration);
+
+			return duration;
+		}
+
+		private void Play(Song song)
+        {
+            if (Streaming && currentSong == song)
+                 return;
+
+            Stop();
+
+			mediaPlayer = MediaPlayer.Create(context, songIds[song]);
+            mediaPlayer.SetVolume(Volume, Volume);
+			mediaPlayer.Start();
+
+            currentSong = song;
+            Streaming = true;
+		}
 
         public void Stop()
         {
-            audioOutput?.Stop();
-            audioOutput?.Reset();
-            currentStream = null;
+			if (mediaPlayer != null)
+			{
+				mediaPlayer.Stop();
+				mediaPlayer.Release();
+				mediaPlayer = null;
+			}
+
+			Streaming = false;
+			currentSong = null;
         }
-    }
+
+        // We don't need the following. This is just to fulfill the IAudioOutput contract
+        // but the songs won't call those methods.
+		public void Start()
+		{
+			throw new NotImplementedException();
+		}
+
+		public void StreamData(IAudioStream audioStream, int channels = 1, int sampleRate = 44100, bool sample8Bit = true)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void Reset()
+		{
+			throw new NotImplementedException();
+		}
+	}
 }

@@ -2,13 +2,13 @@
   <PropertyGroup>
     <TargetFramework>net7.0-android</TargetFramework>
     <SupportedOSPlatformVersion>29.0</SupportedOSPlatformVersion>
-	<RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
+	<RuntimeIdentifiers>android-arm;android-arm64;android-x86;android-x64</RuntimeIdentifiers>
     <OutputType>Exe</OutputType>
     <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationId>com.pyrdacor.AmbermoonAndroid</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
-    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>10.0</ApplicationDisplayVersion>
     <Configurations>Debug;Release;ReleaseAndroid;DebugAndroid;DebugES;ReleaseES</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

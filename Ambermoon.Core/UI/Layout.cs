@@ -748,8 +748,7 @@ namespace Ambermoon.UI
                 _ => throw new AmbermoonException(ExceptionScope.Application, "Open option menu from the current window is not supported.")
             };
             AddSprite(area, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.MapDisableOverlay), game.UIPaletteIndex, 1);
-            var version = System.Reflection.Assembly.GetEntryAssembly().GetName().Version;
-            string versionString = $"Ambermoon.net V{version.Major}.{version.Minor}.{version.Build:00}^{GameVersion.RemakeReleaseDate}^^{game.DataNameProvider.DataVersionString}^{game.DataNameProvider.DataInfoString}";
+            string versionString = game.GetFullVersion();
             Rect boxArea;
             Rect textArea;
             if (Type == LayoutType.Battle)
@@ -1484,22 +1483,22 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleVolume())),
                 KeyValuePair.Create("", game.Configuration.Fullscreen || game.Configuration.IsMobile ? null : toggleResolutionAction),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFullscreen())),
+                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleFullscreen())),
                 KeyValuePair.Create("", RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilter()) : nullOptionAction),
                 KeyValuePair.Create("", RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilterAddition()) : nullOptionAction),
                 KeyValuePair.Create("", RenderView.AllowEffects ? ((index, _) => ToggleEffects()) : nullOptionAction),
                 // Page 2
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleBattleSpeed())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => Toggle3DMovement())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTurnWithArrowKeys())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTooltips())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePlayerStatsTooltips())),
+                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => Toggle3DMovement())),
+                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleTurnWithArrowKeys())),
+                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleTooltips())),
+                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => TogglePlayerStatsTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFloorAndCeiling())),
                 KeyValuePair.Create("", game.Configuration.ShowFloor && game.Configuration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction),
                 // Page 3
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExternalMusic())),
+                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleExtendedSaves())),
+                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleExternalMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFantasyIntro())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleIntro())),

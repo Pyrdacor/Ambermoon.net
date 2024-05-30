@@ -1,4 +1,7 @@
 using Ambermoon;
+using Android.Content;
+using Android.Content.PM;
+using Android.OS;
 using Android.Views;
 using Silk.NET.Windowing.Sdl.Android;
 
@@ -7,32 +10,70 @@ namespace AmbermoonAndroid
     [Activity(Label = "@string/app_name", MainLauncher = true, ScreenOrientation = Android.Content.PM.ScreenOrientation.Landscape)]
     public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
     {
-        private readonly GameWindow gameWindow = new();
+        private GameWindow gameWindow;
+        private MusicManager musicManager;
         private GestureDetector gestureDetector;
 
-        public override bool OnTouchEvent(MotionEvent e)
-        {
-            if (gestureDetector != null)
-                return gestureDetector.OnTouchEvent(e);
+		public override bool DispatchTouchEvent(MotionEvent ev)
+		{
+			if (gestureDetector != null)
+			{
+				gestureDetector.OnTouchEvent(ev);
+			}
+			return base.DispatchTouchEvent(ev);
+		}
 
-            return base.OnTouchEvent(e);
-        }
+		public override bool OnTouchEvent(MotionEvent e)
+        {
+			if (gestureDetector != null)
+			{
+				gestureDetector.OnTouchEvent(e);
+				return true;
+			}
+			return base.OnTouchEvent(e);
+		}
 
         private void NameResetHandler()
         {
-			RunOnUiThread(() => Title = "");
+			RunOnUiThread(() => Title = "Ambermoon");
 		}
 
-        protected override void OnRun()
-        {
-			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+		protected override void OnDestroy()
+		{
+			base.OnDestroy();
+            musicManager?.Stop();
+		}
 
-			RunOnUiThread(() =>
-            {
-                gestureDetector = new GestureDetector(this, this);
-                Title = "";
-            });
+		protected override void OnCreate(Bundle savedInstanceState)
+		{
+            string version;
             
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+			{
+#pragma warning disable CA1416 // Validate platform compatibility
+				version = PackageManager?.GetPackageInfo(new VersionedPackage(PackageName, 0), PackageManager.PackageInfoFlags.Of(0)).VersionName ?? "1.0";
+#pragma warning restore CA1416 // Validate platform compatibility
+			}
+			else
+			{
+#pragma warning disable CS0618 // Type or member is obsolete
+				version = PackageManager?.GetPackageInfo(PackageName, 0).VersionName ?? "1.0";
+#pragma warning restore CS0618 // Type or member is obsolete
+			}
+
+			gameWindow = new($"Ambermoon.net V{version}");
+
+			ActionBar?.Hide();
+			Title = "Ambermoon";
+
+			base.OnCreate(savedInstanceState);
+
+			gestureDetector = new GestureDetector(this, this);
+		}
+
+		protected override void OnRun()
+        {
+			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;           
 
             FileProvider.Initialize(this);
 
@@ -43,7 +84,8 @@ namespace AmbermoonAndroid
 
             try
             {
-                gameWindow.Run(configuration, NameResetHandler);
+                musicManager = new MusicManager(this);
+                gameWindow.Run(configuration, musicManager, NameResetHandler);
             }
             catch (Exception ex)
             {
@@ -86,11 +128,11 @@ namespace AmbermoonAndroid
 
             if (ex.InnerException != null)
             {
-                message += Environment.NewLine + ex.InnerException.Message;
+                message += System.Environment.NewLine + ex.InnerException.Message;
                 ex = ex.InnerException;
             }
 
-            Console.WriteLine(message + Environment.NewLine + ex.StackTrace);
+            Console.WriteLine(message + System.Environment.NewLine + ex.StackTrace);
         }
 
         public bool OnDown(MotionEvent e)

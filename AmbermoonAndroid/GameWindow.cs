@@ -1,9 +1,7 @@
 ﻿using Ambermoon;
-using Ambermoon.Audio.Android;
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy;
-using Ambermoon.Data.Legacy.Audio;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
@@ -35,7 +33,7 @@ namespace AmbermoonAndroid
         MainMenu mainMenu = null;
         Func<Game> gameCreator = null;
         MusicManager musicManager = null;
-        AudioOutput audioOutput = null;
+        bool musicInitialized = false;
         IRenderText infoText = null;
         IFontProvider fontProvider = null;
         DateTime? initializeErrorTime = null;
@@ -48,8 +46,9 @@ namespace AmbermoonAndroid
         Graphic[] additionalPalettes;
         bool initialized = false;
         bool initialIntroEndedByClick = false;
+        readonly List<Action> touchActions = new();
 
-        public string Identifier { get; }
+		public string Identifier { get; }
         public IGLContext GLContext => window?.GLContext;
         public int Width { get; private set; }
         public int Height { get; private set; }
@@ -57,9 +56,10 @@ namespace AmbermoonAndroid
         Intro intro = null;
         public Game Game { get; private set; }
 
-        public GameWindow(string id = "MainWindow")
+        public GameWindow(string gameVersion, string id = "MainWindow")
         {
-            Identifier = id;
+            this.gameVersion = gameVersion;
+			Identifier = id;
         }
 
         void ChangeResolution(int? oldWidth, bool fullscreen, bool changed)
@@ -135,10 +135,10 @@ namespace AmbermoonAndroid
             {
                 cursor = mouse.Cursor;
                 cursor.CursorMode = CursorMode.Hidden;
-                mouse.MouseDown += Mouse_MouseDown;
+                /*mouse.MouseDown += Mouse_MouseDown;
                 mouse.MouseUp += Mouse_MouseUp;
                 mouse.MouseMove += Mouse_MouseMove;
-                mouse.Scroll += Mouse_Scroll;
+                mouse.Scroll += Mouse_Scroll;*/
             }
         }
 
@@ -280,8 +280,8 @@ namespace AmbermoonAndroid
                  keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))
             {
                 configuration.Music = !configuration.Music;
-                audioOutput.Enabled = configuration.Music;
-                if (audioOutput.Available && audioOutput.Enabled)
+                musicManager.Enabled = configuration.Music;
+                if (musicManager.Available && musicManager.Enabled)
                     Game?.ContinueMusic();
                 Game?.ExternalMusicChanged();
             }
@@ -291,13 +291,13 @@ namespace AmbermoonAndroid
                 if (configuration.Volume >= 10)
                 {
                     configuration.Volume -= 10;
-                    audioOutput.Volume = configuration.Volume / 100.0f;
+					musicManager.Volume = configuration.Volume / 100.0f;
                     Game?.ExternalVolumeChanged();
                 }
                 else if (configuration.Volume > 0)
                 {
                     configuration.Volume = 0;
-                    audioOutput.Volume = configuration.Volume / 100.0f;
+					musicManager.Volume = configuration.Volume / 100.0f;
                     Game?.ExternalVolumeChanged();
                 }
             }
@@ -307,13 +307,13 @@ namespace AmbermoonAndroid
                 if (configuration.Volume <= 90)
                 {
                     configuration.Volume += 10;
-                    audioOutput.Volume = configuration.Volume / 100.0f;
+					musicManager.Volume = configuration.Volume / 100.0f;
                     Game?.ExternalVolumeChanged();
                 }
                 else if (configuration.Volume < 100)
                 {
                     configuration.Volume = 100;
-                    audioOutput.Volume = configuration.Volume / 100.0f;
+					musicManager.Volume = configuration.Volume / 100.0f;
                     Game?.ExternalVolumeChanged();
                 }
             }
@@ -491,35 +491,64 @@ namespace AmbermoonAndroid
 
 		internal void OnMouseDown(Position position, MouseButtons buttons)
 		{
-			if (logoPyrdacor != null)
-			{
-				logoPyrdacor?.Cleanup();
-				logoPyrdacor = null;
-			}
-			else if (versionSelector != null)
-				versionSelector.OnMouseDown(position, buttons);
-			else if (mainMenu != null)
-				mainMenu.OnMouseDown(position, buttons);
-			else if (Game != null)
-				Game.OnMouseDown(position, buttons);
+            lock (touchActions)
+            {
+                touchActions.Add(() =>
+                {
+                    if (logoPyrdacor != null)
+                    {
+                        logoPyrdacor?.Cleanup();
+                        logoPyrdacor = null;
+                    }
+                    else if (fantasyIntro != null)
+                    {
+                        fantasyIntro.Abort();
+                    }
+                    else if (advancedLogo != null)
+                    {
+                        advancedLogo?.Cleanup();
+                        advancedLogo = null;
+                    }
+                    else if (versionSelector != null)
+                        versionSelector.OnMouseDown(position, buttons);
+                    else if (mainMenu != null)
+                        mainMenu.OnMouseDown(position, buttons);
+                    else if (intro != null)
+                        intro.Click();
+                    else if (Game != null)
+                        Game.OnMouseDown(position, buttons);
+                });
+            }
 		}
 
 		internal void OnMouseUp(Position position, MouseButtons buttons)
 		{
-			if (versionSelector != null)
-				versionSelector.OnMouseUp(position, buttons);
-			else if (mainMenu != null)
-				mainMenu.OnMouseUp(position, buttons);
-			else if (Game != null)
-				Game.OnMouseUp(position, buttons);
+            lock (touchActions)
+            {
+                touchActions.Add(() =>
+                {
+                    if (versionSelector != null)
+                        versionSelector.OnMouseUp(position, buttons);
+                    else if (mainMenu != null)
+                        mainMenu.OnMouseUp(position, buttons);
+                    else if (Game != null)
+                        Game.OnMouseUp(position, buttons);
+                });
+            }
 		}
 
 		internal void OnMouseScroll(Position position, int deltaX, int deltaY)
 		{
-			if (versionSelector != null)
-				versionSelector.OnMouseWheel(deltaX, deltaY, position);
-			else if (Game != null)
-				Game.OnMouseWheel(deltaX, deltaY, position);
+            lock (touchActions)
+            {
+                touchActions.Add(() =>
+                {
+                    if (versionSelector != null)
+                        versionSelector.OnMouseWheel(deltaX, deltaY, position);
+                    else if (Game != null)
+                        Game.OnMouseWheel(deltaX, deltaY, position);
+                });
+            }
 		}
 
 		static void WritePNG(string filename, byte[] rgbData, Size imageSize, bool alpha, bool upsideDown)
@@ -624,7 +653,7 @@ namespace AmbermoonAndroid
             void PlayMusic(Song song)
             {
                 if (configuration.Music)
-                    musicManager.GetSong(song)?.Play(audioOutput);
+                    musicManager.GetSong(song)?.Play(musicManager);
 
                 if (infoText != null)
                     infoText.Visible = false;
@@ -716,14 +745,14 @@ namespace AmbermoonAndroid
             // Load game data
             var graphicProvider = gameData.GraphicProvider;
 
-            if (audioOutput == null)
+            if (!musicInitialized)
             {
-                audioOutput = new AudioOutput();
-                audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
-                audioOutput.Enabled = audioOutput.Available && configuration.Music;
+                musicInitialized = true;
+				musicManager.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
+				musicManager.Enabled = musicManager.Available && configuration.Music;
                 if (configuration.ShowPyrdacorLogo)
                 {
-                    logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(FileProvider.GetSongData()), 0, false, false));
+                    logoPyrdacor = new LogoPyrdacor(musicManager, musicManager.GetPyrdacorSong());
                     additionalPalettes = logoPyrdacor.Palettes;
                 }
                 else
@@ -735,7 +764,6 @@ namespace AmbermoonAndroid
             if (gameData.Advanced)
                 advancedLogo = new AdvancedLogo(); // TODO: later add it to options
 
-            musicManager = new MusicManager(gameData);
             fontProvider ??= new IngameFontProvider(new DataReader(FileProvider.GetIngameFontData()), gameData.FontProvider.GetFont());
 
             // Create render view
@@ -789,7 +817,7 @@ namespace AmbermoonAndroid
                     if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
                         currentSavegame = configuration.GetOrCreateCurrentAdditionalSavegameSlots(Path.GetFileName(savePath))?.ContinueSavegameSlot ?? 0;
                     bool canContinue = currentSavegame != 0;
-                    var cursor = new Render.Cursor(renderView, gameData.CursorHotspots);
+                    var cursor = new InvisibleCursor(renderView, gameData.CursorHotspots);
                     cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
                     cursor.Type = Data.CursorType.None;
 
@@ -801,13 +829,13 @@ namespace AmbermoonAndroid
 
                             gameCreator = () =>
                             {
-                                var game = new Game(configuration, gameLanguage, renderView, graphicProvider,
-                                    savegameManager, savegameSerializer, gameData.Dictionary, cursor, audioOutput,
+								var game = new Game(configuration, gameLanguage, renderView, graphicProvider,
+                                    savegameManager, savegameSerializer, gameData.Dictionary, cursor, musicManager,
                                     musicManager, (_) => { }, (_) => { }, QueryPressedKeys,
                                     new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
-                                    Path.GetFileName(savePath));
+                                    Path.GetFileName(savePath), gameVersion);
                                 game.QuitRequested += window.Close;
-                                game.MousePositionChanged += position =>
+                                /*game.MousePositionChanged += position =>
                                 {
                                     if (mouse != null)
                                     {
@@ -815,7 +843,7 @@ namespace AmbermoonAndroid
                                         mouse.Position = new MousePosition(position.X, position.Y);
                                         mouse.MouseMove += Mouse_MouseMove;
                                     }
-                                };
+                                };*/
                                 game.MouseTrappedChanged += (bool trapped, Position position) =>
                                 {
                                     try
@@ -831,13 +859,13 @@ namespace AmbermoonAndroid
                                         trappedMouseLastPosition = trapped ? new FloatPosition(window.Size.X / 2, window.Size.Y / 2) : null;
                                         this.cursor.CursorMode = CursorMode.Hidden;
                                     }
-                                    if (mouse != null)
+                                    /*if (mouse != null)
                                     {
                                         mouse.MouseMove -= Mouse_MouseMove;
                                         mouse.Position = !trapped || !trapMouse ? new MousePosition(position.X, position.Y) :
                                             new MousePosition(window.Size.X / 2, window.Size.Y / 2);
                                         mouse.MouseMove += Mouse_MouseMove;
-                                    }
+                                    }*/
                                 };
                                 game.ConfigurationChanged += (configuration, windowChange) =>
                                 {
@@ -982,7 +1010,7 @@ namespace AmbermoonAndroid
             }, () =>
             {
                 if (configuration.Music)
-                    musicManager.GetSong(Song.Intro)?.Play(audioOutput);
+                    musicManager.GetSong(Song.Intro)?.Play(musicManager);
             });
         }
 
@@ -1065,12 +1093,12 @@ namespace AmbermoonAndroid
             };
             flagsGraphic.Data = flagsData.ReadBytes(flagsGraphic.Width * flagsGraphic.Height);
 
-            audioOutput = new AudioOutput();
-            audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
-            audioOutput.Enabled = audioOutput.Available && configuration.Music;
+            musicInitialized = true;
+			musicManager.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
+			musicManager.Enabled = musicManager.Available && configuration.Music;
             if (configuration.ShowPyrdacorLogo)
             {
-                logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(FileProvider.GetSongData()), 0, false, false));
+                logoPyrdacor = new LogoPyrdacor(musicManager, musicManager.GetPyrdacorSong());
                 additionalPalettes = new Graphic[2] { logoPyrdacor.Palettes[0], flagsPalette };
             }
             else
@@ -1115,7 +1143,7 @@ namespace AmbermoonAndroid
 #else
                 configuration.GameVersionIndex = 0;
 #endif
-            var cursor = new Render.Cursor(renderView, gameData.CursorHotspots, textureAtlasManager);
+            var cursor = new InvisibleCursor(renderView, gameData.CursorHotspots, textureAtlasManager);
 
             RunTask(() =>
             {
@@ -1359,9 +1387,21 @@ namespace AmbermoonAndroid
             renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
         }
 
-        public void Run(Configuration configuration, Action nameResetHandler)
+        void DoEvents()
+        {
+            lock (touchActions)
+            {
+                foreach (var touchAction in touchActions)
+                    touchAction();
+                touchActions.Clear();
+            }
+            window.DoEvents();
+        }
+
+        public void Run(Configuration configuration, MusicManager musicManager, Action nameResetHandler)
         {
             this.configuration = configuration;
+            this.musicManager = musicManager;
             var screenSize = configuration.GetScreenSize();
             Width = screenSize.Width;
             Height = screenSize.Height;
@@ -1372,8 +1412,6 @@ namespace AmbermoonAndroid
 #else
             var api = GraphicsAPI.Default;
 #endif
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
-            gameVersion = $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build}";
             var videoMode = new VideoMode(60);
             var options = new WindowOptions(true, new WindowDimension(100, 100),
                 new WindowDimension(Width, Height), 60.0, 120.0, api, gameVersion,
@@ -1385,7 +1423,8 @@ namespace AmbermoonAndroid
 				SdlWindowing.RegisterPlatform();
                 SdlInput.RegisterPlatform();
                 SdlWindowing.Use();
-                window = Silk.NET.Windowing.Window.GetView(new ViewOptions(options));
+                nameResetHandler?.Invoke();
+				window = Silk.NET.Windowing.Window.GetView(new ViewOptions(options));
 				window.Load += nameResetHandler;
 				window.Load += Window_Load;
                 window.Render += Window_Render;
@@ -1394,12 +1433,21 @@ namespace AmbermoonAndroid
                 window.FramebufferResize += Window_FramebufferResize;
                 window.Closing += () =>
                 {
-                    audioOutput.Stop();
-                    audioOutput.Dispose();
+                    musicManager.Stop();
                     cheatTaskCancellationTokenSource.Cancel();
                 };
 
-				window.Run();
+                window.Initialize();
+                window.Run(() =>
+                {
+                    DoEvents();
+                    if (!window.IsClosing)
+                        window.DoUpdate();
+					if (!window.IsClosing)
+						window.DoRender();
+                });
+                DoEvents();
+                window.Reset();
             }
             catch (Exception ex)
             {
