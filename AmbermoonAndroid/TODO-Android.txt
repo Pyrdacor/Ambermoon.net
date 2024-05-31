@@ -1,0 +1,5 @@
+﻿- Long press movement for 3D
+- Long press event triggering for 3D
+- Long press to talk to NPCs
+- Tapping on 2D map seems to be a bit off sometimes (step movement)
+- BinaryFormatter in battles is not supported on Android
