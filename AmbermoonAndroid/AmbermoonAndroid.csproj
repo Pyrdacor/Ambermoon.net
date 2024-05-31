@@ -62,6 +62,7 @@
     <PackageReference Include="Silk.NET.OpenGL" Version="2.20.0" />
     <PackageReference Include="Silk.NET.OpenGLES" Version="2.20.0" />
     <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.20.0" />
+    <PackageReference Include="Xamarin.AndroidX.Core" Version="1.13.0.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Audio.Android\Ambermoon.Audio.Android.csproj" />

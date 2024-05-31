@@ -75,6 +75,7 @@ namespace AmbermoonAndroid
             { PyrdacorSong, Resource.Raw.song }
 		};
         static readonly Dictionary<Song, TimeSpan> songDurations = new();
+		static readonly Dictionary<Song, Mp3Song> songs = new();
 
 		private readonly Context context;
 		private MediaPlayer mediaPlayer;
@@ -95,9 +96,9 @@ namespace AmbermoonAndroid
                 enabled = value;
 
                 if (!enabled)
-                    Stop();
+                    Pause();
                 else if (currentSong != null)
-                    Play(currentSong.Value);
+                    Resume();
             }
         }
 
@@ -120,13 +121,27 @@ namespace AmbermoonAndroid
 
         public ISong GetSong(Song index)
         {
-			return new Mp3Song(this, index);
+            if (songs.TryGetValue(index, out var song))
+                return song;
+
+			song = new Mp3Song(this, index);
+
+            songs.Add(index, song);
+
+			return song;
 		}
 
         public ISong GetPyrdacorSong()
         {
-            return new Mp3Song(this, PyrdacorSong);
-        }
+			if (songs.TryGetValue(PyrdacorSong, out var song))
+				return song;
+
+			song = new Mp3Song(this, PyrdacorSong);
+
+			songs.Add(PyrdacorSong, song);
+
+			return song;
+		}
 
 		private TimeSpan GetSongDuration(Song song)
         {
@@ -145,7 +160,7 @@ namespace AmbermoonAndroid
 		private void Play(Song song)
         {
             if (Streaming && currentSong == song)
-                 return;
+                return;
 
             Stop();
 
@@ -170,8 +185,24 @@ namespace AmbermoonAndroid
 			currentSong = null;
         }
 
-        // We don't need the following. This is just to fulfill the IAudioOutput contract
-        // but the songs won't call those methods.
+		private void Pause()
+		{
+			if (mediaPlayer != null && mediaPlayer.IsPlaying)
+			{
+				mediaPlayer.Pause();
+			}
+		}
+
+		private void Resume()
+		{
+			if (mediaPlayer != null)
+			{
+				mediaPlayer.Start();
+			}
+		}
+
+		// We don't need the following. This is just to fulfill the IAudioOutput contract
+		// but the songs won't call those methods.
 		public void Start()
 		{
 			throw new NotImplementedException();

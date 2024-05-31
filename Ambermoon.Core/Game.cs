@@ -242,6 +242,7 @@ namespace Ambermoon
         bool disableTimeEvents = false;
         readonly string gameVersionName;
         readonly string fullVersion;
+        readonly Action<bool, string> keyboardRequest;
 		public Features Features { get; }
         public const int NumAdditionalSavegameSlots = 20;
         internal SavegameTime GameTime { get; private set; } = null;
@@ -562,9 +563,9 @@ namespace Ambermoon
             ISavegameManager savegameManager, ISavegameSerializer savegameSerializer, TextDictionary textDictionary,
             Cursor cursor, IAudioOutput audioOutput, ISongManager songManager, FullscreenChangeHandler fullscreenChangeHandler,
             ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory,
-            Features features, string gameVersionName, string version)
+            Features features, string gameVersionName, string version, Action<bool, string> keyboardRequest)
         {
-            
+            this.keyboardRequest = keyboardRequest;
 			Features = features;
             this.gameVersionName = gameVersionName;
             Character.FoodWeight = Features.HasFlag(Features.ReducedFoodWeight) ? 25u : 250u;
@@ -664,7 +665,7 @@ namespace Ambermoon
 
             layout.ShowPortraitArea(false);
 
-            TextInput.FocusChanged += UpdateCursor;
+            TextInput.FocusChanged += InputFocusChanged;
         }
 
         internal byte UIPaletteIndex => currentUIPaletteIndex;
@@ -1367,7 +1368,7 @@ namespace Ambermoon
             Util.SafeCall(() => layout.Destroy());
             Util.SafeCall(() => CursorType = CursorType.None);
             Util.SafeCall(() => windowTitle?.Delete());
-            TextInput.FocusChanged -= UpdateCursor;
+            TextInput.FocusChanged -= InputFocusChanged;
         }
 
         void PartyMemberDied(Character partyMember)
@@ -3527,6 +3528,12 @@ namespace Ambermoon
                 MousePositionChanged?.Invoke(lastMousePosition);
             }
         }
+
+        private void InputFocusChanged()
+        {
+            UpdateCursor();
+            keyboardRequest?.Invoke(TextInput.FocusedInput != null, TextInput.FocusedInput?.Text ?? "");
+		}
 
         internal void UpdateCursor()
         {

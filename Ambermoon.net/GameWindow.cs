@@ -829,7 +829,7 @@ namespace Ambermoon
                                 savegameManager, savegameSerializer, gameData.Dictionary, cursor, audioOutput,
                                 musicManager, FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
                                 new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
-                                Path.GetFileName(savePath), versionString);
+                                Path.GetFileName(savePath), versionString, null);
 
 			                    game.QuitRequested += window.Close;
 			                    game.MousePositionChanged += position =>

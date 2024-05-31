@@ -143,7 +143,7 @@ namespace AmbermoonAndroid
         {
 			var filename = Path.Combine(AppDataPath, ConfigurationFileName);
 
-            if (!File.Exists(filename))
+            if (!File.Exists(filename) || new FileInfo(filename).Length == 0)
                 return defaultValue;
 
             return JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(filename));

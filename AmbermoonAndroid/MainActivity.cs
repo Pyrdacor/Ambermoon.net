@@ -1,8 +1,14 @@
 using Ambermoon;
-using Android.Content;
+using Ambermoon.Data.Enumerations;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
+using Android.Views.InputMethods;
+using Android.Views.TextClassifiers;
+using AndroidX.Core.App;
+using AndroidX.Core.Content;
+using Org.Libsdl.App;
+using Silk.NET.SDL;
 using Silk.NET.Windowing.Sdl.Android;
 
 namespace AmbermoonAndroid
@@ -10,9 +16,13 @@ namespace AmbermoonAndroid
     [Activity(Label = "@string/app_name", MainLauncher = true, ScreenOrientation = Android.Content.PM.ScreenOrientation.Landscape)]
     public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
     {
-        private GameWindow gameWindow;
+		private const int RequestBluetoothPermissionsId = 1001;
+		private GameWindow gameWindow;
         private MusicManager musicManager;
         private GestureDetector gestureDetector;
+		private InputMethodManager imm;
+		private EditText hiddenEditText;
+		private string lastInputText = "";
 
 		public override bool DispatchTouchEvent(MotionEvent ev)
 		{
@@ -61,14 +71,172 @@ namespace AmbermoonAndroid
 #pragma warning restore CS0618 // Type or member is obsolete
 			}
 
-			gameWindow = new($"Ambermoon.net V{version}");
+			gameWindow = new($"Ambermoon.net V{version}", (keyboardRequested, text) =>
+            {
+                if (keyboardRequested)
+                    ShowKeyboard(text);
+                else
+                    HideKeyboard();
+            });
 
 			ActionBar?.Hide();
 			Title = "Ambermoon";
 
+			RequestBluetoothPermissions();
+
 			base.OnCreate(savedInstanceState);
 
 			gestureDetector = new GestureDetector(this, this);
+		}
+
+		private void RequestBluetoothPermissions()
+		{
+			if (Build.VERSION.SdkInt >= BuildVersionCodes.S)
+			{
+				if (ContextCompat.CheckSelfPermission(this, Android.Manifest.Permission.BluetoothScan) != Permission.Granted ||
+					ContextCompat.CheckSelfPermission(this, Android.Manifest.Permission.BluetoothConnect) != Permission.Granted ||
+					ContextCompat.CheckSelfPermission(this, Android.Manifest.Permission.BluetoothAdvertise) != Permission.Granted)
+				{
+					ActivityCompat.RequestPermissions(this, new string[]
+					{
+						Android.Manifest.Permission.BluetoothScan,
+						Android.Manifest.Permission.BluetoothConnect,
+						Android.Manifest.Permission.BluetoothAdvertise,
+					}, RequestBluetoothPermissionsId);
+				}
+			}
+		}
+
+		public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
+		{
+			base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+
+			if (requestCode == RequestBluetoothPermissionsId)
+			{
+				// Check if all permissions were granted
+				if (grantResults.Length > 0 && grantResults.All(result => result == Permission.Granted))
+				{
+					// All required permissions were granted
+					Toast.MakeText(this, "Bluetooth permissions granted", ToastLength.Short).Show();
+				}
+				else
+				{
+					// Permissions denied
+					Toast.MakeText(this, "Bluetooth permissions denied", ToastLength.Short).Show();
+				}
+			}
+		}
+
+		public void ShowKeyboard(string text)
+		{
+			RunOnUiThread(() =>
+			{
+				hiddenEditText.Visibility = ViewStates.Visible;
+				hiddenEditText.Focusable = true;
+				hiddenEditText.FocusableInTouchMode = true;
+				hiddenEditText.Text = lastInputText = text;
+				hiddenEditText.RequestFocus();
+				hiddenEditText.SetSelection(hiddenEditText.Text.Length);
+				hiddenEditText.SetCursorVisible(false);
+				imm.ShowSoftInput(hiddenEditText, ShowFlags.Forced);
+				hiddenEditText.Focusable = false;
+				hiddenEditText.FocusableInTouchMode = false;
+			});
+		}
+
+		public void HideKeyboard()
+		{
+			RunOnUiThread(() =>
+			{
+				imm.HideSoftInputFromWindow(hiddenEditText.WindowToken, 0);
+				hiddenEditText.ClearFocus();
+				hiddenEditText.Text = lastInputText = "";
+				hiddenEditText.Visibility = ViewStates.Invisible;
+			});
+		}
+
+		private void OnAfterInit()
+		{
+			RunOnUiThread(() =>
+			{
+				/*Window.DecorView.SystemUiVisibility = (StatusBarVisibility)(
+					SystemUiFlags.LayoutStable |
+					SystemUiFlags.LayoutHideNavigation |
+					SystemUiFlags.LayoutFullscreen |
+					SystemUiFlags.HideNavigation |
+					SystemUiFlags.Fullscreen |
+					SystemUiFlags.ImmersiveSticky);*/
+
+				imm = (InputMethodManager)GetSystemService(InputMethodService);
+
+				hiddenEditText = new(this);
+				hiddenEditText.LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent);
+				hiddenEditText.Text = "";
+				hiddenEditText.SetBackgroundColor(Android.Graphics.Color.Transparent);
+				hiddenEditText.SetTextColor(Android.Graphics.Color.Transparent);
+				hiddenEditText.Visibility = ViewStates.Invisible;
+				hiddenEditText.Focusable = false;
+				hiddenEditText.FocusableInTouchMode = false;
+				hiddenEditText.Clickable = false;
+				hiddenEditText.LongClickable = false;
+				hiddenEditText.CustomSelectionActionModeCallback = new NoTextSelection();
+
+				hiddenEditText.AfterTextChanged += (sender, e) =>
+				{
+					string inputText = hiddenEditText.Text;
+
+					if (inputText == lastInputText)
+						return;
+
+					int i;
+					
+					for (i = 0; i < inputText.Length; i++)
+					{
+						if (i >= lastInputText.Length || inputText[i] != lastInputText[i])
+							break;
+					}
+
+					// i is now at the end of the same start of the input.
+
+					// If i equals last input length, some chars were added -> add them
+					if (i == lastInputText.Length)
+					{
+						for (; i < inputText.Length; i++)
+							gameWindow.OnKeyChar(inputText[i]);
+					}
+					// If i equals current input length, some chars were removed -> remove them
+					else if (i == inputText.Length)
+					{
+						for (; i < lastInputText.Length; i++)
+							gameWindow.OnKeyDown(Key.Backspace);
+					}
+					// Otherwise they differ
+					else
+					{
+						// First remove everything remaining from last input
+						int j = i;
+						for (; i < lastInputText.Length; i++)
+							gameWindow.OnKeyDown(Key.Backspace);
+						// Then add everything from new input
+						for (; j < inputText.Length; j++)
+							gameWindow.OnKeyChar(inputText[j]);
+					}
+
+					lastInputText = inputText;
+				};
+
+				var sdlViewGroup = FindViewById<ViewGroup>(Android.Resource.Id.Content);
+
+				sdlViewGroup.AddView(hiddenEditText);
+			});
+		}
+
+		private class NoTextSelection : Java.Lang.Object, ActionMode.ICallback
+		{
+			public bool OnActionItemClicked(ActionMode mode, IMenuItem item) => false;
+			public bool OnCreateActionMode(ActionMode mode, IMenu menu) => false;
+			public bool OnPrepareActionMode(ActionMode mode, IMenu menu) => false;
+			public void OnDestroyActionMode(ActionMode mode) { }
 		}
 
 		protected override void OnRun()
@@ -85,7 +253,7 @@ namespace AmbermoonAndroid
             try
             {
                 musicManager = new MusicManager(this);
-                gameWindow.Run(configuration, musicManager, NameResetHandler);
+                gameWindow.Run(configuration, musicManager, NameResetHandler, OnAfterInit);
             }
             catch (Exception ex)
             {

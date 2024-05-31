@@ -10,7 +10,6 @@ using Ambermoon.UI;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Input;
 using Silk.NET.Windowing;
-using System.Reflection;
 using MousePosition = System.Numerics.Vector2;
 using WindowDimension = Silk.NET.Maths.Vector2D<int>;
 using Key = Ambermoon.Key;
@@ -47,6 +46,7 @@ namespace AmbermoonAndroid
         bool initialized = false;
         bool initialIntroEndedByClick = false;
         readonly List<Action> touchActions = new();
+        readonly Action<bool, string> keyboardRequest;
 
 		public string Identifier { get; }
         public IGLContext GLContext => window?.GLContext;
@@ -56,9 +56,10 @@ namespace AmbermoonAndroid
         Intro intro = null;
         public Game Game { get; private set; }
 
-        public GameWindow(string gameVersion, string id = "MainWindow")
+        public GameWindow(string gameVersion, Action<bool, string> keyboardRequest, string id = "MainWindow")
         {
             this.gameVersion = gameVersion;
+            this.keyboardRequest = keyboardRequest;
 			Identifier = id;
         }
 
@@ -551,6 +552,22 @@ namespace AmbermoonAndroid
             }
 		}
 
+        internal void OnKeyChar(char ch)
+        {
+            if (ch == '\n')
+            {
+                OnKeyDown(Key.Return);
+                return;
+            }
+
+            Keyboard_KeyChar(null, ch);
+        }
+
+		internal void OnKeyDown(Key key)
+		{
+            Game?.OnKeyDown(key, KeyModifiers.None);
+		}
+
 		static void WritePNG(string filename, byte[] rgbData, Size imageSize, bool alpha, bool upsideDown)
         {
             if (File.Exists(filename))
@@ -833,7 +850,7 @@ namespace AmbermoonAndroid
                                     savegameManager, savegameSerializer, gameData.Dictionary, cursor, musicManager,
                                     musicManager, (_) => { }, (_) => { }, QueryPressedKeys,
                                     new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
-                                    Path.GetFileName(savePath), gameVersion);
+                                    Path.GetFileName(savePath), gameVersion, keyboardRequest);
                                 game.QuitRequested += window.Close;
                                 /*game.MousePositionChanged += position =>
                                 {
@@ -877,21 +894,6 @@ namespace AmbermoonAndroid
 
                                     if (!renderView.TryUseEffects())
                                         configuration.Effects = Effects.None;
-
-                                    if (configuration.EnableCheats)
-                                        PrintCheatConsoleHeader();
-
-                                    if (configuration.EnableCheats && !Console.IsInputRedirected)
-                                    {
-                                        while (Console.KeyAvailable)
-                                            Console.ReadKey(true);
-                                    }
-                                    else if (!configuration.EnableCheats && !Console.IsInputRedirected)
-                                    {
-                                        cheatHeaderPrinted = false;
-                                        if (!Console.IsOutputRedirected)
-                                            Console.Clear();
-                                    }
                                 };
                                 game.DrugTicked += Drug_Ticked;
                                 mainMenu.GameDataLoaded = true;
@@ -1332,12 +1334,6 @@ namespace AmbermoonAndroid
                     mainMenu?.Destroy();
                     mainMenu = null;
                     gameCreator = null;
-
-                    // Show cheat info
-                    if (configuration.EnableCheats)
-                    {
-                        PrintCheatConsoleHeader();
-                    }
                 }
             }
             else if (Game != null)
@@ -1346,32 +1342,31 @@ namespace AmbermoonAndroid
             }
         }
 
-        static bool cheatHeaderPrinted = false;
-        static bool cheatTaskStarted = false;        
-        static CancellationTokenSource cheatTaskCancellationTokenSource = new CancellationTokenSource();
-
-        static void PrintCheatConsoleHeader()
-        {
-            if (!cheatHeaderPrinted)
-            {
-                cheatHeaderPrinted = true;
-                Console.WriteLine("***** Ambermoon Cheat Console *****");
-                Console.WriteLine("Type 'help' for more information.");
-                Console.WriteLine();
-            }
-        }
-
         void Window_Resize(WindowDimension size)
         {
-            if (renderView != null)
-                renderView.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, size.X, size.Y);
+            try
+            {
+                if (renderView != null)
+                    renderView.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, size.X, size.Y);
+            }
+            catch
+            {
+                // ignore
+            }
         }
 
         void Window_FramebufferResize(WindowDimension size)
         {
-            if (renderView != null)
-                renderView.Resize(size.X, size.Y);
-        }
+			try
+			{
+				if (renderView != null)
+                    renderView.Resize(size.X, size.Y);
+			}
+			catch
+			{
+				// ignore
+			}
+		}
 
         // TODO
         /*void Window_StateChanged(WindowState state)
@@ -1398,7 +1393,8 @@ namespace AmbermoonAndroid
             window.DoEvents();
         }
 
-        public void Run(Configuration configuration, MusicManager musicManager, Action nameResetHandler)
+        public void Run(Configuration configuration, MusicManager musicManager,
+            Action nameResetHandler, Action afterInitHandler)
         {
             this.configuration = configuration;
             this.musicManager = musicManager;
@@ -1427,14 +1423,14 @@ namespace AmbermoonAndroid
 				window = Silk.NET.Windowing.Window.GetView(new ViewOptions(options));
 				window.Load += nameResetHandler;
 				window.Load += Window_Load;
-                window.Render += Window_Render;
+                window.Load += afterInitHandler;
+				window.Render += Window_Render;
                 window.Update += Window_Update;
                 window.Resize += Window_Resize;
                 window.FramebufferResize += Window_FramebufferResize;
                 window.Closing += () =>
                 {
                     musicManager.Stop();
-                    cheatTaskCancellationTokenSource.Cancel();
                 };
 
                 window.Initialize();
