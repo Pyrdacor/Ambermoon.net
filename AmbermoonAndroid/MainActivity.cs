@@ -24,13 +24,28 @@ namespace AmbermoonAndroid
 		private EditText hiddenEditText;
 		private string lastInputText = "";
 
-		public override bool DispatchTouchEvent(MotionEvent ev)
+		public override bool DispatchTouchEvent(MotionEvent e)
 		{
+			switch (e.Action)
+			{
+				/*case MotionEventActions.Down:
+					HandleTouchDown(e.GetX(), e.GetY());
+					break;*/
+				case MotionEventActions.Move:
+					if (e.PointerCount == 1)
+						HandleTouchMove(e.GetX(), e.GetY());
+					break;
+				case MotionEventActions.Up:
+					if (e.PointerCount == 1)
+						HandleTouchUp(e.GetX(), e.GetY());
+					break;
+			}
+
 			if (gestureDetector != null)
 			{
-				gestureDetector.OnTouchEvent(ev);
+				gestureDetector.OnTouchEvent(e);
 			}
-			return base.DispatchTouchEvent(ev);
+			return base.DispatchTouchEvent(e);
 		}
 
 		public override bool OnTouchEvent(MotionEvent e)
@@ -322,8 +337,7 @@ namespace AmbermoonAndroid
                 var coords = new MotionEvent.PointerCoords();
                 e.GetPointerCoords(0, coords);
                 var position = new Position(Util.Round(coords.X), Util.Round(coords.Y));
-                gameWindow.OnMouseDown(position, MouseButtons.Right);
-                gameWindow.OnMouseUp(position, MouseButtons.Right);
+				gameWindow.OnLongPress(position);
             }
         }
 
@@ -355,5 +369,17 @@ namespace AmbermoonAndroid
 
             return false;
         }
-    }
+
+		private void HandleTouchMove(float x, float y)
+		{
+			var position = new Position(Util.Round(x), Util.Round(y));
+			gameWindow.OnFingerMoveTo(position);
+		}
+
+		private void HandleTouchUp(float x, float y)
+		{
+			var position = new Position(Util.Round(x), Util.Round(y));
+			gameWindow.OnFingerUp(position);
+		}
+	}
 }

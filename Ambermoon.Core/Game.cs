@@ -1,7 +1,7 @@
 ﻿/*
  * Game.cs - Game core of Ambermoon
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -404,6 +404,8 @@ namespace Ambermoon
         internal bool ConversationTextActive { get; private set; } = false;
         Func<MouseButtons, bool> nextClickHandler = null;
         Action itemDragCancelledHandler = null;
+        bool specialMobileMovementActive = false;
+
         /// <summary>
         /// The 3x3 buttons will always be enabled!
         /// </summary>
@@ -2769,7 +2771,7 @@ namespace Ambermoon
                     CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
                 }
             }
-        }
+		}
 
         internal void SpeakToParty()
         {
@@ -3246,6 +3248,178 @@ namespace Ambermoon
 
                 if (char.ToLower(keyChar) == 'm' && ingame && is3D)
                     ShowAutomap();
+            }
+        }
+
+        public void OnFingerUp(Position position)
+        {
+			if (!Configuration.IsMobile)
+				return;
+
+            if (specialMobileMovementActive)
+            {
+				keys[(int)Key.W] = false;
+				keys[(int)Key.A] = false;
+				keys[(int)Key.S] = false;
+				keys[(int)Key.D] = false;
+				specialMobileMovementActive = false;
+			}
+		}
+
+        public void OnFingerMoveTo(Position position)
+        {
+            if (!Configuration.IsMobile || CurrentWindow.Window != Window.MapView || !specialMobileMovementActive)
+                return;
+
+            // We just press the keys and let the move logic move the player in a timed manner.
+            keys[(int)Key.W] = false;
+            keys[(int)Key.A] = false;
+            keys[(int)Key.S] = false;
+            keys[(int)Key.D] = false;
+
+			var relativePosition = renderView.ScreenToGame(position);
+			relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
+
+			if (is3D)
+            {
+                // TODO
+            }
+            else
+            {
+				var tilePosition = renderMap2D.PositionToTile(relativePosition);
+
+                if (tilePosition != null)
+                {
+                    if (player2D.Position.X < tilePosition.X)
+                        keys[(int)Key.D] = true;
+                    else if (player2D.Position.X > tilePosition.X)
+                        keys[(int)Key.A] = true;
+                    if (player2D.Position.Y < tilePosition.Y)
+                        keys[(int)Key.S] = true;
+                    else if (player2D.Position.Y > tilePosition.Y)
+                        keys[(int)Key.W] = true;
+                }
+            }
+        }
+
+        public void OnLongPress(Position position)
+        {
+            if (!Configuration.IsMobile)
+                return;
+
+            if (CurrentWindow.Window != Window.MapView)
+            {
+                OnMouseDown(position, MouseButtons.Right);
+				OnMouseUp(position, MouseButtons.Right);
+			}
+            else
+            {
+                if (is3D)
+                {
+                    // TODO
+                }
+                else
+                {
+					var relativePosition = renderView.ScreenToGame(position);
+					relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
+					var tilePosition = renderMap2D.PositionToTile(relativePosition);
+
+                    if (tilePosition != null)
+                    {
+                        uint tileX = (uint)tilePosition.X;
+                        uint tileY = (uint)tilePosition.Y;
+
+						var @event = renderMap2D.GetEvent(tileX, tileY, CurrentSavegame);
+
+                        bool TriggerEvent(EventTrigger trigger)
+                        {
+							int range = trigger == EventTrigger.Mouth ? 3 : 2;
+
+                            int xDist = Math.Abs(player2D.Position.X - tilePosition.X);
+							int yDist = Math.Abs(player2D.Position.Y - tilePosition.Y);
+
+                            if (xDist > range || yDist > range)
+                                return false;
+
+							var map = renderMap2D.GetMapFromTile(tileX, tileY);
+							map.TriggerEventChain(this, trigger, tileX % (uint)map.Width, tileY % (uint)map.Height, @event);
+
+                            return true;
+						}
+
+                        if (@event is ConditionEvent condition)
+                        {
+                            if (condition.TypeOfCondition == ConditionEvent.ConditionType.EnterNumber ||
+                                condition.TypeOfCondition == ConditionEvent.ConditionType.Eye ||
+                                condition.TypeOfCondition == ConditionEvent.ConditionType.Hand ||
+                                condition.TypeOfCondition == ConditionEvent.ConditionType.Mouth ||
+                                condition.TypeOfCondition == ConditionEvent.ConditionType.MultiCursor ||
+                                condition.TypeOfCondition == ConditionEvent.ConditionType.SayWord)
+                            {
+                                EventTrigger GetMultiCursorTrigger()
+                                {
+                                    var flags = condition.ObjectIndex;
+									if ((flags & 0x4) != 0)
+										return EventTrigger.Mouth; // check and return this first as it has a higher range
+									if ((flags & 0x1) != 0)
+                                        return EventTrigger.Hand;
+                                    if ((flags & 0x2) != 0)
+                                        return EventTrigger.Eye;
+                                    
+                                    return EventTrigger.Always;
+								}
+
+                                var trigger = condition.TypeOfCondition switch
+                                {
+                                    ConditionEvent.ConditionType.Eye => EventTrigger.Eye,
+                                    ConditionEvent.ConditionType.Hand => EventTrigger.Hand,
+                                    ConditionEvent.ConditionType.EnterNumber => EventTrigger.Hand,
+                                    ConditionEvent.ConditionType.MultiCursor => GetMultiCursorTrigger(),
+                                    _ => EventTrigger.Mouth
+                                };
+
+                                if (TriggerEvent(trigger))
+								    return;
+							}
+                        }
+                        else if (@event is ChestEvent chestEvent)
+                        {
+                            if (!chestEvent.CloseWhenEmpty || chestEvent.NoSave)
+                            {
+                                if (TriggerEvent(EventTrigger.Eye))
+                                    return;
+                            }
+                            else
+                            {
+								var chest = GetChest(chestEvent.RealChestIndex);
+
+                                if (!chest.Empty && TriggerEvent(EventTrigger.Eye))
+                                    return;
+							}
+                        }
+                        else if (@event is DoorEvent doorEvent)
+                        {
+                            if (CurrentSavegame.IsDoorLocked(doorEvent.Index))
+							{
+								if (TriggerEvent(EventTrigger.Eye))
+								    return;
+							}
+						}
+
+                        // TODO: NPCs
+
+                        specialMobileMovementActive = true;
+
+						if (player2D.Position.X < tilePosition.X)
+							keys[(int)Key.D] = true;
+						else if (player2D.Position.X > tilePosition.X)
+							keys[(int)Key.A] = true;
+						if (player2D.Position.Y < tilePosition.Y)
+							keys[(int)Key.S] = true;
+						else if (player2D.Position.Y > tilePosition.Y)
+							keys[(int)Key.W] = true;
+					}
+				}
             }
         }
 

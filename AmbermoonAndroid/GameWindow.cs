@@ -490,6 +490,22 @@ namespace AmbermoonAndroid
                 Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
         }
 
+        internal void OnLongPress(Position position)
+        {
+            if (Game == null)
+            {
+                OnMouseDown(position, MouseButtons.Right);
+                OnMouseUp(position, MouseButtons.Right);
+            }
+            else
+            {
+                lock (touchActions)
+                {
+                    touchActions.Add(() => Game.OnLongPress(position));
+                }
+            }
+        }
+
 		internal void OnMouseDown(Position position, MouseButtons buttons)
 		{
             lock (touchActions)
@@ -552,7 +568,18 @@ namespace AmbermoonAndroid
             }
 		}
 
-        internal void OnKeyChar(char ch)
+        internal void OnFingerUp(Position position)
+        {
+            Game?.OnFingerUp(position);
+
+		}
+
+        internal void OnFingerMoveTo(Position position)
+        {
+            Game?.OnFingerMoveTo(position);
+		}
+
+		internal void OnKeyChar(char ch)
         {
             if (ch == '\n')
             {
