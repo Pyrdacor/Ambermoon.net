@@ -165,14 +165,15 @@ namespace AmbermoonAndroid
             Stop();
 
 			mediaPlayer = MediaPlayer.Create(context, songIds[song]);
-            mediaPlayer.SetVolume(Volume, Volume);
-			mediaPlayer.Start();
+			mediaPlayer.Looping = true;
+			mediaPlayer.SetVolume(Volume, Volume);
+			mediaPlayer.Start();			
 
             currentSong = song;
             Streaming = true;
 		}
 
-        public void Stop()
+		public void Stop()
         {
 			if (mediaPlayer != null)
 			{

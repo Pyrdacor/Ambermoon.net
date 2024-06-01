@@ -3314,13 +3314,21 @@ namespace Ambermoon
 			}
             else
             {
-                if (is3D)
+				var relativePosition = renderView.ScreenToGame(position);
+
+				if (!mapViewArea.Contains(relativePosition))
+                {
+					OnMouseDown(position, MouseButtons.Right);
+					OnMouseUp(position, MouseButtons.Right);
+                    return;
+				}
+
+				if (is3D)
                 {
                     // TODO
                 }
                 else
                 {
-					var relativePosition = renderView.ScreenToGame(position);
 					relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
 					var tilePosition = renderMap2D.PositionToTile(relativePosition);
 
