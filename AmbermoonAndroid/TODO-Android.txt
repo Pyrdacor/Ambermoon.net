@@ -3,3 +3,4 @@
 - Long press to talk to NPCs
 - Tapping on 2D map seems to be a bit off sometimes (step movement)
 - BinaryFormatter in battles is not supported on Android
+- Music has delay after finishing (very noticable for Pyrdacor logo :/ )
