@@ -44,10 +44,10 @@ namespace Ambermoon.Data
         /// This was called "Battle round spell point usage".
         /// </summary>
         public ushort UnusedWord34 { get; set; }
-        public CharacterValueCollection<Attribute> Attributes { get; } = new CharacterValueCollection<Attribute>(10); // 8 attribute + age + a hidden attribute
-        public CharacterValueCollection<Skill> Skills { get; } = new CharacterValueCollection<Skill>(10);
-        public CharacterValue HitPoints { get; } = new CharacterValue();
-        public CharacterValue SpellPoints { get; } = new CharacterValue();
+        public CharacterValueCollection<Attribute> Attributes { get; init; } = new CharacterValueCollection<Attribute>(10); // 8 attribute + age + a hidden attribute
+        public CharacterValueCollection<Skill> Skills { get; init; } = new CharacterValueCollection<Skill>(10);
+        public CharacterValue HitPoints { get; init; } = new CharacterValue();
+        public CharacterValue SpellPoints { get; init; } = new CharacterValue();
         public short BaseAttackDamage { get; set; }
         public short BaseDefense { get; set; }
         public short BonusAttackDamage { get; set; }

@@ -3,7 +3,8 @@ using Ambermoon.Data.Serialization;
 using System;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Ambermoon.Data
 {
@@ -13,8 +14,8 @@ namespace Ambermoon.Data
         public MonsterGraphicIndex CombatGraphicIndex { get; set; }
         public uint Morale { get; set; }
         public ushort DefeatExperience { get; set; }
-        public Animation[] Animations { get; } = new Animation[8];
-        public byte[] UnknownAdditionalBytes1 { get; set; } // seems to be 16 bytes from 0 to 15
+        public Animation[] Animations { get; init; } = new Animation[8];
+        public byte[] AtariPalette { get; set; } // not used
         public byte[] MonsterPalette { get; set; }
         public byte[] UnknownAdditionalBytes2 { get; set; } // 2 bytes
         public uint FrameWidth { get; set; }
@@ -50,17 +51,25 @@ namespace Ambermoon.Data
 
         public Monster Clone()
         {
-            // Note: Binary serialization is slow to create a clone
-            // but normally cloning is only done once when a fight starts.
-            // So this doesn't matter much and is easier to implement
-            // than the alternatives.
             using var stream = new MemoryStream();
-#pragma warning disable SYSLIB0011
-            var formatter = new BinaryFormatter();
-            formatter.Serialize(stream, this);
-            stream.Position = 0;
-            return (Monster)formatter.Deserialize(stream);
-#pragma warning restore SYSLIB0011
+			var options = new JsonSerializerOptions
+			{
+				WriteIndented = true,
+				PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+				ReferenceHandler = ReferenceHandler.Preserve,
+				DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+				Converters =
+			    {
+				    new CharacterValueCollectionConverter<Attribute>(),
+					new CharacterValueCollectionConverter<Skill>()
+				}
+			};
+			JsonSerializer.Serialize(stream, this, options);
+			stream.Position = 0;
+            var monster = JsonSerializer.Deserialize<Monster>(stream, options);
+            for (int i = 0; i < Animations.Length; i++)
+                monster.Animations[i] = Animations[i];
+            return monster;
         }
 
         /// <summary>

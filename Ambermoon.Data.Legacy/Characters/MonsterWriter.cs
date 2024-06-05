@@ -14,7 +14,7 @@ namespace Ambermoon.Data.Legacy.Characters
             foreach (var animation in monster.Animations)
                 dataWriter.Write((byte)animation.UsedAmount);
 
-            dataWriter.Write(monster.UnknownAdditionalBytes1);
+            dataWriter.Write(monster.AtariPalette);
             dataWriter.Write(monster.MonsterPalette);
             dataWriter.Write(monster.UnknownAdditionalBytes2);
             dataWriter.Write((ushort)monster.FrameWidth);

@@ -27,7 +27,7 @@ namespace Ambermoon.Data.Legacy.Characters
             foreach (var animation in monster.Animations)
                 animation.UsedAmount = dataReader.ReadByte();
 
-            monster.UnknownAdditionalBytes1 = dataReader.ReadBytes(16); // TODO
+            monster.AtariPalette = dataReader.ReadBytes(16); // TODO
             monster.MonsterPalette = dataReader.ReadBytes(32);
             monster.UnknownAdditionalBytes2 = dataReader.ReadBytes(2); // TODO
             monster.FrameWidth = dataReader.ReadWord();
