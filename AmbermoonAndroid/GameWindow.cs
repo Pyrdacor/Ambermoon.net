@@ -560,10 +560,11 @@ namespace AmbermoonAndroid
             {
                 touchActions.Add(() =>
                 {
-                    if (versionSelector != null)
-                        versionSelector.OnMouseWheel(deltaX, deltaY, position);
+					// Note: x and y are swapped on purpose here as the screen is rotated
+					if (versionSelector != null)
+                        versionSelector.OnMouseWheel(deltaY, deltaX, position);
                     else if (Game != null)
-                        Game.OnMouseWheel(deltaX, deltaY, position);
+                        Game.OnMouseWheel(deltaY, deltaX, position);
                 });
             }
 		}

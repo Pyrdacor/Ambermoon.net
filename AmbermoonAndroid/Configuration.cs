@@ -72,7 +72,7 @@ namespace AmbermoonAndroid
         public bool AutoDerune { get; set; } = true;
 		[JsonIgnore] // not needed/supported on Android
 		public bool EnableCheats { get; set; } = false;
-		public bool ShowButtonTooltips { get; set; } = true;
+		public bool ShowButtonTooltips { get; set; } = false;
 		public bool ShowFantasyIntro { get; set; } = true;
 		public bool ShowIntro { get; set; } = true;
         [Obsolete("Use GraphicFilter instead.")]
@@ -81,7 +81,7 @@ namespace AmbermoonAndroid
         public GraphicFilter GraphicFilter { get; set; } = GraphicFilter.None;
         public GraphicFilterOverlay GraphicFilterOverlay { get; set; } = GraphicFilterOverlay.None;
         public Effects Effects { get; set; } = Effects.None;
-        public bool ShowPlayerStatsTooltips { get; set; } = true;
+        public bool ShowPlayerStatsTooltips { get; set; } = false;
         public bool ShowPyrdacorLogo { get; set; } = true;
 		[Obsolete("Now the fantasy intro is shown instead.")]
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

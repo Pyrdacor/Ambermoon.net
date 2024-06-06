@@ -512,6 +512,7 @@ namespace Ambermoon
         Position preFullscreenMousePosition = null;
         bool mouseTrappingActive = false;
         Position lastMousePosition = new Position();
+        FloatPosition mobileAutomapScroll = new FloatPosition();
         readonly Position trappedMousePositionOffset = new Position();
         bool trapped => trapMouseArea != null;
         public event Action<bool, Position> MouseTrappedChanged;
@@ -3322,13 +3323,10 @@ namespace Ambermoon
 			if (!Configuration.IsMobile)
 				return;
 
-            if (CurrentMobileAction == MobileAction.Move)
-            {
-				keys[(int)Key.W] = false;
-				keys[(int)Key.A] = false;
-				keys[(int)Key.S] = false;
-				keys[(int)Key.D] = false;
-			}
+			keys[(int)Key.W] = false;
+			keys[(int)Key.A] = false;
+			keys[(int)Key.S] = false;
+			keys[(int)Key.D] = false;
 
 			CurrentMobileAction = MobileAction.None;
 		}
@@ -4045,18 +4043,25 @@ namespace Ambermoon
         {
             if (characterCreator != null)
             {
-                characterCreator.OnMouseWheel(xScroll, yScroll, mousePosition);
+                characterCreator.OnMouseWheel(xScroll, yScroll, mousePosition, Configuration.IsMobile);
                 return;
             }
 
             if (allInputDisabled)
                 return;
 
-            bool scrolled = false;
+			if (Configuration.IsMobile && currentWindow.Window == Window.Automap)
+			{
+				mobileAutomapScroll.X += xScroll;
+				mobileAutomapScroll.Y += yScroll;
+                return;
+			}
+
+			bool scrolled = false;
 
             if (xScroll != 0)
                 scrolled = layout.ScrollX(xScroll < 0);
-            if (yScroll != 0 && layout.ScrollY(yScroll < 0))
+            if (yScroll != 0 && layout.ScrollY(Configuration.IsMobile ? yScroll > 0 : yScroll < 0))
                 scrolled = true;
 
             if (scrolled)
@@ -4145,7 +4150,19 @@ namespace Ambermoon
             else // 2D
             {
                 var tilePosition = renderMap2D.PositionToTile(position);
-                return TriggerMapEvents(trigger, (uint)tilePosition.X, (uint)tilePosition.Y);
+
+                if (Configuration.IsMobile)
+                {
+                    int range = trigger == EventTrigger.Mouth ? 3 : 2;
+
+                    int xDist = Math.Abs(player2D.Position.X - tilePosition.X);
+                    int yDist = Math.Abs(player2D.Position.Y - tilePosition.Y);
+
+                    if (xDist > range || yDist > range)
+                        return false;
+                }
+
+				return TriggerMapEvents(trigger, (uint)tilePosition.X, (uint)tilePosition.Y);
             }
         }
 
@@ -14893,7 +14910,10 @@ namespace Ambermoon
 
         internal void ShowAutomap(AutomapOptions automapOptions, Action finishAction = null)
         {
-            void Create()
+            mobileAutomapScroll.X = 0;
+            mobileAutomapScroll.Y = 0;
+
+			void Create()
             {
                 Fade(() =>
                 {
@@ -15602,30 +15622,44 @@ namespace Ambermoon
                             {
                                 if (InputEnable)
                                 {
-                                    var position = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
-                                    int x = position.X < 4 ? -1 : position.X > 204 ? 1 : 0;
-                                    int y = position.Y < 41 ? -1 : position.Y > 196 ? 1 : 0;
-
-                                    if (x != 0 || y != 0)
-                                        Scroll(x, y);
-                                    else
+                                    if (Configuration.IsMobile)
                                     {
-                                        bool left = keys[(int)Key.Left] || keys[(int)Key.A] || keys[(int)Key.Home];
-                                        bool right = keys[(int)Key.Right] || keys[(int)Key.D] || keys[(int)Key.End];
-                                        bool up = keys[(int)Key.Up] || keys[(int)Key.W] || keys[(int)Key.PageUp];
-                                        bool down = keys[(int)Key.Down] || keys[(int)Key.S] || keys[(int)Key.PageDown];
+                                        int x = Util.Round(mobileAutomapScroll.X);
+                                        int y = Util.Round(mobileAutomapScroll.Y);
 
-                                        if (left && !right)
-                                            x = -1;
-                                        else if (right && !left)
-                                            x = 1;
-                                        if (up && !down)
-                                            y = -1;
-                                        else if (down && !up)
-                                            y = 1;
+                                        mobileAutomapScroll.X = 0;
+                                        mobileAutomapScroll.Y = 0;
 
                                         if (x != 0 || y != 0)
                                             Scroll(x, y);
+                                    }
+                                    else
+                                    {
+                                        var position = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
+                                        int x = position.X < 4 ? -1 : position.X > 204 ? 1 : 0;
+                                        int y = position.Y < 41 ? -1 : position.Y > 196 ? 1 : 0;
+
+                                        if (x != 0 || y != 0)
+                                            Scroll(x, y);
+                                        else
+                                        {
+                                            bool left = keys[(int)Key.Left] || keys[(int)Key.A] || keys[(int)Key.Home];
+                                            bool right = keys[(int)Key.Right] || keys[(int)Key.D] || keys[(int)Key.End];
+                                            bool up = keys[(int)Key.Up] || keys[(int)Key.W] || keys[(int)Key.PageUp];
+                                            bool down = keys[(int)Key.Down] || keys[(int)Key.S] || keys[(int)Key.PageDown];
+
+                                            if (left && !right)
+                                                x = -1;
+                                            else if (right && !left)
+                                                x = 1;
+                                            if (up && !down)
+                                                y = -1;
+                                            else if (down && !up)
+                                                y = 1;
+
+                                            if (x != 0 || y != 0)
+                                                Scroll(x, y);
+                                        }
                                     }
                                 }
 

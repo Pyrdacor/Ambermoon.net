@@ -1,14 +1,10 @@
 using Ambermoon;
-using Ambermoon.Data.Enumerations;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
 using Android.Views.InputMethods;
-using Android.Views.TextClassifiers;
 using AndroidX.Core.App;
 using AndroidX.Core.Content;
-using Org.Libsdl.App;
-using Silk.NET.SDL;
 using Silk.NET.Windowing.Sdl.Android;
 
 namespace AmbermoonAndroid
@@ -341,13 +337,33 @@ namespace AmbermoonAndroid
             }
         }
 
-        public bool OnScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
+		private const int SCROLL_DELAY = 100; // 100 ms
+		private double lastScrollTime = 0;
+
+		public bool OnScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
         {
-            var coords = new MotionEvent.PointerCoords();
+			var now = DateTime.Now.TimeOfDay.TotalMilliseconds;
+
+			if (now - lastScrollTime < SCROLL_DELAY)
+				return true;
+
+			// scroll distance should be 10 virtual pixels minimum
+			float widthThreshold = 10.0f * gameWindow.Width / Global.VirtualScreenWidth;
+			float heightThreshold = 10.0f * gameWindow.Height / Global.VirtualScreenHeight;
+			if (Math.Abs(distanceX) < widthThreshold)
+				distanceX = 0;
+			if (Math.Abs(distanceY) < heightThreshold)
+				distanceY = 0;
+			if (distanceX == 0 && distanceY == 0)
+				return true;
+			var coords = new MotionEvent.PointerCoords();
             e2.GetPointerCoords(0, coords);
             var position = new Position(Util.Round(coords.X), Util.Round(coords.Y));
-            gameWindow.OnMouseScroll(position, Util.Round(distanceY), Util.Round(distanceX));
-            return true;
+			gameWindow.OnMouseScroll(position, Math.Sign(distanceY), Math.Sign(distanceX));
+
+			lastScrollTime = now;
+
+			return true;
         }
 
         public void OnShowPress(MotionEvent e)

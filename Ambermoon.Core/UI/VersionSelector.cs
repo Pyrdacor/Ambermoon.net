@@ -747,9 +747,9 @@ namespace Ambermoon.UI
             tooltipBackground?.Delete();
         }
 
-        public void OnMouseWheel(int _, int yScroll, Position mousePosition)
+        public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
         {
-            if (yScroll != 0)
+			if (yScroll != 0)
             {
                 if (yScroll > 0) // up
                     SelectedVersion = (SelectedVersion - 1 + versionCount) % versionCount;
@@ -759,6 +759,29 @@ namespace Ambermoon.UI
                 if (!IsSelectedVersionFromExternalData())
                     HideTooltip();
             }
-        }
+            else if (xScroll != 0)
+			{
+                int languageIndex = (int)configuration.Language;
+
+				if (xScroll > 0) // left
+				{
+                    if (languageIndex <= 0)
+                        return;
+                    --languageIndex;
+				}
+				else // right
+                {
+                    if (languageIndex >= languageChangeButtons.Count - 1)
+                        return;
+                    ++languageIndex;
+                }
+
+				configuration.Language = (GameLanguage)languageIndex;
+				UpdateLanguageDependentValues();
+
+				if (!IsSelectedVersionFromExternalData())
+					HideTooltip();
+			}
+		}
     }
 }

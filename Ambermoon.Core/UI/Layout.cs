@@ -4974,7 +4974,7 @@ namespace Ambermoon.UI
 
         public bool ScrollX(bool right)
         {
-            // not used as of now
+            // not used
             return false;
         }
 
@@ -5191,6 +5191,13 @@ namespace Ambermoon.UI
                         ClosePopup();
                         return true;
                     }
+                    else if (game.Configuration.IsMobile && activePopup.CanAbort &&
+						!OptionMenuOpen && !activePopup.HasTextInput() && !activePopup.HasButtons)
+                    {
+                        // Close popups with tap on mobile but not save/load or popups with buttons or text input.
+						ClosePopup();
+						return true;
+					}
                     else
                     {
                         if (activePopup.Click(position, buttons, out ignoreNextMouseUp))

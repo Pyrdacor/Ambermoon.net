@@ -422,25 +422,28 @@ namespace Ambermoon.UI
             }
         }
 
-        public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
+        public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition, bool mobile)
         {
             if (fadeIn || fadeOut)
                 return;
 
-            if (yScroll != 0)
+            if (!mobile)
             {
-                if (yScroll > 0) // up
-                    SwapPortrait(-1);
-                else
-                    SwapPortrait(1);
+                if (xScroll == 0 && yScroll != 0)
+                    xScroll = yScroll;
             }
-            else if(xScroll != 0)
+
+            if (xScroll != 0)
             {
                 if (xScroll > 0) // left
                     SwapPortrait(-1);
                 else
                     SwapPortrait(1);
             }
-        }
+            else if (yScroll != 0)
+			{
+                ChangeMale(!isFemale);
+			}
+		}
     }
 }
