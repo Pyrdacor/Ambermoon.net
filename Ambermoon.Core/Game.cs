@@ -143,7 +143,7 @@ namespace Ambermoon
 
             static uint GetTickDivider3D(bool legacyMode) => legacyMode ? 8u : 60u;
             static float GetMoveSpeed3D(bool legacyMode) => legacyMode ? 0.25f : 0.04f;
-            static float GetTurnSpeed3D(bool legacyMode, bool mobile) => mobile ? 0.75f : legacyMode ? 15.0f : 2.0f;
+            static float GetTurnSpeed3D(bool legacyMode, bool mobile) => mobile ? 1.5f : legacyMode ? 15.0f : 2.0f;
         }
 
         class TimedGameEvent
@@ -462,7 +462,10 @@ namespace Ambermoon
                 UntrapMouse();
 
                 if (!inputEnable)
+                {
                     ResetMoveKeys(true);
+                    CurrentMobileAction = MobileAction.None;
+                }
             }
         }
         internal TravelType TravelType
@@ -3345,7 +3348,6 @@ namespace Ambermoon
                 keys[(int)Key.D] = false;
 
                 var relativePosition = renderView.ScreenToGame(position);
-                relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
 
                 if (is3D)
                 {
@@ -3362,7 +3364,8 @@ namespace Ambermoon
 				}
                 else
                 {
-                    var tilePosition = renderMap2D.PositionToTile(relativePosition);
+					relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
+					var tilePosition = renderMap2D.PositionToTile(relativePosition);
 
                     if (tilePosition != null)
                     {
@@ -3389,7 +3392,7 @@ namespace Ambermoon
                 OnMouseDown(position, MouseButtons.Right);
 				OnMouseUp(position, MouseButtons.Right);
 			}
-            else
+            else if (CurrentMobileAction == MobileAction.None)
             {
 				var relativePosition = renderView.ScreenToGame(position);
 
@@ -3733,6 +3736,10 @@ namespace Ambermoon
                         lastMoveTicksReset = CurrentTicks;
                         HandleClickMovement();
                     }
+                    else if (Configuration.IsMobile)
+                    {
+                        TriggerMapEvents(null);
+					}
 
                     if (cursor.Type > CursorType.Wait)
                     {

@@ -4,3 +4,5 @@
 - Music has delay after finishing (very noticable for Pyrdacor logo :/ )
 - Scrolling the automap is a bit slow
 - 3D movement is bad
+- Try to avoid/remove bluetooth permission request
+- Icon/logo on phone and when starting

@@ -1077,7 +1077,7 @@ namespace AmbermoonAndroid
                     { "Intro_texts.amb", 'A' },
                     { "Extro_texts.amb", 'A' }
                 };
-                gameData.LoadFromMemoryZip(tempStream, fallbackGameDataProvider, optionalAdditionalFiles);
+                gameData.LoadFromMemoryZip(tempStream, fallbackGameDataProvider, optionalAdditionalFiles, true);
                 return gameData;
             }
 

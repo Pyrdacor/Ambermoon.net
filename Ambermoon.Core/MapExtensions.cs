@@ -129,7 +129,6 @@ namespace Ambermoon
             LastMapEventIndexMap = map.Index;
             LastMapEventIndex = mapEventId;
             LastMapEventPosition = new Position((int)x, (int)y);
-            game.CurrentMobileAction = Game.MobileAction.None;
 
             if (!map.TriggerEventChain(game, trigger, x, y, @event))
             {
@@ -139,7 +138,7 @@ namespace Ambermoon
                 return false;
             }
 
-            return true;
+			return true;
         }
 
         public static void ClearLastEvent(this Map map)

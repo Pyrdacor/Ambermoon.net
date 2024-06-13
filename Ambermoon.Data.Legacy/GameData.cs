@@ -142,7 +142,7 @@ namespace Ambermoon.Data.Legacy
         }
 
         public void LoadFromMemoryZip(Stream stream, Func<ILegacyGameData> fallbackGameDataProvider = null,
-            Dictionary<string, char> optionalAdditionalFiles = null)
+            Dictionary<string, char> optionalAdditionalFiles = null, bool ignoreMusic = false)
         {
             Loaded = false;
             GameDataSource = GameDataSource.Memory;
@@ -172,7 +172,7 @@ namespace Ambermoon.Data.Legacy
                 return archive.GetEntry(name) != null ||
                     EnsureFallbackData()?.Files?.ContainsKey(name) == true;
             }
-            Load(LoadFile, null, CheckFileExists, false, optionalAdditionalFiles);
+            Load(LoadFile, null, CheckFileExists, false, optionalAdditionalFiles, ignoreMusic);
         }
 
         public class GameDataWriter
@@ -497,7 +497,8 @@ namespace Ambermoon.Data.Legacy
         }
 
         void Load(Func<string, IFileContainer> fileLoader, Func<char, Dictionary<string, byte[]>> diskLoader,
-            Func<string, bool> fileExistChecker, bool savesOnly = false, Dictionary<string, char> optionalAdditionalFiles = null)
+            Func<string, bool> fileExistChecker, bool savesOnly = false, Dictionary<string, char> optionalAdditionalFiles = null,
+            bool ignoreMusic = false)
         {
             var ambermoonFiles = new Dictionary<string, char>(savesOnly ? Legacy.Files.AmigaSaveFiles : Legacy.Files.AmigaFiles);
 
@@ -769,7 +770,7 @@ namespace Ambermoon.Data.Legacy
             DataNameProvider = TryLoad(() => new DataNameProvider(executableData));
             LightEffectProvider = TryLoad(() => new LightEffectProvider(executableData));
             MapManager = TryLoad(() => new MapManager(this, new MapReader(), new TilesetReader(), new LabdataReader(), stopAtFirstError));
-            SongManager = TryLoad(() => new SongManager(this));
+            SongManager = ignoreMusic ? null : TryLoad(() => new SongManager(this));
             Dictionary = TryLoad(() => TextDictionary.Load(new TextDictionaryReader(), GetDictionary()));
             Places = TryLoad(() => Places.Load(new PlacesReader(), Files["Place_data"].Files[1]));
 

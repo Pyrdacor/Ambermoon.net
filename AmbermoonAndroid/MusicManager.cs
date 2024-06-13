@@ -2,6 +2,7 @@
 using Ambermoon.Data.Audio;
 using Android.Content;
 using Android.Media;
+using MP3Sharp;
 using Song = Ambermoon.Data.Enumerations.Song;
 
 namespace AmbermoonAndroid
@@ -9,6 +10,80 @@ namespace AmbermoonAndroid
 	class MusicManager : ISongManager, IAudioOutput
     {
         const Song PyrdacorSong = (Song)127;
+
+		class MusicStream : MemoryStream
+		{
+			private readonly MP3Stream mp3Stream;
+			private readonly MemoryStream buffer = new();
+			private bool fullyLoaded = false;
+
+			public int Frequency { get; }
+
+			public MusicStream(MP3Stream mp3Stream)
+			{
+				this.mp3Stream = mp3Stream;
+				Frequency = mp3Stream.Frequency;
+			}
+
+			public override int Read(byte[] buffer, int offset, int count)
+			{
+				if (fullyLoaded)
+				{
+					int tail = Math.Min(count, (int)(this.buffer.Length - this.buffer.Position));
+					int head = count - tail;
+					int readCount = this.buffer.Read(buffer, offset, tail);
+
+					if (head > 0)
+					{
+						this.buffer.Position = 0;
+						readCount += this.buffer.Read(buffer, offset + tail, head);
+					}
+					else if (this.buffer.Position == this.buffer.Length)
+					{
+						this.buffer.Position = 0;
+					}
+
+					return readCount;
+				}
+				else
+				{
+					int readCount = 0;
+
+					if (!mp3Stream.IsEOF)
+					{
+						try
+						{
+							readCount = mp3Stream.Read(buffer, offset, count);
+							this.buffer.Write(buffer, 0, readCount);
+
+							if (readCount < count)
+							{
+								fullyLoaded = true;
+								this.buffer.Position = 0;
+								mp3Stream.Close();
+								readCount += Read(buffer, offset + readCount, count - readCount);
+							}
+
+							return readCount;
+						}
+						catch (Exception ex)
+						{
+							fullyLoaded = true;
+							this.buffer.Position = 0;
+							mp3Stream.Close();
+							return Read(buffer, offset, count);
+						}
+					}
+					else
+					{
+						fullyLoaded = true;
+						this.buffer.Position = 0;
+						mp3Stream.Close();
+						return Read(buffer, offset, count);
+					}
+				}
+			}
+		}
 
 		class Mp3Song : ISong
 		{
@@ -74,11 +149,12 @@ namespace AmbermoonAndroid
             { Song.Menu, Resource.Raw.sonic_mainmenu },
             { PyrdacorSong, Resource.Raw.song }
 		};
-        static readonly Dictionary<Song, TimeSpan> songDurations = new();
+		static readonly Dictionary<Song, TimeSpan> songDurations = new();
 		static readonly Dictionary<Song, Mp3Song> songs = new();
 
+		private readonly Dictionary<Song, MusicStream> songStreams = new();
 		private readonly Context context;
-		private MediaPlayer mediaPlayer;
+		private AudioTrack audioTrack;
         private Song? currentSong = null;
         private float volume = 1.0f;
         private bool enabled = true;
@@ -104,35 +180,42 @@ namespace AmbermoonAndroid
 
         public bool Streaming { get; private set; } = false;
 
+		public bool Paused { get; set; } = false;
+
         public float Volume
         {
             get => volume;
             set
             {
                 volume = Util.Limit(0.0f, value, 1.0f);
-				mediaPlayer?.SetVolume(volume, volume);
+				audioTrack?.SetVolume(volume);
 			}
         }
 
 		public MusicManager(Context context)
         {
             this.context = context;
+
+			foreach (var songId in songIds)
+			{
+				songStreams.Add(songId.Key, new MusicStream(new MP3Stream(GetSongStream(songId.Key, songId.Value))));
+			}
         }
 
-        public ISong GetSong(Song index)
-        {
-            if (songs.TryGetValue(index, out var song))
-                return song;
+		public ISong GetSong(Song index)
+		{
+			if (songs.TryGetValue(index, out var song))
+				return song;
 
 			song = new Mp3Song(this, index);
 
-            songs.Add(index, song);
+			songs.Add(index, song);
 
 			return song;
 		}
 
-        public ISong GetPyrdacorSong()
-        {
+		public ISong GetPyrdacorSong()
+		{
 			if (songs.TryGetValue(PyrdacorSong, out var song))
 				return song;
 
@@ -141,6 +224,15 @@ namespace AmbermoonAndroid
 			songs.Add(PyrdacorSong, song);
 
 			return song;
+		}
+
+		private System.IO.Stream GetSongStream(Song song, int resourceId)
+		{
+			var resourceStream = context.Resources.OpenRawResource(resourceId);
+			var memoryStream = new MemoryStream();
+			resourceStream.CopyTo(memoryStream);
+			memoryStream.Position = 0;
+			return memoryStream;
 		}
 
 		private TimeSpan GetSongDuration(Song song)
@@ -164,41 +256,104 @@ namespace AmbermoonAndroid
 
             Stop();
 
-			mediaPlayer = MediaPlayer.Create(context, songIds[song]);
-			mediaPlayer.Looping = true;
-			mediaPlayer.SetVolume(Volume, Volume);
-			mediaPlayer.Start();			
+			var musicStream = songStreams[song];
+			int bufferSize = AudioTrack.GetMinBufferSize(musicStream.Frequency, ChannelOut.Stereo, Encoding.Pcm16bit) * 2;
 
-            currentSong = song;
+			var audioFormat = new AudioFormat.Builder()
+				.SetEncoding(Encoding.Pcm16bit)
+				.SetSampleRate(musicStream.Frequency)
+				.SetChannelMask(ChannelOut.Stereo)
+				.Build();
+			var audioAttributes = new AudioAttributes.Builder()
+				.SetContentType(AudioContentType.Music)
+				.Build();
+			audioTrack = new AudioTrack.Builder()
+				.SetAudioAttributes(audioAttributes)
+				.SetAudioFormat(audioFormat)
+				.SetBufferSizeInBytes(bufferSize)
+				.SetTransferMode(AudioTrackMode.Stream)
+				.Build();
+			audioTrack.SetVolume(Volume);
+			audioTrack.Play();
+
+			currentSong = song;
             Streaming = true;
+			Paused = false;
+
+			Task.Run(() => StreamAudio(musicStream, bufferSize));
+		}
+
+		private void StreamAudio(MusicStream musicStream, int bufferSize)
+		{
+			var buffer = new byte[bufferSize];
+			int offset = 0;
+
+			while (Streaming)
+			{
+				lock (audioTrack)
+				{
+					while (Paused)
+						Monitor.Wait(audioTrack);
+				}
+
+				if (!Streaming)
+					break;
+
+				lock (audioTrack)
+				{
+					int readCount = musicStream.Read(buffer, 0, bufferSize);
+
+					audioTrack.Write(buffer, offset, readCount);
+				}
+
+				try
+				{
+					Thread.Sleep(10);
+				}
+				catch (ThreadInterruptedException) { }
+			}
 		}
 
 		public void Stop()
         {
-			if (mediaPlayer != null)
+			if (audioTrack != null)
 			{
-				mediaPlayer.Stop();
-				mediaPlayer.Release();
-				mediaPlayer = null;
+				lock (audioTrack)
+				{
+					Streaming = false;
+					Paused = false;
+					Monitor.Pulse(audioTrack);
+					audioTrack.Stop();
+					audioTrack.Release();
+					audioTrack = null;
+				}
 			}
 
-			Streaming = false;
 			currentSong = null;
-        }
+		}
 
 		private void Pause()
 		{
-			if (mediaPlayer != null && mediaPlayer.IsPlaying)
+			if (audioTrack != null && !Paused && Streaming)
 			{
-				mediaPlayer.Pause();
+				lock (audioTrack)
+				{
+					Paused = true;
+					audioTrack.Pause();
+				}
 			}
 		}
 
 		private void Resume()
 		{
-			if (mediaPlayer != null)
+			if (audioTrack != null && Paused)
 			{
-				mediaPlayer.Start();
+				lock (audioTrack)
+				{
+					Paused = false;
+					audioTrack.Play();
+					Monitor.Pulse(audioTrack);
+				}
 			}
 		}
 
