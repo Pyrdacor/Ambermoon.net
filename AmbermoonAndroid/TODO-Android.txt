@@ -9,3 +9,4 @@
 - Implement movement indicator fully (not working properly right now)
 - Finish tutorial
 - Add tutorial translations for mobile
+- When finger in tutorial hovers movement indicator, some areas are fully transparent

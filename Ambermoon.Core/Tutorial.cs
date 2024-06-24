@@ -172,10 +172,12 @@ namespace Ambermoon
                 "Im oberen Bereich siehst du die Spielerportraits. Du kannst die Portraits antippen um " +
 				"den aktiven Spieler auszuwählen. Wenn du den Finger gedrückt hälst gelangst du ins Inventar.",
                 // Tip 4
-                "Du kannst dich mit der Maus, den Tasten W, A, S, D oder auch den Pfeiltasten auf der Map "+
-				"bewegen. In 2D kannst du per Rechtsklick auf die Map den Cursor umschalten und aus ihm " +
-				"einen Aktionscursor machen, mit dem du Dinge untersuchen oder berühren oder aber mit " +
-				"NPCs sprechen kannst.",
+                "Du kannst auf der Karte deinen Finger gedrückt halten. Dies ermöglicht eine direkte " +
+				"Interaktion mit Objekten. Außerdem kannst du so auch laufen, wenn du dann den Finger bewegst. " +
+				"Und zum Schluss gibt es noch das Bewegungskreuz.",
+                // Tip 5
+                "Wenn du hier deinen Finger gedrückt hälst kannst du dich so auch bewegen und du " +
+				"versperrst dir mit dem Finger nicht die komplette Sicht.",
                 // End
                 "Ich bin nun still und wünsche dir viel Spaß beim Spielen von Ambermoon!"
 			} },
@@ -183,9 +185,8 @@ namespace Ambermoon
 			{
                 // Tip 1
                 "The buttons in the lower right area of the screen provide many useful functions of " +
-				"the game. If you are on the main screen you can toggle the buttons by pressing the " +
-				"right mouse button while hovering the area or hitting the Return key. It will unlock " +
-				"additional functions.",
+				"the game. If you are on the main screen you can toggle the buttons by holding your " +
+				"finger pressed on the area. It will unlock additional functions.",
                 // Tip 2
                 "You can also use the NumPad on your keyboard to control those buttons. The layout " +
 				"is exactly as the in-game buttons. So hitting the key 7 will be equivalent to pressing " +
@@ -289,8 +290,11 @@ namespace Ambermoon
 
         void ShowTips(IRenderView renderView)
         {
-            ShowTipChain(renderView, ShowTip1, ShowTip2, ShowTip3, ShowTip4, ShowTutorialEnd);
-        }
+            if (game.Configuration.IsMobile)
+                ShowTipChain(renderView, ShowTip1, ShowTip2, ShowTip3, ShowTip4, ShowTip5, ShowTip6, ShowTutorialEnd);
+            else
+				ShowTipChain(renderView, ShowTip1, ShowTip2, ShowTip3, ShowTip4, ShowTutorialEnd);
+		}
 
         static void ShowTipChain(IRenderView renderView, params Action<IRenderView, Action>[] tips)
         {
@@ -337,7 +341,7 @@ namespace Ambermoon
             {
                 game.CurrentMobileAction = MobileAction.Eye;
                 DrawTouchFinger(Map2DViewArea.Right - 72, Map2DViewArea.Bottom - 50, false);
-				ShowMarker(renderView, new Rect(Map2DViewArea.X + 16 - 2, Map2DViewArea.Y + 32 - 2, 20, 20));
+				ShowMarker(renderView, new(Map2DViewArea.X + 16 - 2, Map2DViewArea.Y + 32 - 2, 20, 20));
                 game.SetClickHandler(next);
 			}
             else
@@ -350,27 +354,47 @@ namespace Ambermoon
 
         void ShowTip4(IRenderView renderView, Action next)
         {
-            if (game.Configuration.IsMobile)
+			HideMarker();
+
+			if (game.Configuration.IsMobile)
             {
 				game.CurrentMobileAction = MobileAction.None;
-				DrawTouchFinger(Global.PartyMemberPortraitArea.X + 32, Global.PartyMemberPortraitArea.Y + 32, false, new Rect(0, 0, Global.VirtualScreenHeight, 53));
+				DrawTouchFinger(Global.PartyMemberPortraitArea.X + 32, Global.PartyMemberPortraitArea.Y + 32, false, new(0, 0, Global.VirtualScreenHeight, 59));
 				ToggleButtons();
 				ShowMarker(renderView, Global.PartyMemberPortraitArea);
 				game.ShowMessagePopup(GetText(3), next);
 			}
             else
             {
-                HideMarker();
-                ShowMarker(renderView, Game.Map2DViewArea);
+                ShowMarker(renderView, Map2DViewArea);
                 game.ShowMessagePopup(GetText(4), next);
             }
         }
 
-        void ShowTutorialEnd(IRenderView renderView, Action next)
+		void ShowTip5(IRenderView renderView, Action next)
         {
+			DrawTouchFinger(Map2DViewArea.Center.X, Map2DViewArea.Bottom - 36, true);
             HideMarker();
-            game.ShowMessagePopup(GetText(5), next);
-            next?.Invoke();
+			game.ShowMessagePopup(GetText(4), next);
+		}
+
+		void ShowTip6(IRenderView renderView, Action next)
+		{
+			ShowMarker(renderView, new(Map2DViewArea.Right - 64 - 1, Map2DViewArea.Bottom - 64 - 1, 66, 66));
+			DrawTouchFinger(Map2DViewArea.Right - 32, Map2DViewArea.Bottom - 24, true);
+			game.SetClickHandler(() =>
+            {
+                HideTouchFinger();
+				HideMarker();
+				game.ShowMessagePopup(GetText(5), next);
+            });
+		}
+
+
+		void ShowTutorialEnd(IRenderView renderView, Action next)
+        {
+ 			HideMarker();
+            game.ShowMessagePopup(GetText(texts.Length), next);
         }
     }
 }
