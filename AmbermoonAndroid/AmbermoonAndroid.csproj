@@ -10,6 +10,7 @@
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>10.0</ApplicationDisplayVersion>
     <Configurations>Debug;Release;ReleaseAndroid;DebugAndroid;DebugES;ReleaseES</Configurations>
+    <GenerateResourceUsePreserializedResources>false</GenerateResourceUsePreserializedResources>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>$(DefineConstants)</DefineConstants>

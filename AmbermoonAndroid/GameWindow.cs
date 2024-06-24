@@ -47,6 +47,8 @@ namespace AmbermoonAndroid
         bool initialIntroEndedByClick = false;
         readonly List<Action> touchActions = new();
         readonly Action<bool, string> keyboardRequest;
+        MovementIndicator movementIndicator;
+        TutorialFinger tutorialFinger;
 
 		public string Identifier { get; }
         public IGLContext GLContext => window?.GLContext;
@@ -63,55 +65,10 @@ namespace AmbermoonAndroid
 			Identifier = id;
         }
 
-        void ChangeResolution(int? oldWidth, bool fullscreen, bool changed)
+        void DrawTouchFinger(int x, int y, bool longPress, Rect clipArea)
         {
-            if (renderView == null || configuration == null)
-                return;
-
-            if (fullscreen)
-            {
-                var fullscreenSize = renderView.AvailableFullscreenModes.OrderBy(r => r.Width * r.Height).LastOrDefault();
-
-                if (fullscreenSize != null)
-                {
-                    configuration.FullscreenWidth = fullscreenSize.Width;
-                    configuration.FullscreenHeight = fullscreenSize.Height;
-                }
-            }
-            else
-            {
-                var possibleResolutions = ScreenResolutions.GetPossibleResolutions(renderView.MaxScreenSize);
-                int index = oldWidth == null ? 0 : changed
-                    ? (possibleResolutions.FindIndex(r => r.Width == oldWidth.Value) + 1) % possibleResolutions.Count
-                    : FindNearestResolution(oldWidth.Value);
-                var resolution = possibleResolutions[index];
-                configuration.Width = resolution.Width;
-                configuration.Height = resolution.Height;
-
-                int FindNearestResolution(int width)
-                {
-                    int index = possibleResolutions.FindIndex(r => r.Width == width);
-
-                    if (index != -1)
-                        return index;
-
-                    int minDiffIndex = 0;
-                    int minDiff = Math.Abs(possibleResolutions[0].Width - width);
-
-                    for (int i = 1; i < possibleResolutions.Count; ++i)
-                    {
-                        int diff = Math.Abs(possibleResolutions[i].Width - width);
-
-                        if (diff < minDiff)
-                        {
-                            minDiffIndex = i;
-                            minDiff = diff;
-                        }
-                    }
-
-                    return minDiffIndex;
-                }
-            }
+            tutorialFinger?.Clip(clipArea);
+            tutorialFinger?.DrawFinger(x, y, longPress);
         }
 
         static void RunTask(Action task)
@@ -501,10 +458,16 @@ namespace AmbermoonAndroid
             {
                 lock (touchActions)
                 {
-                    touchActions.Add(() => Game.OnLongPress(position));
+                    touchActions.Add(() =>
+                    {
+                        if (Game is not null && (!Game.MobileMovementIndicatorEnabled || movementIndicator?.LongPress(ConvertPositionToGame(position)) != true))
+                            Game.OnLongPress(position);
+                    });
                 }
             }
         }
+
+        private Position ConvertPositionToGame(Position position) => renderView?.ScreenToGame(position) ?? position;
 
 		internal void OnMouseDown(Position position, MouseButtons buttons)
 		{
@@ -571,13 +534,14 @@ namespace AmbermoonAndroid
 
         internal void OnFingerUp(Position position)
         {
+            movementIndicator?.FingerUp();
             Game?.OnFingerUp(position);
-
 		}
 
         internal void OnFingerMoveTo(Position position)
         {
-            Game?.OnFingerMoveTo(position);
+			if (Game is not null && (!Game.MobileMovementIndicatorEnabled || movementIndicator?.FingerMoveTo(ConvertPositionToGame(position)) != true))
+			    Game.OnFingerMoveTo(position);
 		}
 
 		internal void OnKeyChar(char ch)
@@ -715,7 +679,8 @@ namespace AmbermoonAndroid
                 switch (closeAction)
                 {
                     case MainMenu.CloseAction.NewGame:
-                        startGameAction?.Invoke(false);
+						configuration.FirstStart = true; // TODO: REMOVE
+						startGameAction?.Invoke(false);
                         break;
                     case MainMenu.CloseAction.Continue:
                         // Someone who has savegames won't need any introduction, so set this to false.
@@ -878,7 +843,7 @@ namespace AmbermoonAndroid
                                     savegameManager, savegameSerializer, gameData.Dictionary, cursor, musicManager,
                                     musicManager, (_) => { }, (_) => { }, QueryPressedKeys,
                                     new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
-                                    Path.GetFileName(savePath), gameVersion, keyboardRequest);
+                                    Path.GetFileName(savePath), gameVersion, keyboardRequest, DrawTouchFinger);
                                 game.QuitRequested += window.Close;
                                 /*game.MousePositionChanged += position =>
                                 {
@@ -940,7 +905,30 @@ namespace AmbermoonAndroid
                                     advancedSavegamePatcher.PatchSavegame(gameData, saveSlot, sourceEpisode, targetEpisode);
                                 };
 
-                                game.Run(continueGame, ConvertMousePosition(mouse.Position));
+                                var graphics = MovementIndicator.GetGraphics(0);
+                                foreach (var entry in TutorialFinger.GetGraphics((uint)graphics.Count))
+                                    graphics.Add(entry.Key, entry.Value);
+								TextureAtlasManager.Instance.AddFromGraphics(Layer.MobileOverlays, graphics);
+                                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MobileOverlays);
+
+								movementIndicator = new MovementIndicator(renderView);
+								movementIndicator.MoveRequested += (int x, int y) =>
+                                {
+                                    if (x < 0)
+                                        OnKeyDown(Key.A);
+                                    else if (x > 0)
+										OnKeyDown(Key.D);
+
+									if (y < 0)
+										OnKeyDown(Key.W);
+									else if (y > 0)
+										OnKeyDown(Key.S);
+								};
+                                tutorialFinger = new TutorialFinger(renderView);
+
+                                renderView.GetLayer(Layer.MobileOverlays).Texture = textureAtlas.Texture;
+
+								game.Run(continueGame, ConvertMousePosition(mouse.Position));
                                 return game;
                             };
                         }
@@ -1367,6 +1355,7 @@ namespace AmbermoonAndroid
             else if (Game != null)
             {
                 Game.Update(delta);
+                movementIndicator?.Update(Game.CurrentMapViewArea, Game.MobileMovementIndicatorEnabled);
             }
         }
 
@@ -1518,12 +1507,14 @@ namespace AmbermoonAndroid
             }
             finally
             {
-                Util.SafeCall(() =>
+				Util.SafeCall(() => movementIndicator?.Destroy());
+				Util.SafeCall(() => tutorialFinger?.Destroy());
+				Util.SafeCall(() =>
                 {
                     infoText?.Delete();
                     infoText = null;
                 });
-                Util.SafeCall(() => window?.Dispose());
+                Util.SafeCall(() => window?.Dispose());                
             }
         }
     }

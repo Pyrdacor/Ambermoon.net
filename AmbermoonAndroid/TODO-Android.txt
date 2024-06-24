@@ -6,3 +6,6 @@
 - 3D movement is bad
 - Try to avoid/remove bluetooth permission request
 - Icon/logo on phone and when starting
+- Implement movement indicator fully (not working properly right now)
+- Finish tutorial
+- Add tutorial translations for mobile

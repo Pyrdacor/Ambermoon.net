@@ -663,7 +663,7 @@ namespace Ambermoon
                 switch (closeAction)
                 {
                     case MainMenu.CloseAction.NewGame:
-                        startGameAction?.Invoke(false);
+						startGameAction?.Invoke(false);
                         break;
                     case MainMenu.CloseAction.Continue:
                         // Someone who has savegames won't need any introduction, so set this to false.

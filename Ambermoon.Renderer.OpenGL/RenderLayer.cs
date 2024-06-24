@@ -252,7 +252,13 @@ namespace Ambermoon.Renderer
                 BaseZ = 0.70f,
                 EnableBlending = false
             } },
-            { Layer.MainMenuGraphics, new ()
+			{ Layer.MobileOverlays, new ()
+			{
+				BaseZ = 0.70f,
+				EnableBlending = true,
+				SupportColoredRects = true
+			} },
+			{ Layer.MainMenuGraphics, new ()
             {
                 BaseZ = 0.70f,
                 SupportPaletteFading = true
@@ -396,7 +402,7 @@ namespace Ambermoon.Renderer
                 supportAnimations, layered, !Config.SupportTextures, layer == Layer.Billboards3D, layer == Layer.Text || layer == Layer.SmallDigits,
                 opaque, layer == Layer.FOW, layer == Layer.Map3DBackground,
                 layer == Layer.Misc || layer == Layer.OutroText || layer == Layer.IntroText || layer == Layer.IntroGraphics, // textures with alpha
-                layer == Layer.Images,
+                layer == Layer.Images || layer == Layer.MobileOverlays,
                 Config.TextureFactor,
                 Config.SupportPaletteFading);
 
@@ -410,7 +416,7 @@ namespace Ambermoon.Renderer
 
         public void UsePalette(bool use)
         {
-            if (Config.UsePalette == use || !Config.SupportTextures || Layer == Layer.Images)
+            if (Config.UsePalette == use || !Config.SupportTextures || Layer == Layer.Images || Layer == Layer.MobileOverlays)
                 return;
 
             Config = Config with { UsePalette = use };
@@ -418,7 +424,7 @@ namespace Ambermoon.Renderer
 
         public void SetTextureFactor(uint factor)
         {
-            if (Config.TextureFactor == factor || !Config.SupportTextures || Layer == Layer.Images)
+            if (Config.TextureFactor == factor || !Config.SupportTextures || Layer == Layer.Images || Layer == Layer.MobileOverlays)
                 return;
 
             Config = Config with { TextureFactor = factor };
@@ -518,7 +524,7 @@ namespace Ambermoon.Renderer
                         shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
                         shader.SetZ(Config.BaseZ);
                     }
-                    else if (Layer == Layer.Images)
+                    else if (Layer == Layer.Images || Layer == Layer.MobileOverlays)
                     {
                         ImageShader shader = RenderBuffer.ImageShader;
 

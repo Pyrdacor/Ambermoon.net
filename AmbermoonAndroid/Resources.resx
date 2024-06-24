@@ -124,11 +124,20 @@
   <data name="borders256" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\raw\borders256.pyr;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="clock" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\raw\clock.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="diffs" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\raw\diffs.dat;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="finger" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\raw\finger.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="flags" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\raw\flags.pyr;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="holdIndicator" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\raw\holdIndicator.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="IngameFont" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\raw\IngameFont.dat;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -138,6 +147,24 @@
   </data>
   <data name="logo" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\raw\logo.pyr;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="moveArrowDown" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\raw\moveArrowDown.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="moveArrowLeft" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\raw\moveArrowLeft.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="moveArrowRight" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\raw\moveArrowRight.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="moveArrowUp" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\raw\moveArrowUp.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="moveIndicatorActive" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\raw\moveIndicatorActive.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="moveTouchIndicator" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\raw\moveTouchIndicator.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="song" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\raw\song.mp3;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -246,6 +273,9 @@
   </data>
   <data name="SONIC.WhoSaidHiHo" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\raw\SONIC.WhoSaidHiHo.mp3;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="tapIndicator" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\raw\tapIndicator.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="versions" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\raw\versions.dat;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

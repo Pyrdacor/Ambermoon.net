@@ -1,7 +1,7 @@
 ﻿/*
  * Tutorial.cs - Game introduction sequence
  *
- * Copyright (C) 2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2021-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -25,17 +25,24 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using static Ambermoon.Game;
 
 namespace Ambermoon
 {
     internal class Tutorial
     {
-        static readonly ImmutableDictionary<GameLanguage, string[]> texts = new Dictionary<GameLanguage, string[]>
+		static readonly ImmutableDictionary<GameLanguage, string> introduction = new Dictionary<GameLanguage, string>
+		{
+			{ GameLanguage.German, "Hi ~SELF~ und willkommen zum Ambermoon Remake.^^Möchtest du eine kleine Einführung?" },
+			{ GameLanguage.English, "Hi ~SELF~ and welcome to the Ambermoon Remake.^^Do you need a little introduction?" },
+			{ GameLanguage.French, "Bonjour ~SELF~ et bienvenue sur Ambermoon Remake.^^Avez-vous besoin d'une petite introduction ?" },
+			{ GameLanguage.Polish, "Cześć ~SELF~, witaj w Ambermoon Remake.^^Potrzebujesz małego wprowadzenia?" },
+			{ GameLanguage.Czech, "Ahoj ~SELF~ a vítej v remaku původního Ambermoon.^^Potřebuješ hru trochu představit?" }
+		}.ToImmutableDictionary();
+		static readonly ImmutableDictionary<GameLanguage, string[]> tips = new Dictionary<GameLanguage, string[]>
         {
             { GameLanguage.German, new string[]
             {
-                // Introduction
-                "Hi ~SELF~ und willkommen zum Ambermoon Remake.^^Möchtest du eine kleine Einführung?",
                 // Tip 1
                 "Die Schaltflächen am unteren rechten Bildschirmrand enthalten sehr viele Funktionen " +
                 "des Spiels. Wenn du dich auf dem Hauptbildschirm befindest, kannst du eine zweite " +
@@ -59,8 +66,6 @@ namespace Ambermoon
             } },
             { GameLanguage.English, new string[]
             {
-                // Introduction
-                "Hi ~SELF~ and welcome to the Ambermoon Remake.^^Do you need a little introduction?",
                 // Tip 1
                 "The buttons in the lower right area of the screen provide many useful functions of " +
                 "the game. If you are on the main screen you can toggle the buttons by pressing the " +
@@ -83,8 +88,6 @@ namespace Ambermoon
             } },
             { GameLanguage.French, new string[]
             {
-                // Introduction
-                "Bonjour ~SELF~ et bienvenue sur Ambermoon Remake.^^Avez-vous besoin d'une petite introduction ?",
                 // Tip 1
                 "Les boutons situés dans la partie inférieure droite de l'écran permettent d'accéder à " +
                 "de nombreuses fonctions utiles du jeu. Si vous êtes sur l'écran principal, vous pouvez " +
@@ -108,8 +111,6 @@ namespace Ambermoon
             } },
             { GameLanguage.Polish, new string[]
             {
-                // Introduction
-                "Cześć ~SELF~, witaj w Ambermoon Remake.^^Potrzebujesz małego wprowadzenia?",
                 // Tip 1
                 "Przyciski w prawym dolnym rogu ekranu zapewniają wiele przydatnych funkcji " +
                 "w grze. Na głównym ekranie można je przełączać , naciskając prawy " +
@@ -132,8 +133,6 @@ namespace Ambermoon
             } },
             { GameLanguage.Czech, new string[]
             {
-	            // Introduction
-	            "Ahoj ~SELF~ a vítej v remaku původního Ambermoon.^^Potřebuješ hru trochu představit?",
 				// Tip 1
 	            "Ikony v pravé dolní části obrazovky poskytují mnoho užitečných funkcí ve hře. " +
 	            "Pokud jsi na hlavní obrazovce, můžeš přepínat zobrazení ikon stiskem " +
@@ -155,16 +154,73 @@ namespace Ambermoon
 	            "Teď už budu zticha. Bav se při hraní Ambermoonu!"
 			} }
 		}.ToImmutableDictionary();
+		static readonly ImmutableDictionary<GameLanguage, string[]> mobileTips = new Dictionary<GameLanguage, string[]>
+		{
+			{ GameLanguage.German, new string[]
+			{
+                // Tip 1
+                "Die Schaltflächen am unteren rechten Bildschirmrand enthalten sehr viele Funktionen " +
+				"des Spiels. Wenn du dich auf dem Hauptbildschirm befindest, kannst du eine zweite " +
+				"Belegung der Schaltflächen nutzen indem du deinen Finger länger auf dem Bereich " +
+				"gedrückt hälst.",
+                // Tip 2
+                "Wenn du eine Aktion wie das Auge wählst, siehst du über deinem Charakter " +
+				"ein Symbol. Wenn du dann auf der Karte ein Objekt antipst " +
+				"wird der Spieler mit diesem Objekt interagieren. Diese Aktionen haben aber " +
+                "eine begrenzte Reichweite!",
+                // Tip 3
+                "Im oberen Bereich siehst du die Spielerportraits. Du kannst die Portraits antippen um " +
+				"den aktiven Spieler auszuwählen. Wenn du den Finger gedrückt hälst gelangst du ins Inventar.",
+                // Tip 4
+                "Du kannst dich mit der Maus, den Tasten W, A, S, D oder auch den Pfeiltasten auf der Map "+
+				"bewegen. In 2D kannst du per Rechtsklick auf die Map den Cursor umschalten und aus ihm " +
+				"einen Aktionscursor machen, mit dem du Dinge untersuchen oder berühren oder aber mit " +
+				"NPCs sprechen kannst.",
+                // End
+                "Ich bin nun still und wünsche dir viel Spaß beim Spielen von Ambermoon!"
+			} },
+			{ GameLanguage.English, new string[]
+			{
+                // Tip 1
+                "The buttons in the lower right area of the screen provide many useful functions of " +
+				"the game. If you are on the main screen you can toggle the buttons by pressing the " +
+				"right mouse button while hovering the area or hitting the Return key. It will unlock " +
+				"additional functions.",
+                // Tip 2
+                "You can also use the NumPad on your keyboard to control those buttons. The layout " +
+				"is exactly as the in-game buttons. So hitting the key 7 will be equivalent to pressing " +
+				"the upper left button (the eye).",
+                // Tip 3
+                "In the upper area you see the character portraits. You can click on them to select the " +
+				"active player or right click them to open the inventories. The keyboard keys 1-6 will select " +
+				"a player as well and keys F1-F6 will open the inventories.",
+                // Tip 4
+                "You can move on maps by using the mouse, keys W, A, S, D or the cursor keys. In 2D you can " +
+				"right click on the map to change the cursor into an action cursor to interact with objects " +
+				"or characters like NPCs.",
+                // End
+                "Now I'm quiet. Have fun playing Ambermoon!"
+			} },
+		}.ToImmutableDictionary();
 
-        readonly Game game;
+		readonly Game game;
         readonly IColoredRect[] markers = new IColoredRect[4];
+        readonly string[] texts;
+        readonly string introductionText;
+        readonly DrawTouchFingerHandler drawTouchFingerRequest;
 
-        public Tutorial(Game game)
+		public Tutorial(Game game, DrawTouchFingerHandler drawTouchFingerRequest)
         {
             this.game = game;
-        }
+            this.drawTouchFingerRequest = drawTouchFingerRequest;
+			var textSource = game.Configuration.IsMobile ? mobileTips : tips;
+			texts = textSource.TryGetValue(game.GameLanguage, out var languageTexts)
+                ? languageTexts : textSource[GameLanguage.English];
+			introductionText = introduction.TryGetValue(game.GameLanguage, out var text)
+                ? text : introduction[GameLanguage.English];
+		}
 
-        string GetText(int index) => texts[game.GameLanguage][index];
+		string GetText(int index) => index == 0 ? introductionText : texts[index - 1];
 
         public void Run(IRenderView renderView)
         {
@@ -214,6 +270,16 @@ namespace Ambermoon
                 marker?.Delete();
         }
 
+        void DrawTouchFinger(int x, int y, bool longPress, Rect clipArea = null)
+        {
+            drawTouchFingerRequest?.Invoke(x, y, longPress, clipArea);
+		}
+
+        void HideTouchFinger()
+        {
+			drawTouchFingerRequest?.Invoke(-1, -1, false, null);
+		}
+
         void ToggleButtons()
         {
             game.InputEnable = true;
@@ -226,12 +292,12 @@ namespace Ambermoon
             ShowTipChain(renderView, ShowTip1, ShowTip2, ShowTip3, ShowTip4, ShowTutorialEnd);
         }
 
-        void ShowTipChain(IRenderView renderView, params Action<IRenderView, Action>[] tips)
+        static void ShowTipChain(IRenderView renderView, params Action<IRenderView, Action>[] tips)
         {
             ShowTipChain(renderView, tips as IEnumerable<Action<IRenderView, Action>>);
         }
 
-        void ShowTipChain(IRenderView renderView, IEnumerable<Action<IRenderView, Action>> tips)
+        static void ShowTipChain(IRenderView renderView, IEnumerable<Action<IRenderView, Action>> tips)
         {
             var count = tips.Count();
 
@@ -245,28 +311,59 @@ namespace Ambermoon
         {
             ShowMarker(renderView, new Rect(Global.ButtonGridX - 1, Global.ButtonGridY - 1,
                 3 * Button.Width + 2, 3 * Button.Height + 2));
+            if (game.Configuration.IsMobile)
+                DrawTouchFinger(Global.ButtonGridX + Button.Width, Global.ButtonGridY + Button.Height * 2, true);
             game.ShowMessagePopup(GetText(1), next);
         }
 
         void ShowTip2(IRenderView renderView, Action next)
         {
             ToggleButtons();
-            game.ShowMessagePopup(GetText(2), next);
+            if (game.Configuration.IsMobile)
+            {
+                HideTouchFinger();
+                HideMarker();
+				ShowMarker(renderView, new Rect(Global.ButtonGridX - 1, Global.ButtonGridY - 1,
+				    Button.Width + 2, Button.Height + 2));
+			}
+			game.ShowMessagePopup(GetText(2), next);
         }
 
         void ShowTip3(IRenderView renderView, Action next)
         {
-            ToggleButtons();
-            HideMarker();
-            ShowMarker(renderView, Global.PartyMemberPortraitArea);
-            game.ShowMessagePopup(GetText(3), next);
+			HideMarker();
+
+            if (game.Configuration.IsMobile)
+            {
+                game.CurrentMobileAction = MobileAction.Eye;
+                DrawTouchFinger(Map2DViewArea.Right - 72, Map2DViewArea.Bottom - 50, false);
+				ShowMarker(renderView, new Rect(Map2DViewArea.X + 16 - 2, Map2DViewArea.Y + 32 - 2, 20, 20));
+                game.SetClickHandler(next);
+			}
+            else
+            {
+                ToggleButtons();
+                ShowMarker(renderView, Global.PartyMemberPortraitArea);
+                game.ShowMessagePopup(GetText(3), next);
+            }
         }
 
         void ShowTip4(IRenderView renderView, Action next)
         {
-            HideMarker();
-            ShowMarker(renderView, Game.Map2DViewArea);
-            game.ShowMessagePopup(GetText(4), next);
+            if (game.Configuration.IsMobile)
+            {
+				game.CurrentMobileAction = MobileAction.None;
+				DrawTouchFinger(Global.PartyMemberPortraitArea.X + 32, Global.PartyMemberPortraitArea.Y + 32, false, new Rect(0, 0, Global.VirtualScreenHeight, 53));
+				ToggleButtons();
+				ShowMarker(renderView, Global.PartyMemberPortraitArea);
+				game.ShowMessagePopup(GetText(3), next);
+			}
+            else
+            {
+                HideMarker();
+                ShowMarker(renderView, Game.Map2DViewArea);
+                game.ShowMessagePopup(GetText(4), next);
+            }
         }
 
         void ShowTutorialEnd(IRenderView renderView, Action next)

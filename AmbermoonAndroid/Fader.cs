@@ -1,7 +1,7 @@
-﻿using Ambermoon.Render;
-using System;
+﻿using Ambermoon;
+using Ambermoon.Render;
 
-namespace Ambermoon
+namespace AmbermoonAndroid
 {
     internal class Fader
     {

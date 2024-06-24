@@ -442,6 +442,14 @@ namespace Ambermoon
                 UpdateMobileActionIndicatorPosition();
             }
         }
+        public bool MobileMovementIndicatorEnabled =>
+            Configuration.IsMobile &&
+            !WindowActive && !PopupActive &&
+            CurrentWindow.Window == Window.MapView &&
+            InputEnable && !allInputDisabled &&
+            characterCreator == null && outro?.Active != true &&
+            customOutro == null;
+        public Rect CurrentMapViewArea => new Rect(mapViewArea);
 
 		/// <summary>
 		/// The 3x3 buttons will always be enabled!
@@ -624,13 +632,19 @@ namespace Ambermoon
 
         public string GetFullVersion() => fullVersion;
 
-        public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IGraphicProvider graphicProvider,
+        public delegate void DrawTouchFingerHandler(int x, int y, bool longPress, Rect clipArea);
+
+        readonly DrawTouchFingerHandler drawTouchFingerRequest;
+
+		public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IGraphicProvider graphicProvider,
             ISavegameManager savegameManager, ISavegameSerializer savegameSerializer, TextDictionary textDictionary,
             Cursor cursor, IAudioOutput audioOutput, ISongManager songManager, FullscreenChangeHandler fullscreenChangeHandler,
             ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory,
-            Features features, string gameVersionName, string version, Action<bool, string> keyboardRequest)
+            Features features, string gameVersionName, string version, Action<bool, string> keyboardRequest,
+			DrawTouchFingerHandler drawTouchFingerRequest = null)
         {
-            this.keyboardRequest = keyboardRequest;
+            this.drawTouchFingerRequest = drawTouchFingerRequest;
+			this.keyboardRequest = keyboardRequest;
 			Features = features;
             this.gameVersionName = gameVersionName;
             Character.FoodWeight = Features.HasFlag(Features.ReducedFoodWeight) ? 25u : 250u;
@@ -16140,7 +16154,7 @@ namespace Ambermoon
 
         void ShowTutorial()
         {
-            new Tutorial(this).Run(renderView);
+            new Tutorial(this, drawTouchFingerRequest).Run(renderView);
         }
 
         internal void ShowTextPopup(Map map, PopupTextEvent popupTextEvent, Action<PopupTextEvent.Response> responseHandler)

@@ -59,6 +59,7 @@ namespace Ambermoon
         Items,
         Text,
         SmallDigits,
+        MobileOverlays,
         MainMenuGraphics,
         MainMenuText,
         MainMenuEffects,

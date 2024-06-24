@@ -80,7 +80,7 @@ namespace Ambermoon.Render
 
                 if (layer == Layer.BattleMonsterRow)
                     atlas.Add(layer, atlasBuilders[layer].Create(1));
-                else if (layer == Layer.Images)
+                else if (layer == Layer.Images || layer == Layer.MobileOverlays)
                     atlas.Add(layer, atlasBuilders[layer].Create(4));
                 else
                     atlas.Add(layer, atlasBuilders[layer].CreateUnpacked(320, 1));
