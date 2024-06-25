@@ -442,13 +442,20 @@ namespace Ambermoon
                 UpdateMobileActionIndicatorPosition();
             }
         }
-        public bool MobileMovementIndicatorEnabled =>
-            Configuration.IsMobile &&
-            !WindowActive && !PopupActive &&
-            CurrentWindow.Window == Window.MapView &&
-            InputEnable && !allInputDisabled &&
-            characterCreator == null && outro?.Active != true &&
-            customOutro == null;
+        private bool mobileMovementIndicatorEnabled = false;
+		public bool MobileMovementIndicatorEnabled
+        {
+            get => mobileMovementIndicatorEnabled && !WindowActive && !PopupActive &&
+					CurrentWindow.Window == Window.MapView &&
+					InputEnable && !allInputDisabled &&
+					characterCreator == null && outro?.Active != true &&
+					customOutro == null;
+            set
+            {
+                if (Configuration.IsMobile)
+                    mobileMovementIndicatorEnabled = value;
+            }
+        }
         public Rect CurrentMapViewArea => new Rect(mapViewArea);
 
 		/// <summary>
@@ -3412,6 +3419,14 @@ namespace Ambermoon
 
 				if (!mapViewArea.Contains(relativePosition))
                 {
+                    if (Global.UpperRightArea.Contains(relativePosition))
+                    {
+                        if (!mobileMovementIndicatorEnabled)
+                            MobileMovementIndicatorEnabled = true;
+                        else if (!Global.MobileMovementIndicator.Contains(relativePosition))
+                            MobileMovementIndicatorEnabled = false;
+                    }
+
 					OnMouseDown(position, MouseButtons.Right);
 					OnMouseUp(position, MouseButtons.Right);
                     return;
@@ -16111,6 +16126,7 @@ namespace Ambermoon
                             }
                             else
                             {
+                                MobileMovementIndicatorEnabled = true;
                                 CloseWindow(closeAction);
                             }
                         }

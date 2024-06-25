@@ -911,6 +911,7 @@ namespace AmbermoonAndroid
 								TextureAtlasManager.Instance.AddFromGraphics(Layer.MobileOverlays, graphics);
                                 var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MobileOverlays);
 
+								tutorialFinger = new TutorialFinger(renderView);
 								movementIndicator = new MovementIndicator(renderView);
 								movementIndicator.MoveRequested += (int x, int y) =>
                                 {
@@ -924,7 +925,6 @@ namespace AmbermoonAndroid
 									else if (y > 0)
 										OnKeyDown(Key.S);
 								};
-                                tutorialFinger = new TutorialFinger(renderView);
 
                                 renderView.GetLayer(Layer.MobileOverlays).Texture = textureAtlas.Texture;
 
@@ -1355,7 +1355,7 @@ namespace AmbermoonAndroid
             else if (Game != null)
             {
                 Game.Update(delta);
-                movementIndicator?.Update(Game.CurrentMapViewArea, Game.MobileMovementIndicatorEnabled);
+                movementIndicator?.Update(Game.MobileMovementIndicatorEnabled);
             }
         }
 

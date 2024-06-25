@@ -10,3 +10,4 @@
 - Finish tutorial
 - Add tutorial translations for mobile
 - When finger in tutorial hovers movement indicator, some areas are fully transparent
+- Advanced logo looks shrinked

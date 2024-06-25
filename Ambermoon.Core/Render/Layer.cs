@@ -59,7 +59,6 @@ namespace Ambermoon
         Items,
         Text,
         SmallDigits,
-        MobileOverlays,
         MainMenuGraphics,
         MainMenuText,
         MainMenuEffects,
@@ -72,7 +71,8 @@ namespace Ambermoon
         FantasyIntroEffects,
         Misc, // general purpose layer
         Images, // non-palette high-resolution images
-        Effects,
+		MobileOverlays,
+		Effects,
         Cursor,
         DrugEffect
     }

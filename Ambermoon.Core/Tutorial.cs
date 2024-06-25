@@ -176,6 +176,10 @@ namespace Ambermoon
 				"Interaktion mit Objekten. Außerdem kannst du so auch laufen, wenn du dann den Finger bewegst. " +
 				"Und zum Schluss gibt es noch das Bewegungskreuz.",
                 // Tip 5
+                "Wenn du auf dem Map-Bildschirm im rechten oberen Bereich deinen Finger gedrückt hälst " +
+				"erscheint das Bewegungskreuz. Du kannst es wieder deaktivieren, indem du außerhalb " +
+                "des Kreuzes auf der Fläche deinen Finger gedrückt hälst.",
+                // Tip 6
                 "Wenn du hier deinen Finger gedrückt hälst kannst du dich so auch bewegen und du " +
 				"versperrst dir mit dem Finger nicht die komplette Sicht.",
                 // End
@@ -235,7 +239,8 @@ namespace Ambermoon
                 else
                 {
                     game.EndSequence();
-                }
+					game.MobileMovementIndicatorEnabled = true;
+				}
             }, 4, 0, TextAlign.Center, false);
         }
 
@@ -375,18 +380,39 @@ namespace Ambermoon
         {
 			DrawTouchFinger(Map2DViewArea.Center.X, Map2DViewArea.Bottom - 36, true);
             HideMarker();
-			game.ShowMessagePopup(GetText(4), next);
+			game.ShowMessagePopup(GetText(4), () =>
+            {
+                HideTouchFinger();
+                game.ExecuteNextUpdateCycle(next);
+            });
 		}
 
 		void ShowTip6(IRenderView renderView, Action next)
 		{
-			ShowMarker(renderView, new(Map2DViewArea.Right - 64 - 1, Map2DViewArea.Bottom - 64 - 1, 66, 66));
-			DrawTouchFinger(Map2DViewArea.Right - 32, Map2DViewArea.Bottom - 24, true);
-			game.SetClickHandler(() =>
+            ShowMarker(renderView, Global.UpperRightArea.CreateModified(-1, -1, 2, 2));
+			var center = Global.UpperRightArea.Center;
+			DrawTouchFinger(center.X, center.Y + 26, true);
+            game.SetClickHandler(() =>
             {
                 HideTouchFinger();
-				HideMarker();
-				game.ShowMessagePopup(GetText(5), next);
+				game.ShowMessagePopup(GetText(5), () =>
+                {
+					HideMarker();
+					game.MobileMovementIndicatorEnabled = true;
+                    ShowMarker(renderView, Global.MobileMovementIndicator.CreateModified(-1, -1, 2, 2));
+                    // Wait at least 1 update frame to display the finger as it must be ensured
+                    // that it is drawn after the movement indicator.
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(20), () =>
+                    {
+                        DrawTouchFinger(center.X, center.Y + 26, true);
+                        game.SetClickHandler(() =>
+                        {
+                            HideTouchFinger();
+                            HideMarker();
+                            game.ShowMessagePopup(GetText(6), next);
+                        });
+                    });
+                });
             });
 		}
 

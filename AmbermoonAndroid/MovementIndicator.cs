@@ -57,8 +57,8 @@ namespace AmbermoonAndroid
                 return sprite;
 			}
 
-            int displayX = Global.Map2DViewX + Global.Map2DViewWidth - 64;
-            int displayY = Global.Map2DViewY + Global.Map2DViewHeight - 64;
+            int displayX = Global.MobileMovementIndicator.X;
+			int displayY = Global.MobileMovementIndicator.Y;
 			background = CreateSprite(displayX, displayY, 64, 64, 50, 4, 160);
             activeIndicator = CreateSprite(displayX + activeIndicatorOffset.X, displayY + activeIndicatorOffset.Y, 12, 10, 55, 5, 224);
 
@@ -112,14 +112,12 @@ namespace AmbermoonAndroid
 			return true;
 		}
 
-        public void Update(Rect mapViewArea, bool enabled)
+        public void Update(bool enabled)
         {
 			if (destroyed)
 				return;
 
-			if (enabled)
-				UpdatePosition(mapViewArea.Right - 64, mapViewArea.Bottom - 64);
-			else
+			if (!enabled)
 				active = false;
 
 			background.Visible = enabled;
@@ -129,26 +127,6 @@ namespace AmbermoonAndroid
             {
                 arrows[i].Visible = enabled && active && currentDirections[i];
             }
-		}
-
-		private void UpdatePosition(int x, int y)
-		{
-			if (background.X == x && background.Y == y)
-				return;
-
-			background.X = x;
-			background.Y = y;
-
-			activeIndicator.X = x + activeIndicatorOffset.X;
-			activeIndicator.Y = y + activeIndicatorOffset.Y;
-
-			for (int i = 0; i < arrowOffsets.Length; i++)
-			{
-				arrows[i].X = x + arrowOffsets[i].X;
-				arrows[i].Y = y + arrowOffsets[i].Y;
-			}
-
-			Area = new Ambermoon.Rect(x, y, 64, 64);
 		}
 
         public void Destroy()
