@@ -174,14 +174,15 @@ namespace Ambermoon
                 // Tip 4
                 "Du kannst auf der Karte deinen Finger gedrückt halten. Dies ermöglicht eine direkte " +
 				"Interaktion mit Objekten. Außerdem kannst du so auch laufen, wenn du dann den Finger bewegst. " +
-				"Und zum Schluss gibt es noch das Bewegungskreuz.",
+				"Und zum Schluss gibt es noch das virtuelle Steuerkreuz.",
                 // Tip 5
                 "Wenn du auf dem Map-Bildschirm im rechten oberen Bereich deinen Finger gedrückt hälst " +
-				"erscheint das Bewegungskreuz. Du kannst es wieder deaktivieren, indem du außerhalb " +
+				"erscheint das Steuerkreuz. Du kannst es wieder deaktivieren, indem du außerhalb " +
                 "des Kreuzes auf der Fläche deinen Finger gedrückt hälst.",
                 // Tip 6
-                "Wenn du hier deinen Finger gedrückt hälst kannst du dich so auch bewegen und du " +
-				"versperrst dir mit dem Finger nicht die komplette Sicht.",
+                "Wenn du deinen Finger auf dem Kreuz gedrückt hälst kannst du dich bewegen, indem du " +
+				"deinen Finger relativ zum Kreuz bewegst und du versperrst dir mit dem Finger nicht die " +
+                "Sicht auf die Karte.",
                 // End
                 "Ich bin nun still und wünsche dir viel Spaß beim Spielen von Ambermoon!"
 			} },
@@ -192,17 +193,22 @@ namespace Ambermoon
 				"the game. If you are on the main screen you can toggle the buttons by holding your " +
 				"finger pressed on the area. It will unlock additional functions.",
                 // Tip 2
-                "You can also use the NumPad on your keyboard to control those buttons. The layout " +
-				"is exactly as the in-game buttons. So hitting the key 7 will be equivalent to pressing " +
-				"the upper left button (the eye).",
+                "If you choose actions like the eye, you will see some symbol over the character's " +
+				"head. When you tap some object on the map, the player tries to interact with it. But " +
+				"those actions have a limited range!",
                 // Tip 3
-                "In the upper area you see the character portraits. You can click on them to select the " +
-				"active player or right click them to open the inventories. The keyboard keys 1-6 will select " +
-				"a player as well and keys F1-F6 will open the inventories.",
+                "In the upper area you see the character portraits. You can tap on them to select the " +
+				"active player or long press them to open the inventories.",
                 // Tip 4
-                "You can move on maps by using the mouse, keys W, A, S, D or the cursor keys. In 2D you can " +
-				"right click on the map to change the cursor into an action cursor to interact with objects " +
-				"or characters like NPCs.",
+                "You can long press on the map. This allows direct interaction with objects. You can also " +
+				"walk this way if you move your finger afterwards. And then we also have the virtual D-Pad.",
+                // Tip 5
+                "If you long press on the upper right part while you are on the map screen, you will " +
+				"enable the D-Pad. You can disable it again by long pressing the same area but outside " +
+				"the pad.",
+                // Tip 6
+                "If you long press on the pad, you can move around by moving your finger relative to the " +
+				"pad. So you won't block your view on the map by your own finger.",
                 // End
                 "Now I'm quiet. Have fun playing Ambermoon!"
 			} },
