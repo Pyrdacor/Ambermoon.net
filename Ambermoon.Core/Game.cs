@@ -7970,7 +7970,7 @@ namespace Ambermoon
             void ShowDictionary()
             {
                 aborted = false;
-                OpenDictionary(SayWord, word => !oldKeywords.Contains(word) || newKeywords.Contains(word)
+				OpenDictionary(SayWord, word => !oldKeywords.Contains(word) || newKeywords.Contains(word)
                     ? TextColor.LightYellow : TextColor.BrightGray);
             }
 
@@ -8011,7 +8011,8 @@ namespace Ambermoon
                     itemGrid.ItemClicked -= ItemClicked;
                     message?.Destroy();
                     UntrapMouse();
-                    nextClickHandler = null;
+					layout.ButtonsDisabled = false;
+					nextClickHandler = null;
                     ShowCreatedItems();
                 }
 
@@ -8020,7 +8021,8 @@ namespace Ambermoon
                 CursorType = CursorType.Sword;
                 var itemArea = new Rect(16, 139, 151, 53);
                 TrapMouse(itemArea);
-                itemGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+				layout.ButtonsDisabled = true;
+				itemGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
                 void SetupRightClickAbort()
                 {
                     nextClickHandler = buttons =>
@@ -8054,7 +8056,8 @@ namespace Ambermoon
                     message = null;
                     layout.GetItem(itemSlot).Dragged = true; // Keep it above UI
                     UntrapMouse();
-                    conversationEvent = GetFirstMatchingEvent(e => e.Interaction == interactionType && e.ItemIndex == itemSlot.ItemIndex);
+					layout.ButtonsDisabled = false;
+					conversationEvent = GetFirstMatchingEvent(e => e.Interaction == interactionType && e.ItemIndex == itemSlot.ItemIndex);
 
                     if (conversationEvent == null)
                     {
@@ -8141,7 +8144,8 @@ namespace Ambermoon
                     itemGrid.ItemClicked -= ItemClicked;
                     nextClickHandler = null;
                     UntrapMouse();
-                    StartSequence();
+					layout.ButtonsDisabled = false;
+					StartSequence();
                     itemGrid.HideTooltip();
                     itemGrid.PlayMoveAnimation(itemSlot, new Position(215, 75), () => CheckItem(itemSlot), 650);
                 }
@@ -11838,6 +11842,7 @@ namespace Ambermoon
                     ShowDefaultMessage();
                     CursorType = CursorType.Sword;
                     TrapMouse(itemArea);
+                    layout.ButtonsDisabled = true;
                     itemsGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
                     itemsGrid.ItemClicked += ItemClicked;
                     SetupRightClickAbort();
@@ -11851,7 +11856,8 @@ namespace Ambermoon
                             DisableItemGrid();
                             layout.ShowChestMessage(null);
                             UntrapMouse();
-                            CursorType = CursorType.Sword;
+							layout.ButtonsDisabled = false;
+							CursorType = CursorType.Sword;
                             inputEnable = true;
                             return true;
                         }
@@ -11864,7 +11870,8 @@ namespace Ambermoon
                     itemsGrid.HideTooltip();
                     itemsGrid.ItemClicked -= ItemClicked;
                     itemsGrid.Disabled = true;
-                }
+					layout.ButtonsDisabled = false;
+				}
                 void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
                 {
                     itemsGrid.HideTooltip();
@@ -12004,7 +12011,8 @@ namespace Ambermoon
                     CursorType = CursorType.Sword;
                     var itemArea = new Rect(16, 139, 151, 53);
                     TrapMouse(itemArea);
-                    itemsGrid.Initialize(equipment ? CurrentPartyMember.Equipment.Slots.Where(s => s.Value.ItemIndex != 0).Select(s => s.Value).ToList()
+					layout.ButtonsDisabled = true;
+					itemsGrid.Initialize(equipment ? CurrentPartyMember.Equipment.Slots.Where(s => s.Value.ItemIndex != 0).Select(s => s.Value).ToList()
                         : CurrentPartyMember.Inventory.Slots.ToList(), false);
                     void SetupRightClickAbort()
                     {
@@ -12015,7 +12023,8 @@ namespace Ambermoon
                                 DisableItemGrid();
                                 layout.ShowChestMessage(null);
                                 UntrapMouse();
-                                CursorType = CursorType.Sword;
+								layout.ButtonsDisabled = false;
+								CursorType = CursorType.Sword;
                                 inputEnable = true;
                                 return true;
                             }
@@ -12029,7 +12038,8 @@ namespace Ambermoon
                         itemsGrid.HideTooltip();
                         itemsGrid.ItemClicked -= ItemClicked;
                         itemsGrid.Disabled = true;
-                    }
+						layout.ButtonsDisabled = false;
+					}
                     itemsGrid.ItemClicked += ItemClicked;
                     void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
                     {
@@ -12438,7 +12448,8 @@ namespace Ambermoon
                     CursorType = CursorType.Sword;
                     var itemArea = new Rect(16, 139, 151, 53);
                     TrapMouse(itemArea);
-                    itemsGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+					layout.ButtonsDisabled = true;
+					itemsGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
                     void SetupRightClickAbort()
                     {
                         nextClickHandler = buttons =>
@@ -12448,7 +12459,8 @@ namespace Ambermoon
                                 DisableItemGrid();
                                 layout.ShowChestMessage(null);
                                 UntrapMouse();
-                                CursorType = CursorType.Sword;
+                                layout.ButtonsDisabled = false;
+								CursorType = CursorType.Sword;
                                 inputEnable = true;
                                 return true;
                             }
@@ -12462,7 +12474,8 @@ namespace Ambermoon
                         itemsGrid.HideTooltip();
                         itemsGrid.ItemClicked -= ItemClicked;
                         itemsGrid.Disabled = true;
-                    }
+						layout.ButtonsDisabled = false;
+					}
                     itemsGrid.ItemClicked += ItemClicked;
                     void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
                     {
@@ -14001,7 +14014,8 @@ namespace Ambermoon
                             itemGrid.Disabled = true;
                             layout.ShowChestMessage(null);
                             UntrapMouse();
-                            CursorType = CursorType.Sword;
+							layout.ButtonsDisabled = false;
+							CursorType = CursorType.Sword;
                             inputEnable = true;
                             return true;
                         }
@@ -14018,7 +14032,8 @@ namespace Ambermoon
                     itemGrid.DisableDrag = true;
                     CursorType = CursorType.Sword;
                     TrapMouse(itemArea);
-                    itemGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+					layout.ButtonsDisabled = true;
+					itemGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
                     SetupRightClickAbort();
                 });
 

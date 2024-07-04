@@ -808,9 +808,9 @@ namespace Ambermoon.UI
 
                 if (itemSlot != null)
                 {
-                    if (keyModifiers.HasFlag(KeyModifiers.Control) && itemControlClickHandler != null)
+                    if (keyModifiers.HasFlag(KeyModifiers.Control) && itemControlClickHandler != null && !layout.ButtonsDisabled)
                         itemControlClickHandler(this, slot.Value, itemSlot.Item);
-                    else if (keyModifiers.HasFlag(KeyModifiers.Shift) && itemShiftClickHandler != null)
+                    else if (keyModifiers.HasFlag(KeyModifiers.Shift) && itemShiftClickHandler != null && !layout.ButtonsDisabled)
                         itemShiftClickHandler(this, slot.Value, itemSlot.Item);
                     else
                     {

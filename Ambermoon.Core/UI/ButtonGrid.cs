@@ -1,7 +1,7 @@
 ﻿/*
  * ButtonGrid.cs - UI 3x3 button grid implementation
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *

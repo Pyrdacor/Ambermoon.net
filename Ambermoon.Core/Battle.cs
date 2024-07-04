@@ -2447,7 +2447,7 @@ namespace Ambermoon
 
         void ImitateMonster(PartyMember caster, Monster monster, Action finishAction)
         {
-            if ((caster.Class != Class.Mystic && caster.Class != Class.Ranger) || caster.Index >= 13)
+            if ((caster.Class != Class.Mystic && caster.Class != Class.Ranger) || caster.Index > 13)
             {
                 // This is for safety. For example it should be avoided that Kasimir or a thief can use
                 // the spell from a scroll as the Amiga implementation only allows specific characters

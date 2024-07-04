@@ -3125,14 +3125,28 @@ namespace Ambermoon.UI
                 game.CursorType = CursorType.Gold;
                 game.TrapMouse(Global.PartyMemberPortraitArea);
                 draggedGoldOrFoodRemover = chest == null
-                    ? (Action<uint>)(gold => { game.CurrentInventory.RemoveGold(gold); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); SetInventoryMessage(null); })
-                    : gold => { chest.Gold -= gold; game.ChestGoldChanged(); UpdateLayoutButtons(); game.UntrapMouse(); };
+                    ? (Action<uint>)(gold => {
+                        game.CurrentInventory.RemoveGold(gold);
+                        game.UpdateCharacterInfo();
+                        UpdateLayoutButtons();
+                        game.UntrapMouse();
+                        SetInventoryMessage(null);
+                        ButtonsDisabled = false;
+                    })
+                    : gold => {
+                        chest.Gold -= gold;
+                        game.ChestGoldChanged();
+                        UpdateLayoutButtons();
+                        game.UntrapMouse();
+                        ButtonsDisabled = false;
+                    };
                 if (chest != null)
                     ShowChestMessage(game.DataNameProvider.GiveToWhom);
                 else
                     SetInventoryMessage(game.DataNameProvider.GiveToWhom);
+				ButtonsDisabled = true;
 
-                for (int i = 0; i < Game.MaxPartyMembers; ++i)
+				for (int i = 0; i < Game.MaxPartyMembers; ++i)
                 {
                     var partyMember = game.GetPartyMember(i);
 
@@ -3149,8 +3163,21 @@ namespace Ambermoon.UI
         {
             GiveFood(chest == null ? game.CurrentInventory.Food : chest.Food,
                 chest == null
-                    ? (Action<uint>)(food => { game.CurrentInventory.RemoveFood(food); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); SetInventoryMessage(null); })
-                    : food => { chest.Food -= food; game.ChestFoodChanged(); UpdateLayoutButtons(); game.UntrapMouse(); },
+                    ? (Action<uint>)(food => {
+                        game.CurrentInventory.RemoveFood(food);
+                        game.UpdateCharacterInfo();
+                        UpdateLayoutButtons();
+                        game.UntrapMouse();
+                        SetInventoryMessage(null);
+						ButtonsDisabled = false;
+					})
+                    : food => {
+                        chest.Food -= food;
+                        game.ChestFoodChanged();
+                        UpdateLayoutButtons();
+                        game.UntrapMouse();
+						ButtonsDisabled = false;
+					},
                 chest == null
                     ? (Action)(() => SetInventoryMessage(game.DataNameProvider.GiveToWhom))
                     : () => ShowChestMessage(game.DataNameProvider.GiveToWhom), null, () =>
@@ -3533,7 +3560,8 @@ namespace Ambermoon.UI
 
         void PickChestItemForAction(Action<ItemGrid, int, ItemSlot> itemAction, string message)
         {
-            ShowChestMessage(message);
+			ButtonsDisabled = true;
+			ShowChestMessage(message);
             var itemArea = new Rect(16, 139, 151, 53);
             game.TrapMouse(itemArea);
 
@@ -3544,8 +3572,9 @@ namespace Ambermoon.UI
                 itemGrids[0].ItemClicked -= ItemChosen;
                 itemGrids[0].RightClicked -= Aborted;
                 game.UntrapMouse();
+				ButtonsDisabled = false;
 
-                if (itemGrid != null && itemSlot != null)
+				if (itemGrid != null && itemSlot != null)
                     itemAction?.Invoke(itemGrid, slot, itemSlot);
             }
 
@@ -3562,6 +3591,7 @@ namespace Ambermoon.UI
 
         void PickInventoryItemForAction(Action<ItemGrid, int, ItemSlot> itemAction, bool includeEquipment, string message)
         {
+            ButtonsDisabled = true;
             SetInventoryMessage(message);
 
             // Note: itemGrids[0] is the inventory and itemGrids[1] is the equipment.
@@ -3577,8 +3607,9 @@ namespace Ambermoon.UI
                 itemGrids[0].RightClicked -= Aborted;
                 itemGrids[1].RightClicked -= Aborted;
                 game.UntrapMouse();
+				ButtonsDisabled = false;
 
-                if (itemGrid != null && itemSlot != null)
+				if (itemGrid != null && itemSlot != null)
                 {
                     // Catch two-handed weapon left hand slot click
                     if (itemSlot.ItemIndex == 0 &&
