@@ -5,7 +5,7 @@ using System.Linq;
 namespace Ambermoon.Data
 {
     [Serializable]
-    public abstract class Character
+	public abstract class Character
     {
         public const uint GoldWeight = 5;
         public static uint FoodWeight { get; set; } = 250;

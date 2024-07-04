@@ -14,13 +14,26 @@ namespace Ambermoon.Data
         private int _bonusValue;
         private uint _storedValue;
 
-        /// <summary>
-        /// Current value without bonus.
-        /// While exhausted this will be the exhausted value
-        /// (half the previous value) and the actual value
-        /// is stored temporarily in <see cref="StoredValue"/>.
-        /// </summary>
-        public uint CurrentValue
+        public CharacterValue()
+        {
+
+        }
+
+        public CharacterValue(CharacterValue other)
+        {
+            _currentValue = other._currentValue;
+			_maxValue = other._maxValue;
+			_bonusValue = other._bonusValue;
+			_storedValue = other._storedValue;
+        }
+
+		/// <summary>
+		/// Current value without bonus.
+		/// While exhausted this will be the exhausted value
+		/// (half the previous value) and the actual value
+		/// is stored temporarily in <see cref="StoredValue"/>.
+		/// </summary>
+		public uint CurrentValue
         {
             get => _currentValue;
             set => SetField(ref _currentValue, value);
@@ -76,7 +89,15 @@ namespace Ambermoon.Data
     {
         readonly CharacterValue[] values = null;
 
-        public CharacterValueCollection(int size)
+		public CharacterValueCollection(CharacterValueCollection<TType> other)
+		{
+			values = new CharacterValue[other.values.Length];
+
+			for (int i = 0; i < other.values.Length; ++i)
+				values[i] = new(other.values[i]);
+		}
+
+		public CharacterValueCollection(int size)
         {
             values = new CharacterValue[size];
 

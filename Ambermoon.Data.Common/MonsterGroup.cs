@@ -28,7 +28,7 @@ namespace Ambermoon.Data
             {
                 for (int column = 0; column < 6; ++column)
                 {
-                    clone.Monsters[column, row] = Monsters[column, row]?.Clone();
+                    clone.Monsters[column, row] = Monsters[column, row]?.DeepClone();
                 }
             }
 

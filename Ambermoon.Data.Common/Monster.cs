@@ -1,15 +1,13 @@
 ﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Serialization;
 using System;
-using System.IO;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Ambermoon.Data
 {
     [Serializable]
-    public class Monster : Character
+    [AutoClone]
+    public partial class Monster : Character, IAutoClone<Monster>
     {
         public MonsterGraphicIndex CombatGraphicIndex { get; set; }
         public uint Morale { get; set; }
@@ -24,12 +22,25 @@ namespace Ambermoon.Data
         public uint MappedFrameHeight { get; set; }
         public Graphic CombatGraphic { get; set; }
 
+        public partial Monster DeepClone();
+
         [Serializable]
         public class Animation
         {
             public int UsedAmount = 0; // 0-32
             public byte[] FrameIndices; // 32 bytes
-        }
+
+			public Animation()
+            {
+
+            }
+
+			public Animation(Animation other)
+            {
+                UsedAmount = other.UsedAmount;
+                FrameIndices = other.FrameIndices;
+            }
+		}
 
         public Monster()
             : base(CharacterType.Monster)
@@ -46,29 +57,6 @@ namespace Ambermoon.Data
 
             monsterReader.ReadMonster(monster, dataReader);
 
-            return monster;
-        }
-
-        public Monster Clone()
-        {
-            using var stream = new MemoryStream();
-			var options = new JsonSerializerOptions
-			{
-				WriteIndented = true,
-				PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-				ReferenceHandler = ReferenceHandler.Preserve,
-				DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-				Converters =
-			    {
-				    new CharacterValueCollectionConverter<Attribute>(),
-					new CharacterValueCollectionConverter<Skill>()
-				}
-			};
-			JsonSerializer.Serialize(stream, this, options);
-			stream.Position = 0;
-            var monster = JsonSerializer.Deserialize<Monster>(stream, options);
-            for (int i = 0; i < Animations.Length; i++)
-                monster.Animations[i] = Animations[i];
             return monster;
         }
 

@@ -48,10 +48,19 @@ namespace Ambermoon.Data
         public byte[] Data { get; set; }
         public bool IndexedGraphic { get; set; }
 
-        public Graphic()
-        {
+		public Graphic()
+		{
 
-        }
+		}
+
+		public Graphic(Graphic other)
+        {
+            Width = other.Width;
+            Height = other.Height;
+			Data = new byte[other.Data.Length];
+			Buffer.BlockCopy(other.Data, 0, Data, 0, Data.Length);
+            IndexedGraphic = other.IndexedGraphic;
+		}
 
         public Graphic(int width, int height, byte colorIndex)
         {
