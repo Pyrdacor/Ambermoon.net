@@ -31,6 +31,14 @@ namespace Ambermoon
 {
     internal class Tutorial
     {
+		static readonly ImmutableDictionary<GameLanguage, string> introductionTooltips = new Dictionary<GameLanguage, string>
+		{
+			{ GameLanguage.German, "Tutorial" },
+			{ GameLanguage.English, "Tutorial" },
+			{ GameLanguage.French, "Tutoriel" },
+			{ GameLanguage.Polish, "Tutoriál" },
+			{ GameLanguage.Czech, "Poradnik" }
+		}.ToImmutableDictionary();
 		static readonly ImmutableDictionary<GameLanguage, string> introduction = new Dictionary<GameLanguage, string>
 		{
 			{ GameLanguage.German, "Hi ~SELF~ und willkommen zum Ambermoon Remake.^^Möchtest du eine kleine Einführung?" },
@@ -212,6 +220,31 @@ namespace Ambermoon
                 // End
                 "Now I'm quiet. Have fun playing Ambermoon!"
 			} },
+            { GameLanguage.Czech, new string[]
+            {
+                // Tip 1
+				"Tlačítka v pravém dolním rohu obrazovky poskytují mnoho užitečných funkcí hry. " + 
+                "Pokud jste na hlavní obrazovce, můžete tato tlačítka přepínat podržením " +
+                "prstu v této oblasti. Tím odemknete další funkce.",
+                // Tip 2
+                "Pokud zvolíte akce jako oko, zobrazí se nad postavou symbol hlavy. " +
+                "Když klepnete na nějaký objekt na mapě, hráč se s ním pokusí interagovat. " +
+                "Ovšem tyto akce mají omezený dosah!",
+                // Tip 3
+                "V horní části vidíte portréty postav. Můžete na ně klepnout a vybrat " +
+                "aktivního hráče, nebo jen dlouze podržet pro otevření inventáře.",
+                // Tip 4
+                "Na mapě můžete podržet prst. To umožňuje přímou interakci s objekty. Je možné " +
+                "tímto způsobem i chodit, pokud poté pohnete prstem. A pak tu máme virtuální D-Pad.",
+                // Tip 5
+                "Pokud na mapě dlouze stisknete pravý horní roh aktivujete D-Pad. " +
+                "Můžete jej znovu deaktivovat dlouhým stisknutím stejné oblasti, ale mimo pole.",
+                // Tip 6
+                "Při dlouhém stisku D-Padu, se můžete pohybovat po okolí pohybem prstu relativně k " +
+                "D-Padu. Takhle si nebudete vlastním prstem blokovat pohled na mapu.",
+                // End
+	            "Teď už budu zticha. Bav se při hraní Ambermoonu!"
+			} },
 		}.ToImmutableDictionary();
 
 		readonly Game game;
@@ -233,7 +266,10 @@ namespace Ambermoon
 
 		string GetText(int index) => index == 0 ? introductionText : texts[index - 1];
 
-        public void Run(IRenderView renderView)
+		internal static string GetIntroductionTooltip(GameLanguage language) =>
+            introductionTooltips.TryGetValue(language, out var tooltip) ? tooltip : introductionTooltips[GameLanguage.English];
+
+		public void Run(IRenderView renderView)
         {
             game.StartSequence();
             game.ShowDecisionPopup(GetText(0), response =>

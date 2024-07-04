@@ -1,7 +1,7 @@
 ﻿/*
  * CharacterCreator.cs - Character creator window
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -41,14 +41,16 @@ namespace Ambermoon.UI
         readonly Button maleButton = null;
         readonly Button femaleButton = null;
         readonly Button okButton = null;
-        readonly ILayerSprite portraitBackground = null;
+		readonly Button tutorialButton = null;
+		readonly IRenderText tutorialText = null;
+		readonly ILayerSprite portraitBackground = null;
         readonly ILayerSprite portrait = null;
         readonly TextInput nameInput = null;
-        readonly List<IColoredRect> portraitBorders = new List<IColoredRect>(4);
-        readonly List<IColoredRect> sunkenBoxParts = new List<IColoredRect>(30);
+        readonly List<IColoredRect> portraitBorders = new(4);
+        readonly List<IColoredRect> sunkenBoxParts = new(30);
         IColoredRect fadeArea;
         const int FadeTime = 250;
-        DateTime? fadeInStartTime = null;
+        readonly DateTime? fadeInStartTime = null;
         DateTime? fadeOutStartTime = null;
         bool fadeIn = true;
         bool fadeOut = false;
@@ -129,11 +131,11 @@ namespace Ambermoon.UI
             femaleButton.ButtonType = ButtonType.Female;
             femaleButton.Visible = true;
             femaleButton.LeftClickAction = () => ChangeMale(true);
-            leftButton = CreateButton(game, offset + new Position(64, 35));
+            leftButton = CreateButton(game, offset + new Position(64 + 8, 35));
             leftButton.ButtonType = ButtonType.MoveLeft;
             leftButton.Visible = true;
             leftButton.LeftClickAction = () => SwapPortrait(-1);
-            rightButton = CreateButton(game, offset + new Position(160, 35));
+            rightButton = CreateButton(game, offset + new Position(160 - 8, 35));
             rightButton.ButtonType = ButtonType.MoveRight;
             rightButton.Visible = true;
             rightButton.LeftClickAction = () => SwapPortrait(1);
@@ -146,9 +148,19 @@ namespace Ambermoon.UI
                 afterFadeOutAction = () => selectHandler?.Invoke(nameInput.Text.ToUpper(), isFemale, portraitIndex);
                 DestroyAndFadeOut();
             };
-            #endregion
+            tutorialButton = CreateButton(game, new Position(okButton.Area.X, maleButton.Area.Y));
+			tutorialButton.ButtonType = ButtonType.ReadScroll;
+			tutorialButton.Visible = true;
+            tutorialButton.Disabled = game.Configuration.FirstStart;
+            tutorialButton.Pressed = game.Configuration.FirstStart;
+            tutorialButton.ToggleButton = true;
+            tutorialButton.LeftClickAction = () =>
+			{
+				game.Configuration.FirstStart = !game.Configuration.FirstStart;
+			};
+			#endregion
 
-            portraitBackground = spriteFactory.Create(32, 34, true, 1) as ILayerSprite;
+			portraitBackground = spriteFactory.Create(32, 34, true, 1) as ILayerSprite;
             portraitBackground.Layer = layer;
             portraitBackground.X = offset.X + 112;
             portraitBackground.Y = offset.Y + 32;
@@ -191,8 +203,14 @@ namespace Ambermoon.UI
             int textWidth = headerText.Length * Global.GlyphWidth;
             int textOffset = (windowArea.Width - textWidth) / 2;
             header = AddText(offset + new Position(textOffset, 16), headerText, TextColor.BrightGray);
+            string tutorialText = Tutorial.GetIntroductionTooltip(game.GameLanguage);
+            if (tutorialText.Length > 8)
+                tutorialText = tutorialText[0..6] + "..";
+			textWidth = tutorialText.Length * Global.GlyphWidth;
+            textOffset = windowArea.Right - textWidth - 12;
+			this.tutorialText = AddText(new Position(textOffset, tutorialButton.Area.Bottom + 2), tutorialText, TextColor.BrightGray);
 
-            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Render.Color.Black, 255);
+			fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Render.Color.Black, 255);
             fadeArea.Layer = renderView.GetLayer(Layer.Effects);
             fadeArea.X = 0;
             fadeArea.Y = 0;
@@ -218,6 +236,8 @@ namespace Ambermoon.UI
             maleButton?.Destroy();
             femaleButton?.Destroy();
             okButton?.Destroy();
+            tutorialButton?.Destroy();
+            tutorialText?.Delete();
             portraitBackground?.Delete();
             portrait?.Delete();
             portraitBorders.ForEach(b => b?.Delete());
@@ -399,6 +419,7 @@ namespace Ambermoon.UI
                 leftButton.LeftMouseUp(position, 0u);
                 rightButton.LeftMouseUp(position, 0u);
                 okButton.LeftMouseUp(position, 0u);
+                tutorialButton.LeftMouseUp(position, 0u);
             }
         }
 
@@ -419,7 +440,8 @@ namespace Ambermoon.UI
                 leftButton.LeftMouseDown(position, 0u);
                 rightButton.LeftMouseDown(position, 0u);
                 okButton.LeftMouseDown(position, 0u);
-            }
+				tutorialButton.LeftMouseDown(position, 0u);
+			}
         }
 
         public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition, bool mobile)
