@@ -362,73 +362,73 @@ namespace Ambermoon.UI
                     "Określ wymagane punkty nauki zaklęć"
                 }
             },
-			{ GameLanguage.Czech, new string[]
-				{
-					"Zavřít",
-					"Ukončit hru",
-					"Nastavení",
-					"Uložit",
-					"Načíst",
-					"Nová hra",
-					"Zkoumat",
-					"Dotknout",
-					"Mluvit",
-					"Přepravit",
-					"Kniha kouzel",
-					"Odpočinek",
-					"Mapa",
-					"Bojové pozice",
-					"Čekat",
-					"Statistiky postavy",
-					"Inventář",
-					"Použít předmět",
-					"Zkoumat předmět",
-					"Uložit předmět do truhly",
-					"Uložit zlato do truhly",
-					"Uložit jídlo do truhly",
-					"Zahodit předmět",
-					"Zahodit zlato",
-					"Zahodit jídlo",
+            { GameLanguage.Czech, new string[]
+                {
+                    "Zavřít",
+                    "Ukončit hru",
+                    "Nastavení",
+                    "Uložit",
+                    "Načíst",
+                    "Nová hra",
+                    "Zkoumat",
+                    "Dotknout",
+                    "Mluvit",
+                    "Přepravit",
+                    "Kniha kouzel",
+                    "Odpočinek",
+                    "Mapa",
+                    "Bojové pozice",
+                    "Čekat",
+                    "Statistiky postavy",
+                    "Inventář",
+                    "Použít předmět",
+                    "Zkoumat předmět",
+                    "Uložit předmět do truhly",
+                    "Uložit zlato do truhly",
+                    "Uložit jídlo do truhly",
+                    "Zahodit předmět",
+                    "Zahodit zlato",
+					"Vyhodit jídlo",
+                    "Dát zlato",
+                    "Dát jídlo",
+					"Rozděl zlato",
+					"Rozděl jídlo",
+                    "Nákup",
+                    "Prodej",
+                    "Trénink",
+                    "Vyléčit osobu",
+                    "Odstranit kletbu",
+                    "Vyléčit stav",
+                    "Zůstat na noc",
+                    "Identifikovat výbavu",
+                    "Identifikovat předmět",
+                    "Opravit předmět",
+                    "Dobít předmět",
+                    "Přečíst svitek kouzla",
+                    "Spánek",
+                    "Odemknout",
+                    "Najít past",
+                    "Zneškodnit past",
+                    "Odpověď",
+                    "Zopakovat hádanku",
+                    "Řekni něco",
+                    "Ukaž předmět",
+					"Dát předmět",
 					"Dát zlato",
 					"Dát jídlo",
-					"Vzít zlato",
-					"Vzít jídlo",
-					"Nákup",
-					"Prodej",
-					"Trénink",
-					"Vyléčit osobu",
-					"Odstranit kletbu",
-					"Vyléčit stav",
-					"Zůstat na noc",
-					"Identifikovat výbavu",
-					"Identifikovat předmět",
-					"Opravit předmět",
-					"Dobít předmět",
-					"Přečíst svitek kouzla",
-					"Spánek",
-					"Odemknout",
-					"Najít past",
-					"Zneškodnit past",
-					"Odpověď",
-					"Zopakovat hádanku",
-					"Řekni něco",
-					"Ukaž předmět",
-					"Dej předmět",
-					"Dej zlato",
-					"Dej jídlo",
-					"Požádat o přijetí",
-					"Požádat o odchod",
-					"Utéct",
-					"Začít kolo",
-					"Pohyb",
-					"Postup",
-					"Útok",
-					"Parírování",
-					"Seslat kouzlo",
-					"Určit body kouzel"
-				}
-			}
-		}.ToImmutableDictionary();
+                    "Požádat o přijetí",
+                    "Požádat o odchod",
+                    "Utéct",
+                    "Začít kolo",
+                    "Pohyb",
+                    "Postup",
+                    "Útok",
+                    "Parírování",
+                    "Seslat kouzlo",
+                    "Určit body kouzel"
+                }
+            }
+        }.ToImmutableDictionary();
 
         public static string GetTooltip(GameLanguage gameLanguage, TooltipType type) => tooltips[gameLanguage][(int)type];
 
@@ -437,6 +437,7 @@ namespace Ambermoon.UI
         public const int Height = 17;
         readonly IRenderView renderView;
         public Rect Area { get; }
+        public bool ToggleButton { get; set; } = false;
         ButtonType buttonType = ButtonType.Empty;
         readonly ILayerSprite frameSprite; // 32x17
         readonly ILayerSprite disableOverlay;
@@ -695,15 +696,18 @@ namespace Ambermoon.UI
             }
         }
 
-        public void LeftMouseUp(Position position, uint currentTicks)
+		public void LeftMouseUp(Position position, uint currentTicks)
         {
+            if (ToggleButton)
+                return;
+
             CursorType? cursorType = null;
             LeftMouseUp(position, ref cursorType, currentTicks);
         }
 
         public void LeftMouseUp(Position position, ref CursorType? cursorType, uint currentTicks)
         {
-            if (Disabled || rightMouse)
+            if (Disabled || rightMouse || ToggleButton)
                 return;
 
             if (Pressed && !InstantAction && Area.Contains(position))
@@ -717,7 +721,7 @@ namespace Ambermoon.UI
 
         public void RightMouseUp(Position position, uint currentTicks)
         {
-            if (Disabled || !rightMouse)
+            if (Disabled || !rightMouse || ToggleButton)
                 return;
 
             if (Pressed && !InstantAction && Area.Contains(position))
@@ -744,10 +748,18 @@ namespace Ambermoon.UI
             if (Area.Contains(position))
             {
                 pressedTime = DateTime.Now;
-                Pressed = true;
                 rightMouse = false;
 
-                if (InstantAction)
+                if (ToggleButton)
+                {
+                    Pressed = !Pressed;
+					cursorType = ExecuteActions(currentTicks, false);
+					return true;
+                }
+                
+                Pressed = true;
+
+				if (InstantAction)
                 {
                     if (continuousActionDelayInTicks == null)
                         released = true;
@@ -762,7 +774,7 @@ namespace Ambermoon.UI
 
         public bool RightMouseDown(Position position, uint currentTicks)
         {
-            if (Disabled)
+            if (Disabled || ToggleButton)
                 return false;
 
             if (Area.Contains(position))
@@ -873,6 +885,9 @@ namespace Ambermoon.UI
 
         public void Update(uint currentTicks)
         {
+            if (ToggleButton)
+                return;
+
             if (Pressed && released && (DateTime.Now - pressedTime).TotalMilliseconds >= ButtonReleaseTime)
                 Pressed = false;
 

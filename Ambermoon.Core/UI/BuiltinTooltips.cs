@@ -242,13 +242,13 @@ namespace Ambermoon.UI
 				// Dexterity
 	            "Obratnost^^Šance v procentech nespustit^ past při manipulaci se zámky.^Přidává spolu se štěstím^ k šanci vyhnout se boji.^^V současné době {0}% šance vyhnout se pasti^ {1}% šance vyhnout se boji",
 				// Speed
-	            "Rychlost^^Vyšší hodnoty vám umožňují jednat v bitvě dříve.^Každých 80 bodů vám umožní posunout se o 1 pole^za kolo.^^V současné době se můžete posunout o {0} políček",
+	            "Pohyb^^Vyšší hodnoty vám umožňují jednat v bitvě dříve.^Každých 80 bodů vám umožní posunout se o 1 pole^za kolo.^^V současné době se můžete posunout o {0} políček",
 				// Stamina
-	            "Výdrž^^Zvyšuje obranu o 1 každých 25 bodů.^^V současné době +{0} obrana",
+	            "Stamina^^Zvyšuje obranu o 1 každých 25 bodů.^^V současné době +{0} obrana",
 				// Charisma
 	            "Charisma^^Zvyšuje prodejní cenu o 1%^každých plných 10 bodů.^^Aktuálně +{0}% prodejní ceny",
 				// Luck
-	            "Štěstí^^Šance v vyhnout se účinku již spuštěné pasti.^Přidává spolu s obratností ^k šanci vyhnout se boji.^^Aktuálně {0}% šance vyhnout se účinku pasti^ {1}% šance vyhnout se boji",
+	            "Štěstí^^Šance vyhnout se účinku již spuštěné pasti.^Přidává spolu s obratností ^k šanci vyhnout se boji.^^Aktuálně {0}% šance vyhnout se účinku pasti^ {1}% šance vyhnout se boji",
 				// Anti-Magic
 	            "Anti-Magie^^Šance na blokování nepřátelských kouzel v procentech.^^V současné době {0}% šance na blokování kouzel"
 			} }
@@ -359,9 +359,9 @@ namespace Ambermoon.UI
 				// Crit
 	            "Kritický zásah^^Šance zabít protivníka jediným úderem.^Nefunguje proti bossům.^^Aktuální šance: {0}%",
 				// Find traps
-	            "Najdi past^^Šance najít past na zámku.^^Aktuální šance: {0}%",
+	            "Najít past^^Šance najít past na zámku.^^Aktuální šance: {0}%",
 				// Disarm traps
-	            "Zneškodni past^^Šance na zneškodnění nalezené pasti na zámku.^^Aktuální šance: {0}%",
+	            "Zneškodnit past^^Šance na zneškodnění nalezené pasti na zámku.^^Aktuální šance: {0}%",
 				// Lockpick
 	            "Odemykání^^Šance na odemčení zámku bez paklíče.^Nefunguje u dveří, které vyžadují klíč.^^Aktuální šance: {0}%",
 				// Search
@@ -369,7 +369,7 @@ namespace Ambermoon.UI
 				// Read magic
 	            "Čtení kouzel^^Šance naučit se kouzlo ze svitku.^Jinak je svitek zničen.^^Aktuální šance: {0}%",
 				// Use magic
-	            "Použít magii^^Šance na úspěšné seslání kouzla.^Některá kouzla mají negativní účinky,^pokud se seslání nezdaří.^^Aktuální šance: {0}%",
+	            "Sesílání kouzel^^Šance na úspěšné seslání kouzla.^Některá kouzla mají negativní účinky,^pokud se seslání nezdaří.^^Aktuální šance: {0}%",
 			} }
 		}.ToImmutableDictionary();
 
@@ -528,7 +528,7 @@ namespace Ambermoon.UI
 				// Blind
 				{ Condition.Blind, "Postava nevidí.^Poloměr světla na 2D mapách je vypnutý.^Úplná tma na 3D mapách." },
 				// Drugged
-				{ Condition.Drugged, "Postava je pod vlivem drog.^Složitější ovládání a vizuální efekty." },
+				{ Condition.Drugged, "Postava je pod vlivem.^Závratě a nekoordinovanost pohybů." },
 				// Exhausted
 				{ Condition.Exhausted, "Všechny atributy se dočasně sníží na polovinu.^Může být odstraněno spánkem." },
 				// Unused
@@ -713,7 +713,7 @@ namespace Ambermoon.UI
 				// Damage
 				"Poškození^^Základní hodnota poškození v bitvách.^^Skládá se z vybavení a síly.",
 				// Defense
-				"Obrana^^Základní hodnota pro snížení fyzického poškození^v bitvách.^^Skládá se z vybavení a výdrže.",
+				"Obrana^^Základní hodnota pro snížení fyzického poškození^v bitvách.^^Kombinace správného vybavení a staminy.",
 				// EPPre50
 				"Zkušenostní body^^Potřebné k získání úrovně.^^Další úroveň na {0} ZB.",
 				// EP50
@@ -727,7 +727,7 @@ namespace Ambermoon.UI
 				// RangeOperator
 				" na ",
 				// MagicIntBonus
-				"^ Bonus: BM and BUK +INT/25 ({0})"
+				"^ Bonus: BM a BUK +INT/25 ({0})"
 			} }
 		}.ToImmutableDictionary();
     }

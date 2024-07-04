@@ -294,14 +294,14 @@ namespace Ambermoon.Render
 					"Egil: Trpaslíci z Gemstone potřebují dobrovolníky na obnovu svého hlavního města.",
 					"~HERO~: Doufám, že se ještě uvidíme. Šťastnou cestu, příteli!",
 					" ^~HERO~: ...",
-					" ^Stranger: Ne tak rychle ~HERO~!",
+					" ^Cizinec: Ne tak rychle ~HERO~!",
 					" ^~HERO~: Kdo jsi?",
-					"Stranger: Jmenuji se ~INK17~Pyrdacor~INK31~. Nemám mnoho času.",
-					"Stranger: Ale mohu vám říci toto: Dobrodružství ještě nekončí.",
+					"Cizinec: Jmenuji se ~INK 17~Pyrdacor~INK 31~. Nemám mnoho času.",
+					"Cizinec: Ale mohu vám říci toto: Dobrodružství ještě nekončí.",
 					" ^~HERO~: O čem to mluvíš?",
-					" ^~INK17~Je v plánu třetí část~INK31~ trilogie Amber.",
+					" ^~INK 17~Je v plánu třetí část~INK 31~ trilogie Amber.",
 					" ^~HERO~: Úžasné!",
-					"Pyrdacor: Děkuji, že jsi si zahrál ~INK22~Ambermoon~INK31~! Doufám, že jsi se bavil."
+					"Pyrdacor: Děkuji, že jsi si zahrál ~INK 22~Ambermoon~INK 31~! Doufám, že jsi se bavil."
 				}
             }
 		}.ToImmutableDictionary();
