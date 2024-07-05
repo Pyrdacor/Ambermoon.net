@@ -472,21 +472,7 @@ namespace Ambermoon
 			}
         }
         Func<bool> currentMobileButtonMoveAllowProvider;
-        private bool mobileMovementIndicatorEnabled = false;
-		public bool MobileMovementIndicatorEnabled
-        {
-            get => mobileMovementIndicatorEnabled && !WindowActive && !PopupActive &&
-					CurrentWindow.Window == Window.MapView &&
-					InputEnable && !allInputDisabled &&
-					characterCreator == null && outro?.Active != true &&
-					customOutro == null;
-            set
-            {
-                if (Configuration.IsMobile)
-                    mobileMovementIndicatorEnabled = value;
-            }
-        }
-        public Rect CurrentMapViewArea => new Rect(mapViewArea);
+        public Rect CurrentMapViewArea => new(mapViewArea);
 
 		/// <summary>
 		/// The 3x3 buttons will always be enabled!
@@ -1464,6 +1450,7 @@ namespace Ambermoon
             for (int i = 0; i < keys.Length; ++i)
                 keys[i] = false;
             clickMoveActive = false;
+            CurrentMobileAction = MobileAction.None;
             trappedAfterClickMoveActivation = false;
             UntrapMouse();
             InputEnable = false;
@@ -2064,7 +2051,8 @@ namespace Ambermoon
 
                         if (someoneDied)
                         {
-                            clickMoveActive = false;
+							CurrentMobileAction = MobileAction.None;
+							clickMoveActive = false;
                             ResetMoveKeys(true);
                         }
                     });
@@ -2100,7 +2088,8 @@ namespace Ambermoon
                     {
                         if (someoneDied || someoneDrown)
                         {
-                            clickMoveActive = false;
+							CurrentMobileAction = MobileAction.None;
+							clickMoveActive = false;
                             ResetMoveKeys(true);
                         }
                     });
@@ -2203,7 +2192,8 @@ namespace Ambermoon
             {
                 EndSequence();
                 clickMoveActive = wasClickMoveActive;
-                followUpAction?.Invoke();
+				CurrentMobileAction = MobileAction.None;
+				followUpAction?.Invoke();
             }
         }
 
@@ -2597,6 +2587,7 @@ namespace Ambermoon
             layout.ReleaseButtons();
             allInputDisabled = true;
             clickMoveActive = false;
+            CurrentMobileAction = MobileAction.None;
             trappedAfterClickMoveActivation = false;
         }
 
@@ -2753,7 +2744,7 @@ namespace Ambermoon
                 if (cursorTypes.Length == 1 && (cursorTypes[0] < CursorType.ArrowForward || cursorTypes[0] > CursorType.Wait))
                 {
                     clickMoveActive = false;
-                    UntrapMouse();
+					UntrapMouse();
                 }
 
                 CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
@@ -2836,7 +2827,11 @@ namespace Ambermoon
 		void Move()
         {
             if (DisallowMoving())
+            {
+                if (CurrentMobileAction == MobileAction.ButtonMove)
+                    CurrentMobileAction = MobileAction.None;
                 return;
+            }
 
             if (Configuration.IsMobile && CurrentMobileAction == MobileAction.ButtonMove && CurrentMobileButtonMoveCursor != null && CurrentMobileButtonMoveCursor != CursorType.None)
             {
@@ -5799,7 +5794,8 @@ namespace Ambermoon
                 if (someoneDied)
                 {
                     clickMoveActive = false;
-                    ResetMoveKeys(true);
+					CurrentMobileAction = MobileAction.None;
+					ResetMoveKeys(true);
                 }
 
                 if (trapEvent.Next != null)
@@ -6931,7 +6927,8 @@ namespace Ambermoon
                 if (someoneDied)
                 {
                     clickMoveActive = false;
-                    ResetMoveKeys(true);
+					CurrentMobileAction = MobileAction.None;
+					ResetMoveKeys(true);
                 }
             };
 
@@ -15706,59 +15703,62 @@ namespace Ambermoon
                             {
                                 var mousePosition = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
 
-                                foreach (var gotoPoint in gotoPoints)
-                                {
-                                    if (gotoPoint.Value.Area.Contains(mousePosition))
-                                    {
-                                        void AbortGoto()
-                                        {
-                                            animationsPaused = false;
-                                            Animate();
-                                            TrapMouse(Global.AutomapArea);
-                                            SetupClickHandlers();
-                                        }
+                                var clickedGotoPoint = gotoPoints.FirstOrDefault(gotoPoint => gotoPoint.Value.Area.Contains(mousePosition));
 
-                                        layout.HideTooltip();
-                                        UntrapMouse();
-                                        animationsPaused = true;
-                                        if (!CanSee())
+                                // Be a bit more forgiving on mobile devices if they not exactly hit the small circle
+                                if (clickedGotoPoint.Key == null && Configuration.IsMobile)
+									clickedGotoPoint = gotoPoints.FirstOrDefault(gotoPoint => gotoPoint.Value.Area.CreateModified(-6, -6, 12, 12).Contains(mousePosition));
+
+								if (clickedGotoPoint.Key != null)
+								{
+                                    void AbortGoto()
+                                    {
+                                        animationsPaused = false;
+                                        Animate();
+                                        TrapMouse(Global.AutomapArea);
+                                        SetupClickHandlers();
+                                    }
+
+                                    layout.HideTooltip();
+                                    UntrapMouse();
+                                    animationsPaused = true;
+                                    if (!CanSee())
+                                    {
+                                        ShowMessagePopup(DataNameProvider.DarkDontFindWayBack, AbortGoto, TextAlign.Left, 202);
+                                    }
+                                    else if (MonsterSeesPlayer)
+                                    {
+                                        ShowMessagePopup(DataNameProvider.WayBackTooDangerous, AbortGoto, TextAlign.Left, 202);
+                                    }
+                                    else
+                                    {
+                                        ShowDecisionPopup(DataNameProvider.ReallyWantToGoThere, response =>
                                         {
-                                            ShowMessagePopup(DataNameProvider.DarkDontFindWayBack, AbortGoto, TextAlign.Left, 202);
-                                        }
-                                        else if (MonsterSeesPlayer)
-                                        {
-                                            ShowMessagePopup(DataNameProvider.WayBackTooDangerous, AbortGoto, TextAlign.Left, 202);
-                                        }
-                                        else
-                                        {
-                                            ShowDecisionPopup(DataNameProvider.ReallyWantToGoThere, response =>
+                                            if (response == PopupTextEvent.Response.Yes)
                                             {
-                                                if (response == PopupTextEvent.Response.Yes)
+                                                if (player3D.Position.X + 1 == clickedGotoPoint.Key.X && player3D.Position.Y + 1 == clickedGotoPoint.Key.Y)
                                                 {
-                                                    if (player3D.Position.X + 1 == gotoPoint.Key.X && player3D.Position.Y + 1 == gotoPoint.Key.Y)
-                                                    {
-                                                        ShowMessagePopup(DataNameProvider.AlreadyAtGotoPoint, AbortGoto, TextAlign.Center, 202);
-                                                    }
-                                                    else
-                                                    {
-                                                        Exit(() =>
-                                                        {
-                                                            var xDiff = Math.Abs((int)gotoPoint.Key.X - (player3D.Position.X + 1));
-                                                            var yDiff = Math.Abs((int)gotoPoint.Key.Y - (player3D.Position.Y + 1));
-                                                            uint ticks = (uint)Util.Round((xDiff + yDiff) * 0.2f);
-                                                            GameTime.Ticks(ticks);
-                                                            Teleport(Map.Index, gotoPoint.Key.X, gotoPoint.Key.Y, gotoPoint.Key.Direction, out _, true);
-                                                        });
-                                                    }
+                                                    ShowMessagePopup(DataNameProvider.AlreadyAtGotoPoint, AbortGoto, TextAlign.Center, 202);
                                                 }
                                                 else
                                                 {
-                                                    AbortGoto();
+                                                    Exit(() =>
+                                                    {
+                                                        var xDiff = Math.Abs((int)clickedGotoPoint.Key.X - (player3D.Position.X + 1));
+                                                        var yDiff = Math.Abs((int)clickedGotoPoint.Key.Y - (player3D.Position.Y + 1));
+                                                        uint ticks = (uint)Util.Round((xDiff + yDiff) * 0.2f);
+                                                        GameTime.Ticks(ticks);
+                                                        Teleport(Map.Index, clickedGotoPoint.Key.X, clickedGotoPoint.Key.Y, clickedGotoPoint.Key.Direction, out _, true);
+                                                    });
                                                 }
-                                            }, 1, 202, TextAlign.Center);
-                                        }
-                                        return true;
+                                            }
+                                            else
+                                            {
+                                                AbortGoto();
+                                            }
+                                        }, 1, 202, TextAlign.Center);
                                     }
+                                    return true;
                                 }
                             }
 
@@ -16266,7 +16266,6 @@ namespace Ambermoon
                             }
                             else
                             {
-                                MobileMovementIndicatorEnabled = true;
                                 CloseWindow(closeAction);
                             }
                         }

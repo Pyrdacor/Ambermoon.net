@@ -50,19 +50,6 @@ namespace AmbermoonAndroid
 
 		public static byte[] GetWindowIcon() => LoadData(Resource.Raw.windowIcon);
 
-        public static Graphic GetMoveIndicatorArrow(CharacterDirection characterDirection) => characterDirection switch
-		{
-			CharacterDirection.Up => GetGraphic(Resource.Raw.moveArrowUp),
-			CharacterDirection.Right => GetGraphic(Resource.Raw.moveArrowRight),
-			CharacterDirection.Down => GetGraphic(Resource.Raw.moveArrowDown),
-			CharacterDirection.Left => GetGraphic(Resource.Raw.moveArrowLeft),
-			_ => throw new ArgumentOutOfRangeException(nameof(characterDirection)),
-		};
-
-		public static Graphic GetMoveIndicatorBackground() => GetGraphic(Resource.Raw.moveTouchIndicator);
-
-		public static Graphic GetMoveIndicatorActive() => GetGraphic(Resource.Raw.moveIndicatorActive);
-
         public static Graphic GetFinger() => GetGraphic(Resource.Raw.finger);
 
 		public static Graphic GetTapIndicator() => GetGraphic(Resource.Raw.tapIndicator);

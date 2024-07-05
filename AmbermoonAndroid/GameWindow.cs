@@ -47,7 +47,6 @@ namespace AmbermoonAndroid
         bool initialIntroEndedByClick = false;
         readonly List<Action> touchActions = new();
         readonly Action<bool, string> keyboardRequest;
-        MovementIndicator movementIndicator;
         TutorialFinger tutorialFinger;
 
 		public string Identifier { get; }
@@ -460,8 +459,7 @@ namespace AmbermoonAndroid
                 {
                     touchActions.Add(() =>
                     {
-                        if (Game is not null && (!Game.MobileMovementIndicatorEnabled || movementIndicator?.LongPress(ConvertPositionToGame(position)) != true))
-                            Game.OnLongPress(position);
+                        Game?.OnLongPress(position);
                     });
                 }
             }
@@ -534,14 +532,12 @@ namespace AmbermoonAndroid
 
         internal void OnFingerUp(Position position)
         {
-            movementIndicator?.FingerUp();
             Game?.OnFingerUp(position);
 		}
 
         internal void OnFingerMoveTo(Position position)
         {
-			if (Game is not null && (!Game.MobileMovementIndicatorEnabled || movementIndicator?.FingerMoveTo(ConvertPositionToGame(position)) != true))
-			    Game.OnFingerMoveTo(position);
+			Game?.OnFingerMoveTo(position);
 		}
 
 		internal void OnKeyChar(char ch)
@@ -904,27 +900,11 @@ namespace AmbermoonAndroid
                                     advancedSavegamePatcher.PatchSavegame(gameData, saveSlot, sourceEpisode, targetEpisode);
                                 };
 
-                                var graphics = MovementIndicator.GetGraphics(0);
-                                foreach (var entry in TutorialFinger.GetGraphics((uint)graphics.Count))
-                                    graphics.Add(entry.Key, entry.Value);
+                                var graphics = TutorialFinger.GetGraphics(0);
 								TextureAtlasManager.Instance.AddFromGraphics(Layer.MobileOverlays, graphics);
                                 var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MobileOverlays);
 
 								tutorialFinger = new TutorialFinger(renderView);
-								movementIndicator = new MovementIndicator(renderView);
-								movementIndicator.MoveRequested += (int x, int y) =>
-                                {
-                                    if (x < 0)
-                                        OnKeyDown(Key.A);
-                                    else if (x > 0)
-										OnKeyDown(Key.D);
-
-									if (y < 0)
-										OnKeyDown(Key.W);
-									else if (y > 0)
-										OnKeyDown(Key.S);
-								};
-
                                 renderView.GetLayer(Layer.MobileOverlays).Texture = textureAtlas.Texture;
 
 								game.Run(continueGame, ConvertMousePosition(mouse.Position));
@@ -1354,7 +1334,6 @@ namespace AmbermoonAndroid
             else if (Game != null)
             {
                 Game.Update(delta);
-                movementIndicator?.Update(Game.MobileMovementIndicatorEnabled);
             }
         }
 
@@ -1506,7 +1485,6 @@ namespace AmbermoonAndroid
             }
             finally
             {
-				Util.SafeCall(() => movementIndicator?.Destroy());
 				Util.SafeCall(() => tutorialFinger?.Destroy());
 				Util.SafeCall(() =>
                 {

@@ -169,8 +169,8 @@ namespace Ambermoon
                 // Tip 1
                 "Die Schaltflächen am unteren rechten Bildschirmrand enthalten sehr viele Funktionen " +
 				"des Spiels. Wenn du dich auf dem Hauptbildschirm befindest, kannst du eine zweite " +
-				"Belegung der Schaltflächen nutzen indem du deinen Finger länger auf dem Bereich " +
-				"gedrückt hälst.",
+				"Belegung der Schaltflächen nutzen indem du deinen Finger länger auf der mittleren " +
+				"Schaltfläche gedrückt hälst.",
                 // Tip 2
                 "Wenn du eine Aktion wie das Auge wählst, siehst du über deinem Charakter " +
 				"ein Symbol. Wenn du dann auf der Karte ein Objekt antipst " +
@@ -182,15 +182,14 @@ namespace Ambermoon
                 // Tip 4
                 "Du kannst auf der Karte deinen Finger gedrückt halten. Dies ermöglicht eine direkte " +
 				"Interaktion mit Objekten. Außerdem kannst du so auch laufen, wenn du dann den Finger bewegst. " +
-				"Und zum Schluss gibt es noch das virtuelle Steuerkreuz.",
+				"Und zum Schluss gibt es noch die Bewegungstasten.",
                 // Tip 5
-                "Wenn du auf dem Map-Bildschirm im rechten oberen Bereich deinen Finger gedrückt hälst " +
-				"erscheint das Steuerkreuz. Du kannst es wieder deaktivieren, indem du außerhalb " +
-                "des Kreuzes auf der Fläche deinen Finger gedrückt hälst.",
+                "Wenn du diese kurz antippst, bewegst du dich ein kleines Stück. Wenn du deinen Finger " +
+				"gedrückt hälst, läufst du kontinuierlich. Du kannst dabei auch die Richtung ändern, " +
+                "indem du deinen Finger auf die anderen Tasten bewegst.",
                 // Tip 6
-                "Wenn du deinen Finger auf dem Kreuz gedrückt hälst kannst du dich bewegen, indem du " +
-				"deinen Finger relativ zum Kreuz bewegst und du versperrst dir mit dem Finger nicht die " +
-                "Sicht auf die Karte.",
+                "Wenn du diese Einführung nochmals sehen möchtest, kannst du ein neues Spiel starten und " +
+                "den Schalter für das Tutorial aktivieren.",
                 // End
                 "Ich bin nun still und wünsche dir viel Spaß beim Spielen von Ambermoon!"
 			} },
@@ -199,7 +198,7 @@ namespace Ambermoon
                 // Tip 1
                 "The buttons in the lower right area of the screen provide many useful functions of " +
 				"the game. If you are on the main screen you can toggle the buttons by holding your " +
-				"finger pressed on the area. It will unlock additional functions.",
+				"finger pressed on the center button. It will unlock additional functions.",
                 // Tip 2
                 "If you choose actions like the eye, you will see some symbol over the character's " +
 				"head. When you tap some object on the map, the player tries to interact with it. But " +
@@ -209,14 +208,14 @@ namespace Ambermoon
 				"active player or long press them to open the inventories.",
                 // Tip 4
                 "You can long press on the map. This allows direct interaction with objects. You can also " +
-				"walk this way if you move your finger afterwards. And then we also have the virtual D-Pad.",
+				"walk this way if you move your finger afterwards. And then we also have the movement buttons.",
                 // Tip 5
-                "If you long press on the upper right part while you are on the map screen, you will " +
-				"enable the D-Pad. You can disable it again by long pressing the same area but outside " +
-				"the pad.",
+                "If you briefly tap a button, you will move a small step but if you long press a button " +
+                "you will move continously. You can also change direction by moving your finger to the " +
+				"other buttons while you hold your finger down.",
                 // Tip 6
-                "If you long press on the pad, you can move around by moving your finger relative to the " +
-				"pad. So you won't block your view on the map by your own finger.",
+                "If you want to see this introduction again, just start a new game and activate the option " +
+                "for the tutorial there.",
                 // End
                 "Now I'm quiet. Have fun playing Ambermoon!"
 			} },
@@ -224,28 +223,26 @@ namespace Ambermoon
 			{
                 // Tip 1
                 "Les boutons dans la zone en bas à droite de l'écran fournissent plusieurs fonctions utiles " +
-                "du jeu. Si vous êtes sur l'écran principal vous pouvez activer les boutons en maintenant " +
-                "votre doigt pressé sur la zone. Ca débloquera les fonctions additionnelles.",
+				"du jeu. Si vous êtes sur l'écran principal vous pouvez changer les boutons en maintenant " +
+				"votre doigt pressé sur le bouton central. Ca débloquera les fonctions additionnelles.",
                 // Tip 2
                 "Si vous choisissez des actions comme l'oeil, vous verrez des symbols sur la tête du personnage. " +
                 "Lorsque vous cliquez sur certains objets sur la carte, le joueur essaie d'intéragir avec. " +
-                "Mais ces actions ont une portée limitée!",
-                // Tip 3
-                "Si vous choisissez des actions comme l'oeil, vous verrez des symbols sur la tête du personnage. " +
-                "Lorsque vous cliquez sur certains objets sur la carte, le joueur essaie d'intéragir avec. Mais " +
-                "ces actions ont une portée limitée!",
-                // Tip 4
-                "Vous pouvez faire une pression longue sur la carte. Ceci permet une intéraction directe avec " +
+				"Mais ces actions ont une portée limitée!",
+				// Tip 3
+				"Dans la zone haute vous voyez les portraits des personnages. Vous pouvez cliquer dessus pour " +
+                "sélectionner le joueur actif ou avec une pression longue pour ouvrir les inventaires.",
+				// Tip 4
+				"Vous pouvez faire une pression longue sur la carte. Ceci permet une intéraction directe avec " +
                 "les objets. Vous pouvez aussi marcher de cette façon si vous déplacez votre doigt après coup. " +
-                "Et nous avons également le D-Pad virtuel.",
-                // Tip 5
-                "Si vous faites une pression longue sur la partie supérieure pendant que vous êtes sur l'écran " +
-                "carte, vous activerez le D-Pad. Vous pouvez le désactiver à nouveau en faisant une pression " +
-                "longue sur la même zone mais en dehors du pad.",
+				"Et nous avons également les boutons de mouvement.",
+				// Tip 5
+				"Si vous appuyez brièvement sur un bouton, vous vous déplacerez d'un petit pas, mais si vous appuyez " +
+                "longuement sur un bouton, vous vous déplacerez continuellement. Vous pouvez également changer de " +
+                "direction en déplaçant votre doigt vers les autres boutons tout en maintenant votre doigt appuyé.",
                 // Tip 6
-                "Si vous faites une pression longue sur le pad, vous pouvez vous déplacer dans les environs en " +
-                "bougeant votre doigt relatif au pad. Ainsi vous ne bloquerez pas votre vue sur la carte avec votre " +
-                "propre doigt.",
+                "Si vous souhaitez revoir cette introduction, démarrez une nouvelle partie et activez l'option " +
+                "du tutoriel à cet endroit.",
                 // End
                 "Maintenant, je suis silencieux. Amusez-vous bien avec Ambermoon !"
 			} },
@@ -253,7 +250,7 @@ namespace Ambermoon
 			{
                 // Tip 1
 			    "Przyciski w prawym dolnym rogu ekranu zapewniają wiele przydatnych funkcji gry. Jeśli jesteś " +
-                "na ekranie głównym, możesz przełączać przyciski, przytrzymując palec na tym obszarze. "+
+				"na ekranie głównym, możesz przełączać przyciski, przytrzymując palec na środkowym przycisku. "+
                 "Umożliwia to dostęp do dodatkowych funkcji.",
                 // Tip 2
 				"Jeśli wybierzesz akcję taką jak oko, zobaczysz symbol nad głową postaci. Po dotknięciu " +
@@ -264,13 +261,14 @@ namespace Ambermoon
                 "gracza lub przytrzymać dłużej, aby otworzyć ekwipunek.",
                 // Tip 4
                 "Dłuższy nacisk na obszarze mapy pozwala na bezpośrednią interakcję z obiektami. Możesz także " +
-                "chodzić w ten sposób, jeśli w trakcie przesuniesz palec. Mamy też wirtualny D-Pad.",
+				"chodzić w ten sposób, jeśli w trakcie przesuniesz palec. Mamy też przyciski ruchu.",
                 // Tip 5
-                "Jeśli długo naciśniesz prawą górną część, gdy jesteś na ekranie mapy, włączysz D-Pada. " +
-                "Możesz go ponownie wyłączyć, naciskając długo ten sam obszar, ale poza padem.",
+                "Krótkie naciśnięcie przycisku spowoduje niewielki ruch, natomiast długie naciśnięcie przycisku " +
+                "spowoduje ciągły ruch. Możesz także zmienić kierunek, przesuwając palec do innych przycisków, " +
+                "przytrzymując go.",
                 // Tip 6
-                "Po długim naciśnięciu pada można poruszać się, przesuwając palec względem pada. " +
-                "Nie będziesz więc blokować widoku mapy własnym palcem.",
+                "Jeśli chcesz ponownie zobaczyć to wprowadzenie, po prostu rozpocznij nową grę i aktywuj opcję " +
+                "samouczka.",
                 // End
                 "Teraz zamilknę. baw się dobrze grając w Ambermoon!"
 			} },
@@ -279,7 +277,7 @@ namespace Ambermoon
                 // Tip 1
 				"Tlačítka v pravém dolním rohu obrazovky poskytují mnoho užitečných funkcí hry. " + 
                 "Pokud jste na hlavní obrazovce, můžete tato tlačítka přepínat podržením " +
-                "prstu v této oblasti. Tím odemknete další funkce.",
+				"prstu na prostředním tlačítku. Tím odemknete další funkce.",
                 // Tip 2
                 "Pokud zvolíte akce jako oko, zobrazí se nad postavou symbol hlavy. " +
                 "Když klepnete na nějaký objekt na mapě, hráč se s ním pokusí interagovat. " +
@@ -289,13 +287,14 @@ namespace Ambermoon
                 "aktivního hráče, nebo jen dlouze podržet pro otevření inventáře.",
                 // Tip 4
                 "Na mapě můžete podržet prst. To umožňuje přímou interakci s objekty. Je možné " +
-                "tímto způsobem i chodit, pokud poté pohnete prstem. A pak tu máme virtuální D-Pad.",
+				"tímto způsobem i chodit, pokud poté pohnete prstem. A pak tu máme také pohybová tlačítka.",
                 // Tip 5
-                "Pokud na mapě dlouze stisknete pravý horní roh aktivujete D-Pad. " +
-                "Můžete jej znovu deaktivovat dlouhým stisknutím stejné oblasti, ale mimo pole.",
+                "Pokud krátce klepnete na tlačítko, posunete se o malý krok, ale pokud tlačítko stisknete " +
+                "dlouze, budete se pohybovat nepřetržitě. Směr můžete měnit také tak, že při podržení prstu " +
+                "přejdete na jiná tlačítka.",
                 // Tip 6
-                "Při dlouhém stisku D-Padu, se můžete pohybovat po okolí pohybem prstu relativně k " +
-                "D-Padu. Takhle si nebudete vlastním prstem blokovat pohled na mapu.",
+                "Pokud chcete tento úvod vidět znovu, spusťte novou hru a aktivujte v ní možnost výukového " +
+                "programu.",
                 // End
 	            "Teď už budu zticha. Bav se při hraní Ambermoonu!"
 			} },
@@ -335,7 +334,6 @@ namespace Ambermoon
                 else
                 {
                     game.EndSequence();
-					game.MobileMovementIndicatorEnabled = true;
 				}
             }, 4, 0, TextAlign.Center, false);
         }
@@ -414,11 +412,18 @@ namespace Ambermoon
 
         void ShowTip1(IRenderView renderView, Action next)
         {
-            ShowMarker(renderView, new Rect(Global.ButtonGridX - 1, Global.ButtonGridY - 1,
-                3 * Button.Width + 2, 3 * Button.Height + 2));
             if (game.Configuration.IsMobile)
+            {
+                ShowMarker(renderView, new Rect(Global.ButtonGridX + Button.Width - 1, Global.ButtonGridY + Button.Height - 1,
+                    Button.Width + 2, Button.Height + 2));
                 DrawTouchFinger(Global.ButtonGridX + Button.Width, Global.ButtonGridY + Button.Height * 2, true);
-            game.ShowMessagePopup(GetText(1), next);
+            }
+            else
+            {
+                ShowMarker(renderView, new Rect(Global.ButtonGridX - 1, Global.ButtonGridY - 1,
+                    3 * Button.Width + 2, 3 * Button.Height + 2));
+            }
+			game.ShowMessagePopup(GetText(1), next);
         }
 
         void ShowTip2(IRenderView renderView, Action next)
@@ -485,33 +490,45 @@ namespace Ambermoon
 
 		void ShowTip6(IRenderView renderView, Action next)
 		{
-            ShowMarker(renderView, Global.UpperRightArea.CreateModified(-1, -1, 2, 2));
-			var center = Global.UpperRightArea.Center;
-			DrawTouchFinger(center.X, center.Y + 26, true);
-            game.SetClickHandler(() =>
+            ShowMarker(renderView, Global.ButtonGridArea.CreateModified(-1, -1, 2, 2));
+			var center = Global.ButtonGridArea.Center;
+			DrawTouchFinger(center.X, center.Y - Button.Height + 8, true);
+            uint? buttonDelay = null;
+            game.ShowMessagePopup(GetText(5), () =>
             {
-                HideTouchFinger();
-				game.ShowMessagePopup(GetText(5), () =>
+                game.ExecuteNextUpdateCycle(() =>
                 {
-					HideMarker();
-					game.MobileMovementIndicatorEnabled = true;
-                    ShowMarker(renderView, Global.MobileMovementIndicator.CreateModified(-1, -1, 2, 2));
-                    // Wait at least 1 update frame to display the finger as it must be ensured
-                    // that it is drawn after the movement indicator.
-                    game.AddTimedEvent(TimeSpan.FromMilliseconds(20), () =>
+                    ReleaseButton(1, buttonDelay);
+                    buttonDelay = PressButton(5);
+                    HideTouchFinger();
+                    DrawTouchFinger(center.X + Button.Width + 8, center.Y + 4, true);
+                    game.SetClickHandler(() =>
                     {
-                        DrawTouchFinger(center.X, center.Y + 26, true);
-                        game.SetClickHandler(() =>
-                        {
-                            HideTouchFinger();
-                            HideMarker();
-                            game.ShowMessagePopup(GetText(6), next);
-                        });
+                        ReleaseButton(5, buttonDelay);
+                        HideTouchFinger();
+                        HideMarker();
+                        game.ShowMessagePopup(GetText(6), next);
                     });
                 });
             });
+            buttonDelay = PressButton(1); // Do this after ShowMessagePopup as it would release the buttons again
 		}
 
+        uint? PressButton(int index)
+        {
+            var button = game.Layout.GetButton(index);
+            var oldContinuousActionDelayInTicks = button.ContinuousActionDelayInTicks;
+            button.ContinuousActionDelayInTicks = null;
+			button.Pressed = true;
+            return oldContinuousActionDelayInTicks;
+		}
+
+		void ReleaseButton(int index, uint? continuousActionDelayInTicks)
+		{
+			var button = game.Layout.GetButton(index);
+			button.ContinuousActionDelayInTicks = continuousActionDelayInTicks;
+			button.Release(true);
+		}
 
 		void ShowTutorialEnd(IRenderView renderView, Action next)
         {

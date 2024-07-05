@@ -1,5 +1,2 @@
 ﻿- Try to avoid/remove bluetooth permission request
-- Remove D-Pad
-- Adjust tutorial texts and steps again :(
 - Advanced logo looks shrinked
-- Automap goto point click on mobile is too narrow (add some area around it)

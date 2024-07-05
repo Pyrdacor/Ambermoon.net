@@ -2061,7 +2061,7 @@ namespace Ambermoon.UI
             {
 				if (game.Configuration.IsMobile)
                 {
-                    game.Move(false, 1.0f, cursorType);
+					game.Move(false, 1.0f, cursorType);
                     game.StartVirtualButtonMovement(cursorType, GetMoveButtonCursorMapping().ToList().FindIndex(c => c == cursorType),
                         () => moveDelay >= game.CurrentTicks - lastButtonMoveTicks);
                     return;
@@ -2123,7 +2123,7 @@ namespace Ambermoon.UI
                 }
             }
 
-            switch (Type)
+			switch (Type)
             {
                 case LayoutType.Map2D:
                     if (ButtonGridPage == 0)
