@@ -801,6 +801,8 @@ namespace Ambermoon.UI
             buttonGrid.EnableButton(index, enable);
         }
 
+        public Button GetButton(int index) => buttonGrid.GetButton(index);
+
         public bool ButtonsDisabled
         {
             get => buttonGrid.Disabled;
@@ -1943,7 +1945,7 @@ namespace Ambermoon.UI
         }
 
         uint lastButtonMoveTicks = 0;
-        static readonly CursorType[] MoveButtonCursorMapping2D = new CursorType[9]
+        internal static readonly CursorType[] MoveButtonCursorMapping2D = new CursorType[9]
         {
             CursorType.ArrowUpLeft,
             CursorType.ArrowUp,
@@ -1955,7 +1957,7 @@ namespace Ambermoon.UI
             CursorType.ArrowDown,
             CursorType.ArrowDownRight
         };
-        static readonly CursorType[] MoveButtonCursorMapping3D = new CursorType[9]
+		internal static readonly CursorType[] MoveButtonCursorMapping3D = new CursorType[9]
         {
             CursorType.ArrowTurnLeft,
             CursorType.ArrowForward,
@@ -1967,6 +1969,7 @@ namespace Ambermoon.UI
             CursorType.ArrowBackward,
             CursorType.ArrowRotateRight
         };
+        internal CursorType[] GetMoveButtonCursorMapping() => Type == LayoutType.Map2D ? MoveButtonCursorMapping2D : MoveButtonCursorMapping3D;
         static CursorType CombineMoveCursorTypes2D(List<CursorType> cursorTypes)
         {
             bool left = cursorTypes.Contains(CursorType.ArrowUpLeft) ||
@@ -2056,9 +2059,17 @@ namespace Ambermoon.UI
 
             void HandleButtonMove(CursorType cursorType)
             {
-                var pressedCursors = new List<CursorType>();
+				if (game.Configuration.IsMobile)
+                {
+                    game.Move(false, 1.0f, cursorType);
+                    game.StartVirtualButtonMovement(cursorType, GetMoveButtonCursorMapping().ToList().FindIndex(c => c == cursorType),
+                        () => moveDelay >= game.CurrentTicks - lastButtonMoveTicks);
+                    return;
+                }
 
-                if (Type == LayoutType.Map2D)
+				var pressedCursors = new List<CursorType>();
+
+				if (Type == LayoutType.Map2D)
                 {
                     if (game.CurrentTicks - lastButtonMoveTicks < moveDelay)
                         return;

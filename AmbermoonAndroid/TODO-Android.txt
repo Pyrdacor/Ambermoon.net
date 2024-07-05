@@ -1,14 +1,5 @@
-﻿- Long press movement for 3D
-- Long press event triggering for 3D
-- Long press to talk to NPCs
-- Music has delay after finishing (very noticable for Pyrdacor logo :/ )
-- Scrolling the automap is a bit slow
-- 3D movement is bad
-- Try to avoid/remove bluetooth permission request
-- Icon/logo on phone and when starting
-- Implement movement indicator fully (not working properly right now)
-- Finish tutorial
-- Add tutorial translations for mobile
-- When finger in tutorial hovers movement indicator, some areas are fully transparent
+﻿- Try to avoid/remove bluetooth permission request
+- Remove D-Pad
+- Adjust tutorial texts and steps again :(
 - Advanced logo looks shrinked
-- Remove temporary "Tutorial reset / FirstStart=true"
+- Automap goto point click on mobile is too narrow (add some area around it)

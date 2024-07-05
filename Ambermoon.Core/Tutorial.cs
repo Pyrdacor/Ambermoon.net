@@ -220,7 +220,61 @@ namespace Ambermoon
                 // End
                 "Now I'm quiet. Have fun playing Ambermoon!"
 			} },
-            { GameLanguage.Czech, new string[]
+			{ GameLanguage.French, new string[]
+			{
+                // Tip 1
+                "Les boutons dans la zone en bas à droite de l'écran fournissent plusieurs fonctions utiles " +
+                "du jeu. Si vous êtes sur l'écran principal vous pouvez activer les boutons en maintenant " +
+                "votre doigt pressé sur la zone. Ca débloquera les fonctions additionnelles.",
+                // Tip 2
+                "Si vous choisissez des actions comme l'oeil, vous verrez des symbols sur la tête du personnage. " +
+                "Lorsque vous cliquez sur certains objets sur la carte, le joueur essaie d'intéragir avec. " +
+                "Mais ces actions ont une portée limitée!",
+                // Tip 3
+                "Si vous choisissez des actions comme l'oeil, vous verrez des symbols sur la tête du personnage. " +
+                "Lorsque vous cliquez sur certains objets sur la carte, le joueur essaie d'intéragir avec. Mais " +
+                "ces actions ont une portée limitée!",
+                // Tip 4
+                "Vous pouvez faire une pression longue sur la carte. Ceci permet une intéraction directe avec " +
+                "les objets. Vous pouvez aussi marcher de cette façon si vous déplacez votre doigt après coup. " +
+                "Et nous avons également le D-Pad virtuel.",
+                // Tip 5
+                "Si vous faites une pression longue sur la partie supérieure pendant que vous êtes sur l'écran " +
+                "carte, vous activerez le D-Pad. Vous pouvez le désactiver à nouveau en faisant une pression " +
+                "longue sur la même zone mais en dehors du pad.",
+                // Tip 6
+                "Si vous faites une pression longue sur le pad, vous pouvez vous déplacer dans les environs en " +
+                "bougeant votre doigt relatif au pad. Ainsi vous ne bloquerez pas votre vue sur la carte avec votre " +
+                "propre doigt.",
+                // End
+                "Maintenant, je suis silencieux. Amusez-vous bien avec Ambermoon !"
+			} },
+			{ GameLanguage.Polish, new string[]
+			{
+                // Tip 1
+			    "Przyciski w prawym dolnym rogu ekranu zapewniają wiele przydatnych funkcji gry. Jeśli jesteś " +
+                "na ekranie głównym, możesz przełączać przyciski, przytrzymując palec na tym obszarze. "+
+                "Umożliwia to dostęp do dodatkowych funkcji.",
+                // Tip 2
+				"Jeśli wybierzesz akcję taką jak oko, zobaczysz symbol nad głową postaci. Po dotknięciu " +
+                "jakiegoś obiektu na mapie, gracz próbuje wejść z nim w interakcję. Te działania mają jednak " +
+                "ograniczony zasięg!",
+                // Tip 3
+                "W górnym obszarze znajdują się portrety postaci. Możesz je dotknąć, aby wybrać aktywnego " +
+                "gracza lub przytrzymać dłużej, aby otworzyć ekwipunek.",
+                // Tip 4
+                "Dłuższy nacisk na obszarze mapy pozwala na bezpośrednią interakcję z obiektami. Możesz także " +
+                "chodzić w ten sposób, jeśli w trakcie przesuniesz palec. Mamy też wirtualny D-Pad.",
+                // Tip 5
+                "Jeśli długo naciśniesz prawą górną część, gdy jesteś na ekranie mapy, włączysz D-Pada. " +
+                "Możesz go ponownie wyłączyć, naciskając długo ten sam obszar, ale poza padem.",
+                // Tip 6
+                "Po długim naciśnięciu pada można poruszać się, przesuwając palec względem pada. " +
+                "Nie będziesz więc blokować widoku mapy własnym palcem.",
+                // End
+                "Teraz zamilknę. baw się dobrze grając w Ambermoon!"
+			} },
+			{ GameLanguage.Czech, new string[]
             {
                 // Tip 1
 				"Tlačítka v pravém dolním rohu obrazovky poskytují mnoho užitečných funkcí hry. " + 

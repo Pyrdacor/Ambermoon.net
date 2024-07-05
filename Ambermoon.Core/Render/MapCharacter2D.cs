@@ -49,7 +49,8 @@ namespace Ambermoon.Render
         /// </summary>
         public bool IsRealCharacter => !characterReference.CharacterFlags.HasFlag(Flags.UseTileset);
         public bool IsMonster => characterReference.Type == CharacterType.Monster;
-        public bool Paused { get; set; } = false;
+		public bool IsConversationPartner => characterReference.Type == CharacterType.PartyMember || characterReference.Type == CharacterType.NPC;
+		public bool Paused { get; set; } = false;
         public Tileset.TileFlags TileFlags => characterReference?.TileFlags ?? Tileset.TileFlags.None;
 
         // TODO: This is stored in NPC_gfx.amb.

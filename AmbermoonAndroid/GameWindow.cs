@@ -679,7 +679,6 @@ namespace AmbermoonAndroid
                 switch (closeAction)
                 {
                     case MainMenu.CloseAction.NewGame:
-						configuration.FirstStart = true; // TODO: REMOVE
 						startGameAction?.Invoke(false);
                         break;
                     case MainMenu.CloseAction.Continue:

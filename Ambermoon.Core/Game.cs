@@ -44,7 +44,8 @@ namespace Ambermoon
             Hand,
             Eye,
             Mouth,
-            Interact
+            Interact,
+            ButtonMove
         }
 
         internal class ConversationItems : IItemStorage
@@ -425,23 +426,52 @@ namespace Ambermoon
                 if (!Configuration.IsMobile || currentMobileAction == value)
                     return;
 
+                if (value != MobileAction.ButtonMove)
+					CurrentMobileButtonMoveCursor = null;
+
 				currentMobileAction = value;
-                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(currentMobileAction == MobileAction.Move ? Layer.UI : Layer.Cursor);
+                var layer = currentMobileAction == MobileAction.Move || currentMobileAction == MobileAction.ButtonMove
+                    ? Layer.UI
+                    : Layer.Cursor;
+				var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
 				mobileActionIndicator.Visible = false;
 				mobileActionIndicator.TextureAtlasOffset = currentMobileAction switch
                 {
                     MobileAction.Move => textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.StatusMove)),
-                    MobileAction.Hand => textureAtlas.GetOffset((uint)CursorType.Hand),
+					MobileAction.ButtonMove => textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.StatusMove)),
+					MobileAction.Hand => textureAtlas.GetOffset((uint)CursorType.Hand),
 					MobileAction.Eye => textureAtlas.GetOffset((uint)CursorType.Eye),
 					MobileAction.Mouth => textureAtlas.GetOffset((uint)CursorType.Mouth),
 					MobileAction.Interact => textureAtlas.GetOffset((uint)CursorType.Target),
                     _ => textureAtlas.GetOffset(0)
 				};
-				mobileActionIndicator.Layer = renderView.GetLayer(currentMobileAction == MobileAction.Move ? Layer.UI : Layer.Cursor);
+				mobileActionIndicator.Layer = renderView.GetLayer(layer);
 				mobileActionIndicator.Visible = currentMobileAction != MobileAction.None;
                 UpdateMobileActionIndicatorPosition();
             }
         }
+		CursorType? currentMobileButtonMoveCursor;
+		CursorType? CurrentMobileButtonMoveCursor
+        {
+            get => currentMobileButtonMoveCursor;
+            set
+            {
+                if (currentMobileButtonMoveCursor == value)
+                    return;
+
+                currentMobileButtonMoveCursor = value;
+                var mapping = layout.GetMoveButtonCursorMapping();
+
+                for (int i = 0; i < 9; i++)
+                {
+                    if (i == 4)
+                        continue;
+
+                    layout.GetButton(i).Pressed = mapping[i] == currentMobileButtonMoveCursor;
+                }
+			}
+        }
+        Func<bool> currentMobileButtonMoveAllowProvider;
         private bool mobileMovementIndicatorEnabled = false;
 		public bool MobileMovementIndicatorEnabled
         {
@@ -991,16 +1021,27 @@ namespace Ambermoon
 
                     monstersCanMoveImmediately = false;
 
-                    var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
-
-                    if (moveTicks >= movement.MovementTicks(is3D, Map.UseTravelTypes, TravelType))
+                    if (Configuration.IsMobile && CurrentMobileAction == MobileAction.ButtonMove)
                     {
-                        lastMoveTicksReset = CurrentTicks;
+						if (CurrentMobileButtonMoveCursor != null && CurrentMobileButtonMoveCursor != CursorType.None)
+						{
+							if (currentMobileButtonMoveAllowProvider?.Invoke() == true)
+								Move(false, 1.0f, CurrentMobileButtonMoveCursor.Value);
+						}
+					}
+                    else
+                    {
+                        var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
 
-                        if (clickMoveActive)
-                            HandleClickMovement();
-                        else
-                            Move();
+                        if (moveTicks >= movement.MovementTicks(is3D, Map.UseTravelTypes, TravelType))
+                        {
+                            lastMoveTicksReset = CurrentTicks;
+
+                            if (clickMoveActive)
+                                HandleClickMovement();
+                            else
+                                Move();
+                        }
                     }
                 }
 
@@ -2523,7 +2564,7 @@ namespace Ambermoon
 
         void HandleClickMovement()
         {
-            if (paused || WindowActive || !InputEnable || !clickMoveActive || allInputDisabled || pickingNewLeader || pickingTargetPlayer || pickingTargetInventory)
+            if (!clickMoveActive || DisallowMoving())
             {
                 if (clickMoveActive)
                 {
@@ -2599,7 +2640,16 @@ namespace Ambermoon
         // Note: Eagle and wasp allow movement even with overweight.
         bool CanPartyMove() => TravelType == TravelType.Eagle || TravelType == TravelType.Wasp || !PartyMembers.Any(p => !p.CanMove(false));
 
-        internal void Move(bool fromNumpadButton, float speedFactor3D, params CursorType[] cursorTypes)
+		internal void StartVirtualButtonMovement(CursorType cursorType, int buttonIndex, Func<bool> allowMovementProvider)
+        {
+            var button = layout.GetButton(buttonIndex);
+            button.Pressed = true;
+            CurrentMobileAction = MobileAction.ButtonMove;
+			CurrentMobileButtonMoveCursor = cursorType;
+            currentMobileButtonMoveAllowProvider = allowMovementProvider;
+		}
+
+		internal void Move(bool fromNumpadButton, float speedFactor3D, params CursorType[] cursorTypes)
         {
             if (is3D)
             {
@@ -2781,10 +2831,19 @@ namespace Ambermoon
             return result;
         }
 
-        void Move()
+        bool DisallowMoving() => paused || WindowActive || !InputEnable || allInputDisabled || pickingNewLeader || pickingTargetPlayer || pickingTargetInventory;
+
+		void Move()
         {
-            if (paused || WindowActive || !InputEnable || allInputDisabled || pickingNewLeader || pickingTargetPlayer || pickingTargetInventory)
+            if (DisallowMoving())
                 return;
+
+            if (Configuration.IsMobile && CurrentMobileAction == MobileAction.ButtonMove && CurrentMobileButtonMoveCursor != null && CurrentMobileButtonMoveCursor != CursorType.None)
+            {
+                if (currentMobileButtonMoveAllowProvider?.Invoke() == true)
+                    Move(false, 1.0f, CurrentMobileButtonMoveCursor.Value);
+                return;
+			}
 
             bool left = ((!is3D || !Configuration.TurnWithArrowKeys) && keys[(int)Key.Left]) || ((!is3D || Configuration.Movement3D == Movement3D.WASDQE) && keys[(int)Key.A]);
             bool right = ((!is3D || !Configuration.TurnWithArrowKeys) && keys[(int)Key.Right]) || ((!is3D || Configuration.Movement3D == Movement3D.WASDQE) && keys[(int)Key.D]);
@@ -3360,7 +3419,9 @@ namespace Ambermoon
             if (!Configuration.IsMobile || CurrentWindow.Window != Window.MapView)
                 return;
 
-            if (CurrentMobileAction == MobileAction.Move)
+			CurrentMobileButtonMoveCursor = null;
+
+			if (CurrentMobileAction == MobileAction.Move)
             {
                 // We just press the keys and let the move logic move the player in a timed manner.
                 keys[(int)Key.W] = false;
@@ -3401,6 +3462,25 @@ namespace Ambermoon
                     }
                 }
             }
+            else if (CurrentMobileAction == MobileAction.ButtonMove)
+            {
+				var relativePosition = renderView.ScreenToGame(position);
+
+				if (Global.ButtonGridArea.Contains(relativePosition))
+				{
+                    var moveCursors = layout.GetMoveButtonCursorMapping();
+
+					for (int i = 0; i < 9; i++)
+					{
+                        if (ButtonGrid.ButtonAreas[i].Contains(relativePosition))
+                        {
+                            if (i != 4)
+                                CurrentMobileButtonMoveCursor = moveCursors[i];
+							return;
+                        }
+					}
+				}
+			}
         }
 
         public void OnLongPress(Position position)
@@ -3411,71 +3491,109 @@ namespace Ambermoon
             if (CurrentWindow.Window != Window.MapView)
             {
                 OnMouseDown(position, MouseButtons.Right);
-				OnMouseUp(position, MouseButtons.Right);
-			}
-            else if (CurrentMobileAction == MobileAction.None)
+                OnMouseUp(position, MouseButtons.Right);
+            }
+            else
             {
-				var relativePosition = renderView.ScreenToGame(position);
+                var relativePosition = renderView.ScreenToGame(position);
 
-				if (!mapViewArea.Contains(relativePosition))
+                if (!mapViewArea.Contains(relativePosition))
                 {
-                    if (Global.UpperRightArea.Contains(relativePosition))
+                    /*if (Global.UpperRightArea.Contains(relativePosition))
                     {
                         if (!mobileMovementIndicatorEnabled)
                             MobileMovementIndicatorEnabled = true;
                         else if (!Global.MobileMovementIndicator.Contains(relativePosition))
                             MobileMovementIndicatorEnabled = false;
+                    }*/
+
+                    // If long press on an arrow button, we start button movement
+                    if (layout.ButtonGridPage == 0 && Global.ButtonGridArea.Contains(relativePosition))
+                    {
+                        for (int i = 0; i < 9; i++)
+                        {
+                            if (i == 4)
+                                continue;
+
+                            if (ButtonGrid.ButtonAreas[i].Contains(relativePosition))
+                            {
+                                layout.PressButton(i, CurrentTicks);
+                                return;
+                            }
+                        }
                     }
 
 					OnMouseDown(position, MouseButtons.Right);
-					OnMouseUp(position, MouseButtons.Right);
+                    OnMouseUp(position, MouseButtons.Right);
                     return;
-				}
+                }
 
 				relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
 
-				if (is3D)
+                if (is3D)
                 {
-					// TODO
+                    if (!TriggerMapEvents(null))
+                    {
+						if (CurrentMobileAction != MobileAction.None)
+							return;
 
-					CurrentMobileAction = MobileAction.Move;
-					var center = mapViewArea.Center;
+						CurrentMobileAction = MobileAction.Move;
+                        var center = mapViewArea.Center;
 
-					if (relativePosition.X <= center.X - Mobile3DThreshold)
-						keys[(int)Key.A] = true;
-					else if (relativePosition.X >= center.X + Mobile3DThreshold)
-						keys[(int)Key.D] = true;
-					if (relativePosition.Y <= center.Y - Mobile3DThreshold)
-						keys[(int)Key.W] = true;
-					else if (relativePosition.Y >= center.Y + Mobile3DThreshold)
-						keys[(int)Key.S] = true;
-				}
+                        if (relativePosition.X <= center.X - Mobile3DThreshold)
+                            keys[(int)Key.A] = true;
+                        else if (relativePosition.X >= center.X + Mobile3DThreshold)
+                            keys[(int)Key.D] = true;
+                        if (relativePosition.Y <= center.Y - Mobile3DThreshold)
+                            keys[(int)Key.W] = true;
+                        else if (relativePosition.Y >= center.Y + Mobile3DThreshold)
+                            keys[(int)Key.S] = true;
+                    }
+                }
                 else
                 {
-					var tilePosition = renderMap2D.PositionToTile(relativePosition);
+                    var tilePosition = renderMap2D.PositionToTile(relativePosition);
 
                     if (tilePosition != null)
                     {
                         uint tileX = (uint)tilePosition.X;
                         uint tileY = (uint)tilePosition.Y;
 
-						var @event = renderMap2D.GetEvent(tileX, tileY, CurrentSavegame);
+						var character = renderMap2D.GetCharacterFromTile(tileX, tileY);
 
-                        bool TriggerEvent(EventTrigger trigger)
-                        {
-							int range = trigger == EventTrigger.Mouth ? 3 : 2;
-
-                            int xDist = Math.Abs(player2D.Position.X - tilePosition.X);
+						if (character?.IsConversationPartner == true)
+						{
+							int xDist = Math.Abs(player2D.Position.X - tilePosition.X);
 							int yDist = Math.Abs(player2D.Position.Y - tilePosition.Y);
 
+							if (xDist > 3 || yDist > 3)
+							{
+								ShowMessagePopup(GetCustomText(CustomTexts.Index.MobileTargetOutOfReach));
+								return;
+							}
+
+							if (character.Interact(EventTrigger.Mouth, renderMap2D[tileX, tileY].Type == Map.TileType.Bed))
+								return;
+						}
+
+						var @event = renderMap2D.GetEvent(tileX, tileY, CurrentSavegame);
+
+                        void TriggerEvent(EventTrigger trigger)
+                        {
+                            int range = trigger == EventTrigger.Mouth ? 3 : 2;
+
+                            int xDist = Math.Abs(player2D.Position.X - tilePosition.X);
+                            int yDist = Math.Abs(player2D.Position.Y - tilePosition.Y);
+
                             if (xDist > range || yDist > range)
-                                return false;
+							{
+								ShowMessagePopup(GetCustomText(CustomTexts.Index.MobileTargetOutOfReach));
+								return;
+							}
 
 							var map = renderMap2D.GetMapFromTile(tileX, tileY);
-							map.TriggerEventChain(this, trigger, tileX % (uint)map.Width, tileY % (uint)map.Height, @event);
-
-                            return true;
-						}
+                            map.TriggerEventChain(this, trigger, tileX % (uint)map.Width, tileY % (uint)map.Height, @event);
+                        }
 
                         if (@event is ConditionEvent condition)
                         {
@@ -3489,15 +3607,15 @@ namespace Ambermoon
                                 EventTrigger GetMultiCursorTrigger()
                                 {
                                     var flags = condition.ObjectIndex;
-									if ((flags & 0x4) != 0)
-										return EventTrigger.Mouth; // check and return this first as it has a higher range
-									if ((flags & 0x1) != 0)
+                                    if ((flags & 0x4) != 0)
+                                        return EventTrigger.Mouth; // check and return this first as it has a higher range
+                                    if ((flags & 0x1) != 0)
                                         return EventTrigger.Hand;
                                     if ((flags & 0x2) != 0)
                                         return EventTrigger.Eye;
-                                    
+
                                     return EventTrigger.Always;
-								}
+                                }
 
                                 var trigger = condition.TypeOfCondition switch
                                 {
@@ -3508,48 +3626,52 @@ namespace Ambermoon
                                     _ => EventTrigger.Mouth
                                 };
 
-                                if (TriggerEvent(trigger))
-								    return;
-							}
+                                TriggerEvent(trigger);
+                                return;
+                            }
                         }
                         else if (@event is ChestEvent chestEvent)
                         {
                             if (!chestEvent.CloseWhenEmpty || chestEvent.NoSave)
                             {
-                                if (TriggerEvent(EventTrigger.Eye))
-                                    return;
+                                TriggerEvent(EventTrigger.Eye);
+                                return;
                             }
                             else
                             {
-								var chest = GetChest(chestEvent.RealChestIndex);
+                                var chest = GetChest(chestEvent.RealChestIndex);
 
-                                if (!chest.Empty && TriggerEvent(EventTrigger.Eye))
+                                if (!chest.Empty)
+                                {
+                                    TriggerEvent(EventTrigger.Eye);
                                     return;
-							}
+                                }
+                            }
                         }
                         else if (@event is DoorEvent doorEvent)
                         {
                             if (CurrentSavegame.IsDoorLocked(doorEvent.Index))
-							{
-								if (TriggerEvent(EventTrigger.Eye))
-								    return;
-							}
-						}
+                            {
+                                TriggerEvent(EventTrigger.Eye);
+                                return;
+                            }
+                        }
 
-                        // TODO: NPCs
+						if (CurrentMobileAction != MobileAction.None)
+							return;
 
-                        CurrentMobileAction = MobileAction.Move;
+						CurrentMobileAction = MobileAction.Move;
 
-						if (player2D.Position.X < tilePosition.X)
-							keys[(int)Key.D] = true;
-						else if (player2D.Position.X > tilePosition.X)
-							keys[(int)Key.A] = true;
-						if (player2D.Position.Y < tilePosition.Y)
-							keys[(int)Key.S] = true;
-						else if (player2D.Position.Y > tilePosition.Y)
-							keys[(int)Key.W] = true;
-					}
-				}
+                        if (player2D.Position.X < tilePosition.X)
+                            keys[(int)Key.D] = true;
+                        else if (player2D.Position.X > tilePosition.X)
+                            keys[(int)Key.A] = true;
+                        if (player2D.Position.Y < tilePosition.Y)
+                            keys[(int)Key.S] = true;
+                        else if (player2D.Position.Y > tilePosition.Y)
+                            keys[(int)Key.W] = true;
+                    }
+                }
             }
         }
 
@@ -4088,8 +4210,8 @@ namespace Ambermoon
 
 			if (Configuration.IsMobile && currentWindow.Window == Window.Automap)
 			{
-				mobileAutomapScroll.X += xScroll;
-				mobileAutomapScroll.Y += yScroll;
+				mobileAutomapScroll.X += xScroll * 4;
+				mobileAutomapScroll.Y += yScroll * 4;
                 return;
 			}
 
@@ -15678,11 +15800,14 @@ namespace Ambermoon
                                         int x = Util.Round(mobileAutomapScroll.X);
                                         int y = Util.Round(mobileAutomapScroll.Y);
 
-                                        mobileAutomapScroll.X = 0;
-                                        mobileAutomapScroll.Y = 0;
-
                                         if (x != 0 || y != 0)
+                                        {
+                                            if (x != 0)
+                                                mobileAutomapScroll.X -= x;
+                                            if (y != 0)
+                                                mobileAutomapScroll.Y -= y;
                                             Scroll(x, y);
+                                        }
                                     }
                                     else
                                     {

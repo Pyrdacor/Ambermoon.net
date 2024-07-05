@@ -21,6 +21,7 @@
 
 using Ambermoon.Data;
 using Ambermoon.Render;
+using Ambermoon.UI;
 using System.Linq;
 
 namespace Ambermoon
@@ -58,33 +59,34 @@ namespace Ambermoon
         /// </summary>
         public static readonly Rect[] ExtendedPartyMemberPortraitAreas = Enumerable.Range(0, 6).Select(index =>
             new Rect(15 + index * 48, 0, 48, 36)).ToArray();
-        public static readonly Rect PartyMemberPortraitArea = new Rect(0, 0, 320, 36);
+        public static readonly Rect PartyMemberPortraitArea = new(0, 0, 320, 36);
         public const int GlyphWidth = 6;
         public const int GlyphLineHeight = 7;
-        public static readonly Rect CombatBackgroundArea = new Rect(0, 38, 320, 95);
+        public static readonly Rect CombatBackgroundArea = new(0, 38, 320, 95);
         public const int BattleFieldX = 96;
         public const int BattleFieldY = 134;
         public const int BattleFieldSlotWidth = 16;
         public const int BattleFieldSlotHeight = 13;
-        public static readonly Rect BattleFieldArea = new Rect(BattleFieldX, BattleFieldY, 6 * BattleFieldSlotWidth, 5 * BattleFieldSlotHeight);
-        public static Rect BattleFieldSlotArea(int column, int row) => new Rect
+        public static readonly Rect BattleFieldArea = new(BattleFieldX, BattleFieldY, 6 * BattleFieldSlotWidth, 5 * BattleFieldSlotHeight);
+        public static Rect BattleFieldSlotArea(int column, int row) => new
         (
             BattleFieldX + column * BattleFieldSlotWidth,
             BattleFieldY + row * BattleFieldSlotHeight,
             BattleFieldSlotWidth, BattleFieldSlotHeight
         );
         public static Rect BattleFieldSlotArea(int index) => BattleFieldSlotArea(index % 6, index / 6);
-        public static readonly Rect AutomapArea = new Rect(0, 37, 208, 163);
-        public static readonly Rect UpperRightArea = new Rect(208, 49, 96, 80);
-		public static readonly Rect MobileMovementIndicator = new Rect(208 + 16, 49 + 8, 64, 64);
+        public static readonly Rect AutomapArea = new(0, 37, 208, 163);
+        public static readonly Rect UpperRightArea = new(208, 49, 96, 80);
+        public static readonly Rect ButtonGridArea = new(ButtonGridX, ButtonGridY, 3 * Button.Width, 3 * Button.Height);
+		public static readonly Rect MobileMovementIndicator = new(208 + 16, 49 + 8, 64, 64);
 
 
 		internal static Rect GetTextRect(int glyphHeight, Rect rect)
         {
-            if (glyphHeight == Global.GlyphLineHeight)
+            if (glyphHeight == GlyphLineHeight)
                 return rect;
 
-            return rect.CreateModified(0, Global.GlyphLineHeight - glyphHeight, 0, glyphHeight - Global.GlyphLineHeight);
+            return rect.CreateModified(0, GlyphLineHeight - glyphHeight, 0, glyphHeight - GlyphLineHeight);
         }
 
         public static Rect GetTextRect(IRenderView renderView, Rect rect) => GetTextRect(renderView.FontProvider.GetFont().GlyphHeight, rect);

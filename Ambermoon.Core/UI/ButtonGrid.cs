@@ -36,18 +36,24 @@ namespace Ambermoon.UI
         bool rightMouseDown = false;
         readonly Rect area;
         bool visible = true;
+        public readonly static Rect[] ButtonAreas = new Rect[9];
+
+        static ButtonGrid()
+        {
+            for (int i = 0; i < 9; ++i)
+            {
+                ButtonAreas[i] = new(Global.ButtonGridX + (i % 3) * Button.Width,
+                    Global.ButtonGridY + (i / 3) * Button.Height, Button.Width, Button.Height);
+            }
+		}
 
         public ButtonGrid(IRenderView renderView)
         {
-            area = new Rect(Global.ButtonGridX, Global.ButtonGridY, 3 * Button.Width, 3 * Button.Height);
+            area = new Rect(Global.ButtonGridArea);
 
             for (int i = 0; i < 9; ++i)
             {
-                buttons[i] = new Button
-                (
-                    renderView,
-                    new Position(Global.ButtonGridX + (i % 3) * Button.Width, Global.ButtonGridY + (i / 3) * Button.Height)
-                );
+                buttons[i] = new Button(renderView, new Position(ButtonAreas[i].Position));
             }
         }
 
@@ -76,7 +82,9 @@ namespace Ambermoon.UI
             buttons[slot].Disabled = !enable;
         }
 
-        public void SetButton(int slot, ButtonType buttonType, bool disabled, Action action,
+		public Button GetButton(int index) => buttons[index];
+
+		public void SetButton(int slot, ButtonType buttonType, bool disabled, Action action,
             bool instantAction, string tooltip = null, Func<CursorType> cursorChangeAction = null,
             uint? continuousActionDelayInTicks = null)
         {

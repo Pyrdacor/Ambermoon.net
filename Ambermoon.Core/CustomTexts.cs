@@ -38,7 +38,8 @@ namespace Ambermoon
             FailedToRemoveCrashSavegame,
             GameSaved,
             GameLoaded,
-            InitialGameLoaded
+            InitialGameLoaded,
+            MobileTargetOutOfReach,
         }
 
         static readonly ImmutableDictionary<GameLanguage, ImmutableDictionary<Index, string>> entries = new Dictionary<GameLanguage, ImmutableDictionary<Index, string>>
@@ -55,8 +56,9 @@ namespace Ambermoon
                     { Index.FailedToRemoveCrashSavegame, "Der Backup-Spielstand konnte nicht automatisch gelöscht werden. Bitte löschen Sie ihn manuell. Er wird im Unterordner 'Save.99' abgelegt." },
                     { Index.GameSaved, "Gespeichert als ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "~INK 22~Spielstand {0}~INK 31~ wurde geladen."},
-                    { Index.InitialGameLoaded, "~INK 22~Initialer Spielstand~INK 31~ wurde geladen."}
-                }.ToImmutableDictionary()
+                    { Index.InitialGameLoaded, "~INK 22~Initialer Spielstand~INK 31~ wurde geladen."},
+					{ Index.MobileTargetOutOfReach, "Außer Reichweite"}
+				}.ToImmutableDictionary()
             },
             { GameLanguage.English, new Dictionary<Index, string>
                 {
@@ -70,8 +72,9 @@ namespace Ambermoon
                     { Index.FailedToRemoveCrashSavegame, "The crash backup savegame could not be deleted automatically. Please do so yourself. It is stored in sub-folder 'Save.99'." },
                     { Index.GameSaved, "Saved as ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "~INK 22~Savegame {0}~INK 31~ was loaded."},
-                    { Index.InitialGameLoaded, "~INK 22~Initial savegame~INK 31~ was loaded."}
-                }.ToImmutableDictionary()
+                    { Index.InitialGameLoaded, "~INK 22~Initial savegame~INK 31~ was loaded."},
+					{ Index.MobileTargetOutOfReach, "Out of reach"}
+				}.ToImmutableDictionary()
             },
             { GameLanguage.French, new Dictionary<Index, string>
                 {
@@ -85,8 +88,9 @@ namespace Ambermoon
                     { Index.FailedToRemoveCrashSavegame, "La sauvegarde du crash n'a pas pu être supprimée automatiquement. Veuillez le faire vous-même. Elle est stockée dans le sous-dossier 'Save.99'." },
                     { Index.GameSaved, "Sauvegardé en tant que ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "La ~INK 22~sauvegarde {0}~INK 31~ a été chargée."},
-                    { Index.InitialGameLoaded, "La ~INK 22~sauvegarde initiale~INK 31~ a été chargée."}
-                }.ToImmutableDictionary()
+                    { Index.InitialGameLoaded, "La ~INK 22~sauvegarde initiale~INK 31~ a été chargée."},
+					{ Index.MobileTargetOutOfReach, "Hors de portée"}
+				}.ToImmutableDictionary()
             },
             { GameLanguage.Polish, new Dictionary<Index, string>
                 {
@@ -100,8 +104,9 @@ namespace Ambermoon
                     { Index.FailedToRemoveCrashSavegame, "Awaryjna kopia zapisu gry nie może zostać usunięta automatycznie. Należy to zrobić samodzielnie. Jest ona przechowywana w podkatalogu 'Save.99'." },
                     { Index.GameSaved, "Zapisano jako ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "~INK 22~Zapis {0}~INK 31~ został wczytany."},
-                    { Index.InitialGameLoaded, "~INK 22~Zapis startowy~INK 31~ został wczytany."}
-                }.ToImmutableDictionary()
+                    { Index.InitialGameLoaded, "~INK 22~Zapis startowy~INK 31~ został wczytany."},
+					{ Index.MobileTargetOutOfReach, "Poza zasięgiem"}
+				}.ToImmutableDictionary()
             },
             { GameLanguage.Czech, new Dictionary<Index, string>
                 {
@@ -115,7 +120,8 @@ namespace Ambermoon
 					{ Index.FailedToRemoveCrashSavegame, "Zálohu před pádem hry nebylo možné automaticky odstranit. Udělejte to prosím sami. Je uložena v podsložce 'Save.99'." },
 					{ Index.GameSaved, "Uloženo jako ~INK 22~'{0}'~INK 31~."},
 					{ Index.GameLoaded, "~INK 22~Savegame {0}~INK 31~ načteno."},
-					{ Index.InitialGameLoaded, "~INK 22~Počáteční uložení~INK 31~ načteno."}
+					{ Index.InitialGameLoaded, "~INK 22~Počáteční uložení~INK 31~ načteno."},
+					{ Index.MobileTargetOutOfReach, "Mimo dosah"}
 				}.ToImmutableDictionary()
 			}
         }.ToImmutableDictionary();
