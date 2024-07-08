@@ -3749,7 +3749,7 @@ namespace Ambermoon
 
             // Special case to abort multiple monster start animations in battle
             if (ingame && allInputDisabled && !pickingNewLeader && currentWindow.Window == Window.Battle &&
-                currentBattle.StartAnimationPlaying && currentBattle.WaitForClick)
+                currentBattle?.StartAnimationPlaying == true && currentBattle.WaitForClick)
             {
                 currentBattle.Click(CurrentBattleTicks);
                 return;
