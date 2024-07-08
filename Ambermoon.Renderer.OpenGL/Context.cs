@@ -35,6 +35,7 @@ namespace Ambermoon.Renderer
         Rotation rotation = Rotation.None;
         Matrix4 modelViewMatrix = Matrix4.Identity;
         static readonly float FovY3D = (float)Math.PI * 0.26f;
+        static readonly float DefaultAspectRatio = (float)Global.VirtualScreenWidth / Global.VirtualScreenHeight;
         State State { get; }
 
         public Context(State state, int width, int height, float aspect)
@@ -62,14 +63,14 @@ namespace Ambermoon.Renderer
             State.Gl.BlendEquationSeparate(BlendEquationModeEXT.FuncAdd, BlendEquationModeEXT.FuncAdd);
             State.Gl.BlendFuncSeparate(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha, BlendingFactor.One, BlendingFactor.Zero);
 
-            Resize(width, height, aspect);
+			State.ProjectionMatrix2D = Matrix4.CreateOrtho2D(0, Global.VirtualScreenWidth, 0, Global.VirtualScreenHeight, 0, 1);
+
+			Resize(width, height, aspect);
         }
 
         public void Resize(int width, int height, float aspect)
         {
-            State.ProjectionMatrix2D = Matrix4.CreateOrtho2D(0, Global.VirtualScreenWidth, 0, Global.VirtualScreenHeight, 0, 1);
             State.ProjectionMatrix3D = Matrix4.CreatePerspective(FovY3D, aspect, 0.1f, 40.0f * Global.DistancePerBlock); // Max 3D map dimension is 41
-            State.FullScreenProjectionMatrix2D = Matrix4.CreateOrtho2D(0, width, 0, height, 0, 1);
 
             State.ClearMatrices();
             State.PushModelViewMatrix(Matrix4.Identity);
@@ -96,6 +97,24 @@ namespace Ambermoon.Renderer
             }
         }
 
+        void UpdateFullScreenMatrix()
+        {
+            float aspectRatio = (float)width / height;
+            int usedWidth = width;
+            int usedHeight = height;
+
+            if (aspectRatio > DefaultAspectRatio) // screen is wider
+            {
+                usedWidth = Util.Round(DefaultAspectRatio * height);
+            }
+            else if (aspectRatio < DefaultAspectRatio) // screen is higher
+            {
+                usedHeight = Util.Round(width / DefaultAspectRatio);
+            }
+
+			State.FullScreenProjectionMatrix2D = Matrix4.CreateOrtho2D(0, usedWidth, 0, usedHeight, 0, 1);
+		}
+
         void ApplyMatrix()
         {
             State.RestoreModelViewMatrix(modelViewMatrix);
@@ -104,7 +123,7 @@ namespace Ambermoon.Renderer
             if (rotation == Rotation.None)
             {
                 modelViewMatrix = Matrix4.Identity;
-            }
+			}
             else
             {
                 var rotationDegree = 0.0f;
@@ -147,6 +166,7 @@ namespace Ambermoon.Renderer
             }
 
             State.PushModelViewMatrix(modelViewMatrix);
+            UpdateFullScreenMatrix();
         }
     }
 }
