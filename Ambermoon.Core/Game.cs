@@ -5591,16 +5591,62 @@ namespace Ambermoon
             Shake();
         }
 
+        static float FadeAlphaToLight(float alpha)
+        {
+            // 3D shaders use: outColor = vec4(pixelColor.rgb + vec3(light) - vec3(1), pixelColor.a);
+            // Or in short: result = color + light - 1.0f
+            // This means that darker colors are faster darkened and lighter colors are almost linear.
+            // A linear light factor change will darken too quickly and lighten too slowly.
+            // We want fade alpha which is: result = color * alpha
+
+            // But light must increase faster than alpha. As both values are smaller than 1, we can
+            // just use the square root here.
+            return (float)Math.Sqrt(alpha);
+		}
+
+		void Fade3DMapOut(int totalSteps, int timePerStep, float defaultLight)
+		{
+            float div = totalSteps;
+
+            for (int i = 1; i <= totalSteps; i++)
+            {
+                float light = defaultLight * FadeAlphaToLight(1.0f - i / div);
+				AddTimedEvent(TimeSpan.FromMilliseconds(i * timePerStep), () =>
+				    renderView.SetLight(light));
+			}
+		}
+
+		void Fade3DMapIn(int totalSteps, int timePerStep, float defaultLight)
+        {
+			float div = totalSteps;
+
+			for (int i = 1; i <= totalSteps; i++)
+			{
+				float light = defaultLight * FadeAlphaToLight(i / div);
+				AddTimedEvent(TimeSpan.FromMilliseconds(i * timePerStep), () =>
+					renderView.SetLight(light));
+			}
+		}
+
         void Fade(Action midFadeAction, bool changeInputEnableState = true)
         {
             Fading = true;
             if (changeInputEnableState)
                 allInputDisabled = true;
-            layout.AddFadeEffect(new Rect(0, 36, Global.VirtualScreenWidth, Global.VirtualScreenHeight - 36), Render.Color.Black, FadeEffectType.FadeInAndOut, FadeTime);
-            AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), midFadeAction);
+			layout.AddFadeEffect(new Rect(0, 36, Global.VirtualScreenWidth, Global.VirtualScreenHeight - 36), Render.Color.Black, FadeEffectType.FadeInAndOut, FadeTime);
+            AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), () =>
+            {
+                midFadeAction?.Invoke();
+
+				if (currentWindow.Window == Window.MapView && is3D)
+					Fade3DMapIn(20, FadeTime / 40, Get3DLight());
+			});
             if (changeInputEnableState)
                 AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
             AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime + 1), () => Fading = false);
+
+            if (currentWindow.Window == Window.MapView && is3D)
+                Fade3DMapOut(10, FadeTime / 40, Get3DLight());
         }
 
         internal void DamageAllPartyMembers(Func<PartyMember, uint> damageProvider, Func<PartyMember, bool> affectChecker = null,
