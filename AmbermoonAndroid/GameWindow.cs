@@ -1195,9 +1195,9 @@ namespace AmbermoonAndroid
 
 				// Donate button
 				var textureAtlas = textureAtlasManager.GetOrCreate(Layer.MobileOverlays);
-				donateButton = renderView.SpriteFactory.CreateWithAlpha(64, 17, 200);
+				donateButton = renderView.SpriteFactory.CreateWithAlpha(64, 18, 200);
 				donateButton.Layer = renderView.GetLayer(Layer.MobileOverlays);
-				donateButton.X = (Global.VirtualScreenWidth - donateButton.Width) / 2;
+				donateButton.X = (Global.VirtualScreenWidth - 58) / 2;
 				donateButton.Y = Global.VirtualScreenHeight - donateButton.Height - 16;
 				donateButton.TextureAtlasOffset = textureAtlas.GetOffset(0u);
 				donateButton.Visible = true;
@@ -1213,7 +1213,7 @@ namespace AmbermoonAndroid
 
 			var position = renderView.ScreenToGame(mousePosition);
 
-            if (new Rect(donateButton.X, donateButton.Y, donateButton.Width, donateButton.Height).Contains(position))
+            if (new Rect(donateButton.X, donateButton.Y, 58, donateButton.Height).Contains(position))
 			{
                 OpenDonationLink?.Invoke();
 				return true;
