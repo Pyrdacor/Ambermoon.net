@@ -208,7 +208,7 @@ namespace Ambermoon.UI
                 tutorialText = tutorialText[0..6] + "..";
 			textWidth = tutorialText.Length * Global.GlyphWidth;
             textOffset = windowArea.Right - textWidth - 12;
-			this.tutorialText = AddText(new Position(textOffset, tutorialButton.Area.Bottom + 2), tutorialText, TextColor.BrightGray);
+			this.tutorialText = AddText(new Position(textOffset, tutorialButton.Area.Bottom + 3), tutorialText, TextColor.BrightGray);
 
 			fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Render.Color.Black, 255);
             fadeArea.Layer = renderView.GetLayer(Layer.Effects);

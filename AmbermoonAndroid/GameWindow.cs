@@ -17,11 +17,19 @@ using Data = Ambermoon.Data;
 using Render = Ambermoon.Render;
 using Silk.NET.Windowing.Sdl;
 using Silk.NET.Input.Sdl;
+using Android.Content;
 
 namespace AmbermoonAndroid
 {
     class GameWindow : IContextProvider
     {
+        public enum ActivityState
+        {
+			Active, // visible and active
+			Paused, // visible but not active
+            Stopped // invisible and not active
+        }
+
         string gameVersion = "Ambermoon.net";
         Configuration configuration;
         RenderView renderView;
@@ -48,7 +56,22 @@ namespace AmbermoonAndroid
         readonly List<Action> touchActions = new();
         readonly Action<bool, string> keyboardRequest;
         TutorialFinger tutorialFinger;
+        ISprite donateButton;
+		ActivityState state = ActivityState.Active;
+        readonly Action<Action> runOnUiThread;
 
+		public ActivityState State
+        {
+            get => state;
+            set
+            {
+                if (state == value)
+                    return;
+
+                state = value;
+                OnStateChanged();
+            }
+        }
 		public string Identifier { get; }
         public IGLContext GLContext => window?.GLContext;
         public int Width { get; private set; }
@@ -56,23 +79,26 @@ namespace AmbermoonAndroid
         VersionSelector versionSelector = null;
         Intro intro = null;
         public Game Game { get; private set; }
+        public event Action OpenDonationLink;
 
-        public GameWindow(string gameVersion, Action<bool, string> keyboardRequest, string id = "MainWindow")
+        public GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, string> keyboardRequest, string id = "MainWindow")
         {
-            this.gameVersion = gameVersion;
+            this.runOnUiThread = runOnUiThread;
+			this.gameVersion = gameVersion;
             this.keyboardRequest = keyboardRequest;
 			Identifier = id;
         }
 
-        void DrawTouchFinger(int x, int y, bool longPress, Rect clipArea)
+        void DrawTouchFinger(int x, int y, bool longPress, Rect clipArea, bool behindPopup)
         {
             tutorialFinger?.Clip(clipArea);
-            tutorialFinger?.DrawFinger(x, y, longPress);
+            tutorialFinger?.DrawFinger(x, y, longPress, behindPopup);
         }
 
-        static void RunTask(Action task)
+        async void WaitForTask(Action waitTask, Action task)
         {
-            Task.Factory.StartNew(task, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+			await Task.Run(waitTask);
+            runOnUiThread(task);
         }
 
         void SetupInput(IInputContext inputContext)
@@ -488,7 +514,10 @@ namespace AmbermoonAndroid
                         advancedLogo = null;
                     }
                     else if (versionSelector != null)
-                        versionSelector.OnMouseDown(position, buttons);
+                    {
+                        if (!TestDonateButtonClick(position))
+							versionSelector.OnMouseDown(position, buttons);versionSelector.OnMouseDown(position, buttons);
+                    }
                     else if (mainMenu != null)
                         mainMenu.OnMouseDown(position, buttons);
                     else if (intro != null)
@@ -783,12 +812,15 @@ namespace AmbermoonAndroid
                     introFontLarge.GlyphGraphics, introGraphics, features);
                 logoPyrdacor?.Initialize(textureAtlasManager);
                 AdvancedLogo.Initialize(textureAtlasManager);
-                return textureAtlasManager;
+				var graphics = TutorialFinger.GetGraphics(1u); // Donate button is 0
+                graphics.Add(0u, FileProvider.GetDonateButton());
+				textureAtlasManager.AddFromGraphics(Layer.MobileOverlays, graphics);
+				return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = new();
             renderView.SetTextureFactor(Layer.Text, 2);
 
-            if (configuration.ShowFantasyIntro)
+			if (configuration.ShowFantasyIntro)
             {
                 fantasyIntro = new FantasyIntro(renderView, fantasyIntroData, () =>
                 {
@@ -813,7 +845,24 @@ namespace AmbermoonAndroid
             infoText.DisplayLayer = 254;
             infoText.Visible = false;
 
-            RunTask(() =>
+			var cursor = new InvisibleCursor(renderView, gameData.CursorHotspots);
+			cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
+			cursor.Type = Data.CursorType.None;
+
+			WaitForTask(() =>
+            {
+				while (logoPyrdacor != null)
+					Thread.Sleep(100);
+
+				while (fantasyIntro != null)
+					Thread.Sleep(100);
+
+				while (intro != null)
+					Thread.Sleep(100);
+
+				while (advancedLogo != null)
+					Thread.Sleep(100);
+			}, () =>
             {
                 try
                 {
@@ -822,9 +871,6 @@ namespace AmbermoonAndroid
                     if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
                         currentSavegame = configuration.GetOrCreateCurrentAdditionalSavegameSlots(Path.GetFileName(savePath))?.ContinueSavegameSlot ?? 0;
                     bool canContinue = currentSavegame != 0;
-                    var cursor = new InvisibleCursor(renderView, gameData.CursorHotspots);
-                    cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
-                    cursor.Type = Data.CursorType.None;
 
                     void SetupGameCreator(bool continueGame)
                     {
@@ -900,12 +946,9 @@ namespace AmbermoonAndroid
                                     advancedSavegamePatcher.PatchSavegame(gameData, saveSlot, sourceEpisode, targetEpisode);
                                 };
 
-                                var graphics = TutorialFinger.GetGraphics(0);
-								TextureAtlasManager.Instance.AddFromGraphics(Layer.MobileOverlays, graphics);
                                 var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MobileOverlays);
 
 								tutorialFinger = new TutorialFinger(renderView);
-                                renderView.GetLayer(Layer.MobileOverlays).Texture = textureAtlas.Texture;
 
 								game.Run(continueGame, ConvertMousePosition(mouse.Position));
                                 return game;
@@ -917,18 +960,6 @@ namespace AmbermoonAndroid
                             gameCreator = () => throw new AmbermoonException(ExceptionScope.Application, "Game preparation failed.");
                         }
                     }
-
-                    while (logoPyrdacor != null)
-                        Thread.Sleep(100);
-
-                    while (fantasyIntro != null)
-                        Thread.Sleep(100);
-
-                    while (intro != null)
-                        Thread.Sleep(100);
-
-                    while (advancedLogo != null)
-                        Thread.Sleep(100);
 
                     void ShowMainMenu(bool fromIntro)
                     {
@@ -942,7 +973,7 @@ namespace AmbermoonAndroid
                             introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
                             {
                                 cursor.Type = Data.CursorType.None;
-                                mainMenu.FadeOutAndDestroy(continueGame, () => RunTask(() => SetupGameCreator(continueGame)));
+                                mainMenu.FadeOutAndDestroy(continueGame, () => SetupGameCreator(continueGame));
                             }, gameLanguage, () =>
                             {
                                 cursor.Type = Data.CursorType.None;
@@ -1105,7 +1136,7 @@ namespace AmbermoonAndroid
 
             fontProvider ??= new IngameFontProvider(new DataReader(FileProvider.GetIngameFontData()), gameData.FontProvider.GetFont());
 
-            renderView = CreateRenderView(gameData, configuration, gameData.GraphicProvider, fontProvider, additionalPalettes, () =>
+			renderView = CreateRenderView(gameData, configuration, gameData.GraphicProvider, fontProvider, additionalPalettes, () =>
             {
                 textureAtlasManager.AddUIOnly(gameData.GraphicProvider, fontProvider);
                 logoPyrdacor?.Initialize(textureAtlasManager);
@@ -1114,7 +1145,11 @@ namespace AmbermoonAndroid
                 {
                     { 1u, flagsGraphic }
                 });
-                return textureAtlasManager;
+				textureAtlasManager.AddFromGraphics(Layer.MobileOverlays, new Dictionary<uint, Graphic>
+				{
+					{ 0u, FileProvider.GetDonateButton() }
+				});
+				return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = new();
             renderView.SetTextureFactor(Layer.Text, 2);
@@ -1135,32 +1170,57 @@ namespace AmbermoonAndroid
                 });
             }
             if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex >= gameVersions.Count)
-#if DEBUG
-                configuration.GameVersionIndex = additionalVersionInfo != null ? gameVersions.Count - 1 : 0;
-#else
                 configuration.GameVersionIndex = 0;
-#endif
+
             var cursor = new InvisibleCursor(renderView, gameData.CursorHotspots, textureAtlasManager);
 
-            RunTask(() =>
+			WaitForTask(() =>
             {
                 while (logoPyrdacor != null)
                     Thread.Sleep(100);
-
+            }, () =>
+            {
                 versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager,
                     gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption, configuration);
                 versionSelector.Closed += (gameVersionIndex, gameData, _) =>
                 {
-                    var gameVersion = gameVersions[gameVersionIndex];
+                    donateButton?.Delete();
+                    donateButton = null;
+					var gameVersion = gameVersions[gameVersionIndex];
                     configuration.SaveOption = SaveOption.ProgramFolder;
                     configuration.GameVersionIndex = gameVersionIndex;
                     selectHandler?.Invoke(gameData, Configuration.GetSavePath(Configuration.GetVersionSavegameFolder(gameVersion)),
                         gameVersion.Language, gameVersion.Features);
                 };
-            });
+
+				// Donate button
+				var textureAtlas = textureAtlasManager.GetOrCreate(Layer.MobileOverlays);
+				donateButton = renderView.SpriteFactory.CreateWithAlpha(64, 17, 200);
+				donateButton.Layer = renderView.GetLayer(Layer.MobileOverlays);
+				donateButton.X = (Global.VirtualScreenWidth - donateButton.Width) / 2;
+				donateButton.Y = Global.VirtualScreenHeight - donateButton.Height - 16;
+				donateButton.TextureAtlasOffset = textureAtlas.GetOffset(0u);
+				donateButton.Visible = true;
+			});
 
             return true;
         }
+
+        bool TestDonateButtonClick(Position mousePosition)
+        {
+			if (donateButton == null || !donateButton.Visible)
+                return false;
+
+			var position = renderView.ScreenToGame(mousePosition);
+
+            if (new Rect(donateButton.X, donateButton.Y, donateButton.Width, donateButton.Height).Contains(position))
+			{
+                OpenDonationLink?.Invoke();
+				return true;
+			}
+
+            return false;
+		}
 
         void InitGlyphs(IFontProvider fontProvider, TextureAtlasManager textureAtlasManager = null)
         {
@@ -1172,7 +1232,7 @@ namespace AmbermoonAndroid
         }
 
         RenderView CreateRenderView(IGameData gameData, IConfiguration configuration, IGraphicProvider graphicProvider,
-            IFontProvider fontProvider, Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
+            IFontProvider fontProvider, Graphic[] additionalPalettes, Func<TextureAtlasManager> textureAtlasManagerProvider)
         {
             bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;
             var useFrameBuffer = true;
@@ -1274,11 +1334,11 @@ namespace AmbermoonAndroid
 
         void Window_Render(double delta)
         {
-            // TODO: if (!minimized) // somehow get this information from android
+            if (State != ActivityState.Stopped)
             {
                 if (versionSelector != null)
                     versionSelector.Render();
-                if (mainMenu != null)
+                else if (mainMenu != null)
                     mainMenu.Render();
                 else if (Game != null)
                     renderView.Render(Game.ViewportOffset);
@@ -1354,8 +1414,7 @@ namespace AmbermoonAndroid
         {
 			try
 			{
-				if (renderView != null)
-                    renderView.Resize(size.X, size.Y);
+				renderView?.Resize(size.X, size.Y);
 			}
 			catch
 			{
@@ -1363,14 +1422,13 @@ namespace AmbermoonAndroid
 			}
 		}
 
-        // TODO
-        /*void Window_StateChanged(WindowState state)
+        void OnStateChanged()
         {
-            if (state == WindowState.Minimized)
+            if (state != ActivityState.Active)
                 Game?.PauseGame();
             else
                 Game?.ResumeGame();
-        }*/
+        }
 
         void UpdateWindow(IConfiguration configuration)
         {

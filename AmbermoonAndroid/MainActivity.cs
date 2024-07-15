@@ -1,4 +1,5 @@
 using Ambermoon;
+using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
@@ -9,7 +10,7 @@ using Silk.NET.Windowing.Sdl.Android;
 
 namespace AmbermoonAndroid
 {
-    [Activity(Label = "@string/app_name", MainLauncher = true, ScreenOrientation = Android.Content.PM.ScreenOrientation.Landscape)]
+    [Activity(Label = "@string/app_name", MainLauncher = true, ScreenOrientation = ScreenOrientation.Landscape)]
     public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
     {
 		private const int RequestBluetoothPermissionsId = 1001;
@@ -82,13 +83,21 @@ namespace AmbermoonAndroid
 #pragma warning restore CS0618 // Type or member is obsolete
 			}
 
-			gameWindow = new($"Ambermoon.net V{version}", (keyboardRequested, text) =>
+			gameWindow = new(RunOnUiThread, $"Ambermoon.net V{version}", (keyboardRequested, text) =>
             {
                 if (keyboardRequested)
                     ShowKeyboard(text);
                 else
                     HideKeyboard();
             });
+
+			gameWindow.OpenDonationLink += () =>
+			{
+				string url = "https://www.pyrdacor.net/donate";
+				Intent intent = new Intent(Intent.ActionView);
+				intent.SetData(Android.Net.Uri.Parse(url));
+				StartActivity(intent);
+			};
 
 			ActionBar?.Hide();
 			Title = "Ambermoon";
@@ -396,6 +405,24 @@ namespace AmbermoonAndroid
 		{
 			var position = new Position(Util.Round(x), Util.Round(y));
 			gameWindow.OnFingerUp(position);
+		}
+
+		protected override void OnPause()
+		{
+			base.OnPause();
+			gameWindow.State = GameWindow.ActivityState.Paused;
+		}
+
+		protected override void OnStop()
+		{
+			base.OnStop();
+			gameWindow.State = GameWindow.ActivityState.Stopped;
+		}
+
+		protected override void OnResume()
+		{
+			base.OnResume();
+			gameWindow.State = GameWindow.ActivityState.Active;
 		}
 	}
 }

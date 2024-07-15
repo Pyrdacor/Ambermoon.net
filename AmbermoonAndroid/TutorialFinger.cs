@@ -131,7 +131,7 @@ namespace AmbermoonAndroid
 			clock = CreateSprite(320, 320, 32, 32, 70, 2, 224);
 		}
 
-		public void DrawFinger(int x, int y, bool longPress)
+		public void DrawFinger(int x, int y, bool longPress, bool behindPopup)
 		{
 			if (destroyed)
 				return;
@@ -160,6 +160,13 @@ namespace AmbermoonAndroid
 				holdFinger.Visible = false;
 				clock.Visible = false;
 			}
+
+			if (tapFinger.Visible)
+				tapFinger.DisplayLayer = (byte)(behindPopup ? 15 : 255);
+			if (holdFinger.Visible)
+				holdFinger.DisplayLayer = (byte)(behindPopup ? 15 : 255);
+			if (clock.Visible)
+				clock.DisplayLayer = (byte)(behindPopup ? 15 : 255);
 		}
 
         public void Destroy()

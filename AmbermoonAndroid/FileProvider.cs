@@ -1,5 +1,4 @@
-﻿using Ambermoon;
-using Ambermoon.Data;
+﻿using Ambermoon.Data;
 using Android.Graphics;
 
 namespace AmbermoonAndroid
@@ -57,6 +56,8 @@ namespace AmbermoonAndroid
 		public static Graphic GetHoldIndicator() => GetGraphic(Resource.Raw.holdIndicator);
 
 		public static Graphic GetClock() => GetGraphic(Resource.Raw.clock);
+
+		public static Graphic GetDonateButton() => GetGraphic(Resource.Raw.donate);
 
 		private static Graphic GetGraphic(int id)
 		{

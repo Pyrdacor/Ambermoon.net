@@ -370,14 +370,14 @@ namespace Ambermoon
                 marker?.Delete();
         }
 
-        void DrawTouchFinger(int x, int y, bool longPress, Rect clipArea = null)
+        void DrawTouchFinger(int x, int y, bool longPress, Rect clipArea = null, bool behindPopup = false)
         {
-            drawTouchFingerRequest?.Invoke(x, y, longPress, clipArea);
+            drawTouchFingerRequest?.Invoke(x, y, longPress, clipArea, behindPopup);
 		}
 
         void HideTouchFinger()
         {
-			drawTouchFingerRequest?.Invoke(-1, -1, false, null);
+			drawTouchFingerRequest?.Invoke(-1, -1, false, null, false);
 		}
 
         void ToggleButtons()
@@ -465,7 +465,7 @@ namespace Ambermoon
 			if (game.Configuration.IsMobile)
             {
 				game.CurrentMobileAction = MobileAction.None;
-				DrawTouchFinger(Global.PartyMemberPortraitArea.X + 32, Global.PartyMemberPortraitArea.Y + 32, false, new(0, 0, Global.VirtualScreenHeight, 59));
+				DrawTouchFinger(Global.PartyMemberPortraitArea.X + 34, Global.PartyMemberPortraitArea.Y + 32, false, new(0, 0, Global.VirtualScreenHeight, 64), true);
 				ToggleButtons();
 				ShowMarker(renderView, Global.PartyMemberPortraitArea);
 				game.ShowMessagePopup(GetText(3), next);

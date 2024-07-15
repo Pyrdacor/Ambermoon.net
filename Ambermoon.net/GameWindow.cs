@@ -1229,7 +1229,7 @@ namespace Ambermoon
         }
 
         RenderView CreateRenderView(IGameData gameData, IConfiguration configuration, IGraphicProvider graphicProvider,
-            IFontProvider fontProvider, Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
+            IFontProvider fontProvider, Graphic[] additionalPalettes, Func<TextureAtlasManager> textureAtlasManagerProvider)
         {
             bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;
             var useFrameBuffer = true;
@@ -1510,7 +1510,7 @@ namespace Ambermoon
                     patcher.Render();
                 else if (versionSelector != null)
                     versionSelector.Render();
-                if (mainMenu != null)
+                else if (mainMenu != null)
                     mainMenu.Render();
                 else if (Game != null)
                     renderView.Render(Game.ViewportOffset);

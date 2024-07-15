@@ -1,7 +1,7 @@
 ﻿/*
  * VersionSelector.cs - Version selector window
  *
- * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -38,7 +38,7 @@ namespace Ambermoon.UI
         readonly ITextureAtlas textureAtlas;
         readonly ITextureAtlas flagsTextureAtlas;
         readonly IConfiguration configuration;
-        readonly List<ILayerSprite> borders = new List<ILayerSprite>();
+        readonly List<ILayerSprite> borders = new();
         readonly Cursor cursor = null;
         readonly IRenderText headerRenderText = null;
         readonly IRenderText[] versionTexts = new IRenderText[5];
@@ -49,19 +49,18 @@ namespace Ambermoon.UI
         readonly IColoredRect selectedVersionMarker = null;
         readonly Button changeSaveOptionButton = null;
         readonly IRenderText saveOptionText = null;
-        readonly Tooltip saveOptionTooltip = new Tooltip();
+        readonly Tooltip saveOptionTooltip = new();
         readonly IRenderText tooltipText = null;
-        readonly Dictionary<Button, IColoredRect[]> buttonBackgrounds
-            = new Dictionary<Button, IColoredRect[]>();
-        readonly List<List<GameVersion>> mergedGameVersions = new List<List<GameVersion>>();
-        readonly List<GameLanguage> selectedVersionLanguages = new List<GameLanguage>();
-        IColoredRect[] flagSunkenBox = null;
+        readonly Dictionary<Button, IColoredRect[]> buttonBackgrounds = new();
+        readonly List<List<GameVersion>> mergedGameVersions = new();
+        readonly List<GameLanguage> selectedVersionLanguages = new();
+		readonly IColoredRect[] flagSunkenBox = null;
         IColoredRect tooltipBorder = null;
         IColoredRect tooltipBackground = null;
-        List<ILayerSprite> languageChangeButtons = new List<ILayerSprite>();
+        readonly List<ILayerSprite> languageChangeButtons = new();
         IText currentSaveTooltipText = null;
         readonly Button okButton = null;
-        readonly List<Rect> versionAreas = new List<Rect>(5);
+        readonly List<Rect> versionAreas = new(5);
         int selectedSaveOption = 0;
         int selectedVersion = 0;
         readonly int versionCount;
@@ -84,7 +83,7 @@ namespace Ambermoon.UI
         }
         uint ticks = 0;
 
-        public event Action<int, IGameData, bool> Closed;
+		public event Action<int, IGameData, bool> Closed;
 
         public VersionSelector(string ambermoonNetVersion, IRenderView renderView, TextureAtlasManager textureAtlasManager,
             List<GameVersion> gameVersions, Cursor cursor, int selectedVersion, SaveOption saveOption, IConfiguration configuration)
@@ -378,7 +377,7 @@ namespace Ambermoon.UI
 
         string GetVersionInfoTooltip()
         {
-            return configuration.Language switch
+            var tooltip = configuration.Language switch
             {
                 GameLanguage.German => "Die Spieldaten-Version bezieht sich auf die Amiga-Basisdaten. Diese Versionierung ist unabhängig von der Ambermoon.net Version.",
                 GameLanguage.French => "La version des données concerne les données de base de l'Amiga. Cette version est indépendante de la version d'Ambermoon.net.",
@@ -386,6 +385,11 @@ namespace Ambermoon.UI
                 GameLanguage.Czech =>  "Verze herních dat se vztahuje k základním datům Amigy. Tato verze je nezávislá na verzi Ambermoon.net.",
 				_ =>                   "The game data version relates to the Amiga base data. This version is independent of the Ambermoon.net version."
             };
+
+            if (configuration.IsMobile)
+                tooltip = tooltip.Replace("Ambermoon.net", "Ambermoon");
+
+			return tooltip;
         }
 
         string GetSavegameOptionText(int option)
@@ -626,6 +630,7 @@ namespace Ambermoon.UI
             if (buttons == MouseButtons.Left)
             {
                 position = renderView.ScreenToGame(position);
+
                 okButton.LeftMouseUp(position, 0u);
                 changeSaveOptionButton.LeftMouseUp(position, 0u);
             }
@@ -661,6 +666,18 @@ namespace Ambermoon.UI
                     }
                 }
 
+                if (configuration.IsMobile)
+                {
+					if (gameDataVersionTooltipArea.Contains(position))
+					{
+						ShowTooltip(position, gameDataVersionTooltipText, NormalTooltipColor, true);
+					}
+					else
+					{
+						HideTooltip();
+					}
+				}
+
                 okButton.LeftMouseDown(position, 0u);
                 changeSaveOptionButton.LeftMouseDown(position, 0u);
             }
@@ -689,7 +706,34 @@ namespace Ambermoon.UI
             }
         }
 
-        public void OnMouseMove(Position position, MouseButtons buttons)
+		void ShowTooltip(Position position, IText text, TextColor textColor, bool up)
+		{
+			tooltipText.Text = text;
+			tooltipText.TextColor = textColor;
+
+			int textWidth = text.MaxLineSize * Global.GlyphWidth;
+			int x = Util.Limit(0, position.X - textWidth / 2, Global.VirtualScreenWidth - textWidth - 3);
+			int textHeight = text.LineCount * Global.GlyphLineHeight;
+			int y = up ? position.Y - textHeight - 8 : position.Y + 16;
+
+			var backgroundColor = textColor == NormalTooltipColor ? GetPaletteColor((byte)TextColor.Green) : GetPaletteColor((byte)TextColor.Pink);
+
+			tooltipText.Place(Global.GetTextRect(renderView, new Rect(x, y, textWidth, textHeight)), TextAlign.Center);
+			tooltipText.Visible = true;
+			tooltipBorder?.Delete();
+			tooltipBackground?.Delete();
+			tooltipBorder = FillArea(new Rect(x - 2, y - 3, textWidth + 4, textHeight + 4), GetPaletteColor(29), 248);
+			tooltipBackground = FillArea(new Rect(x - 1, y - 2, textWidth + 2, textHeight + 2), backgroundColor, 249);
+		}
+
+		void HideTooltip()
+		{
+			tooltipText.Visible = false;
+			tooltipBorder?.Delete();
+			tooltipBackground?.Delete();
+		}
+
+		public void OnMouseMove(Position position, MouseButtons buttons)
         {
             cursor.UpdatePosition(position, null);
 
@@ -706,45 +750,18 @@ namespace Ambermoon.UI
 
             HighlightVersion(-1);
 
-            void ShowTooltip(IText text, TextColor textColor, bool up)
-            {
-                tooltipText.Text = text;
-                tooltipText.TextColor = textColor;
-
-                int textWidth = text.MaxLineSize * Global.GlyphWidth;
-                int x = Util.Limit(0, position.X - textWidth / 2, Global.VirtualScreenWidth - textWidth - 3);
-                int textHeight = text.LineCount * Global.GlyphLineHeight;
-                int y = up ? position.Y - textHeight - 8 : position.Y + 16;
-
-                var backgroundColor = textColor == NormalTooltipColor ? GetPaletteColor((byte)TextColor.Green) : GetPaletteColor((byte)TextColor.Pink);
-
-                tooltipText.Place(Global.GetTextRect(renderView, new Rect(x, y, textWidth, textHeight)), TextAlign.Center);
-                tooltipText.Visible = true;
-                tooltipBorder?.Delete();
-                tooltipBackground?.Delete();
-                tooltipBorder = FillArea(new Rect(x - 2, y - 3, textWidth + 4, textHeight + 4), GetPaletteColor(29), 248);
-                tooltipBackground = FillArea(new Rect(x - 1, y - 2, textWidth + 2, textHeight + 2), backgroundColor, 249);
-            }
-
             if (IsSelectedVersionFromExternalData() && currentSaveTooltipText != null && saveOptionTooltip.Area.Contains(position))
             {
-                ShowTooltip(currentSaveTooltipText, saveOptionTooltip.TextColor, false);
+                ShowTooltip(position, currentSaveTooltipText, saveOptionTooltip.TextColor, false);
             }
             else if (gameDataVersionTooltipArea.Contains(position))
             {
-                ShowTooltip(gameDataVersionTooltipText, NormalTooltipColor, true);
+                ShowTooltip(position, gameDataVersionTooltipText, NormalTooltipColor, true);
             }
             else
             {
                 HideTooltip();
             }
-        }
-
-        void HideTooltip()
-        {
-            tooltipText.Visible = false;
-            tooltipBorder?.Delete();
-            tooltipBackground?.Delete();
         }
 
         public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)

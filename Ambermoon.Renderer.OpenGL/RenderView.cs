@@ -164,7 +164,7 @@ namespace Ambermoon.Renderer.OpenGL
 
             TextureAtlasManager.RegisterFactory(new TextureAtlasBuilderFactory(State));
 
-            var textureAtlasManager = textureAtlasManagerProvider?.Invoke();
+            var textureAtlasManager = textureAtlasManagerProvider();
             var palette = textureAtlasManager.CreatePalette(graphicProvider, additionalPalettes);
 
             static void Set320x256View(IRenderLayer renderLayer)
@@ -675,11 +675,7 @@ namespace Ambermoon.Renderer.OpenGL
                         State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                     }
 
-                    if (layer.Key == Layer.MobileOverlays)
-                    {
-						State.Gl.Disable(EnableCap.DepthTest);
-					}
-                    else if (layer.Key == Layer.Effects)
+                    if (layer.Key == Layer.Effects)
                     {
 						State.Gl.Enable(EnableCap.DepthTest);
 					}

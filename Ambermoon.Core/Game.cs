@@ -655,7 +655,7 @@ namespace Ambermoon
 
         public string GetFullVersion() => fullVersion;
 
-        public delegate void DrawTouchFingerHandler(int x, int y, bool longPress, Rect clipArea);
+        public delegate void DrawTouchFingerHandler(int x, int y, bool longPress, Rect clipArea, bool behindPopup);
 
         readonly DrawTouchFingerHandler drawTouchFingerRequest;
 
@@ -876,9 +876,11 @@ namespace Ambermoon
         bool gameWasPaused = false;
         bool gamePaused = false;
 
-
         public void PauseGame()
         {
+            if (gamePaused)
+                return;
+
             gamePaused = true;
             audioWasEnabled = AudioOutput?.Available == true && AudioOutput?.Enabled == true;
             musicWasPlaying = currentSong != null;
