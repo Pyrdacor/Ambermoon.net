@@ -5368,7 +5368,7 @@ namespace Ambermoon
                     string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack)));
             }
             UpdateSecondaryStatTooltip(SecondaryStat.Damage);
-            int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
+            int defense = character.BaseDefense + character.BonusDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
             if (CurrentSavegame.IsSpellActive(ActiveSpellType.Protection))
             {
                 if (defense > 0)
