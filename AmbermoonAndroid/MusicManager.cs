@@ -2,6 +2,7 @@
 using Ambermoon.Data.Audio;
 using Android.Content;
 using Android.Media;
+using Android.OS;
 using MP3Sharp;
 using Song = Ambermoon.Data.Enumerations.Song;
 
@@ -267,12 +268,31 @@ namespace AmbermoonAndroid
 			var audioAttributes = new AudioAttributes.Builder()
 				.SetContentType(AudioContentType.Music)
 				.Build();
-			audioTrack = new AudioTrack.Builder()
-				.SetAudioAttributes(audioAttributes)
-				.SetAudioFormat(audioFormat)
-				.SetBufferSizeInBytes(bufferSize)
-				.SetTransferMode(AudioTrackMode.Stream)
-				.Build();
+			if (Build.VERSION.SdkInt >= BuildVersionCodes.M) // API level 23 and above
+			{
+				audioTrack = new AudioTrack.Builder()
+					.SetAudioAttributes(audioAttributes)
+					.SetAudioFormat(audioFormat)
+					.SetBufferSizeInBytes(bufferSize)
+					.SetTransferMode(AudioTrackMode.Stream)
+					.Build();
+			}
+			else // Below API level 23
+			{
+				audioTrack = new AudioTrack(
+					// Audio stream type
+					Android.Media.Stream.Music,
+					// Sample rate in Hz
+					audioFormat.SampleRate,
+					// Channel configuration
+					audioFormat.ChannelMask,
+					// Audio format
+					audioFormat.Encoding,
+					// Buffer size in bytes
+					bufferSize,
+					// Mode
+					AudioTrackMode.Stream);
+			}
 			audioTrack.SetVolume(Volume);
 			audioTrack.Play();
 
