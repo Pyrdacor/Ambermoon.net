@@ -4689,7 +4689,8 @@ namespace Ambermoon.UI
                 6 => 32,
                 7 => 32,
                 8 => 37,
-                _ => throw new AmbermoonException(ExceptionScope.Data, $"Invalid event picture index: {index}. Valid indices are 0 to 8.")
+                9 => 50,
+                _ => throw new AmbermoonException(ExceptionScope.Data, $"Invalid event picture index: {index}. Valid indices are 0 to 9.")
             };
             sprite.Layer = renderLayer;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.EventPictureOffset + index);
