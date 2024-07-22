@@ -137,7 +137,14 @@ namespace Ambermoon.Data
             new Size(16, 8),
             new Size(128, 13),
             new Size(64, 60),
-        };
+			new Size(32, 16),
+			new Size(64, 41),
+			new Size(64, 41),
+			new Size(64, 41),
+			new Size(64, 25),
+			new Size(16, 41),
+			new Size(16, 41), // 110
+		};
 
         public static readonly KeyValuePair<int, Size>[] ObjectGraphicFrameCountsAndSizes = new KeyValuePair<int, Size>[]
         {
@@ -531,6 +538,8 @@ namespace Ambermoon.Data
             KeyValuePair.Create(4, new Size(64, 80)),
             KeyValuePair.Create(1, new Size(32, 32)),
             KeyValuePair.Create(4, new Size(32, 32)),
-        };
+            KeyValuePair.Create(1, new Size(32, 32)), // 390
+            KeyValuePair.Create(1, new Size(32, 79)),
+		};
     }
 }
