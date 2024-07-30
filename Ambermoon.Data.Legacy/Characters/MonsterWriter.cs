@@ -16,7 +16,8 @@ namespace Ambermoon.Data.Legacy.Characters
 
             dataWriter.Write(monster.AtariPalette);
             dataWriter.Write(monster.MonsterPalette);
-            dataWriter.Write(monster.UnknownAdditionalBytes2);
+			dataWriter.Write(monster.AlternateAnimationBits);
+			dataWriter.Write(monster.PaddingByte);
             dataWriter.Write((ushort)monster.FrameWidth);
             dataWriter.Write((ushort)monster.FrameHeight);
             dataWriter.Write((ushort)monster.MappedFrameWidth);

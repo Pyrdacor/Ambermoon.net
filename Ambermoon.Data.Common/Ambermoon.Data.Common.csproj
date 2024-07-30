@@ -16,7 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Common\Ambermoon.Common.csproj" />
-    <ProjectReference Include="..\AutoCloneGenerator\AutoCloneGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

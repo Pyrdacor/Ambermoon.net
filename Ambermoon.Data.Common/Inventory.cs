@@ -2,7 +2,6 @@
 
 namespace Ambermoon.Data
 {
-    [Serializable]
     public class Inventory
     {
         public const int Width = 3;

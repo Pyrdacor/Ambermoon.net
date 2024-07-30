@@ -10673,6 +10673,29 @@ namespace Ambermoon
             }
         }
 
+        MonsterGroup CloneMonsterGroup(MonsterGroup monsterGroup)
+        {
+            Monster CloneMonster(Monster monster)
+            {
+                if (monster == null)
+                    return null;
+
+                return CharacterManager.CloneMonster(monster);
+            }
+
+            var clone = new MonsterGroup();
+
+            for (int y = 0; y < 3; y++)
+            {
+                for (int x = 0; x < 6; x++)
+                {
+                    clone.Monsters[x, y] = CloneMonster(monsterGroup.Monsters[x, y]);
+                }
+            }
+
+            return clone;
+		}
+
         void ShowBattleWindow(Event nextEvent, bool failedFlight, uint? combatBackgroundIndex = null)
         {
             allInputDisabled = true;
@@ -10682,7 +10705,7 @@ namespace Ambermoon
                 roundPlayerBattleActions.Clear();
                 ShowBattleWindow(nextEvent, out byte paletteIndex, combatBackgroundIndex);
                 // Note: Create clones so we can change the values in battle for each monster.
-                var monsterGroup = CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex).Clone();
+                var monsterGroup = CloneMonsterGroup(CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex));
                 foreach (var monster in monsterGroup.Monsters)
                     InitializeMonster(this, monster);
                 var monsterBattleAnimations = new Dictionary<int, BattleAnimation>(24);

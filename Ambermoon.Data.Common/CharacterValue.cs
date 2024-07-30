@@ -6,7 +6,6 @@ using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Data
 {
-    [Serializable]
     public class CharacterValue : INotifyPropertyChanged
     {
         private uint _currentValue;
@@ -84,7 +83,6 @@ namespace Ambermoon.Data
         }
     }
 
-    [Serializable]
     public class CharacterValueCollection<TType> : IEnumerable<CharacterValue> where TType : Enum
     {
         readonly CharacterValue[] values = null;

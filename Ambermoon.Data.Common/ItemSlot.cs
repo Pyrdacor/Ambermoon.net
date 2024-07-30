@@ -2,7 +2,6 @@
 
 namespace Ambermoon.Data
 {
-    [Serializable]
     public class ItemSlot
     {
         public uint ItemIndex;

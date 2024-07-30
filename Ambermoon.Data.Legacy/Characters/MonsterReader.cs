@@ -7,12 +7,17 @@ namespace Ambermoon.Data.Legacy.Characters
     {
         readonly ILegacyGameData gameData;
 
-        public MonsterReader(ILegacyGameData gameData, IGraphicProvider graphicProvider)
+        public MonsterReader(ILegacyGameData gameData)
         {
             this.gameData = gameData;
         }
 
-        public void ReadMonster(Monster monster, IDataReader dataReader)
+		public MonsterReader()
+		{
+
+		}
+
+		public void ReadMonster(Monster monster, IDataReader dataReader)
         {
             ReadCharacter(monster, dataReader);
 
@@ -29,13 +34,15 @@ namespace Ambermoon.Data.Legacy.Characters
 
             monster.AtariPalette = dataReader.ReadBytes(16); // TODO
             monster.MonsterPalette = dataReader.ReadBytes(32);
-            monster.UnknownAdditionalBytes2 = dataReader.ReadBytes(2); // TODO
+			monster.AlternateAnimationBits = dataReader.ReadByte();
+			monster.PaddingByte = dataReader.ReadByte();
             monster.FrameWidth = dataReader.ReadWord();
             monster.FrameHeight = dataReader.ReadWord();
             monster.MappedFrameWidth = dataReader.ReadWord();
             monster.MappedFrameHeight = dataReader.ReadWord();
 
-            monster.CombatGraphic = LoadGraphic(monster);
+            if (gameData != null)
+                monster.CombatGraphic = LoadGraphic(monster);
         }
 
         Graphic LoadGraphic(Monster monster)

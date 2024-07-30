@@ -189,12 +189,22 @@ namespace Ambermoon.Data.GameDataRepository.Data
             animation.UsedAmount = frameIndices.Length;
         }
 
-        #endregion
+		public AnimationType GetAnimationType(MonsterAnimation monsterAnimation)
+		{
+            return _animationTypes[(int)monsterAnimation];
+		}
+
+		public void SetAnimationType(MonsterAnimation monsterAnimation, AnimationType animationType)
+		{
+			_animationTypes[(int)monsterAnimation] = animationType;
+		}
+
+		#endregion
 
 
-        #region Serialization
+		#region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+		public void Serialize(IDataWriter dataWriter, bool advanced)
         {
             void WriteFillBytes(int count)
             {

@@ -1,13 +1,10 @@
 ﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Serialization;
-using System;
 using System.Linq;
 
 namespace Ambermoon.Data
 {
-    [Serializable]
-    [AutoClone]
-    public partial class Monster : Character, IAutoClone<Monster>
+    public partial class Monster : Character
     {
         public MonsterGraphicIndex CombatGraphicIndex { get; set; }
         public uint Morale { get; set; }
@@ -15,16 +12,14 @@ namespace Ambermoon.Data
         public Animation[] Animations { get; init; } = new Animation[8];
         public byte[] AtariPalette { get; set; } // not used
         public byte[] MonsterPalette { get; set; }
-        public byte[] UnknownAdditionalBytes2 { get; set; } // 2 bytes
+        public byte AlternateAnimationBits { get; set; } // 1 bit per animation (if set, play animation backwards after finish)
+        public byte PaddingByte { get; set; } // always 0
         public uint FrameWidth { get; set; }
         public uint FrameHeight { get; set; }
         public uint MappedFrameWidth { get; set; }
         public uint MappedFrameHeight { get; set; }
         public Graphic CombatGraphic { get; set; }
 
-        public partial Monster DeepClone();
-
-        [Serializable]
         public class Animation
         {
             public int UsedAmount = 0; // 0-32

@@ -6,7 +6,7 @@ namespace Ambermoon.Data
     {
         public Monster[,] Monsters { get; } = new Monster[6, 3];
 
-        private MonsterGroup()
+        public MonsterGroup()
         {
 
         }
@@ -18,21 +18,6 @@ namespace Ambermoon.Data
             monsterGroupReader.ReadMonsterGroup(characterManager, monsterGroup, dataReader);
 
             return monsterGroup;
-        }
-
-        public MonsterGroup Clone()
-        {
-            var clone = new MonsterGroup();
-
-            for (int row = 0; row < 3; ++row)
-            {
-                for (int column = 0; column < 6; ++column)
-                {
-                    clone.Monsters[column, row] = Monsters[column, row]?.DeepClone();
-                }
-            }
-
-            return clone;
         }
     }
 }

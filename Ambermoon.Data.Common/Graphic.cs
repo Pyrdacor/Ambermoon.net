@@ -40,7 +40,6 @@ namespace Ambermoon.Data
         public int DataSize => (Width * Height * BitsPerPixel + 7) / 8;
     }
 
-    [Serializable]
     public class Graphic
     {
         public int Width { get; set; }

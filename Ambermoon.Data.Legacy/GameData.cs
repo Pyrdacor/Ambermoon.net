@@ -760,7 +760,7 @@ namespace Ambermoon.Data.Legacy
             if (FantasyIntroData?.FantasyIntroPalettes != null)
                 additionalPalettes.AddRange(FantasyIntroData.FantasyIntroPalettes);
             GraphicProvider = TryLoad(() => new GraphicProvider(this, executableData, additionalPalettes));
-            CharacterManager = TryLoad(() => new CharacterManager(this, GraphicProvider));
+            CharacterManager = TryLoad(() => new CharacterManager(this));
             if (executableData?.ItemManager != null && Files.TryGetValue("Object_texts.amb", out var objTexts))
             {
                 foreach (var objectTextFile in objTexts.Files)

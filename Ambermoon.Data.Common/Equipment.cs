@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace Ambermoon.Data
 {
-    [Serializable]
     public class Equipment
     {
         public Dictionary<EquipmentSlot, ItemSlot> Slots { get; } = new Dictionary<EquipmentSlot, ItemSlot>(9);
