@@ -1235,8 +1235,8 @@ namespace Ambermoon.UI
                     "Turn with arrow keys",
                     "Show button tooltips",
                     "Show stats tooltips",
-                    "3D distance fog",
                     "3D floor and ceiling",
+					"3D distance fog",
                     // Page 3
                     "Show runes as text",
                     "Additional saveslots",
@@ -1331,8 +1331,8 @@ namespace Ambermoon.UI
 		            "Otáčení pomocí šipek",
 					"Zobrazit popisky tlačítek",
 		            "Zobrazit popisky statistik",
-					"Vzdálenost 3D mlhy",
 					"3D podlaha a strop",
+					"Vzdálenost 3D mlhy",
 		            // Page 3
 		            "Zobrazit runy jako text",
 					"Další pozice pro uložení",
