@@ -10727,24 +10727,27 @@ namespace Ambermoon
                     else
                         AddCurrentPlayerActionVisuals();
                     UpdateBattleStatus();
-                    for (int i = 0; i < MaxPartyMembers; ++i)
+                    if (currentBattle != null)
                     {
-                        if (partyMemberBattleFieldTooltips[i] != null)
+                        for (int i = 0; i < MaxPartyMembers; ++i)
                         {
-                            var partyMember = GetPartyMember(i);
-                            int position = currentBattle.GetSlotFromCharacter(partyMember);
-                            partyMemberBattleFieldTooltips[i].Area = new Rect
-                            (
-                                Global.BattleFieldX + (position % 6) * Global.BattleFieldSlotWidth,
-                                Global.BattleFieldY + (position / 6) * Global.BattleFieldSlotHeight - 1,
-                                Global.BattleFieldSlotWidth,
-                                Global.BattleFieldSlotHeight + 1
-                            );
-                            partyMemberBattleFieldTooltips[i].Text =
-                                $"{partyMember.HitPoints.CurrentValue}/{partyMember.HitPoints.TotalMaxValue}^{partyMember.Name}";
+                            if (partyMemberBattleFieldTooltips[i] != null)
+                            {
+                                var partyMember = GetPartyMember(i);
+                                int position = currentBattle.GetSlotFromCharacter(partyMember);
+                                partyMemberBattleFieldTooltips[i].Area = new Rect
+                                (
+                                    Global.BattleFieldX + (position % 6) * Global.BattleFieldSlotWidth,
+                                    Global.BattleFieldY + (position / 6) * Global.BattleFieldSlotHeight - 1,
+                                    Global.BattleFieldSlotWidth,
+                                    Global.BattleFieldSlotHeight + 1
+                                );
+                                partyMemberBattleFieldTooltips[i].Text =
+                                    $"{partyMember.HitPoints.CurrentValue}/{partyMember.HitPoints.TotalMaxValue}^{partyMember.Name}";
+                            }
                         }
+                        UpdateActiveBattleSpells();
                     }
-                    UpdateActiveBattleSpells();
                 };
                 currentBattle.CharacterDied += character =>
                 {
