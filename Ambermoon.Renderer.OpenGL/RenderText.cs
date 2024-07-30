@@ -1,7 +1,7 @@
 ﻿/*
  * RenderText.cs - Text render object
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -305,7 +305,7 @@ namespace Ambermoon.Renderer
                     lastWhitespaceIndex = i;
                     x += characterWidth;
 
-                    if (x + characterWidth - 1 >= bounds.Right)
+                    if (x + characterWidth - 1 >= bounds.Right && i + 1 < text.GlyphIndices.Length && text.GlyphIndices[i + 1] != (byte)SpecialGlyph.NewLine)
                     {
                         AdjustLineAlign(i - 1);
                         lastLineBreakIndex = i;
@@ -332,7 +332,7 @@ namespace Ambermoon.Renderer
 
                 x += characterWidth;
 
-                if (x - 1 >= bounds.Right) // the character didn't fit into the line -> move the whole word to next line
+                if (x > bounds.Right) // the character didn't fit into the line -> move the whole word to next line
                 {
                     bool nextLineVisible = NewLine();
                     AdjustLineAlign(lastWhitespaceIndex - 1);

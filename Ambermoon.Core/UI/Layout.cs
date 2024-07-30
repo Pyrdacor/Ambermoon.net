@@ -1,7 +1,7 @@
 ﻿/*
  * Layout.cs - Handles most of the UI interactions
  *
- * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -842,7 +842,7 @@ namespace Ambermoon.UI
                 CloseOnClick = closeOnClick
             };
             bool scrolling = textBounds.Height / Global.GlyphLineHeight < processedText.LineCount;
-            var uiText = activePopup.AddText(textBounds, text, textColor, textAlign, true, 1, scrolling, this);
+            var uiText = activePopup.AddText(textBounds, processedText, textColor, textAlign, true, 1, scrolling, this);
             if (paletteOverride != null)
                 uiText.PaletteIndex = paletteOverride.Value;
             if (closeAction != null)
