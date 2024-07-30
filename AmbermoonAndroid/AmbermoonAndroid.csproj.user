@@ -6,6 +6,7 @@
     <AndroidDesignerPreferredDevice>7.3in Foldable</AndroidDesignerPreferredDevice>
     <SelectedPlatformGroup>Emulator</SelectedPlatformGroup>
     <SelectedDevice>pixel_5_-_api_34</SelectedDevice>
+    <AndroidDesignerPreferredTheme>Theme.DeviceDefault</AndroidDesignerPreferredTheme>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>
@@ -16,4 +17,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugES|AnyCPU'">
     <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseAndroid|AnyCPU'">
+    <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Resources.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
 </Project>

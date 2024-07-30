@@ -11,6 +11,7 @@
     <ApplicationDisplayVersion>10.0</ApplicationDisplayVersion>
     <Configurations>Debug;Release;ReleaseAndroid;DebugAndroid;DebugES;ReleaseES</Configurations>
     <GenerateResourceUsePreserializedResources>false</GenerateResourceUsePreserializedResources>
+    <SignAssembly>False</SignAssembly>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>$(DefineConstants)</DefineConstants>
@@ -30,7 +31,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>$(DefineConstants);GLES</DefineConstants>
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
-    <PublishTrimmed>False</PublishTrimmed>
+    <PublishTrimmed>True</PublishTrimmed>
+	<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseAndroid|AnyCPU'">
 	<DefineConstants>$(DefineConstants);GLES</DefineConstants>
@@ -41,6 +43,8 @@
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
     <Optimize>True</Optimize>
     <PublishTrimmed>False</PublishTrimmed>
+	<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+	<DebugType>none</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseES|AnyCPU'">
     <DefineConstants>$(DefineConstants);GLES</DefineConstants>
@@ -65,6 +69,12 @@
     <PackageReference Include="Silk.NET.OpenGLES" Version="2.20.0" />
     <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.20.0" />
     <PackageReference Include="Xamarin.AndroidX.Core" Version="1.13.0.1" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseAndroid|AnyCPU'">
+    <PackageReference Include="System.Resources.Extensions" Version="7.0.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <PackageReference Include="System.Resources.Extensions" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Audio.Android\Ambermoon.Audio.Android.csproj" />

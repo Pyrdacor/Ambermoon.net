@@ -1,3 +1,15 @@
+Version 1.10
+============
+
+- Fixed/improved some monster animations in battle
+- Fixed a text render bug where a space before a newline produced two newlines
+- Fixed crash when some players fled and the last one gets unable to act (e.g. cursed)
+- Fixed wrong defense values in character info (inventory)
+- Minor improvements for fading during 3D map changes
+- Some possible crash fixes
+- Some more Czech text fixes
+
+
 Version 1.9
 ===========
 

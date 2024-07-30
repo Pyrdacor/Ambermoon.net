@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:installLocation="auto" package="com.pyrdacor.AmbermoonAndroid" android:versionCode="1" android:versionName="10.0">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:installLocation="auto" package="com.pyrdacor.AmbermoonAndroid" android:versionCode="1" android:versionName="1.10.0">
 	<uses-feature android:glEsVersion="0x00030000" android:required="true" />
 	<uses-configuration android:reqTouchScreen="finger" />
 	<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
