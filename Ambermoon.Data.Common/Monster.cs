@@ -82,7 +82,13 @@ namespace Ambermoon.Data
         public int[] GetAnimationFrameIndices(MonsterAnimationType animationType)
         {
             var animation = Animations[(int)animationType];
-            return animation.FrameIndices.Take(animation.UsedAmount).Select(b => (int)b).ToArray();
+            bool waveAnimation = (AlternateAnimationBits & (1 << (int)animationType)) != 0;
+            var frameIndices = animation.FrameIndices.Take(animation.UsedAmount).Select(b => (int)b);
+
+            if (waveAnimation)
+                frameIndices = Enumerable.Concat(frameIndices, frameIndices.Reverse().Skip(1));
+
+			return frameIndices.ToArray();
         }
     }
 }
