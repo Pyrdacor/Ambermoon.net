@@ -100,51 +100,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write((byte)characterReference.Positions[0].X);
                     dataWriter.Write((byte)characterReference.Positions[0].Y);
                 }
-                else if (characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.SpecialMovement))
+                else if (characterReference.HourMovement)
                 {
-                    switch (characterReference.SpecialMoveType)
+                    for (int i = 0; i < 12; i++)
                     {
-                        case Map.CharacterReference.SpecialMovementType.CyclicPath:
-                        case Map.CharacterReference.SpecialMovementType.AlternatingPath:
-                        {
-                            ushort numPositions = (ushort)characterReference.Positions.Count;
-                            var positionData = new byte[2 + numPositions * 2];
-
-                            positionData[0] = (byte)(numPositions >> 8);
-                            positionData[1] = (byte)(numPositions & 0xff);
-
-                            for (int i = 0; i < numPositions; i++)
-                            {
-                                positionData[2 + i * 2] = (byte)characterReference.Positions[i].X;
-                                positionData[3 + i * 2] = (byte)characterReference.Positions[i].Y;
-                            }
-
-                            characterPositionDataHeaderLocations.Add(dataWriter.Position, positionData);
-                            dataWriter.Write((ushort)((int)characterReference.SpecialMoveType << 12));
-
-                            break;
-                        }
-                        case Map.CharacterReference.SpecialMovementType.ReuseCyclicPath:
-                        {
-                            ushort header = (ushort)(characterReference.SpecialMoveCharacterIndex ?? throw new NullReferenceException(nameof(characterReference.SpecialMoveCharacterIndex)));
-                            header |= (ushort)((characterReference.SpecialMoveOffset ?? throw new NullReferenceException(nameof(characterReference.SpecialMoveOffset))) << 5);
-
-                            dataWriter.Write(header);
-
-                            break;
-                        }
-                        case Map.CharacterReference.SpecialMovementType.CircleCenterPosition:
-                        {
-                            // TODO
-                            throw new NotImplementedException();
-                        }
-                    }
-
-                    foreach (var location in characterPositionDataHeaderLocations.OrderBy(l => l.Key))
-                    {
-                        int type = dataWriter.GetBytes(location.Key, 1)[0];
-                        dataWriter.Replace(location.Key, (ushort)((type << 8) | dataWriter.Position));
-                        dataWriter.Write(location.Value);
+                        dataWriter.Write((byte)characterReference.Positions[i].X);
+                        dataWriter.Write((byte)characterReference.Positions[i].Y);
                     }
                 }
                 else

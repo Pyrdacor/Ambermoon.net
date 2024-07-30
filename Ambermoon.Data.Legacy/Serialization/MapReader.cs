@@ -122,58 +122,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                     // For monsters, random movement or stationary only the start position is given.
                     characterReference.Positions.Add(new Position(dataReader.ReadByte(), dataReader.ReadByte()));
                 }
-                else if (characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.SpecialMovement))
+                else if (characterReference.HourMovement)
                 {
-                    var header = dataReader.ReadWord();
-                    var type = header >> 12;
+					for (int i = 0; i < 12; ++i)
+						characterReference.Positions.Add(new Position(dataReader.ReadByte(), dataReader.ReadByte()));
 
-                    if (type >= 0 && type < 4)
-                    {
-                        var moveType = (Map.CharacterReference.SpecialMovementType)type;
-                        characterReference.SpecialMoveType = moveType;
-
-                        switch (moveType)
-                        {
-                            case Map.CharacterReference.SpecialMovementType.CyclicPath:
-                            case Map.CharacterReference.SpecialMovementType.AlternatingPath:
-                            {
-                                int readerPosition = dataReader.Position;
-                                dataReader.Position = characterPositionOffset + (header & 0xfff);
-                                int numPositions = Math.Min(288, (int)dataReader.ReadWord());
-
-                                for (int i = 0; i < numPositions; i++)
-                                {
-                                    characterReference.Positions.Add(new Position(dataReader.ReadByte(), dataReader.ReadByte()));
-                                }
-
-                                dataReader.Position = readerPosition;
-
-                                break;
-                            }
-                            case Map.CharacterReference.SpecialMovementType.ReuseCyclicPath:
-                            {
-                                int otherCharacterIndex = header & 0x1f;
-                                int offset = (header >> 5) & 0x7f;
-                                int positionCount = map.CharacterReferences[otherCharacterIndex].Positions.Count;
-
-                                for (int i = 0; i < positionCount; i++)
-                                {
-                                    characterReference.Positions.Add(new Position(map.CharacterReferences[otherCharacterIndex].Positions[(i + offset) % positionCount]));
-                                }
-
-                                characterReference.SpecialMoveCharacterIndex = (uint)otherCharacterIndex;
-                                characterReference.SpecialMoveOffset = (uint)offset;
-
-                                break;
-                            }
-                            case Map.CharacterReference.SpecialMovementType.CircleCenterPosition:
-                            {
-                                // TODO
-                                throw new NotImplementedException();
-                            }
-                        }
-                    }
-                }
+                    for (int i = 12; i < 288; ++i)
+                        characterReference.Positions.Add(new Position(characterReference.Positions[i % 12]));
+				}
                 else
                 {
                     for (int i = 0; i < 288; ++i)
