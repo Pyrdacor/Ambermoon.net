@@ -285,20 +285,19 @@ namespace Ambermoon
             }
         }
 
-        public void CheckPatches(Action<bool> closeAppAction, Action noPatchAction, ref int timeout)
+        public void CheckPatches(Action<bool> closeAppAction, Action noPatchAction, ref int timeout, bool? useProxy, string proxy)
         {
-            string version;
-			var handler = new HttpClientHandler
+            useProxy = useProxy == true && !string.IsNullOrWhiteSpace(proxy);
+			string version;
+			using var handler = new HttpClientHandler
 			{
-				UseProxy = false
+				UseProxy = useProxy.Value,
+                Proxy = useProxy.Value ? new WebProxy(proxy) : null
 			};
 			using var httpClient = new HttpClient(handler);
-            Assembly assembly;
 
             try
             {
-                assembly = Assembly.GetEntryAssembly();
-
                 httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
                 var response = httpClient.GetAsync(RecentInfoUrl).Result;
 
@@ -322,7 +321,8 @@ namespace Ambermoon
                 int major = int.Parse(match.Groups[1].Value);
                 int minor = int.Parse(match.Groups[2].Value);
                 int patch = int.Parse(match.Groups[3].Value);
-                var assemblyVersion = assembly.GetName().Version;
+				var assembly = Assembly.GetEntryAssembly();
+				var assemblyVersion = assembly.GetName().Version;
 
                 if (assemblyVersion.Major > major)
                 {
@@ -352,6 +352,12 @@ namespace Ambermoon
             }
             catch (Exception ex)
             {
+                if (useProxy == true) // if failed with proxy, retry without proxy
+                {
+                    CheckPatches(closeAppAction, noPatchAction, ref timeout, false, null);
+                    return;
+                }
+
                 finished = true;
 
                 if (ex is TaskCanceledException || (ex is AggregateException aex && aex.InnerException is TaskCanceledException))
@@ -401,7 +407,7 @@ namespace Ambermoon
 
                 try
                 {
-                    var httpClient = new HttpClient();
+                    var httpClient = new HttpClient(handler);
                     httpClient.Timeout = TimeSpan.FromMinutes(60); // limit to 1h download time
 
                     void SafeDisposeClient()

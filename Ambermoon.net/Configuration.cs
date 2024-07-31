@@ -42,8 +42,10 @@ namespace Ambermoon
 
         public bool? UsePatcher { get; set; } = null;
         public int? PatcherTimeout { get; set; } = null;
+        public bool? UseProxyForPatcher { get; set; } = null;
+		public string PatcherProxy { get; set; } = null;
 
-        public int? WindowX { get; set; } = null;
+		public int? WindowX { get; set; } = null;
         public int? WindowY { get; set; } = null;
         public int? MonitorIndex { get; set; } = null;
         public int? Width { get; set; } = null;

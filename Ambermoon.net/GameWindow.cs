@@ -1461,6 +1461,8 @@ namespace Ambermoon
                     patcher.AskToUsePatcher(() =>
                     {
                         configuration.UsePatcher = true;
+                        configuration.UseProxyForPatcher = false;
+                        configuration.PatcherProxy = "";
                         CheckPatches();
                     }, () =>
                     {
@@ -1485,7 +1487,7 @@ namespace Ambermoon
                             window.Close();
                         else
                             NotPatched();
-                    }, NotPatched, ref timeout);
+                    }, NotPatched, ref timeout, configuration.UseProxyForPatcher, configuration.PatcherProxy);
                     configuration.PatcherTimeout = timeout;
                     void NotPatched()
                     {
