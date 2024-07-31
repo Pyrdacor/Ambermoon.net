@@ -288,7 +288,11 @@ namespace Ambermoon
         public void CheckPatches(Action<bool> closeAppAction, Action noPatchAction, ref int timeout)
         {
             string version;
-            using var httpClient = new HttpClient();
+			var handler = new HttpClientHandler
+			{
+				UseProxy = false
+			};
+			using var httpClient = new HttpClient(handler);
             Assembly assembly;
 
             try
