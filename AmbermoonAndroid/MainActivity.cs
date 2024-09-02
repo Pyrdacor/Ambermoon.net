@@ -73,7 +73,7 @@ namespace AmbermoonAndroid
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
 			{
 #pragma warning disable CA1416 // Validate platform compatibility
-				version = PackageManager?.GetPackageInfo(new VersionedPackage(PackageName, 0), PackageManager.PackageInfoFlags.Of(0)).VersionName ?? "1.0";
+				version = PackageManager?.GetPackageInfo(new VersionedPackage(PackageName, 0), PackageManager.PackageInfoFlags.Of(PackageInfoFlagsLong.None)).VersionName ?? "1.0";
 #pragma warning restore CA1416 // Validate platform compatibility
 			}
 			else
@@ -272,8 +272,8 @@ namespace AmbermoonAndroid
 
             try
             {
-                musicManager = new MusicManager(this);
-                gameWindow.Run(configuration, musicManager, NameResetHandler, OnAfterInit);
+				musicManager = new MusicManager(this);
+				gameWindow.Run(configuration, musicManager, NameResetHandler, OnAfterInit);
             }
             catch (Exception ex)
             {

@@ -31,8 +31,6 @@ namespace AmbermoonAndroid
 
         public static Stream GetVersions() => LoadStream(Resource.Raw.versions);
 
-        public static byte[] GetSongData() => LoadData(Resource.Raw.song);
-
         public static Stream GetLogoData() => LoadStream(Resource.Raw.logo);
 
         public static byte[] GetIntroFontData() => LoadData(Resource.Raw.IntroFont);
@@ -58,6 +56,8 @@ namespace AmbermoonAndroid
 		public static Graphic GetClock() => GetGraphic(Resource.Raw.clock);
 
 		public static Graphic GetDonateButton() => GetGraphic(Resource.Raw.donate);
+
+		public static Stream GetMusic() => LoadStream(Resource.Raw.music);
 
 		private static Graphic GetGraphic(int id)
 		{

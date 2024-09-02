@@ -1,9 +1,11 @@
 ﻿using Ambermoon;
 using Ambermoon.Data.Audio;
+using Ambermoon.Data.Legacy.Serialization;
 using Android.Content;
 using Android.Media;
 using Android.OS;
-using MP3Sharp;
+using SonicArranger;
+using System.IO.Compression;
 using Song = Ambermoon.Data.Enumerations.Song;
 
 namespace AmbermoonAndroid
@@ -12,91 +14,70 @@ namespace AmbermoonAndroid
     {
         const Song PyrdacorSong = (Song)127;
 
-		class MusicStream : MemoryStream
+		private static byte[] Decompress(System.IO.Stream compressedStream)
 		{
-			private readonly MP3Stream mp3Stream;
-			private readonly MemoryStream buffer = new();
-			private bool fullyLoaded = false;
+			using var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress);
+			using var resultStream = new MemoryStream();
+			deflateStream.CopyTo(resultStream);
+			return resultStream.ToArray();
+		}
 
-			public int Frequency { get; }
+		class MusicStream(SonicArranger.Stream saStream) : MemoryStream
+		{
+			private readonly SonicArranger.Stream saStream = saStream;
+			private List<byte> buffer = [];
+			private TimeSpan? duration;
 
-			public MusicStream(MP3Stream mp3Stream)
-			{
-				this.mp3Stream = mp3Stream;
-				Frequency = mp3Stream.Frequency;
-			}
+			public TimeSpan Duration => duration ??= TimeSpan.FromMilliseconds(1000.0 * saStream.ToUnsignedArray().Length / 44100);
 
 			public override int Read(byte[] buffer, int offset, int count)
 			{
-				if (fullyLoaded)
+				void EnsureBufferSize(int size)
 				{
-					int tail = Math.Min(count, (int)(this.buffer.Length - this.buffer.Position));
-					int head = count - tail;
-					int readCount = this.buffer.Read(buffer, offset, tail);
-
-					if (head > 0)
-					{
-						this.buffer.Position = 0;
-						readCount += this.buffer.Read(buffer, offset + tail, head);
-					}
-					else if (this.buffer.Position == this.buffer.Length)
-					{
-						this.buffer.Position = 0;
-					}
-
-					return readCount;
+					while (this.buffer.Count < size)
+						this.buffer.AddRange(saStream.ReadUnsigned(1000, true));
 				}
-				else
+
+				if (this.buffer.Count >= count)
 				{
-					int readCount = 0;
-
-					if (!mp3Stream.IsEOF)
-					{
-						try
-						{
-							readCount = mp3Stream.Read(buffer, offset, count);
-							this.buffer.Write(buffer, 0, readCount);
-
-							if (readCount < count)
-							{
-								fullyLoaded = true;
-								this.buffer.Position = 0;
-								mp3Stream.Close();
-								readCount += Read(buffer, offset + readCount, count - readCount);
-							}
-
-							return readCount;
-						}
-						catch (Exception ex)
-						{
-							fullyLoaded = true;
-							this.buffer.Position = 0;
-							mp3Stream.Close();
-							return Read(buffer, offset, count);
-						}
-					}
-					else
-					{
-						fullyLoaded = true;
-						this.buffer.Position = 0;
-						mp3Stream.Close();
-						return Read(buffer, offset, count);
-					}
+					Array.Copy(this.buffer.ToArray(), 0, buffer, offset, count);
+					this.buffer = new(this.buffer.Skip(count));
+					EnsureBufferSize(44100 * 2);
+					return count;
 				}
+
+				int remainingCount = count;
+
+				if (this.buffer.Count != 0)
+				{
+					Array.Copy(this.buffer.ToArray(), 0, buffer, offset, this.buffer.Count);
+					offset += this.buffer.Count;
+					remainingCount -= this.buffer.Count;
+					this.buffer.Clear();
+				}
+
+				while (remainingCount > 0)
+				{
+					var audioData = saStream.ReadUnsigned(1000, true);
+					int useCount = Math.Min(remainingCount, audioData.Length);
+					Array.Copy(audioData, 0, buffer, offset, useCount);
+					offset += useCount;
+					remainingCount -= useCount;
+
+					if (useCount < audioData.Length)
+						this.buffer.AddRange(audioData.Skip(useCount));
+				}
+
+				EnsureBufferSize(44100 * 2);
+				return count;
 			}
 		}
 
-		class Mp3Song : ISong
+		class SonicArrangerSong(MusicManager musicManager, Song song) : ISong
 		{
-			private readonly MusicManager musicManager;
+			private readonly MusicManager musicManager = musicManager;
 
-			public Mp3Song(MusicManager musicManager, Song song)
-			{
-				this.musicManager = musicManager;
-				Song = song;
-			}
-
-			public Song Song { get; }
+			public Song Song { get; } = song;
 
 			public TimeSpan? SongDuration => musicManager.GetSongDuration(Song);
 
@@ -111,49 +92,9 @@ namespace AmbermoonAndroid
 			}
 		}
 
-		static readonly Dictionary<Song, int> songIds = new()
-		{
-			{ Song.WhoSaidHiHo, Resource.Raw.sonic_whosaidhiho },
-            { Song.MellowCamelFunk, Resource.Raw.sonic_mellowcamelfunk },
-            { Song.CloseToTheHedge, Resource.Raw.sonic_closethehedge },
-            { Song.VoiceOfTheBagpipe, Resource.Raw.sonic_voiceofthebagpipe },
-            { Song.Downtown, Resource.Raw.sonic_downtown },
-            { Song.Ship, Resource.Raw.sonic_ship },
-            { Song.WholeLottaDove, Resource.Raw.sonic_wholelottadove },
-            { Song.HorseIsNoDisgrace, Resource.Raw.sonic_horseisnodisgrace },
-            { Song.DontLookBach, Resource.Raw.sonic_dontlookbach },
-            { Song.RoughWaterfrontTavern, Resource.Raw.sonic_roughwaterfronttavern },
-            { Song.SapphireFireballsOfPureLove, Resource.Raw.sonic_sapphirefireballsofpurelove },
-            { Song.TheAumRemainsTheSame, Resource.Raw.sonic_theaumremainsthesame },
-            { Song.Capital, Resource.Raw.sonic_capital },
-            { Song.PloddingAlong, Resource.Raw.sonic_ploddingalong },
-            { Song.CompactDisc, Resource.Raw.sonic_compactdisc },
-            { Song.RiversideTravellingBlues, Resource.Raw.sonic_riversidetravellingblues },
-            { Song.NobodysVaultButMine, Resource.Raw.sonic_nobodysvaultbutmine },
-            { Song.LaCryptaStrangiato, Resource.Raw.sonic_lacryptastrangiato },
-            { Song.MistyDungeonHop, Resource.Raw.sonic_mistydungeonhop },
-            { Song.BurnBabyBurn, Resource.Raw.sonic_burnbabyburn },
-            { Song.BarBrawlin, Resource.Raw.sonic_barbrawlin },
-            { Song.PsychedelicDuneGroove, Resource.Raw.sonic_psychedelicdunegroove },
-            { Song.StairwayToLevel50, Resource.Raw.sonic_stairway_to_level_50 },
-            { Song.ThatHunchIsBack, Resource.Raw.sonic_thathunchisback },
-            { Song.ChickenSoup, Resource.Raw.sonic_chickensoup },
-            { Song.DragonChaseInCreepyDungeon, Resource.Raw.sonic_dragonchaseincreepydungeon },
-            { Song.HisMastersVoice, Resource.Raw.sonic_hismastersvoice },
-            { Song.NoName, Resource.Raw.sonic_nonamesecret },
-            { Song.OhNoNotAnotherMagicalEvent, Resource.Raw.sonic_ohnonotanothermagevent },
-            { Song.TheUhOhSong, Resource.Raw.sonic_theuhohsong },
-            { Song.OwnerOfALonelySword, Resource.Raw.sonic_ownerofalonelysword },
-            { Song.GameOver, Resource.Raw.sonic_gameover },
-            { Song.Intro, Resource.Raw.sonic_intro },
-            { Song.Outro, Resource.Raw.sonic_extro },
-            { Song.Menu, Resource.Raw.sonic_mainmenu },
-            { PyrdacorSong, Resource.Raw.song }
-		};
-		static readonly Dictionary<Song, TimeSpan> songDurations = new();
-		static readonly Dictionary<Song, Mp3Song> songs = new();
-
-		private readonly Dictionary<Song, MusicStream> songStreams = new();
+		static readonly Dictionary<Song, TimeSpan> songDurations = [];
+		static readonly Dictionary<Song, SonicArrangerSong> songs = [];
+		private readonly Dictionary<Song, MusicStream> songStreams = [];
 		private readonly Context context;
 		private AudioTrack audioTrack;
         private Song? currentSong = null;
@@ -197,18 +138,70 @@ namespace AmbermoonAndroid
         {
             this.context = context;
 
-			foreach (var songId in songIds)
+			using var stream = FileProvider.GetMusic();
+
+			int ReadWord()
 			{
-				songStreams.Add(songId.Key, new MusicStream(new MP3Stream(GetSongStream(songId.Key, songId.Value))));
+				int value = stream.ReadByte();
+				return (value << 8) | stream.ReadByte();
 			}
-        }
+
+			int ReadLong()
+			{
+				int value = stream.ReadByte();
+				value <<= 8;
+				value |= stream.ReadByte();
+				value <<= 8;
+				value |= stream.ReadByte();
+				return (value << 8) | stream.ReadByte();
+			}
+
+			int fileCount = ReadWord();
+			var fileSizes = Enumerable.Range(0, fileCount).Select(_ => ReadLong()).ToArray();
+			var data = Decompress(stream);
+			int offset = 0;
+
+			for (int i = 0; i < fileSizes.Length; i++)
+			{
+				var size = fileSizes[i];
+				var saFile = new SonicArrangerFile(new DataReader(data, offset, size));
+				offset += size;
+
+				int index = i + 1;
+
+				void AddSong(Song song, int songIndex = 0)
+				{
+					var stream = new SonicArranger.Stream(saFile, songIndex, 44100, SonicArranger.Stream.ChannelMode.Mono, true, true);
+					songStreams.Add(song, new MusicStream(stream));
+				}
+
+				if (index < (int)Song.Intro)
+				{
+					AddSong((Song)index);
+				}
+				else
+				{
+					index -= (int)Song.Intro;
+
+					if (index == 0)
+						AddSong(Song.Outro);
+					else if (index == 2)
+						AddSong(PyrdacorSong);
+					else
+					{
+						AddSong(Song.Intro);
+						AddSong(Song.Menu, 1);
+					}
+				}
+			}
+		}
 
 		public ISong GetSong(Song index)
 		{
 			if (songs.TryGetValue(index, out var song))
 				return song;
 
-			song = new Mp3Song(this, index);
+			song = new SonicArrangerSong(this, index);
 
 			songs.Add(index, song);
 
@@ -220,7 +213,7 @@ namespace AmbermoonAndroid
 			if (songs.TryGetValue(PyrdacorSong, out var song))
 				return song;
 
-			song = new Mp3Song(this, PyrdacorSong);
+			song = new SonicArrangerSong(this, PyrdacorSong);
 
 			songs.Add(PyrdacorSong, song);
 
@@ -241,11 +234,10 @@ namespace AmbermoonAndroid
             if (songDurations.TryGetValue(song, out var duration))
                 return duration;
 
-			MediaPlayer tempMediaPlayer = MediaPlayer.Create(context, songIds[song]);
-			duration = TimeSpan.FromMicroseconds(tempMediaPlayer.Duration);
-			tempMediaPlayer.Release();
+			var stream = songStreams[song];
+			duration = stream.Duration;
 
-            songDurations.Add(song, duration);
+			songDurations.Add(song, duration);
 
 			return duration;
 		}
@@ -258,12 +250,12 @@ namespace AmbermoonAndroid
             Stop();
 
 			var musicStream = songStreams[song];
-			int bufferSize = AudioTrack.GetMinBufferSize(musicStream.Frequency, ChannelOut.Stereo, Encoding.Pcm16bit) * 2;
+			int bufferSize = AudioTrack.GetMinBufferSize(44100, ChannelOut.Stereo, Encoding.Pcm16bit) * 2;
 
 			var audioFormat = new AudioFormat.Builder()
-				.SetEncoding(Encoding.Pcm16bit)
-				.SetSampleRate(musicStream.Frequency)
-				.SetChannelMask(ChannelOut.Stereo)
+				.SetEncoding(Encoding.Pcm8bit)
+				.SetSampleRate(44100)
+				.SetChannelMask(ChannelOut.Mono)
 				.Build();
 			var audioAttributes = new AudioAttributes.Builder()
 				.SetContentType(AudioContentType.Music)
