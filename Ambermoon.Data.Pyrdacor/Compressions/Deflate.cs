@@ -6,7 +6,7 @@ namespace Ambermoon.Data.Pyrdacor.Compressions
 {
     internal class Deflate : ICompression
     {
-        public ushort Identifier => 0xDEF0;
+        public ushort Identifier => 0xDEF1;
 
         public IDataReader Decompress(IDataReader dataReader)
         {

@@ -38,10 +38,7 @@ namespace Ambermoon.Data.Pyrdacor.Compressions
                 int chunks = zeroCount / 256;
                 int lastChunkSize = zeroCount % 256;
 
-                if (lastChunkSize == 0)
-                    ++chunks;
-
-                for (int i = 0; i < chunks - 1; ++i)
+                for (int i = 0; i < chunks; ++i)
                 {
                     compressedData.Add(0);
                     compressedData.Add(255);
