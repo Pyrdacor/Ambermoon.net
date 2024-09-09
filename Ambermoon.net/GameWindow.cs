@@ -255,8 +255,8 @@ namespace Ambermoon
         {
             if (versionSelector != null)
                 versionSelector.OnKeyChar(keyChar);
-            else if (Game != null)
-                Game.OnKeyChar(keyChar);
+            else
+                Game?.OnKeyChar(keyChar);
         }
 
         void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
@@ -268,19 +268,17 @@ namespace Ambermoon
             }
             else if (key == Silk.NET.Input.Key.F11)
             {
-                if (Game != null)
-                    Game.PreFullscreenChanged();
+                Game?.PreFullscreenChanged();
 
                 // This can happen while a mouse trap is active in-game. Otherwise a fullscreen
                 // change can only happen from the options menu where mouse trapping can't be active.
                 ChangeFullscreenMode(!Fullscreen);
 
-                if (Game != null)
-                    Game.PostFullscreenChanged();
+                Game?.PostFullscreenChanged();
             }
             else if (key == Silk.NET.Input.Key.F7)
             {
-                if (!Game.BattleRoundActive)
+                if (Game != null && !Game.BattleRoundActive)
                 {
                     if (GetModifiers(keyboard) == KeyModifiers.None)
                         configuration.BattleSpeed = configuration.BattleSpeed >= 100 ? 0 : configuration.BattleSpeed + 10;

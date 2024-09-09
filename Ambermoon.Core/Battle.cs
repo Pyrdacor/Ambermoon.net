@@ -1516,7 +1516,7 @@ namespace Ambermoon
                         }
 
                         animation.AnimationFinished += AttackAnimationFinished;
-                        animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Attack), Game.TicksPerSecond / 6,
+                        animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.CloseRangedAttack), Game.TicksPerSecond / 6,
                             battleTicks);
                         currentBattleAnimation = animation;
                         currentlyAnimatedMonster = monster;
@@ -4223,7 +4223,7 @@ namespace Ambermoon
         public static MonsterAnimationType? ToAnimationType(this Battle.BattleActionType battleAction) => battleAction switch
         {
             Battle.BattleActionType.Move => MonsterAnimationType.Move,
-            Battle.BattleActionType.Attack => MonsterAnimationType.Attack,
+            Battle.BattleActionType.Attack => MonsterAnimationType.CloseRangedAttack,
             Battle.BattleActionType.CastSpell => MonsterAnimationType.Cast,
             _ => null
         };

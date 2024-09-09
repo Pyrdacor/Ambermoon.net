@@ -10,7 +10,7 @@ using Silk.NET.Windowing.Sdl.Android;
 
 namespace AmbermoonAndroid
 {
-    [Activity(Label = "@string/app_name", MainLauncher = true, ScreenOrientation = ScreenOrientation.Landscape)]
+    [Activity(Label = "@string/app_name", MainLauncher = true, ScreenOrientation = ScreenOrientation.Landscape, Exported = true)]
     public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
     {
 		private const int RequestBluetoothPermissionsId = 1001;
@@ -261,7 +261,7 @@ namespace AmbermoonAndroid
 
 		protected override void OnRun()
         {
-			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;           
+			AppDomain.CurrentDomain.UnhandledException += (_, e) => CurrentDomain_UnhandledException(this, e);
 
             FileProvider.Initialize(this);
 
@@ -298,19 +298,32 @@ namespace AmbermoonAndroid
             }
             catch
             {
-                Console.WriteLine("Unable to save configuration.");
+				Android.Util.Log.Error("Ambermoon", "Unable to save configuration.");
             }
         }
 
-        static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+		void ShowError(string message) => ShowMessage("Error", message);
+
+		void ShowMessage(string title, string message)
+		{
+			Android.Util.Log.Error("Ambermoon", $"[{title}] {message}");
+
+			new AlertDialog.Builder(this)
+			.SetTitle(title)
+			.SetMessage(message)
+			.SetPositiveButton("OK", (sender, e) => {})
+			.Show();			
+		}
+
+        static void CurrentDomain_UnhandledException(MainActivity sender, UnhandledExceptionEventArgs e)
         {
             if (e.ExceptionObject is Exception ex)
-                PrintException(ex);
+                sender.PrintException(ex);
             else
-                Console.WriteLine(e.ExceptionObject?.ToString() ?? "Unhandled exception without exception object");
+				sender.ShowError(e.ExceptionObject?.ToString() ?? "Unhandled exception without exception object");
         }
 
-        static void PrintException(Exception ex)
+        void PrintException(Exception ex)
         {
             string message = ex.Message;
 
@@ -320,7 +333,7 @@ namespace AmbermoonAndroid
                 ex = ex.InnerException;
             }
 
-            Console.WriteLine(message + System.Environment.NewLine + ex.StackTrace);
+			ShowError(message + System.Environment.NewLine + ex.StackTrace);
         }
 
         public bool OnDown(MotionEvent e)

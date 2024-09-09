@@ -3,11 +3,11 @@
     public enum MonsterAnimationType : byte
     {
         Move, // also used for random idle animation
-        Attack,
-        Unknown1,
+        CloseRangedAttack,
+        LongRangedAttack,
         Cast,        
         Hurt,
-        Unknown2,
+        Die,
         Start, // played at start of battle
         Unknown3
     }

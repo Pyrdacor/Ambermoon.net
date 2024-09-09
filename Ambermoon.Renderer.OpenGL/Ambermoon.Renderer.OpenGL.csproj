@@ -48,12 +48,12 @@
 	<PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)'=='Release'">
-	<PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
+  <ItemGroup Condition="'$(Configuration)'=='Release' And '$(DefineConstants.Contains(GLES))'">
+    <PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)'=='ReleaseES'">
-	  <PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
+  <ItemGroup Condition="'$(Configuration)'=='Release' And !'$(DefineConstants.Contains(GLES))'">
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug'">

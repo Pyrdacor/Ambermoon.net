@@ -17,7 +17,6 @@ using Data = Ambermoon.Data;
 using Render = Ambermoon.Render;
 using Silk.NET.Windowing.Sdl;
 using Silk.NET.Input.Sdl;
-using Android.Content;
 
 namespace AmbermoonAndroid
 {
@@ -299,45 +298,6 @@ namespace AmbermoonAndroid
 					musicManager.Volume = configuration.Volume / 100.0f;
                     Game?.ExternalVolumeChanged();
                 }
-            }
-            else if (renderView != null && (key == Silk.NET.Input.Key.PrintScreen ||
-                (key == Silk.NET.Input.Key.P && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
-                 keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))))
-            {
-                // TODO: screenshots 
-                /*renderView.TakeScreenshot(imageData =>
-                {
-                    string directory = Path.Combine(Configuration.BundleDirectory, "Screenshots");
-                    string path;
-                    static string GetFileName() => "Screenshot_" + DateTime.Now.ToString("dd-MM-yyyy.HH-mm-ss");
-                    try
-                    {
-                        Directory.CreateDirectory(directory);
-                        path = Path.Combine(directory, GetFileName());
-                    }
-                    catch
-                    {
-                        directory = Path.Combine(Configuration.FallbackConfigDirectory, "Screenshots");
-
-                        try
-                        {
-                            Directory.CreateDirectory(directory);
-                            path = Path.Combine(directory, GetFileName());
-                        }
-                        catch
-                        {
-                            path = Path.Combine(Path.GetTempPath(), GetFileName());
-                        }
-                    }
-                    try
-                    {
-                        WritePNG(path, imageData, renderView.FramebufferSize, false, true);
-                    }
-                    catch
-                    {
-                        Console.WriteLine($"Failed to create screenshot at '{path}'.");
-                    }
-                });*/
             }
             else
             {
@@ -956,7 +916,7 @@ namespace AmbermoonAndroid
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine("Error while preparing game: " + ex.ToString());
+							Android.Util.Log.Error("Ambermoon", "Error while preparing game: " + ex.ToString());
                             gameCreator = () => throw new AmbermoonException(ExceptionScope.Application, "Game preparation failed.");
                         }
                     }
@@ -986,7 +946,7 @@ namespace AmbermoonAndroid
                 catch (Exception ex)
                 {
                     string error = "Error while loading data: " + ex.Message;
-                    Console.WriteLine(error);                   
+					Android.Util.Log.Error("Ambermoon", error);                   
 
                     try
                     {
@@ -1319,7 +1279,7 @@ namespace AmbermoonAndroid
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error starting game: " + ex.ToString());
+					Android.Util.Log.Error("Ambermoon", "Error starting game: " + ex.ToString());
                     window.Close();
                     return;
                 }
@@ -1382,7 +1342,7 @@ namespace AmbermoonAndroid
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Error creating game: " + ex.Message);
+						Android.Util.Log.Error("Ambermoon", "Error creating game: " + ex.Message);
                         window.Close();
                         return;
                     }
