@@ -1619,7 +1619,7 @@ namespace Ambermoon.Render
             else if (block.ObjectIndex != 0)
                 AddObject(surfaceFactory, billboardLayer, x, y, labdata.Objects[((int)block.ObjectIndex - 1) % labdata.Objects.Count]);
 
-            if (wallRemoved && (block.WallIndex == 0 || labdata.Walls[(int)block.WallIndex].Flags.HasFlag(Tileset.TileFlags.Transparency)))
+            if (wallRemoved && (block.WallIndex == 0 || labdata.Walls[(int)block.WallIndex - 1].Flags.HasFlag(Tileset.TileFlags.Transparency)))
             {
                 // Totally removed a wall -> check if adjacent walls need some surfaces.
                 for (int testY = -1; testY <= 1; ++testY)
