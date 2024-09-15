@@ -89,7 +89,6 @@ namespace Ambermoon
             {
                 var ev = @event;
                 bool hasRandomness = false;
-                bool changesTiles = false;
 
                 while (ev?.Type == EventType.Condition ||
                        ev?.Type == EventType.Dice100Roll)
@@ -100,13 +99,16 @@ namespace Ambermoon
                     ev = ev.Next;
                 }
 
-                if (ev != null && ev.Type == EventType.MapText)
+                bool hadText = false;
+
+				if (ev != null && ev.Type == EventType.MapText)
                 {
                     if (ev.Next == null)
                         return false;
 
                     ev = ev.Next;
-                }
+                    hadText = true;
+				}
 
                 // avoid triggering the same event twice, but only for some events
                 if (ev != null &&
@@ -120,7 +122,7 @@ namespace Ambermoon
                     ev.Type != EventType.Action &&
                     ev.Type != EventType.ChangeTile &&
                     ((LastMapEventPosition == new Position((int)x, (int)y) && map.Type == MapType.Map3D) || ev.Type != EventType.Trap) &&
-                    (ev.Type != EventType.StartBattle || !hasRandomness))
+                    (ev.Type != EventType.StartBattle || (!hasRandomness && !hadText)))
                 {
                     return false;
                 }
