@@ -13942,7 +13942,7 @@ namespace Ambermoon
                             }
                         }
                         if (checkFail)
-                            TrySpell(Cast, SpellFinished);
+                            TrySpell(Cast, spell == Spell.CreateFood ? () => ShowMessagePopup(DataNameProvider.TheSpellFailed, SpellFinished) : SpellFinished);
                         else
                             Cast();
                     }
