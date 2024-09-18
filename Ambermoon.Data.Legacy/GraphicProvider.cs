@@ -44,15 +44,16 @@ namespace Ambermoon.Data.Legacy
         readonly GameData gameData;
         public Dictionary<int, Graphic> Palettes { get; }
         public Dictionary<int, int> NPCGraphicOffsets { get; } = new Dictionary<int, int>();
+        public Dictionary<int, List<int>> NPCGraphicFrameCounts { get; } = new Dictionary<int, List<int>>();
 
-        // Note: Found this at 0x12BE in data1 hunk of AM2_CPU (1.05 german)
-        // These are 3 color index mappings for:
-        // - 2D non-world maps
-        // - 2D world maps
-        // - 3D maps
-        // Each tile or wall provides a color index in the range 0..15.
-        // This index is used inside the mapping to get the associated palette index.
-        static readonly byte[] ColorIndexMapping = new byte[48]
+		// Note: Found this at 0x12BE in data1 hunk of AM2_CPU (1.05 german)
+		// These are 3 color index mappings for:
+		// - 2D non-world maps
+		// - 2D world maps
+		// - 3D maps
+		// Each tile or wall provides a color index in the range 0..15.
+		// This index is used inside the mapping to get the associated palette index.
+		static readonly byte[] ColorIndexMapping = new byte[48]
         {
             0x00, 0x1F, 0x1E, 0x1D, 0x1C, 0x1B, 0x1A, 0x12, 0x13, 0x14, 0x11, 0x10, 0x09, 0x0A, 0x18, 0x17,
             0x00, 0x01, 0x1F, 0x12, 0x1C, 0x14, 0x15, 0x06, 0x08, 0x0A, 0x04, 0x02, 0x0E, 0x0C, 0x13, 0x10,
@@ -182,7 +183,9 @@ namespace Ambermoon.Data.Legacy
                     foreach (var file in gameData.Files["NPC_gfx.amb"].Files)
                     {
                         NPCGraphicOffsets.Add(file.Key, npcGraphics.Count);
-                        var reader = file.Value;
+                        var frameCounts = new List<int>();
+						NPCGraphicFrameCounts.Add(file.Key, frameCounts);
+						var reader = file.Value;
                         reader.Position = 0;
 
                         while (reader.Position < reader.Size)
@@ -192,7 +195,9 @@ namespace Ambermoon.Data.Legacy
                             if (numFrames == 0)
                                 break;
 
-                            reader.AlignToWord();
+                            frameCounts.Add(numFrames);
+
+							reader.AlignToWord();
                             var compoundGraphic = new Graphic(16 * numFrames, 32, 0);
 
                             for (i = 0; i < numFrames; ++i)

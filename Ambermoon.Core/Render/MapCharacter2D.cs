@@ -53,15 +53,6 @@ namespace Ambermoon.Render
 		public bool Paused { get; set; } = false;
         public Tileset.TileFlags TileFlags => characterReference?.TileFlags ?? Tileset.TileFlags.None;
 
-        // TODO: This is stored in NPC_gfx.amb.
-        static readonly uint[] NumNPCFrames = new uint[]
-        {
-            3, 3, 6, 4, 5, 3, 3, 3, 4, 3,
-            3, 4, 3, 3, 3, 2, 2, 1, 3, 3,
-            4, 4, 2, 2, 2, 3, 3, 3, 3, 6,
-            3, 2, 3, 2, 2
-        };
-
         public static void Reset() => interacting = false;
 
         public void ResetLastInteractionTime() => lastInteractionTicks = game.CurrentTicks;
@@ -125,7 +116,7 @@ namespace Ambermoon.Render
                     StandFrameIndex = Graphics.GetNPCGraphicIndex(map.NPCGfxIndex, characterReference.GraphicIndex, graphicProvider),
                     SitFrameIndex = playerAnimationInfo.SitFrameIndex,
                     SleepFrameIndex = playerAnimationInfo.SleepFrameIndex,
-                    NumStandFrames = NumNPCFrames[(graphicProvider.NPCGraphicOffsets.TryGetValue((int)map.NPCGfxIndex, out int offset) ? offset : 0) + characterReference.GraphicIndex],
+                    NumStandFrames = (uint)graphicProvider.NPCGraphicFrameCounts[(int)map.NPCGfxIndex][(int)characterReference.GraphicIndex - 1],
                     NumSitFrames = playerAnimationInfo.NumSitFrames,
                     NumSleepFrames = playerAnimationInfo.NumSleepFrames,
                     TicksPerFrame = map.TicksPerAnimationFrame * 2,

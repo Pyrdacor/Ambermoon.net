@@ -82,5 +82,5 @@ namespace Ambermoon.Render
         public static uint GetAutomapGraphicIndex(AutomapGraphic automapGraphic) => AutomapOffset + (uint)automapGraphic;
         public static uint GetNPCGraphicIndex(uint npcFileIndex, uint npcIndex, IGraphicProvider graphicProvider) =>
             NPCGraphicOffset + (graphicProvider.NPCGraphicOffsets.TryGetValue((int)npcFileIndex, out var offset) ? (uint)offset : 0) + npcIndex;
-    }
+	}
 }
