@@ -6397,8 +6397,15 @@ namespace Ambermoon
         /// </summary>
         void Jump()
         {
-            if (!is3D || WindowActive)
+            if (!is3D)
                 return; // Should not happen
+
+            if (WindowActive)
+            {
+                if (currentWindow.Window == Window.Inventory)
+					CloseWindow(() => AddTimedEvent(TimeSpan.FromMilliseconds(250), Jump));
+                return;
+			}
 
             // Note: Even if the player looks diagonal (e.g. south west)
             // the jump is always performed into one of the 4 main directions.
@@ -9749,7 +9756,7 @@ namespace Ambermoon
                     Cast(() => ActivateLight(180, 3), finishAction);
                     break;
                 case Spell.Jump:
-                    Cast(Jump, finishAction);
+					Cast(Jump, finishAction);
                     break;
                 case Spell.WordOfMarking:
                 {
