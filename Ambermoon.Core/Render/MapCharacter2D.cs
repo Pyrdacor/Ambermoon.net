@@ -116,7 +116,7 @@ namespace Ambermoon.Render
                     StandFrameIndex = Graphics.GetNPCGraphicIndex(map.NPCGfxIndex, characterReference.GraphicIndex, graphicProvider),
                     SitFrameIndex = playerAnimationInfo.SitFrameIndex,
                     SleepFrameIndex = playerAnimationInfo.SleepFrameIndex,
-                    NumStandFrames = (uint)graphicProvider.NPCGraphicFrameCounts[(int)map.NPCGfxIndex][(int)characterReference.GraphicIndex - 1],
+                    NumStandFrames = (uint)graphicProvider.NPCGraphicFrameCounts[(int)map.NPCGfxIndex][(int)characterReference.GraphicIndex],
                     NumSitFrames = playerAnimationInfo.NumSitFrames,
                     NumSleepFrames = playerAnimationInfo.NumSleepFrames,
                     TicksPerFrame = map.TicksPerAnimationFrame * 2,
