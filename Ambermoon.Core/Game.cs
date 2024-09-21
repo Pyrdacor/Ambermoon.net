@@ -3898,7 +3898,7 @@ namespace Ambermoon
                 }
                 else
                 {
-                    if (!pickingNewLeader && currentWindow.Window == Window.Battle)
+                    if (!pickingNewLeader && currentBattle != null && currentWindow.Window == Window.Battle)
                     {
                         if (currentBattle.WaitForClick)
                         {
