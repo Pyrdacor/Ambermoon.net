@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.Data.Legacy
+﻿using System.Collections.Generic;
+
+namespace Ambermoon.Data.Legacy
 {
     public static class CombatBackgrounds
     {
@@ -41,5 +43,17 @@
             new CombatBackgroundInfo { GraphicIndex = 5,  Palettes = new uint[3] { 40, 40, 40 } },
             new CombatBackgroundInfo { GraphicIndex = 3,  Palettes = new uint[3] { 18, 18, 18 } }
         };
-    }
+
+		public static readonly Dictionary<uint, CombatBackgroundInfo> AdvancedReplacements2D = new()
+		{
+            // TODO
+			//{ 5, new CombatBackgroundInfo { GraphicIndex = 17, Palettes = new uint[3] { 39, 48, 49 } } }
+		};
+
+		public static readonly Dictionary<uint, CombatBackgroundInfo> AdvancedReplacements3D = new()
+        {
+            { 5, new CombatBackgroundInfo { GraphicIndex = 17, Palettes = new uint[3] { 39, 48, 49 } } },
+			{ 10, new CombatBackgroundInfo { GraphicIndex = 18, Palettes = new uint[3] { 41, 44, 45 } } }
+		};
+	}
 }

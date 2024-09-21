@@ -49,8 +49,8 @@ namespace Ambermoon.Data
         Dictionary<int, int> NPCGraphicOffsets { get; }
 		Dictionary<int, List<int>> NPCGraphicFrameCounts { get; }
 		List<Graphic> GetGraphics(GraphicType type);
-        CombatBackgroundInfo Get2DCombatBackground(uint index);
-        CombatBackgroundInfo Get3DCombatBackground(uint index);
+        CombatBackgroundInfo Get2DCombatBackground(uint index, bool advanced);
+        CombatBackgroundInfo Get3DCombatBackground(uint index, bool advanced);
         CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index);
         float GetMonsterRowImageScaleFactor(MonsterRow row);
         byte PaletteIndexFromColorIndex(Map map, byte colorIndex);

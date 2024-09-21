@@ -42,7 +42,7 @@ namespace Ambermoon.Data.Legacy
         };
 
         readonly GameData gameData;
-        public Dictionary<int, Graphic> Palettes { get; }
+		public Dictionary<int, Graphic> Palettes { get; }
         public Dictionary<int, int> NPCGraphicOffsets { get; } = new Dictionary<int, int>();
         public Dictionary<int, List<int>> NPCGraphicFrameCounts { get; } = new Dictionary<int, List<int>>();
 
@@ -589,8 +589,22 @@ namespace Ambermoon.Data.Legacy
             return info;
         }
 
-        public CombatBackgroundInfo Get2DCombatBackground(uint index) => CombatBackgrounds.Info2D[index];
-        public CombatBackgroundInfo Get3DCombatBackground(uint index) => CombatBackgrounds.Info3D[index];
+        public CombatBackgroundInfo Get2DCombatBackground(uint index, bool advanced)
+        {
+            if (advanced && CombatBackgrounds.AdvancedReplacements2D.TryGetValue(index, out var info))
+                return info;
+
+            return CombatBackgrounds.Info2D[index];
+        }
+
+        public CombatBackgroundInfo Get3DCombatBackground(uint index, bool advanced)
+		{
+			if (advanced && CombatBackgrounds.AdvancedReplacements3D.TryGetValue(index, out var info))
+				return info;
+
+			return CombatBackgrounds.Info3D[index];
+		}
+
         public CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index) => CombatGraphics.Info[index];
         public float GetMonsterRowImageScaleFactor(MonsterRow row) => row switch
         {

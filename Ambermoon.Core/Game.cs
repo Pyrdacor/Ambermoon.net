@@ -2351,7 +2351,7 @@ namespace Ambermoon
             }
 
             // Upgrade old Ambermoon Advanced save games
-            if (Features == Features.AmbermoonAdvanced && slot > 0 && !savegame.PartyMembers.ContainsKey(16))
+            if (renderView.GameData.Advanced && slot > 0 && !savegame.PartyMembers.ContainsKey(16))
             {
                 // TODO: will only work for legacy data for now!
                 RequestAdvancedSavegamePatching((ILegacyGameData)renderView.GameData, slot, 1, 2);
@@ -9253,9 +9253,10 @@ namespace Ambermoon
             ShowMap(false);
             layout.Reset();
 
-            var combatBackground = is3D
-                ? renderView.GraphicProvider.Get3DCombatBackground(combatBackgroundIndex.Value)
-                : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex.Value);
+            bool advancedBackgrounds = Features.HasFlag(Features.AdvancedCombatBackgrounds);
+			var combatBackground = is3D
+                ? renderView.GraphicProvider.Get3DCombatBackground(combatBackgroundIndex.Value, advancedBackgrounds)
+                : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex.Value, advancedBackgrounds);
             paletteIndex = (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1);
             layout.AddSprite(Global.CombatBackgroundArea, Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
                 paletteIndex, 1, null, null, Layer.CombatBackground);
