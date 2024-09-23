@@ -1278,8 +1278,9 @@ namespace Ambermoon.Render
              
             var branches = new Queue<Event>();
             var checkedEvent = new HashSet<Event>();
+            var firstEvent = Map.EventList[(int)block.MapEventId - 1];
 
-            EventType CheckEventBranch(Event @event)
+			EventType CheckEventBranch(Event @event)
             {
                 while (@event != null)
                 {
@@ -1291,12 +1292,41 @@ namespace Ambermoon.Render
                     if (eventTypes.Contains(@event.Type))
                         return @event.Type;
 
-                    var branch = @event.GetSecondaryBranchSuccessor(Map.Events);
+                    if (@event is ConditionEvent condition)
+                    {
+                        switch (condition.TypeOfCondition)
+                        {
+                            case ConditionEvent.ConditionType.Hand:
+                            case ConditionEvent.ConditionType.Eye:
+                            case ConditionEvent.ConditionType.SayWord:
+                            case ConditionEvent.ConditionType.EnterNumber:
+                            case ConditionEvent.ConditionType.MultiCursor:
+                            case ConditionEvent.ConditionType.Levitating:
+                            case ConditionEvent.ConditionType.Mouth:
+                            case ConditionEvent.ConditionType.UseItem:
+                                // For non-move triggers we don't proceed.
+                                return EventType.Invalid;
+                            default:
+                            {
+                                bool lastEventResult = true;
+                                var trigger = @event == firstEvent ? EventTrigger.Move : EventTrigger.Always;
+                                @event = EventExtensions.ExecuteEvent(@event, Map, game, ref trigger, x, y,
+                                    ref lastEventResult, out bool aborted, out _);
+                                if (aborted)
+                                    return EventType.Invalid;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var branch = @event.GetSecondaryBranchSuccessor(Map.Events);
 
-                    if (branch != null && !checkedEvent.Contains(branch))
-                        branches.Enqueue(branch);
+                        if (branch != null && !checkedEvent.Contains(branch))
+                            branches.Enqueue(branch);
 
-                    @event = @event.Next;
+						@event = @event.Next;
+					}                    
                 }
 
                 if (branches.Count != 0)
@@ -1305,7 +1335,7 @@ namespace Ambermoon.Render
                 return EventType.Invalid;
             }
 
-            return CheckEventBranch(Map.EventList[(int)block.MapEventId - 1]);
+            return CheckEventBranch(firstEvent);
         }
 
         public AutomapType AutomapTypeFromBlock(uint x, uint y)

@@ -23,11 +23,28 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>$(DefineConstants);GLES</DefineConstants>
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
-    <PublishTrimmed>True</PublishTrimmed>
+	  <RunAOTCompilation>False</RunAOTCompilation>
+    <PublishTrimmed>False</PublishTrimmed>
 	<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
-	<AndroidLinkTool>r8</AndroidLinkTool>
-	<AndroidPackageFormat>aab</AndroidPackageFormat>
+	<AndroidLinkTool>none</AndroidLinkTool>
+	<AndroidPackageFormat>apk</AndroidPackageFormat>
+	<DebugSymbols>True</DebugSymbols>
+	  <AndroidLinkMode>None</AndroidLinkMode>
+	  <DebugType>Portable</DebugType>
+	  <AndroidEnableProguard>false</AndroidEnableProguard>
+	  <AndroidEnableR8>false</AndroidEnableR8>
+	  <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+	  <AndroidUseLatestPlatformSdk>true</AndroidUseLatestPlatformSdk>
+	  <AndroidUseDebugSymbols>true</AndroidUseDebugSymbols>
+	  <AndroidEnableReleaseSigning>false</AndroidEnableReleaseSigning>
+	  <Optimize>false</Optimize>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
   </PropertyGroup>
+	<PropertyGroup>
+		<AndroidEnableProguard>false</AndroidEnableProguard>
+		<AndroidEnableR8>false</AndroidEnableR8>
+	</PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Silk.NET.Input" Version="2.21.0" />
@@ -48,5 +65,10 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\raw\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="proguard-rules.pro">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
