@@ -47,7 +47,6 @@ namespace Ambermoon.Data.Legacy
 		public static readonly Dictionary<uint, CombatBackgroundInfo> AdvancedReplacements2D = new()
 		{
             // TODO
-			//{ 5, new CombatBackgroundInfo { GraphicIndex = 17, Palettes = new uint[3] { 39, 48, 49 } } }
 		};
 
 		public static readonly Dictionary<uint, CombatBackgroundInfo> AdvancedReplacements3D = new()

@@ -5019,7 +5019,7 @@ namespace Ambermoon
                         }
                         AddAnimatedText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAttributeShortName(attribute));
                         AddAnimatedText(new Rect(52, y, 42, Global.GlyphLineHeight),
-                            (attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue+bonus:000}") + $"/{attributeValues.MaxValue:000}");
+                            (attributeValues.TotalCurrentValue + bonus > 999 ? "***" : $"{attributeValues.TotalCurrentValue + bonus:000}") + $"/{attributeValues.MaxValue:000}");
                     }
                     else
                     {
@@ -5038,12 +5038,31 @@ namespace Ambermoon
                 {
                     int y = 122 + index++ * Global.GlyphLineHeight;
                     var skillValues = partyMember.Skills[skill];
-                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetSkillShortName(skill));
-                    layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
-                        (skillValues.TotalCurrentValue > 99 ? "**" : $"{skillValues.TotalCurrentValue:00}") + $"%/{skillValues.MaxValue:00}%");
-                    if (Configuration.ShowPlayerStatsTooltips)
-                        AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), GetSkillTooltip(GameLanguage, skill, partyMember));
-                }
+                    var current = skillValues.TotalCurrentValue;
+
+                    if (skill == Skill.Searching && Features.HasFlag(Features.ClairvoyanceGrantsSearchSkill) &&
+                        CurrentSavegame.IsSpellActive(ActiveSpellType.Clairvoyance))
+                    {
+                        uint bonus = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Clairvoyance);
+                        void AddAnimatedText(Rect area, string text)
+                        {
+                            this.AddAnimatedText((area, text, color, align) => layout.AddText(area, text, color, align), area, text, TextAlign.Left,
+                                () => CurrentWindow.Window == Window.Stats, 100, true);
+                        }
+                        AddAnimatedText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetSkillShortName(skill));
+                        AddAnimatedText(new Rect(52, y, 42, Global.GlyphLineHeight),
+                            (skillValues.TotalCurrentValue + bonus > 99 ? "**" : $"{skillValues.TotalCurrentValue + bonus:00}") + $"%/{skillValues.MaxValue:00}%");
+                    }
+                    else
+                    {
+                        layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetSkillShortName(skill));
+                        layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
+                            (skillValues.TotalCurrentValue > 99 ? "**" : $"{skillValues.TotalCurrentValue:00}") + $"%/{skillValues.MaxValue:00}%");
+                    }
+
+					if (Configuration.ShowPlayerStatsTooltips)
+						AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), GetSkillTooltip(GameLanguage, skill, partyMember));
+				}
                 #endregion
                 #region Languages
                 layout.AddText(new Rect(106, 50, 72, Global.GlyphLineHeight), DataNameProvider.LanguagesHeaderString, TextColor.LightGreen, TextAlign.Center);
@@ -9881,15 +9900,15 @@ namespace Ambermoon
                     break;
                 case Spell.Knowledge:
                     // Duration: 30 (150 minutes = 2h30m)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 30, 1), finishAction);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 30, 20), finishAction);
                     break;
                 case Spell.Clairvoyance:
                     // Duration: 90 (450 minutes = 7h30m)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 90, 1), finishAction);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 90, 40), finishAction);
                     break;
                 case Spell.SeeTheTruth:
                     // Duration: 180 (900 minutes = 15h)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1), finishAction);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 60), finishAction);
                     break;
                 case Spell.MapView:
                     Cast(() => OpenMiniMap(finishAction), null, finishAction);
@@ -9974,7 +9993,7 @@ namespace Ambermoon
                     // Duration: 180 (900 minutes = 15h)
                     Cast(() =>
                     {
-                        CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1);
+                        CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 60);
                         CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 180, 1);
                     }, finishAction);
                     break;

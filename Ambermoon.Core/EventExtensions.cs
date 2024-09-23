@@ -69,7 +69,7 @@ namespace Ambermoon
                         return null;
                     }
 
-                    if (!(@event is TeleportEvent teleportEvent))
+                    if (@event is not TeleportEvent teleportEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid teleport event.");
 
                     game.Teleport(teleportEvent, x, y);
@@ -82,7 +82,7 @@ namespace Ambermoon
                 }
                 case EventType.Door:
                 {
-                    if (!(@event is DoorEvent doorEvent))
+                    if (@event is not DoorEvent doorEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid door event.");
 
                     if (!game.ShowDoor(doorEvent, false, false, map, x, y, true, trigger == EventTrigger.Move))
@@ -102,11 +102,20 @@ namespace Ambermoon
                         return null;
                     }
 
-                    if (!(@event is ChestEvent chestEvent))
+                    if (@event is not ChestEvent chestEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
-                    if (chestEvent.SearchSkillCheck &&
-                        game.RandomInt(0, 99) >= game.CurrentPartyMember.Skills[Skill.Searching].TotalCurrentValue)
+                    var totalSearchValue = game.CurrentPartyMember.Skills[Skill.Searching].TotalCurrentValue;
+
+					// Search bonus in AA
+					if (game.Features.HasFlag(Features.ClairvoyanceGrantsSearchSkill) &&
+						game.CurrentSavegame.IsSpellActive(ActiveSpellType.Clairvoyance))
+					{
+						totalSearchValue += game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Clairvoyance);
+					}
+
+					if (chestEvent.SearchSkillCheck &&
+                        game.RandomInt(0, 99) >= totalSearchValue)
                     {
                         aborted = true;
                         return null;
@@ -117,7 +126,7 @@ namespace Ambermoon
                 }
                 case EventType.MapText:
                 {
-                    if (!(@event is PopupTextEvent popupTextEvent))
+                    if (@event is not PopupTextEvent popupTextEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid text popup event.");
 
                     // Only check trigger if this is the first event of the chain.
@@ -193,7 +202,7 @@ namespace Ambermoon
                         trigger != EventTrigger.Always)
                         return null;
 
-                    if (!(@event is SpinnerEvent spinnerEvent))
+                    if (@event is not SpinnerEvent spinnerEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid spinner event.");
 
                     game.Spin(spinnerEvent.Direction, spinnerEvent.Next);
@@ -201,7 +210,7 @@ namespace Ambermoon
                 }
                 case EventType.Trap:
                 {
-                    if (!(@event is TrapEvent trapEvent))
+                    if (@event is not TrapEvent trapEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid trap event.");
 
                     if (trigger == EventTrigger.Eye)
@@ -222,7 +231,7 @@ namespace Ambermoon
                 }
                 case EventType.ChangeBuffs:
                 {
-                    if (!(@event is ChangeBuffsEvent changeBuffsEvent))
+                    if (@event is not ChangeBuffsEvent changeBuffsEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid change buffs event.");
 
                     if (changeBuffsEvent.AffectedBuff == null) // all
@@ -267,7 +276,7 @@ namespace Ambermoon
                         trigger != EventTrigger.Mouth)
                         return null;
 
-                    if (!(@event is RiddlemouthEvent riddleMouthEvent))
+                    if (@event is not RiddlemouthEvent riddleMouthEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid riddle mouth event.");
 
                     game.ShowRiddlemouth(map, riddleMouthEvent, () =>
@@ -278,7 +287,7 @@ namespace Ambermoon
                 }
                 case EventType.Reward:
                 {
-                    if (!(@event is RewardEvent rewardEvent))
+                    if (@event is not RewardEvent rewardEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid reward event.");
                     EventProvider provider = null;
                     if (conversationPartner != null)
@@ -345,7 +354,7 @@ namespace Ambermoon
                 }
                 case EventType.ChangeTile:
                 {
-                    if (!(@event is ChangeTileEvent changeTileEvent))
+                    if (@event is not ChangeTileEvent changeTileEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
                     // Note: Savegame stores the front tile index for 2D and wall/object index for 3D.
@@ -382,7 +391,7 @@ namespace Ambermoon
                         return null;
                     }
 
-                    if (!(@event is StartBattleEvent battleEvent))
+                    if (@event is not StartBattleEvent battleEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid battle event.");
 
                     game.StartBattle(battleEvent, battleEvent.Next, game.GetCombatBackgroundIndex(map, x, y));
@@ -397,7 +406,7 @@ namespace Ambermoon
                         return null;
                     }
 
-                    if (!(@event is EnterPlaceEvent enterPlaceEvent))
+                    if (@event is not EnterPlaceEvent enterPlaceEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid place event.");
 
                     if (!game.EnterPlace(map, enterPlaceEvent))
@@ -406,7 +415,7 @@ namespace Ambermoon
                 }
                 case EventType.Condition:
                 {
-                    if (!(@event is ConditionEvent conditionEvent))
+                    if (@event is not ConditionEvent conditionEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid condition event.");
 
                     var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
@@ -732,7 +741,15 @@ namespace Ambermoon
                         {
                             var attribute = game.CurrentPartyMember.Attributes[(Data.Attribute)conditionEvent.ObjectIndex];
                             var totalValue = attribute.CurrentValue + attribute.BonusValue;
-                            if ((totalValue >= conditionEvent.Count) != (conditionEvent.Value != 0))
+
+							// Anti-magic bonus
+							if ((Data.Attribute)conditionEvent.ObjectIndex == Data.Attribute.AntiMagic &&
+								game.CurrentSavegame.IsSpellActive(ActiveSpellType.AntiMagic))
+							{
+								totalValue += game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.AntiMagic);
+							}
+
+							if ((totalValue >= conditionEvent.Count) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -744,7 +761,16 @@ namespace Ambermoon
                         {
                             var skill = game.CurrentPartyMember.Skills[(Skill)conditionEvent.ObjectIndex];
                             var totalValue = skill.CurrentValue + skill.BonusValue;
-                            if ((totalValue >= conditionEvent.Count) != (conditionEvent.Value != 0))
+
+                            // Search bonus in AA
+                            if ((Skill)conditionEvent.ObjectIndex == Skill.Searching &&
+                                game.Features.HasFlag(Features.ClairvoyanceGrantsSearchSkill) &&
+                                game.CurrentSavegame.IsSpellActive(ActiveSpellType.Clairvoyance))
+                            {
+                                totalValue += game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Clairvoyance);
+                            }
+
+							if ((totalValue >= conditionEvent.Count) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -797,7 +823,7 @@ namespace Ambermoon
                 }
                 case EventType.Action:
                 {
-                    if (!(@event is ActionEvent actionEvent))
+                    if (@event is not ActionEvent actionEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid action event.");
 
                     bool ClearSetToggle(Func<bool> currentValueRetriever)
@@ -1037,7 +1063,7 @@ namespace Ambermoon
                 }
                 case EventType.Dice100Roll:
                 {
-                    if (!(@event is Dice100RollEvent diceEvent))
+                    if (@event is not Dice100RollEvent diceEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid dice 100 event.");
 
                     var mapEventIfFalse = diceEvent.ContinueIfFalseWithMapEventIndex == 0xffff
@@ -1047,7 +1073,7 @@ namespace Ambermoon
                 }
                 case EventType.Conversation:
                 {
-                    if (!(@event is ConversationEvent conversationEvent))
+                    if (@event is not ConversationEvent conversationEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid conversation event.");
 
                     switch (conversationEvent.Interaction)
@@ -1078,7 +1104,7 @@ namespace Ambermoon
                 }
                 case EventType.Decision:
                 {
-                    if (!(@event is DecisionEvent decisionEvent))
+                    if (@event is not DecisionEvent decisionEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid decision event.");
 
                     game.ShowDecisionPopup(map, decisionEvent, response =>
@@ -1100,12 +1126,12 @@ namespace Ambermoon
                     return null; // next event is only executed after popup response
                 }
                 case EventType.ChangeMusic:
-                    if (!(@event is ChangeMusicEvent changeMusicEvent))
+                    if (@event is not ChangeMusicEvent changeMusicEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid change music event.");
-                    game.PlayMusic((Data.Enumerations.Song)changeMusicEvent.MusicIndex);
+                    game.PlayMusic((Song)changeMusicEvent.MusicIndex);
                     break;
                 case EventType.Spawn:
-                    if (!(@event is SpawnEvent spawnEvent))
+                    if (@event is not SpawnEvent spawnEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid spawn event.");
                     game.SpawnTransport(spawnEvent.MapIndex == 0 ? map.Index : spawnEvent.MapIndex,
                         spawnEvent.X, spawnEvent.Y, spawnEvent.TravelType);
@@ -1115,7 +1141,7 @@ namespace Ambermoon
                     // TODO
                     break;
                 case EventType.Delay:
-                    if (!(@event is DelayEvent delayEvent))
+                    if (@event is not DelayEvent delayEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid delay event.");
                     game.StartSequence();
                     game.AddTimedEvent(TimeSpan.FromMilliseconds(delayEvent.Milliseconds), () =>
