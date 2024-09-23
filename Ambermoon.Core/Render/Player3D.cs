@@ -308,7 +308,7 @@ namespace Ambermoon.Render
                 return false;
             }
 
-            Geometry.CameraToWorldPosition(map.Map, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
+			Geometry.CameraToWorldPosition(map.Map, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
             float collisionTestDistance = distance + (turning ? 0.334f : 0.2f) * Global.DistancePerBlock;
             positionProvider(collisionTestDistance, out float newX, out float newY, false, false);
 
