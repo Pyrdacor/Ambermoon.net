@@ -237,20 +237,24 @@ namespace Ambermoon
         Queue<Monster> startAnimationMonsters = new Queue<Monster>();
         List<BattleAnimation> effectAnimations = null;
         SpellAnimation currentSpellAnimation = null;
-        readonly Dictionary<ActiveSpellType, ILayerSprite> activeSpellSprites = new Dictionary<ActiveSpellType, ILayerSprite>();
-        readonly Dictionary<ActiveSpellType, IColoredRect> activeSpellDurationBackgrounds = new Dictionary<ActiveSpellType, IColoredRect>();
-        readonly Dictionary<ActiveSpellType, Bar> activeSpellDurationBars = new Dictionary<ActiveSpellType, Bar>();
-        readonly List<KeyValuePair<uint, ItemSlotFlags>> brokenItems = new List<KeyValuePair<uint, ItemSlotFlags>>();
-        readonly List<Monster> droppedWeaponMonsters = new List<Monster>();
+        readonly Dictionary<ActiveSpellType, ILayerSprite> activeSpellSprites = new();
+        readonly Dictionary<ActiveSpellType, IColoredRect> activeSpellDurationBackgrounds = new();
+        readonly Dictionary<ActiveSpellType, Bar> activeSpellDurationBars = new();
+        readonly List<KeyValuePair<uint, ItemSlotFlags>> brokenItems = new();
+        readonly List<Monster> droppedWeaponMonsters = new();
         readonly uint[] totalPlayerDamage = new uint[Game.MaxPartyMembers];
         readonly uint[] numSuccessfulPlayerHits = new uint[Game.MaxPartyMembers];
         readonly uint[] averagePlayerDamage = new uint[Game.MaxPartyMembers];
-        readonly List<uint> monsterMorale = new List<uint>();
-        readonly List<uint> totalMonsterDamage = new List<uint>();
-        readonly List<uint> numSuccessfulMonsterHits = new List<uint>();
-        readonly List<uint> averageMonsterDamage = new List<uint>();
+        readonly List<uint> monsterMorale = new();
+        readonly List<uint> totalMonsterDamage = new();
+        readonly List<uint> numSuccessfulMonsterHits = new();
+        readonly List<uint> averageMonsterDamage = new();
         uint relativeDamageEfficiency = 0;
         bool showMonsterLP = false;
+        bool showElements = false;
+        bool foreseeMagic = false;
+        bool foreseeAttack = false;
+        readonly List<Monster> weakenedMonsters = new();
         bool anyMonsterWantedToFlee = false;
         internal bool NeedsClickForNextAction { get; set; }
         internal int Speed { get; set; }
@@ -531,18 +535,18 @@ namespace Ambermoon
         static string GetMonsterLPString(Monster monster) =>
             $"{GetLPString(monster.HitPoints.CurrentValue)}/{GetLPString(monster.HitPoints.TotalMaxValue)}^{monster.Name}";
 
-        /// <summary>
-        /// Called while updating the battle. Each call will
-        /// perform the next action which can be a movement,
-        /// attack, spell cast, flight or group forward move.
-        /// 
-        /// <see cref="StartRound"/> will automatically call
-        /// this method.
-        /// 
-        /// Each action may trigger some text messages,
-        /// animations or other changes.
-        /// </summary>
-        public void NextAction(uint battleTicks)
+		/// <summary>
+		/// Called while updating the battle. Each call will
+		/// perform the next action which can be a movement,
+		/// attack, spell cast, flight or group forward move.
+		/// 
+		/// <see cref="StartRound"/> will automatically call
+		/// this method.
+		/// 
+		/// Each action may trigger some text messages,
+		/// animations or other changes.
+		/// </summary>
+		public void NextAction(uint battleTicks)
         {
             ReadyForNextAction = false;
 
@@ -578,10 +582,27 @@ namespace Ambermoon
                 {
                     foreach (var monster in Monsters)
                     {
-                        layout.GetMonsterBattleFieldTooltip(monster).Text = GetMonsterLPString(monster);
+                        string tooltip = GetMonsterLPString(monster);
+
+                        if (showElements)
+                            tooltip += $"^({game.DataNameProvider.GetElementName(monster.Element)})";
+						
+                        layout.GetMonsterBattleFieldTooltip(monster).Text = tooltip;
                     }
                 }
-                RoundFinished?.Invoke();
+                else if (showElements)
+				{
+					foreach (var monster in Monsters)
+					{
+						layout.GetMonsterBattleFieldTooltip(monster).Text = monster.Name + $"^({game.DataNameProvider.GetElementName(monster.Element)})";
+					}
+				}
+
+				foreseeMagic = false;
+				foreseeAttack = false;
+
+				RoundFinished?.Invoke();
+
                 return;
             }
 
@@ -2141,7 +2162,12 @@ namespace Ambermoon
 
         bool CheckSpellCast(Character caster, SpellInfo spellInfo)
         {
-            if (game.RollDice100() >= caster.Skills[Skill.UseMagic].TotalCurrentValue)
+            long chance = caster.Skills[Skill.UseMagic].TotalCurrentValue;
+
+            if (caster is Monster && foreseeMagic)
+                chance -= 25;
+
+			if (game.RollDice100() >= chance)
             {
                 layout.SetBattleMessage(caster.Name + game.DataNameProvider.SpellFailed,
                     caster.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
@@ -2899,13 +2925,78 @@ namespace Ambermoon
                     {
                         foreach (var monster in Monsters)
                         {
-                            layout.GetMonsterBattleFieldTooltip(monster).Text = GetMonsterLPString(monster);
-                        }
+                            string tooltip = GetMonsterLPString(monster);
+
+                            if (showElements)
+                                tooltip += $"^({game.DataNameProvider.GetElementName(monster.Element)})";
+
+							layout.GetMonsterBattleFieldTooltip(monster).Text = tooltip;
+						}
                         showMonsterLP = true;
                     }
                     break;
                 }
-                default:
+				case Spell.ShowElements:
+				{
+					if (!showElements)
+					{
+						foreach (var monster in Monsters)
+						{
+							layout.GetMonsterBattleFieldTooltip(monster).Text += $"^({game.DataNameProvider.GetElementName(monster.Element)})";
+						}
+						showElements = true;
+					}
+					break;
+				}
+                case Spell.ForeseeMagic:
+                    foreseeMagic = true;
+                    break;
+				case Spell.ForeseeAttack:
+					foreseeAttack = true;
+					break;
+				case Spell.RecognizeWeakPoint:
+				case Spell.SeeWeaknesses:
+				case Spell.KnowledgeOfTheWeakness:
+                {
+                    if (target is Monster monster)
+                    {
+                        if (!weakenedMonsters.Contains(monster))
+                            weakenedMonsters.Add(monster);
+                    }
+                    break;
+                }
+				case Spell.MysticDecay:
+				{
+					// Base Damage = Caster Level
+					// Dmg Increase % = (1 + (MaxTargetHP - CurrTargetHP) * 10 / MaxTargetHP) ^ 2
+					// MinDmg = 5
+                    // The max damage at level 50 would be 100 against a target with 10% LP or below.
+                    // But Level and INT bonus is applied as well which can also increase the damage
+                    // by 50% or more.
+                    //
+                    // The damage is random between half the value and full the value while the min
+                    // value can still not be below 5.
+					//
+					// Caster Level 25
+					// Target has 10%, 25%, 50%, 75%, 100% LP
+					// 10% -> 200% * 25 = 50
+					// 25% -> 164% * 25 = 41
+					// 50% -> 136% * 25 = 34
+					// 75% -> 109% * 25 = 27
+					// 100% -> 101% * 25 = 25
+					bool ignoreDamageBonus = caster is PartyMember p && p.Index < 16;
+					long bonus = 1 + Math.Max(0, ((long)target.HitPoints.MaxValue - target.HitPoints.CurrentValue) * 10 / target.HitPoints.MaxValue);
+					bonus *= bonus;
+                    uint damage = Math.Max(5u, ((uint)caster.Level * 3 / 2) * (100 + (uint)bonus) / 100);
+					var bonusDamage = caster.Attributes[Attribute.BonusSpellDamage];
+					uint minDamage = Math.Max(5, damage / 2);
+					uint maxDamage = damage;
+					if (!ignoreDamageBonus)
+						AdjustDamage(ref minDamage, ref maxDamage, bonusDamage);
+					DealDamage(minDamage, maxDamage - minDamage);
+					return;
+				}
+				default:
                     game.ApplySpellEffect(spell, caster, target, finishAction, false);
                     return;
             }
@@ -2976,6 +3067,11 @@ namespace Ambermoon
                         damage = (damage * (uint)factor) / 100;                        
                         damage = (uint)Math.Max(1, damage - (damage * damageReduction) / 100);
                     }
+                }
+                if (target is Monster monsterTarget && weakenedMonsters.Contains(monsterTarget))
+                {
+                    uint bonus = monsterTarget.BattleFlags.HasFlag(BattleFlags.Boss) ? 15u : 30u;
+                    damage = Math.Min((100 + bonus) * damage / 100, monsterTarget.HitPoints.CurrentValue);
                 }
                 uint position = (uint)GetSlotFromCharacter(target);
                 PlayBattleEffectAnimation(target.Type == CharacterType.Monster ? BattleEffect.HurtMonster : BattleEffect.HurtPlayer,
@@ -4160,7 +4256,12 @@ namespace Ambermoon
                 return AttackResult.Protected;
             }
 
-            if (!godMode && game.RollDice100() > attacker.Skills[Skill.Attack].TotalCurrentValue)
+            long hitChance = attacker.Skills[Skill.Attack].TotalCurrentValue;
+
+            if (attacker is Monster && foreseeAttack)
+                hitChance -= 25;
+
+			if (!godMode && game.RollDice100() > hitChance)
                 return AttackResult.Failed;
 
             if (game.RollDice100() < attacker.Skills[Skill.CriticalHit].TotalCurrentValue)
@@ -4174,7 +4275,13 @@ namespace Ambermoon
 
             damage = CalculatePhysicalDamage(attacker, target);
 
-            if (damage <= 0)
+			if (target is Monster monsterTarget && weakenedMonsters.Contains(monsterTarget))
+			{
+				int bonus = monsterTarget.BattleFlags.HasFlag(BattleFlags.Boss) ? 15 : 30;
+				damage = Math.Min((100 + bonus) * damage / 100, (int)monsterTarget.HitPoints.CurrentValue);
+			}
+
+			if (damage <= 0)
             {
                 if (!godMode)
                 {

@@ -80,14 +80,14 @@
         MysticalMapIII,
         MysticalGlobe,
         ShowMonsterLP,
-        UnusedMystic18,
-        UnusedMystic19,
-        UnusedMystic20,
-        UnusedMystic21,
-        UnusedMystic22,
-        UnusedMystic23,
-        UnusedMystic24,
-        UnusedMystic25,
+		ShowElements, // Advanced only
+		RecognizeWeakPoint, // Advanced only
+		SeeWeaknesses, // Advanced only
+		KnowledgeOfTheWeakness, // Advanced only
+		ForeseeMagic, // Advanced only
+		ForeseeAttack, // Advanced only
+		MysticDecay, // Advanced only
+		UnusedMystic25,
         UnusedMystic26,
         UnusedMystic27,
         UnusedMystic28,
@@ -242,20 +242,20 @@
         MysticalMapIII,
         MysticalGlobe,
         ShowMonsterLP,
-        Unused18,
-        Unused19,
-        Unused20,
-        Unused21,
-        Unused22,
-        Unused23,
-        Unused24,
-        Unused25,
-        Unused26,
-        Unused27,
-        Unused28,
-        Unused29,
-        Unused30
-    }
+		ShowElements, // Advanced only
+		RecognizeWeakPoint, // Advanced only
+		SeeWeaknesses, // Advanced only
+		KnowledgeOfTheWeakness, // Advanced only
+		ForeseeMagic, // Advanced only
+		ForeseeAttack, // Advanced only
+		MysticDecay, // Advanced only
+		UnusedMystic25,
+		UnusedMystic26,
+		UnusedMystic27,
+		UnusedMystic28,
+		UnusedMystic29,
+		MysticImitation, // Advanced only
+	}
 
     public enum DestructionSpell : byte
     {
@@ -302,7 +302,8 @@
                     spell == Spell.GhostInferno ||
                     spell == Spell.LPStealer ||
                     spell == Spell.SPStealer ||
-                    spell == Spell.MagicalProjectile ||
+					spell == Spell.MysticDecay ||
+					spell == Spell.MagicalProjectile ||
                     spell == Spell.MagicalArrows ||
                     (spell >= Spell.Mudsling && spell <= Spell.Iceshower);
         }
@@ -314,7 +315,8 @@
                     spell == Spell.GhostInferno ||
                    spell == Spell.LPStealer ||
                    spell == Spell.SPStealer ||
-                   spell == Spell.MagicalProjectile ||
+				   spell == Spell.MysticDecay ||
+				   spell == Spell.MagicalProjectile ||
                    spell == Spell.MagicalArrows ||
                    (spell >= Spell.Mudsling && spell <= Spell.Iceshower);
         }

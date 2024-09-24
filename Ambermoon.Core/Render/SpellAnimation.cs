@@ -284,8 +284,14 @@ namespace Ambermoon.Render
                 case Spell.MassHurry:
                 case Spell.MonsterKnowledge:
                 case Spell.ShowMonsterLP:
-                case Spell.MysticImitation:
-                case Spell.Lame:
+				case Spell.ShowElements:
+				case Spell.ForeseeMagic:
+				case Spell.ForeseeAttack:
+				case Spell.MysticImitation:
+				case Spell.RecognizeWeakPoint:
+				case Spell.SeeWeaknesses:
+				case Spell.KnowledgeOfTheWeakness:
+				case Spell.Lame:
                 case Spell.Poison:
                 case Spell.Petrify:
                 case Spell.CauseDisease:
@@ -336,7 +342,8 @@ namespace Ambermoon.Render
                 case Spell.GhostInferno:
                 case Spell.LPStealer:
                 case Spell.SPStealer:
-                case Spell.Firebeam:
+				case Spell.MysticDecay:
+				case Spell.Firebeam:
                 case Spell.Fireball:
                 case Spell.Iceball:
                 {
@@ -413,7 +420,10 @@ namespace Ambermoon.Render
                 case Spell.Hurry:
                 case Spell.MassHurry:
                 case Spell.ShowMonsterLP:
-                case Spell.Earthquake:
+				case Spell.ShowElements:
+				case Spell.ForeseeMagic:
+				case Spell.ForeseeAttack:
+				case Spell.Earthquake:
                 case Spell.Blink:
                 case Spell.Escape:
                 case Spell.SpellPointsI:
@@ -443,7 +453,11 @@ namespace Ambermoon.Render
                 case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
                 case Spell.MysticImitation:
-                case Spell.MagicalProjectile:
+				case Spell.MysticDecay:
+				case Spell.RecognizeWeakPoint:
+				case Spell.SeeWeaknesses:
+				case Spell.KnowledgeOfTheWeakness:
+				case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
                 case Spell.Lame:
                 case Spell.Poison:
@@ -738,11 +752,18 @@ namespace Ambermoon.Render
                 case Spell.GhostWeapon:
                 case Spell.GhostInferno:
                 case Spell.MonsterKnowledge:
-                    // Those spells use only the MoveTo method.
-                    this.finishAction?.Invoke();
+				case Spell.RecognizeWeakPoint:
+				case Spell.SeeWeaknesses:
+				case Spell.KnowledgeOfTheWeakness:
+				case Spell.MysticDecay:
+					// Those spells use only the MoveTo method.
+					this.finishAction?.Invoke();
                     break;
                 case Spell.ShowMonsterLP:
-                case Spell.MysticImitation:
+				case Spell.ShowElements:
+				case Spell.ForeseeMagic:
+				case Spell.ForeseeAttack:
+				case Spell.MysticImitation:
                 {
                     if (fromMonster)
                     {
@@ -1582,16 +1603,23 @@ namespace Ambermoon.Render
                 case Spell.AntiMagicSphere:
                 case Spell.MassHurry:
                 case Spell.ShowMonsterLP:
-                    // Buffs are handled in Play.
-                    this.finishAction?.Invoke();
+				case Spell.ShowElements:
+				case Spell.ForeseeMagic:
+				case Spell.ForeseeAttack:
+					// Buffs are handled in Play.
+					this.finishAction?.Invoke();
                     break;
                 case Spell.MonsterKnowledge:
                 case Spell.MysticImitation:
-                    PlayKnowledge();
+                case Spell.RecognizeWeakPoint:
+				case Spell.SeeWeaknesses:
+				case Spell.KnowledgeOfTheWeakness:
+					PlayKnowledge();
                     break;
                 case Spell.LPStealer:
                 case Spell.SPStealer:
-                {
+				case Spell.MysticDecay:
+				{
                     // Note: The hurt animation comes first so we immediately call the passed finish action
                     // which will display the hurt animation.
                     finishAction?.Invoke(game.CurrentBattleTicks, true, false); // Play hurt animation but do not finish.

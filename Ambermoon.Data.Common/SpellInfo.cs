@@ -181,13 +181,13 @@ namespace Ambermoon.Data
             { Spell.MysticalMapIII, new SpellInfo { SP = 45, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle, Worlds = WorldFlag.All } },
             { Spell.MysticalGlobe, new SpellInfo { SP = 250, SLP = 25, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle, Worlds = WorldFlag.All } },
             { Spell.ShowMonsterLP, new SpellInfo { SP = 15, SLP = 5, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
-            { Spell.UnusedMystic18, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
-            { Spell.UnusedMystic19, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
-            { Spell.UnusedMystic20, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
-            { Spell.UnusedMystic21, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
-            { Spell.UnusedMystic22, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
-            { Spell.UnusedMystic23, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
-            { Spell.UnusedMystic24, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
+            { Spell.ShowElements, new SpellInfo { SP = 10, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } }, // Advanced only
+            { Spell.RecognizeWeakPoint, new SpellInfo { SP = 15, SLP = 20, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } }, // Advanced only
+            { Spell.SeeWeaknesses, new SpellInfo { SP = 30, SLP = 25, Target = SpellTarget.EnemyRow, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } }, // Advanced only
+            { Spell.KnowledgeOfTheWeakness, new SpellInfo { SP = 45, SLP = 30, Target = SpellTarget.AllEnemies, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } }, // Advanced only
+            { Spell.ForeseeMagic, new SpellInfo { SP = 15, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } }, // Advanced only
+            { Spell.ForeseeAttack, new SpellInfo { SP = 15, SLP = 25, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } }, // Advanced only
+            { Spell.MysticDecay, new SpellInfo { SP = 50, SLP = 25, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.Lyramion | WorldFlag.ForestMoon } }, // Advanced only
             { Spell.UnusedMystic25, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
             { Spell.UnusedMystic26, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
             { Spell.UnusedMystic27, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
