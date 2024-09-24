@@ -87,8 +87,8 @@
 		ForeseeMagic, // Advanced only
 		ForeseeAttack, // Advanced only
 		MysticDecay, // Advanced only
-		UnusedMystic25,
-        UnusedMystic26,
+		ProtectionSphere, // Advanced only
+		UnusedMystic26,
         UnusedMystic27,
         UnusedMystic28,
         UnusedMystic29,
@@ -249,7 +249,7 @@
 		ForeseeMagic, // Advanced only
 		ForeseeAttack, // Advanced only
 		MysticDecay, // Advanced only
-		UnusedMystic25,
+		ProtectionSphere, // Advanced only
 		UnusedMystic26,
 		UnusedMystic27,
 		UnusedMystic28,

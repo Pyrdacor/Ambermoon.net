@@ -221,12 +221,12 @@ namespace Ambermoon
         readonly Game game;
         readonly Layout layout;
         readonly PartyMember[] partyMembers;
-        readonly Queue<BattleAction> roundBattleActions = new Queue<BattleAction>();
+        readonly Queue<BattleAction> roundBattleActions = new();
         readonly Character[] battleField = new Character[6 * 5];
-        readonly List<PartyMember> parryingPlayers = new List<PartyMember>(Game.MaxPartyMembers);
-        readonly List<Character> fledCharacters = new List<Character>();
-        readonly List<PartyMember> hurriedPlayers = new List<PartyMember>();
-        readonly Dictionary<int, int> monsterSizeDisplayLayerMapping = new Dictionary<int, int>();
+        readonly List<PartyMember> parryingPlayers = new(Game.MaxPartyMembers);
+        readonly List<Character> fledCharacters = new();
+        readonly List<PartyMember> hurriedPlayers = new();
+        readonly Dictionary<int, int> monsterSizeDisplayLayerMapping = new();
         uint? animationStartTicks = null;
         Monster currentlyAnimatedMonster = null;
         BattleAnimation currentBattleAnimation = null;
@@ -234,12 +234,9 @@ namespace Ambermoon
         bool idleAnimationRunning = false;
         int finishedStartAnimationCount = 0;
         uint nextIdleAnimationTicks = 0;
-        Queue<Monster> startAnimationMonsters = new Queue<Monster>();
+        Queue<Monster> startAnimationMonsters = new();
         List<BattleAnimation> effectAnimations = null;
         SpellAnimation currentSpellAnimation = null;
-        readonly Dictionary<ActiveSpellType, ILayerSprite> activeSpellSprites = new();
-        readonly Dictionary<ActiveSpellType, IColoredRect> activeSpellDurationBackgrounds = new();
-        readonly Dictionary<ActiveSpellType, Bar> activeSpellDurationBars = new();
         readonly List<KeyValuePair<uint, ItemSlotFlags>> brokenItems = new();
         readonly List<Monster> droppedWeaponMonsters = new();
         readonly uint[] totalPlayerDamage = new uint[Game.MaxPartyMembers];
@@ -255,7 +252,8 @@ namespace Ambermoon
         bool foreseeMagic = false;
         bool foreseeAttack = false;
         readonly List<Monster> weakenedMonsters = new();
-        bool anyMonsterWantedToFlee = false;
+		readonly List<Character> protectedCharacters = new();
+		bool anyMonsterWantedToFlee = false;
         internal bool NeedsClickForNextAction { get; set; }
         internal int Speed { get; set; }
         public bool ReadyForNextAction { get; private set; } = false;
@@ -600,6 +598,7 @@ namespace Ambermoon
 
 				foreseeMagic = false;
 				foreseeAttack = false;
+                protectedCharacters.Clear();
 
 				RoundFinished?.Invoke();
 
@@ -2219,9 +2218,9 @@ namespace Ambermoon
 
                 if (checkDeflection && !godmode)
                 {
-                    uint antiMagicBuffValue = game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.AntiMagic);
+					uint antiMagicBuffValue = game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.AntiMagic);
 
-                    if (game.RollDice100() < (int)(target.Attributes[Attribute.AntiMagic].TotalCurrentValue + antiMagicBuffValue))
+                    if (protectedCharacters.Contains(target) || game.RollDice100() < (int)(target.Attributes[Attribute.AntiMagic].TotalCurrentValue + antiMagicBuffValue))
                     {
                         Action blockedAction = () => failAction?.Invoke(true);
                         // Blocked
@@ -2996,6 +2995,11 @@ namespace Ambermoon
 					DealDamage(minDamage, maxDamage - minDamage);
 					return;
 				}
+                case Spell.ProtectionSphere:
+                {
+                    protectedCharacters.Add(caster);
+                    break;
+                }
 				default:
                     game.ApplySpellEffect(spell, caster, target, finishAction, false);
                     return;
@@ -3005,7 +3009,7 @@ namespace Ambermoon
 
             void DealDamage(uint baseDamage, uint variableDamage, bool useSpellBonusDamage = true)
             {
-                if (!game.Features.HasFlag(Features.SpellDamageBonus))
+				if (!game.Features.HasFlag(Features.SpellDamageBonus))
                     useSpellBonusDamage = false;
 
                 void EndHurt()
@@ -4264,7 +4268,10 @@ namespace Ambermoon
 			if (!godMode && game.RollDice100() > hitChance)
                 return AttackResult.Failed;
 
-            if (game.RollDice100() < attacker.Skills[Skill.CriticalHit].TotalCurrentValue)
+            if (protectedCharacters.Contains(target))
+				return AttackResult.Blocked;
+
+			if (game.RollDice100() < attacker.Skills[Skill.CriticalHit].TotalCurrentValue)
             {
                 if (!(target is Monster monster) || !monster.BattleFlags.HasFlag(BattleFlags.Boss))
                 {

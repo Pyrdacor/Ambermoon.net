@@ -291,6 +291,7 @@ namespace Ambermoon.Render
 				case Spell.RecognizeWeakPoint:
 				case Spell.SeeWeaknesses:
 				case Spell.KnowledgeOfTheWeakness:
+				case Spell.ProtectionSphere:
 				case Spell.Lame:
                 case Spell.Poison:
                 case Spell.Petrify:
@@ -444,9 +445,10 @@ namespace Ambermoon.Render
                 case Spell.SelfHealing:
                 case Spell.SelfReviving:
                 case Spell.ExpExchange:
-                    // Those spells have no target position. They are just visible on portraits or not at all.
-                    // GetTargetPosition should never be called for those spells so we throw here.
-                    throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
+				case Spell.ProtectionSphere:
+					// Those spells have no target position. They are just visible on portraits or not at all.
+					// GetTargetPosition should never be called for those spells so we throw here.
+					throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
                 case Spell.GhostWeapon:
                 case Spell.GhostInferno:
                 case Spell.LPStealer:
@@ -848,8 +850,9 @@ namespace Ambermoon.Render
                 case Spell.AddAntiMagic:
                 case Spell.Drugs:
                 case Spell.ExpExchange:
-                    // Those spells will only use the MoveTo method.
-                    this.finishAction?.Invoke();
+				case Spell.ProtectionSphere:
+					// Those spells will only use the MoveTo method.
+					this.finishAction?.Invoke();
                     break;
                 case Spell.Earthslide:
                 {
@@ -1510,7 +1513,8 @@ namespace Ambermoon.Render
                 case Spell.SelfHealing:
                 case Spell.SelfReviving:
                 case Spell.ExpExchange:
-                    if (fromMonster)
+				case Spell.ProtectionSphere:
+					if (fromMonster)
                     {
                         // No visual effect if monster casts it.
                         this.finishAction?.Invoke();
