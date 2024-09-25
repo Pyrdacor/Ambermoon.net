@@ -1459,7 +1459,7 @@ namespace Ambermoon.Render
             mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
             var mapCharacter = new MapCharacter(game, this, mapObject, characterIndex, characterReference,
                 objectPosition, objectInfo.TextureIndex, parent, objectInfo.Flags.HasFlag(Tileset.TileFlags.WaveAnimation),
-                objectInfo.NumAnimationFrames, 8.0f);
+				objectInfo.Flags.HasFlag(Tileset.TileFlags.No3DAnimation), objectInfo.NumAnimationFrames, 8.0f);
             mapCharacter.Active = !game.CurrentSavegame.GetCharacterBit(Map.Index, characterIndex);
             if (mapCharacter.Active)
                 mapObject.Visible = mapCharacter.HasValidPosition;
