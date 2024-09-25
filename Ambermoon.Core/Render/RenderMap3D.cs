@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static Ambermoon.Data.Map.CharacterReference;
+using static Ambermoon.Data.Monster;
 
 namespace Ambermoon.Render
 {
@@ -40,16 +41,18 @@ namespace Ambermoon.Render
             readonly uint numFrames;
             readonly uint ticksPerFrame;
             readonly bool alternateAnimation;
+            readonly bool noAnimation;
             bool animateForward = true;
 
             public MapObject(RenderMap3D map, ISurface3D surface,
-                uint objectIndex, bool alternateAnimation,
+                uint objectIndex, bool alternateAnimation, bool noAnimation,
                 uint numFrames, float fps = 1.0f)
             {
                 this.surface = surface;
                 this.map = map;
                 this.objectIndex = objectIndex;
                 this.alternateAnimation = alternateAnimation;
+                this.noAnimation = noAnimation;
                 this.numFrames = numFrames;
                 ticksPerFrame = Math.Max(1, (uint)Util.Round(Game.TicksPerSecond / Math.Max(0.001f, fps)));
             }
@@ -64,20 +67,30 @@ namespace Ambermoon.Render
                 if (numFrames <= 1 || !surface.Visible)
                     return;
 
-                uint frame = ticks / ticksPerFrame;
+                uint frame;
 
-                if (alternateAnimation)
+                if (noAnimation)
                 {
-                    if (animateForward && (frame / numFrames) % 2 == 1)
-                        animateForward = false;
-                    else if (!animateForward && (frame / numFrames) % 2 == 0)
-                        animateForward = true;
-                    frame %= numFrames;
-                    if (!animateForward)
-                        frame = numFrames - frame - 1;
+                    frame = numFrames / 2;
                 }
                 else
-                    frame %= numFrames;
+                {
+                    frame = ticks / ticksPerFrame;
+
+                    if (alternateAnimation)
+                    {
+                        if (animateForward && (frame / numFrames) % 2 == 1)
+                            animateForward = false;
+                        else if (!animateForward && (frame / numFrames) % 2 == 0)
+                            animateForward = true;
+                        frame %= numFrames;
+                        if (!animateForward)
+                            frame = numFrames - frame - 1;
+                    }
+                    else
+                        frame %= numFrames;
+                }
+
                 // TODO: If this layer is scaled, this won't work anymore.
                 surface.TextureAtlasOffset = map.GetObjectTextureOffset(objectIndex) +
                     new Position((int)(frame * surface.TextureWidth), 0);
@@ -96,6 +109,7 @@ namespace Ambermoon.Render
             readonly uint textureIndex;
             readonly Labdata.ObjectPosition objectPosition;
             readonly bool alternateAnimation;
+            readonly bool noAnimation;
             bool active = true;
             bool animateForward = true;
             uint lastInteractionTicks = 0;
@@ -118,7 +132,7 @@ namespace Ambermoon.Render
             public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
                 Labdata.ObjectPosition objectPosition, uint textureIndex, MapCharacter parent,
-                bool alternateAnimation, uint numFrames, float fps = 1.0f)
+                bool alternateAnimation, bool noAnimation, uint numFrames, float fps = 1.0f)
             {
                 this.game = game;
                 this.surface = surface;
@@ -130,7 +144,8 @@ namespace Ambermoon.Render
                 this.textureIndex = textureIndex;
                 this.objectPosition = objectPosition;
                 this.alternateAnimation = alternateAnimation;
-                this.parent = parent;
+				this.noAnimation = noAnimation;
+				this.parent = parent;
                 if (parent != null)
                     character3D = parent.character3D;
                 else
@@ -213,6 +228,7 @@ namespace Ambermoon.Render
             void ResetFrame()
             {
                 uint frame = numFrames / 2;
+
                 // TODO: If this layer is scaled, this won't work anymore.
                 surface.TextureAtlasOffset = map.GetObjectTextureOffset(textureIndex) +
                     new Position((int)(frame * surface.TextureWidth), 0);
@@ -469,20 +485,29 @@ namespace Ambermoon.Render
                 {
                     if (surface.Visible && numFrames > 1)
                     {
-                        uint frame = ticks / ticksPerFrame;
+						uint frame;
 
-                        if (alternateAnimation)
+                        if (noAnimation)
                         {
-                            if (animateForward && (frame / numFrames) % 2 == 1)
-                                animateForward = false;
-                            else if (!animateForward && (frame / numFrames) % 2 == 0)
-                                animateForward = true;
-                            frame %= numFrames;
-                            if (!animateForward)
-                                frame = numFrames - frame - 1;
+                            frame = numFrames / 2;
                         }
                         else
-                            frame %= numFrames;
+                        {
+                            frame = ticks / ticksPerFrame;
+
+                            if (alternateAnimation)
+                            {
+                                if (animateForward && (frame / numFrames) % 2 == 1)
+                                    animateForward = false;
+                                else if (!animateForward && (frame / numFrames) % 2 == 0)
+                                    animateForward = true;
+                                frame %= numFrames;
+                                if (!animateForward)
+                                    frame = numFrames - frame - 1;
+                            }
+                            else
+                                frame %= numFrames;
+                        }
 
                         // TODO: If this layer is scaled, this won't work anymore.
                         surface.TextureAtlasOffset = map.GetObjectTextureOffset(textureIndex) +
@@ -1492,7 +1517,9 @@ namespace Ambermoon.Render
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true;
                 objects.SafeAdd(blockIndex, new MapObject(this, mapObject, objectInfo.TextureIndex,
-                    objectInfo.Flags.HasFlag(Tileset.TileFlags.WaveAnimation), objectInfo.NumAnimationFrames, 8.0f));
+                    objectInfo.Flags.HasFlag(Tileset.TileFlags.WaveAnimation),
+                    objectInfo.Flags.HasFlag(Tileset.TileFlags.No3DAnimation),
+                    objectInfo.NumAnimationFrames, 8.0f));
 
                 // Small objects should not block
                 if (objectInfo.MappedTextureWidth >= BlockSize / 5)

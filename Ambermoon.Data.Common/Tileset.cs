@@ -36,8 +36,9 @@ namespace Ambermoon.Data
             PlayerInvisible = 0x04000000,
             AutoPoison = 0x08000000, // Auto-poisoning (you can dodge the trap with LUK but there will be no popup). It only poisons while the animation is active.
             Transparency = Floor, // Only for 3D walls
-            AllowMovementMonster = AllowMovementHorse
-        }
+            AllowMovementMonster = AllowMovementHorse,
+            No3DAnimation = PlayerInvisible, // Only for 3D objects
+		}
 
         public class Tile
         {
