@@ -1,7 +1,7 @@
 ﻿/*
  * RenderMap2D.cs - Handles 2D map rendering
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -59,15 +59,7 @@ namespace Ambermoon.Render
         Position lastUpdateScroll = null;
         Map lastUpdateMap = null;
         readonly Dictionary<uint, MapCharacter2D> mapCharacters = new Dictionary<uint, MapCharacter2D>();
-        readonly RandomAnimationInfo[] randomAnimationFramesBackground = new RandomAnimationInfo[NUM_TILES];
-        readonly RandomAnimationInfo[] randomAnimationFramesForeground = new RandomAnimationInfo[NUM_TILES];
-
-        class RandomAnimationInfo
-        {
-            public int CurrentFrame { get; set; }
-            public int FrameCount { get; set; }
-            public bool Poison { get; set; }
-        }
+        readonly MapAnimation mapAnimation;
 
         public event Action<Map, Map[]> MapChanged;
 
@@ -80,6 +72,7 @@ namespace Ambermoon.Render
             this.game = game;
             this.mapManager = mapManager;
             this.renderView = renderView;
+            mapAnimation = new(game);
 
             var spriteFactory = renderView.SpriteFactory;
 
@@ -109,119 +102,54 @@ namespace Ambermoon.Render
         {
             uint frame = ticks / ticksPerFrame;
 
-            void PoisonPlayer(int x, int y)
+			if (frame != lastFrame)
             {
-                var playerPosition = game.PartyPosition - Map.MapOffset;
+                mapAnimation.Tick();
 
-                if (playerPosition.X == x && playerPosition.Y == y)
-                {
-                    game.ForeachPartyMember((p, f) =>
-                    {
-                        if (game.RollDice100() >= p.Attributes[Data.Attribute.Luck].TotalCurrentValue)
-                        {
-                            game.AddCondition(Condition.Poisoned, p);
-                            game.ShowDamageSplash(p, _ => 0, f);
-                        }
-                        else
-                        {
-                            f?.Invoke();
-                        }
-                    }, p => p.Alive && !p.Conditions.HasFlag(Condition.Petrified), () => game.ResetMoveKeys());
-                }
-            }
-
-            if (frame != lastFrame)
-            {
-                int index = 0;
+				int index = 0;
 
                 for (int row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
                 {
                     for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
                     {
-                        uint animationFrameBackground = frame;
-                        uint animationFrameForeground = frame;
-                        var randomAnimationBackground = randomAnimationFramesBackground[column + row * NUM_VISIBLE_TILES_X];
-                        var randomAnimationForeground = randomAnimationFramesForeground[column + row * NUM_VISIBLE_TILES_X];
+						var tile = this[ScrollX + (uint)column, ScrollY + (uint)row];
 
-                        if (randomAnimationBackground != null || randomAnimationForeground != null)
+                        if (tile.BackTileIndex != 0)
                         {
-                            bool poison = randomAnimationBackground?.Poison == true || randomAnimationForeground?.Poison == true;
-                            bool poisoned = false;
+                            var background = backgroundTileSprites[index];
 
-                            if (randomAnimationBackground != null)
+                            if (background.NumFrames > 1)
                             {
-                                int frameCountBackground = randomAnimationBackground.FrameCount;                                
+								var backTile = tileset.Tiles[(int)tile.BackTileIndex - 1];
 
-                                if (++randomAnimationBackground.CurrentFrame >= frameCountBackground) // full cycle passed
-                                {
-                                    randomAnimationFramesBackground[column + row * NUM_VISIBLE_TILES_X] = CreateRandomStart(frameCountBackground, poison);
-                                    animationFrameBackground = 0;
-                                }
-                                else if (randomAnimationBackground.CurrentFrame >= 0)
-                                {
-                                    animationFrameBackground = (uint)randomAnimationBackground.CurrentFrame;
-
-                                    if (poison && randomAnimationBackground.CurrentFrame == 0 && !game.TravelType.IgnoreEvents())
-                                    {
-                                        poisoned = true;
-                                        PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
-                                    }
-                                }
-                                else
-                                {
-                                    animationFrameBackground = 0;
-                                }
-                            }
-
-                            if (randomAnimationForeground != null)
-                            {
-                                int frameCountForeground = randomAnimationForeground.FrameCount;
-
-                                if (++randomAnimationForeground.CurrentFrame >= frameCountForeground) // full cycle passed
-                                {
-                                    randomAnimationFramesForeground[column + row * NUM_VISIBLE_TILES_X] = CreateRandomStart(frameCountForeground, poison);
-                                    animationFrameForeground = 0;
-                                }
-                                else if (randomAnimationForeground.CurrentFrame >= 0)
-                                {
-                                    animationFrameForeground = (uint)randomAnimationForeground.CurrentFrame;
-
-                                    if (!poisoned && poison && randomAnimationForeground.CurrentFrame == 0 && !game.TravelType.IgnoreEvents())
-                                    {
-                                        poisoned = true;
-                                        PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
-                                    }
-                                }
-                                else
-                                {
-                                    animationFrameForeground = 0;
-                                }
-                            }
-                        }
-                        else if (animationFrameBackground == 0 || animationFrameForeground == 0)
-                        {
-                            var tile = this[ScrollX + (uint)column, ScrollY + (uint)row];
-
-                            if (tile.FrontTileIndex != 0 && animationFrameForeground == 0)
-                            {
-                                var frontTile = tileset.Tiles[(int)tile.FrontTileIndex - 1];
-
-                                if (frontTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison) && !game.TravelType.IgnoreAutoPoison())
-                                    PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
-                            }
-                            else if (tile.BackTileIndex != 0 && animationFrameBackground == 0)
-                            {
-                                var backTile = tileset.Tiles[(int)tile.BackTileIndex - 1];
-
-                                if (backTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison) && !game.TravelType.IgnoreAutoPoison())
-                                    PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
+                                background.CurrentFrame = (uint)mapAnimation.UpdateFrameIndex
+                                (
+                                    (int)background.CurrentFrame,
+                                    (int)background.NumFrames,
+                                    index, backTile.Flags.HasFlag(Tileset.TileFlags.WaveAnimation),
+                                    backTile.Flags.HasFlag(Tileset.TileFlags.RandomAnimationStart)
+                                );
                             }
                         }
 
-                        if (backgroundTileSprites[index].NumFrames != 1)
-                            backgroundTileSprites[index].CurrentFrame = animationFrameBackground;
-                        if (foregroundTileSprites[index].NumFrames != 1)
-                            foregroundTileSprites[index].CurrentFrame = animationFrameForeground;
+						if (tile.FrontTileIndex != 0)
+						{
+							var foreground = foregroundTileSprites[index];
+
+							if (foreground.NumFrames > 1)
+							{
+								var frontTile = tileset.Tiles[(int)tile.FrontTileIndex - 1];
+
+								foreground.CurrentFrame = (uint)mapAnimation.UpdateFrameIndex
+								(
+									(int)foreground.CurrentFrame,
+									(int)foreground.NumFrames,
+									index, frontTile.Flags.HasFlag(Tileset.TileFlags.WaveAnimation),
+									frontTile.Flags.HasFlag(Tileset.TileFlags.RandomAnimationStart)
+								);
+							}
+						}
+
                         ++index;
                     }
                 }
@@ -230,7 +158,7 @@ namespace Ambermoon.Render
             }
 
             foreach (var mapCharacter in mapCharacters)
-                mapCharacter.Value.Update(ticks, gameTime, monstersCanMoveImmediately, lastPlayerPosition);
+                mapCharacter.Value.Update(ticks, gameTime, monstersCanMoveImmediately, lastPlayerPosition, mapAnimation, mapCharacter.Value.TileFlags);
         }
 
         public void Pause()
@@ -244,6 +172,32 @@ namespace Ambermoon.Render
             foreach (var character in mapCharacters)
                 character.Value.Paused = false;
         }
+
+        public bool IsTilePoisoning(int x, int y)
+        {
+            if (Map is null)
+                return false;
+
+            var tile = this[(uint)x, (uint)y];
+
+			if (tile.FrontTileIndex != 0)
+			{
+				var frontTile = tileset.Tiles[(int)tile.FrontTileIndex - 1];
+
+                if (frontTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison))
+                    return true;
+			}
+			
+            if (tile.BackTileIndex != 0)
+			{
+				var backTile = tileset.Tiles[(int)tile.BackTileIndex - 1];
+
+                if (backTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison))
+                    return true;
+			}
+
+            return false;
+		}
 
         bool TestCharacterInteraction(MapCharacter2D mapCharacter, bool cursor, Position position)
         {
@@ -561,17 +515,9 @@ namespace Ambermoon.Render
             if (mapChange)
                 lastUpdateScroll = null;
             lastUpdateMap = Map;
-            var randomAnimationFramesBgBackup = mapChange ? null : new RandomAnimationInfo[NUM_TILES];
-            var randomAnimationFramesFgBackup = mapChange ? null : new RandomAnimationInfo[NUM_TILES];
             int scrolledX = lastUpdateScroll == null ? 0 : (int)ScrollX - lastUpdateScroll.X;
             int scrolledY = lastUpdateScroll == null ? 0 : (int)ScrollY - lastUpdateScroll.Y;
             lastUpdateScroll = new Position((int)ScrollX, (int)ScrollY);
-
-            if (!mapChange)
-            {
-                Array.Copy(randomAnimationFramesBackground, randomAnimationFramesBgBackup, randomAnimationFramesBgBackup.Length);
-                Array.Copy(randomAnimationFramesForeground, randomAnimationFramesFgBackup, randomAnimationFramesFgBackup.Length);
-            }
 
             for (uint row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
             {
@@ -585,8 +531,6 @@ namespace Ambermoon.Render
                     foregroundTileSprites[index].Layer = frontLayer;
                     foregroundTileSprites[index].TextureAtlasWidth = textureAtlas.Texture.Width;
                     foregroundTileSprites[index].PaletteIndex = (byte)(Map.PaletteIndex - 1);
-                    randomAnimationFramesBackground[index] = null;
-                    randomAnimationFramesForeground[index] = null;
 
                     if (tile.BackTileIndex == 0)
                     {
@@ -602,15 +546,6 @@ namespace Ambermoon.Render
                         backgroundTileSprites[index].Alternate = backTile.Flags.HasFlag(Tileset.TileFlags.WaveAnimation);
                         backgroundTileSprites[index].Visible = true;
                         backgroundTileSprites[index].BaseLineOffset = 0;
-
-                        if (backTile.Flags.HasFlag(Tileset.TileFlags.RandomAnimationStart))
-                        {
-                            if (mapChange || column + scrolledX < 0 || column + scrolledX >= NUM_VISIBLE_TILES_X
-                                || row + scrolledY < 0 || row + scrolledY >= NUM_VISIBLE_TILES_Y)
-                                randomAnimationFramesBackground[index] = CreateRandomStart(backTile);
-                            else
-                                randomAnimationFramesBackground[index] = randomAnimationFramesBgBackup[column + scrolledX + (row + scrolledY) * NUM_VISIBLE_TILES_X];
-                        }
                     }
 
                     if (tile.FrontTileIndex == 0)
@@ -627,15 +562,6 @@ namespace Ambermoon.Render
                         foregroundTileSprites[index].Visible = true;
                         foregroundTileSprites[index].Alternate = frontTile.Flags.HasFlag(Tileset.TileFlags.WaveAnimation);
                         foregroundTileSprites[index].BaseLineOffset = frontTile.BringToFront ? (Map.UseTravelTypes ? TILE_HEIGHT : 2 * TILE_HEIGHT) + 2 : frontTile.Background ? -1 : 0;
-
-                        if (frontTile.Flags.HasFlag(Tileset.TileFlags.RandomAnimationStart))
-                        {
-                            if (mapChange || column + scrolledX < 0 || column + scrolledX >= NUM_VISIBLE_TILES_X
-                                || row + scrolledY < 0 || row + scrolledY >= NUM_VISIBLE_TILES_Y)
-                                randomAnimationFramesForeground[index] = CreateRandomStart(frontTile);
-                            else
-                                randomAnimationFramesForeground[index] = randomAnimationFramesFgBackup[column + scrolledX + (row + scrolledY) * NUM_VISIBLE_TILES_X];
-                        }
                     }
 
                     ++index;
@@ -773,21 +699,6 @@ namespace Ambermoon.Render
                 InvokeMapChangedHandler(lastMap, map, adjacentMaps[0], adjacentMaps[1], adjacentMaps[2]);
             else
                 InvokeMapChangedHandler(lastMap, map);
-        }
-
-        RandomAnimationInfo CreateRandomStart(int frameCount, bool poison)
-        {
-            return new RandomAnimationInfo
-            {
-                CurrentFrame = -game.RandomInt(0, frameCount * 4),
-                FrameCount = frameCount,
-                Poison = poison
-            };
-        }
-
-        RandomAnimationInfo CreateRandomStart(Tileset.Tile tile)
-        {
-            return CreateRandomStart(tile.NumAnimationFrames, tile.Flags.HasFlag(Tileset.TileFlags.AutoPoison));
         }
 
         internal void InvokeMapChange()

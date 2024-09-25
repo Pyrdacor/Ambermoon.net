@@ -22,6 +22,7 @@
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using System;
+using static Ambermoon.Data.Tileset;
 
 namespace Ambermoon.Render
 {
@@ -304,8 +305,9 @@ namespace Ambermoon.Render
                 SetCurrentFrame(CurrentFrameIndex + 1); // Middle move frame = stand frame
         }
 
-        public override void Update(uint ticks, ITime gameTime, bool allowInstantMovement = false,
-            Position lastPlayerPosition = null)
+        public override void Update(uint ticks, ITime gameTime,
+			bool allowInstantMovement, Position lastPlayerPosition,
+			MapAnimation mapAnimation, TileFlags tileFlags)
         {
             // do not animate so don't call base.Update here
         }

@@ -7116,6 +7116,28 @@ namespace Ambermoon
                     EnableTransport(false);
                 }
 
+                // Check auto poison
+                if (renderMap2D is not null && !TravelType.IgnoreAutoPoison())
+                {
+					var playerPosition = PartyPosition - Map.MapOffset;
+
+					if (renderMap2D.IsTilePoisoning(playerPosition.X, playerPosition.Y))
+                    {
+						ForeachPartyMember((p, f) =>
+						{
+							if (RollDice100() >= p.Attributes[Data.Attribute.Luck].TotalCurrentValue)
+							{
+								AddCondition(Condition.Poisoned, p);
+								ShowDamageSplash(p, _ => 0, f);
+							}
+							else
+							{
+								f?.Invoke();
+							}
+						}, p => p.Alive && !p.Conditions.HasFlag(Condition.Petrified), () => ResetMoveKeys());
+					}
+                }
+
 				UpdateMobileActionIndicatorPosition();
 			}
 

@@ -29,7 +29,7 @@ namespace Ambermoon.Render
 
     internal class MapCharacter2D : Character2D, IMapCharacter
     {
-        static readonly Position NullOffset = new Position(0, 0);
+        static readonly Position NullOffset = new(0, 0);
         readonly Game game;
         readonly Map map;
         readonly Tileset tileset;
@@ -38,7 +38,6 @@ namespace Ambermoon.Render
         uint lastTimeSlot = 0;
         uint? disallowInstantMovementUntilTimeSlot = null;
         uint lastInteractionTicks = 0;
-        bool animateForward = true;
         // This is used to avoid multiple monster encounters in the same update frame (e.g. 2 monsters move onto the player at the same time).
         static bool interacting = false;
         public bool CheckedIfSeesPlayer { get; set; } = false;
@@ -136,7 +135,8 @@ namespace Ambermoon.Render
         }
 
         public override void Update(uint ticks, ITime gameTime,
-            bool allowInstantMovement = false, Position lastPlayerPosition = null)
+			bool allowInstantMovement, Position lastPlayerPosition,
+			MapAnimation mapAnimation, Tileset.TileFlags tileFlags)
         {
             if (!Active || Paused)
                 return;
@@ -295,16 +295,7 @@ namespace Ambermoon.Render
 
             base.MoveTo(map, (uint)newPosition.X, (uint)newPosition.Y, ticks, false, null);
 
-            if (!animateForward)
-                SetCurrentFrame(FrameCount - CurrentFrame - 1);
-
-            Update(ticks, gameTime, out bool maxFrameReached);
-
-            if (maxFrameReached && characterReference.TileFlags.HasFlag(Tileset.TileFlags.WaveAnimation))
-                animateForward = !animateForward;
-
-            if (!animateForward)
-                SetCurrentFrame(FrameCount - CurrentFrame - 1);
+            Update(ticks, gameTime, mapAnimation, characterReference.TileFlags);
 
             if (!interacting && IsMonster && newPosition == game.RenderPlayer.Position)
                 Interact(EventTrigger.Move, false);

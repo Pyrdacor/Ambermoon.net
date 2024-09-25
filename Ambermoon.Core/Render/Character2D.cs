@@ -21,6 +21,7 @@
 
 using Ambermoon.Data;
 using System;
+using static Ambermoon.Data.Tileset;
 
 namespace Ambermoon.Render
 {
@@ -393,22 +394,35 @@ namespace Ambermoon.Render
             }
         }
 
-        protected void Update(uint ticks, ITime gameTime, out bool maxFrameReached,
-            bool allowInstantMovement = false, Position lastPlayerPosition = null)
+        protected void Update(uint ticks, ITime gameTime,
+			MapAnimation mapAnimation, TileFlags tileFlags)
         {
             uint lastFrame = sprite.CurrentFrame;
             uint elapsedTicks = ticks - lastFrameReset;
-            sprite.CurrentFrame = elapsedTicks / CurrentAnimationInfo.TicksPerFrame; // this will take care of modulo frame count
-            maxFrameReached = lastFrame != sprite.CurrentFrame && sprite.CurrentFrame == 0;
+
+            int numFrameTicks = (int)(elapsedTicks / CurrentAnimationInfo.TicksPerFrame);
+            int frame = 0;
+            int x = Position.X - (int)Map.ScrollX;
+			int y = Position.Y - (int)Map.ScrollY;
+            int tileIndex = y * RenderMap2D.NUM_VISIBLE_TILES_X + x;
+
+            for (int i = 0; i < numFrameTicks; i++)
+            {
+                frame = mapAnimation.UpdateFrameIndex(frame, (int)sprite.NumFrames, tileIndex,
+                    tileFlags.HasFlag(TileFlags.WaveAnimation), tileFlags.HasFlag(TileFlags.RandomAnimationStart));
+            }
+
+            sprite.CurrentFrame = (uint)frame;
             if (topSprite != null)
                 topSprite.CurrentFrame = sprite.CurrentFrame;
             CurrentFrameIndex = CurrentBaseFrameIndex + sprite.CurrentFrame;
         }
 
         public virtual void Update(uint ticks, ITime gameTime,
-            bool allowInstantMovement = false, Position lastPlayerPosition = null)
+            bool allowInstantMovement, Position lastPlayerPosition,
+            MapAnimation mapAnimation, TileFlags tileFlags)
         {
-            Update(ticks, gameTime, out _, allowInstantMovement, lastPlayerPosition);
+            Update(ticks, gameTime, mapAnimation, tileFlags);
         }
 
         public void SetCurrentFrame(uint frameIndex)

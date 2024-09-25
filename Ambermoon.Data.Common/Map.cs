@@ -464,7 +464,7 @@ namespace Ambermoon.Data
                 return new Position(x, y);
             }
         }
-        public uint TicksPerAnimationFrame { get; set; } = 10; // This matches the frame speed in real game quiet good. TODO: changeable later? same for every map?
+        public uint TicksPerAnimationFrame { get; set; } = 10; // This matches the frame speed in real game quite good. TODO: changeable later? same for every map?
 
         public Map()
         {
