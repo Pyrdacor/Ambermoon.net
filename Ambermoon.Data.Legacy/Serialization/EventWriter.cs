@@ -147,7 +147,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.WriteEnumAsByte(rewardEvent.Operation);
                     dataWriter.Write((byte)(rewardEvent.Random ? 1 : 0));
                     dataWriter.WriteEnumAsByte(rewardEvent.Target);
-                    dataWriter.Write(rewardEvent.Unknown);
+                    dataWriter.Write(rewardEvent.Unused);
                     dataWriter.Write(rewardEvent.RewardTypeValue);
                     dataWriter.Write((ushort)rewardEvent.Value);
                     break;

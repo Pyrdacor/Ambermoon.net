@@ -264,7 +264,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         Target = rewardTarget,
                         RewardTypeValue = rewardTypeValue,
                         Value = value,
-                        Unknown = unknown
+                        Unused = unknown
                     };
                     break;
                 }

@@ -596,7 +596,7 @@ namespace Ambermoon.Data
         public SpellTypeMastery? UsableSpellTypes => TypeOfReward == RewardType.UsableSpellTypes ? (SpellTypeMastery)(1 << RewardTypeValue) : null;
 		public uint? Spells => TypeOfReward == RewardType.Spells ? (1u << RewardTypeValue) : null;
 		public uint Value { get; set; }
-        public byte Unknown { get; set; }
+        public byte Unused { get; set; }
 
         public override Event Clone(bool keepNext)
         {
@@ -608,7 +608,7 @@ namespace Ambermoon.Data
                 Random = Random,
                 RewardTypeValue = RewardTypeValue,
                 Value = Value,
-                Unknown = Unknown
+                Unused = Unused
             };
             CloneProperties(clone, keepNext);
             return clone;
@@ -620,7 +620,12 @@ namespace Ambermoon.Data
             {
                 RewardOperation.Increase => Random ? $"+rand(0~{Value})" : $"+{Value}",
                 RewardOperation.Fill => "max",
-                _ => $"?op={(int)Operation}?"
+				RewardOperation.IncreasePercentage => Random ? $"+rand(0%~{Value}%)" : $"+{Value}%",
+				RewardOperation.DecreasePercentage => Random ? $"-rand(0%~{Value}%)" : $"-{Value}%",
+				RewardOperation.Remove => "Remove",
+				RewardOperation.Add => "Add",
+				RewardOperation.Toggle => "Toggle",
+					_ => $"?op={(int)Operation}?"
             };
 
             string target = Target >= RewardTarget.FirstPartyMember
@@ -642,26 +647,27 @@ namespace Ambermoon.Data
 
             return TypeOfReward switch
             {
-                RewardType.Attribute => $"{Type}: {Attribute} on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.Skill => $"{Type}: {Skill} on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.HitPoints => $"{Type}: HP on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.SpellPoints => $"{Type}: SP on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.SpellLearningPoints => $"{Type}: SLP on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.Languages => $"{Type}: Add {Languages} on {target}, Unknown {Unknown:x2}",
-                RewardType.Experience => $"{Type}: Exp on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.MaxAttribute => $"{Type}: Max {Attribute} on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.AttacksPerRound => $"{Type}: APR on {Target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.TrainingPoints => $"{Type}: TP on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.Damage => $"{Type}: Damage on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.Defense => $"{Type}: Defense on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.MaxHitPoints => $"{Type}: Max HP on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.MaxSpellPoints => $"{Type}: Max SP on {target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.Attribute => $"{Type}: {Attribute} on {target} {operationString}",
+                RewardType.Skill => $"{Type}: {Skill} on {target} {operationString}",
+                RewardType.HitPoints => $"{Type}: HP on {target} {operationString}",
+                RewardType.SpellPoints => $"{Type}: SP on {target} {operationString}",
+                RewardType.SpellLearningPoints => $"{Type}: SLP on {target} {operationString}",
+                RewardType.Languages => $"{Type}: {operationString} {Languages} on {target}",
+                RewardType.Experience => $"{Type}: Exp on {target} {operationString}",
+                RewardType.MaxAttribute => $"{Type}: Max {Attribute} on {target} {operationString}",
+                RewardType.AttacksPerRound => $"{Type}: APR on {Target} {operationString}",
+                RewardType.TrainingPoints => $"{Type}: TP on {target} {operationString}",
+                RewardType.Damage => $"{Type}: Damage on {target} {operationString}",
+                RewardType.Defense => $"{Type}: Defense on {target} {operationString}",
+                RewardType.MaxHitPoints => $"{Type}: Max HP on {target} {operationString}",
+                RewardType.MaxSpellPoints => $"{Type}: Max SP on {target} {operationString}",
                 RewardType.EmpowerSpells => $"{Type}: {EmpowerString()}",
                 RewardType.ChangePortrait => $"{Type}: Change portrait to {Value} for {target}",
-                RewardType.MaxSkill => $"{Type}: Max {Skill} on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.MagicArmorLevel => $"{Type}: M-B-A on {target} {operationString}, Unknown {Unknown:x2}",
-                RewardType.MagicWeaponLevel => $"{Type}: M-B-W on {target} {operationString}, Unknown {Unknown:x2}",
-                _ => $"{Type}: Unknown ({(int)TypeOfReward}:{RewardTypeValue}) on {target} {operationString}, Unknown {Unknown:x2}"
+                RewardType.MaxSkill => $"{Type}: Max {Skill} on {target} {operationString}",
+                RewardType.MagicArmorLevel => $"{Type}: M-B-A on {target} {operationString}",
+                RewardType.MagicWeaponLevel => $"{Type}: M-B-W on {target} {operationString}",
+				RewardType.Spells => $"{Type}: {operationString} spell {Value} on {target} {operationString}",
+				_ => $"{Type}: Unknown ({(int)TypeOfReward}:{RewardTypeValue}) on {target} {operationString}"
             };
         }
     }
