@@ -348,6 +348,20 @@ namespace Ambermoon
                             }
                             break;
                         default:
+                            if (rewardEvent.Target >= RewardEvent.RewardTarget.FirstPartyMember)
+                            {
+								var partyMember = game.PartyMembers.FirstOrDefault(p => p.Index == 1u + (uint)rewardEvent.Target - (uint)RewardEvent.RewardTarget.FirstPartyMember);
+
+								if (partyMember == null)
+								{
+									aborted = true;
+									return null;
+								}
+
+								Reward(partyMember, Done);
+								break;
+							}
+
                             return rewardEvent.Next;
                     }
                     return null;
