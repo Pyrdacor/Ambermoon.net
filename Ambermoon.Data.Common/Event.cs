@@ -578,7 +578,8 @@ namespace Ambermoon.Data
             // Ambermoon Advanced only
             RandomPlayer,
             FirstAnimal,
-            FirstPartyMember = 100
+            FirstPartyMember = 100,
+            AllButFirstPartyMember = 200
         }
 
         public RewardType TypeOfReward { get; set; }
@@ -628,7 +629,8 @@ namespace Ambermoon.Data
 					_ => $"?op={(int)Operation}?"
             };
 
-            string target = Target >= RewardTarget.FirstPartyMember
+            string target = Target >= RewardTarget.AllButFirstPartyMember
+                ? $"All but PartyMember with index {1 + Target - RewardTarget.AllButFirstPartyMember}" : Target >= RewardTarget.FirstPartyMember
 				? $"PartyMember with index {1 + Target - RewardTarget.FirstPartyMember}" : Target.ToString();
 
 			string EmpowerString()

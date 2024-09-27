@@ -348,7 +348,28 @@ namespace Ambermoon
                             }
                             break;
                         default:
-                            if (rewardEvent.Target >= RewardEvent.RewardTarget.FirstPartyMember)
+                            if (rewardEvent.Target >= RewardEvent.RewardTarget.AllButFirstPartyMember)
+                            {
+                                Func<PartyMember, bool> filter = p => p.Alive && p.Index != 1u + (uint)rewardEvent.Target - (uint)RewardEvent.RewardTarget.AllButFirstPartyMember;
+
+								if (rewardEvent.TypeOfReward == RewardEvent.RewardType.HitPoints &&
+								    (rewardEvent.Operation == RewardEvent.RewardOperation.Decrease ||
+								    rewardEvent.Operation == RewardEvent.RewardOperation.DecreasePercentage))
+								{
+									Func<PartyMember, uint> damageProvider = rewardEvent.Operation == RewardEvent.RewardOperation.Decrease
+										? (Func<PartyMember, uint>)(_ => rewardEvent.Value) : p => rewardEvent.Value * p.HitPoints.TotalMaxValue / 100;
+
+									// Note: Rewards damage silently.
+									game.DamageAllPartyMembers(damageProvider, filter,
+                                        null, _ => Done(), Condition.None, false);
+								}
+								else
+								{
+									game.ForeachPartyMember(Reward, filter, Done);
+								}
+								break;
+							}
+                            else if (rewardEvent.Target >= RewardEvent.RewardTarget.FirstPartyMember)
                             {
 								var partyMember = game.PartyMembers.FirstOrDefault(p => p.Index == 1u + (uint)rewardEvent.Target - (uint)RewardEvent.RewardTarget.FirstPartyMember);
 
