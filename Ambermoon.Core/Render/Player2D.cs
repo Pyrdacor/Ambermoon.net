@@ -96,7 +96,7 @@ namespace Ambermoon.Render
                         var trigger = EventTrigger.Move;
                         bool lastEventStatus = false;
 
-                        bool HasSpecialEvent(Event ev, out Event @event)
+                        bool HasSpecialEvent(Event ev, out Event @event, Map map)
                         {
                             @event = null;
 
@@ -126,12 +126,12 @@ namespace Ambermoon.Render
                                 ev = ev.Next;
                             }
 
-                            return HasSpecialEvent(ev, out @event);
+                            return HasSpecialEvent(ev, out @event, map);
                         }
 
                         var mapAtNewPosition = Map.GetMapFromTile((uint)newX, (uint)newY);
 
-                        if (HasSpecialEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1], out var @event))
+                        if (HasSpecialEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1], out var @event, mapAtNewPosition))
                         {
                             if (travelType.BlockedByTeleport())
                             {

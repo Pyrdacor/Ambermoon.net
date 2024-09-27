@@ -6231,7 +6231,69 @@ namespace Ambermoon
                     }
                     break;
                 }
-            }
+				case RewardEvent.RewardType.Spells:
+				{
+					if (rewardEvent.Spells == null)
+					{
+						ShowMessagePopup($"ERROR: Invalid reward event spell.", followAction);
+						return;
+					}
+
+                    int spellTypeIndex = -1;
+
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (partyMember.SpellMastery.HasFlag((SpellTypeMastery)(1 << i)))
+                        {
+                            spellTypeIndex = i;
+                            break;
+						} 
+                    }
+
+                    if (spellTypeIndex == -1)
+                    {
+                        followAction?.Invoke();
+                        return;
+                    }
+
+                    Action<uint> setter;
+                    uint currentSpells;
+                    
+                    switch (spellTypeIndex)
+                    {
+                        case 0:
+							currentSpells = partyMember.LearnedHealingSpells;
+                            setter = (value) => partyMember.LearnedHealingSpells = value;
+							break;
+						case 1:
+							currentSpells = partyMember.LearnedAlchemisticSpells;
+							setter = (value) => partyMember.LearnedAlchemisticSpells = value;
+							break;
+						case 2:
+							currentSpells = partyMember.LearnedMysticSpells;
+							setter = (value) => partyMember.LearnedMysticSpells = value;
+							break;
+						default:
+							currentSpells = partyMember.LearnedDestructionSpells;
+							setter = (value) => partyMember.LearnedDestructionSpells = value;
+							break;
+                    };
+
+					switch (rewardEvent.Operation)
+					{
+						case RewardEvent.RewardOperation.Add:
+                            setter(currentSpells | rewardEvent.Spells.Value);
+							break;
+						case RewardEvent.RewardOperation.Remove:
+							setter(currentSpells & ~rewardEvent.Spells.Value);
+							break;
+						case RewardEvent.RewardOperation.Toggle:
+							setter(currentSpells ^ rewardEvent.Spells.Value);
+							break;
+					}
+					break;
+				}
+			}
 
             followAction?.Invoke();
         }

@@ -554,8 +554,9 @@ namespace Ambermoon.Data
             ChangePortrait = 0x12,
             MaxSkill = 0x13,
             MagicArmorLevel = 0x14,
-            MagicWeaponLevel = 0x15
-        }
+            MagicWeaponLevel = 0x15,
+			Spells = 0x16,
+		}
 
         public enum RewardOperation
         {
@@ -587,12 +588,13 @@ namespace Ambermoon.Data
         /// </summary>
         public bool Random { get; set; }
         public ushort RewardTypeValue { get; set; }
-        public Attribute? Attribute => TypeOfReward == RewardType.Attribute || TypeOfReward == RewardType.MaxAttribute ? (Attribute)RewardTypeValue : (Attribute?)null;
-        public Skill? Skill => TypeOfReward == RewardType.Skill || TypeOfReward == RewardType.MaxSkill ? (Skill)RewardTypeValue : (Skill?)null;
-        public Language? Languages => TypeOfReward == RewardType.Languages ? (Language)(1 << RewardTypeValue) : (Language?)null;
-        public Condition? Conditions => TypeOfReward == RewardType.Conditions ? (Condition)(1 << RewardTypeValue) : (Condition?)null;
-        public SpellTypeMastery? UsableSpellTypes => TypeOfReward == RewardType.UsableSpellTypes ? (SpellTypeMastery)(1 << RewardTypeValue) : (SpellTypeMastery?)null;
-        public uint Value { get; set; }
+        public Attribute? Attribute => TypeOfReward == RewardType.Attribute || TypeOfReward == RewardType.MaxAttribute ? (Attribute)RewardTypeValue : null;
+        public Skill? Skill => TypeOfReward == RewardType.Skill || TypeOfReward == RewardType.MaxSkill ? (Skill)RewardTypeValue : null;
+        public Language? Languages => TypeOfReward == RewardType.Languages ? (Language)(1 << RewardTypeValue) : null;
+        public Condition? Conditions => TypeOfReward == RewardType.Conditions ? (Condition)(1 << RewardTypeValue) : null;
+        public SpellTypeMastery? UsableSpellTypes => TypeOfReward == RewardType.UsableSpellTypes ? (SpellTypeMastery)(1 << RewardTypeValue) : null;
+		public uint? Spells => TypeOfReward == RewardType.Spells ? (1u << RewardTypeValue) : null;
+		public uint Value { get; set; }
         public byte Unknown { get; set; }
 
         public override Event Clone(bool keepNext)
