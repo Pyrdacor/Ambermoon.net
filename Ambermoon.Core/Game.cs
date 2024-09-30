@@ -7179,7 +7179,7 @@ namespace Ambermoon
                 }
 
                 // Check auto poison
-                if (renderMap2D is not null && !TravelType.IgnoreAutoPoison())
+                if (!is3D && renderMap2D is not null && !TravelType.IgnoreAutoPoison())
                 {
 					var playerPosition = PartyPosition - Map.MapOffset;
 

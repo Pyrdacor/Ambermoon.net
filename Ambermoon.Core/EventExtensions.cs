@@ -840,11 +840,10 @@ namespace Ambermoon
                             {
                                 case EventType.Teleport:
                                 case EventType.StartBattle:
-                                case EventType.EnterPlace:
                                 case EventType.Riddlemouth:
                                     aborted = true;
                                     return null;
-                            }
+							}
                         }
                     }
 
