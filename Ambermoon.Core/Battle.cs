@@ -26,6 +26,7 @@ using Ambermoon.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Attribute = Ambermoon.Data.Attribute;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
@@ -386,6 +387,17 @@ namespace Ambermoon
             // TODO: adjust to work like original
             // TODO: in original idle animations can also occur in active battle round while no other animation is played
             nextIdleAnimationTicks = battleTicks + (uint)game.RandomInt(1, 16) * Game.TicksPerSecond / 4;
+        }
+
+        public void InitImitatingPlayers()
+        {
+			foreach (var partyMember in PartyMembers.Where(partyMember => partyMember.Alive && !fledCharacters.Contains(partyMember)))
+			{
+				if (imitationBackupData.TryGetValue(partyMember.Index, out var backup))
+				{
+					game.ReplacePartyMemberBattleFieldSprite(partyMember, backup.MonsterGraphicIndex);
+				}
+			}
         }
 
         public void Update(uint battleTicks, uint normalizedBattleTicks)
@@ -2390,13 +2402,15 @@ namespace Ambermoon
 
         private class ImitationBackupData
         {
-            readonly byte attacksPerRound;
+			readonly byte attacksPerRound;
             readonly CharacterElement element;
             readonly uint currentHitPoints;
             readonly uint maxHitPoints;
             readonly uint currentSpellPoints;
             readonly uint maxSpellPoints;
-            readonly short magicAttack;
+			readonly short baseAttack;
+			readonly short baseDefense;
+			readonly short magicAttack;
             readonly short magicDefense;
             readonly uint[] currentAttributes = new uint[8];
             readonly uint[] maxAttributes = new uint[8];
@@ -2405,14 +2419,19 @@ namespace Ambermoon
             readonly uint learnedSpells;
             static readonly Skill[] SkillIndexMapping = new Skill[4] { Skill.Attack, Skill.Parry, Skill.CriticalHit, Skill.UseMagic };
 
-            public ImitationBackupData(PartyMember partyMember)
+            public MonsterGraphicIndex MonsterGraphicIndex { get; }
+
+			public ImitationBackupData(PartyMember partyMember, MonsterGraphicIndex monsterGraphicIndex)
             {
-                attacksPerRound = partyMember.AttacksPerRound;
+                MonsterGraphicIndex = monsterGraphicIndex;
+				attacksPerRound = partyMember.AttacksPerRound;
                 element = partyMember.Element;
                 currentHitPoints = partyMember.HitPoints.CurrentValue;
                 maxHitPoints = partyMember.HitPoints.MaxValue;
                 currentSpellPoints = partyMember.SpellPoints.CurrentValue;
                 maxSpellPoints = partyMember.SpellPoints.MaxValue;
+                baseAttack = partyMember.BaseAttackDamage;
+                baseDefense = partyMember.BaseDefense;
                 magicAttack = partyMember.MagicAttack;
                 magicDefense = partyMember.MagicDefense;
                 for (int i = 0; i < 8; ++i)
@@ -2434,13 +2453,15 @@ namespace Ambermoon
             {
                 partyMember.AttacksPerRound = attacksPerRound;
                 partyMember.Element = element;
-                if (partyMember.HitPoints.CurrentValue > currentHitPoints)
-                    partyMember.HitPoints.CurrentValue = currentHitPoints;
                 partyMember.HitPoints.MaxValue = maxHitPoints;
-                if (partyMember.SpellPoints.MaxValue == 0 || partyMember.SpellPoints.CurrentValue > currentSpellPoints)
-                    partyMember.SpellPoints.CurrentValue =  currentSpellPoints;
-                partyMember.SpellPoints.MaxValue = maxSpellPoints;
-                for (int i = 0; i < 8; ++i)
+				if (partyMember.HitPoints.CurrentValue > maxHitPoints)
+					partyMember.HitPoints.CurrentValue = maxHitPoints;
+				partyMember.SpellPoints.MaxValue = maxSpellPoints;
+                if (partyMember.SpellPoints.MaxValue == 0)
+                    partyMember.SpellPoints.CurrentValue = currentSpellPoints;
+                else if (partyMember.SpellPoints.CurrentValue > maxSpellPoints)
+                    partyMember.SpellPoints.CurrentValue = maxSpellPoints;
+				for (int i = 0; i < 8; ++i)
                 {
                     var attribute = partyMember.Attributes[(Attribute)i];
                     attribute.MaxValue = maxAttributes[i];
@@ -2457,11 +2478,8 @@ namespace Ambermoon
                 partyMember.LearnedMysticSpells = learnedSpells;
                 partyMember.LearnedDestructionSpells = 0;
                 partyMember.SpellMastery = partyMember.Class == Class.Mystic ? SpellTypeMastery.Mystic | SpellTypeMastery.Mastered : SpellTypeMastery.Mystic;
-                // Note: In theory the base values can be increased via reward events. This would then be a problem.
-                // But currently those events are only used on Kasimir and the spell is only usable by mystics.
-                // TODO: Ensure that the scroll is not usable by animals or thieves if it is added!
-                partyMember.BaseDefense = 0;
-                partyMember.BonusAttackDamage = 0;
+                partyMember.BaseDefense = baseDefense;
+                partyMember.BonusAttackDamage = baseDefense;
                 partyMember.MagicAttack = magicAttack;
                 partyMember.MagicDefense = magicDefense;
                 partyMember.InventoryInaccessible = false;
@@ -2482,9 +2500,9 @@ namespace Ambermoon
                 return;
             }    
 
-            imitationBackupData.Add(caster.Index, new ImitationBackupData(caster));
+            imitationBackupData.Add(caster.Index, new ImitationBackupData(caster, monster.CombatGraphicIndex));
 
-            game.ReplacePartyMemberBattleFieldSprite(caster, monster);
+            game.ReplacePartyMemberBattleFieldSprite(caster, monster.CombatGraphicIndex);
 
             caster.AttacksPerRound = monster.AttacksPerRound;
             caster.Element = monster.Element;
@@ -2523,9 +2541,9 @@ namespace Ambermoon
         {
             foreach (var partyMember in game.PartyMembers)
             {
-                if (imitationBackupData.ContainsKey(partyMember.Index))
+                if (imitationBackupData.TryGetValue(partyMember.Index, out var backup))
                 {
-                    // TODO
+                    backup.ApplyToPartyMember(partyMember);
                 }
             }
 

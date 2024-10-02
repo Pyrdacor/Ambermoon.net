@@ -9405,19 +9405,22 @@ namespace Ambermoon
                     partyMember.Conditions.CanSelect() ? TextColor.White : TextColor.DeadPartyMember, null, out partyMemberBattleFieldTooltips[i]);
                 }
             }
+
             UpdateBattleStatus();
             UpdateActiveBattleSpells();
 
             SetupBattleButtons();
+
+            currentBattle?.InitImitatingPlayers();
         }
 
-        internal void ReplacePartyMemberBattleFieldSprite(PartyMember partyMember, Monster monster)
+        internal void ReplacePartyMemberBattleFieldSprite(PartyMember partyMember, MonsterGraphicIndex graphicIndex)
         {
             int index = PartyMembers.ToList().IndexOf(partyMember);
 
             if (index != -1)
             {
-                var textureIndex = Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1;
+                var textureIndex = Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)graphicIndex - 1;
                 partyMemberBattleFieldSprites[index].TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(textureIndex);
             }
         }
