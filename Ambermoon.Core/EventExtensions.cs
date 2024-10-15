@@ -76,8 +76,8 @@ namespace Ambermoon
 
                     // Note: The teleporter from Mine 1 to 2 has a teleport event which has another
                     // one as its next event. We have to avoid further event execution by just return
-                    // null here. I guess teleport events are not allowed to chain anything and this
-                    // might be a data bug.
+                    // null here. Teleport events are not allowed to chain anything and this
+                    // might be a data bug. In original code, teleport events will always break the chain.
                     return null;
                 }
                 case EventType.Door:
@@ -813,7 +813,15 @@ namespace Ambermoon
                             }
                             break;
                         }
-                    }
+						case ConditionEvent.ConditionType.TrainingPoints:
+							if ((game.CurrentPartyMember.TrainingPoints >= conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+							{
+								aborted = mapEventIfFalse == null;
+								lastEventStatus = false;
+								return mapEventIfFalse;
+							}
+							break;
+					}
 
                     // For some follow-up events we won't proceed by using Eye, Hand or Mouth.
                     if (conversationPartner == null && conditionEvent.Next != null &&

@@ -808,7 +808,8 @@ namespace Ambermoon.Data
             SpellEmpowered = 0x1a,
             IsNight = 0x1b,
             Attribute = 0x1c,
-            Skill = 0x1d
+            Skill = 0x1d,
+            TrainingPoints = 0x1e
         }
 
         public ConditionType TypeOfCondition { get; set; }
@@ -895,7 +896,8 @@ namespace Ambermoon.Data
                 ConditionType.IsNight => $"{Type}: Is night, {falseHandling}",
                 ConditionType.Attribute => $"{Type}: {(Attribute)ObjectIndex} {(Value == 0 ? "<" : ">=")} {Count}, {falseHandling}",
                 ConditionType.Skill => $"{Type}: {(Skill)ObjectIndex} {(Value == 0 ? "<" : ">=")} {Count}, {falseHandling}",
-                _ => $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, {falseHandling}",
+				ConditionType.TrainingPoints => $"{Type}: TP {(Value == 0 ? "<" : ">=")} {ObjectIndex}, {falseHandling}",
+				_ => $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, {falseHandling}",
             };
         }
     }
