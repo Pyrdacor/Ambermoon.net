@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Ambermoon.Data
 {
@@ -113,7 +114,11 @@ namespace Ambermoon.Data
         /// <summary>
         /// Adds a non-interactive game delay (Ambermoon Advanced only).
         /// </summary>
-        Delay
+        Delay,
+		/// <summary>
+		/// Tests some condition for a specific party member
+		/// </summary>
+		PartyMemberCondition,
     }
 
     public class Event
@@ -808,8 +813,7 @@ namespace Ambermoon.Data
             SpellEmpowered = 0x1a,
             IsNight = 0x1b,
             Attribute = 0x1c,
-            Skill = 0x1d,
-            TrainingPoints = 0x1e
+            Skill = 0x1d
         }
 
         public ConditionType TypeOfCondition { get; set; }
@@ -880,29 +884,107 @@ namespace Ambermoon.Data
                 ConditionType.GameOptionSet => $"{Type}: Game option {(Option)(1 << (int)ObjectIndex)} is {(Value == 0 ? "not set" : "set")}, {falseHandling}",
                 ConditionType.CanSee => $"{Type}: {(Value == 0 ? "Can't see" : "Can see")}, {falseHandling}",
                 ConditionType.HasCondition => $"{Type}: {(Value == 0 ? "Has not" : "Has")} condition {(Condition)(1 << (int)ObjectIndex)}, {falseHandling}",
-                ConditionType.Hand => $"{Type}: Hand cursor, {falseHandling}",
+                ConditionType.Hand => $"{Type}: Hand cursor {(Value == 0 ? "not " : "")}used, {falseHandling}",
                 ConditionType.SayWord => $"{Type}: Say keyword {ObjectIndex}, {falseHandling}",
                 ConditionType.EnterNumber => $"{Type}: Enter number {ObjectIndex}, {falseHandling}",
                 ConditionType.Levitating => $"{Type}: Levitating, {falseHandling}",
                 ConditionType.HasGold => $"{Type}: Gold {(Value == 0 ? "<" : ">=")} {ObjectIndex}, {falseHandling}",
                 ConditionType.HasFood => $"{Type}: Food {(Value == 0 ? "<" : ">=")} {ObjectIndex}, {falseHandling}",
-                ConditionType.Eye => $"{Type}: Eye cursor, {falseHandling}",
-                ConditionType.Mouth => $"{Type}: Mouth cursor, {falseHandling}",
-                ConditionType.TransportAtLocation => $"{Type}: Transport at event location , {falseHandling}",
-                ConditionType.MultiCursor => $"{Type}: Any cursor of {GetMultiCursorString()}, {falseHandling}",
-                ConditionType.TravelType => $"{Type}: Travel type {EnumHelper.GetName((TravelType)ObjectIndex)}, {falseHandling}",
-                ConditionType.LeadClass => $"{Type}: Active party member has class {EnumHelper.GetName((Class)ObjectIndex)}, {falseHandling}",
-                ConditionType.SpellEmpowered => $"{Type}: Active party member has {((CharacterElement)(1 << (4 + (int)Util.Limit(0, ObjectIndex, 2)))).ToString().ToLower()} spells empowered, {falseHandling}",
-                ConditionType.IsNight => $"{Type}: Is night, {falseHandling}",
-                ConditionType.Attribute => $"{Type}: {(Attribute)ObjectIndex} {(Value == 0 ? "<" : ">=")} {Count}, {falseHandling}",
-                ConditionType.Skill => $"{Type}: {(Skill)ObjectIndex} {(Value == 0 ? "<" : ">=")} {Count}, {falseHandling}",
-				ConditionType.TrainingPoints => $"{Type}: TP {(Value == 0 ? "<" : ">=")} {ObjectIndex}, {falseHandling}",
+                ConditionType.Eye => $"{Type}: Eye cursor{(Value == 0 ? " not " : "")} used, {falseHandling}",
+                ConditionType.Mouth => $"{Type}: Mouth cursor{(Value == 0 ? " not " : "")} used, {falseHandling}",
+                ConditionType.TransportAtLocation => $"{Type}: Transport {(Value == 0 ? "not " : "")}at event location , {falseHandling}",
+                ConditionType.MultiCursor => $"{Type}: Any cursor of {GetMultiCursorString()} {(Value == 0 ? "not " : "")}used, {falseHandling}",
+                ConditionType.TravelType => $"{Type}: Travel type {(Value == 0 ? "not " : "")}{EnumHelper.GetName((TravelType)ObjectIndex)}, {falseHandling}",
+                ConditionType.LeadClass => $"{Type}: Active party member has {(Value == 0 ? "not " : "")}class {EnumHelper.GetName((Class)ObjectIndex)}, {falseHandling}",
+                ConditionType.SpellEmpowered => $"{Type}: Active party member has {(Value == 0 ? "not " : "")}{((CharacterElement)(1 << (4 + (int)Util.Limit(0, ObjectIndex, 2)))).ToString().ToLower()} spells empowered, {falseHandling}",
+                ConditionType.IsNight => $"{Type}: Is {(Value == 0 ? "not " : "")}night, {falseHandling}",
+                ConditionType.Attribute => $"{Type}: Active player {(Attribute)ObjectIndex} {(Value == 0 ? "<" : ">=")} {Count}, {falseHandling}",
+                ConditionType.Skill => $"{Type}: Active player {(Skill)ObjectIndex} {(Value == 0 ? "<" : ">=")} {Count}, {falseHandling}",
 				_ => $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, {falseHandling}",
             };
         }
     }
 
-    public class ActionEvent : Event
+	public class PartyMemberConditionEvent : Event
+	{
+		public enum PartyMemberConditionType : byte
+		{
+            Level = 0x00,
+			Attribute = 0x01,
+			Skill = 0x02,
+			TrainingPoints = 0x03
+		}
+
+		public enum PartyMemberConditionTarget : byte
+		{
+			ActivePlayer,
+            All,
+            Any,
+            Min,
+            Max,
+            Average,
+            Random,
+            FirstCharacter // Thalion, and then all others
+		}
+
+		public PartyMemberConditionType TypeOfCondition { get; set; }
+		public Condition DisallowedAilments { get; set; }
+		public uint Value { get; set; }
+		public uint ConditionValueIndex { get; set; } // Which attribute, skill, etc
+		public PartyMemberConditionTarget Target { get; set; }
+		/// <summary>
+		/// Next map event to continue with if the condition was met.
+		/// 0xffff means continue with next map event from the list.
+		/// </summary>
+		public uint ContinueIfFalseWithMapEventIndex { get; set; }
+
+		public override Event Clone(bool keepNext)
+		{
+			var clone = new PartyMemberConditionEvent
+			{
+				TypeOfCondition = TypeOfCondition,
+				Target = Target,
+				Value = Value,
+                ConditionValueIndex = ConditionValueIndex,
+				ContinueIfFalseWithMapEventIndex = ContinueIfFalseWithMapEventIndex,
+				DisallowedAilments = DisallowedAilments
+			};
+			CloneProperties(clone, keepNext);
+			return clone;
+		}
+
+		public override string ToString()
+		{
+            string target = Target switch
+            {
+                PartyMemberConditionTarget.ActivePlayer => "Active player",
+                PartyMemberConditionTarget.All => "All players",
+                PartyMemberConditionTarget.Any => "Any player",
+                PartyMemberConditionTarget.Min => "Min",
+                PartyMemberConditionTarget.Max => "Max",
+                PartyMemberConditionTarget.Average => "Average",
+                PartyMemberConditionTarget.Random => "Random player",
+                >= PartyMemberConditionTarget.FirstCharacter => $"Char {1 + (int)Target - (int)PartyMemberConditionTarget.FirstCharacter}",
+                _ => ""
+            };
+			string falseHandling = ContinueIfFalseWithMapEventIndex == 0xffff
+				? "Stop here if false"
+				: $"Jump to event {ContinueIfFalseWithMapEventIndex:x2} if false";
+            string disallowedAilments = DisallowedAilments == Condition.None
+                ? ""
+                : $" (not {EnumHelper.GetFlagNames(DisallowedAilments, 2)})";
+
+			return TypeOfCondition switch
+			{
+				PartyMemberConditionType.Attribute => $"{Type}: {target} {(Attribute)ConditionValueIndex} >= {Value}{disallowedAilments}, {falseHandling}",
+				PartyMemberConditionType.Skill => $"{Type}: {target} {(Skill)ConditionValueIndex} >= {Value}{disallowedAilments}, {falseHandling}",
+				PartyMemberConditionType.TrainingPoints => $"{Type}: {target} TP >= {Value}{disallowedAilments}, {falseHandling}",
+				_ => $"{Type}: Unknown ({TypeOfCondition}), Target {target}, Value {Value}, {falseHandling}",
+			};
+		}
+	}
+
+	public class ActionEvent : Event
     {
         /// <summary>
         /// These are similar to the <see cref="ConditionEvent.ConditionType"/>

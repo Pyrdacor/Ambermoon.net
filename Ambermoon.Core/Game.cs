@@ -6354,7 +6354,7 @@ namespace Ambermoon
 
                 var @event = Map.EventList[(int)mapEventId - 1];
 
-                if (!(@event is ConditionEvent conditionEvent))
+                if (@event is not ConditionEvent conditionEvent)
                     return false;
 
                 climbEvent = conditionEvent;

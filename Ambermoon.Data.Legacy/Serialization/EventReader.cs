@@ -345,7 +345,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
-                case EventType.Action:
+				case EventType.Action:
                 {
                     var actionType = (ActionEvent.ActionType)dataReader.ReadByte();
                     var value = dataReader.ReadByte();
@@ -513,7 +513,26 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
-                default:
+				case EventType.PartyMemberCondition:
+				{
+					var conditionType = (PartyMemberConditionEvent.PartyMemberConditionType)dataReader.ReadByte();
+					var conditionValueIndex = dataReader.ReadByte();
+					var target = (PartyMemberConditionEvent.PartyMemberConditionTarget)dataReader.ReadByte();
+					var disallowedAilments = (Condition)dataReader.ReadWord();
+					var value = dataReader.ReadWord();
+					var jumpToIfNotFulfilled = dataReader.ReadWord();
+					@event = new PartyMemberConditionEvent
+					{
+						TypeOfCondition = conditionType,
+						ConditionValueIndex = conditionValueIndex,
+						Target = target,					
+						DisallowedAilments = disallowedAilments,
+						Value = value,
+						ContinueIfFalseWithMapEventIndex = jumpToIfNotFulfilled
+					};
+					break;
+				}
+				default:
                 {
                     @event = new DebugEvent
                     {

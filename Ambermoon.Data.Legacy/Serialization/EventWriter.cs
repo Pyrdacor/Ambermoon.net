@@ -293,7 +293,18 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write(delayEvent.Unused2);
                     break;
                 }
-                default:
+				case EventType.PartyMemberCondition:
+				{
+					var conditionEvent = @event as PartyMemberConditionEvent;
+					dataWriter.WriteEnumAsByte(conditionEvent.TypeOfCondition);
+					dataWriter.Write((byte)conditionEvent.ConditionValueIndex);
+					dataWriter.Write((byte)conditionEvent.Target);
+					dataWriter.Write((ushort)conditionEvent.DisallowedAilments);
+					dataWriter.Write((ushort)conditionEvent.Value);
+					dataWriter.Write((ushort)conditionEvent.ContinueIfFalseWithMapEventIndex);
+					break;
+				}
+				default:
                 {
                     var debugEvent = @event as DebugEvent;
                     dataWriter.Write(debugEvent.Data);
