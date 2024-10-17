@@ -813,14 +813,6 @@ namespace Ambermoon
                             }
                             break;
                         }
-						case ConditionEvent.ConditionType.TrainingPoints:
-							if ((game.CurrentPartyMember.TrainingPoints >= conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
 					}
 
                     // For some follow-up events we won't proceed by using Eye, Hand or Mouth.
@@ -837,8 +829,8 @@ namespace Ambermoon
                     {
                         var next = conditionEvent.Next;
 
-                        while (next != null && (next.Type == EventType.Condition ||
-                            next.Type == EventType.Action || next.Type == EventType.Reward ||
+                        while (next != null && (next.Type == EventType.Condition || next.Type == EventType.PartyMemberCondition ||
+							next.Type == EventType.Action || next.Type == EventType.Reward ||
                             next.Type == EventType.ChangeMusic || next.Type == EventType.Dice100Roll))
                             next = next.Next;
 
@@ -1195,420 +1187,91 @@ namespace Ambermoon
                     });
                     return null;
 				case EventType.PartyMemberCondition:
-				{
-					if (@event is not ConditionEvent conditionEvent)
-						throw new AmbermoonException(ExceptionScope.Data, "Invalid condition event.");
+                {
+                    if (@event is not PartyMemberConditionEvent conditionEvent)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid party member condition event.");
 
-					var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
-						? null : events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
+                    var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
+                        ? null : events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
 
-					switch (conditionEvent.TypeOfCondition)
+                    uint GetAttribute(PartyMember partyMember)
+                    {
+                        if (conditionEvent.ConditionValueIndex >= 8)
+                            throw new AmbermoonException(ExceptionScope.Data, $"Invalid party member condition attribute index: {conditionEvent.ConditionValueIndex}");
+
+                        return partyMember.Attributes[conditionEvent.ConditionValueIndex].TotalCurrentValue;
+                    }
+
+					uint GetSkill(PartyMember partyMember)
 					{
-						case ConditionEvent.ConditionType.GlobalVariable:
-							if (game.CurrentSavegame.GetGlobalVariable(conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.EventBit:
-							if (game.CurrentSavegame.GetEventBit(1 + (conditionEvent.ObjectIndex >> 6), conditionEvent.ObjectIndex & 0x3f) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.DoorOpen:
-							if (game.CurrentSavegame.IsDoorLocked(conditionEvent.ObjectIndex) != (conditionEvent.Value == 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.ChestOpen:
-							if (game.CurrentSavegame.IsChestLocked(conditionEvent.ObjectIndex) != (conditionEvent.Value == 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.CharacterBit:
-							if (game.CurrentSavegame.GetCharacterBit(1 + (conditionEvent.ObjectIndex >> 5), conditionEvent.ObjectIndex & 0x1f)
-								!= (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.PartyMember:
-						{
-							if (game.PartyMembers.Any(m => (m.Index == conditionEvent.ObjectIndex &&
-								((uint)m.Conditions & (uint)conditionEvent.DisallowedAilments) == 0)) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						}
-						case ConditionEvent.ConditionType.ItemOwned:
-						{
-							int totalCount = 0;
+						if (conditionEvent.ConditionValueIndex >= 10)
+							throw new AmbermoonException(ExceptionScope.Data, $"Invalid party member condition skill index: {conditionEvent.ConditionValueIndex}");
 
-							foreach (var partyMember in game.PartyMembers)
-							{
-								foreach (var slot in partyMember.Inventory.Slots)
-								{
-									if (slot.ItemIndex == conditionEvent.ObjectIndex)
-										totalCount += slot.Amount;
-								}
-								foreach (var slot in partyMember.Equipment.Slots)
-								{
-									if (slot.Value.ItemIndex == conditionEvent.ObjectIndex)
-										totalCount += slot.Value.Amount;
-								}
-							}
-
-							if (conditionEvent.Value == 0 && totalCount != 0)
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							else if (conditionEvent.Value == 1 && (totalCount == 0 || totalCount < conditionEvent.Count))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-
-							break;
-						}
-						case ConditionEvent.ConditionType.UseItem:
-						{
-							if (trigger < EventTrigger.Item0)
-							{
-								// no item used
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-
-							uint itemIndex = (uint)(trigger - EventTrigger.Item0);
-
-							if (itemIndex != conditionEvent.ObjectIndex)
-							{
-								// wrong item used
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						}
-						case ConditionEvent.ConditionType.KnowsKeyword:
-							if (game.CurrentSavegame.IsDictionaryWordKnown(conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.LastEventResult:
-							if (lastEventStatus != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.GameOptionSet:
-							if (game.CurrentSavegame.IsGameOptionActive((Data.Enumerations.Option)(1 << (int)conditionEvent.ObjectIndex)) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.CanSee:
-						{
-							bool canSee = game.CanSee();
-							if (canSee != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						}
-						case ConditionEvent.ConditionType.Direction:
-						{
-							if ((game.PlayerDirection == (CharacterDirection)conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						}
-						case ConditionEvent.ConditionType.HasCondition:
-							if (game.CurrentPartyMember.Conditions.HasFlag((Condition)(1 << (int)conditionEvent.ObjectIndex)) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.Hand:
-							if ((trigger == EventTrigger.Hand) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.SayWord:
-						{
-							bool isStartEvent = conversationPartner?.EventList?.Contains(@event) == true ||
-								map.EventList.Contains(@event);
-
-							if (isStartEvent && (trigger == EventTrigger.Mouth) != (conditionEvent.Value != 0))
-							{
-								aborted = true;
-								return null;
-							}
-							if (!isStartEvent || trigger == EventTrigger.Mouth)
-							{
-								game.SayWord(map, x, y, events, conditionEvent);
-								return null;
-							}
-							break;
-						}
-						case ConditionEvent.ConditionType.EnterNumber:
-						{
-							game.EnterNumber(map, x, y, events, conditionEvent);
-							return null;
-						}
-						case ConditionEvent.ConditionType.Levitating:
-							if ((trigger == EventTrigger.Levitating) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.HasGold:
-							if ((game.CurrentPartyMember.Gold >= conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.HasFood:
-							if ((game.CurrentPartyMember.Food >= conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.Eye:
-							if ((trigger == EventTrigger.Eye) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						// New Ambermoon Advanced conditions
-						case ConditionEvent.ConditionType.Mouth:
-							if ((trigger == EventTrigger.Mouth) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.TransportAtLocation:
-						{
-							var transport = game.CurrentSavegame.TransportLocations.FirstOrDefault(l => l != null && l.MapIndex == map.Index && l.Position.X == x + 1 && l.Position.Y == y + 1);
-							bool result = true;
-							if (transport == null)
-							{
-								result = false;
-							}
-							else if (conditionEvent.ObjectIndex != 0 && conditionEvent.ObjectIndex != (uint)transport.TravelType)
-							{
-								result = false;
-							}
-							if (result != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						}
-						case ConditionEvent.ConditionType.MultiCursor:
-						{
-							var flags = conditionEvent.ObjectIndex;
-							bool result = false;
-
-							if (trigger == EventTrigger.Hand && (flags & 0x1) != 0)
-								result = true;
-							else if (trigger == EventTrigger.Eye && (flags & 0x2) != 0)
-								result = true;
-							else if (trigger == EventTrigger.Mouth && (flags & 0x4) != 0)
-								result = true;
-							if (result != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						}
-						case ConditionEvent.ConditionType.TravelType:
-							if (((uint)game.TravelType == conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.LeadClass:
-							if (((uint)game.CurrentPartyMember.Class == conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.SpellEmpowered:
-						{
-							uint elementIndex = conditionEvent.ObjectIndex;
-
-							if (elementIndex > 2)
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-
-							int mask = (1 << (4 + (int)elementIndex));
-
-							if ((((int)game.CurrentPartyMember.BattleFlags & mask) != 0) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						}
-						case ConditionEvent.ConditionType.IsNight:
-							if (game.IsNight() != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						case ConditionEvent.ConditionType.Attribute:
-						{
-							var attribute = game.CurrentPartyMember.Attributes[(Data.Attribute)conditionEvent.ObjectIndex];
-							var totalValue = attribute.CurrentValue + attribute.BonusValue;
-
-							// Anti-magic bonus
-							if ((Data.Attribute)conditionEvent.ObjectIndex == Data.Attribute.AntiMagic &&
-								game.CurrentSavegame.IsSpellActive(ActiveSpellType.AntiMagic))
-							{
-								totalValue += game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.AntiMagic);
-							}
-
-							if ((totalValue >= conditionEvent.Count) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						}
-						case ConditionEvent.ConditionType.Skill:
-						{
-							var skill = game.CurrentPartyMember.Skills[(Skill)conditionEvent.ObjectIndex];
-							var totalValue = skill.CurrentValue + skill.BonusValue;
-
-							// Search bonus in AA
-							if ((Skill)conditionEvent.ObjectIndex == Skill.Searching &&
-								game.Features.HasFlag(Features.ClairvoyanceGrantsSearchSkill) &&
-								game.CurrentSavegame.IsSpellActive(ActiveSpellType.Clairvoyance))
-							{
-								totalValue += game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Clairvoyance);
-							}
-
-							if ((totalValue >= conditionEvent.Count) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
-						}
-						case ConditionEvent.ConditionType.TrainingPoints:
-							if ((game.CurrentPartyMember.TrainingPoints >= conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
-							{
-								aborted = mapEventIfFalse == null;
-								lastEventStatus = false;
-								return mapEventIfFalse;
-							}
-							break;
+						return partyMember.Skills[conditionEvent.ConditionValueIndex].TotalCurrentValue;
 					}
 
-					// For some follow-up events we won't proceed by using Eye, Hand or Mouth.
-					if (conversationPartner == null && conditionEvent.Next != null &&
-						trigger != EventTrigger.Move && trigger != EventTrigger.Always &&
-						conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Hand &&
-						conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Eye &&
-						conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Mouth &&
-						conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.UseItem &&
-						conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Levitating &&
-						conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.EnterNumber &&
-						conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.SayWord &&
-						conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.LastEventResult)
-					{
-						var next = conditionEvent.Next;
+					Func<PartyMember, uint> extractor = conditionEvent.TypeOfCondition switch
+                    {
+                        PartyMemberConditionEvent.PartyMemberConditionType.Attribute => GetAttribute,
+                        PartyMemberConditionEvent.PartyMemberConditionType.Skill => GetSkill,
+                        PartyMemberConditionEvent.PartyMemberConditionType.TrainingPoints => (partyMember) => partyMember.TrainingPoints,
+                        _ => throw new AmbermoonException(ExceptionScope.Data, $"Invalid party member condition type: {conditionEvent.TypeOfCondition}")
+					};
 
-						while (next != null && (next.Type == EventType.Condition ||
-							next.Type == EventType.Action || next.Type == EventType.Reward ||
-							next.Type == EventType.ChangeMusic || next.Type == EventType.Dice100Roll))
-							next = next.Next;
+                    Func<PartyMember, bool> filter = conditionEvent.DisallowedAilments == Condition.None
+                        ? (_) => true
+                        : (partyMember) => ((ushort)partyMember.Conditions & (ushort)conditionEvent.DisallowedAilments) == 0;
 
-						if (next != null)
-						{
-							switch (next.Type)
-							{
-								case EventType.Teleport:
-								case EventType.StartBattle:
-								case EventType.Riddlemouth:
-									aborted = true;
-									return null;
-							}
-						}
+                    var partyMembers = game.PartyMembers.Where(p => p != null).ToList();
+
+                    bool CheckSingle(PartyMember partyMember)
+                    {
+                        return extractor(partyMember) >= conditionEvent.Value;
 					}
 
-					if (conditionEvent.Next == null || !(conditionEvent.Next is ConditionEvent followEvent) ||
-						(followEvent.TypeOfCondition != ConditionEvent.ConditionType.Eye &&
-						 followEvent.TypeOfCondition != ConditionEvent.ConditionType.Hand &&
-						 followEvent.TypeOfCondition != ConditionEvent.ConditionType.Mouth))
-						trigger = EventTrigger.Always; // following events should not dependent on the trigger anymore in that case
+					bool CheckAggregation(Func<IEnumerable<decimal>, decimal> aggregator)
+					{
+                        return aggregator(partyMembers.Where(filter).Select(p => (decimal)extractor(p))) >= conditionEvent.Value;
+					}
+
+                    bool CheckRandom()
+                    {
+                        var possible = partyMembers.Where(filter).ToList();
+
+                        if (possible.Count == 0)
+                            return false;
+
+                        return extractor(possible[game.RandomInt(0, possible.Count - 1)]) >= conditionEvent.Value;
+                    }
+
+                    bool CheckPartyMember(uint index)
+                    {
+                        var partyMember = partyMembers.FirstOrDefault(p => p.Index == index && filter(p));
+
+                        return partyMember != null && CheckSingle(partyMember);
+                    }
+
+					bool result = conditionEvent.Target switch
+                    {
+					    PartyMemberConditionEvent.PartyMemberConditionTarget.ActivePlayer => filter(game.CurrentPartyMember) && CheckSingle(game.CurrentPartyMember),
+					    PartyMemberConditionEvent.PartyMemberConditionTarget.All => partyMembers.Count == partyMembers.Where(filter).Count() && partyMembers.All(CheckSingle),
+					    PartyMemberConditionEvent.PartyMemberConditionTarget.Any => partyMembers.Where(filter).Any(CheckSingle),
+						PartyMemberConditionEvent.PartyMemberConditionTarget.Min => CheckAggregation(Enumerable.Min),
+						PartyMemberConditionEvent.PartyMemberConditionTarget.Max => CheckAggregation(Enumerable.Max),
+						PartyMemberConditionEvent.PartyMemberConditionTarget.Average => CheckAggregation(Enumerable.Average),
+						PartyMemberConditionEvent.PartyMemberConditionTarget.Random => CheckRandom(),
+                        >= PartyMemberConditionEvent.PartyMemberConditionTarget.FirstCharacter => CheckPartyMember((uint)conditionEvent.Target - (uint)PartyMemberConditionEvent.PartyMemberConditionTarget.FirstCharacter),
+					};
+
+                    if (!result)
+					{
+						aborted = mapEventIfFalse == null;
+						lastEventStatus = false;
+						return mapEventIfFalse;
+					}
 
 					break;
-				}
+                }
 				default:
                     Console.WriteLine($"Unknown event type found: {@event.Type}");
                     return @event.Next;
