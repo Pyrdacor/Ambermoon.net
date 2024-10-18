@@ -965,7 +965,6 @@ namespace Ambermoon.Data
                 PartyMemberConditionTarget.Average => "Average",
                 PartyMemberConditionTarget.Random => "Random player",
                 >= PartyMemberConditionTarget.FirstCharacter => $"Char {1 + (int)Target - (int)PartyMemberConditionTarget.FirstCharacter}",
-                _ => ""
             };
 			string falseHandling = ContinueIfFalseWithMapEventIndex == 0xffff
 				? "Stop here if false"
