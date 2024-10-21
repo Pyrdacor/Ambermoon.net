@@ -975,6 +975,7 @@ namespace Ambermoon.Data
 
 			return TypeOfCondition switch
 			{
+				PartyMemberConditionType.Level => $"{Type}: {target} Level >= {Value}{disallowedAilments}, {falseHandling}",
 				PartyMemberConditionType.Attribute => $"{Type}: {target} {(Attribute)ConditionValueIndex} >= {Value}{disallowedAilments}, {falseHandling}",
 				PartyMemberConditionType.Skill => $"{Type}: {target} {(Skill)ConditionValueIndex} >= {Value}{disallowedAilments}, {falseHandling}",
 				PartyMemberConditionType.TrainingPoints => $"{Type}: {target} TP >= {Value}{disallowedAilments}, {falseHandling}",
