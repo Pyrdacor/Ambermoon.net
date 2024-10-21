@@ -1231,7 +1231,12 @@ namespace Ambermoon
 
 					bool CheckAggregation(Func<IEnumerable<decimal>, decimal> aggregator)
 					{
-                        return aggregator(partyMembers.Where(filter).Select(p => (decimal)extractor(p))) >= conditionEvent.Value;
+                        var values = partyMembers.Where(filter).Select(p => (decimal)extractor(p));
+
+                        if (!values.Any())
+                            return false;
+
+						return aggregator(values) >= conditionEvent.Value;
 					}
 
                     bool CheckRandom()
