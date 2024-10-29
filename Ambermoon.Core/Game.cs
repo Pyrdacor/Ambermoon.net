@@ -1634,7 +1634,7 @@ namespace Ambermoon
                     SetMapCharacterBit(characterBit, true);
                     if (partyMember.CharacterBitIndex == 0xffff || partyMember.CharacterBitIndex == 0x0000)
                         partyMember.CharacterBitIndex = characterBit;
-                    break;
+                    return 0;
                 }
             }
 

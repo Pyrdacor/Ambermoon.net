@@ -1393,7 +1393,7 @@ namespace Ambermoon
                 if (name == "tar")
                 {
                     // There is a problem when entering "Tar" as it will match
-                    // "Tar the dark" and "Targot". But most likey you mean Tar.
+                    // "Tar the dark" and "Targor". But most likey you mean Tar.
                     // So by adding the space to the search text it should work.
                     name = "tar ";
                 }
@@ -1406,7 +1406,16 @@ namespace Ambermoon
                     Console.WriteLine();
                     return;
                 }
-                else if (partyMembers.Length > 1)
+
+                partyMembers = partyMembers.Where(p => !game.PartyMembers.Contains(p)).ToArray();
+
+                if (partyMembers.Length == 0)
+				{
+					Console.WriteLine("All party members matching the given name are already in the party.");
+					Console.WriteLine();
+					return;
+				}
+				else if (partyMembers.Length > 1)
                 {
                     if (partyMembers.Length == 2 && partyMembers[0].Index == 1)
                     {
