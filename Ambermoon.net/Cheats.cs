@@ -130,7 +130,8 @@ namespace Ambermoon
                 (
                     "Kills a specific party member." + Environment.NewLine +
                     "Usage: kill [party_member_index] [death_type]" + Environment.NewLine +
-                    "Death types: 0 (normal), 1 (ashes), 2 (dust)" + Environment.NewLine +
+					"Usage: kill <partial_party_member_name> [death_type]" + Environment.NewLine +
+					"Death types: 0 (normal), 1 (ashes), 2 (dust)" + Environment.NewLine +
                     "Defaults to active party member and death type 0",
                     Kill
                 )
@@ -1058,6 +1059,92 @@ namespace Ambermoon
             Console.WriteLine();
         }
 
+        static PartyMember GetPartyMemberByIdOrSlotOrName(Game game, string partyMemberIdOrName,
+            Func<PartyMember, bool> filter, Func<PartyMember> afterFilterEmptyHandler,
+            Func<PartyMember[], PartyMember> afterFilterMoreThanOnceHandler, bool numberIsSlot)
+        {
+			PartyMember partyMember = null;
+
+			if (uint.TryParse(partyMemberIdOrName, out uint partyMemberId))
+			{
+                if (numberIsSlot)
+                {
+                    if (partyMemberId < 1 || partyMemberId > Game.MaxPartyMembers)
+                    {
+                        Console.WriteLine("Party member slot was outside the range 1~6.");
+                        Console.WriteLine();
+                        return null;
+                    }
+
+                    partyMember = game.GetPartyMember((int)partyMemberId - 1);
+                }
+                else
+                {
+                    var entries = game.GetCurrentSavegame().PartyMembers;
+
+                    if (!entries.TryGetValue(partyMemberId, out partyMember))
+                    {
+                        Console.WriteLine($"The given party member id does not exist. Use a value from {entries.Keys.Min()} to {entries.Keys.Max()}.");
+                        Console.WriteLine();
+                        return null;
+                    }
+                }
+
+				if (!filter(partyMember))
+				{
+                    return afterFilterEmptyHandler();
+				}
+			}
+			else
+			{
+				string name = partyMemberIdOrName.ToLower();
+
+				if (name == "tar")
+				{
+					// There is a problem when entering "Tar" as it will match
+					// "Tar the dark" and "Targor". But most likey you mean Tar.
+					// So by adding the space to the search text it should work.
+					name = "tar ";
+				}
+
+				var partyMembers = game.GetCurrentSavegame().PartyMembers.Values.Where(p => p.Name.ToLower().StartsWith(name)).ToArray();
+
+				if (partyMembers.Length == 0)
+				{
+					Console.WriteLine("No party member matches the given name.");
+					Console.WriteLine();
+					return null;
+				}
+
+				partyMembers = partyMembers.Where(filter).ToArray();
+
+				if (partyMembers.Length == 0)
+				{
+					return afterFilterEmptyHandler();
+				}
+				else if (partyMembers.Length > 1)
+				{
+                    partyMember = afterFilterMoreThanOnceHandler(partyMembers);
+
+                    if (partyMember != null)
+                        return partyMember;
+
+					Console.WriteLine("More than one party member matches the given name.");
+					Console.WriteLine("Please specify more precise. Here are the matches:");
+					foreach (var p in partyMembers.Where(x => x.Index != 1))
+						Console.WriteLine("  - " + p.Name);
+					Console.WriteLine();
+					return null;
+				}
+				else
+				{
+					partyMember = partyMembers[0];
+				}
+			}
+
+            return partyMember;
+		}
+
         static void Kill(Game game, string[] args)
         {
             Console.WriteLine();
@@ -1084,19 +1171,21 @@ namespace Ambermoon
                 return;
             }
 
-            int? partyMemberIndex = args.Length < 1 ? (int?)null : int.TryParse(args[0], out int i) ? i : null;
+			var partyMember = args.Length == 0 ? game.CurrentPartyMember : GetPartyMemberByIdOrSlotOrName(game, args[0], p => game.PartyMembers.Contains(p),
+                () =>
+                {
+                    if (long.TryParse(args[0], out var index))
+					    Console.WriteLine($"There is no party member in slot {index}.");
+                    else
+						Console.WriteLine($"There is no party member with a matching name in the party.");
 
-            var partyMember = partyMemberIndex == null ? game.CurrentPartyMember : game.GetPartyMember(partyMemberIndex.Value - 1);
+					Console.WriteLine();
+					return null;
+				},
+                (_) => null, true);
 
             if (partyMember == null)
-            {
-                if (partyMemberIndex != null)
-                    Console.WriteLine($"There is no party member in slot {partyMemberIndex.Value}.");
-                else
-                    Console.WriteLine($"There is no active party member.");
-                Console.WriteLine();
                 return;
-            }
 
             int deathType = args.Length < 2 ? 0 : int.TryParse(args[1], out int t) ? t : 0;
             var deathCondition = deathType switch
@@ -1372,72 +1461,27 @@ namespace Ambermoon
                 return;
             }
 
-            string partyMemberIdOrName = args[0];
-            PartyMember partyMember = null;
-            
-            if (uint.TryParse(partyMemberIdOrName, out uint partyMemberId))
-            {
-                var entries = game.GetCurrentSavegame().PartyMembers;
-
-                if (!entries.TryGetValue(partyMemberId, out partyMember))
+            var partyMember = GetPartyMemberByIdOrSlotOrName(game, args[0], p => !game.PartyMembers.Contains(p),
+                () =>
                 {
-                    Console.WriteLine($"The given party member id does not exist. Use a value from {entries.Keys.Min()} to {entries.Keys.Max()}.");
-                    Console.WriteLine();
-                    return;
-                }
-            }
-            else
-            {
-                string name = partyMemberIdOrName.ToLower();
-
-                if (name == "tar")
-                {
-                    // There is a problem when entering "Tar" as it will match
-                    // "Tar the dark" and "Targor". But most likey you mean Tar.
-                    // So by adding the space to the search text it should work.
-                    name = "tar ";
-                }
-
-                var partyMembers = game.GetCurrentSavegame().PartyMembers.Values.Where(p => p.Name.ToLower().StartsWith(name)).ToArray();
-
-                if (partyMembers.Length == 0)
-                {
-                    Console.WriteLine("No party member matches the given name.");
-                    Console.WriteLine();
-                    return;
-                }
-
-                partyMembers = partyMembers.Where(p => !game.PartyMembers.Contains(p)).ToArray();
-
-                if (partyMembers.Length == 0)
-				{
 					Console.WriteLine("All party members matching the given name are already in the party.");
 					Console.WriteLine();
-					return;
-				}
-				else if (partyMembers.Length > 1)
+                    return null;
+				},
+                (partyMembers) =>
                 {
-                    if (partyMembers.Length == 2 && partyMembers[0].Index == 1)
-                    {
-                        // If the name matches 2 party members and one of them is the hero,
-                        // just use the other party member for invitation.
-                        partyMember = partyMembers[1];
-                    }
-                    else
-                    {
-                        Console.WriteLine("More than one party member matches the given name.");
-                        Console.WriteLine("Please specify more precise. Here are the matches:");
-                        foreach (var p in partyMembers.Where(x => x.Index != 1))
-                            Console.WriteLine("  - " + p.Name);
-                        Console.WriteLine();
-                        return;
-                    }
-                }
-                else
-                {
-                    partyMember = partyMembers[0];
-                }
-            }
+					if (partyMembers.Length == 2 && partyMembers[0].Index == 1)
+					{
+						// If the name matches 2 party members and one of them is the hero,
+						// just use the other party member for invitation.
+						return partyMembers[1];
+					}
+
+                    return null;
+				}, false);
+
+            if (partyMember == null)
+                return;
 
             if (game.PartyMembers.Contains(partyMember))
             {
