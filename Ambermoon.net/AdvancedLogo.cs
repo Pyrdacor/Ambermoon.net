@@ -176,6 +176,7 @@ namespace Ambermoon
                 case CommandType.FadeInAdvancedImage:
                     if (commandActivated)
                     {
+                        // TODO: resize if switching to fullscreen etc. Also in Android.
                         float ratio = (float)logoAdvancedGraphic.Width / logoAdvancedGraphic.Height;
                         int height = renderView.FramebufferSize.Height;
                         int width = Util.Round(ratio * height);

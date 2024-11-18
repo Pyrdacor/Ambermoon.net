@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "790070356346",
+    "project_id": "ambermoon-8570b",
+    "storage_bucket": "ambermoon-8570b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:790070356346:android:c670b84cc94aa09e968ec3",
+        "android_client_info": {
+          "package_name": "com.pyrdacor.AmbermoonAndroid"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBsmfDI3cxH3ptxIkf-Bw0Ofr6ZCjXObgE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

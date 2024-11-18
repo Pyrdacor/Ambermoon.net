@@ -2,10 +2,12 @@ using Ambermoon;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
+using Android.Runtime;
 using Android.Views;
 using Android.Views.InputMethods;
-using AndroidX.Core.App;
-using AndroidX.Core.Content;
+using Firebase;
+using Firebase.Crashlytics;
+using Java.Interop;
 using Silk.NET.Windowing.Sdl.Android;
 
 namespace AmbermoonAndroid
@@ -13,7 +15,7 @@ namespace AmbermoonAndroid
     [Activity(Label = "@string/app_name", MainLauncher = true, ScreenOrientation = ScreenOrientation.Landscape, Exported = true)]
     public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
     {
-		private const int RequestBluetoothPermissionsId = 1001;
+		// private const int RequestBluetoothPermissionsId = 1001;
 		private GameWindow gameWindow;
         private MusicManager musicManager;
         private GestureDetector gestureDetector;
@@ -102,14 +104,33 @@ namespace AmbermoonAndroid
 			ActionBar?.Hide();
 			Title = "Ambermoon";
 
-			RequestBluetoothPermissions();
+			//RequestBluetoothPermissions();
 
 			base.OnCreate(savedInstanceState);
+
+			// Firebase Crash Analytics
+			FirebaseApp.InitializeApp(this);
+			FirebaseCrashlytics.Instance.SetCrashlyticsCollectionEnabled(Java.Lang.Boolean.True);
+			FirebaseCrashlytics.Instance.SendUnsentReports();
+
+			AppDomain.CurrentDomain.UnhandledException += (_, e) => CurrentDomain_UnhandledException(this, e);
+
+			TaskScheduler.UnobservedTaskException += (_, e) =>
+			{
+				PrintException(e.Exception);
+				e.SetObserved(); // Prevent the app from crashing
+			};
+
+			AndroidEnvironment.UnhandledExceptionRaiser += (_, e) =>
+			{
+				PrintException(e.Exception);
+				e.Handled = true; // Prevent the app from crashing
+			};
 
 			gestureDetector = new GestureDetector(this, this);
 		}
 
-		private void RequestBluetoothPermissions()
+		/*private void RequestBluetoothPermissions()
 		{
 			if (Build.VERSION.SdkInt >= BuildVersionCodes.S)
 			{
@@ -125,9 +146,9 @@ namespace AmbermoonAndroid
 					}, RequestBluetoothPermissionsId);
 				}
 			}
-		}
+		}*/
 
-		public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
+		/*public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
 		{
 			base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 
@@ -145,7 +166,7 @@ namespace AmbermoonAndroid
 					Toast.MakeText(this, "Bluetooth permissions denied", ToastLength.Short).Show();
 				}
 			}
-		}
+		}*/
 
 		public void ShowKeyboard(string text)
 		{
@@ -155,9 +176,9 @@ namespace AmbermoonAndroid
 				hiddenEditText.Focusable = true;
 				hiddenEditText.FocusableInTouchMode = true;
 				hiddenEditText.Text = lastInputText = text;
-				hiddenEditText.RequestFocus();
 				hiddenEditText.SetSelection(hiddenEditText.Text.Length);
-				hiddenEditText.SetCursorVisible(false);
+				hiddenEditText.SetCursorVisible(true);
+				hiddenEditText.RequestFocus();
 				imm.ShowSoftInput(hiddenEditText, ShowFlags.Forced);
 				hiddenEditText.Focusable = false;
 				hiddenEditText.FocusableInTouchMode = false;
@@ -173,6 +194,61 @@ namespace AmbermoonAndroid
 				hiddenEditText.Text = lastInputText = "";
 				hiddenEditText.Visibility = ViewStates.Invisible;
 			});
+		}
+
+		public class CustomOnKeyListener : Java.Lang.Object, View.IOnKeyListener
+		{
+			private readonly Action<Keycode, KeyEventActions> _onKeyAction;
+
+			public CustomOnKeyListener(Action<Keycode, KeyEventActions> onKeyAction)
+			{
+				_onKeyAction = onKeyAction;
+			}
+
+			public bool OnKey(View v, Keycode keyCode, KeyEvent e)
+			{
+				_onKeyAction?.Invoke(keyCode, e.Action);
+				return true; // Indicate the event was handled
+			}
+		}
+
+		public class EditorActionListener : Java.Lang.Object, TextView.IOnEditorActionListener
+		{
+			private readonly Func<TextView, ImeAction, KeyEvent, bool> _callback;
+
+			public EditorActionListener(Func<TextView, ImeAction, KeyEvent, bool> callback)
+			{
+				_callback = callback;
+			}
+
+			public bool OnEditorAction(TextView v, ImeAction actionId, KeyEvent e)
+			{
+				return _callback(v, actionId, e);
+			}
+		}
+
+		public override bool DispatchKeyEvent(KeyEvent e)
+		{
+			if (hiddenEditText.Visibility != ViewStates.Visible || e.Action != KeyEventActions.Down)
+				return base.DispatchKeyEvent(e);
+
+			if (e.KeyCode == Keycode.Del)
+			{
+				if (lastInputText.Length > 0)
+				{
+					hiddenEditText.Text = lastInputText[..^1];
+					hiddenEditText.SetSelection(hiddenEditText.Text.Length);
+					return true;
+				}
+			}
+			else if (e.KeyCode == Keycode.Enter && lastInputText.Length > 0)
+			{
+				HideKeyboard();
+				gameWindow.OnKeyDown(Key.Return);
+				return true;
+			}
+
+			return base.DispatchKeyEvent(e);
 		}
 
 		private void OnAfterInit()
@@ -200,6 +276,18 @@ namespace AmbermoonAndroid
 				hiddenEditText.Clickable = false;
 				hiddenEditText.LongClickable = false;
 				hiddenEditText.CustomSelectionActionModeCallback = new NoTextSelection();
+
+				hiddenEditText.SetOnEditorActionListener(new EditorActionListener((v, actionId, e) =>
+				{
+					if (actionId == ImeAction.Done || actionId == ImeAction.Next || actionId == ImeAction.Send)
+					{
+						HideKeyboard();
+						gameWindow.OnKeyDown(Key.Return);
+						return true;
+					}
+
+					return false;
+				}));
 
 				hiddenEditText.AfterTextChanged += (sender, e) =>
 				{
@@ -261,9 +349,7 @@ namespace AmbermoonAndroid
 
 		protected override void OnRun()
         {
-			AppDomain.CurrentDomain.UnhandledException += (_, e) => CurrentDomain_UnhandledException(this, e);
-
-            FileProvider.Initialize(this);
+			FileProvider.Initialize(this);
 
             //appDataDir = ApplicationContext!.FilesDir!.AbsolutePath;
 
@@ -274,14 +360,14 @@ namespace AmbermoonAndroid
             {
 				musicManager = new MusicManager(this);
 				gameWindow.Run(configuration, musicManager, NameResetHandler, OnAfterInit);
-            }
+			}
             catch (Exception ex)
             {
                 PrintException(ex);
             }
             finally
             {
-                SaveConfig(configuration);
+				SaveConfig(configuration);
             }
         }
 
@@ -306,13 +392,18 @@ namespace AmbermoonAndroid
 
 		void ShowMessage(string title, string message)
 		{
+			FirebaseCrashlytics.Instance.Log(message);
+
 			Android.Util.Log.Error("Ambermoon", $"[{title}] {message}");
 
-			new AlertDialog.Builder(this)
-			.SetTitle(title)
-			.SetMessage(message)
-			.SetPositiveButton("OK", (sender, e) => {})
-			.Show();			
+			RunOnUiThread(() =>
+			{
+				new AlertDialog.Builder(this)
+				.SetTitle(title)
+				.SetMessage(message)
+				.SetPositiveButton("OK", (sender, e) => { })
+				.Show();
+			});
 		}
 
         static void CurrentDomain_UnhandledException(MainActivity sender, UnhandledExceptionEventArgs e)
@@ -323,17 +414,26 @@ namespace AmbermoonAndroid
 				sender.ShowError(e.ExceptionObject?.ToString() ?? "Unhandled exception without exception object");
         }
 
-        void PrintException(Exception ex)
+        void PrintException(Exception exception)
         {
-            string message = ex.Message;
+			var initialException = exception;
+			string message = exception.Message;
 
-            if (ex.InnerException != null)
+            if (exception.InnerException != null)
             {
-                message += System.Environment.NewLine + ex.InnerException.Message;
-                ex = ex.InnerException;
+                message += System.Environment.NewLine + exception.InnerException.Message;
+                exception = exception.InnerException;
             }
 
-			ShowError(message + System.Environment.NewLine + ex.StackTrace);
+			var stackTrace = initialException.StackTrace;
+
+			if (stackTrace is not null)
+				message += System.Environment.NewLine + stackTrace;
+
+			var androidException = Java.Lang.Throwable.FromException(new JavaException(message, initialException));
+			FirebaseCrashlytics.Instance.RecordException(androidException);
+
+			ShowError(message);
         }
 
         public bool OnDown(MotionEvent e)

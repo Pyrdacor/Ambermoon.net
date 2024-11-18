@@ -11,7 +11,6 @@ using Ambermoon.UI;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Input;
 using Silk.NET.Input.Glfw;
-using Silk.NET.SDL;
 using Silk.NET.Windowing;
 using Silk.NET.Windowing.Glfw;
 using System;

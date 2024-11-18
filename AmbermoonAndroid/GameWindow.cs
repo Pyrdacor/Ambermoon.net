@@ -17,6 +17,7 @@ using Data = Ambermoon.Data;
 using Render = Ambermoon.Render;
 using Silk.NET.Windowing.Sdl;
 using Silk.NET.Input.Sdl;
+using Firebase.Crashlytics;
 
 namespace AmbermoonAndroid
 {
@@ -50,7 +51,6 @@ namespace AmbermoonAndroid
         LogoPyrdacor logoPyrdacor = null;
         AdvancedLogo advancedLogo = null;
         Graphic[] additionalPalettes;
-        bool initialized = false;
         bool initialIntroEndedByClick = false;
         readonly List<Action> touchActions = new();
         readonly Action<bool, string> keyboardRequest;
@@ -1232,7 +1232,7 @@ namespace AmbermoonAndroid
 
         void Window_Load()
         {
-            window.MakeCurrent();
+			window.MakeCurrent();
 
             // Setup input
             SetupInput(window.CreateInput());
@@ -1245,18 +1245,12 @@ namespace AmbermoonAndroid
 
             var gl = Silk.NET.OpenGL.GL.GetApi(GLContext);
             gl.Viewport(new System.Drawing.Size(window.FramebufferSize.X, window.FramebufferSize.Y));
-            gl.ClearColor(System.Drawing.Color.Black);
+            gl.ClearColor(System.Drawing.Color.Red);
             gl.Clear(Silk.NET.OpenGL.ClearBufferMask.ColorBufferBit);
             GLContext.SwapBuffers();
 
-            if (configuration.Width == null || configuration.Height == null)
-            {
-                var size = ScreenResolutions.GetPossibleResolutions(new Size(fullscreenSize.X, fullscreenSize.Y))[2];
-                configuration.Width = Width = size.Width;
-                configuration.Height = Height = size.Height;
-            }
-
-            initialized = true;
+            configuration.Width = Width = fullscreenSize.X;
+            configuration.Height = Height = fullscreenSize.Y;
 
             var builtinVersionReader = new BinaryReader(FileProvider.GetVersions());
 
@@ -1422,7 +1416,7 @@ namespace AmbermoonAndroid
             var api = GraphicsAPI.Default;
 #endif
             var videoMode = new VideoMode(60);
-            var options = new WindowOptions(true, new WindowDimension(100, 100),
+            var options = new WindowOptions(true, new WindowDimension(0, 0),
                 new WindowDimension(Width, Height), 60.0, 120.0, api, gameVersion,
                 WindowState.Normal, WindowBorder.Fixed, true, false, videoMode, 24);
             options.WindowClass = "Ambermoon.net";

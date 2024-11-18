@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+	<TargetFrameworks>net7.0;net8.0-android</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<Version>0.1.2</Version>
@@ -21,7 +21,7 @@
   </PropertyGroup>
 	
   <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
-	  <PackageReference Include="System.Drawing.Common" Version="8.0.1" />
+	  <PackageReference Include="System.Drawing.Common" Version="8.0.10" />
   </ItemGroup>
 
   <ItemGroup>

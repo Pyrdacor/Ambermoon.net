@@ -1212,7 +1212,8 @@ namespace Ambermoon
 
 					Func<PartyMember, uint> extractor = conditionEvent.TypeOfCondition switch
                     {
-                        PartyMemberConditionEvent.PartyMemberConditionType.Attribute => GetAttribute,
+						PartyMemberConditionEvent.PartyMemberConditionType.Level => (partyMember) => partyMember.Level,
+						PartyMemberConditionEvent.PartyMemberConditionType.Attribute => GetAttribute,
                         PartyMemberConditionEvent.PartyMemberConditionType.Skill => GetSkill,
                         PartyMemberConditionEvent.PartyMemberConditionType.TrainingPoints => (partyMember) => partyMember.TrainingPoints,
                         _ => throw new AmbermoonException(ExceptionScope.Data, $"Invalid party member condition type: {conditionEvent.TypeOfCondition}")
@@ -1265,7 +1266,7 @@ namespace Ambermoon
 						PartyMemberConditionEvent.PartyMemberConditionTarget.Max => CheckAggregation(Enumerable.Max),
 						PartyMemberConditionEvent.PartyMemberConditionTarget.Average => CheckAggregation(Enumerable.Average),
 						PartyMemberConditionEvent.PartyMemberConditionTarget.Random => CheckRandom(),
-                        >= PartyMemberConditionEvent.PartyMemberConditionTarget.FirstCharacter => CheckPartyMember((uint)conditionEvent.Target - (uint)PartyMemberConditionEvent.PartyMemberConditionTarget.FirstCharacter),
+                        >= PartyMemberConditionEvent.PartyMemberConditionTarget.FirstCharacter => CheckPartyMember(1u + (uint)conditionEvent.Target - (uint)PartyMemberConditionEvent.PartyMemberConditionTarget.FirstCharacter),
 					};
 
                     if (!result)

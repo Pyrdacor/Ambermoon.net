@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+	<TargetFrameworks>net7.0;net8.0-android</TargetFrameworks>
     <Nullable>disable</Nullable>
 	<Authors>Robert Schneckenhaus</Authors>
 	<Description>Library that provides file system abstraction for Ambermoon.</Description>

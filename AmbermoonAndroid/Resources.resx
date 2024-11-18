@@ -160,4 +160,7 @@
   <data name="windowIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\raw\windowIcon.raw;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="com.crashlytics.android.build_id" xml:space="preserve">
+    <value>9f337ee3-989d-473b-996a-8ebb44a6043d</value>
+  </data>
 </root>

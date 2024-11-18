@@ -847,6 +847,10 @@ namespace Ambermoon.UI
                 uiText.PaletteIndex = paletteOverride.Value;
             if (closeAction != null)
                 activePopup.Closed += closeAction;
+
+            if (scrolling && game.Configuration.IsMobile)
+                activePopup.CanAbort = false;
+
             return activePopup;
         }
 
