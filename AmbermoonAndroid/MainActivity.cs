@@ -229,22 +229,22 @@ namespace AmbermoonAndroid
 
 		public override bool DispatchKeyEvent(KeyEvent e)
 		{
-			if (hiddenEditText.Visibility != ViewStates.Visible || e.Action != KeyEventActions.Down)
+			if (hiddenEditText is null || e is null || hiddenEditText.Visibility != ViewStates.Visible || e.Action != KeyEventActions.Down)
 				return base.DispatchKeyEvent(e);
 
 			if (e.KeyCode == Keycode.Del)
 			{
-				if (lastInputText.Length > 0)
+				if (lastInputText is not null && lastInputText.Length > 0)
 				{
 					hiddenEditText.Text = lastInputText[..^1];
 					hiddenEditText.SetSelection(hiddenEditText.Text.Length);
 					return true;
 				}
 			}
-			else if (e.KeyCode == Keycode.Enter && lastInputText.Length > 0)
+			else if (e.KeyCode == Keycode.Enter && lastInputText is not null && lastInputText.Length > 0)
 			{
 				HideKeyboard();
-				gameWindow.OnKeyDown(Key.Return);
+				gameWindow?.OnKeyDown(Key.Return);
 				return true;
 			}
 
