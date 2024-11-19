@@ -31,9 +31,9 @@
 	<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
 	<AndroidLinkTool>none</AndroidLinkTool>
 	<AndroidPackageFormat>aab</AndroidPackageFormat>
-	<DebugSymbols>True</DebugSymbols>
+	<DebugSymbols>False</DebugSymbols>
 	  <AndroidLinkMode>None</AndroidLinkMode>
-	  <DebugType>embedded</DebugType>
+	  <DebugType>none</DebugType>
 	  <AndroidEnableProguard>false</AndroidEnableProguard>
 	  <AndroidEnableR8>false</AndroidEnableR8>
 	  <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
