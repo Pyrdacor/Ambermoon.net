@@ -40,7 +40,7 @@ namespace Ambermoon.Renderer
             $"",
             $"vec4 getColor(vec2 coord)",
             $"{{",
-            $"    return texture({DefaultSamplerName}, coord);",
+            $"    return textureLod({DefaultSamplerName}, coord, 0.0f);",
             $"}}",
             $"",
             $"void main()",

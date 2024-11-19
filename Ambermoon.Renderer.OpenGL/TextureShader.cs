@@ -54,7 +54,7 @@ namespace Ambermoon.Renderer
             $"    vec4 pixelColor = vec4(0);",
             $"    if ({DefaultUsePaletteName} > 0.5f)",
             $"    {{",
-            $"        float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
+            $"        float colorIndex = textureLod({DefaultSamplerName}, varTexCoord, 0.0f).r * 255.0f;",
             $"        ",
             $"        if (colorIndex < 0.5f)",
             $"            discard;",
@@ -62,12 +62,12 @@ namespace Ambermoon.Renderer
             $"        {{",
             $"            if (colorIndex >= 31.5f)",
             $"                colorIndex = 0.0f;",
-            $"            pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}));",
+            $"            pixelColor = textureLod({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}), 0.0f);",
             $"        }}",
             $"    }}",
             $"    else",
             $"    {{",
-            $"        pixelColor = texture({DefaultSamplerName}, varTexCoord);",
+            $"        pixelColor = textureLod({DefaultSamplerName}, varTexCoord, 0.0f);",
             $"        if (pixelColor.a < 0.5f)",
             $"            discard;",
             $"    }}",
@@ -75,7 +75,7 @@ namespace Ambermoon.Renderer
             $"    if (maskColIndex < 0.5f)",
             $"        {DefaultFragmentOutColorName} = pixelColor;",
             $"    else",
-            $"        {DefaultFragmentOutColorName} = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}));",
+            $"        {DefaultFragmentOutColorName} = textureLod({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}), 0.0f);",
             $"}}"
         };
 

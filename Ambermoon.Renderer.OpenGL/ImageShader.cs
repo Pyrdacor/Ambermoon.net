@@ -34,7 +34,7 @@ namespace Ambermoon.Renderer
             $"",
             $"void main()",
             $"{{",
-            $"    vec4 color = texture({DefaultSamplerName}, varTexCoord);",
+            $"    vec4 color = textureLod({DefaultSamplerName}, varTexCoord, 0.0f);",
             $"    {DefaultFragmentOutColorName} = vec4(color.rgb, color.a * a);",
             $"}}"
         };

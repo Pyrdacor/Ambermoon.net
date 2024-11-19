@@ -893,7 +893,7 @@ namespace Ambermoon.Render
                     const float endScale = 4.75f;
                     PlayMaterialization(position, CombatGraphicIndex.Landslide, initialScale, 0, () =>
                     {
-                        game.ShakeScreen(TimeSpan.FromMilliseconds(150), 9, 0.035f);
+                        game.ShakeScreen(TimeSpan.FromMilliseconds(20), 9, 0.035f);
                         BattleAnimation animation = AddAnimationThatRemains(CombatGraphicIndex.Landslide, 1,
                             position, position + new Position(0, 14), Game.TicksPerSecond * 8 / 5,
                             materializeScale, endScale, 0);

@@ -81,7 +81,7 @@ namespace Ambermoon.Renderer
             $"",
             $"vec4 getColor(vec2 coord)",
             $"{{",
-            $"    return texture({DefaultSamplerName}, max(vec2(0.0f), min(vec2(1.0f), coord)));",
+            $"    return textureLod({DefaultSamplerName}, max(vec2(0.0f), min(vec2(1.0f), coord)), 0.0f);",
             $"}}",
             $"const mat3 yuvMatrix = mat3( 0.299f,    0.587f,    0.114f,",
             $"                            -0.14713f, -0.28886f,  0.436f,",
