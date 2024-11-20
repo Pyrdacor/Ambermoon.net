@@ -209,7 +209,7 @@ namespace Ambermoon.UI
                         uiText.FreeScrollingEnded += () =>
                         {
                             if (closeAfterScroll)
-                                game.ClosePopup();
+                                game.ClosePopup(true, game.Configuration.IsMobile);
                         };
                     }
                     else

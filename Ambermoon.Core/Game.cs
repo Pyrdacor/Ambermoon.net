@@ -12552,7 +12552,7 @@ namespace Ambermoon
                     {
                         ClosePopup();
                         Heal(lp);
-                    }, ClosePopup);
+                    }, () => ClosePopup());
                 });
                 // Remove curse button
                 layout.AttachEventToButton(3, () =>
@@ -13286,7 +13286,7 @@ namespace Ambermoon
                     {
                         ClosePopup();
                         Train(times);
-                    }, ClosePopup);
+                    }, () => ClosePopup());
                 });
                 PlayerSwitched();
             });
@@ -13337,7 +13337,7 @@ namespace Ambermoon
 
                 if (exitQuestion != null)
                 {
-                    layout.OpenYesNoPopup(ProcessText(exitQuestion), Exit, ClosePopup, ClosePopup, 2);
+                    layout.OpenYesNoPopup(ProcessText(exitQuestion), Exit, () => ClosePopup(), () => ClosePopup(), 2);
                 }
                 else
                 {
@@ -13546,7 +13546,7 @@ namespace Ambermoon
                         Exit();
                     }
 
-                    layout.OpenYesNoPopup(ProcessText(DataNameProvider.WantToGoWithoutItemsMerchant), ExitAndReturnItems, ClosePopup, ClosePopup, 2);
+                    layout.OpenYesNoPopup(ProcessText(DataNameProvider.WantToGoWithoutItemsMerchant), ExitAndReturnItems, () => ClosePopup(), () => ClosePopup(), 2);
                 }
                 else
                 {
@@ -15004,7 +15004,7 @@ namespace Ambermoon
             var exitButton = popup.AddButton(new Position(190, 166));
             exitButton.ButtonType = ButtonType.Exit;
             exitButton.Disabled = false;
-            exitButton.LeftClickAction = ClosePopup;
+            exitButton.LeftClickAction = () => ClosePopup();
             exitButton.Visible = true;
             popup.Closed += () =>
             {
@@ -16922,7 +16922,7 @@ namespace Ambermoon
             UpdateCursor(lastMousePosition, MouseButtons.None);
         }
 
-        internal void ClosePopup() => layout?.ClosePopup();
+        internal void ClosePopup(bool raiseEvent = true, bool force = false) => layout?.ClosePopup(raiseEvent, force);
 
         internal void CloseWindow() => CloseWindow(null);
 
