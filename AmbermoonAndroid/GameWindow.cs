@@ -926,7 +926,7 @@ namespace AmbermoonAndroid
                         // When starting for the first time the intro is played automatically.
                         // But then is disabled. It can still be viewed from the main menu
                         // and there is also an option to show it always in the option menu.
-                        if (configuration.FirstStart)
+                        if (configuration.FirstStart && !fromIntro)
                             configuration.ShowIntro = false;
 
                         this.ShowMainMenu(renderView, cursor, fromIntro, IntroData.GraphicPalettes, introFontLarge,
@@ -987,7 +987,6 @@ namespace AmbermoonAndroid
             mainMenu = null;
             if (configuration.Music)
             {
-                musicManager.Stop();
                 musicManager.GetSong(Song.Intro)?.Stop(); // might be looping in the main menu, so we need to stop and reset it here
             }
 
@@ -1245,7 +1244,7 @@ namespace AmbermoonAndroid
 
             var gl = Silk.NET.OpenGL.GL.GetApi(GLContext);
             gl.Viewport(new System.Drawing.Size(window.FramebufferSize.X, window.FramebufferSize.Y));
-            gl.ClearColor(System.Drawing.Color.Red);
+            gl.ClearColor(System.Drawing.Color.Black);
             gl.Clear(Silk.NET.OpenGL.ClearBufferMask.ColorBufferBit);
             GLContext.SwapBuffers();
 
@@ -1435,10 +1434,7 @@ namespace AmbermoonAndroid
                 window.Update += Window_Update;
                 window.Resize += Window_Resize;
                 window.FramebufferResize += Window_FramebufferResize;
-                window.Closing += () =>
-                {
-                    musicManager.Stop();
-                };
+                window.Closing += musicManager.Stop;
 
                 window.Initialize();
                 window.Run(() =>

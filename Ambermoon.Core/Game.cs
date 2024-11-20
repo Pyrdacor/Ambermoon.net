@@ -112,14 +112,16 @@ namespace Ambermoon
         class Movement
         {
             readonly uint[] tickDivider;
+            readonly bool mobile;
 
-            uint TickDivider(bool is3D, bool worldMap, TravelType travelType) => tickDivider[is3D ? 0 : !worldMap ? 1 : 2 + (int)travelType];
+            uint TickDivider(bool is3D, bool worldMap, TravelType travelType) => tickDivider[is3D ? 0 : !worldMap ? (mobile ? 2 : 1) : 2 + (int)travelType];
             public uint MovementTicks(bool is3D, bool worldMap, TravelType travelType) => TicksPerSecond / TickDivider(is3D, worldMap, travelType);
             public float MoveSpeed3D { get; }
             public float TurnSpeed3D { get; }
 
             public Movement(bool legacyMode, bool mobile)
             {
+                this.mobile = mobile;
                 tickDivider = new uint[]
                 {
                     GetTickDivider3D(legacyMode), // 3D movement
@@ -138,12 +140,12 @@ namespace Ambermoon
                     8,  // Sand ship
                     15, // Wasp
                 };
-                MoveSpeed3D = GetMoveSpeed3D(legacyMode);
+                MoveSpeed3D = GetMoveSpeed3D(legacyMode, mobile);
                 TurnSpeed3D = GetTurnSpeed3D(legacyMode, mobile);
             }
 
             static uint GetTickDivider3D(bool legacyMode) => legacyMode ? 8u : 60u;
-            static float GetMoveSpeed3D(bool legacyMode) => legacyMode ? 0.25f : 0.04f;
+            static float GetMoveSpeed3D(bool legacyMode, bool mobile) => mobile ? 0.03f : legacyMode ? 0.25f : 0.04f;
             static float GetTurnSpeed3D(bool legacyMode, bool mobile) => mobile ? 1.5f : legacyMode ? 15.0f : 2.0f;
         }
 

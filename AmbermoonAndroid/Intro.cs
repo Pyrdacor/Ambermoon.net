@@ -1597,11 +1597,13 @@ namespace AmbermoonAndroid
         {
             var adder = () =>
             {
-                additionalAction?.Invoke();
+                if (!destroyed)
+                    additionalAction?.Invoke();
                 return IntroAction.CreateAction(actionType, this, finishHandler, renderView, startTicks, introData, Random, introFont, introFontLarge);
             };
 
-            actionQueue.Enqueue(KeyValuePair.Create(startTicks, adder));
+            if (!destroyed)
+                actionQueue.Enqueue(KeyValuePair.Create(startTicks, adder));
         }
 
         internal void StartMeteorGlowing(long ticks)
@@ -1635,8 +1637,16 @@ namespace AmbermoonAndroid
 
             foreach (var action in actions.ToArray())
             {
-                action.Update(ticks, animationFrameCounter);
+				if (destroyed)
+					action.Destroy();
+                else
+				    action.Update(ticks, animationFrameCounter);                
             }
+
+            if (destroyed && actions.Count > 0)
+            {
+				actions.Clear();
+			}
         }
 
         public void Click()

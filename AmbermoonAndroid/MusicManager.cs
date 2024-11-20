@@ -22,15 +22,70 @@ namespace AmbermoonAndroid
 			return resultStream.ToArray();
 		}
 
-		class MusicStream(SonicArranger.Stream saStream) : MemoryStream
+		class MusicStream : MemoryStream
 		{
-			private readonly SonicArranger.Stream saStream = saStream;
-			private List<byte> buffer = [];
-			private TimeSpan? duration;
+			private const int BufferSize = 44100 * 2;
+			private readonly SonicArranger.Stream saStream;
+			private readonly List<byte> initialBuffer;
+			private List<byte> buffer = [];			
+			private bool reset = true;
+			private bool resetting = false;
 
-			public TimeSpan Duration => duration ??= TimeSpan.FromMilliseconds(1000.0 * saStream.ToUnsignedArray().Length / 44100);
+			public MusicStream(SonicArranger.Stream saStream)
+			{
+				this.saStream = saStream;
+				initialBuffer = GetBuffer(BufferSize * 2);
+				this.buffer.AddRange(initialBuffer);
+				reset = true;
+			}
+
+			private List<byte> GetBuffer(int minSize)
+			{
+				var buffer = new List<byte>();
+				int remainingCount = minSize;
+
+				while (remainingCount > 0)
+				{
+					var audioData = saStream.ReadUnsigned(1000, true);
+					buffer.AddRange(audioData);
+					remainingCount -= audioData.Length;
+				}
+
+				return buffer;
+			}
+
+			public void Reset()
+			{
+				if (reset || resetting)
+					return;
+
+				lock (this.buffer)
+				{
+					this.buffer.Clear();
+					this.buffer.AddRange(initialBuffer);
+					reset = true;
+				}
+
+				resetting = true;
+
+				Task.Run(() =>
+				{
+					saStream.Reset();
+					GetBuffer(BufferSize * 2); // only called to align the underlying stream
+					resetting = false;
+				});
+			}
 
 			public override int Read(byte[] buffer, int offset, int count)
+			{
+				lock (this.buffer)
+				{
+					reset = false;
+					return InternalRead(buffer, offset, count);
+				}
+			}
+
+			protected int InternalRead(byte[] buffer, int offset, int count)
 			{
 				void EnsureBufferSize(int size)
 				{
@@ -42,7 +97,7 @@ namespace AmbermoonAndroid
 				{
 					Array.Copy(this.buffer.ToArray(), 0, buffer, offset, count);
 					this.buffer = new(this.buffer.Skip(count));
-					EnsureBufferSize(44100 * 2);
+					EnsureBufferSize(BufferSize);
 					return count;
 				}
 
@@ -68,7 +123,7 @@ namespace AmbermoonAndroid
 						this.buffer.AddRange(audioData.Skip(useCount));
 				}
 
-				EnsureBufferSize(44100 * 2);
+				EnsureBufferSize(BufferSize);
 				return count;
 			}
 		}
@@ -79,7 +134,7 @@ namespace AmbermoonAndroid
 
 			public Song Song { get; } = song;
 
-			public TimeSpan? SongDuration => musicManager.GetSongDuration(Song);
+			public TimeSpan? SongDuration => null;
 
 			public void Play(IAudioOutput _)
 			{
@@ -92,7 +147,6 @@ namespace AmbermoonAndroid
 			}
 		}
 
-		static readonly Dictionary<Song, TimeSpan> songDurations = [];
 		static readonly Dictionary<Song, SonicArrangerSong> songs = [];
 		private readonly Dictionary<Song, MusicStream> songStreams = [];
 		private readonly Context context;
@@ -229,25 +283,12 @@ namespace AmbermoonAndroid
 			return memoryStream;
 		}
 
-		private TimeSpan GetSongDuration(Song song)
-        {
-            if (songDurations.TryGetValue(song, out var duration))
-                return duration;
-
-			var stream = songStreams[song];
-			duration = stream.Duration;
-
-			songDurations.Add(song, duration);
-
-			return duration;
-		}
-
 		private void Play(Song song)
         {
             if (Streaming && currentSong == song)
                 return;
 
-            Stop();
+			Stop();
 
 			var musicStream = songStreams[song];
 			int bufferSize = AudioTrack.GetMinBufferSize(44100, ChannelOut.Stereo, Encoding.Pcm16bit) * 2;
@@ -299,21 +340,40 @@ namespace AmbermoonAndroid
 		{
 			var buffer = new byte[bufferSize];
 			int offset = 0;
+			var threadAudioTrack = audioTrack;
 
 			while (Streaming)
 			{
+				if (threadAudioTrack != audioTrack)
+					return;
+
 				lock (audioTrack)
 				{
+					if (threadAudioTrack != audioTrack)
+						return;
+
 					while (Paused)
 						Monitor.Wait(audioTrack);
+
+					if (threadAudioTrack != audioTrack)
+						return;
 				}
 
 				if (!Streaming)
 					break;
 
+				if (threadAudioTrack != audioTrack)
+					return;
+
 				lock (audioTrack)
 				{
+					if (threadAudioTrack != audioTrack)
+						return;
+
 					int readCount = musicStream.Read(buffer, 0, bufferSize);
+
+					if (threadAudioTrack != audioTrack)
+						return;
 
 					audioTrack.Write(buffer, offset, readCount);
 				}
@@ -340,6 +400,9 @@ namespace AmbermoonAndroid
 					audioTrack = null;
 				}
 			}
+
+			if (currentSong is not null)
+				songStreams[currentSong.Value]?.Reset();
 
 			currentSong = null;
 		}
