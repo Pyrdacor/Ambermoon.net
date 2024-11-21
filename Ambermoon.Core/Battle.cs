@@ -596,7 +596,7 @@ namespace Ambermoon
 
                         if (showElements)
                             tooltip += $"^({game.DataNameProvider.GetElementName(monster.Element)})";
-						
+
                         layout.GetMonsterBattleFieldTooltip(monster).Text = tooltip;
                     }
                 }
@@ -2402,15 +2402,15 @@ namespace Ambermoon
 
         private class ImitationBackupData
         {
-			readonly byte attacksPerRound;
+            readonly byte attacksPerRound;
             readonly CharacterElement element;
             readonly uint currentHitPoints;
             readonly uint maxHitPoints;
             readonly uint currentSpellPoints;
             readonly uint maxSpellPoints;
-			readonly short baseAttack;
-			readonly short baseDefense;
-			readonly short magicAttack;
+            readonly short baseAttack;
+            readonly short baseDefense;
+            readonly short magicAttack;
             readonly short magicDefense;
             readonly uint[] currentAttributes = new uint[8];
             readonly uint[] maxAttributes = new uint[8];
@@ -2421,10 +2421,10 @@ namespace Ambermoon
 
             public MonsterGraphicIndex MonsterGraphicIndex { get; }
 
-			public ImitationBackupData(PartyMember partyMember, MonsterGraphicIndex monsterGraphicIndex)
+            public ImitationBackupData(PartyMember partyMember, MonsterGraphicIndex monsterGraphicIndex)
             {
                 MonsterGraphicIndex = monsterGraphicIndex;
-				attacksPerRound = partyMember.AttacksPerRound;
+                attacksPerRound = partyMember.AttacksPerRound;
                 element = partyMember.Element;
                 currentHitPoints = partyMember.HitPoints.CurrentValue;
                 maxHitPoints = partyMember.HitPoints.MaxValue;
@@ -2454,14 +2454,14 @@ namespace Ambermoon
                 partyMember.AttacksPerRound = attacksPerRound;
                 partyMember.Element = element;
                 partyMember.HitPoints.MaxValue = maxHitPoints;
-				if (partyMember.HitPoints.CurrentValue > maxHitPoints)
-					partyMember.HitPoints.CurrentValue = maxHitPoints;
-				partyMember.SpellPoints.MaxValue = maxSpellPoints;
+                if (partyMember.HitPoints.CurrentValue > maxHitPoints)
+	                partyMember.HitPoints.CurrentValue = maxHitPoints;
+                partyMember.SpellPoints.MaxValue = maxSpellPoints;
                 if (partyMember.SpellPoints.MaxValue == 0)
                     partyMember.SpellPoints.CurrentValue = currentSpellPoints;
                 else if (partyMember.SpellPoints.CurrentValue > maxSpellPoints)
                     partyMember.SpellPoints.CurrentValue = maxSpellPoints;
-				for (int i = 0; i < 8; ++i)
+                for (int i = 0; i < 8; ++i)
                 {
                     var attribute = partyMember.Attributes[(Attribute)i];
                     attribute.MaxValue = maxAttributes[i];

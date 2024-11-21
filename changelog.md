@@ -1,7 +1,8 @@
 # Changelog
 
-## 1.10.0 - Tenth patch (July 2024)
+## 1.10.0 - Tenth patch (July 2024 - November 2024)
 
+- Version [1.10.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.1): Fixed and improvements
 - Version [1.10.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.0): First Android version, monster animation fix, many bug fixes
 
 ## 1.9.0 - Ninth patch (August 2023 - May 2024)
