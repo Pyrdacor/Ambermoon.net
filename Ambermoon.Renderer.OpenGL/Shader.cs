@@ -61,12 +61,22 @@ namespace Ambermoon.Renderer
             state.Gl.ShaderSource(ShaderIndex, code);
             state.Gl.CompileShader(ShaderIndex);
 
-            string infoLog = state.Gl.GetShaderInfoLog(ShaderIndex);
+            state.Gl.GetShader(ShaderIndex, GLEnum.CompileStatus, out int compileStatus);
 
-            if (!string.IsNullOrWhiteSpace(infoLog))
-            {
-                throw new Exception(infoLog.Trim()); // TODO: throw specialized exception?
-            }
+            if (compileStatus == (int)GLEnum.False)
+			{
+				string infoLog = state.Gl.GetShaderInfoLog(ShaderIndex);
+
+				// TODO: throw specialized exception?
+				if (!string.IsNullOrWhiteSpace(infoLog))
+				{
+					throw new Exception(infoLog.Trim());
+				}
+                else
+                {
+                    throw new Exception("Unknown error");
+                }
+			}			
         }
 
         public void AttachToProgram(ShaderProgram program)
