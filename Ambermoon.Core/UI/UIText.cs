@@ -42,8 +42,9 @@ namespace Ambermoon.UI
         IReadOnlyList<TextColor> textColorsPerLine;
         TextColor defaultTextColor = TextColor.BrightGray;
         public bool WithScrolling { get; internal set; }
+        public bool CanScroll => WithScrolling && this.text.LineCount > numVisibleLines;
 
-        public event Action FreeScrollingStarted;
+		public event Action FreeScrollingStarted;
         public event Action FreeScrollingEnded;
 
         public bool Visible

@@ -404,7 +404,8 @@ namespace Ambermoon
         readonly List<ILayerSprite> highlightBattleFieldSprites = new List<ILayerSprite>();
         bool blinkingHighlight = false;
         FilledArea buttonGridBackground;
-        IColoredRect drugOverlay = null;
+        ILayerSprite mobileClickIndicator = null;
+		IColoredRect drugOverlay = null;
         uint lastDrugColorChangeTicks = 0;
         uint lastDrugMouseMoveTicks = 0;
         public Action DrugTicked;
@@ -727,7 +728,17 @@ namespace Ambermoon
             ouchSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Ouch));
             ouchSprite.Visible = false;
             ouchEvent.Action = () => ouchSprite.Visible = false;
-            for (int i = 0; i < MaxPartyMembers; ++i)
+
+            if (Configuration.IsMobile)
+            {
+                mobileClickIndicator = renderView.SpriteFactory.Create(16, 16, true) as ILayerSprite;
+				mobileClickIndicator.Layer = renderView.GetLayer(Layer.Cursor);
+				mobileClickIndicator.Visible = false;
+				mobileClickIndicator.PaletteIndex = PrimaryUIPaletteIndex;
+				mobileClickIndicator.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Cursor).GetOffset((uint)CursorType.Click);
+			}
+
+			for (int i = 0; i < MaxPartyMembers; ++i)
             {
                 hurtPlayerSprites[i] = renderView.SpriteFactory.Create(32, 26, true, 200) as ILayerSprite;
                 hurtPlayerSprites[i].Layer = renderView.GetLayer(Layer.UI);
@@ -1484,7 +1495,11 @@ namespace Ambermoon
 
         public void Destroy()
         {
-            Util.SafeCall(UntrapMouse);
+            drugOverlay?.Delete();
+            ouchSprite?.Delete();
+            mobileClickIndicator?.Delete();
+
+			Util.SafeCall(UntrapMouse);
             allInputDisabled = true;
             ingame = false;
             Util.SafeCall(() => AudioOutput?.Stop());
@@ -1498,7 +1513,7 @@ namespace Ambermoon
 
         void PartyMemberDied(Character partyMember)
         {
-            if (!(partyMember is PartyMember member))
+            if (partyMember is not PartyMember member)
                 throw new AmbermoonException(ExceptionScope.Application, "PartyMemberDied with a character which is not a party member.");
 
             member.HitPoints.CurrentValue = 0;
@@ -11797,7 +11812,24 @@ namespace Ambermoon
             }
         }
 
-        void GameOver()
+        void ShowMobileClickIndicator(int x, int y)
+        {
+            if (Configuration.IsMobile && mobileClickIndicator != null)
+            {
+                mobileClickIndicator.PaletteIndex = UIPaletteIndex;
+                mobileClickIndicator.X = x;
+				mobileClickIndicator.Y = y;
+				mobileClickIndicator.Visible = true;
+			}
+        }
+
+		void HideMobileClickIndicator()
+		{
+            if (mobileClickIndicator != null)
+			    mobileClickIndicator.Visible = false;
+		}
+
+		void GameOver()
         {
             PlayMusic(Song.GameOver);
             ShowEvent(ProcessText(DataNameProvider.GameOverMessage), 8, null, true);
@@ -16429,11 +16461,16 @@ namespace Ambermoon
                 // Position = 18,139, max 40 chars per line and 7 lines.
                 var textArea = new Rect(18, 139, 285, 49);
                 var scrollableText = layout.AddScrollableText(textArea, text, TextColor.BrightGray);
+
+				ShowMobileClickIndicator(Global.VirtualScreenWidth / 2 - 8, Global.VirtualScreenHeight - 16 + (gameOver ? -8 : 3));
+
                 scrollableText.Clicked += scrolledToEnd =>
                 {
                     if (scrolledToEnd)
                     {
-                        if (gameOver)
+						HideMobileClickIndicator();
+
+						if (gameOver)
                         {
                             scrollableText?.Destroy();
                             scrollableText = null;

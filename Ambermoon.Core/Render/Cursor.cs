@@ -29,7 +29,7 @@ namespace Ambermoon.Render
         readonly IRenderView renderView;
         readonly ITextureAtlas textureAtlas;
         readonly ISprite sprite;
-        readonly Dictionary<CursorType, Position> cursorHotspots = new Dictionary<CursorType, Position>();
+        readonly Dictionary<CursorType, Position> cursorHotspots = new();
         CursorType type = CursorType.Sword;
         internal Position Hotspot { get; private set; } = null;
         protected virtual bool Visible
