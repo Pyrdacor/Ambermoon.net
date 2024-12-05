@@ -106,7 +106,10 @@ namespace Ambermoon.UI
 
                 ContentArea = new Rect(fill.X, fill.Y, fill.Width, fill.Height);
             }
-        }
+
+            if (game.CursorType == CursorType.Click)
+				game.ShowMobileClickIndicatorForPopup();
+		}
 
         public bool CloseOnClick { get; set; } = true;
         public bool DisableButtons { get; set; } = false;

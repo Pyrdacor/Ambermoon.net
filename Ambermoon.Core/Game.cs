@@ -606,7 +606,10 @@ namespace Ambermoon
 
                 if (Configuration.IsMobile)
                 {
-                    if (value >= CursorType.ArrowUp && value <= CursorType.ArrowRotateRight)
+                    if (value != CursorType.Click)
+                        HideMobileClickIndicator();
+
+					if (value >= CursorType.ArrowUp && value <= CursorType.ArrowRotateRight)
                     {
                         CursorType = CursorType.Sword;
                         return; // Don't allow mouse cursor movement on mobile
@@ -622,6 +625,11 @@ namespace Ambermoon
                         CurrentMobileAction = MobileAction.Interact;
                     
                     cursor.Type = value;
+
+                    if (cursor.Type == CursorType.Click && layout.PopupActive)
+                    {
+                        ShowMobileClickIndicatorForPopup();
+                    }
 				}
                 else
                 {
@@ -6539,6 +6547,35 @@ namespace Ambermoon
                     ShowMessagePopup(DataNameProvider.CannotJumpThroughWalls);
                     return;
                 }
+
+                var @event = Map.GetEvent((uint)checkPosition.X, (uint)checkPosition.Y, CurrentSavegame);
+
+                // Avoid jumping through closed doors, riddlemouths and place entrances.
+                if (@event != null)
+                {
+                    var trigger = EventTrigger.Move;
+                    bool lastEventStatus = true;
+                    bool aborted = false;
+
+                    while (@event is ConditionEvent condition)
+                    {
+                        @event = condition.ExecuteEvent(Map, this, ref trigger,
+                            (uint)checkPosition.X, (uint)checkPosition.Y, ref lastEventStatus,
+                            out aborted, out _);
+
+                        if (aborted)
+                            break;
+                    }
+
+                    if (!aborted &&
+                        ((@event is DoorEvent door && CurrentSavegame.IsDoorLocked(door.DoorIndex)) ||
+                        @event.Type == EventType.Riddlemouth ||
+                        @event.Type == EventType.EnterPlace))
+                    {
+                        ShowMessagePopup(DataNameProvider.CannotJumpThroughWalls);
+                        return;
+                    }
+                }
             }
 
             player3D.SetPosition(targetPosition.X, targetPosition.Y, CurrentTicks, true);
@@ -11823,6 +11860,12 @@ namespace Ambermoon
 			}
         }
 
+        internal void ShowMobileClickIndicatorForPopup()
+        {
+            var position = layout.GetPopupClickIndicatorPosition();
+			ShowMobileClickIndicator(position.X, position.Y);
+		}
+
 		void HideMobileClickIndicator()
 		{
             if (mobileClickIndicator != null)
@@ -16474,7 +16517,7 @@ namespace Ambermoon
                         {
                             scrollableText?.Destroy();
                             scrollableText = null;
-                            AddLoadQuitOptions();
+							AddLoadQuitOptions();
                         }
                         else
                         {

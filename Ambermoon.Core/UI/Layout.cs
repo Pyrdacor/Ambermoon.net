@@ -1027,6 +1027,16 @@ namespace Ambermoon.UI
             popup?.Destroy();
         }
 
+        internal Position GetPopupClickIndicatorPosition()
+        {
+            if (activePopup is null)
+                return new();
+
+            var center = activePopup.ContentArea.Center;
+
+			return new Position(activePopup.ContentArea.Center.X - 8, activePopup.ContentArea.Bottom);
+		}
+
         internal void ClosePopup(bool raiseEvent = true, bool force = false)
         {
             // Note: As ClosePopup may trigger popup?.OnClosed
