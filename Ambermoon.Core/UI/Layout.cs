@@ -1032,8 +1032,6 @@ namespace Ambermoon.UI
             if (activePopup is null)
                 return new();
 
-            var center = activePopup.ContentArea.Center;
-
 			return new Position(activePopup.ContentArea.Center.X - 8, activePopup.ContentArea.Bottom);
 		}
 
