@@ -7778,7 +7778,17 @@ namespace Ambermoon
             var chest = GetChest(chestEvent.RealChestIndex);
 
             if (chestEvent.CloseWhenEmpty && chest.Empty)
+            {
+                if (!chestEvent.NoSave)
+                {
+                    GetEventIndex(position, out var eventIndex, out var mapIndex);
+
+                    if (eventIndex != null)
+                        CurrentSavegame.SetEventBit(mapIndex.Value, eventIndex.Value - 1, true);
+                }
+
                 return false; // Chest has gone due to looting
+            }
 
             chest.Type = chestEvent.CloseWhenEmpty ? ChestType.Junk : ChestType.Chest;
 
