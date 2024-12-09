@@ -1379,8 +1379,25 @@ namespace Ambermoon.Render
 
             if (block.MapEventId != 0 && Map.EventAutomapTypes[(int)block.MapEventId - 1] != AutomapType.None)
             {
+                
+
                 if (game.CurrentSavegame.IsEventActive(Map.Index, block.MapEventId - 1))
-                    return Map.EventAutomapTypes[(int)block.MapEventId - 1];
+                {
+                    var automapType = Map.EventAutomapTypes[(int)block.MapEventId - 1];
+
+                    if (Map.EventList[(int)block.MapEventId - 1] is ChestEvent chestEvent)
+                    {
+                        if (automapType == AutomapType.Chest && !game.CurrentSavegame.IsChestLocked(chestEvent.RealChestIndex - 1))
+                            automapType = AutomapType.ChestOpened;
+                    }
+                    else if (Map.EventList[(int)block.MapEventId - 1] is DoorEvent doorEvent)
+                    {
+                        if (automapType == AutomapType.Door && !game.CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex))
+                            automapType = AutomapType.DoorOpen;
+                    }
+
+                    return automapType;
+                }
             }
 
             if (block.WallIndex != 0)
