@@ -7536,6 +7536,32 @@ namespace Ambermoon
             }
         }
 
+        private void GetEventIndex(Position position, out uint? eventIndex, out uint? mapIndex)
+        {
+            if (Map.Type == MapType.Map3D)
+            {
+                eventIndex = Map.GetEventIndex((uint)position.X, (uint)position.Y, CurrentSavegame);
+                mapIndex = Map.Index;
+            }
+            else
+            {
+                uint x = (uint)position.X;
+                uint y = (uint)position.Y;
+
+                var map = Map;
+
+                if (map.IsWorldMap)
+                {
+                    map = renderMap2D.GetMapFromTile(x, y);
+                    x %= 50;
+                    y %= 50;
+                }
+
+                eventIndex = map.GetEventIndex(x, y, CurrentSavegame);
+                mapIndex = map.Index;
+            }
+        }
+
         internal void ChestClosed()
         {
             // This is called by manually close the chest window via the Exit button
@@ -7571,6 +7597,18 @@ namespace Ambermoon
                 if (chestEvent.NoSave)
                 {
                     RefillChest(chestIndex);
+                }
+                else if (chestEvent.CloseWhenEmpty)
+                {
+                    var chest = GetChest(chestEvent.RealChestIndex);
+
+                    if (chest.Empty)
+                    {
+                        GetEventIndex(position, out var eventIndex, out var mapIndex);
+
+                        if (eventIndex != null)
+                            CurrentSavegame.SetEventBit(mapIndex.Value, eventIndex.Value - 1, true);
+                    }
                 }
 
                 if (chestEvent.Next != null)

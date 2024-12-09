@@ -70,6 +70,14 @@ namespace Ambermoon
             return map.EventList[(int)mapEventId - 1];
         }
 
+        public static uint? GetEventIndex(this Map map, uint x, uint y, Savegame savegame)
+        {
+            var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
+            bool hasMapEvent = mapEventId != 0 && savegame.IsEventActive(map.Index, mapEventId - 1);
+
+            return hasMapEvent ? mapEventId : null;
+        }
+
         public static bool TriggerEvents(this Map map, Game game, EventTrigger trigger,
             uint x, uint y, Savegame savegame, out bool hasMapEvent, Func<Event, bool> filter = null)
         {
