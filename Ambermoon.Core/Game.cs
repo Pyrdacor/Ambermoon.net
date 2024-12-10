@@ -6016,6 +6016,8 @@ namespace Ambermoon
                         return;
                     }
 
+                    bool wasDead = !partyMember.Alive;
+
                     switch (rewardEvent.Operation)
                     {
                         case RewardEvent.RewardOperation.Add:
@@ -6031,6 +6033,14 @@ namespace Ambermoon
 
                     if (rewardEvent.Conditions.Value.HasFlag(Condition.Blind) && partyMember == CurrentPartyMember)
                         UpdateLight();
+
+                    if (wasDead && partyMember.Alive)
+                    {
+                        partyMember.HitPoints.CurrentValue = 1;
+                        layout.UpdateCharacter(partyMember, followAction);
+                        return;
+                    }
+
                     break;
                 }
                 case RewardEvent.RewardType.UsableSpellTypes:

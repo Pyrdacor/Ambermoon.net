@@ -344,7 +344,12 @@ namespace Ambermoon
                             }
                             else
                             {
-                                game.ForeachPartyMember(Reward, p => p.Alive, Done);
+                                // Allow condition removal for dead party members
+                                Func<PartyMember, bool> filter = rewardEvent.TypeOfReward == RewardEvent.RewardType.Conditions &&
+                                    rewardEvent.Operation == RewardEvent.RewardOperation.Remove
+                                    ? _ => true : p => p.Alive;
+
+                                game.ForeachPartyMember(Reward, filter, Done);
                             }
                             break;
                         default:
