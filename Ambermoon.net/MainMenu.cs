@@ -168,6 +168,22 @@ namespace Ambermoon
             }
         }
 
+        public void OnKeyDown(Key key)
+        {
+            if (closed || loadingText.Visible || started)
+                return;
+
+            if (key == Key.Space || key == Key.Return)
+            {
+                started = true;
+
+                if (mainMenuTexts[0].Value.Visible)
+                    Closed?.Invoke(CloseAction.Continue);
+                else
+                    Closed?.Invoke(CloseAction.NewGame);
+            }
+        }
+
         public void OnMouseUp(Position position, MouseButtons buttons)
         {
             // not used

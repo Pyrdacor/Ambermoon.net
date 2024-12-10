@@ -422,6 +422,8 @@ namespace Ambermoon
                     versionSelector.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
                 else if (intro != null && key == Silk.NET.Input.Key.Escape)
                     intro.Click();
+                else if (mainMenu != null)
+                    mainMenu.OnKeyDown(ConvertKey(key));
                 else
                     Game?.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
             }
