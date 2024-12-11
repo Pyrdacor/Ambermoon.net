@@ -1379,8 +1379,6 @@ namespace Ambermoon.Render
 
             if (block.MapEventId != 0 && Map.EventAutomapTypes[(int)block.MapEventId - 1] != AutomapType.None)
             {
-                
-
                 if (game.CurrentSavegame.IsEventActive(Map.Index, block.MapEventId - 1))
                 {
                     var automapType = Map.EventAutomapTypes[(int)block.MapEventId - 1];
