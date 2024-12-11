@@ -14,7 +14,7 @@ namespace Ambermoon.Data
         Blind = 0x0010,
         Drugged = 0x0020,
         Exhausted = 0x0040,
-        Unused = 0x0080,
+        Fleeing = 0x0080,
         Lamed = 0x0100,
         Poisoned = 0x0200,
         Petrified = 0x0400,
@@ -150,7 +150,7 @@ namespace Ambermoon.Data
                 !conditions.HasFlag(Condition.Panic) &&
                 !conditions.HasFlag(Condition.Drugged) &&
                 !conditions.HasFlag(Condition.Petrified) &&
-                !conditions.HasFlag(Condition.Unused) && // the original code states that this disables casting as well
+                !conditions.HasFlag(Condition.Fleeing) &&
                 !conditions.HasFlag(Condition.DeadCorpse) &&
                 !conditions.HasFlag(Condition.DeadAshes) &&
                 !conditions.HasFlag(Condition.DeadDust);

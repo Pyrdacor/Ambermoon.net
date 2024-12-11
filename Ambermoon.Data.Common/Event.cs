@@ -676,7 +676,7 @@ namespace Ambermoon.Data
                 RewardType.MaxSkill => $"{Type}: Max {Skill} on {target} {operationString}",
                 RewardType.MagicArmorLevel => $"{Type}: M-B-A on {target} {operationString}",
                 RewardType.MagicWeaponLevel => $"{Type}: M-B-W on {target} {operationString}",
-				RewardType.Spells => $"{Type}: {operationString} spell {Value} on {target}",
+				RewardType.Spells => $"{Type}: {operationString} spell {RewardTypeValue} on {target}",
 				_ => $"{Type}: Unknown ({(int)TypeOfReward}:{RewardTypeValue}) on {target} {operationString}"
             };
         }

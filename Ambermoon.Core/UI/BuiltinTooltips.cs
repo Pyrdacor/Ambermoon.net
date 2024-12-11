@@ -392,7 +392,7 @@ namespace Ambermoon.UI
                 // Exhausted
                 { Condition.Exhausted, "Alle Attribute temporär halbiert.^Kann durch Schlafen beseitigt werden." },
                 // Unused
-                { Condition.Unused, "" },
+                { Condition.Fleeing, "" },
                 // Lamed
                 { Condition.Lamed, "Keine Bewegung und kein Angriff möglich." },
                 // Poisoned
@@ -427,7 +427,7 @@ namespace Ambermoon.UI
                 // Exhausted
                 { Condition.Exhausted, "All attributes halved temporarly.^Can be removed by sleeping." },
                 // Unused
-                { Condition.Unused, "" },
+                { Condition.Fleeing, "" },
                 // Lamed
                 { Condition.Lamed, "No movement or attack is possible." },
                 // Poisoned
@@ -462,7 +462,7 @@ namespace Ambermoon.UI
                 // Exhausted
                 { Condition.Exhausted, "Tous les attributs sont temporairement réduits de moitié.^Cette réduction peut être supprimée en dormant." },
                 // Unused
-                { Condition.Unused, "" },
+                { Condition.Fleeing, "" },
                 // Lamed
                 { Condition.Lamed, "Aucun mouvement ou attaque n'est possible." },
                 // Poisoned
@@ -497,7 +497,7 @@ namespace Ambermoon.UI
                 // Exhausted
                 { Condition.Exhausted, "Wszystkie atrybuty są tymczasowo zmniejszone o połowę.^Można usunąć przez przespanie się." },
                 // Unused
-                { Condition.Unused, "" },
+                { Condition.Fleeing, "" },
                 // Lamed
                 { Condition.Lamed, "Nie jest możliwy ruch ani atak." },
                 // Poisoned
@@ -532,7 +532,7 @@ namespace Ambermoon.UI
 				// Exhausted
 				{ Condition.Exhausted, "Všechny atributy se dočasně sníží na polovinu.^Může být odstraněno spánkem." },
 				// Unused
-				{ Condition.Unused, "" },
+				{ Condition.Fleeing, "" },
 				// Lamed
 				{ Condition.Lamed, "Není možný žádný pohyb ani útok." },
 				// Poisoned

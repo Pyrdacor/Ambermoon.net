@@ -286,9 +286,9 @@ namespace Ambermoon.Data
         public Equipment Equipment { get; } = new Equipment();
 
         public static readonly List<Condition> PossibleConditions = EnumHelper.GetValues<Condition>()
-            .Where(a => a != Condition.None && a != Condition.Unused).ToList();
+            .Where(a => a != Condition.None).ToList();
         public static readonly List<Condition> PossibleVisibleConditions = PossibleConditions
-            .Where(a => a != Condition.DeadAshes && a != Condition.DeadDust).ToList();
+            .Where(a => a != Condition.Fleeing && a != Condition.DeadAshes && a != Condition.DeadDust).ToList();
         public List<Condition> VisibleConditions
         {
             get
