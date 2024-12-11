@@ -164,6 +164,6 @@
     <value>9f337ee3-989d-473b-996a-8ebb44a6043d</value>
   </data>
   <data name="mobile_mid_button" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\mobile_mid_button;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+    <value>Resources\raw\mobile_mid_button;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

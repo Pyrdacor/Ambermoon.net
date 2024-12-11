@@ -441,19 +441,26 @@ namespace Ambermoon
                     : Layer.Cursor;
 				var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
 				mobileActionIndicator.Visible = false;
-				mobileActionIndicator.TextureAtlasOffset = currentMobileAction switch
+                try
                 {
-                    MobileAction.Move => textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.StatusMove)),
-					MobileAction.ButtonMove => textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.StatusMove)),
-					MobileAction.Hand => textureAtlas.GetOffset((uint)CursorType.Hand),
-					MobileAction.Eye => textureAtlas.GetOffset((uint)CursorType.Eye),
-					MobileAction.Mouth => textureAtlas.GetOffset((uint)CursorType.Mouth),
-					MobileAction.Interact => textureAtlas.GetOffset((uint)CursorType.Target),
-                    _ => textureAtlas.GetOffset(0)
-				};
-				mobileActionIndicator.Layer = renderView.GetLayer(layer);
-				mobileActionIndicator.Visible = currentMobileAction != MobileAction.None;
-                UpdateMobileActionIndicatorPosition();
+                    mobileActionIndicator.TextureAtlasOffset = currentMobileAction switch
+                    {
+                        MobileAction.Move => textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.StatusMove)),
+                        MobileAction.ButtonMove => textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.StatusMove)),
+                        MobileAction.Hand => textureAtlas.GetOffset((uint)CursorType.Hand),
+                        MobileAction.Eye => textureAtlas.GetOffset((uint)CursorType.Eye),
+                        MobileAction.Mouth => textureAtlas.GetOffset((uint)CursorType.Mouth),
+                        MobileAction.Interact => textureAtlas.GetOffset((uint)CursorType.Target),
+                        _ => textureAtlas.GetOffset(0)
+                    };
+                    mobileActionIndicator.Layer = renderView.GetLayer(layer);
+                    mobileActionIndicator.Visible = currentMobileAction != MobileAction.None;
+                    UpdateMobileActionIndicatorPosition();
+                }
+                catch
+                {
+                    mobileActionIndicator.Visible = false;
+                }
             }
         }
 		CursorType? currentMobileButtonMoveCursor;

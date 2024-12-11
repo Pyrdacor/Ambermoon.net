@@ -5251,7 +5251,8 @@ namespace Ambermoon.UI
                         return true;
                     }
                     else if (game.Configuration.IsMobile && activePopup.CanAbort &&
-						!OptionMenuOpen && !activePopup.HasTextInput() && !activePopup.HasButtons)
+						!OptionMenuOpen && !activePopup.HasTextInput() && !activePopup.HasButtons &&
+                        !activePopup.HasList)
                     {
                         // Close popups with tap on mobile but not save/load or popups with buttons or text input.
 						ClosePopup();

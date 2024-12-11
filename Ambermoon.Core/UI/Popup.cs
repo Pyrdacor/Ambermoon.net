@@ -115,6 +115,7 @@ namespace Ambermoon.UI
         public bool DisableButtons { get; set; } = false;
         public bool CanAbort { get; set; } = true;
         public bool HasButtons => buttons.Count != 0;
+        public bool HasList => listBox != null;
         public bool ClickCursor => CloseOnClick || texts.Any(text => text.WithScrolling);
         public event Action Closed;
 
