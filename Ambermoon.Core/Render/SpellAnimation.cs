@@ -702,7 +702,7 @@ namespace Ambermoon.Render
                     else
                     {
                         // These spells only show some redish falling stars above the portraits.
-                        var massSpell = SpellInfos.Entries[spell].Target != SpellTarget.SingleFriend;
+                        var massSpell = game.SpellInfos[spell].Target != SpellTarget.SingleFriend;
 
                         if (massSpell)
                         {

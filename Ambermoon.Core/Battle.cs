@@ -1582,14 +1582,14 @@ namespace Ambermoon
 
                     // Note: Support spells like healing can also miss. In this case no message is displayed but the SP is spent.
 
-                    var spellInfo = SpellInfos.Entries[spell];
+                    var spellInfo = game.SpellInfos[spell];
 
                     if (battleAction.Character is PartyMember partyMember)
                         game.CurrentCaster = partyMember;
 
                     if (itemSlotIndex == null)
                     {
-                        battleAction.Character.SpellPoints.CurrentValue = (uint)Math.Max(0, (int)battleAction.Character.SpellPoints.CurrentValue - (int)SpellInfos.GetSPCost(game.Features, spell, battleAction.Character));
+                        battleAction.Character.SpellPoints.CurrentValue = (uint)Math.Max(0, (int)battleAction.Character.SpellPoints.CurrentValue - (int)game.SpellInfos.GetSPCost(game.Features, spell, battleAction.Character));
 
                         if (battleAction.Character is PartyMember castingPartyMember)
                             layout.FillCharacterBars(castingPartyMember);
@@ -2214,7 +2214,7 @@ namespace Ambermoon
         internal bool CheckSpell(Character caster, Character target, Spell spell, Action<bool> failAction, bool playBlocked,
             bool showMessage = true, bool checkDeflection = true)
         {
-            var spellInfo = SpellInfos.Entries[spell];
+            var spellInfo = game.SpellInfos[spell];
             void Fail() => failAction?.Invoke(false);
             void ShowFailMessage(string message, Action finishAction)
             {
@@ -3447,8 +3447,8 @@ namespace Ambermoon
 
             return caster.LearnedSpells.Where(spell =>
             {
-                var spellInfo = SpellInfos.Entries[spell];
-                return sp >= SpellInfos.GetSPCost(game.Features, spell, caster) &&
+                var spellInfo = game.SpellInfos[spell];
+                return sp >= game.SpellInfos.GetSPCost(game.Features, spell, caster) &&
                     spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Battle) &&
                     checker(spell);
 
@@ -3460,7 +3460,7 @@ namespace Ambermoon
             return GetAvailableSpells(monster, spell =>
             {
                 return spell.IsCastableByMonster() &&
-                       SpellInfos.Entries[spell].Target.TargetsEnemy();
+                       game.SpellInfos[spell].Target.TargetsEnemy();
             });
         }
 
@@ -3973,9 +3973,10 @@ namespace Ambermoon
             return (uint)possiblePositions[game.RandomInt(0, possiblePositions.Count - 1)];
         }
 
+        // TODO: not used? why?
         uint GetBestSpellSpotOrRow(Monster monster, Spell spell)
         {
-            var spellInfo = SpellInfos.Entries[spell];
+            var spellInfo = game.SpellInfos[spell];
 
             if (spellInfo.Target == SpellTarget.EnemyRow)
             {
@@ -4039,7 +4040,7 @@ namespace Ambermoon
                     {
                         // Only 1 player in battle
                         // Prefer single target spells
-                        var singleTargetSpells = spells.Where(s => SpellInfos.Entries[s].Target == SpellTarget.SingleEnemy).ToList();
+                        var singleTargetSpells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.SingleEnemy).ToList();
 
                         if (singleTargetSpells.Count != 0)
                         {
@@ -4048,7 +4049,7 @@ namespace Ambermoon
                         }
                         else
                         {
-                            var rowTargetSpells = spells.Where(s => SpellInfos.Entries[s].Target == SpellTarget.EnemyRow).ToList();
+                            var rowTargetSpells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow).ToList();
 
                             if (rowTargetSpells.Count != 0)
                             {
@@ -4059,19 +4060,19 @@ namespace Ambermoon
                             // Otherwise pick from all spells
                         }
                     }
-                    else if (averagePrio >= 75 && spells.Any(s => SpellInfos.Entries[s].Target == SpellTarget.AllEnemies))
+                    else if (averagePrio >= 75 && spells.Any(s => game.SpellInfos[s].Target == SpellTarget.AllEnemies))
                     {
-                        spells = spells.Where(s => SpellInfos.Entries[s].Target == SpellTarget.AllEnemies).ToList();
+                        spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.AllEnemies).ToList();
                     }
-                    else if (averagePrio >= 50 && spells.Any(s => SpellInfos.Entries[s].Target == SpellTarget.EnemyRow))
+                    else if (averagePrio >= 50 && spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow))
                     {
                         PickBestTargetRow();
-                        spells = spells.Where(s => SpellInfos.Entries[s].Target == SpellTarget.EnemyRow).ToList();
+                        spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow).ToList();
                     }
                     else // single target spell
                     {
                         PickBestTargetTile();
-                        spells = spells.Where(s => SpellInfos.Entries[s].Target == SpellTarget.SingleEnemy).ToList();
+                        spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.SingleEnemy).ToList();
                     }
                     // This might happen if the monster only has All or Row spells and the prio forces to use a Single or Row spell.
                     if (spells.Count == 0)
@@ -4226,7 +4227,7 @@ namespace Ambermoon
                 itemSlotIndex = null;
         }
         public bool IsSelfSpell(PartyMember caster, uint actionParameter) =>
-            SpellInfos.Entries[GetCastSpell(actionParameter)].Target == SpellTarget.SingleFriend &&
+            game.SpellInfos[GetCastSpell(actionParameter)].Target == SpellTarget.SingleFriend &&
                 GetTargetTileOrRowFromParameter(actionParameter) == GetSlotFromCharacter(caster);
         public static bool IsCastFromItem(uint actionParameter) => GetCastItemSlot(actionParameter) != 0x1f;
         public static uint GetCastItemSlot(uint actionParameter) => (actionParameter >> 5) & 0x1f;

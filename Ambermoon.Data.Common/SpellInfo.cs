@@ -343,10 +343,10 @@ namespace Ambermoon.Data
             { Spell.Icestorm, 160 }
         }.ToImmutableDictionary();
 
-        public static uint GetSPCost(Features features, Spell spell, Character caster)
+        public static uint GetSPCost(this IReadOnlyDictionary<Spell, SpellInfo> spellInfos, Features features, Spell spell, Character caster)
         {
             uint GetBaseSP(Spell spell) => features.HasFlag(Features.AdjustedSPAndSLP) && adjustedSP.TryGetValue(spell, out var sp)
-                ? sp : Entries[spell].SP;
+                ? sp : spellInfos[spell].SP;
 
             if (caster is PartyMember)
             {
@@ -370,10 +370,10 @@ namespace Ambermoon.Data
             return GetBaseSP(spell);
         }
 
-        public static uint GetSLPCost(Features features, Spell spell)
+        public static uint GetSLPCost(this IReadOnlyDictionary<Spell, SpellInfo> spellInfos, Features features, Spell spell)
         {
             return features.HasFlag(Features.AdjustedSPAndSLP) && adjustedSLP.TryGetValue(spell, out var slp)
-                ? slp : Entries[spell].SLP;
+                ? slp : spellInfos[spell].SLP;
         }
 
         static SpellInfos()
@@ -398,16 +398,16 @@ namespace Ambermoon.Data
 
         static SpellType GetSpellType(Spell spell)
         {
-            switch (spell)
+            return spell switch
             {
-                case Spell.DispellUndead:
-                case Spell.DestroyUndead:
-                case Spell.HolyWord:
-                case Spell.GhostWeapon:
-                    return SpellType.Destruction;
-                default:
-                    return (SpellType)(1 << (((int)spell - 1) / 30));
-            }
+                Spell.DispellUndead or
+                Spell.DestroyUndead or
+                Spell.HolyWord or
+                Spell.GhostWeapon or
+                Spell.GhostInferno or
+                Spell.MysticDecay => SpellType.Destruction,
+                _ => (SpellType)(1 << (((int)spell - 1) / 30)),
+            };
         }
 
         public static IReadOnlyDictionary<Spell, SpellInfo> Entries => entries;

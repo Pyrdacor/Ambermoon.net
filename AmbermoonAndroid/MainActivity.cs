@@ -27,9 +27,10 @@ namespace AmbermoonAndroid
 		{
 			switch (e.Action)
 			{
-				/*case MotionEventActions.Down:
-					HandleTouchDown(e.GetX(), e.GetY());
-					break;*/
+				case MotionEventActions.Down:
+                    if (e.PointerCount == 1)
+                        HandleTouchDown(e.GetX(), e.GetY());
+					break;
 				case MotionEventActions.Move:
 					if (e.PointerCount == 1)
 						HandleTouchMove(e.GetX(), e.GetY());
@@ -514,7 +515,13 @@ namespace AmbermoonAndroid
 			gameWindow.OnFingerMoveTo(position);
 		}
 
-		private void HandleTouchUp(float x, float y)
+        private void HandleTouchDown(float x, float y)
+        {
+            var position = new Position(Util.Round(x), Util.Round(y));
+            gameWindow.OnFingerDown(position);
+        }
+
+        private void HandleTouchUp(float x, float y)
 		{
 			var position = new Position(Util.Round(x), Util.Round(y));
 			gameWindow.OnFingerUp(position);

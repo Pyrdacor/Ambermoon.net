@@ -181,6 +181,17 @@ namespace Ambermoon.Render
                 AddTexture(Layer.SmallDigits, i, font.GetDigitGlyphGraphic(i));
         }
 
+        public void ReplaceGraphic(Layer layer, uint index, Graphic graphic)
+        {
+            if (atlas.ContainsKey(layer))
+                throw new AmbermoonException(ExceptionScope.Application, $"Texture atlas already created for layer {layer}.");
+
+            if (!atlasBuilders.TryGetValue(layer, out var builder))
+                throw new AmbermoonException(ExceptionScope.Application, $"No texture atlas builder for layer {layer}.");
+
+            builder.ReplaceTexture(index, graphic);
+        }
+
         public void AddAll(IGameData gameData, IGraphicProvider graphicProvider, IFontProvider fontProvider,
             Dictionary<uint, Graphic> introTextGlyphs, Dictionary<uint, Graphic> introLargeTextGlyphs,
             Dictionary<uint, Graphic> introGraphics, Features features)

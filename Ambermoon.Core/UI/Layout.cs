@@ -26,6 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using static System.Collections.Specialized.BitVector32;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI
@@ -1489,37 +1490,38 @@ namespace Ambermoon.UI
             var off = game.DataNameProvider.Off;
             int width = game.Configuration.Width ?? 1280;
             bool cheatsEnabled = !game.Configuration.IsMobile && game.Configuration.EnableCheats;
-            var toggleResolutionAction = (Action<int, string>)((index, _) => ToggleResolution());
-            var nullOptionAction = (Action<int, string>)null;
-            var options = new List<KeyValuePair<string, Action<int, string>>>(OptionCount)
-            {
-                // Page 1
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusic())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleVolume())),
-                KeyValuePair.Create("", game.Configuration.Fullscreen || game.Configuration.IsMobile ? null : toggleResolutionAction),
-                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleFullscreen())),
-                KeyValuePair.Create("", RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilter()) : nullOptionAction),
-                KeyValuePair.Create("", RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilterAddition()) : nullOptionAction),
-                KeyValuePair.Create("", RenderView.AllowEffects ? ((index, _) => ToggleEffects()) : nullOptionAction),
-                // Page 2
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleBattleSpeed())),
-                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => Toggle3DMovement())),
-                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleTurnWithArrowKeys())),
-                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleTooltips())),
-                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => TogglePlayerStatsTooltips())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFloorAndCeiling())),
-                KeyValuePair.Create("", game.Configuration.ShowFloor && game.Configuration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction),
-                // Page 3
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
-                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleExtendedSaves())),
-                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleExternalMusic())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFantasyIntro())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleIntro())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleSaveLoadInfo())),
-                // Page 4
-                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleCheats())),
-            };
+            Action<int, string> toggleResolutionAction = (index, _) => ToggleResolution();
+            Action<int, string> nullOptionAction = null;
+            List<KeyValuePair<string, Action<int, string>>> options = new(OptionCount);
+            void AddOption(Action<int, string> action) => options.Add(KeyValuePair.Create("", action));
+ 
+            // Page 1
+            AddOption((index, _) => ToggleMusic());
+            AddOption((index, _) => ToggleVolume());
+            AddOption(game.Configuration.Fullscreen || game.Configuration.IsMobile ? null : toggleResolutionAction);
+            AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleFullscreen());
+            AddOption(RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilter()) : nullOptionAction);
+            AddOption(RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilterAddition()) : nullOptionAction);
+            AddOption(RenderView.AllowEffects ? ((index, _) => ToggleEffects()) : nullOptionAction);
+            // Page 2
+            AddOption((index, _) => ToggleBattleSpeed());
+            AddOption(game.Configuration.IsMobile ? null : (index, _) => Toggle3DMovement());
+            AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleTurnWithArrowKeys());
+            AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleTooltips());
+            AddOption(game.Configuration.IsMobile ? null : (index, _) => TogglePlayerStatsTooltips());
+            AddOption((index, _) => ToggleFloorAndCeiling());
+            AddOption(game.Configuration.ShowFloor && game.Configuration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
+            // Page 3
+            AddOption((index, _) => ToggleAutoDerune());
+            AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleExtendedSaves());
+            AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleExternalMusic());
+            AddOption((index, _) => TogglePyrdacorLogo());
+            AddOption((index, _) => ToggleFantasyIntro());
+            AddOption((index, _) => ToggleIntro());
+            AddOption((index, _) => ToggleSaveLoadInfo());
+            // Page 4
+            AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleCheats());
+
             listBox = activePopup.AddOptionsListBox(options.Take(OptionsPerPage).ToList());
 
             string GetResolutionString()
@@ -1683,6 +1685,7 @@ namespace Ambermoon.UI
                 game.Configuration.Fullscreen = !game.Configuration.Fullscreen;
 
                 listBox.SetItemAction(2, game.Configuration.Fullscreen ? null : toggleResolutionAction);
+                options[2] = KeyValuePair.Create(options[2].Key, game.Configuration.Fullscreen || game.Configuration.IsMobile ? null : toggleResolutionAction);
 
                 if (!game.Configuration.Fullscreen)
                     SetResolution();
@@ -2793,7 +2796,7 @@ namespace Ambermoon.UI
             {
                 if (item.Spell != Spell.None)
                 {
-                    if (!SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.Battle))
+                    if (!game.SpellInfos[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.Battle))
                     {
                         SetInventoryMessage(game.DataNameProvider.WrongPlaceToUseItem, true);
                         return;
@@ -2801,7 +2804,7 @@ namespace Ambermoon.UI
 
                     var worldFlag = (WorldFlag)(1 << (int)game.Map.World);
 
-                    if (!SpellInfos.Entries[item.Spell].Worlds.HasFlag(worldFlag))
+                    if (!game.SpellInfos[item.Spell].Worlds.HasFlag(worldFlag))
                     {
                         SetInventoryMessage(game.DataNameProvider.WrongWorldToUseItem, true);
                         return;
@@ -2848,7 +2851,7 @@ namespace Ambermoon.UI
                 {
                     var worldFlag = (WorldFlag)(1 << (int)game.Map.World);
 
-                    if (!SpellInfos.Entries[item.Spell].Worlds.HasFlag(worldFlag))
+                    if (!game.SpellInfos[item.Spell].Worlds.HasFlag(worldFlag))
                     {
                         SetInventoryMessage(game.DataNameProvider.WrongWorldToUseItem, true);
                         return;
@@ -2869,18 +2872,18 @@ namespace Ambermoon.UI
                     }
                     else if (game.LastWindow.Window == Window.Camp)
                     {
-                        wrongPlace = !SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.Camp);
+                        wrongPlace = !game.SpellInfos[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.Camp);
                     }
                     else if (game.LastWindow.Window != Window.Battle)
                     {
-                        if (!SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.AnyMap))
+                        if (!game.SpellInfos[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.AnyMap))
                         {
                             if (game.Map.IsWorldMap)
-                                wrongPlace = !SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.WorldMapOnly);
+                                wrongPlace = !game.SpellInfos[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.WorldMapOnly);
                             else if (game.Map.Type == MapType.Map3D)
                             {
                                 if (!game.Map.Flags.HasFlag(MapFlags.Outdoor))
-                                    wrongPlace = !SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.DungeonOnly);
+                                    wrongPlace = !game.SpellInfos[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.DungeonOnly);
                                 else
                                     wrongPlace = true;
                             }

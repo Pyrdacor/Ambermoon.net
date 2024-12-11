@@ -72,6 +72,11 @@ namespace Ambermoon.Renderer
             textures.Add(index, texture);
         }
 
+        public void ReplaceTexture(uint index, Graphic texture)
+        {
+            textures[index] = texture;
+        }
+
         public ITextureAtlas CreateUnpacked(uint maxWidth, uint bytesPerPixel)
         {
             uint width = 0u;

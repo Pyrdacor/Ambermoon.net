@@ -392,6 +392,8 @@ namespace Ambermoon
         PartyMember currentPickingActionMember = null;
         PartyMember currentlyHealedMember = null;
         SpellAnimation currentAnimation = null;
+        readonly Dictionary<Spell, SpellInfo> spellInfos;
+        internal IReadOnlyDictionary<Spell, SpellInfo> SpellInfos => spellInfos.AsReadOnly();
         Spell pickedSpell = Spell.None;
         uint? spellItemSlotIndex = null;
         bool? spellItemIsEquipped = null;
@@ -421,6 +423,7 @@ namespace Ambermoon
 		MobileAction currentMobileAction = MobileAction.None;
         readonly ILayerSprite mobileActionIndicator;
         const int Mobile3DThreshold = 32;
+        bool fingerDown = false;
 		internal MobileAction CurrentMobileAction
         {
             get => currentMobileAction;
@@ -677,6 +680,12 @@ namespace Ambermoon
             Features features, string gameVersionName, string version, Action<bool, string> keyboardRequest,
 			DrawTouchFingerHandler drawTouchFingerRequest = null)
         {
+            spellInfos = new(Data.SpellInfos.Entries);
+
+            // In Advanced limit All Healing to Camp and Battle
+            if (features.HasFlag(Features.AdvancedSpells))
+                spellInfos[Spell.AllHealing] = spellInfos[Spell.AllHealing] with { ApplicationArea = SpellApplicationArea.CampAndBattle };
+
             this.drawTouchFingerRequest = drawTouchFingerRequest;
 			this.keyboardRequest = keyboardRequest;
 			Features = features;
@@ -2660,6 +2669,9 @@ namespace Ambermoon
 
 		internal void StartVirtualButtonMovement(CursorType cursorType, int buttonIndex, Func<bool> allowMovementProvider)
         {
+            if (!fingerDown)
+                return;
+
             var button = layout.GetButton(buttonIndex);
             button.Pressed = true;
             CurrentMobileAction = MobileAction.ButtonMove;
@@ -3423,9 +3435,16 @@ namespace Ambermoon
             }
         }
 
+        public void OnFingerDown(Position position)
+        {
+            fingerDown = true;
+        }
+
         public void OnFingerUp(Position position)
         {
-			if (!Configuration.IsMobile)
+            fingerDown = false;
+
+            if (!Configuration.IsMobile)
 				return;
 
 			keys[(int)Key.W] = false;
@@ -3438,6 +3457,8 @@ namespace Ambermoon
 
         public void OnFingerMoveTo(Position position)
         {
+            fingerDown = true;
+
             if (!Configuration.IsMobile || CurrentWindow.Window != Window.MapView)
                 return;
 
@@ -9597,7 +9618,7 @@ namespace Ambermoon
                     OpenSpellList(CurrentPartyMember,
                         spell =>
                         {
-                            var spellInfo = SpellInfos.Entries[spell];
+                            var spellInfo = SpellInfos[spell];
 
                             if (!spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Battle))
                                 return DataNameProvider.WrongArea;
@@ -9640,7 +9661,7 @@ namespace Ambermoon
                     highlightBattleFieldSprites.Clear();
                 }
 
-                var spellInfo = SpellInfos.Entries[pickedSpell];
+                var spellInfo = SpellInfos[pickedSpell];
 
                 switch (spellInfo.Target)
                 {
@@ -11292,7 +11313,7 @@ namespace Ambermoon
                         break;
                     case Battle.BattleActionType.CastSpell:
                         var spell = Battle.GetCastSpell(action.Parameter);
-                        switch (SpellInfos.Entries[spell].Target)
+                        switch (SpellInfos[spell].Target)
                         {
                             case SpellTarget.SingleEnemy:
                             case SpellTarget.SingleFriend:
@@ -14053,7 +14074,7 @@ namespace Ambermoon
                 }
             }
 
-            var spellInfo = SpellInfos.Entries[spell];
+            var spellInfo = SpellInfos[spell];
 
             void ConsumeSP()
             {
@@ -14353,7 +14374,7 @@ namespace Ambermoon
                 OpenSpellList(CurrentPartyMember,
                     spell =>
                     {
-                        var spellInfo = SpellInfos.Entries[spell];
+                        var spellInfo = SpellInfos[spell];
 
                         if (camp && !spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Camp))
                             return DataNameProvider.WrongArea;
@@ -16424,7 +16445,7 @@ namespace Ambermoon
             var spells = partyMember.LearnedSpells.Select(spell => new KeyValuePair<Spell, string>(spell, spellAvailableChecker(spell))).ToList();
             string GetSpellEntry(Spell spell, bool available)
             {
-                var spellInfo = SpellInfos.Entries[spell];
+                var spellInfo = SpellInfos[spell];
                 string entry = DataNameProvider.GetSpellName(spell);
 
                 if (available)

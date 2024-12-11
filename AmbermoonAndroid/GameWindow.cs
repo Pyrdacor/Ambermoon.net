@@ -518,6 +518,11 @@ namespace AmbermoonAndroid
             }
 		}
 
+        internal void OnFingerDown(Position position)
+        {
+            Game?.OnFingerDown(position);
+        }
+
         internal void OnFingerUp(Position position)
         {
             Game?.OnFingerUp(position);
@@ -769,6 +774,7 @@ namespace AmbermoonAndroid
                     introGraphics.Add(++twinlakeFrameOffset, twinlakeImagePart.Graphic);
                 textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
                     introFontLarge.GlyphGraphics, introGraphics, features);
+                textureAtlasManager.ReplaceGraphic(Layer.UI, Graphics.GetButtonGraphicIndex(ButtonType.Wait), FileProvider.GetMidButton());
                 logoPyrdacor?.Initialize(textureAtlasManager);
                 AdvancedLogo.Initialize(textureAtlasManager);
 				var graphics = TutorialFinger.GetGraphics(1u); // Donate button is 0
@@ -1353,8 +1359,7 @@ namespace AmbermoonAndroid
         {
             try
             {
-                if (renderView != null)
-                    renderView.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, size.X, size.Y);
+                renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, size.X, size.Y);
             }
             catch
             {

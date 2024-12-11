@@ -25,7 +25,7 @@ using Ambermoon.UI;
 
 namespace Ambermoon.Render
 {
-    internal static class Graphics
+    public static class Graphics
     {
         // Characters
         public const uint TravelGraphicOffset = 3 * 17;
@@ -54,11 +54,11 @@ namespace Ambermoon.Render
         static readonly uint ButtonOffset = UIGraphicOffset + (uint)EnumHelper.NameCount<UIGraphic>();
         static readonly uint PopupFrameOffset = UIGraphicOffset;
 
-        public static uint GetScrollbarGraphicIndex(ScrollbarType scrollbarType) => UICustomGraphicOffset + (uint)scrollbarType;
+        internal static uint GetScrollbarGraphicIndex(ScrollbarType scrollbarType) => UICustomGraphicOffset + (uint)scrollbarType;
         public static uint GetCustomUIGraphicIndex(UICustomGraphic customGraphic) => UICustomGraphicOffset + (uint)customGraphic;
         public static uint GetUIGraphicIndex(UIGraphic graphic) => UIGraphicOffset + (uint)graphic;
         public static uint GetButtonGraphicIndex(ButtonType buttonType) => ButtonOffset + (uint)buttonType;
-        public static uint GetPopupFrameGraphicIndex(PopupFrame frame) => PopupFrameOffset + (uint)frame;
+        internal static uint GetPopupFrameGraphicIndex(PopupFrame frame) => PopupFrameOffset + (uint)frame;
         public static UIGraphic? GetConditionGraphic(Condition condition) => condition switch
         {
             Condition.Irritated => UIGraphic.StatusIrritated,

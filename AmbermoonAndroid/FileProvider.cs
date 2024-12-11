@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Data.Legacy.Serialization;
 using Android.Graphics;
 
 namespace AmbermoonAndroid
@@ -59,7 +60,29 @@ namespace AmbermoonAndroid
 
 		public static Stream GetMusic() => LoadStream(Resource.Raw.music);
 
-		private static Graphic GetGraphic(int id)
+		public static Graphic GetMidButton()
+		{
+			var imageData = LoadData(Resource.Raw.mobile_mid_button);
+			var graphic = new Graphic()
+            {
+                Width = 32,
+                Height = 13,
+                IndexedGraphic = true
+            };
+
+            new GraphicReader().ReadGraphic(graphic, new DataReader(imageData), new GraphicInfo
+			{
+				Width = 32,
+				Height = 13,
+				PaletteOffset = 24,
+				GraphicFormat = GraphicFormat.Palette3Bit,
+                Alpha = true,
+            });
+
+			return graphic;
+		}
+
+        private static Graphic GetGraphic(int id)
 		{
 			return LoadGraphic(GetBitmap(id));
 		}
