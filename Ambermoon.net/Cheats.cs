@@ -1099,24 +1099,24 @@ namespace Ambermoon
 			{
 				string name = partyMemberIdOrName.ToLower();
 
-				if (name == "tar")
-				{
-					// There is a problem when entering "Tar" as it will match
-					// "Tar the dark" and "Targor". But most likey you mean Tar.
-					// So by adding the space to the search text it should work.
-					name = "tar ";
-				}
-
 				var partyMembers = game.GetCurrentSavegame().PartyMembers.Values.Where(p => p.Name.ToLower().StartsWith(name)).ToArray();
 
-				if (partyMembers.Length == 0)
+                if (partyMembers.Length == 0)
 				{
-					Console.WriteLine("No party member matches the given name.");
+                    Console.WriteLine("No party member matches the given name.");
 					Console.WriteLine();
 					return null;
 				}
 
 				partyMembers = partyMembers.Where(filter).ToArray();
+
+                if (partyMembers.Length > 0 && name == "tar")
+                {
+                    // There is a problem when entering "Tar" as it will match
+                    // "Tar the dark" and "Targor". But most likey you mean Tar.
+                    // So we just take the first one which is Tar.
+                    partyMembers = partyMembers.Take(1).ToArray();
+                }
 
 				if (partyMembers.Length == 0)
 				{
@@ -1254,53 +1254,61 @@ namespace Ambermoon
                 return;
             }
 
-            int? partyMemberIndex = args.Length < 1 ? (int?)null : int.TryParse(args[0], out int v) ? v : null;
-            const int maxSlot = Game.MaxPartyMembers - 1;
-            int firstSlot = Util.Limit(0, partyMemberIndex == null ? 0 : partyMemberIndex.Value, maxSlot);
-            int lastSlot = Util.Limit(0, partyMemberIndex == null ? maxSlot : partyMemberIndex.Value, maxSlot);
-            var affectedPartyMembers = new List<PartyMember>();
-            bool singleTarget = partyMemberIndex != null;
-
-            for (int i = firstSlot; i <= lastSlot; ++i)
+            var partyMembers = args.Length == 0 ? game.PartyMembers.ToList() : new List<PartyMember>
             {
-                var partyMember = game.GetPartyMember(i);
-
-                if (partyMember == null || partyMember.Alive)
-                    continue;
-
-                affectedPartyMembers.Add(partyMember);
-            }
-
-            if (affectedPartyMembers.Count == 0)
-            {
-                if (singleTarget)
-                    Console.WriteLine($"{game.GetPartyMember(partyMemberIndex.Value - 1).Name} is not dead.");
-                else
-                    Console.WriteLine("Nobody is dead.");
-                Console.WriteLine();
-            }
-            else
-            {
-                inputDisabled = true;
-                Console.WriteLine("Reviving party members ... ");
-
-                game.Revive(null, affectedPartyMembers, () =>
-                {
-                    if (singleTarget)
-                        Console.WriteLine($"{game.GetPartyMember(partyMemberIndex.Value - 1).Name} was revived.");
-                    else if (affectedPartyMembers.Count == 1)
-                        Console.WriteLine($"{affectedPartyMembers[0].Name} was revived.");
-                    else
-                        Console.WriteLine($"{string.Join(", ", affectedPartyMembers.Select(p => p.Name))} were revived");
-                    Console.WriteLine();
-
-                    lock (trackedKeys)
+                GetPartyMemberByIdOrSlotOrName(game, args[0], p => game.PartyMembers.Contains(p),
+                    () =>
                     {
-                        inputDisabled = false;
-                        trackedKeys.ForEach(key => ProcessInput(key, game));
-                    }
-                });
+                        if (long.TryParse(args[0], out var index))
+                            Console.WriteLine($"There is no party member in slot {index}.");
+                        else
+                            Console.WriteLine($"There is no party member with a matching name in the party.");
+
+                        Console.WriteLine();
+                        return null;
+                    },
+                    (_) => null, true)
+            };
+
+            if (partyMembers.Count == 0 || partyMembers.First() == null)
+                return;
+
+            if (partyMembers.Count > 1)
+            {
+                partyMembers = partyMembers.Where(p => !p.Alive).ToList();
+
+                if (partyMembers.Count == 0)
+                {
+                    Console.WriteLine("All party members are already alive.");
+                    Console.WriteLine();
+                    return;
+                }
             }
+
+            if (partyMembers.Count == 1 && partyMembers[0].Alive)
+            {
+                Console.WriteLine($"{partyMembers[0].Name} is not dead.");
+                Console.WriteLine();
+                return;
+            }
+
+            inputDisabled = true;
+            Console.WriteLine("Reviving party members ... ");
+
+            game.Revive(null, partyMembers, () =>
+            {
+                if (partyMembers.Count == 1)
+                    Console.WriteLine($"{partyMembers[0].Name} was revived.");
+                else
+                    Console.WriteLine($"{string.Join(", ", partyMembers.Select(p => p.Name))} were revived");
+                Console.WriteLine();
+
+                lock (trackedKeys)
+                {
+                    inputDisabled = false;
+                    trackedKeys.ForEach(key => ProcessInput(key, game));
+                }
+            });
         }
 
         static void Berserk(Game game, string[] args)

@@ -558,9 +558,10 @@ namespace Ambermoon
         Rect preFullscreenChangeTrapMouseArea = null;
         Position preFullscreenMousePosition = null;
         bool mouseTrappingActive = false;
-        Position lastMousePosition = new Position();
-        FloatPosition mobileAutomapScroll = new FloatPosition();
-        readonly Position trappedMousePositionOffset = new Position();
+        Position lastMousePosition = new();
+        FloatPosition mobileAutomapScroll = new();
+        Position lastMobileAutomapFingerPosition = new();
+        readonly Position trappedMousePositionOffset = new();
         bool trapped => trapMouseArea != null;
         public event Action<bool, Position> MouseTrappedChanged;
         public event Action<Position> MousePositionChanged;
@@ -3445,11 +3446,13 @@ namespace Ambermoon
         public void OnFingerDown(Position position)
         {
             fingerDown = true;
+            lastMobileAutomapFingerPosition = position;
         }
 
         public void OnFingerUp(Position position)
         {
             fingerDown = false;
+            lastMobileAutomapFingerPosition = position;
 
             if (!Configuration.IsMobile)
 				return;
@@ -3466,10 +3469,21 @@ namespace Ambermoon
         {
             fingerDown = true;
 
-            if (!Configuration.IsMobile || CurrentWindow.Window != Window.MapView)
+            if (!Configuration.IsMobile)
                 return;
 
-			CurrentMobileButtonMoveCursor = null;
+            if (currentWindow.Window == Window.Automap)
+            {
+                var diff = position - lastMobileAutomapFingerPosition;
+                mobileAutomapScroll.X += diff.X;
+                mobileAutomapScroll.Y += diff.Y;
+                return;
+            }
+
+            if (CurrentWindow.Window != Window.MapView)
+                return;
+
+            CurrentMobileButtonMoveCursor = null;
 
 			if (CurrentMobileAction == MobileAction.Move)
             {
@@ -4260,7 +4274,8 @@ namespace Ambermoon
 
 			if (Configuration.IsMobile && currentWindow.Window == Window.Automap)
 			{
-				mobileAutomapScroll.X += xScroll * 4;
+                lastMobileAutomapFingerPosition = mousePosition;
+                mobileAutomapScroll.X += xScroll * 4;
 				mobileAutomapScroll.Y += yScroll * 4;
                 return;
 			}
@@ -17368,7 +17383,7 @@ namespace Ambermoon
         {
             void Revive(PartyMember target, Action finishAction) =>
                 ApplySpellEffect(Spell.Resurrection, caster, target, finishAction, false);
-            ForeachPartyMember(Revive, p => p.Conditions.HasFlag(Condition.DeadCorpse), () =>
+            ForeachPartyMember(Revive, p => affectedMembers.Contains(p) && p.Conditions.HasFlag(Condition.DeadCorpse), () =>
             {
                 currentAnimation?.Destroy();
                 currentAnimation = new SpellAnimation(this, layout);
