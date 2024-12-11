@@ -3446,13 +3446,13 @@ namespace Ambermoon
         public void OnFingerDown(Position position)
         {
             fingerDown = true;
-            lastMobileAutomapFingerPosition = position;
+            lastMobileAutomapFingerPosition = renderView.ScreenToGame(position);
         }
 
         public void OnFingerUp(Position position)
         {
             fingerDown = false;
-            lastMobileAutomapFingerPosition = position;
+            lastMobileAutomapFingerPosition = renderView.ScreenToGame(position);
 
             if (!Configuration.IsMobile)
 				return;
@@ -3474,9 +3474,11 @@ namespace Ambermoon
 
             if (currentWindow.Window == Window.Automap)
             {
+                position = renderView.ScreenToGame(position);
                 var diff = position - lastMobileAutomapFingerPosition;
-                mobileAutomapScroll.X += diff.X;
-                mobileAutomapScroll.Y += diff.Y;
+                lastMobileAutomapFingerPosition = position;
+                mobileAutomapScroll.X -= 6.0f * diff.X / Global.VirtualScreenWidth;
+                mobileAutomapScroll.Y -= 6.0f * diff.Y / Global.VirtualScreenHeight;
                 return;
             }
 
@@ -4274,7 +4276,7 @@ namespace Ambermoon
 
 			if (Configuration.IsMobile && currentWindow.Window == Window.Automap)
 			{
-                lastMobileAutomapFingerPosition = mousePosition;
+                lastMobileAutomapFingerPosition = renderView.ScreenToGame(mousePosition);
                 mobileAutomapScroll.X += xScroll * 4;
 				mobileAutomapScroll.Y += yScroll * 4;
                 return;
