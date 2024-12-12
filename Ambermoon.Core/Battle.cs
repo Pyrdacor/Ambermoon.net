@@ -543,20 +543,23 @@ namespace Ambermoon
         static string GetLPString(uint lp) => lp > 999 ? "***" : lp.ToString();
 
         static string GetMonsterLPString(Monster monster) =>
-            $"{GetLPString(monster.HitPoints.CurrentValue)}/{GetLPString(monster.HitPoints.TotalMaxValue)}^{monster.Name}";
+            $"{GetLPString(monster.HitPoints.CurrentValue)}/{GetLPString(monster.HitPoints.TotalMaxValue)}";
 
-		/// <summary>
-		/// Called while updating the battle. Each call will
-		/// perform the next action which can be a movement,
-		/// attack, spell cast, flight or group forward move.
-		/// 
-		/// <see cref="StartRound"/> will automatically call
-		/// this method.
-		/// 
-		/// Each action may trigger some text messages,
-		/// animations or other changes.
-		/// </summary>
-		public void NextAction(uint battleTicks)
+        string GetElementString(Monster monster) =>
+            $"{game.DataNameProvider.ElementLabel} {game.DataNameProvider.GetElementName(monster.Element)}";
+
+        /// <summary>
+        /// Called while updating the battle. Each call will
+        /// perform the next action which can be a movement,
+        /// attack, spell cast, flight or group forward move.
+        /// 
+        /// <see cref="StartRound"/> will automatically call
+        /// this method.
+        /// 
+        /// Each action may trigger some text messages,
+        /// animations or other changes.
+        /// </summary>
+        public void NextAction(uint battleTicks)
         {
             ReadyForNextAction = false;
 
@@ -588,25 +591,13 @@ namespace Ambermoon
 
                 anyMonsterWantedToFlee = false;
                 RoundActive = false;
-                if (showMonsterLP)
+                if (showMonsterLP || showElements)
                 {
                     foreach (var monster in Monsters)
                     {
-                        string tooltip = GetMonsterLPString(monster);
-
-                        if (showElements)
-                            tooltip += $"^({game.DataNameProvider.GetElementName(monster.Element)})";
-
-                        layout.GetMonsterBattleFieldTooltip(monster).Text = tooltip;
+                        SetMonsterTooltip(monster);
                     }
                 }
-                else if (showElements)
-				{
-					foreach (var monster in Monsters)
-					{
-						layout.GetMonsterBattleFieldTooltip(monster).Text = monster.Name + $"^({game.DataNameProvider.GetElementName(monster.Element)})";
-					}
-				}
 
 				foreseeMagic = false;
 				foreseeAttack = false;
@@ -626,6 +617,27 @@ namespace Ambermoon
             }
 
             RunBattleAction(action, battleTicks);
+        }
+
+        private void SetMonsterTooltip(Monster monster)
+        {
+            string tooltip = string.Empty;
+
+            if (showMonsterLP)
+            {
+                tooltip = GetMonsterLPString(monster) + "^";
+
+                if (showElements)
+                    tooltip += GetElementString(monster) + "^";
+            }
+            else if (showElements)
+            {
+                tooltip = GetElementString(monster) + "^";
+            }
+            
+            tooltip += monster.Name;
+
+            layout.GetMonsterBattleFieldTooltip(monster).Text = tooltip;
         }
 
         public void ResetClick()
@@ -2942,13 +2954,9 @@ namespace Ambermoon
                     {
                         foreach (var monster in Monsters)
                         {
-                            string tooltip = GetMonsterLPString(monster);
-
-                            if (showElements)
-                                tooltip += $"^({game.DataNameProvider.GetElementName(monster.Element)})";
-
-							layout.GetMonsterBattleFieldTooltip(monster).Text = tooltip;
+                            SetMonsterTooltip(monster);
 						}
+
                         showMonsterLP = true;
                     }
                     break;
@@ -2959,8 +2967,9 @@ namespace Ambermoon
 					{
 						foreach (var monster in Monsters)
 						{
-							layout.GetMonsterBattleFieldTooltip(monster).Text += $"^({game.DataNameProvider.GetElementName(monster.Element)})";
-						}
+                            SetMonsterTooltip(monster);
+                        }
+
 						showElements = true;
 					}
 					break;
@@ -3138,7 +3147,7 @@ namespace Ambermoon
             100, 100,   0, 100, 100, 100, 100, 100, // Physical spells
             100, 100, 100,   0, 100, 100, 100, 100, // Undead spells
              75, 100, 100,  75,   0,  50, 100, 150, // Earth spells
-             75, 100, 100,  75, 150,   0,  50, 150, // Wind spells
+             75, 100, 100,  75, 150,   0,  50, 100, // Wind spells
              75,  75, 100, 125, 100, 150,   0,  50, // Fire spells
              75, 100, 100,  75,  50, 100, 150,   0  // Water spells
         };
