@@ -115,10 +115,14 @@ namespace Ambermoon.Data
         /// Adds a non-interactive game delay (Ambermoon Advanced only).
         /// </summary>
         Delay,
-		/// <summary>
-		/// Tests some condition for a specific party member
+        /// <summary>
+        /// Tests some condition for a specific party member (Ambermoon Advanced only).
+        /// </summary>
+        PartyMemberCondition,
+        /// <summary>
+		/// Shakes the screen (Ambermoon Advanced only).
 		/// </summary>
-		PartyMemberCondition,
+        Shake,
     }
 
     public class Event
@@ -1405,6 +1409,30 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return $"{Type} {Milliseconds} ms";
+        }
+    }
+
+    public class ShakeEvent : Event
+    {
+        public uint Shakes { get; set; }
+        public byte[] Unused1 { get; set; }
+        public ushort Unused2 { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new ShakeEvent
+            {
+                Shakes = Shakes,
+                Unused1 = CloneBytes(Unused1),
+                Unused2 = Unused2,
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
+        public override string ToString()
+        {
+            return $"{Type} {Shakes} shakes";
         }
     }
 

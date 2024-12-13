@@ -304,7 +304,15 @@ namespace Ambermoon.Data.Legacy.Serialization
 					dataWriter.Write((ushort)conditionEvent.ContinueIfFalseWithMapEventIndex);
 					break;
 				}
-				default:
+                case EventType.Shake:
+                {
+                    var shakeEvent = @event as ShakeEvent;
+                    dataWriter.Write(shakeEvent.Unused1);
+                    dataWriter.Write((ushort)shakeEvent.Shakes);
+                    dataWriter.Write(shakeEvent.Unused2);
+                    break;
+                }
+                default:
                 {
                     var debugEvent = @event as DebugEvent;
                     dataWriter.Write(debugEvent.Data);

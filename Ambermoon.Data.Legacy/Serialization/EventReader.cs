@@ -532,7 +532,20 @@ namespace Ambermoon.Data.Legacy.Serialization
 					};
 					break;
 				}
-				default:
+                case EventType.Shake:
+                {
+                    var unused1 = dataReader.ReadBytes(5);
+                    var shakes = dataReader.ReadWord();
+                    var unused2 = dataReader.ReadWord();
+                    @event = new ShakeEvent
+                    {
+                        Unused1 = unused1,
+                        Shakes = shakes,
+                        Unused2 = unused2
+                    };
+                    break;
+                }
+                default:
                 {
                     @event = new DebugEvent
                     {

@@ -1283,7 +1283,25 @@ namespace Ambermoon
 
 					break;
                 }
-				default:
+                case EventType.Shake:
+                    if (@event is not ShakeEvent shakeEvent)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid shake event.");
+                    if (shakeEvent.Shakes > 0)
+                    {
+                        game.StartSequence();
+                        var shakeTime = TimeSpan.FromMilliseconds(1000.0 * shakeEvent.Shakes / Game.TicksPerSecond);
+                        game.ShakeScreen(shakeTime, (int)shakeEvent.Shakes, 3.0f);
+                        game.AddTimedEvent(shakeTime, () =>
+                        {
+                            game.EndSequence(false);
+
+                            if (@event.Next != null)
+                                TriggerEventChain(map, game, EventTrigger.Always, x, y, @event.Next, true);
+                        });
+                        return null;
+                    }
+                    break;
+                default:
                     Console.WriteLine($"Unknown event type found: {@event.Type}");
                     return @event.Next;
             }
