@@ -292,7 +292,11 @@ namespace Ambermoon.Render
 				case Spell.SeeWeaknesses:
 				case Spell.KnowledgeOfTheWeakness:
 				case Spell.ProtectionSphere:
-				case Spell.Lame:
+                case Spell.ElementToEarth:
+                case Spell.ElementToWind:
+                case Spell.ElementToFire:
+                case Spell.ElementToWater:
+                case Spell.Lame:
                 case Spell.Poison:
                 case Spell.Petrify:
                 case Spell.CauseDisease:
@@ -344,7 +348,7 @@ namespace Ambermoon.Render
                 case Spell.LPStealer:
                 case Spell.SPStealer:
 				case Spell.MysticDecay:
-				case Spell.Firebeam:
+                case Spell.Firebeam:
                 case Spell.Fireball:
                 case Spell.Iceball:
                 {
@@ -456,10 +460,14 @@ namespace Ambermoon.Render
                 case Spell.MonsterKnowledge:
                 case Spell.MysticImitation:
 				case Spell.MysticDecay:
-				case Spell.RecognizeWeakPoint:
+                case Spell.RecognizeWeakPoint:
 				case Spell.SeeWeaknesses:
 				case Spell.KnowledgeOfTheWeakness:
-				case Spell.MagicalProjectile:
+                case Spell.ElementToEarth:
+                case Spell.ElementToWind:
+                case Spell.ElementToFire:
+                case Spell.ElementToWater:
+                case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
                 case Spell.Lame:
                 case Spell.Poison:
@@ -723,6 +731,22 @@ namespace Ambermoon.Render
                 case Spell.SelfReviving:
                     // Handled in MoveTo
                     this.finishAction?.Invoke();
+                    break;
+                case Spell.ElementToEarth:
+                    ShowOverlay(Color.EarthOverlay);
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(250), this.finishAction);
+                    break;
+                case Spell.ElementToWind:
+                    ShowOverlay(Color.WindOverlay);
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(250), this.finishAction);
+                    break;
+                case Spell.ElementToFire:
+                    ShowOverlay(Color.FireOverlay);
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(250), this.finishAction);
+                    break;
+                case Spell.ElementToWater:
+                    ShowOverlay(Color.IceOverlay);
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(250), this.finishAction);
                     break;
                 case Spell.RestoreStamina:
                     // This doesn't seem to have any visual effect.
@@ -1618,7 +1642,11 @@ namespace Ambermoon.Render
                 case Spell.RecognizeWeakPoint:
 				case Spell.SeeWeaknesses:
 				case Spell.KnowledgeOfTheWeakness:
-					PlayKnowledge();
+                case Spell.ElementToEarth:
+                case Spell.ElementToWind:
+                case Spell.ElementToFire:
+                case Spell.ElementToWater:
+                    PlayKnowledge();
                     break;
                 case Spell.LPStealer:
                 case Spell.SPStealer:

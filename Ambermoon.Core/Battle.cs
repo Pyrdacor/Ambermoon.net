@@ -3027,7 +3027,18 @@ namespace Ambermoon
                     protectedCharacters.Add(caster);
                     break;
                 }
-				default:
+                case Spell.ElementToEarth:
+                case Spell.ElementToWind:
+                case Spell.ElementToFire:
+                case Spell.ElementToWater:
+                    if (target is Monster monsterTarget)
+                    {
+                        int elementIndex = 4 + (int)spell - (int)Spell.ElementToEarth;
+                        monsterTarget.Element = (CharacterElement)(1 << elementIndex);
+                        SetMonsterTooltip(monsterTarget);
+                    }
+                    break;
+                default:
                     game.ApplySpellEffect(spell, caster, target, finishAction, false);
                     return;
             }

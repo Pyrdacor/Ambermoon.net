@@ -189,10 +189,10 @@ namespace Ambermoon.Data
             { Spell.ForeseeAttack, new SpellInfo { SP = 15, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } }, // Advanced only
             { Spell.MysticDecay, new SpellInfo { SP = 50, SLP = 25, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } }, // Advanced only
             { Spell.ProtectionSphere, new SpellInfo { SP = 50, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } }, // Advanced only
-            { Spell.UnusedMystic26, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
-            { Spell.UnusedMystic27, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
-            { Spell.UnusedMystic28, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
-            { Spell.UnusedMystic29, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
+            { Spell.ElementToEarth, new SpellInfo { SP = 75, SLP = 35, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
+            { Spell.ElementToWind, new SpellInfo { SP = 75, SLP = 35, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
+            { Spell.ElementToFire, new SpellInfo { SP = 75, SLP = 35, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
+            { Spell.ElementToWater, new SpellInfo { SP = 75, SLP = 35, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.MysticImitation, new SpellInfo { SP = 100, SLP = 100, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.MagicalProjectile, new SpellInfo { SP = 5, SLP = 5, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.MagicalArrows, new SpellInfo { SP = 15, SLP = 10, Target = SpellTarget.EnemyRow, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },

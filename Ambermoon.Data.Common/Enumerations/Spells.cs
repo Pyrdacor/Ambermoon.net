@@ -88,10 +88,10 @@
 		ForeseeAttack, // Advanced only
 		MysticDecay, // Advanced only
 		ProtectionSphere, // Advanced only
-		UnusedMystic26,
-        UnusedMystic27,
-        UnusedMystic28,
-        UnusedMystic29,
+		ElementToEarth,
+        ElementToWind,
+        ElementToFire,
+        ElementToWater,
         MysticImitation, // Advanced only
         MagicalProjectile,
         MagicalArrows,
