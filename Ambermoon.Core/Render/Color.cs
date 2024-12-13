@@ -95,8 +95,8 @@ namespace Ambermoon.Render
         public static readonly Color BrightGray = new(0x77, 0x77, 0x66);
         public static readonly Color BrightAccent = new(0x88, 0x88, 0x77);
         public static readonly Color DarkAccent = new(0x55, 0x55, 0x44);
-        public static readonly Color EarthOverlay = new(0x88, 0x44, 0x00, 0x68);
-        public static readonly Color WindOverlay = new(0xcc, 0xdd, 0xff, 0x68);
+        public static readonly Color EarthOverlay = new(0x88, 0x66, 0x11, 0x68);
+        public static readonly Color WindOverlay = new(0xbb, 0xbb, 0xcc, 0x68);
         public static readonly Color FireOverlay = new(0xbb, 0x22, 0x00, 0x68);
         public static readonly Color IceOverlay = new(0x00, 0x11, 0x99, 0x68);
 
