@@ -5662,6 +5662,9 @@ namespace Ambermoon
             -0.5f, 0.0f, 1.0f, 0.5f, -1.0f, 0.0f, 0.5f
         };
 
+        internal void ShakeScreen(TimeSpan durationPerShake, int numShakes, int pixelAmplitude)
+            => ShakeScreen(durationPerShake, numShakes, (float)pixelAmplitude / Global.VirtualScreenHeight);
+
         internal void ShakeScreen(TimeSpan durationPerShake, int numShakes, float amplitude)
         {
             int shakeIndex = 0;

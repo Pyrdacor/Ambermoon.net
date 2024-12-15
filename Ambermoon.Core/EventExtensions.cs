@@ -1289,9 +1289,9 @@ namespace Ambermoon
                     if (shakeEvent.Shakes > 0)
                     {
                         game.StartSequence();
-                        var shakeTime = TimeSpan.FromMilliseconds(1000.0 * shakeEvent.Shakes / Game.TicksPerSecond);
-                        game.ShakeScreen(shakeTime, (int)shakeEvent.Shakes, 3.0f);
-                        game.AddTimedEvent(shakeTime, () =>
+                        var shakeTime = TimeSpan.FromMilliseconds(6000.0 / Game.TicksPerSecond);
+                        game.ShakeScreen(shakeTime, (int)shakeEvent.Shakes, 3);
+                        game.AddTimedEvent(shakeTime * shakeEvent.Shakes, () =>
                         {
                             game.EndSequence(false);
 
