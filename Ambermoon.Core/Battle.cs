@@ -2198,6 +2198,11 @@ namespace Ambermoon
         {
             long chance = caster.Skills[Skill.UseMagic].TotalCurrentValue;
 
+            if (game.Features.HasFlag(Features.ExtendedCurseEffects) &&
+                !caster.BattleFlags.HasFlag(BattleFlags.Boss) &&
+                caster.Conditions.HasFlag(Condition.Drugged))
+                chance -= 25;
+
             if (caster is Monster && foreseeMagic)
                 chance -= 25;
 
