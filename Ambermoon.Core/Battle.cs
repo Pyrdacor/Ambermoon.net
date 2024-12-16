@@ -26,7 +26,6 @@ using Ambermoon.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Attribute = Ambermoon.Data.Attribute;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
@@ -254,6 +253,7 @@ namespace Ambermoon
         bool foreseeAttack = false;
         readonly List<Monster> weakenedMonsters = new();
 		readonly List<Character> protectedCharacters = new();
+        readonly Dictionary<Character, uint> agingValues = new();
 		bool anyMonsterWantedToFlee = false;
         internal bool NeedsClickForNextAction { get; set; }
         internal int Speed { get; set; }
@@ -603,7 +603,18 @@ namespace Ambermoon
 				foreseeAttack = false;
                 protectedCharacters.Clear();
 
-				RoundFinished?.Invoke();
+                foreach (var actor in Characters)
+                {
+                    if (actor.Conditions.HasFlag(Condition.Aging))
+                    {
+                        if (!agingValues.TryGetValue(actor, out var value))
+                            agingValues[actor] = 10;
+                        else if (value < 50)
+                            agingValues[actor] += 10;
+                    }
+                }
+
+                RoundFinished?.Invoke();
 
                 return;
             }
@@ -4301,6 +4312,30 @@ namespace Ambermoon
 
             long hitChance = attacker.Skills[Skill.Attack].TotalCurrentValue;
 
+            if (game.Features.HasFlag(Features.ExtendedCurseEffects))
+            {
+                uint hitMalus = 0;
+
+                if (attacker.Conditions.HasFlag(Condition.Drugged))
+                {
+                    hitMalus = 25;
+                }
+
+                if (attacker.Conditions.HasFlag(Condition.Blind))
+                {
+                    hitMalus += 50;
+                }
+                else if (attacker.Conditions.HasFlag(Condition.Aging) && agingValues.TryGetValue(attacker, out uint agingValue))
+                {
+                    hitMalus += agingValue;
+                }
+
+                if (attacker.BattleFlags.HasFlag(BattleFlags.Boss))
+                    hitMalus >>= 1;
+
+                hitChance -= hitMalus;
+            }
+
             if (attacker is Monster && foreseeAttack)
                 hitChance -= 25;
 
@@ -4312,7 +4347,7 @@ namespace Ambermoon
 
 			if (game.RollDice100() < attacker.Skills[Skill.CriticalHit].TotalCurrentValue)
             {
-                if (!(target is Monster monster) || !monster.BattleFlags.HasFlag(BattleFlags.Boss))
+                if (target is not Monster monster || !monster.BattleFlags.HasFlag(BattleFlags.Boss))
                 {
                     damage = (int)target.HitPoints.CurrentValue;
                     return AttackResult.CriticalHit;
@@ -4341,9 +4376,28 @@ namespace Ambermoon
             }
 
             // Note: Monsters can't parry.
-            if (target is PartyMember partyMember && parryingPlayers.Contains(partyMember) &&
-                game.RollDice100() < partyMember.Skills[Skill.Parry].TotalCurrentValue)
-                return AttackResult.Blocked;
+            if (target is PartyMember partyMember && parryingPlayers.Contains(partyMember))
+            {
+                long parryChance = partyMember.Skills[Skill.Parry].TotalCurrentValue;
+
+                if (game.Features.HasFlag(Features.ExtendedCurseEffects))
+                {
+                    uint parryMalus = 0;
+
+                    if (partyMember.Conditions.HasFlag(Condition.Blind))
+                        parryMalus = 50;
+                    else if (attacker.Conditions.HasFlag(Condition.Aging) && agingValues.TryGetValue(attacker, out uint agingValue))
+                        parryMalus = agingValue;
+
+                    if (target.BattleFlags.HasFlag(BattleFlags.Boss))
+                        parryMalus >>= 1;
+
+                    parryChance -= parryMalus;
+                }
+
+                if (game.RollDice100() < parryChance)
+                    return AttackResult.Blocked;
+            }
 
             return AttackResult.Damage;
         }
@@ -4360,6 +4414,41 @@ namespace Ambermoon
                 attackDamage = (attackDamage * (100 + (int)game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
             if (defense > 0)
                 defense = (defense * (100 + (int)game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection))) / 100;
+
+            if (game.Features.HasFlag(Features.ExtendedCurseEffects))
+            {
+                int attackDamageMalus = 0;
+
+                if (attacker.Conditions.HasFlag(Condition.Diseased))
+                {
+                    attackDamageMalus = 50;
+                }
+                else if (attacker.Conditions.HasFlag(Condition.Aging) && agingValues.TryGetValue(attacker, out uint agingValue))
+                {
+                    attackDamageMalus = (int)agingValue;
+                }
+
+                if (attacker.BattleFlags.HasFlag(BattleFlags.Boss))
+                    attackDamageMalus >>= 1;
+
+                attackDamage = Math.Max(0, attackDamage * (100 - attackDamageMalus) / 100);
+
+                int defenseMalus = 0;
+
+                if (target.Conditions.HasFlag(Condition.Diseased))
+                {
+                    defenseMalus = 50;
+                }
+                else if (target.Conditions.HasFlag(Condition.Aging) && agingValues.TryGetValue(target, out uint agingValue))
+                {
+                    defenseMalus = (int)agingValue;
+                }
+
+                if (target.BattleFlags.HasFlag(BattleFlags.Boss))
+                    defenseMalus >>= 1;
+
+                defense = Math.Max(0, defense * (100 - defenseMalus) / 100);
+            }
 
             return (game.RandomInt(50, 100) * attackDamage) / 100 - (game.RandomInt(50, 100) * defense) / 100;
         }
