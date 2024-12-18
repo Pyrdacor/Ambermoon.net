@@ -464,8 +464,8 @@ namespace Ambermoon.UI
             byte paletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
 
             frameSprite = renderView.SpriteFactory.Create(Width, Height, true, 3) as ILayerSprite;
-            disableOverlay = renderView.SpriteFactory.Create(Width, Height - 6, true, 5) as ILayerSprite;
-            iconSprite = renderView.SpriteFactory.Create(Width, Height - 4, true, 4) as ILayerSprite;
+            disableOverlay = renderView.SpriteFactory.Create(Width, Height - 6, true, 7) as ILayerSprite;
+            iconSprite = renderView.SpriteFactory.Create(Width, Height - 4, true, 5) as ILayerSprite;
 
             var layer = renderView.GetLayer(Layer.UI);
             frameSprite.Layer = layer;
@@ -548,9 +548,9 @@ namespace Ambermoon.UI
             get => (byte)(frameSprite.DisplayLayer - 3);
             set
             {
-                frameSprite.DisplayLayer = (byte)Math.Min(255, value + 3);
-                iconSprite.DisplayLayer = (byte)Math.Min(255, value + 4);
-                disableOverlay.DisplayLayer = (byte)Math.Min(255, value + 5);
+                frameSprite.DisplayLayer = (byte)Math.Min(251, value + 3);
+                iconSprite.DisplayLayer = (byte)(frameSprite.DisplayLayer + 2);
+                disableOverlay.DisplayLayer = (byte)(frameSprite.DisplayLayer + 4);
             }
         }
 

@@ -2625,7 +2625,7 @@ namespace Ambermoon
             }
         }
 
-        internal void StartSequence()
+        public void StartSequence()
         {
             allInputWasDisabled = allInputDisabled;
             layout.ReleaseButtons();
@@ -2635,11 +2635,27 @@ namespace Ambermoon
             trappedAfterClickMoveActivation = false;
         }
 
-        internal void EndSequence(bool force = true)
+        public void EndSequence(bool force = true)
         {
             if (force || !allInputWasDisabled)
                 allInputDisabled = false;
             allInputWasDisabled = false;
+        }
+
+        public class GameSequence : IDisposable
+        {
+            private readonly Game game;
+
+            public GameSequence(Game game)
+            {
+                this.game = game;
+                game.StartSequence();
+            }
+
+            public void Dispose()
+            {
+                game.EndSequence();
+            }
         }
 
         void PlayTimedSequence(int steps, Action stepAction, int stepTimeInMs, Action followUpAction = null)
@@ -4555,6 +4571,48 @@ namespace Ambermoon
             {
                 layout.FillCharacterBars(i, GetPartyMember(i));
             }
+        }
+
+        public void UpdateCharacterStatus(PartyMember partyMember)
+        {
+            if (!ingame || layout == null || CurrentSavegame == null)
+                return;
+
+            layout.UpdateCharacterStatus(partyMember);
+        }
+
+        public void UpdateCharacters(Action finishAction, IEnumerable<PartyMember> partyMembers = null)
+        {
+            var queue = new Queue<PartyMember>(partyMembers ?? PartyMembers);
+
+            void UpdateNext()
+            {
+                if (queue.Count == 0)
+                {
+                    finishAction?.Invoke();
+                    return;
+                }
+
+                var partyMember = queue.Dequeue();
+
+                if (partyMember == null)
+                {
+                    UpdateNext();
+                    return;
+                }
+
+                var slot = SlotFromPartyMember(partyMember);
+
+                if (slot == null)
+                {
+                    UpdateNext();
+                    return;
+                }
+
+                layout.SetCharacter(slot.Value, partyMember, false, UpdateNext, false, true);
+            }
+
+            UpdateNext();
         }
 
         void UpdateMapName(Map map = null)

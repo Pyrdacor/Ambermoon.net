@@ -30,7 +30,31 @@ namespace Ambermoon.Data
     {
         public static Condition WithoutBattleOnlyConditions(this Condition conditions)
         {
-            return (Condition)((int)conditions & 0xfff2);
+            return (Condition)((int)conditions & 0xff72);
+        }
+
+        public static bool IsBattleOnly(this Condition condition)
+        {
+            return
+                condition == Condition.Fleeing ||
+                condition == Condition.Irritated ||
+                condition == Condition.Sleep ||
+                condition == Condition.Panic;
+        }
+
+        public static bool CanBeAppliedManually(this Condition condition)
+        {
+            return
+                condition != Condition.None &&
+                condition != Condition.Exhausted &&
+                condition != Condition.Fleeing;
+        }
+
+        public static bool CanBeCleansed(this Condition condition)
+        {
+            return
+                condition != Condition.None &&
+                condition != Condition.Fleeing;
         }
 
         public static bool CanFight(this Condition conditions)
