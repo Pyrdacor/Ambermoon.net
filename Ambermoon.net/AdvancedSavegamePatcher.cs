@@ -20,6 +20,41 @@ namespace Ambermoon
             int maxValueHighIndex = -1;
             int curValueHighIndex = -1;
             int lastAddedTransportIndex = -1;
+            record ManualPartyDataChange(int ByteIndex, byte? OldByte, byte? NewByte, byte? Mask = null);
+
+            private static readonly Dictionary<int, List<ManualPartyDataChange>> manualPartyDataChanges = new();
+
+            private static void AddManualChange(int sourceVersion, int targetVersion, ManualPartyDataChange manualChange)
+            {
+                int key = (targetVersion & 0xf) | ((sourceVersion & 0xf) << 4);
+
+                if (!manualPartyDataChanges.TryGetValue(key, out var changes))
+                {
+                    manualPartyDataChanges.Add(key, new() { manualChange });
+                }
+                else
+                {
+                    changes.Add(manualChange);
+                }
+            }
+
+            private static void AddManualChangeMask(int sourceVersion, int targetVersion, int byteIndex, byte mask)
+            {
+                AddManualChange(sourceVersion, targetVersion, new(byteIndex, null, null, mask));
+            }
+
+            private static void AddManualChange(int sourceVersion, int targetVersion, int byteIndex, byte oldByte, byte newByte)
+            {
+                AddManualChange(sourceVersion, targetVersion, new(byteIndex, oldByte, newByte));
+            }
+
+            static Patch()
+            {
+                // Ep 1 to 2
+
+                // Reset glob var 54 (was used for Kasimir before but now for Sunny's brooch)
+                AddManualChangeMask(1, 2, 0x104 + 6, 0xbf);
+            }
 
             public Patch(BinaryReader reader)
             {
@@ -28,7 +63,7 @@ namespace Ambermoon
             }
 
             // This will patch the save files inside the game data
-            public void PatchSavegame(ILegacyGameData gameData, int saveSlot)
+            public void PatchSavegame(ILegacyGameData gameData, int saveSlot, int episodeKey)
             {
                 itemIndexHighIndex = -1;
                 itemIndexHighByte = -1;
@@ -36,6 +71,8 @@ namespace Ambermoon
                 maxValueHighIndex = -1;
                 curValueHighIndex = -1;
                 lastAddedTransportIndex = -1;
+
+                var partyDataChanges = manualPartyDataChanges.GetValueOrDefault(episodeKey, new());
 
                 // Note: the order of SavegameManager.SaveFileNames is important
                 // as the patch data is stored in the same order. Also ensure
@@ -45,7 +82,7 @@ namespace Ambermoon
                 foreach (var saveFile in SavegameManager.SaveFileNames)
                 {
                     string fullName = $"Save.{saveSlot:00}/{saveFile}";
-                    gameData.Files[fullName] = PatchFile(index++, gameData.Files[fullName]);
+                    gameData.Files[fullName] = PatchFile(index++, gameData.Files[fullName], partyDataChanges);
                 }
             }
 
@@ -131,7 +168,7 @@ namespace Ambermoon
             {
                 void AddAssignUByte(DataWriter data, int index, int value)
                 {
-                    data[index] = (byte)Util.Limit(0,data[index] + value, 255);
+                    data[index] = (byte)Util.Limit(0, data[index] + value, 255);
                 }
 
                 bool checkItemIndex = true;
@@ -316,7 +353,7 @@ namespace Ambermoon
                                 if (newByte != 0)
                                 {
                                     int index = byteIndex;
-                                    while (subFileData[index] != 0 && index < 0xfe)
+                                    while (subFileData[index] != 0 && index < 0x104 - 6)
                                     {
                                         index += 6;
                                     }
@@ -327,7 +364,7 @@ namespace Ambermoon
                                     }
                                 }
                             }
-                            else if (lastAddedTransportIndex >= 0 && (subFileData[lastAddedTransportIndex + offset] >> 7) == 0x01)
+                            else if (lastAddedTransportIndex >= 0 && (subFileData[lastAddedTransportIndex] >> 7) == 0x01)
                             {
                                 subFileData[lastAddedTransportIndex + offset] = newByte;
                             }
@@ -392,8 +429,15 @@ namespace Ambermoon
                             // attributes and skills and HP and SP
                             int offset = (byteIndex - 0x2a) % (byteIndex < 0xca ? 8 : 6);
                             if (offset < 2)
-                            { // current value
+                            {
+                                // current value
                                 int change = newByte - oldByte;
+                                if (change < 0 && subFileData[byteIndex] < -change && offset == 1)
+                                {
+                                    if (subFileData[byteIndex - 1] == 0)
+                                        throw new AmbermoonException(ExceptionScope.Data, "Invalid character value change.");
+                                    subFileData[byteIndex - 1]--;
+                                }
                                 AddAssignUByte(subFileData, byteIndex, change);
                                 if (offset == 0)
                                 {
@@ -420,6 +464,12 @@ namespace Ambermoon
                                 // is not changed so we must ensure that the current
                                 // value is not exceeding the max value here.
                                 int change = newByte - oldByte;
+                                if (change < 0 && subFileData[byteIndex] < -change && offset == 3)
+                                {
+                                    if (subFileData[byteIndex - 1] == 0)
+                                        throw new AmbermoonException(ExceptionScope.Data, "Invalid character value change.");
+                                    subFileData[byteIndex - 1]--;
+                                }
                                 AddAssignUByte(subFileData, byteIndex, change);
                                 if (offset == 2)
                                 {
@@ -443,6 +493,14 @@ namespace Ambermoon
                                 // bonus value and pre-exhaustion backup value
                                 // Just adjust the value.
                                 int change = newByte - oldByte;
+
+                                if (change < 0 && subFileData[byteIndex] < -change && offset % 2 == 1)
+                                {
+                                    if (subFileData[byteIndex - 1] == 0)
+                                        throw new AmbermoonException(ExceptionScope.Data, "Invalid character value change.");
+                                    subFileData[byteIndex - 1]--;
+                                }
+                                
                                 AddAssignUByte(subFileData, byteIndex, change);
                             }
                         }
@@ -465,11 +523,21 @@ namespace Ambermoon
                                  byteIndex == 0x11 || // APR
                                  (byteIndex >= 0x14 && byteIndex < 0x1c) || // SLP, TP, Gold, Food
                                  (byteIndex >= 0xd6 && byteIndex < 0xe2) || // def, dmg, magic def/dmg
-                                 (byteIndex >= 0x10e && byteIndex < 0x112))
+                                 (byteIndex >= 0x10e && byteIndex < 0x112)) // weight
                         {
-                            // weight
                             // Those are all values that should be increased or decreased and not just replaced.
                             int change = newByte - oldByte;
+
+                            if (byteIndex >= 0x14)
+                            {
+                                if (change < 0 && subFileData[byteIndex] < -change && (byteIndex > 0x10e || byteIndex % 2 != 0))
+                                {
+                                    if (subFileData[byteIndex - 1] == 0)
+                                        throw new AmbermoonException(ExceptionScope.Data, "Invalid character value change.");
+                                    subFileData[byteIndex - 1]--;
+                                }
+                            }
+
                             AddAssignUByte(subFileData, byteIndex, change);
                         }
                         else
@@ -486,6 +554,14 @@ namespace Ambermoon
                         {
                             // chest gold or food
                             int change = newByte - oldByte;
+
+                            if (change < 0 && subFileData[byteIndex] < -change && byteIndex % 2 != 0)
+                            {
+                                if (subFileData[byteIndex - 1] == 0)
+                                    throw new AmbermoonException(ExceptionScope.Data, "Invalid chest or merchant value change.");
+                                subFileData[byteIndex - 1]--;
+                            }
+
                             AddAssignUByte(subFileData, byteIndex, change);
                         }
                         else
@@ -498,7 +574,10 @@ namespace Ambermoon
                     case 4:
                     {
                         // Automap.amb
-                        // Only add explore bits
+                        // Only add explore
+                        while (subFileData.Size <= byteIndex)
+                            subFileData.Write(0);
+
                         subFileData[byteIndex] |= newByte;
                         break;
                     }
@@ -516,7 +595,7 @@ namespace Ambermoon
                 }
             }
 
-            IFileContainer PatchFile(int fileIndex, IFileContainer oldFile)
+            IFileContainer PatchFile(int fileIndex, IFileContainer oldFile, List<ManualPartyDataChange> partyDataChanges)
             {
                 int size = patchReader.ReadBEInt16();
                 var reader = new DataReader(patchReader.ReadBytes(size));
@@ -575,9 +654,14 @@ namespace Ambermoon
                             data[index] &= 0x7f; // remove the marker
                         }
                     }
-                    // TODO: this is a manual hack when converting EP 1 to 2
-                    // Reset glob var 54 (was used for Kasimir before but now for Sunny's brooch)
-                    data[0x104 + 6] &= 0xbf;
+
+                    foreach (var change in partyDataChanges)
+                    {
+                        if (change.Mask != null)
+                            data[change.ByteIndex] &= change.Mask.Value;
+                        else if (data[change.ByteIndex] == change.OldByte)
+                            data[change.ByteIndex] = change.NewByte ?? throw new AmbermoonException(ExceptionScope.Data, "Invalid manual party data change.");
+                    }
                 }
                 else if (fileIndex == 1)
                 {
@@ -635,10 +719,28 @@ namespace Ambermoon
         {
             byte header = (byte)((sourceEpisode << 4) | targetEpisode);
 
-            if (!patches.TryGetValue(header, out var patch))
-                throw new AmbermoonException(ExceptionScope.Data, "No patch information for old Ambermoon Advanced savegame found.");
+            if (patches.TryGetValue(header, out var patch))
+            {
+                patch.PatchSavegame(gameData, saveSlot, header);
+            }
+            else
+            {
+                // Is there any patch where the target is the expected version?
+                // If so pick the one with the lowest source version which is >= the given source version.
+                var intermediatePatch = patches.Where(p => (p.Key & 0x0f) == targetEpisode).OrderBy(p => p.Key >> 4).Where(p => (p.Key >> 4) >= sourceEpisode).FirstOrDefault();
 
-            patch.PatchSavegame(gameData, saveSlot);
+                if (intermediatePatch.Value != null)
+                {
+                    // First try to patch up to the intermediate version.
+                    PatchSavegame(gameData, saveSlot, sourceEpisode, intermediatePatch.Key >> 4);
+                    // Then patch from there to the target version.
+                    intermediatePatch.Value.PatchSavegame(gameData, saveSlot, header);
+                }
+                else
+                {
+                    throw new AmbermoonException(ExceptionScope.Data, "No patch information for old Ambermoon Advanced savegame found.");
+                }
+            }
         }
     }
 }
