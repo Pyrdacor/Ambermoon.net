@@ -2514,7 +2514,7 @@ namespace Ambermoon
             }
         }
 
-        readonly Dictionary<uint, ImitationBackupData> imitationBackupData = new Dictionary<uint, ImitationBackupData>();
+        readonly Dictionary<uint, ImitationBackupData> imitationBackupData = new();
 
         void ImitateMonster(PartyMember caster, Monster monster, Action finishAction)
         {

@@ -32,7 +32,7 @@ namespace Ambermoon.Data
                 ItemIndex = itemIndex,
                 Amount = usedAmount,
                 Flags = item.DefaultSlotFlags,
-                NumRemainingCharges = item.MaxCharges == 0 ? 0 : Math.Max(1, (int)item.InitialCharges),
+                NumRemainingCharges = Math.Max(item.MaxCharges == 0 ? 0 : 1, item.InitialCharges),
                 RechargeTimes = item.InitialRecharges
             };
         }
