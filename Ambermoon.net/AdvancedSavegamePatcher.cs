@@ -2,6 +2,7 @@
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
+using SonicArranger;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,6 +14,22 @@ namespace Ambermoon
     {
         class Patch
         {
+            // From episode 2 to 3 we use a new diff format.
+            enum DiffType : byte
+            {
+                ByteValueChange,
+                WordValueChange,
+                BitfieldBitsAdded,
+                BitfieldBitsCleared,
+                SubfileAdded,
+                SubfileRemoved,
+                SubfileExtended,
+                SubfileShrunk,
+                ByteReplacement,
+                AddInventoryItem,
+                SetSubfile,
+            }
+
             readonly DataReader patchReader;
             int itemIndexHighIndex = -1;
             int itemIndexHighByte = -1;
@@ -58,7 +75,7 @@ namespace Ambermoon
 
             public Patch(BinaryReader reader)
             {
-                int size = (int)(reader.ReadUInt32() & int.MaxValue);
+                int size = (int)(reader.ReadBEUInt32() & int.MaxValue);
                 patchReader = new DataReader(reader.ReadBytes(size));
             }
 
@@ -82,7 +99,127 @@ namespace Ambermoon
                 foreach (var saveFile in SavegameManager.SaveFileNames)
                 {
                     string fullName = $"Save.{saveSlot:00}/{saveFile}";
-                    gameData.Files[fullName] = PatchFile(index++, gameData.Files[fullName], partyDataChanges);
+                    gameData.Files[fullName] = PatchFile(gameData, index++, gameData.Files[fullName], partyDataChanges, episodeKey);
+                }
+            }
+
+            static void ProcessNewDiffs(int fileIndex, Dictionary<int, DataWriter> subFiles, DataReader diffDataReader)
+            {
+                int? currentSubFile = null;
+                int numActions = diffDataReader.ReadWord();
+
+                while (numActions-- > 0 && diffDataReader.Position < diffDataReader.Size)
+                {
+                    var action = (DiffType)diffDataReader.ReadByte();
+
+                    switch (action)
+                    {
+                        case DiffType.ByteValueChange:
+                        {
+                            currentSubFile ??= 1;
+                            int byteIndex = diffDataReader.ReadWord();
+                            short change = unchecked((short)diffDataReader.ReadWord());
+                            int newValue = subFiles[currentSubFile.Value][byteIndex] + change;
+                            byte newByte = newValue > 0 ? (byte)(newValue & 0xff) : unchecked((byte)checked((sbyte)newValue));
+                            subFiles[currentSubFile.Value][byteIndex] = newByte;
+                            break;
+                        }
+                        case DiffType.WordValueChange:
+                        {
+                            currentSubFile ??= 1;
+                            int byteIndex = diffDataReader.ReadWord();
+                            int change = unchecked((int)diffDataReader.ReadDword());
+                            int newValue = ((subFiles[currentSubFile.Value][byteIndex] << 8) | subFiles[currentSubFile.Value][byteIndex + 1]) + change;
+                            ushort newWord = newValue > 0 ? (ushort)(newValue & 0xffff) : unchecked((ushort)checked((short)newValue));
+                            subFiles[currentSubFile.Value][byteIndex] = (byte)(newWord >> 8);
+                            subFiles[currentSubFile.Value][byteIndex + 1] = (byte)(newValue & 0xff);
+                            break;
+                        }
+                        case DiffType.BitfieldBitsAdded:
+                        {
+                            currentSubFile ??= 1;
+                            int byteIndex = diffDataReader.ReadWord();
+                            byte bits = diffDataReader.ReadByte();
+                            subFiles[currentSubFile.Value][byteIndex] |= bits;
+                            break;
+                        }
+                        case DiffType.BitfieldBitsCleared:
+                        {
+                            currentSubFile ??= 1;
+                            int byteIndex = diffDataReader.ReadWord();
+                            byte bits = diffDataReader.ReadByte();
+                            subFiles[currentSubFile.Value][byteIndex] &= (byte)~bits;
+                            break;
+                        }
+                        case DiffType.SubfileAdded:
+                        {
+                            int subfileIndex = diffDataReader.ReadWord();
+                            int length = diffDataReader.ReadWord();
+                            if (subFiles.TryGetValue(subfileIndex, out var subFile))
+                            {
+                                if (subFile.Size == 0)
+                                    subFiles[subfileIndex] = new DataWriter(diffDataReader.ReadBytes(length));
+                                else
+                                    throw new AmbermoonException(ExceptionScope.Data, $"Sub file {subfileIndex} was already present but should be added.");
+                            }
+                            else
+                            {
+                                subFiles.Add(subfileIndex, new DataWriter(diffDataReader.ReadBytes(length)));
+                            }
+                            break;
+                        }
+                        case DiffType.SubfileRemoved:
+                        {
+                            int subfileIndex = diffDataReader.ReadWord();
+                            subFiles.Remove(subfileIndex);
+                            break;
+                        }
+                        case DiffType.SubfileExtended:
+                        {
+                            int subfileIndex = diffDataReader.ReadWord();
+                            int length = diffDataReader.ReadWord();
+                            subFiles[subfileIndex].Write(diffDataReader.ReadBytes(length));
+                            break;
+                        }
+                        case DiffType.SubfileShrunk:
+                        {
+                            int subfileIndex = diffDataReader.ReadWord();
+                            int length = diffDataReader.ReadWord();
+                            subFiles[subfileIndex].Remove(length, subFiles[subfileIndex].Size - length);
+                            break;
+                        }
+                        case DiffType.ByteReplacement:
+                        {
+                            currentSubFile ??= 1;
+                            int byteIndex = diffDataReader.ReadWord();
+                            byte newByte = diffDataReader.ReadByte();
+                            subFiles[currentSubFile.Value][byteIndex] = newByte;
+                            break;
+                        }
+                        case DiffType.AddInventoryItem:
+                        {
+                            currentSubFile ??= 1;
+                            byte[] itemSlotData = diffDataReader.ReadBytes(6);
+                            int offset = fileIndex == 1 ? 0x158 : 0;
+
+                            for (int i = 0; i < 24; i++)
+                            {
+                                if (subFiles[currentSubFile.Value][offset + i * 6] == 0)
+                                {
+                                    for (int j = 0; j < 6; j++)
+                                        subFiles[currentSubFile.Value][offset + i * 6 + j] = itemSlotData[j];
+                                    break;
+                                }
+                            }
+
+                            break;
+                        }
+                        case DiffType.SetSubfile:
+                        {
+                            currentSubFile = diffDataReader.ReadWord();
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -91,6 +228,7 @@ namespace Ambermoon
             static void ProcessDiffEntry(int fileIndex, Dictionary<int, DataWriter> subFiles, DataReader diffDataReader, PatchMethod patchMethod)
             {
                 byte action = diffDataReader.ReadByte();
+
                 int ReadSubFileIndex()
                 {
                     int subfileIndex = diffDataReader.ReadWord();
@@ -595,63 +733,84 @@ namespace Ambermoon
                 }
             }
 
-            IFileContainer PatchFile(int fileIndex, IFileContainer oldFile, List<ManualPartyDataChange> partyDataChanges)
+            IFileContainer PatchFile(ILegacyGameData gameData, int fileIndex, IFileContainer oldFile, List<ManualPartyDataChange> partyDataChanges, int episodeKey)
             {
                 int size = patchReader.ReadBEInt16();
                 var reader = new DataReader(patchReader.ReadBytes(size));
                 var subFiles = oldFile.Files.ToDictionary(f => f.Key, f => new DataWriter(f.Value.ToArray()));
                 int lastSubFileIndex = -1;
 
-                while (reader.Position < reader.Size)
+                if (episodeKey != 0x12)
                 {
-                    ProcessDiffEntry(fileIndex, subFiles, reader, (subFileIndex, byteIndex, oldByte, newByte) =>
+                    ProcessNewDiffs(fileIndex, subFiles, reader);
+                }
+                else
+                {
+                    while (reader.Position < reader.Size)
                     {
-                        lastSubFileIndex = fileIndex == 0 && subFileIndex == 0 ? 1 : subFileIndex;
-                        PatchByte(oldFile.Files[subFileIndex], subFiles[subFileIndex], fileIndex, byteIndex, oldByte, newByte);
-                    });
-                }
+                        ProcessDiffEntry(fileIndex, subFiles, reader, (subFileIndex, byteIndex, oldByte, newByte) =>
+                        {
+                            lastSubFileIndex = fileIndex == 0 && subFileIndex == 0 ? 1 : subFileIndex;
+                            PatchByte(oldFile.Files[subFileIndex], subFiles[subFileIndex], fileIndex, byteIndex, oldByte, newByte);
+                        });
+                    }
 
-                if (itemIndexHighIndex >= 0)
-                {
-                    byte value = (oldFile.Files[lastSubFileIndex] as DataReader)[itemIndexHighIndex + 1];
-                    PatchByte(oldFile.Files[lastSubFileIndex], subFiles[lastSubFileIndex], fileIndex, itemIndexHighIndex + 1, value, value);
-                    itemIndexHighIndex = -1;
-                    itemIndexHighByte = -1;
-                }
+                    if (itemIndexHighIndex >= 0)
+                    {
+                        byte value = (oldFile.Files[lastSubFileIndex] as DataReader)[itemIndexHighIndex + 1];
+                        PatchByte(oldFile.Files[lastSubFileIndex], subFiles[lastSubFileIndex], fileIndex, itemIndexHighIndex + 1, value, value);
+                        itemIndexHighIndex = -1;
+                        itemIndexHighByte = -1;
+                    }
 
-                if (maxValueHighIndex >= 0)
-                {
-                    // The high byte of a max value was changed but there is no
-                    // change to the lower byte. So we have to perform the max
-                    // value logic here.
-                    byte value = (oldFile.Files[lastSubFileIndex] as DataReader)[maxValueHighIndex + 1];
-                    PatchByte(oldFile.Files[lastSubFileIndex], subFiles[lastSubFileIndex], fileIndex, maxValueHighIndex + 1, value, value);
-                }
-                if (curValueHighIndex >= 0)
-                {
-                    // The high byte of a current value was changed but there is no
-                    // change to the lower byte. So we have to perform the current
-                    // value logic here.
-                    byte value = (oldFile.Files[lastSubFileIndex] as DataReader)[curValueHighIndex + 1];
-                    PatchByte(oldFile.Files[lastSubFileIndex], subFiles[lastSubFileIndex], fileIndex, curValueHighIndex + 1, value, value);
+                    if (maxValueHighIndex >= 0)
+                    {
+                        // The high byte of a max value was changed but there is no
+                        // change to the lower byte. So we have to perform the max
+                        // value logic here.
+                        byte value = (oldFile.Files[lastSubFileIndex] as DataReader)[maxValueHighIndex + 1];
+                        PatchByte(oldFile.Files[lastSubFileIndex], subFiles[lastSubFileIndex], fileIndex, maxValueHighIndex + 1, value, value);
+                    }
+                    if (curValueHighIndex >= 0)
+                    {
+                        // The high byte of a current value was changed but there is no
+                        // change to the lower byte. So we have to perform the current
+                        // value logic here.
+                        byte value = (oldFile.Files[lastSubFileIndex] as DataReader)[curValueHighIndex + 1];
+                        PatchByte(oldFile.Files[lastSubFileIndex], subFiles[lastSubFileIndex], fileIndex, curValueHighIndex + 1, value, value);
+                    }
                 }
 
                 if (fileIndex == 0)
                 {
                     // Party_data.sav
                     var data = subFiles[1];
-                    // Fix the transport locations
-                    int index = 0x44;
-                    for (int i = 0; i < 32; ++i)
-                    {
-                        if ((data[index] & 0x80) != 0)
+
+                    if (episodeKey == 0x12)
+                    {                        
+                        // Fix the transport locations
+                        int index = 0x44;
+                        for (int i = 0; i < 32; ++i)
                         {
-                            if (data[index + 1] == 0 || data[index + 2] == 0 || (data[index + 4] == 0 && data[index + 3] == 0))
+                            if ((data[index] & 0x80) != 0)
                             {
-                                // Invalid entry
-                                throw new AmbermoonException(ExceptionScope.Data, "Invalid added transport location.");
+                                if (data[index + 1] == 0 || data[index + 2] == 0 || (data[index + 4] == 0 && data[index + 3] == 0))
+                                {
+                                    // Invalid entry
+                                    throw new AmbermoonException(ExceptionScope.Data, "Invalid added transport location.");
+                                }
+                                data[index] &= 0x7f; // remove the marker
                             }
-                            data[index] &= 0x7f; // remove the marker
+                        }
+                    }
+                    else if ((episodeKey & 0x03) == 0x03) // upgrade to ep 3
+                    {
+                        // Spawn Aman in WEAPONS CHAMBER if the event was already triggered
+                        // If event bit 265:4 inactive and glob var 376 is 0, set character bit 407:4 to show and 264:3 to hide
+                        if ((data[0x504 + 264 * 8] & 0x08) != 0 && (data[0x104 + 376 / 8] & 0x01) == 0)
+                        {
+                            data[0x2504 + 406 * 4] &= 0xf7;
+                            data[0x2504 + 263 * 4] |= 0x04;
                         }
                     }
 
@@ -694,6 +853,45 @@ namespace Ambermoon
                             --freeFingers;
                         subFile[0x06] = freeHands;
                         subFile[0x07] = freeFingers;
+
+                        uint weight = 0;
+                        uint oldWeight = subFile[0x10e];
+                        oldWeight <<= 8;
+                        oldWeight |= subFile[0x10f];
+                        oldWeight <<= 8;
+                        oldWeight |= subFile[0x110];
+                        oldWeight <<= 8;
+                        oldWeight |= subFile[0x111];
+
+                        // Add gold and food
+                        weight += ((uint)subFile[0x18] << 8) * Character.GoldWeight;
+                        weight += subFile[0x19] * Character.GoldWeight;
+                        weight += ((uint)subFile[0x1A] << 8) * Character.FoodWeight;
+                        weight += subFile[0x1B] * Character.FoodWeight;
+
+                        for (int i = 0x122; i < 0x1e8; i += 6)
+                        {
+                            if (subFile[i] != 0)
+                            {
+                                int itemIndex = (subFile[i + 4] << 8) | subFile[i + 5];
+                                
+                                if (itemIndex == 0)
+                                    continue;
+
+                                weight += subFile[i] * gameData.ItemManager.GetItem((uint)itemIndex).Weight;
+                            }
+                        }
+
+                        // we fix the weight value but only if it is actually
+                        // smaller than the old value. This is to prevent
+                        // overweight for old savegames.
+                        if (oldWeight > weight)
+                        {
+                            subFile[0x10e] = (byte)((weight >> 24) & 0xff);
+                            subFile[0x10f] = (byte)((weight >> 16) & 0xff);
+                            subFile[0x110] = (byte)((weight >> 8) & 0xff);
+                            subFile[0x111] = (byte)(weight & 0xff);
+                        }
                     });
                 }
 

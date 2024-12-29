@@ -864,9 +864,44 @@ namespace Ambermoon
 
             characterCreator = new CharacterCreator(renderView, this, (name, female, portraitIndex) =>
             {
-                LoadInitial(name, female, (uint)portraitIndex);
+                LoadInitial(name, female, (uint)portraitIndex, FixSavegameValues);
                 characterCreator = null;
             });
+        }
+
+        private void FixSavegameValues(Savegame savegame)
+        {
+            foreach (var member in savegame.PartyMembers.Values)
+            {
+                uint weight = 0;
+
+                // Add gold and food
+                weight += member.Gold * Character.GoldWeight;
+                weight += member.Food * Character.FoodWeight;
+
+                // Add items
+                foreach (var itemSlot in member.Inventory.Slots)
+                {
+                    if (itemSlot == null || itemSlot.ItemIndex == 0)
+                        continue;
+
+                    var item = ItemManager.GetItem(itemSlot.ItemIndex);
+
+                    weight += (uint)itemSlot.Amount * item.Weight;
+                }
+
+                foreach (var itemSlot in member.Equipment.Slots.Values)
+                {
+                    if (itemSlot == null || itemSlot.ItemIndex == 0)
+                        continue;
+
+                    var item = ItemManager.GetItem(itemSlot.ItemIndex);
+
+                    weight += (uint)itemSlot.Amount * item.Weight;
+                }
+
+                member.TotalWeight = weight;
+            }
         }
 
         internal void LoadInitial(string name, bool female, uint portraitIndex, Action<Savegame> setup = null,
@@ -2393,11 +2428,24 @@ namespace Ambermoon
             }
 
             // Upgrade old Ambermoon Advanced save games
-            if (renderView.GameData.Advanced && slot > 0 && !savegame.PartyMembers.ContainsKey(16))
+            if (renderView.GameData.Advanced && slot > 0)
             {
                 // TODO: will only work for legacy data for now!
-                RequestAdvancedSavegamePatching((ILegacyGameData)renderView.GameData, slot, 1, 2);
-                savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, slot, totalSavegames);
+                int sourceEpisode;
+                int targetEpisode = 3; // TODO: increase when there is a new one
+
+                if (!savegame.PartyMembers.ContainsKey(16)) // If Kasimir is not there, it is episode 1
+                    sourceEpisode = 1;
+                else if (!savegame.Chests.ContainsKey(280)) // If chest 280 is not there it is episode 2
+                    sourceEpisode = 2;
+                else // If both are there, it is episode 3
+                    sourceEpisode = 3;
+
+                if (sourceEpisode < targetEpisode)
+                {
+                    RequestAdvancedSavegamePatching((ILegacyGameData)renderView.GameData, slot, sourceEpisode, targetEpisode);
+                    savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, slot, totalSavegames);
+                }
             }
 
             void Start() => this.Start(savegame, () => postAction?.Invoke(slot));
