@@ -14712,6 +14712,8 @@ namespace Ambermoon
                         }
                     }
                 };
+
+                PlayerSwitched();
             });
         }
 
