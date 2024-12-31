@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ambermoon.Data.Enumerations;
+using System;
 using System.ComponentModel;
 
 namespace Ambermoon.Data
@@ -166,13 +167,13 @@ namespace Ambermoon.Data
                 !conditions.HasFlag(Condition.DeadDust);
         }
 
-        public static bool CanCastSpell(this Condition conditions)
+        public static bool CanCastSpell(this Condition conditions, Features features)
         {
             return
                 !conditions.HasFlag(Condition.Irritated) &&
                 !conditions.HasFlag(Condition.Sleep) &&
                 !conditions.HasFlag(Condition.Panic) &&
-                !conditions.HasFlag(Condition.Drugged) &&
+                (!conditions.HasFlag(Condition.Drugged) || features.HasFlag(Features.ExtendedCurseEffects)) &&
                 !conditions.HasFlag(Condition.Petrified) &&
                 !conditions.HasFlag(Condition.Fleeing) &&
                 !conditions.HasFlag(Condition.DeadCorpse) &&

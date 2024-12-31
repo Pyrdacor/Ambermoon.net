@@ -32,6 +32,7 @@ using TextColor = Ambermoon.Data.Enumerations.Color;
 using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 using Ambermoon.Data.Audio;
 using static Ambermoon.UI.BuiltinTooltips;
+using System.Threading.Channels;
 
 namespace Ambermoon
 {
@@ -10424,7 +10425,13 @@ namespace Ambermoon
 
         void TrySpell(Action successAction, Action failAction)
         {
-            if (RollDice100() < CurrentPartyMember.Skills[Skill.UseMagic].TotalCurrentValue)
+            long chance = CurrentPartyMember.Skills[Skill.UseMagic].TotalCurrentValue;
+
+            if (Features.HasFlag(Features.ExtendedCurseEffects) &&
+                CurrentPartyMember.Conditions.HasFlag(Condition.Drugged))
+                chance -= 25;
+
+            if (RollDice100() < chance)
                 successAction?.Invoke();
             else
                 failAction?.Invoke();
@@ -11427,7 +11434,7 @@ namespace Ambermoon
             layout.EnableButton(4, currentBattle.CanPartyMoveForward);
             layout.EnableButton(6, CurrentPartyMember.BaseAttackDamage + CurrentPartyMember.BonusAttackDamage > 0 && CurrentPartyMember.Conditions.CanAttack());
             layout.EnableButton(7, CurrentPartyMember.Conditions.CanParry());
-            layout.EnableButton(8, CurrentPartyMember.Conditions.CanCastSpell() && CurrentPartyMember.HasAnySpell());
+            layout.EnableButton(8, CurrentPartyMember.Conditions.CanCastSpell(Features) && CurrentPartyMember.HasAnySpell());
         }
 
         /// <summary>
@@ -17039,7 +17046,7 @@ namespace Ambermoon
             if (CurrentPartyMember?.Class.IsMagic() != true)
                 return false;
 
-            if (CurrentPartyMember?.Conditions.CanCastSpell() != true)
+            if (CurrentPartyMember?.Conditions.CanCastSpell(Features) != true)
                 return false;
 
             return true;

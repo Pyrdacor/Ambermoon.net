@@ -2369,7 +2369,7 @@ namespace Ambermoon
                 {
                     SkipActions();
                 }
-                else if (!condition.CanCastSpell() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.CastSpell))
+                else if (!condition.CanCastSpell(game.Features) && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.CastSpell))
                 {
                     SkipActions();
                 }
@@ -3382,7 +3382,7 @@ namespace Ambermoon
 
                 if (rand < 8)
                 {
-                    if (canCast && monster.HasAnySpell() && monster.Conditions.CanCastSpell() && CanCastAnySpell(monster))
+                    if (canCast && monster.HasAnySpell() && monster.Conditions.CanCastSpell(game.Features) && CanCastAnySpell(monster))
                         return BattleActionType.CastSpell;
 
                     canCast = false;
