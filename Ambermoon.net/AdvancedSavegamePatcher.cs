@@ -812,6 +812,20 @@ namespace Ambermoon
                             data[0x2504 + 406 * 4] &= 0xf7;
                             data[0x2504 + 263 * 4] |= 0x04;
                         }
+
+                        // Remove all existing tile change events which target AA3 (map 368)
+                        List<int> tileChangeEventsToRemove = new();
+                        for (int i = 0x35EB; i < data.Size; i += 6)
+                        {
+                            if (data[i] == 0x01 && data[i + 1] == 0x70)
+                            {
+                                tileChangeEventsToRemove.Add(i);
+                            }
+                        }
+                        for (int i = tileChangeEventsToRemove.Count - 1; i >= 0; --i)
+                        {
+                            data.Remove(tileChangeEventsToRemove[i], 6);
+                        }
                     }
 
                     foreach (var change in partyDataChanges)
