@@ -5,8 +5,8 @@
     <TargetFramework>net7.0</TargetFramework>
     <RootNamespace>Ambermoon</RootNamespace>
     <RuntimeIdentifiers>win-x86;win-x64;linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
-    <Version>1.10.1</Version>
-    <Copyright>Copyright (C) 2020-2024 by Robert Schneckenhaus</Copyright>
+    <Version>1.10.2</Version>
+    <Copyright>Copyright (C) 2020-2025 by Robert Schneckenhaus</Copyright>
     <Company>Robert Schneckenhaus</Company>
     <Authors>Robert Schneckenhaus</Authors>
     <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>

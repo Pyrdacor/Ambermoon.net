@@ -2433,7 +2433,7 @@ namespace Ambermoon
             {
                 // TODO: will only work for legacy data for now!
                 int sourceEpisode;
-                int targetEpisode = 3; // TODO: increase when there is a new one
+                int targetEpisode = GameLanguage == GameLanguage.German ? 3 : 2; // TODO: increase when there is a new one
 
                 if (!savegame.PartyMembers.ContainsKey(16)) // If Kasimir is not there, it is episode 1
                     sourceEpisode = 1;
