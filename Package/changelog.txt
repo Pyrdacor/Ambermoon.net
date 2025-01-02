@@ -1,6 +1,7 @@
 Version 1.10
 ============
 
+- Ambermoon Advanced episode 3 is now available
 - Fixed/improved some monster animations in battle
 - Fixed a text render bug where a space before a newline produced two newlines
 - Fixed crash when some players fled and the last one gets unable to act (e.g. cursed)
