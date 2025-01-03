@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PublishTrimmed>true</PublishTrimmed>
-	<Version>1.10.2</Version>
+	<Version>1.10.3</Version>
 	<Configurations>Debug;Release;DebugES;ReleaseES</Configurations>
 	<ApplicationManifest>app.manifest</ApplicationManifest>
 	<!--<PublishAot>true</PublishAot>-->

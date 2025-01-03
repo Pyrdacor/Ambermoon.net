@@ -2,6 +2,7 @@
 
 ## 1.10.0 - Tenth patch (July 2024 - November 2024)
 
+- Version [1.10.3](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.3): Added english AA episode 3
 - Version [1.10.2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.2): Fix Ambermoon Advanced english (still episode 2)
 - Version [1.10.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.1): Ambermoon Advanced german, fixes and improvements
 - Version [1.10.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.0): First Android version, monster animation fix, many bug fixes
