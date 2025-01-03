@@ -6,11 +6,11 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.10.1 is the most recent version from December 31th 2024. It includes [original version 1.19](https://github.com/Pyrdacor/Ambermoon) and also [Ambermoon Advanced 1.03/1.30](https://github.com/Pyrdacor/Ambermoon-Advanced).
+Version 1.10.3 is the most recent version from December 3rd, 2025. It includes [original version 1.19](https://github.com/Pyrdacor/Ambermoon) and also [Ambermoon Advanced 1.30](https://github.com/Pyrdacor/Ambermoon-Advanced).
 
 You can also download the game on my website at www.pyrdacor.net!
 
-Platform | Download 1.10.1
+Platform | Download 1.10.3
 --- | :-:
 **Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows.zip)
 **Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Linux.tar.gz)
