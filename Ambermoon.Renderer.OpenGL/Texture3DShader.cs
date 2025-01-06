@@ -43,6 +43,7 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultPaletteCountName = TextureShader.DefaultPaletteCountName;
         internal static readonly string DefaultFogColorName = "fogColor";
         internal static readonly string DefaultFogDistanceName = "fogDist";
+        internal static readonly string DefaultFadeName = "fade";
 
         // The palette has a size of 32xNumPalettes pixels.
         // Each row represents one palette of 32 colors.
@@ -61,6 +62,7 @@ namespace Ambermoon.Renderer
             $"uniform vec4 {DefaultSkyReplaceColorName};",
             $"uniform vec4 {DefaultFogColorName};",
             $"uniform float {DefaultFogDistanceName};",
+            $"uniform float {DefaultFadeName};",
             $"in vec2 varTexCoord;",
             $"in float dist;",
             $"flat in float palIndex;",
@@ -92,10 +94,14 @@ namespace Ambermoon.Renderer
             $"    else",
             $"        {DefaultFragmentOutColorName} = vec4(max(vec3(0), pixelColor.rgb + vec3({DefaultLightName}) - vec3(1)), pixelColor.a);",
             $"    ",
-            $"    if ({DefaultFogColorName}.a > 0.001f)",
+            $"    if ({DefaultFadeName} >= 0.9999f && {DefaultFogColorName}.a > 0.001f)",
             $"    {{",
             $"        float fogFactor = {DefaultFogColorName}.a * min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, dist / {DefaultFogDistanceName});",
             $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * (1.0f - fogFactor) + fogFactor * {DefaultFogColorName};",
+            $"    }}",
+            $"    else if ({DefaultFadeName} < 0.9999f)",
+            $"    {{",
+            $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * {DefaultFadeName};",
             $"    }}",
             $"}}"
         };
@@ -202,6 +208,11 @@ namespace Ambermoon.Renderer
             shaderProgram.SetInputVector4(DefaultFogColorName, fogColor.R / 255.0f,
                 fogColor.G / 255.0f, fogColor.B / 255.0f, fogColor.A / 255.0f);
             shaderProgram.SetInput(DefaultFogDistanceName, distance);
+        }
+
+        public void SetFade(float fade)
+        {
+            shaderProgram.SetInput(DefaultFadeName, fade);
         }
 
         public new static Texture3DShader Create(State state) => new Texture3DShader(state);

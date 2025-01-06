@@ -1929,6 +1929,9 @@ namespace Ambermoon
             layout.ShowPortraitArea(true);
             UpdateLight(true);
 
+            if (is3D)
+                Fade3DMapIn(20, FadeTime / 40);
+
             InputEnable = true;
             paused = false;
 
@@ -4483,7 +4486,7 @@ namespace Ambermoon
 
             bool TestEvent()
             {
-                if (!(@event is ConditionEvent conditionEvent))
+                if (@event is not ConditionEvent conditionEvent)
                     return false;
 
                 if (conditionEvent.TypeOfCondition == ConditionEvent.ConditionType.UseItem &&
@@ -5805,27 +5808,33 @@ namespace Ambermoon
             return (float)Math.Sqrt(alpha);
 		}
 
-		void Fade3DMapOut(int totalSteps, int timePerStep, float defaultLight)
+        void Set3DLight(float fade)
+        {
+            renderView.Set3DFade(fade);
+            // TODO: ceiling/floor color
+        }
+
+		void Fade3DMapOut(int totalSteps, int timePerStep)
 		{
             float div = totalSteps;
 
-            for (int i = 1; i <= totalSteps; i++)
+            for (int i = 0; i <= totalSteps; i++)
             {
-                float light = defaultLight * FadeAlphaToLight(1.0f - i / div);
+                float light = FadeAlphaToLight(1.0f - i / div);
 				AddTimedEvent(TimeSpan.FromMilliseconds(i * timePerStep), () =>
-				    renderView.SetLight(light));
+                    Set3DLight(light));
 			}
 		}
 
-		void Fade3DMapIn(int totalSteps, int timePerStep, float defaultLight)
+		void Fade3DMapIn(int totalSteps, int timePerStep)
         {
 			float div = totalSteps;
 
-			for (int i = 1; i <= totalSteps; i++)
+			for (int i = 0; i <= totalSteps; i++)
 			{
-				float light = defaultLight * FadeAlphaToLight(i / div);
+				float light = FadeAlphaToLight(i / div);
 				AddTimedEvent(TimeSpan.FromMilliseconds(i * timePerStep), () =>
-					renderView.SetLight(light));
+                    Set3DLight(light));
 			}
 		}
 
@@ -5840,14 +5849,14 @@ namespace Ambermoon
                 midFadeAction?.Invoke();
 
 				if (currentWindow.Window == Window.MapView && is3D)
-					Fade3DMapIn(20, FadeTime / 40, Get3DLight());
+					Fade3DMapIn(20, FadeTime / 40);
 			});
             if (changeInputEnableState)
                 AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
             AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime + 1), () => Fading = false);
 
             if (currentWindow.Window == Window.MapView && is3D)
-                Fade3DMapOut(10, FadeTime / 40, Get3DLight());
+                Fade3DMapOut(10, FadeTime / 40);
         }
 
         internal void DamageAllPartyMembers(Func<PartyMember, uint> damageProvider, Func<PartyMember, bool> affectChecker = null,
@@ -12312,16 +12321,13 @@ namespace Ambermoon
                     : lightIntensity;
                 renderMap3D.UpdateSky(lightEffectProvider, GameTime, lightBuffIntensity);
                 renderMap3D.SetColorLightFactor(light3D);
-                renderMap3D?.SetFog(Map, MapManager.GetLabdataForMap(Map));
+                renderMap3D.SetFog(Map, MapManager.GetLabdataForMap(Map));
             }
             else // 2D
             {
                 GetTransportsInVisibleArea(out TransportLocation transportAtPlayerIndex);
-                if (player2D == null)
-                {
-                    player2D = new Player2D(this, renderView.GetLayer(Layer.Characters), player, renderMap2D,
-                        renderView.SpriteFactory, new Position(0, 0), MapManager);
-                }
+                player2D ??= new Player2D(this, renderView.GetLayer(Layer.Characters), player, renderMap2D,
+                    renderView.SpriteFactory, new Position(0, 0), MapManager);
                 player2D.BaselineOffset = !CanSee() || transportAtPlayerIndex != null ? MaxBaseLine :
                     player.MovementAbility > PlayerMovementAbility.Swimming ? 32 : 0;
             }

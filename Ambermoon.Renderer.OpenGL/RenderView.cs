@@ -991,6 +991,13 @@ namespace Ambermoon.Renderer.OpenGL
             (GetLayer(Layer.Map3DBackground) as RenderLayer).RenderBuffer.SkyShader.SetLight(light);
         }
 
+        public void Set3DFade(float fade)
+        {
+            (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetFade(fade);
+            (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetFade(fade);
+            //(GetLayer(Layer.Map3DBackground) as RenderLayer).RenderBuffer.SkyShader.SetFade(fade);
+        }
+
         public void SetSkyColorReplacement(uint? skyColor, Color replaceColor)
         {
             (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetSkyColorReplacement(skyColor, replaceColor);

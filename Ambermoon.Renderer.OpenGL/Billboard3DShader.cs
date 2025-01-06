@@ -42,6 +42,7 @@ namespace Ambermoon.Renderer
             $"uniform vec4 {DefaultSkyReplaceColorName};",
             $"uniform vec4 {DefaultFogColorName};",
             $"uniform float {DefaultFogDistanceName};",
+            $"uniform float {DefaultFadeName};",
             $"in vec2 varTexCoord;",
             $"in float dist;",
             $"in float drawY;",
@@ -69,10 +70,14 @@ namespace Ambermoon.Renderer
             $"    else",
             $"        {DefaultFragmentOutColorName} = vec4(pixelColor.rgb + vec3({DefaultLightName}) - vec3(1), pixelColor.a);",
             $"    ",
-            $"    if ({DefaultFogColorName}.a > 0.001f)",
+            $"    if ({DefaultFadeName} >= 0.9999f && {DefaultFogColorName}.a > 0.001f)",
             $"    {{",
             $"        float fogFactor = {DefaultFogColorName}.a * ({DefaultSkyColorIndexName} < 31.5f && drawY > 0.0f ? min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, dist / ({DefaultFogDistanceName} * (1.0f + 2.5f * drawY))) : min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, dist / {DefaultFogDistanceName}));",
             $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * (1.0f - fogFactor) + fogFactor * {DefaultFogColorName};",
+            $"    }}",
+            $"    else if ({DefaultFadeName} < 0.9999f)",
+            $"    {{",
+            $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * {DefaultFadeName};",
             $"    }}",
             $"}}"
         };

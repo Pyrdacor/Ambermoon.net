@@ -66,6 +66,7 @@ namespace Ambermoon.Render
         ICamera3D Camera3D { get; }
         Action<float> AspectProcessor { get; }
         void SetLight(float light);
+        void Set3DFade(float fade);
         void SetSkyColorReplacement(uint? skyColor, Color replaceColor);
         PaletteReplacement PaletteReplacement { get; set; }
         PaletteReplacement HorizonPaletteReplacement { get; set; }

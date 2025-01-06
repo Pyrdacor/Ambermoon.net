@@ -977,6 +977,11 @@ namespace Ambermoon.Render
             }
         }
 
+        public void EnableFloorAndCeilingColors(bool enable)
+        {
+            floorColor.Visible = ceilingColor.Visible = enable && game.CanSee();
+        }
+
         void SetColors(PaletteReplacement paletteReplacement)
         {
             floorColor.Visible = ceilingColor.Visible = game.CanSee();
@@ -1840,8 +1845,7 @@ namespace Ambermoon.Render
                 return;
             }
 
-            if (skyColors != null)
-                skyColors.ForEach(c => c?.Delete());
+            skyColors?.ForEach(c => c?.Delete());
 
             bool canSee = game.CanSee();
 
