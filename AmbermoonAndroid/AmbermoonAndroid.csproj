@@ -8,7 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationId>com.pyrdacor.AmbermoonAndroid</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
-    <ApplicationDisplayVersion>1.10.3</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>1.10.4</ApplicationDisplayVersion>
     <Configurations>Debug;Release</Configurations>
     <GenerateResourceUsePreserializedResources>false</GenerateResourceUsePreserializedResources>
     <SignAssembly>False</SignAssembly>
