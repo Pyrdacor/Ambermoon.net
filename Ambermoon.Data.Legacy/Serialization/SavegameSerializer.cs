@@ -378,6 +378,30 @@ namespace Ambermoon.Data.Legacy.Serialization
                 WriteCurrentSlot(data, currentSlot);
                 Buffer.BlockCopy(nameData, 0, data, 2 + slot * 39, 39);
                 legacyGameData.Files["Saves"].Files[1] = new DataReader(data);
+
+                // If someone replaces the saves manually outside the game and also the Saves file,
+                // it might be reflected in game but when saving, those changes will be lost.
+                // So if slots are missing in game data but are present in external saves file and
+                // there are folders for the slot, we will add it.
+                if (externalSavesPath != null && File.Exists(externalSavesPath))
+                {
+                    int externalCurrentSlot = 0;
+                    var externalSavesReader = new DataReader(File.ReadAllBytes(externalSavesPath));
+                    var externalSaveNames = GetSavegameNames(externalSavesReader, ref externalCurrentSlot);
+                    var internalSaveNames = GetSavegameNames(new DataReader(data), ref currentSlot);
+                    var basePath = Path.GetDirectoryName(externalSavesPath);
+
+                    for (int i = 0; i < 10; i++)
+                    {
+                        if (string.IsNullOrWhiteSpace(internalSaveNames[i]) && !string.IsNullOrWhiteSpace(externalSaveNames[i]) &&
+                            Directory.Exists(Path.Combine(basePath, $"Save.{i+1:00}")))
+                        {
+                            internalSaveNames[i] = externalSaveNames[i];
+                            var internalSaveData = ConvertName(internalSaveNames[i]);
+                            Buffer.BlockCopy(internalSaveData, 0, data, 2 + i * 39, 39);
+                        }
+                    }
+                }
             }
         }
     }

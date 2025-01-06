@@ -86,7 +86,7 @@ namespace Ambermoon.Audio.OpenAL
                     }
                 }
                 var newBuffers = new uint[count];
-                for (int i = 0; i < count; ++i)
+                for (int i = 0; i < count && !cancellationToken.IsCancellationRequested; ++i)
                 {
                     var nextBuffer = new AudioBuffer(al, channels, sampleRate, sample8Bit, bufferPosition);
                     nextBuffer.Stream(audioStream.Stream(BufferDuration));
@@ -102,11 +102,18 @@ namespace Ambermoon.Audio.OpenAL
                     queuedBuffers.Enqueue(nextBuffer);
                     newBuffers[i] = nextBuffer.Index;
                 }
-                al.SourceQueueBuffers(source, newBuffers);
+                if (!cancellationToken.IsCancellationRequested)
+                    al.SourceQueueBuffers(source, newBuffers);
             }
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
 
             // Start with 3 buffers (up to 12 seconds)
             SetupNextBuffers(BufferCount);
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
 
             // Start playing the source
             al.SourcePlay(source);
