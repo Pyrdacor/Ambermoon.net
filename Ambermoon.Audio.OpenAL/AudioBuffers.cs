@@ -102,8 +102,20 @@ namespace Ambermoon.Audio.OpenAL
                     queuedBuffers.Enqueue(nextBuffer);
                     newBuffers[i] = nextBuffer.Index;
                 }
+
                 if (!cancellationToken.IsCancellationRequested)
+                {
                     al.SourceQueueBuffers(source, newBuffers);
+                }
+                else if (queuedBuffers.Count != 0)
+                {
+                    for (int i = 0; i < Math.Min(count, queuedBuffers.Count); ++i)
+                    {
+                        var buffer = queuedBuffers.Dequeue();
+                        al.SourceUnqueueBuffers(source, new uint[1] { buffer.Index });
+                        buffer.Dispose();
+                    }
+                }
             }
 
             if (cancellationToken.IsCancellationRequested)
