@@ -17,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LICENSE = LICENSE
 		nuget.ps1 = nuget.ps1
 		publish.ps1 = publish.ps1
+		Quests.md = Quests.md
 		README.md = README.md
 		ToDo.md = ToDo.md
 		versions.dat = versions.dat
