@@ -1,7 +1,7 @@
 ﻿/*
  * Game.cs - Game core of Ambermoon
  *
- * Copyright (C) 2020-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -5828,7 +5828,7 @@ namespace Ambermoon
 
 		void Fade3DMapIn(int totalSteps, int timePerStep)
         {
-			float div = totalSteps;
+            float div = totalSteps;
 
 			for (int i = 0; i <= totalSteps; i++)
 			{
