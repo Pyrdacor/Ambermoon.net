@@ -4,6 +4,27 @@ namespace Ambermoon.UI;
 
 internal static class QuestTexts
 {
+    public static readonly Dictionary<GameLanguage, string> LegendActive = new()
+    {
+        { GameLanguage.German, "Aktiv" },
+        { GameLanguage.English, "Active" },
+        // TODO ...
+    };
+
+    public static readonly Dictionary<GameLanguage, string> LegendBlocked = new()
+    {
+        { GameLanguage.German, "Blockiert" },
+        { GameLanguage.English, "Blocked" },
+        // TODO ...
+    };
+
+    public static readonly Dictionary<GameLanguage, string> LegendCompleted = new()
+    {
+        { GameLanguage.German, "Abgeschlossen" },
+        { GameLanguage.English, "Completed" },
+        // TODO ...
+    };
+
     public static readonly Dictionary<GameLanguage, Dictionary<MainQuestType, string>> MainQuests = new()
     {
         { GameLanguage.German, new()
@@ -53,12 +74,27 @@ internal static class QuestTexts
     {
         { GameLanguage.German, new()
         {
+            // Grandfather's Quest
             { SubQuestType.Grandfather_GoToWineCellar, "Gehe in den Weinkeller" },
+            { SubQuestType.Grandfather_FindHisEquipment, "Finde Großvaters Ausrüstung" },
+            { SubQuestType.Grandfather_RemoveCaveIn, "Beseitige den Einsturz" },
+            { SubQuestType.Grandfather_VisitAntonius, "Besuche Vater Antonius" },
+            // Swamp Fever
+            { SubQuestType.SwampFever_ObtainEmptyBottle, "Besorge eine leere Phiole" },
+            { SubQuestType.SwampFever_ObtainSwampLilly, "Besorge eine Sumpflilie" },
+            { SubQuestType.SwampFever_ObtainWaterOfLife, "Besorge Wasser des Lebens" },
             // TODO ...
         } },
         { GameLanguage.English, new()
         {
             { SubQuestType.Grandfather_GoToWineCellar, "Go to the wine cellar" },
+            { SubQuestType.Grandfather_FindHisEquipment, "Find grandfather's equipment" },
+            { SubQuestType.Grandfather_RemoveCaveIn, "Remove the cave-in" },
+            { SubQuestType.Grandfather_VisitAntonius, "Visit father Anthony" },
+            // Swamp Fever
+            { SubQuestType.SwampFever_ObtainEmptyBottle, "Obtain an empty bottle" },
+            { SubQuestType.SwampFever_ObtainSwampLilly, "Obtain a swamp lilly" },
+            { SubQuestType.SwampFever_ObtainWaterOfLife, "Obtain water of life" },
             // TODO ...
         } }
         // TODO ...

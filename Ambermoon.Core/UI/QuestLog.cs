@@ -117,11 +117,9 @@ file static class QuestStateExtensions
     {
         return state switch
         {
-            QuestState.Inactive => TextColor.DarkGray,
             QuestState.Active => TextColor.Yellow,
-            QuestState.Blocked => TextColor.Red,
-            QuestState.Completed => TextColor.DarkGray,
-            _ => throw new NotImplementedException(),
+            QuestState.Blocked => TextColor.DarkBrown,
+            _ => TextColor.DarkerGray,
         };
     }
 
@@ -164,7 +162,16 @@ public enum MainQuestType
 
 public enum SubQuestType
 {
+    // Grandfather's Quest
     Grandfather_GoToWineCellar,
+    Grandfather_FindHisEquipment,
+    Grandfather_RemoveCaveIn,
+    Grandfather_VisitAntonius,
+    // Swamp Fever
+    SwampFever_ObtainEmptyBottle,
+    SwampFever_ObtainSwampLilly,
+    SwampFever_ObtainWaterOfLife,
+    // ...
 }
 
 public record SubQuest(MainQuest Quest, QuestState initialState = QuestState.Inactive)
@@ -244,6 +251,9 @@ public record MainQuest(QuestLog QuestLog)
             if (quest != subQuest)
                 quest.Update(QuestLog.Quests);
         }
+
+        if (this.ToCompoundState() == QuestState.Completed) // all completed?
+            QuestLog.CompleteMainQuest(Type);
     }
 }
 
@@ -343,34 +353,58 @@ public class QuestLog
         [
             #region Original quests
             QuestFactory.CreateMainQuest(this, MainQuestType.Grandfather,
-                mainQuest => new SubQuest(mainQuest, QuestState.Active)
+                mainQuest => new SubQuest(mainQuest, QuestState.Completed)
                 {
                     Type = SubQuestType.Grandfather_GoToWineCellar,
-                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
+                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0), // TODO
                     RequiredCompletedQuests = [],
                     AnyCompletedQuests = [],
                     AddAfter = null,
-                    SourceType = null,
-                    SourceIndex = null,
+                    SourceType = CharacterType.NPC,
+                    SourceIndex = 1,
+                    MinAmount = null,
+                    MaxCompletionCount = 1
+                },
+                mainQuest => new SubQuest(mainQuest, QuestState.Completed)
+                {
+                    Type = SubQuestType.Grandfather_FindHisEquipment,
+                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0), // TODO
+                    RequiredCompletedQuests = [SubQuestType.Grandfather_GoToWineCellar],
+                    AnyCompletedQuests = [],
+                    AddAfter = null,
+                    SourceType = CharacterType.NPC,
+                    SourceIndex = 1,
+                    MinAmount = null,
+                    MaxCompletionCount = 1
+                },
+                mainQuest => new SubQuest(mainQuest, QuestState.Completed)
+                {
+                    Type = SubQuestType.Grandfather_RemoveCaveIn,
+                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0), // TODO
+                    RequiredCompletedQuests = [SubQuestType.Grandfather_FindHisEquipment],
+                    AnyCompletedQuests = [],
+                    AddAfter = null,
+                    SourceType = CharacterType.NPC,
+                    SourceIndex = 1,
                     MinAmount = null,
                     MaxCompletionCount = 1
                 },
                 mainQuest => new SubQuest(mainQuest, QuestState.Active)
                 {
-                    Type = SubQuestType.Grandfather_GoToWineCellar,
-                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
-                    RequiredCompletedQuests = [],
+                    Type = SubQuestType.Grandfather_VisitAntonius,
+                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0), // TODO
+                    RequiredCompletedQuests = [SubQuestType.Grandfather_RemoveCaveIn],
                     AnyCompletedQuests = [],
                     AddAfter = null,
-                    SourceType = null,
-                    SourceIndex = null,
+                    SourceType = CharacterType.NPC,
+                    SourceIndex = 2,
                     MinAmount = null,
                     MaxCompletionCount = 1
                 }),
             QuestFactory.CreateMainQuest(this, MainQuestType.SwampFever,
                 mainQuest => new SubQuest(mainQuest, QuestState.Active)
                 {
-                    Type = SubQuestType.Grandfather_GoToWineCellar,
+                    Type = SubQuestType.SwampFever_ObtainSwampLilly,
                     Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
                     RequiredCompletedQuests = [],
                     AnyCompletedQuests = [],
@@ -380,9 +414,21 @@ public class QuestLog
                     MinAmount = null,
                     MaxCompletionCount = 1
                 },
-                mainQuest => new SubQuest(mainQuest, QuestState.Active)
+                mainQuest => new SubQuest(mainQuest, QuestState.Blocked)
                 {
-                    Type = SubQuestType.Grandfather_GoToWineCellar,
+                    Type = SubQuestType.SwampFever_ObtainEmptyBottle,
+                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
+                    RequiredCompletedQuests = [],
+                    AnyCompletedQuests = [],
+                    AddAfter = null,
+                    SourceType = null,
+                    SourceIndex = null,
+                    MinAmount = null,
+                    MaxCompletionCount = 1
+                },
+                mainQuest => new SubQuest(mainQuest, QuestState.Blocked)
+                {
+                    Type = SubQuestType.SwampFever_ObtainWaterOfLife,
                     Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
                     RequiredCompletedQuests = [],
                     AnyCompletedQuests = [],
@@ -553,6 +599,11 @@ public class QuestLog
         }
     }
 
+    internal void CompleteMainQuest(MainQuestType questType)
+    {
+        questGroups[questType] = false; // collapse completed quests
+    }
+
     public void Check(Event @event)
     {
         foreach (var quest in Quests.SelectMany(q => q.SubQuests).Where(q => q.State != QuestState.Completed))
@@ -599,7 +650,8 @@ public class QuestLog
 
         popup = game.Layout.OpenPopup(area.Position, Columns, Rows, true, false, 8);
 
-        popup.AddSunkenBox(new Rect(area.Left + 16 + 4 - 2, area.Top + 16, area.Width - 32 - 16, area.Height - 32 - 16 + 2));
+        var boxArea = new Rect(area.Left + 16 + 3 - 2, area.Top + 16 - 2, area.Width - 32 - 16 + 3, area.Height - 32 - 16 + 2);
+        popup.AddSunkenBox(boxArea);
 
         var closeButton = popup.AddButton(new Position(area.Right - 16 - Button.Width - 4, area.Bottom - 16 - Button.Height + 2));
         closeButton.ButtonType = Data.Enumerations.ButtonType.Ok;
@@ -610,7 +662,7 @@ public class QuestLog
         };
         closeButton.Visible = true;
 
-        var textArea = new Rect(area.Left + 16 + 4, area.Top + 16 + 1, area.Width - 32 - 16, area.Height - 32 - 16);
+        var textArea = new Rect(area.Left + 16 + 3, area.Top + 16 - 2 + 1, area.Width - 32 - 16, area.Height - 32 - 16);
 
         for (int i = 0; i < TextLineCount; i++)
         {
@@ -622,6 +674,27 @@ public class QuestLog
 
         scrollbar = null;
 
+        // Legend
+        var legendAreaX = boxArea.Left + 1;
+        var legendAreaY = boxArea.Bottom + 4;
+        void AddColorRect(TextColor color)
+        {
+            popup.FillArea(new Rect(legendAreaX - 1, legendAreaY - 1, 8, 8), Color.DarkShadow, 1);
+            popup.FillArea(new Rect(legendAreaX, legendAreaY, 6, 6), game.GetPrimaryUIColor((int)color), 2);
+            legendAreaX += 9;
+        }
+        void AddLegendText(string text)
+        {
+            popup.AddText(new Position(legendAreaX, legendAreaY), text, TextColor.LightGray);
+            legendAreaX += text.Length * Global.GlyphWidth + 4;
+        }
+        AddColorRect(QuestState.Active.ToColor());
+        AddLegendText(QuestTexts.LegendActive[game.GameLanguage]);
+        AddColorRect(QuestState.Blocked.ToColor());
+        AddLegendText(QuestTexts.LegendBlocked[game.GameLanguage]);
+        AddColorRect(QuestState.Completed.ToColor());
+        AddLegendText(QuestTexts.LegendCompleted[game.GameLanguage]);
+
         Redraw();
 
         Open = true;
@@ -629,7 +702,7 @@ public class QuestLog
 
     private static string TruncateText(string text, bool header)
     {
-        int maxLength = header ? 43 : 42;
+        int maxLength = header ? 44 : 43;
         return text.Length <= maxLength ? text : text[0..(maxLength - 2)] + "..";
     }
 
@@ -668,7 +741,7 @@ public class QuestLog
 
         if (scrollbar == null)
         {
-            scrollbar = popup.AddScrollbar(game.Layout, scrollRange, 1, -2);
+            scrollbar = popup.AddScrollbar(game.Layout, scrollRange, 1, -1);
             scrollbar.Scrolled += ScrollTo;
             scrollOffset = Math.Min(scrollRange, scrollOffset);
 
@@ -686,7 +759,7 @@ public class QuestLog
         }
 
         var area = Area;
-        var textArea = new Rect(area.Left + 16 + 4, area.Top + 16 + 1, area.Width - 32 - 16, area.Height - 32 - 16);
+        var textArea = new Rect(area.Left + 16 + 3, area.Top + 16 - 2 + 1, area.Width - 32 - 16, area.Height - 32 - 16);
 
         int questIndex = 0;
         int subIndex = 0;
