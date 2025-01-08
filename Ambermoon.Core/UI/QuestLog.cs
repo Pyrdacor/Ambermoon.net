@@ -130,13 +130,13 @@ file static class QuestStateExtensions
         if (states.Length == 1 && states[0] == QuestState.Completed)
             return QuestState.Completed;
 
+        if (states.Contains(QuestState.Active))
+            return QuestState.Active;
+
         if (states.Contains(QuestState.Blocked))
             return QuestState.Blocked;
 
-        if (states.Contains(QuestState.Inactive))
-            return QuestState.Inactive;
-
-        return QuestState.Active;
+        return states.Contains(QuestState.Completed) ? QuestState.Active : QuestState.Inactive;
     }
 }
 
@@ -439,7 +439,7 @@ public class QuestLog
                     MaxCompletionCount = 1
                 }),
             QuestFactory.CreateMainQuest(this, MainQuestType.AlkemsRing,
-                mainQuest => new SubQuest(mainQuest, QuestState.Active)
+                mainQuest => new SubQuest(mainQuest, QuestState.Inactive)
                 {
                     Type = SubQuestType.Grandfather_GoToWineCellar,
                     Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
@@ -820,6 +820,17 @@ public class QuestLog
             else
             {
                 var subQuest = quest.SubQuests[subIndex++];
+
+                while (subQuest.State == QuestState.Inactive)
+                {
+                    if (subIndex == quest.SubQuests.Length)
+                    {
+                        header = true;
+                        break;
+                    }
+
+                    subQuest = quest.SubQuests[subIndex++];
+                }
 
                 if (iterationIndex >= scrollOffset)
                 {
