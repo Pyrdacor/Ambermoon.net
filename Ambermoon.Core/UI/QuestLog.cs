@@ -564,7 +564,7 @@ public class QuestLog
                     MaxCompletionCount = 1
                 }),
             QuestFactory.CreateMainQuest(this, MainQuestType.GoldenHorseshoes,
-                mainQuest => new SubQuest(mainQuest, QuestState.Active)
+                mainQuest => new SubQuest(mainQuest, QuestState.Inactive)
                 {
                     Type = SubQuestType.Grandfather_GoToWineCellar,
                     Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
@@ -576,7 +576,7 @@ public class QuestLog
                     MinAmount = null,
                     MaxCompletionCount = 1
                 },
-                mainQuest => new SubQuest(mainQuest, QuestState.Active)
+                mainQuest => new SubQuest(mainQuest, QuestState.Inactive)
                 {
                     Type = SubQuestType.Grandfather_GoToWineCellar,
                     Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
@@ -723,13 +723,15 @@ public class QuestLog
 
         collapseIndicators.Clear();
 
+        var quests = Quests.Where(quest => quest.ToCompoundState() != QuestState.Inactive).ToArray();
+
         int visibleLines = 0;
 
-        for (int i = 0; i < Quests.Length; i++)
+        for (int i = 0; i < quests.Length; i++)
         {
-            if (questGroups[Quests[i].Type])
+            if (questGroups[quests[i].Type])
             {
-                visibleLines += 1 + Quests[i].SubQuests.Length;
+                visibleLines += 1 + quests[i].SubQuests.Where(s => s.State != QuestState.Inactive).Count();
             }
             else
             {
@@ -770,14 +772,14 @@ public class QuestLog
 
         while (true)
         {
-            if (questIndex == Quests.Length)
+            if (questIndex == quests.Length)
             {
                 for (int j = textIndex; j < TextLineCount; j++)
                     texts[j].Visible = false;
                 break;
             }
 
-            var quest = Quests[questIndex];
+            var quest = quests[questIndex];
 
             if (!header && subIndex == quest.SubQuests.Length)
             {
@@ -785,19 +787,19 @@ public class QuestLog
                 subIndex = 0;
                 header = true;
 
-                if (questIndex == Quests.Length)
+                if (questIndex == quests.Length)
                 {
                     for (int j = textIndex; j < TextLineCount; j++)
                         texts[j].Visible = false;
                     break;
                 }
 
-                quest = Quests[questIndex];
+                quest = quests[questIndex];
             }
 
             if (header)
             {
-                bool expanded = questGroups[Quests[questIndex].Type];
+                bool expanded = questGroups[quests[questIndex].Type];
 
                 if (iterationIndex >= scrollOffset)
                 {
