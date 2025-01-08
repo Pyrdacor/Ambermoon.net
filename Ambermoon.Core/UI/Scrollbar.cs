@@ -111,6 +111,14 @@ namespace Ambermoon.UI
                 Disabled = true;
         }
 
+        public void SetScrollRange(int scrollRange)
+        {
+            ScrollRange = scrollRange;
+
+            if (scrollRange == 0)
+                Disabled = true;
+        }
+
         void SetBarPosition(Position position)
         {
             if (this.position == position)

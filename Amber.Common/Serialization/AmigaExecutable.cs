@@ -92,7 +92,7 @@ namespace Amber.Serialization
 			public uint Size { get; internal set; }
 			public uint MemoryFlags { get; internal set; }
 			public uint NumEntries;
-			public byte[] Data;
+			public byte[]? Data;
         }
 
 		public struct Reloc32Hunk : IHunk

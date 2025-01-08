@@ -275,6 +275,10 @@ namespace Ambermoon
 
                 Game?.PostFullscreenChanged();
             }
+            else if (key == Silk.NET.Input.Key.F6)
+            {
+                Game?.OpenQuestLog();
+            }
             else if (key == Silk.NET.Input.Key.F7)
             {
                 if (Game != null && !Game.BattleRoundActive)

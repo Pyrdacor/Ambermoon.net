@@ -5,6 +5,7 @@
 - Dependency of main quests (e.g. finish Tolimar quest to continue grandfather's quest)
 - Source (person name)
 - Amount updates (like find 1/3 items and later 2/3, 3/3)
+- Priorities / recommendations what to do next?
 
 
 ## Original game
@@ -22,8 +23,6 @@
   - Enter crypta (unlock)
   - Find ring
   - Return ring
-- Ambermoon picture
-  - Deliver picture to Baron Karsten
 - Thief plague
   - Find hideout
   - Find Nagier (kill or make peace)
@@ -47,3 +46,27 @@
 - Chain of office
   - Obtain chain of office
   - Return to Head of Spannenberg
+- Thief guild
+  - ...
+- Monstereye
+  - Buy monstereye
+- The madman (given by the nurse or when you directly kill him)
+  - Kill madman (only added when you do so, and then directly completed)
+  - Find second part of amulet (if you obtain it)
+  - Unite amulet (if you obtain the second part)
+- Sandra's daughter
+  - Look for Sabine in Burnville (added by Sandra, completed when finding the note)
+	- Maybe hint swimming there?
+- Tower of black magic
+  - Find tower / use sphere of opening (Nelvin)
+  - Rescue Burnville people (added when meeting Sabine)
+  - Weaken Luminor (icewater)
+  - Kill Luminor
+- Valdyn's return
+  - Find a way to return Valdyn to his world
+  - Use yellow sphere on portal (add exp to this/change that Valdyn must be there when you use it, added when getting it from the Moranian)
+- Ambermoon picture
+  - Deliver picture to Baron Karsten
+- Amberstar (if you obtain it)
+  - Go to the temple of brotherhood
+  - Defeat Thornahuun

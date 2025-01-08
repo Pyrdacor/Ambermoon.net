@@ -417,6 +417,7 @@ namespace Ambermoon
         bool allInputDisabled = false;
         bool inputEnable = true;
         bool paused = false;
+        QuestLog questLog;
         public bool Fading { get; private set; } = false;
         internal bool ConversationTextActive { get; private set; } = false;
         Func<MouseButtons, bool> nextClickHandler = null;
@@ -1934,6 +1935,8 @@ namespace Ambermoon
 
             InputEnable = true;
             paused = false;
+
+            questLog = new(this, renderView, renderView.GameData.Advanced, 3); // TODO: adjust episode if it changes
 
             if (layout.ButtonGridPage == 1)
                 ToggleButtonGridPage();
@@ -4047,6 +4050,13 @@ namespace Ambermoon
                         {
                             currentBattle.ResetClick();
                         }
+                    }
+
+                    if (questLog?.Open == true)
+                    {
+                        CursorType = CursorType.Sword;
+                        questLog.Click(relativePosition);
+                        return;
                     }
 
                     var cursorType = CursorType.Sword;
@@ -16713,6 +16723,14 @@ namespace Ambermoon
                 responseHandler?.Invoke(PopupTextEvent.Response.Close);
             }, true, true);
             CursorType = CursorType.Click;
+        }
+
+        public void OpenQuestLog()
+        {
+            if (WindowActive || PopupActive || !InputEnable || allInputDisabled)
+                return;
+
+            questLog.Show();
         }
 
         void ShowEvent(IText text, uint imageIndex, Action closeAction,
