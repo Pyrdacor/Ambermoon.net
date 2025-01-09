@@ -74,27 +74,42 @@ internal static class QuestTexts
     {
         { GameLanguage.German, new()
         {
-            // Grandfather's Quest
+            // Grandfather's Quest            
+            { SubQuestType.Grandfather_TalkToGrandfather, "Rede mit deinem Großvater" },
             { SubQuestType.Grandfather_GoToWineCellar, "Gehe in den Weinkeller" },
             { SubQuestType.Grandfather_FindHisEquipment, "Finde Großvaters Ausrüstung" },
             { SubQuestType.Grandfather_RemoveCaveIn, "Beseitige den Einsturz" },
-            { SubQuestType.Grandfather_VisitAntonius, "Besuche Vater Antonius" },
+            { SubQuestType.Grandfather_ReturnToGrandfather, "Kehre zu Großvater zurück" },
+            { SubQuestType.Grandfather_VisitGrave, "Besuche Großvaters Grab" },
             // Swamp Fever
+            { SubQuestType.SwampFever_TalkToFatherAnthony, "Sprich mit Vater Antonius" },
             { SubQuestType.SwampFever_ObtainEmptyBottle, "Besorge eine leere Phiole" },
             { SubQuestType.SwampFever_ObtainSwampLilly, "Besorge eine Sumpflilie" },
             { SubQuestType.SwampFever_ObtainWaterOfLife, "Besorge Wasser des Lebens" },
+            // Alkem's Ring
+            { SubQuestType.AlkemsRing_EnterTheCrypt, "Betritt die alte Krypta" },
+            { SubQuestType.AlkemsRing_FindTheRing, "Finde den Ring in der Krypta" },
+            { SubQuestType.AlkemsRing_ReturnTheRing, "Bring den Ring zu Alkem" },
             // TODO ...
         } },
         { GameLanguage.English, new()
         {
+            // Grandfather's Quest  
+            { SubQuestType.Grandfather_TalkToGrandfather, "Talk to your grandfather" },
             { SubQuestType.Grandfather_GoToWineCellar, "Go to the wine cellar" },
             { SubQuestType.Grandfather_FindHisEquipment, "Find grandfather's equipment" },
             { SubQuestType.Grandfather_RemoveCaveIn, "Remove the cave-in" },
-            { SubQuestType.Grandfather_VisitAntonius, "Visit father Anthony" },
+            { SubQuestType.Grandfather_ReturnToGrandfather, "Return to grandfather" },
+            { SubQuestType.Grandfather_VisitGrave, "Visit grandfather's grave" },
             // Swamp Fever
+            { SubQuestType.SwampFever_TalkToFatherAnthony, "Talk to Father Anthony" },
             { SubQuestType.SwampFever_ObtainEmptyBottle, "Obtain an empty bottle" },
             { SubQuestType.SwampFever_ObtainSwampLilly, "Obtain a swamp lilly" },
             { SubQuestType.SwampFever_ObtainWaterOfLife, "Obtain water of life" },
+            // Alkem's Ring
+            { SubQuestType.AlkemsRing_EnterTheCrypt, "Enter the old crypt" },
+            { SubQuestType.AlkemsRing_FindTheRing, "Find the ring inside the crypt" },
+            { SubQuestType.AlkemsRing_ReturnTheRing, "Return the ring to Alkem" },
             // TODO ...
         } }
         // TODO ...

@@ -417,7 +417,7 @@ namespace Ambermoon
         bool allInputDisabled = false;
         bool inputEnable = true;
         bool paused = false;
-        QuestLog questLog;
+        internal QuestLog QuestLog { get; private set; }
         public bool Fading { get; private set; } = false;
         internal bool ConversationTextActive { get; private set; } = false;
         Func<MouseButtons, bool> nextClickHandler = null;
@@ -1936,7 +1936,7 @@ namespace Ambermoon
             InputEnable = true;
             paused = false;
 
-            questLog = new(this, renderView, renderView.GameData.Advanced, 3); // TODO: adjust episode if it changes
+            QuestLog = new(this, renderView, renderView.GameData.Advanced, 3); // TODO: adjust episode if it changes
 
             if (layout.ButtonGridPage == 1)
                 ToggleButtonGridPage();
@@ -4052,10 +4052,10 @@ namespace Ambermoon
                         }
                     }
 
-                    if (questLog?.Open == true)
+                    if (QuestLog?.Open == true)
                     {
                         CursorType = CursorType.Sword;
-                        questLog.Click(relativePosition);
+                        QuestLog.Click(relativePosition);
                         return;
                     }
 
@@ -5642,6 +5642,8 @@ namespace Ambermoon
             partyMember ??= CurrentInventory;
 
             partyMember.TotalWeight += (uint)amount * item.Weight;
+
+            QuestLog.CheckItem(item, (uint)amount);
 
             if (CurrentWindow.Window == Window.Inventory)
                 layout.UpdateLayoutButtons();
@@ -7473,6 +7475,8 @@ namespace Ambermoon
 
                 if (CanSee())
                 {
+                    QuestLog.CheckExploration(Map.Index, (uint)player3D.Position.X + 1, (uint)player3D.Position.Y + 1);
+
                     var labdata = MapManager.GetLabdataForMap(Map);
 
                     for (int y = -1; y <= 1; ++y)
@@ -7996,7 +8000,11 @@ namespace Ambermoon
                     {
                         CurrentSavegame.UnlockChest(chestEvent.RealChestIndex - 1);
                         currentWindow.Window = Window.Chest; // This avoids returning to locked screen when closing chest window.
-                        ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true, true));
+                        ExecuteNextUpdateCycle(() =>
+                        {
+                            QuestLog.CheckChestUnlock(chestEvent.ChestIndex + 1);
+                            ShowChest(chestEvent, false, false, map, position, true, true);
+                        });
                     }, null, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                     chestEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
                     (uint)player.Position.X, (uint)player.Position.Y, map.Events[(int)chestEvent.UnlockFailedEventIndex], true),
@@ -8043,6 +8051,7 @@ namespace Ambermoon
                         player2D.UpdateAppearance(CurrentTicks);
                     }
                     CurrentSavegame.UnlockDoor(doorEvent.DoorIndex);
+                    QuestLog.CheckDoorUnlock(doorEvent.DoorIndex);
                     if (unlockText != null)
                     {
                         layout.ShowClickChestMessage(unlockText, Close);
@@ -16730,7 +16739,7 @@ namespace Ambermoon
             if (WindowActive || PopupActive || !InputEnable || allInputDisabled)
                 return;
 
-            questLog.Show();
+            QuestLog.Show();
         }
 
         void ShowEvent(IText text, uint imageIndex, Action closeAction,

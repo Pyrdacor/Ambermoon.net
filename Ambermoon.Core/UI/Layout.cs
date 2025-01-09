@@ -4749,7 +4749,7 @@ namespace Ambermoon.UI
                 ChestText?.Destroy();
                 ChestText = null;
             }
-            else if (!(game.OpenStorage is Game.ConversationItems))
+            else if (game.OpenStorage is not Game.ConversationItems)
             {
                 SetInventoryMessage(null);
             }
