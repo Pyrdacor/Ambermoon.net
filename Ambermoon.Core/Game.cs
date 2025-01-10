@@ -251,7 +251,7 @@ namespace Ambermoon
         public event Action<IConfiguration, bool> ConfigurationChanged;
         internal GameLanguage GameLanguage { get; private set; }
         CharacterCreator characterCreator = null;
-        readonly Random random = new Random();
+        readonly Random random = new();
         bool disableMusicChange = false;
         bool disableTimeEvents = false;
         readonly string gameVersionName;
@@ -260,7 +260,7 @@ namespace Ambermoon
 		public Features Features { get; }
         public const int NumAdditionalSavegameSlots = 20;
         internal SavegameTime GameTime { get; private set; } = null;
-        readonly List<uint> changedMaps = new List<uint>();
+        readonly List<uint> changedMaps = [];
         internal const int FadeTime = 1000;
         public const int MaxPartyMembers = 6;
         public const uint TicksPerSecond = 60;
@@ -418,6 +418,7 @@ namespace Ambermoon
         bool inputEnable = true;
         bool paused = false;
         internal QuestLog QuestLog { get; private set; }
+        readonly ILayerSprite questLogIcon;
         public bool Fading { get; private set; } = false;
         internal bool ConversationTextActive { get; private set; } = false;
         Func<MouseButtons, bool> nextClickHandler = null;
@@ -755,6 +756,13 @@ namespace Ambermoon
             ouchSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Ouch));
             ouchSprite.Visible = false;
             ouchEvent.Action = () => ouchSprite.Visible = false;
+            questLogIcon = renderView.SpriteFactory.Create(16, 16, true) as ILayerSprite;
+            questLogIcon.Layer = renderView.GetLayer(Layer.Misc);
+            questLogIcon.PaletteIndex = PrimaryUIPaletteIndex;
+            questLogIcon.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Misc).GetOffset(QuestLog.IconGraphicIndex);
+            questLogIcon.X = 0;
+            questLogIcon.Y = 8;
+            questLogIcon.Visible = true;
 
             if (Configuration.IsMobile)
             {
@@ -864,10 +872,13 @@ namespace Ambermoon
 
             PlayMusic(Song.HisMastersVoice);
 
+            questLogIcon.Visible = false;
+
             characterCreator = new CharacterCreator(renderView, this, (name, female, portraitIndex) =>
             {
                 LoadInitial(name, female, (uint)portraitIndex, FixSavegameValues);
                 characterCreator = null;
+                questLogIcon.Visible = true;
             });
         }
 
@@ -4052,7 +4063,14 @@ namespace Ambermoon
                         }
                     }
 
-                    if (QuestLog?.Open == true)
+                    if (InputEnable && !allInputDisabled && new Rect(questLogIcon.X, questLogIcon.Y, questLogIcon.Width, questLogIcon.Height + 2).Contains(relativePosition))
+                    {
+                        CursorType = CursorType.Sword;
+                        ToggleQuestLog();
+                        return;
+                    }
+
+                    if (QuestLog.Open)
                     {
                         CursorType = CursorType.Sword;
                         QuestLog.Click(relativePosition);
@@ -16734,12 +16752,12 @@ namespace Ambermoon
             CursorType = CursorType.Click;
         }
 
-        public void OpenQuestLog()
+        public void ToggleQuestLog()
         {
-            if (WindowActive || PopupActive || !InputEnable || allInputDisabled)
-                return;
-
-            QuestLog.Show();
+            if (QuestLog.Open)
+                ClosePopup();
+            else if (!WindowActive && !PopupActive && InputEnable && !allInputDisabled)
+                QuestLog.Show();
         }
 
         void ShowEvent(IText text, uint imageIndex, Action closeAction,

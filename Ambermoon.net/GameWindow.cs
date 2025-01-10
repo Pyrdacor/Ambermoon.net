@@ -277,7 +277,7 @@ namespace Ambermoon
             }
             else if (key == Silk.NET.Input.Key.F6)
             {
-                Game?.OpenQuestLog();
+                Game?.ToggleQuestLog();
             }
             else if (key == Silk.NET.Input.Key.F7)
             {
@@ -766,6 +766,16 @@ namespace Ambermoon
             // Create render view
             renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, additionalPalettes, () =>
             {
+                var questLogIconData = new DataReader(Resources.QuestLog);
+                var questLogIcon = new Graphic();
+                new GraphicReader().ReadGraphic(questLogIcon, questLogIconData, new GraphicInfo
+                {
+                    GraphicFormat = GraphicFormat.Palette5Bit,
+                    Width = 16,
+                    Height = 16,
+                    Alpha = true,
+                });
+
                 var textureAtlasManager = TextureAtlasManager.Instance;
                 var introGraphics = introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value);
                 uint twinlakeFrameOffset = (uint)introData.Graphics.Keys.Max();
@@ -773,6 +783,10 @@ namespace Ambermoon
                     introGraphics.Add(++twinlakeFrameOffset, twinlakeImagePart.Graphic);
                 textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
                     introFontLarge.GlyphGraphics, introGraphics, features);
+                textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
+                {
+                    { QuestLog.IconGraphicIndex, questLogIcon }
+                });
                 logoPyrdacor?.Initialize(textureAtlasManager);
                 AdvancedLogo.Initialize(textureAtlasManager);
                 return textureAtlasManager;
@@ -1143,11 +1157,11 @@ namespace Ambermoon
             if (configuration.ShowPyrdacorLogo)
             {
                 logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
-                additionalPalettes = new Graphic[2] { logoPyrdacor.Palettes[0], flagsPalette };
+                additionalPalettes = [ logoPyrdacor.Palettes[0], flagsPalette ];
             }
             else
             {
-                additionalPalettes = new Graphic[2] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] }, flagsPalette };
+                additionalPalettes = [ new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] }, flagsPalette ];
             }
 
             fontProvider ??= new IngameFontProvider(new DataReader(Resources.IngameFont), gameData.FontProvider.GetFont());

@@ -40,7 +40,6 @@ file class NextSubQuestActivatedTrigger : IQuestTrigger
     public QuestState NewState => QuestState.Completed;
 }
 
-
 file class GlobalVariableTrigger(Game game, TriggerType triggerType, uint index, bool expectedValue = true) : IQuestTrigger
 {
     public QuestState OldState => triggerType == TriggerType.Activation ? QuestState.Inactive : QuestState.Active;
@@ -555,7 +554,7 @@ public record MainQuest(QuestLog QuestLog)
         {
             var previousCompletedTrigger = SubQuests[index + 1].Triggers.FirstOrDefault(trigger => trigger is PreviousSubQuestCompletedTrigger);
 
-            if (previousCompletedTrigger != null)
+            if (previousCompletedTrigger != null && SubQuests[index + 1].State != QuestState.Completed)
                 SubQuests[index + 1].State = QuestState.Active;
         }
     }
@@ -582,6 +581,7 @@ file static class QuestFactory
 
 public class QuestLog
 {
+    public const uint IconGraphicIndex = 1000u;
     const int Columns = 20;
     const int Rows = 10;
     const int X = 0;
