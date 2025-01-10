@@ -60,7 +60,9 @@ namespace AmbermoonAndroid
 
 		public static Stream GetMusic() => LoadStream(Resource.Raw.music);
 
-		public static Graphic GetMidButton()
+        public static byte[] GetQuestLogIcon() => LoadData(Resource.Raw.QuestLog);
+
+        public static Graphic GetMidButton()
 		{
 			var imageData = LoadData(Resource.Raw.mobile_mid_button);
 			var graphic = new Graphic()

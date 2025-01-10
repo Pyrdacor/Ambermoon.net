@@ -166,4 +166,7 @@
   <data name="mobile_mid_button" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\raw\mobile_mid_button;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="QuestLog" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\raw\QuestLog;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

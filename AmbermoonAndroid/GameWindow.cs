@@ -17,6 +17,7 @@ using Data = Ambermoon.Data;
 using Render = Ambermoon.Render;
 using Silk.NET.Windowing.Sdl;
 using Silk.NET.Input.Sdl;
+using Android.Content.Res;
 
 namespace AmbermoonAndroid
 {
@@ -767,6 +768,16 @@ namespace AmbermoonAndroid
             // Create render view
             renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, additionalPalettes, () =>
             {
+                var questLogIconData = new DataReader(FileProvider.GetQuestLogIcon());
+                var questLogIcon = new Graphic();
+                new GraphicReader().ReadGraphic(questLogIcon, questLogIconData, new GraphicInfo
+                {
+                    GraphicFormat = GraphicFormat.Palette5Bit,
+                    Width = 16,
+                    Height = 16,
+                    Alpha = true,
+                });
+
                 var textureAtlasManager = TextureAtlasManager.Instance;
                 var introGraphics = introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value);
                 uint twinlakeFrameOffset = (uint)introData.Graphics.Keys.Max();
@@ -777,7 +788,11 @@ namespace AmbermoonAndroid
                 textureAtlasManager.ReplaceGraphic(Layer.UI, Graphics.GetButtonGraphicIndex(ButtonType.Wait), FileProvider.GetMidButton());
                 logoPyrdacor?.Initialize(textureAtlasManager);
                 AdvancedLogo.Initialize(textureAtlasManager);
-				var graphics = TutorialFinger.GetGraphics(1u); // Donate button is 0
+                textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
+                {
+                    { QuestLog.IconGraphicIndex, questLogIcon }
+                });
+                var graphics = TutorialFinger.GetGraphics(1u); // Donate button is 0
                 graphics.Add(0u, FileProvider.GetDonateButton());
 				textureAtlasManager.AddFromGraphics(Layer.MobileOverlays, graphics);
 				return textureAtlasManager;
