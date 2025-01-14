@@ -113,7 +113,7 @@ file class CharacterVisibilityTrigger(Game game, TriggerType triggerType, uint m
     }
 }
 
-file class ItemObtainedTrigger(TriggerType triggerType, uint itemIndex) : IQuestTrigger
+file class ItemObtainedTrigger(Game game, TriggerType triggerType, params uint[] itemIndices) : IQuestTrigger
 {
     public QuestState OldState => triggerType == TriggerType.Activation ? QuestState.Inactive : QuestState.Active;
     public QuestState NewState => triggerType == TriggerType.Activation ? QuestState.Active : QuestState.Completed;
@@ -123,27 +123,50 @@ file class ItemObtainedTrigger(TriggerType triggerType, uint itemIndex) : IQuest
         if (subQuest.State != OldState)
             return;
 
-        if (item != null && item.Index == itemIndex)
+        if (itemIndices == null || itemIndices.Length == 0)
+            return;
+
+        if (item == null) // only check items you already have
         {
-            while (subQuest.CompletionCount < subQuest.MaxCompletionCount)
+            foreach (var itemIndex in itemIndices)
             {
-                if (subQuest.MinAmount == 0 || subQuest.MinAmount < subQuest.CurrentAmount)
+                if (game.HasFoundItem(itemIndex, subQuest.MinAmount ?? 1))
                 {
                     subQuest.State = NewState;
                     return;
                 }
+            }
 
-                uint countToAdd = Math.Min(itemCount, (uint)(subQuest.MinAmount - subQuest.CurrentAmount));
+            return;
+        }
 
-                if (countToAdd == 0)
-                    break;
-
-                subQuest.CurrentAmount += countToAdd;
-
-                if (subQuest.CurrentAmount == subQuest.MinAmount)
+        foreach (var itemIndex in itemIndices)
+        {
+            if (item.Index == itemIndex)
+            {
+                while (subQuest.CompletionCount < subQuest.MaxCompletionCount)
                 {
-                    subQuest.State = NewState;
+                    if (subQuest.MinAmount == 0 || subQuest.MinAmount < subQuest.CurrentAmount)
+                    {
+                        subQuest.State = NewState;
+                        return;
+                    }
+
+                    uint minAmount = subQuest.MinAmount ?? 1;
+                    uint countToAdd = Math.Min(itemCount, (uint)(minAmount - subQuest.CurrentAmount));
+
+                    if (countToAdd == 0)
+                        break;
+
+                    subQuest.CurrentAmount += countToAdd;
+
+                    if (subQuest.CurrentAmount == minAmount)
+                    {
+                        subQuest.State = NewState;
+                    }
                 }
+
+                break;
             }
         }
     }
@@ -324,6 +347,10 @@ public enum SubQuestType
     SwampFever_ObtainEmptyBottle,
     SwampFever_ObtainSwampLilly,
     SwampFever_ObtainWaterOfLife,
+    SwampFever_ReturnToAnthony,
+    SwampFever_HealSally,
+    SwampFever_TalkToSally,
+    SwampFever_TalkToWat,
     // Alkem's Ring
     AlkemsRing_EnterTheCrypt,
     AlkemsRing_FindTheRing,
@@ -676,6 +703,12 @@ public class QuestLog
             return (_) => Quests.FirstOrDefault(q => q.Type == mainQuest).SubQuests.FirstOrDefault(q => q.Type == otherQuest).State = QuestState.Completed;
         }
 
+        Action<SubQuest> CompleteOtherQuests(MainQuestType mainQuest, params SubQuestType[] otherQuest)
+        {
+            var lookup = new HashSet<SubQuestType>(otherQuest);
+            return (_) => Quests.FirstOrDefault(q => q.Type == mainQuest).SubQuests.Where(q => lookup.Contains(q.Type)).ToList().ForEach(q => q.State = QuestState.Completed);
+        }
+
         // TODO ...
         Quests =
         [
@@ -757,36 +790,119 @@ public class QuestLog
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 1, // Grandfather
-                })/*,
+                }),
             QuestFactory.CreateMainQuest(this, MainQuestType.SwampFever,
-                mainQuest => new SubQuest(mainQuest, QuestState.Active)
+                mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.SwampFever_TalkToFatherAnthony,
-                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
+                    Triggers =
+                    [
+                        // Activate
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 12), // "ANTIDOTE", not ideal, but there is nothing else to trigger on
+                        // Complete
+                        new NextSubQuestActivatedTrigger(),
+                    ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 12, // Wat the fisherman
                 },
-                mainQuest => new SubQuest(mainQuest, QuestState.Active)
+                mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.SwampFever_ObtainSwampLilly,
-                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
+                    Triggers =
+                    [
+                        // Activate
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 26), // talked to Antonius about Antidote
+                        // Complete
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 255), // swamp lilly
+                    ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 2, // Father Anthony
                 },
-                mainQuest => new SubQuest(mainQuest, QuestState.Blocked)
+                mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.SwampFever_ObtainEmptyBottle,
-                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
+                    Triggers =
+                    [
+                        // Activate
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 26), // talked to Antonius about Antidote
+                        // Complete
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 218, 254), // empty bottle, but also water of life will work
+                    ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 2, // Father Anthony
                 },
-                mainQuest => new SubQuest(mainQuest, QuestState.Blocked)
+                mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.SwampFever_ObtainWaterOfLife,
-                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
+                    Triggers =
+                    [
+                        // Activate
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 26), // talked to Antonius about Antidote
+                        // Complete
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 254), // water of life
+                    ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 2, // Father Anthony
-                }),
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SwampFever_ReturnToAnthony,
+                    PostActivationAction = CompleteOtherQuests
+                    (
+                        MainQuestType.SwampFever,
+                        SubQuestType.SwampFever_ObtainEmptyBottle,
+                        SubQuestType.SwampFever_ObtainSwampLilly,
+                        SubQuestType.SwampFever_ObtainWaterOfLife
+                    ),
+                    Triggers =
+                    [
+                        // Activate
+                        new ItemObtainedTrigger(game, TriggerType.Activation, 254, 255), // swamp lilly and water of life
+                        // Complete
+                        new NextSubQuestActivatedTrigger(),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 2, // Father Anthony
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SwampFever_HealSally,
+                    Triggers =
+                    [
+                        // Activate
+                        new ItemObtainedTrigger(game, TriggerType.Activation, 253), // antidote
+                        // Complete
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 34), // spawn recovered Sally
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 12, // Wat the fisherman
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SwampFever_TalkToSally,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 36), // received reward from Sally
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 13, // Sally
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SwampFever_TalkToWat,
+                    Triggers =
+                    [
+                        // Activate
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 34), // spawn recovered Sally
+                        // Complete
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 35), // received reward from Wat
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 12, // Wat the fisherman
+                })/*,
             QuestFactory.CreateMainQuest(this, MainQuestType.AlkemsRing,
                 mainQuest => new SubQuest(mainQuest, QuestState.Inactive)
                 {

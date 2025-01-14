@@ -17,7 +17,6 @@ using Data = Ambermoon.Data;
 using Render = Ambermoon.Render;
 using Silk.NET.Windowing.Sdl;
 using Silk.NET.Input.Sdl;
-using Android.Content.Res;
 
 namespace AmbermoonAndroid
 {

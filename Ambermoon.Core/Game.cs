@@ -1571,8 +1571,9 @@ namespace Ambermoon
             drugOverlay?.Delete();
             ouchSprite?.Delete();
             mobileClickIndicator?.Delete();
+            questLogIcon?.Delete();
 
-			Util.SafeCall(UntrapMouse);
+            Util.SafeCall(UntrapMouse);
             allInputDisabled = true;
             ingame = false;
             Util.SafeCall(() => AudioOutput?.Stop());
@@ -2248,6 +2249,21 @@ namespace Ambermoon
             return currentBattle?.HasPartyMemberFled(partyMember) ?? false;
         }
 
+        public bool HasFoundItem(uint itemIndex, uint minAmount = 1)
+        {
+            long foundCount = 0;
+
+            foreach (var partyMember in CurrentSavegame.PartyMembers.Values)
+            {
+                foundCount += partyMember.Inventory.Slots.Where(s => s.ItemIndex == itemIndex).Sum(s => s.Amount);
+
+                if (foundCount >= minAmount)
+                    return true;
+            }
+
+            return false;
+        }
+
         /// <summary>
         /// Runs an action for each party member. In contrast to a normal foreach loop
         /// the action can contain blocking calls for each party member like popups.
@@ -2570,8 +2586,11 @@ namespace Ambermoon
             if (SavegameManager.HasCrashSavegame())
             {
                 ingame = true;
+                questLogIcon.Visible = false;
                 ShowDecisionPopup(GetCustomText(CustomTexts.Index.LoadCrashedGame), response =>
                 {
+                    questLogIcon.Visible = true;
+
                     if (response == PopupTextEvent.Response.Yes)
                     {
                         LoadGame(99, false, true);
@@ -4070,7 +4089,7 @@ namespace Ambermoon
                         return;
                     }
 
-                    if (QuestLog.Open)
+                    if (QuestLog?.Open == true)
                     {
                         CursorType = CursorType.Sword;
                         QuestLog.Click(relativePosition);
@@ -16754,10 +16773,13 @@ namespace Ambermoon
 
         public void ToggleQuestLog()
         {
-            if (QuestLog.Open)
-                ClosePopup();
-            else if (!WindowActive && !PopupActive && InputEnable && !allInputDisabled)
-                QuestLog.Show();
+            if (QuestLog != null)
+            {
+                if (QuestLog.Open)
+                    ClosePopup();
+                else if (!WindowActive && !PopupActive && InputEnable && !allInputDisabled)
+                    QuestLog.Show();
+            }
         }
 
         void ShowEvent(IText text, uint imageIndex, Action closeAction,

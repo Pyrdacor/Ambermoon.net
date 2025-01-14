@@ -86,6 +86,10 @@ internal static class QuestTexts
             { SubQuestType.SwampFever_ObtainEmptyBottle, "Besorge eine leere Phiole" },
             { SubQuestType.SwampFever_ObtainSwampLilly, "Besorge eine Sumpflilie" },
             { SubQuestType.SwampFever_ObtainWaterOfLife, "Besorge Wasser des Lebens" },
+            { SubQuestType.SwampFever_ReturnToAnthony, "Kehre zu Vater Antonius zurück" },
+            { SubQuestType.SwampFever_HealSally, "Heile Sally, die Tochter des Fischers" },
+            { SubQuestType.SwampFever_TalkToSally, "Rede mit Sally, der Tochter des Fischers" },
+            { SubQuestType.SwampFever_TalkToWat, "Rede mit Wat dem Fischer" },
             // Alkem's Ring
             { SubQuestType.AlkemsRing_EnterTheCrypt, "Betritt die alte Krypta" },
             { SubQuestType.AlkemsRing_FindTheRing, "Finde den Ring in der Krypta" },
@@ -106,6 +110,10 @@ internal static class QuestTexts
             { SubQuestType.SwampFever_ObtainEmptyBottle, "Obtain an empty bottle" },
             { SubQuestType.SwampFever_ObtainSwampLilly, "Obtain a swamp lilly" },
             { SubQuestType.SwampFever_ObtainWaterOfLife, "Obtain water of life" },
+            { SubQuestType.SwampFever_ReturnToAnthony, "Return to Father Anthony" },
+            { SubQuestType.SwampFever_HealSally, "Heal Sally, the fisherman's daughter" },
+            { SubQuestType.SwampFever_TalkToSally, "Talk to Sally, the fisherman's daughter" },
+            { SubQuestType.SwampFever_TalkToWat, "Talk to Wat the fisherman" },
             // Alkem's Ring
             { SubQuestType.AlkemsRing_EnterTheCrypt, "Enter the old crypt" },
             { SubQuestType.AlkemsRing_FindTheRing, "Find the ring inside the crypt" },

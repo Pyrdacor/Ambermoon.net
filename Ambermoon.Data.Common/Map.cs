@@ -29,7 +29,7 @@ namespace Ambermoon.Data
         SmallPlayer = StationaryGraphics // Display player smaller. Only all world maps have this set. Only considered for 2D maps.
     }
 
-    public class Map
+    public class Map : IEventProvider
     {
         public enum TileType
         {
