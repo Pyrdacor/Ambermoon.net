@@ -831,10 +831,10 @@ namespace AmbermoonAndroid
             {
                 try
                 {
-                    var savegameManager = new SavegameManager(savePath);
-                    savegameManager.GetSavegameNames(gameData, out int currentSavegame, 10);
+                    var savegameManager = new RemakeSavegameManager(savePath, configuration);
+                    savegameManager.GetSavegameNames(gameData, out int currentSavegame, Game.NumBaseSavegameSlots);
                     if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
-                        currentSavegame = configuration.GetOrCreateCurrentAdditionalSavegameSlots(Path.GetFileName(savePath))?.ContinueSavegameSlot ?? 0;
+                        currentSavegame = savegameManager.ContinueSavegameSlot;
                     bool canContinue = currentSavegame != 0;
 
                     void SetupGameCreator(bool continueGame)
@@ -849,7 +849,8 @@ namespace AmbermoonAndroid
                                     savegameManager, savegameSerializer, gameData.Dictionary, cursor, musicManager,
                                     musicManager, (_) => { }, (_) => { }, QueryPressedKeys,
                                     new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
-                                    Path.GetFileName(savePath), gameVersion, keyboardRequest, DrawTouchFinger);
+                                    Path.GetFileName(savePath), gameVersion, keyboardRequest, savegameManager,
+                                    DrawTouchFinger);
                                 game.QuitRequested += window.Close;
                                 /*game.MousePositionChanged += position =>
                                 {

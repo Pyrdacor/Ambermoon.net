@@ -803,18 +803,18 @@ namespace Ambermoon
 
             RunTask(() =>
             {
-            try
-            {
-                var savegameManager = new SavegameManager(savePath);
-                savegameManager.GetSavegameNames(gameData, out int currentSavegame, 10);
-                if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
-                    currentSavegame = configuration.GetOrCreateCurrentAdditionalSavegameSlots(Path.GetFileName(savePath))?.ContinueSavegameSlot ?? 0;
-                bool canContinue = currentSavegame != 0;
-                var cursor = new Render.Cursor(renderView, gameData.CursorHotspots);
-                cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
-                cursor.Type = Data.CursorType.None;
+                try
+                {
+                    var savegameManager = new RemakeSavegameManager(savePath, configuration);
+                    savegameManager.GetSavegameNames(gameData, out int currentSavegame, Game.NumBaseSavegameSlots);
+                    if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
+                        currentSavegame = savegameManager.ContinueSavegameSlot;
+                    bool canContinue = currentSavegame != 0;
+                    var cursor = new Render.Cursor(renderView, gameData.CursorHotspots);
+                    cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
+                    cursor.Type = Data.CursorType.None;
 
-                void SetupGameCreator(bool continueGame)
+                    void SetupGameCreator(bool continueGame)
                 {
                     try
                     {
@@ -828,7 +828,7 @@ namespace Ambermoon
                                 savegameManager, savegameSerializer, gameData.Dictionary, cursor, audioOutput,
                                 musicManager, FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
                                 new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
-                                Path.GetFileName(savePath), versionString, null);
+                                Path.GetFileName(savePath), versionString, null, savegameManager);
 
 			                    game.QuitRequested += window.Close;
 			                    game.MousePositionChanged += position =>

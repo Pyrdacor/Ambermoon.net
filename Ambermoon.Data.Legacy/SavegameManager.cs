@@ -18,7 +18,7 @@ namespace Ambermoon.Data.Legacy
             savesPath = Path.Combine(path, "Saves");
         }
 
-        public string[] GetSavegameNames(IGameData gameData, out int current, int totalSavegames)
+        public virtual string[] GetSavegameNames(IGameData gameData, out int current, int totalSavegames)
         {
             current = 0;
 
@@ -36,7 +36,7 @@ namespace Ambermoon.Data.Legacy
             }            
         }
 
-        public void WriteSavegameName(IGameData gameData, int slot, ref string name, string externalSavesPath)
+        public virtual void WriteSavegameName(IGameData gameData, int slot, ref string name, string externalSavesPath)
         {
             SavegameSerializer.WriteSavegameName(gameData, slot, ref name, externalSavesPath);
         }

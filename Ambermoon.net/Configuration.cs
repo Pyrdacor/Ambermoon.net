@@ -274,7 +274,7 @@ namespace Ambermoon
                     Names = new string[Game.NumAdditionalSavegameSlots]
                 };
 
-                AdditionalSavegameSlots = Enumerable.Concat(AdditionalSavegameSlots, new[] { savegameSlots }).ToArray();
+                AdditionalSavegameSlots = Enumerable.Concat(AdditionalSavegameSlots, [savegameSlots]).ToArray();
             }
 
             return savegameSlots;

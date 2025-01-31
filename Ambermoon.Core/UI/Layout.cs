@@ -1067,7 +1067,7 @@ namespace Ambermoon.UI
         internal void OpenLoadMenu(Action<Action> preLoadAction = null, Action abortAction = null,
             bool loadInitialSavegameOnFailure = false)
         {
-            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _, 10);
+            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _, Game.NumBaseSavegameSlots);
             bool extended = game.Configuration.ExtendedSavegameSlots;
             if (extended)
             {
@@ -1126,7 +1126,7 @@ namespace Ambermoon.UI
 
         void OpenSaveMenu()
         {
-            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _, 10);
+            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _, Game.NumBaseSavegameSlots);
             bool extended = game.Configuration.ExtendedSavegameSlots;
             if (extended)
             {

@@ -372,12 +372,12 @@ namespace AmbermoonAndroid
             }
         }
 
-        Configuration LoadConfig()
+        static Configuration LoadConfig()
         {
             return Configuration.Load(new Configuration { FirstStart = true });
         }
 
-        void SaveConfig(Configuration configuration)
+        static void SaveConfig(Configuration configuration)
         {
             try
             {

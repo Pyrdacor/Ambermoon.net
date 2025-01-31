@@ -19,8 +19,11 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Xml;
 
 namespace Ambermoon
 {
@@ -71,8 +74,20 @@ namespace Ambermoon
     public class AdditionalSavegameSlots
     {
         public string GameVersionName { get; set; }
-        public string[] Names { get; set; } = new string[20];
+        public string[] BaseNames { get; set; } = new string[Game.NumBaseSavegameSlots];
+        public string[] Names { get; set; } = new string[Game.NumAdditionalSavegameSlots];
         public int ContinueSavegameSlot { get; set; } = 0;
+        public DateTime? LastSavesSync { get; set; } = null;
+
+        public static AdditionalSavegameSlots Load(string path)
+        {
+            return JsonConvert.DeserializeObject<AdditionalSavegameSlots>(File.ReadAllText(path));
+        }
+
+        public void Save(string path)
+        {
+            File.WriteAllText(path, JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.Indented));
+        }
     }
 
     public enum GraphicFilter
@@ -102,6 +117,12 @@ namespace Ambermoon
     {
         WASD,
         WASDQE
+    }
+
+    public interface IAdditionalSaveSlotProvider
+    {
+        AdditionalSavegameSlots GetOrCreateAdditionalSavegameNames(string gameVersionName);
+        void RequestSave();
     }
 
     public interface IConfiguration
