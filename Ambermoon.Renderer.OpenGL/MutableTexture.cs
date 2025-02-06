@@ -21,57 +21,56 @@
 
 using System;
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class MutableTexture : Texture
 {
-    internal class MutableTexture : Texture
+    uint bytesPerPixel = 4;
+    int width = 0;
+    int height = 0;
+    byte[] data = null;
+
+    public MutableTexture(State state, int width, int height, uint bytesPerPixel)
+        : base(state, width, height)
     {
-        uint bytesPerPixel = 4;
-        int width = 0;
-        int height = 0;
-        byte[] data = null;
+        this.bytesPerPixel = bytesPerPixel;
+        this.width = width;
+        this.height = height;
+        data = new byte[width * height * bytesPerPixel]; // initialized with zeros so non-occupied areas will be transparent
+    }
 
-        public MutableTexture(State state, int width, int height, uint bytesPerPixel)
-            : base(state, width, height)
+    public override int Width => width;
+    public override int Height => height;
+
+    public void AddSubTexture(Position position, byte[] data, int width, int height)
+    {
+        for (int y = 0; y < height; ++y)
         {
-            this.bytesPerPixel = bytesPerPixel;
-            this.width = width;
-            this.height = height;
-            data = new byte[width * height * bytesPerPixel]; // initialized with zeros so non-occupied areas will be transparent
+            Buffer.BlockCopy(data, y * width * (int)bytesPerPixel, this.data, (position.X + (position.Y + y) * Width) * (int)bytesPerPixel, width * (int)bytesPerPixel);
         }
+    }
 
-        public override int Width => width;
-        public override int Height => height;
-
-        public void AddSubTexture(Position position, byte[] data, int width, int height)
+    public void Finish(int numMipMapLevels)
+    {
+        var pixelFormat = bytesPerPixel switch
         {
-            for (int y = 0; y < height; ++y)
-            {
-                Buffer.BlockCopy(data, y * width * (int)bytesPerPixel, this.data, (position.X + (position.Y + y) * Width) * (int)bytesPerPixel, width * (int)bytesPerPixel);
-            }
-        }
+            1 => PixelFormat.Alpha,
+            4 => PixelFormat.RGBA8,
+            _ => throw new ArgumentOutOfRangeException($"Unsupported bytes per pixel value: {bytesPerPixel}")
+        };
 
-        public void Finish(int numMipMapLevels)
-        {
-            var pixelFormat = bytesPerPixel switch
-            {
-                1 => PixelFormat.Alpha,
-                4 => PixelFormat.RGBA8,
-                _ => throw new ArgumentOutOfRangeException($"Unsupported bytes per pixel value: {bytesPerPixel}")
-            };
+        Create(pixelFormat, data, numMipMapLevels);
 
-            Create(pixelFormat, data, numMipMapLevels);
+        data = null;
+    }
 
-            data = null;
-        }
+    public void Resize(int width, int height)
+    {
+        if (data != null && this.width == width && this.height == height)
+            return;
 
-        public void Resize(int width, int height)
-        {
-            if (data != null && this.width == width && this.height == height)
-                return;
-
-            this.width = width;
-            this.height = height;
-            data = new byte[width * height * bytesPerPixel]; // initialized with zeros so non-occupied areas will be transparent
-        }
+        this.width = width;
+        this.height = height;
+        data = new byte[width * height * bytesPerPixel]; // initialized with zeros so non-occupied areas will be transparent
     }
 }

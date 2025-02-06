@@ -27,147 +27,146 @@ using Silk.NET.OpenGL;
 using System;
 using System.IO;
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+public class Texture : Render.Texture, IDisposable
 {
-    public class Texture : Render.Texture, IDisposable
+    public static Texture ActiveTexture { get; private set; } = null;
+
+    public virtual uint Index { get; private set; } = 0u;
+    public override int Width { get; } = 0;
+    public override int Height { get; } = 0;
+    readonly State state = null;
+    bool disposed = false;
+
+    protected Texture(State state, int width, int height)
     {
-        public static Texture ActiveTexture { get; private set; } = null;
+        this.state = state;
+        Index = state.Gl.GenTexture();
+        Width = width;
+        Height = height;
+    }
 
-        public virtual uint Index { get; private set; } = 0u;
-        public override int Width { get; } = 0;
-        public override int Height { get; } = 0;
-        readonly State state = null;
-        bool disposed = false;
+    public Texture(State state, int width, int height, PixelFormat format, Stream pixelDataStream, int numMipMapLevels = 0)
+    {
+        int size = width * height * (int)BytesPerPixel[(int)format];
 
-        protected Texture(State state, int width, int height)
+        if ((pixelDataStream.Length - pixelDataStream.Position) < size)
+            throw new Exception("Pixel data stream does not contain enough data.");
+
+        if (!pixelDataStream.CanRead)
+            throw new Exception("Pixel data stream does not support reading.");
+
+        byte[] pixelData = new byte[size];
+
+        pixelDataStream.Read(pixelData, 0, size);
+
+        this.state = state;
+        Index = state.Gl.GenTexture();
+        Width = width;
+        Height = height;
+
+        Create(format, pixelData, numMipMapLevels);
+    }
+
+    public Texture(State state, int width, int height, PixelFormat format, byte[] pixelData, int numMipMapLevels = 0)
+    {
+        if (width * height * BytesPerPixel[(int)format] != pixelData.Length)
+            throw new Exception("Invalid texture data size.");
+
+        this.state = state;
+        Index = state.Gl.GenTexture();
+        Width = width;
+        Height = height;
+
+        Create(format, pixelData, numMipMapLevels);
+    }
+
+    static InternalFormat ToOpenGLInternalFormat(PixelFormat format) =>
+        format == PixelFormat.Alpha ? InternalFormat.R8 : InternalFormat.Rgba8;
+
+    static GLEnum ToOpenGLPixelFormat(PixelFormat format)
+    {
+        switch (format)
         {
-            this.state = state;
-            Index = state.Gl.GenTexture();
-            Width = width;
-            Height = height;
+            case PixelFormat.RGBA8:
+                return GLEnum.Rgba;
+            case PixelFormat.RGB8:
+                return GLEnum.Rgb;
+            case PixelFormat.Alpha:
+                // Note: for the supported image format GL_RED means one channel data, GL_ALPHA is only used for texture storage on the gpu, so we don't use it
+                // We always use RGBA8 as texture storage on the gpu
+                return GLEnum.Red;
+            default:
+                throw new Exception("Invalid pixel format.");
+        }
+    }
+
+    protected void Create(PixelFormat format, byte[] pixelData, int numMipMapLevels)
+    {
+        if (format >= PixelFormat.RGB5A1)
+        {
+            pixelData = ConvertPixelData(pixelData, ref format);
         }
 
-        public Texture(State state, int width, int height, PixelFormat format, Stream pixelDataStream, int numMipMapLevels = 0)
+        Bind();
+
+        var minMode = (numMipMapLevels > 0) ? TextureMinFilter.NearestMipmapNearest : TextureMinFilter.Nearest;
+
+        state.Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)minMode);
+        state.Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+        state.Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+        state.Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+
+        state.Gl.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
+
+        unsafe
         {
-            int size = width * height * (int)BytesPerPixel[(int)format];
-
-            if ((pixelDataStream.Length - pixelDataStream.Position) < size)
-                throw new Exception("Pixel data stream does not contain enough data.");
-
-            if (!pixelDataStream.CanRead)
-                throw new Exception("Pixel data stream does not support reading.");
-
-            byte[] pixelData = new byte[size];
-
-            pixelDataStream.Read(pixelData, 0, size);
-
-            this.state = state;
-            Index = state.Gl.GenTexture();
-            Width = width;
-            Height = height;
-
-            Create(format, pixelData, numMipMapLevels);
-        }
-
-        public Texture(State state, int width, int height, PixelFormat format, byte[] pixelData, int numMipMapLevels = 0)
-        {
-            if (width * height * BytesPerPixel[(int)format] != pixelData.Length)
-                throw new Exception("Invalid texture data size.");
-
-            this.state = state;
-            Index = state.Gl.GenTexture();
-            Width = width;
-            Height = height;
-
-            Create(format, pixelData, numMipMapLevels);
-        }
-
-        static InternalFormat ToOpenGLInternalFormat(PixelFormat format) =>
-            format == PixelFormat.Alpha ? InternalFormat.R8 : InternalFormat.Rgba8;
-
-        static GLEnum ToOpenGLPixelFormat(PixelFormat format)
-        {
-            switch (format)
+            fixed (byte* ptr = &pixelData[0])
             {
-                case PixelFormat.RGBA8:
-                    return GLEnum.Rgba;
-                case PixelFormat.RGB8:
-                    return GLEnum.Rgb;
-                case PixelFormat.Alpha:
-                    // Note: for the supported image format GL_RED means one channel data, GL_ALPHA is only used for texture storage on the gpu, so we don't use it
-                    // We always use RGBA8 as texture storage on the gpu
-                    return GLEnum.Red;
-                default:
-                    throw new Exception("Invalid pixel format.");
+                state.Gl.TexImage2D(GLEnum.Texture2D, 0, (int)ToOpenGLInternalFormat(format), (uint)Width, (uint)Height, 0, ToOpenGLPixelFormat(format), GLEnum.UnsignedByte, ptr);
             }
         }
 
-        protected void Create(PixelFormat format, byte[] pixelData, int numMipMapLevels)
+        if (numMipMapLevels > 0)
+            state.Gl.GenerateMipmap(GLEnum.Texture2D);
+    }
+
+    public virtual void Bind()
+    {
+        if (disposed)
+            throw new Exception("Tried to bind a disposed texture.");
+
+        if (ActiveTexture == this)
+            return;
+
+        state.Gl.BindTexture(TextureTarget.Texture2D, Index);
+        ActiveTexture = this;
+    }
+
+    public void Unbind()
+    {
+        if (ActiveTexture == this)
         {
-            if (format >= PixelFormat.RGB5A1)
-            {
-                pixelData = ConvertPixelData(pixelData, ref format);
-            }
-
-            Bind();
-
-            var minMode = (numMipMapLevels > 0) ? TextureMinFilter.NearestMipmapNearest : TextureMinFilter.Nearest;
-
-            state.Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)minMode);
-            state.Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-            state.Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-            state.Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-
-            state.Gl.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
-
-            unsafe
-            {
-                fixed (byte* ptr = &pixelData[0])
-                {
-                    state.Gl.TexImage2D(GLEnum.Texture2D, 0, (int)ToOpenGLInternalFormat(format), (uint)Width, (uint)Height, 0, ToOpenGLPixelFormat(format), GLEnum.UnsignedByte, ptr);
-                }
-            }
-
-            if (numMipMapLevels > 0)
-                state.Gl.GenerateMipmap(GLEnum.Texture2D);
+            state.Gl.BindTexture(TextureTarget.Texture2D, 0);
+            ActiveTexture = null;
         }
+    }
 
-        public virtual void Bind()
+    public void Dispose()
+    {
+        if (!disposed)
         {
-            if (disposed)
-                throw new Exception("Tried to bind a disposed texture.");
-
             if (ActiveTexture == this)
-                return;
+                Unbind();
 
-            state.Gl.BindTexture(TextureTarget.Texture2D, Index);
-            ActiveTexture = this;
-        }
-
-        public void Unbind()
-        {
-            if (ActiveTexture == this)
+            if (Index != 0)
             {
-                state.Gl.BindTexture(TextureTarget.Texture2D, 0);
-                ActiveTexture = null;
+                state.Gl.DeleteTexture(Index);
+                Index = 0;
             }
-        }
 
-        public void Dispose()
-        {
-            if (!disposed)
-            {
-                if (ActiveTexture == this)
-                    Unbind();
-
-                if (Index != 0)
-                {
-                    state.Gl.DeleteTexture(Index);
-                    Index = 0;
-                }
-
-                disposed = true;
-            }
+            disposed = true;
         }
     }
 }

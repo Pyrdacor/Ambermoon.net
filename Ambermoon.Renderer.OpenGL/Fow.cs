@@ -19,129 +19,128 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Ambermoon.Render;
+namespace Ambermoon.Renderer.OpenGL;
 
-namespace Ambermoon.Renderer.OpenGL
+using Render;
+
+public class Fow : RenderNode, IFow
 {
-    public class Fow : RenderNode, IFow
+    protected int drawIndex = -1;
+    Position center = new();
+    byte radius = 0;
+    int baseLineOffset = 0;
+
+    public Fow(int width, int height, Position center, byte radius, Rect virtualScreen)
+        : base(width, height, virtualScreen)
     {
-        protected int drawIndex = -1;
-        Position center = new Position();
-        byte radius = 0;
-        int baseLineOffset = 0;
+        this.center = center;
+        this.radius = radius;
+    }
 
-        public Fow(int width, int height, Position center, byte radius, Rect virtualScreen)
-            : base(width, height, virtualScreen)
+    public Position Center
+    {
+        get => center;
+        set
         {
-            this.center = center;
-            this.radius = radius;
-        }
-
-        public Position Center
-        {
-            get => center;
-            set
-            {
-                if (center?.X == value?.X && center?.Y == value?.Y)
-                    return;
-
-                center = value == null ? new Position() : new Position(value);
-
-                UpdateCenter();
-            }
-        }
-
-        public byte Radius
-        {
-            get => radius;
-            set
-            {
-                if (radius == value)
-                    return;
-
-                radius = value;
-
-                UpdateRadius();
-            }
-        }
-
-        public int BaseLineOffset
-        {
-            get => baseLineOffset;
-            set
-            {
-                if (baseLineOffset == value)
-                    return;
-
-                baseLineOffset = value;
-
-                UpdatePosition();
-            }
-        }
-
-        protected virtual void UpdateCenter()
-        {
-            if (drawIndex != -1) // -1 means not attached to a layer
-                (Layer as RenderLayer).UpdateFOWCenter(drawIndex, center);
-        }
-
-        protected virtual void UpdateRadius()
-        {
-            if (drawIndex != -1) // -1 means not attached to a layer
-                (Layer as RenderLayer).UpdateFOWRadius(drawIndex, radius);
-        }
-
-        protected override void AddToLayer()
-        {
-            drawIndex = (Layer as RenderLayer).GetDrawIndex(this);
-        }
-
-        protected override void RemoveFromLayer()
-        {
-            if (drawIndex != -1)
-            {
-                (Layer as RenderLayer).FreeDrawIndex(drawIndex);
-                drawIndex = -1;
-            }
-        }
-
-        protected override void UpdatePosition()
-        {
-            if (drawIndex != -1) // -1 means not attached to a layer
-                (Layer as RenderLayer).UpdatePosition(drawIndex, this);
-        }
-
-        public override void Resize(int width, int height)
-        {
-            if (Width == width && Height == height)
+            if (center?.X == value?.X && center?.Y == value?.Y)
                 return;
 
-            base.Resize(width, height);
+            center = value == null ? new Position() : new Position(value);
 
-            UpdatePosition();
-        }
-
-        protected override void OnClipAreaChanged(bool onScreen, bool needUpdate)
-        {
-            if (onScreen && needUpdate)
-            {
-                UpdatePosition();
-            }
+            UpdateCenter();
         }
     }
 
-    public class FowFactory : IFowFactory
+    public byte Radius
     {
-        internal Rect VirtualScreen { get; private set; } = null;
-
-        public FowFactory(Rect virtualScreen)
+        get => radius;
+        set
         {
-            VirtualScreen = virtualScreen;
-        }
+            if (radius == value)
+                return;
 
-        public IFow Create(int width, int height, Position center, byte radius)
-        {
-            return new Fow(width, height, center, radius, VirtualScreen);
+            radius = value;
+
+            UpdateRadius();
         }
+    }
+
+    public int BaseLineOffset
+    {
+        get => baseLineOffset;
+        set
+        {
+            if (baseLineOffset == value)
+                return;
+
+            baseLineOffset = value;
+
+            UpdatePosition();
+        }
+    }
+
+    protected virtual void UpdateCenter()
+    {
+        if (drawIndex != -1) // -1 means not attached to a layer
+            (Layer as RenderLayer).UpdateFOWCenter(drawIndex, center);
+    }
+
+    protected virtual void UpdateRadius()
+    {
+        if (drawIndex != -1) // -1 means not attached to a layer
+            (Layer as RenderLayer).UpdateFOWRadius(drawIndex, radius);
+    }
+
+    protected override void AddToLayer()
+    {
+        drawIndex = (Layer as RenderLayer).GetDrawIndex(this);
+    }
+
+    protected override void RemoveFromLayer()
+    {
+        if (drawIndex != -1)
+        {
+            (Layer as RenderLayer).FreeDrawIndex(drawIndex);
+            drawIndex = -1;
+        }
+    }
+
+    protected override void UpdatePosition()
+    {
+        if (drawIndex != -1) // -1 means not attached to a layer
+            (Layer as RenderLayer).UpdatePosition(drawIndex, this);
+    }
+
+    public override void Resize(int width, int height)
+    {
+        if (Width == width && Height == height)
+            return;
+
+        base.Resize(width, height);
+
+        UpdatePosition();
+    }
+
+    protected override void OnClipAreaChanged(bool onScreen, bool needUpdate)
+    {
+        if (onScreen && needUpdate)
+        {
+            UpdatePosition();
+        }
+    }
+}
+
+public class FowFactory : IFowFactory
+{
+    internal Rect VirtualScreen { get; private set; } = null;
+
+    public FowFactory(Rect virtualScreen)
+    {
+        VirtualScreen = virtualScreen;
+    }
+
+    public IFow Create(int width, int height, Position center, byte radius)
+    {
+        return new Fow(width, height, center, radius, VirtualScreen);
     }
 }

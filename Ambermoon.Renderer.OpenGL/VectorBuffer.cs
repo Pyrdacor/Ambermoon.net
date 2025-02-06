@@ -21,46 +21,39 @@
 
 using System;
 
-namespace Ambermoon.Renderer.OpenGL
+namespace Ambermoon.Renderer.OpenGL;
+
+class VectorBuffer(State state, bool staticData) : BufferObject<float>(state, staticData)
 {
-    class VectorBuffer : BufferObject<float>
+    public override int Dimension => 3;
+
+    bool UpdateVectorData(float[] buffer, int index, Tuple<float, float, float> vector)
     {
-        public override int Dimension => 3;
+        bool changed = false;
+        float x = vector.Item1;
+        float y = vector.Item2;
+        float z = vector.Item3;
 
-        public VectorBuffer(State state, bool staticData)
-            : base(state, staticData)
+        if (buffer[index + 0] != x ||
+            buffer[index + 1] != y ||
+            buffer[index + 2] != z)
         {
-
+            buffer[index + 0] = x;
+            buffer[index + 1] = y;
+            buffer[index + 2] = z;
+            changed = true;
         }
 
-        bool UpdateVectorData(float[] buffer, int index, Tuple<float, float, float> vector)
-        {
-            bool changed = false;
-            float x = vector.Item1;
-            float y = vector.Item2;
-            float z = vector.Item3;
+        return index == Size || changed;
+    }
 
-            if (buffer[index + 0] != x ||
-                buffer[index + 1] != y ||
-                buffer[index + 2] != z)
-            {
-                buffer[index + 0] = x;
-                buffer[index + 1] = y;
-                buffer[index + 2] = z;
-                changed = true;
-            }
+    public int Add(float x, float y, float z, int index = -1)
+    {
+        return base.Add(UpdateVectorData, Tuple.Create(x, y, z), index);
+    }
 
-            return index == Size || changed;
-        }
-
-        public int Add(float x, float y, float z, int index = -1)
-        {
-            return base.Add(UpdateVectorData, Tuple.Create(x, y, z), index);
-        }
-
-        public void Update(int index, float x, float y, float z)
-        {
-            base.Update(UpdateVectorData, index, Tuple.Create(x, y, z));
-        }
+    public void Update(int index, float x, float y, float z)
+    {
+        base.Update(UpdateVectorData, index, Tuple.Create(x, y, z));
     }
 }

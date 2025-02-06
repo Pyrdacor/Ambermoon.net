@@ -19,16 +19,9 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class ByteBuffer(State state, bool staticData) : BufferObject<byte>(state, staticData)
 {
-    internal class ByteBuffer : BufferObject<byte>
-    {
-        public override int Dimension => 1;
-
-        public ByteBuffer(State state, bool staticData)
-            : base(state, staticData)
-        {
-
-        }
-    }
+    public override int Dimension => 1;
 }

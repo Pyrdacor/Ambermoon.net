@@ -26,42 +26,41 @@ using Silk.NET.OpenGL;
 #endif
 using System;
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class IndexBuffer : BufferObject<uint>
 {
-    internal class IndexBuffer : BufferObject<uint>
+    public override int Dimension => 6;
+
+    public IndexBuffer(State state)
+        : base(state, true)
     {
-        public override int Dimension => 6;
+        BufferTarget = GLEnum.ElementArrayBuffer;
+    }
 
-        public IndexBuffer(State state)
-            : base(state, true)
+    bool InsertIndexData(uint[] buffer, int index, uint startIndex)
+    {
+        buffer[index++] = startIndex + 0;
+        buffer[index++] = startIndex + 1;
+        buffer[index++] = startIndex + 2;
+        buffer[index++] = startIndex + 3;
+        buffer[index++] = startIndex + 0;
+        buffer[index++] = startIndex + 2;
+
+        return true;
+    }
+
+    public void InsertQuad(int quadIndex)
+    {
+        if (quadIndex >= int.MaxValue / 6)
+            throw new OutOfMemoryException("Too many polygons to render.");
+
+        int arrayIndex = quadIndex * 6; // 2 triangles with 3 vertices each
+        uint vertexIndex = (uint)(quadIndex * 4); // 4 different vertices form a quad
+
+        while (Size <= arrayIndex + 6)
         {
-            BufferTarget = GLEnum.ElementArrayBuffer;
-        }
-
-        bool InsertIndexData(uint[] buffer, int index, uint startIndex)
-        {
-            buffer[index++] = startIndex + 0;
-            buffer[index++] = startIndex + 1;
-            buffer[index++] = startIndex + 2;
-            buffer[index++] = startIndex + 3;
-            buffer[index++] = startIndex + 0;
-            buffer[index++] = startIndex + 2;
-
-            return true;
-        }
-
-        public void InsertQuad(int quadIndex)
-        {
-            if (quadIndex >= int.MaxValue / 6)
-                throw new OutOfMemoryException("Too many polygons to render.");
-
-            int arrayIndex = quadIndex * 6; // 2 triangles with 3 vertices each
-            uint vertexIndex = (uint)(quadIndex * 4); // 4 different vertices form a quad
-
-            while (Size <= arrayIndex + 6)
-            {
-                base.Add(InsertIndexData, (uint)vertexIndex, quadIndex);
-            }
+            base.Add(InsertIndexData, (uint)vertexIndex, quadIndex);
         }
     }
 }

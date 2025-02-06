@@ -26,147 +26,146 @@ using Silk.NET.OpenGL;
 #endif
 using System;
 
-namespace Ambermoon.Renderer
-{
-    public class Context
-    {
-        int width = -1;
-        int height = -1;
-        Rotation rotation = Rotation.None;
-        Matrix4 modelViewMatrix = Matrix4.Identity;
-        static readonly float FovY3D = (float)Math.PI * 0.26f;
-        static readonly float DefaultAspectRatio = (float)Global.VirtualScreenWidth / Global.VirtualScreenHeight;
-        State State { get; }
+namespace Ambermoon.Renderer.OpenGL;
 
-        public Context(State state, int width, int height, float aspect)
-        {
-            State = state;
+public class Context
+{
+    int width = -1;
+    int height = -1;
+    Rotation rotation = Rotation.None;
+    Matrix4 modelViewMatrix = Matrix4.Identity;
+    static readonly float FovY3D = (float)Math.PI * 0.26f;
+    static readonly float DefaultAspectRatio = (float)Global.VirtualScreenWidth / Global.VirtualScreenHeight;
+    State State { get; }
+
+    public Context(State state, int width, int height, float aspect)
+    {
+        State = state;
 
 #if GLES
-            // We need at least OpenGLES 3.0 for instancing and shaders
-            if (State.OpenGLVersionMajor < 3)
-                throw new Exception($"OpenGL ES version 3.0 is required for rendering. Your version is {State.OpenGLVersionMajor}.{State.OpenGLVersionMinor}.");
+        // We need at least OpenGLES 3.0 for instancing and shaders
+        if (State.OpenGLVersionMajor < 3)
+            throw new Exception($"OpenGL ES version 3.0 is required for rendering. Your version is {State.OpenGLVersionMajor}.{State.OpenGLVersionMinor}.");
 #else
-            // We need at least OpenGL 3.1 for instancing and shaders
-            if (State.OpenGLVersionMajor < 3 || (State.OpenGLVersionMajor == 3 && State.OpenGLVersionMinor < 1))
-                throw new Exception($"OpenGL version 3.1 is required for rendering. Your version is {State.OpenGLVersionMajor}.{State.OpenGLVersionMinor}.");
+        // We need at least OpenGL 3.1 for instancing and shaders
+        if (State.OpenGLVersionMajor < 3 || State.OpenGLVersionMajor == 3 && State.OpenGLVersionMinor < 1)
+            throw new Exception($"OpenGL version 3.1 is required for rendering. Your version is {State.OpenGLVersionMajor}.{State.OpenGLVersionMinor}.");
 #endif
 
-            State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-            State.Gl.Enable(EnableCap.DepthTest);
-            State.Gl.DepthRange(0.0f, 1.0f);
-            State.Gl.DepthFunc(DepthFunction.Lequal);
-            State.Gl.Disable(EnableCap.CullFace);
+        State.Gl.Enable(EnableCap.DepthTest);
+        State.Gl.DepthRange(0.0f, 1.0f);
+        State.Gl.DepthFunc(DepthFunction.Lequal);
+        State.Gl.Disable(EnableCap.CullFace);
 
-            State.Gl.Disable(EnableCap.Blend);
-            State.Gl.BlendEquationSeparate(BlendEquationModeEXT.FuncAdd, BlendEquationModeEXT.FuncAdd);
-            State.Gl.BlendFuncSeparate(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha, BlendingFactor.One, BlendingFactor.Zero);
+        State.Gl.Disable(EnableCap.Blend);
+        State.Gl.BlendEquationSeparate(BlendEquationModeEXT.FuncAdd, BlendEquationModeEXT.FuncAdd);
+        State.Gl.BlendFuncSeparate(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha, BlendingFactor.One, BlendingFactor.Zero);
 
-			State.ProjectionMatrix2D = Matrix4.CreateOrtho2D(0, Global.VirtualScreenWidth, 0, Global.VirtualScreenHeight, 0, 1);
+        State.ProjectionMatrix2D = Matrix4.CreateOrtho2D(0, Global.VirtualScreenWidth, 0, Global.VirtualScreenHeight, 0, 1);
 
-			Resize(width, height, aspect);
+        Resize(width, height, aspect);
+    }
+
+    public void Resize(int width, int height, float aspect)
+    {
+        State.ProjectionMatrix3D = Matrix4.CreatePerspective(FovY3D, aspect, 0.1f, 40.0f * Global.DistancePerBlock); // Max 3D map dimension is 41
+
+        State.ClearMatrices();
+        State.PushModelViewMatrix(Matrix4.Identity);
+        State.PushProjectionMatrix(State.ProjectionMatrix2D);
+
+        this.width = width;
+        this.height = height;
+
+        SetRotation(rotation, true);
+    }
+
+    public void UpdateAspect(float aspect)
+    {
+        Resize(width, height, aspect);
+    }
+
+    public void SetRotation(Rotation rotation, bool forceUpdate = false)
+    {
+        if (forceUpdate || rotation != this.rotation)
+        {
+            this.rotation = rotation;
+
+            ApplyMatrix();
+        }
+    }
+
+    void UpdateFullScreenMatrix()
+    {
+        float aspectRatio = (float)width / height;
+        int usedWidth = width;
+        int usedHeight = height;
+
+        if (aspectRatio > DefaultAspectRatio) // screen is wider
+        {
+            usedWidth = Util.Round(DefaultAspectRatio * height);
+        }
+        else if (aspectRatio < DefaultAspectRatio) // screen is higher
+        {
+            usedHeight = Util.Round(width / DefaultAspectRatio);
         }
 
-        public void Resize(int width, int height, float aspect)
+        State.FullScreenProjectionMatrix2D = Matrix4.CreateOrtho2D(0, usedWidth, 0, usedHeight, 0, 1);
+    }
+
+    void ApplyMatrix()
+    {
+        State.RestoreModelViewMatrix(modelViewMatrix);
+        State.PopModelViewMatrix();
+
+        if (rotation == Rotation.None)
         {
-            State.ProjectionMatrix3D = Matrix4.CreatePerspective(FovY3D, aspect, 0.1f, 40.0f * Global.DistancePerBlock); // Max 3D map dimension is 41
-
-            State.ClearMatrices();
-            State.PushModelViewMatrix(Matrix4.Identity);
-            State.PushProjectionMatrix(State.ProjectionMatrix2D);
-
-            this.width = width;
-            this.height = height;
-
-            SetRotation(rotation, true);
+            modelViewMatrix = Matrix4.Identity;
         }
-
-        public void UpdateAspect(float aspect)
+        else
         {
-            Resize(width, height, aspect);
-        }
+            var rotationDegree = 0.0f;
 
-        public void SetRotation(Rotation rotation, bool forceUpdate = false)
-        {
-            if (forceUpdate || rotation != this.rotation)
+            switch (rotation)
             {
-                this.rotation = rotation;
+                case Rotation.Deg90:
+                    rotationDegree = 90.0f;
+                    break;
+                case Rotation.Deg180:
+                    rotationDegree = 180.0f;
+                    break;
+                case Rotation.Deg270:
+                    rotationDegree = 270.0f;
+                    break;
+                default:
+                    break;
+            }
 
-                ApplyMatrix();
+            var x = 0.5f * width;
+            var y = 0.5f * height;
+
+            if (rotation != Rotation.Deg180) // 90° or 270°
+            {
+                float factor = height / (float)width;
+
+                modelViewMatrix =
+                    Matrix4.CreateTranslationMatrix(x, y) *
+                    Matrix4.CreateYRotationMatrix(rotationDegree) *
+                    Matrix4.CreateScalingMatrix(factor, 1.0f / factor) *
+                    Matrix4.CreateTranslationMatrix(-x, -y);
+            }
+            else // 180°
+            {
+                modelViewMatrix =
+                    Matrix4.CreateTranslationMatrix(x, y) *
+                    Matrix4.CreateYRotationMatrix(rotationDegree) *
+                    Matrix4.CreateTranslationMatrix(-x, -y);
             }
         }
 
-        void UpdateFullScreenMatrix()
-        {
-            float aspectRatio = (float)width / height;
-            int usedWidth = width;
-            int usedHeight = height;
-
-            if (aspectRatio > DefaultAspectRatio) // screen is wider
-            {
-                usedWidth = Util.Round(DefaultAspectRatio * height);
-            }
-            else if (aspectRatio < DefaultAspectRatio) // screen is higher
-            {
-                usedHeight = Util.Round(width / DefaultAspectRatio);
-            }
-
-			State.FullScreenProjectionMatrix2D = Matrix4.CreateOrtho2D(0, usedWidth, 0, usedHeight, 0, 1);
-		}
-
-        void ApplyMatrix()
-        {
-            State.RestoreModelViewMatrix(modelViewMatrix);
-            State.PopModelViewMatrix();
-
-            if (rotation == Rotation.None)
-            {
-                modelViewMatrix = Matrix4.Identity;
-			}
-            else
-            {
-                var rotationDegree = 0.0f;
-
-                switch (rotation)
-                {
-                    case Rotation.Deg90:
-                        rotationDegree = 90.0f;
-                        break;
-                    case Rotation.Deg180:
-                        rotationDegree = 180.0f;
-                        break;
-                    case Rotation.Deg270:
-                        rotationDegree = 270.0f;
-                        break;
-                    default:
-                        break;
-                }
-
-                var x = 0.5f * width;
-                var y = 0.5f * height;
-
-                if (rotation != Rotation.Deg180) // 90° or 270°
-                {
-                    float factor = (float)height / (float)width;
-
-                    modelViewMatrix =
-                        Matrix4.CreateTranslationMatrix(x, y) *
-                        Matrix4.CreateYRotationMatrix(rotationDegree) *
-                        Matrix4.CreateScalingMatrix(factor, 1.0f / factor) *
-                        Matrix4.CreateTranslationMatrix(-x, -y);
-                }
-                else // 180°
-                {
-                    modelViewMatrix =
-                        Matrix4.CreateTranslationMatrix(x, y) *
-                        Matrix4.CreateYRotationMatrix(rotationDegree) *
-                        Matrix4.CreateTranslationMatrix(-x, -y);
-                }
-            }
-
-            State.PushModelViewMatrix(modelViewMatrix);
-            UpdateFullScreenMatrix();
-        }
+        State.PushModelViewMatrix(modelViewMatrix);
+        UpdateFullScreenMatrix();
     }
 }

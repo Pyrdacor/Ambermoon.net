@@ -19,16 +19,9 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class FloatBuffer(State state, bool staticData) : BufferObject<float>(state, staticData)
 {
-    internal class FloatBuffer : BufferObject<float>
-    {
-        public override int Dimension => 1;
-
-        public FloatBuffer(State state, bool staticData)
-            : base(state, staticData)
-        {
-
-        }
-    }
+    public override int Dimension => 1;
 }

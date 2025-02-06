@@ -21,23 +21,48 @@
 
 using System;
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class PositionBuffer(State state, bool staticData) : BufferObject<short>(state, staticData)
 {
-    internal class PositionBuffer : BufferObject<short>
+    public override int Dimension => 2;
+
+    bool UpdatePositionData(short[] buffer, int index, Tuple<short, short> position)
     {
-        public override int Dimension => 2;
+        bool changed = false;
+        short x = position.Item1;
+        short y = position.Item2;
 
-        public PositionBuffer(State state, bool staticData)
-            : base(state, staticData)
+        if (buffer[index + 0] != x ||
+            buffer[index + 1] != y)
         {
-
+            buffer[index + 0] = x;
+            buffer[index + 1] = y;
+            changed = true;
         }
 
-        bool UpdatePositionData(short[] buffer, int index, Tuple<short, short> position)
+        return changed || index == Size;
+    }
+
+    public int Add(short x, short y, int index = -1)
+    {
+        return Add(UpdatePositionData, Tuple.Create(x, y), index);
+    }
+
+    public void Update(int index, short x, short y)
+    {
+        Update(UpdatePositionData, index, Tuple.Create(x, y));
+    }
+
+    public void TransformAll(Func<int, Tuple<short, short>, Tuple<short, short>> updater)
+    {
+        bool TransformPositionData(short[] buffer, int index, Tuple<short, short> _)
         {
             bool changed = false;
-            short x = position.Item1;
-            short y = position.Item2;
+            var position = Tuple.Create(buffer[index + 0], buffer[index + 1]);
+            var newPosition = updater(index, position);
+            short x = newPosition.Item1;
+            short y = newPosition.Item2;
 
             if (buffer[index + 0] != x ||
                 buffer[index + 1] != y)
@@ -50,41 +75,9 @@ namespace Ambermoon.Renderer
             return changed || index == Size;
         }
 
-        public int Add(short x, short y, int index = -1)
+        for (int i = 0; i < Size; ++i)
         {
-            return Add(UpdatePositionData, Tuple.Create(x, y), index);
-        }
-
-        public void Update(int index, short x, short y)
-        {
-            Update(UpdatePositionData, index, Tuple.Create(x, y));
-        }
-
-        public void TransformAll(Func<int, Tuple<short, short>, Tuple<short, short>> updater)
-        {
-            bool TransformPositionData(short[] buffer, int index, Tuple<short, short> _)
-            {
-                bool changed = false;
-                var position = Tuple.Create(buffer[index + 0], buffer[index + 1]);
-                var newPosition = updater(index, position);
-                short x = newPosition.Item1;
-                short y = newPosition.Item2;
-
-                if (buffer[index + 0] != x ||
-                    buffer[index + 1] != y)
-                {
-                    buffer[index + 0] = x;
-                    buffer[index + 1] = y;
-                    changed = true;
-                }
-
-                return changed || index == Size;
-            }
-
-            for (int i = 0; i < Size; ++i)
-            {
-                Update<Tuple<short, short>>(TransformPositionData, i, null);
-            }
+            Update<Tuple<short, short>>(TransformPositionData, i, null);
         }
     }
 }

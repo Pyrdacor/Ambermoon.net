@@ -19,47 +19,40 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+using Render;
+
+internal class ColorBuffer(State state, bool staticData) : BufferObject<byte>(state, staticData)
 {
-    using Render;
+    public override int Dimension => 4;
 
-    internal class ColorBuffer : BufferObject<byte>
+    bool UpdateColorData(byte[] buffer, int index, Color color)
     {
-        public override int Dimension => 4;
+        bool changed = false;
 
-        public ColorBuffer(State state, bool staticData)
-            : base(state, staticData)
+        if (buffer[index + 0] != color.R ||
+            buffer[index + 1] != color.G ||
+            buffer[index + 2] != color.B ||
+            buffer[index + 3] != color.A)
         {
-
+            buffer[index + 0] = color.R;
+            buffer[index + 1] = color.G;
+            buffer[index + 2] = color.B;
+            buffer[index + 3] = color.A;
+            changed = true;
         }
 
-        bool UpdateColorData(byte[] buffer, int index, Color color)
-        {
-            bool changed = false;
+        return index == Size || changed;
+    }
 
-            if (buffer[index + 0] != color.R ||
-                buffer[index + 1] != color.G ||
-                buffer[index + 2] != color.B ||
-                buffer[index + 3] != color.A)
-            {
-                buffer[index + 0] = color.R;
-                buffer[index + 1] = color.G;
-                buffer[index + 2] = color.B;
-                buffer[index + 3] = color.A;
-                changed = true;
-            }
+    public int Add(Color color, int index = -1)
+    {
+        return Add(UpdateColorData, color, index);
+    }
 
-            return index == Size || changed;
-        }
-
-        public int Add(Color color, int index = -1)
-        {
-            return base.Add(UpdateColorData, color, index);
-        }
-
-        public void Update(int index, Color color)
-        {
-            base.Update(UpdateColorData, index, color);
-        }
+    public void Update(int index, Color color)
+    {
+        Update(UpdateColorData, index, color);
     }
 }

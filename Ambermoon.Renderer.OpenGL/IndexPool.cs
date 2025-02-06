@@ -21,63 +21,62 @@
 
 using System.Collections.Generic;
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class IndexPool
 {
-    internal class IndexPool
+    readonly List<int> releasedIndices = new List<int>();
+    int firstFree = 0;
+
+    public int AssignNextFreeIndex(out bool reused)
     {
-        readonly List<int> releasedIndices = new List<int>();
-        int firstFree = 0;
-
-        public int AssignNextFreeIndex(out bool reused)
+        if (releasedIndices.Count != 0)
         {
-            if (releasedIndices.Count != 0)
+            reused = true;
+
+            int index = releasedIndices[^1];
+
+            // Remove last has O(1) while remove first has O(n)!
+            releasedIndices.RemoveAt(releasedIndices.Count - 1);
+
+            return index;
+        }
+
+        reused = false;
+
+        if (firstFree == int.MaxValue)
+        {
+            throw new AmbermoonException(ExceptionScope.Render, "No free index available.");
+        }
+
+        return firstFree++;
+    }
+
+    public void UnassignIndex(int index)
+    {
+        releasedIndices.Add(index);
+    }
+
+    public bool AssignIndex(int index)
+    {
+        // The logic should prefer the last index so that this is much faster.
+        if (releasedIndices.Count != 0)
+        {
+            if (releasedIndices[^1] == index)
             {
-                reused = true;
-
-                int index = releasedIndices[^1];
-
-                // Remove last has O(1) while remove first has O(n)!
                 releasedIndices.RemoveAt(releasedIndices.Count - 1);
-
-                return index;
+                return true;
             }
-
-            reused = false;
-
-            if (firstFree == int.MaxValue)
+            else if (releasedIndices.Contains(index))
             {
-                throw new AmbermoonException(ExceptionScope.Render, "No free index available.");
+                releasedIndices.Remove(index);
+                return true;
             }
-
-            return firstFree++;
         }
 
-        public void UnassignIndex(int index)
-        {
-            releasedIndices.Add(index);
-        }
+        if (index == firstFree)
+            ++firstFree;
 
-        public bool AssignIndex(int index)
-        {
-            // The logic should prefer the last index so that this is much faster.
-            if (releasedIndices.Count != 0)
-            {
-                if (releasedIndices[^1] == index)
-                {
-                    releasedIndices.RemoveAt(releasedIndices.Count - 1);
-                    return true;
-                }
-                else if (releasedIndices.Contains(index))
-                {
-                    releasedIndices.Remove(index);
-                    return true;
-                }
-            }
-
-            if (index == firstFree)
-                ++firstFree;
-
-            return false;
-        }
+        return false;
     }
 }

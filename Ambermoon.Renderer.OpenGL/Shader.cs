@@ -26,44 +26,44 @@ using Silk.NET.OpenGL;
 #endif
 using System;
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class Shader : IDisposable
 {
-    internal class Shader : IDisposable
+    public enum Type
     {
-        public enum Type
-        {
-            Fragment,
-            Vertex
-        }
+        Fragment,
+        Vertex
+    }
 
-        readonly string code = "";
-        bool disposed = false;
-        readonly State state = null;
+    readonly string code = "";
+    bool disposed = false;
+    readonly State state = null;
 
-        public Type ShaderType { get; } = Type.Fragment;
-        public uint ShaderIndex { get; private set; } = 0;
+    public Type ShaderType { get; } = Type.Fragment;
+    public uint ShaderIndex { get; private set; } = 0;
 
-        public Shader(State state, Type type, string code)
-        {
-            this.state = state;
-            ShaderType = type;
-            this.code = code;
+    public Shader(State state, Type type, string code)
+    {
+        this.state = state;
+        ShaderType = type;
+        this.code = code;
 
-            Create();
-        }
+        Create();
+    }
 
-        void Create()
-        {
-            ShaderIndex = state.Gl.CreateShader((ShaderType == Type.Fragment) ?
-                GLEnum.FragmentShader :
-                GLEnum.VertexShader);
+    void Create()
+    {
+        ShaderIndex = state.Gl.CreateShader((ShaderType == Type.Fragment) ?
+            GLEnum.FragmentShader :
+            GLEnum.VertexShader);
 
-            state.Gl.ShaderSource(ShaderIndex, code);
-            state.Gl.CompileShader(ShaderIndex);
+        state.Gl.ShaderSource(ShaderIndex, code);
+        state.Gl.CompileShader(ShaderIndex);
 
-            state.Gl.GetShader(ShaderIndex, GLEnum.CompileStatus, out int compileStatus);
+        state.Gl.GetShader(ShaderIndex, GLEnum.CompileStatus, out int compileStatus);
 
-            if (compileStatus == (int)GLEnum.False)
+        if (compileStatus == (int)GLEnum.False)
 			{
 				string infoLog = state.Gl.GetShaderInfoLog(ShaderIndex);
 
@@ -72,30 +72,29 @@ namespace Ambermoon.Renderer
 				{
 					throw new Exception(infoLog.Trim());
 				}
-                else
-                {
-                    throw new Exception("Unknown error");
-                }
-			}			
-        }
-
-        public void AttachToProgram(ShaderProgram program)
-        {
-            program.AttachShader(this);
-        }
-
-        public void Dispose()
-        {
-            if (!disposed)
+            else
             {
-                if (ShaderIndex != 0)
-                {
-                    state.Gl.DeleteShader(ShaderIndex);
-                    ShaderIndex = 0;
-                }
-
-                disposed = true;
+                throw new Exception("Unknown error");
             }
+			}			
+    }
+
+    public void AttachToProgram(ShaderProgram program)
+    {
+        program.AttachShader(this);
+    }
+
+    public void Dispose()
+    {
+        if (!disposed)
+        {
+            if (ShaderIndex != 0)
+            {
+                state.Gl.DeleteShader(ShaderIndex);
+                ShaderIndex = 0;
+            }
+
+            disposed = true;
         }
     }
 }

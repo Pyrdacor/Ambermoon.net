@@ -19,16 +19,9 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class WordBuffer(State state, bool staticData) : BufferObject<ushort>(state, staticData)
 {
-    internal class WordBuffer : BufferObject<ushort>
-    {
-        public override int Dimension => 1;
-
-        public WordBuffer(State state, bool staticData)
-            : base(state, staticData)
-        {
-
-        }
-    }
+    public override int Dimension => 1;
 }

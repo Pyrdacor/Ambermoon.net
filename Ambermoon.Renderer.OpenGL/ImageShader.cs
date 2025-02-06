@@ -19,57 +19,56 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class ImageShader : TextureShader
 {
-    internal class ImageShader : TextureShader
+    internal static readonly string DefaultAlphaName = AlphaTextureShader.DefaultAlphaName;
+
+    static string[] ImageFragmentShader(State state) =>
+    [
+        GetFragmentShaderHeader(state),
+        $"uniform sampler2D {DefaultSamplerName};",
+        $"in vec2 varTexCoord;",
+        $"flat in float a;",
+        $"",
+        $"void main()",
+        $"{{",
+        $"    vec4 color = textureLod({DefaultSamplerName}, varTexCoord, 0.0f);",
+        $"    {DefaultFragmentOutColorName} = vec4(color.rgb, color.a * a);",
+        $"}}"
+    ];
+
+    static string[] ImageVertexShader(State state) =>
+    [
+        GetVertexShaderHeader(state),
+        $"in vec2 {DefaultPositionName};",
+        $"in ivec2 {DefaultTexCoordName};",
+        $"in uint {DefaultLayerName};",
+        $"in uint {DefaultAlphaName};",
+        $"uniform float {DefaultZName};",
+        $"uniform uvec2 {DefaultAtlasSizeName};",
+        $"uniform mat4 {DefaultProjectionMatrixName};",
+        $"uniform mat4 {DefaultModelViewMatrixName};",
+        $"out vec2 varTexCoord;",
+        $"flat out float a;",
+        $"",
+        $"void main()",
+        $"{{",
+        $"    vec2 atlasFactor = vec2(1.0f / float({DefaultAtlasSizeName}.x), 1.0f / float({DefaultAtlasSizeName}.y));",
+        $"    vec2 pos = vec2({DefaultPositionName}.x, {DefaultPositionName}.y);",
+        $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
+        $"    float z = 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f;",
+        $"    a = float({DefaultAlphaName}) / 255.0f;",
+        $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, z, 1.0f);",
+        $"}}"
+    ];
+
+    ImageShader(State state)
+        : base(state, ImageFragmentShader(state), ImageVertexShader(state))
     {
-        internal static readonly string DefaultAlphaName = AlphaTextureShader.DefaultAlphaName;
 
-        static string[] ImageFragmentShader(State state) => new string[]
-        {
-            GetFragmentShaderHeader(state),
-            $"uniform sampler2D {DefaultSamplerName};",
-            $"in vec2 varTexCoord;",
-            $"flat in float a;",
-            $"",
-            $"void main()",
-            $"{{",
-            $"    vec4 color = textureLod({DefaultSamplerName}, varTexCoord, 0.0f);",
-            $"    {DefaultFragmentOutColorName} = vec4(color.rgb, color.a * a);",
-            $"}}"
-        };
-
-        static string[] ImageVertexShader(State state) => new string[]
-        {
-            GetVertexShaderHeader(state),
-            $"in vec2 {DefaultPositionName};",
-            $"in ivec2 {DefaultTexCoordName};",
-            $"in uint {DefaultLayerName};",
-            $"in uint {DefaultAlphaName};",
-            $"uniform float {DefaultZName};",
-            $"uniform uvec2 {DefaultAtlasSizeName};",
-            $"uniform mat4 {DefaultProjectionMatrixName};",
-            $"uniform mat4 {DefaultModelViewMatrixName};",
-            $"out vec2 varTexCoord;",
-            $"flat out float a;",
-            $"",
-            $"void main()",
-            $"{{",
-            $"    vec2 atlasFactor = vec2(1.0f / float({DefaultAtlasSizeName}.x), 1.0f / float({DefaultAtlasSizeName}.y));",
-            $"    vec2 pos = vec2({DefaultPositionName}.x, {DefaultPositionName}.y);",
-            $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
-            $"    float z = 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f;",
-            $"    a = float({DefaultAlphaName}) / 255.0f;",
-            $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, z, 1.0f);",
-            $"}}"
-        };
-
-        ImageShader(State state)
-            : base(state, ImageFragmentShader(state), ImageVertexShader(state))
-        {
-
-        }
-
-        public static new ImageShader Create(State state) => new ImageShader(state);
     }
+
+    public static new ImageShader Create(State state) => new ImageShader(state);
 }

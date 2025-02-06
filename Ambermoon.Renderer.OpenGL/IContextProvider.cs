@@ -1,9 +1,8 @@
 ﻿using Silk.NET.Core.Contexts;
 
-namespace Ambermoon.Renderer.OpenGL
+namespace Ambermoon.Renderer.OpenGL;
+
+public interface IContextProvider : IGLContextSource
 {
-    public interface IContextProvider : IGLContextSource
-    {
-        public string Identifier { get; }
-    }
+    public string Identifier { get; }
 }

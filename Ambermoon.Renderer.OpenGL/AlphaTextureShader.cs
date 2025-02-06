@@ -19,90 +19,89 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class AlphaTextureShader : TextureShader
 {
-    internal class AlphaTextureShader : TextureShader
+    internal static readonly string DefaultAlphaName = "alpha";
+
+    protected static string[] AlphaTextureFragmentShader(State state) =>
+    [
+        GetFragmentShaderHeader(state),
+        $"uniform float {DefaultUsePaletteName};",
+        $"uniform sampler2D {DefaultSamplerName};",
+        $"uniform sampler2D {DefaultPaletteName};",
+        $"uniform float {DefaultColorKeyName};",
+        $"uniform float {DefaultPaletteCountName};",
+        $"in vec2 varTexCoord;",
+        $"flat in float palIndex;",
+        $"flat in float maskColIndex;",
+        $"flat in float a;",
+        $"",
+        $"void main()",
+        $"{{",
+        $"    vec4 pixelColor = vec4(0);",
+        $"    if ({DefaultUsePaletteName} > 0.5f)",
+        $"    {{",
+        $"        float colorIndex = textureLod({DefaultSamplerName}, varTexCoord, 0.0f).r * 255.0f;",
+        $"        ",
+        $"        if (colorIndex < 0.5f)",
+        $"            discard;",
+        $"        else",
+        $"        {{",
+        $"            if (colorIndex >= 31.5f)",
+        $"                colorIndex = 0.0f;",
+        $"            pixelColor = textureLod({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}), 0.0f);",
+        $"        }}",
+        $"    }}",
+        $"    else",
+        $"    {{",
+        $"        pixelColor = textureLod({DefaultSamplerName}, varTexCoord, 0.0f);",
+        $"        if (pixelColor.a < 0.5f)",
+        $"            discard;",
+        $"    }}",
+        $"    ",
+        $"    if (maskColIndex > 0.5f)",
+        $"        pixelColor = textureLod({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}), 0.0f);",
+        $"    {DefaultFragmentOutColorName} = vec4(pixelColor.rgb, pixelColor.a * a);",
+        $"}}"
+    ];
+
+    protected static string[] AlphaTextureVertexShader(State state) =>
+    [
+        GetVertexShaderHeader(state),
+        $"in vec2 {DefaultPositionName};",
+        $"in ivec2 {DefaultTexCoordName};",
+        $"in uint {DefaultLayerName};",
+        $"in uint {DefaultPaletteIndexName};",
+        $"in uint {DefaultMaskColorIndexName};",
+        $"in uint {DefaultAlphaName};",
+        $"uniform uvec2 {DefaultAtlasSizeName};",
+        $"uniform float {DefaultZName};",
+        $"uniform mat4 {DefaultProjectionMatrixName};",
+        $"uniform mat4 {DefaultModelViewMatrixName};",
+        $"out vec2 varTexCoord;",
+        $"flat out float palIndex;",
+        $"flat out float maskColIndex;",
+        $"flat out float a;",
+        $"",
+        $"void main()",
+        $"{{",
+        $"    vec2 atlasFactor = vec2(1.0f / float({DefaultAtlasSizeName}.x), 1.0f / float({DefaultAtlasSizeName}.y));",
+        $"    vec2 pos = vec2({DefaultPositionName}.x + 0.49f, {DefaultPositionName}.y + 0.49f);",
+        $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
+        $"    palIndex = float({DefaultPaletteIndexName});",
+        $"    a = float({DefaultAlphaName}) / 255.0f;",
+        $"    maskColIndex = float({DefaultMaskColorIndexName});",
+        $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f, 1.0f);",
+        $"}}"
+    ];
+
+    AlphaTextureShader(State state)
+        : base(state, AlphaTextureFragmentShader(state), AlphaTextureVertexShader(state))
     {
-        internal static readonly string DefaultAlphaName = "alpha";
 
-        protected static string[] AlphaTextureFragmentShader(State state) => new string[]
-        {
-            GetFragmentShaderHeader(state),
-            $"uniform float {DefaultUsePaletteName};",
-            $"uniform sampler2D {DefaultSamplerName};",
-            $"uniform sampler2D {DefaultPaletteName};",
-            $"uniform float {DefaultColorKeyName};",
-            $"uniform float {DefaultPaletteCountName};",
-            $"in vec2 varTexCoord;",
-            $"flat in float palIndex;",
-            $"flat in float maskColIndex;",
-            $"flat in float a;",
-            $"",
-            $"void main()",
-            $"{{",
-            $"    vec4 pixelColor = vec4(0);",
-            $"    if ({DefaultUsePaletteName} > 0.5f)",
-            $"    {{",
-            $"        float colorIndex = textureLod({DefaultSamplerName}, varTexCoord, 0.0f).r * 255.0f;",
-            $"        ",
-            $"        if (colorIndex < 0.5f)",
-            $"            discard;",
-            $"        else",
-            $"        {{",
-            $"            if (colorIndex >= 31.5f)",
-            $"                colorIndex = 0.0f;",
-            $"            pixelColor = textureLod({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}), 0.0f);",
-            $"        }}",
-            $"    }}",
-            $"    else",
-            $"    {{",
-            $"        pixelColor = textureLod({DefaultSamplerName}, varTexCoord, 0.0f);",
-            $"        if (pixelColor.a < 0.5f)",
-            $"            discard;",
-            $"    }}",
-            $"    ",
-            $"    if (maskColIndex > 0.5f)",
-            $"        pixelColor = textureLod({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}), 0.0f);",
-            $"    {DefaultFragmentOutColorName} = vec4(pixelColor.rgb, pixelColor.a * a);",
-            $"}}"
-        };
-
-        protected static string[] AlphaTextureVertexShader(State state) => new string[]
-        {
-            GetVertexShaderHeader(state),
-            $"in vec2 {DefaultPositionName};",
-            $"in ivec2 {DefaultTexCoordName};",
-            $"in uint {DefaultLayerName};",
-            $"in uint {DefaultPaletteIndexName};",
-            $"in uint {DefaultMaskColorIndexName};",
-            $"in uint {DefaultAlphaName};",
-            $"uniform uvec2 {DefaultAtlasSizeName};",
-            $"uniform float {DefaultZName};",
-            $"uniform mat4 {DefaultProjectionMatrixName};",
-            $"uniform mat4 {DefaultModelViewMatrixName};",
-            $"out vec2 varTexCoord;",
-            $"flat out float palIndex;",
-            $"flat out float maskColIndex;",
-            $"flat out float a;",
-            $"",
-            $"void main()",
-            $"{{",
-            $"    vec2 atlasFactor = vec2(1.0f / float({DefaultAtlasSizeName}.x), 1.0f / float({DefaultAtlasSizeName}.y));",
-            $"    vec2 pos = vec2({DefaultPositionName}.x + 0.49f, {DefaultPositionName}.y + 0.49f);",
-            $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
-            $"    palIndex = float({DefaultPaletteIndexName});",
-            $"    a = float({DefaultAlphaName}) / 255.0f;",
-            $"    maskColIndex = float({DefaultMaskColorIndexName});",
-            $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f, 1.0f);",
-            $"}}"
-        };
-
-        AlphaTextureShader(State state)
-            : base(state, AlphaTextureFragmentShader(state), AlphaTextureVertexShader(state))
-        {
-
-        }
-
-        public new static AlphaTextureShader Create(State state) => new AlphaTextureShader(state);
     }
+
+    public new static AlphaTextureShader Create(State state) => new AlphaTextureShader(state);
 }

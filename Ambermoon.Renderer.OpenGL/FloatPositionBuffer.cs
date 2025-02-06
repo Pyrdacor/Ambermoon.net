@@ -21,23 +21,54 @@
 
 using System;
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class FloatPositionBuffer : BufferObject<float>
 {
-    internal class FloatPositionBuffer : BufferObject<float>
+    public override int Dimension => 2;
+
+    public FloatPositionBuffer(State state, bool staticData)
+        : base(state, staticData)
     {
-        public override int Dimension => 2;
 
-        public FloatPositionBuffer(State state, bool staticData)
-            : base(state, staticData)
+    }
+
+    bool UpdatePositionData(float[] buffer, int index, Tuple<float, float> position)
+    {
+        bool changed = false;
+        float x = position.Item1;
+        float y = position.Item2;
+
+        if (!Util.FloatEqual(buffer[index + 0], x) ||
+            !Util.FloatEqual(buffer[index + 1], y))
         {
-
+            buffer[index + 0] = x;
+            buffer[index + 1] = y;
+            changed = true;
         }
 
-        bool UpdatePositionData(float[] buffer, int index, Tuple<float, float> position)
+        return changed || index == Size;
+    }
+
+    public int Add(float x, float y, int index = -1)
+    {
+        return Add(UpdatePositionData, Tuple.Create(x, y), index);
+    }
+
+    public void Update(int index, float x, float y)
+    {
+        Update(UpdatePositionData, index, Tuple.Create(x, y));
+    }
+
+    public void TransformAll(Func<int, Tuple<float, float>, Tuple<float, float>> updater)
+    {
+        bool TransformPositionData(float[] buffer, int index, Tuple<float, float> _)
         {
             bool changed = false;
-            float x = position.Item1;
-            float y = position.Item2;
+            var position = Tuple.Create(buffer[index + 0], buffer[index + 1]);
+            var newPosition = updater(index, position);
+            float x = newPosition.Item1;
+            float y = newPosition.Item2;
 
             if (!Util.FloatEqual(buffer[index + 0], x) ||
                 !Util.FloatEqual(buffer[index + 1], y))
@@ -50,41 +81,9 @@ namespace Ambermoon.Renderer
             return changed || index == Size;
         }
 
-        public int Add(float x, float y, int index = -1)
+        for (int i = 0; i < Size; ++i)
         {
-            return Add(UpdatePositionData, Tuple.Create(x, y), index);
-        }
-
-        public void Update(int index, float x, float y)
-        {
-            Update(UpdatePositionData, index, Tuple.Create(x, y));
-        }
-
-        public void TransformAll(Func<int, Tuple<float, float>, Tuple<float, float>> updater)
-        {
-            bool TransformPositionData(float[] buffer, int index, Tuple<float, float> _)
-            {
-                bool changed = false;
-                var position = Tuple.Create(buffer[index + 0], buffer[index + 1]);
-                var newPosition = updater(index, position);
-                float x = newPosition.Item1;
-                float y = newPosition.Item2;
-
-                if (!Util.FloatEqual(buffer[index + 0], x) ||
-                    !Util.FloatEqual(buffer[index + 1], y))
-                {
-                    buffer[index + 0] = x;
-                    buffer[index + 1] = y;
-                    changed = true;
-                }
-
-                return changed || index == Size;
-            }
-
-            for (int i = 0; i < Size; ++i)
-            {
-                Update<Tuple<float, float>>(TransformPositionData, i, null);
-            }
+            Update<Tuple<float, float>>(TransformPositionData, i, null);
         }
     }
 }

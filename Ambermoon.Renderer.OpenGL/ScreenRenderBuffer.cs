@@ -26,83 +26,82 @@ using Silk.NET.OpenGL;
 #endif
 using System;
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class ScreenRenderBuffer : IDisposable
 {
-    internal class ScreenRenderBuffer : IDisposable
+    bool disposed = false;
+    readonly State state;
+
+    readonly VertexArrayObject vertexArrayObject = null;
+    readonly FloatPositionBuffer positionBuffer = null;
+    readonly IndexBuffer indexBuffer = null;
+
+    Size size = null;
+    public Matrix4 ProjectionMatrix { get; private set; } = Matrix4.Identity;
+
+    public ScreenRenderBuffer(State state, ScreenShader screenShader)
     {
-        bool disposed = false;
-        readonly State state;
+        this.state = state;
+        vertexArrayObject = new VertexArrayObject(state, screenShader.ShaderProgram);
+        positionBuffer = new FloatPositionBuffer(state, true);
+        positionBuffer.Add(0, 0, 0);
+        positionBuffer.Add(Global.VirtualScreenWidth, 0, 1);
+        positionBuffer.Add(Global.VirtualScreenWidth, Global.VirtualScreenHeight, 2);
+        positionBuffer.Add(0, Global.VirtualScreenHeight, 3);
+        vertexArrayObject.AddBuffer(ScreenShader.DefaultPositionName, positionBuffer);
+        indexBuffer = new IndexBuffer(state);
+        indexBuffer.InsertQuad(0);
+        vertexArrayObject.AddBuffer("index", indexBuffer);
+    }
 
-        readonly VertexArrayObject vertexArrayObject = null;
-        readonly FloatPositionBuffer positionBuffer = null;
-        readonly IndexBuffer indexBuffer = null;
-
-        Size size = null;
-        public Matrix4 ProjectionMatrix { get; private set; } = Matrix4.Identity;
-
-        public ScreenRenderBuffer(State state, ScreenShader screenShader)
+    public void SetSize(Size size)
+    {
+        if (this.size != size)
         {
-            this.state = state;
-            vertexArrayObject = new VertexArrayObject(state, screenShader.ShaderProgram);
-            positionBuffer = new FloatPositionBuffer(state, true);
-            positionBuffer.Add(0, 0, 0);
-            positionBuffer.Add(Global.VirtualScreenWidth, 0, 1);
-            positionBuffer.Add(Global.VirtualScreenWidth, Global.VirtualScreenHeight, 2);
-            positionBuffer.Add(0, Global.VirtualScreenHeight, 3);
-            vertexArrayObject.AddBuffer(ScreenShader.DefaultPositionName, positionBuffer);
-            indexBuffer = new IndexBuffer(state);
-            indexBuffer.InsertQuad(0);
-            vertexArrayObject.AddBuffer("index", indexBuffer);
+            this.size = new Size(size);
+            positionBuffer.Update(1, (short)size.Width, 0);
+            positionBuffer.Update(2, (short)size.Width, (short)size.Height);
+            positionBuffer.Update(3, 0, (short)size.Height);
+            ProjectionMatrix = Matrix4.CreateOrtho2D(0, size.Width, 0, size.Height, 0, 1);
         }
+    }
 
-        public void SetSize(Size size)
+    public void Render()
+    {
+        if (disposed)
+            return;
+
+        vertexArrayObject.Bind();
+
+        unsafe
         {
-            if (this.size != size)
+            vertexArrayObject.Lock();
+
+            try
             {
-                this.size = new Size(size);
-                positionBuffer.Update(1, (short)size.Width, 0);
-                positionBuffer.Update(2, (short)size.Width, (short)size.Height);
-                positionBuffer.Update(3, 0, (short)size.Height);
-                ProjectionMatrix = Matrix4.CreateOrtho2D(0, size.Width, 0, size.Height, 0, 1);
+                state.Gl.DrawElements(GLEnum.Triangles, (uint)(positionBuffer.Size / 4) * 3, DrawElementsType.UnsignedInt, (void*)0);
+                vertexArrayObject.Unbind();
+            }
+            catch
+            {
+                // ignore for now
+            }
+            finally
+            {
+                vertexArrayObject.Unlock();
             }
         }
+    }
 
-        public void Render()
+    public void Dispose()
+    {
+        if (!disposed)
         {
-            if (disposed)
-                return;
+            vertexArrayObject?.Dispose();
+            positionBuffer?.Dispose();
 
-            vertexArrayObject.Bind();
-
-            unsafe
-            {
-                vertexArrayObject.Lock();
-
-                try
-                {
-                    state.Gl.DrawElements(GLEnum.Triangles, (uint)(positionBuffer.Size / 4) * 3, DrawElementsType.UnsignedInt, (void*)0);
-                    vertexArrayObject.Unbind();
-                }
-                catch
-                {
-                    // ignore for now
-                }
-                finally
-                {
-                    vertexArrayObject.Unlock();
-                }
-            }
-        }
-
-        public void Dispose()
-        {
-            if (!disposed)
-            {
-                vertexArrayObject?.Dispose();
-                positionBuffer?.Dispose();
-
-                disposed = true;
-            }
+            disposed = true;
         }
     }
 }

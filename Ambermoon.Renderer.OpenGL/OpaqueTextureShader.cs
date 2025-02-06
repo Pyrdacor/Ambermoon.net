@@ -19,68 +19,67 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL;
+
+internal class OpaqueTextureShader : TextureShader
 {
-    internal class OpaqueTextureShader : TextureShader
+    static string[] OpaqueTextureFragmentShader(State state) =>
+    [
+        GetFragmentShaderHeader(state),
+        $"uniform float {DefaultUsePaletteName};",
+        $"uniform float {DefaultPaletteCountName};",
+        $"uniform sampler2D {DefaultSamplerName};",
+        $"uniform sampler2D {DefaultPaletteName};",
+        $"in vec2 varTexCoord;",
+        $"flat in float palIndex;",
+        $"",
+        $"void main()",
+        $"{{",
+        $"    vec4 pixelColor;",
+        $"    if ({DefaultUsePaletteName} > 0.5f)",
+        $"    {{",
+        $"        float colorIndex = textureLod({DefaultSamplerName}, varTexCoord, 0.0f).r * 255.0f;",
+        $"        pixelColor = textureLod({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}), 0.0f);",
+        $"    }}",
+        $"    else",
+        $"    {{",
+        $"        pixelColor = textureLod({DefaultSamplerName}, varTexCoord, 0.0f);",
+        $"    }}",
+        $"    ",
+        $"    {DefaultFragmentOutColorName} = pixelColor;",
+        $"}}"
+    ];
+
+    protected static string[] OpaqueTextureVertexShader(State state) =>
+    [
+        GetVertexShaderHeader(state),
+        $"in vec2 {DefaultPositionName};",
+        $"in ivec2 {DefaultTexCoordName};",
+        $"in uint {DefaultLayerName};",
+        $"in uint {DefaultPaletteIndexName};",
+        $"in uint {DefaultMaskColorIndexName};",
+        $"uniform uvec2 {DefaultAtlasSizeName};",
+        $"uniform float {DefaultZName};",
+        $"uniform mat4 {DefaultProjectionMatrixName};",
+        $"uniform mat4 {DefaultModelViewMatrixName};",
+        $"out vec2 varTexCoord;",
+        $"flat out float palIndex;",
+        $"",
+        $"void main()",
+        $"{{",
+        $"    vec2 atlasFactor = vec2(1.0f / float({DefaultAtlasSizeName}.x), 1.0f / float({DefaultAtlasSizeName}.y));",
+        $"    vec2 pos = vec2({DefaultPositionName}.x + 0.49f, {DefaultPositionName}.y + 0.49f);",
+        $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
+        $"    palIndex = float({DefaultPaletteIndexName});",
+        $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f, 1.0f);",
+        $"}}"
+    ];
+
+    OpaqueTextureShader(State state)
+        : base(state, OpaqueTextureFragmentShader(state), OpaqueTextureVertexShader(state))
     {
-        static string[] OpaqueTextureFragmentShader(State state) => new string[]
-        {
-            GetFragmentShaderHeader(state),
-            $"uniform float {DefaultUsePaletteName};",
-            $"uniform float {DefaultPaletteCountName};",
-            $"uniform sampler2D {DefaultSamplerName};",
-            $"uniform sampler2D {DefaultPaletteName};",
-            $"in vec2 varTexCoord;",
-            $"flat in float palIndex;",
-            $"",
-            $"void main()",
-            $"{{",
-            $"    vec4 pixelColor;",
-            $"    if ({DefaultUsePaletteName} > 0.5f)",
-            $"    {{",
-            $"        float colorIndex = textureLod({DefaultSamplerName}, varTexCoord, 0.0f).r * 255.0f;",
-            $"        pixelColor = textureLod({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {DefaultPaletteCountName}), 0.0f);",
-            $"    }}",
-            $"    else",
-            $"    {{",
-            $"        pixelColor = textureLod({DefaultSamplerName}, varTexCoord, 0.0f);",
-            $"    }}",
-            $"    ",
-            $"    {DefaultFragmentOutColorName} = pixelColor;",
-            $"}}"
-        };
 
-        protected static string[] OpaqueTextureVertexShader(State state) => new string[]
-        {
-            GetVertexShaderHeader(state),
-            $"in vec2 {DefaultPositionName};",
-            $"in ivec2 {DefaultTexCoordName};",
-            $"in uint {DefaultLayerName};",
-            $"in uint {DefaultPaletteIndexName};",
-            $"in uint {DefaultMaskColorIndexName};",
-            $"uniform uvec2 {DefaultAtlasSizeName};",
-            $"uniform float {DefaultZName};",
-            $"uniform mat4 {DefaultProjectionMatrixName};",
-            $"uniform mat4 {DefaultModelViewMatrixName};",
-            $"out vec2 varTexCoord;",
-            $"flat out float palIndex;",
-            $"",
-            $"void main()",
-            $"{{",
-            $"    vec2 atlasFactor = vec2(1.0f / float({DefaultAtlasSizeName}.x), 1.0f / float({DefaultAtlasSizeName}.y));",
-            $"    vec2 pos = vec2({DefaultPositionName}.x + 0.49f, {DefaultPositionName}.y + 0.49f);",
-            $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
-            $"    palIndex = float({DefaultPaletteIndexName});",
-            $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f, 1.0f);",
-            $"}}"
-        };
-
-        OpaqueTextureShader(State state)
-            : base(state, OpaqueTextureFragmentShader(state), OpaqueTextureVertexShader(state))
-        {
-
-        }
-
-        public new static OpaqueTextureShader Create(State state) => new OpaqueTextureShader(state);
     }
+
+    public new static OpaqueTextureShader Create(State state) => new OpaqueTextureShader(state);
 }

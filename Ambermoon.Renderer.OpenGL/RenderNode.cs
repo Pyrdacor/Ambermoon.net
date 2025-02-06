@@ -19,218 +19,218 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Ambermoon.Render;
 using System;
 
-namespace Ambermoon.Renderer
-{
-    public abstract class RenderNode : IRenderNode
-    {
-        int x = short.MaxValue;
-        int y = short.MaxValue;
-        bool visible = false;
-        IRenderLayer layer = null;
-        bool visibleRequest = false;
-        bool deleted = false;
-        bool notOnScreen = true;
-        protected readonly Rect virtualScreen = null;
-        Rect clipArea = null;
+namespace Ambermoon.Renderer.OpenGL;
 
-        protected RenderNode(int width, int height, Rect virtualScreen)
+using Render;
+
+public abstract class RenderNode : IRenderNode
+{
+    int x = short.MaxValue;
+    int y = short.MaxValue;
+    bool visible = false;
+    IRenderLayer layer = null;
+    bool visibleRequest = false;
+    bool deleted = false;
+    bool notOnScreen = true;
+    protected readonly Rect virtualScreen = null;
+    Rect clipArea = null;
+
+    protected RenderNode(int width, int height, Rect virtualScreen)
+    {
+        Width = width;
+        Height = height;
+        this.virtualScreen = virtualScreen;
+    }
+
+    public bool Visible
+    {
+        get => visible && !deleted && !notOnScreen;
+        set
+        {
+            if (deleted)
+                return;
+
+            if (layer == null)
+            {
+                visibleRequest = value;
+                visible = false;
+                return;
+            }
+
+            visibleRequest = false;
+
+            if (visible == value)
+                return;
+
+            visible = value;
+
+            OnVisibilityChanged();
+        }
+    }
+
+    public IRenderLayer Layer
+    {
+        get => layer;
+        set
+        {
+            if (value != null && !(value is RenderLayer))
+                throw new InvalidCastException("The given layer is not valid for this renderer.");
+
+            if (layer == value)
+                return;
+
+            if (layer != null && Visible)
+                RemoveFromLayer();
+
+            layer = value;
+
+            if (layer != null && visibleRequest && !deleted)
+            {
+                visible = true;
+                visibleRequest = false;
+                CheckOnScreen();
+            }
+
+            if (layer == null)
+            {
+                visibleRequest = false;
+                visible = false;
+                notOnScreen = true;
+            }
+
+            if (layer != null && Visible)
+                AddToLayer();
+        }
+    }
+
+    public Rect ClipArea
+    {
+        get => clipArea;
+        set
+        {
+            if (clipArea == value)
+                return;
+
+            clipArea = new(value);
+            bool handled = CheckOnScreen();
+            OnClipAreaChanged(!notOnScreen, !handled);
+        }
+    }
+
+    public int Width { get; private set; }
+
+    public int Height { get; private set; }
+
+    public virtual void Resize(int width, int height)
+    {
+        if (Width != width || Height != height)
         {
             Width = width;
             Height = height;
-            this.virtualScreen = virtualScreen;
-        }
 
-        public bool Visible
-        {
-            get => visible && !deleted && !notOnScreen;
-            set
-            {
-                if (deleted)
-                    return;
-
-                if (layer == null)
-                {
-                    visibleRequest = value;
-                    visible = false;
-                    return;
-                }
-
-                visibleRequest = false;
-
-                if (visible == value)
-                    return;
-
-                visible = value;
-
-                OnVisibilityChanged();
-            }
-        }
-
-        public IRenderLayer Layer
-        {
-            get => layer;
-            set
-            {
-                if (value != null && !(value is RenderLayer))
-                    throw new InvalidCastException("The given layer is not valid for this renderer.");
-
-                if (layer == value)
-                    return;
-
-                if (layer != null && Visible)
-                    RemoveFromLayer();
-
-                layer = value;
-
-                if (layer != null && visibleRequest && !deleted)
-                {
-                    visible = true;
-                    visibleRequest = false;
-                    CheckOnScreen();
-                }
-
-                if (layer == null)
-                {
-                    visibleRequest = false;
-                    visible = false;
-                    notOnScreen = true;
-                }
-
-                if (layer != null && Visible)
-                    AddToLayer();
-            }
-        }
-
-        public Rect ClipArea
-        {
-            get => clipArea;
-            set
-            {
-                if (clipArea == value)
-                    return;
-
-                clipArea = new(value);
-                bool handled = CheckOnScreen();
-                OnClipAreaChanged(!notOnScreen, !handled);
-            }
-        }
-
-        public int Width { get; private set; }
-
-        public int Height { get; private set; }
-
-        public virtual void Resize(int width, int height)
-        {
-            if (Width != width || Height != height)
-            {
-                Width = width;
-                Height = height;
-
-                if (!deleted)
-                {
-                    if (!CheckOnScreen())
-                        UpdatePosition();
-                }
-            }
-        }
-
-        protected abstract void AddToLayer();
-
-        protected abstract void RemoveFromLayer();
-
-        protected abstract void UpdatePosition();
-
-        protected virtual void OnVisibilityChanged()
-        {
-            if (Visible)
-                AddToLayer();
-            else
-                RemoveFromLayer();
-        }
-
-        protected abstract void OnClipAreaChanged(bool onScreen, bool needUpdate);
-
-        private protected bool CheckOnScreen(Rect bounds)
-        {
-            bool oldNotOnScreen = notOnScreen;
-            bool oldVisible = Visible;
-            var area = clipArea ?? virtualScreen;
-
-            notOnScreen = !area.IntersectsWith(bounds);
-
-            if (oldNotOnScreen != notOnScreen)
-            {
-                if (oldVisible != Visible)
-                {
-                    OnVisibilityChanged();
-                    return true; // handled
-                }
-            }
-
-            return false;
-        }
-
-        private protected virtual bool CheckOnScreen()
-        {
-            return CheckOnScreen(new Rect(X, Y, Width, Height));
-        }
-
-        public void Delete()
-        {
             if (!deleted)
             {
-                RemoveFromLayer();
-                deleted = true;
-                visible = false;
-                visibleRequest = false;
+                if (!CheckOnScreen())
+                    UpdatePosition();
             }
         }
+    }
 
-        public int X
+    protected abstract void AddToLayer();
+
+    protected abstract void RemoveFromLayer();
+
+    protected abstract void UpdatePosition();
+
+    protected virtual void OnVisibilityChanged()
+    {
+        if (Visible)
+            AddToLayer();
+        else
+            RemoveFromLayer();
+    }
+
+    protected abstract void OnClipAreaChanged(bool onScreen, bool needUpdate);
+
+    private protected bool CheckOnScreen(Rect bounds)
+    {
+        bool oldNotOnScreen = notOnScreen;
+        bool oldVisible = Visible;
+        var area = clipArea ?? virtualScreen;
+
+        notOnScreen = !area.IntersectsWith(bounds);
+
+        if (oldNotOnScreen != notOnScreen)
         {
-            get => x;
-            set
+            if (oldVisible != Visible)
             {
-                if (x == value)
-                    return;
-
-                x = value;
-
-                if (!deleted)
-                {
-                    if (!CheckOnScreen())
-                        UpdatePosition();
-                }
+                OnVisibilityChanged();
+                return true; // handled
             }
         }
 
-        public int Y
+        return false;
+    }
+
+    private protected virtual bool CheckOnScreen()
+    {
+        return CheckOnScreen(new Rect(X, Y, Width, Height));
+    }
+
+    public void Delete()
+    {
+        if (!deleted)
         {
-            get => y;
-            set
+            RemoveFromLayer();
+            deleted = true;
+            visible = false;
+            visibleRequest = false;
+        }
+    }
+
+    public int X
+    {
+        get => x;
+        set
+        {
+            if (x == value)
+                return;
+
+            x = value;
+
+            if (!deleted)
             {
-                if (y == value)
-                    return;
-
-                y = value;
-
-                if (!deleted)
-                {
-                    if (!CheckOnScreen())
-                        UpdatePosition();
-                }
+                if (!CheckOnScreen())
+                    UpdatePosition();
             }
         }
+    }
 
-        public bool InsideClipArea(Rect area)
+    public int Y
+    {
+        get => y;
+        set
         {
-            if (area == null)
-                return true;
+            if (y == value)
+                return;
 
-            return area.IntersectsWith(X, Y, Width, Height);
+            y = value;
+
+            if (!deleted)
+            {
+                if (!CheckOnScreen())
+                    UpdatePosition();
+            }
         }
+    }
+
+    public bool InsideClipArea(Rect area)
+    {
+        if (area == null)
+            return true;
+
+        return area.IntersectsWith(X, Y, Width, Height);
     }
 }
