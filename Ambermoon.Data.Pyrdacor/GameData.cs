@@ -25,7 +25,7 @@ namespace Ambermoon.Data.Pyrdacor
         LazyContainerLoader<Texts, string> locationNameLoader;
         LazyContainerLoader<TilesetData, Tileset> tilesetLoader;
         LazyFileLoader<Texts, TextList> gotoPointNameLoader;
-        readonly Dictionary<string, Action<IDataReader>> fileHandlers = new Dictionary<string, Action<IDataReader>>();
+        readonly Dictionary<string, Action<IDataReader>> fileHandlers = [];
         readonly Lazy<SongManager> songManager;
         readonly Lazy<ICharacterManager> characterManager;
         readonly Lazy<IItemManager> itemManager;
@@ -97,6 +97,8 @@ namespace Ambermoon.Data.Pyrdacor
         public byte FirstOutroPaletteIndex => throw new NotImplementedException();
 
         public byte FirstFantasyIntroPaletteIndex => throw new NotImplementedException();
+
+        public Dictionary<int, List<int>> NPCGraphicFrameCounts => throw new NotImplementedException();
 
         // TODO
         public TravelGraphicInfo GetTravelGraphicInfo(TravelType type, CharacterDirection direction)
@@ -464,6 +466,16 @@ namespace Ambermoon.Data.Pyrdacor
         }
 
         public byte PaletteIndexFromColorIndex(Map map, byte colorIndex)
+        {
+            throw new NotImplementedException();
+        }
+
+        public CombatBackgroundInfo Get2DCombatBackground(uint index, bool advanced)
+        {
+            throw new NotImplementedException();
+        }
+
+        public CombatBackgroundInfo Get3DCombatBackground(uint index, bool advanced)
         {
             throw new NotImplementedException();
         }
