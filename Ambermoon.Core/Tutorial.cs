@@ -147,12 +147,12 @@ namespace Ambermoon
 	            "pravého tlačítka myši po najetí na oblast, nebo stiskem klávesy Enter. Tím se odemknou " +
 	            "další funkce.",
 				// Tip 2
-	            "Ikony lze ovládat také pomocí klávesnice NumPad. Rozložení " +
+	            "Ikony lze ovládat také pomocí numerické klávesnice. Rozložení " +
 	            "je přesně takové, jaké jsou plochy ikon ve hře. Takže stisknutí klávesy 7 bude ekvivalent stisknutí " +
 	            "levého horního tlačítka (oka).",
 				// Tip 3
-	            "V horní části se zobrazují portréty postav. Kliknutím na ně můžeš vybrat " +
-	            "aktivního hráče a pomocí pravého tlačítka otevřeš inventář. Klávesy 1-6 vyberou " +
+	            "V horní části se zobrazují portréty postav. Kliknutím na ně, můžeš vybrat " +
+                "aktivního hrdinu a pomocí pravého tlačítka otevřeš inventář. Klávesy 1-6 vyberou " +
 				"postavu a klávesy F1-F6 otevírají inventář.",
 				// Tip 4
 	            "Na mapě se můžeš pohybovat pomocí myši, kláves W, A, S, D nebo kurzorových kláves. Ve 2D můžeš " +
