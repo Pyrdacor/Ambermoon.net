@@ -95,7 +95,7 @@ internal class RemakeSavegameManager(string path, Configuration configuration) :
         else if (current > 10)
             current = 10;
 
-        if (current != 0 && string.IsNullOrWhiteSpace(savegameNames[current]))
+        if (current != 0 && string.IsNullOrWhiteSpace(savegameNames[current - 1]))
             current = 0;
 
         return savegameNames;
