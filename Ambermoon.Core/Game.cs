@@ -12206,7 +12206,7 @@ public class Game
                     int change = mapChange || playerSwitched ? diff : Math.Sign(diff) * Math.Min(Math.Abs(diff), 8);
                     lastRadius += change;
                     fow2D.Radius = (byte)lastRadius;
-                    fow2D.Visible = lastRadius < 112;
+                    fow2D.Visible = !is3D && lastRadius < 112;
 
                     if (newRadius - lastRadius != 0)
                         AddTimedEvent(timeSpan, ChangeLightRadius);
