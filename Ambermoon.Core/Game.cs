@@ -2550,7 +2550,7 @@ public class Game
 
                 additionalSavegameSlots.ContinueSavegameSlot = slot;
 
-                additionalSaveSlotProvider.RequestSave();
+                additionalSaveSlotProvider.RequestSave(SavegameManager, renderView.GameData);
             }
         });
     }

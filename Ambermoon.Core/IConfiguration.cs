@@ -19,6 +19,7 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Ambermoon.Data;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -122,7 +123,7 @@ namespace Ambermoon
     public interface IAdditionalSaveSlotProvider
     {
         AdditionalSavegameSlots GetOrCreateAdditionalSavegameNames(string gameVersionName);
-        void RequestSave();
+        void RequestSave(ISavegameManager savegameManager, IGameData gameData);
     }
 
     public interface IConfiguration

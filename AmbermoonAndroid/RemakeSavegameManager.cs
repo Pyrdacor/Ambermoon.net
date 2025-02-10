@@ -100,10 +100,28 @@ internal class RemakeSavegameManager(string path, Configuration configuration) :
         return savegameNames;
     }
 
-    public void RequestSave()
+    public void RequestSave(ISavegameManager savegameManager, IGameData gameData)
     {
         try
         {
+            try
+            {
+                if (additionalSavegameSlots.BaseNames.All(name => string.IsNullOrWhiteSpace(name)))
+                {
+                    // Never saved a base savegame?
+                    var baseNames = savegameManager.GetSavegameNames(gameData, out _, Game.NumBaseSavegameSlots);
+
+                    for (int i = 0; i < Game.NumBaseSavegameSlots; i++)
+                    {
+                        additionalSavegameSlots.BaseNames[i] = baseNames[i];
+                    }
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
             additionalSavegameSlots?.Save(savegameNamesPath);
         }
         catch
