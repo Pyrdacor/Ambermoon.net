@@ -3009,7 +3009,7 @@ namespace Ambermoon
                 }
 				case Spell.MysticDecay:
 				{
-					// Base Damage = Caster Level
+					// Base Damage = Caster Level * 3 / 2
 					// Dmg Increase % = (1 + (MaxTargetHP - CurrTargetHP) * 10 / MaxTargetHP) ^ 2
 					// MinDmg = 5
                     // The max damage at level 50 would be 100 against a target with 10% LP or below.
