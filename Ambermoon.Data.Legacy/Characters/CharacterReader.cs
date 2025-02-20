@@ -75,7 +75,7 @@ namespace Ambermoon.Data.Legacy.Characters
             character.SpellPointsPerLevel = dataReader.ReadWord();
             character.SpellLearningPointsPerLevel = dataReader.ReadWord();
             character.TrainingPointsPerLevel = dataReader.ReadWord();
-            character.LookAtCharTextIndex = dataReader.ReadWord(); // Unknown
+            character.LookAtCharTextIndex = dataReader.ReadWord();
             character.ExperiencePoints = dataReader.ReadDword();
             character.LearnedHealingSpells = dataReader.ReadDword();
             character.LearnedAlchemisticSpells = dataReader.ReadDword();
@@ -93,6 +93,9 @@ namespace Ambermoon.Data.Legacy.Characters
                 character.Name = character.Name.Substring(0, terminatingNullIndex).TrimEnd();
             else
                 character.Name = character.Name.TrimEnd();
+
+            if (character is not Monster && character.LookAtCharTextIndex == 0xffff)
+                character.LookAtCharTextIndex = 0; // fallback to text index 0, as there are some flawed characters
 
             if (character.Type != CharacterType.NPC)
             {
