@@ -6297,15 +6297,31 @@ public class Game
                 break;
             case RewardEvent.RewardType.AttacksPerRound:
             {
+                int oldAttacksPerRound = partyMember.AttacksPerRound;
+
                 switch (rewardEvent.Operation)
                 {
                     case RewardEvent.RewardOperation.Increase:
                         partyMember.AttacksPerRound = (byte)Util.Limit(0, partyMember.AttacksPerRound + RandomizeIfNecessary(rewardEvent.Value), 255);
                         break;
                     case RewardEvent.RewardOperation.Decrease:
-                        partyMember.AttacksPerRound = (byte)Util.Limit(0, (int)partyMember.AttacksPerRound - (int)RandomizeIfNecessary(rewardEvent.Value), 255);
+                        partyMember.AttacksPerRound = (byte)Util.Limit(1, (int)partyMember.AttacksPerRound - (int)RandomizeIfNecessary(rewardEvent.Value), 255);
                         break;
                 }
+
+                if (partyMember.AttacksPerRound != oldAttacksPerRound)
+                {
+                    if (partyMember.AttacksPerRound == 1 && partyMember.AttacksPerRoundIncreaseLevels > 0 && partyMember.AttacksPerRoundIncreaseLevels <= partyMember.Level)
+                        partyMember.AttacksPerRoundIncreaseLevels = (ushort)(partyMember.Level + 1);
+                    else if (partyMember.AttacksPerRound > 1)
+                    {
+                        if (partyMember.AttacksPerRoundIncreaseLevels == 0)
+                            partyMember.AttacksPerRoundIncreaseLevels = partyMember.Level;
+                        else
+                            partyMember.AttacksPerRoundIncreaseLevels = (ushort)Util.Limit(1, partyMember.Level / partyMember.AttacksPerRound, partyMember.AttacksPerRoundIncreaseLevels);
+                    }
+                }
+
                 break;
             }
             case RewardEvent.RewardType.TrainingPoints:
