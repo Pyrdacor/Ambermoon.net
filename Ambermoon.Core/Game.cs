@@ -6302,7 +6302,7 @@ public class Game
                 switch (rewardEvent.Operation)
                 {
                     case RewardEvent.RewardOperation.Increase:
-                        partyMember.AttacksPerRound = (byte)Util.Limit(0, partyMember.AttacksPerRound + RandomizeIfNecessary(rewardEvent.Value), 255);
+                        partyMember.AttacksPerRound = (byte)Util.Limit(1, partyMember.AttacksPerRound + RandomizeIfNecessary(rewardEvent.Value), 255);
                         break;
                     case RewardEvent.RewardOperation.Decrease:
                         partyMember.AttacksPerRound = (byte)Util.Limit(1, (int)partyMember.AttacksPerRound - (int)RandomizeIfNecessary(rewardEvent.Value), 255);
