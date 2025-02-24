@@ -6314,12 +6314,7 @@ public class Game
                     if (partyMember.AttacksPerRound == 1 && partyMember.AttacksPerRoundIncreaseLevels > 0 && partyMember.AttacksPerRoundIncreaseLevels <= partyMember.Level)
                         partyMember.AttacksPerRoundIncreaseLevels = (ushort)(partyMember.Level + 1);
                     else if (partyMember.AttacksPerRound > 1)
-                    {
-                        if (partyMember.AttacksPerRoundIncreaseLevels == 0)
-                            partyMember.AttacksPerRoundIncreaseLevels = partyMember.Level;
-                        else
-                            partyMember.AttacksPerRoundIncreaseLevels = (ushort)Util.Limit(1, partyMember.Level / partyMember.AttacksPerRound, partyMember.AttacksPerRoundIncreaseLevels);
-                    }
+                        partyMember.AttacksPerRoundIncreaseLevels = (ushort)Util.Max(1, partyMember.Level / (partyMember.AttacksPerRound - 1));
                 }
 
                 break;
