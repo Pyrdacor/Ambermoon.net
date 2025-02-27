@@ -213,7 +213,7 @@ namespace Ambermoon.Data
             }
             if (addSLPAndTP)
                 TrainingPoints = (ushort)Math.Min(ushort.MaxValue, TrainingPoints + tpAdd);
-            AttacksPerRound = (byte)(AttacksPerRoundIncreaseLevels == 0 ? 1 : 1 + Util.Min(Level / AttacksPerRoundIncreaseLevels, 255));
+            AttacksPerRound = (byte)(AttacksPerRoundIncreaseLevels == 0 ? 1 : Util.Limit(AttacksPerRound, Level / AttacksPerRoundIncreaseLevels, 255));
             MaxReachedLevel = Math.Max(MaxReachedLevel, Level); // Update max reached level
         }
     }
