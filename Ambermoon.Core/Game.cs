@@ -6305,16 +6305,18 @@ public class Game
                         partyMember.AttacksPerRound = (byte)Util.Limit(1, partyMember.AttacksPerRound + RandomizeIfNecessary(rewardEvent.Value), 255);
                         break;
                     case RewardEvent.RewardOperation.Decrease:
-                        partyMember.AttacksPerRound = (byte)Util.Limit(1, (int)partyMember.AttacksPerRound - (int)RandomizeIfNecessary(rewardEvent.Value), 255);
+                        partyMember.AttacksPerRound = (byte)Util.Limit(1, partyMember.AttacksPerRound - (int)RandomizeIfNecessary(rewardEvent.Value), 255);
                         break;
                 }
 
                 if (partyMember.AttacksPerRound != oldAttacksPerRound)
                 {
-                    if (partyMember.AttacksPerRound == 1 && partyMember.AttacksPerRoundIncreaseLevels > 0 && partyMember.AttacksPerRoundIncreaseLevels <= partyMember.Level)
-                        partyMember.AttacksPerRoundIncreaseLevels = (ushort)(partyMember.Level + 1);
+                    var currentAttacksPerRoundIncreaseLevels = partyMember.Level / Math.Max(1, (int)partyMember.AttacksPerRound);
+
+                    if (partyMember.AttacksPerRound == 1 && partyMember.AttacksPerRoundIncreaseLevels != 0)
+                        partyMember.AttacksPerRoundIncreaseLevels = (ushort)currentAttacksPerRoundIncreaseLevels;
                     else if (partyMember.AttacksPerRound > 1)
-                        partyMember.AttacksPerRoundIncreaseLevels = (ushort)Util.Max(1, partyMember.Level / (partyMember.AttacksPerRound - 1));
+                        partyMember.AttacksPerRoundIncreaseLevels = (ushort)Math.Max(1, currentAttacksPerRoundIncreaseLevels);
                 }
 
                 break;
