@@ -147,7 +147,12 @@ internal class RemakeSavegameManager(string path, Configuration configuration) :
         {
             var lastSavesSyncBackup = additionalSavegameSlots.LastSavesSync;
 
-            additionalSavegameSlots.BaseNames[slot] = name;
+            if (additionalSavegameSlots.BaseNames.Length == 0 || !additionalSavegameSlots.BaseNames.Any(name => !string.IsNullOrWhiteSpace(name)))
+            {
+                additionalSavegameSlots.BaseNames = base.GetSavegameNames(gameData, out _, Game.NumBaseSavegameSlots);
+            }
+
+            additionalSavegameSlots.BaseNames[slot - 1] = name;
             additionalSavegameSlots.LastSavesSync = DateTime.UtcNow;
 
             try
