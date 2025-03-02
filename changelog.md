@@ -1,7 +1,8 @@
 # Changelog
 
-## 1.10.0 - Tenth patch (July 2024 - February 2025)
+## 1.10.0 - Tenth patch (July 2024 - March 2025)
 
+- Version [1.10.6](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.6): Savegame fix
 - Version [1.10.5](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.5): Fixes, savegame names are stored in savegame folder rather than config, AA update 3.1
 - Version [1.10.4](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.4): Fixes
 - Version [1.10.3](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.3): Added english AA episode 3

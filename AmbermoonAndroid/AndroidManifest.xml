@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:installLocation="auto" package="com.pyrdacor.AmbermoonAndroid" android:versionCode="10" android:versionName="1.10.5">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:installLocation="auto" package="com.pyrdacor.AmbermoonAndroid" android:versionCode="10" android:versionName="1.10.6">
 	<uses-feature android:glEsVersion="0x00030000" android:required="true" />
 	<uses-configuration android:reqTouchScreen="finger" />
 	<application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:label="@string/app_name" android:supportsRtl="true" android:debuggable="false">
