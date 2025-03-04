@@ -305,7 +305,7 @@ namespace Ambermoon
                     return bundleDirectory;
 
                 if (OperatingSystem.IsMacOSVersionAtLeast(12) || new DirectoryInfo(bundleDirectory).Attributes.HasFlag(FileAttributes.ReadOnly))
-                    bundleDirectory = "~/Library/Application Support/Ambermoon.net";
+                    bundleDirectory = "/Library/Application Support/Ambermoon.net";
 
                 return bundleDirectory;
             }
