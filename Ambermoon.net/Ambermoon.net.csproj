@@ -18,6 +18,7 @@
     <ApplicationIcon>app.ico</ApplicationIcon>
     <Configurations>Debug;Release;DebugAndroid;ReleaseAndroid;ReleaseNative;DebugES;ReleaseES</Configurations>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
 	<!--<PublishAot>true</PublishAot>
 	<TrimMode>full</TrimMode>
 	<PublishTrimmed>true</PublishTrimmed>
