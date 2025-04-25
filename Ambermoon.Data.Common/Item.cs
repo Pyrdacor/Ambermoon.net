@@ -57,6 +57,16 @@ namespace Ambermoon.Data
         public string Name { get; set; }
 
         /// <summary>
+        /// Used only for weapons.
+        /// 
+        /// Note that this is the same as <see cref="SpecialValue"/>.
+        /// </summary>
+        public ItemElement Element
+        {
+            get => (ItemElement)SpecialValue;
+            set => SpecialValue = (byte)value;
+        }
+        /// <summary>
         /// Used only for special items.
         /// 
         /// Note that this is the same as <see cref="SpecialValue"/>.

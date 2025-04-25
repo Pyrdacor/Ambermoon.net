@@ -22,6 +22,7 @@
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using System;
+using System.Numerics;
 
 namespace Ambermoon.Render
 {
@@ -458,7 +459,7 @@ namespace Ambermoon.Render
 
                         void StartBattle(bool failedEscape)
                         {
-                            game.StartBattle(characterReference.Index, failedEscape, battleEndInfo =>
+                            game.StartBattle(characterReference.Index, failedEscape, (uint)game.PartyPosition.X, (uint)game.PartyPosition.Y, battleEndInfo =>
                             {
                                 lastInteractionTicks = game.CurrentTicks;
                                 interacting = false;

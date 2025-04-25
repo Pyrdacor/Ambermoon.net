@@ -1542,6 +1542,9 @@ namespace Ambermoon
                             case AttackResult.Damage:
                                 layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageDidPointsOfDamage, damage), textColor);
                                 break;
+                            case AttackResult.Immune:
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageImmuneToAttack + game.DataNameProvider.GetElementName(battleAction.Character.GetCharacterWeaponElement(game.ItemManager)), textColor);
+                                break;
                         }
                         Proceed(() => ActionFinished(true));
                     }
@@ -4285,7 +4288,21 @@ namespace Ambermoon
             Blocked, // Parry
             Protected, // Magic protection level
             Petrified, // Petrified monsters can't be damaged
-            CriticalHit
+            CriticalHit,
+            Immune, // New in AA
+        }
+
+        bool ImmuneToAttack(Monster target, PartyMember attacker)
+        {
+            if (!game.Features.HasFlag(Features.AdvancedMonsterFlags))
+                return false;
+
+            if (target.AdvancedMonsterFlags == AdvancedMonsterFlags.None)
+                return false;
+
+            var element = attacker.GetCharacterWeaponElement(game.ItemManager);
+
+            return ((byte)target.AdvancedMonsterFlags & (1 << (byte)element)) != 0;
         }
 
         AttackResult ProcessAttack(Character attacker, int attackedSlot, out int damage, out bool abortAttacking)
@@ -4313,6 +4330,12 @@ namespace Ambermoon
             {
                 abortAttacking = true;
                 return AttackResult.Protected;
+            }
+
+            if (target is Monster monster && ImmuneToAttack(monster, attacker as PartyMember))
+            {
+                abortAttacking = true;
+                return AttackResult.Immune;
             }
 
             long hitChance = attacker.Skills[Skill.Attack].TotalCurrentValue;
@@ -4352,7 +4375,7 @@ namespace Ambermoon
 
 			if (game.RollDice100() < attacker.Skills[Skill.CriticalHit].TotalCurrentValue)
             {
-                if (target is not Monster monster || !monster.BattleFlags.HasFlag(BattleFlags.Boss))
+                if (target is not Monster bossMonster || !bossMonster.BattleFlags.HasFlag(BattleFlags.Boss))
                 {
                     damage = (int)target.HitPoints.CurrentValue;
                     return AttackResult.CriticalHit;

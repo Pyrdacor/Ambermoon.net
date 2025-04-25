@@ -19,6 +19,7 @@ namespace Ambermoon.Data
         public uint MappedFrameWidth { get; set; }
         public uint MappedFrameHeight { get; set; }
         public Graphic CombatGraphic { get; set; }
+        public AdvancedMonsterFlags AdvancedMonsterFlags { get; set; }
 
         public class Animation
         {

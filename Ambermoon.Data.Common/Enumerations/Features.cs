@@ -18,6 +18,8 @@ namespace Ambermoon.Data.Enumerations
         AdvancedCombatBackgrounds = 0x200,
 		ClairvoyanceGrantsSearchSkill = 0x400,
         ExtendedCurseEffects = 0x800,
+        AdvancedMonsterFlags = 0x1000, // TODO: Later add to AmbermoonAdvanced
+        ItemElements = 0x2000, // TODO: Later add to AmbermoonAdvanced
         AmbermoonAdvanced = Elements | AdjustedSpellDamage | SpellDamageBonus | ReducedFoodWeight | AdjustedSPAndSLP | AdjustedEPFactors | SageScrollIdentification | AdvancedSpells | WaspTransport | AdvancedCombatBackgrounds | ClairvoyanceGrantsSearchSkill | ExtendedCurseEffects
     }
 }

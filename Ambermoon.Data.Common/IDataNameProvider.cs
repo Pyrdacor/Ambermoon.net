@@ -19,6 +19,7 @@ namespace Ambermoon.Data
         string GetItemTypeName(ItemType itemType);
         string GetSongName(Song song);
         string GetElementName(CharacterElement element);
+        string GetElementName(ItemElement element);
         string CharacterInfoHitPointsString { get; }
         string CharacterInfoSpellPointsString { get; }
         string CharacterInfoSpellLearningPointsString { get; }
@@ -279,6 +280,7 @@ namespace Ambermoon.Data
         string BattleMessageMissedTheTarget { get; }
         string BattleMessageCannotPenetrateMagicalAura { get; }
         string BattleMessageAttackFailed { get; }
+        string BattleMessageImmuneToAttack { get; }
         string BattleMessageAttackWasParried { get; }
         string BattleMessageAttackDidNoDamage { get; }
         string BattleMessageMadeCriticalHit { get; }

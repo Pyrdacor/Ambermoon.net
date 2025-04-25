@@ -6827,7 +6827,7 @@ public class Game
             if (nextEvent != null)
             {
                 EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always,
-                    (uint)player3D.Position.X, (uint)player.Position.Y, nextEvent, true);
+                    (uint)player.Position.X, (uint)player.Position.Y, nextEvent, true);
             }
         });
     }
@@ -8005,8 +8005,8 @@ public class Game
                     currentWindow.Window = Window.Chest; // This avoids returning to locked screen when closing chest window.
                     ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true, true));
                 }, null, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
-                chestEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
-                (uint)player.Position.X, (uint)player.Position.Y, map.Events[(int)chestEvent.UnlockFailedEventIndex], true),
+                chestEvent.UnlockFailedEventIndex == 0xffff ? null : () => map.TriggerEventChain(this, EventTrigger.Always,
+                (uint)position.X, (uint)position.Y, map.Events[(int)chestEvent.UnlockFailedEventIndex], true),
                 () =>
                 {
                     if (chestEvent.Next != null)
@@ -8084,18 +8084,17 @@ public class Game
                         }
                         else
                         {
-                            EventExtensions.TriggerEventChain(map ?? Map, this, EventTrigger.Always, (uint)player.Position.X,
-                                (uint)player.Position.Y, doorEvent.Next, true);
+                            EventExtensions.TriggerEventChain(map ?? Map, this, EventTrigger.Always, x, y, doorEvent.Next, true);
                         }
                     });
                 }
             }, initialText, doorEvent.KeyIndex, doorEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
-            doorEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
-                (uint)player.Position.X, (uint)player.Position.Y, map.Events[(int)doorEvent.UnlockFailedEventIndex], true),
+            doorEvent.UnlockFailedEventIndex == 0xffff ? null : () => map.TriggerEventChain(this, EventTrigger.Always,
+                x, y, map.Events[(int)doorEvent.UnlockFailedEventIndex], true),
             () =>
             {
                 if (doorEvent.Next != null)
-                    map.TriggerEventChain(this, EventTrigger.Always, (uint)player.Position.X, (uint)player.Position.Y, doorEvent.Next, false);
+                    map.TriggerEventChain(this, EventTrigger.Always, x, y, doorEvent.Next, false);
             });
         });
 
@@ -9317,7 +9316,7 @@ public class Game
             }
         }
 
-        StartBattle(monsterGroupIndex, false, null, combatBackgroundIndex);
+        StartBattle(monsterGroupIndex, false, (uint)player.Position.X, (uint)player.Position.Y, null, combatBackgroundIndex);
         return true;
     }
 
@@ -9326,7 +9325,7 @@ public class Game
     /// It is used for monsters that are present on the map.
     /// </summary>
     /// <param name="monsterGroupIndex">Monster group index</param>
-    internal void StartBattle(uint monsterGroupIndex, bool failedEscape,
+    internal void StartBattle(uint monsterGroupIndex, bool failedEscape, uint x, uint y,
         Action<BattleEndInfo> battleEndHandler, uint? combatBackgroundIndex = null)
     {
         if (BattleActive)
@@ -9337,7 +9336,7 @@ public class Game
             MonsterGroupIndex = monsterGroupIndex
         };
         currentBattleInfo.BattleEnded += battleEndHandler;
-        ShowBattleWindow(null, failedEscape, combatBackgroundIndex);
+        ShowBattleWindow(null, failedEscape, x, y, combatBackgroundIndex);
     }
 
     void UpdateBattle(double blinkingTimeFactor)
@@ -9637,7 +9636,7 @@ public class Game
         });
     }
 
-    void ShowBattleWindow(Event nextEvent, out byte paletteIndex, uint? combatBackgroundIndex = null)
+    void ShowBattleWindow(Event nextEvent, out byte paletteIndex, uint x, uint y, uint? combatBackgroundIndex = null)
     {
         combatBackgroundIndex ??= is3D ? renderMap3D.CombatBackgroundIndex : Map.World switch
         {
@@ -9647,7 +9646,7 @@ public class Game
             _ => 0u
         };
 
-        SetWindow(Window.Battle, nextEvent, combatBackgroundIndex);
+        SetWindow(Window.Battle, nextEvent, x, y, combatBackgroundIndex);
         layout.SetLayout(LayoutType.Battle);
         ShowMap(false);
         layout.Reset();
@@ -11112,14 +11111,14 @@ public class Game
         return clone;
 		}
 
-    void ShowBattleWindow(Event nextEvent, bool failedFlight, uint? combatBackgroundIndex = null)
+    void ShowBattleWindow(Event nextEvent, bool failedFlight, uint x, uint y, uint? combatBackgroundIndex = null)
     {
         allInputDisabled = true;
         Fade(() =>
         {
             lastPlayedSong = PlayMusic(Song.SapphireFireballsOfPureLove);
             roundPlayerBattleActions.Clear();
-            ShowBattleWindow(nextEvent, out byte paletteIndex, combatBackgroundIndex);
+            ShowBattleWindow(nextEvent, out byte paletteIndex, x, y, combatBackgroundIndex);
             // Note: Create clones so we can change the values in battle for each monster.
             var monsterGroup = CloneMonsterGroup(CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex));
             foreach (var monster in monsterGroup.Monsters)
@@ -11239,7 +11238,7 @@ public class Game
                         if (nextEvent != null)
                         {
                             EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always,
-                                (uint)RenderPlayer.Position.X, (uint)RenderPlayer.Position.Y, nextEvent, true);
+                                x, y, nextEvent, true);
                         }
                     });
                 }
@@ -11261,8 +11260,7 @@ public class Game
                             allInputDisabled = false;
                             if (nextEvent != null)
                             {
-                                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
-                                    (uint)RenderPlayer.Position.Y, nextEvent, false);
+                                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, x, y, nextEvent, false);
                             }
                         }
 
@@ -15007,7 +15005,7 @@ public class Game
         }
     }
 
-    internal void StartBattle(StartBattleEvent battleEvent, Event nextEvent, uint? combatBackgroundIndex = null)
+    internal void StartBattle(StartBattleEvent battleEvent, Event nextEvent, uint x, uint y, uint? combatBackgroundIndex = null)
     {
         if (BattleActive)
             return;
@@ -15018,7 +15016,7 @@ public class Game
         {
             MonsterGroupIndex = battleEvent.MonsterGroupIndex
         };
-        ShowBattleWindow(nextEvent, false, combatBackgroundIndex);
+        ShowBattleWindow(nextEvent, false, x, y, combatBackgroundIndex);
     }
 
     internal uint GetCombatBackgroundIndex(Map map, uint x, uint y) => is3D ? renderMap3D.CombatBackgroundIndex : renderMap2D.GetCombatBackgroundIndex(map, x, y);
@@ -17399,9 +17397,11 @@ public class Game
             case Window.Battle:
             {
                 var nextEvent = (Event)currentWindow.WindowParameters[0];
-                var combatBackgroundIndex = (uint?)currentWindow.WindowParameters[1];
+                var x = (uint)currentWindow.WindowParameters[1];
+                var y = (uint)currentWindow.WindowParameters[2];
+                var combatBackgroundIndex = (uint?)currentWindow.WindowParameters[3];
                 currentWindow = DefaultWindow;
-                Fade(() => { ShowBattleWindow(nextEvent, out _, combatBackgroundIndex); finishAction?.Invoke(); });
+                Fade(() => { ShowBattleWindow(nextEvent, out _, x, y, combatBackgroundIndex); finishAction?.Invoke(); });
                 break;
             }
             case Window.BattleLoot:

@@ -24,8 +24,13 @@ namespace Ambermoon.Data.Legacy.Characters
             character.SpokenLanguages = (Language)dataReader.ReadByte();
             character.InventoryInaccessible = dataReader.ReadByte() != 0;
             character.PortraitIndex = dataReader.ReadByte();
-            ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.CombatGraphicIndex = (MonsterGraphicIndex)value);
-            character.UnknownBytes13 = dataReader.ReadBytes(2); // Unknown
+            if (character is Monster monster)
+                monster.AdvancedMonsterFlags = (AdvancedMonsterFlags)dataReader.ReadByte();
+            else
+                character.JoinPercentage = dataReader.ReadByte();
+            ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.CombatGraphicIndex = (MonsterGraphicIndex)value);
+            character.SpellChancePercentage = dataReader.ReadByte();
+            character.MagicHitBonus = dataReader.ReadByte();
             ProcessIfMonsterOrPartyMember(dataReader, character, (Monster monster, byte value) => monster.Morale = value,
                 (PartyMember partyMember, byte value) => partyMember.MaxReachedLevel = value);
             character.SpellTypeImmunity = (SpellTypeImmunity)dataReader.ReadByte();
@@ -39,7 +44,7 @@ namespace Ambermoon.Data.Legacy.Characters
             character.CharacterBitIndex = dataReader.ReadWord();
             character.Conditions = (Condition)dataReader.ReadWord();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.DefeatExperience = value);
-            character.UnusedWord34 = dataReader.ReadWord(); // Unknown
+            character.BattleRoundSpellPointUsage = dataReader.ReadWord(); // Unknown
             // mark of return location is stored here: word x, word y, word mapIndex
             ProcessIfPartyMember(dataReader, character, (PartyMember member, ushort value) => member.MarkOfReturnX = value);
             ProcessIfPartyMember(dataReader, character, (PartyMember member, ushort value) => member.MarkOfReturnY = value);

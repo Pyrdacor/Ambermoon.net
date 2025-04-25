@@ -19,8 +19,13 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.WriteEnumAsByte(character.SpokenLanguages);
             dataWriter.Write((byte)(character.InventoryInaccessible ? 0xff : 0));
             dataWriter.Write(character.PortraitIndex);
-            dataWriter.Write(GetIfMonster<ushort>(character, monster => (ushort)monster.CombatGraphicIndex, 0));
-            dataWriter.Write(character.UnknownBytes13); // Unknown
+            if (character is Monster monster)
+                dataWriter.WriteEnumAsByte(monster.AdvancedMonsterFlags);
+            else
+                dataWriter.Write(character.JoinPercentage);
+            dataWriter.Write(GetIfMonster<byte>(character, monster => (byte)monster.CombatGraphicIndex, 0));
+            dataWriter.Write(character.SpellChancePercentage);
+            dataWriter.Write(character.MagicHitBonus);
             dataWriter.Write(GetIfMonsterOrPartyMember<byte>(character, monster => (byte)monster.Morale, partyMember => partyMember.MaxReachedLevel, 0));
             dataWriter.WriteEnumAsByte(character.SpellTypeImmunity);
             dataWriter.Write(character.AttacksPerRound);
@@ -33,7 +38,7 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write(character.CharacterBitIndex);
             dataWriter.WriteEnumAsWord(character.Conditions);
             dataWriter.Write(GetIfMonster<ushort>(character, monster => monster.DefeatExperience, 0));
-            dataWriter.Write(character.UnusedWord34); // Unknown
+            dataWriter.Write(character.BattleRoundSpellPointUsage);
             dataWriter.Write(GetIfPartyMember<ushort>(character, member => member.MarkOfReturnX, 0));
             dataWriter.Write(GetIfPartyMember<ushort>(character, member => member.MarkOfReturnY, 0));
             dataWriter.Write(GetIfPartyMember<ushort>(character, member => member.MarkOfReturnMapIndex, 0));

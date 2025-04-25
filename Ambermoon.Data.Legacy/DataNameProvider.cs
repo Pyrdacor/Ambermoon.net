@@ -77,6 +77,10 @@
 
             return executableData.Messages.GetEntry(index);
         }
+        public string GetElementName(ItemElement element)
+        {
+            return executableData.Messages.GetEntry(Messages.Index.ElementNone + (int)element);
+        }
         public string InventoryTitleString => executableData.UITexts.Entries[UITextIndex.Inventory];
         public string AttributesHeaderString => executableData.UITexts.Entries[UITextIndex.Attributes];
         public string SkillsHeaderString => executableData.UITexts.Entries[UITextIndex.Skills];
@@ -328,6 +332,7 @@
         public string BattleMessageMissedTheTarget => executableData.Messages.GetEntry(Messages.Index.MissedTheTarget);
         public string BattleMessageCannotPenetrateMagicalAura => executableData.Messages.GetEntry(Messages.Index.CannotPenetrateMagicalAura);
         public string BattleMessageAttackFailed => executableData.Messages.GetEntry(Messages.Index.AttackFailed);
+        public string BattleMessageImmuneToAttack => executableData.Messages.GetEntry(Messages.Index.ImmuneToAttack);
         public string BattleMessageAttackWasParried => executableData.Messages.GetEntry(Messages.Index.AttackWasDeflected);
         public string BattleMessageAttackDidNoDamage => executableData.Messages.GetEntry(Messages.Index.AttackDidNoDamage);
         public string BattleMessageMadeCriticalHit => executableData.Messages.GetEntry(Messages.Index.MadeCriticalHit);

@@ -434,7 +434,7 @@ namespace Ambermoon
                     if (@event is not StartBattleEvent battleEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid battle event.");
 
-                    game.StartBattle(battleEvent, battleEvent.Next, game.GetCombatBackgroundIndex(map, x, y));
+                    game.StartBattle(battleEvent, battleEvent.Next, x, y, game.GetCombatBackgroundIndex(map, x, y));
                     return null;
                 }
                 case EventType.EnterPlace:

@@ -21,7 +21,18 @@ namespace Ambermoon.Data
         public Language SpokenLanguages { get; set; }
         public bool InventoryInaccessible { get; set; } // This is not bound to conditions but its own "inventory is secret" flag
         public byte PortraitIndex { get; set; }
-        public byte[] UnknownBytes13 { get; set; } // Unknown 2 bytes
+        /// <summary>
+        /// Not used in Ambermoon.
+        /// </summary>
+        public byte JoinPercentage { get; set; }
+        /// <summary>
+        /// Not used in Ambermoon.
+        /// </summary>
+        public byte SpellChancePercentage { get; set; }
+        /// <summary>
+        /// Not used in Ambermoon.
+        /// </summary>
+        public byte MagicHitBonus { get; set; }
         public SpellTypeImmunity SpellTypeImmunity { get; set; }
         public byte AttacksPerRound { get; set; }
         public CharacterElement Element { get; set; }
@@ -41,8 +52,9 @@ namespace Ambermoon.Data
         public Condition Conditions { get; set; }
         /// <summary>
         /// This was called "Battle round spell point usage".
+        /// But it is never used in Ambermoon.
         /// </summary>
-        public ushort UnusedWord34 { get; set; }
+        public ushort BattleRoundSpellPointUsage { get; set; }
         public CharacterValueCollection<Attribute> Attributes { get; init; } = new CharacterValueCollection<Attribute>(10); // 8 attribute + age + a hidden attribute
         public CharacterValueCollection<Skill> Skills { get; init; } = new CharacterValueCollection<Skill>(10);
         public CharacterValue HitPoints { get; init; } = new CharacterValue();
