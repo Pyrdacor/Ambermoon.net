@@ -48,7 +48,7 @@ after_build:
     - ps: if (($env:APPVEYOR_REPO_TAG -eq $true) -or ($env:APPVEYOR_REPO_BRANCH -eq 'test-macos')) { ./publish.ps1 }
     - ps: ./nuget.ps1
 
-test: off
+test: false
 
 deploy:
   - provider: GitHub

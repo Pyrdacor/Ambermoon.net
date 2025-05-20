@@ -3,25 +3,20 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor
 {
-    public class LazyFileLoader<T, U> where T : class, IFileSpec, new()
+    public class LazyFileLoader<T, U>(IDataReader dataReader, GameData gameData, Func<T, U> valueProvider)
+        where T : class, IFileSpec, new()
     {
-        readonly Func<T> loader;
-        readonly Func<T, U> valueProvider;
-        T? item = null;
-
-        public LazyFileLoader(IDataReader dataReader, GameData gameData, Func<T, U> valueProvider)
+        readonly Func<T> loader = () =>
         {
-            loader = () =>
-            {
-                var item = PADF.Read(dataReader, gameData);
+            var item = PADF.Read(dataReader, gameData);
 
-                if (item is T typedItem)
-                    return typedItem;
-                else
-                    throw new AmbermoonException(ExceptionScope.Data, "Read file had wrong file spec.");
-            };
-            this.valueProvider = valueProvider;
-        }
+            if (item is T typedItem)
+                return typedItem;
+            else
+                throw new AmbermoonException(ExceptionScope.Data, "Read file had wrong file spec.");
+        };
+        readonly Func<T, U> valueProvider = valueProvider;
+        T? item = null;
 
         public U Load()
         {
@@ -29,17 +24,12 @@ namespace Ambermoon.Data.Pyrdacor
         }
     }
 
-    public class LazyContainerLoader<T, U> where T : IFileSpec, new()
+    public class LazyContainerLoader<T, U>(IDataReader dataReader, GameData gameData, Func<T, U> valueProvider)
+        where T : IFileSpec, new()
     {
-        readonly Func<Dictionary<ushort, T>> loader;
-        readonly Func<T, U> valueProvider;
+        readonly Func<Dictionary<ushort, T>> loader = () => PADP.Read<T>(dataReader, gameData);
+        readonly Func<T, U> valueProvider = valueProvider;
         Dictionary<ushort, T>? items = null;
-
-        public LazyContainerLoader(IDataReader dataReader, GameData gameData, Func<T, U> valueProvider)
-        {
-            loader = () => PADP.Read<T>(dataReader, gameData);
-            this.valueProvider = valueProvider;
-        }
 
         public U Load(ushort key)
         {

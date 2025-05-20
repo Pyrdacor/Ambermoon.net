@@ -1,58 +1,57 @@
 ﻿using Ambermoon.Data.Serialization;
 using System;
 
-namespace Ambermoon.Data
+namespace Ambermoon.Data;
+
+public class Automap
 {
-    public class Automap
+    public byte[] ExplorationBits { get; set; }
+
+    public static Automap Load(IAutomapReader automapReader, IDataReader dataReader)
     {
-        public byte[] ExplorationBits { get; set; }
+        var automap = new Automap();
 
-        public static Automap Load(IAutomapReader automapReader, IDataReader dataReader)
-        {
-            var automap = new Automap();
+        automapReader.ReadAutomap(automap, dataReader);
 
-            automapReader.ReadAutomap(automap, dataReader);
+        return automap;
+    }
 
-            return automap;
-        }
+    public bool IsBlockExplored(Map map, uint x, uint y)
+    {
+        return IsBlockExplored(x + y * (uint)map.Width);
+    }
 
-        public bool IsBlockExplored(Map map, uint x, uint y)
-        {
-            return IsBlockExplored(x + y * (uint)map.Width);
-        }
+    public bool IsBlockExplored(uint blockIndex)
+    {
+        int byteIndex = (int)blockIndex / 8;
 
-        public bool IsBlockExplored(uint blockIndex)
-        {
-            int byteIndex = (int)blockIndex / 8;
+        if (byteIndex >= ExplorationBits.Length)
+            throw new AmbermoonException(ExceptionScope.Data, "Block index exceeds automap size.");
 
-            if (byteIndex >= ExplorationBits.Length)
-                throw new AmbermoonException(ExceptionScope.Data, "Block index exceeds automap size.");
+        int bitIndex = (int)blockIndex % 8;
 
-            int bitIndex = (int)blockIndex % 8;
+        return (ExplorationBits[byteIndex] & (1 << bitIndex)) != 0;
+    }
 
-            return (ExplorationBits[byteIndex] & (1 << bitIndex)) != 0;
-        }
+    public void ExploreBlock(Map map, uint x, uint y)
+    {
+        ExploreBlock(x + y * (uint)map.Width);
+    }
 
-        public void ExploreBlock(Map map, uint x, uint y)
-        {
-            ExploreBlock(x + y * (uint)map.Width);
-        }
+    public void ExploreBlock(uint blockIndex)
+    {
+        int byteIndex = (int)blockIndex / 8;
 
-        public void ExploreBlock(uint blockIndex)
-        {
-            int byteIndex = (int)blockIndex / 8;
+        if (byteIndex >= ExplorationBits.Length)
+            throw new AmbermoonException(ExceptionScope.Data, "Block index exceeds automap size.");
 
-            if (byteIndex >= ExplorationBits.Length)
-                throw new AmbermoonException(ExceptionScope.Data, "Block index exceeds automap size.");
+        int bitIndex = (int)blockIndex % 8;
 
-            int bitIndex = (int)blockIndex % 8;
+        ExplorationBits[byteIndex] |= (byte)(1 << bitIndex);
+    }
 
-            ExplorationBits[byteIndex] |= (byte)(1 << bitIndex);
-        }
-
-        public void ResetExploration()
-        {
-            Array.Fill(ExplorationBits, (byte)0);
-        }
+    public void ResetExploration()
+    {
+        Array.Fill(ExplorationBits, (byte)0);
     }
 }

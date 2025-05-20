@@ -1,22 +1,21 @@
 ﻿using Ambermoon.Data.Pyrdacor.Compressions;
 using Ambermoon.Data.Serialization;
 
-namespace Ambermoon.Data.Pyrdacor.FileSpecs
+namespace Ambermoon.Data.Pyrdacor.FileSpecs;
+
+internal class LabyrinthData : IFileSpec<LabyrinthData>, IFileSpec
 {
-    internal class LabyrinthData : IFileSpec
+    public static string Magic => "LAB";
+    public static byte SupportedVersion => 0;
+    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+
+    public void Read(IDataReader dataReader, uint _, GameData __)
     {
-        public string Magic => "LAB";
-        public byte SupportedVersion => 0;
-        public ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+        throw new NotImplementedException();
+    }
 
-        public void Read(IDataReader dataReader, uint _, GameData __)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Write(IDataWriter dataWriter)
-        {
-            throw new NotImplementedException();
-        }
+    public void Write(IDataWriter dataWriter)
+    {
+        throw new NotImplementedException();
     }
 }

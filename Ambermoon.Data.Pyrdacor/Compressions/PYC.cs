@@ -2,13 +2,13 @@
 
 namespace Ambermoon.Data.Pyrdacor.Compressions;
 
-internal class NullCompression : ICompression<NullCompression>, ICompression
+internal class PycCompression : ICompression<PycCompression>, ICompression
 {
-    public static ushort Identifier => 0x0000;
+    public static ushort Identifier => 0xBB5C;
 
     public IDataReader Decompress(IDataReader dataReader)
     {
-        return dataReader;
+        return Decompressor.Decompress();
     }
 
     public IDataWriter Compress(IDataWriter dataWriter)

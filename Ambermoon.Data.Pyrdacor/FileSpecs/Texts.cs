@@ -2,38 +2,37 @@
 using Ambermoon.Data.Pyrdacor.Objects;
 using Ambermoon.Data.Serialization;
 
-namespace Ambermoon.Data.Pyrdacor.FileSpecs
+namespace Ambermoon.Data.Pyrdacor.FileSpecs;
+
+internal class Texts : IFileSpec<Texts>, IFileSpec
 {
-    internal class Texts : IFileSpec
+    public static string Magic => "TXT";
+    public static byte SupportedVersion => 0;
+    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+    TextList? textList = null;
+
+    public TextList TextList => textList!;
+
+    public Texts()
     {
-        public string Magic => "TXT";
-        public byte SupportedVersion => 0;
-        public ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
-        TextList? textList = null;
 
-        public TextList TextList => textList!;
+    }
 
-        public Texts()
-        {
+    public Texts(TextList textList)
+    {
+        this.textList = textList;
+    }
 
-        }
+    public void Read(IDataReader dataReader, uint _, GameData __)
+    {
+        textList = new TextList(dataReader);
+    }
 
-        public Texts(TextList textList)
-        {
-            this.textList = textList;
-        }
+    public void Write(IDataWriter dataWriter)
+    {
+        if (textList == null)
+            throw new AmbermoonException(ExceptionScope.Application, "Text data was null when trying to write it.");
 
-        public void Read(IDataReader dataReader, uint _, GameData __)
-        {
-            textList = new TextList(dataReader);
-        }
-
-        public void Write(IDataWriter dataWriter)
-        {
-            if (textList == null)
-                throw new AmbermoonException(ExceptionScope.Application, "Text data was null when trying to write it.");
-
-            textList.Write(dataWriter);
-        }
+        textList.Write(dataWriter);
     }
 }

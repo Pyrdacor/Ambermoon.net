@@ -1,72 +1,71 @@
 ﻿using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 
-namespace Ambermoon.Data.Pyrdacor.Compressions
+namespace Ambermoon.Data.Pyrdacor.Compressions;
+
+internal class RLE0 : ICompression<RLE0>, ICompression
 {
-    internal class RLE0 : ICompression
+    public static ushort Identifier => 0x2E50;
+
+    public IDataReader Decompress(IDataReader dataReader)
     {
-        public ushort Identifier => 0xC001;
+        var decompressedData = new List<byte>();
 
-        public IDataReader Decompress(IDataReader dataReader)
+        while (dataReader.Position < dataReader.Size)
         {
-            var decompressedData = new List<byte>();
+            var b = dataReader.ReadByte();
 
-            while (dataReader.Position < dataReader.Size)
-            {
-                var b = dataReader.ReadByte();
-
-                if (b == 0)
-                    decompressedData.AddRange(Enumerable.Repeat((byte)0, 1 + dataReader.ReadByte()));
-                else
-                    decompressedData.Add(b);
-            }
-
-            return new DataReader(decompressedData.ToArray());
+            if (b == 0)
+                decompressedData.AddRange(Enumerable.Repeat((byte)0, 1 + dataReader.ReadByte()));
+            else
+                decompressedData.Add(b);
         }
 
-        public IDataWriter Compress(IDataWriter dataWriter)
+        return new DataReader([.. decompressedData]);
+    }
+
+    public IDataWriter Compress(IDataWriter dataWriter)
+    {
+        int zeroCount = 0;
+        var compressedData = new List<byte>();
+        var data = dataWriter.ToArray();
+
+        void WriteZeros()
         {
-            int zeroCount = 0;
-            var compressedData = new List<byte>();
-            var data = dataWriter.ToArray();
+            if (zeroCount == 0)
+                return;
 
-            void WriteZeros()
+            int chunks = zeroCount / 256;
+            int lastChunkSize = zeroCount % 256;
+
+            for (int i = 0; i < chunks; ++i)
             {
-                if (zeroCount == 0)
-                    return;
-
-                int chunks = zeroCount / 256;
-                int lastChunkSize = zeroCount % 256;
-
-                for (int i = 0; i < chunks; ++i)
-                {
-                    compressedData.Add(0);
-                    compressedData.Add(255);
-                }
-
-                if (lastChunkSize != 0)
-                {
-                    compressedData.Add(0);
-                    compressedData.Add((byte)(lastChunkSize - 1));
-                }
-
-                zeroCount = 0;
+                compressedData.Add(0);
+                compressedData.Add(255);
             }
 
-            for (int i = 0; i < data.Length; ++i)
+            if (lastChunkSize != 0)
             {
-                if (data[i] == 0)
-                    ++zeroCount;
-                else
-                {
-                    WriteZeros();
-                    compressedData.Add(data[i]);
-                }
+                compressedData.Add(0);
+                compressedData.Add((byte)(lastChunkSize - 1));
             }
 
-            WriteZeros();
-
-            return new DataWriter(compressedData.ToArray());
+            zeroCount = 0;
         }
+
+        for (int i = 0; i < data.Length; ++i)
+        {
+            if (data[i] == 0)
+                ++zeroCount;
+            else
+            {
+                WriteZeros();
+                compressedData.Add(data[i]);
+            }
+        }
+
+        WriteZeros();
+
+        return new DataWriter([..compressedData]);
     }
 }
