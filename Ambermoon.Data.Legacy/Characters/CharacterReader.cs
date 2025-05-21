@@ -19,8 +19,8 @@ namespace Ambermoon.Data.Legacy.Characters
             character.Class = (Class)dataReader.ReadByte();
             character.SpellMastery = (SpellTypeMastery)dataReader.ReadByte();
             character.Level = dataReader.ReadByte();
-            character.NumberOfFreeHands = dataReader.ReadByte();
-            character.NumberOfFreeFingers = dataReader.ReadByte();
+            character.NumberOfOccupiedHands = dataReader.ReadByte();
+            character.NumberOfOccupiedFingers = dataReader.ReadByte();
             character.SpokenLanguages = (Language)dataReader.ReadByte();
             character.InventoryInaccessible = dataReader.ReadByte() != 0;
             character.PortraitIndex = dataReader.ReadByte();

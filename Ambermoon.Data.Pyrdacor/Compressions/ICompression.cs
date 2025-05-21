@@ -2,9 +2,9 @@
 
 namespace Ambermoon.Data.Pyrdacor.Compressions;
 
-public interface ICompression<T> where T : ICompression
+public interface ICompression<T> : ICompression where T : ICompression
 {
-    ushort GetIdentifier() => T.Identifier;
+    ushort ICompression.GetIdentifier() => T.Identifier;
 }
 
 public interface ICompression
@@ -12,6 +12,7 @@ public interface ICompression
     static virtual ushort Identifier => 0xFFFF;
     IDataReader Decompress(IDataReader dataReader);
     IDataWriter Compress(IDataWriter dataWriter);
+    abstract ushort GetIdentifier();
 
     public static KeyValuePair<ushort, ICompression> NoCompression { get; } = Create<NullCompression>();
     public static KeyValuePair<ushort, ICompression> Deflate { get; } = Create<Deflate>();

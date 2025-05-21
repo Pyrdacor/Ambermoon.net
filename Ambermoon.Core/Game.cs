@@ -4916,7 +4916,7 @@ public class Game
                     return true;
                 }, UnequipItem, layout.UseItem);
             var inventoryGrid = ItemGrid.CreateInventory(this, layout, slot, renderView, ItemManager,
-                inventorySlotPositions, partyMember.Inventory.Slots.ToList(), EquipItem, layout.UseItem);
+                inventorySlotPositions, [.. partyMember.Inventory.Slots], EquipItem, layout.UseItem);
             layout.AddItemGrid(inventoryGrid);
             for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
             {
@@ -4942,6 +4942,20 @@ public class Game
                     else if (leftHandSlot.Empty)
                         leftHandSlot.Amount = 1;
                 }
+            }
+            void UpdateOccupiedHandsAndFingers()
+            {
+                CurrentInventory.NumberOfOccupiedHands = 0;
+                CurrentInventory.NumberOfOccupiedFingers = 0;
+
+                if (!CurrentInventory.Equipment.Slots[EquipmentSlot.RightHand].Empty)
+                    CurrentInventory.NumberOfOccupiedHands++;
+                if (!CurrentInventory.Equipment.Slots[EquipmentSlot.LeftHand].Empty)
+                    CurrentInventory.NumberOfOccupiedHands++;
+                if (!CurrentInventory.Equipment.Slots[EquipmentSlot.RightFinger].Empty)
+                    CurrentInventory.NumberOfOccupiedFingers++;
+                if (!CurrentInventory.Equipment.Slots[EquipmentSlot.LeftFinger].Empty)
+                    CurrentInventory.NumberOfOccupiedFingers++;
             }
             void EquipItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
             {
@@ -4973,6 +4987,7 @@ public class Game
                         itemSlot.Remove(1);
                         targetItemSlot.ItemIndex = itemSlot.ItemIndex;
                         targetItemSlot.Amount = 1;
+                        CurrentInventory.NumberOfOccupiedHands++;
                     }
                     else
                     {
@@ -4989,6 +5004,8 @@ public class Game
                         AddInventoryItem(slot, itemSlot, 1);
                         RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(targetSlot.Value + 1), ItemManager.GetItem(itemSlot.ItemIndex));
                     }
+
+                    UpdateOccupiedHandsAndFingers();
                 }
             }
             void UnequipItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
@@ -5038,6 +5055,7 @@ public class Game
                 itemGrid.SetItem(slot, itemSlot);
 
                 RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slot + 1), ItemManager.GetItem(targetItemSlot.ItemIndex));
+                UpdateOccupiedHandsAndFingers();
             }
             layout.AddItemGrid(equipmentGrid);
             foreach (var equipmentSlot in EnumHelper.GetValues<EquipmentSlot>().Skip(1))

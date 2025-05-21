@@ -15,7 +15,7 @@ namespace Ambermoon.Data.Legacy.Serialization
     public class DataWriter : IDataWriter
     {
         public static readonly Encoding Encoding = DataReader.Encoding;
-        protected readonly List<byte> data = new List<byte>();
+        protected readonly List<byte> data = [];
         public int Position { get; private set; } = 0;
         public int Size => data.Count;
 

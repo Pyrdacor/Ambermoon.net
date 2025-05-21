@@ -16,8 +16,8 @@ namespace Ambermoon.Data
         public Class Class { get; set; }
         public SpellTypeMastery SpellMastery { get; set; }
         public byte Level { get; set; }
-        public byte NumberOfFreeHands { get; set; }
-        public byte NumberOfFreeFingers { get; set; }
+        public byte NumberOfOccupiedHands { get; set; }
+        public byte NumberOfOccupiedFingers { get; set; }
         public Language SpokenLanguages { get; set; }
         public bool InventoryInaccessible { get; set; } // This is not bound to conditions but its own "inventory is secret" flag
         public byte PortraitIndex { get; set; }

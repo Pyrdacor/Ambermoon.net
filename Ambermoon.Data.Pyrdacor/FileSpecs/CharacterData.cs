@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Pyrdacor.Compressions;
+using Ambermoon.Data.Pyrdacor.Extensions;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.FileSpecs;
@@ -28,8 +29,8 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
         switch (dataReader.PeekByte())
         {
             case 0: // party member
-                // TODO
-                throw new NotImplementedException();
+                ReadPartyMember(dataReader, index, gameData);
+                break;
             case 1: // NPC
                 // TODO
                 throw new NotImplementedException();
@@ -48,5 +49,25 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
 
         // TODO
         throw new NotImplementedException();
+    }
+
+    private void ReadPartyMember(IDataReader dataReader, uint index, GameData gameData)
+    {
+        var partyMember = new PartyMember()
+        {
+            Index = index
+        };
+
+        dataReader.Position++; // skip character type
+
+        partyMember.Gender = dataReader.ReadEnum8<Gender>();
+        partyMember.Race = dataReader.ReadEnum8<Race>();
+        partyMember.Class = dataReader.ReadEnum8<Class>();
+        partyMember.SpellMastery = dataReader.ReadEnum8<SpellTypeMastery>();
+        partyMember.Level = dataReader.ReadByte();
+        partyMember.NumberOfOccupiedHands = dataReader.ReadByte();
+        partyMember.NumberOfOccupiedHands = dataReader.ReadByte();
+
+        character = partyMember;
     }
 }

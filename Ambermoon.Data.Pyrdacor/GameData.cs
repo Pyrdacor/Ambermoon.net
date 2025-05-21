@@ -192,7 +192,10 @@ public class GameData : IGameData, IGraphicProvider
             if (locationData.Count != locationNames.Count)
                 throw new AmbermoonException(ExceptionScope.Data, "Mismatch between number of location data and location name entries.");
 
-            foreach (var location in locationData)
+            if (locationData.Keys.Min() != 1 || locationData.Keys.Max() != locationData.Count)
+                throw new AmbermoonException(ExceptionScope.Data, "Location data must not contain any data gaps and first index must be 1.");
+
+            foreach (var location in locationData.OrderBy(location => location.Key))
             {
                 if (!locationNames.TryGetValue(location.Key, out var name))
                     throw new AmbermoonException(ExceptionScope.Data, $"Missing location name for location data {location.Key}.");

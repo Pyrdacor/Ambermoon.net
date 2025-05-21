@@ -14,8 +14,8 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.WriteEnumAsByte(character.Class);
             dataWriter.WriteEnumAsByte(character.SpellMastery);
             dataWriter.Write(character.Level);
-            dataWriter.Write(character.NumberOfFreeHands);
-            dataWriter.Write(character.NumberOfFreeFingers);
+            dataWriter.Write(character.NumberOfOccupiedHands);
+            dataWriter.Write(character.NumberOfOccupiedFingers);
             dataWriter.WriteEnumAsByte(character.SpokenLanguages);
             dataWriter.Write((byte)(character.InventoryInaccessible ? 0xff : 0));
             dataWriter.Write(character.PortraitIndex);

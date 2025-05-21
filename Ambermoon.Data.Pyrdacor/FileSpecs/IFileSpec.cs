@@ -3,11 +3,11 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.FileSpecs;
 
-public interface IFileSpec<T> where T : IFileSpec
+public interface IFileSpec<T> : IFileSpec where T : IFileSpec
 {
-    string GetMagic() => T.Magic;
-    byte GetSupportedVersion() => T.SupportedVersion;
-    ushort GetPreferredCompression() => T.PreferredCompression;
+    string IFileSpec.GetMagic() => T.Magic;
+    byte IFileSpec.GetSupportedVersion() => T.SupportedVersion;
+    ushort IFileSpec.GetPreferredCompression() => T.PreferredCompression;
 }
 
 public interface IFileSpec
@@ -17,6 +17,9 @@ public interface IFileSpec
     static virtual ushort PreferredCompression => ICompression.GetIdentifier<NullCompression>();
     void Read(IDataReader dataReader, uint index, GameData gameData);
     void Write(IDataWriter dataWriter);
+    abstract string GetMagic();
+    abstract byte GetSupportedVersion();
+    abstract ushort GetPreferredCompression();
 
     public static string GetMagic<T>() where T : IFileSpec
     {
