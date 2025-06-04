@@ -2604,7 +2604,9 @@ public class Game
             // ~INK cc~
             // ~RUN1~text~NORM~ or ~"text"~
             text = text
+                .Replace("~RUN1~ ", $"~INK {(int)TextColor.Beige}~")
                 .Replace("~RUN1~", $"~INK {(int)TextColor.Beige}~")
+                .Replace("~NORM~ ", "~INK 32~")
                 .Replace("~NORM~", "~INK 32~");
         }
 

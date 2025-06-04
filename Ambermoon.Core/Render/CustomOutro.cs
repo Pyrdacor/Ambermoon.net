@@ -534,8 +534,8 @@ namespace Ambermoon.Render
                 var wrappedText = outro.game.ProcessText(text, textRect);
                 UIText[] texts = new UIText[wrappedText.LineCount];
                 var position = new Position(textRect.Position);
-                int totalLength = wrappedText.GlyphIndices.Count(c => c < (byte)SpecialGlyph.NoTrim);
-                int lineSize = wrappedText.Lines[0].Count(c => c < (byte)SpecialGlyph.NoTrim);
+                int totalLength = wrappedText.GlyphIndices.Count(c => c < (byte)SpecialGlyph.NewLine);
+                int lineSize = wrappedText.Lines[0].Count(c => c < (byte)SpecialGlyph.NewLine);
                 var currentTextColor = textColor;
 
                 for (int i = 0; i < wrappedText.LineCount; ++i)
@@ -570,7 +570,7 @@ namespace Ambermoon.Render
                             if (processedLines < texts.Length)
                             {
                                 texts[processedLines].Visible = true;
-                                lineSize = wrappedText.Lines[processedLines].Count(c => c < (byte)SpecialGlyph.NoTrim);
+                                lineSize = wrappedText.Lines[processedLines].Count(c => c < (byte)SpecialGlyph.NewLine);
                             }
                         }
                         outro.game.AddTimedEvent(TimeSpan.FromMilliseconds(millisecondsPerCharacter), DrawNextCharacter);

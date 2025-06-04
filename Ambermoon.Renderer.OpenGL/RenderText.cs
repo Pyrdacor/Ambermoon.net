@@ -414,9 +414,9 @@ internal class RenderText : RenderNode, IRenderText
                 Y = position.Y,
                 Layer = Layer,
                 PaletteIndex = PaletteIndex,
-                Visible = Visible
+                Visible = Visible,
+                ClipArea = ClipArea
             };
-            sprite.ClipArea = ClipArea;
 
             characterSprites.Add(sprite);
         }

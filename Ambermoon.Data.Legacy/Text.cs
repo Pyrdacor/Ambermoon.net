@@ -2,16 +2,17 @@
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System;
 
 namespace Ambermoon.Data.Legacy
 {
     internal class Text : IText
     {
         // Key = glyphs, Value = visible length (so without color or newline glyphs)
-        readonly List<KeyValuePair<byte[], int>> lines = new List<KeyValuePair<byte[], int>>();
+        readonly List<KeyValuePair<byte[], int>> lines = [];
 
         public Text(List<KeyValuePair<byte[], int>> glyphLines)
-            : this(glyphLines.SelectMany(line => line.Key).ToArray(), glyphLines.Count, glyphLines.Count == 0 ? 0 : glyphLines.Max(line => line.Value))
+            : this([.. glyphLines.SelectMany(line => line.Key)], glyphLines.Count, glyphLines.Count == 0 ? 0 : glyphLines.Max(line => line.Value))
         {
             lines = glyphLines;
         }
@@ -245,23 +246,45 @@ namespace Ambermoon.Data.Legacy
             return FinalizeText(text.SelectMany(ch => CharToGlyph(ch, false, fallbackChar)));
         }
 
-        public IText FinalizeText(IEnumerable<byte> glyphs)
+        public static IText FinalizeText(IEnumerable<byte> glyphs)
         {
-            List<KeyValuePair<byte[], int>> glyphLines = new List<KeyValuePair<byte[], int>>();
+            List<KeyValuePair<byte[], int>> glyphLines = [];
             int currentLineSize = 0;
             int numLines = 0;
-            List<byte> line = new List<byte>();
+            List<byte> line = [];
 
             void NewLine()
             {
-                while (line.Count != 0 && line.Last() == (byte)SpecialGlyph.SoftSpace)
+                int index = line.Count - 1;
+
+                while (line.Count != 0 && index >= 0)
                 {
+                    byte last = line[index];
+
                     // Trim end
-                    line.RemoveAt(line.Count - 1);
-                    --currentLineSize;
+                    if (last == (byte)SpecialGlyph.SoftSpace)
+                    {
+                        line.RemoveAt(index);
+                        --currentLineSize;
+                        --index;
+                    }
+                    // Remove trailing no trim markers
+                    else if (last == (byte)SpecialGlyph.NoTrim)
+                    {
+                        line.RemoveAt(index);
+                        --index;
+                    }
+                    else if (last >= (byte)SpecialGlyph.FirstColor)
+                    {
+                        --index;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
 
-                glyphLines.Add(new KeyValuePair<byte[], int>(line.ToArray(), currentLineSize));
+                glyphLines.Add(new KeyValuePair<byte[], int>([.. line], currentLineSize));
                 currentLineSize = 0;
                 line.Clear();
                 ++numLines;
@@ -269,7 +292,7 @@ namespace Ambermoon.Data.Legacy
 
             foreach (var glyph in glyphs)
             {
-                if (currentLineSize == 0 && line.Count != 0 && glyph == (byte)SpecialGlyph.SoftSpace)
+                if (currentLineSize == 0 && line.Count != 0 && glyph == (byte)SpecialGlyph.SoftSpace && line.Last() != (byte)SpecialGlyph.NoTrim)
                     continue; // Trim start
 
                 line.Add(glyph);
@@ -322,9 +345,39 @@ namespace Ambermoon.Data.Legacy
             int height = 0;
             var wrappedGlyphLines = new List<KeyValuePair<byte[], int>>();
             var line = new List<byte>();
+            bool addedSoftspaceNewline = false;
 
             void NewLine()
             {
+                // Trim end
+                int index = line.Count - 2;
+
+                while (index >= 0)
+                {
+                    byte last = line[index];
+
+                    if (last == (byte)SpecialGlyph.SoftSpace)
+                    {
+                        line.RemoveAt(index);
+                        --currentLineSize;
+                        --index;
+                        x -= glyphSize.Width;
+                    }
+                    else if (last == (byte)SpecialGlyph.NoTrim)
+                    {
+                        line.RemoveAt(index);
+                        --index;
+                    }
+                    else if (last >= (byte)SpecialGlyph.FirstColor)
+                    {
+                        --index;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
                 if (x > bounds.Left + maxLineWidth)
                     maxLineWidth = x - bounds.Left;
 
@@ -332,16 +385,23 @@ namespace Ambermoon.Data.Legacy
                 x = bounds.Left;
                 y += glyphSize.Height;
                 height = y;
-                wrappedGlyphLines.Add(new KeyValuePair<byte[], int>(line.ToArray(), currentLineSize));
+                wrappedGlyphLines.Add(new KeyValuePair<byte[], int>([.. line], currentLineSize));
                 line.Clear();
                 currentLineSize = 0;
             }
 
-            byte? LastGlyph() => line.Count == 0 ? wrappedGlyphLines.Count == 0 ? (byte?)null :
-                wrappedGlyphLines.Last().Key.LastOrDefault() : line.LastOrDefault();
+            byte? LastGlyph() => line.Count != 0 ? line.LastOrDefault() :
+                (wrappedGlyphLines.Count == 0 ? null : wrappedGlyphLines.Last().Key.LastOrDefault());
+
+            int index = -1; // 362
 
             foreach (var glyph in text.GlyphIndices)
             {
+                ++index;
+
+                if (glyph != (byte)SpecialGlyph.NewLine)
+                    addedSoftspaceNewline = false;
+
                 switch (glyph)
                 {
                     case (byte)SpecialGlyph.SoftSpace:
@@ -353,6 +413,7 @@ namespace Ambermoon.Data.Legacy
                             x -= glyphSize.Width;
                             line.Add((byte)SpecialGlyph.NewLine);
                             NewLine();
+                            addedSoftspaceNewline = true;
                         }
                         else
                         {
@@ -362,6 +423,11 @@ namespace Ambermoon.Data.Legacy
                         }
                         break;
                     case (byte)SpecialGlyph.NewLine:
+                        if (addedSoftspaceNewline)
+                        {
+                            addedSoftspaceNewline = false;
+                            continue;
+                        }
                         line.Add(glyph);
                         NewLine();
                         break;
@@ -374,6 +440,7 @@ namespace Ambermoon.Data.Legacy
                         else
                         {
                             x += glyphSize.Width;
+
                             if (x > bounds.Right)
                             {
                                 if (lastSpaceIndex != -1)
@@ -382,13 +449,13 @@ namespace Ambermoon.Data.Legacy
                                     ++currentLineSize;
                                     line[lastSpaceIndex] = (byte)SpecialGlyph.NewLine;
                                     var newLine = line.Skip(lastSpaceIndex + 1);
-                                    line = line.Take(lastSpaceIndex + 1).ToList();
-                                    currentLineSize = line.Count(c => c < (byte)SpecialGlyph.NoTrim);
-                                    x = bounds.Left + (currentLineSize - 1) * glyphSize.Width;
-                                    NewLine();
-                                    currentLineSize = newLine.Count(c => c < (byte)SpecialGlyph.NoTrim);
+                                    line = [.. line.Take(lastSpaceIndex + 1)];
+                                    currentLineSize = line.Count(c => c < (byte)SpecialGlyph.NewLine);
                                     x = bounds.Left + currentLineSize * glyphSize.Width;
-                                    line = newLine.ToList();
+                                    NewLine();
+                                    currentLineSize = newLine.Count(c => c < (byte)SpecialGlyph.NewLine);
+                                    x = bounds.Left + currentLineSize * glyphSize.Width;
+                                    line = [.. newLine];
                                 }
                                 else
                                 {
@@ -413,7 +480,7 @@ namespace Ambermoon.Data.Legacy
                 wrappedGlyphLines[^1].Key[^1] = (byte)SpecialGlyph.SoftSpace;
 
             if (line.Count > 0)
-                wrappedGlyphLines.Add(new KeyValuePair<byte[], int>(line.ToArray(), currentLineSize));
+                wrappedGlyphLines.Add(new KeyValuePair<byte[], int>([.. line], currentLineSize));
 
             return new Text(wrappedGlyphLines)
             {
@@ -449,7 +516,7 @@ namespace Ambermoon.Data.Legacy
                     rune = false;
                 else if (name.StartsWith("INK "))
                 {
-                    if (!int.TryParse(name.Substring(4), out int colorIndex) || colorIndex < 0 || colorIndex > 32)
+                    if (!int.TryParse(name.AsSpan(4), out int colorIndex) || colorIndex < 0 || colorIndex > 32)
                         throw new AmbermoonException(ExceptionScope.Data, $"Invalid ink tag: ~{name}~");
 
                     glyphIndices.Add((byte)(SpecialGlyph.FirstColor + colorIndex));

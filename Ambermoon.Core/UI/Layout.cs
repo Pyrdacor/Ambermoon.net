@@ -835,19 +835,23 @@ namespace Ambermoon.UI
             var textBounds = new Rect(position.X + (transparent ? 0 : 16), position.Y + (transparent ? 0 : 16),
                 maxWidth, Math.Min(processedText.LineCount * Global.GlyphLineHeight, maxTextHeight));
             int popupRows = Math.Max(4, transparent ? maxTextHeight / Global.GlyphLineHeight : 2 + (textBounds.Height + 15) / 16);
+
             if (!transparent)
                 textBounds.Position.Y += ((popupRows - 2) * 16 - textBounds.Height) / 2;
+
+            bool scrolling = textBounds.Height / Global.GlyphLineHeight < processedText.LineCount;
             activePopup = new Popup(game, RenderView, position, transparent ? maxWidth / Global.GlyphWidth : 18, popupRows, transparent, displayLayerOffset)
             {
                 DisableButtons = disableButtons,
-                CloseOnClick = closeOnClick
+                CloseOnClick = closeOnClick && !scrolling
             };
-            bool scrolling = textBounds.Height / Global.GlyphLineHeight < processedText.LineCount;
             var uiText = activePopup.AddText(textBounds, processedText, textColor, textAlign, true, 1, scrolling, this);
+
             if (paletteOverride != null)
                 uiText.PaletteIndex = paletteOverride.Value;
+
             if (closeAction != null)
-                activePopup.Closed += closeAction;
+                 activePopup.Closed += closeAction;
 
             if (scrolling && game.Configuration.IsMobile)
                 activePopup.CanAbort = false;
