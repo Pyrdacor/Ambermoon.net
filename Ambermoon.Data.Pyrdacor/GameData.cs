@@ -100,6 +100,10 @@ public class GameData : IGameData, IGraphicProvider
 
     public Dictionary<int, List<int>> NPCGraphicFrameCounts => throw new NotImplementedException();
 
+    internal Dictionary<uint, TextList> NPCTexts => npcTextLoader.LoadAll();
+
+    internal Dictionary<uint, TextList> PartyTexts => partyTextLoader.LoadAll();
+
     // TODO
     public TravelGraphicInfo GetTravelGraphicInfo(TravelType type, CharacterDirection direction)
     {

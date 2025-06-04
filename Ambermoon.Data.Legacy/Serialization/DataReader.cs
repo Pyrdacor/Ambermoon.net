@@ -159,7 +159,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public string ReadNullTerminatedString(Encoding encoding)
         {
-            List<byte> buffer = new();
+            List<byte> buffer = [];
             byte b;
             bool needMoreBytes = false;
 
@@ -174,7 +174,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     try
                     {
-                        encoding.GetString(buffer.ToArray());
+                        encoding.GetString([.. buffer]);
                     }
                     catch (ArgumentException)
                     {
@@ -185,11 +185,11 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             try
             {
-                return encoding.GetString(buffer.ToArray());
+                return encoding.GetString([.. buffer]);
             }
             catch (ArgumentException)
             {
-                return encoding.GetString(buffer.Take(buffer.Count - 1).ToArray()) + "?";
+                return encoding.GetString([.. buffer.Take(buffer.Count - 1)]) + "?";
             }
         }
 

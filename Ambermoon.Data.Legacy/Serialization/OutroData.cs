@@ -1,10 +1,7 @@
 ﻿using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Numerics;
-using static Ambermoon.Data.Legacy.ExecutableData.Messages;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
@@ -37,31 +34,41 @@ namespace Ambermoon.Data.Legacy.Serialization
     //
     // The new file Outro_texts.amb has the following format:
     //
-    // word NumberOfTextGroups
-    // word[n] TextCount (for each group)
-    // byte[x] Null-terminated texts for all groups
+    // word NumberOfClickGroups
+    // word[n] NumberOfTextGroups (for each of the n click groups)
+    // For each click group:
+    //   word[m] TextCount (for each of the m text groups)
+    //   For each text group:
+    //     byte[x] Null-terminated texts for the group
     // (byte) Padding (if needed there is a padding byte)
     // word NumberOfTranslators
     // byte[x] Null-terminated translator names
     // byte[x] Null-terminated text for the click message
     // (byte) Padding (if needed there is a padding byte)
+    //
+    //
+    // Outro texts can contain \r (0x0d), followed by another byte.
+    // This will add a newline (following text will appear 12 or 23
+    // pixels below dependent on font size). The byte after \r gives
+    // the X offset of the new line (added to the X offset of the action).
+    // This seems to be unused in Ambermoon though.
 
     public class OutroData : IOutroData
     {
-        readonly Dictionary<OutroOption, List<OutroAction>> outroActions = new();
-        readonly List<Graphic> outroPalettes = new();
+        readonly Dictionary<OutroOption, List<OutroAction>> outroActions = [];
+        readonly List<Graphic> outroPalettes = [];
         // The key is the offset inside the image hunk (it is reference by it from the data hunk).
         // The byte of the pair is the 0-based palette index (in relation to the OutroPalettes).
-        readonly Dictionary<uint, KeyValuePair<Graphic, byte>> graphics = new();
+        readonly Dictionary<uint, KeyValuePair<Graphic, byte>> graphics = [];
         static GraphicInfo paletteGraphicInfo = new()
         {
             Width = 32,
             Height = 1,
             GraphicFormat = GraphicFormat.XRGB16
         };
-        readonly List<string> texts = new();
-        readonly Dictionary<char, Glyph> glyphs = new();
-        readonly Dictionary<char, Glyph> largeGlyphs = new();
+        readonly List<string> texts = [];
+        readonly Dictionary<char, Glyph> glyphs = [];
+        readonly Dictionary<char, Glyph> largeGlyphs = [];
 
         public IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>> OutroActions => outroActions.ToDictionary(a => a.Key, a => (IReadOnlyList<OutroAction>)a.Value.AsReadOnly()).AsReadOnly();
         public IReadOnlyList<Graphic> OutroPalettes => outroPalettes.AsReadOnly();
@@ -447,7 +454,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 baseTextGroups[OutroOption.ValdynInPartyWithYellowSphere][3],
                 baseTextGroups[OutroOption.ValdynInPartyNoYellowSphere][4]
             };
-            var newActionLists = new List<OutroAction>[6] { new(), new(), new(), new(), new(), new() };
+            var newActionLists = new List<OutroAction>[6] { [], [], [], [], [], [] };
             texts.Clear();
 
             static string ProcessText(string text)
@@ -500,7 +507,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                             break;
 
                         textAction = textAction with { TextIndex = this.texts.Count };
-                        if (translators.Count > 0 && texts[t].StartsWith("$") && !texts[t].StartsWith("$$"))
+                        if (translators.Count > 0 && texts[t].StartsWith('$') && !texts[t].StartsWith("$$"))
                         {
                             this.texts.Add(ProcessText(translators[0]));
                             newActions.Add(textAction);

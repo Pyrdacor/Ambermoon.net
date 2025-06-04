@@ -27,4 +27,6 @@ internal class TextList
         foreach (var text in texts)
             dataWriter.Write(text);
     }
+
+    public List<string> ToList() => [.. texts];
 }

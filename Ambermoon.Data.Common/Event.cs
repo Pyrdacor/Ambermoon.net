@@ -138,7 +138,7 @@ namespace Ambermoon.Data
             @event.Next = keepNext ? Next : null;
         }
 
-        protected byte[] CloneBytes(byte[] bytes)
+        protected static byte[] CloneBytes(byte[] bytes)
         {
             var newBytes = new byte[bytes.Length];
             Buffer.BlockCopy(bytes, 0, newBytes, 0, bytes.Length);
