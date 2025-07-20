@@ -27,7 +27,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static Ambermoon.Data.Map.CharacterReference;
-using static Ambermoon.Data.Monster;
 
 namespace Ambermoon.Render
 {
@@ -223,6 +222,8 @@ namespace Ambermoon.Render
                 position.Offset(-1, -1); // positions are 1-based
                 Position = position;
                 ResetFrame();
+
+                children.ForEach(child => child.ResetPosition(gameTime));
             }
 
             void ResetFrame()
@@ -497,9 +498,11 @@ namespace Ambermoon.Render
 
                             if (alternateAnimation)
                             {
-                                if (animateForward && (frame / numFrames) % 2 == 1)
+                                var cycle = (frame / numFrames) % 2;
+
+                                if (animateForward && cycle == 1)
                                     animateForward = false;
-                                else if (!animateForward && (frame / numFrames) % 2 == 0)
+                                else if (!animateForward && cycle == 0)
                                     animateForward = true;
                                 frame %= numFrames;
                                 if (!animateForward)
@@ -515,9 +518,9 @@ namespace Ambermoon.Render
                     }
                 }
 
-                UpdatePosition();
-
                 children.ForEach(c => c.UpdateCurrentMovement(ticks));
+
+                UpdatePosition();                
             }
 
             bool TestPathCollision(FloatPosition position, List<uint> blockingTiles)
@@ -1224,8 +1227,12 @@ namespace Ambermoon.Render
                 {
                     foreach (var subObj in obj.SubObjects)
                     {
-                        if (!graphics.ContainsKey(subObj.Object.TextureIndex))
-                            graphics.Add(subObj.Object.TextureIndex, labdata.ObjectGraphics[labdata.ObjectInfos.IndexOf(subObj.Object)]);
+                        var graphic = labdata.ObjectGraphics[labdata.ObjectInfos.IndexOf(subObj.Object)];
+
+                        // Note: If the same texture is used multiple times but with different amount of frames
+                        // we want to use the graphic with the most frames (highest width) to support all use cases.
+                        if (!graphics.TryGetValue(subObj.Object.TextureIndex, out var existingGraphic) || graphic.Width > existingGraphic.Width)
+                            graphics[subObj.Object.TextureIndex] = graphic;
                     }
                 }
                 for (int i = 0; i < labdata.WallGraphics.Count; ++i)

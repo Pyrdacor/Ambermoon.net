@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 using Ambermoon.Data.Serialization;
 using static Ambermoon.Data.Legacy.Serialization.AmigaExecutable;
 
