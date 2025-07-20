@@ -8438,7 +8438,9 @@ public class Game
         // Gryban
         { 15, 0x35a0 },
         // Kasimir
-        { 16, 0x2203 }
+        { 16, 0x2203 },
+        // S'Ebi
+        { 17, 0x3c00 }
     };
 
     // Some party members like Sabine appear at some different location first (e.g. Luminor's torture chamber)
@@ -8474,7 +8476,9 @@ public class Game
         // Gryban
         { 15, 0x35a0 },
         // Kasimir
-        { 16, 0x2203 }
+        { 16, 0x2203 },
+        // S'Ebi
+        { 17, 0x3bc5 }
     };
 
     /// <summary>
