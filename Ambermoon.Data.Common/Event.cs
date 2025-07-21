@@ -928,8 +928,9 @@ namespace Ambermoon.Data
             Max,
             Average,
             Random,
-            FirstCharacter // Thalion, and then all others
-		}
+            FirstCharacter, // Thalion, and then all others
+            ActiveInventory = 0xff
+        }
 
 		public PartyMemberConditionType TypeOfCondition { get; set; }
 		public Condition DisallowedAilments { get; set; }
@@ -968,6 +969,7 @@ namespace Ambermoon.Data
                 PartyMemberConditionTarget.Max => "Max",
                 PartyMemberConditionTarget.Average => "Average",
                 PartyMemberConditionTarget.Random => "Random player",
+                PartyMemberConditionTarget.ActiveInventory => "Active inventory",
                 >= PartyMemberConditionTarget.FirstCharacter => $"Char {1 + (int)Target - (int)PartyMemberConditionTarget.FirstCharacter}",
             };
 			string falseHandling = ContinueIfFalseWithMapEventIndex == 0xffff

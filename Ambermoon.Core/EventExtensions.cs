@@ -1271,6 +1271,7 @@ namespace Ambermoon
 						PartyMemberConditionEvent.PartyMemberConditionTarget.Max => CheckAggregation(Enumerable.Max),
 						PartyMemberConditionEvent.PartyMemberConditionTarget.Average => CheckAggregation(Enumerable.Average),
 						PartyMemberConditionEvent.PartyMemberConditionTarget.Random => CheckRandom(),
+                        PartyMemberConditionEvent.PartyMemberConditionTarget.ActiveInventory => filter(game.CurrentInventory) && CheckSingle(game.CurrentInventory),
                         >= PartyMemberConditionEvent.PartyMemberConditionTarget.FirstCharacter => CheckPartyMember(1u + (uint)conditionEvent.Target - (uint)PartyMemberConditionEvent.PartyMemberConditionTarget.FirstCharacter),
 					};
 
