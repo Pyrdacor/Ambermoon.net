@@ -6545,6 +6545,8 @@ public class Game
         }
         OpenDictionary(word =>
         {
+            layout.ClosePopup();
+
             bool match = string.Compare(textDictionary.Entries[(int)conditionEvent.ObjectIndex], word, true) == 0;
             var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
                 ? null : events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
@@ -7025,33 +7027,47 @@ public class Game
                 break;
             case TeleportEvent.TransitionType.Falling:
             {
-                Pause();
-                Fall(x, y, () => Fade(() =>
+                if (!is3D)
                 {
-                    noEvents = true;
-                    RunTransition();
-                    MoveVertically(false, true, () =>
+                    Fade(RunTransition);
+                }
+                else
+                {
+                    Pause();
+                    Fall(x, y, () => Fade(() =>
                     {
-                        Resume();
-                        noEvents = false;
-                        TriggerMapEvents(EventTrigger.Move);
-                    });
-                }));
+                        noEvents = true;
+                        RunTransition();
+                        MoveVertically(false, true, () =>
+                        {
+                            Resume();
+                            noEvents = false;
+                            TriggerMapEvents(EventTrigger.Move);
+                        });
+                    }));
+                }
                 break;
             }
             case TeleportEvent.TransitionType.Climbing:
-                Pause();
-                Climb(() => Fade(() =>
+                if (!is3D)
                 {
-                    noEvents = true;
-                    RunTransition();
-                    MoveVertically(true, true, () =>
+                    Fade(RunTransition);
+                }
+                else
+                {
+                    Pause();
+                    Climb(() => Fade(() =>
                     {
-                        Resume();
-                        noEvents = false;
-                        TriggerMapEvents(EventTrigger.Move);
-                    });
-                }));
+                        noEvents = true;
+                        RunTransition();
+                        MoveVertically(true, true, () =>
+                        {
+                            Resume();
+                            noEvents = false;
+                            TriggerMapEvents(EventTrigger.Move);
+                        });
+                    }));
+                }
                 break;
             case TeleportEvent.TransitionType.Outro:
                 Teleporting = false;
