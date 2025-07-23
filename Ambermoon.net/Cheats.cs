@@ -554,6 +554,9 @@ class Cheats
 
             partyMember.SpokenLanguages = (Language)0xff;
 
+            if (game.Advanced)
+                partyMember.SpokenExtendedLanguages = (ExtendedLanguage)0x01;
+
             switch (partyMember.Class)
             {
                 case Class.Adventurer:

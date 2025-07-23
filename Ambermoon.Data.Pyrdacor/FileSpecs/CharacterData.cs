@@ -52,6 +52,8 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
 
         if (character is PartyMember partyMember)
         {
+            // TODO: There were some changes to some properties. Align with the legacy writer!
+
             dataWriter.WriteEnum8(CharacterType.PartyMember);
             dataWriter.WriteEnum8(partyMember.Gender);
             dataWriter.WriteEnum8(partyMember.Race);
@@ -197,6 +199,8 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
         };
 
         dataReader.Position++; // skip character type
+
+        // TODO: There were some changes to some properties. Align with the legacy reader!
 
         partyMember.Gender = dataReader.ReadEnum8<Gender>();
         partyMember.Race = dataReader.ReadEnum8<Race>();

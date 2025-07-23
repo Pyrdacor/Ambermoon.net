@@ -601,7 +601,9 @@ namespace Ambermoon.Data
         public ushort RewardTypeValue { get; set; }
         public Attribute? Attribute => TypeOfReward == RewardType.Attribute || TypeOfReward == RewardType.MaxAttribute ? (Attribute)RewardTypeValue : null;
         public Skill? Skill => TypeOfReward == RewardType.Skill || TypeOfReward == RewardType.MaxSkill ? (Skill)RewardTypeValue : null;
-        public Language? Languages => TypeOfReward == RewardType.Languages ? (Language)(1 << (int)RewardTypeValue) : null;
+        public Language? Languages => AnyLanguages != null && AnyLanguages < 0x100 ? (Language)AnyLanguages : null;
+        public ExtendedLanguage? ExtendedLanguages => AnyLanguages != null && AnyLanguages >= 0x100 ? (ExtendedLanguage)(AnyLanguages >> 8) : null;
+        private uint? AnyLanguages => TypeOfReward == RewardType.Languages ? 1u << (int)RewardTypeValue : null;
         public Condition? Conditions => TypeOfReward == RewardType.Conditions ? (Condition)(1 << (int)RewardTypeValue) : null;
         public SpellTypeMastery? UsableSpellTypes => TypeOfReward == RewardType.UsableSpellTypes ? (SpellTypeMastery)(1 << (int)RewardTypeValue) : null;
 		public uint? Spells => TypeOfReward == RewardType.Spells ? (1u << (int)RewardTypeValue) : null;
@@ -665,7 +667,7 @@ namespace Ambermoon.Data
                 RewardType.SpellLearningPoints => $"{Type}: SLP on {target} {operationString}",
 				RewardType.Conditions => $"{Type}: {operationString} {Conditions} on {target}",
 				RewardType.UsableSpellTypes => $"{Type}: {operationString} {UsableSpellTypes} on {target}",
-				RewardType.Languages => $"{Type}: {operationString} {Languages} on {target}",
+				RewardType.Languages => $"{Type}: {operationString} {Languages?.ToString() ?? ExtendedLanguages?.ToString()} on {target}",
                 RewardType.Experience => $"{Type}: Exp on {target} {operationString}",
                 RewardType.MaxAttribute => $"{Type}: Max {Attribute} on {target} {operationString}",
                 RewardType.AttacksPerRound => $"{Type}: APR on {Target} {operationString}",

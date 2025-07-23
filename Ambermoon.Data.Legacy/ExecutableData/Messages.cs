@@ -394,12 +394,20 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             SageSLP,
             MountTheWasp,
             ImmuneToAttack,
+            ExtendedLanguage1,
+            ExtendedLanguage2,
+            ExtendedLanguage3,
+            ExtendedLanguage4,
+            ExtendedLanguage5,
+            ExtendedLanguage6,
+            ExtendedLanguage7,
+            ExtendedLanguage8,
             Count
         }
 
-        readonly List<string> entries = new List<string>();
+        readonly List<string> entries = [];
         public IReadOnlyList<string> Entries => entries.AsReadOnly();
-        public string GetEntry(Index index) => entries[(int)index];
+        public string GetEntry(Index index) => (int)index >= entries.Count ? "" : entries[(int)index];
         static readonly Regex PlaceHolderRegex = new Regex(@"\{[0-9]\}", RegexOptions.Compiled);
 
         internal Messages(List<string> formatMessages, List<string> messages)

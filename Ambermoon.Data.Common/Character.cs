@@ -19,6 +19,7 @@ namespace Ambermoon.Data
         public byte NumberOfOccupiedHands { get; set; }
         public byte NumberOfOccupiedFingers { get; set; }
         public Language SpokenLanguages { get; set; }
+        public ExtendedLanguage SpokenExtendedLanguages { get; set; }
         public bool InventoryInaccessible { get; set; } // This is not bound to conditions but its own "inventory is secret" flag
         public byte PortraitIndex { get; set; }
         /// <summary>

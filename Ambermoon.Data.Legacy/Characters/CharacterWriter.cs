@@ -24,7 +24,10 @@ namespace Ambermoon.Data.Legacy.Characters
             else
                 dataWriter.Write(character.JoinPercentage);
             dataWriter.Write(GetIfMonster<byte>(character, monster => (byte)monster.CombatGraphicIndex, 0));
-            dataWriter.Write(character.SpellChancePercentage);
+            if (character is Monster)
+                dataWriter.Write(character.SpellChancePercentage);
+            else
+                dataWriter.WriteEnumAsByte(character.SpokenExtendedLanguages);
             dataWriter.Write(character.MagicHitBonus);
             dataWriter.Write(GetIfMonsterOrPartyMember<byte>(character, monster => (byte)monster.Morale, partyMember => partyMember.MaxReachedLevel, 0));
             dataWriter.WriteEnumAsByte(character.SpellTypeImmunity);

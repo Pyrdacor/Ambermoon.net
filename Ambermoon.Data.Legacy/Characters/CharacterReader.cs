@@ -29,7 +29,10 @@ namespace Ambermoon.Data.Legacy.Characters
             else
                 character.JoinPercentage = dataReader.ReadByte();
             ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.CombatGraphicIndex = (MonsterGraphicIndex)value);
-            character.SpellChancePercentage = dataReader.ReadByte();
+            if (character is Monster)
+                character.SpellChancePercentage = dataReader.ReadByte();
+            else
+                character.SpokenExtendedLanguages = (ExtendedLanguage)dataReader.ReadByte();
             character.MagicHitBonus = dataReader.ReadByte();
             ProcessIfMonsterOrPartyMember(dataReader, character, (Monster monster, byte value) => monster.Morale = value,
                 (PartyMember partyMember, byte value) => partyMember.MaxReachedLevel = value);

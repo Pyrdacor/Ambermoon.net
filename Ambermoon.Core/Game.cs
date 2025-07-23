@@ -258,6 +258,7 @@ public class Game
     readonly string fullVersion;
     readonly Action<bool, string> keyboardRequest;
 	public Features Features { get; }
+    public bool Advanced => renderView.GameData.Advanced;
     public const int NumBaseSavegameSlots = 10;
     public const int NumAdditionalSavegameSlots = 20;
     internal SavegameTime GameTime { get; private set; } = null;
@@ -5278,6 +5279,22 @@ public class Game
                 if (learned)
                     layout.AddText(new Rect(106, y, 72, Global.GlyphLineHeight), DataNameProvider.GetLanguageName(language));
             }
+            if (renderView.GameData.Advanced)
+            {
+                foreach (var extendedLanguage in EnumHelper.GetValues<ExtendedLanguage>().Skip(1)) // skip ExtendedLanguage.None
+                {
+                    int y = 57 + index++ * Global.GlyphLineHeight;
+                    bool learned = partyMember.SpokenExtendedLanguages.HasFlag(extendedLanguage);
+                    if (learned)
+                    {
+                        string name = DataNameProvider.GetExtendedLanguageName(extendedLanguage);
+
+                        if (string.IsNullOrWhiteSpace(name))
+                            index--;
+                        else
+                            layout.AddText(new Rect(106, y, 72, Global.GlyphLineHeight), name);
+                }
+            }
             #endregion
             #region Conditions
             layout.AddText(new Rect(106, 115, 72, Global.GlyphLineHeight), DataNameProvider.ConditionsHeaderString, TextColor.LightGreen, TextAlign.Center);
@@ -6255,7 +6272,7 @@ public class Game
             }
             case RewardEvent.RewardType.Languages:
             {
-                if (rewardEvent.Languages == null)
+                if (rewardEvent.Languages == null && (!Advanced || rewardEvent.ExtendedLanguages == null))
                 {
                     ShowMessagePopup($"ERROR: Invalid reward event language.", followAction);
                     return;
@@ -6264,13 +6281,22 @@ public class Game
                 switch (rewardEvent.Operation)
                 {
                     case RewardEvent.RewardOperation.Add:
-                        partyMember.SpokenLanguages |= rewardEvent.Languages.Value;
+                        if (rewardEvent.Languages != null)
+                            partyMember.SpokenLanguages |= rewardEvent.Languages.Value;
+                        else
+                            partyMember.SpokenExtendedLanguages |= rewardEvent.ExtendedLanguages.Value;
                         break;
                     case RewardEvent.RewardOperation.Remove:
-                        partyMember.SpokenLanguages &= ~rewardEvent.Languages.Value;
+                        if (rewardEvent.Languages != null)
+                            partyMember.SpokenLanguages &= ~rewardEvent.Languages.Value;
+                        else
+                            partyMember.SpokenExtendedLanguages &= ~rewardEvent.ExtendedLanguages.Value;
                         break;
                     case RewardEvent.RewardOperation.Toggle:
-                        partyMember.SpokenLanguages ^= rewardEvent.Languages.Value;
+                        if (rewardEvent.Languages != null)
+                            partyMember.SpokenLanguages ^= rewardEvent.Languages.Value;
+                        else
+                            partyMember.SpokenExtendedLanguages ^= rewardEvent.ExtendedLanguages.Value;
                         break;
                 }
                 break;
@@ -8512,7 +8538,8 @@ public class Game
         if (!(conversationPartner is Character character))
             throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
 
-        if ((character.SpokenLanguages & CurrentPartyMember.SpokenLanguages) == 0)
+        if ((character.SpokenLanguages & CurrentPartyMember.SpokenLanguages) == 0 &&
+            (character.SpokenExtendedLanguages & CurrentPartyMember.SpokenExtendedLanguages) == 0)
         {
             ShowMessagePopup(DataNameProvider.YouDontSpeakSameLanguage);
             return;
@@ -17036,7 +17063,8 @@ public class Game
         {
             var conversationPartner = windowInfo.WindowParameters[0] as IConversationPartner;
 
-            if (((conversationPartner as Character).SpokenLanguages & partyMember.SpokenLanguages) == 0)
+            if (((conversationPartner as Character).SpokenLanguages & partyMember.SpokenLanguages) == 0 &&
+                ((conversationPartner as Character).SpokenExtendedLanguages & partyMember.SpokenExtendedLanguages) == 0)
             {
                 ShowMessagePopup(DataNameProvider.YouDontSpeakSameLanguage);
                 return false;

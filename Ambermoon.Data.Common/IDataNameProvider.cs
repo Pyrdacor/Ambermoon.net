@@ -20,6 +20,7 @@ namespace Ambermoon.Data
         string GetSongName(Song song);
         string GetElementName(CharacterElement element);
         string GetElementName(ItemElement element);
+        string GetExtendedLanguageName(ExtendedLanguage language);
         string CharacterInfoHitPointsString { get; }
         string CharacterInfoSpellPointsString { get; }
         string CharacterInfoSpellLearningPointsString { get; }

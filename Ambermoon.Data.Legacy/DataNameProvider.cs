@@ -3,6 +3,7 @@
     using Ambermoon.Data.Enumerations;
     using ExecutableData;
     using System.Linq;
+    using System.Xml.Linq;
 
     public class DataNameProvider : IDataNameProvider
     {
@@ -80,6 +81,10 @@
         public string GetElementName(ItemElement element)
         {
             return executableData.Messages.GetEntry(Messages.Index.ElementNone + (int)element);
+        }
+        public string GetExtendedLanguageName(ExtendedLanguage language)
+        {
+            return executableData.Messages.GetEntry(Messages.Index.ExtendedLanguage1 + (int)language);
         }
         public string InventoryTitleString => executableData.UITexts.Entries[UITextIndex.Inventory];
         public string AttributesHeaderString => executableData.UITexts.Entries[UITextIndex.Attributes];
