@@ -5293,6 +5293,7 @@ public class Game
                             index--;
                         else
                             layout.AddText(new Rect(106, y, 72, Global.GlyphLineHeight), name);
+                    }
                 }
             }
             #endregion
