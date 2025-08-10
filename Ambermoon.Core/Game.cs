@@ -5201,6 +5201,8 @@ public class Game
                 layout.AddTooltip(area, tooltip, TextColor.White, TextAlign.Left, new Render.Color(GetPrimaryUIColor(15), 0xb0));
             }
 
+            bool extendedLanguages = Features.HasFlag(Features.ExtendedLanguages);
+
             #region Character info
             DisplayCharacterInfo(partyMember, false);
             #endregion
@@ -5270,20 +5272,21 @@ public class Game
 				}
             #endregion
             #region Languages
-            layout.AddText(new Rect(106, 50, 72, Global.GlyphLineHeight), DataNameProvider.LanguagesHeaderString, TextColor.LightGreen, TextAlign.Center);
+            int languageY = extendedLanguages ? 115 : 50;
+            layout.AddText(new Rect(106, languageY, 72, Global.GlyphLineHeight), DataNameProvider.LanguagesHeaderString, TextColor.LightGreen, TextAlign.Center);
             index = 0;
             foreach (var language in EnumHelper.GetValues<Language>().Skip(1)) // skip Language.None
             {
-                int y = 57 + index++ * Global.GlyphLineHeight;
+                int y = languageY + 7 + index++ * Global.GlyphLineHeight;
                 bool learned = partyMember.SpokenLanguages.HasFlag(language);
                 if (learned)
                     layout.AddText(new Rect(106, y, 72, Global.GlyphLineHeight), DataNameProvider.GetLanguageName(language));
             }
-            if (renderView.GameData.Advanced)
+            if (extendedLanguages)
             {
                 foreach (var extendedLanguage in EnumHelper.GetValues<ExtendedLanguage>().Skip(1)) // skip ExtendedLanguage.None
                 {
-                    int y = 57 + index++ * Global.GlyphLineHeight;
+                    int y = languageY + 7 + index++ * Global.GlyphLineHeight;
                     bool learned = partyMember.SpokenExtendedLanguages.HasFlag(extendedLanguage);
                     if (learned)
                     {
@@ -5298,7 +5301,8 @@ public class Game
             }
             #endregion
             #region Conditions
-            layout.AddText(new Rect(106, 115, 72, Global.GlyphLineHeight), DataNameProvider.ConditionsHeaderString, TextColor.LightGreen, TextAlign.Center);
+            int conditionY = extendedLanguages ? 50 : 115;
+            layout.AddText(new Rect(106, conditionY, 72, Global.GlyphLineHeight), DataNameProvider.ConditionsHeaderString, TextColor.LightGreen, TextAlign.Center);
             index = 0;
             // Total space is 80 pixels wide. Each condition icon is 16 pixels wide. So there is space for 5 condition icons per line.
             const int conditionsPerRow = 5;
@@ -5315,7 +5319,7 @@ public class Game
                 ++index;
 
                 int x = 96 + column * 16;
-                int y = 124 + row * 17;
+                int y = conditionY + 9 + row * 17;
                 var area = new Rect(x, y, 16, 16);
                 string conditionName = DataNameProvider.GetConditionName(condition);
                 string tooltip = Configuration.ShowPlayerStatsTooltips ? null : conditionName;

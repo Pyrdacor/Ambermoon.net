@@ -3,7 +3,7 @@
     using Ambermoon.Data.Enumerations;
     using ExecutableData;
     using System.Linq;
-    using System.Xml.Linq;
+    using System.Numerics;
 
     public class DataNameProvider : IDataNameProvider
     {
@@ -84,7 +84,10 @@
         }
         public string GetExtendedLanguageName(ExtendedLanguage language)
         {
-            return executableData.Messages.GetEntry(Messages.Index.ExtendedLanguage1 + (int)language);
+            // As our values are always of form 2^n this will exactly return n.
+            int index = BitOperations.TrailingZeroCount((byte)language);
+
+            return executableData.Messages.GetEntry(Messages.Index.ExtendedLanguage1 + index);
         }
         public string InventoryTitleString => executableData.UITexts.Entries[UITextIndex.Inventory];
         public string AttributesHeaderString => executableData.UITexts.Entries[UITextIndex.Attributes];
