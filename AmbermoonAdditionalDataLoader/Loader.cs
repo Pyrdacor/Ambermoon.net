@@ -36,7 +36,7 @@ namespace Ambermoon.AdditionalData
             }
 
             var entries = new Dictionary<string, BinaryReader>();
-            var executableFileName = Process.GetCurrentProcess().MainModule?.FileName ?? Assembly.GetEntryAssembly()?.Location;
+            var executableFileName = Environment.ProcessPath ?? Assembly.GetEntryAssembly()?.Location;
 
             if (executableFileName == null)
                 return entries;
