@@ -1202,7 +1202,7 @@ namespace Ambermoon
                     {
                         PartyMemberConditionEvent.PartyMemberConditionType.Language => value => (((uint)value >> (int)conditionEvent.ConditionValueIndex) & 0x1) != 0,
                         _ => value => value >= conditionEvent.Value
-                    }
+                    };
 
                     uint GetAttribute(PartyMember partyMember)
                     {
@@ -1258,7 +1258,7 @@ namespace Ambermoon
                         if (possible.Count == 0)
                             return false;
 
-                        return comparator((extractor(possible[game.RandomInt(0, possible.Count - 1)]));
+                        return comparator(extractor(possible[game.RandomInt(0, possible.Count - 1)]));
                     }
 
                     bool CheckPartyMember(uint index)
