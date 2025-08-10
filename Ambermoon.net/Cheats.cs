@@ -554,7 +554,7 @@ class Cheats
 
             partyMember.SpokenLanguages = (Language)0xff;
 
-            if (game.Advanced)
+            if (game.Features.HasFlag(Data.Enumerations.Features.ExtendedLanguages))
                 partyMember.SpokenExtendedLanguages = (ExtendedLanguage)0x01;
 
             switch (partyMember.Class)
