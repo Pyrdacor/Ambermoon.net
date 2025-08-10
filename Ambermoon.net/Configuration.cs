@@ -319,7 +319,7 @@ namespace Ambermoon
         }
 
         // Some weird Mac OS behavior stored stuff in this folder...
-        public static string BrokenMacBundleDirectory = "/Applications/Ambermoon.net.app/Contents/Resources/~/Library/Application Support/Ambermoon.net";
+        public const string BrokenMacBundleDirectory = "/Applications/Ambermoon.net.app/Contents/Resources/~/Library/Application Support/Ambermoon.net";
 
         private static string readonlyBundleDirectory = null;
         /// <summary>
