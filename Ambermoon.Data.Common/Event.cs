@@ -918,7 +918,8 @@ namespace Ambermoon.Data
             Level = 0x00,
 			Attribute = 0x01,
 			Skill = 0x02,
-			TrainingPoints = 0x03
+			TrainingPoints = 0x03,
+            Language = 0x04,
 		}
 
 		public enum PartyMemberConditionTarget : byte
@@ -987,7 +988,8 @@ namespace Ambermoon.Data
 				PartyMemberConditionType.Attribute => $"{Type}: {target} {(Attribute)ConditionValueIndex} >= {Value}{disallowedAilments}, {falseHandling}",
 				PartyMemberConditionType.Skill => $"{Type}: {target} {(Skill)ConditionValueIndex} >= {Value}{disallowedAilments}, {falseHandling}",
 				PartyMemberConditionType.TrainingPoints => $"{Type}: {target} TP >= {Value}{disallowedAilments}, {falseHandling}",
-				_ => $"{Type}: Unknown ({TypeOfCondition}), Target {target}, Value {Value}, {falseHandling}",
+                PartyMemberConditionType.Language => $"{Type}: {target} has language {(ConditionValueIndex < 8 ? (Language)ConditionValueIndex : (ExtendedLanguage)ConditionValueIndex)} {disallowedAilments}, {falseHandling}",
+                _ => $"{Type}: Unknown ({TypeOfCondition}), Target {target}, Value {Value}, {falseHandling}",
 			};
 		}
 	}

@@ -1198,6 +1198,11 @@ namespace Ambermoon
 
                     var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
                         ? null : events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
+                    Func<decimal, bool> comparator = conditionEvent.TypeOfCondition switch
+                    {
+                        PartyMemberConditionEvent.PartyMemberConditionType.Language => value => (((uint)value >> (int)conditionEvent.ConditionValueIndex) & 0x1) != 0,
+                        _ => value => value >= conditionEvent.Value
+                    }
 
                     uint GetAttribute(PartyMember partyMember)
                     {
@@ -1221,6 +1226,7 @@ namespace Ambermoon
 						PartyMemberConditionEvent.PartyMemberConditionType.Attribute => GetAttribute,
                         PartyMemberConditionEvent.PartyMemberConditionType.Skill => GetSkill,
                         PartyMemberConditionEvent.PartyMemberConditionType.TrainingPoints => (partyMember) => partyMember.TrainingPoints,
+                        PartyMemberConditionEvent.PartyMemberConditionType.Language => (partyMember) => (uint)partyMember.SpokenLanguages | ((uint)partyMember.SpokenExtendedLanguages << 8),
                         _ => throw new AmbermoonException(ExceptionScope.Data, $"Invalid party member condition type: {conditionEvent.TypeOfCondition}")
 					};
 
@@ -1232,7 +1238,7 @@ namespace Ambermoon
 
                     bool CheckSingle(PartyMember partyMember)
                     {
-                        return extractor(partyMember) >= conditionEvent.Value;
+                        return comparator(extractor(partyMember));
 					}
 
 					bool CheckAggregation(Func<IEnumerable<decimal>, decimal> aggregator)
@@ -1242,7 +1248,7 @@ namespace Ambermoon
                         if (!values.Any())
                             return false;
 
-						return aggregator(values) >= conditionEvent.Value;
+						return comparator(aggregator(values));
 					}
 
                     bool CheckRandom()
@@ -1252,7 +1258,7 @@ namespace Ambermoon
                         if (possible.Count == 0)
                             return false;
 
-                        return extractor(possible[game.RandomInt(0, possible.Count - 1)]) >= conditionEvent.Value;
+                        return comparator((extractor(possible[game.RandomInt(0, possible.Count - 1)]));
                     }
 
                     bool CheckPartyMember(uint index)
