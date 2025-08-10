@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using MousePosition = System.Numerics.Vector2;
 using WindowDimension = Silk.NET.Maths.Vector2D<int>;
 using Thread = System.Threading.Thread;
+using System.Globalization;
 
 namespace Ambermoon
 {
@@ -1064,8 +1065,8 @@ namespace Ambermoon
                 return gameData;
             }
 
-            if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex > versions.Count) // == versions.Count is ok as it could be external data
-                configuration.GameVersionIndex = 0;
+            if (configuration.GameVersionIndex > versions.Count) // == versions.Count is ok as it could be external data
+                configuration.GameVersionIndex = -1;
 
             GameData.GameDataInfo? additionalVersionInfo = null;
 
@@ -1076,7 +1077,30 @@ namespace Ambermoon
             catch
             {
                 if (configuration.GameVersionIndex == versions.Count)
-                    configuration.GameVersionIndex = 0;
+                    configuration.GameVersionIndex = -1;
+            }
+
+            // Falls back to english
+            int GetGameVersionIndexBySystemLanguage()
+            {
+                var uiCulture = CultureInfo.CurrentUICulture;
+                string languageName = uiCulture.Parent.EnglishName;
+
+                int versionIndex = versions.FindIndex(v => v.Language.Equals(languageName, StringComparison.CurrentCultureIgnoreCase) && !v.Info.Contains("advanced", StringComparison.CurrentCultureIgnoreCase));
+
+                if (versionIndex == -1)
+                    versionIndex = versions.FindIndex(v => v.Language.Equals(languageName, StringComparison.CurrentCultureIgnoreCase));
+
+                if (versionIndex == -1)
+                    versionIndex = versions.FindIndex(v => v.Language.Equals("english", StringComparison.CurrentCultureIgnoreCase) && !v.Info.Contains("advanced", StringComparison.CurrentCultureIgnoreCase));
+
+                if (versionIndex == -1)
+                    versionIndex = versions.FindIndex(v => v.Language.Equals("english", StringComparison.CurrentCultureIgnoreCase));
+
+                if (versionIndex == -1)
+                    versionIndex = 0;
+
+                return versionIndex;
             }
 
             // Some versions merge with another one. Here only the basis versions are stored.
@@ -1084,6 +1108,12 @@ namespace Ambermoon
 
             if (configuration.GameVersionIndex < versions.Count)
             {
+                if (configuration.GameVersionIndex < 0)
+                {
+                    // Try to select a version by the OS system language
+                    configuration.GameVersionIndex = GetGameVersionIndexBySystemLanguage();
+                }
+
                 Func<ILegacyGameData> fallbackGameDataProvider = baseVersionIndices.Contains(configuration.GameVersionIndex)
                     ? null
                     : () => LoadBuiltinVersionData(versions[baseVersionIndices.Last(idx => idx < configuration.GameVersionIndex)], null);
@@ -1097,7 +1127,9 @@ namespace Ambermoon
                 }
                 catch
                 {
-                    configuration.GameVersionIndex = 0;
+                    // Try to select a version by the OS system language
+                    configuration.GameVersionIndex = GetGameVersionIndexBySystemLanguage();
+
                     gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex], null);
                 }
             }
