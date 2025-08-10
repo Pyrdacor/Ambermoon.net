@@ -7489,9 +7489,9 @@ public class Game
             // Check auto poison
             if (!is3D && renderMap2D is not null && !TravelType.IgnoreAutoPoison())
             {
-					var playerPosition = PartyPosition - Map.MapOffset;
+                var playerPosition = player.Position;
 
-					if (renderMap2D.IsTilePoisoning(playerPosition.X, playerPosition.Y))
+				if (renderMap2D.IsTilePoisoning(playerPosition.X, playerPosition.Y))
                 {
 						ForeachPartyMember((p, f) =>
 						{
