@@ -168,7 +168,7 @@ namespace Ambermoon
         {
             try
             {
-                if (OperatingSystem.IsMacOS() && OperatingSystem.IsMacOSVersionAtLeast(12))
+                if (OperatingSystem.IsMacOS())
                 {
                     // As we changed the place where the config, saves and other files are
                     // stored for macOS 12 and higher we have to check if there were old configs
@@ -203,21 +203,28 @@ namespace Ambermoon
                         }
                     }
 
-                    // Move old config over
-                    CheckAndMovePath(ConfigurationFileName, File.Exists, File.Move, true);
-
-                    // Move old save folder over
-                    try
+                    if (Directory.Exists(BrokenMacBundleDirectory))
                     {
-                        CheckAndMovePath("Saves", Directory.Exists, Directory.Move, false);
+                        Directory.Move(BrokenMacBundleDirectory, BundleDirectory);
                     }
-                    catch
+                    else if (OperatingSystem.IsMacOSVersionAtLeast(12))
                     {
-                        CheckAndMovePath("SavesRemake", Directory.Exists, Directory.Move, true);
-                    }
+                        // Move old config over
+                        CheckAndMovePath(ConfigurationFileName, File.Exists, File.Move, true);
 
-                    // Move screenshots folder
-                    CheckAndMovePath("Screenshots", Directory.Exists, Directory.Move, true);
+                        // Move old save folder over
+                        try
+                        {
+                            CheckAndMovePath("Saves", Directory.Exists, Directory.Move, false);
+                        }
+                        catch
+                        {
+                            CheckAndMovePath("SavesRemake", Directory.Exists, Directory.Move, true);
+                        }
+
+                        // Move screenshots folder
+                        CheckAndMovePath("Screenshots", Directory.Exists, Directory.Move, true);
+                    }
                 }
             }
             catch
@@ -305,11 +312,14 @@ namespace Ambermoon
                     return bundleDirectory;
 
                 if (OperatingSystem.IsMacOSVersionAtLeast(12) || new DirectoryInfo(bundleDirectory).Attributes.HasFlag(FileAttributes.ReadOnly))
-                    bundleDirectory = "~/Library/Application Support/Ambermoon.net";
+                    bundleDirectory = "/Library/Application Support/Ambermoon.net";
 
                 return bundleDirectory;
             }
         }
+
+        // Some weird Mac OS behavior stored stuff in this folder...
+        public static string BrokenMacBundleDirectory = "/Applications/Ambermoon.net.app/Contents/Resources/~/Library/Application Support/Ambermoon.net";
 
         private static string readonlyBundleDirectory = null;
         /// <summary>
