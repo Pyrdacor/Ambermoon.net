@@ -257,7 +257,7 @@ public class Game
     readonly string gameVersionName;
     readonly string fullVersion;
     readonly Action<bool, string> keyboardRequest;
-	public Features Features { get; }
+    public Features Features { get; }
     public bool Advanced => renderView.GameData.Advanced;
     public const int NumBaseSavegameSlots = 10;
     public const int NumAdditionalSavegameSlots = 20;
@@ -410,7 +410,7 @@ public class Game
     bool blinkingHighlight = false;
     FilledArea buttonGridBackground;
     ILayerSprite mobileClickIndicator = null;
-		IColoredRect drugOverlay = null;
+    IColoredRect drugOverlay = null;
     uint lastDrugColorChangeTicks = 0;
     uint lastDrugMouseMoveTicks = 0;
     public Action DrugTicked;
@@ -423,11 +423,11 @@ public class Game
     internal bool ConversationTextActive { get; private set; } = false;
     Func<MouseButtons, bool> nextClickHandler = null;
     Action itemDragCancelledHandler = null;
-		MobileAction currentMobileAction = MobileAction.None;
+    MobileAction currentMobileAction = MobileAction.None;
     readonly ILayerSprite mobileActionIndicator;
     const int Mobile3DThreshold = 32;
     bool fingerDown = false;
-		internal MobileAction CurrentMobileAction
+    internal MobileAction CurrentMobileAction
     {
         get => currentMobileAction;
         set
@@ -436,14 +436,14 @@ public class Game
                 return;
 
             if (value != MobileAction.ButtonMove)
-					CurrentMobileButtonMoveCursor = null;
+                CurrentMobileButtonMoveCursor = null;
 
-				currentMobileAction = value;
+            currentMobileAction = value;
             var layer = currentMobileAction == MobileAction.Move || currentMobileAction == MobileAction.ButtonMove
                 ? Layer.UI
                 : Layer.Cursor;
-				var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
-				mobileActionIndicator.Visible = false;
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
+            mobileActionIndicator.Visible = false;
             try
             {
                 mobileActionIndicator.TextureAtlasOffset = currentMobileAction switch
@@ -466,8 +466,8 @@ public class Game
             }
         }
     }
-		CursorType? currentMobileButtonMoveCursor;
-		CursorType? CurrentMobileButtonMoveCursor
+    CursorType? currentMobileButtonMoveCursor;
+    CursorType? CurrentMobileButtonMoveCursor
     {
         get => currentMobileButtonMoveCursor;
         set
@@ -485,15 +485,15 @@ public class Game
 
                 layout.GetButton(i).Pressed = mapping[i] == currentMobileButtonMoveCursor;
             }
-			}
+        }
     }
     Func<bool> currentMobileButtonMoveAllowProvider;
     public Rect CurrentMapViewArea => new(mapViewArea);
 
-		/// <summary>
-		/// The 3x3 buttons will always be enabled!
-		/// </summary>
-		public bool InputEnable
+    /// <summary>
+    /// The 3x3 buttons will always be enabled!
+    /// </summary>
+    public bool InputEnable
     {
         get => inputEnable;
         set
@@ -623,7 +623,7 @@ public class Game
                 if (value != CursorType.Click)
                     HideMobileClickIndicator();
 
-					if (value >= CursorType.ArrowUp && value <= CursorType.ArrowRotateRight)
+                if (value >= CursorType.ArrowUp && value <= CursorType.ArrowRotateRight)
                 {
                     CursorType = CursorType.Sword;
                     return; // Don't allow mouse cursor movement on mobile
@@ -637,14 +637,14 @@ public class Game
                     CurrentMobileAction = MobileAction.Mouth;
                 else if (value == CursorType.Target)
                     CurrentMobileAction = MobileAction.Interact;
-                
+
                 cursor.Type = value;
 
                 if (cursor.Type == CursorType.Click && layout.PopupActive)
                 {
                     ShowMobileClickIndicatorForPopup();
                 }
-				}
+            }
             else
             {
                 cursor.Type = value;
@@ -684,7 +684,7 @@ public class Game
 
     readonly DrawTouchFingerHandler drawTouchFingerRequest;
 
-	public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IGraphicProvider graphicProvider,
+    public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IGraphicProvider graphicProvider,
         ISavegameManager savegameManager, ISavegameSerializer savegameSerializer, TextDictionary textDictionary,
         Cursor cursor, IAudioOutput audioOutput, ISongManager songManager, FullscreenChangeHandler fullscreenChangeHandler,
         ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory,
@@ -698,8 +698,8 @@ public class Game
             spellInfos[Spell.AllHealing] = spellInfos[Spell.AllHealing] with { ApplicationArea = SpellApplicationArea.CampAndBattle };
 
         this.drawTouchFingerRequest = drawTouchFingerRequest;
-			this.keyboardRequest = keyboardRequest;
-			Features = features;
+        this.keyboardRequest = keyboardRequest;
+        Features = features;
         this.gameVersionName = gameVersionName;
         Character.FoodWeight = Features.HasFlag(Features.ReducedFoodWeight) ? 25u : 250u;
         currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
@@ -727,8 +727,8 @@ public class Game
         places = renderView.GameData.Places;
         this.savegameSerializer = savegameSerializer;
         DataNameProvider = renderView.GameData.DataNameProvider;
-			fullVersion = version + $"^{GameVersion.RemakeReleaseDate}^^{DataNameProvider.DataVersionString}^{DataNameProvider.DataInfoString}";
-			this.textDictionary = textDictionary;
+        fullVersion = version + $"^{GameVersion.RemakeReleaseDate}^^{DataNameProvider.DataVersionString}^{DataNameProvider.DataInfoString}";
+        this.textDictionary = textDictionary;
         this.lightEffectProvider = renderView.GameData.LightEffectProvider;
         this.outroFactory = outroFactory;
         camera3D = renderView.Camera3D;
@@ -761,13 +761,13 @@ public class Game
         if (Configuration.IsMobile)
         {
             mobileClickIndicator = renderView.SpriteFactory.Create(16, 16, true) as ILayerSprite;
-				mobileClickIndicator.Layer = renderView.GetLayer(Layer.Cursor);
-				mobileClickIndicator.Visible = false;
-				mobileClickIndicator.PaletteIndex = PrimaryUIPaletteIndex;
-				mobileClickIndicator.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Cursor).GetOffset((uint)CursorType.Click);
-			}
+            mobileClickIndicator.Layer = renderView.GetLayer(Layer.Cursor);
+            mobileClickIndicator.Visible = false;
+            mobileClickIndicator.PaletteIndex = PrimaryUIPaletteIndex;
+            mobileClickIndicator.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Cursor).GetOffset((uint)CursorType.Click);
+        }
 
-			for (int i = 0; i < MaxPartyMembers; ++i)
+        for (int i = 0; i < MaxPartyMembers; ++i)
         {
             hurtPlayerSprites[i] = renderView.SpriteFactory.Create(32, 26, true, 200) as ILayerSprite;
             hurtPlayerSprites[i].Layer = renderView.GetLayer(Layer.UI);
@@ -809,14 +809,14 @@ public class Game
 
         layout.ShowPortraitArea(false);
 
-			// Mobile action indicator
-			mobileActionIndicator = renderView.SpriteFactory.Create(16, 16, true) as ILayerSprite;
+        // Mobile action indicator
+        mobileActionIndicator = renderView.SpriteFactory.Create(16, 16, true) as ILayerSprite;
         mobileActionIndicator.Layer = renderView.GetLayer(Layer.UI);
         mobileActionIndicator.PaletteIndex = PrimaryUIPaletteIndex;
         mobileActionIndicator.DisplayLayer = 0;
         mobileActionIndicator.Visible = false;
 
-			TextInput.FocusChanged += InputFocusChanged;
+        TextInput.FocusChanged += InputFocusChanged;
     }
 
     internal byte UIPaletteIndex => currentUIPaletteIndex;
@@ -1088,12 +1088,12 @@ public class Game
 
                 if (Configuration.IsMobile && CurrentMobileAction == MobileAction.ButtonMove)
                 {
-						if (CurrentMobileButtonMoveCursor != null && CurrentMobileButtonMoveCursor != CursorType.None)
-						{
-							if (currentMobileButtonMoveAllowProvider?.Invoke() == true)
-								Move(false, 1.0f, CurrentMobileButtonMoveCursor.Value);
-						}
-					}
+                    if (CurrentMobileButtonMoveCursor != null && CurrentMobileButtonMoveCursor != CursorType.None)
+                    {
+                        if (currentMobileButtonMoveAllowProvider?.Invoke() == true)
+                            Move(false, 1.0f, CurrentMobileButtonMoveCursor.Value);
+                    }
+                }
                 else
                 {
                     var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
@@ -1563,7 +1563,7 @@ public class Game
         ouchSprite?.Delete();
         mobileClickIndicator?.Delete();
 
-			Util.SafeCall(UntrapMouse);
+        Util.SafeCall(UntrapMouse);
         allInputDisabled = true;
         ingame = false;
         Util.SafeCall(() => AudioOutput?.Stop());
@@ -2137,8 +2137,8 @@ public class Game
 
                     if (someoneDied)
                     {
-							CurrentMobileAction = MobileAction.None;
-							clickMoveActive = false;
+                        CurrentMobileAction = MobileAction.None;
+                        clickMoveActive = false;
                         ResetMoveKeys(true);
                     }
                 });
@@ -2174,8 +2174,8 @@ public class Game
                 {
                     if (someoneDied || someoneDrown)
                     {
-							CurrentMobileAction = MobileAction.None;
-							clickMoveActive = false;
+                        CurrentMobileAction = MobileAction.None;
+                        clickMoveActive = false;
                         ResetMoveKeys(true);
                     }
                 });
@@ -2278,8 +2278,8 @@ public class Game
         {
             EndSequence();
             clickMoveActive = wasClickMoveActive;
-				CurrentMobileAction = MobileAction.None;
-				followUpAction?.Invoke();
+            CurrentMobileAction = MobileAction.None;
+            followUpAction?.Invoke();
         }
     }
 
@@ -2750,7 +2750,7 @@ public class Game
     // Note: Eagle and wasp allow movement even with overweight.
     bool CanPartyMove() => TravelType == TravelType.Eagle || TravelType == TravelType.Wasp || !PartyMembers.Any(p => !p.CanMove(false));
 
-		internal void StartVirtualButtonMovement(CursorType cursorType, int buttonIndex, Func<bool> allowMovementProvider)
+    internal void StartVirtualButtonMovement(CursorType cursorType, int buttonIndex, Func<bool> allowMovementProvider)
     {
         if (!fingerDown)
             return;
@@ -2758,11 +2758,11 @@ public class Game
         var button = layout.GetButton(buttonIndex);
         button.Pressed = true;
         CurrentMobileAction = MobileAction.ButtonMove;
-			CurrentMobileButtonMoveCursor = cursorType;
+        CurrentMobileButtonMoveCursor = cursorType;
         currentMobileButtonMoveAllowProvider = allowMovementProvider;
-		}
+    }
 
-		internal void Move(bool fromNumpadButton, float speedFactor3D, params CursorType[] cursorTypes)
+    internal void Move(bool fromNumpadButton, float speedFactor3D, params CursorType[] cursorTypes)
     {
         if (is3D)
         {
@@ -2866,7 +2866,7 @@ public class Game
             if (cursorTypes.Length == 1 && (cursorTypes[0] < CursorType.ArrowForward || cursorTypes[0] > CursorType.Wait))
             {
                 clickMoveActive = false;
-					UntrapMouse();
+                UntrapMouse();
             }
 
             CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
@@ -2946,7 +2946,7 @@ public class Game
 
     bool DisallowMoving() => paused || WindowActive || !InputEnable || allInputDisabled || pickingNewLeader || pickingTargetPlayer || pickingTargetInventory;
 
-		void Move()
+    void Move()
     {
         if (DisallowMoving())
         {
@@ -2960,7 +2960,7 @@ public class Game
             if (currentMobileButtonMoveAllowProvider?.Invoke() == true)
                 Move(false, 1.0f, CurrentMobileButtonMoveCursor.Value);
             return;
-			}
+        }
 
         bool left = ((!is3D || !Configuration.TurnWithArrowKeys) && keys[(int)Key.Left]) || ((!is3D || Configuration.Movement3D == Movement3D.WASDQE) && keys[(int)Key.A]);
         bool right = ((!is3D || !Configuration.TurnWithArrowKeys) && keys[(int)Key.Right]) || ((!is3D || Configuration.Movement3D == Movement3D.WASDQE) && keys[(int)Key.D]);
@@ -2991,8 +2991,8 @@ public class Game
                 if (!up && !down)
                     Move2D(1, 0);
             }
-				else if (CanPartyMove())
-				{
+            else if (CanPartyMove())
+            {
                 player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                 CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
             }
@@ -3018,8 +3018,8 @@ public class Game
                     right && !left ? 1 : 0;
                 Move2D(x, -1);
             }
-				else if (CanPartyMove())
-				{
+            else if (CanPartyMove())
+            {
                 player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                 CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
             }
@@ -3032,13 +3032,13 @@ public class Game
                     right && !left ? 1 : 0;
                 Move2D(x, 1);
             }
-				else if (CanPartyMove())
-				{
+            else if (CanPartyMove())
+            {
                 player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                 CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
             }
         }
-		}
+    }
 
     internal void SpeakToParty()
     {
@@ -3530,15 +3530,15 @@ public class Game
         lastMobileAutomapFingerPosition = renderView.ScreenToGame(position);
 
         if (!Configuration.IsMobile)
-				return;
+            return;
 
-			keys[(int)Key.W] = false;
-			keys[(int)Key.A] = false;
-			keys[(int)Key.S] = false;
-			keys[(int)Key.D] = false;
+        keys[(int)Key.W] = false;
+        keys[(int)Key.A] = false;
+        keys[(int)Key.S] = false;
+        keys[(int)Key.D] = false;
 
-			CurrentMobileAction = MobileAction.None;
-		}
+        CurrentMobileAction = MobileAction.None;
+    }
 
     public void OnFingerMoveTo(Position position)
     {
@@ -3562,7 +3562,7 @@ public class Game
 
         CurrentMobileButtonMoveCursor = null;
 
-			if (CurrentMobileAction == MobileAction.Move)
+        if (CurrentMobileAction == MobileAction.Move)
         {
             // We just press the keys and let the move logic move the player in a timed manner.
             keys[(int)Key.W] = false;
@@ -3577,18 +3577,18 @@ public class Game
                 var center = mapViewArea.Center;
 
                 if (relativePosition.X <= center.X - Mobile3DThreshold)
-						keys[(int)Key.A] = true;
+                    keys[(int)Key.A] = true;
                 else if (relativePosition.X >= center.X + Mobile3DThreshold)
-						keys[(int)Key.D] = true;
-					if (relativePosition.Y <= center.Y - Mobile3DThreshold)
-						keys[(int)Key.W] = true;
-					else if (relativePosition.Y >= center.Y + Mobile3DThreshold)
-						keys[(int)Key.S] = true;
-				}
+                    keys[(int)Key.D] = true;
+                if (relativePosition.Y <= center.Y - Mobile3DThreshold)
+                    keys[(int)Key.W] = true;
+                else if (relativePosition.Y >= center.Y + Mobile3DThreshold)
+                    keys[(int)Key.S] = true;
+            }
             else
             {
-					relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
-					var tilePosition = renderMap2D.PositionToTile(relativePosition);
+                relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
+                var tilePosition = renderMap2D.PositionToTile(relativePosition);
 
                 if (tilePosition != null)
                 {
@@ -3605,23 +3605,23 @@ public class Game
         }
         else if (CurrentMobileAction == MobileAction.ButtonMove)
         {
-				var relativePosition = renderView.ScreenToGame(position);
+            var relativePosition = renderView.ScreenToGame(position);
 
-				if (Global.ButtonGridArea.Contains(relativePosition))
-				{
+            if (Global.ButtonGridArea.Contains(relativePosition))
+            {
                 var moveCursors = layout.GetMoveButtonCursorMapping();
 
-					for (int i = 0; i < 9; i++)
-					{
+                for (int i = 0; i < 9; i++)
+                {
                     if (ButtonGrid.ButtonAreas[i].Contains(relativePosition))
                     {
                         if (i != 4)
                             CurrentMobileButtonMoveCursor = moveCursors[i];
-							return;
+                        return;
                     }
-					}
-				}
-			}
+                }
+            }
+        }
     }
 
     public void OnLongPress(Position position)
@@ -3664,21 +3664,21 @@ public class Game
                     }
                 }
 
-					OnMouseDown(position, MouseButtons.Right);
+                OnMouseDown(position, MouseButtons.Right);
                 OnMouseUp(position, MouseButtons.Right);
                 return;
             }
 
-				relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
+            relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
 
             if (is3D)
             {
                 if (!TriggerMapEvents(null))
                 {
-						if (CurrentMobileAction != MobileAction.None)
-							return;
+                    if (CurrentMobileAction != MobileAction.None)
+                        return;
 
-						CurrentMobileAction = MobileAction.Move;
+                    CurrentMobileAction = MobileAction.Move;
                     var center = mapViewArea.Center;
 
                     if (relativePosition.X <= center.X - Mobile3DThreshold)
@@ -3700,24 +3700,24 @@ public class Game
                     uint tileX = (uint)tilePosition.X;
                     uint tileY = (uint)tilePosition.Y;
 
-						var character = renderMap2D.GetCharacterFromTile(tileX, tileY);
+                    var character = renderMap2D.GetCharacterFromTile(tileX, tileY);
 
-						if (character?.IsConversationPartner == true)
-						{
-							int xDist = Math.Abs(player2D.Position.X - tilePosition.X);
-							int yDist = Math.Abs(player2D.Position.Y - tilePosition.Y);
+                    if (character?.IsConversationPartner == true)
+                    {
+                        int xDist = Math.Abs(player2D.Position.X - tilePosition.X);
+                        int yDist = Math.Abs(player2D.Position.Y - tilePosition.Y);
 
-							if (xDist > 3 || yDist > 3)
-							{
-								ShowMessagePopup(GetCustomText(CustomTexts.Index.MobileTargetOutOfReach));
-								return;
-							}
+                        if (xDist > 3 || yDist > 3)
+                        {
+                            ShowMessagePopup(GetCustomText(CustomTexts.Index.MobileTargetOutOfReach));
+                            return;
+                        }
 
-							if (character.Interact(EventTrigger.Mouth, renderMap2D[tileX, tileY].Type == Map.TileType.Bed))
-								return;
-						}
+                        if (character.Interact(EventTrigger.Mouth, renderMap2D[tileX, tileY].Type == Map.TileType.Bed))
+                            return;
+                    }
 
-						var @event = renderMap2D.GetEvent(tileX, tileY, CurrentSavegame);
+                    var @event = renderMap2D.GetEvent(tileX, tileY, CurrentSavegame);
 
                     void TriggerEvent(EventTrigger trigger)
                     {
@@ -3727,12 +3727,12 @@ public class Game
                         int yDist = Math.Abs(player2D.Position.Y - tilePosition.Y);
 
                         if (xDist > range || yDist > range)
-							{
-								ShowMessagePopup(GetCustomText(CustomTexts.Index.MobileTargetOutOfReach));
-								return;
-							}
+                        {
+                            ShowMessagePopup(GetCustomText(CustomTexts.Index.MobileTargetOutOfReach));
+                            return;
+                        }
 
-							var map = renderMap2D.GetMapFromTile(tileX, tileY);
+                        var map = renderMap2D.GetMapFromTile(tileX, tileY);
                         map.TriggerEventChain(this, trigger, tileX % (uint)map.Width, tileY % (uint)map.Height, @event);
                     }
 
@@ -3798,10 +3798,10 @@ public class Game
                         }
                     }
 
-						if (CurrentMobileAction != MobileAction.None)
-							return;
+                    if (CurrentMobileAction != MobileAction.None)
+                        return;
 
-						CurrentMobileAction = MobileAction.Move;
+                    CurrentMobileAction = MobileAction.Move;
 
                     if (player2D.Position.X < tilePosition.X)
                         keys[(int)Key.D] = true;
@@ -3984,37 +3984,37 @@ public class Game
                 }
                 else if (cursor.Type == CursorType.Mouth)
                 {
-						if (!TriggerMapEvents(EventTrigger.Mouth, relativePosition))
+                    if (!TriggerMapEvents(EventTrigger.Mouth, relativePosition))
                     {
                         if (!is3D && player2D?.DisplayArea.Contains(mapViewArea.Position + relativePosition) == true)
                         {
-								CurrentMobileAction = MobileAction.None;
-								SpeakToParty();
+                            CurrentMobileAction = MobileAction.None;
+                            SpeakToParty();
                         }
                     }
                     else
                     {
-							CurrentMobileAction = MobileAction.None;
-						}
+                        CurrentMobileAction = MobileAction.None;
+                    }
                 }
                 else if (cursor.Type == CursorType.Target && !is3D)
                 {
-						if (!TriggerMapEvents(EventTrigger.Mouth, relativePosition))
+                    if (!TriggerMapEvents(EventTrigger.Mouth, relativePosition))
                     {
                         if (!TriggerMapEvents(EventTrigger.Eye, relativePosition))
                         {
                             if (TriggerMapEvents(EventTrigger.Hand, relativePosition))
-									CurrentMobileAction = MobileAction.None;
-							}
+                                CurrentMobileAction = MobileAction.None;
+                        }
                         else
                         {
-								CurrentMobileAction = MobileAction.None;
-							}
+                            CurrentMobileAction = MobileAction.None;
+                        }
                     }
                     else
                     {
-							CurrentMobileAction = MobileAction.None;
-						}
+                        CurrentMobileAction = MobileAction.None;
+                    }
                 }
                 else if (cursor.Type == CursorType.Wait)
                 {
@@ -4031,7 +4031,7 @@ public class Game
                 else if (Configuration.IsMobile)
                 {
                     TriggerMapEvents(null);
-					}
+                }
 
                 if (cursor.Type > CursorType.Wait)
                 {
@@ -4124,7 +4124,7 @@ public class Game
     {
         UpdateCursor();
         keyboardRequest?.Invoke(TextInput.FocusedInput != null, TextInput.FocusedInput?.Text ?? "");
-		}
+    }
 
     internal void UpdateCursor()
     {
@@ -4299,7 +4299,7 @@ public class Game
             {
                 if (position.X < lastMousePosition.X)
                     trappedMousePositionOffset.X += lastMousePosition.X - position.X;
-            }                    
+            }
             else if (trappedPosition.X >= trapMouseArea.Right)
             {
                 if (position.X > lastMousePosition.X)
@@ -4349,15 +4349,15 @@ public class Game
         if (allInputDisabled)
             return;
 
-			if (Configuration.IsMobile && currentWindow.Window == Window.Automap)
-			{
+        if (Configuration.IsMobile && currentWindow.Window == Window.Automap)
+        {
             lastMobileAutomapFingerPosition = renderView.ScreenToGame(mousePosition);
             mobileAutomapScroll.X += xScroll * 4;
-				mobileAutomapScroll.Y += yScroll * 4;
+            mobileAutomapScroll.Y += yScroll * 4;
             return;
-			}
+        }
 
-			bool scrolled = false;
+        bool scrolled = false;
 
         if (xScroll != 0)
             scrolled = layout.ScrollX(xScroll < 0);
@@ -4462,7 +4462,7 @@ public class Game
                     return false;
             }
 
-				return TriggerMapEvents(trigger, (uint)tilePosition.X, (uint)tilePosition.Y);
+            return TriggerMapEvents(trigger, (uint)tilePosition.X, (uint)tilePosition.Y);
         }
     }
 
@@ -4502,7 +4502,7 @@ public class Game
 
             bool lastEventStatus = true;
             var trigger = (EventTrigger)((uint)EventTrigger.Item0 + itemIndex);
-            
+
             @event = EventExtensions.ExecuteEvent(conditionEvent, map, this, ref trigger, eventX, eventY, ref lastEventStatus, out bool _, out var _);
 
             return TestEvent();
@@ -5267,9 +5267,9 @@ public class Game
                         (skillValues.TotalCurrentValue > 99 ? "**" : $"{skillValues.TotalCurrentValue:00}") + $"%/{skillValues.MaxValue:00}%");
                 }
 
-					if (Configuration.ShowPlayerStatsTooltips)
-						AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), GetSkillTooltip(GameLanguage, skill, partyMember));
-				}
+                if (Configuration.ShowPlayerStatsTooltips)
+                    AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), GetSkillTooltip(GameLanguage, skill, partyMember));
+            }
             #endregion
             #region Languages
             int languageY = extendedLanguages ? 115 : 50;
@@ -5852,7 +5852,7 @@ public class Game
         // But light must increase faster than alpha. As both values are smaller than 1, we can
         // just use the square root here.
         return (float)Math.Sqrt(alpha);
-		}
+    }
 
     void Set3DLight(float fade)
     {
@@ -5860,43 +5860,43 @@ public class Game
         // TODO: ceiling/floor color
     }
 
-		void Fade3DMapOut(int totalSteps, int timePerStep)
-		{
+    void Fade3DMapOut(int totalSteps, int timePerStep)
+    {
         float div = totalSteps;
 
         for (int i = 0; i <= totalSteps; i++)
         {
             float light = FadeAlphaToLight(1.0f - i / div);
-				AddTimedEvent(TimeSpan.FromMilliseconds(i * timePerStep), () =>
-                Set3DLight(light));
-			}
-		}
+            AddTimedEvent(TimeSpan.FromMilliseconds(i * timePerStep), () =>
+            Set3DLight(light));
+        }
+    }
 
-		void Fade3DMapIn(int totalSteps, int timePerStep)
+    void Fade3DMapIn(int totalSteps, int timePerStep)
     {
         float div = totalSteps;
 
-			for (int i = 0; i <= totalSteps; i++)
-			{
-				float light = FadeAlphaToLight(i / div);
-				AddTimedEvent(TimeSpan.FromMilliseconds(i * timePerStep), () =>
-                Set3DLight(light));
-			}
-		}
+        for (int i = 0; i <= totalSteps; i++)
+        {
+            float light = FadeAlphaToLight(i / div);
+            AddTimedEvent(TimeSpan.FromMilliseconds(i * timePerStep), () =>
+            Set3DLight(light));
+        }
+    }
 
     void Fade(Action midFadeAction, bool changeInputEnableState = true)
     {
         Fading = true;
         if (changeInputEnableState)
             allInputDisabled = true;
-			layout.AddFadeEffect(new Rect(0, 36, Global.VirtualScreenWidth, Global.VirtualScreenHeight - 36), Render.Color.Black, FadeEffectType.FadeInAndOut, FadeTime);
+        layout.AddFadeEffect(new Rect(0, 36, Global.VirtualScreenWidth, Global.VirtualScreenHeight - 36), Render.Color.Black, FadeEffectType.FadeInAndOut, FadeTime);
         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), () =>
         {
             midFadeAction?.Invoke();
 
-				if (currentWindow.Window == Window.MapView && is3D)
-					Fade3DMapIn(20, FadeTime / 40);
-			});
+            if (currentWindow.Window == Window.MapView && is3D)
+                Fade3DMapIn(20, FadeTime / 40);
+        });
         if (changeInputEnableState)
             AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime + 1), () => Fading = false);
@@ -6096,8 +6096,8 @@ public class Game
             if (someoneDied)
             {
                 clickMoveActive = false;
-					CurrentMobileAction = MobileAction.None;
-					ResetMoveKeys(true);
+                CurrentMobileAction = MobileAction.None;
+                ResetMoveKeys(true);
             }
 
             if (trapEvent.Next != null)
@@ -6277,7 +6277,7 @@ public class Game
             }
             case RewardEvent.RewardType.Languages:
             {
-                if (rewardEvent.Languages == null && (!Advanced || rewardEvent.ExtendedLanguages == null))
+                if (rewardEvent.Languages == null && (!Features.HasFlag(Features.ExtendedLanguages) || rewardEvent.ExtendedLanguages == null))
                 {
                     ShowMessagePopup($"ERROR: Invalid reward event language.", followAction);
                     return;
@@ -6410,7 +6410,8 @@ public class Game
                             else
                             {
                                 partyMember.AddLevelUpEffects(RandomInt);
-                            };
+                            }
+                            ;
                         }
                         ShowLevelUpWindow(partyMember, followAction);
                         return;
@@ -6498,13 +6499,13 @@ public class Game
                 }
                 break;
             }
-				case RewardEvent.RewardType.Spells:
-				{
-					if (rewardEvent.Spells == null)
-					{
-						ShowMessagePopup($"ERROR: Invalid reward event spell.", followAction);
-						return;
-					}
+            case RewardEvent.RewardType.Spells:
+            {
+                if (rewardEvent.Spells == null)
+                {
+                    ShowMessagePopup($"ERROR: Invalid reward event spell.", followAction);
+                    return;
+                }
 
                 int spellTypeIndex = -1;
 
@@ -6514,7 +6515,7 @@ public class Game
                     {
                         spellTypeIndex = i;
                         break;
-						} 
+                    }
                 }
 
                 if (spellTypeIndex == -1)
@@ -6525,42 +6526,43 @@ public class Game
 
                 Action<uint> setter;
                 uint currentSpells;
-                
+
                 switch (spellTypeIndex)
                 {
                     case 0:
-							currentSpells = partyMember.LearnedHealingSpells;
+                        currentSpells = partyMember.LearnedHealingSpells;
                         setter = (value) => partyMember.LearnedHealingSpells = value;
-							break;
-						case 1:
-							currentSpells = partyMember.LearnedAlchemisticSpells;
-							setter = (value) => partyMember.LearnedAlchemisticSpells = value;
-							break;
-						case 2:
-							currentSpells = partyMember.LearnedMysticSpells;
-							setter = (value) => partyMember.LearnedMysticSpells = value;
-							break;
-						default:
-							currentSpells = partyMember.LearnedDestructionSpells;
-							setter = (value) => partyMember.LearnedDestructionSpells = value;
-							break;
-                };
+                        break;
+                    case 1:
+                        currentSpells = partyMember.LearnedAlchemisticSpells;
+                        setter = (value) => partyMember.LearnedAlchemisticSpells = value;
+                        break;
+                    case 2:
+                        currentSpells = partyMember.LearnedMysticSpells;
+                        setter = (value) => partyMember.LearnedMysticSpells = value;
+                        break;
+                    default:
+                        currentSpells = partyMember.LearnedDestructionSpells;
+                        setter = (value) => partyMember.LearnedDestructionSpells = value;
+                        break;
+                }
+                ;
 
-					switch (rewardEvent.Operation)
-					{
-						case RewardEvent.RewardOperation.Add:
+                switch (rewardEvent.Operation)
+                {
+                    case RewardEvent.RewardOperation.Add:
                         setter(currentSpells | rewardEvent.Spells.Value);
-							break;
-						case RewardEvent.RewardOperation.Remove:
-							setter(currentSpells & ~rewardEvent.Spells.Value);
-							break;
-						case RewardEvent.RewardOperation.Toggle:
-							setter(currentSpells ^ rewardEvent.Spells.Value);
-							break;
-					}
-					break;
-				}
-			}
+                        break;
+                    case RewardEvent.RewardOperation.Remove:
+                        setter(currentSpells & ~rewardEvent.Spells.Value);
+                        break;
+                    case RewardEvent.RewardOperation.Toggle:
+                        setter(currentSpells ^ rewardEvent.Spells.Value);
+                        break;
+                }
+                break;
+            }
+        }
 
         followAction?.Invoke();
     }
@@ -6753,9 +6755,9 @@ public class Game
         if (WindowActive)
         {
             if (currentWindow.Window == Window.Inventory)
-					CloseWindow(() => AddTimedEvent(TimeSpan.FromMilliseconds(250), Jump));
+                CloseWindow(() => AddTimedEvent(TimeSpan.FromMilliseconds(250), Jump));
             return;
-			}
+        }
 
         // Note: Even if the player looks diagonal (e.g. south west)
         // the jump is always performed into one of the 4 main directions.
@@ -7375,8 +7377,8 @@ public class Game
             if (someoneDied)
             {
                 clickMoveActive = false;
-					CurrentMobileAction = MobileAction.None;
-					ResetMoveKeys(true);
+                CurrentMobileAction = MobileAction.None;
+                ResetMoveKeys(true);
             }
         };
 
@@ -7391,18 +7393,18 @@ public class Game
         if (is3D)
         {
             var mapViewCenter = mapViewArea.Center;
-				mobileActionIndicator.X = mapViewCenter.X - mobileActionIndicator.Width / 2;
-				mobileActionIndicator.Y = mapViewCenter.Y - mobileActionIndicator.Height / 2;
-			}
+            mobileActionIndicator.X = mapViewCenter.X - mobileActionIndicator.Width / 2;
+            mobileActionIndicator.Y = mapViewCenter.Y - mobileActionIndicator.Height / 2;
+        }
         else
         {
             mobileActionIndicator.X = player2D.DisplayArea.X;
-				mobileActionIndicator.Y = player2D.DisplayArea.Y - mobileActionIndicator.Height;
+            mobileActionIndicator.Y = player2D.DisplayArea.Y - mobileActionIndicator.Height;
         }
     }
 
-		internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null, bool updateSavegame = true,
-        Map lastMap = null)
+    internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null, bool updateSavegame = true,
+    Map lastMap = null)
     {
         if (mapChange)
             lastMapTicksReset = CurrentTicks;
@@ -7495,25 +7497,25 @@ public class Game
             {
                 var playerPosition = player.Position;
 
-				if (renderMap2D.IsTilePoisoning(playerPosition.X, playerPosition.Y))
+                if (renderMap2D.IsTilePoisoning(playerPosition.X, playerPosition.Y))
                 {
-						ForeachPartyMember((p, f) =>
-						{
-							if (RollDice100() >= p.Attributes[Data.Attribute.Luck].TotalCurrentValue)
-							{
-								AddCondition(Condition.Poisoned, p);
-								ShowDamageSplash(p, _ => 0, f);
-							}
-							else
-							{
-								f?.Invoke();
-							}
-						}, p => p.Alive && !p.Conditions.HasFlag(Condition.Petrified), () => ResetMoveKeys());
-					}
+                    ForeachPartyMember((p, f) =>
+                    {
+                        if (RollDice100() >= p.Attributes[Data.Attribute.Luck].TotalCurrentValue)
+                        {
+                            AddCondition(Condition.Poisoned, p);
+                            ShowDamageSplash(p, _ => 0, f);
+                        }
+                        else
+                        {
+                            f?.Invoke();
+                        }
+                    }, p => p.Alive && !p.Conditions.HasFlag(Condition.Petrified), () => ResetMoveKeys());
+                }
             }
 
-				UpdateMobileActionIndicatorPosition();
-			}
+            UpdateMobileActionIndicatorPosition();
+        }
 
         if (mapChange)
         {
@@ -8231,7 +8233,7 @@ public class Game
                 {
                     itemGrid.HideTooltip();
                     itemGrid.Disabled = true;
-                    layout.ShowChestMessage(null);                       
+                    layout.ShowChestMessage(null);
                     UntrapMouse();
                     CursorType = CursorType.Sword;
                     inputEnable = true;
@@ -8290,7 +8292,7 @@ public class Game
                                     item.Visible = false;
                                     uint itemIndex = itemSlot.ItemIndex;
                                     itemSlot.Remove(1);
-                                    InventoryItemRemoved(itemIndex, 1, CurrentPartyMember);                                        
+                                    InventoryItemRemoved(itemIndex, 1, CurrentPartyMember);
                                 });
                             }
                             else
@@ -8322,7 +8324,7 @@ public class Game
                                 {
                                     uint itemIndex = itemSlot.ItemIndex;
                                     itemSlot.Remove(1);
-                                    InventoryItemRemoved(itemIndex, 1, CurrentPartyMember);                                        
+                                    InventoryItemRemoved(itemIndex, 1, CurrentPartyMember);
                                     if (itemSlot.Amount > 0)
                                     {
                                         StartSequence();
@@ -8614,8 +8616,8 @@ public class Game
         void ShowDictionary()
         {
             aborted = false;
-				OpenDictionary(SayWord, word => !oldKeywords.Contains(word) || newKeywords.Contains(word)
-                ? TextColor.LightYellow : TextColor.BrightGray);
+            OpenDictionary(SayWord, word => !oldKeywords.Contains(word) || newKeywords.Contains(word)
+            ? TextColor.LightYellow : TextColor.BrightGray);
         }
 
         void SayWord(string keyword)
@@ -8655,8 +8657,8 @@ public class Game
                 itemGrid.ItemClicked -= ItemClicked;
                 message?.Destroy();
                 UntrapMouse();
-					layout.ButtonsDisabled = false;
-					nextClickHandler = null;
+                layout.ButtonsDisabled = false;
+                nextClickHandler = null;
                 ShowCreatedItems();
             }
 
@@ -8665,8 +8667,8 @@ public class Game
             CursorType = CursorType.Sword;
             var itemArea = new Rect(16, 139, 151, 53);
             TrapMouse(itemArea);
-				layout.ButtonsDisabled = true;
-				itemGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+            layout.ButtonsDisabled = true;
+            itemGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
             void SetupRightClickAbort()
             {
                 nextClickHandler = buttons =>
@@ -8700,8 +8702,8 @@ public class Game
                 message = null;
                 layout.GetItem(itemSlot).Dragged = true; // Keep it above UI
                 UntrapMouse();
-					layout.ButtonsDisabled = false;
-					conversationEvent = GetFirstMatchingEvent(e => e.Interaction == interactionType && e.ItemIndex == itemSlot.ItemIndex);
+                layout.ButtonsDisabled = false;
+                conversationEvent = GetFirstMatchingEvent(e => e.Interaction == interactionType && e.ItemIndex == itemSlot.ItemIndex);
 
                 if (conversationEvent == null)
                 {
@@ -8747,7 +8749,7 @@ public class Game
                                         {
                                             uint itemIndex = itemSlot.ItemIndex;
                                             itemSlot.Remove(1);
-                                            InventoryItemRemoved(itemIndex, 1, CurrentPartyMember);                                                
+                                            InventoryItemRemoved(itemIndex, 1, CurrentPartyMember);
                                             //ShowCreatedItems();
                                             EndSequence();
                                             Abort();
@@ -8788,8 +8790,8 @@ public class Game
                 itemGrid.ItemClicked -= ItemClicked;
                 nextClickHandler = null;
                 UntrapMouse();
-					layout.ButtonsDisabled = false;
-					StartSequence();
+                layout.ButtonsDisabled = false;
+                StartSequence();
                 itemGrid.HideTooltip();
                 itemGrid.PlayMoveAnimation(itemSlot, new Position(215, 75), () => CheckItem(itemSlot), 650);
             }
@@ -9213,7 +9215,7 @@ public class Game
                     if (!newKeywords.Contains(keyword))
                         newKeywords.Add(keyword);
                 }
-                
+
                 if (conversationEvent.Type == EventType.Teleport ||
                     conversationEvent.Type == EventType.Chest ||
                     conversationEvent.Type == EventType.Door ||
@@ -9724,9 +9726,9 @@ public class Game
         layout.Reset();
 
         bool advancedBackgrounds = Features.HasFlag(Features.AdvancedCombatBackgrounds);
-			var combatBackground = is3D
-            ? renderView.GraphicProvider.Get3DCombatBackground(combatBackgroundIndex.Value, advancedBackgrounds)
-            : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex.Value, advancedBackgrounds);
+        var combatBackground = is3D
+        ? renderView.GraphicProvider.Get3DCombatBackground(combatBackgroundIndex.Value, advancedBackgrounds)
+        : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex.Value, advancedBackgrounds);
         paletteIndex = (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1);
         layout.AddSprite(Global.CombatBackgroundArea, Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
             paletteIndex, 1, null, null, Layer.CombatBackground);
@@ -10230,7 +10232,7 @@ public class Game
                 Cast(() => ActivateLight(180, 3), finishAction);
                 break;
             case Spell.Jump:
-					Cast(Jump, finishAction);
+                Cast(Jump, finishAction);
                 break;
             case Spell.WordOfMarking:
             {
@@ -10597,7 +10599,7 @@ public class Game
                 if (item.MaxRechargesSpell != 0 && item.MaxRechargesSpell != 255 && itemSlot.RechargeTimes >= item.MaxRechargesSpell)
                 {
                     Error(DataNameProvider.CannotRechargeAnymore);
-                    return;                        
+                    return;
                 }
                 Cast(() =>
                 {
@@ -11181,7 +11183,7 @@ public class Game
         }
 
         return clone;
-		}
+    }
 
     void ShowBattleWindow(Event nextEvent, bool failedFlight, uint x, uint y, uint? combatBackgroundIndex = null)
     {
@@ -12173,24 +12175,24 @@ public class Game
         {
             mobileClickIndicator.PaletteIndex = UIPaletteIndex;
             mobileClickIndicator.X = x;
-				mobileClickIndicator.Y = y;
-				mobileClickIndicator.Visible = true;
-			}
+            mobileClickIndicator.Y = y;
+            mobileClickIndicator.Visible = true;
+        }
     }
 
     internal void ShowMobileClickIndicatorForPopup()
     {
         var position = layout.GetPopupClickIndicatorPosition();
-			ShowMobileClickIndicator(position.X, position.Y);
-		}
+        ShowMobileClickIndicator(position.X, position.Y);
+    }
 
-		void HideMobileClickIndicator()
-		{
+    void HideMobileClickIndicator()
+    {
         if (mobileClickIndicator != null)
-			    mobileClickIndicator.Visible = false;
-		}
+            mobileClickIndicator.Visible = false;
+    }
 
-		void GameOver()
+    void GameOver()
     {
         PlayMusic(Song.GameOver);
         ShowEvent(ProcessText(DataNameProvider.GameOverMessage), 8, null, true);
@@ -12555,8 +12557,8 @@ public class Game
                         DisableItemGrid();
                         layout.ShowChestMessage(null);
                         UntrapMouse();
-							layout.ButtonsDisabled = false;
-							CursorType = CursorType.Sword;
+                        layout.ButtonsDisabled = false;
+                        CursorType = CursorType.Sword;
                         inputEnable = true;
                         return true;
                     }
@@ -12569,8 +12571,8 @@ public class Game
                 itemsGrid.HideTooltip();
                 itemsGrid.ItemClicked -= ItemClicked;
                 itemsGrid.Disabled = true;
-					layout.ButtonsDisabled = false;
-				}
+                layout.ButtonsDisabled = false;
+            }
             void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
             {
                 itemsGrid.HideTooltip();
@@ -12674,7 +12676,8 @@ public class Game
                         SetupRightClickAbort();
                     }
                 );
-            };
+            }
+            ;
         });
     }
 
@@ -12710,9 +12713,9 @@ public class Game
                 CursorType = CursorType.Sword;
                 var itemArea = new Rect(16, 139, 151, 53);
                 TrapMouse(itemArea);
-					layout.ButtonsDisabled = true;
-					itemsGrid.Initialize(equipment ? CurrentPartyMember.Equipment.Slots.Where(s => s.Value.ItemIndex != 0).Select(s => s.Value).ToList()
-                    : CurrentPartyMember.Inventory.Slots.ToList(), false);
+                layout.ButtonsDisabled = true;
+                itemsGrid.Initialize(equipment ? CurrentPartyMember.Equipment.Slots.Where(s => s.Value.ItemIndex != 0).Select(s => s.Value).ToList()
+                : CurrentPartyMember.Inventory.Slots.ToList(), false);
                 void SetupRightClickAbort()
                 {
                     nextClickHandler = buttons =>
@@ -12722,8 +12725,8 @@ public class Game
                             DisableItemGrid();
                             layout.ShowChestMessage(null);
                             UntrapMouse();
-								layout.ButtonsDisabled = false;
-								CursorType = CursorType.Sword;
+                            layout.ButtonsDisabled = false;
+                            CursorType = CursorType.Sword;
                             inputEnable = true;
                             return true;
                         }
@@ -12737,8 +12740,8 @@ public class Game
                     itemsGrid.HideTooltip();
                     itemsGrid.ItemClicked -= ItemClicked;
                     itemsGrid.Disabled = true;
-						layout.ButtonsDisabled = false;
-					}
+                    layout.ButtonsDisabled = false;
+                }
                 itemsGrid.ItemClicked += ItemClicked;
                 void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
                 {
@@ -12823,9 +12826,10 @@ public class Game
                         {
                             Finish();
                         }
-                        
+
                     }, TextAlign.Left);
-                };
+                }
+                ;
             }
             // Examine equipment button
             layout.AttachEventToButton(0, () => ShowItems(true));
@@ -13101,7 +13105,8 @@ public class Game
                             }
                         });
                     }
-                };
+                }
+                ;
             });
             PlayerSwitched();
         });
@@ -13147,8 +13152,8 @@ public class Game
                 CursorType = CursorType.Sword;
                 var itemArea = new Rect(16, 139, 151, 53);
                 TrapMouse(itemArea);
-					layout.ButtonsDisabled = true;
-					itemsGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+                layout.ButtonsDisabled = true;
+                itemsGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
                 void SetupRightClickAbort()
                 {
                     nextClickHandler = buttons =>
@@ -13159,7 +13164,7 @@ public class Game
                             layout.ShowChestMessage(null);
                             UntrapMouse();
                             layout.ButtonsDisabled = false;
-								CursorType = CursorType.Sword;
+                            CursorType = CursorType.Sword;
                             inputEnable = true;
                             return true;
                         }
@@ -13173,8 +13178,8 @@ public class Game
                     itemsGrid.HideTooltip();
                     itemsGrid.ItemClicked -= ItemClicked;
                     itemsGrid.Disabled = true;
-						layout.ButtonsDisabled = false;
-					}
+                    layout.ButtonsDisabled = false;
+                }
                 itemsGrid.ItemClicked += ItemClicked;
                 void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
                 {
@@ -13229,7 +13234,8 @@ public class Game
 
                         DisableItemGrid();
                     }, TextAlign.Left);
-                };
+                }
+                ;
             });
         });
     }
@@ -13654,7 +13660,7 @@ public class Game
                     Skill.Searching => Picture80x80.Thief,
                     Skill.ReadMagic => Picture80x80.Magician,
                     Skill.UseMagic => Picture80x80.Magician,
-                    _ =>  Picture80x80.Knight
+                    _ => Picture80x80.Knight
                 }, trainer, SetupTrainer, PlayerSwitched
             );
             // train button
@@ -14366,7 +14372,7 @@ public class Game
                                     // not require a message.
                                     return;
                                 }
-                                
+
                                 if (!caster.Alive || !target.Alive)
                                 {
                                     ShowMessagePopup(DataNameProvider.CannotExchangeExpWithDead);
@@ -14713,8 +14719,8 @@ public class Game
                         itemGrid.Disabled = true;
                         layout.ShowChestMessage(null);
                         UntrapMouse();
-							layout.ButtonsDisabled = false;
-							CursorType = CursorType.Sword;
+                        layout.ButtonsDisabled = false;
+                        CursorType = CursorType.Sword;
                         inputEnable = true;
                         return true;
                     }
@@ -14731,8 +14737,8 @@ public class Game
                 itemGrid.DisableDrag = true;
                 CursorType = CursorType.Sword;
                 TrapMouse(itemArea);
-					layout.ButtonsDisabled = true;
-					itemGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+                layout.ButtonsDisabled = true;
+                itemGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
                 SetupRightClickAbort();
             });
 
@@ -15665,7 +15671,7 @@ public class Game
         mobileAutomapScroll.X = 0;
         mobileAutomapScroll.Y = 0;
 
-			void Create()
+        void Create()
         {
             Fade(() =>
             {
@@ -16289,10 +16295,10 @@ public class Game
 
                             // Be a bit more forgiving on mobile devices if they not exactly hit the small circle
                             if (clickedGotoPoint.Key == null && Configuration.IsMobile)
-									clickedGotoPoint = gotoPoints.FirstOrDefault(gotoPoint => gotoPoint.Value.Area.CreateModified(-6, -6, 12, 12).Contains(mousePosition));
+                                clickedGotoPoint = gotoPoints.FirstOrDefault(gotoPoint => gotoPoint.Value.Area.CreateModified(-6, -6, 12, 12).Contains(mousePosition));
 
-								if (clickedGotoPoint.Key != null)
-								{
+                            if (clickedGotoPoint.Key != null)
+                            {
                                 void AbortGoto()
                                 {
                                     animationsPaused = false;
@@ -16822,19 +16828,19 @@ public class Game
             var textArea = new Rect(18, 139, 285, 49);
             var scrollableText = layout.AddScrollableText(textArea, text, TextColor.BrightGray);
 
-				ShowMobileClickIndicator(Global.VirtualScreenWidth / 2 - 8, Global.VirtualScreenHeight - 16 + (gameOver ? -8 : 3));
+            ShowMobileClickIndicator(Global.VirtualScreenWidth / 2 - 8, Global.VirtualScreenHeight - 16 + (gameOver ? -8 : 3));
 
             scrollableText.Clicked += scrolledToEnd =>
             {
                 if (scrolledToEnd)
                 {
-						HideMobileClickIndicator();
+                    HideMobileClickIndicator();
 
-						if (gameOver)
+                    if (gameOver)
                     {
                         scrollableText?.Destroy();
                         scrollableText = null;
-							AddLoadQuitOptions();
+                        AddLoadQuitOptions();
                     }
                     else
                     {
