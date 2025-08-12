@@ -14,7 +14,7 @@ namespace Ambermoon
         readonly IOutroData outroData;
         readonly Font outroFont;
         readonly Font outroFontLarge;
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly IRenderLayer renderLayer;
         long ticks = 0;
         static readonly double[] PixelScrollPerSecond = new double[6] { 0.0, 6.0, 12.0, 24.0, 48.0, 96.0 };
@@ -34,7 +34,7 @@ namespace Ambermoon
         long fadeStartTicks = 0;
         const long HalfFadeDurationInTicks = 3 * Game.TicksPerSecond / 4;
 
-        static void EnsureTextures(IRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge)
+        static void EnsureTextures(IGameRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge)
         {
             if (textureAtlas == null)
             {
@@ -48,7 +48,7 @@ namespace Ambermoon
             }
         }
 
-        public Outro(IRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge, Action finishAction)
+        public Outro(IGameRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge, Action finishAction)
         {
             this.finishAction = finishAction;
             this.outroData = outroData;
@@ -304,12 +304,12 @@ namespace Ambermoon
 
     internal class OutroFactory : IOutroFactory
     {
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly IOutroData outroData;
         readonly Font outroFont;
         readonly Font outroFontLarge;
 
-        public OutroFactory(IRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge)
+        public OutroFactory(IGameRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge)
         {
             this.renderView = renderView;
             this.outroData = outroData;

@@ -138,7 +138,7 @@ namespace Ambermoon
             //audioOutput.Volume = oldVolume;
         }
 
-        public void Update(IRenderView renderView, Action finished)
+        public void Update(IGameRenderView renderView, Action finished)
         {
             if (renderView == null)
                 return;
@@ -163,7 +163,7 @@ namespace Ambermoon
         }
 
 
-        void ProcessCurrentCommand(IRenderView renderView, bool commandActivated)
+        void ProcessCurrentCommand(IGameRenderView renderView, bool commandActivated)
         {
             var command = currentCommand.Value;
 

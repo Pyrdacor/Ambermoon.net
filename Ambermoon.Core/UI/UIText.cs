@@ -29,7 +29,7 @@ namespace Ambermoon.UI
 {
     public class UIText
     {
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         IText text;
         readonly IRenderText renderText;
         readonly Rect bounds;
@@ -79,7 +79,7 @@ namespace Ambermoon.UI
             textColorsPerLine = renderText.GetTextColorPerLine(null);
         }
 
-        public UIText(IRenderView renderView, byte paletteIndex, IText text, Rect bounds, byte displayLayer = 1,
+        public UIText(IGameRenderView renderView, byte paletteIndex, IText text, Rect bounds, byte displayLayer = 1,
             TextColor textColor = TextColor.BrightGray, bool shadow = true, TextAlign textAlign = TextAlign.Left,
             bool allowScrolling = false, Action<TimeSpan, Action> timedEventCreator = null)
         {

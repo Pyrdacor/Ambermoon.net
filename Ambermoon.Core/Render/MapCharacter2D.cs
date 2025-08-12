@@ -57,7 +57,7 @@ namespace Ambermoon.Render
 
         public void ResetLastInteractionTime() => lastInteractionTicks = game.CurrentTicks;
 
-        private MapCharacter2D(Game game, IRenderView renderView, Layer layer, IMapManager mapManager,
+        private MapCharacter2D(Game game, IGameRenderView renderView, Layer layer, IMapManager mapManager,
             RenderMap2D map, uint characterIndex, Map.CharacterReference characterReference)
             : base(game, renderView.GetLayer(layer), TextureAtlasManager.Instance.GetOrCreate(layer),
                 renderView.SpriteFactory, direction => AnimationProvider(game, map.Map, mapManager,
@@ -127,7 +127,7 @@ namespace Ambermoon.Render
             }
         }
 
-        public static MapCharacter2D Create(Game game, IRenderView renderView, IMapManager mapManager,
+        public static MapCharacter2D Create(Game game, IGameRenderView renderView, IMapManager mapManager,
             RenderMap2D map, uint characterIndex, Map.CharacterReference characterReference)
         {
             var layer = characterReference.CharacterFlags.HasFlag(Flags.UseTileset)

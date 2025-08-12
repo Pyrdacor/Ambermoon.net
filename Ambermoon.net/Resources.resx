@@ -130,6 +130,24 @@
   <data name="IngameFont" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\IngameFont.dat;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="lbar_green" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\lbar_green;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="lbar_left" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\lbar_left;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="lbar_mid" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\lbar_mid;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="lbar_red" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\lbar_red;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="lbar_right" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\lbar_right;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="lbar_yellow" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\lbar_yellow;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="logo" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\logo.pyr;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>

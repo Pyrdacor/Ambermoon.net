@@ -32,7 +32,7 @@ namespace Ambermoon.UI
     {
         public const byte BaseDisplayLayer = 20;
         readonly Game game;
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly ITextureAtlas textureAtlas;
         readonly List<ILayerSprite> borders = new List<ILayerSprite>();
         readonly IColoredRect fill;
@@ -50,7 +50,7 @@ namespace Ambermoon.UI
         public bool HasChildPopup => popup != null;
         public event Action<bool> Scrolled;
 
-        public Popup(Game game, IRenderView renderView, Position position, int columns, int rows,
+        public Popup(Game game, IGameRenderView renderView, Position position, int columns, int rows,
             bool transparent, byte displayLayerOffset = 0)
         {
             if (columns < 3 || rows < 3)

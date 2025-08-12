@@ -825,7 +825,7 @@ namespace Ambermoon.Render
         readonly Game game;
         readonly ICamera3D camera = null;
         readonly IMapManager mapManager = null;
-        readonly IRenderView renderView = null;
+        readonly IGameRenderView renderView = null;
         ITextureAtlas textureAtlas = null;
         IColoredRect floorColor = null;
         IColoredRect ceilingColor = null;
@@ -886,7 +886,7 @@ namespace Ambermoon.Render
 
         public bool IsBlockingPlayer(uint x, uint y) => characterBlockingBlocks[0].Contains(x + y * (uint)Map.Width);
 
-        public RenderMap3D(Game game, Map map, IMapManager mapManager, IRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
+        public RenderMap3D(Game game, Map map, IMapManager mapManager, IGameRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
         {
             this.game = game;
             camera = renderView.Camera3D;

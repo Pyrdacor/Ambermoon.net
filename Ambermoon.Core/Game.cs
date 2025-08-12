@@ -343,7 +343,7 @@ public class Game
     public ICharacterManager CharacterManager { get; }
     readonly Places places;
     IPlace currentPlace = null;
-    readonly IRenderView renderView;
+    readonly IGameRenderView renderView;
     internal IAudioOutput AudioOutput { get; private set; }
     readonly ISongManager songManager;
     ISong currentSong;
@@ -406,7 +406,7 @@ public class Game
     readonly ILayerSprite[] hurtPlayerSprites = new ILayerSprite[MaxPartyMembers]; // splash
     readonly IRenderText[] hurtPlayerDamageTexts = new IRenderText[MaxPartyMembers];
     readonly ILayerSprite battleRoundActiveSprite; // sword and mace
-    readonly List<ILayerSprite> highlightBattleFieldSprites = new List<ILayerSprite>();
+    readonly List<ILayerSprite> highlightBattleFieldSprites = [];
     bool blinkingHighlight = false;
     FilledArea buttonGridBackground;
     ILayerSprite mobileClickIndicator = null;
@@ -434,9 +434,6 @@ public class Game
         {
             if (!Configuration.IsMobile || currentMobileAction == value)
                 return;
-
-            if (value != MobileAction.ButtonMove)
-                CurrentMobileButtonMoveCursor = null;
 
             currentMobileAction = value;
             var layer = currentMobileAction == MobileAction.Move || currentMobileAction == MobileAction.ButtonMove
@@ -466,28 +463,6 @@ public class Game
             }
         }
     }
-    CursorType? currentMobileButtonMoveCursor;
-    CursorType? CurrentMobileButtonMoveCursor
-    {
-        get => currentMobileButtonMoveCursor;
-        set
-        {
-            if (currentMobileButtonMoveCursor == value)
-                return;
-
-            currentMobileButtonMoveCursor = value;
-            var mapping = layout.GetMoveButtonCursorMapping();
-
-            for (int i = 0; i < 9; i++)
-            {
-                if (i == 4)
-                    continue;
-
-                layout.GetButton(i).Pressed = mapping[i] == currentMobileButtonMoveCursor;
-            }
-        }
-    }
-    Func<bool> currentMobileButtonMoveAllowProvider;
     public Rect CurrentMapViewArea => new(mapViewArea);
 
     /// <summary>
@@ -684,7 +659,7 @@ public class Game
 
     readonly DrawTouchFingerHandler drawTouchFingerRequest;
 
-    public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IGraphicProvider graphicProvider,
+    public Game(IConfiguration configuration, GameLanguage gameLanguage, IGameRenderView renderView, IGraphicProvider graphicProvider,
         ISavegameManager savegameManager, ISavegameSerializer savegameSerializer, TextDictionary textDictionary,
         Cursor cursor, IAudioOutput audioOutput, ISongManager songManager, FullscreenChangeHandler fullscreenChangeHandler,
         ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory,
@@ -1088,11 +1063,11 @@ public class Game
 
                 if (Configuration.IsMobile && CurrentMobileAction == MobileAction.ButtonMove)
                 {
-                    if (CurrentMobileButtonMoveCursor != null && CurrentMobileButtonMoveCursor != CursorType.None)
+                    /*if (CurrentMobileButtonMoveCursor != null && CurrentMobileButtonMoveCursor != CursorType.None)
                     {
                         if (currentMobileButtonMoveAllowProvider?.Invoke() == true)
                             Move(false, 1.0f, CurrentMobileButtonMoveCursor.Value);
-                    }
+                    }*/
                 }
                 else
                 {
@@ -2750,18 +2725,6 @@ public class Game
     // Note: Eagle and wasp allow movement even with overweight.
     bool CanPartyMove() => TravelType == TravelType.Eagle || TravelType == TravelType.Wasp || !PartyMembers.Any(p => !p.CanMove(false));
 
-    internal void StartVirtualButtonMovement(CursorType cursorType, int buttonIndex, Func<bool> allowMovementProvider)
-    {
-        if (!fingerDown)
-            return;
-
-        var button = layout.GetButton(buttonIndex);
-        button.Pressed = true;
-        CurrentMobileAction = MobileAction.ButtonMove;
-        CurrentMobileButtonMoveCursor = cursorType;
-        currentMobileButtonMoveAllowProvider = allowMovementProvider;
-    }
-
     internal void Move(bool fromNumpadButton, float speedFactor3D, params CursorType[] cursorTypes)
     {
         if (is3D)
@@ -2955,10 +2918,10 @@ public class Game
             return;
         }
 
-        if (Configuration.IsMobile && CurrentMobileAction == MobileAction.ButtonMove && CurrentMobileButtonMoveCursor != null && CurrentMobileButtonMoveCursor != CursorType.None)
+        if (Configuration.IsMobile && CurrentMobileAction == MobileAction.ButtonMove)// && CurrentMobileButtonMoveCursor != null && CurrentMobileButtonMoveCursor != CursorType.None)
         {
-            if (currentMobileButtonMoveAllowProvider?.Invoke() == true)
-                Move(false, 1.0f, CurrentMobileButtonMoveCursor.Value);
+            //if (currentMobileButtonMoveAllowProvider?.Invoke() == true)
+            //    Move(false, 1.0f, CurrentMobileButtonMoveCursor.Value);
             return;
         }
 
@@ -3560,8 +3523,6 @@ public class Game
         if (CurrentWindow.Window != Window.MapView)
             return;
 
-        CurrentMobileButtonMoveCursor = null;
-
         if (CurrentMobileAction == MobileAction.Move)
         {
             // We just press the keys and let the move logic move the player in a timed manner.
@@ -3607,7 +3568,7 @@ public class Game
         {
             var relativePosition = renderView.ScreenToGame(position);
 
-            if (Global.ButtonGridArea.Contains(relativePosition))
+            /*if (Global.ButtonGridArea.Contains(relativePosition))
             {
                 var moveCursors = layout.GetMoveButtonCursorMapping();
 
@@ -3620,7 +3581,7 @@ public class Game
                         return;
                     }
                 }
-            }
+            }*/
         }
     }
 

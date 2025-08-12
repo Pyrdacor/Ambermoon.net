@@ -43,9 +43,13 @@ namespace Ambermoon.Data
         Near
     }
 
-    public interface IGraphicProvider
+    public interface IPaletteProvider
     {
         Dictionary<int, Graphic> Palettes { get; }
+    }
+
+    public interface IGraphicProvider : IPaletteProvider
+    {
         Dictionary<int, int> NPCGraphicOffsets { get; }
 		Dictionary<int, List<int>> NPCGraphicFrameCounts { get; }
 		List<Graphic> GetGraphics(GraphicType type);

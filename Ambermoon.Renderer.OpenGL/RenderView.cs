@@ -34,11 +34,16 @@ using Render;
 
 public delegate bool FullscreenRequestHandler(bool fullscreen);
 
+file class DummyPaletteProvider : IPaletteProvider
+{
+    public Dictionary<int, Graphic> Palettes { get; } = [];
+}
+
 public class RenderView : RenderLayerFactory, IRenderView, IDisposable
 {
-    Action<byte[]> screenshotDataHandler = null;
-    bool disposed = false;
-    readonly Context context;
+    Action<int, int, byte[]> screenshotDataHandler = null;
+    private protected bool disposed = false;
+    private protected readonly Context context;
     bool useFrameBuffer = false;
     readonly FrameBuffer frameBuffer;
     readonly ScreenShader screenShader;
@@ -47,6 +52,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     readonly FrameBuffer effectFrameBuffer;
     readonly EffectShader effectShader;
     readonly ScreenRenderBuffer effectBuffer;
+    private protected readonly ICamera3D camera3D = null;
     // Area inside the window where the rendering happens.
     // Note that this area is in screen coordinates and not
     // necessarily in pixels!
@@ -62,18 +68,11 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     );
     readonly SizingPolicy sizingPolicy;
     readonly OrientationPolicy orientationPolicy;
-    readonly DeviceType deviceType;
+    DeviceType deviceType;
     Rotation rotation = Rotation.None;
     readonly SortedDictionary<Layer, RenderLayer> layers = new SortedDictionary<Layer, RenderLayer>();
     readonly SpriteFactory spriteFactory = null;
     readonly ColoredRectFactory coloredRectFactory = null;
-    readonly Surface3DFactory surface3DFactory = null;
-    readonly RenderTextFactory renderTextFactory = null;
-    readonly FowFactory fowFactory = null;
-    readonly Camera3D camera3D = null;
-    PaletteReplacement paletteReplacement = null;
-    PaletteReplacement horizonPaletteReplacement = null;
-    PaletteFading paletteFading = null;
     bool fullscreen = false;
     const float VirtualAspectRatio = Global.VirtualAspectRatio;
     float sizeFactorX = 1.0f;
@@ -95,24 +94,16 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     public event EventHandler SystemKeyPress;
     public event EventHandler StopDrag;
 #pragma warning restore 0067
-    public FullscreenRequestHandler FullscreenRequestHandler { get; set; }
 
-    public Size FramebufferSize => new Size(frameBufferSize);
+    public FullscreenRequestHandler FullscreenRequestHandler { get; set; }
+    public Size FramebufferSize => new Size(renderDisplayArea.Right, renderDisplayArea.Bottom);
     public Size MaxScreenSize { get; set; }
     public List<Size> AvailableFullscreenModes { get; set; }
     public bool IsLandscapeRatio { get; } = true;
-
+    public bool ShowImageLayerOnly { get; set; } = false;
     public ISpriteFactory SpriteFactory => spriteFactory;
     public IColoredRectFactory ColoredRectFactory => coloredRectFactory;
-    public ISurface3DFactory Surface3DFactory => surface3DFactory;
-    public IRenderTextFactory RenderTextFactory => renderTextFactory;
-    public IFowFactory FowFactory => fowFactory;
-    public ICamera3D Camera3D => camera3D;
-    public IGameData GameData { get; }
-    public IGraphicProvider GraphicProvider { get; }
-    public IFontProvider FontProvider { get; }
-    public ITextProcessor TextProcessor { get; }
-    public Action<float> AspectProcessor { get; }
+    public int? DrugColorComponent { get; set; } = null;
 
     #region Coordinate transformations
 
@@ -124,26 +115,26 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
 
     #endregion
 
+    public bool AllowFramebuffer => frameBuffer != null;
+    public bool AllowEffects => effectFrameBuffer != null;
 
-    public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
-        IFontProvider fontProvider, ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
+    public RenderView(IContextProvider contextProvider, IPaletteProvider paletteProvider,
+        Func<TextureAtlasManager> textureAtlasManagerProvider,
         int framebufferWidth, int framebufferHeight, Size windowSize, ref bool useFrameBuffer, ref bool useEffectFrameBuffer,
         Func<KeyValuePair<int, int>> screenBufferModeProvider, Func<int> effectProvider, Graphic[] additionalPalettes,
+        Func<State, ICamera3D> cameraProvider = null,
         DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
         OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
         : base(new State(contextProvider))
     {
-        AspectProcessor = UpdateAspect;
-        GameData = gameData;
-        GraphicProvider = graphicProvider;
-        FontProvider = fontProvider;
-        TextProcessor = textProcessor;
+        paletteProvider ??= new DummyPaletteProvider();
         frameBufferSize = new Size(framebufferWidth, framebufferHeight);
         renderDisplayArea = new Rect(new Position(0, 0), windowSize);
         this.windowSize = new Size(windowSize);
         this.sizingPolicy = sizingPolicy;
         this.orientationPolicy = orientationPolicy;
         this.deviceType = deviceType;
+        this.camera3D = cameraProvider?.Invoke(State);
         IsLandscapeRatio = framebufferWidth > framebufferHeight;
 
         Resize(framebufferWidth, framebufferHeight);
@@ -154,19 +145,14 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         var visibleArea = new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
         spriteFactory = new SpriteFactory(visibleArea);
         coloredRectFactory = new ColoredRectFactory(visibleArea);
-        surface3DFactory = new Surface3DFactory(visibleArea);
-        renderTextFactory = new RenderTextFactory(visibleArea);
-        fowFactory = new FowFactory(visibleArea);
 
         this.screenBufferModeProvider = screenBufferModeProvider;
         this.effectProvider = effectProvider;
 
-        camera3D = new Camera3D(State);
-
         TextureAtlasManager.RegisterFactory(new TextureAtlasBuilderFactory(State));
 
         var textureAtlasManager = textureAtlasManagerProvider();
-        var palette = textureAtlasManager.CreatePalette(graphicProvider, additionalPalettes);
+        var palette = textureAtlasManager.CreatePalette(paletteProvider, additionalPalettes);
 
         static void Set320x256View(IRenderLayer renderLayer)
         {
@@ -244,8 +230,22 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         }
     }
 
-    public bool AllowFramebuffer => frameBuffer != null;
-    public bool AllowEffects => effectFrameBuffer != null;
+    public void UsePalette(Layer layer, bool use)
+    {
+        layers[layer]?.UsePalette(use);
+    }
+
+    public void SetTextureFactor(Layer layer, uint factor)
+    {
+        layers[layer]?.SetTextureFactor(factor);
+    }
+
+    public void Close()
+    {
+        Dispose();
+
+        Closed?.Invoke(this, EventArgs.Empty);
+    }
 
     public bool TryUseFrameBuffer()
     {
@@ -269,28 +269,6 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
 
         useEffectFrameBuffer = false;
         return false;
-    }
-
-    void UpdateAspect(float aspect)
-    {
-        context?.UpdateAspect(aspect);
-    }
-
-    public void UsePalette(Layer layer, bool use)
-    {
-        layers[layer]?.UsePalette(use);
-    }
-
-    public void SetTextureFactor(Layer layer, uint factor)
-    {
-        layers[layer]?.SetTextureFactor(factor);
-    }
-
-    public void Close()
-    {
-        Dispose();
-
-        Closed?.Invoke(this, EventArgs.Empty);
     }
 
     public bool Fullscreen
@@ -385,6 +363,16 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         }
     }
 
+    public void SetDeviceType(DeviceType deviceType, int width, int height, int? windowWidth = null, int? windowHeight = null)
+    {
+        if (this.deviceType == deviceType)
+            return;
+
+        this.deviceType = deviceType;
+
+        Resize(width, height, windowWidth, windowHeight);
+    }
+
     public void Resize(int width, int height, int? windowWidth = null, int? windowHeight = null)
     {
         if (windowWidth != null)
@@ -417,7 +405,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
             sizingPolicy == SizingPolicy.FitWindowForcePortrait ||
             sizingPolicy == SizingPolicy.FitWindowForceLandscape)
         {
-            renderDisplayArea = new Rect(0, 0, width, height);
+            renderDisplayArea = new(0, 0, width, height);
 
             sizeFactorX = 1.0f;
             sizeFactorY = 1.0f;
@@ -432,19 +420,29 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
 
             if (Misc.FloatEqual(windowRatio, virtualRatio))
             {
-                renderDisplayArea = new Rect(0, 0, windowSize.Width, windowSize.Height);
+                renderDisplayArea = new(0, 0, windowSize.Width, windowSize.Height);
             }
             else if (windowRatio < virtualRatio)
             {
                 int newHeight = Misc.Round(windowSize.Width / virtualRatio);
-                renderDisplayArea = new Rect(0, (windowSize.Height - newHeight) / 2, windowSize.Width, newHeight);
+                renderDisplayArea = new(0, (windowSize.Height - newHeight) / 2, windowSize.Width, newHeight);
                 int newFrameBufferHeight = Misc.Round(frameBufferSize.Width / virtualRatio);
                 frameBufferSize.Height = newFrameBufferHeight;
             }
             else // windowRatio > virtualRatio
             {
                 int newWidth = Misc.Round(windowSize.Height * virtualRatio);
-                renderDisplayArea = new Rect((windowSize.Width - newWidth) / 2, 0, newWidth, windowSize.Height);
+
+                if (deviceType == DeviceType.Desktop)
+                {
+                    renderDisplayArea = new((windowSize.Width - newWidth) / 2, 0, newWidth, windowSize.Height);
+                }
+                else
+                {
+                    // On mobile, we display the touch pad on the right
+                    renderDisplayArea = new(0, 0, newWidth, windowSize.Height);
+                }
+
                 int newFrameBufferWidth = Misc.Round(frameBufferSize.Height * virtualRatio);
                 frameBufferSize.Width = newFrameBufferWidth;
             }
@@ -465,7 +463,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         State.Gl.Viewport(viewport.X, viewport.Y, (uint)viewport.Width, (uint)viewport.Height);
     }
 
-    public void TakeScreenshot(Action<byte[]> dataHandler)
+    public void TakeScreenshot(Action<int, int, byte[]> dataHandler)
     {
         if (screenshotDataHandler == null)
             screenshotDataHandler = dataHandler;
@@ -503,7 +501,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     {
         if (disposed)
             return;
-        
+
         if (screenshotDataHandler != null)
         {
             try
@@ -513,7 +511,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                 State.Gl.ReadBuffer(GLEnum.Back);
                 State.Gl.PixelStore(PixelStoreParameter.PackAlignment, 1);
                 State.Gl.ReadPixels<byte>(area.X, area.Y, (uint)area.Width, (uint)area.Height, GLEnum.Rgb, GLEnum.UnsignedByte, buffer);
-                screenshotDataHandler(buffer);
+                screenshotDataHandler(area.Width, area.Height, buffer);
                 screenshotDataHandler = null;
             }
             catch
@@ -526,30 +524,36 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         {
             context.SetRotation(rotation);
 
-            bool render3DMap = layers[Layer.Map3D].Visible;
+            bool render3DMap = !ShowImageLayerOnly && layers[Layer.Map3D].Visible;
             var viewOffset = new Position
             (
                 Util.Round((viewportOffset?.X ?? 0.0f) * renderDisplayArea.Width),
                 Util.Round((viewportOffset?.Y ?? 0.0f) * renderDisplayArea.Height)
             );
 
-            if (useEffectFrameBuffer)
-                BindEffectBuffer(viewOffset);
-            else
+            if (!ShowImageLayerOnly)
             {
-                State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
-                State.Gl.Viewport(0, 0, (uint)frameBufferSize.Width, (uint)frameBufferSize.Height);
+                if (useEffectFrameBuffer)
+                    BindEffectBuffer(viewOffset);
+                else
+                {
+                    State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
+                    State.Gl.Viewport(0, 0, (uint)frameBufferSize.Width, (uint)frameBufferSize.Height);
+                }
             }
 
             State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
 
-            bool set2DViewport = false;
+            bool set2DViewport = ShowImageLayerOnly;
             viewOffset.X -= Util.Floor(0.49f * frameBufferSize.Width / Global.VirtualScreenWidth);
             viewOffset.Y -= Util.Floor(0.49f * frameBufferSize.Height / Global.VirtualScreenHeight);
 
             foreach (var layer in layers)
             {
+                if (ShowImageLayerOnly && layer.Key != Layer.Images)
+                    continue;
+
                 if (render3DMap)
                 {
                     if (layer.Key == Layer.Map3DBackground)
@@ -567,7 +571,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                     else if (layer.Key == Layer.Map3DCeiling)
                     {
                         // Setup 3D stuff
-                        camera3D.Activate();
+                        (camera3D as Camera3D).Activate();
                         State.RestoreProjectionMatrix(State.ProjectionMatrix3D);
                         var mapViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY, Global.Map3DViewWidth + 1, Global.Map3DViewHeight + 1);
                         mapViewArea.Position = PositionTransformation(mapViewArea.Position).Round();
@@ -656,7 +660,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                     State.Gl.Clear((uint)ClearBufferMask.DepthBufferBit);
                 }
 
-                if (layer.Key == Layer.DrugEffect)
+                if (layer.Key == Global.LastLayer)
                 {
                     if (useFrameBuffer)
                         RenderToScreen(viewOffset, useEffectFrameBuffer);
@@ -669,8 +673,8 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                 }
                 else if (layer.Key == Layer.MobileOverlays)
                 {
-						State.Gl.BlendFuncSeparate(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha, BlendingFactor.One, BlendingFactor.OneMinusSrcAlpha);
-					}
+                    State.Gl.BlendFuncSeparate(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha, BlendingFactor.One, BlendingFactor.OneMinusSrcAlpha);
+                }
                 else if (layer.Value.Config.EnableBlending)
                 {
                     State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
@@ -678,8 +682,8 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
 
                 if (layer.Key == Layer.Effects)
                 {
-						State.Gl.Enable(EnableCap.DepthTest);
-					}
+                    State.Gl.Enable(EnableCap.DepthTest);
+                }
 
                 if (layer.Value.Config.EnableBlending)
                     State.Gl.Enable(EnableCap.Blend);
@@ -689,14 +693,44 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                 if (!layer.Value.Config.RenderToVirtualScreen)
                 {
                     State.PushProjectionMatrix(State.FullScreenProjectionMatrix2D);
-                    try
+
+
+                    //if (this.deviceType != DeviceType.Desktop)
                     {
-                        layer.Value.Render();
+                        int[] currentViewport = new int[4];
+                        State.Gl.GetInteger(GLEnum.Viewport, currentViewport);
+
+                        int currentFrameBuffer = State.Gl.GetInteger(GLEnum.FramebufferBinding);
+
+                        var viewport = frameBufferWindowArea;
+                        State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
+                        State.Gl.Viewport(viewport.X, viewport.Y,
+                            (uint)(windowSize.Width - viewport.X), (uint)(windowSize.Height - viewport.Y));
+                        //State.Gl.ClearColor(0.5f, 0.0f, 0.0f, 1.0f);
+                        //State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit);
+
+                        try
+                        {
+                            layer.Value.Render();
+                        }
+                        finally
+                        {
+                            State.Gl.Viewport(currentViewport[0], currentViewport[1], (uint)currentViewport[2], (uint)currentViewport[3]);
+                            State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, (uint)currentFrameBuffer);
+                            State.PopProjectionMatrix();
+                        }
                     }
-                    finally
+                    /*else
                     {
-                        State.PopProjectionMatrix();
-                    }
+                        try
+                        {
+                            layer.Value.Render();
+                        }
+                        finally
+                        {
+                            State.PopProjectionMatrix();
+                        }
+                    }*/
                 }
                 else
                 {
@@ -789,7 +823,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
             case Rotation.Deg90:
                 relX = renderDisplayArea.Width - rotatedY;
                 relY = rotatedX;
-                 break;
+                break;
             case Rotation.Deg180:
                 relX = renderDisplayArea.Width - rotatedX;
                 relY = renderDisplayArea.Height - rotatedY;
@@ -939,6 +973,54 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
             disposed = true;
         }
     }
+}
+
+public class GameRenderView : RenderView, IGameRenderView, IDisposable
+{
+    readonly Surface3DFactory surface3DFactory = null;
+    readonly RenderTextFactory renderTextFactory = null;
+    readonly FowFactory fowFactory = null;
+    PaletteReplacement paletteReplacement = null;
+    PaletteReplacement horizonPaletteReplacement = null;
+    PaletteFading paletteFading = null;
+
+    public ISurface3DFactory Surface3DFactory => surface3DFactory;
+    public IRenderTextFactory RenderTextFactory => renderTextFactory;
+    public IFowFactory FowFactory => fowFactory;
+    public ICamera3D Camera3D => camera3D;
+    public IGameData GameData { get; }
+    public IGraphicProvider GraphicProvider { get; }
+    public IFontProvider FontProvider { get; }
+    public ITextProcessor TextProcessor { get; }
+    public Action<float> AspectProcessor { get; }
+
+    public GameRenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
+        IFontProvider fontProvider, ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
+        int framebufferWidth, int framebufferHeight, Size windowSize, ref bool useFrameBuffer, ref bool useEffectFrameBuffer,
+        Func<KeyValuePair<int, int>> screenBufferModeProvider, Func<int> effectProvider, Graphic[] additionalPalettes,
+        DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
+        OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
+        : base(contextProvider, graphicProvider, textureAtlasManagerProvider, framebufferWidth, framebufferHeight, windowSize,
+            ref useEffectFrameBuffer, ref useEffectFrameBuffer, screenBufferModeProvider, effectProvider, additionalPalettes,
+            state => new Camera3D(state), deviceType, sizingPolicy, orientationPolicy)
+    {
+        AspectProcessor = UpdateAspect;
+        GameData = gameData;
+        GraphicProvider = graphicProvider;
+        FontProvider = fontProvider;
+        TextProcessor = textProcessor;
+
+        // factories
+        var visibleArea = new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
+        surface3DFactory = new Surface3DFactory(visibleArea);
+        renderTextFactory = new RenderTextFactory(visibleArea);
+        fowFactory = new FowFactory(visibleArea);
+    }
+
+    void UpdateAspect(float aspect)
+    {
+        context?.UpdateAspect(aspect);
+    }
 
     public PaletteReplacement PaletteReplacement
     {
@@ -982,8 +1064,6 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
             }
         }
     }
-
-    public int? DrugColorComponent { get; set; } = null;
 
     public void SetLight(float light)
     {

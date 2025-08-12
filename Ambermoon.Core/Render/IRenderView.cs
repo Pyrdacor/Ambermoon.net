@@ -1,7 +1,7 @@
 ﻿/*
  * IRenderView.cs - Render view interface
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -34,7 +34,6 @@ namespace Ambermoon.Render
         void Close();
         void UsePalette(Layer layer, bool use);
         void SetTextureFactor(Layer layer, uint factor);
-
         Position GameToScreen(Position position);
         Position ViewToScreen(Position position);
         Size ViewToScreen(Size size);
@@ -45,20 +44,23 @@ namespace Ambermoon.Render
         Position ScreenToView(Position position);
         Size ScreenToView(Size size);
         Rect ScreenToView(Rect rect);
-        void TakeScreenshot(Action<byte[]> dataHandler);
-
+        void TakeScreenshot(Action<int, int, byte[]> dataHandler);
         Size FramebufferSize { get; }
         Size MaxScreenSize { get; }
         List<Size> AvailableFullscreenModes { get; set; }
         bool Fullscreen { get; set; }
         bool AllowFramebuffer { get; }
         bool AllowEffects { get; }
-
-        IGameData GameData { get; }
-        IGraphicProvider GraphicProvider { get; }
-        IFontProvider FontProvider { get; }
+        bool ShowImageLayerOnly { get; set; }
         ISpriteFactory SpriteFactory { get; }
         IColoredRectFactory ColoredRectFactory { get; }
+    }
+
+    public interface IGameRenderView : IRenderView
+    {
+        IGameData GameData { get; }
+        IGraphicProvider GraphicProvider { get; }
+        IFontProvider FontProvider { get; }       
         ISurface3DFactory Surface3DFactory { get; }
         IRenderTextFactory RenderTextFactory { get; }
         IFowFactory FowFactory { get; }

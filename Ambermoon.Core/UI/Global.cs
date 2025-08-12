@@ -89,6 +89,6 @@ namespace Ambermoon
             return rect.CreateModified(0, GlyphLineHeight - glyphHeight, 0, glyphHeight - GlyphLineHeight);
         }
 
-        public static Rect GetTextRect(IRenderView renderView, Rect rect) => GetTextRect(renderView.FontProvider.GetFont().GlyphHeight, rect);
+        public static Rect GetTextRect(IGameRenderView renderView, Rect rect) => GetTextRect(renderView.FontProvider.GetFont().GlyphHeight, rect);
     }
 }

@@ -99,20 +99,7 @@ public class Context
 
     void UpdateFullScreenMatrix()
     {
-        float aspectRatio = (float)width / height;
-        int usedWidth = width;
-        int usedHeight = height;
-
-        if (aspectRatio > DefaultAspectRatio) // screen is wider
-        {
-            usedWidth = Util.Round(DefaultAspectRatio * height);
-        }
-        else if (aspectRatio < DefaultAspectRatio) // screen is higher
-        {
-            usedHeight = Util.Round(width / DefaultAspectRatio);
-        }
-
-        State.FullScreenProjectionMatrix2D = Matrix4.CreateOrtho2D(0, usedWidth, 0, usedHeight, 0, 1);
+        State.FullScreenProjectionMatrix2D = Matrix4.CreateOrtho2D(0, width, 0, height, 0, 1);
     }
 
     void ApplyMatrix()

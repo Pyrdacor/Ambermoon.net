@@ -538,13 +538,13 @@ namespace Ambermoon.UI
         public bool PopupClickCursor => activePopup?.ClickCursor == true;
         public int ButtonGridPage { get; private set; } = 0;
         uint? ticksPerMovement = null;
-        internal IRenderView RenderView { get; }
+        internal IGameRenderView RenderView { get; }
         public bool TransportEnabled { get; set; } = false;
         public event Action<int, int, MouseButtons> BattleFieldSlotClicked;
         public event Action DraggedItemDropped;
         public int GlyphHeight { get; }
 
-        public Layout(Game game, IRenderView renderView, IItemManager itemManager)
+        public Layout(Game game, IGameRenderView renderView, IItemManager itemManager)
         {
             this.game = game;
             RenderView = renderView;
@@ -2078,14 +2078,6 @@ namespace Ambermoon.UI
 
             void HandleButtonMove(CursorType cursorType)
             {
-				if (game.Configuration.IsMobile)
-                {
-					game.Move(false, 1.0f, cursorType);
-                    game.StartVirtualButtonMovement(cursorType, GetMoveButtonCursorMapping().ToList().FindIndex(c => c == cursorType),
-                        () => moveDelay >= game.CurrentTicks - lastButtonMoveTicks);
-                    return;
-                }
-
 				var pressedCursors = new List<CursorType>();
 
 				if (Type == LayoutType.Map2D)
@@ -2145,7 +2137,7 @@ namespace Ambermoon.UI
 			switch (Type)
             {
                 case LayoutType.Map2D:
-                    if (ButtonGridPage == 0)
+                    if (ButtonGridPage == 0 && !game.Configuration.IsMobile)
                     {
                         buttonGrid.SetButton(0, ButtonType.MoveUpLeft, false, () => HandleButtonMove(CursorType.ArrowUpLeft), true, null, null, moveDelay);
                         buttonGrid.SetButton(1, ButtonType.MoveUp, false, () => HandleButtonMove(CursorType.ArrowUp), true, null, null, moveDelay);
@@ -2167,11 +2159,15 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true || game?.TravelType.CanCampOn() != true, () => game.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false, null);
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
-                        buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
+
+                        if (false && game.Configuration.IsMobile)
+                            buttonGrid.SetButton(8, ButtonType.Wait, false, OpenWaitPopup, false, GetTooltip(Button.TooltipType.Wait));
+                        else
+                            buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
                     }
                     break;
                 case LayoutType.Map3D:
-                    if (ButtonGridPage == 0)
+                    if (ButtonGridPage == 0 && !game.Configuration.IsMobile)
                     {
                         buttonGrid.SetButton(0, ButtonType.TurnLeft, false, () => HandleButtonMove(CursorType.ArrowTurnLeft), true, null, null, moveDelay);
                         buttonGrid.SetButton(1, ButtonType.MoveForward, false, () => HandleButtonMove(CursorType.ArrowForward), true, null, null, moveDelay);
@@ -2199,7 +2195,11 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
                         buttonGrid.SetButton(6, ButtonType.Map, false, game.ShowAutomap, false, GetTooltip(Button.TooltipType.Automap));
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
-                        buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
+
+                        if (game.Configuration.IsMobile)
+                            buttonGrid.SetButton(8, ButtonType.Wait, false, OpenWaitPopup, false, GetTooltip(Button.TooltipType.Wait));
+                        else
+                            buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
                     }
                     break;
                 case LayoutType.Inventory:
@@ -5727,7 +5727,7 @@ namespace Ambermoon.UI
         }
 
         // This is used for spells and effects. X is center of monster and Y is in the upper half.
-        public static Position GetMonsterCombatCenterPosition(IRenderView renderView, int position, Monster monster)
+        public static Position GetMonsterCombatCenterPosition(IGameRenderView renderView, int position, Monster monster)
         {
             int column = position % 6;
             int row = position / 6;
@@ -5739,7 +5739,7 @@ namespace Ambermoon.UI
             return new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height / 2);
         }
 
-        public static Position GetMonsterCombatGroundPosition(IRenderView renderView, int position)
+        public static Position GetMonsterCombatGroundPosition(IGameRenderView renderView, int position)
         {
             int column = position % 6;
             int row = position / 6;
@@ -5750,7 +5750,7 @@ namespace Ambermoon.UI
             return new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row]);
         }
 
-        public static Position GetMonsterCombatTopPosition(IRenderView renderView, int position, Monster monster)
+        public static Position GetMonsterCombatTopPosition(IGameRenderView renderView, int position, Monster monster)
         {
             int column = position % 6;
             int row = position / 6;

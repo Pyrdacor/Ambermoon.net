@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace Ambermoon;
 
-internal class Patcher(IRenderView renderView, string patcherPath, TextureAtlasManager textureAtlasManager)
+internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAtlasManager textureAtlasManager)
 {
     const string RecentInfoUrl = "https://ambermoon-net.pyrdacor.net/download/recent.txt";
     const string PatchBaseUrl = "https://ambermoon-net.pyrdacor.net/download/";

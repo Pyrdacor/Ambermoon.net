@@ -17,7 +17,7 @@ namespace Ambermoon
             Exit
         }
 
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly Cursor cursor = null;
         readonly string continueLoadingText;
         readonly string newLoadingText;
@@ -47,7 +47,7 @@ namespace Ambermoon
         public event Action<CloseAction> Closed;
         bool started = false;
 
-        public MainMenu(IRenderView renderView, Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
+        public MainMenu(IGameRenderView renderView, Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             Font introFont, string[] texts, bool canContinue, string continueLoadingText, string newLoadingText,
             Action<Song> playMusicAction, bool fromIntro)
         {

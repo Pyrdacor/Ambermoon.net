@@ -109,7 +109,7 @@ namespace AmbermoonAndroid
 			return graphics.Select((gfx, index) => new { gfx, index }).ToDictionary(b => offset + (uint)b.index, b => b.gfx);
 		}
 
-		public TutorialFinger(IRenderView renderView)
+		public TutorialFinger(IGameRenderView renderView)
         {
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MobileOverlays);
 			var layer = renderView.GetLayer(Layer.MobileOverlays);

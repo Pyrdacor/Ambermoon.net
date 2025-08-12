@@ -11,7 +11,7 @@ namespace Ambermoon
     {
         static ITextureAtlas textureAtlas = null;
         readonly Action finishAction;
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly IRenderLayer renderLayer;
         readonly IRenderLayer colorLayer;
         readonly Queue<FantasyIntroAction> actions = null;
@@ -35,7 +35,7 @@ namespace Ambermoon
         uint fairyAnimationIndex = 0;
         static uint borderTextureIndexOffset = 0;
 
-        static void EnsureTextures(IRenderView renderView, IFantasyIntroData fantasyIntroData)
+        static void EnsureTextures(IGameRenderView renderView, IFantasyIntroData fantasyIntroData)
         {
             if (textureAtlas == null)
             {
@@ -64,7 +64,7 @@ namespace Ambermoon
             }
         }
 
-        public FantasyIntro(IRenderView renderView, IFantasyIntroData fantasyIntroData, Action finishAction)
+        public FantasyIntro(IGameRenderView renderView, IFantasyIntroData fantasyIntroData, Action finishAction)
         {
             this.finishAction = finishAction;
             this.renderView = renderView;

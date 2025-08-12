@@ -32,7 +32,7 @@ namespace Ambermoon.UI
         ILayerSprite sprite;
         ILayerSprite brokenOverlay;
         IRenderText amountDisplay;
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly IItemManager itemManager;
         readonly bool merchantItem;
         bool showItemAmount = true;
@@ -65,7 +65,7 @@ namespace Ambermoon.UI
             }
         }
 
-        public UIItem(IRenderView renderView, IItemManager itemManager, ItemSlot item, bool merchantItem)
+        public UIItem(IGameRenderView renderView, IItemManager itemManager, ItemSlot item, bool merchantItem)
         {
             this.renderView = renderView;
             this.itemManager = itemManager;

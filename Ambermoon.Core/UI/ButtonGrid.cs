@@ -47,7 +47,7 @@ namespace Ambermoon.UI
             }
 		}
 
-        public ButtonGrid(IRenderView renderView)
+        public ButtonGrid(IGameRenderView renderView)
         {
             area = new Rect(Global.ButtonGridArea);
 

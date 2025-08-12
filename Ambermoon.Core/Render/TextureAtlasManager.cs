@@ -105,12 +105,12 @@ namespace Ambermoon.Render
             return builder.Create(bytesPerPixel);
         }
 
-        public Texture CreatePalette(IGraphicProvider graphicProvider, params Graphic[] additionalPalettes)
+        public Texture CreatePalette(IPaletteProvider paletteProvider, params Graphic[] additionalPalettes)
         {
             var paletteBuilder = factory.Create();
             uint index = 0;
 
-            foreach (var palette in graphicProvider.Palettes)
+            foreach (var palette in paletteProvider.Palettes)
                 paletteBuilder.AddTexture(index++, palette.Value);
 
             if (additionalPalettes != null && additionalPalettes.Length != 0 && additionalPalettes[0] != null)

@@ -63,7 +63,7 @@ namespace Ambermoon.Render
             _ => GetItem(game, itemIndex)?.GraphicIndex ?? throw new AmbermoonException(ExceptionScope.Application, $"No item was given for item animtion '{type}'")
         };
 
-        static void PlayItemDestroyAnimation(Game game, IRenderView renderView, Position position, uint graphicIndex, Action finishAction)
+        static void PlayItemDestroyAnimation(Game game, IGameRenderView renderView, Position position, uint graphicIndex, Action finishAction)
         {
             var sprites = new ISprite[128];
             var animationPositionIndices = new int[128];
@@ -132,7 +132,7 @@ namespace Ambermoon.Render
             Animate();
         }
 
-        public static void Play(Game game, IRenderView renderView, Type type, Position startPosition,
+        public static void Play(Game game, IGameRenderView renderView, Type type, Position startPosition,
             Action finishAction = null, TimeSpan? initialDelay = null, int pixelsPerSecond = 300,
             Func<bool> visibilityChecker = null)
         {
@@ -140,7 +140,7 @@ namespace Ambermoon.Render
                 GetGraphicIndex(game, type, null), null, pixelsPerSecond, visibilityChecker);
         }
 
-        public static void Play(Game game, IRenderView renderView, Type type, Position startPosition,
+        public static void Play(Game game, IGameRenderView renderView, Type type, Position startPosition,
             Action finishAction, TimeSpan? initialDelay, Position targetPosition, Item item,
             int pixelsPerSecond = 300, Func<bool> visibilityChecker = null)
         {
@@ -148,14 +148,14 @@ namespace Ambermoon.Render
                 GetGraphicIndex(game, type, item?.Index), null, pixelsPerSecond, visibilityChecker);
         }
 
-        public static void Play(Game game, IRenderView renderView, Type type, Position startPosition,
+        public static void Play(Game game, IGameRenderView renderView, Type type, Position startPosition,
             Action finishAction, TimeSpan? initialDelay, Position targetPosition, UIItem item, int pixelsPerSecond = 300)
         {
             Play(game, renderView, type, startPosition, finishAction, initialDelay, targetPosition,
                 GetGraphicIndex(game, type, item?.Item?.ItemIndex), item, pixelsPerSecond);
         }
 
-        static void Play(Game game, IRenderView renderView, Type type, Position startPosition,
+        static void Play(Game game, IGameRenderView renderView, Type type, Position startPosition,
             Action finishAction, TimeSpan? initialDelay, Position targetPosition, uint graphicIndex,
             UIItem item, int pixelsPerSecond = 300, Func<bool> visibilityChecker = null)
         {

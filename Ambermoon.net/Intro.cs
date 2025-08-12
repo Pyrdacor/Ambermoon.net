@@ -33,7 +33,7 @@ namespace Ambermoon
             public abstract void Update(long ticks, int frameCounter);
             public abstract void Destroy();
 
-            public static IntroAction CreateAction(IntroActionType actionType, Intro intro, Action finishHandler, IRenderView renderView, long startTicks, IIntroData introData, Func<short> rng, Font introFont, Font introFontLarge)
+            public static IntroAction CreateAction(IntroActionType actionType, Intro intro, Action finishHandler, IGameRenderView renderView, long startTicks, IIntroData introData, Func<short> rng, Font introFont, Font introFontLarge)
             {
                 return actionType switch
                 {
@@ -71,7 +71,7 @@ namespace Ambermoon
                 } while (scale >= 0);
             }
 
-            public IntroActionStarfield(IRenderView renderView, Func<short> rng)
+            public IntroActionStarfield(IGameRenderView renderView, Func<short> rng)
                 : base(IntroActionType.Starfield)
             {
                 var layer = renderView.GetLayer(Layer.IntroEffects);
@@ -176,7 +176,7 @@ namespace Ambermoon
             // change ticks and therefore the fade duration is 15*4 = 60.
             private const int FadeDuration = 60;
 
-            public IntroActionLogoFlyin(IntroGraphic introGraphic, IntroActionType actionType, IRenderView renderView, long startTicks, Action finishHandler, IIntroData introData, Font largeFont)
+            public IntroActionLogoFlyin(IntroGraphic introGraphic, IntroActionType actionType, IGameRenderView renderView, long startTicks, Action finishHandler, IIntroData introData, Font largeFont)
                 : base(actionType)
             {
                 // Before starting the scaling, the palette is faded.
@@ -326,7 +326,7 @@ namespace Ambermoon
 
         private class IntroActionTextCommands : IntroAction
         {
-            private readonly IRenderView renderView;
+            private readonly IGameRenderView renderView;
             private readonly IIntroData introData;
             private readonly List<Text> texts = new();
             private readonly Queue<IIntroTextCommand> commands = new();
@@ -353,7 +353,7 @@ namespace Ambermoon
                 { 0x0e92, Data.Enumerations.Color.LightOrange } // it almost fits with f90 instead of e92
             };
 
-            public IntroActionTextCommands(IRenderView renderView, IIntroData introData, Font introFont, Intro intro, Action finishHandler, long startTicks)
+            public IntroActionTextCommands(IGameRenderView renderView, IIntroData introData, Font introFont, Intro intro, Action finishHandler, long startTicks)
                 : base(IntroActionType.TextCommands)
             {
                 this.renderView = renderView;
@@ -659,7 +659,7 @@ namespace Ambermoon
 
             // Sun is using animationFrameCounter / 4 to get the frame index
 
-            private readonly IRenderView renderView;
+            private readonly IGameRenderView renderView;
             private readonly ITextureAtlas textureAtlas;
             private readonly ILayerSprite[] objects = new ILayerSprite[5];
             private IAlphaSprite glowingMeteorOverlay;
@@ -696,7 +696,7 @@ namespace Ambermoon
                 townText.Visible = true;
             }
 
-            public IntroActionDisplayObjects(IRenderView renderView, long startTicks, Font largeFont, IIntroData introData, Action finishHandler)
+            public IntroActionDisplayObjects(IGameRenderView renderView, long startTicks, Font largeFont, IIntroData introData, Action finishHandler)
                 : base(IntroActionType.DisplayObjects)
             {
                 this.renderView = renderView;
@@ -1042,7 +1042,7 @@ namespace Ambermoon
             private int activeFrame = -1;
             private Action finishHandler;
 
-            public IntroActionTwinlake(IRenderView renderView, long startTicks, IIntroData introData, Action finishHandler, Font largeFont)
+            public IntroActionTwinlake(IGameRenderView renderView, long startTicks, IIntroData introData, Action finishHandler, Font largeFont)
                 : base(IntroActionType.TwinlakeAnimation)
             {
                 this.startTicks = startTicks;
@@ -1159,7 +1159,7 @@ namespace Ambermoon
             private long fadeOutStartTicks = -1;
             private const int TimePerTown = 350 + 64;
 
-            public IntroActionTownDestruction(IRenderView renderView, long startTicks, IIntroData introData, Action finishHandler)
+            public IntroActionTownDestruction(IGameRenderView renderView, long startTicks, IIntroData introData, Action finishHandler)
                 : base(IntroActionType.TownDestruction)
             {
                 this.finishHandler = finishHandler;
@@ -1324,7 +1324,7 @@ namespace Ambermoon
 
         private class IntroActionEndScreen : IntroAction
         {
-            private readonly IRenderView renderView;
+            private readonly IGameRenderView renderView;
             private readonly ITextureAtlas textureAtlas;
             private readonly ILayerSprite background;
             private readonly ILayerSprite[] clouds = new ILayerSprite[4];
@@ -1337,7 +1337,7 @@ namespace Ambermoon
             private readonly Color startBlack;
             private readonly Color endBlack;
 
-            public IntroActionEndScreen(IRenderView renderView, long startTicks, Font largeFont, IIntroData introData, Action finishHandler)
+            public IntroActionEndScreen(IGameRenderView renderView, long startTicks, Font largeFont, IIntroData introData, Action finishHandler)
                 : base(IntroActionType.EndScreen)
             {
                 this.renderView = renderView;
@@ -1483,7 +1483,7 @@ namespace Ambermoon
         readonly IIntroData introData;
         readonly Font introFont;
         readonly Font introFontLarge;
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         long ticks = 0;
         readonly List<IntroAction> actions = new();
         const double TicksPerSecond = 50.0;
@@ -1528,7 +1528,7 @@ namespace Ambermoon
             return colorChanges * ticksPerColorChange;
         }
 
-        public Intro(IRenderView renderView, IIntroData introData, Font introFont, Font introFontLarge, Action<bool> finishAction, Action startMusicAction)
+        public Intro(IGameRenderView renderView, IIntroData introData, Font introFont, Font introFontLarge, Action<bool> finishAction, Action startMusicAction)
         {
             this.finishAction = finishAction;
             this.introData = introData;

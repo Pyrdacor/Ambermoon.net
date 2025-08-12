@@ -31,7 +31,7 @@ namespace AmbermoonAndroid
 
         string gameVersion = "Ambermoon.net";
         Configuration configuration;
-        RenderView renderView;
+        GameRenderView renderView;
         IView window;
         IKeyboard keyboard = null;
         IMouse mouse = null;
@@ -54,6 +54,7 @@ namespace AmbermoonAndroid
         readonly List<Action> touchActions = new();
         readonly Action<bool, string> keyboardRequest;
         TutorialFinger tutorialFinger;
+        TouchPad touchPad;
         ISprite donateButton;
 		ActivityState state = ActivityState.Active;
         readonly Action<Action> runOnUiThread;
@@ -313,6 +314,7 @@ namespace AmbermoonAndroid
                 {
                     advancedLogo?.Cleanup();
                     advancedLogo = null;
+                    renderView.ShowImageLayerOnly = false;
                 }
                 else if (versionSelector != null)
                     versionSelector.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
@@ -378,6 +380,7 @@ namespace AmbermoonAndroid
             {
                 advancedLogo?.Cleanup();
                 advancedLogo = null;
+                renderView.ShowImageLayerOnly = false;
             }
             else if (versionSelector != null)
                 versionSelector.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
@@ -642,7 +645,7 @@ namespace AmbermoonAndroid
             writer.CopyTo(file);
         }
 
-        void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, bool fromIntro, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
+        void ShowMainMenu(IGameRenderView renderView, Render.Cursor cursor, bool fromIntro, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage,
             Action showIntroAction)
         {
@@ -780,7 +783,9 @@ namespace AmbermoonAndroid
 				var graphics = TutorialFinger.GetGraphics(1u); // Donate button is 0
                 graphics.Add(0u, FileProvider.GetDonateButton());
 				textureAtlasManager.AddFromGraphics(Layer.MobileOverlays, graphics);
-				return textureAtlasManager;
+                graphics = TouchPad.GetGraphics(1u); // Advanced logo is 0
+                textureAtlasManager.AddFromGraphics(Layer.Images, graphics);
+                return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = new();
             renderView.SetTextureFactor(Layer.Text, 2);
@@ -825,8 +830,11 @@ namespace AmbermoonAndroid
 				while (intro != null)
 					Thread.Sleep(100);
 
-				while (advancedLogo != null)
-					Thread.Sleep(100);
+                while (advancedLogo != null)
+                {
+                    renderView.ShowImageLayerOnly = true;
+                    Thread.Sleep(100);
+                }
 			}, () =>
             {
                 try
@@ -912,11 +920,17 @@ namespace AmbermoonAndroid
                                     advancedSavegamePatcher.PatchSavegame(gameData, saveSlot, sourceEpisode, targetEpisode);
                                 };
 
+                                // In game we want to move everything to the left and make room for the touch pad area.
+                                // Before we just display as on desktop (centered on screen). Now switch to mobile device view.
+                                renderView.SetDeviceType(DeviceType.MobileLandscape, window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
+
                                 var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MobileOverlays);
 
 								tutorialFinger = new TutorialFinger(renderView);
+                                touchPad = new TouchPad(renderView, new(window.Size.X, window.Size.Y));
 
 								game.Run(continueGame, ConvertMousePosition(mouse.Position));
+
                                 return game;
                             };
                         }
@@ -1040,7 +1054,7 @@ namespace AmbermoonAndroid
                     { "Intro_texts.amb", 'A' },
                     { "Extro_texts.amb", 'A' }
                 };
-                gameData.LoadFromMemoryZip(tempStream, fallbackGameDataProvider, optionalAdditionalFiles, true);
+                gameData.LoadFromMemoryZip(tempStream, fallbackGameDataProvider, optionalAdditionalFiles, null, true);
                 return gameData;
             }
 
@@ -1196,13 +1210,13 @@ namespace AmbermoonAndroid
             renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => digitTextureAtlas.GetOffset((uint)x));
         }
 
-        RenderView CreateRenderView(IGameData gameData, IConfiguration configuration, IGraphicProvider graphicProvider,
+        GameRenderView CreateRenderView(IGameData gameData, IConfiguration configuration, IGraphicProvider graphicProvider,
             IFontProvider fontProvider, Graphic[] additionalPalettes, Func<TextureAtlasManager> textureAtlasManagerProvider)
         {
             bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;
             var useFrameBuffer = true;
             var useEffects = configuration.Effects != Effects.None;
-            var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
+            var renderView = new GameRenderView(this, gameData, graphicProvider, fontProvider,
                 new TextProcessor(fontProvider.GetFont().GlyphCount), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
                 new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
                 () => KeyValuePair.Create(AnyIntroActive() ? 0 : (int)configuration.GraphicFilter, AnyIntroActive() ? 0 : (int)configuration.GraphicFilterOverlay),
@@ -1325,7 +1339,7 @@ namespace AmbermoonAndroid
             else if (logoPyrdacor == null && fantasyIntro != null)
                 fantasyIntro.Update(delta);
             else if (logoPyrdacor == null && advancedLogo != null)
-                advancedLogo.Update(renderView, () => advancedLogo = null);
+                advancedLogo.Update(renderView, () => { advancedLogo = null; renderView.ShowImageLayerOnly = false; });
             else if (intro != null)
                 intro.Update(delta);
             else if (mainMenu != null)
@@ -1386,11 +1400,6 @@ namespace AmbermoonAndroid
                 Game?.PauseGame();
             else
                 Game?.ResumeGame();
-        }
-
-        void UpdateWindow(IConfiguration configuration)
-        {
-            renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
         }
 
         void DoEvents()
@@ -1499,6 +1508,7 @@ namespace AmbermoonAndroid
             finally
             {
 				Util.SafeCall(() => tutorialFinger?.Destroy());
+                Util.SafeCall(() => touchPad?.Destroy());
 				Util.SafeCall(() =>
                 {
                     infoText?.Delete();

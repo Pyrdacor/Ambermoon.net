@@ -33,7 +33,7 @@ namespace Ambermoon.Render
             public string Text;
         }
 
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly Layout layout;
         readonly Action<Action> finishAction;
         readonly List<IRenderText> texts = new List<IRenderText>();
@@ -45,7 +45,7 @@ namespace Ambermoon.Render
         const long TicksPerLine = 6 * Global.GlyphLineHeight;
         CreditsText lastText;
 
-        public Credits(IRenderView renderView, Layout layout, Action<Action> finishAction)
+        public Credits(IGameRenderView renderView, Layout layout, Action<Action> finishAction)
         {
             this.renderView = renderView;
             this.layout = layout;

@@ -142,7 +142,8 @@ namespace Ambermoon.Data.Legacy
         }
 
         public void LoadFromMemoryZip(Stream stream, Func<ILegacyGameData> fallbackGameDataProvider = null,
-            Dictionary<string, char> optionalAdditionalFiles = null, bool ignoreMusic = false)
+            Dictionary<string, char> optionalAdditionalFiles = null, Action<float> progressTracker = null,
+            bool ignoreMusic = false)
         {
             Loaded = false;
             GameDataSource = GameDataSource.Memory;
@@ -172,7 +173,7 @@ namespace Ambermoon.Data.Legacy
                 return archive.GetEntry(name) != null ||
                     EnsureFallbackData()?.Files?.ContainsKey(name) == true;
             }
-            Load(LoadFile, null, CheckFileExists, false, optionalAdditionalFiles, ignoreMusic);
+            Load(LoadFile, null, CheckFileExists, false, optionalAdditionalFiles, progressTracker, ignoreMusic);
         }
 
         public class GameDataWriter
@@ -498,7 +499,7 @@ namespace Ambermoon.Data.Legacy
 
         void Load(Func<string, IFileContainer> fileLoader, Func<char, Dictionary<string, byte[]>> diskLoader,
             Func<string, bool> fileExistChecker, bool savesOnly = false, Dictionary<string, char> optionalAdditionalFiles = null,
-            bool ignoreMusic = false)
+            Action<float> progressTracker = null, bool ignoreMusic = false)
         {
             var ambermoonFiles = new Dictionary<string, char>(savesOnly ? Legacy.Files.AmigaSaveFiles : Legacy.Files.AmigaFiles);
 
@@ -522,6 +523,12 @@ namespace Ambermoon.Data.Legacy
                 foreach (var file in Legacy.Files.New114Files)
                     ambermoonFiles.Add(file.Key, file.Value);
             }
+
+            float progress = 0.0f;
+            float progressPerFile = (savesOnly ? 1.0f : 0.45f) / ambermoonFiles.Count;
+            // If not only saves are loaded a lot of the time is needed after the files are loaded for image loading etc.
+
+            progressTracker?.Invoke(progress);
 
             void HandleFileLoaded(string file, bool fromFiles)
             {
@@ -549,10 +556,16 @@ namespace Ambermoon.Data.Legacy
                         Dictionaries.Add(file.ToLower().Split('.').Last(), Files[file].Files[1]);
                     foundNoDictionary = false;
                 }
+
+                progress += progressPerFile;
+                progressTracker?.Invoke(progress);
             }
 
             void HandleFileNotFound(string file, char disk)
             {
+                progress += progressPerFile;
+                progressTracker?.Invoke(progress);
+
                 if (optionalAdditionalFiles?.ContainsKey(file) == true)
                     return; // Don't error on missing optional files
 
@@ -696,6 +709,7 @@ namespace Ambermoon.Data.Legacy
 
             if (savesOnly)
             {
+                progressTracker?.Invoke(1.0f);
                 Loaded = true;
                 return;
             }
@@ -705,7 +719,11 @@ namespace Ambermoon.Data.Legacy
                 throw new FileNotFoundException("Unable to find any dictionary file.");
             }
 
+            
             LoadTravelGraphics();
+            // We assume 1% of time for this
+            progress += 0.01f;
+            progressTracker?.Invoke(progress);
 
             try
             {
@@ -728,8 +746,17 @@ namespace Ambermoon.Data.Legacy
             {
                 // ignore
             }
+            finally
+            {
+                // We assume 1% of time for this
+                progress += 0.01f;
+                progressTracker?.Invoke(progress);
+            }
 
             executableData = TryLoad(() => ExecutableData.ExecutableData.FromGameData(this));
+            // We assume 3% of time for this
+            progress += 0.03f;
+            progressTracker?.Invoke(progress);
 
             if (executableData?.FileList == null && stopAtFirstError)
                 throw new AmbermoonException(ExceptionScope.Data, "Incomplete game data. AM2_CPU is missing.");
@@ -749,9 +776,30 @@ namespace Ambermoon.Data.Legacy
                 }
             }
 
+            // Now we load 13 things. Each has usually a different load duration.
+            // We have 0.5f (50%) or progress left.
+            // These values express the progress per following step.
+            // It is based on some example duration measurement.
+            float[] progresses =
+            [
+                0.06679695f, 0.02982927f, 0.00666224f, 0.04767520f,
+                0.13528821f, 0.00020068f, 0.00008975f, 0.00004560f,
+                0.00008313f, 0.26092917f, 0.04355856f, 0.00019003f,
+                0.00029546f
+            ];
+            int progressIndex = 0;
+            void UpdateProgress()
+            {
+                progress += progresses[progressIndex++];
+                progressTracker?.Invoke(progress);
+            }
+         
             IntroData = TryLoad(() => new IntroData(this));
+            UpdateProgress();
             FantasyIntroData = TryLoad(() => new FantasyIntroData(this));
+            UpdateProgress();
             OutroData = TryLoad(() => new OutroData(this));
+            UpdateProgress();
             var additionalPalettes = new List<Graphic>();
             if (IntroData?.IntroPalettes != null)
                 additionalPalettes.AddRange(IntroData.IntroPalettes);
@@ -760,19 +808,29 @@ namespace Ambermoon.Data.Legacy
             if (FantasyIntroData?.FantasyIntroPalettes != null)
                 additionalPalettes.AddRange(FantasyIntroData.FantasyIntroPalettes);
             GraphicProvider = TryLoad(() => new GraphicProvider(this, executableData, additionalPalettes));
+            UpdateProgress();
             CharacterManager = TryLoad(() => new CharacterManager(this));
+            UpdateProgress();
             if (executableData?.ItemManager != null && Files.TryGetValue("Object_texts.amb", out var objTexts))
-            {
+            {              
                 foreach (var objectTextFile in objTexts.Files)
                     executableData.ItemManager.AddTexts((uint)objectTextFile.Key, Serialization.TextReader.ReadTexts(objectTextFile.Value));
             }
+            UpdateProgress();
             FontProvider = TryLoad(() => new FontProvider(executableData));
+            UpdateProgress();
             DataNameProvider = TryLoad(() => new DataNameProvider(executableData));
+            UpdateProgress();
             LightEffectProvider = TryLoad(() => new LightEffectProvider(executableData));
+            UpdateProgress();
             MapManager = TryLoad(() => new MapManager(this, new MapReader(), new TilesetReader(), new LabdataReader(), stopAtFirstError));
+            UpdateProgress();
             SongManager = ignoreMusic ? null : TryLoad(() => new SongManager(this));
+            UpdateProgress();
             Dictionary = TryLoad(() => TextDictionary.Load(new TextDictionaryReader(), GetDictionary()));
+            UpdateProgress();
             Places = TryLoad(() => Places.Load(new PlacesReader(), Files["Place_data"].Files[1]));
+            UpdateProgress();
 
             Loaded = true;
         }

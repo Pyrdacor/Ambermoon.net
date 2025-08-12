@@ -35,7 +35,7 @@ namespace Ambermoon.Render
         Credits credits;
         readonly Game game;
         readonly Layout layout;
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly Savegame savegame;
         readonly List<Popup> popups = new List<Popup>();
         readonly List<ISprite> images = new List<ISprite>();

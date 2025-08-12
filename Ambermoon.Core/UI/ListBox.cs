@@ -29,7 +29,7 @@ namespace Ambermoon.UI
     internal class ListBox
     {
         readonly Game game;
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly List<KeyValuePair<string, Action<int, string>>> items;
         readonly List<Rect> itemAreas = new List<Rect>(10);
         readonly List<IRenderText> itemIndices = new List<IRenderText>(10);
@@ -50,7 +50,7 @@ namespace Ambermoon.UI
 
         public event Action<int> HoverItem;
 
-        ListBox(IRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items,
+        ListBox(IGameRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items,
             Rect area, Position itemBasePosition, int itemHeight, int hoverBoxWidth, Position relativeHoverBoxOffset,
             bool withIndex, int maxItems, char? fallbackChar = null, bool canEdit = false,
             Func<string, TextColor> colorProvider = null)
@@ -102,34 +102,34 @@ namespace Ambermoon.UI
             }
         }
 
-        public static ListBox CreateOptionsListbox(IRenderView renderView, Game game, Popup popup,
+        public static ListBox CreateOptionsListbox(IGameRenderView renderView, Game game, Popup popup,
             List<KeyValuePair<string, Action<int, string>>> items)
         {
             return new ListBox(renderView, game, popup, items, new Rect(64, 85, 191, 52), new Position(67, 87), 7, 189, new Position(-2, -1), false, 7);
         }
 
-        public static ListBox CreateSavegameListbox(IRenderView renderView, Game game, Popup popup,
+        public static ListBox CreateSavegameListbox(IGameRenderView renderView, Game game, Popup popup,
             List<KeyValuePair<string, Action<int, string>>> items, bool canEdit, int maxItems, int yOffset)
         {
             return new ListBox(renderView, game, popup, items, new Rect(32, 85 + yOffset, 256, maxItems * Global.GlyphLineHeight + 3),
                 new Position(33, 87 + yOffset), 7, 237, new Position(16, -1), true, maxItems, '?', canEdit);
         }
 
-        public static ListBox CreateDictionaryListbox(IRenderView renderView, Game game, Popup popup,
+        public static ListBox CreateDictionaryListbox(IGameRenderView renderView, Game game, Popup popup,
             List<KeyValuePair<string, Action<int, string>>> items, Func<string, TextColor> colorProvider)
         {
             return new ListBox(renderView, game, popup, items, new Rect(48, 48, 130, 115),
                 new Position(52, 50), 7, 127, new Position(-3, -1), false, 16, null, false, colorProvider);
         }
 
-        public static ListBox CreateSpellListbox(IRenderView renderView, Game game, Popup popup,
+        public static ListBox CreateSpellListbox(IGameRenderView renderView, Game game, Popup popup,
             List<KeyValuePair<string, Action<int, string>>> items)
         {
             return new ListBox(renderView, game, popup, items, new Rect(48, 56, 162, 115),
                 new Position(52, 58), 7, 159, new Position(-3, -1), false, 16);
         }
 
-        public static ListBox CreateSongListbox(IRenderView renderView, Game game, Popup popup,
+        public static ListBox CreateSongListbox(IGameRenderView renderView, Game game, Popup popup,
             List<KeyValuePair<string, Action<int, string>>> items)
         {
             return new ListBox(renderView, game, popup, items, new Rect(32, 50, 192, 115),

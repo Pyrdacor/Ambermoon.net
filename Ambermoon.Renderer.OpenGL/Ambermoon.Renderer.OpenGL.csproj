@@ -37,23 +37,23 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='DebugAndroid'">
-	<PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
+	<PackageReference Include="Silk.NET.OpenGLES" Version="2.22.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='DebugES'">
-	  <PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
+	  <PackageReference Include="Silk.NET.OpenGLES" Version="2.22.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='ReleaseAndroid'">
-	<PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
+	<PackageReference Include="Silk.NET.OpenGLES" Version="2.22.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Release' And '$(DefineConstants.Contains(GLES))'">
-    <PackageReference Include="Silk.NET.OpenGLES" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.OpenGLES" Version="2.22.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Release' And !'$(DefineConstants.Contains(GLES))'">
-    <PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug'">
@@ -61,7 +61,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='ReleaseNative'">
-    <PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
   </ItemGroup>
 
   <ItemGroup>

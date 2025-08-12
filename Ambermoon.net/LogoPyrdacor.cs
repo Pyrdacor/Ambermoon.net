@@ -150,7 +150,7 @@ namespace Ambermoon
             audioOutput.Volume = oldVolume;
         }
 
-        public void Update(IRenderView renderView, Action finished)
+        public void Update(IGameRenderView renderView, Action finished)
         {
             if (renderView == null)
                 return;
@@ -174,7 +174,7 @@ namespace Ambermoon
             ProcessCurrentCommand(renderView, commandActivated);
         }
 
-        void EnsureSprites(IRenderView renderView, bool firstOnly)
+        void EnsureSprites(IGameRenderView renderView, bool firstOnly)
         {
             IAlphaSprite EnsureSprite(IAlphaSprite sprite, byte displayLayer)
             {
@@ -192,7 +192,7 @@ namespace Ambermoon
                 sprite2 = EnsureSprite(sprite2, 10);
         }
 
-        void EnsureText(IRenderView renderView, string text)
+        void EnsureText(IGameRenderView renderView, string text)
         {
             if (renderText == null)
             {
@@ -218,13 +218,13 @@ namespace Ambermoon
             textOverlay.Visible = true;
         }
 
-        Position GetImageOffset(IRenderView renderView, int index)
+        Position GetImageOffset(IGameRenderView renderView, int index)
         {
             int textureFactor = (int)renderView.GetLayer(Layer.Misc).TextureFactor;
             return (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.Misc).GetOffset(0) + new Position(index * frameSize.Width * textureFactor, 0);
         }
 
-        void ProcessCurrentCommand(IRenderView renderView, bool commandActivated)
+        void ProcessCurrentCommand(IGameRenderView renderView, bool commandActivated)
         {
             var command = currentCommand.Value;
 

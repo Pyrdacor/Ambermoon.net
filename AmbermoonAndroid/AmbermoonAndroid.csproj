@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0-android</TargetFramework>
-    <SupportedOSPlatformVersion>21.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
 	<RuntimeIdentifiers>android-arm;android-arm64;android-x86;android-x64</RuntimeIdentifiers>
     <OutputType>Exe</OutputType>
     <Nullable>disable</Nullable>
@@ -59,12 +59,12 @@
     <PackageReference Include="Silk.NET.OpenGLES" Version="2.22.0" />
     <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.22.0" />
     <PackageReference Include="SonicArranger" Version="1.0.12" />
-    <PackageReference Include="Xamarin.AndroidX.Core" Version="1.15.0.1" />
-    <PackageReference Include="System.Resources.Extensions" Version="9.0.0" />
-    <PackageReference Include="Xamarin.Firebase.Analytics" Version="122.1.2.1" />
-    <PackageReference Include="Xamarin.Firebase.Crashlytics" Version="119.2.1.1" />
-    <PackageReference Include="Xamarin.GooglePlayServices.Base" Version="118.5.0.3" />
-    <PackageReference Include="Xamarin.GooglePlayServices.Tasks" Version="118.2.0.3" />
+    <PackageReference Include="Xamarin.AndroidX.Core" Version="1.16.0.2" />
+    <PackageReference Include="System.Resources.Extensions" Version="9.0.8" />
+    <PackageReference Include="Xamarin.Firebase.Analytics" Version="123.0.0" />
+    <PackageReference Include="Xamarin.Firebase.Crashlytics" Version="120.0.0" />
+    <PackageReference Include="Xamarin.GooglePlayServices.Base" Version="118.7.2" />
+    <PackageReference Include="Xamarin.GooglePlayServices.Tasks" Version="118.3.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Audio.Android\Ambermoon.Audio.Android.csproj" />

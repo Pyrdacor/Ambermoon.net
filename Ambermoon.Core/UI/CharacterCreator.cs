@@ -30,7 +30,7 @@ namespace Ambermoon.UI
 {
     public class CharacterCreator
     {
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly ITextureAtlas textureAtlas;
 
         readonly List<ILayerSprite> borders = new List<ILayerSprite>();
@@ -72,7 +72,7 @@ namespace Ambermoon.UI
             39, 40, 41, 47, 52
         };
 
-        public CharacterCreator(IRenderView renderView, Game game, Action<string, bool, int> selectHandler)
+        public CharacterCreator(IGameRenderView renderView, Game game, Action<string, bool, int> selectHandler)
         {
             this.renderView = renderView;
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);

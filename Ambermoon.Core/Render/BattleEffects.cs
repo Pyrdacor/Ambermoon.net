@@ -64,7 +64,7 @@ namespace Ambermoon.Render
 
         public static readonly int[] RowYOffsets = new[] { 81, 88, 98, 111, 124 };
 
-        static Position GetProjectileTargetPosition(IRenderView renderView, uint tile, Character[] battleField)
+        static Position GetProjectileTargetPosition(IGameRenderView renderView, uint tile, Character[] battleField)
         {
             if (battleField[(int)tile] is Monster monster)
             {
@@ -76,7 +76,7 @@ namespace Ambermoon.Render
             }
         }
 
-        static Position GetCenterPosition(IRenderView renderView, uint tile, Character[] battleField, int yOffset = 0)
+        static Position GetCenterPosition(IGameRenderView renderView, uint tile, Character[] battleField, int yOffset = 0)
         {
             var offset = new Position(0, yOffset);
 
@@ -90,7 +90,7 @@ namespace Ambermoon.Render
             }
         }
 
-        static BattleEffectInfo CreateSimpleEffect(IRenderView renderView, uint sourceTile, uint targetTile, CombatGraphicIndex graphicIndex,
+        static BattleEffectInfo CreateSimpleEffect(IGameRenderView renderView, uint sourceTile, uint targetTile, CombatGraphicIndex graphicIndex,
             Character[] battleField, uint duration, float startScale = 1.0f, float scaleChangePerY = 0.0f)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
@@ -114,7 +114,7 @@ namespace Ambermoon.Render
             };
         }
 
-        static BattleEffectInfo CreateSimpleEffect(IRenderView renderView, uint tile, CombatGraphicIndex graphicIndex,
+        static BattleEffectInfo CreateSimpleEffect(IGameRenderView renderView, uint tile, CombatGraphicIndex graphicIndex,
             Character[] battleField, uint duration, Func<bool, int> yOffsetProvider = null, float scale = 1.0f, bool ground = false)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
@@ -145,7 +145,7 @@ namespace Ambermoon.Render
             };
         }
 
-        static float GetScaleFromRow(IRenderView renderView, uint tile, Character[] battleField)
+        static float GetScaleFromRow(IGameRenderView renderView, uint tile, Character[] battleField)
         {
             if (battleField[(int)tile]?.Type == CharacterType.PartyMember)
                 return 2.0f;
@@ -153,7 +153,7 @@ namespace Ambermoon.Render
             return renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
         }
 
-        static BattleEffectInfo CreateFlyingEffect(IRenderView renderView, uint sourceTile, uint targetTile,
+        static BattleEffectInfo CreateFlyingEffect(IGameRenderView renderView, uint sourceTile, uint targetTile,
             CombatGraphicIndex graphicIndex, Character[] battleField, float baseScale = 1.0f)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
@@ -195,7 +195,7 @@ namespace Ambermoon.Render
                 15 * Game.TicksPerSecond / 12);
         }
 
-        public static List<BattleEffectInfo> GetEffectInfo(IRenderView renderView, BattleEffect battleEffect, uint sourceTile, uint targetTile,
+        public static List<BattleEffectInfo> GetEffectInfo(IGameRenderView renderView, BattleEffect battleEffect, uint sourceTile, uint targetTile,
             Character[] battleField, float scale = 1.0f)
         {
             return battleEffect switch

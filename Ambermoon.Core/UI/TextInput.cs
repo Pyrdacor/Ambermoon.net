@@ -44,7 +44,7 @@ namespace Ambermoon.UI
 
         readonly ClickAction leftClickAction;
         readonly ClickAction rightClickAction;
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly UIText text;
         readonly IColoredRect blinkingCursor;
         readonly Rect area;
@@ -140,7 +140,7 @@ namespace Ambermoon.UI
 
         public static event Action FocusChanged;
 
-        public TextInput(Game game, IRenderView renderView, Position position, int inputLength, byte displayLayer,
+        public TextInput(Game game, IGameRenderView renderView, Position position, int inputLength, byte displayLayer,
             ClickAction leftClickAction, ClickAction rightClickAction, TextAlign textAlign)
         {
             this.leftClickAction = leftClickAction;

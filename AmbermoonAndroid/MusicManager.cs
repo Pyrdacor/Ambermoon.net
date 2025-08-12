@@ -155,7 +155,7 @@ namespace AmbermoonAndroid
         private float volume = 1.0f;
         private bool enabled = true;
 
-		public bool Available => true;
+		public bool Available => false;//true;
 
         public bool Enabled
         {
@@ -191,6 +191,8 @@ namespace AmbermoonAndroid
 		public MusicManager(Context context)
         {
             this.context = context;
+
+			return;
 
 			using var stream = FileProvider.GetMusic();
 
@@ -285,6 +287,9 @@ namespace AmbermoonAndroid
 
 		private void Play(Song song)
         {
+			if (!Available)
+				return;
+
             if (Streaming && currentSong == song)
                 return;
 

@@ -34,7 +34,7 @@ namespace Ambermoon.UI
         const int FlagWidth = 16;
         const int FlagHeight = 16;
         const TextColor NormalTooltipColor = TextColor.White;
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly ITextureAtlas textureAtlas;
         readonly ITextureAtlas flagsTextureAtlas;
         readonly IConfiguration configuration;
@@ -85,7 +85,7 @@ namespace Ambermoon.UI
 
 		public event Action<int, IGameData, bool> Closed;
 
-        public VersionSelector(string ambermoonNetVersion, IRenderView renderView, TextureAtlasManager textureAtlasManager,
+        public VersionSelector(string ambermoonNetVersion, IGameRenderView renderView, TextureAtlasManager textureAtlasManager,
             List<GameVersion> gameVersions, Cursor cursor, int selectedVersion, SaveOption saveOption, IConfiguration configuration)
         {
             this.renderView = renderView;

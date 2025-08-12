@@ -33,7 +33,7 @@ namespace Ambermoon.Render
         readonly Game game;
         readonly Layout layout;
         readonly Battle battle;
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly Spell spell;
         readonly List<BattleAnimation> animations = new List<BattleAnimation>();
         IColoredRect colorOverlay;

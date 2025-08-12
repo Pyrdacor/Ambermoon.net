@@ -48,7 +48,7 @@ namespace Ambermoon.Render
         Map[] adjacentMaps = null;
         Tileset tileset = null;
         readonly IMapManager mapManager = null;
-        readonly IRenderView renderView = null;
+        readonly IGameRenderView renderView = null;
         ITextureAtlas textureAtlas = null;
         readonly List<IAnimatedSprite> backgroundTileSprites = new List<IAnimatedSprite>(NUM_TILES);
         readonly List<IAnimatedSprite> foregroundTileSprites = new List<IAnimatedSprite>(NUM_TILES);
@@ -66,7 +66,7 @@ namespace Ambermoon.Render
         public uint ScrollX { get; private set; } = 0;
         public uint ScrollY { get; private set; } = 0;
 
-        public RenderMap2D(Game game, Map map, IMapManager mapManager, IRenderView renderView,
+        public RenderMap2D(Game game, Map map, IMapManager mapManager, IGameRenderView renderView,
             uint initialScrollX = 0, uint initialScrollY = 0)
         {
             this.game = game;

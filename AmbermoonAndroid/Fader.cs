@@ -32,7 +32,7 @@ namespace AmbermoonAndroid
             Finished = null;
         }
 
-        public Fader(IRenderView renderView, byte startAlpha, byte endAlpha, byte displayLayer, bool destroyWhenFinished,
+        public Fader(IGameRenderView renderView, byte startAlpha, byte endAlpha, byte displayLayer, bool destroyWhenFinished,
             bool initialVisible = false, Color baseColor = null)
         {
             this.startAlpha = startAlpha;

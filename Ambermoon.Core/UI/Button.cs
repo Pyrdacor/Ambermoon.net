@@ -435,7 +435,7 @@ namespace Ambermoon.UI
         public const int ButtonReleaseTime = 250;
         public const int Width = 32;
         public const int Height = 17;
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         public Rect Area { get; }
         public bool ToggleButton { get; set; } = false;
         ButtonType buttonType = ButtonType.Empty;
@@ -456,7 +456,7 @@ namespace Ambermoon.UI
         readonly IRenderText tooltip = null;
         string tooltipText = null;
 
-        public Button(IRenderView renderView, Position position,
+        public Button(IGameRenderView renderView, Position position,
             TextureAtlasManager textureAtlasManager = null)
         {
             this.renderView = renderView;

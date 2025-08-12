@@ -38,7 +38,7 @@ namespace Ambermoon.UI
         public static readonly Size SlotSize = new Size(SlotWidth, SlotHeight);
         readonly Game game;
         readonly Layout layout;
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly IItemManager itemManager;
         readonly List<Position> slotPositions;
         readonly List<ItemSlot> slots;
@@ -120,7 +120,7 @@ namespace Ambermoon.UI
             }
         }
 
-        private ItemGrid(Game game, Layout layout, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
+        private ItemGrid(Game game, Layout layout, IGameRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
             List<ItemSlot> slots, bool allowExternalDrop, Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>, bool> pickupAction,
             int slotsPerPage, int slotsPerScroll, int numTotalSlots, Rect scrollbarArea = null, Size scrollbarSize = null,
             ScrollbarType? scrollbarType = null, bool showPrice = false, Func<uint> availableGoldProvider = null)
@@ -172,7 +172,7 @@ namespace Ambermoon.UI
 
         public void ClearItemClickEventHandlers() => ItemClicked = null;
 
-        public static ItemGrid CreateInventory(Game game, Layout layout, int partyMemberIndex, IRenderView renderView,
+        public static ItemGrid CreateInventory(Game game, Layout layout, int partyMemberIndex, IGameRenderView renderView,
             IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots,
             Action<ItemGrid, int, ItemSlot> equipHandler, Action<ItemGrid, int, ItemSlot> useHandler)
         {
@@ -203,7 +203,7 @@ namespace Ambermoon.UI
             return grid;
         }
 
-        public static ItemGrid CreateEquipment(Game game, Layout layout, int partyMemberIndex, IRenderView renderView,
+        public static ItemGrid CreateEquipment(Game game, Layout layout, int partyMemberIndex, IGameRenderView renderView,
             IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots, Func<ItemSlot, bool> equipChecker,
             Action<ItemGrid, int, ItemSlot> unequipHandler, Action<ItemGrid, int, ItemSlot> useHandler)
         {
@@ -346,7 +346,7 @@ namespace Ambermoon.UI
             return grid;
         }
 
-        public static ItemGrid Create(Game game, Layout layout, IRenderView renderView, IItemManager itemManager,
+        public static ItemGrid Create(Game game, Layout layout, IGameRenderView renderView, IItemManager itemManager,
             List<Position> slotPositions, List<ItemSlot> slots, bool allowExternalDrop, int slotsPerPage,
             int slotsPerScroll, int numTotalSlots, Rect scrollbarArea, Size scrollbarSize, ScrollbarType scrollbarType,
             bool showPrice = false, Func<uint>availableGoldProvider = null)

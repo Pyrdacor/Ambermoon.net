@@ -26,7 +26,7 @@ namespace Ambermoon.Render
 {
     public class Cursor
     {
-        readonly IRenderView renderView;
+        readonly IGameRenderView renderView;
         readonly ITextureAtlas textureAtlas;
         readonly ISprite sprite;
         readonly Dictionary<CursorType, Position> cursorHotspots = new();
@@ -38,7 +38,7 @@ namespace Ambermoon.Render
             set => sprite.Visible = value;
         }
 
-        public Cursor(IRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager textureAtlasManager = null)
+        public Cursor(IGameRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager textureAtlasManager = null)
         {
             this.renderView = renderView;
             textureAtlas = (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.Cursor);
@@ -120,7 +120,7 @@ namespace Ambermoon.Render
 
 	public class InvisibleCursor : Cursor
 	{
-		public InvisibleCursor(IRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager textureAtlasManager = null)
+		public InvisibleCursor(IGameRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager textureAtlasManager = null)
             : base(renderView, cursorHotspots, textureAtlasManager)
 		{
 		}

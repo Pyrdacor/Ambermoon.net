@@ -104,7 +104,7 @@ public class Texture : Render.Texture, IDisposable
 
     protected void Create(PixelFormat format, byte[] pixelData, int numMipMapLevels)
     {
-        if (format >= PixelFormat.RGB5A1)
+        if (format >= PixelFormat.RGB5A1 && pixelData.Length != 0)
         {
             pixelData = ConvertPixelData(pixelData, ref format);
         }
@@ -120,11 +120,15 @@ public class Texture : Render.Texture, IDisposable
 
         state.Gl.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
 
-        unsafe
+        if (pixelData.Length != 0)
         {
-            fixed (byte* ptr = &pixelData[0])
+            unsafe
             {
-                state.Gl.TexImage2D(GLEnum.Texture2D, 0, (int)ToOpenGLInternalFormat(format), (uint)Width, (uint)Height, 0, ToOpenGLPixelFormat(format), GLEnum.UnsignedByte, ptr);
+                fixed (byte* ptr = &pixelData[0])
+                {
+                    state.Gl.TexImage2D(GLEnum.Texture2D, 0, (int)ToOpenGLInternalFormat(format), (uint)Width, (uint)Height, 0, ToOpenGLPixelFormat(format), GLEnum.UnsignedByte, ptr);
+                }
+
             }
         }
 

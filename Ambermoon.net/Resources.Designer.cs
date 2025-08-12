@@ -32,5 +32,17 @@ namespace Ambermoon
         internal static byte[] Borders256 => (byte[])ResourceManager.GetObject("borders256", Culture);
 
         internal static byte[] Flags => (byte[])ResourceManager.GetObject("flags", Culture);
+
+        internal static byte[] LoadingBarLeft => (byte[])ResourceManager.GetObject("lbar_left", Culture);
+
+        internal static byte[] LoadingBarRight => (byte[])ResourceManager.GetObject("lbar_right", Culture);
+
+        internal static byte[] LoadingBarMid => (byte[])ResourceManager.GetObject("lbar_mid", Culture);
+
+        internal static byte[] LoadingBarRed => (byte[])ResourceManager.GetObject("lbar_red", Culture);
+
+        internal static byte[] LoadingBarYellow => (byte[])ResourceManager.GetObject("lbar_yellow", Culture);
+
+        internal static byte[] LoadingBarGreen => (byte[])ResourceManager.GetObject("lbar_green", Culture);
     }
 }

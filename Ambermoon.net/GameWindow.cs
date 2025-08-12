@@ -25,355 +25,379 @@ using WindowDimension = Silk.NET.Maths.Vector2D<int>;
 using Thread = System.Threading.Thread;
 using System.Globalization;
 
-namespace Ambermoon
+namespace Ambermoon;
+
+file class Logger : GameData.ILogger
 {
-    class GameWindow : IContextProvider
+    public void Append(string text) => Console.Write(text);
+    public void AppendLine(string text) => Console.WriteLine(text);
+}
+
+class GameWindow : IContextProvider
+{
+    string gameVersion = "Ambermoon.net";
+    Configuration configuration;
+    GameRenderView renderView;
+    IWindow window;
+    IKeyboard keyboard = null;
+    IMouse mouse = null;
+    ICursor cursor = null;
+    MainMenu mainMenu = null;
+    Func<Game> gameCreator = null;
+    MusicManager musicManager = null;
+    AudioOutput audioOutput = null;
+    IRenderText infoText = null;
+    IFontProvider fontProvider = null;
+    DateTime? initializeErrorTime = null;
+    List<Size> availableFullscreenModes = null;
+    bool trapMouse = false;
+    FloatPosition trappedMouseOffset = null;
+    FloatPosition trappedMouseLastPosition = null;
+    FantasyIntro fantasyIntro = null;
+    LogoPyrdacor logoPyrdacor = null;
+    AdvancedLogo advancedLogo = null;
+    LoadingBar loadingBar = null;
+    Action preloadAction = null;
+    Action switchRenderViewAction = null;
+    bool preloading = true;
+    Graphic[] additionalPalettes;
+    bool initialized = false;
+    Patcher patcher = null;
+    bool checkPatcher = true;
+    bool initialIntroEndedByClick = false;
+
+    public string Identifier { get; }
+    public IGLContext GLContext => window?.GLContext;
+    public int Width { get; private set; }
+    public int Height { get; private set; }
+    VersionSelector versionSelector = null;
+    Intro intro = null;
+    public Game Game { get; private set; }
+    public bool Fullscreen
     {
-        string gameVersion = "Ambermoon.net";
-        Configuration configuration;
-        RenderView renderView;
-        IWindow window;
-        IKeyboard keyboard = null;
-        IMouse mouse = null;
-        ICursor cursor = null;
-        MainMenu mainMenu = null;
-        Func<Game> gameCreator = null;
-        MusicManager musicManager = null;
-        AudioOutput audioOutput = null;
-        IRenderText infoText = null;
-        IFontProvider fontProvider = null;
-        DateTime? initializeErrorTime = null;
-        List<Size> availableFullscreenModes = null;
-        bool trapMouse = false;
-        FloatPosition trappedMouseOffset = null;
-        FloatPosition trappedMouseLastPosition = null;
-        FantasyIntro fantasyIntro = null;
-        LogoPyrdacor logoPyrdacor = null;
-        AdvancedLogo advancedLogo = null;
-        Graphic[] additionalPalettes;
-        bool initialized = false;
-        Patcher patcher = null;
-        bool checkPatcher = true;
-        bool initialIntroEndedByClick = false;
-
-        public string Identifier { get; }
-        public IGLContext GLContext => window?.GLContext;
-        public int Width { get; private set; }
-        public int Height { get; private set; }
-        VersionSelector versionSelector = null;
-        Intro intro = null;
-        public Game Game { get; private set; }
-        public bool Fullscreen
+        get => configuration.Fullscreen;
+        set
         {
-            get => configuration.Fullscreen;
-            set
-            {
-                configuration.Fullscreen = value;
-                window.WindowState = configuration.Fullscreen ? WindowState.Fullscreen : WindowState.Normal;
+            configuration.Fullscreen = value;
+            window.WindowState = configuration.Fullscreen ? WindowState.Fullscreen : WindowState.Normal;
 
-                if (cursor != null)
-                    cursor.CursorMode = CursorMode.Hidden;
-            }
-        }
-
-        public GameWindow(string id = "MainWindow")
-        {
-            Identifier = id;
-        }
-
-        void ChangeResolution(int? oldWidth) => ChangeResolution(oldWidth, configuration.Fullscreen, true);
-
-        void ChangeResolution(int? oldWidth, bool fullscreen, bool changed)
-        {
-            if (renderView == null || configuration == null)
-                return;
-
-            if (fullscreen)
-            {
-                var fullscreenSize = renderView.AvailableFullscreenModes.MaxBy(r => r.Width * r.Height);
-
-                if (fullscreenSize != null)
-                {
-                    configuration.FullscreenWidth = fullscreenSize.Width;
-                    configuration.FullscreenHeight = fullscreenSize.Height;
-                }
-            }
-            else
-            {
-                var possibleResolutions = ScreenResolutions.GetPossibleResolutions(renderView.MaxScreenSize);
-                int index = oldWidth == null ? 0 : changed
-                    ? (possibleResolutions.FindIndex(r => r.Width == oldWidth.Value) + 1) % possibleResolutions.Count
-                    : FindNearestResolution(oldWidth.Value);
-                var resolution = possibleResolutions[index];
-                configuration.Width = resolution.Width;
-                configuration.Height = resolution.Height;
-
-                int FindNearestResolution(int width)
-                {
-                    int index = possibleResolutions.FindIndex(r => r.Width == width);
-
-                    if (index != -1)
-                        return index;
-
-                    int minDiffIndex = 0;
-                    int minDiff = Math.Abs(possibleResolutions[0].Width - width);
-
-                    for (int i = 1; i < possibleResolutions.Count; ++i)
-                    {
-                        int diff = Math.Abs(possibleResolutions[i].Width - width);
-
-                        if (diff < minDiff)
-                        {
-                            minDiffIndex = i;
-                            minDiff = diff;
-                        }
-                    }
-
-                    return minDiffIndex;
-                }
-            }
-        }
-
-        static void RunTask(Action task)
-        {
-            Task.Factory.StartNew(task, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
-        }
-
-        void ChangeFullscreenMode(bool fullscreen)
-        {
-            FullscreenChangeRequest(fullscreen);
-            Fullscreen = fullscreen;
-            UpdateWindow(configuration);
-        }
-
-        void FullscreenChangeRequest(bool fullscreen)
-        {
-            ChangeResolution(configuration.Width, fullscreen, false);
-        }
-
-        void SetupInput(IInputContext inputContext)
-        {
-            keyboard = inputContext.Keyboards.FirstOrDefault(k => k.IsConnected);
-
-            if (keyboard != null)
-            {
-                keyboard.KeyDown += Keyboard_KeyDown;
-                keyboard.KeyUp += Keyboard_KeyUp;
-                keyboard.KeyChar += Keyboard_KeyChar;
-            }
-
-            mouse = inputContext.Mice.FirstOrDefault(m => m.IsConnected);
-
-            if (mouse != null)
-            {
-                cursor = mouse.Cursor;
+            if (cursor != null)
                 cursor.CursorMode = CursorMode.Hidden;
-                mouse.MouseDown += Mouse_MouseDown;
-                mouse.MouseUp += Mouse_MouseUp;
-                mouse.MouseMove += Mouse_MouseMove;
-                mouse.Scroll += Mouse_Scroll;
+        }
+    }
+
+    public GameWindow(string id = "MainWindow")
+    {
+        Identifier = id;
+    }
+
+    void ChangeResolution(int? oldWidth) => ChangeResolution(oldWidth, configuration.Fullscreen, true);
+
+    void ChangeResolution(int? oldWidth, bool fullscreen, bool changed)
+    {
+        if (renderView == null || configuration == null)
+            return;
+
+        if (fullscreen)
+        {
+            var fullscreenSize = renderView.AvailableFullscreenModes.MaxBy(r => r.Width * r.Height);
+
+            if (fullscreenSize != null)
+            {
+                configuration.FullscreenWidth = fullscreenSize.Width;
+                configuration.FullscreenHeight = fullscreenSize.Height;
             }
         }
-
-        static KeyModifiers GetModifiers(IKeyboard keyboard)
+        else
         {
-            var modifiers = KeyModifiers.None;
+            var possibleResolutions = ScreenResolutions.GetPossibleResolutions(renderView.MaxScreenSize);
+            int index = oldWidth == null ? 0 : changed
+                ? (possibleResolutions.FindIndex(r => r.Width == oldWidth.Value) + 1) % possibleResolutions.Count
+                : FindNearestResolution(oldWidth.Value);
+            var resolution = possibleResolutions[index];
+            configuration.Width = resolution.Width;
+            configuration.Height = resolution.Height;
 
-            if (keyboard.IsKeyPressed(Silk.NET.Input.Key.ShiftLeft) || keyboard.IsKeyPressed(Silk.NET.Input.Key.ShiftRight))
-                modifiers |= KeyModifiers.Shift;
-            if (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) || keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight))
-                modifiers |= KeyModifiers.Control;
-            if (keyboard.IsKeyPressed(Silk.NET.Input.Key.AltLeft) || keyboard.IsKeyPressed(Silk.NET.Input.Key.AltRight))
-                modifiers |= KeyModifiers.Alt;
+            int FindNearestResolution(int width)
+            {
+                int index = possibleResolutions.FindIndex(r => r.Width == width);
 
-            return modifiers;
+                if (index != -1)
+                    return index;
+
+                int minDiffIndex = 0;
+                int minDiff = Math.Abs(possibleResolutions[0].Width - width);
+
+                for (int i = 1; i < possibleResolutions.Count; ++i)
+                {
+                    int diff = Math.Abs(possibleResolutions[i].Width - width);
+
+                    if (diff < minDiff)
+                    {
+                        minDiffIndex = i;
+                        minDiff = diff;
+                    }
+                }
+
+                return minDiffIndex;
+            }
+        }
+    }
+
+    static void RunTask(Action task)
+    {
+        Task.Factory.StartNew(task, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+    }
+
+    void ChangeFullscreenMode(bool fullscreen)
+    {
+        FullscreenChangeRequest(fullscreen);
+        Fullscreen = fullscreen;
+        UpdateWindow(configuration);
+    }
+
+    void FullscreenChangeRequest(bool fullscreen)
+    {
+        ChangeResolution(configuration.Width, fullscreen, false);
+    }
+
+    void SetupInput(IInputContext inputContext)
+    {
+        keyboard = inputContext.Keyboards.FirstOrDefault(k => k.IsConnected);
+
+        if (keyboard != null)
+        {
+            keyboard.KeyDown += Keyboard_KeyDown;
+            keyboard.KeyUp += Keyboard_KeyUp;
+            keyboard.KeyChar += Keyboard_KeyChar;
         }
 
-        List<Key> QueryPressedKeys()
-            => keyboard?.SupportedKeys.Where(key => keyboard.IsKeyPressed(key)).Select(ConvertKey).ToList();
+        mouse = inputContext.Mice.FirstOrDefault(m => m.IsConnected);
 
-        static Key ConvertKey(Silk.NET.Input.Key key) => key switch
+        if (mouse != null)
         {
-            Silk.NET.Input.Key.Left => Key.Left,
-            Silk.NET.Input.Key.Right => Key.Right,
-            Silk.NET.Input.Key.Up => Key.Up,
-            Silk.NET.Input.Key.Down => Key.Down,
-            Silk.NET.Input.Key.Escape => Key.Escape,
-            Silk.NET.Input.Key.F1 => Key.F1,
-            Silk.NET.Input.Key.F2 => Key.F2,
-            Silk.NET.Input.Key.F3 => Key.F3,
-            Silk.NET.Input.Key.F4 => Key.F4,
-            Silk.NET.Input.Key.F5 => Key.F5,
-            Silk.NET.Input.Key.F6 => Key.F6,
-            Silk.NET.Input.Key.F7 => Key.F7,
-            Silk.NET.Input.Key.F8 => Key.F8,
-            Silk.NET.Input.Key.F9 => Key.F9,
-            Silk.NET.Input.Key.F10 => Key.F10,
-            Silk.NET.Input.Key.F11 => Key.F11,
-            Silk.NET.Input.Key.F12 => Key.F12,
-            Silk.NET.Input.Key.Enter => Key.Return,
-            Silk.NET.Input.Key.KeypadEnter => Key.Return,
-            Silk.NET.Input.Key.Delete => Key.Delete,
-            Silk.NET.Input.Key.Backspace => Key.Backspace,
-            Silk.NET.Input.Key.Tab => Key.Tab,
-            Silk.NET.Input.Key.Keypad0 => Key.Num0,
-            Silk.NET.Input.Key.Keypad1 => Key.Num1,
-            Silk.NET.Input.Key.Keypad2 => Key.Num2,
-            Silk.NET.Input.Key.Keypad3 => Key.Num3,
-            Silk.NET.Input.Key.Keypad4 => Key.Num4,
-            Silk.NET.Input.Key.Keypad5 => Key.Num5,
-            Silk.NET.Input.Key.Keypad6 => Key.Num6,
-            Silk.NET.Input.Key.Keypad7 => Key.Num7,
-            Silk.NET.Input.Key.Keypad8 => Key.Num8,
-            Silk.NET.Input.Key.Keypad9 => Key.Num9,
-            Silk.NET.Input.Key.PageUp => Key.PageUp,
-            Silk.NET.Input.Key.PageDown => Key.PageDown,
-            Silk.NET.Input.Key.Home => Key.Home,
-            Silk.NET.Input.Key.End => Key.End,
-            Silk.NET.Input.Key.Space => Key.Space,
-            Silk.NET.Input.Key.W => Key.W,
-            Silk.NET.Input.Key.A => Key.A,
-            Silk.NET.Input.Key.S => Key.S,
-            Silk.NET.Input.Key.D => Key.D,
-            Silk.NET.Input.Key.Q => Key.Q,
-            Silk.NET.Input.Key.E => Key.E,
-            Silk.NET.Input.Key.M => Key.M,
-            Silk.NET.Input.Key.Number0 => Key.Number0,
-            Silk.NET.Input.Key.Number1 => Key.Number1,
-            Silk.NET.Input.Key.Number2 => Key.Number2,
-            Silk.NET.Input.Key.Number3 => Key.Number3,
-            Silk.NET.Input.Key.Number4 => Key.Number4,
-            Silk.NET.Input.Key.Number5 => Key.Number5,
-            Silk.NET.Input.Key.Number6 => Key.Number6,
-            Silk.NET.Input.Key.Number7 => Key.Number7,
-            Silk.NET.Input.Key.Number8 => Key.Number8,
-            Silk.NET.Input.Key.Number9 => Key.Number9,
-            _ => Key.Invalid,
-        };
+            cursor = mouse.Cursor;
+            cursor.CursorMode = CursorMode.Hidden;
+            mouse.MouseDown += Mouse_MouseDown;
+            mouse.MouseUp += Mouse_MouseUp;
+            mouse.MouseMove += Mouse_MouseMove;
+            mouse.Scroll += Mouse_Scroll;
+        }
+    }
 
-        void Keyboard_KeyChar(IKeyboard keyboard, char keyChar)
+    static KeyModifiers GetModifiers(IKeyboard keyboard)
+    {
+        var modifiers = KeyModifiers.None;
+
+        if (keyboard.IsKeyPressed(Silk.NET.Input.Key.ShiftLeft) || keyboard.IsKeyPressed(Silk.NET.Input.Key.ShiftRight))
+            modifiers |= KeyModifiers.Shift;
+        if (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) || keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight))
+            modifiers |= KeyModifiers.Control;
+        if (keyboard.IsKeyPressed(Silk.NET.Input.Key.AltLeft) || keyboard.IsKeyPressed(Silk.NET.Input.Key.AltRight))
+            modifiers |= KeyModifiers.Alt;
+
+        return modifiers;
+    }
+
+    List<Key> QueryPressedKeys()
+        => keyboard?.SupportedKeys.Where(key => keyboard.IsKeyPressed(key)).Select(ConvertKey).ToList();
+
+    static Key ConvertKey(Silk.NET.Input.Key key) => key switch
+    {
+        Silk.NET.Input.Key.Left => Key.Left,
+        Silk.NET.Input.Key.Right => Key.Right,
+        Silk.NET.Input.Key.Up => Key.Up,
+        Silk.NET.Input.Key.Down => Key.Down,
+        Silk.NET.Input.Key.Escape => Key.Escape,
+        Silk.NET.Input.Key.F1 => Key.F1,
+        Silk.NET.Input.Key.F2 => Key.F2,
+        Silk.NET.Input.Key.F3 => Key.F3,
+        Silk.NET.Input.Key.F4 => Key.F4,
+        Silk.NET.Input.Key.F5 => Key.F5,
+        Silk.NET.Input.Key.F6 => Key.F6,
+        Silk.NET.Input.Key.F7 => Key.F7,
+        Silk.NET.Input.Key.F8 => Key.F8,
+        Silk.NET.Input.Key.F9 => Key.F9,
+        Silk.NET.Input.Key.F10 => Key.F10,
+        Silk.NET.Input.Key.F11 => Key.F11,
+        Silk.NET.Input.Key.F12 => Key.F12,
+        Silk.NET.Input.Key.Enter => Key.Return,
+        Silk.NET.Input.Key.KeypadEnter => Key.Return,
+        Silk.NET.Input.Key.Delete => Key.Delete,
+        Silk.NET.Input.Key.Backspace => Key.Backspace,
+        Silk.NET.Input.Key.Tab => Key.Tab,
+        Silk.NET.Input.Key.Keypad0 => Key.Num0,
+        Silk.NET.Input.Key.Keypad1 => Key.Num1,
+        Silk.NET.Input.Key.Keypad2 => Key.Num2,
+        Silk.NET.Input.Key.Keypad3 => Key.Num3,
+        Silk.NET.Input.Key.Keypad4 => Key.Num4,
+        Silk.NET.Input.Key.Keypad5 => Key.Num5,
+        Silk.NET.Input.Key.Keypad6 => Key.Num6,
+        Silk.NET.Input.Key.Keypad7 => Key.Num7,
+        Silk.NET.Input.Key.Keypad8 => Key.Num8,
+        Silk.NET.Input.Key.Keypad9 => Key.Num9,
+        Silk.NET.Input.Key.PageUp => Key.PageUp,
+        Silk.NET.Input.Key.PageDown => Key.PageDown,
+        Silk.NET.Input.Key.Home => Key.Home,
+        Silk.NET.Input.Key.End => Key.End,
+        Silk.NET.Input.Key.Space => Key.Space,
+        Silk.NET.Input.Key.W => Key.W,
+        Silk.NET.Input.Key.A => Key.A,
+        Silk.NET.Input.Key.S => Key.S,
+        Silk.NET.Input.Key.D => Key.D,
+        Silk.NET.Input.Key.Q => Key.Q,
+        Silk.NET.Input.Key.E => Key.E,
+        Silk.NET.Input.Key.M => Key.M,
+        Silk.NET.Input.Key.Number0 => Key.Number0,
+        Silk.NET.Input.Key.Number1 => Key.Number1,
+        Silk.NET.Input.Key.Number2 => Key.Number2,
+        Silk.NET.Input.Key.Number3 => Key.Number3,
+        Silk.NET.Input.Key.Number4 => Key.Number4,
+        Silk.NET.Input.Key.Number5 => Key.Number5,
+        Silk.NET.Input.Key.Number6 => Key.Number6,
+        Silk.NET.Input.Key.Number7 => Key.Number7,
+        Silk.NET.Input.Key.Number8 => Key.Number8,
+        Silk.NET.Input.Key.Number9 => Key.Number9,
+        _ => Key.Invalid,
+    };
+
+    void Keyboard_KeyChar(IKeyboard keyboard, char keyChar)
+    {
+        if (loadingBar != null)
+            return;
+        else if (versionSelector != null)
+            versionSelector.OnKeyChar(keyChar);
+        else
+            Game?.OnKeyChar(keyChar);
+    }
+
+    void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
+    {
+        if (loadingBar != null)
+            return;
+
+        if (key == Silk.NET.Input.Key.C && GetModifiers(keyboard) == (KeyModifiers.Control | KeyModifiers.Shift))
         {
-            if (versionSelector != null)
-                versionSelector.OnKeyChar(keyChar);
+            var monitor = Silk.NET.Windowing.Window.GetWindowPlatform(false)?.GetMainMonitor() ?? null;
+            window.Center(monitor);
+        }
+        else if (key == Silk.NET.Input.Key.F11)
+        {
+            Game?.PreFullscreenChanged();
+
+            // This can happen while a mouse trap is active in-game. Otherwise a fullscreen
+            // change can only happen from the options menu where mouse trapping can't be active.
+            ChangeFullscreenMode(!Fullscreen);
+
+            Game?.PostFullscreenChanged();
+        }
+        else if (key == Silk.NET.Input.Key.F7)
+        {
+            if (Game != null && !Game.BattleRoundActive)
+            {
+                if (GetModifiers(keyboard) == KeyModifiers.None)
+                    configuration.BattleSpeed = configuration.BattleSpeed >= 100 ? 0 : configuration.BattleSpeed + 10;
+                else
+                    configuration.BattleSpeed = configuration.BattleSpeed <= 0 ? 100 : configuration.BattleSpeed - 10;
+
+                Game?.ExternalBattleSpeedChanged();
+            }
+        }
+        else if (key == Silk.NET.Input.Key.F8)
+        {
+            if (GetModifiers(keyboard) == KeyModifiers.None)
+                configuration.GraphicFilter = (GraphicFilter)(((int)configuration.GraphicFilter + 1) % EnumHelper.GetValues<GraphicFilter>().Length);
             else
-                Game?.OnKeyChar(keyChar);
+                configuration.GraphicFilter = (GraphicFilter)(((int)configuration.GraphicFilter - 1 + EnumHelper.GetValues<GraphicFilter>().Length) % EnumHelper.GetValues<GraphicFilter>().Length);
+
+            if (!renderView.TryUseFrameBuffer())
+                configuration.GraphicFilter = GraphicFilter.None;
+
+            Game?.ExternalGraphicFilterChanged();
         }
-
-        void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
+        else if (key == Silk.NET.Input.Key.F9)
         {
-            if (key == Silk.NET.Input.Key.C && GetModifiers(keyboard) == (KeyModifiers.Control | KeyModifiers.Shift))
-            {
-                var monitor = Silk.NET.Windowing.Window.GetWindowPlatform(false)?.GetMainMonitor() ?? null;
-                window.Center(monitor);
-            }
-            else if (key == Silk.NET.Input.Key.F11)
-            {
-                Game?.PreFullscreenChanged();
+            if (GetModifiers(keyboard) == KeyModifiers.None)
+                configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)configuration.GraphicFilterOverlay + 1) % EnumHelper.GetValues<GraphicFilterOverlay>().Length);
+            else
+                configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)configuration.GraphicFilterOverlay - 1 + EnumHelper.GetValues<GraphicFilterOverlay>().Length) % EnumHelper.GetValues<GraphicFilterOverlay>().Length);
 
-                // This can happen while a mouse trap is active in-game. Otherwise a fullscreen
-                // change can only happen from the options menu where mouse trapping can't be active.
-                ChangeFullscreenMode(!Fullscreen);
+            if (!renderView.TryUseFrameBuffer())
+                configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
 
-                Game?.PostFullscreenChanged();
-            }
-            else if (key == Silk.NET.Input.Key.F7)
+            Game?.ExternalGraphicFilterOverlayChanged();
+        }
+        else if (key == Silk.NET.Input.Key.F10)
+        {
+            if (GetModifiers(keyboard) == KeyModifiers.None)
+                configuration.Effects = (Effects)(((int)configuration.Effects + 1) % EnumHelper.GetValues<Effects>().Length);
+            else
+                configuration.Effects = (Effects)(((int)configuration.Effects - 1 + EnumHelper.GetValues<Effects>().Length) % EnumHelper.GetValues<Effects>().Length);
+
+            if (!renderView.TryUseEffects())
+                configuration.Effects = Effects.None;
+
+            Game?.ExternalEffectsChanged();
+        }
+        else if (key == Silk.NET.Input.Key.M && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
+             keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))
+        {
+            configuration.Music = !configuration.Music;
+            audioOutput.Enabled = configuration.Music;
+            if (audioOutput.Available && audioOutput.Enabled)
+                Game?.ContinueMusic();
+            Game?.ExternalMusicChanged();
+        }
+        else if (key == Silk.NET.Input.Key.Comma && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
+             keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))
+        {
+            if (configuration.Volume >= 10)
             {
-                if (Game != null && !Game.BattleRoundActive)
+                configuration.Volume -= 10;
+                audioOutput.Volume = configuration.Volume / 100.0f;
+                Game?.ExternalVolumeChanged();
+            }
+            else if (configuration.Volume > 0)
+            {
+                configuration.Volume = 0;
+                audioOutput.Volume = configuration.Volume / 100.0f;
+                Game?.ExternalVolumeChanged();
+            }
+        }
+        else if (key == Silk.NET.Input.Key.Period && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
+             keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))
+        {
+            if (configuration.Volume <= 90)
+            {
+                configuration.Volume += 10;
+                audioOutput.Volume = configuration.Volume / 100.0f;
+                Game?.ExternalVolumeChanged();
+            }
+            else if (configuration.Volume < 100)
+            {
+                configuration.Volume = 100;
+                audioOutput.Volume = configuration.Volume / 100.0f;
+                Game?.ExternalVolumeChanged();
+            }
+        }
+        else if (renderView != null && (key == Silk.NET.Input.Key.PrintScreen ||
+            (key == Silk.NET.Input.Key.P && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
+             keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))))
+        {
+            renderView.TakeScreenshot((width, height, imageData) =>
+            {
+                string directory = Path.Combine(Configuration.BundleDirectory, "Screenshots");
+                string path;
+                static string GetFileName() => "Screenshot_" + DateTime.Now.ToString("dd-MM-yyyy.HH-mm-ss");
+                try
                 {
-                    if (GetModifiers(keyboard) == KeyModifiers.None)
-                        configuration.BattleSpeed = configuration.BattleSpeed >= 100 ? 0 : configuration.BattleSpeed + 10;
-                    else
-                        configuration.BattleSpeed = configuration.BattleSpeed <= 0 ? 100 : configuration.BattleSpeed - 10;
-
-                    Game?.ExternalBattleSpeedChanged();
+                    Directory.CreateDirectory(directory);
+                    path = Path.Combine(directory, GetFileName());
                 }
-            }
-            else if (key == Silk.NET.Input.Key.F8)
-            {
-                if (GetModifiers(keyboard) == KeyModifiers.None)
-                    configuration.GraphicFilter = (GraphicFilter)(((int)configuration.GraphicFilter + 1) % EnumHelper.GetValues<GraphicFilter>().Length);
-                else
-                    configuration.GraphicFilter = (GraphicFilter)(((int)configuration.GraphicFilter - 1 + EnumHelper.GetValues<GraphicFilter>().Length) % EnumHelper.GetValues<GraphicFilter>().Length);
-
-                if (!renderView.TryUseFrameBuffer())
-                    configuration.GraphicFilter = GraphicFilter.None;
-
-                Game?.ExternalGraphicFilterChanged();
-            }
-            else if (key == Silk.NET.Input.Key.F9)
-            {
-                if (GetModifiers(keyboard) == KeyModifiers.None)
-                    configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)configuration.GraphicFilterOverlay + 1) % EnumHelper.GetValues<GraphicFilterOverlay>().Length);
-                else
-                    configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)configuration.GraphicFilterOverlay - 1 + EnumHelper.GetValues<GraphicFilterOverlay>().Length) % EnumHelper.GetValues<GraphicFilterOverlay>().Length);
-
-                if (!renderView.TryUseFrameBuffer())
-                    configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
-
-                Game?.ExternalGraphicFilterOverlayChanged();
-            }
-            else if (key == Silk.NET.Input.Key.F10)
-            {
-                if (GetModifiers(keyboard) == KeyModifiers.None)
-                    configuration.Effects = (Effects)(((int)configuration.Effects + 1) % EnumHelper.GetValues<Effects>().Length);
-                else
-                    configuration.Effects = (Effects)(((int)configuration.Effects - 1 + EnumHelper.GetValues<Effects>().Length) % EnumHelper.GetValues<Effects>().Length);
-
-                if (!renderView.TryUseEffects())
-                    configuration.Effects = Effects.None;
-
-                Game?.ExternalEffectsChanged();
-            }
-            else if (key == Silk.NET.Input.Key.M && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
-                 keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))
-            {
-                configuration.Music = !configuration.Music;
-                audioOutput.Enabled = configuration.Music;
-                if (audioOutput.Available && audioOutput.Enabled)
-                    Game?.ContinueMusic();
-                Game?.ExternalMusicChanged();
-            }
-            else if (key == Silk.NET.Input.Key.Comma && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
-                 keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))
-            {
-                if (configuration.Volume >= 10)
+                catch
                 {
-                    configuration.Volume -= 10;
-                    audioOutput.Volume = configuration.Volume / 100.0f;
-                    Game?.ExternalVolumeChanged();
-                }
-                else if (configuration.Volume > 0)
-                {
-                    configuration.Volume = 0;
-                    audioOutput.Volume = configuration.Volume / 100.0f;
-                    Game?.ExternalVolumeChanged();
-                }
-            }
-            else if (key == Silk.NET.Input.Key.Period && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
-                 keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))
-            {
-                if (configuration.Volume <= 90)
-                {
-                    configuration.Volume += 10;
-                    audioOutput.Volume = configuration.Volume / 100.0f;
-                    Game?.ExternalVolumeChanged();
-                }
-                else if (configuration.Volume < 100)
-                {
-                    configuration.Volume = 100;
-                    audioOutput.Volume = configuration.Volume / 100.0f;
-                    Game?.ExternalVolumeChanged();
-                }
-            }
-            else if (renderView != null && (key == Silk.NET.Input.Key.PrintScreen ||
-                (key == Silk.NET.Input.Key.P && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
-                 keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))))
-            {
-                renderView.TakeScreenshot(imageData =>
-                {
-                    string directory = Path.Combine(Configuration.BundleDirectory, "Screenshots");
-                    string path;
-                    static string GetFileName() => "Screenshot_" + DateTime.Now.ToString("dd-MM-yyyy.HH-mm-ss");
+                    directory = Path.Combine(Configuration.FallbackConfigDirectory, "Screenshots");
+
                     try
                     {
                         Directory.CreateDirectory(directory);
@@ -381,100 +405,22 @@ namespace Ambermoon
                     }
                     catch
                     {
-                        directory = Path.Combine(Configuration.FallbackConfigDirectory, "Screenshots");
-
-                        try
-                        {
-                            Directory.CreateDirectory(directory);
-                            path = Path.Combine(directory, GetFileName());
-                        }
-                        catch
-                        {
-                            path = Path.Combine(Path.GetTempPath(), GetFileName());
-                        }
+                        path = Path.Combine(Path.GetTempPath(), GetFileName());
                     }
-                    try
-                    {
-                        WritePNG(path, imageData, renderView.FramebufferSize, false, true);
-                    }
-                    catch
-                    {
-                        Console.WriteLine($"Failed to create screenshot at '{path}'.");
-                    }
-                });
-            }
-            else
-            {
-                if (logoPyrdacor != null)
-                {
-                    logoPyrdacor?.Cleanup();
-                    logoPyrdacor = null;
                 }
-                else if (fantasyIntro != null)
+                try
                 {
-                    fantasyIntro.Abort();
+                    WritePNG(path, imageData, new(width, height), false, true);
                 }
-                else if (advancedLogo != null)
+                catch
                 {
-                    advancedLogo?.Cleanup();
-                    advancedLogo = null;
+                    Console.WriteLine($"Failed to create screenshot at '{path}'.");
                 }
-                else if (versionSelector != null)
-                    versionSelector.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
-                else if (intro != null && key == Silk.NET.Input.Key.Escape)
-                    intro.Click();
-                else if (mainMenu != null)
-                    mainMenu.OnKeyDown(ConvertKey(key));
-                else
-                    Game?.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
-            }
+            });
         }
-
-        void Keyboard_KeyUp(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
+        else
         {
-            if (versionSelector != null)
-                versionSelector.OnKeyUp(ConvertKey(key), GetModifiers(keyboard));
-            else if (Game != null)
-                Game.OnKeyUp(ConvertKey(key), GetModifiers(keyboard));
-        }
-
-        static MouseButtons GetMouseButtons(IMouse mouse)
-        {
-            var buttons = MouseButtons.None;
-
-            if (mouse.IsButtonPressed(MouseButton.Left))
-                buttons |= MouseButtons.Left;
-            if (mouse.IsButtonPressed(MouseButton.Right))
-                buttons |= MouseButtons.Right;
-            if (mouse.IsButtonPressed(MouseButton.Middle))
-                buttons |= MouseButtons.Middle;
-
-            return buttons;
-        }
-
-        static MouseButtons ConvertMouseButtons(MouseButton mouseButton)
-        {
-            return mouseButton switch
-            {
-                MouseButton.Left => MouseButtons.Left,
-                MouseButton.Right => MouseButtons.Right,
-                MouseButton.Middle => MouseButtons.Middle,
-                _ => MouseButtons.None
-            };
-        }
-
-        static Position ConvertMousePosition(MousePosition position)
-        {
-            return new Position(Util.Round(position.X), Util.Round(position.Y));
-        }
-
-        void Mouse_MouseDown(IMouse mouse, MouseButton button)
-        {
-            var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
-
-            if (patcher != null)
-                patcher.OnMouseDown(ConvertMousePosition(position), ConvertMouseButtons(button));
-            else if (logoPyrdacor != null)
+            if (logoPyrdacor != null)
             {
                 logoPyrdacor?.Cleanup();
                 logoPyrdacor = null;
@@ -487,335 +433,416 @@ namespace Ambermoon
             {
                 advancedLogo?.Cleanup();
                 advancedLogo = null;
+                renderView.ShowImageLayerOnly = false;
             }
             else if (versionSelector != null)
-                versionSelector.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
-            else if (mainMenu != null)
-                mainMenu.OnMouseDown(ConvertMousePosition(position), ConvertMouseButtons(button));
-            else if (intro != null)
+                versionSelector.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
+            else if (intro != null && key == Silk.NET.Input.Key.Escape)
                 intro.Click();
+            else if (mainMenu != null)
+                mainMenu.OnKeyDown(ConvertKey(key));
             else
-                Game?.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse), GetModifiers(keyboard));
+                Game?.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
+        }
+    }
+
+    void Keyboard_KeyUp(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
+    {
+        if (loadingBar != null)
+            return;
+        else if (versionSelector != null)
+            versionSelector.OnKeyUp(ConvertKey(key), GetModifiers(keyboard));
+        else if (Game != null)
+            Game.OnKeyUp(ConvertKey(key), GetModifiers(keyboard));
+    }
+
+    static MouseButtons GetMouseButtons(IMouse mouse)
+    {
+        var buttons = MouseButtons.None;
+
+        if (mouse.IsButtonPressed(MouseButton.Left))
+            buttons |= MouseButtons.Left;
+        if (mouse.IsButtonPressed(MouseButton.Right))
+            buttons |= MouseButtons.Right;
+        if (mouse.IsButtonPressed(MouseButton.Middle))
+            buttons |= MouseButtons.Middle;
+
+        return buttons;
+    }
+
+    static MouseButtons ConvertMouseButtons(MouseButton mouseButton)
+    {
+        return mouseButton switch
+        {
+            MouseButton.Left => MouseButtons.Left,
+            MouseButton.Right => MouseButtons.Right,
+            MouseButton.Middle => MouseButtons.Middle,
+            _ => MouseButtons.None
+        };
+    }
+
+    static Position ConvertMousePosition(MousePosition position)
+    {
+        return new Position(Util.Round(position.X), Util.Round(position.Y));
+    }
+
+    void Mouse_MouseDown(IMouse mouse, MouseButton button)
+    {
+        var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
+
+        if (patcher != null)
+            patcher.OnMouseDown(ConvertMousePosition(position), ConvertMouseButtons(button));
+        else if (loadingBar != null)
+            return;
+        else if (logoPyrdacor != null)
+        {
+            logoPyrdacor?.Cleanup();
+            logoPyrdacor = null;
+        }
+        else if (fantasyIntro != null)
+        {
+            fantasyIntro.Abort();
+        }
+        else if (advancedLogo != null)
+        {
+            advancedLogo?.Cleanup();
+            advancedLogo = null;
+            renderView.ShowImageLayerOnly = false;
+        }
+        else if (versionSelector != null)
+            versionSelector.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
+        else if (mainMenu != null)
+            mainMenu.OnMouseDown(ConvertMousePosition(position), ConvertMouseButtons(button));
+        else if (intro != null)
+            intro.Click();
+        else
+            Game?.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse), GetModifiers(keyboard));
+    }
+
+    void Mouse_MouseUp(IMouse mouse, MouseButton button)
+    {
+        var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
+
+        if (patcher != null)
+            patcher.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
+        else if (loadingBar != null)
+            return;
+        else if (versionSelector != null)
+            versionSelector.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
+        else if (mainMenu != null)
+            mainMenu.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
+        else if (Game != null)
+            Game.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
+    }
+
+    void Mouse_MouseMove(IMouse mouse, MousePosition position)
+    {
+        if (trapMouse && mouse != null)
+        {
+            mouse.MouseMove -= Mouse_MouseMove;
+            trappedMouseOffset.X += position.X - trappedMouseLastPosition.X;
+            trappedMouseOffset.Y += position.Y - trappedMouseLastPosition.Y;
+            mouse.Position = new MousePosition(window.Size.X / 2, window.Size.Y / 2);
+            position = new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y);
+            mouse.MouseMove += Mouse_MouseMove;
         }
 
-        void Mouse_MouseUp(IMouse mouse, MouseButton button)
-        {
-            var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
+        if (patcher != null)
+            patcher.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
+        else if (loadingBar != null)
+            return;
+        else if (versionSelector != null)
+            versionSelector.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
+        else if (mainMenu != null)
+            mainMenu.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
+        else if (Game != null)
+            Game.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
+    }
 
-            if (patcher != null)
-                patcher.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
-            else if (versionSelector != null)
-                versionSelector.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
-            else if (mainMenu != null)
-                mainMenu.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
-            else if (Game != null)
-                Game.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
+    void Mouse_Scroll(IMouse mouse, ScrollWheel wheelDelta)
+    {
+        var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
+
+        if (loadingBar != null)
+            return;
+        else if (versionSelector != null)
+            versionSelector.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
+        else if (Game != null)
+            Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
+    }
+
+    static void WritePNG(string filename, byte[] rgbData, Size imageSize, bool alpha, bool upsideDown)
+    {
+        if (File.Exists(filename))
+            filename += Guid.NewGuid().ToString();
+
+        filename += ".png";
+
+        int bpp = alpha ? 4 : 3;
+        var writer = new DataWriter();
+
+        void WriteChunk(string name, Action<DataWriter> dataWriter)
+        {
+            var internalDataWriter = new DataWriter();
+            dataWriter?.Invoke(internalDataWriter);
+            var data = internalDataWriter.ToArray();
+
+            writer.Write((uint)data.Length);
+            writer.WriteWithoutLength(name);
+            writer.Write(data);
+            var crc = new PngCrc();
+            uint headerCrc = crc.Calculate(new byte[] { (byte)name[0], (byte)name[1], (byte)name[2], (byte)name[3] });
+            writer.Write(crc.Calculate(headerCrc, data));
         }
 
-        void Mouse_MouseMove(IMouse mouse, MousePosition position)
+        // Header
+        writer.Write(0x89);
+        writer.Write(0x50);
+        writer.Write(0x4E);
+        writer.Write(0x47);
+        writer.Write(0x0D);
+        writer.Write(0x0A);
+        writer.Write(0x1A);
+        writer.Write(0x0A);
+
+        // IHDR chunk
+        WriteChunk("IHDR", writer =>
         {
-            if (trapMouse && mouse != null)
+            writer.Write((uint)imageSize.Width);
+            writer.Write((uint)imageSize.Height);
+            writer.Write(8); // 8 bits per color
+            writer.Write((byte)(alpha ? 6 : 2)); // With alpha (RGBA) or color only (RGB)
+            writer.Write(0); // Deflate compression
+            writer.Write(0); // Default filtering
+            writer.Write(0); // No interlace
+        });
+
+        WriteChunk("IDAT", writer =>
+        {
+            byte[] dataWithFilterBytes = new byte[rgbData.Length + imageSize.Height];
+            for (int y = 0; y < imageSize.Height; ++y)
             {
-                mouse.MouseMove -= Mouse_MouseMove;
-                trappedMouseOffset.X += position.X - trappedMouseLastPosition.X;
-                trappedMouseOffset.Y += position.Y - trappedMouseLastPosition.Y;
-                mouse.Position = new MousePosition(window.Size.X / 2, window.Size.Y / 2);
-                position = new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y);
-                mouse.MouseMove += Mouse_MouseMove;
+                int i = upsideDown ? imageSize.Height - y - 1 : y;
+                Buffer.BlockCopy(rgbData, y * imageSize.Width * bpp, dataWithFilterBytes, 1 + i + i * imageSize.Width * bpp, imageSize.Width * bpp);
+            }
+            // Note: Data is initialized with 0 bytes so the filter bytes are already 0.
+            using var uncompressedStream = new MemoryStream(dataWithFilterBytes);
+            using var compressedStream = new MemoryStream();
+            var compressStream = new System.IO.Compression.DeflateStream(compressedStream, System.IO.Compression.CompressionLevel.Optimal, true);
+            uncompressedStream.CopyTo(compressStream);
+            compressStream.Close();
+
+            // Zlib header
+            writer.Write(0x78); // 32k window deflate method
+            writer.Write(0xDA); // Best compression, no dict and header is multiple of 31
+
+            uint Adler32()
+            {
+                uint s1 = 1;
+                uint s2 = 0;
+
+                for (int n = 0; n < dataWithFilterBytes.Length; ++n)
+                {
+                    s1 = (s1 + dataWithFilterBytes[n]) % 65521;
+                    s2 = (s2 + s1) % 65521;
+                }
+
+                return (s2 << 16) | s1;
             }
 
-            if (patcher != null)
-                patcher.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
-            else if (versionSelector != null)
-                versionSelector.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
-            else if (mainMenu != null)
-                mainMenu.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
-            else if (Game != null)
-                Game.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
+            // Compressed data
+            writer.Write(compressedStream.ToArray());
+
+            // Checksum
+            writer.Write(Adler32());
+        });
+
+        // IEND chunk
+        WriteChunk("IEND", null);
+
+        using var file = File.Create(filename);
+        writer.CopyTo(file);
+    }
+
+    void ShowMainMenu(IGameRenderView renderView, Render.Cursor cursor, bool fromIntro, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
+        Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage,
+        Action showIntroAction)
+    {
+        renderView.PaletteFading = null; // Reset palette fading
+
+        void PlayMusic(Song song)
+        {
+            if (configuration.Music)
+                musicManager.GetSong(song)?.Play(audioOutput);
+
+            if (infoText != null)
+                infoText.Visible = false;
         }
 
-        void Mouse_Scroll(IMouse mouse, ScrollWheel wheelDelta)
+        // Fast clicking might create the main menu while the intro is also created and so both would be active.
+        // This will ensure that the intro is destroyed if the main menu opens.
+        intro?.Destroy();
+        intro = null;
+        mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
+            GetText(gameLanguage, 0), GetText(gameLanguage, 1), PlayMusic, fromIntro);
+        mainMenu.Closed += closeAction =>
         {
-            var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
-
-            if (versionSelector != null)
-                versionSelector.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
-            else if (Game != null)
-                Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
-        }
-
-        static void WritePNG(string filename, byte[] rgbData, Size imageSize, bool alpha, bool upsideDown)
-        {
-            if (File.Exists(filename))
-                filename += Guid.NewGuid().ToString();
-
-            filename += ".png";
-
-            int bpp = alpha ? 4 : 3;
-            var writer = new DataWriter();
-
-            void WriteChunk(string name, Action<DataWriter> dataWriter)
+            switch (closeAction)
             {
-                var internalDataWriter = new DataWriter();
-                dataWriter?.Invoke(internalDataWriter);
-                var data = internalDataWriter.ToArray();
-
-                writer.Write((uint)data.Length);
-                writer.WriteWithoutLength(name);
-                writer.Write(data);
-                var crc = new PngCrc();
-                uint headerCrc = crc.Calculate(new byte[] { (byte)name[0], (byte)name[1], (byte)name[2], (byte)name[3] });
-                writer.Write(crc.Calculate(headerCrc, data));
+                case MainMenu.CloseAction.NewGame:
+                    startGameAction?.Invoke(false);
+                    break;
+                case MainMenu.CloseAction.Continue:
+                    // Someone who has savegames won't need any introduction, so set this to false.
+                    configuration.FirstStart = false;
+                    startGameAction?.Invoke(true);
+                    break;
+                case MainMenu.CloseAction.Intro:
+                    showIntroAction?.Invoke();
+                    break;
+                case MainMenu.CloseAction.Exit:
+                    mainMenu?.Destroy();
+                    mainMenu = null;
+                    window.Close();
+                    break;
+                default:
+                    throw new AmbermoonException(ExceptionScope.Application, "Invalid main menu close action.");
             }
+        };
+    }
 
-            // Header
-            writer.Write(0x89);
-            writer.Write(0x50);
-            writer.Write(0x4E);
-            writer.Write(0x47);
-            writer.Write(0x0D);
-            writer.Write(0x0A);
-            writer.Write(0x1A);
-            writer.Write(0x0A);
-
-            // IHDR chunk
-            WriteChunk("IHDR", writer =>
+    static readonly Dictionary<GameLanguage, string[]> LoadingTexts = new Dictionary<GameLanguage, string[]>
+    {
+        { GameLanguage.German, new string[]
             {
-                writer.Write((uint)imageSize.Width);
-                writer.Write((uint)imageSize.Height);
-                writer.Write(8); // 8 bits per color
-                writer.Write((byte)(alpha ? 6 : 2)); // With alpha (RGBA) or color only (RGB)
-                writer.Write(0); // Deflate compression
-                writer.Write(0); // Default filtering
-                writer.Write(0); // No interlace
+                "Starte Spiel ...",
+                "Bereite neues Spiel vor ..."
+            }
+        },
+        { GameLanguage.English, new string[]
+            {
+                "Starting game ...",
+                "Preparing new game ..."
+            }
+        },
+        { GameLanguage.French, new string[]
+            {
+                "Démarrage du jeu ...",
+                "Démarrage un nouveau jeu ..."
+            }
+        },
+        { GameLanguage.Polish, new string[]
+            {
+                "Rozpoczynanie gry ...",
+                "Przygotowanie nowej gry ..."
+            }
+        },
+        { GameLanguage.Czech, new string[]
+            {
+                "Zahájení hry ...",
+                "Příprava nové hry ..."
+            }
+        }
+    };
+
+    string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
+
+    void StartGame(IGameData gameData, string savePath, GameLanguage gameLanguage, Features features, BinaryReader advancedDiffsReader)
+    {
+        // Load fantasy intro data
+        var fantasyIntroData = gameData.FantasyIntroData;
+
+        // Load intro data
+        var introData = gameData.IntroData;
+        var introFont = new Font(introData.Glyphs, 6, 0);
+        var introFontLarge = new Font(introData.LargeGlyphs, 10, (uint)introData.Glyphs.Count);
+
+        // Load outro data
+        var outroData = gameData.OutroData;
+        var outroFont = new Font(outroData.Glyphs, 6, 0);
+        var outroFontLarge = new Font(outroData.LargeGlyphs, 10, (uint)outroData.Glyphs.Count);
+
+        // Load game data
+        var graphicProvider = gameData.GraphicProvider;
+
+        if (audioOutput == null)
+        {
+            audioOutput = new AudioOutput();
+            audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
+            audioOutput.Enabled = audioOutput.Available && configuration.Music;
+            if (configuration.ShowPyrdacorLogo)
+            {
+                logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
+                additionalPalettes = logoPyrdacor.Palettes;
+            }
+            else
+            {
+                additionalPalettes = new Graphic[1] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] } };
+            }
+        }
+
+        if (gameData.Advanced)
+            advancedLogo = new AdvancedLogo(); // TODO: later add it to options
+
+        musicManager = new MusicManager(configuration, gameData);
+        fontProvider ??= new IngameFontProvider(new DataReader(Resources.IngameFont), gameData.FontProvider.GetFont());
+
+        // Create render view
+        renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, additionalPalettes, () =>
+        {
+            var textureAtlasManager = TextureAtlasManager.Instance;
+            var introGraphics = introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value);
+            uint twinlakeFrameOffset = (uint)introData.Graphics.Keys.Max();
+            foreach (var twinlakeImagePart in introData.TwinlakeImageParts)
+                introGraphics.Add(++twinlakeFrameOffset, twinlakeImagePart.Graphic);
+            textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
+                introFontLarge.GlyphGraphics, introGraphics, features);
+            logoPyrdacor?.Initialize(textureAtlasManager);
+            AdvancedLogo.Initialize(textureAtlasManager);
+            return textureAtlasManager;
+        });
+        renderView.AvailableFullscreenModes = availableFullscreenModes;
+        renderView.SetTextureFactor(Layer.Text, 2);
+
+        if (configuration.ShowFantasyIntro)
+        {
+            fantasyIntro = new FantasyIntro(renderView, fantasyIntroData, () =>
+            {
+                fantasyIntro = null;
+
+                if (configuration.ShowIntro)
+                    ShowIntro(byClick => initialIntroEndedByClick = byClick, introData, introFont, introFontLarge);
             });
-
-            WriteChunk("IDAT", writer =>
-            {
-                byte[] dataWithFilterBytes = new byte[rgbData.Length + imageSize.Height];
-                for (int y = 0; y < imageSize.Height; ++y)
-                {
-                    int i = upsideDown ? imageSize.Height - y - 1 : y;
-                    Buffer.BlockCopy(rgbData, y * imageSize.Width * bpp, dataWithFilterBytes, 1 + i + i * imageSize.Width * bpp, imageSize.Width * bpp);
-                }
-                // Note: Data is initialized with 0 bytes so the filter bytes are already 0.
-                using var uncompressedStream = new MemoryStream(dataWithFilterBytes);
-                using var compressedStream = new MemoryStream();
-                var compressStream = new System.IO.Compression.DeflateStream(compressedStream, System.IO.Compression.CompressionLevel.Optimal, true);
-                uncompressedStream.CopyTo(compressStream);
-                compressStream.Close();
-
-                // Zlib header
-                writer.Write(0x78); // 32k window deflate method
-                writer.Write(0xDA); // Best compression, no dict and header is multiple of 31
-
-                uint Adler32()
-                {
-                    uint s1 = 1;
-                    uint s2 = 0;
-
-                    for (int n = 0; n < dataWithFilterBytes.Length; ++n)
-                    {
-                        s1 = (s1 + dataWithFilterBytes[n]) % 65521;
-                        s2 = (s2 + s1) % 65521;
-                    }
-
-                    return (s2 << 16) | s1;
-                }
-
-                // Compressed data
-                writer.Write(compressedStream.ToArray());
-
-                // Checksum
-                writer.Write(Adler32());
-            });
-
-            // IEND chunk
-            WriteChunk("IEND", null);
-
-            using var file = File.Create(filename);
-            writer.CopyTo(file);
+        }
+        else if (configuration.ShowIntro)
+        {
+            ShowIntro(byClick => initialIntroEndedByClick = byClick, introData, introFont, introFontLarge);
         }
 
-        void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, bool fromIntro, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
-            Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage,
-            Action showIntroAction)
+        InitGlyphs(fontProvider);
+
+        var text = renderView.TextProcessor.CreateText("");
+        infoText = renderView.RenderTextFactory.Create(
+            (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
+            renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
+            Global.GetTextRect(renderView, new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6)), TextAlign.Center);
+        infoText.DisplayLayer = 254;
+        infoText.Visible = false;
+
+        RunTask(() =>
         {
-            renderView.PaletteFading = null; // Reset palette fading
-
-            void PlayMusic(Song song)
+            try
             {
-                if (configuration.Music)
-                    musicManager.GetSong(song)?.Play(audioOutput);
+                var savegameManager = new RemakeSavegameManager(savePath, configuration);
+                savegameManager.GetSavegameNames(gameData, out int currentSavegame, Game.NumBaseSavegameSlots);
+                if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
+                    currentSavegame = savegameManager.ContinueSavegameSlot;
+                bool canContinue = currentSavegame != 0;
+                var cursor = new Render.Cursor(renderView, gameData.CursorHotspots);
+                cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
+                cursor.Type = Data.CursorType.None;
 
-                if (infoText != null)
-                    infoText.Visible = false;
-            }
-
-            // Fast clicking might create the main menu while the intro is also created and so both would be active.
-            // This will ensure that the intro is destroyed if the main menu opens.
-            intro?.Destroy();
-            intro = null;
-            mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
-                GetText(gameLanguage, 0), GetText(gameLanguage, 1), PlayMusic, fromIntro);
-            mainMenu.Closed += closeAction =>
-            {
-                switch (closeAction)
-                {
-                    case MainMenu.CloseAction.NewGame:
-						startGameAction?.Invoke(false);
-                        break;
-                    case MainMenu.CloseAction.Continue:
-                        // Someone who has savegames won't need any introduction, so set this to false.
-                        configuration.FirstStart = false;
-                        startGameAction?.Invoke(true);
-                        break;
-                    case MainMenu.CloseAction.Intro:
-                        showIntroAction?.Invoke();
-                        break;
-                    case MainMenu.CloseAction.Exit:
-                        mainMenu?.Destroy();
-                        mainMenu = null;
-                        window.Close();
-                        break;
-                    default:
-                        throw new AmbermoonException(ExceptionScope.Application, "Invalid main menu close action.");
-                }
-            };
-        }
-
-        static readonly Dictionary<GameLanguage, string[]> LoadingTexts = new Dictionary<GameLanguage, string[]>
-        {
-            { GameLanguage.German, new string[]
-                {
-                    "Starte Spiel ...",
-                    "Bereite neues Spiel vor ..."
-                }
-            },
-            { GameLanguage.English, new string[]
-                {
-                    "Starting game ...",
-                    "Preparing new game ..."
-                }
-            },
-            { GameLanguage.French, new string[]
-                {
-                    "Démarrage du jeu ...",
-                    "Démarrage un nouveau jeu ..."
-                }
-            },
-            { GameLanguage.Polish, new string[]
-                {
-                    "Rozpoczynanie gry ...",
-                    "Przygotowanie nowej gry ..."
-                }
-            },
-            { GameLanguage.Czech, new string[]
-	            {
-					"Zahájení hry ...",
-					"Příprava nové hry ..."
-				}
-            }
-		};
-
-        string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
-
-        void StartGame(IGameData gameData, string savePath, GameLanguage gameLanguage, Features features, BinaryReader advancedDiffsReader)
-        {
-            // Load fantasy intro data
-            var fantasyIntroData = gameData.FantasyIntroData;
-
-            // Load intro data
-            var introData = gameData.IntroData;
-            var introFont = new Font(introData.Glyphs, 6, 0);
-            var introFontLarge = new Font(introData.LargeGlyphs, 10, (uint)introData.Glyphs.Count);
-
-            // Load outro data
-            var outroData = gameData.OutroData;
-            var outroFont = new Font(outroData.Glyphs, 6, 0);
-            var outroFontLarge = new Font(outroData.LargeGlyphs, 10, (uint)outroData.Glyphs.Count);
-
-            // Load game data
-            var graphicProvider = gameData.GraphicProvider;
-
-            if (audioOutput == null)
-            {
-                audioOutput = new AudioOutput();
-                audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
-                audioOutput.Enabled = audioOutput.Available && configuration.Music;
-                if (configuration.ShowPyrdacorLogo)
-                {
-                    logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
-                    additionalPalettes = logoPyrdacor.Palettes;
-                }
-                else
-                {
-                    additionalPalettes = new Graphic[1] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] } };
-                }
-            }
-
-            if (gameData.Advanced)
-                advancedLogo = new AdvancedLogo(); // TODO: later add it to options
-
-            musicManager = new MusicManager(configuration, gameData);
-            fontProvider ??= new IngameFontProvider(new DataReader(Resources.IngameFont), gameData.FontProvider.GetFont());
-
-            // Create render view
-            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, additionalPalettes, () =>
-            {
-                var textureAtlasManager = TextureAtlasManager.Instance;
-                var introGraphics = introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value);
-                uint twinlakeFrameOffset = (uint)introData.Graphics.Keys.Max();
-                foreach (var twinlakeImagePart in introData.TwinlakeImageParts)
-                    introGraphics.Add(++twinlakeFrameOffset, twinlakeImagePart.Graphic);
-                textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
-                    introFontLarge.GlyphGraphics, introGraphics, features);
-                logoPyrdacor?.Initialize(textureAtlasManager);
-                AdvancedLogo.Initialize(textureAtlasManager);
-                return textureAtlasManager;
-            });
-            renderView.AvailableFullscreenModes = availableFullscreenModes;
-            renderView.SetTextureFactor(Layer.Text, 2);
-
-            if (configuration.ShowFantasyIntro)
-            {
-                fantasyIntro = new FantasyIntro(renderView, fantasyIntroData, () =>
-                {
-                    fantasyIntro = null;
-
-                    if (configuration.ShowIntro)
-                        ShowIntro(byClick => initialIntroEndedByClick = byClick, introData, introFont, introFontLarge);
-                });
-            }
-            else if (configuration.ShowIntro)
-            {
-                ShowIntro(byClick => initialIntroEndedByClick = byClick, introData, introFont, introFontLarge);
-            }
-
-            InitGlyphs(fontProvider);
-
-            var text = renderView.TextProcessor.CreateText("");
-            infoText = renderView.RenderTextFactory.Create(
-                (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1), 
-                renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
-                Global.GetTextRect(renderView, new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6)), TextAlign.Center);
-            infoText.DisplayLayer = 254;
-            infoText.Visible = false;
-
-            RunTask(() =>
-            {
-                try
-                {
-                    var savegameManager = new RemakeSavegameManager(savePath, configuration);
-                    savegameManager.GetSavegameNames(gameData, out int currentSavegame, Game.NumBaseSavegameSlots);
-                    if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
-                        currentSavegame = savegameManager.ContinueSavegameSlot;
-                    bool canContinue = currentSavegame != 0;
-                    var cursor = new Render.Cursor(renderView, gameData.CursorHotspots);
-                    cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
-                    cursor.Type = Data.CursorType.None;
-
-                    void SetupGameCreator(bool continueGame)
+                void SetupGameCreator(bool continueGame)
                 {
                     try
                     {
@@ -831,18 +858,18 @@ namespace Ambermoon
                                 new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
                                 Path.GetFileName(savePath), versionString, null, savegameManager);
 
-			                    game.QuitRequested += window.Close;
-			                    game.MousePositionChanged += position =>
-			                    {
-				                    if (mouse != null)
-				                    {
-					                    mouse.MouseMove -= Mouse_MouseMove;
-					                    mouse.Position = new MousePosition(position.X, position.Y);
+                            game.QuitRequested += window.Close;
+                            game.MousePositionChanged += position =>
+                        {
+                                    if (mouse != null)
+                                    {
+                                        mouse.MouseMove -= Mouse_MouseMove;
+                                        mouse.Position = new MousePosition(position.X, position.Y);
                                         mouse.MouseMove += Mouse_MouseMove;
                                     }
                                 };
-                                game.MouseTrappedChanged += (bool trapped, Position position) =>
-                                {
+                            game.MouseTrappedChanged += (bool trapped, Position position) =>
+                        {
                                     try
                                     {
                                         this.cursor.CursorMode = trapped ? CursorMode.Disabled : CursorMode.Hidden;
@@ -850,7 +877,7 @@ namespace Ambermoon
                                     }
                                     catch
                                     {
-                                        // SDL etc needs special logic as CursorMode.Disabled is not available
+                                // SDL etc needs special logic as CursorMode.Disabled is not available
                                         trapMouse = trapped;
                                         trappedMouseOffset = trapped ? new FloatPosition(position) : null;
                                         trappedMouseLastPosition = trapped ? new FloatPosition(window.Size.X / 2, window.Size.Y / 2) : null;
@@ -864,8 +891,8 @@ namespace Ambermoon
                                         mouse.MouseMove += Mouse_MouseMove;
                                     }
                                 };
-                                game.ConfigurationChanged += (configuration, windowChange) =>
-                                {
+                            game.ConfigurationChanged += (configuration, windowChange) =>
+                        {
                                     if (windowChange)
                                     {
                                         ChangeFullscreenMode(configuration.Fullscreen);
@@ -895,217 +922,228 @@ namespace Ambermoon
                                             Console.Clear();
                                     }
                                 };
-                                game.DrugTicked += Drug_Ticked;
-                                mainMenu.GameDataLoaded = true;
+                            game.DrugTicked += Drug_Ticked;
+                            mainMenu.GameDataLoaded = true;
 
-                                AdvancedSavegamePatcher advancedSavegamePatcher = null;
+                            AdvancedSavegamePatcher advancedSavegamePatcher = null;
 
-                                // Load advanced diffs (is null for non-advanced versions)
-                                if (advancedDiffsReader != null)
-                                    advancedSavegamePatcher = new AdvancedSavegamePatcher(advancedDiffsReader);
+                            // Load advanced diffs (is null for non-advanced versions)
+                            if (advancedDiffsReader != null)
+                                advancedSavegamePatcher = new AdvancedSavegamePatcher(advancedDiffsReader);
 
-                                game.RequestAdvancedSavegamePatching += (gameData, saveSlot, sourceEpisode, targetEpisode) =>
-                                {
+                            game.RequestAdvancedSavegamePatching += (gameData, saveSlot, sourceEpisode, targetEpisode) =>
+                        {
                                     if (advancedSavegamePatcher == null)
                                         throw new AmbermoonException(ExceptionScope.Data, "No diff information for old Ambermoon Advanced savegame found.");
 
                                     advancedSavegamePatcher.PatchSavegame(gameData, saveSlot, sourceEpisode, targetEpisode);
                                 };
 
-                                game.Run(continueGame, ConvertMousePosition(mouse.Position));
-                                return game;
-                            };
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("Error while preparing game: " + ex.ToString());
-                            gameCreator = () => throw new AmbermoonException(ExceptionScope.Application, "Game preparation failed.");
-                        }
+                            game.Run(continueGame, ConvertMousePosition(mouse.Position));
+                            return game;
+                        };
                     }
-
-                    while (logoPyrdacor != null)
-                        Thread.Sleep(100);
-
-                    while (fantasyIntro != null)
-                        Thread.Sleep(100);
-
-                    while (intro != null)
-                        Thread.Sleep(100);
-
-                    while (advancedLogo != null)
-                        Thread.Sleep(100);
-
-                    void ShowMainMenu(bool fromIntro)
+                    catch (Exception ex)
                     {
-                        // When starting for the first time the intro is played automatically.
-                        // But then is disabled. It can still be viewed from the main menu
-                        // and there is also an option to show it always in the option menu.
-                        if (configuration.FirstStart)
-                            configuration.ShowIntro = false;
-
-                        this.ShowMainMenu(renderView, cursor, fromIntro, IntroData.GraphicPalettes, introFontLarge,
-                            introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
-                            {
-                                cursor.Type = Data.CursorType.None;
-                                mainMenu.FadeOutAndDestroy(continueGame, () => RunTask(() => SetupGameCreator(continueGame)));
-                            }, gameLanguage, () =>
-                            {
-                                cursor.Type = Data.CursorType.None;
-                                ShowIntro(byClick => ShowMainMenu(!byClick), introData, introFont, introFontLarge);
-                            });
+                        Console.WriteLine("Error while preparing game: " + ex.ToString());
+                        gameCreator = () => throw new AmbermoonException(ExceptionScope.Application, "Game preparation failed.");
                     }
-
-                    ShowMainMenu(configuration.ShowIntro && !initialIntroEndedByClick);
                 }
-                catch (Exception ex)
+
+                while (logoPyrdacor != null)
+                    Thread.Sleep(100);
+
+                while (fantasyIntro != null)
+                    Thread.Sleep(100);
+
+                while (intro != null)
+                    Thread.Sleep(100);
+
+                while (advancedLogo != null)
                 {
-                    string error = "Error while loading data: " + ex.Message;
-                    Console.WriteLine(error);                   
-
-                    try
-                    {
-                        error = @"Error loading data   \(o_o\)";
-                        if (ex is FileNotFoundException fileNotFoundException &&
-                            fileNotFoundException.Source == "Silk.NET.Core")
-                        {
-                            var missingLibrary = fileNotFoundException?.FileName;
-
-                            if (missingLibrary != null)
-                            {
-                                error = @$"Error: {Path.GetFileName(missingLibrary)} is missing   (/o_o)/";
-
-                                if (missingLibrary.ToLower().Contains("openal"))
-                                    error += $"^Please install OpenAL manually"; // ^ is new line
-                            }
-                        }
-
-                        int height = 6 + error.Count(ch => ch == '^') * 7;
-                        var text = renderView.TextProcessor.CreateText(error, '_');
-                        text = renderView.TextProcessor.WrapText(text, new Rect(0, 0, Global.VirtualScreenWidth, height), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
-                        infoText.Text = text;
-                        infoText.Place(new Rect(Math.Max(0, (Global.VirtualScreenWidth - infoText.Width) / 2), infoText.Y, infoText.Text.MaxLineSize * 6, height));
-                        infoText.Visible = true;
-                        initializeErrorTime = DateTime.Now;
-                    }
-                    catch
-                    {
-                        window.Close();
-                    }
+                    renderView.ShowImageLayerOnly = true;
+                    Thread.Sleep(100);
                 }
-            });
+
+                void ShowMainMenu(bool fromIntro)
+                {
+                    // When starting for the first time the intro is played automatically.
+                    // But then is disabled. It can still be viewed from the main menu
+                    // and there is also an option to show it always in the option menu.
+                    if (configuration.FirstStart)
+                        configuration.ShowIntro = false;
+
+                    this.ShowMainMenu(renderView, cursor, fromIntro, IntroData.GraphicPalettes, introFontLarge,
+                        introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
+                        {
+                            cursor.Type = Data.CursorType.None;
+                            mainMenu.FadeOutAndDestroy(continueGame, () => RunTask(() => SetupGameCreator(continueGame)));
+                        }, gameLanguage, () =>
+                        {
+                            cursor.Type = Data.CursorType.None;
+                            ShowIntro(byClick => ShowMainMenu(!byClick), introData, introFont, introFontLarge);
+                        });
+                }
+
+                ShowMainMenu(configuration.ShowIntro && !initialIntroEndedByClick);
+            }
+            catch (Exception ex)
+            {
+                string error = "Error while loading data: " + ex.Message;
+                Console.WriteLine(error);
+
+                try
+                {
+                    error = @"Error loading data   \(o_o\)";
+                    if (ex is FileNotFoundException fileNotFoundException &&
+                        fileNotFoundException.Source == "Silk.NET.Core")
+                    {
+                        var missingLibrary = fileNotFoundException?.FileName;
+
+                        if (missingLibrary != null)
+                        {
+                            error = @$"Error: {Path.GetFileName(missingLibrary)} is missing   (/o_o)/";
+
+                            if (missingLibrary.ToLower().Contains("openal"))
+                                error += $"^Please install OpenAL manually"; // ^ is new line
+                        }
+                    }
+
+                    int height = 6 + error.Count(ch => ch == '^') * 7;
+                    var text = renderView.TextProcessor.CreateText(error, '_');
+                    text = renderView.TextProcessor.WrapText(text, new Rect(0, 0, Global.VirtualScreenWidth, height), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+                    infoText.Text = text;
+                    infoText.Place(new Rect(Math.Max(0, (Global.VirtualScreenWidth - infoText.Width) / 2), infoText.Y, infoText.Text.MaxLineSize * 6, height));
+                    infoText.Visible = true;
+                    initializeErrorTime = DateTime.Now;
+                }
+                catch
+                {
+                    window.Close();
+                }
+            }
+        });
+    }
+
+    void ShowIntro(Action<bool> showMainMenuAction, IIntroData introData, Font introFont, Font introFontLarge)
+    {
+        mainMenu?.Destroy();
+        mainMenu = null;
+        if (configuration.Music)
+        {
+            musicManager.Stop();
+            musicManager.GetSong(Song.Intro)?.Stop(); // might be looping in the main menu, so we need to stop and reset it here
         }
 
-        void ShowIntro(Action<bool> showMainMenuAction, IIntroData introData, Font introFont, Font introFontLarge)
+        intro = new Intro(renderView, introData, introFont, introFontLarge, byClick =>
         {
-            mainMenu?.Destroy();
-            mainMenu = null;
+            intro = null;
+            showMainMenuAction?.Invoke(byClick);
+        }, () =>
+        {
             if (configuration.Music)
-            {
-                musicManager.Stop();
-                musicManager.GetSong(Song.Intro)?.Stop(); // might be looping in the main menu, so we need to stop and reset it here
-            }
+                musicManager.GetSong(Song.Intro)?.Play(audioOutput);
+        });
+    }
 
-            intro = new Intro(renderView, introData, introFont, introFontLarge, byClick =>
-            {
-                intro = null;
-                showMainMenuAction?.Invoke(byClick);
-            }, () =>
-            {
-                if (configuration.Music)
-                    musicManager.GetSong(Song.Intro)?.Play(audioOutput);
-            });
+    bool ShowVersionSelector(List<BuiltinVersion> versions, Action<IGameData,
+        string, GameLanguage, Features> selectHandler,
+        out TextureAtlasManager createdTextureAtlasManager)
+    {
+        var textureAtlasManager = TextureAtlasManager.CreateEmpty();
+        createdTextureAtlasManager = textureAtlasManager;
+
+        var gameData = new GameData();
+        var dataPath = configuration.UseDataPath ? configuration.DataPath : Configuration.BundleDirectory;
+
+        if (versions == null || versions.Count == 0)
+        {
+            loadingBar.SetProgress(1.0f);
+
+            // no versions
+            configuration.GameVersionIndex = 0;
+            gameData.Load(dataPath);
+            selectHandler?.Invoke(gameData, Configuration.GetSavePath(Configuration.ExternalSavegameFolder), gameData.Language.ToGameLanguage(),
+                gameData.Advanced ? Features.AmbermoonAdvanced : Features.None);
+            return false;
         }
 
-        bool ShowVersionSelector(BinaryReader builtinVersionReader, Action<IGameData, string, GameLanguage, Features> selectHandler, out TextureAtlasManager createdTextureAtlasManager)
+        GameData LoadBuiltinVersionData(BuiltinVersion builtinVersion, Func<ILegacyGameData> fallbackGameDataProvider,
+            Action<float> progressTracker = null)
         {
-            createdTextureAtlasManager = null;
-            List<BuiltinVersion> versions = null;
-
-            if (builtinVersionReader != null)
+            var gameData = new GameData(GameData.LoadPreference.PreferExtracted
+#if DEBUG
+                , new Logger()
+#endif
+            );
+            builtinVersion.SourceStream.Position = builtinVersion.Offset;
+            var buffer = new byte[(int)builtinVersion.Size];
+            builtinVersion.SourceStream.Read(buffer, 0, buffer.Length);
+            var tempStream = new MemoryStream(buffer);
+            // If the builtin version has a base version, it can provide files called "Intro_texts.amb" and "Extro_texts.amb"
+            // which only contains the intro and outro texts. It is then merged with the base version's Ambermoon_intro or Ambermoon_extro file.
+            var optionalAdditionalFiles = fallbackGameDataProvider == null ? null : new Dictionary<string, char>()
             {
-                var versionLoader = new BuiltinVersionLoader();
-                versions = versionLoader.Load(builtinVersionReader);
-            }
+                { "Intro_texts.amb", 'A' },
+                { "Extro_texts.amb", 'A' }
+            };
+            gameData.LoadFromMemoryZip(tempStream, fallbackGameDataProvider, optionalAdditionalFiles,
+                progressTracker);
+            return gameData;
+        }
 
+        GameData LoadGameDataFromDataPath()
+        {
             var gameData = new GameData();
-            var dataPath = configuration.UseDataPath ? configuration.DataPath : Configuration.BundleDirectory;
+            gameData.Load(dataPath);
+            return gameData;
+        }
 
-            if (versions == null || versions.Count == 0)
-            {
-                // no versions
-                configuration.GameVersionIndex = 0;
-                gameData.Load(dataPath);
-                selectHandler?.Invoke(gameData, Configuration.GetSavePath(Configuration.ExternalSavegameFolder), gameData.Language.ToGameLanguage(),
-                    gameData.Advanced ? Features.AmbermoonAdvanced : Features.None);
-                return false;
-            }
+        if (configuration.GameVersionIndex > versions.Count) // == versions.Count is ok as it could be external data
+            configuration.GameVersionIndex = -1;
 
-            GameData LoadBuiltinVersionData(BuiltinVersion builtinVersion, Func<ILegacyGameData> fallbackGameDataProvider)
-            {
-                var gameData = new GameData();
-                builtinVersion.SourceStream.Position = builtinVersion.Offset;
-                var buffer = new byte[(int)builtinVersion.Size];
-                builtinVersion.SourceStream.Read(buffer, 0, buffer.Length);
-                var tempStream = new MemoryStream(buffer);
-                // If the builtin version has a base version, it can provide files called "Intro_texts.amb" and "Extro_texts.amb"
-                // which only contains the intro and outro texts. It is then merged with the base version's Ambermoon_intro or Ambermoon_extro file.
-                var optionalAdditionalFiles = fallbackGameDataProvider == null ? null : new Dictionary<string, char>()
-                {
-                    { "Intro_texts.amb", 'A' },
-                    { "Extro_texts.amb", 'A' }
-                };
-                gameData.LoadFromMemoryZip(tempStream, fallbackGameDataProvider, optionalAdditionalFiles);
-                return gameData;
-            }
+        GameData.GameDataInfo? additionalVersionInfo = null;
 
-            GameData LoadGameDataFromDataPath()
-            {
-                var gameData = new GameData();
-                gameData.Load(dataPath);
-                return gameData;
-            }
-
-            if (configuration.GameVersionIndex > versions.Count) // == versions.Count is ok as it could be external data
+        try
+        {
+            additionalVersionInfo = GameData.GetInfo(dataPath);
+        }
+        catch
+        {
+            if (configuration.GameVersionIndex == versions.Count)
                 configuration.GameVersionIndex = -1;
+        }
 
-            GameData.GameDataInfo? additionalVersionInfo = null;
+        // Falls back to english
+        int GetGameVersionIndexBySystemLanguage()
+        {
+            var uiCulture = CultureInfo.CurrentUICulture;
+            string languageName = uiCulture.Parent.EnglishName;
 
-            try
-            {
-                additionalVersionInfo = GameData.GetInfo(dataPath);
-            }
-            catch
-            {
-                if (configuration.GameVersionIndex == versions.Count)
-                    configuration.GameVersionIndex = -1;
-            }
+            int versionIndex = versions.FindIndex(v => v.Language.Equals(languageName, StringComparison.CurrentCultureIgnoreCase) && !v.Info.Contains("advanced", StringComparison.CurrentCultureIgnoreCase));
 
-            // Falls back to english
-            int GetGameVersionIndexBySystemLanguage()
-            {
-                var uiCulture = CultureInfo.CurrentUICulture;
-                string languageName = uiCulture.Parent.EnglishName;
+            if (versionIndex == -1)
+                versionIndex = versions.FindIndex(v => v.Language.Equals(languageName, StringComparison.CurrentCultureIgnoreCase));
 
-                int versionIndex = versions.FindIndex(v => v.Language.Equals(languageName, StringComparison.CurrentCultureIgnoreCase) && !v.Info.Contains("advanced", StringComparison.CurrentCultureIgnoreCase));
+            if (versionIndex == -1)
+                versionIndex = versions.FindIndex(v => v.Language.Equals("english", StringComparison.CurrentCultureIgnoreCase) && !v.Info.Contains("advanced", StringComparison.CurrentCultureIgnoreCase));
 
-                if (versionIndex == -1)
-                    versionIndex = versions.FindIndex(v => v.Language.Equals(languageName, StringComparison.CurrentCultureIgnoreCase));
+            if (versionIndex == -1)
+                versionIndex = versions.FindIndex(v => v.Language.Equals("english", StringComparison.CurrentCultureIgnoreCase));
 
-                if (versionIndex == -1)
-                    versionIndex = versions.FindIndex(v => v.Language.Equals("english", StringComparison.CurrentCultureIgnoreCase) && !v.Info.Contains("advanced", StringComparison.CurrentCultureIgnoreCase));
+            if (versionIndex == -1)
+                versionIndex = 0;
 
-                if (versionIndex == -1)
-                    versionIndex = versions.FindIndex(v => v.Language.Equals("english", StringComparison.CurrentCultureIgnoreCase));
+            return versionIndex;
+        }
 
-                if (versionIndex == -1)
-                    versionIndex = 0;
+        // Some versions merge with another one. Here only the basis versions are stored.
+        var baseVersionIndices = versions.Select((version, index) => new { version, index }).Where(v => !v.version.MergeWithPrevious).Select(v => v.index).ToList();
 
-                return versionIndex;
-            }
+        Action<float> progressTracker = progress => loadingBar.SetProgress(0.15f + progress * 0.85f);
 
-            // Some versions merge with another one. Here only the basis versions are stored.
-            var baseVersionIndices = versions.Select((version, index) => new { version, index }).Where(v => !v.version.MergeWithPrevious).Select(v => v.index).ToList();
-
+        var gameDataPromise = ResourceProvider.GetResource(() =>
+        {
             if (configuration.GameVersionIndex < versions.Count)
             {
                 if (configuration.GameVersionIndex < 0)
@@ -1116,24 +1154,30 @@ namespace Ambermoon
 
                 Func<ILegacyGameData> fallbackGameDataProvider = baseVersionIndices.Contains(configuration.GameVersionIndex)
                     ? null
-                    : () => LoadBuiltinVersionData(versions[baseVersionIndices.Last(idx => idx < configuration.GameVersionIndex)], null);
-                gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex], fallbackGameDataProvider);
+                    : () => LoadBuiltinVersionData(versions[baseVersionIndices.Last(idx => idx < configuration.GameVersionIndex)], null, progressTracker);
+                gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex], fallbackGameDataProvider, progressTracker);
             }
             else
             {
                 try
                 {
                     gameData = LoadGameDataFromDataPath();
+                    loadingBar.SetProgress(1.0f);
                 }
                 catch
                 {
                     // Try to select a version by the OS system language
                     configuration.GameVersionIndex = GetGameVersionIndexBySystemLanguage();
 
-                    gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex], null);
+                    gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex], null, progressTracker);
                 }
             }
 
+            return gameData;
+        });
+
+        gameDataPromise.ResultReady += (gameData) =>
+        {
             var builtinVersionDataProviders = new Func<ILegacyGameData>[versions.Count];
             for (int i = 0; i < versions.Count; ++i)
             {
@@ -1146,8 +1190,7 @@ namespace Ambermoon
                     builtinVersionDataProviders[i] = () => configuration.GameVersionIndex == index ? gameData : LoadBuiltinVersionData(versions[index], builtinVersionDataProviders[lastBaseVersion]);
                 }
             }
-            var textureAtlasManager = TextureAtlasManager.CreateEmpty();
-            createdTextureAtlasManager = textureAtlasManager;
+            
 
             var flagsData = new DataReader(Resources.Flags);
             var flagsPalette = new Graphic
@@ -1180,400 +1223,479 @@ namespace Ambermoon
 
             fontProvider ??= new IngameFontProvider(new DataReader(Resources.IngameFont), gameData.FontProvider.GetFont());
 
-            renderView = CreateRenderView(gameData, configuration, gameData.GraphicProvider, fontProvider, additionalPalettes, () =>
+            switchRenderViewAction = () =>
             {
-                textureAtlasManager.AddUIOnly(gameData.GraphicProvider, fontProvider);
-                logoPyrdacor?.Initialize(textureAtlasManager);
-                AdvancedLogo.Initialize(textureAtlasManager);
-                textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
+                loadingBar.Destroy();
+                loadingBar = null;
+
+                renderView = CreateRenderView(gameData, configuration, gameData.GraphicProvider, fontProvider, additionalPalettes, () =>
                 {
-                    { 1u, flagsGraphic }
+                    textureAtlasManager.AddUIOnly(gameData.GraphicProvider, fontProvider);
+                    logoPyrdacor?.Initialize(textureAtlasManager);
+                    AdvancedLogo.Initialize(textureAtlasManager);
+                    textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
+                    {
+                        { 1u, flagsGraphic }
+                    });
+                    return textureAtlasManager;
                 });
-                return textureAtlasManager;
-            });
-            renderView.AvailableFullscreenModes = availableFullscreenModes;
-            renderView.SetTextureFactor(Layer.Text, 2);
-            InitGlyphs(fontProvider, textureAtlasManager);
-            var gameVersions = new List<GameVersion>(5);
-            for (int i = 0; i < versions.Count; ++i)
-            {
-                var builtinVersion = versions[i];
-                gameVersions.Add(new GameVersion
+                renderView.AvailableFullscreenModes = availableFullscreenModes;
+                renderView.SetTextureFactor(Layer.Text, 2);
+                InitGlyphs(fontProvider, textureAtlasManager);
+                var gameVersions = new List<GameVersion>(5);
+                for (int i = 0; i < versions.Count; ++i)
                 {
-                    Version = builtinVersion.Version,
-                    Language = builtinVersion.Language.ToGameLanguage(),
-                    Info = builtinVersion.Info,
-                    DataProvider = builtinVersionDataProviders[i],
-                    Features = builtinVersion.Features,
-                    MergeWithPrevious = builtinVersion.MergeWithPrevious,
-                    ExternalData = false
-                });
-            }
-            if (additionalVersionInfo != null)
-            {                
-                gameVersions.Add(new GameVersion
+                    var builtinVersion = versions[i];
+                    gameVersions.Add(new GameVersion
+                    {
+                        Version = builtinVersion.Version,
+                        Language = builtinVersion.Language.ToGameLanguage(),
+                        Info = builtinVersion.Info,
+                        DataProvider = builtinVersionDataProviders[i],
+                        Features = builtinVersion.Features,
+                        MergeWithPrevious = builtinVersion.MergeWithPrevious,
+                        ExternalData = false
+                    });
+                }
+                if (additionalVersionInfo != null)
                 {
-                    Version = additionalVersionInfo.Value.Version,
-                    Language = additionalVersionInfo.Value.Language.ToGameLanguage(),
-                    Info = "From external data",
-                    DataProvider = configuration.GameVersionIndex == 4 ? (() => gameData) : LoadGameDataFromDataPath,
-                    Features = additionalVersionInfo.Value.Advanced ? Features.AmbermoonAdvanced | Features.AdvancedMonsterFlags | Features.ItemElements | Features.ExtendedLanguages : Features.None, // TODO
-                    MergeWithPrevious = false,
-                    ExternalData = true
-                });
-            }
-            if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex >= gameVersions.Count)
+                    gameVersions.Add(new GameVersion
+                    {
+                        Version = additionalVersionInfo.Value.Version,
+                        Language = additionalVersionInfo.Value.Language.ToGameLanguage(),
+                        Info = "From external data",
+                        DataProvider = configuration.GameVersionIndex == 4 ? (() => gameData) : LoadGameDataFromDataPath,
+                        Features = additionalVersionInfo.Value.Advanced ? Features.AmbermoonAdvanced | Features.AdvancedMonsterFlags | Features.ItemElements | Features.ExtendedLanguages : Features.None, // TODO
+                        MergeWithPrevious = false,
+                        ExternalData = true
+                    });
+                }
+                if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex >= gameVersions.Count)
 #if DEBUG
-                configuration.GameVersionIndex = additionalVersionInfo != null ? gameVersions.Count - 1 : 0;
+                    configuration.GameVersionIndex = additionalVersionInfo != null ? gameVersions.Count - 1 : 0;
 #else
-                configuration.GameVersionIndex = 0;
+                    configuration.GameVersionIndex = 0;
 #endif
-            var cursor = new Render.Cursor(renderView, gameData.CursorHotspots, textureAtlasManager);
+                var cursor = new Render.Cursor(renderView, gameData.CursorHotspots, textureAtlasManager);
 
-            RunTask(() =>
-            {
-                while (checkPatcher || patcher != null || logoPyrdacor != null)
-                    Thread.Sleep(100);
-
-                versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager,
-                    gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption, configuration);
-                versionSelector.Closed += (gameVersionIndex, gameData, saveInDataPath) =>
+                RunTask(() =>
                 {
-                    var gameVersion = gameVersions[gameVersionIndex];
-                    configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
-                    configuration.GameVersionIndex = gameVersionIndex;
-                    selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : Configuration.GetSavePath(Configuration.GetVersionSavegameFolder(gameVersion)),
-                        gameVersion.Language, gameVersion.Features);
-                };
-            });
+                    while (checkPatcher || patcher != null || logoPyrdacor != null)
+                        Thread.Sleep(100);
 
-            return true;
+                    versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager,
+                        gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption, configuration);
+                    versionSelector.Closed += (gameVersionIndex, gameData, saveInDataPath) =>
+                    {
+                        var gameVersion = gameVersions[gameVersionIndex];
+                        configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
+                        configuration.GameVersionIndex = gameVersionIndex;
+                        selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : Configuration.GetSavePath(Configuration.GetVersionSavegameFolder(gameVersion)),
+                            gameVersion.Language, gameVersion.Features);
+                    };
+                });
+            };
+        };
+
+        return true;
+    }
+
+    void InitGlyphs(IFontProvider fontProvider, TextureAtlasManager textureAtlasManager = null)
+    {
+        int glyphCount = fontProvider.GetFont().GlyphCount;
+        var textureAtlas = (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.Text);
+        renderView.RenderTextFactory.GlyphTextureMapping = Enumerable.Range(0, glyphCount).ToDictionary(x => (byte)x, x => textureAtlas.GetOffset((uint)x));
+        var digitTextureAtlas = (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.SmallDigits);
+        renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => digitTextureAtlas.GetOffset((uint)x));
+    }
+
+    GameRenderView CreateRenderView(IGameData gameData, IConfiguration configuration, IGraphicProvider graphicProvider,
+        IFontProvider fontProvider, Graphic[] additionalPalettes, Func<TextureAtlasManager> textureAtlasManagerProvider)
+    {
+        bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;
+        var useFrameBuffer = true;
+        var useEffects = configuration.Effects != Effects.None;
+        var renderView = new GameRenderView(this, gameData, graphicProvider, fontProvider,
+            new TextProcessor(fontProvider.GetFont().GlyphCount), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
+            new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
+            () => KeyValuePair.Create(AnyIntroActive() ? 0 : (int)configuration.GraphicFilter, AnyIntroActive() ? 0 : (int)configuration.GraphicFilterOverlay),
+            () => AnyIntroActive() ? 0 : (int)configuration.Effects,
+            additionalPalettes);
+        if (!useFrameBuffer)
+        {
+            configuration.GraphicFilter = GraphicFilter.None;
+            configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
+        }
+        if (!useEffects)
+            configuration.Effects = Effects.None;
+        return renderView;
+    }
+
+    bool PositionInsideWindow(MousePosition position)
+    {
+        return position.X >= 0 && position.X < window.Size.X &&
+            position.Y >= 0 && position.Y < window.Size.Y;
+    }
+
+    void Drug_Ticked()
+    {
+        if (mouse != null && PositionInsideWindow(mouse.Position))
+        {
+            mouse.Position = new MousePosition(mouse.Position.X + Game.RandomInt(-16, 16),
+                mouse.Position.Y + Game.RandomInt(-16, 16));
+            if (Fullscreen) // This needs a little help
+                Game.OnMouseMove(ConvertMousePosition(mouse.Position), GetMouseButtons(mouse));
+        }
+    }
+
+    void Window_Load()
+    {
+        if (window.Native.Glfw is null)
+        {
+            Console.WriteLine("WARNING: The current window is not a GLFW window." + Environment.NewLine +
+                              "         Other window systems may be not fully supported!");
         }
 
-        void InitGlyphs(IFontProvider fontProvider, TextureAtlasManager textureAtlasManager = null)
+        var windowIcon = new Silk.NET.Core.RawImage(16, 16, new Memory<byte>(Resources.WindowIcon));
+        window.SetWindowIcon(ref windowIcon);
+
+        window.MakeCurrent();
+
+        // Setup input
+        SetupInput(window.CreateInput());
+
+        availableFullscreenModes = window.Monitor.GetAllVideoModes().Select(mode =>
+            new Size(mode.Resolution.Value.X, mode.Resolution.Value.Y)).Distinct().ToList();
+
+        var fullscreenSize = availableFullscreenModes.MaxBy(r => r.Width * r.Height);
+
+        if (fullscreenSize != null)
         {
-            int glyphCount = fontProvider.GetFont().GlyphCount;
-            var textureAtlas = (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.Text);
-            renderView.RenderTextFactory.GlyphTextureMapping = Enumerable.Range(0, glyphCount).ToDictionary(x => (byte)x, x => textureAtlas.GetOffset((uint)x));
-            var digitTextureAtlas = (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.SmallDigits);
-            renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => digitTextureAtlas.GetOffset((uint)x));
+            configuration.FullscreenWidth = fullscreenSize.Width;
+            configuration.FullscreenHeight = fullscreenSize.Height;
         }
 
-        RenderView CreateRenderView(IGameData gameData, IConfiguration configuration, IGraphicProvider graphicProvider,
-            IFontProvider fontProvider, Graphic[] additionalPalettes, Func<TextureAtlasManager> textureAtlasManagerProvider)
+        var platform = Silk.NET.Windowing.Window.GetWindowPlatform(false);
+        var monitors = platform.GetMonitors().ToArray();
+
+        if (configuration.MonitorIndex != null && configuration.MonitorIndex >= 0 && configuration.MonitorIndex < monitors.Length)
+            window.Monitor = monitors[configuration.MonitorIndex.Value];
+        else
+            window.Monitor = platform.GetMainMonitor();
+
+        if (configuration.Fullscreen)
         {
-            bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;
-            var useFrameBuffer = true;
-            var useEffects = configuration.Effects != Effects.None;
-            var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
-                new TextProcessor(fontProvider.GetFont().GlyphCount), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
-                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
-                () => KeyValuePair.Create(AnyIntroActive() ? 0 : (int)configuration.GraphicFilter, AnyIntroActive() ? 0 : (int)configuration.GraphicFilterOverlay),
-                () => AnyIntroActive() ? 0 : (int)configuration.Effects,
-                additionalPalettes);
-            if (!useFrameBuffer)
+            ChangeFullscreenMode(true); // This will adjust the window
+        }
+
+        var gl = Silk.NET.OpenGL.GL.GetApi(GLContext);
+        gl.Viewport(new System.Drawing.Size(window.FramebufferSize.X, window.FramebufferSize.Y));
+        gl.ClearColor(System.Drawing.Color.Black);
+        gl.Clear(Silk.NET.OpenGL.ClearBufferMask.ColorBufferBit);
+        GLContext.SwapBuffers();
+
+        if (configuration.Width == null || configuration.Height == null)
+        {
+            var monitorSize = window.Monitor.Bounds.Size;
+            var size = ScreenResolutions.GetPossibleResolutions(new Size(monitorSize.X, monitorSize.Y))[2];
+            configuration.Width = Width = size.Width;
+            configuration.Height = Height = size.Height;
+            if (!configuration.Fullscreen)
+                window.Size = new WindowDimension(Width, Height);
+        }
+
+        if (!configuration.Fullscreen)
+        {
+            if (configuration.WindowX == null || configuration.WindowY == null)
             {
-                configuration.GraphicFilter = GraphicFilter.None;
-                configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
+                window.Center();
+                configuration.WindowX = window.Position.X;
+                configuration.WindowY = window.Position.Y;
+                configuration.MonitorIndex = window.Monitor.Index;
             }
-            if (!useEffects)
-                configuration.Effects = Effects.None;
-            return renderView;
-        }
-
-        bool PositionInsideWindow(MousePosition position)
-        {
-            return position.X >= 0 && position.X < window.Size.X &&
-                position.Y >= 0 && position.Y < window.Size.Y;
-        }
-
-        void Drug_Ticked()
-        {
-            if (mouse != null && PositionInsideWindow(mouse.Position))
-            {
-                mouse.Position = new MousePosition(mouse.Position.X + Game.RandomInt(-16, 16),
-                    mouse.Position.Y + Game.RandomInt(-16, 16));
-                if (Fullscreen) // This needs a little help
-                    Game.OnMouseMove(ConvertMousePosition(mouse.Position), GetMouseButtons(mouse));
-            }
-        }
-
-        void Window_Load()
-        {
-            if (window.Native.Glfw is null)
-            {
-                Console.WriteLine("WARNING: The current window is not a GLFW window." + Environment.NewLine +
-                                  "         Other window systems may be not fully supported!");
-            }
-
-            var windowIcon = new Silk.NET.Core.RawImage(16, 16, new Memory<byte>(Resources.WindowIcon));
-            window.SetWindowIcon(ref windowIcon);
-
-            window.MakeCurrent();
-
-            // Setup input
-            SetupInput(window.CreateInput());
-
-            availableFullscreenModes = window.Monitor.GetAllVideoModes().Select(mode =>
-                new Size(mode.Resolution.Value.X, mode.Resolution.Value.Y)).Distinct().ToList();
-
-            var fullscreenSize = availableFullscreenModes.MaxBy(r => r.Width * r.Height);
-
-            if (fullscreenSize != null)
-            {
-                configuration.FullscreenWidth = fullscreenSize.Width;
-                configuration.FullscreenHeight = fullscreenSize.Height;
-            }
-
-            var platform = Silk.NET.Windowing.Window.GetWindowPlatform(false);
-            var monitors = platform.GetMonitors().ToArray();
-
-            if (configuration.MonitorIndex != null && configuration.MonitorIndex >= 0 && configuration.MonitorIndex < monitors.Length)
-                window.Monitor = monitors[configuration.MonitorIndex.Value];
             else
-                window.Monitor = platform.GetMainMonitor();
-
-            if (configuration.Fullscreen)
             {
-                ChangeFullscreenMode(true); // This will adjust the window
+                window.Position = new WindowDimension(configuration.WindowX.Value, configuration.WindowY.Value);
+                EnsureWindowOnMonitor();
+                configuration.WindowX = window.Position.X;
+                configuration.WindowY = window.Position.Y;
+                configuration.MonitorIndex = window.Monitor.Index;
             }
 
-            var gl = Silk.NET.OpenGL.GL.GetApi(GLContext);
-            gl.Viewport(new System.Drawing.Size(window.FramebufferSize.X, window.FramebufferSize.Y));
-            gl.ClearColor(System.Drawing.Color.Black);
-            gl.Clear(Silk.NET.OpenGL.ClearBufferMask.ColorBufferBit);
-            GLContext.SwapBuffers();
+            var monitorSize = window.Monitor.Bounds.Size;
+            var realBorderSize = window.BorderSize.Origin + window.BorderSize.Size;
+            var realWindowSize = window.Size + realBorderSize;
 
-            if (configuration.Width == null || configuration.Height == null)
+            if (realWindowSize.X > monitorSize.X || realWindowSize.Y > monitorSize.Y)
             {
-                var monitorSize = window.Monitor.Bounds.Size;
                 var size = ScreenResolutions.GetPossibleResolutions(new Size(monitorSize.X, monitorSize.Y))[2];
                 configuration.Width = Width = size.Width;
                 configuration.Height = Height = size.Height;
-                if (!configuration.Fullscreen)
-                    window.Size = new WindowDimension(Width, Height);
+                window.Size = new WindowDimension(Width, Height);
+            }
+        }
+
+        initialized = true;
+
+        static BinaryReader LoadAdvancedDiffs()
+        {
+            static bool TryLoad(string path, out BinaryReader reader)
+            {
+                reader = File.Exists(path) ? new BinaryReader(File.OpenRead(path)) : null;
+                return reader != null;
             }
 
-            if (!configuration.Fullscreen)
+            if (TryLoad("diffs.dat", out var reader))
+                return reader;
+
+            if (TryLoad(Path.Combine(Configuration.ReadonlyBundleDirectory, "diffs.dat"), out reader))
+                return reader;
+
+            if (OperatingSystem.IsMacOS() &&
+                Configuration.ReadonlyBundleDirectory != Configuration.ExecutableDirectoryPath &&
+                !Directory.Exists(Configuration.ReadonlyBundleDirectory) &&
+                TryLoad(Path.Combine(Configuration.ExecutableDirectoryPath, "diffs.dat"), out reader))
             {
-                if (configuration.WindowX == null || configuration.WindowY == null)
-                {
-                    window.Center();
-                    configuration.WindowX = window.Position.X;
-                    configuration.WindowY = window.Position.Y;
-                    configuration.MonitorIndex = window.Monitor.Index;
-                }
-                else
-                {
-                    window.Position = new WindowDimension(configuration.WindowX.Value, configuration.WindowY.Value);
-                    EnsureWindowOnMonitor();
-                    configuration.WindowX = window.Position.X;
-                    configuration.WindowY = window.Position.Y;
-                    configuration.MonitorIndex = window.Monitor.Index;
-                }
-
-                var monitorSize = window.Monitor.Bounds.Size;
-                var realBorderSize = window.BorderSize.Origin + window.BorderSize.Size;
-                var realWindowSize = window.Size + realBorderSize;
-
-                if (realWindowSize.X > monitorSize.X || realWindowSize.Y > monitorSize.Y)
-                {
-                    var size = ScreenResolutions.GetPossibleResolutions(new Size(monitorSize.X, monitorSize.Y))[2];
-                    configuration.Width = Width = size.Width;
-                    configuration.Height = Height = size.Height;
-                    window.Size = new WindowDimension(Width, Height);
-                }
+                return reader;
             }
 
-            initialized = true;
+            return null;
+        }
 
-            static BinaryReader LoadAdvancedDiffs()
+        static BinaryReader LoadVersionData()
+        {
+            static bool TryLoad(string path, out BinaryReader reader)
             {
-                static bool TryLoad(string path, out BinaryReader reader)
-                {
-                    reader = File.Exists(path) ? new BinaryReader(File.OpenRead(path)) : null;
-                    return reader != null;
-                }
-
-                if (TryLoad("diffs.dat", out var reader))
-                    return reader;
-
-                if (TryLoad(Path.Combine(Configuration.ReadonlyBundleDirectory, "diffs.dat"), out reader))
-                    return reader;
-
-                if (OperatingSystem.IsMacOS() &&
-                    Configuration.ReadonlyBundleDirectory != Configuration.ExecutableDirectoryPath &&
-                    !Directory.Exists(Configuration.ReadonlyBundleDirectory) &&
-                    TryLoad(Path.Combine(Configuration.ExecutableDirectoryPath, "diffs.dat"), out reader))
-                {
-                    return reader;
-                }
-
-                return null;
+                reader = File.Exists(path) ? new BinaryReader(File.OpenRead(path)) : null;
+                return reader != null;
             }
 
-            static BinaryReader LoadVersionData()
+            if (TryLoad("versions.dat", out var reader))
+                return reader;
+
+            if (TryLoad(Path.Combine(Configuration.ReadonlyBundleDirectory, "versions.dat"), out reader))
+                return reader;
+
+            if (OperatingSystem.IsMacOS() &&
+                Configuration.ReadonlyBundleDirectory != Configuration.ExecutableDirectoryPath &&
+                !Directory.Exists(Configuration.ReadonlyBundleDirectory) &&
+                TryLoad(Path.Combine(Configuration.ExecutableDirectoryPath, "versions.dat"), out reader))
             {
-                static bool TryLoad(string path, out BinaryReader reader)
-                {
-                    reader = File.Exists(path) ? new BinaryReader(File.OpenRead(path)) : null;
-                    return reader != null;
-                }
-
-                if (TryLoad("versions.dat", out var reader))
-                    return reader;
-
-                if (TryLoad(Path.Combine(Configuration.ReadonlyBundleDirectory, "versions.dat"), out reader))
-                    return reader;
-
-                if (OperatingSystem.IsMacOS() &&
-                    Configuration.ReadonlyBundleDirectory != Configuration.ExecutableDirectoryPath &&
-                    !Directory.Exists(Configuration.ReadonlyBundleDirectory) &&
-                    TryLoad(Path.Combine(Configuration.ExecutableDirectoryPath, "versions.dat"), out reader))
-                {
-                    return reader;
-                }
-
-                return null;
+                return reader;
             }
 
-            var additionalData = OperatingSystem.IsMacOS() ? null : AdditionalData.Loader.Load();
-            var builtinVersionReader = additionalData == null
-                ? LoadVersionData()
-                : additionalData.TryGetValue("versions", out var reader) ? reader : LoadVersionData();
+            return null;
+        }
 
-            if (ShowVersionSelector(builtinVersionReader, (gameData, savePath, gameLanguage, features) =>
+        // Create light weight render view for preloading data.
+        // It is basically used to show the loading bar.
+        {
+            var useFrameBuffer = true;
+            var useEffects = configuration.Effects != Effects.None;
+            var preloadTextureAtlasManager = TextureAtlasManager.CreateEmpty();
+            var preLoadRenverView = new RenderView(this, null, () =>
             {
-                try
-                {
-                    builtinVersionReader?.Dispose();
-                    renderView?.Dispose();
-                }
-                catch
-                {
-                    // ignore
-                }
+                LoadingBar.Initialize(preloadTextureAtlasManager);
+                return preloadTextureAtlasManager;
+            }, window.FramebufferSize.X, window.FramebufferSize.Y, new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
+            () => KeyValuePair.Create(0, 0), () => 0, []);
 
-                try
-                {
-                    var advancedDiffsReader = gameData.Advanced ? (additionalData == null
-                        ? LoadAdvancedDiffs()
-                        : additionalData.TryGetValue("diffs", out var reader) ? reader : LoadAdvancedDiffs()) : null;
-                    StartGame(gameData as GameData, savePath, gameLanguage, features, advancedDiffsReader);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error starting game: " + ex.ToString());
-                    window.Close();
-                    return;
-                }
-                WindowMoved();
-                versionSelector = null;
-            }, out var textureAtlasManager))
+            loadingBar = new(preLoadRenverView);
+            window.DoRender();
+        }
+        
+        preloadAction = () =>
+        {
+            var additionalDataPromise = ResourceProvider.GetResource(() => OperatingSystem.IsMacOS() ? null : AdditionalData.Loader.Load());
+
+            additionalDataPromise.ResultReady += (additionalData) =>
             {
-                WindowMoved();
-            }
+                loadingBar.SetProgress(0.05f);
 
-            string patcherPath = Path.Combine(Configuration.ExecutableDirectoryPath, "AmbermoonPatcher");
+                var builtinVersionReaderPromise = ResourceProvider.GetResource(() => additionalData == null
+                    ? LoadVersionData()
+                    : additionalData.TryGetValue("versions", out var reader) ? reader : LoadVersionData());
 
-            if (OperatingSystem.IsWindows())
-                patcherPath += ".exe";
-
-            bool hasPatcher = File.Exists(patcherPath);
-
-            if (hasPatcher && configuration.UsePatcher != false)
-            {
-                bool firstTime = configuration.UsePatcher == null;
-                patcher = new Patcher(renderView, patcherPath, textureAtlasManager ?? TextureAtlasManager.Instance);
-                checkPatcher = false;
-
-                if (firstTime)
+                builtinVersionReaderPromise.ResultReady += (builtinVersionReader) =>
                 {
-                    patcher.AskToUsePatcher(() =>
+                    loadingBar.SetProgress(0.1f);
+
+                    var versionsPromise = ResourceProvider.GetResource(() =>
                     {
-                        configuration.UsePatcher = true;
-                        configuration.UseProxyForPatcher = false;
-                        configuration.PatcherProxy = "";
-                        CheckPatches();
-                    }, () =>
-                    {
-                        configuration.UsePatcher ??= false;
-                        patcher?.CleanUp(true);
-                        patcher = null;
-                        logoPyrdacor?.PlayMusic();
+                        List<BuiltinVersion> versions = null;
+
+                        if (builtinVersionReader != null)
+                        {
+                            var versionLoader = new BuiltinVersionLoader();
+                            versions = versionLoader.Load(builtinVersionReader);
+                        }
+
+                        return versions;
                     });
-                }
-                else
-                {
-                    CheckPatches();
-                }
 
-                void CheckPatches()
-                {
-                    configuration.PatcherTimeout ??= 1250;                    
-                    int timeout = configuration.PatcherTimeout.Value;
-                    patcher.CheckPatches(ok =>
+                    versionsPromise.ResultReady += (versions) =>
                     {
-                        if (ok)
-                            window.Close();
+                        loadingBar.SetProgress(0.15f);
+
+                        if (ShowVersionSelector(versions, (gameData, savePath, gameLanguage, features) =>
+                        {
+                            try
+                            {
+                                if (loadingBar != null)
+                                {
+                                    loadingBar.Destroy();
+                                    loadingBar = null;
+                                }
+
+                                builtinVersionReader?.Dispose();
+                                renderView?.Dispose();
+                            }
+                            catch
+                            {
+                                // ignore
+                            }
+
+                            try
+                            {
+                                var advancedDiffsReader = gameData.Advanced ? (additionalData == null
+                                    ? LoadAdvancedDiffs()
+                                    : additionalData.TryGetValue("diffs", out var reader) ? reader : LoadAdvancedDiffs()) : null;
+                                StartGame(gameData as GameData, savePath, gameLanguage, features, advancedDiffsReader);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Error starting game: " + ex.ToString());
+                                window.Close();
+                                return;
+                            }
+                            WindowMoved();
+                            versionSelector = null;
+                        }, out var textureAtlasManager))
+                        {
+                            WindowMoved();
+                        }
+
+                        string patcherPath = Path.Combine(Configuration.ExecutableDirectoryPath, "AmbermoonPatcher");
+
+                        if (OperatingSystem.IsWindows())
+                            patcherPath += ".exe";
+
+                        bool hasPatcher = File.Exists(patcherPath);
+
+                        if (hasPatcher && configuration.UsePatcher != false)
+                        {
+                            bool firstTime = configuration.UsePatcher == null;
+                            patcher = new Patcher(renderView, patcherPath, textureAtlasManager ?? TextureAtlasManager.Instance);
+                            checkPatcher = false;
+
+                            if (firstTime)
+                            {
+                                patcher.AskToUsePatcher(() =>
+                                {
+                                    configuration.UsePatcher = true;
+                                    configuration.UseProxyForPatcher = false;
+                                    configuration.PatcherProxy = "";
+                                    CheckPatches();
+                                }, () =>
+                                {
+                                    configuration.UsePatcher ??= false;
+                                    patcher?.CleanUp(true);
+                                    patcher = null;
+                                    logoPyrdacor?.PlayMusic();
+                                });
+                            }
+                            else
+                            {
+                                CheckPatches();
+                            }
+
+                            void CheckPatches()
+                            {
+                                configuration.PatcherTimeout ??= 1250;
+                                int timeout = configuration.PatcherTimeout.Value;
+                                patcher.CheckPatches(ok =>
+                                {
+                                    if (ok)
+                                        window.Close();
+                                    else
+                                        NotPatched();
+                                }, NotPatched, ref timeout, configuration.UseProxyForPatcher, configuration.PatcherProxy);
+                                configuration.PatcherTimeout = timeout;
+                                void NotPatched()
+                                {
+                                    patcher?.CleanUp(true);
+                                    patcher = null;
+                                    logoPyrdacor?.PlayMusic();
+                                }
+                            }
+                        }
                         else
-                            NotPatched();
-                    }, NotPatched, ref timeout, configuration.UseProxyForPatcher, configuration.PatcherProxy);
-                    configuration.PatcherTimeout = timeout;
-                    void NotPatched()
-                    {
-                        patcher?.CleanUp(true);
-                        patcher = null;
-                        logoPyrdacor?.PlayMusic();
-                    }
-                }
-            }
-            else
-            {
-                checkPatcher = false;
-                logoPyrdacor?.PlayMusic();
-            }
-        }
+                        {
+                            checkPatcher = false;
+                            logoPyrdacor?.PlayMusic();
+                        }
+                    };
+                };
+            };              
+        };
+        preloading = true;
+    }
 
-        void Window_Render(double delta)
+    void Window_Render(double delta)
+    {
+        if (window.WindowState != WindowState.Minimized)
         {
-            if (window.WindowState != WindowState.Minimized)
-            {
-                if (patcher != null)
-                    patcher.Render();
-                else if (versionSelector != null)
-                    versionSelector.Render();
-                else if (mainMenu != null)
-                    mainMenu.Render();
-                else if (Game != null)
-                    renderView.Render(Game.ViewportOffset);
-                else if (renderView != null)
-                    renderView.Render(null);
-
-                window.SwapBuffers();
-            }
-        }
-
-        void Window_Update(double delta)
-        {
-            if (initializeErrorTime != null)
-            {
-                if ((DateTime.Now - initializeErrorTime.Value).TotalSeconds > 5)
-                    window.Close();
-                return;
-            }
-
-            if (patcher == null && logoPyrdacor != null)
-                logoPyrdacor.Update(renderView, () => logoPyrdacor = null);
-
             if (patcher != null)
-                patcher.Update(delta);
+                patcher.Render();
+            else if (loadingBar != null)
+                loadingBar.Render();
             else if (versionSelector != null)
+                versionSelector.Render();
+            else if (mainMenu != null)
+                mainMenu.Render();
+            else if (Game != null)
+                renderView.Render(Game.ViewportOffset);
+            else if (renderView != null)
+                renderView.Render(null);
+
+            window.SwapBuffers();
+        }
+    }
+
+    void Window_Update(double delta)
+    {
+        if (preloading)
+        {
+            preloadAction?.Invoke();
+            preloading = false;
+            return;
+        }
+        else if (switchRenderViewAction != null)
+        {
+            switchRenderViewAction();
+            switchRenderViewAction = null;
+        }
+
+        if (initializeErrorTime != null)
+        {
+            if ((DateTime.Now - initializeErrorTime.Value).TotalSeconds > 5)
+                window.Close();
+            return;
+        }
+
+        if (patcher == null && logoPyrdacor != null)
+            logoPyrdacor.Update(renderView, () => logoPyrdacor = null);
+
+        if (patcher != null)
+            patcher.Update(delta);
+        else if (loadingBar == null)
+        {
+            if (versionSelector != null)
                 versionSelector.Update(delta);
             else if (logoPyrdacor == null && fantasyIntro != null)
                 fantasyIntro.Update(delta);
             else if (logoPyrdacor == null && advancedLogo != null)
-                advancedLogo.Update(renderView, () => advancedLogo = null);
+                advancedLogo.Update(renderView, () => { advancedLogo = null; renderView.ShowImageLayerOnly = false; });
             else if (intro != null)
                 intro.Update(delta);
             else if (mainMenu != null)
@@ -1643,213 +1765,213 @@ namespace Ambermoon
                 }
             }
         }
+    }
 
-        static bool cheatHeaderPrinted = false;
-        static bool cheatTaskStarted = false;        
-        static CancellationTokenSource cheatTaskCancellationTokenSource = new CancellationTokenSource();
+    static bool cheatHeaderPrinted = false;
+    static bool cheatTaskStarted = false;
+    static CancellationTokenSource cheatTaskCancellationTokenSource = new CancellationTokenSource();
 
-        static void PrintCheatConsoleHeader()
+    static void PrintCheatConsoleHeader()
+    {
+        if (!cheatHeaderPrinted)
         {
-            if (!cheatHeaderPrinted)
-            {
-                cheatHeaderPrinted = true;
-                Console.WriteLine("***** Ambermoon Cheat Console *****");
-                Console.WriteLine("Type 'help' for more information.");
-                Console.WriteLine();
-            }
+            cheatHeaderPrinted = true;
+            Console.WriteLine("***** Ambermoon Cheat Console *****");
+            Console.WriteLine("Type 'help' for more information.");
+            Console.WriteLine();
+        }
+    }
+
+    void Window_Resize(WindowDimension size)
+    {
+        if (!Fullscreen && (size.X != Width || size.Y != Height))
+        {
+            // This seems to happen when changing the screen resolution.
+            window.Size = new WindowDimension(Width, Height);
+            EnsureWindowOnMonitor();
         }
 
-        void Window_Resize(WindowDimension size)
-        {
-            if (!Fullscreen && (size.X != Width || size.Y != Height))
-            {
-                // This seems to happen when changing the screen resolution.
-                window.Size = new WindowDimension(Width, Height);
-                EnsureWindowOnMonitor();
-            }
+        if (renderView != null)
+            renderView.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, size.X, size.Y);
+    }
 
-            if (renderView != null)
-                renderView.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, size.X, size.Y);
+    void Window_FramebufferResize(WindowDimension size)
+    {
+        if (renderView != null)
+            renderView.Resize(size.X, size.Y);
+    }
+
+    void Window_StateChanged(WindowState state)
+    {
+        if (state == WindowState.Minimized)
+            Game?.PauseGame();
+        else
+            Game?.ResumeGame();
+    }
+
+    void Window_Move(WindowDimension position)
+    {
+        if (initialized)
+        {
+            configuration.WindowX = window.Position.X;
+            configuration.WindowY = window.Position.Y;
+            configuration.MonitorIndex = window.Monitor?.Index ?? 0;
         }
 
-        void Window_FramebufferResize(WindowDimension size)
+        WindowMoved();
+    }
+
+    void WindowMoved()
+    {
+        if (renderView != null)
         {
-            if (renderView != null)
-                renderView.Resize(size.X, size.Y);
+            var monitorSize = window.Monitor?.Bounds.Size ?? new WindowDimension(800, 500);
+            renderView.MaxScreenSize = new Size(monitorSize.X, monitorSize.Y);
+            renderView.Resize(window.FramebufferSize.X, window.FramebufferSize.Y);
+        }
+    }
+
+    void UpdateWindow(IConfiguration configuration)
+    {
+        if (!Fullscreen)
+        {
+            var size = configuration.GetScreenSize();
+            this.configuration.Width = Width = size.Width;
+            this.configuration.Height = Height = size.Height;
+            window.Size = new WindowDimension(size.Width, size.Height);
+            EnsureWindowOnMonitor();
         }
 
-        void Window_StateChanged(WindowState state)
+        renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
+    }
+
+    void EnsureWindowOnMonitor()
+    {
+        var bounds = window.Monitor?.Bounds;
+        WindowDimension upperLeft = bounds?.Origin ?? new WindowDimension(0, 0);
+        int? newX = null;
+        int? newY = null;
+
+        if (window.Position.X - window.BorderSize.Origin.X < upperLeft.X)
         {
-            if (state == WindowState.Minimized)
-                Game?.PauseGame();
-            else
-                Game?.ResumeGame();
+            newX = upperLeft.X + window.BorderSize.Origin.X;
+        }
+        else if (bounds != null && window.Position.X >= upperLeft.X + bounds.Value.Size.X)
+        {
+            newX = Math.Max(upperLeft.X + window.BorderSize.Origin.X, upperLeft.X + bounds.Value.Size.X - window.Size.X - window.BorderSize.Origin.X - window.BorderSize.Size.X);
         }
 
-        void Window_Move(WindowDimension position)
+        if (window.Position.Y - window.BorderSize.Origin.Y < upperLeft.Y)
         {
-            if (initialized)
-            {
-                configuration.WindowX = window.Position.X;
-                configuration.WindowY = window.Position.Y;
-                configuration.MonitorIndex = window.Monitor?.Index ?? 0;
-            }
-
-            WindowMoved();
+            newY = upperLeft.Y + window.BorderSize.Origin.Y;
+        }
+        else if (bounds != null && window.Position.Y >= upperLeft.Y + bounds.Value.Size.Y)
+        {
+            newY = Math.Max(upperLeft.Y + window.BorderSize.Origin.Y, upperLeft.Y + bounds.Value.Size.Y - window.Size.Y - window.BorderSize.Origin.Y - window.BorderSize.Size.Y);
         }
 
-        void WindowMoved()
+        if (newX != null || newY != null)
         {
-            if (renderView != null)
-            {
-                var monitorSize = window.Monitor?.Bounds.Size ?? new WindowDimension(800, 500);
-                renderView.MaxScreenSize = new Size(monitorSize.X, monitorSize.Y);
-                renderView.Resize(window.FramebufferSize.X, window.FramebufferSize.Y);
-            }
+            window.Position = new WindowDimension(newX ?? window.Position.X, newY ?? window.Position.Y);
         }
+    }
 
-        void UpdateWindow(IConfiguration configuration)
-        {
-            if (!Fullscreen)
-            {
-                var size = configuration.GetScreenSize();
-                this.configuration.Width = Width = size.Width;
-                this.configuration.Height = Height = size.Height;
-                window.Size = new WindowDimension(size.Width, size.Height);
-                EnsureWindowOnMonitor();
-            }
-
-            renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
-        }
-
-        void EnsureWindowOnMonitor()
-        {
-            var bounds = window.Monitor?.Bounds;
-            WindowDimension upperLeft = bounds?.Origin ?? new WindowDimension(0, 0);
-            int? newX = null;
-            int? newY = null;
-
-            if (window.Position.X - window.BorderSize.Origin.X < upperLeft.X)
-            {
-                newX = upperLeft.X + window.BorderSize.Origin.X;
-            }
-            else if (bounds != null && window.Position.X >= upperLeft.X + bounds.Value.Size.X)
-            {
-                newX = Math.Max(upperLeft.X + window.BorderSize.Origin.X, upperLeft.X + bounds.Value.Size.X - window.Size.X - window.BorderSize.Origin.X - window.BorderSize.Size.X);
-            }
-
-            if (window.Position.Y - window.BorderSize.Origin.Y < upperLeft.Y)
-            {
-                newY = upperLeft.Y + window.BorderSize.Origin.Y;
-            }
-            else if (bounds != null && window.Position.Y >= upperLeft.Y + bounds.Value.Size.Y)
-            {
-                newY = Math.Max(upperLeft.Y + window.BorderSize.Origin.Y, upperLeft.Y + bounds.Value.Size.Y - window.Size.Y - window.BorderSize.Origin.Y - window.BorderSize.Size.Y);
-            }
-
-            if (newX != null || newY != null)
-            {
-                window.Position = new WindowDimension(newX ?? window.Position.X, newY ?? window.Position.Y);
-            }
-        }
-
-        public void Run(Configuration configuration)
-        {
-            this.configuration = configuration;
-            var screenSize = configuration.GetScreenSize();
-            Width = screenSize.Width;
-            Height = screenSize.Height;
+    public void Run(Configuration configuration)
+    {
+        this.configuration = configuration;
+        var screenSize = configuration.GetScreenSize();
+        Width = screenSize.Width;
+        Height = screenSize.Height;
 
 #if GLES
-            var api = new GraphicsAPI
-                (ContextAPI.OpenGLES, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(2, 0));
+        var api = new GraphicsAPI
+            (ContextAPI.OpenGLES, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(2, 0));
 #else
-            var api = GraphicsAPI.Default;
+        var api = GraphicsAPI.Default;
 #endif
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
-            gameVersion = $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build}";
-            var videoMode = new VideoMode(60);
-            var options = new WindowOptions(true, new WindowDimension(100, 100),
-                new WindowDimension(Width, Height), 60.0, 120.0, api, gameVersion,
-                WindowState.Normal, WindowBorder.Fixed, true, false, videoMode, 24);
-            options.WindowClass = "Ambermoon.net";
+        var version = Assembly.GetExecutingAssembly().GetName().Version;
+        gameVersion = $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build}";
+        var videoMode = new VideoMode(60);
+        var options = new WindowOptions(true, new WindowDimension(100, 100),
+            new WindowDimension(Width, Height), 60.0, 120.0, api, gameVersion,
+            WindowState.Normal, WindowBorder.Fixed, true, false, videoMode, 24);
+        options.WindowClass = "Ambermoon.net";
 
-            try
+        try
+        {
+            GlfwWindowing.RegisterPlatform();
+            GlfwInput.RegisterPlatform();
+            GlfwWindowing.Use();
+            window = (IWindow)Silk.NET.Windowing.Window.GetView(new ViewOptions(options));
+            window.Title = options.Title;
+            window.Size = options.Size;
+            window.WindowBorder = options.WindowBorder;
+            window.Load += Window_Load;
+            window.Render += Window_Render;
+            window.Update += Window_Update;
+            window.Resize += Window_Resize;
+            window.FramebufferResize += Window_FramebufferResize;
+            window.Move += Window_Move;
+            window.StateChanged += Window_StateChanged;
+            window.Closing += () =>
             {
-                GlfwWindowing.RegisterPlatform();
-                GlfwInput.RegisterPlatform();
-                GlfwWindowing.Use();
-                window = (IWindow)Silk.NET.Windowing.Window.GetView(new ViewOptions(options));
-                window.Title = options.Title;
-                window.Size = options.Size;
-                window.WindowBorder = options.WindowBorder;
-                window.Load += Window_Load;
-                window.Render += Window_Render;
-                window.Update += Window_Update;
-                window.Resize += Window_Resize;
-                window.FramebufferResize += Window_FramebufferResize;
-                window.Move += Window_Move;
-                window.StateChanged += Window_StateChanged;
-                window.Closing += () =>
-                {
-                    audioOutput.Stop();
-                    audioOutput.Dispose();
-                    cheatTaskCancellationTokenSource.Cancel();
-                };
-                window.Run();
-            }
-            catch (Exception ex)
+                audioOutput.Stop();
+                audioOutput.Dispose();
+                cheatTaskCancellationTokenSource.Cancel();
+            };
+            window.Run();
+        }
+        catch (Exception ex)
+        {
+            if (Game != null)
             {
-                if (Game != null)
+                try
                 {
-                    try
-                    {
-                        Game.SaveCrashedGame();
-                    }
-                    catch
-                    {
-                        // ignore
-                    }
+                    Game.SaveCrashedGame();
                 }
-
-                if (renderView != null && infoText != null)
+                catch
                 {
-                    Util.SafeCall(() => Game?.Destroy());
-                    Util.SafeCall(() => window.DoRender());
-                    Util.SafeCall(() =>
-                    {
-                        var screenArea = new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
-                        var text = renderView.TextProcessor.CreateText(ex.Message
-                            .Replace("\r\n", "^")                            
-                            .Replace("\n", "^")
-                            .Replace("\r", "^"),
-                            ' ');
-                        text = renderView.TextProcessor.WrapText(text, screenArea, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
-                        int height = text.LineCount * Global.GlyphLineHeight - 1;
-                        infoText.Text = text;
-                        screenArea.Position.Y = Math.Max(0, (Global.VirtualScreenHeight - height) / 2);
-                        infoText.Place(screenArea, TextAlign.Center);
-                        infoText.Visible = true;
-
-                        for (int i = 0; i < 5; ++i)
-                        {
-                            window.DoRender();
-                            Thread.Sleep(1000);
-                        }
-                    });
+                    // ignore
                 }
-
-                throw;
             }
-            finally
+
+            if (renderView != null && infoText != null)
             {
+                Util.SafeCall(() => Game?.Destroy());
+                Util.SafeCall(() => window.DoRender());
                 Util.SafeCall(() =>
                 {
-                    infoText?.Delete();
-                    infoText = null;
+                    var screenArea = new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
+                    var text = renderView.TextProcessor.CreateText(ex.Message
+                        .Replace("\r\n", "^")
+                        .Replace("\n", "^")
+                        .Replace("\r", "^"),
+                        ' ');
+                    text = renderView.TextProcessor.WrapText(text, screenArea, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+                    int height = text.LineCount * Global.GlyphLineHeight - 1;
+                    infoText.Text = text;
+                    screenArea.Position.Y = Math.Max(0, (Global.VirtualScreenHeight - height) / 2);
+                    infoText.Place(screenArea, TextAlign.Center);
+                    infoText.Visible = true;
+
+                    for (int i = 0; i < 5; ++i)
+                    {
+                        window.DoRender();
+                        Thread.Sleep(1000);
+                    }
                 });
-                Util.SafeCall(() => window?.Dispose());
             }
+
+            throw;
+        }
+        finally
+        {
+            Util.SafeCall(() =>
+            {
+                infoText?.Delete();
+                infoText = null;
+            });
+            Util.SafeCall(() => window?.Dispose());
         }
     }
 }

@@ -17,7 +17,7 @@ namespace AmbermoonAndroid
         byte alpha = 255;
         Rect clipArea;
 
-        public Text(IRenderView renderView, Layer layer, string text, IReadOnlyDictionary<char, Glyph> glyphs,
+        public Text(IGameRenderView renderView, Layer layer, string text, IReadOnlyDictionary<char, Glyph> glyphs,
             List<char> characters, byte displayLayer, int spaceWidth, bool upperOnly, uint textureAtlasIndexOffset,
             byte alpha = 255, Rect clipArea = null)
         {
@@ -277,7 +277,7 @@ namespace AmbermoonAndroid
             this.glyphs = glyphs;
         }
 
-        public Text CreateText(IRenderView renderView, Layer layer, Rect area, string text,
+        public Text CreateText(IGameRenderView renderView, Layer layer, Rect area, string text,
             byte displayLayer, TextAlign textAlign = TextAlign.Center, byte alpha = 255, Rect clipArea = null)
         {
             text = new string(TextProcessor.RemoveDiacritics(text).Where(ch => ch == ' ' || glyphs.ContainsKey(upperOnly ? char.ToUpper(ch) : ch)).ToArray());

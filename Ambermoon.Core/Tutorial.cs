@@ -322,7 +322,7 @@ namespace Ambermoon
 		internal static string GetIntroductionTooltip(GameLanguage language) =>
             introductionTooltips.TryGetValue(language, out var tooltip) ? tooltip : introductionTooltips[GameLanguage.English];
 
-		public void Run(IRenderView renderView)
+		public void Run(IGameRenderView renderView)
         {
             game.StartSequence();
             game.ShowDecisionPopup(GetText(0), response =>
@@ -338,7 +338,7 @@ namespace Ambermoon
             }, 4, 0, TextAlign.Center, false);
         }
 
-        void ShowMarker(IRenderView renderView, Rect area)
+        void ShowMarker(IGameRenderView renderView, Rect area)
         {
             var red = new Color(255, 0, 0);
             markers[0] = renderView.ColoredRectFactory.Create(area.Width, 1, red, 15);
@@ -387,7 +387,7 @@ namespace Ambermoon
             game.InputEnable = false;
         }
 
-        void ShowTips(IRenderView renderView)
+        void ShowTips(IGameRenderView renderView)
         {
             if (game.Configuration.IsMobile)
                 ShowTipChain(renderView, ShowTip1, ShowTip2, ShowTip3, ShowTip4, ShowTip5, ShowTip6, ShowTutorialEnd);
@@ -395,12 +395,12 @@ namespace Ambermoon
 				ShowTipChain(renderView, ShowTip1, ShowTip2, ShowTip3, ShowTip4, ShowTutorialEnd);
 		}
 
-        static void ShowTipChain(IRenderView renderView, params Action<IRenderView, Action>[] tips)
+        static void ShowTipChain(IGameRenderView renderView, params Action<IGameRenderView, Action>[] tips)
         {
-            ShowTipChain(renderView, tips as IEnumerable<Action<IRenderView, Action>>);
+            ShowTipChain(renderView, tips as IEnumerable<Action<IGameRenderView, Action>>);
         }
 
-        static void ShowTipChain(IRenderView renderView, IEnumerable<Action<IRenderView, Action>> tips)
+        static void ShowTipChain(IGameRenderView renderView, IEnumerable<Action<IGameRenderView, Action>> tips)
         {
             var count = tips.Count();
 
@@ -410,7 +410,7 @@ namespace Ambermoon
                 tips.First()?.Invoke(renderView, () => ShowTipChain(renderView, tips.Skip(1)));
         }
 
-        void ShowTip1(IRenderView renderView, Action next)
+        void ShowTip1(IGameRenderView renderView, Action next)
         {
             if (game.Configuration.IsMobile)
             {
@@ -426,7 +426,7 @@ namespace Ambermoon
 			game.ShowMessagePopup(GetText(1), next);
         }
 
-        void ShowTip2(IRenderView renderView, Action next)
+        void ShowTip2(IGameRenderView renderView, Action next)
         {
             ToggleButtons();
             if (game.Configuration.IsMobile)
@@ -439,7 +439,7 @@ namespace Ambermoon
 			game.ShowMessagePopup(GetText(2), next);
         }
 
-        void ShowTip3(IRenderView renderView, Action next)
+        void ShowTip3(IGameRenderView renderView, Action next)
         {
 			HideMarker();
 
@@ -458,7 +458,7 @@ namespace Ambermoon
             }
         }
 
-        void ShowTip4(IRenderView renderView, Action next)
+        void ShowTip4(IGameRenderView renderView, Action next)
         {
 			HideMarker();
 
@@ -477,7 +477,7 @@ namespace Ambermoon
             }
         }
 
-		void ShowTip5(IRenderView renderView, Action next)
+		void ShowTip5(IGameRenderView renderView, Action next)
         {
 			DrawTouchFinger(Map2DViewArea.Center.X, Map2DViewArea.Bottom - 36, true);
             HideMarker();
@@ -488,7 +488,7 @@ namespace Ambermoon
             });
 		}
 
-		void ShowTip6(IRenderView renderView, Action next)
+		void ShowTip6(IGameRenderView renderView, Action next)
 		{
             ShowMarker(renderView, Global.ButtonGridArea.CreateModified(-1, -1, 2, 2));
 			var center = Global.ButtonGridArea.Center;
@@ -530,7 +530,7 @@ namespace Ambermoon
 			button.Release(true);
 		}
 
-		void ShowTutorialEnd(IRenderView renderView, Action next)
+		void ShowTutorialEnd(IGameRenderView renderView, Action next)
         {
  			HideMarker();
             game.ShowMessagePopup(GetText(texts.Length), next);
