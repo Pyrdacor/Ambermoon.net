@@ -88,6 +88,11 @@ namespace AmbermoonAndroid
 			return graphic;
 		}
 
+        public static Graphic GetLoadingBarLeft() => GetSpecialGraphic(Resource.Raw.lbar_left);
+        public static Graphic GetLoadingBarMid() => GetSpecialGraphic(Resource.Raw.lbar_mid);
+        public static Graphic GetLoadingBarRight() => GetSpecialGraphic(Resource.Raw.lbar_right);
+        public static Graphic GetLoadingBarFill() => GetSpecialGraphic(Resource.Raw.lbar_green);
+
         private static Graphic GetGraphic(int id)
 		{
 			return LoadGraphic(GetBitmap(id));
@@ -99,7 +104,50 @@ namespace AmbermoonAndroid
 			return BitmapFactory.DecodeStream(stream);
 		}
 
-		private static Graphic LoadGraphic(Bitmap bitmap)
+        private static Graphic GetSpecialGraphic(int id)
+        {
+            return LoadSpecialGraphic(LoadData(id));
+        }
+
+        private static Graphic LoadSpecialGraphic(byte[] imageData)
+		{
+            var dataReader = new DataReader(imageData);
+            int width = dataReader.ReadWord();
+            int height = dataReader.ReadWord();
+            int numColors = dataReader.ReadByte();
+
+            byte[] colors = new byte[numColors * 3];
+
+            for (int i = 0; i < numColors; i++)
+            {
+                colors[i * 3 + 0] = dataReader.ReadByte();
+                colors[i * 3 + 1] = dataReader.ReadByte();
+                colors[i * 3 + 2] = dataReader.ReadByte();
+            }
+
+            int chunkSize = width * height;
+            byte[] data = new byte[chunkSize * 4];
+
+            for (int i = 0; i < chunkSize; ++i)
+            {
+                int index = dataReader.ReadByte();
+
+                data[i * 4 + 0] = colors[index * 3 + 0];
+                data[i * 4 + 1] = colors[index * 3 + 1];
+                data[i * 4 + 2] = colors[index * 3 + 2];
+                data[i * 4 + 3] = 0xff;
+            }
+
+            return new Graphic
+            {
+                Width = width,
+                Height = height,
+                Data = data,
+                IndexedGraphic = false
+            };
+        }
+
+        private static Graphic LoadGraphic(Bitmap bitmap)
 		{
 			int width = bitmap.Width;
 			int height = bitmap.Height;

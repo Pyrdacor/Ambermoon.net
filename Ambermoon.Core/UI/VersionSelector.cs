@@ -216,6 +216,7 @@ namespace Ambermoon.UI
             okButton = CreateButton(new Position(versionListArea.Right - 32, versionListArea.Bottom + 3), textureAtlasManager);
             okButton.ButtonType = Data.Enumerations.ButtonType.Ok;
             okButton.Visible = true;
+            okButton.InstantAction = configuration.IsMobile;
             okButton.LeftClickAction = () =>
             {
                 int totalSelectedIndex = 0;

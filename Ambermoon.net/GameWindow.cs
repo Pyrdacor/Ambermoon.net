@@ -1190,7 +1190,6 @@ class GameWindow : IContextProvider
                     builtinVersionDataProviders[i] = () => configuration.GameVersionIndex == index ? gameData : LoadBuiltinVersionData(versions[index], builtinVersionDataProviders[lastBaseVersion]);
                 }
             }
-            
 
             var flagsData = new DataReader(Resources.Flags);
             var flagsPalette = new Graphic

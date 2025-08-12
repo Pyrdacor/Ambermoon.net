@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Ambermoon.Data;
+﻿using Ambermoon.Data;
 using Ambermoon.Render;
-using Ambermoon.Data.Legacy.Serialization;
+using AmbermoonAndroid;
 
 namespace Ambermoon;
 
@@ -20,44 +18,6 @@ internal class LoadingBar
 
     static uint GraphicOffset;
 
-    static Graphic LoadImage(byte[] imageData)
-    {
-        var dataReader = new DataReader(imageData);
-        int width = dataReader.ReadWord();
-        int height = dataReader.ReadWord();
-        int numColors = dataReader.ReadByte();
-
-        byte[] colors = new byte[numColors * 3];
-
-        for (int i = 0; i < numColors; i++)
-        {
-            colors[i * 3 + 0] = dataReader.ReadByte();
-            colors[i * 3 + 1] = dataReader.ReadByte();
-            colors[i * 3 + 2] = dataReader.ReadByte();
-        }
-
-        int chunkSize = width * height;
-        byte[] data = new byte[chunkSize * 4];
-
-        for (int i = 0; i < chunkSize; ++i)
-        {
-            int index = dataReader.ReadByte();
-
-            data[i * 4 + 0] = colors[index * 3 + 0];
-            data[i * 4 + 1] = colors[index * 3 + 1];
-            data[i * 4 + 2] = colors[index * 3 + 2];
-            data[i * 4 + 3] = 0xff;
-        }
-
-        return new Graphic
-        {
-            Width = width,
-            Height = height,
-            Data = data,
-            IndexedGraphic = false
-        };
-    }
-
     public static void Initialize(TextureAtlasManager textureAtlasManager)
     {
         if (LoadingBar.textureAtlasManager != textureAtlasManager)
@@ -74,12 +34,10 @@ internal class LoadingBar
 
         Graphic[] graphics =
         [
-            LoadImage(Resources.LoadingBarLeft),
-            LoadImage(Resources.LoadingBarRight),
-            LoadImage(Resources.LoadingBarMid),
-            LoadImage(Resources.LoadingBarRed),
-            LoadImage(Resources.LoadingBarYellow),
-            LoadImage(Resources.LoadingBarGreen)
+            FileProvider.GetLoadingBarLeft(),
+            FileProvider.GetLoadingBarRight(),
+            FileProvider.GetLoadingBarMid(),
+            FileProvider.GetLoadingBarFill(),
         ];
 
         return graphics.Select((gfx, index) => new { gfx, index }).ToDictionary(b => offset + (uint)b.index, b => b.gfx);
@@ -108,7 +66,7 @@ internal class LoadingBar
             return sprite;
         }
 
-        float desiredScreenPortion = area.Width / 4;
+        float desiredScreenPortion = area.Width / 3;
         const int DefaultWidth = 116; // 100 for the percentage and 16 for the borders
         float scale = desiredScreenPortion / DefaultWidth;
 
@@ -128,7 +86,7 @@ internal class LoadingBar
         int midPartCount = (scaledWidth - leftSize.Width - rightSize.Width) / midSize.Width;
         int colorYOffset = (midSize.Height - colorSize.Height) / 2;
         int x = (area.Width - scaledWidth) / 2;
-        int y = area.Height - area.Height / 6;
+        int y = area.Height - area.Height / 5;
 
         left = CreateSprite(leftTexSize, leftSize, 0, 0);
         left.X = x;
@@ -140,7 +98,7 @@ internal class LoadingBar
         for (int i = 0; i < midPartCount; i++)
         {
             var midPart = CreateSprite(midTexSize, midSize, 0, 2);
-            var color = CreateSprite(colorTexSize, colorSize, 0, 5);
+            var color = CreateSprite(colorTexSize, colorSize, 0, 3);
 
             midPart.X = x;
             midPart.Y = y;
@@ -162,7 +120,6 @@ internal class LoadingBar
 
     public void SetProgress(float progress)
     {
-        //var textureAtlas = textureAtlasManager.GetOrCreate(Layer.Images);
         progress = Util.Limit(0.0f, progress, 1.0f);
 
         int width = midParts.Count * midParts[0].Width;
@@ -171,19 +128,8 @@ internal class LoadingBar
         int colorWidth = progressParts[0].Width;
         int numVisibleColors = Util.Limit(0, (barWidth + colorWidth / 2) / colorWidth, progressParts.Count);
 
-        /*uint colorIndex = 3;
-        if (numVisibleColors >= progressParts.Count * 2 / 3)
-            colorIndex = 5;
-        else if (numVisibleColors >= progressParts.Count / 3)
-            colorIndex = 4;
-
-        var textureOffset = textureAtlas.GetOffset(GraphicOffset + colorIndex);*/
-
         for (int i = 0; i < numVisibleColors; i++)
-        {
-            //progressParts[i].TextureAtlasOffset = textureOffset;
             progressParts[i].Visible = true;
-        }
     }
 
     public void Destroy()

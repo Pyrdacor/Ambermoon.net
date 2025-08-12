@@ -658,13 +658,15 @@ public class Game
     public delegate void DrawTouchFingerHandler(int x, int y, bool longPress, Rect clipArea, bool behindPopup);
 
     readonly DrawTouchFingerHandler drawTouchFingerRequest;
+    readonly Action<bool> showMobileTouchPadHandler;
 
     public Game(IConfiguration configuration, GameLanguage gameLanguage, IGameRenderView renderView, IGraphicProvider graphicProvider,
         ISavegameManager savegameManager, ISavegameSerializer savegameSerializer, TextDictionary textDictionary,
         Cursor cursor, IAudioOutput audioOutput, ISongManager songManager, FullscreenChangeHandler fullscreenChangeHandler,
         ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory,
         Features features, string gameVersionName, string version, Action<bool, string> keyboardRequest,
-        IAdditionalSaveSlotProvider additionalSaveSlotProvider, DrawTouchFingerHandler drawTouchFingerRequest = null)
+        IAdditionalSaveSlotProvider additionalSaveSlotProvider, DrawTouchFingerHandler drawTouchFingerRequest = null,
+        Action<bool> showMobileTouchPadHandler = null)
     {
         spellInfos = new(Data.SpellInfos.Entries);
 
@@ -673,6 +675,7 @@ public class Game
             spellInfos[Spell.AllHealing] = spellInfos[Spell.AllHealing] with { ApplicationArea = SpellApplicationArea.CampAndBattle };
 
         this.drawTouchFingerRequest = drawTouchFingerRequest;
+        this.showMobileTouchPadHandler = showMobileTouchPadHandler;
         this.keyboardRequest = keyboardRequest;
         Features = features;
         this.gameVersionName = gameVersionName;
@@ -840,6 +843,8 @@ public class Game
         currentSong = null;
 
         PlayMusic(Song.HisMastersVoice);
+
+        showMobileTouchPadHandler?.Invoke(false);
 
         characterCreator = new CharacterCreator(renderView, this, (name, female, portraitIndex) =>
         {
@@ -4039,6 +4044,54 @@ public class Game
 
         if (TextInput.FocusedInput != null)
             CursorType = CursorType.None;
+    }
+
+    public void OnMobileMove(Direction? direction)
+    {
+        if (!Configuration.IsMobile)
+            return;
+
+        if (CurrentWindow.Window != Window.MapView)
+            return;
+
+        keys[(int)Key.W] = false;
+        keys[(int)Key.A] = false;
+        keys[(int)Key.S] = false;
+        keys[(int)Key.D] = false;
+
+        switch (direction)
+        {
+            case Direction.Up:
+                keys[(int)Key.W] = true;
+                break;
+            case Direction.UpLeft:
+                keys[(int)Key.W] = true;
+                keys[(int)Key.A] = true;
+                break;
+            case Direction.UpRight:
+                keys[(int)Key.W] = true;
+                keys[(int)Key.D] = true;
+                break;
+            case Direction.Down:
+                keys[(int)Key.S] = true;
+                break;
+            case Direction.DownLeft:
+                keys[(int)Key.S] = true;
+                keys[(int)Key.A] = true;
+                break;
+            case Direction.DownRight:
+                keys[(int)Key.S] = true;
+                keys[(int)Key.D] = true;
+                break;
+            case Direction.Left:
+                keys[(int)Key.A] = true;
+                break;
+            case Direction.Right:
+                keys[(int)Key.D] = true;
+                break;
+            default:
+                break;
+        }
     }
 
     void Determine2DTargetMode(Position cursorPosition)
@@ -17265,6 +17318,8 @@ public class Game
 
     void SetWindow(Window window, params object[] parameters)
     {
+        showMobileTouchPadHandler?.Invoke(window == Window.MapView);
+
         CurrentMobileAction = MobileAction.None;
 
         if ((window != Window.Inventory && window != Window.Stats) ||
