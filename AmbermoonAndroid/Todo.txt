@@ -1,0 +1,3 @@
+﻿- Tapping on the touch pad arrows should move one tile in this direction
+- Touch pad for 3D movement?
+- Show pressed button in version selector and character creator
