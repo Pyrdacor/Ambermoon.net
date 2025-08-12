@@ -494,7 +494,7 @@ class GameWindow : IContextProvider
                 else if (versionSelector != null)
                 {
                     if (!TestDonateButtonClick(position))
-                        versionSelector.OnMouseDown(position, buttons); versionSelector.OnMouseDown(position, buttons);
+                        versionSelector.OnMouseDown(position, buttons);
                 }
                 else if (mainMenu != null)
                     mainMenu.OnMouseDown(position, buttons);

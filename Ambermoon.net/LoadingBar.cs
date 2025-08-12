@@ -108,7 +108,7 @@ internal class LoadingBar
             return sprite;
         }
 
-        float desiredScreenPortion = area.Width / 4;
+        float desiredScreenPortion = area.Width / 6;
         const int DefaultWidth = 116; // 100 for the percentage and 16 for the borders
         float scale = desiredScreenPortion / DefaultWidth;
 
@@ -128,7 +128,7 @@ internal class LoadingBar
         int midPartCount = (scaledWidth - leftSize.Width - rightSize.Width) / midSize.Width;
         int colorYOffset = (midSize.Height - colorSize.Height) / 2;
         int x = (area.Width - scaledWidth) / 2;
-        int y = area.Height - area.Height / 6;
+        int y = area.Height - area.Height / 8;
 
         left = CreateSprite(leftTexSize, leftSize, 0, 0);
         left.X = x;

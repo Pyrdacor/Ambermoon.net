@@ -12,7 +12,7 @@ namespace AmbermoonAndroid
         int threshold = 0;
 
         readonly ILayerSprite background;
-        readonly ILayerSprite[] arrows = new IAlphaSprite[4];
+        readonly ILayerSprite[] arrows = new ILayerSprite[4];
         readonly ILayerSprite activeMarker;
         readonly ILayerSprite disableOverlay;
 
@@ -31,47 +31,54 @@ namespace AmbermoonAndroid
 
         public static Dictionary<uint, Graphic> GetGraphics(uint offset)
 		{
-			GraphicOffset = offset;
-			var background = FileProvider.GetTouchPad();
-			var marker = FileProvider.GetTouchPadMarker(); // 368,368 (282x282)
-			// Left arrow at 222,444 with 128x139
-			// Top arrow at 438,210 with 151x141
-			// Right arrow at 673,439 with 133x146
-			// Bottom arrow at 434,673 with 156x137
-			var arrows = FileProvider.GetTouchArrows();
-
-            byte[] oddRowPixels = [0, 0, 0, 0xff, 0, 0, 0, 0];
-            byte[] evenRowPixels = [0, 0, 0, 0, 0, 0, 0, 0xff];
-            byte[] oddRow = [.. Enumerable.Repeat(oddRowPixels, background.Width / 2).SelectMany(x => x)];
-            byte[] evenRow = [.. Enumerable.Repeat(oddRowPixels, background.Width / 2).SelectMany(x => x)];
-            var data = new byte[background.Width * background.Height * 4];
-            int index = 0;
-
-            for (int i = 0; i < background.Height / 2; i++)
+            try
             {
-                Buffer.BlockCopy(oddRow, 0, data, index, oddRow.Length);
-                index += oddRow.Length;
-                Buffer.BlockCopy(evenRow, 0, data, index, evenRow.Length);
-                index += evenRow.Length;
+                GraphicOffset = offset;
+                var background = FileProvider.GetTouchPad();
+                var marker = FileProvider.GetTouchPadMarker(); // 368,368 (282x282)
+                                                               // Left arrow at 222,444 with 128x139
+                                                               // Top arrow at 438,210 with 151x141
+                                                               // Right arrow at 673,439 with 133x146
+                                                               // Bottom arrow at 434,673 with 156x137
+                var arrows = FileProvider.GetTouchArrows();
+
+                byte[] oddRowPixels = [0, 0, 0, 0xff, 0, 0, 0, 0];
+                byte[] evenRowPixels = [0, 0, 0, 0, 0, 0, 0, 0xff];
+                byte[] oddRow = [.. Enumerable.Repeat(oddRowPixels, background.Width / 2).SelectMany(x => x)];
+                byte[] evenRow = [.. Enumerable.Repeat(evenRowPixels, background.Width / 2).SelectMany(x => x)];
+                var data = new byte[background.Width * background.Height * 4];
+                int index = 0;
+
+                for (int i = 0; i < background.Height / 2; i++)
+                {
+                    Buffer.BlockCopy(oddRow, 0, data, index, oddRow.Length);
+                    index += oddRow.Length;
+                    Buffer.BlockCopy(evenRow, 0, data, index, evenRow.Length);
+                    index += evenRow.Length;
+                }
+
+                var disableOverlay = new Graphic
+                {
+                    Width = background.Width,
+                    Height = background.Height,
+                    IndexedGraphic = false,
+                    Data = data
+                };
+
+                Graphic[] graphics =
+                [
+                    background,
+                    marker,
+                    ..arrows,
+                    disableOverlay
+                ];
+
+                return graphics.Select((gfx, index) => new { gfx, index }).ToDictionary(b => offset + (uint)b.index, b => b.gfx);
             }
-
-            var disableOverlay = new Graphic
+            catch (Exception ex)
             {
-                Width = background.Width,
-                Height = background.Height,
-                IndexedGraphic = false,
-                Data = data
-            };
-
-            Graphic[] graphics =
-			[
-                background,
-				marker,
-				..arrows,
-                disableOverlay
-            ];
-
-			return graphics.Select((gfx, index) => new { gfx, index }).ToDictionary(b => offset + (uint)b.index, b => b.gfx);
+                throw;
+            }
 		}
 
 		public void Resize(int width, int height)
@@ -96,58 +103,65 @@ namespace AmbermoonAndroid
 
 		public TouchPad(IGameRenderView renderView, Size windowSize)
         {
-			Resize(windowSize.Width, windowSize.Height);
-
-			var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Images);
-			var layer = renderView.GetLayer(Layer.Images);
-
-            ILayerSprite CreateSprite(int texWidth, int texHeight, int width, int height, byte displayLayer, uint textureIndex)
+            try
             {
-                var sprite = renderView.SpriteFactory.Create(width, height, true, displayLayer) as ILayerSprite;
-                sprite.Visible = false;
-                sprite.TextureSize = new(texWidth, texHeight);
-                sprite.Layer = layer;
-                sprite.TextureAtlasOffset = textureAtlas.GetOffset(GraphicOffset + textureIndex);
-                // Important for visibility check, otherwise the virtual screen is used!
-                sprite.ClipArea = area;
+                Resize(windowSize.Width, windowSize.Height);
 
-                return sprite;
+                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Images);
+                var layer = renderView.GetLayer(Layer.Images);
+
+                ILayerSprite CreateSprite(int texWidth, int texHeight, int width, int height, byte displayLayer, uint textureIndex)
+                {
+                    var sprite = renderView.SpriteFactory.Create(width, height, true, displayLayer) as ILayerSprite;
+                    sprite.Visible = false;
+                    sprite.TextureSize = new(texWidth, texHeight);
+                    sprite.Layer = layer;
+                    sprite.TextureAtlasOffset = textureAtlas.GetOffset(GraphicOffset + textureIndex);
+                    // Important for visibility check, otherwise the virtual screen is used!
+                    sprite.ClipArea = area;
+
+                    return sprite;
+                }
+
+                // Note: This has to be updated when the device resolution changes. But this is not possible so we should be fine!
+                int minDimension = Math.Min(area.Width, area.Height);
+                int deviceHeight = Math.Min(windowSize.Width, windowSize.Height);
+
+                if (minDimension > 1024 && minDimension > deviceHeight * 3 / 4)
+                {
+                    minDimension = deviceHeight * 3 / 4;
+                }
+
+                double scale = minDimension / 1024.0;
+
+                background = CreateSprite(1024, 1024, minDimension, minDimension, 0, 0);
+                background.X = area.X + (area.Width - background.Width) / 2;
+                background.Y = area.Y + (area.Height - background.Height) / 2;
+
+                disableOverlay = CreateSprite(1024, 1024, minDimension, minDimension, 100, 6);
+                disableOverlay.X = background.X;
+                disableOverlay.Y = background.Y;
+
+                var relativeArea = RelativeMarkerArea;
+                activeMarker = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scale * relativeArea.Width), Util.Round(scale * relativeArea.Height), 10, 1);
+                activeMarker.X = background.X + Util.Round(scale * relativeArea.X);
+                activeMarker.Y = background.Y + Util.Round(scale * relativeArea.Y);
+
+                for (int a = 0; a < 4; a++)
+                {
+                    relativeArea = RelativeArrowAreas[a];
+                    var arrow = arrows[a] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scale * relativeArea.Width), Util.Round(scale * relativeArea.Height), 10, (uint)(2 + a));
+
+                    arrow.X = background.X + Util.Round(scale * relativeArea.X);
+                    arrow.Y = background.Y + Util.Round(scale * relativeArea.Y);
+                }
+
+                background.Visible = true;
             }
-
-            // Note: This has to be updated when the device resolution changes. But this is not possible so we should be fine!
-            int minDimension = Math.Min(area.Width, area.Height);
-			int deviceHeight = Math.Min(windowSize.Width, windowSize.Height);
-
-			if (minDimension > 1024 && minDimension > deviceHeight * 3 / 4)
-			{
-				minDimension = deviceHeight * 3 / 4;
-			}
-
-			double scale = minDimension / 1024.0;
-
-			background = CreateSprite(1024, 1024, minDimension, minDimension, 0, 0);
-            background.X = area.X + (area.Width - background.Width) / 2;
-            background.Y = area.Y + (area.Height - background.Height) / 2;
-
-            disableOverlay = CreateSprite(1024, 1024, minDimension, minDimension, 100, 6);
-            disableOverlay.X = background.X;
-            disableOverlay.Y = background.Y;
-
-            var relativeArea = RelativeMarkerArea;
-			activeMarker = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scale * relativeArea.Width), Util.Round(scale * relativeArea.Height), 10, 1);
-            activeMarker.X = background.X + Util.Round(scale * relativeArea.X);
-            activeMarker.Y = background.Y + Util.Round(scale * relativeArea.Y);
-
-            for (int a = 0; a < 4; a++)
-			{
-                relativeArea = RelativeArrowAreas[a];
-				var arrow = arrows[a] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scale * relativeArea.Width), Util.Round(scale * relativeArea.Height), 10, (uint)(2 + a));
-
-				arrow.X = background.X + Util.Round(scale * relativeArea.X);
-				arrow.Y = background.Y + Util.Round(scale * relativeArea.Y);
-			}
-
-			background.Visible = true;
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
 
 		public void Show(bool show)
@@ -274,7 +288,7 @@ namespace AmbermoonAndroid
         public void Update(Game game)
         {
             if (disableOverlay != null && background != null)
-                disableOverlay.Visible = background.Visible && game.InputEnable;
+                disableOverlay.Visible = background.Visible && !game.InputEnable;
         }
     }
 }
