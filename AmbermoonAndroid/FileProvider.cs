@@ -60,7 +60,13 @@ namespace AmbermoonAndroid
 
 		public static Stream GetMusic() => LoadStream(Resource.Raw.music);
 
-		public static Graphic GetMidButton()
+        public static Graphic GetTouchPad() => GetGraphic(Resource.Raw.touchpad);
+
+        public static Graphic GetTouchPadMarker() => GetGraphic(Resource.Raw.touchpad_marker);
+
+        public static Graphic[] GetTouchArrows() => [ GetGraphic(Resource.Raw.touchpad_left), GetGraphic(Resource.Raw.touchpad_top), GetGraphic(Resource.Raw.touchpad_right), GetGraphic(Resource.Raw.touchpad_bottom)];
+
+        public static Graphic GetMidButton()
 		{
 			var imageData = LoadData(Resource.Raw.mobile_mid_button);
 			var graphic = new Graphic()
