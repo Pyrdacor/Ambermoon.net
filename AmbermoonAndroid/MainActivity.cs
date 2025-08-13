@@ -501,6 +501,10 @@ namespace AmbermoonAndroid
                 var coords = new MotionEvent.PointerCoords();
                 e.GetPointerCoords(0, coords);
                 var position = new Position(Util.Round(coords.X), Util.Round(coords.Y));
+
+				if (gameWindow.OnTap(position))
+					return true;
+
                 gameWindow.OnMouseDown(position, MouseButtons.Left);
                 gameWindow.OnMouseUp(position, MouseButtons.Left);
                 return true;

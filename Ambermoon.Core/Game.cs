@@ -37,6 +37,14 @@ namespace Ambermoon;
 
 public class Game
 {
+    public enum MobileIconAction
+    {
+        Eye,
+        Hand,
+        Mouth,
+        Options
+    }
+
     internal enum MobileAction
     {
         None,
@@ -655,10 +663,48 @@ public class Game
 
     public string GetFullVersion() => fullVersion;
 
+    public void TriggerMobileIconAction(MobileIconAction mobileIconAction)
+    {
+        if (!Configuration.IsMobile || !InputEnable || allInputDisabled || PopupActive || WindowActive || currentWindow.Window != Window.MapView)
+            return;
+
+        switch (mobileIconAction)
+        {
+            case MobileIconAction.Eye:
+                if (is3D)
+                {
+                    // TODO
+                }
+                else
+                    CursorType = CursorType.Eye;
+                break;
+            case MobileIconAction.Hand:
+                if (is3D)
+                {
+                    // TODO
+                }
+                else
+                    CursorType = CursorType.Hand;
+                break;
+            case MobileIconAction.Mouth:
+                if (is3D)
+                {
+                    // TODO
+                }
+                else
+                    CursorType = CursorType.Mouth;
+                break;
+            case MobileIconAction.Options:
+                layout.OpenOptionMenu();
+                break;
+        }
+    }
+
     public delegate void DrawTouchFingerHandler(int x, int y, bool longPress, Rect clipArea, bool behindPopup);
 
     readonly DrawTouchFingerHandler drawTouchFingerRequest;
     readonly Action<bool> showMobileTouchPadHandler;
+    readonly Action<bool> setMobileDeviceViewHandler;
 
     public Game(IConfiguration configuration, GameLanguage gameLanguage, IGameRenderView renderView, IGraphicProvider graphicProvider,
         ISavegameManager savegameManager, ISavegameSerializer savegameSerializer, TextDictionary textDictionary,
@@ -666,7 +712,7 @@ public class Game
         ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory,
         Features features, string gameVersionName, string version, Action<bool, string> keyboardRequest,
         IAdditionalSaveSlotProvider additionalSaveSlotProvider, DrawTouchFingerHandler drawTouchFingerRequest = null,
-        Action<bool> showMobileTouchPadHandler = null)
+        Action<bool> showMobileTouchPadHandler = null, Action<bool> setMobileDeviceViewHandler = null)
     {
         spellInfos = new(Data.SpellInfos.Entries);
 
@@ -676,6 +722,7 @@ public class Game
 
         this.drawTouchFingerRequest = drawTouchFingerRequest;
         this.showMobileTouchPadHandler = showMobileTouchPadHandler;
+        this.setMobileDeviceViewHandler = setMobileDeviceViewHandler;
         this.keyboardRequest = keyboardRequest;
         Features = features;
         this.gameVersionName = gameVersionName;
@@ -845,9 +892,11 @@ public class Game
         PlayMusic(Song.HisMastersVoice);
 
         showMobileTouchPadHandler?.Invoke(false);
+        setMobileDeviceViewHandler?.Invoke(false);
 
         characterCreator = new CharacterCreator(renderView, this, (name, female, portraitIndex) =>
         {
+            setMobileDeviceViewHandler?.Invoke(true);
             LoadInitial(name, female, (uint)portraitIndex, FixSavegameValues);
             characterCreator = null;
         });
@@ -7142,6 +7191,9 @@ public class Game
 
     void ShowOutro()
     {
+        showMobileTouchPadHandler?.Invoke(false);
+        setMobileDeviceViewHandler?.Invoke(false);
+
         ClosePopup();
         CloseWindow();
         Pause();
@@ -7158,6 +7210,9 @@ public class Game
 
     void ShowCustomOutro()
     {
+        showMobileTouchPadHandler?.Invoke(false);
+        setMobileDeviceViewHandler?.Invoke(false);
+
         customOutro = new CustomOutro(this, layout, CurrentSavegame);
         customOutro.Start();
     }
@@ -17319,6 +17374,10 @@ public class Game
     void SetWindow(Window window, params object[] parameters)
     {
         showMobileTouchPadHandler?.Invoke(window == Window.MapView);
+
+        if (window == Window.Battle || LastWindow.Window == Window.BattleLoot ||
+            (LastWindow.Window == Window.Battle && window != Window.BattleLoot))
+            setMobileDeviceViewHandler?.Invoke(window != Window.Battle && window != Window.BattleLoot);
 
         CurrentMobileAction = MobileAction.None;
 

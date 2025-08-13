@@ -62,9 +62,19 @@ namespace AmbermoonAndroid
 
         public static Graphic GetTouchPad() => GetGraphic(Resource.Raw.touchpad);
 
+        public static Graphic GetTouchPadIconBackground() => GetGraphic(Resource.Raw.icon_background);
+
+        public static Graphic GetTouchPadEye() => GetGraphic(Resource.Raw.eye);
+
+        public static Graphic GetTouchPadHand() => GetGraphic(Resource.Raw.hand);
+
+        public static Graphic GetTouchPadMouth() => GetGraphic(Resource.Raw.mouth);
+
+        public static Graphic GetTouchPadOptions() => GetGraphic(Resource.Raw.options);
+
         public static Graphic GetTouchPadMarker() => GetGraphic(Resource.Raw.touchpad_marker);
 
-        public static Graphic[] GetTouchArrows() => [ GetGraphic(Resource.Raw.touchpad_left), GetGraphic(Resource.Raw.touchpad_top), GetGraphic(Resource.Raw.touchpad_right), GetGraphic(Resource.Raw.touchpad_bottom)];
+        public static Graphic[] GetTouchArrows() => [ GetGraphic(Resource.Raw.touchpad_top), GetGraphic(Resource.Raw.touchpad_right), GetGraphic(Resource.Raw.touchpad_bottom), GetGraphic(Resource.Raw.touchpad_left) ];
 
         public static Graphic GetMidButton()
 		{

@@ -2160,7 +2160,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false, null);
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
 
-                        if (false && game.Configuration.IsMobile)
+                        if (game.Configuration.IsMobile)
                             buttonGrid.SetButton(8, ButtonType.Wait, false, OpenWaitPopup, false, GetTooltip(Button.TooltipType.Wait));
                         else
                             buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));

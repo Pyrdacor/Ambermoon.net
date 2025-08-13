@@ -1,7 +1,7 @@
 ﻿/*
  * VersionSelector.cs - Version selector window
  *
- * Copyright (C) 2020-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -216,7 +216,6 @@ namespace Ambermoon.UI
             okButton = CreateButton(new Position(versionListArea.Right - 32, versionListArea.Bottom + 3), textureAtlasManager);
             okButton.ButtonType = Data.Enumerations.ButtonType.Ok;
             okButton.Visible = true;
-            okButton.InstantAction = configuration.IsMobile;
             okButton.LeftClickAction = () =>
             {
                 int totalSelectedIndex = 0;

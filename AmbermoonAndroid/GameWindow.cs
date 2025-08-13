@@ -461,6 +461,9 @@ class GameWindow : IContextProvider
             {
                 touchActions.Add(() =>
                 {
+                    if (Game != null && touchPad?.OnLongPress(Game, position) == true)
+                        return;
+
                     Game?.OnLongPress(position);
                 });
             }
@@ -541,18 +544,23 @@ class GameWindow : IContextProvider
         }
     }
 
+    internal bool OnTap(Position position)
+    {
+        return touchPad?.OnTap(Game, position) ?? false;
+    }
+
     internal void OnFingerDown(Position position)
     {
-        if (Game != null && touchPad?.OnFingerDown(Game, position) == true)
-            return;
-
         Game?.OnFingerDown(position);
     }
 
     internal void OnFingerUp(Position position)
     {
-        touchPad?.OnFingerUp(position);
-        Game?.OnFingerUp(position);
+        if (Game == null)
+            return;
+
+        touchPad?.OnFingerUp(Game, position);
+        Game.OnFingerUp(position);
     }
 
     internal void OnFingerMoveTo(Position position)
@@ -746,14 +754,21 @@ class GameWindow : IContextProvider
             }
         },
         { GameLanguage.Czech, new string[]
-                {
-                    "Zahájení hry ...",
-                    "Příprava nové hry ..."
-                }
+            {
+                "Zahájení hry ...",
+                "Příprava nové hry ..."
+            }
         }
         };
 
     string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
+
+    void SetMobileDeviceView(bool set)
+    {
+        // In game we want to move everything to the left and make room for the touch pad area.
+        // Before we just display as on desktop (centered on screen). Now switch to mobile device view.
+        renderView.SetDeviceType(set ? DeviceType.MobileLandscape : DeviceType.Desktop, window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
+    }
 
     void StartGame(IGameData gameData, string savePath, GameLanguage gameLanguage, Features features, BinaryReader advancedDiffsReader)
     {
@@ -885,7 +900,7 @@ class GameWindow : IContextProvider
                             musicManager, (_) => { }, (_) => { }, QueryPressedKeys,
                             new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
                             Path.GetFileName(savePath), gameVersion, keyboardRequest, savegameManager,
-                            DrawTouchFinger, show => touchPad.Show(show));
+                            DrawTouchFinger, show => touchPad.Show(show), SetMobileDeviceView);
                         game.QuitRequested += window.Close;
                         /*game.MousePositionChanged += position =>
                         {
@@ -947,14 +962,11 @@ class GameWindow : IContextProvider
                             advancedSavegamePatcher.PatchSavegame(gameData, saveSlot, sourceEpisode, targetEpisode);
                         };
 
-                        // In game we want to move everything to the left and make room for the touch pad area.
-                        // Before we just display as on desktop (centered on screen). Now switch to mobile device view.
-                        renderView.SetDeviceType(DeviceType.MobileLandscape, window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
-
                         var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MobileOverlays);
 
                         tutorialFinger = new TutorialFinger(renderView);
                         touchPad = new TouchPad(renderView, new(window.Size.X, window.Size.Y));
+                        touchPad.Show(false);
 
                         game.Run(continueGame, ConvertMousePosition(mouse.Position));
 
