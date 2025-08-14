@@ -20,10 +20,9 @@ internal class TouchPad
     readonly ILayerSprite background;
     readonly ILayerSprite[] arrows = new ILayerSprite[4];
     readonly ILayerSprite activeMarker;
-    readonly ILayerSprite disableOverlay;
+    readonly ILayerSprite[] disableOverlays = new ILayerSprite[3];
     readonly ILayerSprite[] iconBackgrounds = new ILayerSprite[4];
     readonly ILayerSprite[] icons = new ILayerSprite[4];
-    readonly ILayerSprite[] iconDisableOverlays = new ILayerSprite[4];
 
     static uint GraphicOffset = 0;
     static readonly Rect RelativeMarkerArea = new(368, 368, 282, 282);
@@ -92,79 +91,6 @@ internal class TouchPad
                 Data = data
             };
 
-            data = new byte[iconBackground.Width * iconBackground.Height * 4];
-            index = 0;
-            int rowSize = iconBackground.Width * 4;
-
-            for (int i = 0; i < iconBackground.Height / 2; i++)
-            {
-                int x = 0;
-
-                while (x < iconBackground.Width)
-                {
-                    int count = Math.Min(iconBackground.Width - x, oddRow.Length);
-
-                    Buffer.BlockCopy(oddRow, 0, data, index, count);
-                    index += count;
-                    x += count;
-                }
-
-                x = 0;
-
-                while (x < iconBackground.Width)
-                {
-                    int count = Math.Min(iconBackground.Width - x, evenRow.Length);
-
-                    Buffer.BlockCopy(evenRow, 0, data, index, count);
-                    index += count;
-                    x += count;
-                }
-
-                bool checkLeft = true;
-                bool checkRight = true;
-
-                for (x = 0; x < iconBackground.Width / 2; x++)
-                {
-                    if (checkLeft)
-                    {
-                        if (iconBackground.Data[i * rowSize + x * 4 + 3] != 0)
-                        {
-                            checkLeft = false;
-
-                            if (!checkRight)
-                                break;
-                        }
-                        else
-                        {
-                            data[i * rowSize + x * 4 * 3] = 0;
-                        }
-                    }
-
-                    if (checkRight)
-                    {
-                        if (iconBackground.Data[i * rowSize + rowSize - (x + 1) * 4 + 3] != 0)
-                        {
-                            checkRight = false;
-
-                            if (!checkLeft)
-                                break;
-                        }
-                        else
-                        {
-                            data[i * rowSize + rowSize - (x + 1) * 4 + 3] = 0;
-                        }
-                    }
-                }
-            }
-
-            var iconDisableOverlay = new Graphic
-            {
-                Width = iconBackground.Width,
-                Height = iconBackground.Height,
-                IndexedGraphic = false,
-                Data = data
-            };
-
             Graphic[] graphics =
             [
                 background,
@@ -175,8 +101,7 @@ internal class TouchPad
                 eye,
                 hand,
                 mouth,
-                options,
-                iconDisableOverlay
+                options
             ];
 
             return graphics.Select((gfx, index) => new { gfx, index }).ToDictionary(b => offset + (uint)b.index, b => b.gfx);
@@ -244,9 +169,15 @@ internal class TouchPad
             background.X = area.X + (area.Width - background.Width) / 2;
             background.Y = area.Y + (area.Height - background.Height) / 2;
 
-            disableOverlay = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, minDimension, minDimension, 100, 6);
-            disableOverlay.X = background.X;
-            disableOverlay.Y = background.Y;
+            disableOverlays[0] = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, minDimension, minDimension, 100, 6);
+            disableOverlays[0].X = background.X;
+            disableOverlays[0].Y = background.Y - background.Height;
+            disableOverlays[1] = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, minDimension, minDimension, 100, 6);
+            disableOverlays[1].X = background.X;
+            disableOverlays[1].Y = background.Y;
+            disableOverlays[2] = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, minDimension, minDimension, 100, 6);
+            disableOverlays[2].X = background.X;
+            disableOverlays[2].Y = background.Y + background.Height;
 
             var relativeArea = RelativeMarkerArea;
             activeMarker = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scale * relativeArea.Width), Util.Round(scale * relativeArea.Height), 10, 1);
@@ -268,7 +199,6 @@ internal class TouchPad
             {
                 relativeArea = RelativeIconAreas[i];
                 var iconBackground = iconBackgrounds[i] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scale * relativeArea.Width), Util.Round(scale * relativeArea.Height), 20, 7);
-                var iconDisableOverlay = iconDisableOverlays[i] = CreateSprite(relativeArea.Width, relativeArea.Height, iconBackground.Width, iconBackground.Height, 100, 12);
 
                 var iconSize = IconSizes[i];
                 double iconWidth = i == 3 ? 192.0 : 256.0;
@@ -278,9 +208,6 @@ internal class TouchPad
 
                 iconBackground.X = background.X + Util.Round(scale * relativeArea.X);
                 iconBackground.Y = background.Y + Util.Round(scale * relativeArea.Y);
-
-                iconDisableOverlay.X = iconBackground.X;
-                iconDisableOverlay.Y = iconBackground.Y;
 
                 icon.X = iconBackground.X + (iconBackground.Width - icon.Width) / 2;
                 icon.Y = iconBackground.Y + (iconBackground.Height - icon.Height) / 2;
@@ -307,13 +234,12 @@ internal class TouchPad
         if (!show)
         {
             activeMarker.Visible = false;
-            disableOverlay.Visible = false;
+            
+            foreach (var disableOverlay in disableOverlays)
+                disableOverlay.Visible = false;
 
             foreach (var arrow in arrows)
                 arrow.Visible = false;
-
-            foreach (var iconDisableOverlay in iconDisableOverlays)
-                iconDisableOverlay.Visible = false;
 
             active = false;
             Direction = null;
@@ -327,7 +253,8 @@ internal class TouchPad
 
         background.Delete();
         activeMarker.Delete();
-        disableOverlay.Delete();
+        foreach (var disableOverlay in disableOverlays)
+            disableOverlay.Delete();
 
         foreach (var arrow in arrows)
             arrow.Delete();
@@ -336,7 +263,6 @@ internal class TouchPad
         {
             iconBackgrounds[i].Delete();
             icons[i].Delete();
-            iconDisableOverlays[i].Delete();
         }
 
         Direction = null;
@@ -488,13 +414,10 @@ internal class TouchPad
         {
             bool showDisableOverlays = background.Visible && !game.InputEnable;
 
-            if (disableOverlay != null)
-                disableOverlay.Visible = showDisableOverlays;
-
-            foreach (var iconDisableOverlay in iconDisableOverlays)
+            foreach (var disableOverlay in disableOverlays)
             {
-                if (iconDisableOverlay != null)
-                    iconDisableOverlay.Visible = showDisableOverlays;
+                if (disableOverlay != null)
+                    disableOverlay.Visible = showDisableOverlays;
             }
         }
 

@@ -819,7 +819,6 @@ class GameWindow : IContextProvider
                 introGraphics.Add(++twinlakeFrameOffset, twinlakeImagePart.Graphic);
             textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
                 introFontLarge.GlyphGraphics, introGraphics, features);
-            textureAtlasManager.ReplaceGraphic(Layer.UI, Graphics.GetButtonGraphicIndex(ButtonType.Wait), FileProvider.GetMidButton());
             logoPyrdacor?.Initialize(textureAtlasManager);
             AdvancedLogo.Initialize(textureAtlasManager);
             var graphics = TutorialFinger.GetGraphics(1u); // Donate button is 0

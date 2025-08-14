@@ -76,28 +76,6 @@ namespace AmbermoonAndroid
 
         public static Graphic[] GetTouchArrows() => [ GetGraphic(Resource.Raw.touchpad_top), GetGraphic(Resource.Raw.touchpad_right), GetGraphic(Resource.Raw.touchpad_bottom), GetGraphic(Resource.Raw.touchpad_left) ];
 
-        public static Graphic GetMidButton()
-		{
-			var imageData = LoadData(Resource.Raw.mobile_mid_button);
-			var graphic = new Graphic()
-            {
-                Width = 32,
-                Height = 13,
-                IndexedGraphic = true
-            };
-
-            new GraphicReader().ReadGraphic(graphic, new DataReader(imageData), new GraphicInfo
-			{
-				Width = 32,
-				Height = 13,
-				PaletteOffset = 24,
-				GraphicFormat = GraphicFormat.Palette3Bit,
-                Alpha = true,
-            });
-
-			return graphic;
-		}
-
         public static Graphic GetLoadingBarLeft() => GetSpecialGraphic(Resource.Raw.lbar_left);
         public static Graphic GetLoadingBarMid() => GetSpecialGraphic(Resource.Raw.lbar_mid);
         public static Graphic GetLoadingBarRight() => GetSpecialGraphic(Resource.Raw.lbar_right);
