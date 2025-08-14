@@ -770,6 +770,8 @@ class GameWindow : IContextProvider
         // In game we want to move everything to the left and make room for the touch pad area.
         // Before we just display as on desktop (centered on screen). Now switch to mobile device view.
         renderView.SetDeviceType(set ? DeviceType.MobileLandscape : DeviceType.Desktop, window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
+
+        touchPad.Show(set);
     }
 
     void StartGame(IGameData gameData, string savePath, GameLanguage gameLanguage, Features features, BinaryReader advancedDiffsReader)
@@ -902,7 +904,7 @@ class GameWindow : IContextProvider
                                 musicManager, (_) => { }, (_) => { }, QueryPressedKeys,
                                 new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
                                 Path.GetFileName(savePath), gameVersion, keyboardRequest, savegameManager,
-                                DrawTouchFinger, show => touchPad.Show(show), SetMobileDeviceView);
+                                DrawTouchFinger, SetMobileDeviceView);
                             game.QuitRequested += Quit;
                             /*game.MousePositionChanged += position =>
                             {

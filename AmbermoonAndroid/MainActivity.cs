@@ -22,8 +22,15 @@ namespace AmbermoonAndroid
 		private InputMethodManager imm;
 		private EditText hiddenEditText;
 		private string lastInputText = "";
+        private Handler longPressHandler;
+		const int LongPressDelay = 300;
 
-		public override bool DispatchTouchEvent(MotionEvent e)
+		public MainActivity()
+		{
+            longPressHandler = new Handler(Looper.MainLooper);
+        }
+
+        public override bool DispatchTouchEvent(MotionEvent e)
 		{
 			switch (e.Action)
 			{
@@ -55,6 +62,7 @@ namespace AmbermoonAndroid
 				gestureDetector.OnTouchEvent(e);
 				return true;
 			}
+
 			return base.OnTouchEvent(e);
 		}
 
@@ -447,9 +455,25 @@ namespace AmbermoonAndroid
 			ShowError(message);
         }
 
-        public bool OnDown(MotionEvent e)
-        {
-            // TODO
+		public bool OnDown(MotionEvent e)
+		{
+            longPressHandler.RemoveCallbacksAndMessages(null);
+
+            if (e.PointerCount == 1)
+			{
+				var initialEvent = MotionEvent.Obtain(e);
+
+				longPressHandler.PostDelayed(() =>
+				{
+					var coords = new MotionEvent.PointerCoords();
+                    initialEvent.GetPointerCoords(0, coords);
+					var position = new Position(Util.Round(coords.X), Util.Round(coords.Y));
+					gameWindow.OnLongPress(position);
+				}, LongPressDelay);
+
+				return true;
+			}
+
             return false;
         }
 
@@ -461,13 +485,7 @@ namespace AmbermoonAndroid
 
         public void OnLongPress(MotionEvent e)
         {
-            if (e.PointerCount == 1)
-            {
-                var coords = new MotionEvent.PointerCoords();
-                e.GetPointerCoords(0, coords);
-                var position = new Position(Util.Round(coords.X), Util.Round(coords.Y));
-				gameWindow.OnLongPress(position);
-            }
+            // ignore this, we use our custom long press handler!
         }
 
 		private const int SCROLL_DELAY = 100; // 100 ms
@@ -475,7 +493,9 @@ namespace AmbermoonAndroid
 
 		public bool OnScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
         {
-			var now = DateTime.Now.TimeOfDay.TotalMilliseconds;
+            longPressHandler.RemoveCallbacksAndMessages(null);
+
+            var now = DateTime.Now.TimeOfDay.TotalMilliseconds;
 
 			if (now - lastScrollTime < SCROLL_DELAY)
 				return true;
@@ -506,6 +526,8 @@ namespace AmbermoonAndroid
 
         public bool OnSingleTapUp(MotionEvent e)
         {
+            longPressHandler.RemoveCallbacksAndMessages(null);
+
             if (e.PointerCount == 1)
             {
                 var coords = new MotionEvent.PointerCoords();

@@ -314,6 +314,7 @@ public class Game
         (!Map.Flags.HasFlag(MapFlags.Dungeon) || lightIntensity > 0);
     internal bool GameOverButtonsVisible { get; private set; } = false;
     public bool WindowActive => currentWindow.Window != Window.MapView;
+    public bool Is3D => is3D;
     public bool PopupActive => layout?.PopupActive ?? false;
     public bool WindowOrPopupActive => WindowActive || PopupActive;
     public bool CampActive => WindowActive && CurrentWindow.Window == Window.Camp;
@@ -704,7 +705,6 @@ public class Game
 
     readonly DrawTouchFingerHandler drawTouchFingerRequest;
     readonly Action<bool> showMobileTouchPadHandler;
-    readonly Action<bool> setMobileDeviceViewHandler;
 
     public Game(IConfiguration configuration, GameLanguage gameLanguage, IGameRenderView renderView, IGraphicProvider graphicProvider,
         ISavegameManager savegameManager, ISavegameSerializer savegameSerializer, TextDictionary textDictionary,
@@ -712,7 +712,7 @@ public class Game
         ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory,
         Features features, string gameVersionName, string version, Action<bool, string> keyboardRequest,
         IAdditionalSaveSlotProvider additionalSaveSlotProvider, DrawTouchFingerHandler drawTouchFingerRequest = null,
-        Action<bool> showMobileTouchPadHandler = null, Action<bool> setMobileDeviceViewHandler = null)
+        Action<bool> showMobileTouchPadHandler = null)
     {
         spellInfos = new(Data.SpellInfos.Entries);
 
@@ -722,7 +722,6 @@ public class Game
 
         this.drawTouchFingerRequest = drawTouchFingerRequest;
         this.showMobileTouchPadHandler = showMobileTouchPadHandler;
-        this.setMobileDeviceViewHandler = setMobileDeviceViewHandler;
         this.keyboardRequest = keyboardRequest;
         Features = features;
         this.gameVersionName = gameVersionName;
@@ -892,12 +891,11 @@ public class Game
         PlayMusic(Song.HisMastersVoice);
 
         showMobileTouchPadHandler?.Invoke(false);
-        setMobileDeviceViewHandler?.Invoke(false);
 
         characterCreator = new CharacterCreator(renderView, this, (name, female, portraitIndex) =>
         {
-            setMobileDeviceViewHandler?.Invoke(true);
             LoadInitial(name, female, (uint)portraitIndex, FixSavegameValues);
+            showMobileTouchPadHandler?.Invoke(false); // This avoids showing it briefly and then immediately enter the grandfather event window
             characterCreator = null;
         });
     }
@@ -7192,7 +7190,6 @@ public class Game
     void ShowOutro()
     {
         showMobileTouchPadHandler?.Invoke(false);
-        setMobileDeviceViewHandler?.Invoke(false);
 
         ClosePopup();
         CloseWindow();
@@ -7211,7 +7208,6 @@ public class Game
     void ShowCustomOutro()
     {
         showMobileTouchPadHandler?.Invoke(false);
-        setMobileDeviceViewHandler?.Invoke(false);
 
         customOutro = new CustomOutro(this, layout, CurrentSavegame);
         customOutro.Start();
@@ -17374,10 +17370,6 @@ public class Game
     void SetWindow(Window window, params object[] parameters)
     {
         showMobileTouchPadHandler?.Invoke(window == Window.MapView);
-
-        if (window == Window.Battle || LastWindow.Window == Window.BattleLoot ||
-            (LastWindow.Window == Window.Battle && window != Window.BattleLoot))
-            setMobileDeviceViewHandler?.Invoke(window != Window.Battle && window != Window.BattleLoot);
 
         CurrentMobileAction = MobileAction.None;
 

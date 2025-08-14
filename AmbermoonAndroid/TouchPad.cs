@@ -1,6 +1,7 @@
 ﻿using Ambermoon;
 using Ambermoon.Data;
 using Ambermoon.Render;
+using Android.OS;
 
 namespace AmbermoonAndroid;
 
@@ -13,9 +14,11 @@ internal class TouchPad
     int threshold = 0;
     int iconHitRadius = 0;
     int arrowHitRadius = 0;
-    bool arrowClicked = false;
-    bool resetDirection = false;
     const int DisableOverlayDimension = 128;
+    bool arrowClicked = false;
+    Handler hideTappedArrowHandler = new(Looper.MainLooper);
+    const int ShowTappedArrowDuration = 200;
+    bool enabled = false;
 
     readonly ILayerSprite background;
     readonly ILayerSprite[] arrows = new ILayerSprite[4];
@@ -273,11 +276,13 @@ internal class TouchPad
 
     public bool OnTap(Game game, Position position)
     {
-        if (!game.InputEnable)
+        if (!enabled)
             return false;
 
         if (area.Contains(position))
         {
+            Key[] keys = [Key.W, Key.D, Key.S, Key.A];
+
             for (int i = 0; i < arrows.Length; i++)
             {
                 var arrow = arrows[i];
@@ -285,11 +290,19 @@ internal class TouchPad
 
                 if (arrowArea.Contains(position))
                 {
-                    Direction = (Direction)(i * 2);
-                    arrowClicked = true;
+                    game.OnKeyDown(keys[i], KeyModifiers.None);
+
                     arrow.Visible = true;
                     activeMarker.Visible = false;
                     active = false;
+                    arrowClicked = true;
+
+                    hideTappedArrowHandler.PostDelayed(() =>
+                    {
+                        if (arrowClicked)
+                            arrow.Visible = false;
+                    }, ShowTappedArrowDuration);
+
                     return true;
                 }
             }
@@ -314,7 +327,7 @@ internal class TouchPad
 
     public bool OnLongPress(Game game, Position position)
     {
-        if (!game.InputEnable)
+        if (!enabled)
         {
             if (active)
                 OnFingerUp(game, position);
@@ -328,6 +341,12 @@ internal class TouchPad
         if (area.Contains(position))
         {
             active = true;
+            arrowClicked = false;
+            hideTappedArrowHandler.RemoveCallbacksAndMessages(null);
+
+            foreach (var arrow in arrows)
+                arrow.Visible = false;            
+
             activeMarker.Visible = true;
             return true;
         }
@@ -340,22 +359,18 @@ internal class TouchPad
         active = false;
         activeMarker.Visible = false;
 
-        if (arrowClicked)
-        {
-            arrowClicked = false;
-            resetDirection = true;
-        }
-        else
+        if (!arrowClicked)
         {
             foreach (var arrow in arrows)
                 arrow.Visible = false;
-            Direction = null;
         }
+
+        Direction = null;
     }
 
     public bool OnFingerMoveTo(Game game, Position position)
     {
-        if (!game.InputEnable)
+        if (!enabled)
         {
             if (active)
                 OnFingerUp(game, position);
@@ -410,6 +425,8 @@ internal class TouchPad
 
     public void Update(Game game)
     {
+        enabled = background != null && background.Visible && game.InputEnable;
+
         if (background != null)
         {
             bool showDisableOverlays = background.Visible && !game.InputEnable;
@@ -418,23 +435,6 @@ internal class TouchPad
             {
                 if (disableOverlay != null)
                     disableOverlay.Visible = showDisableOverlays;
-            }
-        }
-
-        if (arrowClicked)
-        {
-            arrowClicked = false;
-            resetDirection = true;
-        }
-        else if (resetDirection)
-        {
-            resetDirection = false;
-
-            if (!active)
-            {
-                foreach (var arrow in arrows)
-                    arrow.Visible = false;
-                Direction = null;
             }
         }
     }
