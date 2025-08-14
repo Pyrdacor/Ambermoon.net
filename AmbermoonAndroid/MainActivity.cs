@@ -359,8 +359,18 @@ namespace AmbermoonAndroid
 
             try
             {
-				musicManager = new MusicManager(this);
-				gameWindow.Run(configuration, musicManager, NameResetHandler, OnAfterInit);
+				var musicManagerFactory = () =>
+				{
+					musicManager = new MusicManager();
+					return musicManager;
+				};
+
+				gameWindow.Closed += () =>
+				{
+					FinishAndRemoveTask();
+                    Process.KillProcess(Process.MyPid());
+                };
+				gameWindow.Run(configuration, musicManagerFactory, NameResetHandler, OnAfterInit);
 			}
             catch (Exception ex)
             {

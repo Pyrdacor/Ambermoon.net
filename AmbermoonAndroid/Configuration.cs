@@ -83,7 +83,8 @@ namespace AmbermoonAndroid
         public Effects Effects { get; set; } = Effects.None;
         public bool ShowPlayerStatsTooltips { get; set; } = false;
         public bool ShowPyrdacorLogo { get; set; } = true;
-		[Obsolete("Now the fantasy intro is shown instead.")]
+        public bool ShowAdvancedLogo { get; set; } = true;
+        [Obsolete("Now the fantasy intro is shown instead.")]
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public bool? ShowThalionLogo { get; set; } = null;
         public bool ShowFloor { get; set; } = true;

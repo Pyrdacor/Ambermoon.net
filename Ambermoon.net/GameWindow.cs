@@ -781,8 +781,8 @@ class GameWindow : IContextProvider
             }
         }
 
-        if (gameData.Advanced)
-            advancedLogo = new AdvancedLogo(); // TODO: later add it to options
+        if (gameData.Advanced && configuration.ShowAdvancedLogo)
+            advancedLogo = new AdvancedLogo();
 
         musicManager = new MusicManager(configuration, gameData);
         fontProvider ??= new IngameFontProvider(new DataReader(Resources.IngameFont), gameData.FontProvider.GetFont());

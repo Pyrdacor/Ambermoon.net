@@ -149,7 +149,6 @@ namespace AmbermoonAndroid
 
 		static readonly Dictionary<Song, SonicArrangerSong> songs = [];
 		private readonly Dictionary<Song, MusicStream> songStreams = [];
-		private readonly Context context;
 		private AudioTrack audioTrack;
         private Song? currentSong = null;
         private float volume = 1.0f;
@@ -188,10 +187,8 @@ namespace AmbermoonAndroid
 			}
         }
 
-		public MusicManager(Context context)
+		public MusicManager()
         {
-            this.context = context;
-
 			using var stream = FileProvider.GetMusic();
 
 			int ReadWord()
@@ -272,15 +269,6 @@ namespace AmbermoonAndroid
 			songs.Add(PyrdacorSong, song);
 
 			return song;
-		}
-
-		private System.IO.Stream GetSongStream(Song song, int resourceId)
-		{
-			var resourceStream = context.Resources.OpenRawResource(resourceId);
-			var memoryStream = new MemoryStream();
-			resourceStream.CopyTo(memoryStream);
-			memoryStream.Position = 0;
-			return memoryStream;
 		}
 
 		private void Play(Song song)

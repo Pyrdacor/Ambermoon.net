@@ -1522,8 +1522,9 @@ namespace Ambermoon.UI
             AddOption((index, _) => TogglePyrdacorLogo());
             AddOption((index, _) => ToggleFantasyIntro());
             AddOption((index, _) => ToggleIntro());
-            AddOption((index, _) => ToggleSaveLoadInfo());
+            AddOption((index, _) => ToggleAdvancedLogo());
             // Page 4
+            AddOption((index, _) => ToggleSaveLoadInfo());
             AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleCheats());
 
             listBox = activePopup.AddOptionsListBox(options.Take(OptionsPerPage).ToList());
@@ -1596,9 +1597,10 @@ namespace Ambermoon.UI
             void SetPyrdacorLogo() => SetOptionString(17, game.Configuration.ShowPyrdacorLogo ? on : off);
             void SetFantasyIntro() => SetOptionString(18, game.Configuration.ShowFantasyIntro ? on : off);
             void SetIntro() => SetOptionString(19, game.Configuration.ShowIntro ? on : off);
-            void SetSaveLoadInfo() => SetOptionString(20, game.Configuration.ShowSaveLoadMessage ? on : off);
+            void SetAdvancedLogo() => SetOptionString(20, game.Configuration.ShowAdvancedLogo ? on : off);
             // Page 4
-            void SetCheats() => SetOptionString(21, cheatsEnabled ? on : off);
+            void SetSaveLoadInfo() => SetOptionString(21, game.Configuration.ShowSaveLoadMessage ? on : off);
+            void SetCheats() => SetOptionString(22, cheatsEnabled ? on : off);
 
             void UpdateShowFogOption() => SetOptionAction(13, game.Configuration.ShowFloor && game.Configuration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
 
@@ -1632,9 +1634,10 @@ namespace Ambermoon.UI
                         SetPyrdacorLogo();
                         SetFantasyIntro();
                         SetIntro();
-                        SetSaveLoadInfo();
+                        SetAdvancedLogo();
                         break;
                     case 3:
+                        SetSaveLoadInfo();
                         SetCheats();
                         break;
                 }
@@ -1793,6 +1796,12 @@ namespace Ambermoon.UI
             {
                 game.Configuration.ShowPyrdacorLogo = !game.Configuration.ShowPyrdacorLogo;
                 SetPyrdacorLogo();
+                changedConfiguration = true;
+            }
+            void ToggleAdvancedLogo()
+            {
+                game.Configuration.ShowAdvancedLogo = !game.Configuration.ShowAdvancedLogo;
+                SetAdvancedLogo();
                 changedConfiguration = true;
             }
             void ToggleFantasyIntro()

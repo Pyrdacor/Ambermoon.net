@@ -39,6 +39,7 @@ class GameWindow : IContextProvider
     ICursor cursor = null;
     MainMenu mainMenu = null;
     Func<Game> gameCreator = null;
+    Func<MusicManager> musicManagerFactory = null;
     MusicManager musicManager = null;
     bool musicInitialized = false;
     IRenderText infoText = null;
@@ -84,6 +85,7 @@ class GameWindow : IContextProvider
     Intro intro = null;
     public Game Game { get; private set; }
     public event Action OpenDonationLink;
+    public event Action Closed;
 
     public GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, string> keyboardRequest, string id = "MainWindow")
     {
@@ -719,7 +721,7 @@ class GameWindow : IContextProvider
                 case MainMenu.CloseAction.Exit:
                     mainMenu?.Destroy();
                     mainMenu = null;
-                    window.Close();
+                    Quit();
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, "Invalid main menu close action.");
@@ -761,7 +763,7 @@ class GameWindow : IContextProvider
         }
         };
 
-    string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
+    static string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
 
     void SetMobileDeviceView(bool set)
     {
@@ -796,16 +798,17 @@ class GameWindow : IContextProvider
             if (configuration.ShowPyrdacorLogo)
             {
                 logoPyrdacor = new LogoPyrdacor(musicManager, musicManager.GetPyrdacorSong());
+                logoPyrdacor?.PlayMusic();
                 additionalPalettes = logoPyrdacor.Palettes;
             }
             else
             {
-                additionalPalettes = new Graphic[1] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] } };
+                additionalPalettes = [new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] }];
             }
         }
 
-        if (gameData.Advanced)
-            advancedLogo = new AdvancedLogo(); // TODO: later add it to options
+        if (gameData.Advanced && configuration.ShowAdvancedLogo)
+            advancedLogo = new AdvancedLogo();
 
         fontProvider ??= new IngameFontProvider(new DataReader(FileProvider.GetIngameFontData()), gameData.FontProvider.GetFont());
 
@@ -861,182 +864,188 @@ class GameWindow : IContextProvider
         cursor.Type = Data.CursorType.None;
 
         WaitForTask(() =>
-    {
-        while (logoPyrdacor != null)
-            Thread.Sleep(100);
-
-        while (fantasyIntro != null)
-            Thread.Sleep(100);
-
-        while (intro != null)
-            Thread.Sleep(100);
-
-        while (advancedLogo != null)
         {
-            renderView.ShowImageLayerOnly = true;
-            Thread.Sleep(100);
-        }
-    }, () =>
-    {
-        try
-        {
-            var savegameManager = new RemakeSavegameManager(savePath, configuration);
-            savegameManager.GetSavegameNames(gameData, out int currentSavegame, Game.NumBaseSavegameSlots);
-            if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
-                currentSavegame = savegameManager.ContinueSavegameSlot;
-            bool canContinue = currentSavegame != 0;
+            while (logoPyrdacor != null)
+                Thread.Sleep(100);
 
-            void SetupGameCreator(bool continueGame)
+            while (fantasyIntro != null)
+                Thread.Sleep(100);
+
+            while (intro != null)
+                Thread.Sleep(100);
+
+            while (advancedLogo != null)
             {
-                try
-                {
-                    var savegameSerializer = new SavegameSerializer();
-
-                    gameCreator = () =>
-                    {
-                        var game = new Game(configuration, gameLanguage, renderView, graphicProvider,
-                            savegameManager, savegameSerializer, gameData.Dictionary, cursor, musicManager,
-                            musicManager, (_) => { }, (_) => { }, QueryPressedKeys,
-                            new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
-                            Path.GetFileName(savePath), gameVersion, keyboardRequest, savegameManager,
-                            DrawTouchFinger, show => touchPad.Show(show), SetMobileDeviceView);
-                        game.QuitRequested += window.Close;
-                        /*game.MousePositionChanged += position =>
-                        {
-                            if (mouse != null)
-                            {
-                                mouse.MouseMove -= Mouse_MouseMove;
-                                mouse.Position = new MousePosition(position.X, position.Y);
-                                mouse.MouseMove += Mouse_MouseMove;
-                            }
-                        };*/
-                        game.MouseTrappedChanged += (bool trapped, Position position) =>
-                        {
-                            try
-                            {
-                                this.cursor.CursorMode = trapped ? CursorMode.Disabled : CursorMode.Hidden;
-                                trapMouse = false;
-                            }
-                            catch
-                            {
-                                // SDL etc needs special logic as CursorMode.Disabled is not available
-                                trapMouse = trapped;
-                                trappedMouseOffset = trapped ? new FloatPosition(position) : null;
-                                trappedMouseLastPosition = trapped ? new FloatPosition(window.Size.X / 2, window.Size.Y / 2) : null;
-                                this.cursor.CursorMode = CursorMode.Hidden;
-                            }
-                            /*if (mouse != null)
-                            {
-                                mouse.MouseMove -= Mouse_MouseMove;
-                                mouse.Position = !trapped || !trapMouse ? new MousePosition(position.X, position.Y) :
-                                    new MousePosition(window.Size.X / 2, window.Size.Y / 2);
-                                mouse.MouseMove += Mouse_MouseMove;
-                            }*/
-                        };
-                        game.ConfigurationChanged += (configuration, windowChange) =>
-                        {
-                            if (!renderView.TryUseFrameBuffer())
-                            {
-                                configuration.GraphicFilter = GraphicFilter.None;
-                                configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
-                            }
-
-                            if (!renderView.TryUseEffects())
-                                configuration.Effects = Effects.None;
-                        };
-                        game.DrugTicked += Drug_Ticked;
-                        mainMenu.GameDataLoaded = true;
-
-                        AdvancedSavegamePatcher advancedSavegamePatcher = null;
-
-                        // Load advanced diffs (is null for non-advanced versions)
-                        if (advancedDiffsReader != null)
-                            advancedSavegamePatcher = new AdvancedSavegamePatcher(advancedDiffsReader);
-
-                        game.RequestAdvancedSavegamePatching += (gameData, saveSlot, sourceEpisode, targetEpisode) =>
-                        {
-                            if (advancedSavegamePatcher == null)
-                                throw new AmbermoonException(ExceptionScope.Data, "No diff information for old Ambermoon Advanced savegame found.");
-
-                            advancedSavegamePatcher.PatchSavegame(gameData, saveSlot, sourceEpisode, targetEpisode);
-                        };
-
-                        var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MobileOverlays);
-
-                        tutorialFinger = new TutorialFinger(renderView);
-                        touchPad = new TouchPad(renderView, new(window.Size.X, window.Size.Y));
-                        touchPad.Show(false);
-
-                        game.Run(continueGame, ConvertMousePosition(mouse.Position));
-
-                        return game;
-                    };
-                }
-                catch (Exception ex)
-                {
-                    Android.Util.Log.Error("Ambermoon", "Error while preparing game: " + ex.ToString());
-                    gameCreator = () => throw new AmbermoonException(ExceptionScope.Application, "Game preparation failed.");
-                }
+                renderView.ShowImageLayerOnly = true;
+                Thread.Sleep(100);
             }
-
-            void ShowMainMenu(bool fromIntro)
-            {
-                // When starting for the first time the intro is played automatically.
-                // But then is disabled. It can still be viewed from the main menu
-                // and there is also an option to show it always in the option menu.
-                if (configuration.FirstStart && !fromIntro)
-                    configuration.ShowIntro = false;
-
-                this.ShowMainMenu(renderView, cursor, fromIntro, IntroData.GraphicPalettes, introFontLarge,
-                    introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
-                    {
-                        cursor.Type = Data.CursorType.None;
-                        mainMenu.FadeOutAndDestroy(continueGame, () => SetupGameCreator(continueGame));
-                    }, gameLanguage, () =>
-                    {
-                        cursor.Type = Data.CursorType.None;
-                        ShowIntro(byClick => ShowMainMenu(!byClick), introData, introFont, introFontLarge);
-                    });
-            }
-
-            ShowMainMenu(configuration.ShowIntro && !initialIntroEndedByClick);
-        }
-        catch (Exception ex)
+        }, () =>
         {
-            string error = "Error while loading data: " + ex.Message;
-            Android.Util.Log.Error("Ambermoon", error);
-
             try
             {
-                error = @"Error loading data   \(o_o\)";
-                if (ex is FileNotFoundException fileNotFoundException &&
-                    fileNotFoundException.Source == "Silk.NET.Core")
+                var savegameManager = new RemakeSavegameManager(savePath, configuration);
+                savegameManager.GetSavegameNames(gameData, out int currentSavegame, Game.NumBaseSavegameSlots);
+                if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
+                    currentSavegame = savegameManager.ContinueSavegameSlot;
+                bool canContinue = currentSavegame != 0;
+
+                void SetupGameCreator(bool continueGame)
                 {
-                    var missingLibrary = fileNotFoundException?.FileName;
-
-                    if (missingLibrary != null)
+                    try
                     {
-                        error = @$"Error: {Path.GetFileName(missingLibrary)} is missing   (/o_o)/";
+                        var savegameSerializer = new SavegameSerializer();
 
-                        if (missingLibrary.ToLower().Contains("openal"))
-                            error += $"^Please install OpenAL manually"; // ^ is new line
+                        gameCreator = () =>
+                        {
+                            var game = new Game(configuration, gameLanguage, renderView, graphicProvider,
+                                savegameManager, savegameSerializer, gameData.Dictionary, cursor, musicManager,
+                                musicManager, (_) => { }, (_) => { }, QueryPressedKeys,
+                                new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
+                                Path.GetFileName(savePath), gameVersion, keyboardRequest, savegameManager,
+                                DrawTouchFinger, show => touchPad.Show(show), SetMobileDeviceView);
+                            game.QuitRequested += Quit;
+                            /*game.MousePositionChanged += position =>
+                            {
+                                if (mouse != null)
+                                {
+                                    mouse.MouseMove -= Mouse_MouseMove;
+                                    mouse.Position = new MousePosition(position.X, position.Y);
+                                    mouse.MouseMove += Mouse_MouseMove;
+                                }
+                            };*/
+                            game.MouseTrappedChanged += (bool trapped, Position position) =>
+                            {
+                                try
+                                {
+                                    this.cursor.CursorMode = trapped ? CursorMode.Disabled : CursorMode.Hidden;
+                                    trapMouse = false;
+                                }
+                                catch
+                                {
+                                    // SDL etc needs special logic as CursorMode.Disabled is not available
+                                    trapMouse = trapped;
+                                    trappedMouseOffset = trapped ? new FloatPosition(position) : null;
+                                    trappedMouseLastPosition = trapped ? new FloatPosition(window.Size.X / 2, window.Size.Y / 2) : null;
+                                    this.cursor.CursorMode = CursorMode.Hidden;
+                                }
+                                /*if (mouse != null)
+                                {
+                                    mouse.MouseMove -= Mouse_MouseMove;
+                                    mouse.Position = !trapped || !trapMouse ? new MousePosition(position.X, position.Y) :
+                                        new MousePosition(window.Size.X / 2, window.Size.Y / 2);
+                                    mouse.MouseMove += Mouse_MouseMove;
+                                }*/
+                            };
+                            game.ConfigurationChanged += (configuration, windowChange) =>
+                            {
+                                if (!renderView.TryUseFrameBuffer())
+                                {
+                                    configuration.GraphicFilter = GraphicFilter.None;
+                                    configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
+                                }
+
+                                if (!renderView.TryUseEffects())
+                                    configuration.Effects = Effects.None;
+                            };
+                            game.DrugTicked += Drug_Ticked;
+                            mainMenu.GameDataLoaded = true;
+
+                            AdvancedSavegamePatcher advancedSavegamePatcher = null;
+
+                            // Load advanced diffs (is null for non-advanced versions)
+                            if (advancedDiffsReader != null)
+                                advancedSavegamePatcher = new AdvancedSavegamePatcher(advancedDiffsReader);
+
+                            game.RequestAdvancedSavegamePatching += (gameData, saveSlot, sourceEpisode, targetEpisode) =>
+                            {
+                                if (advancedSavegamePatcher == null)
+                                    throw new AmbermoonException(ExceptionScope.Data, "No diff information for old Ambermoon Advanced savegame found.");
+
+                                advancedSavegamePatcher.PatchSavegame(gameData, saveSlot, sourceEpisode, targetEpisode);
+                            };
+
+                            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MobileOverlays);
+
+                            tutorialFinger = new TutorialFinger(renderView);
+                            touchPad = new TouchPad(renderView, new(window.Size.X, window.Size.Y));
+                            touchPad.Show(false);
+
+                            game.Run(continueGame, ConvertMousePosition(mouse.Position));
+
+                            return game;
+                        };
+                    }
+                    catch (Exception ex)
+                    {
+                        Android.Util.Log.Error("Ambermoon", "Error while preparing game: " + ex.ToString());
+                        gameCreator = () => throw new AmbermoonException(ExceptionScope.Application, "Game preparation failed.");
                     }
                 }
 
-                int height = 6 + error.Count(ch => ch == '^') * 7;
-                var text = renderView.TextProcessor.CreateText(error, '_');
-                text = renderView.TextProcessor.WrapText(text, new Rect(0, 0, Global.VirtualScreenWidth, height), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
-                infoText.Text = text;
-                infoText.Place(new Rect(Math.Max(0, (Global.VirtualScreenWidth - infoText.Width) / 2), infoText.Y, infoText.Text.MaxLineSize * 6, height));
-                infoText.Visible = true;
-                initializeErrorTime = DateTime.Now;
+                void ShowMainMenu(bool fromIntro)
+                {
+                    // When starting for the first time the intro is played automatically.
+                    // But then is disabled. It can still be viewed from the main menu
+                    // and there is also an option to show it always in the option menu.
+                    if (configuration.FirstStart && !fromIntro)
+                        configuration.ShowIntro = false;
+
+                    this.ShowMainMenu(renderView, cursor, fromIntro, IntroData.GraphicPalettes, introFontLarge,
+                        introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
+                        {
+                            cursor.Type = Data.CursorType.None;
+                            mainMenu.FadeOutAndDestroy(continueGame, () => SetupGameCreator(continueGame));
+                        }, gameLanguage, () =>
+                        {
+                            cursor.Type = Data.CursorType.None;
+                            ShowIntro(byClick => ShowMainMenu(!byClick), introData, introFont, introFontLarge);
+                        });
+                }
+
+                ShowMainMenu(configuration.ShowIntro && !initialIntroEndedByClick);
             }
-            catch
+            catch (Exception ex)
             {
-                window.Close();
+                string error = "Error while loading data: " + ex.Message;
+                Android.Util.Log.Error("Ambermoon", error);
+
+                try
+                {
+                    error = @"Error loading data   \(o_o\)";
+                    if (ex is FileNotFoundException fileNotFoundException &&
+                        fileNotFoundException.Source == "Silk.NET.Core")
+                    {
+                        var missingLibrary = fileNotFoundException?.FileName;
+
+                        if (missingLibrary != null)
+                        {
+                            error = @$"Error: {Path.GetFileName(missingLibrary)} is missing   (/o_o)/";
+
+                            if (missingLibrary.ToLower().Contains("openal"))
+                                error += $"^Please install OpenAL manually"; // ^ is new line
+                        }
+                    }
+
+                    int height = 6 + error.Count(ch => ch == '^') * 7;
+                    var text = renderView.TextProcessor.CreateText(error, '_');
+                    text = renderView.TextProcessor.WrapText(text, new Rect(0, 0, Global.VirtualScreenWidth, height), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+                    infoText.Text = text;
+                    infoText.Place(new Rect(Math.Max(0, (Global.VirtualScreenWidth - infoText.Width) / 2), infoText.Y, infoText.Text.MaxLineSize * 6, height));
+                    infoText.Visible = true;
+                    initializeErrorTime = DateTime.Now;
+                }
+                catch
+                {
+                    Quit();
+                }
             }
-        }
-    });
+        });
+    }
+
+    void Quit()
+    {
+        window.Close();
+        Closed?.Invoke();
     }
 
     void ShowIntro(Action<bool> showMainMenuAction, IIntroData introData, Font introFont, Font introFontLarge)
@@ -1258,6 +1267,8 @@ class GameWindow : IContextProvider
                     donateButton.Visible = true;
                 });
             };
+
+            logoPyrdacor?.PlayMusic();
         };
 
         return true;
@@ -1387,6 +1398,10 @@ class GameWindow : IContextProvider
 
             versionsPromise.ResultReady += (versions) =>
             {
+                loadingBar.SetProgress(0.1f);
+
+                musicManager = musicManagerFactory?.Invoke();
+
                 loadingBar.SetProgress(0.15f);
 
                 if (ShowVersionSelector(versions, (gameData, savePath, gameLanguage, features) =>
@@ -1415,7 +1430,7 @@ class GameWindow : IContextProvider
                     catch (Exception ex)
                     {
                         Android.Util.Log.Error("Ambermoon", "Error starting game: " + ex.ToString());
-                        window.Close();
+                        Quit();
                         return;
                     }
                     versionSelector = null;
@@ -1423,8 +1438,6 @@ class GameWindow : IContextProvider
                 {
                     // empty
                 }
-
-                logoPyrdacor?.PlayMusic();
             };
         };
         preloading = true;
@@ -1466,7 +1479,7 @@ class GameWindow : IContextProvider
         if (initializeErrorTime != null)
         {
             if ((DateTime.Now - initializeErrorTime.Value).TotalSeconds > 5)
-                window.Close();
+                Quit();
             return;
         }
 
@@ -1497,7 +1510,7 @@ class GameWindow : IContextProvider
                     catch (Exception ex)
                     {
                         Android.Util.Log.Error("Ambermoon", "Error creating game: " + ex.Message);
-                        window.Close();
+                        Quit();
                         return;
                     }
                     mainMenu?.Destroy();
@@ -1557,11 +1570,11 @@ class GameWindow : IContextProvider
         window.DoEvents();
     }
 
-    public void Run(Configuration configuration, MusicManager musicManager,
+    public void Run(Configuration configuration, Func<MusicManager> musicManagerFactory,
         Action nameResetHandler, Action afterInitHandler)
     {
         this.configuration = configuration;
-        this.musicManager = musicManager;
+        this.musicManagerFactory = musicManagerFactory;
         var screenSize = configuration.GetScreenSize();
         Width = screenSize.Width;
         Height = screenSize.Height;
@@ -1592,7 +1605,7 @@ class GameWindow : IContextProvider
             window.Update += Window_Update;
             window.Resize += Window_Resize;
             window.FramebufferResize += Window_FramebufferResize;
-            window.Closing += musicManager.Stop;
+            window.Closing += () => musicManager?.Stop();
 
             window.Initialize();
             window.Run(() =>
