@@ -35,6 +35,7 @@ public class RenderBuffer : IDisposable
     bool disposed = false;
     readonly State state;
     uint textureFactor = 1;
+    bool indexOrderChecked = true;
 
     readonly VertexArrayObject vertexArrayObject = null;
     readonly VectorBuffer vectorBuffer = null;
@@ -309,6 +310,7 @@ public class RenderBuffer : IDisposable
         positionBuffer.Add(position.X, position.Y + size.Height, index + 3);
 
         indexBuffer.InsertQuad(index / 4);
+        indexOrderChecked = false;
 
         var baseLineOffsetSize = new FloatSize(0, fow.BaseLineOffset);
 
@@ -354,6 +356,7 @@ public class RenderBuffer : IDisposable
         positionBuffer.Add(position.X, position.Y + size.Height, index + 3);
 
         indexBuffer.InsertQuad(index / 4);
+        indexOrderChecked = false;
 
         if (layerBuffer != null)
         {
@@ -423,6 +426,7 @@ public class RenderBuffer : IDisposable
         positionBuffer.Add(position.X, position.Y + size.Height, index + 3);
 
         indexBuffer.InsertQuad(index / 4);
+        indexOrderChecked = false;
 
         if (paletteIndexBuffer != null)
         {
@@ -568,6 +572,7 @@ public class RenderBuffer : IDisposable
         }
 
         indexBuffer.InsertQuad(index / 4);
+        indexOrderChecked = false;
 
         if (paletteIndexBuffer != null)
         {
@@ -1182,6 +1187,25 @@ public class RenderBuffer : IDisposable
                 vertexArrayObject.Unlock();
             }
         }
+    }
+
+    internal void EnsureCorrectRenderOrder()
+    {
+        // Already checked
+        if (indexOrderChecked)
+            return;
+
+        // We need an index buffer
+        if (indexBuffer == null)
+            return;
+
+        // We only support this for layer buffers right now as this is the only use case
+        if (layerBuffer == null)
+            return;
+            
+        indexBuffer.EnsureCorrectRenderOrder(layerBuffer);
+
+        indexOrderChecked = true;
     }
 
     public void Dispose()

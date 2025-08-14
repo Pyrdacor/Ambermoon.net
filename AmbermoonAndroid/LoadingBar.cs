@@ -98,7 +98,7 @@ internal class LoadingBar
         for (int i = 0; i < midPartCount; i++)
         {
             var midPart = CreateSprite(midTexSize, midSize, 0, 2);
-            var color = CreateSprite(colorTexSize, colorSize, 0, 3);
+            var color = CreateSprite(colorTexSize, colorSize, 10, 3);
 
             midPart.X = x;
             midPart.Y = y;

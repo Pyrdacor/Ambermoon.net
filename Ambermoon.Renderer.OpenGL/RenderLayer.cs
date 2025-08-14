@@ -436,6 +436,8 @@ public class RenderLayer : IRenderLayer, IDisposable
         if (!Visible)
             return;
 
+        EnsureCorrectRenderOrder(RenderBuffer);
+
         if (Layer == Layer.FOW)
         {
             var fowShader = RenderBuffer.FowShader;
@@ -447,6 +449,8 @@ public class RenderLayer : IRenderLayer, IDisposable
         {
             if (renderBufferColorRects != null)
             {
+                EnsureCorrectRenderOrder(renderBufferColorRects);
+
                 var colorShader = renderBufferColorRects.ColorShader;
 
                 colorShader.UpdateMatrices(state);
@@ -686,6 +690,14 @@ public class RenderLayer : IRenderLayer, IDisposable
     public void UpdateColoredRectDisplayLayer(int index, byte displayLayer)
     {
         renderBufferColorRects.UpdateDisplayLayer(index, displayLayer);
+    }
+
+    private void EnsureCorrectRenderOrder(RenderBuffer renderBuffer)
+    {
+        if (!Config.EnableBlending)
+            return; // No need for it
+
+        renderBuffer.EnsureCorrectRenderOrder();
     }
 
     public void Dispose()

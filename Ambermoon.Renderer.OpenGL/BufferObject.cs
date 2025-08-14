@@ -55,6 +55,17 @@ internal abstract class BufferObject<T> : IDisposable where T : unmanaged, IEqua
 
     protected delegate bool DataUpdater<U>(T[] buffer, int index, U value);
 
+    internal T[] Buffer
+    {
+        get
+        {
+            lock (bufferLock)
+            {
+                return buffer;
+            }
+        }
+    }
+
     protected BufferObject(State state, bool staticData)
     {
         this.state = state;

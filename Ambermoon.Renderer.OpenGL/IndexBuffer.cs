@@ -25,6 +25,7 @@ using Silk.NET.OpenGLES;
 using Silk.NET.OpenGL;
 #endif
 using System;
+using System.Collections.Generic;
 
 namespace Ambermoon.Renderer.OpenGL;
 
@@ -61,6 +62,45 @@ internal class IndexBuffer : BufferObject<uint>
         while (Size <= arrayIndex + 6)
         {
             base.Add(InsertIndexData, (uint)vertexIndex, quadIndex);
+        }
+    }
+
+    internal void EnsureCorrectRenderOrder(ByteBuffer layerBuffer)
+    {
+        if (layerBuffer.Size == 0)
+            return;
+
+        // We expect always 4 equal values
+        var layerValues = layerBuffer.Buffer;
+        var quads = new List<KeyValuePair<byte, int>>(layerBuffer.Size / 4);
+
+        for (int i = 0; i < layerBuffer.Size / 4; i++)
+        {
+            byte layer = layerValues[i * 4];
+            quads.Add(new KeyValuePair<byte, int>(layer, i));
+        }
+
+        // Sort quads by layer (lower values first), then by index
+        quads.Sort((a, b) =>
+        {
+            int result = a.Key.CompareTo(b.Key);
+
+            if (result == 0)
+                return a.Value.CompareTo(b.Value);
+
+            return result;
+        });
+
+        int bufferIndex = 0;
+
+        foreach (var quad in quads)
+        {
+            Buffer[bufferIndex++] = (uint)(quad.Value * 4 + 0);
+            Buffer[bufferIndex++] = (uint)(quad.Value * 4 + 1);
+            Buffer[bufferIndex++] = (uint)(quad.Value * 4 + 2);
+            Buffer[bufferIndex++] = (uint)(quad.Value * 4 + 3);
+            Buffer[bufferIndex++] = (uint)(quad.Value * 4 + 0);
+            Buffer[bufferIndex++] = (uint)(quad.Value * 4 + 2);
         }
     }
 }
