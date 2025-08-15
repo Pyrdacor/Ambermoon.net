@@ -5,7 +5,6 @@ using Android.OS;
 
 namespace AmbermoonAndroid;
 
-
 internal class TouchPad
 {
     bool destroyed = false;
@@ -24,8 +23,7 @@ internal class TouchPad
     readonly ILayerSprite[] arrows = new ILayerSprite[4];
     readonly ILayerSprite activeMarker;
     readonly ILayerSprite disableOverlay;
-    readonly ILayerSprite[] iconBackgrounds = new ILayerSprite[4];
-    readonly ILayerSprite[] icons = new ILayerSprite[4];
+    readonly ILayerSprite[] icons = new ILayerSprite[11];
 
     static uint GraphicOffset = 0;
     static readonly Rect RelativeMarkerArea = new(368, 368, 282, 282);
@@ -36,13 +34,10 @@ internal class TouchPad
         new(434, 673, 156, 137),
         new(222, 444, 128, 139),
     ];
-    static readonly Rect[] RelativeIconAreas =
-    [
-        new(57, 1048, 270, 276),
-        new(57 + 270 + 50, 1048, 270, 276),
-        new(57 + 270 + 50 + 270 + 50, 1048, 270, 276),
-        new((1024 - 270)/2, -(276 + 24), 270, 276),
-    ];
+    const int IconX1 = 136;
+    const int IconX2 = 1116;
+    const int IconY1 = 186;
+    const int IconY2 = 528;
     static readonly Size[] IconSizes =
     [
         new(24, 9), // eye
@@ -168,8 +163,10 @@ internal class TouchPad
 
             for (int i = 0; i < 4; i++)
             {
-                relativeArea = RelativeIconAreas[i];
-                var iconBackground = iconBackgrounds[i] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 20, 7);
+                int iconX = i % 2 == 0 ? IconX1 : IconX2;
+                int iconY = i < 2 ? IconY1 : IconY2;
+
+                relativeArea = new(iconX, iconY, 270, 276);
 
                 var iconSize = IconSizes[i];
                 double iconWidth = i == 3 ? 192.0 : 256.0;
@@ -177,14 +174,16 @@ internal class TouchPad
                 var iconHeight = iconScale * iconSize.Height;
                 var icon = icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(scaleX * iconWidth), Util.Round(scaleY * iconHeight), 30, (uint)(8 + i));
 
-                iconBackground.X = background.X + Util.Round(scaleX * relativeArea.X);
-                iconBackground.Y = background.Y + Util.Round(scaleY * relativeArea.Y);
+                var iconBackgroundX = background.X + Util.Round(scaleX * relativeArea.X);
+                var iconBackgroundY = background.Y + Util.Round(scaleY * relativeArea.Y);
+                var iconBackgroundWidth = Util.Round(scaleX * 270);
+                var iconBackgroundHeight = Util.Round(scaleY * 276);
 
-                icon.X = iconBackground.X + (iconBackground.Width - icon.Width) / 2;
-                icon.Y = iconBackground.Y + (iconBackground.Height - icon.Height) / 2;
+                icon.X = iconBackgroundX + (iconBackgroundWidth - icon.Width) / 2;
+                icon.Y = iconBackgroundY + (iconBackgroundHeight - icon.Height) / 2;
             }
 
-            iconHitRadius = Math.Max(iconBackgrounds[0].Width, iconBackgrounds[0].Height) / 2 + 1;
+            iconHitRadius = Math.Max(270, 276) / 2 + 1;
         }
         catch (Exception ex)
         {
@@ -198,7 +197,6 @@ internal class TouchPad
 
         for (int i = 0; i < 4; i++)
         {
-            iconBackgrounds[i].Visible = show;
             icons[i].Visible = show;
         }
 
@@ -227,9 +225,8 @@ internal class TouchPad
         foreach (var arrow in arrows)
             arrow.Delete();
 
-        for (int i = 0; i < iconBackgrounds.Length; i++)
+        for (int i = 0; i < 4; i++)
         {
-            iconBackgrounds[i].Delete();
             icons[i].Delete();
         }
 
@@ -272,10 +269,15 @@ internal class TouchPad
                 }
             }
 
-            for (int i = 0; i < iconBackgrounds.Length; i++)
+            for (int i = 0; i < 4; i++)
             {
-                var icon = iconBackgrounds[i];
-                var iconArea = new Rect(icon.X + icon.Width / 2 - iconHitRadius, icon.Y + icon.Height / 2 - iconHitRadius, 2 * iconHitRadius, 2 * iconHitRadius);
+                int iconX = i % 2 == 0 ? IconX1 : IconX2;
+                int iconY = i < 2 ? IconY1 : IconY2;
+
+                // TODO: scale
+                var relativeArea = new Rect(iconX, iconY, 270, 276);
+
+                var iconArea = new Rect(relativeArea.X + relativeArea.Width / 2 - iconHitRadius, relativeArea.Y + relativeArea.Height / 2 - iconHitRadius, 2 * iconHitRadius, 2 * iconHitRadius);
 
                 if (iconArea.Contains(position))
                 {
