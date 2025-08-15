@@ -1,3 +1,4 @@
+using System.Text;
 using Ambermoon;
 using Android.Content;
 using Android.Content.PM;
@@ -15,7 +16,6 @@ namespace AmbermoonAndroid
     [Activity(Label = "@string/app_name", MainLauncher = true, ScreenOrientation = ScreenOrientation.Landscape, Exported = true)]
     public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
     {
-		// private const int RequestBluetoothPermissionsId = 1001;
 		private GameWindow gameWindow;
         private MusicManager musicManager;
         private GestureDetector gestureDetector;
@@ -27,6 +27,9 @@ namespace AmbermoonAndroid
 
 		public MainActivity()
 		{
+            Console.SetOut(new AndroidConsole(nameof(AmbermoonAndroid) + "_Info"));
+            Console.SetError(new AndroidConsole(nameof(AmbermoonAndroid) + "_Error"));
+
             longPressHandler = new Handler(Looper.MainLooper);
         }
 
@@ -113,8 +116,6 @@ namespace AmbermoonAndroid
 			ActionBar?.Hide();
 			Title = "Ambermoon";
 
-			//RequestBluetoothPermissions();
-
 			base.OnCreate(savedInstanceState);
 
 			// Firebase Crash Analytics
@@ -138,44 +139,6 @@ namespace AmbermoonAndroid
 
 			gestureDetector = new GestureDetector(this, this);
 		}
-
-		/*private void RequestBluetoothPermissions()
-		{
-			if (Build.VERSION.SdkInt >= BuildVersionCodes.S)
-			{
-				if (ContextCompat.CheckSelfPermission(this, Android.Manifest.Permission.BluetoothScan) != Permission.Granted ||
-					ContextCompat.CheckSelfPermission(this, Android.Manifest.Permission.BluetoothConnect) != Permission.Granted ||
-					ContextCompat.CheckSelfPermission(this, Android.Manifest.Permission.BluetoothAdvertise) != Permission.Granted)
-				{
-					ActivityCompat.RequestPermissions(this, new string[]
-					{
-						Android.Manifest.Permission.BluetoothScan,
-						Android.Manifest.Permission.BluetoothConnect,
-						Android.Manifest.Permission.BluetoothAdvertise,
-					}, RequestBluetoothPermissionsId);
-				}
-			}
-		}*/
-
-		/*public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
-		{
-			base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-
-			if (requestCode == RequestBluetoothPermissionsId)
-			{
-				// Check if all permissions were granted
-				if (grantResults.Length > 0 && grantResults.All(result => result == Permission.Granted))
-				{
-					// All required permissions were granted
-					Toast.MakeText(this, "Bluetooth permissions granted", ToastLength.Short).Show();
-				}
-				else
-				{
-					// Permissions denied
-					Toast.MakeText(this, "Bluetooth permissions denied", ToastLength.Short).Show();
-				}
-			}
-		}*/
 
 		public void ShowKeyboard(string text)
 		{

@@ -42,7 +42,13 @@ public class Game
         Eye,
         Hand,
         Mouth,
-        Options
+        Transport,
+        Map,
+        Wait,
+        Camp,
+        SpellBook,
+        BattlePositions,
+        Options,
     }
 
     internal enum MobileAction
@@ -52,8 +58,7 @@ public class Game
         Hand,
         Eye,
         Mouth,
-        Interact,
-        ButtonMove
+        Interact
     }
 
     internal class ConversationItems : IItemStorage
@@ -445,7 +450,7 @@ public class Game
                 return;
 
             currentMobileAction = value;
-            var layer = currentMobileAction == MobileAction.Move || currentMobileAction == MobileAction.ButtonMove
+            var layer = currentMobileAction == MobileAction.Move
                 ? Layer.UI
                 : Layer.Cursor;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
@@ -455,7 +460,6 @@ public class Game
                 mobileActionIndicator.TextureAtlasOffset = currentMobileAction switch
                 {
                     MobileAction.Move => textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.StatusMove)),
-                    MobileAction.ButtonMove => textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.StatusMove)),
                     MobileAction.Hand => textureAtlas.GetOffset((uint)CursorType.Hand),
                     MobileAction.Eye => textureAtlas.GetOffset((uint)CursorType.Eye),
                     MobileAction.Mouth => textureAtlas.GetOffset((uint)CursorType.Mouth),
@@ -673,27 +677,43 @@ public class Game
         {
             case MobileIconAction.Eye:
                 if (is3D)
-                {
-                    // TODO
-                }
+                    TriggerMapEvents(EventTrigger.Eye);
                 else
                     CursorType = CursorType.Eye;
                 break;
             case MobileIconAction.Hand:
                 if (is3D)
-                {
-                    // TODO
-                }
+                    TriggerMapEvents(EventTrigger.Hand);
                 else
                     CursorType = CursorType.Hand;
                 break;
             case MobileIconAction.Mouth:
                 if (is3D)
-                {
-                    // TODO
-                }
+                    TriggerMapEvents(EventTrigger.Mouth);
                 else
                     CursorType = CursorType.Mouth;
+                break;
+            case MobileIconAction.Transport:
+                if (!is3D && layout.TransportEnabled)
+                    ToggleTransport();
+                break;
+            case MobileIconAction.Map:
+                if (is3D)
+                    ShowAutomap();
+                break;
+            case MobileIconAction.Wait:
+                layout.OpenWaitPopup();
+                break;
+            case MobileIconAction.Camp:
+                if (Map?.CanCamp == true)
+                    OpenCamp(false);
+                break;
+            case MobileIconAction.SpellBook:
+                if (CanUseSpells())
+                    CastSpell(false);
+                break;
+            case MobileIconAction.BattlePositions:
+                ShowBattlePositionWindow();
                 break;
             case MobileIconAction.Options:
                 layout.OpenOptionMenu();
@@ -1113,27 +1133,16 @@ public class Game
 
                 monstersCanMoveImmediately = false;
 
-                if (Configuration.IsMobile && CurrentMobileAction == MobileAction.ButtonMove)
-                {
-                    /*if (CurrentMobileButtonMoveCursor != null && CurrentMobileButtonMoveCursor != CursorType.None)
-                    {
-                        if (currentMobileButtonMoveAllowProvider?.Invoke() == true)
-                            Move(false, 1.0f, CurrentMobileButtonMoveCursor.Value);
-                    }*/
-                }
-                else
-                {
-                    var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
+                var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
 
-                    if (moveTicks >= movement.MovementTicks(is3D, Map.UseTravelTypes, TravelType))
-                    {
-                        lastMoveTicksReset = CurrentTicks;
+                if (moveTicks >= movement.MovementTicks(is3D, Map.UseTravelTypes, TravelType))
+                {
+                    lastMoveTicksReset = CurrentTicks;
 
-                        if (clickMoveActive)
-                            HandleClickMovement();
-                        else
-                            Move();
-                    }
+                    if (clickMoveActive)
+                        HandleClickMovement();
+                    else
+                        Move();
                 }
             }
 
@@ -2961,21 +2970,10 @@ public class Game
 
     bool DisallowMoving() => paused || WindowActive || !InputEnable || allInputDisabled || pickingNewLeader || pickingTargetPlayer || pickingTargetInventory;
 
-    void Move()
+    void Move(bool tapped = false)
     {
         if (DisallowMoving())
-        {
-            if (CurrentMobileAction == MobileAction.ButtonMove)
-                CurrentMobileAction = MobileAction.None;
             return;
-        }
-
-        if (Configuration.IsMobile && CurrentMobileAction == MobileAction.ButtonMove)// && CurrentMobileButtonMoveCursor != null && CurrentMobileButtonMoveCursor != CursorType.None)
-        {
-            //if (currentMobileButtonMoveAllowProvider?.Invoke() == true)
-            //    Move(false, 1.0f, CurrentMobileButtonMoveCursor.Value);
-            return;
-        }
 
         bool left = ((!is3D || !Configuration.TurnWithArrowKeys) && keys[(int)Key.Left]) || ((!is3D || Configuration.Movement3D == Movement3D.WASDQE) && keys[(int)Key.A]);
         bool right = ((!is3D || !Configuration.TurnWithArrowKeys) && keys[(int)Key.Right]) || ((!is3D || Configuration.Movement3D == Movement3D.WASDQE) && keys[(int)Key.D]);
@@ -3016,12 +3014,16 @@ public class Game
         {
             if (turnLeft && !turnRight)
             {
-                player3D.TurnLeft(movement.TurnSpeed3D);
+                int turns = tapped ? 6 : 1;
+
+                player3D.TurnLeft(movement.TurnSpeed3D * turns);
                 CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
             }
             else if (!turnLeft && turnRight)
             {
-                player3D.TurnRight(movement.TurnSpeed3D);
+                int turns = tapped ? 6 : 1;
+
+                player3D.TurnRight(movement.TurnSpeed3D * turns);
                 CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
             }
         }
@@ -3035,8 +3037,21 @@ public class Game
             }
             else if (CanPartyMove())
             {
-                player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                bool moved = player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                 CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
+
+                if (tapped && moved)
+                {
+                    // Tapping in 3D will move 6 times to make some distance
+                    for (int i = 0; i < 5; i++)
+                    {
+                        moved = player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                        CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
+
+                        if (!moved)
+                            break;
+                    }
+                }
             }
         }
         else if (down && !up)
@@ -3187,7 +3202,7 @@ public class Game
         }
     }
 
-    public void OnKeyDown(Key key, KeyModifiers modifiers)
+    public void OnKeyDown(Key key, KeyModifiers modifiers, bool tapped = false)
     {
 #if DEBUG
         if (key == Key.F5 && modifiers == KeyModifiers.Control)
@@ -3274,7 +3289,7 @@ public class Game
         keys[(int)key] = true;
 
         if (!WindowActive && !layout.PopupActive)
-            Move();
+            Move(tapped);
         else if (currentWindow.Window == Window.BattlePositions && battlePositionDragging)
             return;
         else if (trapMouseArea != null && (currentWindow.Window == Window.Merchant ||
@@ -3615,25 +3630,6 @@ public class Game
                         keys[(int)Key.W] = true;
                 }
             }
-        }
-        else if (CurrentMobileAction == MobileAction.ButtonMove)
-        {
-            var relativePosition = renderView.ScreenToGame(position);
-
-            /*if (Global.ButtonGridArea.Contains(relativePosition))
-            {
-                var moveCursors = layout.GetMoveButtonCursorMapping();
-
-                for (int i = 0; i < 9; i++)
-                {
-                    if (ButtonGrid.ButtonAreas[i].Contains(relativePosition))
-                    {
-                        if (i != 4)
-                            CurrentMobileButtonMoveCursor = moveCursors[i];
-                        return;
-                    }
-                }
-            }*/
         }
     }
 

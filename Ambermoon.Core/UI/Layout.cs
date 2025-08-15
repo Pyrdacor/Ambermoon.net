@@ -2146,7 +2146,12 @@ namespace Ambermoon.UI
 			switch (Type)
             {
                 case LayoutType.Map2D:
-                    if (ButtonGridPage == 0 && !game.Configuration.IsMobile)
+                    if (game.Configuration.IsMobile)
+                    {
+                        for (int i = 0; i < 9; i++)
+                            buttonGrid.SetButton(i, ButtonType.Empty, true, null, false);
+                    }
+                    else if (ButtonGridPage == 0)
                     {
                         buttonGrid.SetButton(0, ButtonType.MoveUpLeft, false, () => HandleButtonMove(CursorType.ArrowUpLeft), true, null, null, moveDelay);
                         buttonGrid.SetButton(1, ButtonType.MoveUp, false, () => HandleButtonMove(CursorType.ArrowUp), true, null, null, moveDelay);
@@ -2168,15 +2173,16 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true || game?.TravelType.CanCampOn() != true, () => game.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false, null);
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
-
-                        if (game.Configuration.IsMobile)
-                            buttonGrid.SetButton(8, ButtonType.Wait, false, OpenWaitPopup, false, GetTooltip(Button.TooltipType.Wait));
-                        else
-                            buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
+                        buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
                     }
                     break;
                 case LayoutType.Map3D:
-                    if (ButtonGridPage == 0 && !game.Configuration.IsMobile)
+                    if (game.Configuration.IsMobile)
+                    {
+                        for (int i = 0; i < 9; i++)
+                            buttonGrid.SetButton(i, ButtonType.Empty, true, null, false);
+                    }
+                    else if (ButtonGridPage == 0)
                     {
                         buttonGrid.SetButton(0, ButtonType.TurnLeft, false, () => HandleButtonMove(CursorType.ArrowTurnLeft), true, null, null, moveDelay);
                         buttonGrid.SetButton(1, ButtonType.MoveForward, false, () => HandleButtonMove(CursorType.ArrowForward), true, null, null, moveDelay);
@@ -2204,11 +2210,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
                         buttonGrid.SetButton(6, ButtonType.Map, false, game.ShowAutomap, false, GetTooltip(Button.TooltipType.Automap));
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
-
-                        if (game.Configuration.IsMobile)
-                            buttonGrid.SetButton(8, ButtonType.Wait, false, OpenWaitPopup, false, GetTooltip(Button.TooltipType.Wait));
-                        else
-                            buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
+                        buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
                     }
                     break;
                 case LayoutType.Inventory:

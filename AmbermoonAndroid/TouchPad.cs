@@ -23,7 +23,7 @@ internal class TouchPad
     readonly ILayerSprite background;
     readonly ILayerSprite[] arrows = new ILayerSprite[4];
     readonly ILayerSprite activeMarker;
-    readonly ILayerSprite[] disableOverlays = new ILayerSprite[3];
+    readonly ILayerSprite disableOverlay;
     readonly ILayerSprite[] iconBackgrounds = new ILayerSprite[4];
     readonly ILayerSprite[] icons = new ILayerSprite[4];
 
@@ -46,7 +46,7 @@ internal class TouchPad
     static readonly Size[] IconSizes =
     [
         new(24, 9), // eye
-        new(22, 11), // hand
+        new(22, 12), // hand
         new(23, 9), // mouth
         new(13, 11), // options
     ];
@@ -115,31 +115,12 @@ internal class TouchPad
         }
     }
 
-    public void Resize(int width, int height)
-    {
-        // Game uses 320x200 (16:10 resolution).
-
-        int deviceHeight = Math.Min(width, height);
-        int deviceWidth = Math.Max(width, height);
-
-        double factor = deviceHeight / 200.0;
-        int usedWidth = (int)Math.Ceiling(320.0 * factor);
-
-        if (usedWidth >= deviceWidth)
-        {
-            // TODO: what to do here?
-            throw new AmbermoonException(ExceptionScope.Application, "TouchPad: Device width is too small for touchpad.");
-        }
-
-        area = new Rect(usedWidth, 0, deviceWidth - usedWidth, deviceHeight);
-        threshold = area.Width / 10; // 10% of the width is the threshold for touchpad movement
-    }
-
-    public TouchPad(IGameRenderView renderView, Size windowSize)
+    public TouchPad(IGameRenderView renderView, Rect touchPadArea)
     {
         try
         {
-            Resize(windowSize.Width, windowSize.Height);
+            area = new(touchPadArea);
+            threshold = area.Width / 10; // 10% of the width is the threshold for touchpad movement
 
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Images);
             var layer = renderView.GetLayer(Layer.Images);
@@ -157,43 +138,30 @@ internal class TouchPad
                 return sprite;
             }
 
-            // Note: This has to be updated when the device resolution changes. But this is not possible so we should be fine!
-            int minDimension = Math.Min(area.Width, area.Height);
-            int deviceHeight = Math.Min(windowSize.Width, windowSize.Height);
+            double scaleX = area.Width / 1526.0f;
+            double scaleY = area.Height / 994.0f;
 
-            if (minDimension > 1024 && minDimension > deviceHeight * 3 / 4)
-            {
-                minDimension = deviceHeight * 3 / 4;
-            }
+            //background = CreateSprite(1024, 1024, minDimension, minDimension, 0, 0);
+            background = CreateSprite(1526, 994, area.Width, area.Height, 0, 0);
+            background.X = area.X;// + (area.Width - background.Width) / 2;
+            background.Y = area.Y;// + (area.Height - background.Height) / 2;
 
-            double scale = minDimension / 1024.0;
-
-            background = CreateSprite(1024, 1024, minDimension, minDimension, 0, 0);
-            background.X = area.X + (area.Width - background.Width) / 2;
-            background.Y = area.Y + (area.Height - background.Height) / 2;
-
-            disableOverlays[0] = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, minDimension, minDimension, 100, 6);
-            disableOverlays[0].X = background.X;
-            disableOverlays[0].Y = background.Y - background.Height;
-            disableOverlays[1] = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, minDimension, minDimension, 100, 6);
-            disableOverlays[1].X = background.X;
-            disableOverlays[1].Y = background.Y;
-            disableOverlays[2] = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, minDimension, minDimension, 100, 6);
-            disableOverlays[2].X = background.X;
-            disableOverlays[2].Y = background.Y + background.Height;
+            disableOverlay = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, area.Width, area.Height, 100, 6);
+            disableOverlay.X = background.X;
+            disableOverlay.Y = background.Y;
 
             var relativeArea = RelativeMarkerArea;
-            activeMarker = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scale * relativeArea.Width), Util.Round(scale * relativeArea.Height), 10, 1);
-            activeMarker.X = background.X + Util.Round(scale * relativeArea.X);
-            activeMarker.Y = background.Y + Util.Round(scale * relativeArea.Y);
+            activeMarker = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 10, 1);
+            activeMarker.X = background.X + Util.Round(scaleX * relativeArea.X);
+            activeMarker.Y = background.Y + Util.Round(scaleY * relativeArea.Y);
 
             for (int a = 0; a < 4; a++)
             {
                 relativeArea = RelativeArrowAreas[a];
-                var arrow = arrows[a] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scale * relativeArea.Width), Util.Round(scale * relativeArea.Height), 10, (uint)(2 + a));
+                var arrow = arrows[a] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 10, (uint)(2 + a));
 
-                arrow.X = background.X + Util.Round(scale * relativeArea.X);
-                arrow.Y = background.Y + Util.Round(scale * relativeArea.Y);
+                arrow.X = background.X + Util.Round(scaleX * relativeArea.X);
+                arrow.Y = background.Y + Util.Round(scaleY * relativeArea.Y);
             }
 
             arrowHitRadius = (5 * arrows.SelectMany<ILayerSprite, int>(arrow => [arrow.Width, arrow.Height]).Max() / 4) / 2;
@@ -201,16 +169,16 @@ internal class TouchPad
             for (int i = 0; i < 4; i++)
             {
                 relativeArea = RelativeIconAreas[i];
-                var iconBackground = iconBackgrounds[i] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scale * relativeArea.Width), Util.Round(scale * relativeArea.Height), 20, 7);
+                var iconBackground = iconBackgrounds[i] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 20, 7);
 
                 var iconSize = IconSizes[i];
                 double iconWidth = i == 3 ? 192.0 : 256.0;
                 double iconScale = iconWidth / iconSize.Width;
                 var iconHeight = iconScale * iconSize.Height;
-                var icon = icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(scale * iconWidth), Util.Round(scale * iconHeight), 30, (uint)(8 + i));
+                var icon = icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(scaleX * iconWidth), Util.Round(scaleY * iconHeight), 30, (uint)(8 + i));
 
-                iconBackground.X = background.X + Util.Round(scale * relativeArea.X);
-                iconBackground.Y = background.Y + Util.Round(scale * relativeArea.Y);
+                iconBackground.X = background.X + Util.Round(scaleX * relativeArea.X);
+                iconBackground.Y = background.Y + Util.Round(scaleY * relativeArea.Y);
 
                 icon.X = iconBackground.X + (iconBackground.Width - icon.Width) / 2;
                 icon.Y = iconBackground.Y + (iconBackground.Height - icon.Height) / 2;
@@ -237,9 +205,7 @@ internal class TouchPad
         if (!show)
         {
             activeMarker.Visible = false;
-            
-            foreach (var disableOverlay in disableOverlays)
-                disableOverlay.Visible = false;
+            disableOverlay.Visible = false;
 
             foreach (var arrow in arrows)
                 arrow.Visible = false;
@@ -256,8 +222,7 @@ internal class TouchPad
 
         background.Delete();
         activeMarker.Delete();
-        foreach (var disableOverlay in disableOverlays)
-            disableOverlay.Delete();
+        disableOverlay.Delete();
 
         foreach (var arrow in arrows)
             arrow.Delete();
@@ -290,7 +255,7 @@ internal class TouchPad
 
                 if (arrowArea.Contains(position))
                 {
-                    game.OnKeyDown(keys[i], KeyModifiers.None);
+                    game.OnKeyDown(keys[i], KeyModifiers.None, true);
 
                     arrow.Visible = true;
                     activeMarker.Visible = false;
@@ -428,14 +393,6 @@ internal class TouchPad
         enabled = background != null && background.Visible && game.InputEnable;
 
         if (background != null)
-        {
-            bool showDisableOverlays = background.Visible && !game.InputEnable;
-
-            foreach (var disableOverlay in disableOverlays)
-            {
-                if (disableOverlay != null)
-                    disableOverlay.Visible = showDisableOverlays;
-            }
-        }
+            disableOverlay.Visible = background.Visible && !game.InputEnable;
     }
 }

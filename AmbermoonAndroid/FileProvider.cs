@@ -60,7 +60,7 @@ namespace AmbermoonAndroid
 
 		public static Stream GetMusic() => LoadStream(Resource.Raw.music);
 
-        public static Graphic GetTouchPad() => GetGraphic(Resource.Raw.touchpad);
+        public static Graphic GetTouchPad() => GetGraphic(Resource.Raw.new_touchpad);
 
         public static Graphic GetTouchPadIconBackground() => GetGraphic(Resource.Raw.icon_background);
 

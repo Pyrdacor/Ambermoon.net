@@ -64,6 +64,7 @@ class GameWindow : IContextProvider
     ISprite donateButton;
     ActivityState state = ActivityState.Active;
     readonly Action<Action> runOnUiThread;
+    Rect touchPadArea;
 
     public ActivityState State
     {
@@ -93,6 +94,61 @@ class GameWindow : IContextProvider
         this.gameVersion = gameVersion;
         this.keyboardRequest = keyboardRequest;
         Identifier = id;
+    }
+
+    void DetermineTouchPadArea()
+    {
+        // Game uses 320x200 (16:10 resolution).
+
+        int width = window.FramebufferSize.X;
+        int height = window.FramebufferSize.Y;
+
+        int deviceWidth = Math.Max(width, height);
+        int deviceHeight = Math.Min(width, height);        
+
+        double factor = deviceHeight / 200.0;
+        int usedWidth = (int)Math.Ceiling(320.0 * factor);
+
+        if (usedWidth >= deviceWidth)
+        {
+            touchPadArea = GetTouchPadOverGameArea(deviceWidth, deviceHeight, false, usedWidth);
+        }
+        else
+        {
+            touchPadArea = GetTouchPadOverGameArea(deviceWidth, deviceHeight, true, usedWidth);
+        }
+    }
+
+    static Rect GetTouchPadOverGameArea(int deviceWidth, int deviceHeight, bool hasHorizontalFreeSpace, int gameWidth)
+    {
+        int gameX = 0;
+        int gameY = 0;
+        int gameHeight = deviceHeight;
+
+        // Game is centered
+        if (hasHorizontalFreeSpace)
+        {
+            gameX = (deviceWidth - gameWidth) / 2;
+        }
+        else
+        {
+            double factor = deviceWidth / 320.0;
+            gameHeight = (int)Math.Ceiling(200.0 * factor);
+            //gameY = Math.Max(0, (deviceHeight - gameHeight) / 2);
+            gameWidth = deviceWidth;
+        }
+
+        float relX = 202.0f / Global.VirtualScreenWidth;// (float)Global.ButtonGridX / Global.VirtualScreenWidth;
+        float relY = (37.0f + 92.0f) / Global.VirtualScreenHeight;// (float)Global.ButtonGridY / Global.VirtualScreenHeight;
+        float relWidth = 108.0f / Global.VirtualScreenWidth;//3.0f * Ambermoon.UI.Button.Width / Global.VirtualScreenWidth;
+        float relHeight = 71.0f / Global.VirtualScreenHeight;// 3.0f * Ambermoon.UI.Button.Height / Global.VirtualScreenHeight;
+
+        int x = gameX + Util.Round(relX * gameWidth);
+        int y = gameY + Util.Round(relY * gameHeight);
+        int width = Util.Round(relWidth * gameWidth);
+        int height = Util.Round(relHeight * gameHeight);
+
+        return new(x, y, width, height);
     }
 
     void DrawTouchFinger(int x, int y, bool longPress, Rect clipArea, bool behindPopup)
@@ -589,99 +645,6 @@ class GameWindow : IContextProvider
         Game?.OnKeyDown(key, KeyModifiers.None);
     }
 
-    static void WritePNG(string filename, byte[] rgbData, Size imageSize, bool alpha, bool upsideDown)
-    {
-        if (File.Exists(filename))
-            filename += Guid.NewGuid().ToString();
-
-        filename += ".png";
-
-        int bpp = alpha ? 4 : 3;
-        var writer = new DataWriter();
-
-        void WriteChunk(string name, Action<DataWriter> dataWriter)
-        {
-            var internalDataWriter = new DataWriter();
-            dataWriter?.Invoke(internalDataWriter);
-            var data = internalDataWriter.ToArray();
-
-            writer.Write((uint)data.Length);
-            writer.WriteWithoutLength(name);
-            writer.Write(data);
-            var crc = new PngCrc();
-            uint headerCrc = crc.Calculate(new byte[] { (byte)name[0], (byte)name[1], (byte)name[2], (byte)name[3] });
-            writer.Write(crc.Calculate(headerCrc, data));
-        }
-
-        // Header
-        writer.Write(0x89);
-        writer.Write(0x50);
-        writer.Write(0x4E);
-        writer.Write(0x47);
-        writer.Write(0x0D);
-        writer.Write(0x0A);
-        writer.Write(0x1A);
-        writer.Write(0x0A);
-
-        // IHDR chunk
-        WriteChunk("IHDR", writer =>
-        {
-            writer.Write((uint)imageSize.Width);
-            writer.Write((uint)imageSize.Height);
-            writer.Write(8); // 8 bits per color
-            writer.Write((byte)(alpha ? 6 : 2)); // With alpha (RGBA) or color only (RGB)
-            writer.Write(0); // Deflate compression
-            writer.Write(0); // Default filtering
-            writer.Write(0); // No interlace
-        });
-
-        WriteChunk("IDAT", writer =>
-        {
-            byte[] dataWithFilterBytes = new byte[rgbData.Length + imageSize.Height];
-            for (int y = 0; y < imageSize.Height; ++y)
-            {
-                int i = upsideDown ? imageSize.Height - y - 1 : y;
-                Buffer.BlockCopy(rgbData, y * imageSize.Width * bpp, dataWithFilterBytes, 1 + i + i * imageSize.Width * bpp, imageSize.Width * bpp);
-            }
-            // Note: Data is initialized with 0 bytes so the filter bytes are already 0.
-            using var uncompressedStream = new MemoryStream(dataWithFilterBytes);
-            using var compressedStream = new MemoryStream();
-            var compressStream = new System.IO.Compression.DeflateStream(compressedStream, System.IO.Compression.CompressionLevel.Optimal, true);
-            uncompressedStream.CopyTo(compressStream);
-            compressStream.Close();
-
-            // Zlib header
-            writer.Write(0x78); // 32k window deflate method
-            writer.Write(0xDA); // Best compression, no dict and header is multiple of 31
-
-            uint Adler32()
-            {
-                uint s1 = 1;
-                uint s2 = 0;
-
-                for (int n = 0; n < dataWithFilterBytes.Length; ++n)
-                {
-                    s1 = (s1 + dataWithFilterBytes[n]) % 65521;
-                    s2 = (s2 + s1) % 65521;
-                }
-
-                return (s2 << 16) | s1;
-            }
-
-            // Compressed data
-            writer.Write(compressedStream.ToArray());
-
-            // Checksum
-            writer.Write(Adler32());
-        });
-
-        // IEND chunk
-        WriteChunk("IEND", null);
-
-        using var file = File.Create(filename);
-        writer.CopyTo(file);
-    }
-
     void ShowMainMenu(IGameRenderView renderView, Render.Cursor cursor, bool fromIntro, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
         Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage,
         Action showIntroAction)
@@ -767,10 +730,6 @@ class GameWindow : IContextProvider
 
     void SetMobileDeviceView(bool set)
     {
-        // In game we want to move everything to the left and make room for the touch pad area.
-        // Before we just display as on desktop (centered on screen). Now switch to mobile device view.
-        renderView.SetDeviceType(set ? DeviceType.MobileLandscape : DeviceType.Desktop, window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
-
         touchPad.Show(set);
     }
 
@@ -969,7 +928,7 @@ class GameWindow : IContextProvider
                             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MobileOverlays);
 
                             tutorialFinger = new TutorialFinger(renderView);
-                            touchPad = new TouchPad(renderView, new(window.Size.X, window.Size.Y));
+                            touchPad = new TouchPad(renderView, touchPadArea);
                             touchPad.Show(false);
 
                             game.Run(continueGame, ConvertMousePosition(mouse.Position));
@@ -1362,6 +1321,8 @@ class GameWindow : IContextProvider
         configuration.Width = Width = fullscreenSize.X;
         configuration.Height = Height = fullscreenSize.Y;
 
+        DetermineTouchPadArea();
+
         // Create light weight render view for preloading data.
         // It is basically used to show the loading bar.
         {
@@ -1534,6 +1495,7 @@ class GameWindow : IContextProvider
         try
         {
             renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, size.X, size.Y);
+            DetermineTouchPadArea();
         }
         catch
         {

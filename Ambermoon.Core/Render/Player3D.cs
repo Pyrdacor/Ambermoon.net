@@ -155,7 +155,7 @@ namespace Ambermoon.Render
 
         delegate void PositionProvider(float distance, out float newX, out float newY, bool noX, bool noZ);
 
-        void Move(float distance, uint ticks, PositionProvider positionProvider, Action<float, bool, bool> mover, bool turning = false)
+        bool Move(float distance, uint ticks, PositionProvider positionProvider, Action<float, bool, bool> mover, bool turning = false)
         {
             bool TriggerEvents(List<Position> touchedPositions, float oldX, float oldY, float newX, float newY)
             {
@@ -268,7 +268,7 @@ namespace Ambermoon.Render
                 return anyEventTriggered;
             }
 
-            void Move(bool noX, bool noZ)
+            bool Move(bool noX, bool noZ)
             {
                 float oldX = Camera.X;
                 float oldY = Camera.Z;
@@ -277,6 +277,8 @@ namespace Ambermoon.Render
                 var touchedPositions = Geometry.CameraToTouchedBlockPositions(map.Map, Camera.X, Camera.Z, 0.75f * Global.DistancePerBlock);
                 Position = touchedPositions[0];
                 bool moved = false;
+
+                Console.WriteLine($"We moved from {lastPosition.X},{lastPosition.Y} to {Position.X},{Position.Y}");
 
                 if (Position != lastPosition)
                 {
@@ -288,8 +290,19 @@ namespace Ambermoon.Render
                     game.ResetMapCharacterInteraction(map.Map);
                 }
 
-                if (!TriggerEvents(touchedPositions, oldX, oldY, Camera.X, Camera.Z) && moved)
-                    game.PlayerMoved(false, lastPosition);
+                Console.WriteLine($"moved flag = {moved}");
+
+                if (!TriggerEvents(touchedPositions, oldX, oldY, Camera.X, Camera.Z))
+                {
+                    Console.WriteLine("yes");
+                    if (moved)
+                        game.PlayerMoved(false, lastPosition);
+                    return true;
+                }
+
+                Console.WriteLine("no");
+
+                return false;
             }
 
             bool TestMoveStop(float newX, float newY)
@@ -322,8 +335,8 @@ namespace Ambermoon.Render
                     if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in x direction
                     {
                         if (!TestMoveStop(newX, newY))
-                            Move(false, true);
-                        return;
+                            return Move(false, true);
+                        return false;
                     }
 
                     // If collision is detected in x direction too, try to move only in z direction
@@ -332,8 +345,8 @@ namespace Ambermoon.Render
                     if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in z direction
                     {
                         if (!TestMoveStop(newX, newY))
-                            Move(true, false);
-                        return;
+                            return Move(true, false);
+                        return false;
                     }
 
                     // If we are here, we can't move at all
@@ -344,28 +357,30 @@ namespace Ambermoon.Render
             {
                 // We can move freely
                 if (!TestMoveStop(newX, newY))
-                    Move(false, false);
+                    return Move(false, false);
             }
+
+            return false;
         }
 
-        public void MoveForward(float distance, uint ticks, bool turning = false)
+        public bool MoveForward(float distance, uint ticks, bool turning = false)
         {
-            Move(distance, ticks, Camera.GetForwardPosition, Camera.MoveForward, turning);
+            return Move(distance, ticks, Camera.GetForwardPosition, Camera.MoveForward, turning);
         }
 
-        public void MoveBackward(float distance, uint ticks, bool turning = false)
+        public bool MoveBackward(float distance, uint ticks, bool turning = false)
         {
-            Move(distance, ticks, Camera.GetBackwardPosition, Camera.MoveBackward, turning);
+            return Move(distance, ticks, Camera.GetBackwardPosition, Camera.MoveBackward, turning);
         }
 
-        public void MoveLeft(float distance, uint ticks, bool turning = false)
+        public bool MoveLeft(float distance, uint ticks, bool turning = false)
         {
-            Move(distance, ticks, Camera.GetLeftPosition, Camera.MoveLeft, turning);
+            return Move(distance, ticks, Camera.GetLeftPosition, Camera.MoveLeft, turning);
         }
 
-        public void MoveRight(float distance, uint ticks, bool turning = false)
+        public bool MoveRight(float distance, uint ticks, bool turning = false)
         {
-            Move(distance, ticks, Camera.GetRightPosition, Camera.MoveRight, turning);
+            return Move(distance, ticks, Camera.GetRightPosition, Camera.MoveRight, turning);
         }
 
         public void TurnLeft(float angle) // in degrees

@@ -698,15 +698,15 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                 {
                     State.PushProjectionMatrix(State.FullScreenProjectionMatrix2D);
 
-                    int[] currentViewport = new int[4];
-                    State.Gl.GetInteger(GLEnum.Viewport, currentViewport);
+                    //int[] currentViewport = new int[4];
+                    //State.Gl.GetInteger(GLEnum.Viewport, currentViewport);
 
-                    int currentFrameBuffer = State.Gl.GetInteger(GLEnum.FramebufferBinding);
+                    //int currentFrameBuffer = State.Gl.GetInteger(GLEnum.FramebufferBinding);
 
-                    var viewport = frameBufferWindowArea;
-                    State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
-                    State.Gl.Viewport(viewport.X, viewport.Y,
-                        (uint)(windowSize.Width - viewport.X), (uint)(windowSize.Height - viewport.Y));
+                    //var viewport = frameBufferWindowArea;
+                    //State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
+                    //State.Gl.Viewport(viewport.X, viewport.Y,
+                    //    (uint)(windowSize.Width - viewport.X), (uint)(windowSize.Height - viewport.Y));
 
                     try
                     {
@@ -714,8 +714,8 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                     }
                     finally
                     {
-                        State.Gl.Viewport(currentViewport[0], currentViewport[1], (uint)currentViewport[2], (uint)currentViewport[3]);
-                        State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, (uint)currentFrameBuffer);
+                        //State.Gl.Viewport(currentViewport[0], currentViewport[1], (uint)currentViewport[2], (uint)currentViewport[3]);
+                        //State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, (uint)currentFrameBuffer);
                         State.PopProjectionMatrix();
                     }
                 }
