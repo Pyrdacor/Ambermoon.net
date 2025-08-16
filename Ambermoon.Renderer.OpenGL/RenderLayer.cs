@@ -384,6 +384,8 @@ public class RenderLayer : IRenderLayer, IDisposable
 
     readonly State state = null;
     readonly RenderBuffer renderBufferColorRects = null;
+    RenderBuffer renderBufferSemiTransparent = null;
+    readonly Func<RenderBuffer> renderBufferSemiTransparentFactory = null;
     readonly Texture palette = null;
     bool disposed = false;
 
@@ -405,6 +407,11 @@ public class RenderLayer : IRenderLayer, IDisposable
             layer == Layer.Images || layer == Layer.MobileOverlays,
             Config.TextureFactor,
             Config.SupportPaletteFading);
+
+        renderBufferSemiTransparentFactory = () =>
+            new RenderBuffer(state, false, supportAnimations, layered, false, false, false, opaque, layer == Layer.FOW,
+                layer == Layer.Map3DBackground, layer == Layer.Misc || layer == Layer.OutroText || layer == Layer.IntroText || layer == Layer.IntroGraphics,
+                layer == Layer.Images || layer == Layer.MobileOverlays, Config.TextureFactor, Config.SupportPaletteFading);
 
         if (Config.SupportColoredRects)
             renderBufferColorRects = new RenderBuffer(state, false, false, true, true);
@@ -435,8 +442,6 @@ public class RenderLayer : IRenderLayer, IDisposable
     {
         if (!Visible)
             return;
-
-        EnsureCorrectRenderOrder(RenderBuffer);
 
         if (Layer == Layer.FOW)
         {
@@ -578,12 +583,29 @@ public class RenderLayer : IRenderLayer, IDisposable
         }
 
         RenderBuffer?.Render();
+
+        if (renderBufferSemiTransparent != null)
+        {
+            EnsureCorrectRenderOrder(renderBufferSemiTransparent);
+
+            state.Gl.DepthMask(false);
+            renderBufferSemiTransparent.Render();
+            state.Gl.DepthMask(true);
+        }
     }
 
     public int GetDrawIndex(ISprite sprite, byte? textColorIndex = null)
     {
         return RenderBuffer.GetDrawIndex(sprite, PositionTransformation,
             SizeTransformation, textColorIndex);
+    }
+
+    public int GetDrawIndexWithAlpha(IAlphaSprite sprite)
+    {
+        renderBufferSemiTransparent ??= renderBufferSemiTransparentFactory();
+
+        return renderBufferSemiTransparent.GetDrawIndex(sprite, PositionTransformation,
+            SizeTransformation);
     }
 
     public int GetDrawIndex(ISurface3D surface)
@@ -602,9 +624,19 @@ public class RenderLayer : IRenderLayer, IDisposable
         RenderBuffer.FreeDrawIndex(index);
     }
 
+    public void FreeDrawIndexWithAlpha(int index)
+    {
+        renderBufferSemiTransparent?.FreeDrawIndex(index);
+    }
+
     public void UpdatePosition(int index, ISprite sprite)
     {
         RenderBuffer.UpdatePosition(index, sprite, sprite.BaseLineOffset, PositionTransformation, SizeTransformation);
+    }
+
+    public void UpdatePositionWithAlpha(int index, ISprite sprite)
+    {
+        renderBufferSemiTransparent.UpdatePosition(index, sprite, sprite.BaseLineOffset, PositionTransformation, SizeTransformation);
     }
 
     public void UpdateTextureAtlasOffset(int index, ISprite sprite)
@@ -612,9 +644,19 @@ public class RenderLayer : IRenderLayer, IDisposable
         RenderBuffer.UpdateTextureAtlasOffset(index, sprite);
     }
 
+    public void UpdateTextureAtlasOffsetWithAlpha(int index, ISprite sprite)
+    {
+        renderBufferSemiTransparent.UpdateTextureAtlasOffset(index, sprite);
+    }
+
     public void UpdateMaskColor(int index, byte? maskColor)
     {
         RenderBuffer.UpdateMaskColor(index, maskColor);
+    }
+
+    public void UpdateMaskColorWithAlpha(int index, byte? maskColor)
+    {
+        renderBufferSemiTransparent.UpdateMaskColor(index, maskColor);
     }
 
     public void UpdatePosition(int index, ISurface3D surface)
@@ -639,7 +681,12 @@ public class RenderLayer : IRenderLayer, IDisposable
 
     public void UpdateAlpha(int index, byte alpha)
     {
-        RenderBuffer.UpdateAlpha(index, alpha);
+        var renderBuffer = RenderBuffer;
+        
+        if (alpha > 0 && alpha < 255)
+            renderBuffer = renderBufferSemiTransparent;
+
+        renderBuffer.UpdateAlpha(index, alpha);
     }
 
     public void UpdateExtrude(int index, float extrude)
@@ -650,6 +697,11 @@ public class RenderLayer : IRenderLayer, IDisposable
     public void UpdatePaletteIndex(int index, byte paletteIndex)
     {
         RenderBuffer.UpdatePaletteIndex(index, paletteIndex);
+    }
+
+    public void UpdatePaletteIndexWithAlpha(int index, byte paletteIndex)
+    {
+        renderBufferSemiTransparent.UpdatePaletteIndex(index, paletteIndex);
     }
 
     public void UpdateTextColorIndex(int index, byte textColorIndex)
@@ -706,6 +758,7 @@ public class RenderLayer : IRenderLayer, IDisposable
         {
             RenderBuffer?.Dispose();
             renderBufferColorRects?.Dispose();
+            renderBufferSemiTransparent?.Dispose();
             if (Texture is Texture texture)
                 texture?.Dispose();
             Visible = false;

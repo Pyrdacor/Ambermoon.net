@@ -1,7 +1,7 @@
 ﻿/*
  * RenderBuffer.cs - Renders several buffered objects
  *
- * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *

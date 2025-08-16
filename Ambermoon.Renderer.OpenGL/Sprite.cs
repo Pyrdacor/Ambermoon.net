@@ -244,16 +244,117 @@ internal class AlphaSprite : LayerSprite, IAlphaSprite
             if (alpha == value)
                 return;
 
-            alpha = value;
+            bool wasSemiTransparent = IsSemiTransparent;
+            var newAlpha = (byte)Util.Limit(0, value, 255);
+            bool isSemiTransparent = newAlpha > 0 && newAlpha < 255;
 
-            UpdateAlpha();
+            if (wasSemiTransparent == isSemiTransparent)
+            {
+                alpha = newAlpha;
+                UpdateAlpha();
+            }
+            else if (drawIndex != -1)
+            {
+                // We need to re-create the sprite.
+                RemoveFromLayer();
+                alpha = newAlpha;
+                AddToLayer();
+            }
+            else
+            {
+                alpha = newAlpha;
+            }
         }
     }
 
     void UpdateAlpha()
     {
         if (drawIndex != -1) // -1 means not attached to a layer
+        {
             (Layer as RenderLayer).UpdateAlpha(drawIndex, alpha);
+        }
+    }
+
+    protected override void AddToLayer()
+    {
+        var renderLayer = Layer as RenderLayer;
+
+        if (IsSemiTransparent)
+            drawIndex = renderLayer.GetDrawIndexWithAlpha(this);
+        else
+            drawIndex = renderLayer.GetDrawIndex(this);            
+    }
+
+    protected override void RemoveFromLayer()
+    {
+        if (drawIndex != -1)
+        {
+            var renderLayer = Layer as RenderLayer;
+
+            if (IsSemiTransparent)
+                renderLayer.FreeDrawIndexWithAlpha(drawIndex);            
+            else
+                renderLayer.FreeDrawIndex(drawIndex);
+
+            drawIndex = -1;
+        }
+    }
+
+    private bool IsSemiTransparent => alpha > 0 && alpha< 255;
+
+    protected override void UpdatePosition()
+    {
+        if (drawIndex != -1) // -1 means not attached to a layer
+        {
+            var renderLayer = Layer as RenderLayer;
+
+            if (IsSemiTransparent)
+                renderLayer.UpdatePositionWithAlpha(drawIndex, this);
+            else
+                renderLayer.UpdatePosition(drawIndex, this);
+
+            if (ClipArea != null) // We need to adjust tex coords if clipped
+                UpdateTextureAtlasOffset();
+        }
+    }
+
+    protected override void UpdateTextureAtlasOffset()
+    {
+        if (drawIndex != -1) // -1 means not attached to a layer
+        {
+            var renderLayer = Layer as RenderLayer;
+
+            if (IsSemiTransparent)
+                renderLayer.UpdateTextureAtlasOffsetWithAlpha(drawIndex, this);
+            else
+                renderLayer.UpdateTextureAtlasOffset(drawIndex, this);
+        }
+    }
+
+    protected override void UpdateMaskColor()
+    {
+        if (drawIndex != -1) // -1 means not attached to a layer
+        {
+            var renderLayer = Layer as RenderLayer;
+
+            if (IsSemiTransparent)
+                renderLayer.UpdateMaskColorWithAlpha(drawIndex, MaskColor);
+            else
+                renderLayer.UpdateMaskColor(drawIndex, MaskColor);
+        }
+    }
+
+    protected override void UpdatePaletteIndex()
+    {
+        if (drawIndex != -1) // -1 means not attached to a layer
+        {
+            var renderLayer = Layer as RenderLayer;
+
+            if (IsSemiTransparent)
+                renderLayer.UpdatePaletteIndexWithAlpha(drawIndex, PaletteIndex);
+            else
+                renderLayer.UpdatePaletteIndex(drawIndex, PaletteIndex);
+        }
     }
 }
 
