@@ -8,31 +8,33 @@ namespace AmbermoonAndroid;
 internal class TouchPad
 {
     bool destroyed = false;
-    Rect area = new();
+    readonly Rect area;
     bool active = false;
-    int threshold = 0;
-    int iconHitRadius = 0;
-    int arrowHitRadius = 0;
+    readonly int threshold = 0;
+    readonly int arrowHitRadius = 0;
     const int DisableOverlayDimension = 128;
     bool arrowClicked = false;
-    Handler hideTappedArrowHandler = new(Looper.MainLooper);
+    readonly Handler hideTappedArrowHandler = new(Looper.MainLooper);
     const int ShowTappedArrowDuration = 200;
     bool enabled = false;
+    int iconPage = -1;
+    readonly HashSet<Game.MobileIconAction> iconsActive = [];
 
     readonly ILayerSprite background;
     readonly ILayerSprite[] arrows = new ILayerSprite[4];
     readonly ILayerSprite activeMarker;
     readonly ILayerSprite disableOverlay;
     readonly ILayerSprite[] icons = new ILayerSprite[11];
+    readonly Rect[] iconAreas = new Rect[4];
 
     static uint GraphicOffset = 0;
-    static readonly Rect RelativeMarkerArea = new(368, 368, 282, 282);
+    static readonly Rect RelativeMarkerArea = new(634, 362, 254, 254);
     static readonly Rect[] RelativeArrowAreas =
     [
-        new(438, 210, 151, 141),
-        new(673, 439, 133, 146),
-        new(434, 673, 156, 137),
-        new(222, 444, 128, 139),
+        new(688, 202, 151, 141),
+        new(911, 416, 133, 146),
+        new(685, 639, 156, 137),
+        new(482, 420, 128, 139),
     ];
     const int IconX1 = 136;
     const int IconX2 = 1116;
@@ -43,7 +45,32 @@ internal class TouchPad
         new(24, 9), // eye
         new(22, 12), // hand
         new(23, 9), // mouth
+        new(26, 11), // transport
+        new(22, 11), // map
+        new(26, 13), // magic
+        new(26, 11), // camp
+        new(11, 11), // wait
+        new(25, 12), // battle positions
         new(13, 11), // options
+        new(24, 13), // switch
+    ];
+    static readonly Position[] IconLocations =
+    [
+        // First page
+        new(0, 0), // eye
+        new(0, 1), // hand
+        new(1, 0), // mouth
+        // Second page
+        new(0, 0), // transport
+        new(0, 0), // map (shares same slot with transport)
+        new(0, 1), // magic
+        new(1, 0), // camp
+        // Third page
+        new(0, 0), // wait
+        new(0, 1), // battle positions
+        new(1, 0), // options
+        // Switch
+        new(1, 1) // switch
     ];
 
     public Direction? Direction { get; private set; } = null;
@@ -64,7 +91,14 @@ internal class TouchPad
             var eye = FileProvider.GetTouchPadEye();
             var hand = FileProvider.GetTouchPadHand();
             var mouth = FileProvider.GetTouchPadMouth();
+            var transport = FileProvider.GetTouchPadTransport();
+            var map = FileProvider.GetTouchPadMap();
+            var magic = FileProvider.GetTouchPadMagic();
+            var camp = FileProvider.GetTouchPadCamp();
+            var wait = FileProvider.GetTouchPadWait();
+            var battlePositions = FileProvider.GetTouchPadBattlePositions();
             var options = FileProvider.GetTouchPadOptions();
+            var @switch = FileProvider.GetTouchPadSwitch();
 
             byte[] oddRowPixels = [0, 0, 0, 0xff, 0, 0, 0, 0];
             byte[] evenRowPixels = [0, 0, 0, 0, 0, 0, 0, 0xff];
@@ -99,7 +133,14 @@ internal class TouchPad
                 eye,
                 hand,
                 mouth,
-                options
+                transport,
+                map,
+                magic,
+                camp,
+                wait,
+                battlePositions,
+                options,
+                @switch
             ];
 
             return graphics.Select((gfx, index) => new { gfx, index }).ToDictionary(b => offset + (uint)b.index, b => b.gfx);
@@ -165,25 +206,32 @@ internal class TouchPad
             {
                 int iconX = i % 2 == 0 ? IconX1 : IconX2;
                 int iconY = i < 2 ? IconY1 : IconY2;
-
                 relativeArea = new(iconX, iconY, 270, 276);
-
-                var iconSize = IconSizes[i];
-                double iconWidth = i == 3 ? 192.0 : 256.0;
-                double iconScale = iconWidth / iconSize.Width;
-                var iconHeight = iconScale * iconSize.Height;
-                var icon = icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(scaleX * iconWidth), Util.Round(scaleY * iconHeight), 30, (uint)(8 + i));
 
                 var iconBackgroundX = background.X + Util.Round(scaleX * relativeArea.X);
                 var iconBackgroundY = background.Y + Util.Round(scaleY * relativeArea.Y);
                 var iconBackgroundWidth = Util.Round(scaleX * 270);
                 var iconBackgroundHeight = Util.Round(scaleY * 276);
 
-                icon.X = iconBackgroundX + (iconBackgroundWidth - icon.Width) / 2;
-                icon.Y = iconBackgroundY + (iconBackgroundHeight - icon.Height) / 2;
+                iconAreas[i] = new(iconBackgroundX, iconBackgroundY, iconBackgroundWidth, iconBackgroundHeight);
             }
 
-            iconHitRadius = Math.Max(270, 276) / 2 + 1;
+            for (int i = 0; i < IconSizes.Length; i++)
+            {
+                var iconLocation = IconLocations[i];
+
+                relativeArea = new(iconAreas[iconLocation.X + iconLocation.Y * 2]);
+
+                var iconSize = IconSizes[i];
+                var iconDisplaySize = relativeArea.Size * new FloatSize(0.95f, 0.95f);
+
+                var icon = icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(scaleX * iconDisplaySize.Width), Util.Round(scaleY * iconDisplaySize.Height), 30, (uint)(8 + i));
+
+                icon.X = relativeArea.X + (relativeArea.Width - icon.Width) / 2;
+                icon.Y = relativeArea.Y + (relativeArea.Height - icon.Height) / 2;
+            }
+
+            IconPage = 0;
         }
         catch (Exception ex)
         {
@@ -191,14 +239,54 @@ internal class TouchPad
         }
     }
 
+    public int IconPage
+    {
+        get => iconPage;
+        set
+        {
+            if (iconPage == value)
+                return;
+
+            iconPage = value;
+
+            iconsActive.Clear();
+
+            if (iconPage == 0)
+            {
+                iconsActive.Add(Game.MobileIconAction.Eye);
+                iconsActive.Add(Game.MobileIconAction.Hand);
+                iconsActive.Add(Game.MobileIconAction.Mouth);
+            }
+            else if (iconPage == 1)
+            {
+                iconsActive.Add(Game.MobileIconAction.Transport);
+                iconsActive.Add(Game.MobileIconAction.Map);
+                iconsActive.Add(Game.MobileIconAction.SpellBook);
+                iconsActive.Add(Game.MobileIconAction.Camp);
+            }
+            else if (iconPage == 2)
+            {
+                iconsActive.Add(Game.MobileIconAction.BattlePositions);
+                iconsActive.Add(Game.MobileIconAction.Wait);
+                iconsActive.Add(Game.MobileIconAction.Options);
+            }
+
+            if (background?.Visible == true)
+            {
+                for (int i = 0; i < icons.Length; i++)
+                {
+                    icons[i].Visible = iconsActive.Contains((Game.MobileIconAction)i);
+                }
+            }
+        }
+    }
+
     public void Show(bool show)
     {
         background.Visible = show;
 
-        for (int i = 0; i < 4; i++)
-        {
-            icons[i].Visible = show;
-        }
+        for (int i = 0; i < icons.Length; i++)
+            icons[i].Visible = show && iconsActive.Contains((Game.MobileIconAction)i);
 
         if (!show)
         {
@@ -225,10 +313,8 @@ internal class TouchPad
         foreach (var arrow in arrows)
             arrow.Delete();
 
-        for (int i = 0; i < 4; i++)
-        {
-            icons[i].Delete();
-        }
+        foreach (var icon in icons)
+            icon.Delete();
 
         Direction = null;
         active = false;
@@ -271,25 +357,60 @@ internal class TouchPad
 
             for (int i = 0; i < 4; i++)
             {
-                int iconX = i % 2 == 0 ? IconX1 : IconX2;
-                int iconY = i < 2 ? IconY1 : IconY2;
-
-                // TODO: scale
-                var relativeArea = new Rect(iconX, iconY, 270, 276);
-
-                var iconArea = new Rect(relativeArea.X + relativeArea.Width / 2 - iconHitRadius, relativeArea.Y + relativeArea.Height / 2 - iconHitRadius, 2 * iconHitRadius, 2 * iconHitRadius);
-
-                if (iconArea.Contains(position))
+                if (iconAreas[i].Contains(position))
                 {
                     activeMarker.Visible = false;
                     active = false;
-                    game.TriggerMobileIconAction((Game.MobileIconAction)i);
+
+                    if (i == 3) // switch
+                        IconPage = (IconPage + 1) % 3;
+                    else
+                    {
+                        var action = GetIconActionBySlot(game, i);
+
+                        if (action != null)
+                            game.TriggerMobileIconAction(action.Value);
+                    }
+
                     return true;
                 }
             }
         }
 
         return false;
+    }
+
+    Game.MobileIconAction? GetIconActionBySlot(Game game, int slot)
+    {
+        switch (IconPage)
+        {
+            case 0:
+                return slot switch
+                {
+                    0 => Game.MobileIconAction.Eye,
+                    1 => Game.MobileIconAction.Hand,
+                    2 => Game.MobileIconAction.Mouth,
+                    _ => null
+                };
+            case 1:
+                return slot switch
+                {
+                    0 => game.Is3D ? Game.MobileIconAction.Map : Game.MobileIconAction.Transport,
+                    1 => Game.MobileIconAction.SpellBook,
+                    2 => Game.MobileIconAction.Camp,
+                    _ => null
+                };
+            case 2:
+                return slot switch
+                {
+                    0 => Game.MobileIconAction.Wait,
+                    1 => Game.MobileIconAction.BattlePositions,
+                    2 => Game.MobileIconAction.Options,
+                    _ => null
+                };
+        }
+
+        return null;
     }
 
     public bool OnLongPress(Game game, Position position)
@@ -396,5 +517,17 @@ internal class TouchPad
 
         if (background != null)
             disableOverlay.Visible = background.Visible && !game.InputEnable;
+
+        if (background?.Visible == true && IconPage == 1)
+        {
+            if (game.Is3D)
+            {
+                icons[(int)Game.MobileIconAction.Transport].Visible = false;
+            }
+            else
+            {
+                icons[(int)Game.MobileIconAction.Map].Visible = false;
+            }
+        }
     }
 }

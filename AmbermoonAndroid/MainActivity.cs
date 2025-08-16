@@ -332,7 +332,7 @@ namespace AmbermoonAndroid
             {
 				var musicManagerFactory = () =>
 				{
-					musicManager = new MusicManager();
+					musicManager = new MusicManager(configuration.Music, configuration.FirstStart);
 					return musicManager;
 				};
 

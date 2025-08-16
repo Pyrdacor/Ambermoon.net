@@ -44,9 +44,9 @@ public class Game
         Mouth,
         Transport,
         Map,
-        Wait,
-        Camp,
         SpellBook,
+        Camp,
+        Wait,
         BattlePositions,
         Options,
     }
@@ -701,16 +701,16 @@ public class Game
                 if (is3D)
                     ShowAutomap();
                 break;
-            case MobileIconAction.Wait:
-                layout.OpenWaitPopup();
+            case MobileIconAction.SpellBook:
+                if (CanUseSpells())
+                    CastSpell(false);
                 break;
             case MobileIconAction.Camp:
                 if (Map?.CanCamp == true)
                     OpenCamp(false);
-                break;
-            case MobileIconAction.SpellBook:
-                if (CanUseSpells())
-                    CastSpell(false);
+                break;            
+            case MobileIconAction.Wait:
+                layout.OpenWaitPopup();
                 break;
             case MobileIconAction.BattlePositions:
                 ShowBattlePositionWindow();

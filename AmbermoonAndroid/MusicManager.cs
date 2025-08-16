@@ -1,7 +1,6 @@
 ﻿using Ambermoon;
 using Ambermoon.Data.Audio;
 using Ambermoon.Data.Legacy.Serialization;
-using Android.Content;
 using Android.Media;
 using Android.OS;
 using SonicArranger;
@@ -153,6 +152,8 @@ namespace AmbermoonAndroid
         private Song? currentSong = null;
         private float volume = 1.0f;
         private bool enabled = true;
+		private bool initialized = false;
+
 
 		public bool Available => true;
 
@@ -166,10 +167,15 @@ namespace AmbermoonAndroid
 
                 enabled = value;
 
-                if (!enabled)
-                    Pause();
-                else if (currentSong != null)
-                    Resume();
+				if (!enabled)
+					Pause();
+				else
+				{
+					if (initialized && currentSong != null)
+					{
+						Resume();
+					}
+				}
             }
         }
 
@@ -187,7 +193,7 @@ namespace AmbermoonAndroid
 			}
         }
 
-		public MusicManager()
+		public MusicManager(bool musicEnabled, bool firstStart)
         {
 			using var stream = FileProvider.GetMusic();
 
@@ -212,38 +218,75 @@ namespace AmbermoonAndroid
 			var data = Decompress(stream);
 			int offset = 0;
 
-			for (int i = 0; i < fileSizes.Length; i++)
-			{
-				var size = fileSizes[i];
-				var saFile = new SonicArrangerFile(new DataReader(data, offset, size));
-				offset += size;
+			var songCount = fileCount + 1; // intro file contains intro and main menu song
+			var loadSongFactories = new Dictionary<Song, Action>(songCount);
+            int initializeCount = 0;
 
-				int index = i + 1;
+            for (int i = 0; i < fileSizes.Length; i++)
+            {
+                var size = fileSizes[i];
+                var saFile = new SonicArrangerFile(new DataReader(data, offset, size));
+                offset += size;
 
-				void AddSong(Song song, int songIndex = 0)
-				{
-					var stream = new SonicArranger.Stream(saFile, songIndex, 44100, SonicArranger.Stream.ChannelMode.Mono, true, true);
-					songStreams.Add(song, new MusicStream(stream));
-				}
+                int index = i + 1;
 
-				if (index < (int)Song.Intro)
-				{
-					AddSong((Song)index);
-				}
-				else
-				{
-					index -= (int)Song.Intro;
+                void AddSong(Song song, int songIndex = 0)
+                {
+                    var stream = new SonicArranger.Stream(saFile, songIndex, 44100, SonicArranger.Stream.ChannelMode.Mono, true, true);
+                    songStreams.Add(song, new MusicStream(stream));
 
-					if (index == 0)
-						AddSong(Song.Outro);
-					else if (index == 2)
-						AddSong(PyrdacorSong);
-					else
+					if (++initializeCount == fileCount)
 					{
-						AddSong(Song.Intro);
-						AddSong(Song.Menu, 1);
-					}
-				}
+						initialized = true;
+
+                        if (enabled && currentSong != null)
+                        {
+                            Resume();
+                        }
+                    }
+                }
+
+                if (index < (int)Song.Intro)
+                {
+                    loadSongFactories.Add((Song)index, () => AddSong((Song)index));
+                }
+                else
+                {
+                    index -= (int)Song.Intro;
+
+                    if (index == 0)
+                        loadSongFactories.Add(Song.Outro, () => AddSong(Song.Outro));
+                    else if (index == 2)
+                        loadSongFactories.Add(PyrdacorSong, () => AddSong(PyrdacorSong));
+                    else
+                    {
+                        loadSongFactories.Add(Song.Intro, () => AddSong(Song.Intro));
+                        loadSongFactories.Add(Song.Menu, () => AddSong(Song.Menu, 1));
+                    }
+                }
+            }
+
+			// Preload songs if music is enabled
+			if (musicEnabled)
+			{
+				// We load initial song data in a separate task/thread to not block.
+				// The only exception is the Pyrdacor Song as it must be played early.
+				loadSongFactories[PyrdacorSong]();
+
+				Task.Run(() =>
+				{
+					// We preload in specific order.
+					if (firstStart)
+						loadSongFactories[Song.Intro]();
+					loadSongFactories[Song.Menu]();
+                    if (!firstStart)
+                        loadSongFactories[Song.Intro]();
+
+					for (int i = 1; i < (int)Song.Intro; i++)
+                        loadSongFactories[(Song)i]();
+
+                    loadSongFactories[Song.Outro]();
+                });
 			}
 		}
 
@@ -280,6 +323,9 @@ namespace AmbermoonAndroid
                 return;
 
 			Stop();
+
+			while (!initialized)
+				Thread.Sleep(100);
 
 			var musicStream = songStreams[song];
 			int bufferSize = AudioTrack.GetMinBufferSize(44100, ChannelOut.Stereo, Encoding.Pcm16bit) * 2;

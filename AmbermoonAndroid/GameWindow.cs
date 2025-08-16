@@ -111,15 +111,15 @@ class GameWindow : IContextProvider
 
         if (usedWidth >= deviceWidth)
         {
-            touchPadArea = GetTouchPadOverGameArea(deviceWidth, deviceHeight, false, usedWidth);
+            touchPadArea = GetTouchPadArea(deviceWidth, deviceHeight, false, usedWidth);
         }
         else
         {
-            touchPadArea = GetTouchPadOverGameArea(deviceWidth, deviceHeight, true, usedWidth);
+            touchPadArea = GetTouchPadArea(deviceWidth, deviceHeight, true, usedWidth);
         }
     }
 
-    static Rect GetTouchPadOverGameArea(int deviceWidth, int deviceHeight, bool hasHorizontalFreeSpace, int gameWidth)
+    Rect GetTouchPadArea(int deviceWidth, int deviceHeight, bool hasHorizontalFreeSpace, int gameWidth)
     {
         int gameX = 0;
         int gameY = 0;
@@ -134,19 +134,19 @@ class GameWindow : IContextProvider
         {
             double factor = deviceWidth / 320.0;
             gameHeight = (int)Math.Ceiling(200.0 * factor);
-            //gameY = Math.Max(0, (deviceHeight - gameHeight) / 2);
+            gameY = Math.Max(0, (deviceHeight - gameHeight) / 2);
             gameWidth = deviceWidth;
         }
 
         float relX = 202.0f / Global.VirtualScreenWidth;// (float)Global.ButtonGridX / Global.VirtualScreenWidth;
         float relY = (37.0f + 92.0f) / Global.VirtualScreenHeight;// (float)Global.ButtonGridY / Global.VirtualScreenHeight;
-        float relWidth = 108.0f / Global.VirtualScreenWidth;//3.0f * Ambermoon.UI.Button.Width / Global.VirtualScreenWidth;
-        float relHeight = 71.0f / Global.VirtualScreenHeight;// 3.0f * Ambermoon.UI.Button.Height / Global.VirtualScreenHeight;
+        float relWidth = 108.5f / Global.VirtualScreenWidth;//3.0f * Ambermoon.UI.Button.Width / Global.VirtualScreenWidth;
+        float relHeight = 71.5f / Global.VirtualScreenHeight;// 3.0f * Ambermoon.UI.Button.Height / Global.VirtualScreenHeight;
 
-        int x = gameX + Util.Round(relX * gameWidth);
-        int y = gameY + Util.Round(relY * gameHeight);
-        int width = Util.Round(relWidth * gameWidth);
-        int height = Util.Round(relHeight * gameHeight);
+        int x = gameX + Util.Ceiling(relX * gameWidth);
+        int y = gameY + Util.Ceiling(relY * gameHeight);
+        int width = Util.Ceiling(relWidth * gameWidth);
+        int height = Util.Ceiling(relHeight * gameHeight);
 
         return new(x, y, width, height);
     }

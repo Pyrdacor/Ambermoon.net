@@ -4,7 +4,12 @@ using Ambermoon.Data.Legacy.Serialization;
 
 var image = (Bitmap)Image.FromFile(args[0]);
 
-using var output = File.Create(args[1]);
+string outPath = args[1];
+
+if (Directory.Exists(outPath))
+    outPath = Path.Combine(outPath, Path.GetFileNameWithoutExtension(args[0]));
+
+using var output = File.Create(outPath);
 var writer = new DataWriter();
 
 int chunkSize = image.Width * image.Height;
@@ -15,6 +20,25 @@ Marshal.Copy(data.Scan0, pixelData, 0, pixelData.Length);
 
 var colors = new HashSet<int>();
 var imageColors = new int[chunkSize];
+
+var colorReplacements = new Dictionary<int, int>();
+
+if (args.Length > 2)
+{
+    var replacements = args[2].Split(';');
+
+    foreach (var replacement in replacements)
+    {
+        var parts = replacement.Split(':');
+
+        if (parts.Length == 2 &&
+            int.TryParse(parts[0], System.Globalization.NumberStyles.HexNumber, null, out int oldColor) &&
+            int.TryParse(parts[1], System.Globalization.NumberStyles.HexNumber, null, out int newColor))
+        {
+            colorReplacements[oldColor] = newColor;
+        }
+    }
+}
 
 for (int i = 0; i < chunkSize; i++)
 {
@@ -41,9 +65,18 @@ writer.Write((byte)palette.Count);
 
 foreach (var color in palette.Keys)
 {
-    writer.Write((byte)((color >> 16) & 0xFF)); // R
-    writer.Write((byte)((color >> 8) & 0xFF));  // G
-    writer.Write((byte)(color & 0xFF));         // B
+    if (colorReplacements.TryGetValue(color, out var colorReplacement))
+    {
+        writer.Write((byte)((colorReplacement >> 16) & 0xFF)); // R
+        writer.Write((byte)((colorReplacement >> 8) & 0xFF));  // G
+        writer.Write((byte)(colorReplacement & 0xFF));         // B
+    }
+    else
+    {
+        writer.Write((byte)((color >> 16) & 0xFF)); // R
+        writer.Write((byte)((color >> 8) & 0xFF));  // G
+        writer.Write((byte)(color & 0xFF));         // B
+    }
 }
 
 for (int i = 0; i < chunkSize; i++)

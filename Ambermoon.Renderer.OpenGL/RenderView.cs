@@ -61,6 +61,11 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     Size windowSize;
     // The size of the framebuffer in pixels
     Size frameBufferSize;
+    // This is the total size of the framebuffer in pixels.
+    // It includes black areas if the aspect ratio of the
+    // framebuffer does not match the aspect ratio of the
+    // virtual screen.
+    Rect renderScreenArea;
     // The rendering area in pixels
     Rect frameBufferWindowArea => new Rect
     (
@@ -96,7 +101,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
 #pragma warning restore 0067
 
     public FullscreenRequestHandler FullscreenRequestHandler { get; set; }
-    public Size FramebufferSize => new Size(renderDisplayArea.Right, renderDisplayArea.Bottom);
+    public Size RenderScreenSize => new(renderScreenArea.Size);
     public Size MaxScreenSize { get; set; }
     public List<Size> AvailableFullscreenModes { get; set; }
     public bool IsLandscapeRatio { get; } = true;
@@ -129,6 +134,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     {
         paletteProvider ??= new DummyPaletteProvider();
         frameBufferSize = new Size(framebufferWidth, framebufferHeight);
+        renderScreenArea = new(Position.Zero, frameBufferSize);
         renderDisplayArea = new Rect(new Position(0, 0), windowSize);
         this.windowSize = new Size(windowSize);
         this.sizingPolicy = sizingPolicy;
@@ -397,6 +403,8 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     {
         frameBufferSize.Width = width;
         frameBufferSize.Height = height;
+
+        renderScreenArea = new(Position.Zero, frameBufferSize);
 
         SetRotation(orientation);
 
@@ -684,7 +692,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                 {
                     State.Gl.Disable(EnableCap.DepthTest);
                 }
-                if (layer.Key == Layer.MobileOverlays)
+                else if (layer.Key == Layer.MobileOverlays)
                 {
                     State.Gl.Enable(EnableCap.DepthTest);
                 }
@@ -698,15 +706,13 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                 {
                     State.PushProjectionMatrix(State.FullScreenProjectionMatrix2D);
 
-                    //int[] currentViewport = new int[4];
-                    //State.Gl.GetInteger(GLEnum.Viewport, currentViewport);
+                    int[] currentViewport = new int[4];
+                    State.Gl.GetInteger(GLEnum.Viewport, currentViewport);
 
                     //int currentFrameBuffer = State.Gl.GetInteger(GLEnum.FramebufferBinding);
 
-                    //var viewport = frameBufferWindowArea;
                     //State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
-                    //State.Gl.Viewport(viewport.X, viewport.Y,
-                    //    (uint)(windowSize.Width - viewport.X), (uint)(windowSize.Height - viewport.Y));
+                    State.Gl.Viewport(0, 0, (uint)renderScreenArea.Width, (uint)renderScreenArea.Height);
 
                     try
                     {
@@ -714,7 +720,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                     }
                     finally
                     {
-                        //State.Gl.Viewport(currentViewport[0], currentViewport[1], (uint)currentViewport[2], (uint)currentViewport[3]);
+                        State.Gl.Viewport(currentViewport[0], currentViewport[1], (uint)currentViewport[2], (uint)currentViewport[3]);
                         //State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, (uint)currentFrameBuffer);
                         State.PopProjectionMatrix();
                     }

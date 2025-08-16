@@ -160,16 +160,17 @@ namespace AmbermoonAndroid
                 case CommandType.FadeInAdvancedImage:
                     if (commandActivated)
                     {
+                        var textureAtlas = AdvancedLogo.textureAtlasManager.GetOrCreate(Layer.Images);
                         float ratio = (float)logoAdvancedGraphic.Width / logoAdvancedGraphic.Height;
-                        int height = renderView.FramebufferSize.Height;
+                        int height = renderView.RenderScreenSize.Height;
                         int width = Util.Round(ratio * height);
                         sprite = renderView.SpriteFactory.CreateWithAlpha(width, height);
                         sprite.Layer = renderView.GetLayer(Layer.Images);
                         // Important for visibility check, otherwise the virtual screen is used!
-                        sprite.ClipArea = new Rect(Position.Zero, renderView.FramebufferSize);
-                        sprite.X = (renderView.FramebufferSize.Width - width) / 2;
-                        sprite.Y = (renderView.FramebufferSize.Height - height) / 2;
-                        sprite.TextureAtlasOffset = new Position(0, 0); // TODO: must be first image!
+                        sprite.ClipArea = new Rect(Position.Zero, renderView.RenderScreenSize);
+                        sprite.X = (renderView.RenderScreenSize.Width - width) / 2;
+                        sprite.Y = (renderView.RenderScreenSize.Height - height) / 2;
+                        sprite.TextureAtlasOffset = textureAtlas.GetOffset(0);
                         sprite.TextureSize = new Size(logoAdvancedGraphic.Width, logoAdvancedGraphic.Height);
                         sprite.Alpha = 0;
                         sprite.Visible = true;

@@ -60,29 +60,31 @@ namespace AmbermoonAndroid
 
 		public static Stream GetMusic() => LoadStream(Resource.Raw.music);
 
-        public static Graphic GetTouchPad() => GetGraphic(Resource.Raw.new_touchpad);
+        public static Graphic GetTouchPad() => GetGraphic(Resource.Raw.touchpad);
 
         public static Graphic GetTouchPadIconBackground() => GetGraphic(Resource.Raw.icon_background);
 
-        public static Graphic GetTouchPadEye() => GetGraphic(Resource.Raw.icon_eye);
+        public static Graphic GetTouchPadEye() => GetSpecialGraphic(Resource.Raw.icon_eye);
 
-        public static Graphic GetTouchPadHand() => GetGraphic(Resource.Raw.icon_hand);
+        public static Graphic GetTouchPadHand() => GetSpecialGraphic(Resource.Raw.icon_hand);
 
-        public static Graphic GetTouchPadMouth() => GetGraphic(Resource.Raw.icon_mouth);
+        public static Graphic GetTouchPadMouth() => GetSpecialGraphic(Resource.Raw.icon_mouth);
 
-        public static Graphic GetTouchPadTransport() => GetGraphic(Resource.Raw.icon_transport);
+        public static Graphic GetTouchPadTransport() => GetSpecialGraphic(Resource.Raw.icon_transport);
 
-        public static Graphic GetTouchPadMap() => GetGraphic(Resource.Raw.icon_map);
+        public static Graphic GetTouchPadMap() => GetSpecialGraphic(Resource.Raw.icon_map);
 
-        public static Graphic GetTouchPadCamp() => GetGraphic(Resource.Raw.icon_camp);
+        public static Graphic GetTouchPadCamp() => GetSpecialGraphic(Resource.Raw.icon_camp);
 
-        public static Graphic GetTouchPadWait() => GetGraphic(Resource.Raw.icon_wait);
+        public static Graphic GetTouchPadMagic() => GetSpecialGraphic(Resource.Raw.icon_magic);
 
-        public static Graphic GetTouchPadMagic() => GetGraphic(Resource.Raw.icon_magic);
+        public static Graphic GetTouchPadWait() => GetSpecialGraphic(Resource.Raw.icon_wait);
 
-        public static Graphic GetTouchPadBattlePositions() => GetGraphic(Resource.Raw.icon_battle_positions);
+        public static Graphic GetTouchPadBattlePositions() => GetSpecialGraphic(Resource.Raw.icon_battle_positions);
 
-        public static Graphic GetTouchPadOptions() => GetGraphic(Resource.Raw.icon_options);
+        public static Graphic GetTouchPadOptions() => GetSpecialGraphic(Resource.Raw.icon_options);
+
+        public static Graphic GetTouchPadSwitch() => GetSpecialGraphic(Resource.Raw.icon_switch);
 
         public static Graphic GetTouchPadMarker() => GetGraphic(Resource.Raw.touchpad_marker);
 

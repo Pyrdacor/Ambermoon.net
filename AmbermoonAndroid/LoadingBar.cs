@@ -49,7 +49,7 @@ internal class LoadingBar
 
         renderView.ShowImageLayerOnly = true;
 
-        var area = new Rect(Position.Zero, renderView.FramebufferSize);
+        var area = new Rect(Position.Zero, renderView.RenderScreenSize);
         var textureAtlas = textureAtlasManager.GetOrCreate(Layer.Images);
         var layer = renderView.GetLayer(Layer.Images);
 
