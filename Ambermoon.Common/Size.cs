@@ -161,6 +161,16 @@ namespace Ambermoon
             return new FloatSize(size);
         }
 
+        public static FloatSize operator *(FloatSize size, float factor)
+        {
+            return new FloatSize(size.Width * factor, size.Height * factor);
+        }
+
+        public static FloatSize operator *(float factor, FloatSize size)
+        {
+            return new FloatSize(size.Width * factor, size.Height * factor);
+        }
+
         public static FloatSize operator *(FloatSize size1, FloatSize size2)
         {
             return new FloatSize(size1.Width * size2.Width, size1.Height * size2.Height);

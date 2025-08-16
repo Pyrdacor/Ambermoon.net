@@ -688,11 +688,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                     State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 }
 
-                if (layer.Key == Layer.Images)
-                {
-                    State.Gl.Disable(EnableCap.DepthTest);
-                }
-                else if (layer.Key == Layer.MobileOverlays)
+                if (layer.Key == Layer.Images || layer.Key == Layer.MobileOverlays)
                 {
                     State.Gl.Enable(EnableCap.DepthTest);
                 }

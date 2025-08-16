@@ -25,7 +25,7 @@ internal class TouchPad
     readonly ILayerSprite activeMarker;
     readonly ILayerSprite disableOverlay;
     readonly ILayerSprite[] icons = new ILayerSprite[11];
-    readonly Rect[] iconAreas = new Rect[4];
+    readonly Rect[][] iconAreas = new Rect[2][2];
 
     static uint GraphicOffset = 0;
     static readonly Rect RelativeMarkerArea = new(634, 362, 254, 254);
@@ -161,15 +161,22 @@ internal class TouchPad
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Images);
             var layer = renderView.GetLayer(Layer.Images);
 
-            ILayerSprite CreateSprite(int texWidth, int texHeight, int width, int height, byte displayLayer, uint textureIndex)
+            ILayerSprite CreateSprite(int texWidth, int texHeight, int width, int height, byte displayLayer, uint textureIndex, byte? alpha = null)
             {
-                var sprite = renderView.SpriteFactory.Create(width, height, true, displayLayer) as ILayerSprite;
+                var sprite = alpha == null
+                    ? renderView.SpriteFactory.Create(width, height, true, displayLayer) as ILayerSprite
+                    : renderView.SpriteFactory.CreateWithAlpha(width, height, displayLayer);
                 sprite.Visible = false;
                 sprite.TextureSize = new(texWidth, texHeight);
                 sprite.Layer = layer;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(GraphicOffset + textureIndex);
                 // Important for visibility check, otherwise the virtual screen is used!
                 sprite.ClipArea = area;
+
+                if (alpha != null && sprite is IAlphaSprite alphaSprite)
+                {
+                    alphaSprite.Alpha = alpha.Value;
+                }
 
                 return sprite;
             }
@@ -178,23 +185,23 @@ internal class TouchPad
             double scaleY = area.Height / 994.0f;
 
             //background = CreateSprite(1024, 1024, minDimension, minDimension, 0, 0);
-            background = CreateSprite(1526, 994, area.Width, area.Height, 0, 0);
+            background = CreateSprite(1526, 994, area.Width, area.Height, 150, 0);
             background.X = area.X;// + (area.Width - background.Width) / 2;
             background.Y = area.Y;// + (area.Height - background.Height) / 2;
 
-            disableOverlay = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, area.Width, area.Height, 100, 6);
+            disableOverlay = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, area.Width, area.Height, 190, 6);
             disableOverlay.X = background.X;
             disableOverlay.Y = background.Y;
 
             var relativeArea = RelativeMarkerArea;
-            activeMarker = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 10, 1);
+            activeMarker = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 170, 1, 128);
             activeMarker.X = background.X + Util.Round(scaleX * relativeArea.X);
             activeMarker.Y = background.Y + Util.Round(scaleY * relativeArea.Y);
 
             for (int a = 0; a < 4; a++)
             {
                 relativeArea = RelativeArrowAreas[a];
-                var arrow = arrows[a] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 10, (uint)(2 + a));
+                var arrow = arrows[a] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 170, (uint)(2 + a));
 
                 arrow.X = background.X + Util.Round(scaleX * relativeArea.X);
                 arrow.Y = background.Y + Util.Round(scaleY * relativeArea.Y);
@@ -204,8 +211,8 @@ internal class TouchPad
 
             for (int i = 0; i < 4; i++)
             {
-                int iconX = i % 2 == 0 ? IconX1 : IconX2;
-                int iconY = i < 2 ? IconY1 : IconY2;
+                int iconX = i < 2 ? IconX1 : IconX2;
+                int iconY = i % 2 == 0 ? IconY1 : IconY2;
                 relativeArea = new(iconX, iconY, 270, 276);
 
                 var iconBackgroundX = background.X + Util.Round(scaleX * relativeArea.X);
@@ -213,19 +220,23 @@ internal class TouchPad
                 var iconBackgroundWidth = Util.Round(scaleX * 270);
                 var iconBackgroundHeight = Util.Round(scaleY * 276);
 
-                iconAreas[i] = new(iconBackgroundX, iconBackgroundY, iconBackgroundWidth, iconBackgroundHeight);
+                iconAreas[i / 2][i % 2] = new(iconBackgroundX, iconBackgroundY, iconBackgroundWidth, iconBackgroundHeight);
             }
 
             for (int i = 0; i < IconSizes.Length; i++)
             {
                 var iconLocation = IconLocations[i];
 
-                relativeArea = new(iconAreas[iconLocation.X + iconLocation.Y * 2]);
+                relativeArea = new(iconAreas[iconLocation.X][iconLocation.Y]);
 
                 var iconSize = IconSizes[i];
-                var iconDisplaySize = relativeArea.Size * new FloatSize(0.95f, 0.95f);
+                var baseSize = 0.95f * relativeArea.Size;
+                var maxSize = (float)IconSizes.Max(s => Math.Max(s.Width, s.Height));
+                var factorX = iconSize.Width / maxSize;
+                var factorY = iconSize.Height / maxSize;
+                var iconDisplaySize = baseSize * new FloatSize(factorX, factorY);
 
-                var icon = icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(scaleX * iconDisplaySize.Width), Util.Round(scaleY * iconDisplaySize.Height), 30, (uint)(8 + i));
+                var icon = icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(iconDisplaySize.Width), Util.Round(iconDisplaySize.Height), 170, (uint)(8 + i));
 
                 icon.X = relativeArea.X + (relativeArea.Width - icon.Width) / 2;
                 icon.Y = relativeArea.Y + (relativeArea.Height - icon.Height) / 2;

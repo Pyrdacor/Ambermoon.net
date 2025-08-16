@@ -106,12 +106,12 @@ namespace AmbermoonAndroid
 			return BitmapFactory.DecodeStream(stream);
 		}
 
-        private static Graphic GetSpecialGraphic(int id)
+        private static Graphic GetSpecialGraphic(int id, bool transparent = true)
         {
-            return LoadSpecialGraphic(LoadData(id));
+            return LoadSpecialGraphic(LoadData(id), transparent);
         }
 
-        private static Graphic LoadSpecialGraphic(byte[] imageData)
+        private static Graphic LoadSpecialGraphic(byte[] imageData, bool transparent)
 		{
             var dataReader = new DataReader(imageData);
             int width = dataReader.ReadWord();
@@ -137,7 +137,7 @@ namespace AmbermoonAndroid
                 data[i * 4 + 0] = colors[index * 3 + 0];
                 data[i * 4 + 1] = colors[index * 3 + 1];
                 data[i * 4 + 2] = colors[index * 3 + 2];
-                data[i * 4 + 3] = 0xff;
+                data[i * 4 + 3] = (byte)(index == 0 && transparent ? 0x00 : 0xff);
             }
 
             return new Graphic

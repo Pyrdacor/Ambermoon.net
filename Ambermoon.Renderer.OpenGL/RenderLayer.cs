@@ -252,13 +252,13 @@ public class RenderLayer : IRenderLayer, IDisposable
             BaseZ = 0.70f,
             EnableBlending = false
         } },
-			{ Layer.MobileOverlays, new ()
-			{
-				BaseZ = 0.70f,
-				EnableBlending = true,
-				SupportColoredRects = true
-			} },
-			{ Layer.MainMenuGraphics, new ()
+        { Layer.MobileOverlays, new ()
+        {
+            BaseZ = 0.70f,
+            EnableBlending = true,
+            SupportColoredRects = true
+        } },
+        { Layer.MainMenuGraphics, new ()
         {
             BaseZ = 0.70f,
             SupportPaletteFading = true
