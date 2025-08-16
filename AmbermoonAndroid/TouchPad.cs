@@ -548,6 +548,24 @@ internal class TouchPad
                 icons[(int)Game.MobileIconAction.Map].Visible = false;
                 icons[(int)Game.MobileIconAction.Transport].Visible = true;
             }
+
+            if (!disableOverlay.Visible)
+            {
+                if (!game.Is3D && !game.TransportEnabled)
+                {
+                    // TODO: Show small disable overlay
+                }
+
+                if (!game.CampEnabled)
+                {
+                    // TODO: Show small disable overlay
+                }
+            }
+        }
+
+        if (background?.Visible == true && IconPage == 2 && !disableOverlay.Visible && !game.SpellBookEnabled)
+        {
+            // TODO: Show small disable overlay
         }
     }
 }

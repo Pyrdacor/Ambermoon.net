@@ -689,7 +689,10 @@ public class Game
                 break;
             case MobileIconAction.Mouth:
                 if (is3D)
-                    TriggerMapEvents(EventTrigger.Mouth);
+                {
+                    if (!TriggerMapEvents(EventTrigger.Mouth))
+                        SpeakToParty();
+                }
                 else
                     CursorType = CursorType.Mouth;
                 break;
@@ -727,6 +730,12 @@ public class Game
         if (Configuration.IsMobile)
             showMobileTouchPadHandler?.Invoke(true);
     }
+
+    public bool TransportEnabled => layout.TransportEnabled;
+
+    public bool CampEnabled => Map?.CanCamp == true && TravelType.CanCampOn() == true;
+
+    public bool SpellBookEnabled => CanUseSpells();
 
     public delegate void DrawTouchFingerHandler(int x, int y, bool longPress, Rect clipArea, bool behindPopup);
 
