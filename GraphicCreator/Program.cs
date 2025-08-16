@@ -40,6 +40,14 @@ if (args.Length > 2)
     }
 }
 
+int transparentColor = -1;
+
+if (args.Length > 3 &&
+    !int.TryParse(args[3], System.Globalization.NumberStyles.HexNumber, null, out transparentColor))
+{
+    throw new Exception("Invalid transparent color specified. Use a hex value like 'FF00FF' for magenta.");
+}
+
 for (int i = 0; i < chunkSize; i++)
 {
     var r = pixelData[i * 4 + 2];
@@ -59,7 +67,7 @@ if (colors.Count > 256)
 writer.Write((ushort)image.Width);
 writer.Write((ushort)image.Height);
 
-var palette = colors.OrderBy(c => c).Select((color, index) => new { color, index }).ToDictionary(c => c.color, c => c.index);
+var palette = colors.OrderBy(c => transparentColor == c ? -1 : c).Select((color, index) => new { color, index }).ToDictionary(c => c.color, c => c.index);
 
 writer.Write((byte)palette.Count);
 
