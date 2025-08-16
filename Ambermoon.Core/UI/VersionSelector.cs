@@ -215,6 +215,7 @@ namespace Ambermoon.UI
             saveOptionText.Visible = false;
             okButton = CreateButton(new Position(versionListArea.Right - 32, versionListArea.Bottom + 3), textureAtlasManager);
             okButton.ButtonType = Data.Enumerations.ButtonType.Ok;
+            okButton.ToggleButton = configuration.IsMobile;
             okButton.Visible = true;
             okButton.LeftClickAction = () =>
             {
@@ -601,8 +602,9 @@ namespace Ambermoon.UI
                     var action = okButton.LeftClickAction;
                     okButton.LeftClickAction = () =>
                     {
-                        okButton.Release(true);
-                        okButton.Disabled = true;                        
+                        if (!configuration.IsMobile)
+                            okButton.Release(true);
+                        okButton.Disabled = true;
                         action?.Invoke();
                     };
                     okButton.ContinuousActionDelayInTicks = 3 * Game.TicksPerSecond / 2;

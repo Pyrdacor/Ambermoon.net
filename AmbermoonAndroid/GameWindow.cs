@@ -1209,6 +1209,8 @@ class GameWindow : IContextProvider
                         gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption, configuration);
                     versionSelector.Closed += (gameVersionIndex, gameData, _) =>
                     {
+                        window.DoRender();
+
                         donateButton?.Delete();
                         donateButton = null;
                         var gameVersion = gameVersions[gameVersionIndex];

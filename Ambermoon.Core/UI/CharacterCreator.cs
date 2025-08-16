@@ -141,6 +141,7 @@ namespace Ambermoon.UI
             rightButton.LeftClickAction = () => SwapPortrait(1);
             okButton = CreateButton(game, new Position(windowArea.Right - 16 - 32, windowArea.Bottom - 16 - 17));
             okButton.ButtonType = ButtonType.Ok;
+            okButton.ToggleButton = game.Configuration.IsMobile;
             okButton.Visible = true;
             okButton.LeftClickAction = () =>
             {

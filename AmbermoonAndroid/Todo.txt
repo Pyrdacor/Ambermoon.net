@@ -1,7 +1,1 @@
-﻿- Tapping on the touch pad arrows should move one tile in this direction
-- Touch pad for 3D movement?
-- Show pressed button in version selector and character creator
-- Touchpad image disappears now (activating filters, effects, new game?)
-
-- Replace option menu by wait in 2D.
-- Add option icon to the right part.
+﻿- Update the tutorial to use the new touch pad
