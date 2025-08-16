@@ -25,7 +25,7 @@ internal class TouchPad
     readonly ILayerSprite activeMarker;
     readonly ILayerSprite disableOverlay;
     readonly ILayerSprite[] icons = new ILayerSprite[11];
-    readonly Rect[][] iconAreas = new Rect[2][2];
+    readonly Rect[,] iconAreas = new Rect[2,2];
 
     static uint GraphicOffset = 0;
     static readonly Rect RelativeMarkerArea = new(634, 362, 254, 254);
@@ -185,23 +185,23 @@ internal class TouchPad
             double scaleY = area.Height / 994.0f;
 
             //background = CreateSprite(1024, 1024, minDimension, minDimension, 0, 0);
-            background = CreateSprite(1526, 994, area.Width, area.Height, 150, 0);
+            background = CreateSprite(1526, 994, area.Width, area.Height, 11, 0);
             background.X = area.X;// + (area.Width - background.Width) / 2;
             background.Y = area.Y;// + (area.Height - background.Height) / 2;
 
-            disableOverlay = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, area.Width, area.Height, 190, 6);
+            disableOverlay = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, area.Width, area.Height, 17, 6);
             disableOverlay.X = background.X;
             disableOverlay.Y = background.Y;
 
             var relativeArea = RelativeMarkerArea;
-            activeMarker = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 170, 1, 128);
+            activeMarker = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 14, 1, 128);
             activeMarker.X = background.X + Util.Round(scaleX * relativeArea.X);
             activeMarker.Y = background.Y + Util.Round(scaleY * relativeArea.Y);
 
             for (int a = 0; a < 4; a++)
             {
                 relativeArea = RelativeArrowAreas[a];
-                var arrow = arrows[a] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 170, (uint)(2 + a));
+                var arrow = arrows[a] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 14, (uint)(2 + a));
 
                 arrow.X = background.X + Util.Round(scaleX * relativeArea.X);
                 arrow.Y = background.Y + Util.Round(scaleY * relativeArea.Y);
@@ -220,23 +220,23 @@ internal class TouchPad
                 var iconBackgroundWidth = Util.Round(scaleX * 270);
                 var iconBackgroundHeight = Util.Round(scaleY * 276);
 
-                iconAreas[i / 2][i % 2] = new(iconBackgroundX, iconBackgroundY, iconBackgroundWidth, iconBackgroundHeight);
+                iconAreas[i / 2, i % 2] = new(iconBackgroundX, iconBackgroundY, iconBackgroundWidth, iconBackgroundHeight);
             }
 
             for (int i = 0; i < IconSizes.Length; i++)
             {
                 var iconLocation = IconLocations[i];
 
-                relativeArea = new(iconAreas[iconLocation.X][iconLocation.Y]);
+                relativeArea = new(iconAreas[iconLocation.X, iconLocation.Y]);
 
                 var iconSize = IconSizes[i];
-                var baseSize = 0.95f * relativeArea.Size;
+                var baseSize = 0.9f * relativeArea.Size;
                 var maxSize = (float)IconSizes.Max(s => Math.Max(s.Width, s.Height));
                 var factorX = iconSize.Width / maxSize;
                 var factorY = iconSize.Height / maxSize;
                 var iconDisplaySize = baseSize * new FloatSize(factorX, factorY);
 
-                var icon = icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(iconDisplaySize.Width), Util.Round(iconDisplaySize.Height), 170, (uint)(8 + i));
+                var icon = icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(iconDisplaySize.Width), Util.Round(iconDisplaySize.Height), 14, (uint)(8 + i));
 
                 icon.X = relativeArea.X + (relativeArea.Width - icon.Width) / 2;
                 icon.Y = relativeArea.Y + (relativeArea.Height - icon.Height) / 2;
@@ -288,6 +288,8 @@ internal class TouchPad
                 {
                     icons[i].Visible = iconsActive.Contains((Game.MobileIconAction)i);
                 }
+
+                icons[^1].Visible = true; // Always show switch icon
             }
         }
     }
@@ -298,6 +300,8 @@ internal class TouchPad
 
         for (int i = 0; i < icons.Length; i++)
             icons[i].Visible = show && iconsActive.Contains((Game.MobileIconAction)i);
+
+        icons[^1].Visible = show; // Always show switch icon
 
         if (!show)
         {
@@ -366,24 +370,27 @@ internal class TouchPad
                 }
             }
 
-            for (int i = 0; i < 4; i++)
+            for (int y = 0; y < 2; y++)
             {
-                if (iconAreas[i].Contains(position))
+                for (int x = 0; x < 2; x++)
                 {
-                    activeMarker.Visible = false;
-                    active = false;
-
-                    if (i == 3) // switch
-                        IconPage = (IconPage + 1) % 3;
-                    else
+                    if (iconAreas[x, y].Contains(position))
                     {
-                        var action = GetIconActionBySlot(game, i);
+                        activeMarker.Visible = false;
+                        active = false;
 
-                        if (action != null)
-                            game.TriggerMobileIconAction(action.Value);
+                        if (x == 1 && y == 1) // switch
+                            IconPage = (IconPage + 1) % 3;
+                        else
+                        {
+                            var action = GetIconActionBySlot(game, y + x * 2);
+
+                            if (action != null)
+                                game.TriggerMobileIconAction(action.Value);
+                        }
+
+                        return true;
                     }
-
-                    return true;
                 }
             }
         }
@@ -534,10 +541,12 @@ internal class TouchPad
             if (game.Is3D)
             {
                 icons[(int)Game.MobileIconAction.Transport].Visible = false;
+                icons[(int)Game.MobileIconAction.Map].Visible = true;
             }
             else
             {
                 icons[(int)Game.MobileIconAction.Map].Visible = false;
+                icons[(int)Game.MobileIconAction.Transport].Visible = true;
             }
         }
     }

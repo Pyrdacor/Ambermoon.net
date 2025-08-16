@@ -790,6 +790,9 @@ namespace Ambermoon.UI
                 game.SetupBattleButtons();
             game.Resume();
             game.InputEnable = true;
+
+            if (!game.BattleActive)
+                game.ShowMobileTouchPadHandler();
         }
 
         public void ShowButtons(bool show)

@@ -1,7 +1,7 @@
 ﻿/*
  * Popup.cs - Small popup window
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -34,13 +34,13 @@ namespace Ambermoon.UI
         readonly Game game;
         readonly IGameRenderView renderView;
         readonly ITextureAtlas textureAtlas;
-        readonly List<ILayerSprite> borders = new List<ILayerSprite>();
+        readonly List<ILayerSprite> borders = [];
         readonly IColoredRect fill;
-        readonly List<UIText> texts = new List<UIText>();
-        readonly List<IColoredRect> filledAreas = new List<IColoredRect>();
-        readonly List<ILayerSprite> sprites = new List<ILayerSprite>();
-        readonly List<Button> buttons = new List<Button>();
-        readonly List<TextInput> inputs = new List<TextInput>();
+        readonly List<UIText> texts = [];
+        readonly List<IColoredRect> filledAreas = [];
+        readonly List<ILayerSprite> sprites = [];
+        readonly List<Button> buttons = [];
+        readonly List<TextInput> inputs = [];
         ListBox listBox = null;
         Scrollbar scrollbar = null;
         Popup popup = null;

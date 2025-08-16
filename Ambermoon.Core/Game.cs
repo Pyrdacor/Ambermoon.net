@@ -716,9 +716,16 @@ public class Game
                 ShowBattlePositionWindow();
                 break;
             case MobileIconAction.Options:
+                showMobileTouchPadHandler?.Invoke(false);
                 layout.OpenOptionMenu();
                 break;
         }
+    }
+
+    internal void ShowMobileTouchPadHandler()
+    {
+        if (Configuration.IsMobile)
+            showMobileTouchPadHandler?.Invoke(true);
     }
 
     public delegate void DrawTouchFingerHandler(int x, int y, bool longPress, Rect clipArea, bool behindPopup);

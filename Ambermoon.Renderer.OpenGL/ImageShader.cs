@@ -35,6 +35,10 @@ internal class ImageShader : TextureShader
         $"void main()",
         $"{{",
         $"    vec4 color = textureLod({DefaultSamplerName}, varTexCoord, 0.0f);",
+        $"    ",
+        $"    if (color.a < 0.001f)",
+        $"        discard;",
+        $"    ",
         $"    {DefaultFragmentOutColorName} = vec4(color.rgb, color.a * a);",
         $"}}"
     ];

@@ -106,12 +106,12 @@ namespace AmbermoonAndroid
 			return BitmapFactory.DecodeStream(stream);
 		}
 
-        private static Graphic GetSpecialGraphic(int id, bool transparent = true)
+        private static Graphic GetSpecialGraphic(int id)
         {
-            return LoadSpecialGraphic(LoadData(id), transparent);
+            return LoadSpecialGraphic(LoadData(id));
         }
 
-        private static Graphic LoadSpecialGraphic(byte[] imageData, bool transparent)
+        private static Graphic LoadSpecialGraphic(byte[] imageData)
 		{
             var dataReader = new DataReader(imageData);
             int width = dataReader.ReadWord();
@@ -127,6 +127,9 @@ namespace AmbermoonAndroid
                 colors[i * 3 + 2] = dataReader.ReadByte();
             }
 
+            // If first color is magenta (ff00ff), we treat it as transparent.
+            bool transparent = colors[0] == 0xff && colors[1] == 0x00 && colors[2] == 0xff;
+
             int chunkSize = width * height;
             byte[] data = new byte[chunkSize * 4];
 
@@ -134,10 +137,17 @@ namespace AmbermoonAndroid
             {
                 int index = dataReader.ReadByte();
 
-                data[i * 4 + 0] = colors[index * 3 + 0];
-                data[i * 4 + 1] = colors[index * 3 + 1];
-                data[i * 4 + 2] = colors[index * 3 + 2];
-                data[i * 4 + 3] = (byte)(index == 0 && transparent ? 0x00 : 0xff);
+                if (index == 0 && transparent)
+                {
+                    data[i * 4 + 3] = 0x00;
+                }
+                else
+                {
+                    data[i * 4 + 0] = colors[index * 3 + 0];
+                    data[i * 4 + 1] = colors[index * 3 + 1];
+                    data[i * 4 + 2] = colors[index * 3 + 2];
+                    data[i * 4 + 3] = 0xff;
+                }
             }
 
             return new Graphic

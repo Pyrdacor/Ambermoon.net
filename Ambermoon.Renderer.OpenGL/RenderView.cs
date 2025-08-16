@@ -688,11 +688,6 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                     State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 }
 
-                if (layer.Key == Layer.Images || layer.Key == Layer.MobileOverlays)
-                {
-                    State.Gl.Enable(EnableCap.DepthTest);
-                }
-
                 if (layer.Value.Config.EnableBlending)
                     State.Gl.Enable(EnableCap.Blend);
                 else
@@ -704,10 +699,6 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
 
                     int[] currentViewport = new int[4];
                     State.Gl.GetInteger(GLEnum.Viewport, currentViewport);
-
-                    //int currentFrameBuffer = State.Gl.GetInteger(GLEnum.FramebufferBinding);
-
-                    //State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
                     State.Gl.Viewport(0, 0, (uint)renderScreenArea.Width, (uint)renderScreenArea.Height);
 
                     try
@@ -717,7 +708,6 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                     finally
                     {
                         State.Gl.Viewport(currentViewport[0], currentViewport[1], (uint)currentViewport[2], (uint)currentViewport[3]);
-                        //State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, (uint)currentFrameBuffer);
                         State.PopProjectionMatrix();
                     }
                 }
