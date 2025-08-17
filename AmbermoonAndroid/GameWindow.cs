@@ -551,6 +551,7 @@ class GameWindow : IContextProvider
                 {
                     advancedLogo?.Cleanup();
                     advancedLogo = null;
+                    renderView.ShowImageLayerOnly = false;
                 }
                 else if (versionSelector != null)
                 {

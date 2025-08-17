@@ -29,9 +29,6 @@ namespace Ambermoon
         Command? currentCommand = null;
         DateTime currentCommandStartTime = DateTime.MaxValue;
         IAlphaSprite sprite = null;
-        //readonly float oldVolume;
-        //readonly Audio.OpenAL.AudioOutput audioOutput;
-        //readonly ISong song;
         static TextureAtlasManager textureAtlasManager = null;
 
         static AdvancedLogo()
@@ -45,12 +42,8 @@ namespace Ambermoon
             logoAdvancedGraphic = LoadImage(logoData);
         }
 
-        public AdvancedLogo(/*Audio.OpenAL.AudioOutput audioOutput, ISong song*/)
+        public AdvancedLogo()
         {
-            //this.audioOutput = audioOutput;
-            //this.song = song;
-            //oldVolume = audioOutput.Volume;
-
             commands = new Queue<Command>(3);
 
             commands.Enqueue(new Command
@@ -119,23 +112,9 @@ namespace Ambermoon
             }
         }
 
-        /*public void StopMusic()
-        {
-            if (audioOutput.Enabled)
-                song?.Stop();
-        }
-
-        public void PlayMusic()
-        {
-            if (audioOutput.Enabled)
-                song?.Play(audioOutput);
-        }*/
-
         public void Cleanup()
         {
             sprite?.Delete();
-            //song.Stop();
-            //audioOutput.Volume = oldVolume;
         }
 
         public void Update(IGameRenderView renderView, Action finished)
@@ -176,6 +155,7 @@ namespace Ambermoon
                 case CommandType.FadeInAdvancedImage:
                     if (commandActivated)
                     {
+                        var textureAtlas = AdvancedLogo.textureAtlasManager.GetOrCreate(Layer.Images);
                         // TODO: resize if switching to fullscreen etc. Also in Android.
                         float ratio = (float)logoAdvancedGraphic.Width / logoAdvancedGraphic.Height;
                         int height = renderView.RenderScreenSize.Height;
@@ -186,7 +166,7 @@ namespace Ambermoon
                         sprite.ClipArea = new Rect(Position.Zero, renderView.RenderScreenSize);
                         sprite.X = (renderView.RenderScreenSize.Width - width) / 2;
                         sprite.Y = (renderView.RenderScreenSize.Height - height) / 2;
-                        sprite.TextureAtlasOffset = new Position(0, 0); // TODO: must be first image!
+                        sprite.TextureAtlasOffset = textureAtlas.GetOffset(0);
                         sprite.TextureSize = new Size(logoAdvancedGraphic.Width, logoAdvancedGraphic.Height);
                         sprite.Alpha = 0;
                         sprite.Visible = true;

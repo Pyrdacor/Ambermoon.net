@@ -27,9 +27,6 @@ namespace AmbermoonAndroid
         Command? currentCommand = null;
         DateTime currentCommandStartTime = DateTime.MaxValue;
         IAlphaSprite sprite = null;
-        //readonly float oldVolume;
-        //readonly Audio.OpenAL.AudioOutput audioOutput;
-        //readonly ISong song;
         static TextureAtlasManager textureAtlasManager = null;
 
         static AdvancedLogo()
@@ -43,12 +40,8 @@ namespace AmbermoonAndroid
             logoAdvancedGraphic = LoadImage(logoData);
         }
 
-        public AdvancedLogo(/*Audio.OpenAL.AudioOutput audioOutput, ISong song*/)
+        public AdvancedLogo()
         {
-            //this.audioOutput = audioOutput;
-            //this.song = song;
-            //oldVolume = audioOutput.Volume;
-
             commands = new Queue<Command>(3);
 
             commands.Enqueue(new Command
