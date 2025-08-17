@@ -83,7 +83,7 @@ namespace Ambermoon.UI
         }
         uint ticks = 0;
 
-		public event Action<int, IGameData, bool> Closed;
+		public event Action<int, Func<IGameData>, bool> Closed;
 
         public VersionSelector(string ambermoonNetVersion, IGameRenderView renderView, TextureAtlasManager textureAtlasManager,
             List<GameVersion> gameVersions, Cursor cursor, int selectedVersion, SaveOption saveOption, IConfiguration configuration)
@@ -229,7 +229,7 @@ namespace Ambermoon.UI
                 totalSelectedIndex += mergedGameVersions[this.selectedVersion].FindIndex(v => v.Language == selectedVersionLanguages[this.selectedVersion]);
 
                 Closed?.Invoke(totalSelectedIndex,
-                    mergedGameVersions[this.selectedVersion].First(v => v.Language == selectedVersionLanguages[this.selectedVersion]).DataProvider?.Invoke(),
+                    mergedGameVersions[this.selectedVersion].First(v => v.Language == selectedVersionLanguages[this.selectedVersion]).DataProvider,
                     IsSelectedVersionFromExternalData() && selectedSaveOption == 1);
             };
             saveOptionTooltip.Area = Global.GetTextRect(renderView, new Rect(saveOptionPosition, new Size(savegameOptionText.Length * Global.GlyphWidth, Global.GlyphLineHeight)));

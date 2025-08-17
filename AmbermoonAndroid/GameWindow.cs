@@ -1207,12 +1207,13 @@ class GameWindow : IContextProvider
                 {
                     versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager,
                         gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption, configuration);
-                    versionSelector.Closed += (gameVersionIndex, gameData, _) =>
+                    versionSelector.Closed += (gameVersionIndex, gameDataProvider, _) =>
                     {
                         window.DoRender();
 
                         donateButton?.Delete();
                         donateButton = null;
+                        var gameData = gameDataProvider?.Invoke();
                         var gameVersion = gameVersions[gameVersionIndex];
                         configuration.SaveOption = SaveOption.ProgramFolder;
                         configuration.GameVersionIndex = gameVersionIndex;

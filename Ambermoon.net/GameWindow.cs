@@ -1284,8 +1284,11 @@ class GameWindow : IContextProvider
 
                     versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager,
                         gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption, configuration);
-                    versionSelector.Closed += (gameVersionIndex, gameData, saveInDataPath) =>
+                    versionSelector.Closed += (gameVersionIndex, gameDataProvider, saveInDataPath) =>
                     {
+                        window.DoRender();
+
+                        var gameData = gameDataProvider?.Invoke();
                         var gameVersion = gameVersions[gameVersionIndex];
                         configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
                         configuration.GameVersionIndex = gameVersionIndex;
