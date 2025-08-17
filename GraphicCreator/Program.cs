@@ -94,5 +94,90 @@ for (int i = 0; i < chunkSize; i++)
     writer.Write((byte)index);
 }
 
+/*if (colors.Count < 128)
+{
+    writer = TryRLE(writer);
+}*/
 
 output.Write(writer.ToArray(), 0, writer.Size);
+
+DataWriter TryRLE(DataWriter writer)
+{
+    var writerData = writer.ToArray();
+    int headerSize = 5 + writerData[4] * 3;
+    var header = writerData[..headerSize]; // width, height, color count
+    var data = writerData[headerSize..]; // skip width, height and color count
+    const byte rleMask = 0x80;
+    var compressedData = new List<byte>();
+    byte currentSymbol = rleMask;
+    int count = 0;
+
+    void WriteRLE()
+    {
+        if (count > 4210815)
+            throw new IndexOutOfRangeException("RLE count was too large");
+
+        if (count > 0)
+        {
+            if (count < 3) // not worth it
+            {
+                for (int c = 0; c < count; c++)
+                    compressedData.Add(currentSymbol);
+            }
+            else
+            {
+                // count--
+                // 0 - 127: 0x00 - 0x7F
+                // 128 - 16511: 0x8000 - 0xFF7F
+                // 16512 - 4210815: 0x808000 - 0xFFFFFF
+
+                compressedData.Add((byte)(currentSymbol | rleMask));
+
+                count--; // 0-based
+
+                if (count < 128)                    
+                    compressedData.Add((byte)count); // 0x00 - 0x7F
+                else
+                {
+                    count -= 128;
+
+                    if (count < 16384) // 14 bits
+                    {
+                        compressedData.Add((byte)(0x80 | (count >> 7)));
+                        compressedData.Add((byte)(count & 0x7f));
+                    }
+                    else
+                    {
+                        count -= 16384;
+
+                        compressedData.Add((byte)(0x80 | (count >> 15)));
+                        compressedData.Add((byte)(0x80 | ((count >> 8) & 0x7f)));
+                        compressedData.Add((byte)(count & 0xff));
+                    }
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < data.Length; i++)
+    {
+        if (data[i] == currentSymbol)
+        {
+            count++;
+        }
+        else
+        {
+            WriteRLE();            
+
+            currentSymbol = data[i];
+            count = 1;
+        }
+    }
+
+    WriteRLE();
+
+    if (compressedData.Count > data.Length)
+        return writer; // RLE compression did not help, return original data
+
+    return new DataWriter([..header, ..compressedData.ToArray()]);
+}

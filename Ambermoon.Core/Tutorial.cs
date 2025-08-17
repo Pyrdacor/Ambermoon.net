@@ -1,7 +1,7 @@
 ﻿/*
  * Tutorial.cs - Game introduction sequence
  *
- * Copyright (C) 2021-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2021-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
