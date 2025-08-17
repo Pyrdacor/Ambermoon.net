@@ -54,7 +54,6 @@ public class Game
     internal enum MobileAction
     {
         None,
-        Move,
         Hand,
         Eye,
         Mouth,
@@ -450,16 +449,13 @@ public class Game
                 return;
 
             currentMobileAction = value;
-            var layer = currentMobileAction == MobileAction.Move
-                ? Layer.UI
-                : Layer.Cursor;
+            var layer = Layer.Cursor;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
             mobileActionIndicator.Visible = false;
             try
             {
                 mobileActionIndicator.TextureAtlasOffset = currentMobileAction switch
                 {
-                    MobileAction.Move => textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.StatusMove)),
                     MobileAction.Hand => textureAtlas.GetOffset((uint)CursorType.Hand),
                     MobileAction.Eye => textureAtlas.GetOffset((uint)CursorType.Eye),
                     MobileAction.Mouth => textureAtlas.GetOffset((uint)CursorType.Mouth),
@@ -3602,51 +3598,6 @@ public class Game
             mobileAutomapScroll.Y -= 6.0f * diff.Y / Global.VirtualScreenHeight;
             return;
         }
-
-        if (CurrentWindow.Window != Window.MapView)
-            return;
-
-        if (CurrentMobileAction == MobileAction.Move)
-        {
-            // We just press the keys and let the move logic move the player in a timed manner.
-            keys[(int)Key.W] = false;
-            keys[(int)Key.A] = false;
-            keys[(int)Key.S] = false;
-            keys[(int)Key.D] = false;
-
-            var relativePosition = renderView.ScreenToGame(position);
-
-            if (is3D)
-            {
-                var center = mapViewArea.Center;
-
-                if (relativePosition.X <= center.X - Mobile3DThreshold)
-                    keys[(int)Key.A] = true;
-                else if (relativePosition.X >= center.X + Mobile3DThreshold)
-                    keys[(int)Key.D] = true;
-                if (relativePosition.Y <= center.Y - Mobile3DThreshold)
-                    keys[(int)Key.W] = true;
-                else if (relativePosition.Y >= center.Y + Mobile3DThreshold)
-                    keys[(int)Key.S] = true;
-            }
-            else
-            {
-                relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
-                var tilePosition = renderMap2D.PositionToTile(relativePosition);
-
-                if (tilePosition != null)
-                {
-                    if (player2D.Position.X < tilePosition.X)
-                        keys[(int)Key.D] = true;
-                    else if (player2D.Position.X > tilePosition.X)
-                        keys[(int)Key.A] = true;
-                    if (player2D.Position.Y < tilePosition.Y)
-                        keys[(int)Key.S] = true;
-                    else if (player2D.Position.Y > tilePosition.Y)
-                        keys[(int)Key.W] = true;
-                }
-            }
-        }
     }
 
     public void OnLongPress(Position position)
@@ -3698,23 +3649,7 @@ public class Game
 
             if (is3D)
             {
-                if (!TriggerMapEvents(null))
-                {
-                    if (CurrentMobileAction != MobileAction.None)
-                        return;
-
-                    CurrentMobileAction = MobileAction.Move;
-                    var center = mapViewArea.Center;
-
-                    if (relativePosition.X <= center.X - Mobile3DThreshold)
-                        keys[(int)Key.A] = true;
-                    else if (relativePosition.X >= center.X + Mobile3DThreshold)
-                        keys[(int)Key.D] = true;
-                    if (relativePosition.Y <= center.Y - Mobile3DThreshold)
-                        keys[(int)Key.W] = true;
-                    else if (relativePosition.Y >= center.Y + Mobile3DThreshold)
-                        keys[(int)Key.S] = true;
-                }
+                TriggerMapEvents(null);
             }
             else
             {
@@ -3822,20 +3757,6 @@ public class Game
                             return;
                         }
                     }
-
-                    if (CurrentMobileAction != MobileAction.None)
-                        return;
-
-                    CurrentMobileAction = MobileAction.Move;
-
-                    if (player2D.Position.X < tilePosition.X)
-                        keys[(int)Key.D] = true;
-                    else if (player2D.Position.X > tilePosition.X)
-                        keys[(int)Key.A] = true;
-                    if (player2D.Position.Y < tilePosition.Y)
-                        keys[(int)Key.S] = true;
-                    else if (player2D.Position.Y > tilePosition.Y)
-                        keys[(int)Key.W] = true;
                 }
             }
         }

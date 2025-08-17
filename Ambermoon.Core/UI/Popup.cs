@@ -106,6 +106,10 @@ namespace Ambermoon.UI
 
                 ContentArea = new Rect(fill.X, fill.Y, fill.Width, fill.Height);
             }
+            else
+            {
+                ContentArea = new Rect(position.X + 16, position.Y + 16, (columns - 2) * 16, (rows - 2) * 16);
+            }
 
             if (game.CursorType == CursorType.Click)
 				game.ShowMobileClickIndicatorForPopup();

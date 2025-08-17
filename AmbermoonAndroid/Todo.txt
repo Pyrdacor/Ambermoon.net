@@ -1,2 +1,1 @@
 ﻿- Update the tutorial to use the new touch pad
-- Remove map click movement on Android
