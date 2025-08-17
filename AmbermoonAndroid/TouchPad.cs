@@ -52,7 +52,7 @@ internal class TouchPad
         new(11, 11), // wait
         new(25, 12), // battle positions
         new(13, 11), // options
-        new(24, 13), // switch
+        new(22, 8), // switch
     ];
     static readonly Position[] IconLocations =
     [
