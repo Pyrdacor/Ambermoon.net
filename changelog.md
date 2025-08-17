@@ -1,7 +1,9 @@
 # Changelog
 
-## 1.10.0 - Tenth patch (July 2024 - June 2025)
+## 1.10.0 - Tenth patch (July 2024 - August 2025)
 
+- Version [1.10.10](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.10): Loading bar and savegame crash fix
+- Version [1.10.9](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.9): Bug fixes and improvements
 - Version [1.10.8](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.8): Text display fix
 - Version [1.10.7](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.7): AA crash fix
 - Version [1.10.6](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.10.6): Savegame fix
