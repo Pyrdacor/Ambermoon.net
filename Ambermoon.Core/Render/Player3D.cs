@@ -278,8 +278,6 @@ namespace Ambermoon.Render
                 Position = touchedPositions[0];
                 bool moved = false;
 
-                Console.WriteLine($"We moved from {lastPosition.X},{lastPosition.Y} to {Position.X},{Position.Y}");
-
                 if (Position != lastPosition)
                 {
                     player.Position.X = Position.X;
@@ -290,17 +288,12 @@ namespace Ambermoon.Render
                     game.ResetMapCharacterInteraction(map.Map);
                 }
 
-                Console.WriteLine($"moved flag = {moved}");
-
                 if (!TriggerEvents(touchedPositions, oldX, oldY, Camera.X, Camera.Z))
                 {
-                    Console.WriteLine("yes");
                     if (moved)
                         game.PlayerMoved(false, lastPosition);
                     return true;
                 }
-
-                Console.WriteLine("no");
 
                 return false;
             }

@@ -559,7 +559,7 @@ public class Game
     static Dictionary<uint, Chest> initialChests = null;
     internal Savegame CurrentSavegame { get; private set; }
     event Action ActivePlayerChanged;
-    public event Action<ILegacyGameData, int, int, int> RequestAdvancedSavegamePatching;
+    public event Func<ILegacyGameData, int, int, int, Savegame, Savegame> RequestAdvancedSavegamePatching;
 
     // Rendering
     readonly Cursor cursor = null;
@@ -2498,8 +2498,7 @@ public class Game
 
             if (sourceEpisode < targetEpisode)
             {
-                RequestAdvancedSavegamePatching((ILegacyGameData)renderView.GameData, slot, sourceEpisode, targetEpisode);
-                savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, slot, totalSavegames);
+                savegame = RequestAdvancedSavegamePatching((ILegacyGameData)renderView.GameData, slot, sourceEpisode, targetEpisode, savegame);
             }
         }
 

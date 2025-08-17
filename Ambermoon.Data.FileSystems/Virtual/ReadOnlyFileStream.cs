@@ -21,7 +21,7 @@ namespace Ambermoon.Data.FileSystems.Virtual
 
         public IDisposableDataReader GetReader()
         {
-            return baseStream.GetReader();
+            return baseStream.GetReader(streamOffset, streamLength);
         }
 
         public void AdjustOffset(int newOffset)

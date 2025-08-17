@@ -916,14 +916,14 @@ class GameWindow : IContextProvider
 
                             // Load advanced diffs (is null for non-advanced versions)
                             if (advancedDiffsReader != null)
-                                advancedSavegamePatcher = new AdvancedSavegamePatcher(advancedDiffsReader);
+                                advancedSavegamePatcher = new AdvancedSavegamePatcher(advancedDiffsReader, savegameManager);
 
-                            game.RequestAdvancedSavegamePatching += (gameData, saveSlot, sourceEpisode, targetEpisode) =>
+                            game.RequestAdvancedSavegamePatching += (gameData, saveSlot, sourceEpisode, targetEpisode, savegame) =>
                             {
                                 if (advancedSavegamePatcher == null)
                                     throw new AmbermoonException(ExceptionScope.Data, "No diff information for old Ambermoon Advanced savegame found.");
 
-                                advancedSavegamePatcher.PatchSavegame(gameData, saveSlot, sourceEpisode, targetEpisode);
+                                return advancedSavegamePatcher.PatchSavegame(gameData, saveSlot, sourceEpisode, targetEpisode, savegame, savegameSerializer);
                             };
 
                             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MobileOverlays);

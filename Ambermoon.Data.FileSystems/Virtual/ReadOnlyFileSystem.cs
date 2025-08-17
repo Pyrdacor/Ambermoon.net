@@ -20,7 +20,7 @@ namespace Ambermoon.Data.FileSystems.Virtual
 
             foreach (var file in files)
             {
-                var readOnlyFile = GetFile(file.Key);
+                var readOnlyFile = GetFile(file.Key.TrimStart('/'));
 
                 if (readOnlyFile == null)
                     throw new KeyNotFoundException($"File '{file.Key}' was not found.");

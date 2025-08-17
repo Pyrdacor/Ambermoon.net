@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
+using Ambermoon.Data.Serialization.FileSystem;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -178,6 +179,23 @@ namespace Ambermoon.Data.Legacy
             return savegame;
         }
 
+        public Dictionary<string, IFileContainer> GetSavegameFileContainers(int saveSlot)
+        {
+            string path = Path.Combine(this.path, $"Save.{saveSlot:00}");
+            var fileReader = new FileReader();
+            IFileContainer ReadContainer(string name)
+            {
+                using var stream = File.OpenRead(Path.Combine(path, name));
+                return fileReader.ReadRawFile(name, stream);
+            }
+
+            return SaveFileNames.ToDictionary
+            (
+                fileName => fileName,
+                ReadContainer
+            );
+        }
+
         public Savegame LoadInitial(IGameData gameData, ISavegameSerializer savegameSerializer)
         {
             var legacyGameData = gameData as ILegacyGameData;
@@ -352,20 +370,62 @@ namespace Ambermoon.Data.Legacy
             WriteFiles($"Save.{saveSlot:00}/Automap.amb", savegameFiles.AutomapDataWriters);
         }
 
-        void SaveToPath(string path, SavegameOutputFiles savegameFiles, int saveSlot, IFileContainer savesContainer)
+        public void SaveToFileSystem(IFileSystem fileSystem, int saveSlot, ISavegameSerializer savegameSerializer, Savegame savegame)
+        {
+            var savegameFiles = savegameSerializer.Write(savegame);
+
+            SaveToFileSystem(fileSystem, savegameFiles, saveSlot, null);
+        }
+
+        public static Savegame LoadFromFileSystem(ILegacyGameData legacyGameData, IReadOnlyFileSystem fileSystem, int saveSlot, ISavegameSerializer savegameSerializer)
+        {
+            var fileReader = new FileReader();
+            IFileContainer ReadContainer(string name)
+            {
+                var file = fileSystem.GetFile(name);
+                using var stream = file.Stream.GetReader();
+                return fileReader.ReadFile(name, stream);
+            }
+            IDataReader ReadFile(string name)
+            {
+                return ReadContainer(name).Files[1];
+            }
+            var savegameFiles = new SavegameInputFiles
+            {
+                SaveDataReader = ReadFile($"Save.{saveSlot:00}/Party_data.sav"),
+                PartyMemberDataReaders = ReadContainer($"Save.{saveSlot:00}/Party_char.amb"),
+                ChestDataReaders = ReadContainer($"Save.{saveSlot:00}/Chest_data.amb"),
+                MerchantDataReaders = ReadContainer($"Save.{saveSlot:00}/Merchant_data.amb"),
+                AutomapDataReaders = ReadContainer($"Save.{saveSlot:00}/Automap.amb")
+            };
+
+            var savegame = new Savegame();
+            var initialPartyMemberReaders = legacyGameData.Files.TryGetValue("Initial/Party_char.amb", out var readers)
+                ? readers : legacyGameData.Files.TryGetValue("Save.00/Party_char.amb", out readers) ? readers : null;
+
+            savegameSerializer.Read(savegame, savegameFiles, legacyGameData.Files["Party_texts.amb"], initialPartyMemberReaders);
+
+            return savegame;
+        }
+
+        void SaveTo(System.Action<string> directoryCreator, System.Action<string, byte[]> fileWriter,
+            string basePath, SavegameOutputFiles savegameFiles, int saveSlot, IFileContainer savesContainer)
         {
             void WriteFile(string name, IDataWriter writer)
             {
-                var fullPath = Path.Combine(path, name);
-                Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
-                File.WriteAllBytes(fullPath, writer.ToArray());
+                var fullPath = basePath == null ? name : Path.Combine(basePath, name);
+
+                if (basePath != null)
+                    directoryCreator(Path.GetDirectoryName(fullPath));
+
+                fileWriter(fullPath, writer.ToArray());
             }
 
             void WriteFiles(string name, Dictionary<int, IDataWriter> writers)
             {
                 var output = new DataWriter();
                 FileWriter.WriteContainer(output, writers.ToDictionary(w => (uint)w.Key, w => w.Value.ToArray()), FileType.AMBR);
-                File.WriteAllBytes(Path.Combine(path, name), output.ToArray());
+                fileWriter(basePath == null ? name : Path.Combine(basePath, name), output.ToArray());
             }
 
             WriteFile($"Save.{saveSlot:00}/Party_data.sav", savegameFiles.SaveDataWriter);
@@ -378,8 +438,19 @@ namespace Ambermoon.Data.Legacy
             {
                 var savesWriter = new DataWriter();
                 FileWriter.Write(savesWriter, savesContainer, Compression.LobCompression.LobType.Ambermoon, FileDictionaryCompression.None);
-                File.WriteAllBytes(savesPath, savesWriter.ToArray());
+                fileWriter(basePath == null ? "Saves" : savesPath, savesWriter.ToArray());
             }
+        }
+
+        void SaveToFileSystem(IFileSystem fileSystem, SavegameOutputFiles savegameFiles, int saveSlot, IFileContainer savesContainer)
+        {
+            SaveTo(dirName => fileSystem.CreateFolder(dirName), (name, data) => fileSystem.CreateFile(name, data),
+                null, savegameFiles, saveSlot, savesContainer);
+        }
+
+        void SaveToPath(string path, SavegameOutputFiles savegameFiles, int saveSlot, IFileContainer savesContainer)
+        {
+            SaveTo(dirName => Directory.CreateDirectory(dirName), File.WriteAllBytes, path, savegameFiles, saveSlot, savesContainer);
         }
     }
 }

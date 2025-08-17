@@ -85,6 +85,8 @@ namespace Ambermoon.Data.FileSystems.OperatingSystem
             if (string.IsNullOrWhiteSpace(path))
                 return rootFolder;
 
+            System.IO.Directory.CreateDirectory(path);
+
             path = ToRelativePath(path);
             var parts = GetPathParts(path);
             var parent = GetNode(parts, 0, rootFolder, true) as Folder;
@@ -105,6 +107,14 @@ namespace Ambermoon.Data.FileSystems.OperatingSystem
 
         public IFile CreateFile(string path, byte[] data)
         {
+            using (var file = System.IO.File.Create(path))
+            {
+                if (data != null && data.Length != 0)
+                {
+                    file.Write(data, 0, data.Length);
+                }
+            }
+
             path = ToRelativePath(path);
             var parts = GetPathParts(path);
             var parent = GetNode(parts, 0, rootFolder, true) as Folder;

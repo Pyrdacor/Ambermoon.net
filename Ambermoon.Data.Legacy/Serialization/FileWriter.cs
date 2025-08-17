@@ -17,8 +17,9 @@ namespace Ambermoon.Data.Legacy.Serialization
             return buffer;
         }
 
-        public static void Write(DataWriter writer, IFileContainer fileContainer, LobType lobType,
-            FileDictionaryCompression fileDictionaryCompression, Action<int, int, int?> compressionPrinter = null)
+        public static void Write(DataWriter writer, IFileContainer fileContainer, LobType lobType = LobType.Ambermoon,
+            FileDictionaryCompression fileDictionaryCompression = FileDictionaryCompression.None,
+            Action<int, int, int?> compressionPrinter = null)
         {
             var fileType = fileContainer.Header.AsFileType();
 
