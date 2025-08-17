@@ -12,6 +12,7 @@ Version 1.10
 - Some possible crash fixes
 - Some more Czech text fixes
 - Many smaller fixes and improvements
+- Added loading bar at the beginning
 
 
 Version 1.9
