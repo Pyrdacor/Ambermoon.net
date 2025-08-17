@@ -1,1 +1,2 @@
 ﻿- Update the tutorial to use the new touch pad
+- Entering options (and e.g. turning music off) will displace the touchpad. Maybe resolution is re-evaluated?

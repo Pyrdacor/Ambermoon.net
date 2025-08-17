@@ -20,17 +20,18 @@
 		<AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
 		<AndroidPackageFormat>apk</AndroidPackageFormat>
 		<AndroidEnableMultiDex>False</AndroidEnableMultiDex>
+		<AndroidDebuggable>false</AndroidDebuggable>
 		<DebugType>embedded</DebugType>
 		<DebugSymbols>True</DebugSymbols>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<DefineConstants>$(DefineConstants);GLES</DefineConstants>
-		<EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
+		<EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 		<RunAOTCompilation>False</RunAOTCompilation>
 		<PublishTrimmed>False</PublishTrimmed>
 		<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
 		<AndroidLinkTool>none</AndroidLinkTool>
-		<AndroidPackageFormat>apk</AndroidPackageFormat>
+		<AndroidPackageFormat>aab</AndroidPackageFormat>
 		<DebugSymbols>False</DebugSymbols>
 		<AndroidLinkMode>None</AndroidLinkMode>
 		<DebugType>none</DebugType>

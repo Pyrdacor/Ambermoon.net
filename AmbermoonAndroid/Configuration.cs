@@ -8,9 +8,11 @@ namespace AmbermoonAndroid
     {
 		internal const string ConfigurationFileName = "ambermoon.cfg";
 		internal const string ExternalSavegameFolder = "external";
-		internal static string AppDataPath { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "Ambermoon");
+		internal static string ExternalAppDataPath { get; } = Application.Context.GetExternalFilesDir(null).AbsolutePath;
+        internal static string InternalAppDataPath { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "Ambermoon");
 
-		internal static string GetVersionSavegameFolder(GameVersion gameVersion)
+
+        internal static string GetVersionSavegameFolder(GameVersion gameVersion)
 		{
 			if (gameVersion.ExternalData)
 				return ExternalSavegameFolder;
@@ -117,7 +119,7 @@ namespace AmbermoonAndroid
 			string suffix = $"Saves{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
 			string alternativeSuffix = $"SavesRemake{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
 
-			var path = Path.Combine(AppDataPath, suffix);
+			var path = Path.Combine(ExternalAppDataPath, suffix);
 
 			if (createIfMissing)
 			{
@@ -127,7 +129,7 @@ namespace AmbermoonAndroid
 				}
 				catch
 				{
-					path = Path.Combine(AppDataPath, alternativeSuffix);
+					path = Path.Combine(ExternalAppDataPath, alternativeSuffix);
 					Directory.CreateDirectory(path);
 				}
 				return path;
@@ -142,7 +144,7 @@ namespace AmbermoonAndroid
 
         public static Configuration Load(Configuration defaultValue = null)
         {
-			var filename = Path.Combine(AppDataPath, ConfigurationFileName);
+			var filename = Path.Combine(InternalAppDataPath, ConfigurationFileName);
 
             if (!File.Exists(filename) || new FileInfo(filename).Length == 0)
                 return defaultValue;
@@ -152,9 +154,9 @@ namespace AmbermoonAndroid
 
         public void Save()
         {
-			var filename = Path.Combine(AppDataPath, ConfigurationFileName);
+			var filename = Path.Combine(InternalAppDataPath, ConfigurationFileName);
 
-			Directory.CreateDirectory(AppDataPath);
+			Directory.CreateDirectory(InternalAppDataPath);
             File.WriteAllText(filename, JsonConvert.SerializeObject(this,
                 new JsonSerializerSettings
                 {
