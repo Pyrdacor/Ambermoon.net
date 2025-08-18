@@ -6899,9 +6899,6 @@ public class Game
             return newMap.Tiles[newX, newY].AllowMovement(MapManager.GetTilesetForMap(newMap), TravelType);
     }
 
-    /// <summary>
-    /// This is used by external triggers like a cheat engine.
-    /// </summary>
     public bool Teleport(uint mapIndex, uint x, uint y, CharacterDirection direction, out bool blocked, bool force = false)
     {
         blocked = false;
@@ -7400,8 +7397,7 @@ public class Game
         }
     }
 
-    internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null, bool updateSavegame = true,
-    Map lastMap = null)
+    internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null, bool updateSavegame = true, Map lastMap = null)
     {
         if (mapChange)
             lastMapTicksReset = CurrentTicks;

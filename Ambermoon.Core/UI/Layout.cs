@@ -1201,7 +1201,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 22;
+        const int OptionCount = 23;
         const int OptionsPerPage = 7;
         static readonly ImmutableDictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
@@ -1232,8 +1232,9 @@ namespace Ambermoon.UI
                     "Pyrdacor Logo zeigen",
                     "Fantasy Intro zeigen",
                     "Intro anzeigen",
-                    "Info beim Speichern/Laden",
+                    "Advanced Logo zeigen",
                     // Page 4
+                    "Info beim Speichern/Laden",
                     "Cheats aktivieren",
                 }
             },
@@ -1264,8 +1265,9 @@ namespace Ambermoon.UI
                     "Show Pyrdacor logo",
                     "Show fantasy intro",
                     "Show intro",
-                    "Show save/load info",
+                    "Show advanced logo",
                     // Page 4
+                    "Show save/load info",
                     "Enable cheats",
                 }
             },
@@ -1296,8 +1298,9 @@ namespace Ambermoon.UI
                     "Afficher Pyrdacor logo",
                     "Afficher fantasy intro",
                     "Afficher intro",
-                    "Messages de sauvegarde",
+                    "Afficher advanced logo",
                     // Page 4
+                    "Messages de sauvegarde",
                     "Activer les cheats",
                 }
             },
@@ -1328,8 +1331,9 @@ namespace Ambermoon.UI
                     "Pokaż logo Pyrdacora",
                     "Pokaż fantasy intro",
                     "Pokaż intro",
-                    "Pokaż inf. zapis/odczyt",
+                    "Pokaż advanced logo",
                     // Page 4
+                    "Pokaż inf. zapis/odczyt",
                     "Włącz cheaty",
                 }
             },
@@ -1360,9 +1364,10 @@ namespace Ambermoon.UI
 		            "Zobrazit logo Pyrdacor",
 		            "Zobrazit fantasy intro",
 		            "Zobrazit intro",
-					"Info o uložení/nahrání",
+                    "Zobrazit advanced logo",                    
 		            // Page 4
-		            "Povolit cheaty",
+                    "Info o uložení/nahrání",
+                    "Povolit cheaty",
 				}
             }
 		}.ToImmutableDictionary();
