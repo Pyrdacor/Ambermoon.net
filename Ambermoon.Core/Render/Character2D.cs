@@ -239,14 +239,8 @@ namespace Ambermoon.Render
 
                 if (map.Type == MapType.Map2D)
                 {
-                    uint scrollX = x;
-                    uint scrollY = y;
-                    Map.LimitScrollOffset(ref scrollX, ref scrollY, map);
-                    Map.SetMap(map, scrollX, scrollY);
-                    Direction = newDirection.Value;
-                    mapInitAction?.Invoke(map);
-
-                    RecheckTopSprite();
+                    game.Start2D(map, x, y, newDirection.Value, false, mapInitAction);
+                    return;
                 }
                 else
                 {

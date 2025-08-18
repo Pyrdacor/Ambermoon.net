@@ -673,12 +673,12 @@ namespace Ambermoon.Render
             if (map.IsWorldMap)
             {
                 worldMap = true;
-                adjacentMaps = new Map[3]
-                {
+                adjacentMaps =
+                [
                     mapManager.GetMap(map.RightMapIndex.Value),
                     mapManager.GetMap(map.DownMapIndex.Value),
                     mapManager.GetMap(map.DownRightMapIndex.Value)
-                };
+                ];
             }
             else
             {
