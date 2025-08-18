@@ -1,7 +1,7 @@
 ﻿/*
  * Context.cs - Render context which is capable of rotating the whole screen
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -153,6 +153,6 @@ public class Context
         }
 
         State.PushModelViewMatrix(modelViewMatrix);
-        UpdateFullScreenMatrix();
+            UpdateFullScreenMatrix();
     }
 }

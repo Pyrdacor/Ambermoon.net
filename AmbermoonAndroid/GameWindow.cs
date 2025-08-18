@@ -4,6 +4,7 @@ using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Frontend;
 using Ambermoon.Render;
 using Ambermoon.Renderer.OpenGL;
 using Ambermoon.UI;
@@ -785,7 +786,7 @@ class GameWindow : IContextProvider
             textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
                 introFontLarge.GlyphGraphics, introGraphics, features);
             logoPyrdacor?.Initialize(textureAtlasManager);
-            AdvancedLogo.Initialize(textureAtlasManager);
+            AdvancedLogo.Initialize(textureAtlasManager, FileProvider.GetAdvancedLogoData);
             var graphics = TutorialFinger.GetGraphics(1u); // Donate button is 0
             graphics.Add(0u, FileProvider.GetDonateButton());
             textureAtlasManager.AddFromGraphics(Layer.MobileOverlays, graphics);
@@ -793,7 +794,7 @@ class GameWindow : IContextProvider
             textureAtlasManager.AddFromGraphics(Layer.Images, graphics);
             return textureAtlasManager;
         });
-        renderView.AvailableFullscreenModes = new();
+        renderView.AvailableFullscreenModes = [];
         renderView.SetTextureFactor(Layer.Text, 2);
 
         if (configuration.ShowFantasyIntro)
@@ -1152,7 +1153,7 @@ class GameWindow : IContextProvider
             }
             else
             {
-                additionalPalettes = new Graphic[2] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] }, flagsPalette };
+                additionalPalettes = [new() { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] }, flagsPalette];
             }
 
             fontProvider ??= new IngameFontProvider(new DataReader(FileProvider.GetIngameFontData()), gameData.FontProvider.GetFont());
@@ -1166,18 +1167,18 @@ class GameWindow : IContextProvider
                 {
                     textureAtlasManager.AddUIOnly(gameData.GraphicProvider, fontProvider);
                     logoPyrdacor?.Initialize(textureAtlasManager);
-                    AdvancedLogo.Initialize(textureAtlasManager);
+                    AdvancedLogo.Initialize(textureAtlasManager, FileProvider.GetAdvancedLogoData);
                     textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
                     {
                         { 1u, flagsGraphic }
                     });
                     textureAtlasManager.AddFromGraphics(Layer.MobileOverlays, new Dictionary<uint, Graphic>
-                        {
-                            { 0u, FileProvider.GetDonateButton() }
-                        });
+                    {
+                        { 0u, FileProvider.GetDonateButton() }
+                    });
                     return textureAtlasManager;
                 });
-                renderView.AvailableFullscreenModes = new();
+                renderView.AvailableFullscreenModes = [];
                 renderView.SetTextureFactor(Layer.Text, 2);
                 InitGlyphs(fontProvider, textureAtlasManager);
                 var gameVersions = new List<GameVersion>(5);
@@ -1335,12 +1336,21 @@ class GameWindow : IContextProvider
             var preloadTextureAtlasManager = TextureAtlasManager.CreateEmpty();
             var preLoadRenverView = new RenderView(this, null, () =>
             {
-                LoadingBar.Initialize(preloadTextureAtlasManager);
+                LoadingBar.Initialize(preloadTextureAtlasManager, index =>
+                {
+                    return index switch
+                    {
+                        0 => FileProvider.GetLoadingBarLeft(),
+                        1 => FileProvider.GetLoadingBarRight(),
+                        2 => FileProvider.GetLoadingBarMid(),
+                        _ => FileProvider.GetLoadingBarFill(),
+                    };
+                });
                 return preloadTextureAtlasManager;
             }, window.FramebufferSize.X, window.FramebufferSize.Y, new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
             () => KeyValuePair.Create(0, 0), () => 0, []);
 
-            loadingBar = new(preLoadRenverView);
+            loadingBar = new(preLoadRenverView, 1.0f / 3.0f, 1.0f / 5.0f);
             window.DoRender();
         }
 

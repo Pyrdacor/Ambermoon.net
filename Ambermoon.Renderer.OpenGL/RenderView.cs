@@ -1,7 +1,7 @@
 ﻿/*
  * GameView.cs - Implementation of a game render view
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -67,7 +67,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     // virtual screen.
     Rect renderScreenArea;
     // The rendering area in pixels
-    Rect frameBufferWindowArea => new Rect
+    Rect frameBufferWindowArea => new
     (
         renderDisplayArea.Position, frameBufferSize
     );
@@ -101,7 +101,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
 #pragma warning restore 0067
 
     public FullscreenRequestHandler FullscreenRequestHandler { get; set; }
-    public Size RenderScreenSize => new(renderScreenArea.Size);
+    public Rect RenderScreenArea => new(useFrameBuffer ? renderDisplayArea : renderScreenArea);
     public Size MaxScreenSize { get; set; }
     public List<Size> AvailableFullscreenModes { get; set; }
     public bool IsLandscapeRatio { get; } = true;
@@ -369,16 +369,6 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         }
     }
 
-    public void SetDeviceType(DeviceType deviceType, int width, int height, int? windowWidth = null, int? windowHeight = null)
-    {
-        if (this.deviceType == deviceType)
-            return;
-
-        this.deviceType = deviceType;
-
-        Resize(width, height, windowWidth, windowHeight);
-    }
-
     public void Resize(int width, int height, int? windowWidth = null, int? windowHeight = null)
     {
         if (windowWidth != null)
@@ -440,16 +430,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
             else // windowRatio > virtualRatio
             {
                 int newWidth = Misc.Round(windowSize.Height * virtualRatio);
-
-                if (deviceType == DeviceType.Desktop)
-                {
-                    renderDisplayArea = new((windowSize.Width - newWidth) / 2, 0, newWidth, windowSize.Height);
-                }
-                else
-                {
-                    // On mobile, we display the touch pad on the right
-                    renderDisplayArea = new(0, 0, newWidth, windowSize.Height);
-                }
+                renderDisplayArea = new((windowSize.Width - newWidth) / 2, 0, newWidth, windowSize.Height);
 
                 int newFrameBufferWidth = Misc.Round(frameBufferSize.Height * virtualRatio);
                 frameBufferSize.Width = newFrameBufferWidth;
@@ -697,6 +678,9 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                 {
                     State.PushProjectionMatrix(State.FullScreenProjectionMatrix2D);
 
+                    if (useFrameBuffer)
+                        State.PushModelViewMatrix(Matrix4.CreateTranslationMatrix(-renderDisplayArea.X, -renderDisplayArea.Y));
+
                     int[] currentViewport = new int[4];
                     State.Gl.GetInteger(GLEnum.Viewport, currentViewport);
                     State.Gl.Viewport(0, 0, (uint)renderScreenArea.Width, (uint)renderScreenArea.Height);
@@ -708,6 +692,8 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                     finally
                     {
                         State.Gl.Viewport(currentViewport[0], currentViewport[1], (uint)currentViewport[2], (uint)currentViewport[3]);
+                        if (useFrameBuffer)
+                            State.PopModelViewMatrix();
                         State.PopProjectionMatrix();
                     }
                 }

@@ -1,7 +1,7 @@
 ﻿/*
  * Matrix.cs - Basic 4x4 matrix implementation
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -28,13 +28,13 @@ public class Matrix4
     readonly float[] matrix = new float[16];
     float[] inverse = null;
 
-    public static readonly Matrix4 Identity = new Matrix4(new float[16]
-    {
+    public static readonly Matrix4 Identity = new(
+    [
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f
-    });
+    ]);
 
     public static Matrix4 CreateOrtho2D(float left, float right, float top, float bottom, float near = -1.0f, float far = 1.0f)
     {
@@ -45,13 +45,13 @@ public class Matrix4
         // depth
         float d = far - near;
 
-        return new Matrix4(new float[16]
-        {
+        return new Matrix4(
+        [
             2.0f / w,   0.0f,       0.0f,       -(right + left) / w,
             0.0f,       2.0f / h,   0.0f,       -(bottom + top) / h,
             0.0f,       0.0f,       2.0f / d,   -(far + near) / d,
             0.0f,       0.0f,       0.0f,       1.0f
-        });
+        ]);
     }
 
     public static Matrix4 CreatePerspective(float fovY, float aspect, float near, float far)
@@ -91,35 +91,35 @@ public class Matrix4
         // near/(near+distance) in the projection matrix.
         // This projection matrix exactly scales x and y by
         // 256/(256+distance) with the given FOV applied.
-        return new Matrix4(new float[16]
-        {
+        return new Matrix4(
+        [
             2.0f * near / w,    0.0f,               (r + l) / w,                    0.0f,
             0.0f,               2.0f * near / h,    (t + b) / h,                    0.0f,
             0.0f,               0.0f,               -(2.0f*near+far)/(far-near),    -(2.0f*near*(far+near))/(far-near)-near,
             0.0f,               0.0f,               -1.0f,                          near
-        });
+        ]);
     }
 
     public static Matrix4 CreateTranslationMatrix(float x, float y, float z = 0.0f)
     {
-        return new Matrix4(new float[16]
-        {
+        return new Matrix4(
+        [
             1.0f, 0.0f, 0.0f, x,
             0.0f, 1.0f, 0.0f, y,
             0.0f, 0.0f, 1.0f, z,
             0.0f, 0.0f, 0.0f, 1.0f
-        });
+        ]);
     }
 
     public static Matrix4 CreateScalingMatrix(float x, float y, float z = 1.0f)
     {
-        return new Matrix4(new float[16]
-        {
+        return new Matrix4(
+        [
             x,    0.0f, 0.0f, 0.0f,
             0.0f, y,    0.0f, 0.0f,
             0.0f, 0.0f, z,    0.0f,
             0.0f, 0.0f, 0.0f, 1.0f
-        });
+        ]);
     }
 
     public static Matrix4 CreateYRotationMatrix(float angle)
@@ -129,13 +129,13 @@ public class Matrix4
         var sin = (float)Math.Sin(angle * deg2rad);
         var cos = (float)Math.Cos(angle * deg2rad);
 
-        return new Matrix4(new float[16]
-        {
+        return new Matrix4(
+        [
             cos,  -sin, 0.0f, 0.0f,
             sin,  cos,  0.0f, 0.0f,
             0.0f, 0.0f, 1.0f, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f
-        });
+        ]);
     }
 
     public static Matrix4 CreateZRotationMatrix(float angle)
@@ -145,13 +145,13 @@ public class Matrix4
         var sin = (float)Math.Sin(angle * deg2rad);
         var cos = (float)Math.Cos(angle * deg2rad);
 
-        return new Matrix4(new float[16]
-        {
+        return new Matrix4(
+        [
             cos,  0.0f, sin,  0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,
             -sin, 0.0f, cos,  0.0f,
             0.0f, 0.0f, 0.0f, 1.0f
-        });
+        ]);
     }
 
     public Matrix4 CreateInverseMatrix()

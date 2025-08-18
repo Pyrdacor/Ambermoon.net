@@ -5,6 +5,7 @@ using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Audio;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Frontend;
 using Ambermoon.Render;
 using Ambermoon.Renderer.OpenGL;
 using Ambermoon.UI;
@@ -33,7 +34,7 @@ file class Logger : GameData.ILogger
     public void AppendLine(string text) => Console.WriteLine(text);
 }
 
-class GameWindow : IContextProvider
+class GameWindow(string id = "MainWindow") : IContextProvider
 {
     string gameVersion = "Ambermoon.net";
     Configuration configuration;
@@ -66,7 +67,7 @@ class GameWindow : IContextProvider
     bool checkPatcher = true;
     bool initialIntroEndedByClick = false;
 
-    public string Identifier { get; }
+    public string Identifier { get; } = id;
     public IGLContext GLContext => window?.GLContext;
     public int Width { get; private set; }
     public int Height { get; private set; }
@@ -79,16 +80,10 @@ class GameWindow : IContextProvider
         set
         {
             configuration.Fullscreen = value;
-            window.WindowState = configuration.Fullscreen ? WindowState.Fullscreen : WindowState.Normal;
 
             if (cursor != null)
                 cursor.CursorMode = CursorMode.Hidden;
         }
-    }
-
-    public GameWindow(string id = "MainWindow")
-    {
-        Identifier = id;
     }
 
     void ChangeResolution(int? oldWidth) => ChangeResolution(oldWidth, configuration.Fullscreen, true);
@@ -100,17 +95,24 @@ class GameWindow : IContextProvider
 
         if (fullscreen)
         {
-            var fullscreenSize = renderView.AvailableFullscreenModes.MaxBy(r => r.Width * r.Height);
+            var fullscreenSize = window.VideoMode.Resolution;
 
-            if (fullscreenSize != null)
-            {
-                configuration.FullscreenWidth = fullscreenSize.Width;
-                configuration.FullscreenHeight = fullscreenSize.Height;
-            }
+            configuration.FullscreenWidth = fullscreenSize.Value.X;
+            configuration.FullscreenHeight = fullscreenSize.Value.Y;
+
+            var fullscreenWindowSize = fullscreenSize.Value;
+
+            if (window.Monitor?.Index == Silk.NET.Windowing.Monitor.GetMainMonitor(window)?.Index)
+                fullscreenWindowSize -= new WindowDimension(0, 1); // This avoids automatic fullscreen
+
+            window.Position = window.Monitor.Bounds.Origin;
+            window.Size = fullscreenWindowSize;
         }
         else
         {
-            var possibleResolutions = ScreenResolutions.GetPossibleResolutions(renderView.MaxScreenSize);
+            var monitorSize = window.Monitor.Bounds.Size;
+            var size = renderView?.MaxScreenSize ?? new Size(monitorSize.X, monitorSize.Y);
+            var possibleResolutions = ScreenResolutions.GetPossibleResolutions(size);
             int index = oldWidth == null ? 0 : changed
                 ? (possibleResolutions.FindIndex(r => r.Width == oldWidth.Value) + 1) % possibleResolutions.Count
                 : FindNearestResolution(oldWidth.Value);
@@ -151,8 +153,8 @@ class GameWindow : IContextProvider
 
     void ChangeFullscreenMode(bool fullscreen)
     {
-        FullscreenChangeRequest(fullscreen);
         Fullscreen = fullscreen;
+        FullscreenChangeRequest(fullscreen);        
         UpdateWindow(configuration);
     }
 
@@ -777,7 +779,7 @@ class GameWindow : IContextProvider
             }
             else
             {
-                additionalPalettes = new Graphic[1] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] } };
+                additionalPalettes = [new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] }];
             }
         }
 
@@ -798,7 +800,7 @@ class GameWindow : IContextProvider
             textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
                 introFontLarge.GlyphGraphics, introGraphics, features);
             logoPyrdacor?.Initialize(textureAtlasManager);
-            AdvancedLogo.Initialize(textureAtlasManager);
+            AdvancedLogo.Initialize(textureAtlasManager, () => Resources.Advanced);
             return textureAtlasManager;
         });
         renderView.AvailableFullscreenModes = availableFullscreenModes;
@@ -1213,11 +1215,11 @@ class GameWindow : IContextProvider
             if (configuration.ShowPyrdacorLogo)
             {
                 logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
-                additionalPalettes = new Graphic[2] { logoPyrdacor.Palettes[0], flagsPalette };
+                additionalPalettes = [logoPyrdacor.Palettes[0], flagsPalette];
             }
             else
             {
-                additionalPalettes = new Graphic[2] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] }, flagsPalette };
+                additionalPalettes = [new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] }, flagsPalette];
             }
 
             fontProvider ??= new IngameFontProvider(new DataReader(Resources.IngameFont), gameData.FontProvider.GetFont());
@@ -1231,7 +1233,7 @@ class GameWindow : IContextProvider
                 {
                     textureAtlasManager.AddUIOnly(gameData.GraphicProvider, fontProvider);
                     logoPyrdacor?.Initialize(textureAtlasManager);
-                    AdvancedLogo.Initialize(textureAtlasManager);
+                    AdvancedLogo.Initialize(textureAtlasManager, () => Resources.Advanced);
                     textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
                     {
                         { 1u, flagsGraphic }
@@ -1366,8 +1368,8 @@ class GameWindow : IContextProvider
         // Setup input
         SetupInput(window.CreateInput());
 
-        availableFullscreenModes = window.Monitor.GetAllVideoModes().Select(mode =>
-            new Size(mode.Resolution.Value.X, mode.Resolution.Value.Y)).Distinct().ToList();
+        availableFullscreenModes = [.. window.Monitor.GetAllVideoModes().Select(mode =>
+            new Size(mode.Resolution.Value.X, mode.Resolution.Value.Y)).Distinct()];
 
         var fullscreenSize = availableFullscreenModes.MaxBy(r => r.Width * r.Height);
 
@@ -1418,7 +1420,7 @@ class GameWindow : IContextProvider
             else
             {
                 window.Position = new WindowDimension(configuration.WindowX.Value, configuration.WindowY.Value);
-                EnsureWindowOnMonitor();
+                EnsureWindowOnMonitor(window.Monitor);
                 configuration.WindowX = window.Position.X;
                 configuration.WindowY = window.Position.Y;
                 configuration.MonitorIndex = window.Monitor.Index;
@@ -1497,12 +1499,12 @@ class GameWindow : IContextProvider
             var preloadTextureAtlasManager = TextureAtlasManager.CreateEmpty();
             var preLoadRenverView = new RenderView(this, null, () =>
             {
-                LoadingBar.Initialize(preloadTextureAtlasManager);
+                LoadingBar.Initialize(preloadTextureAtlasManager, LoadingBarGraphicProvider.GetGraphic);
                 return preloadTextureAtlasManager;
             }, window.FramebufferSize.X, window.FramebufferSize.Y, new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
             () => KeyValuePair.Create(0, 0), () => 0, []);
 
-            loadingBar = new(preLoadRenverView);
+            loadingBar = new(preLoadRenverView, 1.0f / 6.0f, 1.0f / 8.0f);
             window.DoRender();
         }
         
@@ -1790,7 +1792,7 @@ class GameWindow : IContextProvider
         {
             // This seems to happen when changing the screen resolution.
             window.Size = new WindowDimension(Width, Height);
-            EnsureWindowOnMonitor();
+            EnsureWindowOnMonitor(window.Monitor);
         }
 
         if (renderView != null)
@@ -1830,6 +1832,10 @@ class GameWindow : IContextProvider
             var monitorSize = window.Monitor?.Bounds.Size ?? new WindowDimension(800, 500);
             renderView.MaxScreenSize = new Size(monitorSize.X, monitorSize.Y);
             renderView.Resize(window.FramebufferSize.X, window.FramebufferSize.Y);
+
+            availableFullscreenModes = [.. window.Monitor.GetAllVideoModes().Select(mode =>
+                new Size(mode.Resolution.Value.X, mode.Resolution.Value.Y)).Distinct()];
+            renderView.AvailableFullscreenModes = availableFullscreenModes;
         }
     }
 
@@ -1841,15 +1847,15 @@ class GameWindow : IContextProvider
             this.configuration.Width = Width = size.Width;
             this.configuration.Height = Height = size.Height;
             window.Size = new WindowDimension(size.Width, size.Height);
-            EnsureWindowOnMonitor();
+            EnsureWindowOnMonitor(window.Monitor);
         }
 
         renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
     }
 
-    void EnsureWindowOnMonitor()
+    void EnsureWindowOnMonitor(IMonitor monitor)
     {
-        var bounds = window.Monitor?.Bounds;
+        var bounds = monitor?.Bounds;
         WindowDimension upperLeft = bounds?.Origin ?? new WindowDimension(0, 0);
         int? newX = null;
         int? newY = null;
@@ -1893,10 +1899,10 @@ class GameWindow : IContextProvider
 #endif
         var version = Assembly.GetExecutingAssembly().GetName().Version;
         gameVersion = $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build}";
-        var videoMode = new VideoMode(60);
+        //VideoMode videoMode = VideoMode.Default;// new VideoMode(60);
         var options = new WindowOptions(true, new WindowDimension(100, 100),
             new WindowDimension(Width, Height), 60.0, 120.0, api, gameVersion,
-            WindowState.Normal, WindowBorder.Fixed, true, false, videoMode, 24);
+            WindowState.Normal, WindowBorder.Fixed, true, false, default, 24);
         options.WindowClass = "Ambermoon.net";
 
         try

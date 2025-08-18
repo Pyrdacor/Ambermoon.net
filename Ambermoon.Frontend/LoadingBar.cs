@@ -1,15 +1,15 @@
-﻿using Ambermoon.Data;
+﻿using Ambermoon;
+using Ambermoon.Data;
 using Ambermoon.Render;
-using AmbermoonAndroid;
 
-namespace Ambermoon;
+namespace Ambermoon.Frontend;
 
-internal class LoadingBar
+public class LoadingBar
 {
     bool destroyed = false;
     readonly IRenderView renderView;
 
-    static TextureAtlasManager textureAtlasManager = null;
+    static TextureAtlasManager? textureAtlasManager = null;
 
     readonly ILayerSprite left;
     readonly ILayerSprite right;
@@ -17,9 +17,12 @@ internal class LoadingBar
     readonly List<ILayerSprite> progressParts = [];
 
     static uint GraphicOffset;
+    static Func<int, Graphic>? graphicsProvider;
 
-    public static void Initialize(TextureAtlasManager textureAtlasManager)
+    public static void Initialize(TextureAtlasManager textureAtlasManager, Func<int, Graphic>? graphicsProvider)
     {
+        LoadingBar.graphicsProvider = graphicsProvider;
+
         if (LoadingBar.textureAtlasManager != textureAtlasManager)
         {
             LoadingBar.textureAtlasManager = textureAtlasManager;
@@ -31,31 +34,32 @@ internal class LoadingBar
     private static Dictionary<uint, Graphic> GetGraphics(uint offset)
     {
         GraphicOffset = offset;
+        var gfxProvider = graphicsProvider!;
 
         Graphic[] graphics =
         [
-            FileProvider.GetLoadingBarLeft(),
-            FileProvider.GetLoadingBarRight(),
-            FileProvider.GetLoadingBarMid(),
-            FileProvider.GetLoadingBarFill(),
+            gfxProvider(0),
+            gfxProvider(1),
+            gfxProvider(2),
+            gfxProvider(3),
         ];
 
         return graphics.Select((gfx, index) => new { gfx, index }).ToDictionary(b => offset + (uint)b.index, b => b.gfx);
     }
 
-    public LoadingBar(IRenderView renderView)
+    public LoadingBar(IRenderView renderView, float sizeFactor, float bottomDistFactor)
     {
         this.renderView = renderView;
 
         renderView.ShowImageLayerOnly = true;
 
-        var area = new Rect(Position.Zero, renderView.RenderScreenSize);
-        var textureAtlas = textureAtlasManager.GetOrCreate(Layer.Images);
+        var area = new Rect(renderView.RenderScreenArea);
+        var textureAtlas = textureAtlasManager!.GetOrCreate(Layer.Images);
         var layer = renderView.GetLayer(Layer.Images);
 
         ILayerSprite CreateSprite(Size texSize, Size size, byte displayLayer, uint textureIndex)
         {
-            var sprite = renderView.SpriteFactory.Create(size.Width, size.Height, true, displayLayer) as ILayerSprite;
+            var sprite = (renderView.SpriteFactory.Create(size.Width, size.Height, true, displayLayer) as ILayerSprite)!;
             sprite.Visible = false;
             sprite.TextureSize = new(texSize.Width, texSize.Height);
             sprite.Layer = layer;
@@ -66,7 +70,7 @@ internal class LoadingBar
             return sprite;
         }
 
-        float desiredScreenPortion = area.Width / 3;
+        float desiredScreenPortion = (area.X * 2 + area.Width) * sizeFactor;
         const int DefaultWidth = 116; // 100 for the percentage and 16 for the borders
         float scale = desiredScreenPortion / DefaultWidth;
 
@@ -85,8 +89,8 @@ internal class LoadingBar
 
         int midPartCount = (scaledWidth - leftSize.Width - rightSize.Width) / midSize.Width;
         int colorYOffset = (midSize.Height - colorSize.Height) / 2;
-        int x = (area.Width - scaledWidth) / 2;
-        int y = area.Height - area.Height / 5;
+        int x = area.X + (2 * area.X + area.Width - scaledWidth) / 2;
+        int y = area.Height - Util.Round(area.Height * bottomDistFactor);
 
         left = CreateSprite(leftTexSize, leftSize, 0, 0);
         left.X = x;
