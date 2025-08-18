@@ -904,7 +904,7 @@ class GameWindow : IContextProvider
                                         configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
                                     }
 
-                                    if (!renderView.TryUseEffects())
+                                    if (configuration.Effects != Effects.None && !renderView.TryUseEffects())
                                         configuration.Effects = Effects.None;
 
                                     if (configuration.EnableCheats)

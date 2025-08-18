@@ -1530,7 +1530,7 @@ namespace Ambermoon.UI
             AddOption((index, _) => ToggleSaveLoadInfo());
             AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleCheats());
 
-            listBox = activePopup.AddOptionsListBox(options.Take(OptionsPerPage).ToList());
+            listBox = activePopup.AddOptionsListBox([.. options.Take(OptionsPerPage)]);
 
             string GetResolutionString()
             {

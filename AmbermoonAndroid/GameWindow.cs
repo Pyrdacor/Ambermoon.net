@@ -30,7 +30,7 @@ class GameWindow : IContextProvider
         Stopped // invisible and not active
     }
 
-    string gameVersion = "Ambermoon.net";
+    readonly string gameVersion = "Ambermoon";
     Configuration configuration;
     GameRenderView renderView;
     IView window;
@@ -906,7 +906,7 @@ class GameWindow : IContextProvider
                                     configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
                                 }
 
-                                if (!renderView.TryUseEffects())
+                                if (configuration.Effects != Effects.None && !renderView.TryUseEffects())
                                     configuration.Effects = Effects.None;
                             };
                             game.DrugTicked += Drug_Ticked;

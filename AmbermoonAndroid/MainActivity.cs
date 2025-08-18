@@ -102,7 +102,7 @@ namespace AmbermoonAndroid;
 #pragma warning restore CS0618 // Type or member is obsolete
 		}
 
-		gameWindow = new(RunOnUiThread, $"Ambermoon.net V{version}", (keyboardRequested, text) =>
+		gameWindow = new(RunOnUiThread, $"Ambermoon V{version}", (keyboardRequested, text) =>
             {
                 if (keyboardRequested)
                     ShowKeyboard(text);
@@ -373,7 +373,7 @@ namespace AmbermoonAndroid;
             }
             catch
             {
-			Android.Util.Log.Error("Ambermoon", "Unable to save configuration.");
+				Android.Util.Log.Error("Ambermoon", "Unable to save configuration.");
             }
         }
 
