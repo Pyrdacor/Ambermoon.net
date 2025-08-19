@@ -610,6 +610,8 @@ namespace Ambermoon.UI
         public void Hover(Position position)
         {
             listBox?.Hover(position);
+
+            buttons.ForEach(button => button.Hover(position));
         }
 
         public ListBox AddOptionsListBox(List<KeyValuePair<string, Action<int, string>>> items)
