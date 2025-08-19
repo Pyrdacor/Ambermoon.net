@@ -1,3 +1,14 @@
+Version 1.11
+============
+
+- Improved fullscreen handling (now uses a window the size of the fullscreen resolution)
+- Fixed cursor hotspots (was off by 1 pixel in x and y direction)
+- Fixed a crash when accessing the last option page (introduced in 1.10.10)
+- Fixed wrong 2D view when teleporting to world map from a normal 2D map (mostly with cheats)
+- Fixed centering of advanced logo if changing between resolutions or fullscreen
+- Added option to turn off advanced logo
+
+
 Version 1.10
 ============
 

@@ -44,7 +44,7 @@ namespace Ambermoon
         public bool ExternalData;
         public Func<IGameData> DataProvider;
 
-        internal const string RemakeReleaseDate = "17-08-2025";
+        internal const string RemakeReleaseDate = "19-08-2025";
     }
 
     public static class GameLanguageExtensions
