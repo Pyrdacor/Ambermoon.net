@@ -1,4 +1,3 @@
 ﻿- Update the tutorial to use the new touch pad
-- Entering options (and e.g. turning music off) will displace the touchpad. Maybe resolution is re-evaluated?
 - If you have music off and turn it on while the pyrdacor logo is already running, the music starts from the beginning.
 - Make transport, camp and magic possible to disable
