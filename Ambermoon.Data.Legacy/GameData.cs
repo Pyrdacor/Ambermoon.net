@@ -50,14 +50,14 @@ namespace Ambermoon.Data.Legacy
             { TravelType.SandLizard, new GraphicInfo { Width = 48, Height = 21, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
             { TravelType.SandShip, new GraphicInfo { Width = 48, Height = 39, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } }
         };
-        private readonly Dictionary<char, Dictionary<string, byte[]>> loadedDisks = new Dictionary<char, Dictionary<string, byte[]>>();
+        private readonly Dictionary<char, Dictionary<string, byte[]>> loadedDisks = [];
         private readonly LoadPreference loadPreference;
         private readonly VersionPreference versionPreference;
         private readonly ILogger log;
         private readonly bool stopAtFirstError;
-        private readonly List<TravelGraphicInfo> travelGraphicInfos = new List<TravelGraphicInfo>(44);
+        private readonly List<TravelGraphicInfo> travelGraphicInfos = new(44);
         private ExecutableData.ExecutableData executableData;
-        public IReadOnlyList<Position> CursorHotspots => executableData?.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly();
+        public IReadOnlyList<Position> CursorHotspots => executableData?.Cursors.Entries.Select(c => new Position(c.HotspotX - 1, c.HotspotY - 1)).ToList().AsReadOnly();
         public Places Places { get; private set; }
         public IGraphicProvider GraphicProvider { get; private set; }
         public ICharacterManager CharacterManager { get; private set; }

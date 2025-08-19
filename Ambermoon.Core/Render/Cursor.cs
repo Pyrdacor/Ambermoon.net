@@ -1,7 +1,7 @@
 ﻿/*
  * Cursor.cs - Graphical mouse cursor
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -29,7 +29,7 @@ namespace Ambermoon.Render
         readonly IGameRenderView renderView;
         readonly ITextureAtlas textureAtlas;
         readonly ISprite sprite;
-        readonly Dictionary<CursorType, Position> cursorHotspots = new();
+        readonly Dictionary<CursorType, Position> cursorHotspots = [];
         CursorType type = CursorType.Sword;
         internal Position Hotspot { get; private set; } = null;
         protected virtual bool Visible
