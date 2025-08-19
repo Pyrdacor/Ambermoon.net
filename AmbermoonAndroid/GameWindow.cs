@@ -794,7 +794,6 @@ class GameWindow : IContextProvider
             textureAtlasManager.AddFromGraphics(Layer.Images, graphics);
             return textureAtlasManager;
         });
-        renderView.AvailableFullscreenModes = [];
         renderView.SetTextureFactor(Layer.Text, 2);
 
         if (configuration.ShowFantasyIntro)
@@ -1178,7 +1177,6 @@ class GameWindow : IContextProvider
                     });
                     return textureAtlasManager;
                 });
-                renderView.AvailableFullscreenModes = [];
                 renderView.SetTextureFactor(Layer.Text, 2);
                 InitGlyphs(fontProvider, textureAtlasManager);
                 var gameVersions = new List<GameVersion>(5);

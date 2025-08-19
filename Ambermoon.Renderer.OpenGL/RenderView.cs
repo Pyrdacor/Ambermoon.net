@@ -102,8 +102,6 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
 
     public FullscreenRequestHandler FullscreenRequestHandler { get; set; }
     public Rect RenderScreenArea => new(useFrameBuffer ? renderDisplayArea : renderScreenArea);
-    public Size MaxScreenSize { get; set; }
-    public List<Size> AvailableFullscreenModes { get; set; }
     public bool IsLandscapeRatio { get; } = true;
     public bool ShowImageLayerOnly { get; set; } = false;
     public ISpriteFactory SpriteFactory => spriteFactory;

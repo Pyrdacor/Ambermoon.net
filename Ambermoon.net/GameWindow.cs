@@ -50,7 +50,6 @@ class GameWindow(string id = "MainWindow") : IContextProvider
     IRenderText infoText = null;
     IFontProvider fontProvider = null;
     DateTime? initializeErrorTime = null;
-    List<Size> availableFullscreenModes = null;
     bool trapMouse = false;
     FloatPosition trappedMouseOffset = null;
     FloatPosition trappedMouseLastPosition = null;
@@ -81,6 +80,9 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         {
             configuration.Fullscreen = value;
 
+            window.TopMost = value;
+            window.WindowBorder = value ? WindowBorder.Hidden : WindowBorder.Fixed;
+
             if (cursor != null)
                 cursor.CursorMode = CursorMode.Hidden;
         }
@@ -90,35 +92,39 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
     void ChangeResolution(int? oldWidth, bool fullscreen, bool changed)
     {
-        if (renderView == null || configuration == null)
-            return;
-
         if (fullscreen)
         {
             var fullscreenSize = window.VideoMode.Resolution;
 
-            configuration.FullscreenWidth = fullscreenSize.Value.X;
-            configuration.FullscreenHeight = fullscreenSize.Value.Y;
+            if (fullscreenSize != null)
+            {
+                if (configuration != null)
+                {
+                    configuration.FullscreenWidth = fullscreenSize.Value.X;
+                    configuration.FullscreenHeight = fullscreenSize.Value.Y;
+                }
 
-            var fullscreenWindowSize = fullscreenSize.Value;
+                var fullscreenWindowSize = fullscreenSize.Value + new WindowDimension(0, 1); // This avoids automatic fullscreen
 
-            if (window.Monitor?.Index == Silk.NET.Windowing.Monitor.GetMainMonitor(window)?.Index)
-                fullscreenWindowSize -= new WindowDimension(0, 1); // This avoids automatic fullscreen
-
-            window.Position = window.Monitor.Bounds.Origin;
-            window.Size = fullscreenWindowSize;
+                window.Position = window.Monitor.Bounds.Origin;
+                window.Size = fullscreenWindowSize;
+            }
         }
         else
         {
             var monitorSize = window.Monitor.Bounds.Size;
-            var size = renderView?.MaxScreenSize ?? new Size(monitorSize.X, monitorSize.Y);
+            var size = new Size(monitorSize.X, monitorSize.Y);
             var possibleResolutions = ScreenResolutions.GetPossibleResolutions(size);
             int index = oldWidth == null ? 0 : changed
                 ? (possibleResolutions.FindIndex(r => r.Width == oldWidth.Value) + 1) % possibleResolutions.Count
                 : FindNearestResolution(oldWidth.Value);
             var resolution = possibleResolutions[index];
-            configuration.Width = resolution.Width;
-            configuration.Height = resolution.Height;
+
+            if (configuration != null)
+            {
+                configuration.Width = resolution.Width;
+                configuration.Height = resolution.Height;
+            }
 
             int FindNearestResolution(int width)
             {
@@ -803,7 +809,6 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             AdvancedLogo.Initialize(textureAtlasManager, () => Resources.Advanced);
             return textureAtlasManager;
         });
-        renderView.AvailableFullscreenModes = availableFullscreenModes;
         renderView.SetTextureFactor(Layer.Text, 2);
 
         if (configuration.ShowFantasyIntro)
@@ -1240,7 +1245,6 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                     });
                     return textureAtlasManager;
                 });
-                renderView.AvailableFullscreenModes = availableFullscreenModes;
                 renderView.SetTextureFactor(Layer.Text, 2);
                 InitGlyphs(fontProvider, textureAtlasManager);
                 var gameVersions = new List<GameVersion>(5);
@@ -1368,17 +1372,6 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         // Setup input
         SetupInput(window.CreateInput());
 
-        availableFullscreenModes = [.. window.Monitor.GetAllVideoModes().Select(mode =>
-            new Size(mode.Resolution.Value.X, mode.Resolution.Value.Y)).Distinct()];
-
-        var fullscreenSize = availableFullscreenModes.MaxBy(r => r.Width * r.Height);
-
-        if (fullscreenSize != null)
-        {
-            configuration.FullscreenWidth = fullscreenSize.Width;
-            configuration.FullscreenHeight = fullscreenSize.Height;
-        }
-
         var platform = Silk.NET.Windowing.Window.GetWindowPlatform(false);
         var monitors = platform.GetMonitors().ToArray();
 
@@ -1386,6 +1379,14 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             window.Monitor = monitors[configuration.MonitorIndex.Value];
         else
             window.Monitor = platform.GetMainMonitor();
+
+        var fullscreenSize = window.VideoMode.Resolution;
+
+        if (fullscreenSize != null)
+        {
+            configuration.FullscreenWidth = fullscreenSize.Value.X;
+            configuration.FullscreenHeight = fullscreenSize.Value.Y;
+        }
 
         if (configuration.Fullscreen)
         {
@@ -1827,16 +1828,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
     void WindowMoved()
     {
-        if (renderView != null)
-        {
-            var monitorSize = window.Monitor?.Bounds.Size ?? new WindowDimension(800, 500);
-            renderView.MaxScreenSize = new Size(monitorSize.X, monitorSize.Y);
-            renderView.Resize(window.FramebufferSize.X, window.FramebufferSize.Y);
-
-            availableFullscreenModes = [.. window.Monitor.GetAllVideoModes().Select(mode =>
-                new Size(mode.Resolution.Value.X, mode.Resolution.Value.Y)).Distinct()];
-            renderView.AvailableFullscreenModes = availableFullscreenModes;
-        }
+        renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y);
     }
 
     void UpdateWindow(IConfiguration configuration)

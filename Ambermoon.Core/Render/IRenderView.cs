@@ -46,8 +46,6 @@ namespace Ambermoon.Render
         Rect ScreenToView(Rect rect);
         void TakeScreenshot(Action<int, int, byte[]> dataHandler);
         Rect RenderScreenArea { get; }
-        Size MaxScreenSize { get; }
-        List<Size> AvailableFullscreenModes { get; set; }
         bool Fullscreen { get; set; }
         bool AllowFramebuffer { get; }
         bool AllowEffects { get; }
