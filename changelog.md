@@ -2,6 +2,7 @@
 
 ## 1.11.0 - Eleventh patch (August 2025)
 
+- Version [1.11.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.11.1): Fixed startup crash and patcher
 - Version [1.11.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.11.0): Improved fullscreen handling, bugfixes
 
 ## 1.10.0 - Tenth patch (July 2024 - August 2025)
