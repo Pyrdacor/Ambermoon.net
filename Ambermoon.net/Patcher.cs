@@ -17,6 +17,21 @@ using System.Threading.Tasks;
 
 namespace Ambermoon;
 
+file class SafeHttpClient(HttpClientHandler handler, bool disposeHandler = false) : HttpClient(handler, disposeHandler)
+{
+    protected override void Dispose(bool disposing)
+    {
+        try
+        {
+            base.Dispose(disposing);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+}
+
 internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAtlasManager textureAtlasManager)
 {
     const string RecentInfoUrl = "https://ambermoon-net.pyrdacor.net/download/recent.txt";
@@ -277,21 +292,22 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
     public void CheckPatches(Action<bool> closeAppAction, Action noPatchAction, ref int timeout, bool? useProxy, string proxy)
     {
         useProxy = useProxy == true && !string.IsNullOrWhiteSpace(proxy);
-			string version;
-			using var handler = new HttpClientHandler
-			{
-				UseProxy = useProxy.Value,
+		string version;
+		var handler = new HttpClientHandler
+		{
+			UseProxy = useProxy.Value,
             Proxy = useProxy.Value ? new WebProxy(proxy) : null
-			};
-			using var httpClient = new HttpClient(handler);
+		};
+		using var httpClient = new SafeHttpClient(handler);
 
         try
         {
             httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
-            var response = httpClient.GetAsync(RecentInfoUrl).Result;
+            using var response = httpClient.GetAsync(RecentInfoUrl).Result;
 
             if (response.StatusCode != HttpStatusCode.OK)
             {
+                handler?.Dispose();
                 noPatchAction?.Invoke();
                 return;
             }
@@ -303,6 +319,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
             if (version == null || !(match = versionRegex.Match(version)).Success)
             {
                 finished = true;
+                handler?.Dispose();
                 noPatchAction?.Invoke();
                 return;
             }
@@ -316,6 +333,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
             if (assemblyVersion.Major > major)
             {
                 finished = true;
+                handler?.Dispose();
                 noPatchAction?.Invoke();
                 return;
             }
@@ -325,6 +343,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
                 if (assemblyVersion.Minor > minor)
                 {
                     finished = true;
+                    handler?.Dispose();
                     noPatchAction?.Invoke();
                     return;
                 }
@@ -332,6 +351,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
                 if (assemblyVersion.Minor == minor && assemblyVersion.Build >= patch)
                 {
                     finished = true;
+                    handler?.Dispose();
                     noPatchAction?.Invoke();
                     return;
                 }
@@ -343,6 +363,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
         {
             if (useProxy == true) // if failed with proxy, retry without proxy
             {
+                handler?.Dispose();
                 CheckPatches(closeAppAction, noPatchAction, ref timeout, false, null);
                 return;
             }
@@ -361,6 +382,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
                 Console.WriteLine("Error determining available patches: " + ex.ToString());
             }
 
+            handler?.Dispose();
             noPatchAction?.Invoke();
             return;
         }
@@ -368,6 +390,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
         if (!TestWritePermission())
         {
             Console.WriteLine($"There is a new version but the patcher has no write permission to the installation directory \"{Configuration.ExecutableDirectoryPath}\". Try to start the game as an administrator to allow the patcher to update the files.");
+            handler?.Dispose();
             noPatchAction?.Invoke();
             return;
         }
@@ -396,20 +419,10 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
 
             try
             {
-                var httpClient = new HttpClient(handler);
+                var httpClient = new SafeHttpClient(handler, true);
                 httpClient.Timeout = TimeSpan.FromMinutes(60); // limit to 1h download time
-
-                void SafeDisposeClient()
-                {
-                    try
-                    {
-                        httpClient?.Dispose();
-                    }
-                    catch
-                    {
-                        // ignore
-                    }
-                }
+                float totalProgress = -1.0f;
+                long totalBytes = -1;
 
                 long? totalSize = null;
                 var memoryStream = new MemoryStream();
@@ -418,7 +431,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
                     if (progress < 0.0f) // error
                     {
                         finished = true;
-                        SafeDisposeClient();
+                        httpClient?.Dispose();
                         clickHandler = noPatchAction;
                         lock (uiLock)
                         {
@@ -434,18 +447,21 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
                         return;
                     }
 
+                    if (progress > totalProgress)
+                        totalProgress = progress;
+
                     lock (uiLock)
                     {
                         uiChanges.Enqueue(() =>
                         {
-                            progressBar.Resize(Util.Round((clientArea.Width - 8) * progress), progressBar.Height);
+                            progressBar.Resize(Util.Round((clientArea.Width - 8) * totalProgress), progressBar.Height);
                         });
                     }
 
                     if (progress >= 1.0f)
                     {
                         finished = true;
-                        SafeDisposeClient();
+                        httpClient?.Dispose();
 
                         if (cancellationTokenSource.IsCancellationRequested)
                         {
@@ -503,20 +519,22 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
                                     button.TooltipOffset = new Position(0, -4);
                                 }
 
-                                textProgress.SetText(renderView.TextProcessor.CreateText($"{Util.Round(progress * 100.0f)}%"));
+                                textProgress.SetText(renderView.TextProcessor.CreateText($"{Util.Round(totalProgress * 100.0f)}%"));
                             });
                         }
                     }
                 });
                 var progressInBytes = new Progress<long>(bytes =>
                 {
-                    if (totalSize != null && totalSize > 0)
+                    if (totalSize != null && totalSize > 0 && bytes > totalBytes)
                     {
+                        totalBytes = bytes;
+
                         string sizeString = bytes switch
                         {
-                            < 1024 => $"{bytes} B",
-                            < 1024 * 1024 => $"{bytes / 1024} KB",
-                            _ => MBString(bytes)
+                            < 1024 => $"{totalBytes} B",
+                            < 1024 * 1024 => $"{totalBytes / 1024} KB",
+                            _ => MBString(totalBytes)
                         };
 
                         lock (uiLock)
@@ -528,39 +546,53 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
                         }
                     }
                 });
-                Task.Run(() => httpClient.DownloadAsync(patchUrl, memoryStream, progress, progressInBytes, size => totalSize = size, statusCode =>
+                Task.Run(async () =>
                 {
-                    if (statusCode != HttpStatusCode.OK)
+                    try
+                    {
+                        await httpClient.DownloadAsync(patchUrl, memoryStream, progress, progressInBytes, size => totalSize = size, statusCode =>
+                        {
+                            if (statusCode != HttpStatusCode.OK)
+                            {
+                                finished = true;
+                                httpClient?.Dispose();
+                                clickHandler = noPatchAction;
+                                lock (uiLock)
+                                {
+                                    uiChanges.Enqueue(() =>
+                                    {
+                                        CleanUpTextsAndButtons(true);
+                                        AddText(GetText(statusCode == HttpStatusCode.NotFound ? TextId.VersionNotFound : TextId.FailedToDownload),
+                                            textArea, Data.Enumerations.Color.LightRed, TextAlign.Left, 50, true);
+                                        AddText(GetText(TextId.ContinueWithClick), new Rect(clientArea.X, clientArea.Y + 64, clientArea.Width, 7),
+                                            Data.Enumerations.Color.White, TextAlign.Center, 50, true);
+                                    });
+                                }
+                            }
+                        }, cancellationTokenSource.Token);
+                    }
+                    catch (Exception ex)
                     {
                         finished = true;
-                        SafeDisposeClient();
-                        clickHandler = noPatchAction;
-                        lock (uiLock)
+                        httpClient?.Dispose();
+                        CleanUpTextsAndButtons();
+                        if (ex is TaskCanceledException && cancellationTokenSource.IsCancellationRequested)
                         {
-                            uiChanges.Enqueue(() =>
-                            {
-                                CleanUpTextsAndButtons(true);
-                                AddText(GetText(statusCode == HttpStatusCode.NotFound ? TextId.VersionNotFound : TextId.FailedToDownload),
-                                    textArea, Data.Enumerations.Color.LightRed, TextAlign.Left, 50, true);
-                                AddText(GetText(TextId.ContinueWithClick), new Rect(clientArea.X, clientArea.Y + 64, clientArea.Width, 7),
-                                    Data.Enumerations.Color.White, TextAlign.Center, 50, true);
-                            });
+                            noPatchAction?.Invoke();
+                        }
+                        else
+                        {
+                            AddText(GetText(TextId.FailedToDownload), textArea, Data.Enumerations.Color.LightRed);
+                            AddText(GetText(TextId.ContinueWithClick), new Rect(clientArea.X, clientArea.Y + 64, clientArea.Width, 7), Data.Enumerations.Color.White, TextAlign.Center);
+                            clickHandler = noPatchAction;
                         }
                     }
-                }, cancellationTokenSource.Token));
+                });
             }
             catch (Exception ex)
             {
                 finished = true;
 
-                try
-                {
-                    httpClient?.Dispose();
-                }
-                catch
-                {
-                    // ignore
-                }
                 CleanUpTextsAndButtons();
                 if (ex is TaskCanceledException && cancellationTokenSource.IsCancellationRequested)
                 {
@@ -577,6 +609,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
         AddButton(ButtonType.No, clientArea.X + clientArea.Width / 2 + 8, clientArea.Y + 76, () =>
         {
             finished = true;
+            handler?.Dispose();
             noPatchAction?.Invoke();
         });
     }

@@ -1283,6 +1283,66 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 #endif
                 var cursor = new Render.Cursor(renderView, gameData.CursorHotspots, textureAtlasManager);
 
+                string patcherPath = Path.Combine(Configuration.ExecutableDirectoryPath, "AmbermoonPatcher");
+
+                if (OperatingSystem.IsWindows())
+                    patcherPath += ".exe";
+
+                bool hasPatcher = File.Exists(patcherPath);
+
+                if (hasPatcher && configuration.UsePatcher != false)
+                {
+                    bool firstTime = configuration.UsePatcher == null;
+                    patcher = new Patcher(renderView, patcherPath, textureAtlasManager ?? TextureAtlasManager.Instance);
+                    checkPatcher = false;
+
+                    if (firstTime)
+                    {
+                        patcher.AskToUsePatcher(() =>
+                        {
+                            configuration.UsePatcher = true;
+                            configuration.UseProxyForPatcher = false;
+                            configuration.PatcherProxy = "";
+                            CheckPatches();
+                        }, () =>
+                        {
+                            configuration.UsePatcher ??= false;
+                            patcher?.CleanUp(true);
+                            patcher = null;
+                            logoPyrdacor?.PlayMusic();
+                        });
+                    }
+                    else
+                    {
+                        CheckPatches();
+                    }
+
+                    void CheckPatches()
+                    {
+                        configuration.PatcherTimeout ??= 1250;
+                        int timeout = configuration.PatcherTimeout.Value;
+                        patcher.CheckPatches(ok =>
+                        {
+                            if (ok)
+                                window.Close();
+                            else
+                                NotPatched();
+                        }, NotPatched, ref timeout, configuration.UseProxyForPatcher, configuration.PatcherProxy);
+                        configuration.PatcherTimeout = timeout;
+                        void NotPatched()
+                        {
+                            patcher?.CleanUp(true);
+                            patcher = null;
+                            logoPyrdacor?.PlayMusic();
+                        }
+                    }
+                }
+                else
+                {
+                    checkPatcher = false;
+                    logoPyrdacor?.PlayMusic();
+                }
+
                 RunTask(() =>
                 {
                     while (checkPatcher || patcher != null || logoPyrdacor != null)
@@ -1578,66 +1638,6 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                         }, out var textureAtlasManager))
                         {
                             WindowMoved();
-                        }
-
-                        string patcherPath = Path.Combine(Configuration.ExecutableDirectoryPath, "AmbermoonPatcher");
-
-                        if (OperatingSystem.IsWindows())
-                            patcherPath += ".exe";
-
-                        bool hasPatcher = File.Exists(patcherPath);
-
-                        if (hasPatcher && configuration.UsePatcher != false)
-                        {
-                            bool firstTime = configuration.UsePatcher == null;
-                            patcher = new Patcher(renderView, patcherPath, textureAtlasManager ?? TextureAtlasManager.Instance);
-                            checkPatcher = false;
-
-                            if (firstTime)
-                            {
-                                patcher.AskToUsePatcher(() =>
-                                {
-                                    configuration.UsePatcher = true;
-                                    configuration.UseProxyForPatcher = false;
-                                    configuration.PatcherProxy = "";
-                                    CheckPatches();
-                                }, () =>
-                                {
-                                    configuration.UsePatcher ??= false;
-                                    patcher?.CleanUp(true);
-                                    patcher = null;
-                                    logoPyrdacor?.PlayMusic();
-                                });
-                            }
-                            else
-                            {
-                                CheckPatches();
-                            }
-
-                            void CheckPatches()
-                            {
-                                configuration.PatcherTimeout ??= 1250;
-                                int timeout = configuration.PatcherTimeout.Value;
-                                patcher.CheckPatches(ok =>
-                                {
-                                    if (ok)
-                                        window.Close();
-                                    else
-                                        NotPatched();
-                                }, NotPatched, ref timeout, configuration.UseProxyForPatcher, configuration.PatcherProxy);
-                                configuration.PatcherTimeout = timeout;
-                                void NotPatched()
-                                {
-                                    patcher?.CleanUp(true);
-                                    patcher = null;
-                                    logoPyrdacor?.PlayMusic();
-                                }
-                            }
-                        }
-                        else
-                        {
-                            checkPatcher = false;
-                            logoPyrdacor?.PlayMusic();
                         }
                     };
                 };
