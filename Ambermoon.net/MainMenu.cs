@@ -60,7 +60,7 @@ namespace Ambermoon
 
             mainMenuFader = new Fader(renderView, 0xff, 0x00, 50, false, true);
 
-            background = renderView.SpriteFactory.Create(320, 200, true) as ILayerSprite;
+            background = renderView.SpriteFactory.CreateLayered(320, 200);
             background.Layer = renderView.GetLayer(Layer.MainMenuGraphics);
             background.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + paletteIndices[IntroGraphic.MainMenuBackground] - 1);
             background.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MainMenuBackground);

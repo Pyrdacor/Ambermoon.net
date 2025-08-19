@@ -91,7 +91,7 @@ namespace Ambermoon.UI
             );
             void AddBorder(PopupFrame frame, int column, int row)
             {
-                var sprite = spriteFactory.Create(16, 16, true) as ILayerSprite;
+                var sprite = spriteFactory.CreateLayered(16, 16);
                 sprite.Layer = layer;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetPopupFrameGraphicIndex(frame));
                 sprite.PaletteIndex = 0;
@@ -161,7 +161,7 @@ namespace Ambermoon.UI
 			};
 			#endregion
 
-			portraitBackground = spriteFactory.Create(32, 34, true, 1) as ILayerSprite;
+			portraitBackground = spriteFactory.CreateLayered(32, 34, 1);
             portraitBackground.Layer = layer;
             portraitBackground.X = offset.X + 112;
             portraitBackground.Y = offset.Y + 32;
@@ -169,7 +169,7 @@ namespace Ambermoon.UI
             portraitBackground.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex + 3 - 1);
             portraitBackground.Visible = true;
 
-            portrait = spriteFactory.Create(32, 34, true, 2) as ILayerSprite;
+            portrait = spriteFactory.CreateLayered(32, 34, 2);
             portrait.Layer = layer;
             portrait.X = portraitBackground.X;
             portrait.Y = portraitBackground.Y;

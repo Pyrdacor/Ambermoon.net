@@ -963,7 +963,7 @@ namespace Ambermoon.Render
                 var clipArea = Game.Map3DViewArea.CreateModified(0, 0, 1, 0);
                 horizonSprite = new SkySprite(ceilingColor.Height - 20, (x, y) =>
                 {
-                    var sprite = renderView.SpriteFactory.Create(144, 20, true, 2) as ILayerSprite;
+                    var sprite = renderView.SpriteFactory.CreateLayered(144, 20, 2);
                     sprite.TextureAtlasOffset = HorizonTextureOffset;
                     sprite.ClipArea = clipArea;
                     sprite.PaletteIndex = (byte)(Map.PaletteIndex - 1);

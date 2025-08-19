@@ -95,6 +95,8 @@ namespace AmbermoonAndroid
         public static Graphic GetLoadingBarRight() => GetSpecialGraphic(Resource.Raw.lbar_right);
         public static Graphic GetLoadingBarFill() => GetSpecialGraphic(Resource.Raw.lbar_green);
 
+        public static byte[] GetQuestLogIcon() => LoadData(Resource.Raw.QuestLog);
+
         private static Graphic GetGraphic(int id)
 		{
 			return LoadGraphic(GetBitmap(id));

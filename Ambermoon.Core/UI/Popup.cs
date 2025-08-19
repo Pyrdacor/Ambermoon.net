@@ -63,7 +63,7 @@ namespace Ambermoon.UI
 
             void AddBorder(PopupFrame frame, int column, int row)
             {
-                var sprite = renderView.SpriteFactory.Create(16, 16, true, DisplayLayer) as ILayerSprite;
+                var sprite = renderView.SpriteFactory.CreateLayered(16, 16, DisplayLayer);
                 sprite.Layer = renderView.GetLayer(Layer.UI);
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetPopupFrameGraphicIndex(frame));
                 sprite.PaletteIndex = game.UIPaletteIndex;
@@ -256,8 +256,8 @@ namespace Ambermoon.UI
 
         public ILayerSprite AddImage(Rect area, uint imageIndex, Layer layer, byte displayLayer, byte paletteIndex)
         {
-            var sprite = renderView.SpriteFactory.Create(area.Width, area.Height, true,
-                (byte)Util.Min(255, this.DisplayLayer + displayLayer)) as ILayerSprite;
+            var sprite = renderView.SpriteFactory.CreateLayered(area.Width, area.Height,
+                (byte)Util.Min(255, DisplayLayer + displayLayer));
             sprite.Layer = renderView.GetLayer(layer);
             sprite.PaletteIndex = paletteIndex;
             sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(layer).GetOffset(imageIndex);

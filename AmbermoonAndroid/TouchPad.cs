@@ -164,7 +164,7 @@ internal class TouchPad
             ILayerSprite CreateSprite(int texWidth, int texHeight, int width, int height, byte displayLayer, uint textureIndex, byte? alpha = null)
             {
                 var sprite = alpha == null
-                    ? renderView.SpriteFactory.Create(width, height, true, displayLayer) as ILayerSprite
+                    ? renderView.SpriteFactory.CreateLayered(width, height, displayLayer)
                     : renderView.SpriteFactory.CreateWithAlpha(width, height, displayLayer);
                 sprite.Visible = false;
                 sprite.TextureSize = new(texWidth, texHeight);

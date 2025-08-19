@@ -83,7 +83,7 @@ namespace Ambermoon.UI
             position = new Position(scrollArea.Position);
             baseType = type;
 
-            backgroundSprite = layout.RenderView.SpriteFactory.Create(scrollArea.Width, scrollArea.Height, true) as ILayerSprite;
+            backgroundSprite = layout.RenderView.SpriteFactory.CreateLayered(scrollArea.Width, scrollArea.Height);
             backgroundSprite.Layer = layout.RenderView.GetLayer(Layer.UI);
             backgroundSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + type switch
             {
@@ -98,7 +98,7 @@ namespace Ambermoon.UI
             backgroundSprite.Visible = true;
 
             // We add 1 to height because there is 1 pixel row for a shadow.
-            sprite = layout.RenderView.SpriteFactory.Create(width, height + 1, true) as ILayerSprite;
+            sprite = layout.RenderView.SpriteFactory.CreateLayered(width, height + 1);
             sprite.Layer = layout.RenderView.GetLayer(Layer.UI);
             sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + (uint)type);
             sprite.DisplayLayer = (byte)Math.Min(255, displayLayer + 2);
@@ -106,6 +106,14 @@ namespace Ambermoon.UI
             sprite.X = position.X;
             sprite.Y = position.Y;
             sprite.Visible = true;
+
+            if (scrollRange == 0)
+                Disabled = true;
+        }
+
+        public void SetScrollRange(int scrollRange)
+        {
+            ScrollRange = scrollRange;
 
             if (scrollRange == 0)
                 Disabled = true;

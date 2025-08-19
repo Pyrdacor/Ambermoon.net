@@ -178,6 +178,7 @@ namespace Ambermoon
         Movement3D Movement3D { get; set; }
         bool TurnWithArrowKeys { get; set; }
         GameLanguage Language { get; set; }
+        bool ShowCompletedQuests { get; set; }
 
         void RequestSave();
         AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots(string gameVersionName);

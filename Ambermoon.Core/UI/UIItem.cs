@@ -71,7 +71,7 @@ namespace Ambermoon.UI
             this.itemManager = itemManager;
             Item = item;
             this.merchantItem = merchantItem;
-            sprite = renderView.SpriteFactory.Create(16, 16, true) as ILayerSprite;
+            sprite = renderView.SpriteFactory.CreateLayered(16, 16);
             sprite.Layer = renderView.GetLayer(Layer.Items);
             sprite.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
 
@@ -164,7 +164,7 @@ namespace Ambermoon.UI
             {
                 if (brokenOverlay == null)
                 {
-                    brokenOverlay = renderView.SpriteFactory.Create(16, 16, true, (byte)(sprite?.DisplayLayer ?? 0 + 1)) as ILayerSprite;
+                    brokenOverlay = renderView.SpriteFactory.CreateLayered(16, 16, (byte)((sprite?.DisplayLayer ?? 0) + 1));
                     brokenOverlay.Layer = renderView.GetLayer(Layer.UI);
                     brokenOverlay.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
                     brokenOverlay.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)

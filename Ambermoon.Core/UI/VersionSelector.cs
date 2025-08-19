@@ -108,7 +108,7 @@ namespace Ambermoon.UI
             );
             void AddBorder(PopupFrame frame, int column, int row)
             {
-                var sprite = spriteFactory.Create(16, 16, true) as ILayerSprite;
+                var sprite = spriteFactory.CreateLayered(16, 16);
                 sprite.Layer = layer;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetPopupFrameGraphicIndex(frame));
                 sprite.PaletteIndex = 0;
@@ -246,7 +246,7 @@ namespace Ambermoon.UI
                 var language = (GameLanguage)i;
                 if (configuration.Language == language)
                     flagSunkenBox = AddSunkenBox(languageButtonArea.CreateModified(-2, -2, 4, 4), 1, 28);
-                var languageChangeButton = renderView.SpriteFactory.Create(FlagWidth, FlagHeight, true, 3) as ILayerSprite;
+                var languageChangeButton = renderView.SpriteFactory.CreateLayered(FlagWidth, FlagHeight, 3);
                 languageChangeButton.Layer = renderLayer;
                 languageChangeButton.TextureAtlasOffset = GetFlagImageOffset(language, textureFactor);
                 languageChangeButton.X = languageButtonArea.X;

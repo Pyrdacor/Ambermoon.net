@@ -778,6 +778,15 @@ class GameWindow : IContextProvider
         // Create render view
         renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, additionalPalettes, () =>
         {
+            var questLogIconData = new DataReader(FileProvider.GetQuestLogIcon());
+            var questLogIcon = new Graphic();
+            new GraphicReader().ReadGraphic(questLogIcon, questLogIconData, new GraphicInfo
+            {
+                GraphicFormat = GraphicFormat.Palette5Bit,
+                Width = 16,
+                Height = 16,
+                Alpha = true,
+            });
             var textureAtlasManager = TextureAtlasManager.Instance;
             var introGraphics = introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value);
             uint twinlakeFrameOffset = (uint)introData.Graphics.Keys.Max();
@@ -787,6 +796,10 @@ class GameWindow : IContextProvider
                 introFontLarge.GlyphGraphics, introGraphics, features);
             logoPyrdacor?.Initialize(textureAtlasManager);
             AdvancedLogo.Initialize(textureAtlasManager, FileProvider.GetAdvancedLogoData);
+            textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
+            {
+                { QuestLog.IconGraphicIndex, questLogIcon }
+            });
             var graphics = TutorialFinger.GetGraphics(1u); // Donate button is 0
             graphics.Add(0u, FileProvider.GetDonateButton());
             textureAtlasManager.AddFromGraphics(Layer.MobileOverlays, graphics);

@@ -99,7 +99,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
         #region Window
         void AddBorder(UIGraphic frame, int column, int row)
         {
-            var sprite = spriteFactory.Create(16, 16, true) as ILayerSprite;
+            var sprite = spriteFactory.CreateLayered(16, 16);
             sprite.Layer = layer;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(274u + (uint)frame);
             sprite.PaletteIndex = 0;

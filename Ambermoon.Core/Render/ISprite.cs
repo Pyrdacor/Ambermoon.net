@@ -129,4 +129,12 @@ namespace Ambermoon.Render
         IAnimatedSprite CreateAnimated(int width, int height, int textureAtlasWidth, uint numFrames, bool layered = false, byte displayLayer = 0);
         IAlphaSprite CreateWithAlpha(int width, int height, byte displayLayer = 0);
     }
+
+    public static class SpriteFactoryExtensions
+    {
+        public static ILayerSprite CreateLayered(this ISpriteFactory factory, int width, int height, byte displayLayer = 0)
+        {
+            return factory.Create(width, height, true, displayLayer) as ILayerSprite;
+        }
+    }
 }

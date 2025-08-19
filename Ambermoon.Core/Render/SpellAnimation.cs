@@ -102,7 +102,7 @@ namespace Ambermoon.Render
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var textureSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height);
             var size = customBaseSize ?? textureSize;
-            var sprite = renderView.SpriteFactory.Create(size.Width, size.Height, true, displayLayer) as ILayerSprite;
+            var sprite = renderView.SpriteFactory.CreateLayered(size.Width, size.Height, displayLayer);
             sprite.ClipArea = Global.CombatBackgroundArea;
             sprite.Layer = renderView.GetLayer(Layer.BattleEffects);
             sprite.PaletteIndex = palette;
@@ -203,7 +203,7 @@ namespace Ambermoon.Render
             Position endOffset, uint duration, Action finishAction = null)
         {
             var area = Global.PartyMemberPortraitAreas[slot];
-            var sprite = renderView.SpriteFactory.Create(frameSize.Width, frameSize.Height, true, 200) as ILayerSprite;
+            var sprite = renderView.SpriteFactory.CreateLayered(frameSize.Width, frameSize.Height, 200);
             sprite.ClipArea = area;
             sprite.Layer = renderView.GetLayer(Layer.UI);
             sprite.PaletteIndex = game.PrimaryUIPaletteIndex;

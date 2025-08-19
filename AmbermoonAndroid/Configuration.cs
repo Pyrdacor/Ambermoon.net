@@ -111,8 +111,9 @@ namespace AmbermoonAndroid
 			string l when l.StartsWith("cz") => GameLanguage.Czech,
 			_ => GameLanguage.English
 		};
+		public bool ShowCompletedQuests { get; set; } = true;
 
-		public void RequestSave() => SaveRequested?.Invoke();
+        public void RequestSave() => SaveRequested?.Invoke();
 
 		public static string GetSavePath(string version, bool createIfMissing = true)
 		{

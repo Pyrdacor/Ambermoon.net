@@ -59,7 +59,7 @@ public class LoadingBar
 
         ILayerSprite CreateSprite(Size texSize, Size size, byte displayLayer, uint textureIndex)
         {
-            var sprite = (renderView.SpriteFactory.Create(size.Width, size.Height, true, displayLayer) as ILayerSprite)!;
+            var sprite = renderView.SpriteFactory.CreateLayered(size.Width, size.Height, displayLayer);
             sprite.Visible = false;
             sprite.TextureSize = new(texSize.Width, texSize.Height);
             sprite.Layer = layer;

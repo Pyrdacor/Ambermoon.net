@@ -32,6 +32,7 @@ using TextColor = Ambermoon.Data.Enumerations.Color;
 using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 using Ambermoon.Data.Audio;
 using static Ambermoon.UI.BuiltinTooltips;
+using static Ambermoon.Data.Map;
 
 namespace Ambermoon;
 
@@ -263,7 +264,7 @@ public class Game
     readonly IAdditionalSaveSlotProvider additionalSaveSlotProvider;
     internal GameLanguage GameLanguage { get; private set; }
     CharacterCreator characterCreator = null;
-    readonly Random random = new Random();
+    readonly Random random = new();
     bool disableMusicChange = false;
     bool disableTimeEvents = false;
     readonly string gameVersionName;
@@ -274,7 +275,7 @@ public class Game
     public const int NumBaseSavegameSlots = 10;
     public const int NumAdditionalSavegameSlots = 20;
     internal SavegameTime GameTime { get; private set; } = null;
-    readonly List<uint> changedMaps = new List<uint>();
+    readonly List<uint> changedMaps = [];
     internal const int FadeTime = 1000;
     public const int MaxPartyMembers = 6;
     public const uint TicksPerSecond = 60;
@@ -432,6 +433,8 @@ public class Game
     bool allInputDisabled = false;
     bool inputEnable = true;
     bool paused = false;
+    internal QuestLog QuestLog { get; private set; }
+    readonly ILayerSprite questLogIcon;
     public bool Fading { get; private set; } = false;
     internal bool ConversationTextActive { get; private set; } = false;
     Func<MouseButtons, bool> nextClickHandler = null;
@@ -806,17 +809,24 @@ public class Game
         drugOverlay.X = 0;
         drugOverlay.Y = 0;
         drugOverlay.Visible = false;
-        ouchSprite = renderView.SpriteFactory.Create(32, 23, true) as ILayerSprite;
+        ouchSprite = renderView.SpriteFactory.CreateLayered(32, 23);
         ouchSprite.ClipArea = Map2DViewArea;
         ouchSprite.Layer = renderView.GetLayer(Layer.UI);
         ouchSprite.PaletteIndex = currentUIPaletteIndex;
         ouchSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Ouch));
         ouchSprite.Visible = false;
         ouchEvent.Action = () => ouchSprite.Visible = false;
+        questLogIcon = renderView.SpriteFactory.CreateLayered(16, 16);
+        questLogIcon.Layer = renderView.GetLayer(Layer.Misc);
+        questLogIcon.PaletteIndex = PrimaryUIPaletteIndex;
+        questLogIcon.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Misc).GetOffset(QuestLog.IconGraphicIndex);
+        questLogIcon.X = 0;
+        questLogIcon.Y = 8;
+        questLogIcon.Visible = true;
 
         if (Configuration.IsMobile)
         {
-            mobileClickIndicator = renderView.SpriteFactory.Create(16, 16, true) as ILayerSprite;
+            mobileClickIndicator = renderView.SpriteFactory.CreateLayered(16, 16);
             mobileClickIndicator.Layer = renderView.GetLayer(Layer.Cursor);
             mobileClickIndicator.Visible = false;
             mobileClickIndicator.PaletteIndex = PrimaryUIPaletteIndex;
@@ -825,7 +835,7 @@ public class Game
 
         for (int i = 0; i < MaxPartyMembers; ++i)
         {
-            hurtPlayerSprites[i] = renderView.SpriteFactory.Create(32, 26, true, 200) as ILayerSprite;
+            hurtPlayerSprites[i] = renderView.SpriteFactory.CreateLayered(32, 26, 200);
             hurtPlayerSprites[i].Layer = renderView.GetLayer(Layer.UI);
             hurtPlayerSprites[i].PaletteIndex = PrimaryUIPaletteIndex;
             hurtPlayerSprites[i].TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.DamageSplash));
@@ -846,7 +856,7 @@ public class Game
                 hurtPlayerSprites[i].Visible = false;
             }
         };
-        battleRoundActiveSprite = renderView.SpriteFactory.Create(32, 36, true) as ILayerSprite;
+        battleRoundActiveSprite = renderView.SpriteFactory.CreateLayered(32, 36);
         battleRoundActiveSprite.Layer = renderView.GetLayer(Layer.UI);
         battleRoundActiveSprite.PaletteIndex = PrimaryUIPaletteIndex;
         battleRoundActiveSprite.DisplayLayer = 2;
@@ -866,7 +876,7 @@ public class Game
         layout.ShowPortraitArea(false);
 
         // Mobile action indicator
-        mobileActionIndicator = renderView.SpriteFactory.Create(16, 16, true) as ILayerSprite;
+        mobileActionIndicator = renderView.SpriteFactory.CreateLayered(16, 16);
         mobileActionIndicator.Layer = renderView.GetLayer(Layer.UI);
         mobileActionIndicator.PaletteIndex = PrimaryUIPaletteIndex;
         mobileActionIndicator.DisplayLayer = 0;
@@ -923,12 +933,14 @@ public class Game
         PlayMusic(Song.HisMastersVoice);
 
         showMobileTouchPadHandler?.Invoke(false);
+        questLogIcon.Visible = false;
 
         characterCreator = new CharacterCreator(renderView, this, (name, female, portraitIndex) =>
         {
             LoadInitial(name, female, (uint)portraitIndex, FixSavegameValues);
             showMobileTouchPadHandler?.Invoke(false); // This avoids showing it briefly and then immediately enter the grandfather event window
             characterCreator = null;
+            questLogIcon.Visible = true;
         });
     }
 
@@ -1609,6 +1621,7 @@ public class Game
     {
         drugOverlay?.Delete();
         ouchSprite?.Delete();
+        questLogIcon?.Delete();
         mobileClickIndicator?.Delete();
 
         Util.SafeCall(UntrapMouse);
@@ -1952,9 +1965,7 @@ public class Game
         SetActivePartyMember(CurrentSavegame.ActivePartyMemberSlot);
 
         player = new Player();
-        var map = MapManager.GetMap(savegame.CurrentMapIndex);
-
-        if (map == null)
+        var map = MapManager.GetMap(savegame.CurrentMapIndex) ??
             throw new AmbermoonException(ExceptionScope.Data, $"Map with index {savegame.CurrentMapIndex} does not exist.");
 
         bool is3D = map.Type == MapType.Map3D;
@@ -1985,6 +1996,9 @@ public class Game
 
         InputEnable = true;
         paused = false;
+
+        QuestLog = new(this, renderView, renderView.GameData.Advanced,
+            renderView.GameData.Advanced ? GetCurrentAdvancedEpisode() : 0);
 
         if (layout.ButtonGridPage == 1)
             ToggleButtonGridPage();
@@ -2285,6 +2299,21 @@ public class Game
         return currentBattle?.HasPartyMemberFled(partyMember) ?? false;
     }
 
+    public bool HasFoundItem(uint itemIndex, uint minAmount = 1)
+    {
+        long foundCount = 0;
+
+        foreach (var partyMember in CurrentSavegame.PartyMembers.Values)
+        {
+            foundCount += partyMember.Inventory.Slots.Where(s => s.ItemIndex == itemIndex).Sum(s => s.Amount);
+
+            if (foundCount >= minAmount)
+                return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Runs an action for each party member. In contrast to a normal foreach loop
     /// the action can contain blocking calls for each party member like popups.
@@ -2485,19 +2514,12 @@ public class Game
         // Upgrade old Ambermoon Advanced save games
         if (renderView.GameData.Advanced && slot > 0)
         {
-            // TODO: will only work for legacy data for now!
-            int sourceEpisode;
-            int targetEpisode = 3; // TODO: increase when there is a new one
-
-            if (!savegame.PartyMembers.ContainsKey(16)) // If Kasimir is not there, it is episode 1
-                sourceEpisode = 1;
-            else if (!savegame.Chests.ContainsKey(280)) // If chest 280 is not there it is episode 2
-                sourceEpisode = 2;
-            else // If both are there, it is episode 3
-                sourceEpisode = 3;
+            int sourceEpisode = GetAdvancedEpisode(savegame);
+            int targetEpisode = GetAdvancedEpisode(null);
 
             if (sourceEpisode < targetEpisode)
             {
+                // TODO: will only work for legacy game data for now!
                 savegame = RequestAdvancedSavegamePatching((ILegacyGameData)renderView.GameData, slot, sourceEpisode, targetEpisode, savegame);
             }
         }
@@ -2510,6 +2532,21 @@ public class Game
             Start();
     }
 
+    // TODO: Update for new episodes!
+    static int GetAdvancedEpisode(Savegame savegame)
+    {
+        if (savegame == null)
+            return 3;
+
+        if (!savegame.PartyMembers.ContainsKey(16)) // If Kasimir is not there, it is episode 1
+            return 1;
+        else if (!savegame.Chests.ContainsKey(280)) // If chest 280 is not there it is episode 2
+            return 2;
+        else // If both are there, it is episode 3
+            return 3;
+    }
+
+    int GetCurrentAdvancedEpisode() => GetAdvancedEpisode(CurrentSavegame);
     void PrepareSaving(Action saveAction)
     {
         // Note: In 3D it is possible to walk partly on tiles that block the player. For example
@@ -2608,8 +2645,11 @@ public class Game
         if (SavegameManager.HasCrashSavegame())
         {
             ingame = true;
+            questLogIcon.Visible = false;
             ShowDecisionPopup(GetCustomText(CustomTexts.Index.LoadCrashedGame), response =>
             {
+                questLogIcon.Visible = true;
+
                 if (response == PopupTextEvent.Response.Yes)
                 {
                     LoadGame(99, false, true);
@@ -4001,6 +4041,20 @@ public class Game
                     }
                 }
 
+                if (InputEnable && !allInputDisabled && new Rect(questLogIcon.X, questLogIcon.Y, questLogIcon.Width, questLogIcon.Height + 2).Contains(relativePosition))
+                {
+                    CursorType = CursorType.Sword;
+                    ToggleQuestLog();
+                    return;
+                }
+               
+                if (QuestLog?.Open == true)
+                {
+                    CursorType = CursorType.Sword;
+                    QuestLog.Click(relativePosition);
+                    return;
+                }
+
                 var cursorType = CursorType.Sword;
                 layout.Click(relativePosition, buttons, ref cursorType, CurrentTicks, pickingNewLeader, pickingTargetPlayer, pickingTargetInventory, keyModifiers);
                 disableUntrapping = true;
@@ -4328,6 +4382,9 @@ public class Game
             lastMousePosition = new Position(position);
             position = GetMousePosition(position);
             UpdateCursor(position, buttons);
+
+            if (QuestLog?.Open == true)
+                QuestLog.Hover(renderView.ScreenToGame(position));
         }
     }
 
@@ -5671,6 +5728,8 @@ public class Game
         partyMember ??= CurrentInventory;
 
         partyMember.TotalWeight += (uint)amount * item.Weight;
+
+        QuestLog.CheckItem(item, (uint)amount);
 
         if (CurrentWindow.Window == Window.Inventory)
             layout.UpdateLayoutButtons();
@@ -7542,6 +7601,9 @@ public class Game
 
             if (CanSee())
             {
+                // TODO: Only the tile the player walks on or the whole revealed area (the loop below)?
+                QuestLog.CheckExploration(Map.Index, (uint)player3D.Position.X + 1, (uint)player3D.Position.Y + 1);
+
                 var labdata = MapManager.GetLabdataForMap(Map);
 
                 for (int y = -1; y <= 1; ++y)
@@ -8065,7 +8127,11 @@ public class Game
                 {
                     CurrentSavegame.UnlockChest(chestEvent.RealChestIndex - 1);
                     currentWindow.Window = Window.Chest; // This avoids returning to locked screen when closing chest window.
-                    ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true, true));
+                    ExecuteNextUpdateCycle(() =>
+                    {
+                        QuestLog.CheckChestUnlock(chestEvent.ChestIndex + 1);
+                        ShowChest(chestEvent, false, false, map, position, true, true);
+                    });
                 }, null, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                 chestEvent.UnlockFailedEventIndex == 0xffff ? null : () => map.TriggerEventChain(this, EventTrigger.Always,
                 (uint)position.X, (uint)position.Y, map.Events[(int)chestEvent.UnlockFailedEventIndex], true),
@@ -8112,6 +8178,7 @@ public class Game
                     player2D.UpdateAppearance(CurrentTicks);
                 }
                 CurrentSavegame.UnlockDoor(doorEvent.DoorIndex);
+                QuestLog.CheckDoorUnlock(doorEvent.DoorIndex);
                 if (unlockText != null)
                 {
                     layout.ShowClickChestMessage(unlockText, Close);
@@ -16799,6 +16866,17 @@ public class Game
             responseHandler?.Invoke(PopupTextEvent.Response.Close);
         }, true, true);
         CursorType = CursorType.Click;
+    }
+
+    public void ToggleQuestLog()
+    {
+        if (QuestLog != null)
+        {
+            if (QuestLog.Open)
+                ClosePopup();
+            else if (!WindowActive && !PopupActive && InputEnable && !allInputDisabled)
+                QuestLog.Show();
+        }
     }
 
     void ShowEvent(IText text, uint imageIndex, Action closeAction,
