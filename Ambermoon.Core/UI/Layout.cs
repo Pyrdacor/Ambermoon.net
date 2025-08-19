@@ -4772,7 +4772,7 @@ namespace Ambermoon.UI
                 ChestText?.Destroy();
                 ChestText = null;
             }
-            else if (!(game.OpenStorage is Game.ConversationItems))
+            else if (game.OpenStorage is not Game.ConversationItems)
             {
                 SetInventoryMessage(null);
             }
@@ -5578,7 +5578,7 @@ namespace Ambermoon.UI
 
             if (game.CurrentWindow.Window != Window.Inventory && (game.OpenStorage is Chest || game.OpenStorage is Merchant))
                 ShowChestMessage(game.DataNameProvider.WhereToMoveIt);
-            else if (!(game.OpenStorage is Game.ConversationItems))
+            else if (game.OpenStorage is not Game.ConversationItems)
                 SetInventoryMessage(game.DataNameProvider.WhereToMoveIt);
         }
 
