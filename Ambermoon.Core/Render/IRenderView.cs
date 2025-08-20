@@ -21,57 +21,62 @@
 
 using Ambermoon.Data;
 using System;
-using System.Collections.Generic;
 
-namespace Ambermoon.Render
+namespace Ambermoon.Render;
+
+public enum WindowMode
 {
-    public interface IRenderView : IRenderLayerFactory
-    {
-        void Render(FloatPosition viewportOffset);
-        void AddLayer(IRenderLayer layer);
-        IRenderLayer GetLayer(Layer layer);
-        void Resize(int width, int height, int? windowWidth = null, int? windowHeight = null);
-        void Close();
-        void UsePalette(Layer layer, bool use);
-        void SetTextureFactor(Layer layer, uint factor);
-        Position GameToScreen(Position position);
-        Position ViewToScreen(Position position);
-        Size ViewToScreen(Size size);
-        Rect GameToScreen(Rect rect);
-        Rect ViewToScreen(Rect rect);
-        Position ScreenToLayer(Position position, Layer layer);
-        Position ScreenToGame(Position position);
-        Position ScreenToView(Position position);
-        Size ScreenToView(Size size);
-        Rect ScreenToView(Rect rect);
-        void TakeScreenshot(Action<int, int, byte[]> dataHandler);
-        Rect RenderScreenArea { get; }
-        bool Fullscreen { get; set; }
-        bool AllowFramebuffer { get; }
-        bool AllowEffects { get; }
-        bool ShowImageLayerOnly { get; set; }
-        ISpriteFactory SpriteFactory { get; }
-        IColoredRectFactory ColoredRectFactory { get; }
-    }
+    Normal,
+    Fullscreen,
+    FullsizedWindow,
+}
 
-    public interface IGameRenderView : IRenderView
-    {
-        IGameData GameData { get; }
-        IGraphicProvider GraphicProvider { get; }
-        IFontProvider FontProvider { get; }       
-        ISurface3DFactory Surface3DFactory { get; }
-        IRenderTextFactory RenderTextFactory { get; }
-        IFowFactory FowFactory { get; }
-        ITextProcessor TextProcessor { get; }
-        ICamera3D Camera3D { get; }
-        Action<float> AspectProcessor { get; }
-        void SetLight(float light);
-        void Set3DFade(float fade);
-        void SetSkyColorReplacement(uint? skyColor, Color replaceColor);
-        PaletteReplacement PaletteReplacement { get; set; }
-        PaletteReplacement HorizonPaletteReplacement { get; set; }
-        int? DrugColorComponent { get; set; }
-        PaletteFading PaletteFading { get; set; }
-        void SetFog(Color fogColor, float distance);
-    }
+public interface IRenderView : IRenderLayerFactory
+{
+    void Render(FloatPosition viewportOffset);
+    void AddLayer(IRenderLayer layer);
+    IRenderLayer GetLayer(Layer layer);
+    void Resize(int width, int height, int? windowWidth = null, int? windowHeight = null);
+    void Close();
+    void UsePalette(Layer layer, bool use);
+    void SetTextureFactor(Layer layer, uint factor);
+    Position GameToScreen(Position position);
+    Position ViewToScreen(Position position);
+    Size ViewToScreen(Size size);
+    Rect GameToScreen(Rect rect);
+    Rect ViewToScreen(Rect rect);
+    Position ScreenToLayer(Position position, Layer layer);
+    Position ScreenToGame(Position position);
+    Position ScreenToView(Position position);
+    Size ScreenToView(Size size);
+    Rect ScreenToView(Rect rect);
+    void TakeScreenshot(Action<int, int, byte[]> dataHandler);
+    Rect RenderScreenArea { get; }
+    WindowMode WindowMode { get; set; }
+    bool AllowFramebuffer { get; }
+    bool AllowEffects { get; }
+    bool ShowImageLayerOnly { get; set; }
+    ISpriteFactory SpriteFactory { get; }
+    IColoredRectFactory ColoredRectFactory { get; }
+}
+
+public interface IGameRenderView : IRenderView
+{
+    IGameData GameData { get; }
+    IGraphicProvider GraphicProvider { get; }
+    IFontProvider FontProvider { get; }       
+    ISurface3DFactory Surface3DFactory { get; }
+    IRenderTextFactory RenderTextFactory { get; }
+    IFowFactory FowFactory { get; }
+    ITextProcessor TextProcessor { get; }
+    ICamera3D Camera3D { get; }
+    Action<float> AspectProcessor { get; }
+    void SetLight(float light);
+    void Set3DFade(float fade);
+    void SetSkyColorReplacement(uint? skyColor, Color replaceColor);
+    PaletteReplacement PaletteReplacement { get; set; }
+    PaletteReplacement HorizonPaletteReplacement { get; set; }
+    int? DrugColorComponent { get; set; }
+    PaletteFading PaletteFading { get; set; }
+    void SetFog(Color fogColor, float distance);
 }

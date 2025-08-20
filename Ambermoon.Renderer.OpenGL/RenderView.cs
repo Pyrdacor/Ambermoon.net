@@ -32,7 +32,7 @@ namespace Ambermoon.Renderer.OpenGL;
 using Data;
 using Render;
 
-public delegate bool FullscreenRequestHandler(bool fullscreen);
+public delegate bool FullscreenRequestHandler(WindowMode windowMode);
 
 file class DummyPaletteProvider : IPaletteProvider
 {
@@ -73,12 +73,12 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     );
     readonly SizingPolicy sizingPolicy;
     readonly OrientationPolicy orientationPolicy;
-    DeviceType deviceType;
+    readonly DeviceType deviceType;
     Rotation rotation = Rotation.None;
     readonly SortedDictionary<Layer, RenderLayer> layers = new SortedDictionary<Layer, RenderLayer>();
     readonly SpriteFactory spriteFactory = null;
     readonly ColoredRectFactory coloredRectFactory = null;
-    bool fullscreen = false;
+    WindowMode windowMode = WindowMode.Normal;
     const float VirtualAspectRatio = Global.VirtualAspectRatio;
     float sizeFactorX = 1.0f;
     float sizeFactorY = 1.0f;
@@ -275,16 +275,16 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         return false;
     }
 
-    public bool Fullscreen
+    public WindowMode WindowMode
     {
-        get => fullscreen;
+        get => windowMode;
         set
         {
-            if (fullscreen == value || FullscreenRequestHandler == null)
+            if (windowMode == value || FullscreenRequestHandler == null)
                 return;
 
-            if (FullscreenRequestHandler(value))
-                fullscreen = value;
+            if (FullscreenRequestHandler(windowMode))
+                windowMode = value;
         }
     }
 

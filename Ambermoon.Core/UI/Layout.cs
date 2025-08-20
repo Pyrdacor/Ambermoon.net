@@ -511,6 +511,7 @@ namespace Ambermoon.UI
         uint draggedGold = 0;
         uint draggedFood = 0;
         public bool OptionMenuOpen { get; private set; } = false;
+        event Action FullscreenOptionUpdateRequested;
         public bool IsDragging => draggedItem != null || draggedGold != 0 || draggedFood != 0;
         public DraggedItem GetDraggedItem() => draggedItem;
         Action<uint> draggedGoldOrFoodRemover = null;
@@ -1445,6 +1446,25 @@ namespace Ambermoon.UI
 			}
 		}.ToImmutableDictionary();
 
+        static readonly ImmutableDictionary<GameLanguage, string> FullsizedWindowName = new Dictionary<GameLanguage, string>
+        {
+            {
+                GameLanguage.German, "Fenster"
+            },
+            {
+                GameLanguage.English, "Window"
+            },
+            {
+                GameLanguage.French, "Fenêtre"
+            },
+            {
+                GameLanguage.Polish, "Okno"
+            },
+            {
+                GameLanguage.Czech, "Okno"
+            }
+        }.ToImmutableDictionary();
+
         static readonly ImmutableDictionary<GameLanguage, string[]> Movement3DValues = new Dictionary<GameLanguage, string[]>
         {
             {
@@ -1489,6 +1509,11 @@ namespace Ambermoon.UI
             }
 		}.ToImmutableDictionary();
 
+        internal void UpdateFullscreenOption()
+        {
+            FullscreenOptionUpdateRequested?.Invoke();
+        }
+
         void OpenOptions()
         {
             int page = 0;
@@ -1500,6 +1525,12 @@ namespace Ambermoon.UI
             ListBox listBox = null;
             var on = game.DataNameProvider.On;
             var off = game.DataNameProvider.Off;
+            string windowModeNameProvider(WindowMode windowMode) => windowMode switch
+            {
+                WindowMode.Fullscreen => on,
+                WindowMode.FullsizedWindow => FullsizedWindowName[game.GameLanguage],
+                _ => off,
+            };
             int width = game.Configuration.Width ?? 1280;
             bool cheatsEnabled = !game.Configuration.IsMobile && game.Configuration.EnableCheats;
             Action<int, string> toggleResolutionAction = (index, _) => ToggleResolution();
@@ -1510,7 +1541,7 @@ namespace Ambermoon.UI
             // Page 1
             AddOption((index, _) => ToggleMusic());
             AddOption((index, _) => ToggleVolume());
-            AddOption(game.Configuration.Fullscreen || game.Configuration.IsMobile ? null : toggleResolutionAction);
+            AddOption(game.Configuration.WindowMode != WindowMode.Normal || game.Configuration.IsMobile ? null : toggleResolutionAction);
             AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleFullscreen());
             AddOption(RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilter()) : nullOptionAction);
             AddOption(RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilterAddition()) : nullOptionAction);
@@ -1534,6 +1565,14 @@ namespace Ambermoon.UI
             // Page 4
             AddOption((index, _) => ToggleSaveLoadInfo());
             AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleCheats());
+
+            void UpdateFullscreenOption()
+            {
+                if (page == 0)
+                    FullscreenUpdated();
+            }
+
+            FullscreenOptionUpdateRequested += UpdateFullscreenOption;
 
             listBox = activePopup.AddOptionsListBox([.. options.Take(OptionsPerPage)]);
 
@@ -1586,7 +1625,7 @@ namespace Ambermoon.UI
             void SetMusic() => SetOptionString(0, game.Configuration.Music ? on : off);
             void SetVolume() => SetOptionString(1, Util.Limit(0, game.Configuration.Volume, 100).ToString());
             void SetResolution() => SetOptionString(2, GetResolutionString());
-            void SetFullscreen() => SetOptionString(3, game.Configuration.Fullscreen ? on : off);
+            void SetFullscreen() => SetOptionString(3, windowModeNameProvider(game.Configuration.WindowMode));
             void SetGraphicFilter() => SetOptionString(4, game.Configuration.GraphicFilter == GraphicFilter.None ? off : game.Configuration.GraphicFilter.ToString());
             void SetGraphicFilterOverlay() => SetOptionString(5, game.Configuration.GraphicFilterOverlay == GraphicFilterOverlay.None ? off : game.Configuration.GraphicFilterOverlay.ToString());
             void SetEffects() => SetOptionString(6, game.Configuration.Effects == Effects.None ? off : game.Configuration.Effects.ToString());
@@ -1686,7 +1725,7 @@ namespace Ambermoon.UI
             }
             void ToggleResolution()
             {
-                if (game.Configuration.Fullscreen)
+                if (game.Configuration.WindowMode != WindowMode.Normal)
                     return;
 
                 game.NotifyResolutionChange(width);
@@ -1695,18 +1734,24 @@ namespace Ambermoon.UI
                 changedConfiguration = true;
                 windowChange = true;
             }
-            void ToggleFullscreen()
+            void FullscreenUpdated()
             {
-                game.Configuration.Fullscreen = !game.Configuration.Fullscreen;
+                listBox.SetItemAction(2, game.Configuration.WindowMode != WindowMode.Normal ? null : toggleResolutionAction);
+                options[2] = KeyValuePair.Create(options[2].Key, game.Configuration.WindowMode != WindowMode.Normal || game.Configuration.IsMobile ? null : toggleResolutionAction);
 
-                listBox.SetItemAction(2, game.Configuration.Fullscreen ? null : toggleResolutionAction);
-                options[2] = KeyValuePair.Create(options[2].Key, game.Configuration.Fullscreen || game.Configuration.IsMobile ? null : toggleResolutionAction);
-
-                if (!game.Configuration.Fullscreen)
+                if (game.Configuration.WindowMode == WindowMode.Normal)
                     SetResolution();
 
-                game.RequestFullscreenChange(game.Configuration.Fullscreen);
                 SetFullscreen();
+            }
+            void ToggleFullscreen()
+            {
+                game.Configuration.WindowMode = (WindowMode)(((int)game.Configuration.WindowMode + 1) % 3);
+
+                game.RequestFullscreenChange(game.Configuration.WindowMode);
+
+                FullscreenUpdated();
+
                 changedConfiguration = true;
                 windowChange = true;
             }
@@ -1845,6 +1890,7 @@ namespace Ambermoon.UI
             exitButton.InstantAction = false;
             exitButton.LeftClickAction = () =>
             {
+                FullscreenOptionUpdateRequested -= UpdateFullscreenOption;
                 ClosePopup();
                 CloseOptionMenu();
                 if (changedConfiguration)
@@ -1899,63 +1945,63 @@ namespace Ambermoon.UI
                 ShowOptions();
             }
 
-            externalGraphicFilterChanged += SetGraphicFilter;
-            externalGraphicFilterOverlayChanged += SetGraphicFilterOverlay;
-            externalEffectsChanged += SetEffects;
-            battleSpeedChanged += SetBattleSpeed;
-            musicChanged += SetMusic;
-            volumeChanged += SetVolume;
+            ExternalGraphicFilterChanged += SetGraphicFilter;
+            ExternalGraphicFilterOverlayChanged += SetGraphicFilterOverlay;
+            ExternalEffectsChanged += SetEffects;
+            BattleSpeedChanged += SetBattleSpeed;
+            MusicChanged += SetMusic;
+            VolumeChanged += SetVolume;
             activePopup.Closed += () =>
             {
-                externalGraphicFilterChanged -= SetGraphicFilter;
-                externalGraphicFilterOverlayChanged -= SetGraphicFilterOverlay;
-                externalEffectsChanged -= SetEffects;
-                battleSpeedChanged -= SetBattleSpeed;
-                musicChanged -= SetMusic;
-                volumeChanged -= SetVolume;
+                ExternalGraphicFilterChanged -= SetGraphicFilter;
+                ExternalGraphicFilterOverlayChanged -= SetGraphicFilterOverlay;
+                ExternalEffectsChanged -= SetEffects;
+                BattleSpeedChanged -= SetBattleSpeed;
+                MusicChanged -= SetMusic;
+                VolumeChanged -= SetVolume;
             };
         }
 
-        event Action externalGraphicFilterChanged;
+        event Action ExternalGraphicFilterChanged;
 
-        public void ExternalGraphicFilterChanged()
+        public void OnExternalGraphicFilterChanged()
         {
-            externalGraphicFilterChanged?.Invoke();
+            ExternalGraphicFilterChanged?.Invoke();
         }
 
-        event Action externalGraphicFilterOverlayChanged;
+        event Action ExternalGraphicFilterOverlayChanged;
 
-        public void ExternalGraphicFilterOverlayChanged()
+        public void OnExternalGraphicFilterOverlayChanged()
         {
-            externalGraphicFilterOverlayChanged?.Invoke();
+            ExternalGraphicFilterOverlayChanged?.Invoke();
         }
 
-        event Action externalEffectsChanged;
+        event Action ExternalEffectsChanged;
 
-        public void ExternalEffectsChanged()
+        public void OnExternalEffectsChanged()
         {
-            externalEffectsChanged?.Invoke();
+            ExternalEffectsChanged?.Invoke();
         }
 
-        event Action battleSpeedChanged;
+        event Action BattleSpeedChanged;
 
-        public void ExternalBattleSpeedChanged()
+        public void OnExternalBattleSpeedChanged()
         {
-            battleSpeedChanged?.Invoke();
+            BattleSpeedChanged?.Invoke();
         }
 
-        event Action musicChanged;
+        event Action MusicChanged;
 
-        public void ExternalMusicChanged()
+        public void OnExternalMusicChanged()
         {
-            musicChanged?.Invoke();
+            MusicChanged?.Invoke();
         }
 
-        event Action volumeChanged;
+        event Action VolumeChanged;
 
-        public void ExternalVolumeChanged()
+        public void OnExternalVolumeChanged()
         {
-            volumeChanged?.Invoke();
+            VolumeChanged?.Invoke();
         }
 
         public void AttachEventToButton(int index, Action action)

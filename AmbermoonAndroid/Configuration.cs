@@ -1,4 +1,5 @@
 ﻿using Ambermoon;
+using Ambermoon.Render;
 using Newtonsoft.Json;
 using System.Globalization;
 
@@ -50,9 +51,11 @@ namespace AmbermoonAndroid
         public int? Height { get; set; } = null;
         public int? FullscreenWidth { get; set; } = null;
         public int? FullscreenHeight { get; set; } = null;
-		[JsonIgnore] // not needed/supported on Android
-		public bool Fullscreen { get; set; } = true;
-		[JsonIgnore] // not needed/supported on Android
+        [JsonIgnore] // not needed/supported on Android
+		public bool? Fullscreen { get; set; } = null;
+        [JsonIgnore] // not needed/supported on Android
+        public WindowMode WindowMode { get; set; } = WindowMode.Normal;
+        [JsonIgnore] // not needed/supported on Android
 		public bool UseDataPath { get; set; } = false;
 		[JsonIgnore] // not needed/supported on Android
 		public string DataPath { get; set; } = "";

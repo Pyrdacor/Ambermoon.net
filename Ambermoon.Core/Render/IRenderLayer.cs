@@ -19,41 +19,40 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Ambermoon.Render
+namespace Ambermoon.Render;
+
+public delegate FloatPosition PositionTransformation(FloatPosition position);
+public delegate FloatSize SizeTransformation(FloatSize size);
+
+public interface IRenderLayer
 {
-    public delegate FloatPosition PositionTransformation(FloatPosition position);
-    public delegate FloatSize SizeTransformation(FloatSize size);
-
-    public interface IRenderLayer
+    Layer Layer { get; }
+    bool Visible
     {
-        Layer Layer { get; }
-        bool Visible
-        {
-            get;
-            set;
-        }
-        PositionTransformation PositionTransformation
-        {
-            get;
-            set;
-        }
-        SizeTransformation SizeTransformation
-        {
-            get;
-            set;
-        }
-        Texture Texture
-        {
-            get;
-            set;
-        }
-        uint TextureFactor { get; }
-
-        void Render();
+        get;
+        set;
     }
-
-    public interface IRenderLayerFactory
+    PositionTransformation PositionTransformation
     {
-        IRenderLayer Create(Layer layer, Texture texture, Texture palette);
+        get;
+        set;
     }
+    SizeTransformation SizeTransformation
+    {
+        get;
+        set;
+    }
+    Texture Texture
+    {
+        get;
+        set;
+    }
+    uint TextureFactor { get; }
+
+    void Render();
+}
+
+public interface IRenderLayerFactory
+{
+    IRenderLayer Create(Layer layer, Texture texture, Texture palette);
 }

@@ -73,26 +73,24 @@ class GameWindow(string id = "MainWindow") : IContextProvider
     VersionSelector versionSelector = null;
     Intro intro = null;
     public Game Game { get; private set; }
-    public bool Fullscreen
+    public WindowMode WindowMode
     {
-        get => configuration.Fullscreen;
+        get => configuration.WindowMode;
         set
         {
-            configuration.Fullscreen = value;
+            configuration.WindowMode = value;
 
-            window.TopMost = value;
-            window.WindowBorder = value ? WindowBorder.Hidden : WindowBorder.Fixed;
-
-            if (cursor != null)
-                cursor.CursorMode = CursorMode.Hidden;
+            window.TopMost = value != WindowMode.Normal;
+            window.WindowBorder = value != WindowMode.Normal ? WindowBorder.Hidden : WindowBorder.Fixed;
+            window.WindowState = value == WindowMode.Fullscreen ? WindowState.Fullscreen : WindowState.Normal;
         }
     }
 
-    void ChangeResolution(int? oldWidth) => ChangeResolution(oldWidth, configuration.Fullscreen, true);
+    void ChangeResolution(int? oldWidth) => ChangeResolution(oldWidth, configuration.WindowMode, true);
 
-    void ChangeResolution(int? oldWidth, bool fullscreen, bool changed)
+    void ChangeResolution(int? oldWidth, WindowMode windowMode, bool changed)
     {
-        if (fullscreen)
+        if (windowMode != WindowMode.Normal)
         {
             var fullscreenSize = window.VideoMode.Resolution;
 
@@ -104,7 +102,10 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                     configuration.FullscreenHeight = fullscreenSize.Value.Y;
                 }
 
-                var fullscreenWindowSize = fullscreenSize.Value + new WindowDimension(0, 1); // This avoids automatic fullscreen
+                var fullscreenWindowSize = fullscreenSize.Value;
+
+                if (windowMode == WindowMode.FullsizedWindow)
+                    fullscreenWindowSize += new WindowDimension(0, 1); // this avoid automatic exclusive fullscreen
 
                 window.Position = window.Monitor.Bounds.Origin;
                 window.Size = fullscreenWindowSize;
@@ -157,16 +158,16 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         Task.Factory.StartNew(task, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
     }
 
-    void ChangeFullscreenMode(bool fullscreen)
+    void ChangeFullscreenMode(WindowMode windowMode)
     {
-        Fullscreen = fullscreen;
-        FullscreenChangeRequest(fullscreen);        
+        WindowMode = windowMode;
+        FullscreenChangeRequest(windowMode);
         UpdateWindow(configuration);
     }
 
-    void FullscreenChangeRequest(bool fullscreen)
+    void FullscreenChangeRequest(WindowMode windowMode)
     {
-        ChangeResolution(configuration.Width, fullscreen, false);
+        ChangeResolution(configuration.Width, windowMode, false);
     }
 
     void SetupInput(IInputContext inputContext)
@@ -295,7 +296,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
             // This can happen while a mouse trap is active in-game. Otherwise a fullscreen
             // change can only happen from the options menu where mouse trapping can't be active.
-            ChangeFullscreenMode(!Fullscreen);
+            ChangeFullscreenMode((WindowMode)(((int)WindowMode + 1) % 3));
 
             Game?.PostFullscreenChanged();
         }
@@ -867,68 +868,68 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
                             game.QuitRequested += window.Close;
                             game.MousePositionChanged += position =>
-                        {
-                                    if (mouse != null)
-                                    {
-                                        mouse.MouseMove -= Mouse_MouseMove;
-                                        mouse.Position = new MousePosition(position.X, position.Y);
-                                        mouse.MouseMove += Mouse_MouseMove;
-                                    }
-                                };
+                            {
+                                if (mouse != null)
+                                {
+                                    mouse.MouseMove -= Mouse_MouseMove;
+                                    mouse.Position = new MousePosition(position.X, position.Y);
+                                    mouse.MouseMove += Mouse_MouseMove;
+                                }
+                            };
                             game.MouseTrappedChanged += (bool trapped, Position position) =>
-                        {
-                                    try
-                                    {
-                                        this.cursor.CursorMode = trapped ? CursorMode.Disabled : CursorMode.Hidden;
-                                        trapMouse = false;
-                                    }
-                                    catch
-                                    {
-                                // SDL etc needs special logic as CursorMode.Disabled is not available
-                                        trapMouse = trapped;
-                                        trappedMouseOffset = trapped ? new FloatPosition(position) : null;
-                                        trappedMouseLastPosition = trapped ? new FloatPosition(window.Size.X / 2, window.Size.Y / 2) : null;
-                                        this.cursor.CursorMode = CursorMode.Hidden;
-                                    }
-                                    if (mouse != null)
-                                    {
-                                        mouse.MouseMove -= Mouse_MouseMove;
-                                        mouse.Position = !trapped || !trapMouse ? new MousePosition(position.X, position.Y) :
-                                            new MousePosition(window.Size.X / 2, window.Size.Y / 2);
-                                        mouse.MouseMove += Mouse_MouseMove;
-                                    }
-                                };
+                            {
+                                try
+                                {
+                                    this.cursor.CursorMode = trapped ? CursorMode.Disabled : CursorMode.Hidden;
+                                    trapMouse = false;
+                                }
+                                catch
+                                {
+                                    // SDL etc needs special logic as CursorMode.Disabled is not available
+                                    trapMouse = trapped;
+                                    trappedMouseOffset = trapped ? new FloatPosition(position) : null;
+                                    trappedMouseLastPosition = trapped ? new FloatPosition(window.Size.X / 2, window.Size.Y / 2) : null;
+                                    this.cursor.CursorMode = CursorMode.Hidden;
+                                }
+                                if (mouse != null)
+                                {
+                                    mouse.MouseMove -= Mouse_MouseMove;
+                                    mouse.Position = !trapped || !trapMouse ? new MousePosition(position.X, position.Y) :
+                                        new MousePosition(window.Size.X / 2, window.Size.Y / 2);
+                                    mouse.MouseMove += Mouse_MouseMove;
+                                }
+                            };
                             game.ConfigurationChanged += (configuration, windowChange) =>
-                        {
-                                    if (windowChange)
-                                    {
-                                        ChangeFullscreenMode(configuration.Fullscreen);
-                                    }
+                            {
+                                if (windowChange)
+                                {
+                                    ChangeFullscreenMode(configuration.WindowMode);
+                                }
 
-                                    if (!renderView.TryUseFrameBuffer())
-                                    {
-                                        configuration.GraphicFilter = GraphicFilter.None;
-                                        configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
-                                    }
+                                if (!renderView.TryUseFrameBuffer())
+                                {
+                                    configuration.GraphicFilter = GraphicFilter.None;
+                                    configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
+                                }
 
-                                    if (configuration.Effects != Effects.None && !renderView.TryUseEffects())
-                                        configuration.Effects = Effects.None;
+                                if (configuration.Effects != Effects.None && !renderView.TryUseEffects())
+                                    configuration.Effects = Effects.None;
 
-                                    if (configuration.EnableCheats)
-                                        PrintCheatConsoleHeader();
+                                if (configuration.EnableCheats)
+                                    PrintCheatConsoleHeader();
 
-                                    if (configuration.EnableCheats && !Console.IsInputRedirected)
-                                    {
-                                        while (Console.KeyAvailable)
-                                            Console.ReadKey(true);
-                                    }
-                                    else if (!configuration.EnableCheats && !Console.IsInputRedirected)
-                                    {
-                                        cheatHeaderPrinted = false;
-                                        if (!Console.IsOutputRedirected)
-                                            Console.Clear();
-                                    }
-                                };
+                                if (configuration.EnableCheats && !Console.IsInputRedirected)
+                                {
+                                    while (Console.KeyAvailable)
+                                        Console.ReadKey(true);
+                                }
+                                else if (!configuration.EnableCheats && !Console.IsInputRedirected)
+                                {
+                                    cheatHeaderPrinted = false;
+                                    if (!Console.IsOutputRedirected)
+                                        Console.Clear();
+                                }
+                            };
                             game.DrugTicked += Drug_Ticked;
                             mainMenu.GameDataLoaded = true;
 
@@ -1411,7 +1412,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         {
             mouse.Position = new MousePosition(mouse.Position.X + Game.RandomInt(-16, 16),
                 mouse.Position.Y + Game.RandomInt(-16, 16));
-            if (Fullscreen) // This needs a little help
+            if (WindowMode != WindowMode.Normal) // This needs a little help (TODO: still?)
                 Game.OnMouseMove(ConvertMousePosition(mouse.Position), GetMouseButtons(mouse));
         }
     }
@@ -1448,9 +1449,9 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             configuration.FullscreenHeight = fullscreenSize.Value.Y;
         }
 
-        if (configuration.Fullscreen)
+        if (configuration.WindowMode != WindowMode.Normal)
         {
-            ChangeFullscreenMode(true); // This will adjust the window
+            ChangeFullscreenMode(configuration.WindowMode); // This will adjust the window
         }
 
         var gl = Silk.NET.OpenGL.GL.GetApi(GLContext);
@@ -1465,11 +1466,11 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             var size = ScreenResolutions.GetPossibleResolutions(new Size(monitorSize.X, monitorSize.Y))[2];
             configuration.Width = Width = size.Width;
             configuration.Height = Height = size.Height;
-            if (!configuration.Fullscreen)
+            if (configuration.WindowMode == WindowMode.Normal)
                 window.Size = new WindowDimension(Width, Height);
         }
 
-        if (!configuration.Fullscreen)
+        if (configuration.WindowMode == WindowMode.Normal)
         {
             if (configuration.WindowX == null || configuration.WindowY == null)
             {
@@ -1568,7 +1569,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             loadingBar = new(preLoadRenverView, 1.0f / 6.0f, 1.0f / 8.0f);
             window.DoRender();
         }
-        
+
         preloadAction = () =>
         {
             var additionalDataPromise = ResourceProvider.GetResource(() => OperatingSystem.IsMacOS() ? null : AdditionalData.Loader.Load());
@@ -1641,7 +1642,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                         }
                     };
                 };
-            };              
+            };
         };
         preloading = true;
     }
@@ -1789,7 +1790,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
     void Window_Resize(WindowDimension size)
     {
-        if (!Fullscreen && (size.X != Width || size.Y != Height))
+        if (WindowMode == WindowMode.Normal && (size.X != Width || size.Y != Height))
         {
             // This seems to happen when changing the screen resolution.
             window.Size = new WindowDimension(Width, Height);
@@ -1833,7 +1834,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
     void UpdateWindow(IConfiguration configuration)
     {
-        if (!Fullscreen)
+        if (WindowMode == WindowMode.Normal)
         {
             var size = configuration.GetScreenSize();
             this.configuration.Width = Width = size.Width;

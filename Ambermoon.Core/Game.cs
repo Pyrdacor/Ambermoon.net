@@ -252,7 +252,7 @@ public class Game
         ConversationPartyMember
     }
 
-    public delegate void FullscreenChangeHandler(bool fullscreen);
+    public delegate void FullscreenChangeHandler(WindowMode windowMode);
     public delegate void ResolutionChangeHandler(int? oldWidth);
 
     // TODO: cleanup members
@@ -263,7 +263,7 @@ public class Game
     readonly IAdditionalSaveSlotProvider additionalSaveSlotProvider;
     internal GameLanguage GameLanguage { get; private set; }
     CharacterCreator characterCreator = null;
-    readonly Random random = new Random();
+    readonly Random random = new();
     bool disableMusicChange = false;
     bool disableTimeEvents = false;
     readonly string gameVersionName;
@@ -659,7 +659,7 @@ public class Game
     }
     internal IMapCharacter CurrentMapCharacter { get; set; } // This is set when interacting with a map character
 
-    internal void RequestFullscreenChange(bool fullscreen) => fullscreenChangeHandler?.Invoke(fullscreen);
+    internal void RequestFullscreenChange(WindowMode windowMode) => fullscreenChangeHandler?.Invoke(windowMode);
     internal void NotifyResolutionChange(int? oldWidth) => resolutionChangeHandler?.Invoke(oldWidth);
 
     public string GetFullVersion() => fullVersion;
@@ -1302,16 +1302,16 @@ public class Game
         }
     }
 
-    public void ExternalGraphicFilterChanged() => layout.ExternalGraphicFilterChanged();
-    public void ExternalGraphicFilterOverlayChanged() => layout.ExternalGraphicFilterOverlayChanged();
-    public void ExternalEffectsChanged() => layout.ExternalEffectsChanged();
+    public void ExternalGraphicFilterChanged() => layout.OnExternalGraphicFilterChanged();
+    public void ExternalGraphicFilterOverlayChanged() => layout.OnExternalGraphicFilterOverlayChanged();
+    public void ExternalEffectsChanged() => layout.OnExternalEffectsChanged();
     public void ExternalBattleSpeedChanged()
     {
         SetBattleSpeed(Configuration.BattleSpeed);
-        layout.ExternalBattleSpeedChanged();
+        layout.OnExternalBattleSpeedChanged();
     }
-    public void ExternalMusicChanged() => layout.ExternalMusicChanged();
-    public void ExternalVolumeChanged() => layout.ExternalVolumeChanged();
+    public void ExternalMusicChanged() => layout.OnExternalMusicChanged();
+    public void ExternalVolumeChanged() => layout.OnExternalVolumeChanged();
 
     internal int RollDice100()
     {
@@ -4110,6 +4110,11 @@ public class Game
         else
         {
             MousePositionChanged?.Invoke(lastMousePosition);
+        }
+
+        if (layout?.OptionMenuOpen == true)
+        {
+            layout.UpdateFullscreenOption();
         }
     }
 
