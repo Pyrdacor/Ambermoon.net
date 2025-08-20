@@ -90,6 +90,8 @@ namespace AmbermoonAndroid
 
         public static Graphic[] GetTouchArrows() => [ GetGraphic(Resource.Raw.touchpad_top), GetGraphic(Resource.Raw.touchpad_right), GetGraphic(Resource.Raw.touchpad_bottom), GetGraphic(Resource.Raw.touchpad_left) ];
 
+        public static Graphic GetTouchPadIconDisableOverlay() => GetGraphic(Resource.Raw.icon_disable_overlay);
+
         public static Graphic GetLoadingBarLeft() => GetSpecialGraphic(Resource.Raw.lbar_left);
         public static Graphic GetLoadingBarMid() => GetSpecialGraphic(Resource.Raw.lbar_mid);
         public static Graphic GetLoadingBarRight() => GetSpecialGraphic(Resource.Raw.lbar_right);

@@ -12,7 +12,10 @@ internal class TouchPad
     bool active = false;
     readonly int threshold = 0;
     readonly int arrowHitRadius = 0;
-    const int DisableOverlayDimension = 128;
+    const int DisableOverlayWidth = 98;
+    const int DisableOverlayHeight = 64;
+    const int IconDisableOverlayWidth = 19;
+    const int IconDisableOverlayHeight = 19;
     bool arrowClicked = false;
     readonly Handler hideTappedArrowHandler = new(Looper.MainLooper);
     const int ShowTappedArrowDuration = 200;
@@ -24,6 +27,8 @@ internal class TouchPad
     readonly ILayerSprite[] arrows = new ILayerSprite[4];
     readonly ILayerSprite activeMarker;
     readonly ILayerSprite disableOverlay;
+    readonly Dictionary<int, ILayerSprite> iconDisableOverlays = [];
+    readonly Func<int, int, ILayerSprite> iconDisableOverlayFactory;
     readonly ILayerSprite[] icons = new ILayerSprite[11];
     readonly Rect[,] iconAreas = new Rect[2,2];
 
@@ -99,15 +104,16 @@ internal class TouchPad
             var battlePositions = FileProvider.GetTouchPadBattlePositions();
             var options = FileProvider.GetTouchPadOptions();
             var @switch = FileProvider.GetTouchPadSwitch();
+            var iconDisableOverlay = FileProvider.GetTouchPadIconDisableOverlay();
 
             byte[] oddRowPixels = [0, 0, 0, 0xff, 0, 0, 0, 0];
             byte[] evenRowPixels = [0, 0, 0, 0, 0, 0, 0, 0xff];
-            byte[] oddRow = [.. Enumerable.Repeat(oddRowPixels, DisableOverlayDimension / 2).SelectMany(x => x)];
-            byte[] evenRow = [.. Enumerable.Repeat(evenRowPixels, DisableOverlayDimension / 2).SelectMany(x => x)];
-            var data = new byte[DisableOverlayDimension * DisableOverlayDimension * 4];
+            byte[] oddRow = [.. Enumerable.Repeat(oddRowPixels, DisableOverlayWidth / 2).SelectMany(x => x)];
+            byte[] evenRow = [.. Enumerable.Repeat(evenRowPixels, DisableOverlayWidth / 2).SelectMany(x => x)];
+            var data = new byte[DisableOverlayWidth * DisableOverlayHeight * 4];
             int index = 0;
 
-            for (int i = 0; i < DisableOverlayDimension / 2; i++)
+            for (int i = 0; i < DisableOverlayHeight / 2; i++)
             {
                 Buffer.BlockCopy(oddRow, 0, data, index, oddRow.Length);
                 index += oddRow.Length;
@@ -117,8 +123,8 @@ internal class TouchPad
 
             var disableOverlay = new Graphic
             {
-                Width = DisableOverlayDimension,
-                Height = DisableOverlayDimension,
+                Width = DisableOverlayWidth,
+                Height = DisableOverlayHeight,
                 IndexedGraphic = false,
                 Data = data
             };
@@ -130,6 +136,7 @@ internal class TouchPad
                 ..arrows,
                 disableOverlay,
                 iconBackground,
+                iconDisableOverlay,
                 eye,
                 hand,
                 mouth,
@@ -184,12 +191,11 @@ internal class TouchPad
             double scaleX = area.Width / 1526.0f;
             double scaleY = area.Height / 994.0f;
 
-            //background = CreateSprite(1024, 1024, minDimension, minDimension, 0, 0);
             background = CreateSprite(1526, 994, area.Width, area.Height, 11, 0);
-            background.X = area.X;// + (area.Width - background.Width) / 2;
-            background.Y = area.Y;// + (area.Height - background.Height) / 2;
+            background.X = area.X;
+            background.Y = area.Y;
 
-            disableOverlay = CreateSprite(DisableOverlayDimension, DisableOverlayDimension, area.Width, area.Height, 17, 6);
+            disableOverlay = CreateSprite(DisableOverlayWidth, DisableOverlayHeight, area.Width, area.Height, 17, 6);
             disableOverlay.X = background.X;
             disableOverlay.Y = background.Y;
 
@@ -236,11 +242,24 @@ internal class TouchPad
                 var factorY = iconSize.Height / maxSize;
                 var iconDisplaySize = baseSize * new FloatSize(factorX, factorY);
 
-                var icon = icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(iconDisplaySize.Width), Util.Round(iconDisplaySize.Height), 14, (uint)(8 + i));
+                var icon = icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(iconDisplaySize.Width), Util.Round(iconDisplaySize.Height), 14, (uint)(9 + i));
 
                 icon.X = relativeArea.X + (relativeArea.Width - icon.Width) / 2;
                 icon.Y = relativeArea.Y + (relativeArea.Height - icon.Height) / 2;
             }
+
+            iconDisableOverlayFactory = (int x, int y) =>
+            {
+                var relativeArea = new Rect(iconAreas[x, y]);
+
+                var iconDisableOverlay = CreateSprite(IconDisableOverlayWidth, IconDisableOverlayHeight, relativeArea.Width, relativeArea.Height, 17, 8);
+
+                iconDisableOverlay.X = relativeArea.X;
+                iconDisableOverlay.Y = relativeArea.Y;
+                iconDisableOverlay.Visible = true;
+
+                return iconDisableOverlay;
+            };
 
             IconPage = 0;
         }
@@ -308,6 +327,9 @@ internal class TouchPad
             activeMarker.Visible = false;
             disableOverlay.Visible = false;
 
+            foreach (var iconDisableOverlay in iconDisableOverlays.Values)
+                iconDisableOverlay.Visible = false;
+
             foreach (var arrow in arrows)
                 arrow.Visible = false;
 
@@ -330,6 +352,11 @@ internal class TouchPad
 
         foreach (var icon in icons)
             icon.Delete();
+
+        foreach (var iconDisableOverlay in iconDisableOverlays.Values)
+            iconDisableOverlay.Delete();
+
+        iconDisableOverlays.Clear();
 
         Direction = null;
         active = false;
@@ -529,12 +556,39 @@ internal class TouchPad
         return true;
     }
 
+    void EnableIconAtLocation(int x, int y, bool enable)
+    {
+        int index = y + x * 2;
+
+        if (enable)
+        {           
+            if (iconDisableOverlays.TryGetValue(index, out var overlay))
+            {
+                overlay.Delete();
+                iconDisableOverlays.Remove(index);
+            }
+        }
+        else
+        {
+            if (iconDisableOverlays.TryGetValue(index, out var overlay))
+            {
+                overlay.Visible = true;
+            }
+            else
+            {
+                iconDisableOverlays.Add(index, iconDisableOverlayFactory(x, y));
+            }
+        }
+    }
+
     public void Update(Game game)
     {
         enabled = background != null && background.Visible && game.InputEnable;
 
         if (background != null)
             disableOverlay.Visible = background.Visible && !game.InputEnable;
+
+        bool[] iconsDisabled = [false, false, false];
 
         if (background?.Visible == true && IconPage == 1)
         {
@@ -553,19 +607,26 @@ internal class TouchPad
             {
                 if (!game.Is3D && !game.TransportEnabled)
                 {
-                    // TODO: Show small disable overlay
+                    var location = IconLocations[(int)Game.MobileIconAction.Transport];
+                    iconsDisabled[location.Y + location.X * 2] = true;
                 }
 
                 if (!game.CampEnabled)
                 {
-                    // TODO: Show small disable overlay
+                    var location = IconLocations[(int)Game.MobileIconAction.Camp];
+                    iconsDisabled[location.Y + location.X * 2] = true;
                 }
             }
         }
 
         if (background?.Visible == true && IconPage == 2 && !disableOverlay.Visible && !game.SpellBookEnabled)
         {
-            // TODO: Show small disable overlay
+            var location = IconLocations[(int)Game.MobileIconAction.SpellBook];
+            iconsDisabled[location.Y + location.X * 2] = true;
         }
+
+        EnableIconAtLocation(0, 0, !iconsDisabled[0]);
+        EnableIconAtLocation(0, 1, !iconsDisabled[1]);
+        EnableIconAtLocation(1, 0, !iconsDisabled[2]);
     }
 }
