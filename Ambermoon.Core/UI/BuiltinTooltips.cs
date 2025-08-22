@@ -56,7 +56,11 @@ namespace Ambermoon.UI
             {
                 string aprLevels = "";
 
-                for (int i = partyMember.AttacksPerRoundIncreaseLevels; i <= 50; i += partyMember.AttacksPerRoundIncreaseLevels)
+                int start = features.HasFlag(Features.AdvancedAPRCalculation)
+                    ? partyMember.AttacksPerRoundIncreaseLevels
+                    : partyMember.AttacksPerRoundIncreaseLevels * 2;
+
+                for (int i = start; i <= 50; i += partyMember.AttacksPerRoundIncreaseLevels)
                 {
                     aprLevels += $"{i} ";
                 }

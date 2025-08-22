@@ -32,6 +32,7 @@ using TextColor = Ambermoon.Data.Enumerations.Color;
 using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 using Ambermoon.Data.Audio;
 using static Ambermoon.UI.BuiltinTooltips;
+using System.Reflection.Emit;
 
 namespace Ambermoon;
 
@@ -1723,6 +1724,11 @@ public class Game
                     partyMember.Skills[item.Skill.Value].BonusValue += factor * item.SkillValue;
             }
         }
+
+        if (!Features.HasFlag(Features.AdvancedAPRCalculation))
+            partyMember.AttacksPerRound = (byte)(partyMember.AttacksPerRoundIncreaseLevels == 0 ? 1 : Util.Limit(partyMember.AttacksPerRound, partyMember.Level / partyMember.AttacksPerRoundIncreaseLevels, 255));
+        else
+            partyMember.AttacksPerRound = (byte)(partyMember.AttacksPerRoundIncreaseLevels == 0 ? 1 : Util.Limit(partyMember.AttacksPerRound, 1 + partyMember.Level / partyMember.AttacksPerRoundIncreaseLevels, 255));
     }
 
     /// <summary>
@@ -6407,7 +6413,7 @@ public class Game
                             }
                             else
                             {
-                                partyMember.AddLevelUpEffects(RandomInt);
+                                partyMember.AddLevelUpEffects(RandomInt, Features);
                             }
                             ;
                         }

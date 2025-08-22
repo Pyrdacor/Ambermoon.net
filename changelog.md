@@ -2,6 +2,7 @@
 
 ## 1.11.0 - Eleventh patch (August 2025)
 
+- Version [1.11.3](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.11.3): Added Advanced 1.33 version, APR calculation now differs in Advanced
 - Version [1.11.2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.11.2): Re-added the native fullscreen, now you have two fullscreen modes
 - Version [1.11.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.11.1): Fixed startup crash and patcher
 - Version [1.11.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.11.0): Improved fullscreen handling, bugfixes

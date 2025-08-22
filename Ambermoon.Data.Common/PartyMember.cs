@@ -182,14 +182,14 @@ namespace Ambermoon.Data
             {
                 ++Level;
                 nextLevelExperiencePoints = GetNextLevelExperiencePoints(features);
-                AddLevelUpEffects(random);
+                AddLevelUpEffects(random, features);
             }
             while (ExperiencePoints >= nextLevelExperiencePoints && Level < 50);
 
             return true;
         }
 
-        public void AddLevelUpEffects(Func<int, int, int> random)
+        public void AddLevelUpEffects(Func<int, int, int> random, Features? features)
         {
             var intelligence = Attributes[Attribute.Intelligence].TotalCurrentValue;
             bool magicClass = Class.IsMagic();
@@ -213,7 +213,12 @@ namespace Ambermoon.Data
             }
             if (addSLPAndTP)
                 TrainingPoints = (ushort)Math.Min(ushort.MaxValue, TrainingPoints + tpAdd);
-            AttacksPerRound = (byte)(AttacksPerRoundIncreaseLevels == 0 ? 1 : Util.Limit(AttacksPerRound, Level / AttacksPerRoundIncreaseLevels, 255));
+
+            if (features == null || !features.Value.HasFlag(Features.AdvancedAPRCalculation))
+                AttacksPerRound = (byte)(AttacksPerRoundIncreaseLevels == 0 ? 1 : Util.Limit(AttacksPerRound, Level / AttacksPerRoundIncreaseLevels, 255));
+            else
+                AttacksPerRound = (byte)(AttacksPerRoundIncreaseLevels == 0 ? 1 : Util.Limit(AttacksPerRound, 1 + Level / AttacksPerRoundIncreaseLevels, 255));
+
             MaxReachedLevel = Math.Max(MaxReachedLevel, Level); // Update max reached level
         }
     }
