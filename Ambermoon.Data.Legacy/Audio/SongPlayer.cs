@@ -19,7 +19,7 @@ namespace Ambermoon.Data.Legacy.Audio
                 {
                     Stop();
                     currentStream = audioStream;
-                    audioOutput.StreamData(audioStream, 1, 44100, true);
+                    audioOutput.StreamData(audioStream, 1, audioOutput.SampleRate, true);
                 }
                 if (!audioOutput.Streaming)
                     audioOutput.Start();

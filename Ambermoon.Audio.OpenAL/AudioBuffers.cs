@@ -10,8 +10,8 @@ namespace Ambermoon.Audio.OpenAL
     internal class AudioBuffers : IDisposable
     {
         static AudioBuffers CurrentBuffers { get; set; } = null;
-        static readonly TimeSpan BufferDuration = TimeSpan.FromSeconds(4.0); // buffer 4 seconds
-        const int BufferCount = 3;
+        static readonly TimeSpan BufferDuration = TimeSpan.FromSeconds(0.25); // buffer 250 ms
+        const int BufferCount = 6;
         readonly Queue<AudioBuffer> queuedBuffers = new(BufferCount);
         readonly AL al;
         readonly uint source;
@@ -81,7 +81,7 @@ namespace Ambermoon.Audio.OpenAL
                     for (int i = 0; i < Math.Min(count, queuedBuffers.Count); ++i)
                     {
                         var buffer = queuedBuffers.Dequeue();
-                        al.SourceUnqueueBuffers(source, new uint[1] { buffer.Index });
+                        al.SourceUnqueueBuffers(source, [buffer.Index]);
                         buffer.Dispose();
                     }
                 }
@@ -112,7 +112,7 @@ namespace Ambermoon.Audio.OpenAL
                     for (int i = 0; i < Math.Min(count, queuedBuffers.Count); ++i)
                     {
                         var buffer = queuedBuffers.Dequeue();
-                        al.SourceUnqueueBuffers(source, new uint[1] { buffer.Index });
+                        al.SourceUnqueueBuffers(source, [buffer.Index]);
                         buffer.Dispose();
                     }
                 }
@@ -121,7 +121,7 @@ namespace Ambermoon.Audio.OpenAL
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            // Start with 3 buffers (up to 12 seconds)
+            // Start with 6 buffers (up to 1.5 seconds)
             SetupNextBuffers(BufferCount);
 
             if (cancellationToken.IsCancellationRequested)
@@ -136,7 +136,7 @@ namespace Ambermoon.Audio.OpenAL
                 int buffersProcessed;
                 do
                 {
-                    await Task.Delay(10, CancellationToken.None);
+                    await Task.Delay(5, CancellationToken.None);
                     al.GetSourceProperty(source, GetSourceInteger.BuffersProcessed, out buffersProcessed);
                 } while (buffersProcessed == 0 && !cancellationToken.IsCancellationRequested);
 
@@ -150,7 +150,7 @@ namespace Ambermoon.Audio.OpenAL
             while (queuedBuffers.Count != 0)
             {
                 var buffer = queuedBuffers.Dequeue();
-                al.SourceUnqueueBuffers(source, new uint[1] { buffer.Index });
+                al.SourceUnqueueBuffers(source, [buffer.Index]);
                 buffer.Dispose();
             }
 

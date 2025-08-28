@@ -14,6 +14,7 @@ namespace Ambermoon.Audio.Android
 
         public AudioOutput(int channels = 1, int sampleRate = 44100)
         {
+            SampleRate = sampleRate;
             Available = true;
         }
 
@@ -34,6 +35,11 @@ namespace Ambermoon.Audio.Android
 
             return track;
         }
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public int SampleRate { get; }
 
         /// <summary>
         /// <inheritdoc/>
@@ -156,7 +162,6 @@ namespace Ambermoon.Audio.Android
 
             Stop();
 
-            // TODO: stream instead of fully load?
             currentTrack = GetTrack(audioStream.Stream(TimeSpan.MaxValue), channels, sampleRate, sample8Bit);
 
             Reset();

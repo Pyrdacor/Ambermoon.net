@@ -8,8 +8,8 @@ namespace Ambermoon.Data.Legacy.Audio
 {
     public class SongManager : ISongManager
     {
-        readonly Dictionary<Enumerations.Song, Song> songs = new Dictionary<Enumerations.Song, Song>();
-        readonly SongPlayer songPlayer = new SongPlayer();
+        readonly Dictionary<Enumerations.Song, Song> songs = [];
+        readonly SongPlayer songPlayer = new();
 
         Song CreateSong(Enumerations.Song song, int songIndex, IDataReader dataReader)
         {

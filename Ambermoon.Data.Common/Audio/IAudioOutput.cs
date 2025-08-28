@@ -34,5 +34,9 @@
         /// Output volume (0.0 to 1.0)
         /// </summary>
         float Volume { get; set; }
+        /// <summary>
+        /// Sample rate of the audio output.
+        /// </summary>
+        int SampleRate { get; }
     }
 }
