@@ -2737,7 +2737,20 @@ namespace Ambermoon.UI
             var item = itemManager.GetItem(itemIndex);
             int RollDice1000() => game.RandomInt(0, 999);
 
-            if (!game.BattleActive && game.TestUseItemMapEvent(itemIndex, out var eventX, out var eventY))
+            bool HasRightWindowForEvent(EventType eventType)
+            {
+                return eventType switch
+                {
+                    EventType.Chest => game.LastWindow.Window == Window.MapView || game.LastWindow.Window == Window.Chest,
+                    EventType.Door => game.LastWindow.Window == Window.MapView || game.LastWindow.Window == Window.Door,
+                    _ => game.LastWindow.Window == Window.MapView,
+                };
+            }
+
+            if (!game.BattleActive && !game.CampActive &&
+                (game.LastWindow.Window == Window.MapView || game.LastWindow.Window == Window.Chest || game.LastWindow.Window == Window.Door) &&
+                game.TestUseItemMapEvent(itemIndex, out var eventX, out var eventY, out EventType eventType) &&
+                HasRightWindowForEvent(eventType))
             {
                 void Use(bool broke)
                 {
@@ -2792,6 +2805,12 @@ namespace Ambermoon.UI
                 {
                     Use(false);
                 }
+                return;
+            }
+
+            if (item.Type == ItemType.Key && (item.Spell == Spell.None || item.Spell == Spell.Lockpicking))
+            {
+                SetInventoryMessage(game.DataNameProvider.WrongPlaceToUseItem, true);
                 return;
             }
 
@@ -2979,14 +2998,7 @@ namespace Ambermoon.UI
                         return;
                     }
 
-                    if (item.Spell == Spell.Lockpicking)
-                    {
-                        // Do not consume. Can be used by Thief/Ranger but has no effect in Ambermoon.
-                        if (wasInputEnabled)
-                            game.InputEnable = true;
-                        return;
-                    }
-                    else if (item.Spell == Spell.MountWasp)
+                    if (item.Spell == Spell.MountWasp)
                     {
                         if (game.TravelType != TravelType.Walk)
                         {

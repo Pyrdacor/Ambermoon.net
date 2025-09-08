@@ -32,7 +32,6 @@ using TextColor = Ambermoon.Data.Enumerations.Color;
 using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 using Ambermoon.Data.Audio;
 using static Ambermoon.UI.BuiltinTooltips;
-using System.Reflection.Emit;
 
 namespace Ambermoon;
 
@@ -558,6 +557,7 @@ public class Game
     Action<Position> battlePositionDragHandler = null;
     bool battlePositionDragging = false;
     static Dictionary<uint, Chest> initialChests = null;
+    const uint LockpickItemIndex = 138;
     internal Savegame CurrentSavegame { get; private set; }
     event Action ActivePlayerChanged;
     public event Func<ILegacyGameData, int, int, int, Savegame, Savegame> RequestAdvancedSavegamePatching;
@@ -4486,7 +4486,7 @@ public class Game
         }
     }
 
-    internal bool TestUseItemMapEvent(uint itemIndex, out uint x, out uint y)
+    internal bool TestUseItemMapEvent(uint itemIndex, out uint x, out uint y, out EventType eventType)
     {
         x = (uint)player.Position.X;
         y = (uint)player.Position.Y;
@@ -4495,8 +4495,33 @@ public class Game
         var @event = is3D ? Map.GetEvent(x, y, CurrentSavegame) : renderMap2D.GetEvent(x, y, CurrentSavegame);
         var map = is3D ? Map : renderMap2D.GetMapFromTile(x, y);
 
-        bool TestEvent()
+        // In the remake we allow using keys (including lockpick) to open a nearby chest/door.
+        // This will only happen if nearby chests/doors can be opened with it. The chest or
+        // door screen is opened and the item is used automatically. If there is a scrollable
+        // text, the key using is postponed to after reading through it.
+        var item = ItemManager.GetItem(itemIndex);
+        bool isKey = item.Type == ItemType.Key;
+
+        bool IsMatchingKeyEvent()
         {
+            if (!isKey)
+                return false;
+
+            if (@event is ChestEvent chestEvent && CurrentSavegame.IsChestLocked(chestEvent.RealChestIndex - 1))
+                return true;
+            if (@event is DoorEvent doorEvent && CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex))
+                return true;
+
+            return false;
+        }
+
+        bool TestEvent(out EventType eventType)
+        {
+            eventType = @event?.Type ?? EventType.Invalid;
+
+            if (IsMatchingKeyEvent())
+                return true;
+
             if (@event is not ConditionEvent conditionEvent)
                 return false;
 
@@ -4509,10 +4534,10 @@ public class Game
 
             @event = EventExtensions.ExecuteEvent(conditionEvent, map, this, ref trigger, eventX, eventY, ref lastEventStatus, out bool _, out var _);
 
-            return TestEvent();
+            return TestEvent(out eventType);
         }
 
-        if (TestEvent())
+        if (TestEvent(out eventType))
             return true;
 
         var mapWidth = Map.IsWorldMap ? int.MaxValue : Map.Width;
@@ -4535,6 +4560,10 @@ public class Game
                 x = (uint)position.X;
                 y = (uint)position.Y;
                 @event = Map.GetEvent(x, y, CurrentSavegame);
+                eventX = x;
+                eventY = y;
+
+                return TestEvent(out eventType);
             }
             else
             {
@@ -4543,37 +4572,35 @@ public class Game
         }
         else
         {
-            switch (player.Direction)
+            Position[] offsets = [new(0, -1), new(1, 0), new(0, 1), new(-1, 0)];
+            bool IsOffsetInvalid(Position offset, uint x, uint y) => x + offset.X < 0 || x + offset.X >= mapWidth || y + offset.Y < 0 || y + offset.Y >= mapHeight;
+            int shift = (int)player.Direction;
+            offsets = offsets.Skip(shift).Concat(offsets.Take(shift)).ToArray();
+
+            foreach (var offset in offsets)
             {
-                case CharacterDirection.Left:
-                    if (x == 0)
-                        return false;
-                    --x;
-                    break;
-                case CharacterDirection.Right:
-                    if (x == mapWidth - 1)
-                        return false;
-                    ++x;
-                    break;
-                case CharacterDirection.Up:
-                    if (y == 0)
-                        return false;
-                    --y;
-                    break;
-                case CharacterDirection.Down:
-                    if (y == mapHeight - 1)
-                        return false;
-                    ++y;
-                    break;
+                if (IsOffsetInvalid(offset, x, y))
+                    continue;
+
+                if (TestEventAtOffset(offset, x, y, out eventType))
+                {
+                    x = (uint)(x + offset.X);
+                    y = (uint)(y + offset.Y);
+                    return true;
+                }
             }
 
-            @event = renderMap2D.GetEvent(x, y, CurrentSavegame);
+            return false;
+
+            bool TestEventAtOffset(Position offset, uint x, uint y, out EventType eventType)
+            {
+                eventX = (uint)(x + offset.X);
+                eventY = (uint)(y + offset.Y);
+                @event = renderMap2D.GetEvent(eventX, eventY, CurrentSavegame);
+
+                return TestEvent(out eventType);
+            }
         }
-
-        eventX = x;
-        eventY = y;
-
-        return TestEvent();
     }
 
     internal bool TriggerMapEvents(EventTrigger? trigger)
@@ -8040,9 +8067,10 @@ public class Game
     }
 
     internal bool ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map map,
-        Position position, bool fromEvent, bool triggerFollowEvents = false)
+        Position position, bool fromEvent, bool triggerFollowEvents = false, uint usedItem = 0)
     {
         var chest = GetChest(chestEvent.RealChestIndex);
+        var keyUser = usedItem != 0 ? CurrentInventory : null;
 
         if (chestEvent.CloseWhenEmpty && chest.Empty)
         {
@@ -8084,7 +8112,7 @@ public class Game
                 {
                     if (chestEvent.Next != null)
                         map.TriggerEventChain(this, EventTrigger.Always, (uint)position.X, (uint)position.Y, chestEvent.Next, false);
-                });
+                }, usedItem, keyUser);
             }
             else
             {
@@ -8094,18 +8122,22 @@ public class Game
 
         if (CurrentWindow.Window == Window.Chest)
             OpenChest();
+        else if (CurrentWindow.Window == Window.Inventory && LastWindow.Window == Window.Chest)
+            CloseWindow(OpenChest);
         else
             Fade(OpenChest);
 
         return true;
     }
 
-    internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, bool disarmedTrap, Map map, uint x, uint y, bool fromEvent, bool moved)
+    internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, bool disarmedTrap, Map map, uint x, uint y,
+        bool fromEvent, bool moved, uint usedItem = 0)
     {
+        var keyUser = usedItem != 0 ? CurrentInventory : null;
         if (!CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex))
             return false;
 
-        Fade(() =>
+        void ShowDoorAction()
         {
             string initialText = fromEvent && doorEvent.TextIndex != 255 ?
                 map.GetText((int)doorEvent.TextIndex, DataNameProvider.TextBlockMissing) : null;
@@ -8168,15 +8200,22 @@ public class Game
             {
                 if (doorEvent.Next != null)
                     map.TriggerEventChain(this, EventTrigger.Always, x, y, doorEvent.Next, false);
-            });
-        });
+            }, usedItem, keyUser);
+        }
+
+        if (CurrentWindow.Window == Window.Door)
+            ShowDoorAction();
+        else if (CurrentWindow.Window == Window.Inventory && LastWindow.Window == Window.Door)
+            CloseWindow(ShowDoorAction);
+        else
+            Fade(ShowDoorAction);
 
         return true;
     }
 
     void ShowLocked(Picture80x80 picture80X80, Action openedAction, string initialMessage,
         uint keyIndex, uint lockpickingChanceReduction, bool foundTrap, bool disarmedTrap, Action failedAction,
-        Action abortAction)
+        Action abortAction, uint usedKey = 0, PartyMember keyUser = null)
     {
         layout.SetLayout(LayoutType.Items);
         layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
@@ -8190,7 +8229,6 @@ public class Game
         layout.Set80x80Picture(picture80X80);
         bool hasTrap = failedAction != null;
         bool chest = picture80X80 == Picture80x80.ChestClosed;
-        const uint LockpickItemIndex = 138;
 
         layout.EnableButton(1, CurrentPartyMember.Inventory.Slots.Any(s => s?.Empty == false));
         layout.EnableButton(3, !foundTrap);
@@ -8207,6 +8245,7 @@ public class Game
             layout.EnableButton(1, CurrentPartyMember.Inventory.Slots.Any(s => s?.Empty == false));
         }
 
+        ActivePlayerChanged = null;
         ActivePlayerChanged += PlayerSwitched;
         closeWindowHandler = _ => ActivePlayerChanged -= PlayerSwitched;
 
@@ -8224,7 +8263,7 @@ public class Game
 
             itemGrid.Disabled = false;
             itemGrid.DisableDrag = true;
-            itemGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+            itemGrid.Initialize([.. CurrentPartyMember.Inventory.Slots], false);
             TrapMouse(itemArea);
             SetupRightClickAbort();
         }
@@ -8254,11 +8293,19 @@ public class Game
                 : (chest ? DataNameProvider.HasOpenedChest : DataNameProvider.HasOpenedDoor), finishAction);
         }
 
-        itemGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+        itemGrid.ItemClicked += (ItemGrid _, int _, ItemSlot itemSlot) =>
         {
             UntrapMouse();
             nextClickHandler = null;
             layout.ShowChestMessage(null);
+            CheckKey(itemSlot, true, true);
+        };
+
+        void CheckKey(ItemSlot itemSlot, bool showItemsAfterwards, bool removeItemFromCharacter)
+        {
+            bool isActivePlayerItem = removeItemFromCharacter || keyUser.Index == CurrentPartyMember.Index;
+            var targetPlayer = isActivePlayerItem ? CurrentPartyMember : keyUser;
+
             StartSequence();
             itemGrid.HideTooltip();
             var targetPosition = chest ? new Position(28, 76) : new Position(73, 102);
@@ -8266,6 +8313,7 @@ public class Game
             {
                 bool canOpen = keyIndex == itemSlot.ItemIndex || (keyIndex == 0 && itemSlot.ItemIndex == LockpickItemIndex);
                 var item = layout.GetItem(itemSlot);
+                var itemIndex = itemSlot.ItemIndex;
                 item.ShowItemAmount = false;
 
                 itemGrid.PlayShakeAnimation(itemSlot, () =>
@@ -8296,7 +8344,9 @@ public class Game
                                     item.Visible = false;
                                     uint itemIndex = itemSlot.ItemIndex;
                                     itemSlot.Remove(1);
-                                    InventoryItemRemoved(itemIndex, 1, CurrentPartyMember);
+
+                                    if (removeItemFromCharacter)
+                                        InventoryItemRemoved(itemIndex, 1, targetPlayer);
                                 });
                             }
                             else
@@ -8328,7 +8378,10 @@ public class Game
                                 {
                                     uint itemIndex = itemSlot.ItemIndex;
                                     itemSlot.Remove(1);
-                                    InventoryItemRemoved(itemIndex, 1, CurrentPartyMember);
+
+                                    if (removeItemFromCharacter)
+                                        InventoryItemRemoved(itemIndex, 1, targetPlayer);
+
                                     if (itemSlot.Amount > 0)
                                     {
                                         StartSequence();
@@ -8337,7 +8390,9 @@ public class Game
                                         {
                                             itemGrid.ResetAnimation(itemSlot);
                                             EndSequence();
-                                            StartUseItems();
+
+                                            if (showItemsAfterwards)
+                                                StartUseItems();
                                         });
                                     }
                                     else
@@ -8353,12 +8408,21 @@ public class Game
                                             layout.ShowChestMessage(null);
                                             UntrapMouse();
                                         }
-                                        else
+                                        else if (showItemsAfterwards)
                                         {
+
                                             itemGrid.ResetAnimation(itemSlot);
                                             item.ShowItemAmount = true;
                                             item.Visible = true;
+
                                             StartUseItems();
+                                        }
+                                        else
+                                        {
+                                            itemGrid.HideTooltip();
+                                            itemGrid.Disabled = true;
+                                            layout.ShowChestMessage(null);
+                                            UntrapMouse();
                                         }
                                     }
                                 });
@@ -8374,14 +8438,38 @@ public class Game
                                 {
                                     itemGrid.ResetAnimation(itemSlot);
                                     EndSequence();
-                                    StartUseItems();
+
+                                    if (showItemsAfterwards)
+                                        StartUseItems();
+                                    else
+                                    {
+                                        itemGrid.HideTooltip();
+                                        itemGrid.Disabled = true;
+                                        layout.ShowChestMessage(null);
+                                        UntrapMouse();
+                                    }
+
+                                    if (!removeItemFromCharacter)
+                                    {
+                                        var item = ItemManager.GetItem(itemIndex);
+
+                                        // If the item was used and therefore consumed/destroyed, we have to add it back. 
+                                        if (item.Flags.HasFlag(ItemFlags.DestroyAfterUsage))
+                                        {
+                                            targetPlayer.AddItem(itemIndex, item.Flags.HasFlag(ItemFlags.Stackable));
+                                            InventoryItemAdded(itemIndex, 1, targetPlayer);
+
+                                            if (isActivePlayerItem)
+                                                layout.EnableButton(1, true);
+                                        }
+                                    }
                                 });
                             });
                         }
                     }
                 });
             });
-        };
+        }
 
         // Lockpick button
         layout.AttachEventToButton(0, () =>
@@ -8457,7 +8545,23 @@ public class Game
         layout.AttachEventToButton(2, Exit);
 
         if (!string.IsNullOrWhiteSpace(initialMessage))
-            layout.ShowClickChestMessage(initialMessage);
+            layout.ShowClickChestMessage(initialMessage, CheckImmediateOpen);
+        else
+            CheckImmediateOpen();
+
+        void CheckImmediateOpen()
+        {
+            if (usedKey == 0)
+                return;
+
+            StartSequence();
+            var targetPosition = chest ? new Position(28, 76) : new Position(73, 102);
+            itemGrid.Disabled = false;
+            itemGrid.DisableDrag = true;
+            var itemSlot = new ItemSlot { ItemIndex = usedKey, Amount = 1 };
+            itemGrid.Initialize([itemSlot], false);
+            CheckKey(itemSlot, false, false);
+        }
     }
 
     static readonly Dictionary<uint, ushort> PartyMemberCharacterBits = new Dictionary<uint, ushort>

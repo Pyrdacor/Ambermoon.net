@@ -854,6 +854,8 @@ class Cheats
 
     static void Give(Game game, string[] args)
     {
+        // TODO: If the char has no items and the inventory is open,
+        //       the buttons are still disabled after give.
         Console.WriteLine();
 
         PartyMember GetPartyMember(int argIndex)

@@ -115,6 +115,31 @@ namespace Ambermoon.Data
 
         public bool HasItem(uint itemIndex) => Inventory.Slots.Any(s => s.ItemIndex == itemIndex);
 
+        // This will not add anything if there is no free slot.
+        // It also won't not adjust weight and other things.
+        // The item is simply added to the inventory.
+        public void AddItem(uint itemIndex, bool stackable)
+        {
+            if (stackable)
+            {
+                var slotWithSameItem = Inventory.Slots.FirstOrDefault(s => s.ItemIndex == itemIndex && s.Amount < 99);
+
+                if (slotWithSameItem != null)
+                {
+                    slotWithSameItem.Amount = (byte)Math.Min(99, slotWithSameItem.Amount + 1);
+                    return;
+                }
+            }
+
+            var emptySlot = Inventory.Slots.FirstOrDefault(s => s.Empty);
+
+            if (emptySlot != null)
+            {
+                emptySlot.ItemIndex = itemIndex;
+                emptySlot.Amount = 1;
+            }
+        }
+
         public void AddGold(uint gold)
         {
             var newGold = (ushort)Math.Min(ushort.MaxValue, Gold + gold);

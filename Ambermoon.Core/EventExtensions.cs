@@ -85,7 +85,8 @@ namespace Ambermoon
                     if (@event is not DoorEvent doorEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid door event.");
 
-                    if (!game.ShowDoor(doorEvent, false, false, map, x, y, true, trigger == EventTrigger.Move))
+                    if (!game.ShowDoor(doorEvent, false, false, map, x, y, true, trigger == EventTrigger.Move,
+                        trigger >= EventTrigger.Item0 ? (uint)(trigger - EventTrigger.Item0) : 0))
                     {
                         // already unlocked
                         // Note that the original sets last event status to false in this case!
@@ -121,7 +122,8 @@ namespace Ambermoon
                         return null;
                     }
 
-                    aborted = !game.ShowChest(chestEvent, false, false, map, new Position((int)x, (int)y), true);
+                    aborted = !game.ShowChest(chestEvent, false, false, map, new Position((int)x, (int)y), true, false,
+                        trigger >= EventTrigger.Item0 ? (uint)(trigger - EventTrigger.Item0) : 0);
                     return null;
                 }
                 case EventType.MapText:
