@@ -43,8 +43,10 @@ namespace Ambermoon.UI
         TextColor defaultTextColor = TextColor.BrightGray;
         public bool WithScrolling { get; internal set; }
         public bool CanScroll => WithScrolling && this.text.LineCount > numVisibleLines;
+        public int NumVisibleLines => numVisibleLines;
 
-		public event Action FreeScrollingStarted;
+
+        public event Action FreeScrollingStarted;
         public event Action FreeScrollingEnded;
 
         public bool Visible
@@ -160,19 +162,39 @@ namespace Ambermoon.UI
             renderText.Place(position.X, position.Y);
         }
 
-        public void MouseMove(int y)
+        public void MouseMove(int y, bool mobile)
         {
             if (freeScrolling)
             {
                 if (y < 0)
                 {
                     if (lineOffset > 0)
-                        UpdateText(--lineOffset);
+                    {
+                        if (mobile)
+                        {
+                            lineOffset = Math.Max(0, lineOffset - NumVisibleLines / 2);
+                            UpdateText(lineOffset);
+                        }
+                        else
+                        {
+                            UpdateText(--lineOffset);
+                        }
+                    }
                 }
                 else if (y > 0)
                 {
                     if (lineOffset < text.LineCount - numVisibleLines)
-                        UpdateText(++lineOffset);
+                    {
+                        if (mobile)
+                        {
+                            lineOffset = Math.Min(text.LineCount - numVisibleLines, lineOffset + NumVisibleLines / 2);
+                            UpdateText(lineOffset);
+                        }
+                        else
+                        {
+                            UpdateText(++lineOffset);
+                        }
+                    }
                 }
             }
         }

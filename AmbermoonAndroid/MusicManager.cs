@@ -193,6 +193,8 @@ namespace AmbermoonAndroid
 			}
         }
 
+		public int SampleRate => 44100;
+
 		public MusicManager(bool musicEnabled, bool firstStart)
         {
 			using var stream = FileProvider.GetMusic();

@@ -4364,8 +4364,8 @@ public class Game
         bool scrolled = false;
 
         if (xScroll != 0)
-            scrolled = layout.ScrollX(xScroll < 0);
-        if (yScroll != 0 && layout.ScrollY(Configuration.IsMobile ? yScroll > 0 : yScroll < 0))
+            scrolled = layout.ScrollX(xScroll);
+        if (yScroll != 0 && layout.ScrollY(yScroll))
             scrolled = true;
 
         if (scrolled)

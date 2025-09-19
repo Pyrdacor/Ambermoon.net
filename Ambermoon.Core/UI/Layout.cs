@@ -847,9 +847,12 @@ namespace Ambermoon.UI
             activePopup = new Popup(game, RenderView, position, transparent ? maxWidth / Global.GlyphWidth : 18, popupRows, transparent, displayLayerOffset)
             {
                 DisableButtons = disableButtons,
-                CloseOnClick = closeOnClick && !scrolling
+                CloseOnClick = closeOnClick
             };
             var uiText = activePopup.AddText(textBounds, processedText, textColor, textAlign, true, 1, scrolling, this);
+
+            if (activePopup.CloseOnClick && scrolling)
+                activePopup.CloseOnClick = false;
 
             if (paletteOverride != null)
                 uiText.PaletteIndex = paletteOverride.Value;
@@ -4738,7 +4741,15 @@ namespace Ambermoon.UI
             scrollableText.FreeScrollingStarted += () =>
             {
                 freeScrolledText = scrollableText;
-                game.ExecuteNextUpdateCycle(() => game.CursorType = CursorType.None);
+
+                if (game.Configuration.IsMobile)
+                {
+                    activePopup.CanAbort = !activePopup.HasButtons && !activePopup.HasList && !activePopup.HasChildPopup;
+                }
+                else
+                {
+                    game.ExecuteNextUpdateCycle(() => game.CursorType = CursorType.None);
+                }
             };
             scrollableText.FreeScrollingEnded += () =>
             {
@@ -5112,21 +5123,31 @@ namespace Ambermoon.UI
             }
         }
 
-        public bool ScrollX(bool right)
+        public bool ScrollX(int xScroll)
         {
+            // bool right = xScroll < 0;
+
             // not used
             return false;
         }
 
-        public bool ScrollY(bool down)
+        public bool ScrollY(int yScroll)
         {
-            if (OptionMenuOpen && PopupActive && activePopup.Scroll(down))
+            bool down = game.Configuration.IsMobile ? yScroll > 0 : yScroll < 0;
+
+            if (OptionMenuOpen && PopupActive && activePopup.Scroll(down, yScroll))
                 return true;
+
+            if (game.Configuration.IsMobile && PopupActive && freeScrolledText != null && activePopup.CanAbort)
+            {
+                if (activePopup.Scroll(down, yScroll))
+                    return true;
+            }
 
             if (!game.InputEnable)
                 return false;
 
-            if (PopupActive && activePopup.Scroll(down))
+            if (PopupActive && activePopup.Scroll(down, yScroll))
                 return true;
 
             if (HasScrollableItemGrid)
@@ -5699,7 +5720,7 @@ namespace Ambermoon.UI
         {
             if (freeScrolledText != null)
             {
-                freeScrolledText?.MouseMove(diff.Y);
+                freeScrolledText?.MouseMove(diff.Y, game.Configuration.IsMobile);
             }
         }
 

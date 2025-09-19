@@ -358,7 +358,7 @@ namespace Ambermoon.UI
             return false;
         }
 
-        public bool Scroll(bool down)
+        public bool Scroll(bool down, int yScroll)
         {
             if (scrollbar != null && !scrollbar.Disabled)
             {
@@ -381,6 +381,12 @@ namespace Ambermoon.UI
             if (Scrolled != null)
             {
                 Scrolled(down);
+                return true;
+            }
+
+            if (game.Configuration.IsMobile && game.Layout.FreeTextScrollingActive && texts.Count > 0)
+            {
+                texts[0]?.MouseMove(yScroll, true);
                 return true;
             }
 
