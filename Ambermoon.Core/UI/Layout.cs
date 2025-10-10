@@ -4744,7 +4744,8 @@ namespace Ambermoon.UI
 
                 if (game.Configuration.IsMobile)
                 {
-                    activePopup.CanAbort = !activePopup.HasButtons && !activePopup.HasList && !activePopup.HasChildPopup;
+                    if (activePopup != null)
+                        activePopup.CanAbort = !activePopup.HasButtons && !activePopup.HasList && !activePopup.HasChildPopup;
                 }
                 else
                 {

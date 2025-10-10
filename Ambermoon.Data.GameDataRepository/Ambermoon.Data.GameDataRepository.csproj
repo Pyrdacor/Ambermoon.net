@@ -4,7 +4,7 @@
 	<TargetFrameworks>net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<Version>0.1.2</Version>
+	<Version>0.1.3</Version>
 	<Authors>Robert Schneckenhaus</Authors>
 	<Description>Library to load and modify Ambermoon game data repositories. Use this for new projects like editors.</Description>
 	<PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>

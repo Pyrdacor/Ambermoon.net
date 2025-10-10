@@ -28,7 +28,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// <summary>
         /// Character follows a given path (NPCs and party members only)
         /// </summary>
-        Path
+        Path,
+        /// <summary>
+        /// Hour movement is new in the advanced version (episode 3).
+        /// Only 12 positions are stored (one for each 5 min chunk in an hour).
+        /// They are repeated every hour.
+        /// </summary>
+        Hour
     }
 
     
@@ -349,8 +355,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             ValueChecker.Check(combatBackgroundIndex, 0, 15);
             ValueChecker.Check(graphicIndex, 0, ushort.MaxValue);
 
-            if (movementType == MapCharacterMovementType.Path)
-                throw new ArgumentException("Movement type must not be path for monsters.");
+            if (movementType == MapCharacterMovementType.Path || movementType == MapCharacterMovementType.Hour)
+                throw new ArgumentException("Movement type must not be path nor hour for monsters.");
 
             MonsterGroupIndex = monsterGroupIndex;
             CombatBackgroundIndex = combatBackgroundIndex;
@@ -410,8 +416,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             EventIndex = 0;
             IsTextPopup = false;
             OnlyMoveWhenSeePlayer = false;
-            if (movementType == MapCharacterMovementType.Path)
-                InitPath();
+            if (movementType == MapCharacterMovementType.Path || movementType == MapCharacterMovementType.Hour)
+                InitPath(movementType == MapCharacterMovementType.Hour);
             else
                 RemovePath();
         }
@@ -456,8 +462,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             EventIndex = 0;
             IsTextPopup = false;
             OnlyMoveWhenSeePlayer = false;
-            if (movementType == MapCharacterMovementType.Path)
-                InitPath();
+            if (movementType == MapCharacterMovementType.Path || movementType == MapCharacterMovementType.Hour)
+                InitPath(movementType == MapCharacterMovementType.Hour);
             else
                 RemovePath();
         }
@@ -503,8 +509,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             EventIndex = 0;
             OnlyMoveWhenSeePlayer = false;
             NpcStartsConversation = false;
-            if (movementType == MapCharacterMovementType.Path)
-                InitPath();
+            if (movementType == MapCharacterMovementType.Path || movementType == MapCharacterMovementType.Hour)
+                InitPath(movementType == MapCharacterMovementType.Hour);
             else
                 RemovePath();
         }
@@ -529,8 +535,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             IsTextPopup = false;
             OnlyMoveWhenSeePlayer = false;
             NpcStartsConversation = false;
-            if (movementType == MapCharacterMovementType.Path)
-                InitPath();
+            if (movementType == MapCharacterMovementType.Path || movementType == MapCharacterMovementType.Hour)
+                InitPath(movementType == MapCharacterMovementType.Hour);
             else
                 RemovePath();
         }
@@ -562,7 +568,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
         }
 
-        internal void InitPath(DataCollection<MapPositionData>? path = null)
+        internal void InitPath(bool hour, DataCollection<MapPositionData>? path = null)
         {
             if (path is not null)
             {
@@ -574,7 +580,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             if (Path is null)
             {
-                Path = new DataCollection<MapPositionData>(288, _ => Position.Copy());
+                Path = new DataCollection<MapPositionData>(hour ? 12 : 288, _ => Position.Copy());
                 Path.ItemChanged += PathItemChanged;
                 OnPropertyChanged(nameof(Path));
             }
@@ -625,6 +631,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                     default:
                         if (MovementType == MapCharacterMovementType.Stationary && advanced)
                             typeAndFlags |= 0x80;
+                        else if (MovementType == MapCharacterMovementType.Hour && advanced)
+                            typeAndFlags |= 0x40;
                         else if (MovementType == MapCharacterMovementType.Random)
                             typeAndFlags |= 0x04;
                         break;
@@ -687,8 +695,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 default:
                 {
                     bool stationary = advanced && (typeAndFlags & 0x20) != 0;
+                    bool hour = advanced && (typeAndFlags & 0x10) != 0;
                     mapCharacterData.MovementType = baseMovementType == 0
-                        ? (stationary ? MapCharacterMovementType.Stationary : MapCharacterMovementType.Path)
+                        ? (stationary ? MapCharacterMovementType.Stationary : (hour ? MapCharacterMovementType.Hour : MapCharacterMovementType.Path))
                         : MapCharacterMovementType.Random;
                     break;
                 }
@@ -723,9 +732,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             mapCharacterData.RandomAnimation = (tileFlags & 0x10) != 0;
             mapCharacterData.AllowedCollisionClasses = (tileFlags & 0x80) != 0 ? 0 : (tileFlags >> 8) & 0x7fff;
 
-            if (mapCharacterData.MovementType == MapCharacterMovementType.Path)
+            if (mapCharacterData.MovementType == MapCharacterMovementType.Path || mapCharacterData.MovementType == MapCharacterMovementType.Hour)
             {
-                mapCharacterData.InitPath();
+                mapCharacterData.InitPath(mapCharacterData.MovementType == MapCharacterMovementType.Hour);
             }
 
             return mapCharacterData;

@@ -548,7 +548,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                     continue;
 
                 if (mapChar.CharacterType == CharacterType.Monster ||
-                    mapChar.MovementType != MapCharacterMovementType.Path)
+                    (mapChar.MovementType != MapCharacterMovementType.Path &&
+                     mapChar.MovementType != MapCharacterMovementType.Hour))
                 {
                     mapChar.Position.Serialize(dataWriter, advanced);
                 }
@@ -659,9 +660,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
                     mapChar.Position = (MapPositionData)MapPositionData.Deserialize(dataReader, advanced);
                 else if (mapChar.CharacterType is not null)
                 {
-                    if (mapChar.MovementType == MapCharacterMovementType.Path)
+                    if (mapChar.MovementType == MapCharacterMovementType.Path || mapChar.MovementType == MapCharacterMovementType.Hour)
                     {
-                        mapChar.InitPath(DataCollection<MapPositionData>.Deserialize(dataReader, 288, advanced));
+                        mapChar.InitPath(mapChar.MovementType == MapCharacterMovementType.Hour,
+                            DataCollection<MapPositionData>.Deserialize(dataReader, mapChar.MovementType == MapCharacterMovementType.Hour ? 12 : 288, advanced));
                         mapChar.Position = mapChar.Path![0];
                     }
                     else

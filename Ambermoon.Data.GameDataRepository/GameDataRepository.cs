@@ -469,10 +469,8 @@ namespace Ambermoon.Data.GameDataRepository
             var object3DImageFiles = ReadFileContainers("2Object3D.amb", "3Object3D.amb");
             static Image Load3DObjectImage(uint index, IDataReader dataReader)
             {
-                // TODO
-                var info = //index < TextureGraphicInfos.ObjectGraphicFrameCountsAndSizes.Length
-                    /*? */TextureGraphicInfos.ObjectGraphicFrameCountsAndSizes[index - 1]
-                    /*: 0*/; // TODO
+                // NOTE: If this crashes please update the infos in "Ambermoon.Data.Common/TextureGraphicInfos.cs".
+                var info = TextureGraphicInfos.ObjectGraphicFrameCountsAndSizes[index - 1];
                 return Image.Deserialize(index, dataReader, info.Key, info.Value.Width, info.Value.Height, GraphicFormat.Texture4Bit);
             }
             Object3DImages = object3DImageFiles.Select(object3DImageFile => Load3DObjectImage((uint)object3DImageFile.Key, object3DImageFile.Value)).ToDictionaryList();
