@@ -144,5 +144,5 @@ deploy:
   - provider: NuGet
     name: NugetPackages
     api_key:
-      secure: 7ujvk64dx5v/uIaRbaWM8wkxhxbqCQ2o6rrPctfu0nMamIKAezf+TPzRY81cBNFT
+      secure: WhJobR60j2QZs4Ve0Jv1fbr6tocp/x8vscNPWq5jX6RNc8AYsrr4MRfEIX2fq+Rx
     skip_symbols: true
