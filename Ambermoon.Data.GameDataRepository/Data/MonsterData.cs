@@ -51,6 +51,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         private uint _morale = 0;
         private uint _defeatExperience = 0;
+        private AdvancedMonsterFlags _attackImmunity = AdvancedMonsterFlags.None;
         private uint _graphicIndex = 0;
         private uint _originalFrameWidth = 0;
         private uint _originalFrameHeight = 0;
@@ -97,6 +98,12 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 ValueChecker.Check(value, 0, ushort.MaxValue);
                 SetField(ref _defeatExperience, value);
             }
+        }
+
+        public AdvancedMonsterFlags AttackImmunity
+        {
+            get => _attackImmunity;
+            set => SetField(ref _attackImmunity, value);
         }
 
         public byte[] CustomPalette { get; set; } = new byte[32];
@@ -148,11 +155,15 @@ namespace Ambermoon.Data.GameDataRepository.Data
         #endregion
 
 
+        #region Constructors
+
         public MonsterData()
         {
             for (int i = 0; i < 8; i++)
                 _animations[i] = new Animation();
         }
+
+        #endregion
 
 
         #region Methods
@@ -204,7 +215,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
 		#region Serialization
 
-		public void Serialize(IDataWriter dataWriter, bool advanced)
+		public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             void WriteFillBytes(int count)
             {
@@ -219,7 +230,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((byte)SpellMastery);
             dataWriter.Write((byte)Level);
             dataWriter.Write((byte)Class);
-            WriteFillBytes(6);
+            WriteFillBytes(5);
+            if (advanced)
+                dataWriter.Write((byte)AttackImmunity);
+            else
+                WriteFillBytes(1);
             dataWriter.Write((byte)GraphicIndex);
             WriteFillBytes(2);
             dataWriter.Write((byte)Math.Min(Morale, 100));
@@ -298,8 +313,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.WriteWithoutLength(name.PadRight(16, '\0'));
 
             #region Equipment and Items
-            Equipment.Serialize(dataWriter, advanced);
-            Items.Serialize(dataWriter, advanced);
+            Equipment.Serialize(dataWriter, majorVersion, advanced);
+            Items.Serialize(dataWriter, majorVersion, advanced);
             #endregion
 
             #region Monster Display Data
@@ -336,7 +351,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             #endregion
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             if (dataReader.ReadByte() != (byte)CharacterType.Monster)
                 throw new InvalidDataException("The given data is no valid monster data.");
@@ -350,7 +365,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
             monsterData.Class = (Class)dataReader.ReadByte();
             monsterData.SpellMastery = (SpellTypeMastery)dataReader.ReadByte();
             monsterData.Level = dataReader.ReadByte();
-            SkipBytes(6);
+            SkipBytes(5);
+            monsterData.AttackImmunity = advanced ? (AdvancedMonsterFlags)dataReader.ReadByte() : AdvancedMonsterFlags.None;
+            if (!advanced)
+                SkipBytes(1);
             monsterData.GraphicIndex = dataReader.ReadByte();
             SkipBytes(2);
             monsterData.Morale = dataReader.ReadByte();
@@ -419,8 +437,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             monsterData.Name = dataReader.ReadString(16).TrimEnd('\0', ' ');
 
             #region Equipment and Items
-            monsterData.Equipment = DataCollection<ItemSlotData>.Deserialize(dataReader, EquipmentSlotCount, advanced);
-            monsterData.Items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, advanced);
+            monsterData.Equipment = DataCollection<ItemSlotData>.Deserialize(dataReader, EquipmentSlotCount, majorVersion, advanced);
+            monsterData.Items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, majorVersion, advanced);
             monsterData.InitializeItemSlots();
 
             // TODO
@@ -462,9 +480,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return monsterData;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var monsterData = (MonsterData)Deserialize(dataReader, advanced);
+            var monsterData = (MonsterData)Deserialize(dataReader, majorVersion, advanced);
             (monsterData as IMutableIndex).Index = index;
             return monsterData;
         }
@@ -476,7 +494,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(MonsterData? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return base.Equals(other) &&
                     _morale == other._morale &&
@@ -493,13 +511,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((MonsterData)obj);
         }
-
-        public override int GetHashCode() => (int)Index;
 
         public static bool operator ==(MonsterData? left, MonsterData? right)
         {

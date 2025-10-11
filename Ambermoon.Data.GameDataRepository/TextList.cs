@@ -42,19 +42,19 @@
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             Legacy.Serialization.TextWriter.WriteTexts(dataWriter, this);
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var textList = (TextList)Deserialize(dataReader, advanced);
+            var textList = (TextList)Deserialize(dataReader, majorVersion, advanced);
             (textList as IMutableIndex).Index = index;
             return textList;
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             return new TextList(0, Legacy.Serialization.TextReader.ReadTexts(dataReader));
         }
@@ -80,7 +80,7 @@
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((TextList)obj);
@@ -157,14 +157,14 @@
 
         #region Serialization
 
-        public static IIndexedDependentData<T> Deserialize(IDataReader dataReader, uint index, T providedData, bool advanced)
+        public static IIndexedDependentData<T> Deserialize(IDataReader dataReader, uint index, T providedData, int majorVersion, bool advanced)
         {
-            var textList = (TextList<T>)Deserialize(dataReader, providedData, advanced);
+            var textList = (TextList<T>)Deserialize(dataReader, providedData, majorVersion, advanced);
             (textList as IMutableIndex).Index = index;
             return textList;
         }
 
-        public static IDependentData<T> Deserialize(IDataReader dataReader, T providedData, bool advanced)
+        public static IDependentData<T> Deserialize(IDataReader dataReader, T providedData, int majorVersion, bool advanced)
         {
             return new TextList<T>(0, providedData, Legacy.Serialization.TextReader.ReadTexts(dataReader));
         }
@@ -190,7 +190,7 @@
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((TextList<T>)obj);

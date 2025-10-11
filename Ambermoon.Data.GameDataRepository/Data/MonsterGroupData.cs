@@ -36,7 +36,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             for (int y = 0; y < 3; y++)
             {
@@ -47,7 +47,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var monsterGroupData = new MonsterGroupData();
 
@@ -62,9 +62,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return monsterGroupData;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var monsterGroupData = (MonsterGroupData)Deserialize(dataReader, advanced);
+            var monsterGroupData = (MonsterGroupData)Deserialize(dataReader, majorVersion, advanced);
             (monsterGroupData as IMutableIndex).Index = index;
             return monsterGroupData;
         }
@@ -76,8 +76,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(MonsterGroupData? other)
         {
-            if (other is null)
-                return false;
+            if (other is null) return false;
+            if (ReferenceEquals(this, other)) return true;
 
             return MonsterIndices.Select((item, index) => new { Item = item, Index = index })
                 .All(entry => other.MonsterIndices[entry.Index] == entry.Item);
@@ -85,7 +85,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((MonsterGroupData)obj);
@@ -132,14 +132,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
         private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(propertyName);
-            return true;
         }
 
         #endregion

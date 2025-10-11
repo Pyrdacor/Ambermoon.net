@@ -504,7 +504,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             // Header
             dataWriter.Write((ushort)Flags);
@@ -520,7 +520,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((byte)0);
 
             // Map characters
-            MapCharacters.Serialize(dataWriter, advanced);
+            MapCharacters.Serialize(dataWriter, majorVersion, advanced);
 
             // Tile data
             IEnumerable<object>? tiles = Type == MapType.Map2D ? Tiles2D : Tiles3D;
@@ -529,7 +529,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 throw new NullReferenceException("Map tiles are missing.");
 
             foreach (var tile in tiles)
-                (tile as IData)!.Serialize(dataWriter, advanced);
+                (tile as IData)!.Serialize(dataWriter, majorVersion, advanced);
 
             // Event entry list
             dataWriter.Write((ushort)EventEntryList.Count);
@@ -539,7 +539,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             // Events
             dataWriter.Write((ushort)Events.Count);
             foreach (var mapEvent in Events)
-                mapEvent.Serialize(dataWriter, advanced);
+                mapEvent.Serialize(dataWriter, majorVersion, advanced);
 
             // Map Character Positions
             foreach (var mapChar in MapCharacters)
@@ -551,11 +551,11 @@ namespace Ambermoon.Data.GameDataRepository.Data
                     (mapChar.MovementType != MapCharacterMovementType.Path &&
                      mapChar.MovementType != MapCharacterMovementType.Hour))
                 {
-                    mapChar.Position.Serialize(dataWriter, advanced);
+                    mapChar.Position.Serialize(dataWriter, majorVersion, advanced);
                 }
                 else
                 {
-                    mapChar.Path!.Serialize(dataWriter, advanced);
+                    mapChar.Path!.Serialize(dataWriter, majorVersion, advanced);
                 }
             }
 
@@ -578,7 +578,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 dataWriter.Write(0);
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var mapData = new MapData();
 
@@ -597,7 +597,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 throw new InvalidDataException("Invalid map data");
 
             // Map characters
-            mapData.MapCharacters = DependentDataCollection<MapCharacterData, MapData>.Deserialize(dataReader, 32, mapData, advanced);
+            mapData.MapCharacters = DependentDataCollection<MapCharacterData, MapData>.Deserialize(dataReader, 32, mapData, majorVersion, advanced);
             mapData.MapCharacters.ItemChanged += mapData.MapCharactersChanged;
 
             if (mapData.Type == MapType.Map2D)
@@ -610,7 +610,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 {
                     for (int x = 0; x < width; x++)
                     {
-                        mapData.Tiles2D.Set(x, y, (MapTile2DData)MapTile2DData.Deserialize(dataReader, advanced));
+                        mapData.Tiles2D.Set(x, y, (MapTile2DData)MapTile2DData.Deserialize(dataReader, majorVersion, advanced));
                     }
                 }
 
@@ -630,7 +630,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 {
                     for (int x = 0; x < width; x++)
                     {
-                        mapData.Tiles3D.Set(x, y, (MapTile3DData)MapTile3DData.Deserialize(dataReader, advanced));
+                        mapData.Tiles3D.Set(x, y, (MapTile3DData)MapTile3DData.Deserialize(dataReader, majorVersion, advanced));
                     }
                 }
 
@@ -643,13 +643,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             // Event entry list
             int eventEntryListSize = dataReader.ReadWord();
-            var eventEntryList = DataCollection<MapEventEntryData>.Deserialize(dataReader, eventEntryListSize, advanced);
+            var eventEntryList = DataCollection<MapEventEntryData>.Deserialize(dataReader, eventEntryListSize, majorVersion, advanced);
             mapData.EventEntryList = new DictionaryList<MapEventEntryData>(eventEntryList);
             // TODO: change detection
 
             // Events
             int numberOfEvents = dataReader.ReadWord();
-            var events = DataCollection<EventData>.Deserialize(dataReader, numberOfEvents, advanced);
+            var events = DataCollection<EventData>.Deserialize(dataReader, numberOfEvents, majorVersion, advanced);
             mapData.Events = new DictionaryList<EventData>(events);
             // TODO: change detection
 
@@ -657,18 +657,18 @@ namespace Ambermoon.Data.GameDataRepository.Data
             foreach (var mapChar in mapData.MapCharacters)
             {
                 if (mapChar.CharacterType == CharacterType.Monster)
-                    mapChar.Position = (MapPositionData)MapPositionData.Deserialize(dataReader, advanced);
+                    mapChar.Position = (MapPositionData)MapPositionData.Deserialize(dataReader, majorVersion, advanced);
                 else if (mapChar.CharacterType is not null)
                 {
                     if (mapChar.MovementType == MapCharacterMovementType.Path || mapChar.MovementType == MapCharacterMovementType.Hour)
                     {
                         mapChar.InitPath(mapChar.MovementType == MapCharacterMovementType.Hour,
-                            DataCollection<MapPositionData>.Deserialize(dataReader, mapChar.MovementType == MapCharacterMovementType.Hour ? 12 : 288, advanced));
+                            DataCollection<MapPositionData>.Deserialize(dataReader, mapChar.MovementType == MapCharacterMovementType.Hour ? 12 : 288, majorVersion, advanced));
                         mapChar.Position = mapChar.Path![0];
                     }
                     else
                     {
-                        mapChar.Position = (MapPositionData)MapPositionData.Deserialize(dataReader, advanced);
+                        mapChar.Position = (MapPositionData)MapPositionData.Deserialize(dataReader, majorVersion, advanced);
                     }
                 }
             }
@@ -683,7 +683,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
             else
             {
-                var gotoPoints = DataCollection<MapGotoPointData>.Deserialize(dataReader, numGotoPoints, advanced);
+                var gotoPoints = DataCollection<MapGotoPointData>.Deserialize(dataReader, numGotoPoints, majorVersion, advanced);
                 mapData.GotoPoints = new DictionaryList<MapGotoPointData>(gotoPoints);
                 // TODO: change detection
 
@@ -698,9 +698,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return mapData;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var mapData = (MapData)Deserialize(dataReader, advanced);
+            var mapData = (MapData)Deserialize(dataReader, majorVersion, advanced);
             (mapData as IMutableIndex).Index = index;
             return mapData;
         }
@@ -712,7 +712,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(MapData? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Index == other.Index &&
                    Type == other.Type &&
@@ -733,7 +733,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((MapData)obj);

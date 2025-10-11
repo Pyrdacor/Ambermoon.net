@@ -13,6 +13,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         private string _name = string.Empty;
         private uint _level = 1;
+        private Gender _gender;
+        private Class _class;
+        private Race _race;
 
         #endregion
 
@@ -34,17 +37,29 @@ namespace Ambermoon.Data.GameDataRepository.Data
             set
             {
                 ValueChecker.Check(value, 15);
-                _name = value;
+                SetField(ref _name, value);
             }
         }
 
         public abstract CharacterType Type { get; }
 
-        public Gender Gender { get; set; }
+        public Gender Gender
+        {
+            get => _gender;
+            set => SetField(ref _gender, value);
+        }
 
-        public Class Class { get; set; }
+        public Class Class
+        {
+            get => _class;
+            set => SetField(ref _class, value);
+        }
 
-        public Race Race { get; set; }
+        public Race Race
+        {
+            get => _race;
+            set => SetField(ref _race, value);
+        }
 
         /// <summary>
         /// Level of the character.
@@ -59,7 +74,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             set
             {
                 ValueChecker.Check(value, 1, byte.MaxValue);
-                _level = value;
+                SetField(ref _level, value);
             }
         }
 
@@ -80,20 +95,20 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(CharacterData? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
-            return _name == other._name &&
-                   _level == other._level &&
-                   Index == other.Index &&
+            return Index == other.Index &&
                    Type == other.Type &&
-                   Gender == other.Gender &&
-                   Class == other.Class &&
-                   Race == other.Race;
+                   _name == other._name &&
+                   _level == other._level &&                   
+                   _gender == other._gender &&
+                   _class == other._class &&
+                   _race == other._race;
         }
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((CharacterData)obj);

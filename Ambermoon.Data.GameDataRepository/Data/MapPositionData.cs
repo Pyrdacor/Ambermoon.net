@@ -58,13 +58,13 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             dataWriter.Write((byte)X);
             dataWriter.Write((byte)Y);
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var positionData = new MapPositionData();
 
@@ -74,9 +74,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return positionData;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var positionData = (MapPositionData)Deserialize(dataReader, advanced);
+            var positionData = (MapPositionData)Deserialize(dataReader, majorVersion, advanced);
             (positionData as IMutableIndex).Index = index;
             return positionData;
         }
@@ -96,7 +96,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((MapPositionData)obj);

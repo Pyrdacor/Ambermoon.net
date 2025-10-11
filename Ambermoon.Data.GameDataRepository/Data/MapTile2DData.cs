@@ -74,14 +74,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             dataWriter.Write((byte)BackTileIndex);
             dataWriter.Write((byte)(MapEventId ?? 0));
             dataWriter.Write((ushort)FrontTileIndex);
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             uint backTileIndex = dataReader.ReadByte();
             uint mapEventId = dataReader.ReadByte();
@@ -102,8 +102,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(MapTile2DData? other)
         {
-            if (other is null)
-                return false;
+            if (other is null) return false;
+            if (ReferenceEquals(this, other)) return true;
 
             return
                 BackTileIndex == other.BackTileIndex &&
@@ -113,7 +113,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((MapTile2DData)obj);

@@ -88,18 +88,18 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             foreach (var item in this)
-                item.Serialize(dataWriter, advanced);
+                item.Serialize(dataWriter, majorVersion, advanced);
         }
 
-        public static DataCollection<TElement> Deserialize(IDataReader dataReader, int size, bool advanced)
+        public static DataCollection<TElement> Deserialize(IDataReader dataReader, int size, int majorVersion, bool advanced)
         {
             var collection = new DataCollection<TElement>(size);
 
             for (uint i = 0; i < size; i++)
-                collection._elements[i] = (TElement)TElement.Deserialize(dataReader, i, advanced);
+                collection._elements[i] = (TElement)TElement.Deserialize(dataReader, i, majorVersion, advanced);
 
             return collection;
         }
@@ -111,14 +111,14 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         public bool Equals(DataCollection<TElement>? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Count == other.Count && _elements.Equals(other._elements);
         }
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
             return Equals((DataCollection<TElement>)obj);
@@ -247,18 +247,18 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             foreach (var item in this)
-                item.Serialize(dataWriter, advanced);
+                item.Serialize(dataWriter, majorVersion, advanced);
         }
 
-        public static DependentDataCollection<TElement, TDependency> Deserialize(IDataReader dataReader, int size, TDependency providedData, bool advanced)
+        public static DependentDataCollection<TElement, TDependency> Deserialize(IDataReader dataReader, int size, TDependency providedData, int majorVersion, bool advanced)
         {
             var collection = new DependentDataCollection<TElement, TDependency>(size);
 
             for (uint i = 0; i < size; i++)
-                collection._elements[i] = (TElement)TElement.Deserialize(dataReader, i, providedData, advanced);
+                collection._elements[i] = (TElement)TElement.Deserialize(dataReader, i, providedData, majorVersion, advanced);
 
             return collection;
         }
@@ -303,14 +303,14 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         public bool Equals(DependentDataCollection<TElement, TDependency>? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Count == other.Count && _elements.Equals(other._elements);
         }
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
             return Equals((DependentDataCollection<TElement, TDependency>)obj);

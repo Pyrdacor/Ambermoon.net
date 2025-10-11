@@ -591,7 +591,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
 
             if (CharacterType is null)
@@ -656,14 +656,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
         }
 
-        public static IIndexedDependentData<MapData> Deserialize(IDataReader dataReader, uint index, MapData providedData, bool advanced)
+        public static IIndexedDependentData<MapData> Deserialize(IDataReader dataReader, uint index, MapData providedData, int majorVersion, bool advanced)
         {
-            var mapCharacterData = (MapCharacterData)Deserialize(dataReader, providedData, advanced);
+            var mapCharacterData = (MapCharacterData)Deserialize(dataReader, providedData, majorVersion, advanced);
             (mapCharacterData as IMutableIndex).Index = index;
             return mapCharacterData;
         }
 
-        public static IDependentData<MapData> Deserialize(IDataReader dataReader, MapData providedData, bool advanced)
+        public static IDependentData<MapData> Deserialize(IDataReader dataReader, MapData providedData, int majorVersion, bool advanced)
         {
             var mapCharacterData = new MapCharacterData();
 
@@ -747,7 +747,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(MapCharacterData? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return _collisionClass == other._collisionClass &&
                    _allowedCollisionClasses == other._allowedCollisionClasses &&
@@ -773,7 +773,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((MapCharacterData)obj);

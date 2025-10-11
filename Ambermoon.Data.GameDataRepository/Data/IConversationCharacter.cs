@@ -12,6 +12,7 @@
         public uint Age { get; set; }
         public uint MaxAge { get; set; }
         public Language SpokenLanguages { get; set; }
+        public ExtendedLanguage AdditionalSpokenLanguages { get; set; }
         public uint GraphicIndex { get; set; }
         public uint LookAtCharTextIndex { get; set; }
 

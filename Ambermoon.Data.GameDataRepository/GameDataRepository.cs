@@ -95,6 +95,8 @@ namespace Ambermoon.Data.GameDataRepository
             set => _info.Version = value;
         }
 
+        public int MajorVersion => int.TryParse(Version.Split('.', 2)[0].TrimStart('v', 'V'), out var major) ? major : 0;
+
         public DateTime ReleaseDate
         {
             get => _info.ReleaseDate;
@@ -457,7 +459,7 @@ namespace Ambermoon.Data.GameDataRepository
             var mapFiles = ReadFileContainers("1Map_data.amb", "2Map_data.amb", "3Map_data.amb");
             Maps = mapFiles.Select(mapFile => (MapData)MapData.Deserialize(mapFile.Value, (uint)mapFile.Key, Advanced)).ToDictionaryList();
             var mapTextFiles = ReadFileContainers("1Map_texts.amb", "2Map_texts.amb", "3Map_texts.amb");
-            MapTexts = mapTextFiles.Select(mapTextFile => (TextList<MapData>)TextList<MapData>.Deserialize(mapTextFile.Value, (uint)mapTextFile.Key, Maps[(uint)mapTextFile.Key], Advanced)).ToDictionaryList();
+            MapTexts = mapTextFiles.Select(mapTextFile => (TextList<MapData>)TextList<MapData>.Deserialize(mapTextFile.Value, (uint)mapTextFile.Key, Maps[(uint)mapTextFile.Key], MajorVersion, Advanced)).ToDictionaryList();
             var tilesetFiles = ReadFileContainer("Icon_data.amb");
             Tilesets = tilesetFiles.Select(tilesetFile => (Tileset2DData)Tileset2DData.Deserialize(tilesetFile.Value, (uint)tilesetFile.Key, Advanced)).ToDictionaryList();
             var tile2DImageFiles = ReadFileContainers("1Icon_gfx.amb", "2Icon_gfx.amb", "3Icon_gfx.amb");
@@ -489,15 +491,14 @@ namespace Ambermoon.Data.GameDataRepository
 
             #region NPCs & Party Members
 
-            /*var npcFiles = ReadFileContainer("NPC_char.amb");
+            var npcFiles = ReadFileContainer("NPC_char.amb");
             Npcs = npcFiles.Select(npcFile => (NpcData)NpcData.Deserialize(npcFile.Value, (uint)npcFile.Key, Advanced)).ToDictionaryList();
             var npcTextFiles = ReadFileContainer("NPC_texts.amb");
-            NpcTexts = npcTextFiles.Select(npcTextFile => (TextList<NpcData>)TextList<NpcData>.Deserialize(npcTextFile.Value, (uint)npcTextFile.Key, Npcs[(uint)npcTextFile.Key], Advanced)).ToDictionaryList();
+            NpcTexts = npcTextFiles.Select(npcTextFile => (TextList<NpcData>)TextList<NpcData>.Deserialize(npcTextFile.Value, (uint)npcTextFile.Key, Npcs[(uint)npcTextFile.Key], MajorVersion, Advanced)).ToDictionaryList();
             var partyMemberFiles = ReadFileContainer("Save.00/Party_char.amb"); // TODO: Fallback to Initial/Party_char.amb
-            PartyMembers = partyMemberFiles.Select(partyMemberFile => (PartyMemberData)PartyMemberData.Deserialize(partyMemberFile.Value, (uint)partyMemberFile.Key, Advanced)).ToDictionaryList();
+            PartyMembers = partyMemberFiles.Select(partyMemberFile => (PartyMemberData)PartyMemberData.Deserialize(partyMemberFile.Value, (uint)partyMemberFile.Key, MajorVersion, Advanced)).ToDictionaryList();
             var partyMemberTextFiles = ReadFileContainer("Party_texts.amb");
-            PartyMemberTexts = partyMemberTextFiles.Select(partyMemberTextFile => (TextList<PartyMemberData>)TextList<PartyMemberData>.Deserialize(partyMemberTextFile.Value, (uint)partyMemberTextFile.Key, PartyMembers[(uint)partyMemberTextFile.Key], Advanced)).ToDictionaryList();
-            */
+            PartyMemberTexts = partyMemberTextFiles.Select(partyMemberTextFile => (TextList<PartyMemberData>)TextList<PartyMemberData>.Deserialize(partyMemberTextFile.Value, (uint)partyMemberTextFile.Key, PartyMembers[(uint)partyMemberTextFile.Key], MajorVersion, Advanced)).ToDictionaryList();
             PartyCombatIcons = combatGraphics.BattleFieldIcons.Take((int)Class.Monster).ToDictionaryList((_, i) => (uint)i);
             var portraitFiles = ReadFileContainer("Portraits.amb");
             Portraits = portraitFiles.Select(portraitFile =>
@@ -510,7 +511,7 @@ namespace Ambermoon.Data.GameDataRepository
             #region Monsters & Combat
 
             var monsterFiles = ReadFileContainer("Monster_char.amb");
-            Monsters = monsterFiles.Select(monsterFile => (MonsterData)MonsterData.Deserialize(monsterFile.Value, (uint)monsterFile.Key, Advanced)).ToDictionaryList();
+            Monsters = monsterFiles.Select(monsterFile => (MonsterData)MonsterData.Deserialize(monsterFile.Value, (uint)monsterFile.Key, MajorVersion, Advanced)).ToDictionaryList();
             var monsterGroupFiles = ReadFileContainer("Monster_groups.amb");
             MonsterGroups = monsterGroupFiles.Select(monsterGroupFile => (MonsterGroupData)MonsterGroupData.Deserialize(monsterGroupFile.Value, (uint)monsterGroupFile.Key, Advanced)).ToDictionaryList();
             var monsterGraphicFiles = ReadFileContainer("Monster_gfx.amb");
@@ -535,12 +536,12 @@ namespace Ambermoon.Data.GameDataRepository
 
             var itemFile = ReadFileContainer("Objects.amb")[1];
             int itemCount = itemFile.ReadWord();
-            Items = DataCollection<ItemData>.Deserialize(itemFile, itemCount, Advanced).ToDictionaryList();
+            Items = DataCollection<ItemData>.Deserialize(itemFile, itemCount, MajorVersion, Advanced).ToDictionaryList();
             var itemGraphicFiles = ReadFileContainer("Object_icons");
             ItemImages = ImageList.Deserialize(0, itemGraphicFiles[1], 16, 16, GraphicFormat.Palette5Bit)
                 .ToDictionaryList();
             var itemTextFiles = ReadFileContainer("Object_texts.amb");
-            ItemTexts = itemTextFiles.Select(itemTextFile => (TextList)TextList.Deserialize(itemTextFile.Value, (uint)itemTextFile.Key, Advanced)).ToDictionaryList();
+            ItemTexts = itemTextFiles.Select(itemTextFile => (TextList)TextList.Deserialize(itemTextFile.Value, (uint)itemTextFile.Key, MajorVersion, Advanced)).ToDictionaryList();
 
             #endregion
 
@@ -631,7 +632,7 @@ namespace Ambermoon.Data.GameDataRepository
             foreach (var mapGroup in mapGroups)
             {
                 var containerName = $"{mapGroup.Key}Map_data.amb";
-                WriteContainer(containerName, FileType.AMPC, mapGroup.ToDictionary(m => m.Index, m => SerializeEntity(m, Advanced)));
+                WriteContainer(containerName, FileType.AMPC, mapGroup.ToDictionary(m => m.Index, m => SerializeEntity(m, MajorVersion, Advanced)));
             }
             var mapTextGroups = GroupMapRelatedEntities(MapTexts);
             foreach (var mapTextGroup in mapTextGroups)
@@ -643,31 +644,31 @@ namespace Ambermoon.Data.GameDataRepository
             #endregion
 
             #region Monsters
-            WriteContainer("Monster_char.amb", FileType.AMPC, Monsters.ToDictionary(m => m.Index, m => SerializeEntity(m, Advanced)));
-            WriteContainer("Monster_groups.amb", FileType.AMPC, MonsterGroups.ToDictionary(m => m.Index, m => SerializeEntity(m, Advanced)));
+            WriteContainer("Monster_char.amb", FileType.AMPC, Monsters.ToDictionary(m => m.Index, m => SerializeEntity(m, MajorVersion, Advanced)));
+            WriteContainer("Monster_groups.amb", FileType.AMPC, MonsterGroups.ToDictionary(m => m.Index, m => SerializeEntity(m, MajorVersion, Advanced)));
             #endregion
         }
 
-        private static byte[] SerializeEntity<T>(T entity, bool advanced) where T : IData
+        private static byte[] SerializeEntity<T>(T entity, int majorVersion, bool advanced) where T : IData
         {
             var writer = new DataWriter();
-            entity.Serialize(writer, advanced);
+            entity.Serialize(writer, majorVersion, advanced);
             return writer.ToArray();
         }
 
-        private static byte[] SerializeDependentEntity<T, D>(T entity, bool advanced)
+        private static byte[] SerializeDependentEntity<T, D>(T entity, int majorVersion, bool advanced)
             where T : IDependentData<D>
             where D : IData
         {
             var writer = new DataWriter();
-            entity.Serialize(writer, advanced);
+            entity.Serialize(writer, majorVersion, advanced);
             return writer.ToArray();
         }
 
         private static byte[] SerializeTextList(TextList textList)
         {
             var writer = new DataWriter();
-            Legacy.Serialization.TextWriter.WriteTexts(writer, textList);
+            TextWriter.WriteTexts(writer, textList);
             return writer.ToArray();
         }
 

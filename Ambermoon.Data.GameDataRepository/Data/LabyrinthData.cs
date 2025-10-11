@@ -167,7 +167,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(LabyrinthOverlayData? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Index == other.Index &&
                    Blend == other.Blend &&
@@ -180,7 +180,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((LabyrinthOverlayData)obj);
@@ -430,7 +430,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(LabyrinthWallData? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Index == other.Index &&
                    Transparent == other.Transparent &&
@@ -445,7 +445,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((LabyrinthWallData)obj);
@@ -805,7 +805,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(LabyrinthObjectDescriptionData? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Index == other.Index &&
                    WaveAnimation == other.WaveAnimation &&
@@ -824,7 +824,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((LabyrinthObjectDescriptionData)obj);
@@ -1032,7 +1032,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(LabyrinthObjectReferenceData? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Index == other.Index &&
                    X == other.X &&
@@ -1043,7 +1043,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((LabyrinthObjectReferenceData)obj);
@@ -1186,7 +1186,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(LabyrinthObjectData? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Index == other.Index &&
                    AutomapType == other.AutomapType &&
@@ -1195,7 +1195,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((LabyrinthObjectData)obj);
@@ -1478,7 +1478,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(LabyrinthData? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Index == other.Index &&
                    WallHeight == other.WallHeight &&
@@ -1494,7 +1494,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((LabyrinthData)obj);

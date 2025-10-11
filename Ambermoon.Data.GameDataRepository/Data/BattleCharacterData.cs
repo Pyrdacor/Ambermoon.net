@@ -42,6 +42,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
         private uint _bonusMaxSpellDamage;
         private int _bonusSpellDamageReduction;
         private int _bonusSpellDamagePercentage;
+        private uint _maxReachedLevel;
 
         #endregion
 
@@ -75,6 +76,24 @@ namespace Ambermoon.Data.GameDataRepository.Data
         {
             get => _element;
             set => SetField(ref _element, value);
+        }
+
+        /// <summary>
+        /// When exchanging experience, the level can decrease but rewards like TP and SLP remain.
+        /// To avoid exploits the max reached level is stored and the character gets only SLP/TP
+        /// when he levels beyond that level.
+        /// 
+        /// This value can be 0, in which case the current level is considered.
+        /// </summary>
+        [Range(0, byte.MaxValue)]
+        public uint MaxReachedLevel
+        {
+            get => _maxReachedLevel;
+            set
+            {
+                ValueChecker.Check(value, 1, byte.MaxValue);
+                SetField(ref _maxReachedLevel, value);
+            }
         }
 
         /// <summary>
@@ -475,7 +494,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(BattleCharacterData? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return base.Equals(other) &&
                    SpellMastery == other.SpellMastery &&
@@ -513,7 +532,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((BattleCharacterData)obj);

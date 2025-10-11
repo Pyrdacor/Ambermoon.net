@@ -8,16 +8,18 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// Serializes the data to a data writer.
         /// </summary>
         /// <param name="dataWriter">Writer to store the serialized data.</param>
+        /// <param name="majorVersion">Major version of the data.</param>
         /// <param name="advanced">Ambermoon Advanced data flag.</param>
-        void Serialize(IDataWriter dataWriter, bool advanced);
+        void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced);
 
         /// <summary>
         /// Deserializes data from a data reader.
         /// </summary>
         /// <param name="dataReader">Reader which provides the data.</param>
+        /// <param name="majorVersion">Major version of the data.</param>
         /// <param name="advanced">Ambermoon Advanced data flag.</param>
         /// <returns></returns>
-        static abstract IData Deserialize(IDataReader dataReader, bool advanced);
+        static abstract IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced);
     }
 
     /// <summary>
@@ -56,9 +58,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// </summary>
         /// <param name="dataReader">Reader which provides the data.</param>
         /// <param name="index">Manually provider index of the data.</param>
+        /// <param name="majorVersion">Major version of the data.</param>
         /// <param name="advanced">Ambermoon Advanced data flag.</param>
         /// <returns></returns>
-        static abstract IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced);
+        static abstract IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced);
     }
 
     /// <summary>
@@ -70,17 +73,19 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// Serializes the data to a data writer.
         /// </summary>
         /// <param name="dataWriter">Writer to store the serialized data.</param>
+        /// <param name="majorVersion">Major version of the data.</param>
         /// <param name="advanced">Ambermoon Advanced data flag.</param>
-        void Serialize(IDataWriter dataWriter, bool advanced);
+        void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced);
 
         /// <summary>
         /// Deserializes data from a data reader.
         /// </summary>
         /// <param name="dataReader">Reader which provides the data.</param>
         /// <param name="providedData">Provided data this data depends on.</param>
+        /// <param name="majorVersion">Major version of the data.</param>
         /// <param name="advanced">Ambermoon Advanced data flag.</param>
         /// <returns></returns>
-        static abstract IDependentData<T> Deserialize(IDataReader dataReader, T providedData, bool advanced);
+        static abstract IDependentData<T> Deserialize(IDataReader dataReader, T providedData, int majorVersion, bool advanced);
     }
 
     /// <summary>
@@ -95,8 +100,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// <param name="dataReader">Reader which provides the data.</param>
         /// <param name="index">Manually provider index of the data.</param>
         /// <param name="providedData">Provided data this data depends on.</param>
+        /// <param name="majorVersion">Major version of the data.</param>
         /// <param name="advanced">Ambermoon Advanced data flag.</param>
         /// <returns></returns>
-        static abstract IIndexedDependentData<T> Deserialize(IDataReader dataReader, uint index, T providedData, bool advanced);
+        static abstract IIndexedDependentData<T> Deserialize(IDataReader dataReader, uint index, T providedData, int majorVersion, bool advanced);
     }
 }

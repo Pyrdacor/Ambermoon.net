@@ -208,12 +208,12 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             dataWriter.Write(Data);
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var eventData = new EventData
             {
@@ -245,9 +245,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return @event;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var mapEventData = (EventData)Deserialize(dataReader, advanced);
+            var mapEventData = (EventData)Deserialize(dataReader, majorVersion, advanced);
             (mapEventData as IMutableIndex).Index = index;
             return mapEventData;
         }
@@ -259,14 +259,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public bool Equals(EventData? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Data.Equals(other.Data);
         }
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
             return Equals((EventData)obj);
