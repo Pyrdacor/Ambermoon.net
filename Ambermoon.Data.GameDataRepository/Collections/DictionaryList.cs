@@ -253,6 +253,8 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
         public Dictionary<uint, T> AsDictionary() => new(_dictionary);
 
+        public void ForEach(Action<T> action) => _list.ForEach(action);
+
         #endregion
 
 

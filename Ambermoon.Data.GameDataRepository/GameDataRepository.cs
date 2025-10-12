@@ -1,16 +1,16 @@
-﻿using System.Runtime.CompilerServices;
-using System.ComponentModel;
-using SonicArranger;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Data.GameDataRepository
 {
+    using Ambermoon.Data.Enumerations;
+    using Ambermoon.Data.Legacy.Serialization;
     using Collections;
     using Data;
-    using Enumerations;
     using Data.Events;
+    using Enumerations;
     using FileSystems;
     using Legacy;
-    using Ambermoon.Data.Legacy.Serialization;
     using Serialization;
     using Serialization.FileSystem;
 
@@ -60,7 +60,7 @@ namespace Ambermoon.Data.GameDataRepository
         private readonly GameDataInfo _info;
         private readonly TextContainer _textContainer;
         private bool disposed;
-        private static readonly List<GameDataRepository> OpenRepositories = new();
+        private static readonly List<GameDataRepository> OpenRepositories = [];
 
         #endregion
 
@@ -108,6 +108,10 @@ namespace Ambermoon.Data.GameDataRepository
             get => _info.Language;
             set => _info.Language = value;
         }
+
+        public uint GoldWeight { get; }
+
+        public uint FoodWeight { get; }
 
         #endregion
 
@@ -438,6 +442,9 @@ namespace Ambermoon.Data.GameDataRepository
             var combatGraphicFiles = ReadFileContainer("Combat_graphics");
             var combatGraphics = CombatGraphicData.Deserialize(combatGraphicFiles[1]);
 
+            FoodWeight = _info.Advanced ? 25u : 250u;
+            GoldWeight = 5;
+
             #endregion
 
 
@@ -489,6 +496,21 @@ namespace Ambermoon.Data.GameDataRepository
             #endregion
 
 
+            #region Items
+
+            // NOTE: Items must be loaded before characters as characters can have items and need their info for some calculations.
+            var itemFile = ReadFileContainer("Objects.amb")[1];
+            int itemCount = itemFile.ReadWord();
+            Items = DataCollection<ItemData>.Deserialize(itemFile, itemCount, MajorVersion, Advanced).ToDictionaryList();
+            var itemGraphicFiles = ReadFileContainer("Object_icons");
+            ItemImages = ImageList.Deserialize(0, itemGraphicFiles[1], 16, 16, GraphicFormat.Palette5Bit)
+                .ToDictionaryList();
+            var itemTextFiles = ReadFileContainer("Object_texts.amb");
+            ItemTexts = itemTextFiles.Select(itemTextFile => (TextList)TextList.Deserialize(itemTextFile.Value, (uint)itemTextFile.Key, MajorVersion, Advanced)).ToDictionaryList();
+
+            #endregion
+
+
             #region NPCs & Party Members
 
             var npcFiles = ReadFileContainer("NPC_char.amb");
@@ -497,6 +519,7 @@ namespace Ambermoon.Data.GameDataRepository
             NpcTexts = npcTextFiles.Select(npcTextFile => (TextList<NpcData>)TextList<NpcData>.Deserialize(npcTextFile.Value, (uint)npcTextFile.Key, Npcs[(uint)npcTextFile.Key], MajorVersion, Advanced)).ToDictionaryList();
             var partyMemberFiles = ReadFileContainer("Save.00/Party_char.amb"); // TODO: Fallback to Initial/Party_char.amb
             PartyMembers = partyMemberFiles.Select(partyMemberFile => (PartyMemberData)PartyMemberData.Deserialize(partyMemberFile.Value, (uint)partyMemberFile.Key, MajorVersion, Advanced)).ToDictionaryList();
+            PartyMembers.ForEach(partyMember => partyMember.EnsureCorrectCalculatedValues(this));
             var partyMemberTextFiles = ReadFileContainer("Party_texts.amb");
             PartyMemberTexts = partyMemberTextFiles.Select(partyMemberTextFile => (TextList<PartyMemberData>)TextList<PartyMemberData>.Deserialize(partyMemberTextFile.Value, (uint)partyMemberTextFile.Key, PartyMembers[(uint)partyMemberTextFile.Key], MajorVersion, Advanced)).ToDictionaryList();
             PartyCombatIcons = combatGraphics.BattleFieldIcons.Take((int)Class.Monster).ToDictionaryList((_, i) => (uint)i);
@@ -512,6 +535,7 @@ namespace Ambermoon.Data.GameDataRepository
 
             var monsterFiles = ReadFileContainer("Monster_char.amb");
             Monsters = monsterFiles.Select(monsterFile => (MonsterData)MonsterData.Deserialize(monsterFile.Value, (uint)monsterFile.Key, MajorVersion, Advanced)).ToDictionaryList();
+            Monsters.ForEach(monster => monster.EnsureCorrectCalculatedValues(this));
             var monsterGroupFiles = ReadFileContainer("Monster_groups.amb");
             MonsterGroups = monsterGroupFiles.Select(monsterGroupFile => (MonsterGroupData)MonsterGroupData.Deserialize(monsterGroupFile.Value, (uint)monsterGroupFile.Key, Advanced)).ToDictionaryList();
             var monsterGraphicFiles = ReadFileContainer("Monster_gfx.amb");
@@ -531,19 +555,6 @@ namespace Ambermoon.Data.GameDataRepository
                 .ToList();
             #endregion
 
-
-            #region Items
-
-            var itemFile = ReadFileContainer("Objects.amb")[1];
-            int itemCount = itemFile.ReadWord();
-            Items = DataCollection<ItemData>.Deserialize(itemFile, itemCount, MajorVersion, Advanced).ToDictionaryList();
-            var itemGraphicFiles = ReadFileContainer("Object_icons");
-            ItemImages = ImageList.Deserialize(0, itemGraphicFiles[1], 16, 16, GraphicFormat.Palette5Bit)
-                .ToDictionaryList();
-            var itemTextFiles = ReadFileContainer("Object_texts.amb");
-            ItemTexts = itemTextFiles.Select(itemTextFile => (TextList)TextList.Deserialize(itemTextFile.Value, (uint)itemTextFile.Key, MajorVersion, Advanced)).ToDictionaryList();
-
-            #endregion
 
             // TODO ...
 

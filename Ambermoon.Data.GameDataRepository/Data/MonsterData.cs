@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Ambermoon.Data.GameDataRepository.Util;
 
 namespace Ambermoon.Data.GameDataRepository.Data
 {
     using Collections;
     using Enumerations;
     using Serialization;
+    using Util;
     using static Monster;
 
     public enum MonsterAnimation
@@ -210,6 +210,29 @@ namespace Ambermoon.Data.GameDataRepository.Data
 			_animationTypes[(int)monsterAnimation] = animationType;
 		}
 
+        public void EnsureCorrectCalculatedValues(GameDataRepository gameDataRepository)
+        {
+            BonusDefense = (int)Math.Clamp
+            (
+                Util.CalculateItemPropertySum(Equipment,
+                    index => gameDataRepository.Items[index],
+                    (item, slotFlags) => slotFlags.HasFlag(ItemSlotFlags.Cursed) ? -(long)item.Defense : item.Defense) +
+                    Attributes[Attribute.Stamina].TotalCurrentValue / 25,
+                int.MinValue,
+                int.MaxValue
+            );
+
+            BonusAttackDamage = (int)Math.Clamp
+            (
+                Util.CalculateItemPropertySum(Equipment,
+                    index => gameDataRepository.Items[index],
+                    (item, slotFlags) => slotFlags.HasFlag(ItemSlotFlags.Cursed) ? -(long)item.Damage : item.Damage) +
+                    Attributes[Attribute.Strength].TotalCurrentValue / 25,
+                int.MinValue,
+                int.MaxValue
+            );
+        }
+
 		#endregion
 
 
@@ -229,7 +252,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((byte)Class);
             dataWriter.Write((byte)SpellMastery);
             dataWriter.Write((byte)Level);
-            dataWriter.Write((byte)Class);
             WriteFillBytes(5);
             if (advanced)
                 dataWriter.Write((byte)AttackImmunity);
@@ -289,23 +311,19 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((ushort)spellPoints.MaxValue);
             dataWriter.WriteSignedWord(spellPoints.BonusValue);
             dataWriter.Write((ushort)BaseDefense);
-            // TODO: calc from equip
-            int bonusDefense = BonusDefense;
-            dataWriter.WriteSignedWord(unchecked((ushort)(short)bonusDefense));
+            dataWriter.WriteSignedWord(BonusDefense);
             dataWriter.Write((ushort)BaseAttackDamage);
-            // TODO: calc from equip
-            int bonusAttackDamage = BonusAttackDamage;
-            dataWriter.WriteSignedWord(bonusAttackDamage);
+            dataWriter.WriteSignedWord(BonusAttackDamage);
             dataWriter.WriteSignedWord(MagicAttackLevel);
             dataWriter.WriteSignedWord(MagicDefenseLevel);
             WriteFillBytes(16);
-            dataWriter.Write((ushort)LearnedSpellsHealing);
-            dataWriter.Write((ushort)LearnedSpellsAlchemistic);
-            dataWriter.Write((ushort)LearnedSpellsMystic);
-            dataWriter.Write((ushort)LearnedSpellsDestruction);
-            dataWriter.Write((ushort)LearnedSpellsType5);
-            dataWriter.Write((ushort)LearnedSpellsType6);
-            dataWriter.Write((ushort)LearnedSpellsFunctional);
+            dataWriter.Write(LearnedSpellsHealing);
+            dataWriter.Write(LearnedSpellsAlchemistic);
+            dataWriter.Write(LearnedSpellsMystic);
+            dataWriter.Write(LearnedSpellsDestruction);
+            dataWriter.Write(LearnedSpellsType5);
+            dataWriter.Write(LearnedSpellsType6);
+            dataWriter.Write(LearnedSpellsFunctional);
             WriteFillBytes(4);
             string name = Name;
             if (name.Length > 15)
@@ -441,13 +459,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
             monsterData.Items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, majorVersion, advanced);
             monsterData.InitializeItemSlots();
 
-            // TODO
-            /*uint calculatedBonusDefense = Util.Util.CalculateItemPropertySum(monsterData._equipment, index => ItemManager.GetItem(index), item => item.Defense);
-            uint calculatedBonusAttackDamage = Util.Util.CalculateItemPropertySum(monsterData._equipment, index => ItemManager.GetItem(index), item => item.Damage);
-            if (bonusDefense != calculatedBonusDefense)
-                throw new InvalidDataException("Invalid monster data. Wrong stored bonus defense.");
-            if (bonusAttackDamage != calculatedBonusAttackDamage)
-                throw new InvalidDataException("Invalid monster data. Wrong stored bonus attack damage.");*/
             #endregion
 
             #region Monster Display Data
@@ -458,8 +469,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 var animation = monsterData._animations[i] = new Animation();
                 int count = animation.UsedAmount = frameCounts[i];
                 animation.FrameIndices = count == 0
-                    ? Array.Empty<byte>()
-                    : allFrameIndices.Skip(i * 32).Take(count).ToArray();
+                    ? []
+                    : [.. allFrameIndices.Skip(i * 32).Take(count)];
             }
             SkipBytes(16); // Atari palette
             monsterData.CustomPalette = dataReader.ReadBytes(32);
@@ -527,6 +538,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return !Equals(left, right);
         }
 
+        public override int GetHashCode() => base.GetHashCode();
+
         #endregion
 
 
@@ -556,7 +569,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
                 BonusSpellDamageReduction = BonusSpellDamageReduction,
                 BonusSpellDamagePercentage = BonusSpellDamagePercentage,
                 BaseDefense = BaseDefense,
+                BonusDefense = BonusDefense,
                 BaseAttackDamage = BaseAttackDamage,
+                BonusAttackDamage = BonusAttackDamage,
                 MagicAttackLevel = MagicAttackLevel,
                 MagicDefenseLevel = MagicDefenseLevel,
                 LearnedSpellsHealing = LearnedSpellsHealing,
@@ -572,9 +587,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             };
 
             for (int i = 0; i < 8; i++)
-                copy.Attributes[(Attribute)i] = Util.Util.Copy(Attributes[(Attribute)i]);
+                copy.Attributes[(Attribute)i] = Util.Copy(Attributes[(Attribute)i]);
             for (int i = 0; i < 10; i++)
-                copy.Skills[(Skill)i] = Util.Util.Copy(Skills[(Skill)i]);
+                copy.Skills[(Skill)i] = Util.Copy(Skills[(Skill)i]);
             copy.HitPoints.CurrentValue = HitPoints.CurrentValue;
             copy.HitPoints.MaxValue = HitPoints.MaxValue;
             copy.HitPoints.BonusValue = HitPoints.BonusValue;

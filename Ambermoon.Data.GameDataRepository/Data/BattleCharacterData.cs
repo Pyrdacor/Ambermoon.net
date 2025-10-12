@@ -171,14 +171,17 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// This is calculated from equipment.
         /// </summary>
         [Range(short.MinValue, short.MaxValue)]
-        public int BonusAttackDamage { get; private set; } = 0;
+        public int BonusAttackDamage { get; private protected set; } = 0;
 
         /// <summary>
         /// This is calculated from equipment.
         /// </summary>
         [Range(short.MinValue, short.MaxValue)]
-        public int BonusDefense { get; private set; } = 0;
+        public int BonusDefense { get; private protected set; } = 0;
 
+        /// <summary>
+        /// This is calculated from equipment, but only for non-animal party members!
+        /// </summary>
         [Range(short.MinValue, short.MaxValue)]
         public int MagicAttackLevel
         {
@@ -190,6 +193,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
         }
 
+        /// <summary>
+        /// This is calculated from equipment, but only for non-animal party members!
+        /// </summary>
         [Range(short.MinValue, short.MaxValue)]
         public int MagicDefenseLevel
         {

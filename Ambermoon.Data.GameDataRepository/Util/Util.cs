@@ -46,11 +46,10 @@ namespace Ambermoon.Data.GameDataRepository.Util
             }
         }
 
-        internal static uint CalculateItemPropertySum<T>(IEnumerable<ItemSlotData> itemSlots,
-            Func<uint, ItemData> itemProvider, Func<ItemData, uint> itemPropertyProvider)
+        internal static long CalculateItemPropertySum(IEnumerable<ItemSlotData> itemSlots,
+            Func<uint, ItemData> itemProvider, Func<ItemData, ItemSlotFlags, long> itemPropertyProvider)
         {
-            // TODO: cursed items (equip only)
-            return (uint)itemSlots.Sum(itemSlot => itemSlot.Amount * itemPropertyProvider(itemProvider(itemSlot.ItemIndex)));
+            return itemSlots.Sum(itemSlot => itemSlot.Amount * itemPropertyProvider(itemProvider(itemSlot.ItemIndex), itemSlot.Flags));
         }
 
         internal static int UnsignedByteToSigned(uint @byte)

@@ -138,7 +138,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             dataWriter.Write((byte)Amount);
             dataWriter.Write((byte)NumberOfRemainingCharges);
@@ -147,7 +147,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((ushort)ItemIndex);
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var itemSlotData = new ItemSlotData();
 
@@ -160,9 +160,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return itemSlotData;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var itemSlotData = (ItemSlotData)Deserialize(dataReader, advanced);
+            var itemSlotData = (ItemSlotData)Deserialize(dataReader, majorVersion, advanced);
             (itemSlotData as IMutableIndex).Index = index;
             return itemSlotData;
         }
