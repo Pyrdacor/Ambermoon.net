@@ -82,16 +82,22 @@ namespace Ambermoon.Data.GameDataRepository
             {
                 // Make lowercase
                 "english" => GameDataLanguage.English,
-                "deutsch" => GameDataLanguage.German, // There might be versions which use "Deutsch" instead of "German"
                 "german" => GameDataLanguage.German,
+                "deutsch" => GameDataLanguage.German,
                 "french" => GameDataLanguage.French,
+                "français" => GameDataLanguage.French,
                 "spanish" => GameDataLanguage.Spanish,
                 "italian" => GameDataLanguage.Italian,
                 "czech" => GameDataLanguage.Czech,
+                "český" => GameDataLanguage.Czech,
                 "polish" => GameDataLanguage.Polish,
+                "polski" => GameDataLanguage.Polish,
                 "russian" => GameDataLanguage.Russian,
+                "русский" => GameDataLanguage.Russian,
                 "hungarian" => GameDataLanguage.Hungarian,
+                "magyar" => GameDataLanguage.Hungarian,
                 "dutch" => GameDataLanguage.Dutch,
+                "nederlands" => GameDataLanguage.Dutch,
                 "swedish" => GameDataLanguage.Swedish,
                 "finnish" => GameDataLanguage.Finnish,
                 "danish" => GameDataLanguage.Danish,
