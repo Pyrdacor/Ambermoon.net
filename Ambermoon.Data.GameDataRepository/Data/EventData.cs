@@ -247,9 +247,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var mapEventData = (EventData)Deserialize(dataReader, majorVersion, advanced);
-            (mapEventData as IMutableIndex).Index = index;
-            return mapEventData;
+            var eventData = (EventData)Deserialize(dataReader, majorVersion, advanced);
+            (eventData as IMutableIndex).Index = index;
+            return eventData;
         }
 
         #endregion

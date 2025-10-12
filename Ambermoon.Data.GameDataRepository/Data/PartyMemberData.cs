@@ -2,8 +2,6 @@
 
 namespace Ambermoon.Data.GameDataRepository.Data;
 
-using System.Reflection;
-using Ambermoon.Data.GameDataRepository.Enumerations;
 using Collections;
 using Serialization;
 using Util;
@@ -571,6 +569,8 @@ public sealed class PartyMemberData : BattleCharacterData, IConversationCharacte
         Equipment.Serialize(dataWriter, majorVersion, advanced);
         Items.Serialize(dataWriter, majorVersion, advanced);
         #endregion
+
+        // TODO: Events
     }
 
     public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
@@ -611,7 +611,7 @@ public sealed class PartyMemberData : BattleCharacterData, IConversationCharacte
         SkipBytes(1);
         if (advanced)
         {
-
+            partyMemberData.MaxReachedLevel = dataReader.ReadByte();
         }
         else
         {
@@ -839,6 +839,8 @@ public sealed class PartyMemberData : BattleCharacterData, IConversationCharacte
 
         copy.Equipment = Equipment.Copy();
         copy.Items = Items.Copy();
+
+        // TODO: Events
 
         (copy as IMutableIndex).Index = Index;
 
