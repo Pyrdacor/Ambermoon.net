@@ -327,26 +327,6 @@ public sealed class PartyMemberData : BattleCharacterData, IConversationCharacte
 
     public void EnsureCorrectCalculatedValues(GameDataRepository gameDataRepository)
     {
-        BonusDefense = (short)Math.Clamp
-        (
-            Util.CalculateItemPropertySum(Equipment,
-                index => gameDataRepository.Items[index],
-                (item, slotFlags) => slotFlags.HasFlag(ItemSlotFlags.Cursed) ? -(long)item.Defense : item.Defense) +
-                Attributes[Attribute.Stamina].TotalCurrentValue / 25,
-            short.MinValue,
-            short.MaxValue
-        );
-
-        BonusAttackDamage = (short)Math.Clamp
-        (
-            Util.CalculateItemPropertySum(Equipment,
-                index => gameDataRepository.Items[index],
-                (item, slotFlags) => slotFlags.HasFlag(ItemSlotFlags.Cursed) ? -(long)item.Damage : item.Damage) +
-                Attributes[Attribute.Strength].TotalCurrentValue / 25,
-            short.MinValue,
-            short.MaxValue
-        );
-
         TotalWeight = (uint)Math.Clamp
         (
             Util.CalculateItemPropertySum(Items,
@@ -356,24 +336,6 @@ public sealed class PartyMemberData : BattleCharacterData, IConversationCharacte
                 Food * gameDataRepository.FoodWeight,
             uint.MinValue,
             uint.MaxValue
-        );
-
-        MagicAttackLevel = (short)Math.Clamp
-        (
-            Util.CalculateItemPropertySum(Equipment,
-                index => gameDataRepository.Items[index],
-                (item, _) => item.MagicAttackLevel),
-            0,
-            short.MaxValue
-        );
-
-        MagicDefenseLevel = (short)Math.Clamp
-        (
-            Util.CalculateItemPropertySum(Equipment,
-                index => gameDataRepository.Items[index],
-                (item, _) => item.MagicDefenseLevel),
-            0,
-            short.MaxValue
         );
 
         for (int i = 0; i < 8; i++)
@@ -404,23 +366,64 @@ public sealed class PartyMemberData : BattleCharacterData, IConversationCharacte
             );
         }
 
-        HitPoints.BonusValue = (short)Math.Clamp
-        (
-            Util.CalculateItemPropertySum(Equipment,
-                index => gameDataRepository.Items[index],
-                (item, slotFlags) => slotFlags.HasFlag(ItemSlotFlags.Cursed) ? -(long)item.HitPoints : item.HitPoints),
-            short.MinValue,
-            short.MaxValue
-        );
+        if (Race != Race.Animal)
+        {
+            BonusDefense = (short)Math.Clamp
+            (
+                Util.CalculateItemPropertySum(Equipment,
+                    index => gameDataRepository.Items[index],
+                    (item, slotFlags) => slotFlags.HasFlag(ItemSlotFlags.Cursed) ? -(long)item.Defense : item.Defense) +
+                    Attributes[Attribute.Stamina].TotalCurrentValue / 25,
+                short.MinValue,
+                short.MaxValue
+            );
 
-        SpellPoints.BonusValue = (short)Math.Clamp
-        (
-            Util.CalculateItemPropertySum(Equipment,
-                index => gameDataRepository.Items[index],
-                (item, slotFlags) => slotFlags.HasFlag(ItemSlotFlags.Cursed) ? -(long)item.SpellPoints : item.SpellPoints),
-            short.MinValue,
-            short.MaxValue
-        );
+            BonusAttackDamage = (short)Math.Clamp
+            (
+                Util.CalculateItemPropertySum(Equipment,
+                    index => gameDataRepository.Items[index],
+                    (item, slotFlags) => slotFlags.HasFlag(ItemSlotFlags.Cursed) ? -(long)item.Damage : item.Damage) +
+                    Attributes[Attribute.Strength].TotalCurrentValue / 25,
+                short.MinValue,
+                short.MaxValue
+            );
+
+            MagicAttackLevel = (short)Math.Clamp
+            (
+                Util.CalculateItemPropertySum(Equipment,
+                    index => gameDataRepository.Items[index],
+                    (item, _) => item.MagicAttackLevel),
+                0,
+                short.MaxValue
+            );
+
+            MagicDefenseLevel = (short)Math.Clamp
+            (
+                Util.CalculateItemPropertySum(Equipment,
+                    index => gameDataRepository.Items[index],
+                    (item, _) => item.MagicDefenseLevel),
+                0,
+                short.MaxValue
+            );
+
+            HitPoints.BonusValue = (short)Math.Clamp
+            (
+                Util.CalculateItemPropertySum(Equipment,
+                    index => gameDataRepository.Items[index],
+                    (item, slotFlags) => slotFlags.HasFlag(ItemSlotFlags.Cursed) ? -(long)item.HitPoints : item.HitPoints),
+                short.MinValue,
+                short.MaxValue
+            );
+
+            SpellPoints.BonusValue = (short)Math.Clamp
+            (
+                Util.CalculateItemPropertySum(Equipment,
+                    index => gameDataRepository.Items[index],
+                    (item, slotFlags) => slotFlags.HasFlag(ItemSlotFlags.Cursed) ? -(long)item.SpellPoints : item.SpellPoints),
+                short.MinValue,
+                short.MaxValue
+            );
+        }
 
         var rightHand = GetEquipmentSlot(EquipmentSlot.RightHand);
 

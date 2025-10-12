@@ -464,15 +464,15 @@ namespace Ambermoon.Data.GameDataRepository
             #region Maps
 
             var mapFiles = ReadFileContainers("1Map_data.amb", "2Map_data.amb", "3Map_data.amb");
-            Maps = mapFiles.Select(mapFile => (MapData)MapData.Deserialize(mapFile.Value, (uint)mapFile.Key, Advanced)).ToDictionaryList();
+            Maps = mapFiles.Select(mapFile => (MapData)MapData.Deserialize(mapFile.Value, (uint)mapFile.Key, MajorVersion, Advanced)).ToDictionaryList();
             var mapTextFiles = ReadFileContainers("1Map_texts.amb", "2Map_texts.amb", "3Map_texts.amb");
             MapTexts = mapTextFiles.Select(mapTextFile => (TextList<MapData>)TextList<MapData>.Deserialize(mapTextFile.Value, (uint)mapTextFile.Key, Maps[(uint)mapTextFile.Key], MajorVersion, Advanced)).ToDictionaryList();
             var tilesetFiles = ReadFileContainer("Icon_data.amb");
-            Tilesets = tilesetFiles.Select(tilesetFile => (Tileset2DData)Tileset2DData.Deserialize(tilesetFile.Value, (uint)tilesetFile.Key, Advanced)).ToDictionaryList();
+            Tilesets = tilesetFiles.Select(tilesetFile => (Tileset2DData)Tileset2DData.Deserialize(tilesetFile.Value, (uint)tilesetFile.Key, MajorVersion, Advanced)).ToDictionaryList();
             var tile2DImageFiles = ReadFileContainers("1Icon_gfx.amb", "2Icon_gfx.amb", "3Icon_gfx.amb");
             Tile2DImages = tile2DImageFiles.Select(tile2DImageFile => ImageList.Deserialize((uint)tile2DImageFile.Key, tile2DImageFile.Value, 16, 16, GraphicFormat.Palette5Bit)).ToDictionaryList();
             var labdataFiles = ReadFileContainers("2Lab_data.amb", "3Lab_data.amb");
-            Labyrinths = labdataFiles.Select(labdataFile => (LabyrinthData)LabyrinthData.Deserialize(labdataFile.Value, (uint)labdataFile.Key, Advanced)).ToDictionaryList();
+            Labyrinths = labdataFiles.Select(labdataFile => (LabyrinthData)LabyrinthData.Deserialize(labdataFile.Value, (uint)labdataFile.Key, MajorVersion, Advanced)).ToDictionaryList();
             var wall3DImageFiles = ReadFileContainers("2Wall3D.amb", "3Wall3D.amb");
             Wall3DImages = wall3DImageFiles.Select(wall3DImageFile => Image.Deserialize((uint)wall3DImageFile.Key, wall3DImageFile.Value, 1, 128, 80, GraphicFormat.Texture4Bit)).ToDictionaryList();
             var object3DImageFiles = ReadFileContainers("2Object3D.amb", "3Object3D.amb");
@@ -514,7 +514,7 @@ namespace Ambermoon.Data.GameDataRepository
             #region NPCs & Party Members
 
             var npcFiles = ReadFileContainer("NPC_char.amb");
-            Npcs = npcFiles.Select(npcFile => (NpcData)NpcData.Deserialize(npcFile.Value, (uint)npcFile.Key, Advanced)).ToDictionaryList();
+            Npcs = npcFiles.Select(npcFile => (NpcData)NpcData.Deserialize(npcFile.Value, (uint)npcFile.Key, MajorVersion, Advanced)).ToDictionaryList();
             var npcTextFiles = ReadFileContainer("NPC_texts.amb");
             NpcTexts = npcTextFiles.Select(npcTextFile => (TextList<NpcData>)TextList<NpcData>.Deserialize(npcTextFile.Value, (uint)npcTextFile.Key, Npcs[(uint)npcTextFile.Key], MajorVersion, Advanced)).ToDictionaryList();
             var partyMemberFiles = ReadFileContainer("Save.00/Party_char.amb"); // TODO: Fallback to Initial/Party_char.amb
@@ -537,7 +537,7 @@ namespace Ambermoon.Data.GameDataRepository
             Monsters = monsterFiles.Select(monsterFile => (MonsterData)MonsterData.Deserialize(monsterFile.Value, (uint)monsterFile.Key, MajorVersion, Advanced)).ToDictionaryList();
             Monsters.ForEach(monster => monster.EnsureCorrectCalculatedValues(this));
             var monsterGroupFiles = ReadFileContainer("Monster_groups.amb");
-            MonsterGroups = monsterGroupFiles.Select(monsterGroupFile => (MonsterGroupData)MonsterGroupData.Deserialize(monsterGroupFile.Value, (uint)monsterGroupFile.Key, Advanced)).ToDictionaryList();
+            MonsterGroups = monsterGroupFiles.Select(monsterGroupFile => (MonsterGroupData)MonsterGroupData.Deserialize(monsterGroupFile.Value, (uint)monsterGroupFile.Key, MajorVersion, Advanced)).ToDictionaryList();
             var monsterGraphicFiles = ReadFileContainer("Monster_gfx.amb");
             var monsterGraphicInfos = Monsters.Select(monster =>
                 Tuple.Create(monster.OriginalFrameWidth, monster.OriginalFrameHeight, monster.GraphicIndex)).Distinct();

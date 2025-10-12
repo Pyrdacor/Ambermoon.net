@@ -86,7 +86,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             dataWriter.Write((byte)X);
             dataWriter.Write((byte)Y);
@@ -98,7 +98,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.WriteWithoutLength(name.PadRight(16, '\0'));
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var gotoPointData = new MapGotoPointData();
 
@@ -111,9 +111,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return gotoPointData;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var gotoPointData = (MapGotoPointData)Deserialize(dataReader, advanced);
+            var gotoPointData = (MapGotoPointData)Deserialize(dataReader, majorVersion, advanced);
             (gotoPointData as IMutableIndex).Index = index;
             return gotoPointData;
         }

@@ -91,7 +91,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             get => _maxReachedLevel;
             set
             {
-                ValueChecker.Check(value, 1, byte.MaxValue);
+                ValueChecker.Check(value, 0, byte.MaxValue);
                 SetField(ref _maxReachedLevel, value);
             }
         }
@@ -485,7 +485,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         public ItemSlotData GetEquipmentSlot(EquipmentSlot equipmentSlot)
         {
-            return Equipment[(int)equipmentSlot];
+            if (equipmentSlot == EquipmentSlot.None)
+                throw new ArgumentException("Invalid equipment slot.", nameof(equipmentSlot));
+
+            return Equipment[(byte)equipmentSlot - 1];
         }
 
         public ItemSlotData GetInventorySlot([Range(0, InventorySlotCount)] int slot)

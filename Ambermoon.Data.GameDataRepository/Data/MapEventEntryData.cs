@@ -50,7 +50,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             return new MapEventEntryData
             {
@@ -58,14 +58,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
             };
         }
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             dataWriter.Write((ushort)EventIndex);
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var mapEventData = (MapEventEntryData)Deserialize(dataReader, advanced);
+            var mapEventData = (MapEventEntryData)Deserialize(dataReader, majorVersion, advanced);
             (mapEventData as IMutableIndex).Index = index;
             return mapEventData;
         }

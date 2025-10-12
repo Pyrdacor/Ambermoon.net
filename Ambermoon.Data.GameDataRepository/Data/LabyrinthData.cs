@@ -128,7 +128,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             // Overlay data
             dataWriter.Write((byte)(Blend ? 1 : 0));
@@ -139,7 +139,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((byte)Height);
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var overlayData = new LabyrinthOverlayData();
 
@@ -153,9 +153,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return overlayData;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var overlayData = (LabyrinthOverlayData)Deserialize(dataReader, advanced);
+            var overlayData = (LabyrinthOverlayData)Deserialize(dataReader, majorVersion, advanced);
             (overlayData as IMutableIndex).Index = index;
             return overlayData;
         }
@@ -366,7 +366,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             uint wallFlags = (AllowedCollisionClasses << 8) & 0x7fff00;
 
@@ -388,10 +388,10 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             // Overlays
             foreach (var overlay in Overlays)
-                overlay.Serialize(dataWriter, advanced);
+                overlay.Serialize(dataWriter, majorVersion, advanced);
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var wallData = new LabyrinthWallData();
 
@@ -409,16 +409,16 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             // Overlays
             int numberOfOverlays = dataReader.ReadByte();
-            var overlays = DataCollection<LabyrinthOverlayData>.Deserialize(dataReader, numberOfOverlays, advanced);
+            var overlays = DataCollection<LabyrinthOverlayData>.Deserialize(dataReader, numberOfOverlays, majorVersion, advanced);
             wallData.Overlays = new DictionaryList<LabyrinthOverlayData>(overlays);
             // TODO: change detection
 
             return wallData;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var wallData = (LabyrinthWallData)Deserialize(dataReader, advanced);
+            var wallData = (LabyrinthWallData)Deserialize(dataReader, majorVersion, advanced);
             (wallData as IMutableIndex).Index = index;
             return wallData;
         }
@@ -738,7 +738,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             uint objectFlags = (AllowedCollisionClasses << 8) & 0x7fff00;
 
@@ -766,7 +766,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((ushort)DisplayHeight);
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var objectDescriptionData = new LabyrinthObjectDescriptionData();
 
@@ -791,9 +791,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return objectDescriptionData;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var objectDescriptionData = (LabyrinthObjectDescriptionData)Deserialize(dataReader, advanced);
+            var objectDescriptionData = (LabyrinthObjectDescriptionData)Deserialize(dataReader, majorVersion, advanced);
             (objectDescriptionData as IMutableIndex).Index = index;
             return objectDescriptionData;
         }
@@ -997,7 +997,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             // Object reference data
             dataWriter.Write(Util.SignedToUnsignedWord(X));
@@ -1006,7 +1006,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((ushort)ObjectDescriptionIndex);
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var objectReferenceData = new LabyrinthObjectReferenceData();
 
@@ -1018,9 +1018,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             return objectReferenceData;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var wallData = (LabyrinthObjectReferenceData)Deserialize(dataReader, advanced);
+            var wallData = (LabyrinthObjectReferenceData)Deserialize(dataReader, majorVersion, advanced);
             (wallData as IMutableIndex).Index = index;
             return wallData;
         }
@@ -1150,31 +1150,31 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             // Object data
             dataWriter.Write((ushort)AutomapType);
 
             // Objects
-            Objects.Serialize(dataWriter, advanced);
+            Objects.Serialize(dataWriter, majorVersion, advanced);
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var objectData = new LabyrinthObjectData();
 
             objectData.AutomapType = (AutomapType)dataReader.ReadWord();
 
             // Objects
-            objectData.Objects = DataCollection<LabyrinthObjectReferenceData>.Deserialize(dataReader, 8, advanced);
+            objectData.Objects = DataCollection<LabyrinthObjectReferenceData>.Deserialize(dataReader, 8, majorVersion, advanced);
             objectData.Objects.ItemChanged += objectData.ObjectsChanged;
 
             return objectData;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var wallData = (LabyrinthObjectData)Deserialize(dataReader, advanced);
+            var wallData = (LabyrinthObjectData)Deserialize(dataReader, majorVersion, advanced);
             (wallData as IMutableIndex).Index = index;
             return wallData;
         }
@@ -1406,7 +1406,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             // Header
             dataWriter.Write((ushort)WallHeight);
@@ -1419,20 +1419,20 @@ namespace Ambermoon.Data.GameDataRepository.Data
             // Objects
             dataWriter.Write((ushort)Objects.Count);
             foreach (var entry in Objects)
-                entry.Serialize(dataWriter, advanced);
+                entry.Serialize(dataWriter, majorVersion, advanced);
 
             // Object descriptions
             dataWriter.Write((ushort)ObjectDescriptions.Count);
             foreach (var entry in ObjectDescriptions)
-                entry.Serialize(dataWriter, advanced);
+                entry.Serialize(dataWriter, majorVersion, advanced);
 
             // Walls
             dataWriter.Write((ushort)Walls.Count);
             foreach (var entry in Walls)
-                entry.Serialize(dataWriter, advanced);
+                entry.Serialize(dataWriter, majorVersion, advanced);
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var labyrinthData = new LabyrinthData();
 
@@ -1445,28 +1445,28 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             // Objects
             int numberOfObjects = dataReader.ReadWord();
-            var objectList = DataCollection<LabyrinthObjectData>.Deserialize(dataReader, numberOfObjects, advanced);
-            labyrinthData.Objects = new DictionaryList<LabyrinthObjectData>(objectList);
+            var objectList = DataCollection<LabyrinthObjectData>.Deserialize(dataReader, numberOfObjects, majorVersion, advanced);
+            labyrinthData.Objects = [.. objectList];
             // TODO: change detection
 
             // Object descriptions
             int numberOfObjectDescriptions = dataReader.ReadWord();
-            var objectDescriptionList = DataCollection<LabyrinthObjectDescriptionData>.Deserialize(dataReader, numberOfObjectDescriptions, advanced);
-            labyrinthData.ObjectDescriptions = new DictionaryList<LabyrinthObjectDescriptionData>(objectDescriptionList);
+            var objectDescriptionList = DataCollection<LabyrinthObjectDescriptionData>.Deserialize(dataReader, numberOfObjectDescriptions, majorVersion, advanced);
+            labyrinthData.ObjectDescriptions = [.. objectDescriptionList];
             // TODO: change detection
 
             // Walls
             int numberOfWalls = dataReader.ReadWord();
-            var wallList = DataCollection<LabyrinthWallData>.Deserialize(dataReader, numberOfWalls, advanced);
-            labyrinthData.Walls = new DictionaryList<LabyrinthWallData>(wallList);
+            var wallList = DataCollection<LabyrinthWallData>.Deserialize(dataReader, numberOfWalls, majorVersion, advanced);
+            labyrinthData.Walls = [.. wallList];
             // TODO: change detection
 
             return labyrinthData;
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var labyrinthData = (LabyrinthData)Deserialize(dataReader, advanced);
+            var labyrinthData = (LabyrinthData)Deserialize(dataReader, majorVersion, advanced);
             (labyrinthData as IMutableIndex).Index = index;
             return labyrinthData;
         }

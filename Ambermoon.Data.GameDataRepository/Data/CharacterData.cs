@@ -66,14 +66,16 @@ namespace Ambermoon.Data.GameDataRepository.Data
         /// 
         /// Note: While this is capped to 50 for party members
         /// it seems to go beyond at least for some monsters.
+        /// 
+        /// Moreover a level of 0 is used for some NPCs.
         /// </summary>
-        [Range(1, byte.MaxValue)]
+        [Range(0, byte.MaxValue)]
         public uint Level
         {
             get => _level;
             set
             {
-                ValueChecker.Check(value, 1, byte.MaxValue);
+                ValueChecker.Check(value, 0, byte.MaxValue);
                 SetField(ref _level, value);
             }
         }

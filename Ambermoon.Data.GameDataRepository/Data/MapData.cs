@@ -534,7 +534,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             // Event entry list
             dataWriter.Write((ushort)EventEntryList.Count);
             foreach (var entry in EventEntryList)
-                entry.Serialize(dataWriter, advanced);
+                entry.Serialize(dataWriter, majorVersion, advanced);
 
             // Events
             dataWriter.Write((ushort)Events.Count);
@@ -563,7 +563,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             var gotoPoints = GotoPoints?.ToList() ?? new List<MapGotoPointData>();
             dataWriter.Write((ushort)gotoPoints.Count);
             foreach (var gotoPoint in gotoPoints)
-                gotoPoint.Serialize(dataWriter, advanced);
+                gotoPoint.Serialize(dataWriter, majorVersion, advanced);
 
             // Event Entry Automap Types
             if (Type == MapType.Map3D)

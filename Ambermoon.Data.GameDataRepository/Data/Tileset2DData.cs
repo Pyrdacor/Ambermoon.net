@@ -327,7 +327,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             uint tileFlags = (AllowedCollisionClasses << 8) & 0x7fff00;
 
@@ -383,14 +383,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
             dataWriter.Write((byte)ColorIndex);
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var tile2DIconData = (Tile2DIconData)Deserialize(dataReader, advanced);
+            var tile2DIconData = (Tile2DIconData)Deserialize(dataReader, majorVersion, advanced);
             (tile2DIconData as IMutableIndex).Index = index;
             return tile2DIconData;
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var tile2DIconData = new Tile2DIconData();
 
@@ -554,24 +554,24 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
         #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, bool advanced)
+        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
         {
             dataWriter.Write((ushort)Icons.Count);
 
             foreach (var icon in Icons)
             {
-                icon.Serialize(dataWriter, advanced);
+                icon.Serialize(dataWriter, majorVersion, advanced);
             }
         }
 
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, bool advanced)
+        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
         {
-            var tileset2DData = (Tileset2DData)Deserialize(dataReader, advanced);
+            var tileset2DData = (Tileset2DData)Deserialize(dataReader, majorVersion, advanced);
             (tileset2DData as IMutableIndex).Index = index;
             return tileset2DData;
         }
 
-        public static IData Deserialize(IDataReader dataReader, bool advanced)
+        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
         {
             var tileset2DData = new Tileset2DData();
 
@@ -582,7 +582,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             for (int i = 0; i < iconCount; ++i)
             {
-                tileset2DData.Icons.Add((Tile2DIconData)Tile2DIconData.Deserialize(dataReader, (uint)i + 1, advanced));
+                tileset2DData.Icons.Add((Tile2DIconData)Tile2DIconData.Deserialize(dataReader, (uint)i + 1, majorVersion, advanced));
             }
 
             tileset2DData.Icons.ItemChanged += tileset2DData.IconChanged;
