@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 namespace Ambermoon.Data.GameDataRepository
 {
     using Ambermoon.Data.Enumerations;
+    using Ambermoon.Data.Legacy.ExecutableData;
     using Ambermoon.Data.Legacy.Serialization;
     using Collections;
     using Data;
@@ -397,6 +398,7 @@ namespace Ambermoon.Data.GameDataRepository
         public List<string> ConditionNames => _textContainer.ConditionNames;
         public List<string> UITexts => _textContainer.UITexts;
         public List<int> UITextWithPlaceholderIndices => _textContainer.UITextWithPlaceholderIndices;
+        public List<string> GenderNames => [UITexts[(int)UITextIndex.Male], UITexts[(int)UITextIndex.Female], UITexts[(int)UITextIndex.BothSexes]];
 
         #endregion
 
@@ -409,6 +411,7 @@ namespace Ambermoon.Data.GameDataRepository
         public GameDataRepository(string path)
             : this(FileContainerFromPath(path))
         {
+
         }
 
         public GameDataRepository(IReadOnlyFileSystem fileSystem)

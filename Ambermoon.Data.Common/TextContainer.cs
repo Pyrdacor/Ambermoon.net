@@ -12,25 +12,25 @@ namespace Ambermoon.Data
             return textContainer;
         }
 
-        public List<string> WorldNames { get; } = new List<string>();
-        public List<string> FormatMessages { get; } = new List<string>();
-        public List<string> Messages { get; } = new List<string>();
-        public List<string> AutomapTypeNames { get; } = new List<string>();
-        public List<string> OptionNames { get; } = new List<string>();
-        public List<string> MusicNames { get; } = new List<string>();
-        public List<string> SpellClassNames { get; } = new List<string>();
-        public List<string> SpellNames { get; } = new List<string>();
-        public List<string> LanguageNames { get; } = new List<string>();
-        public List<string> ClassNames { get; } = new List<string>();
-        public List<string> RaceNames { get; } = new List<string>();
-        public List<string> SkillNames { get; } = new List<string>();
-        public List<string> AttributeNames { get; } = new List<string>();
-        public List<string> SkillShortNames { get; } = new List<string>();
-        public List<string> AttributeShortNames { get; } = new List<string>();
-        public List<string> ItemTypeNames { get; } = new List<string>();
-        public List<string> ConditionNames { get; } = new List<string>();
-        public List<string> UITexts { get; } = new List<string>();
-        public List<int> UITextWithPlaceholderIndices { get; } = new List<int>();
+        public List<string> WorldNames { get; } =  [];
+        public List<string> FormatMessages { get; } =  [];
+        public List<string> Messages { get; } =  [];
+        public List<string> AutomapTypeNames { get; } =  [];
+        public List<string> OptionNames { get; } =  [];
+        public List<string> MusicNames { get; } =  [];
+        public List<string> SpellClassNames { get; } =  [];
+        public List<string> SpellNames { get; } =  [];
+        public List<string> LanguageNames { get; } =  [];
+        public List<string> ClassNames { get; } =  [];
+        public List<string> RaceNames { get; } =  [];
+        public List<string> SkillNames { get; } =  [];
+        public List<string> AttributeNames { get; } =  [];
+        public List<string> SkillShortNames { get; } =  [];
+        public List<string> AttributeShortNames { get; } =  [];
+        public List<string> ItemTypeNames { get; } =  [];
+        public List<string> ConditionNames { get; } =  [];
+        public List<string> UITexts { get; } =  [];
+        public List<int> UITextWithPlaceholderIndices { get; } =  [];
         public string VersionString { get; set; }
         public string DateAndLanguageString { get; set; }
     }
