@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Data
 {
-    public class CharacterValue : INotifyPropertyChanged
+    public class CharacterValue : INotifyPropertyChanged, IEquatable<CharacterValue>
     {
         private uint _currentValue;
         private uint _maxValue;
@@ -81,9 +81,52 @@ namespace Ambermoon.Data
             OnPropertyChanged(propertyName);
             return true;
         }
+
+#nullable enable
+        public bool Equals(CharacterValue? other)
+        {
+            if (other is null) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            return _currentValue == other._currentValue &&
+                   _maxValue == other._maxValue &&
+                   _bonusValue == other._bonusValue &&
+                   _storedValue == other._storedValue;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is null) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((CharacterValue)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            int hashCode = 0;
+
+            hashCode ^= (int)_currentValue;
+            hashCode ^= (int)_maxValue;
+            hashCode ^= _bonusValue;
+            hashCode ^= (int)_storedValue;
+
+            return hashCode;
+        }
+
+        public static bool operator ==(CharacterValue? left, CharacterValue? right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(CharacterValue? left, CharacterValue? right)
+        {
+            return !Equals(left, right);
+        }
+#nullable restore
     }
 
-    public class CharacterValueCollection<TType> : IEnumerable<CharacterValue> where TType : Enum
+    public class CharacterValueCollection<TType> : IEnumerable<CharacterValue>, IEquatable<CharacterValueCollection<TType>> where TType : Enum
     {
         readonly CharacterValue[] values = null;
 
@@ -142,5 +185,57 @@ namespace Ambermoon.Data
         {
             return GetEnumerator();
         }
+
+#nullable enable
+        public bool Equals(CharacterValueCollection<TType>? other)
+        {
+            if (other is null) return false;
+            if (ReferenceEquals(this, other)) return true;
+            if (values is null) return other.values is null;
+            if (other.values is null) return false;
+            if (values.Length != other.values.Length) return false;
+            
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (!values[i].Equals(other.values[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is null) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((CharacterValueCollection<TType>)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            if (values is null)
+                return 0;
+
+            int hashCode = 0;
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                hashCode ^= values[i].GetHashCode();
+            }
+
+            return hashCode;
+        }
+
+        public static bool operator ==(CharacterValueCollection<TType>? left, CharacterValueCollection<TType>? right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(CharacterValueCollection<TType>? left, CharacterValueCollection<TType>? right)
+        {
+            return !Equals(left, right);
+        }
+#nullable restore
     }
 }

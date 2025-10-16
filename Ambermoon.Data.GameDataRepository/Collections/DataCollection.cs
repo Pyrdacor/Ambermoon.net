@@ -40,7 +40,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         public DataCollection()
         {
             Count = 0;
-            _elements = Array.Empty<TElement>();
+            _elements = [];
         }
 
         internal DataCollection(int size)
@@ -113,7 +113,17 @@ namespace Ambermoon.Data.GameDataRepository.Collections
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
-            return Count == other.Count && _elements.Equals(other._elements);
+            if (_elements is null) return other._elements is null;
+            if (other._elements is null) return false;
+            if (_elements.Length != other._elements.Length) return false;
+
+            for (int i = 0; i < _elements.Length; i++)
+            {
+                if (!_elements[i].Equals(other._elements[i]))
+                    return false;
+            }
+
+            return true;
         }
 
         public override bool Equals(object? obj)
