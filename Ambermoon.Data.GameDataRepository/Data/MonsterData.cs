@@ -438,9 +438,9 @@ namespace Ambermoon.Data.GameDataRepository.Data
             spellPoints.MaxValue = dataReader.ReadWord();
             spellPoints.BonusValue = dataReader.ReadSignedWord();
             monsterData.BaseDefense = dataReader.ReadWord();
-            int bonusDefense = dataReader.ReadSignedWord(); // TODO: check against equipment
+            monsterData.BonusDefense = dataReader.ReadSignedWord();
             monsterData.BaseAttackDamage = dataReader.ReadWord();
-            int bonusAttackDamage = dataReader.ReadSignedWord(); // TODO: check against equipment
+            monsterData.BonusAttackDamage = dataReader.ReadSignedWord();
             monsterData.MagicAttackLevel = dataReader.ReadSignedWord();
             monsterData.MagicDefenseLevel = dataReader.ReadSignedWord();
             SkipBytes(16);
@@ -457,8 +457,6 @@ namespace Ambermoon.Data.GameDataRepository.Data
             #region Equipment and Items
             monsterData.Equipment = DataCollection<ItemSlotData>.Deserialize(dataReader, EquipmentSlotCount, majorVersion, advanced);
             monsterData.Items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, majorVersion, advanced);
-            monsterData.InitializeItemSlots();
-
             #endregion
 
             #region Monster Display Data

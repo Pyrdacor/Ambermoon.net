@@ -574,6 +574,8 @@ public sealed class PartyMemberData : BattleCharacterData, IConversationCharacte
         #endregion
 
         // TODO: Events
+        // For now we place 2 zero words to keep the file valid.
+        dataWriter.Write((uint)0);
     }
 
     public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
@@ -704,7 +706,6 @@ public sealed class PartyMemberData : BattleCharacterData, IConversationCharacte
         #region Equipment and Items
         partyMemberData.Equipment = DataCollection<ItemSlotData>.Deserialize(dataReader, EquipmentSlotCount, majorVersion, advanced);
         partyMemberData.Items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, majorVersion, advanced);
-        partyMemberData.InitializeItemSlots();
         #endregion
 
         // TODO: Events
