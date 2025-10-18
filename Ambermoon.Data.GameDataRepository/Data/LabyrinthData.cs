@@ -409,8 +409,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             // Overlays
             int numberOfOverlays = dataReader.ReadByte();
-            var overlays = DataCollection<LabyrinthOverlayData>.Deserialize(dataReader, numberOfOverlays, majorVersion, advanced);
-            wallData.Overlays = new DictionaryList<LabyrinthOverlayData>(overlays);
+            var overlays = DataCollection<LabyrinthOverlayData>.Deserialize(dataReader, numberOfOverlays, majorVersion, advanced, 0);
+            wallData.Overlays = [.. overlays];
             // TODO: change detection
 
             return wallData;
@@ -1166,7 +1166,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             objectData.AutomapType = (AutomapType)dataReader.ReadWord();
 
             // Objects
-            objectData.Objects = DataCollection<LabyrinthObjectReferenceData>.Deserialize(dataReader, 8, majorVersion, advanced);
+            objectData.Objects = DataCollection<LabyrinthObjectReferenceData>.Deserialize(dataReader, 8, majorVersion, advanced, 0);
             objectData.Objects.ItemChanged += objectData.ObjectsChanged;
 
             return objectData;
@@ -1445,19 +1445,19 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             // Objects
             int numberOfObjects = dataReader.ReadWord();
-            var objectList = DataCollection<LabyrinthObjectData>.Deserialize(dataReader, numberOfObjects, majorVersion, advanced);
+            var objectList = DataCollection<LabyrinthObjectData>.Deserialize(dataReader, numberOfObjects, majorVersion, advanced, 1);
             labyrinthData.Objects = [.. objectList];
             // TODO: change detection
 
             // Object descriptions
             int numberOfObjectDescriptions = dataReader.ReadWord();
-            var objectDescriptionList = DataCollection<LabyrinthObjectDescriptionData>.Deserialize(dataReader, numberOfObjectDescriptions, majorVersion, advanced);
+            var objectDescriptionList = DataCollection<LabyrinthObjectDescriptionData>.Deserialize(dataReader, numberOfObjectDescriptions, majorVersion, advanced, 1);
             labyrinthData.ObjectDescriptions = [.. objectDescriptionList];
             // TODO: change detection
 
             // Walls
             int numberOfWalls = dataReader.ReadWord();
-            var wallList = DataCollection<LabyrinthWallData>.Deserialize(dataReader, numberOfWalls, majorVersion, advanced);
+            var wallList = DataCollection<LabyrinthWallData>.Deserialize(dataReader, numberOfWalls, majorVersion, advanced, 101);
             labyrinthData.Walls = [.. wallList];
             // TODO: change detection
 

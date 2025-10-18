@@ -94,12 +94,12 @@ namespace Ambermoon.Data.GameDataRepository.Collections
                 item.Serialize(dataWriter, majorVersion, advanced);
         }
 
-        public static DataCollection<TElement> Deserialize(IDataReader dataReader, int size, int majorVersion, bool advanced)
+        public static DataCollection<TElement> Deserialize(IDataReader dataReader, int size, int majorVersion, bool advanced, uint startIndex)
         {
             var collection = new DataCollection<TElement>(size);
 
             for (uint i = 0; i < size; i++)
-                collection._elements[i] = (TElement)TElement.Deserialize(dataReader, i, majorVersion, advanced);
+                collection._elements[i] = (TElement)TElement.Deserialize(dataReader, startIndex + i, majorVersion, advanced);
 
             return collection;
         }

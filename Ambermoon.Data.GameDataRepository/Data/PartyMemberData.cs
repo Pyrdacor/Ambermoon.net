@@ -429,7 +429,7 @@ public sealed class PartyMemberData : BattleCharacterData, IConversationCharacte
 
         if (rightHand.Amount == 0 || rightHand.ItemIndex == 0)
             NumberOfOccupiedHands = GetEquipmentSlot(EquipmentSlot.LeftHand).Amount == 0 ? 0u : 1u;
-        else if (gameDataRepository.Items[rightHand.ItemIndex].NumberOfHands == 2)
+        else if (gameDataRepository.Items[rightHand.ItemIndex - 1].NumberOfHands == 2)
             NumberOfOccupiedHands = 2;
         else
             NumberOfOccupiedHands = GetEquipmentSlot(EquipmentSlot.LeftHand).Amount == 0 ? 1u : 2u;
@@ -704,8 +704,8 @@ public sealed class PartyMemberData : BattleCharacterData, IConversationCharacte
         partyMemberData.Name = dataReader.ReadString(16).TrimEnd('\0', ' ');
 
         #region Equipment and Items
-        partyMemberData.Equipment = DataCollection<ItemSlotData>.Deserialize(dataReader, EquipmentSlotCount, majorVersion, advanced);
-        partyMemberData.Items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, majorVersion, advanced);
+        partyMemberData.Equipment = DataCollection<ItemSlotData>.Deserialize(dataReader, EquipmentSlotCount, majorVersion, advanced, 0);
+        partyMemberData.Items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, majorVersion, advanced, 0);
         #endregion
 
         // TODO: Events

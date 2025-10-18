@@ -279,7 +279,7 @@ namespace Ambermoon.Data.GameDataRepository.Collections
 
     public static class DictionaryListExtensions
     {
-        public static DictionaryList<T> ToDictionaryList<T>(this IEnumerable<T> enumerable) where T : class, IIndexed, new() => new(enumerable);
+        public static DictionaryList<T> ToDictionaryList<T>(this IEnumerable<T> enumerable) where T : class, IIndexed, new() => [.. enumerable];
 
         public static DictionaryList<T> ToDictionaryList<T>(this IEnumerable<T> enumerable, Func<T, int, uint> keySelector) where T : class, IIndexed, new() => new(enumerable, keySelector);
     }

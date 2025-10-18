@@ -643,14 +643,14 @@ namespace Ambermoon.Data.GameDataRepository.Data
 
             // Event entry list
             int eventEntryListSize = dataReader.ReadWord();
-            var eventEntryList = DataCollection<MapEventEntryData>.Deserialize(dataReader, eventEntryListSize, majorVersion, advanced);
-            mapData.EventEntryList = new DictionaryList<MapEventEntryData>(eventEntryList);
+            var eventEntryList = DataCollection<MapEventEntryData>.Deserialize(dataReader, eventEntryListSize, majorVersion, advanced, 1);
+            mapData.EventEntryList = [.. eventEntryList];
             // TODO: change detection
 
             // Events
             int numberOfEvents = dataReader.ReadWord();
-            var events = DataCollection<EventData>.Deserialize(dataReader, numberOfEvents, majorVersion, advanced);
-            mapData.Events = new DictionaryList<EventData>(events);
+            var events = DataCollection<EventData>.Deserialize(dataReader, numberOfEvents, majorVersion, advanced, 0);
+            mapData.Events = [.. events];
             // TODO: change detection
 
             // Map Character Positions
@@ -663,7 +663,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
                     if (mapChar.MovementType == MapCharacterMovementType.Path || mapChar.MovementType == MapCharacterMovementType.Hour)
                     {
                         mapChar.InitPath(mapChar.MovementType == MapCharacterMovementType.Hour,
-                            DataCollection<MapPositionData>.Deserialize(dataReader, mapChar.MovementType == MapCharacterMovementType.Hour ? 12 : 288, majorVersion, advanced));
+                            DataCollection<MapPositionData>.Deserialize(dataReader, mapChar.MovementType == MapCharacterMovementType.Hour ? 12 : 288, majorVersion, advanced, 0));
                         mapChar.Position = mapChar.Path![0];
                     }
                     else
@@ -683,7 +683,7 @@ namespace Ambermoon.Data.GameDataRepository.Data
             }
             else
             {
-                var gotoPoints = DataCollection<MapGotoPointData>.Deserialize(dataReader, numGotoPoints, majorVersion, advanced);
+                var gotoPoints = DataCollection<MapGotoPointData>.Deserialize(dataReader, numGotoPoints, majorVersion, advanced, 0);
                 mapData.GotoPoints = new DictionaryList<MapGotoPointData>(gotoPoints);
                 // TODO: change detection
 

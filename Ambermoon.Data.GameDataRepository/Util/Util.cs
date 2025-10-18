@@ -47,9 +47,12 @@ namespace Ambermoon.Data.GameDataRepository.Util
         }
 
         internal static long CalculateItemPropertySum(IEnumerable<ItemSlotData> itemSlots,
-            Func<uint, ItemData> itemProvider, Func<ItemData, ItemSlotFlags, long> itemPropertyProvider)
+            Func<uint, ItemData> itemProvider, Func<ItemData, ItemSlotFlags, long> itemPropertyProvider,
+            Func<long>? emptySlotValueProvider = null)
         {
-            return itemSlots.Sum(itemSlot => itemSlot.Amount * itemPropertyProvider(itemProvider(itemSlot.ItemIndex), itemSlot.Flags));
+            emptySlotValueProvider ??= (() => 0);
+
+            return itemSlots.Sum(itemSlot => itemSlot.ItemIndex == 0 || itemSlot.Amount == 0 ? emptySlotValueProvider() : itemSlot.Amount * itemPropertyProvider(itemProvider(itemSlot.ItemIndex), itemSlot.Flags));
         }
 
         internal static int UnsignedByteToSigned(uint @byte)

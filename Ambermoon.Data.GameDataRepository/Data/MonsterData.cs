@@ -455,8 +455,8 @@ namespace Ambermoon.Data.GameDataRepository.Data
             monsterData.Name = dataReader.ReadString(16).TrimEnd('\0', ' ');
 
             #region Equipment and Items
-            monsterData.Equipment = DataCollection<ItemSlotData>.Deserialize(dataReader, EquipmentSlotCount, majorVersion, advanced);
-            monsterData.Items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, majorVersion, advanced);
+            monsterData.Equipment = DataCollection<ItemSlotData>.Deserialize(dataReader, EquipmentSlotCount, majorVersion, advanced, 0);
+            monsterData.Items = DataCollection<ItemSlotData>.Deserialize(dataReader, InventorySlotCount, majorVersion, advanced, 0);
             #endregion
 
             #region Monster Display Data

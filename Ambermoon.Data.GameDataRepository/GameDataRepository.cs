@@ -469,7 +469,7 @@ namespace Ambermoon.Data.GameDataRepository
             var mapFiles = ReadFileContainers("1Map_data.amb", "2Map_data.amb", "3Map_data.amb");
             Maps = mapFiles.Select(mapFile => (MapData)MapData.Deserialize(mapFile.Value, (uint)mapFile.Key, MajorVersion, Advanced)).ToDictionaryList();
             var mapTextFiles = ReadFileContainers("1Map_texts.amb", "2Map_texts.amb", "3Map_texts.amb");
-            MapTexts = mapTextFiles.Select(mapTextFile => (TextList<MapData>)TextList<MapData>.Deserialize(mapTextFile.Value, (uint)mapTextFile.Key, Maps[(uint)mapTextFile.Key], MajorVersion, Advanced)).ToDictionaryList();
+            MapTexts = mapTextFiles.Where(f => Maps.ContainsKey((uint)f.Key)).Select(mapTextFile => (TextList<MapData>)TextList<MapData>.Deserialize(mapTextFile.Value, (uint)mapTextFile.Key, Maps[(uint)mapTextFile.Key], MajorVersion, Advanced)).ToDictionaryList();
             var tilesetFiles = ReadFileContainer("Icon_data.amb");
             Tilesets = tilesetFiles.Select(tilesetFile => (Tileset2DData)Tileset2DData.Deserialize(tilesetFile.Value, (uint)tilesetFile.Key, MajorVersion, Advanced)).ToDictionaryList();
             var tile2DImageFiles = ReadFileContainers("1Icon_gfx.amb", "2Icon_gfx.amb", "3Icon_gfx.amb");
@@ -504,7 +504,7 @@ namespace Ambermoon.Data.GameDataRepository
             // NOTE: Items must be loaded before characters as characters can have items and need their info for some calculations.
             var itemFile = ReadFileContainer("Objects.amb")[1];
             int itemCount = itemFile.ReadWord();
-            Items = DataCollection<ItemData>.Deserialize(itemFile, itemCount, MajorVersion, Advanced).ToDictionaryList();
+            Items = DataCollection<ItemData>.Deserialize(itemFile, itemCount, MajorVersion, Advanced, 1).ToDictionaryList();
             var itemGraphicFiles = ReadFileContainer("Object_icons");
             ItemImages = ImageList.Deserialize(0, itemGraphicFiles[1], 16, 16, GraphicFormat.Palette5Bit)
                 .ToDictionaryList();
