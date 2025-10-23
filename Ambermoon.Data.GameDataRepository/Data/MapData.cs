@@ -2,821 +2,820 @@
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 
-namespace Ambermoon.Data.GameDataRepository.Data
-{
-    using Ambermoon.Data.Enumerations;
-    using Collections;
-    using Serialization;
-    using System.Collections.Generic;
-    using Util;
+namespace Ambermoon.Data.GameDataRepository.Data;
 
-    public enum MapEnvironment
+using Ambermoon.Data.Enumerations;
+using Collections;
+using Serialization;
+using System.Collections.Generic;
+using Util;
+
+public enum MapEnvironment
+{
+    Indoor,
+    Outdoor,
+    Dungeon
+}
+
+public sealed class MapData : IMutableIndex, IIndexedData, IEquatable<MapData>, INotifyPropertyChanged
+{
+
+    #region Fields
+
+    private uint _paletteIndex;
+    private uint _songIndex;
+    private uint? _labdataIndex;
+    private uint? _tilesetIndex;
+    private uint? _skyBackgroundIndex;
+    private uint? _npcGraphicFileIndex;
+    private World _world;
+    private MapType _type;
+
+    #endregion
+
+
+    #region Properties
+
+    uint IMutableIndex.Index
     {
-        Indoor,
-        Outdoor,
-        Dungeon
+        get;
+        set;
     }
 
-    public sealed class MapData : IMutableIndex, IIndexedData, IEquatable<MapData>, INotifyPropertyChanged
+    public uint Index => (this as IMutableIndex).Index;
+
+    public MapType Type
     {
+        get => _type;
+        private set => SetField(ref _type, value);
+    }
 
-        #region Fields
-
-        private uint _paletteIndex;
-        private uint _songIndex;
-        private uint? _labdataIndex;
-        private uint? _tilesetIndex;
-        private uint? _skyBackgroundIndex;
-        private uint? _npcGraphicFileIndex;
-        private World _world;
-        private MapType _type;
-
-        #endregion
-
-
-        #region Properties
-
-        uint IMutableIndex.Index
+    [Range(0, byte.MaxValue)]
+    public uint PaletteIndex
+    {
+        get => _paletteIndex;
+        set
         {
-            get;
-            set;
+            ValueChecker.Check(value, 0, byte.MaxValue);
+            SetField(ref _paletteIndex, value);
         }
+    }
 
-        public uint Index => (this as IMutableIndex).Index;
-
-        public MapType Type
+    [Range(0, byte.MaxValue)]
+    public uint SongIndex
+    {
+        get => _songIndex;
+        set
         {
-            get => _type;
-            private set => SetField(ref _type, value);
+            ValueChecker.Check(value, 0, byte.MaxValue);
+            SetField(ref _songIndex, value);
         }
+    }
 
-        [Range(0, byte.MaxValue)]
-        public uint PaletteIndex
+    public MapFlags Flags { get; private set; }
+
+    public World World
+    {
+        get => _world;
+        private set => SetField(ref _world, value);
+    }
+
+    [Range(0, byte.MaxValue)]
+    public uint? LabdataIndex
+    {
+        get => _labdataIndex;
+        set
         {
-            get => _paletteIndex;
-            set
+            if (value is not null)
+                ValueChecker.Check(value.Value, 0, byte.MaxValue);
+            SetField(ref _labdataIndex, value);
+        }
+    }
+
+    [Range(0, byte.MaxValue)]
+    public uint? TilesetIndex
+    {
+        get => _tilesetIndex;
+        set
+        {
+            if (value is not null)
+                ValueChecker.Check(value.Value, 0, byte.MaxValue);
+            SetField(ref _tilesetIndex, value);
+        }
+    }
+
+    [Range(1, 3)]
+    public uint? SkyBackgroundIndex
+    {
+        get => _skyBackgroundIndex;
+        private set
+        {
+            if (value is not null)
+                ValueChecker.Check(value.Value, 1, 3);
+            SetField(ref _skyBackgroundIndex, value);
+        }
+    }
+
+    [Range(0, byte.MaxValue)]
+    public uint? NpcGraphicFileIndex
+    {
+        get => _npcGraphicFileIndex;
+        private set
+        {
+            if (value is not null)
+                ValueChecker.Check(value.Value, 0, byte.MaxValue);
+            SetField(ref _npcGraphicFileIndex, value);
+        }
+    }
+
+    public MapEnvironment Environment
+    {
+        get
+        {
+            if (Flags.HasFlag(MapFlags.Indoor))
+                return MapEnvironment.Indoor;
+            if (Flags.HasFlag(MapFlags.Outdoor))
+                return MapEnvironment.Outdoor;
+            return MapEnvironment.Dungeon;
+        }
+        set
+        {
+            Flags &= (MapFlags)0xf8; // mask out environment first
+
+            Flags |= value switch
             {
-                ValueChecker.Check(value, 0, byte.MaxValue);
-                SetField(ref _paletteIndex, value);
-            }
-        }
-
-        [Range(0, byte.MaxValue)]
-        public uint SongIndex
-        {
-            get => _songIndex;
-            set
-            {
-                ValueChecker.Check(value, 0, byte.MaxValue);
-                SetField(ref _songIndex, value);
-            }
-        }
-
-        public MapFlags Flags { get; private set; }
-
-        public World World
-        {
-            get => _world;
-            private set => SetField(ref _world, value);
-        }
-
-        [Range(0, byte.MaxValue)]
-        public uint? LabdataIndex
-        {
-            get => _labdataIndex;
-            set
-            {
-                if (value is not null)
-                    ValueChecker.Check(value.Value, 0, byte.MaxValue);
-                SetField(ref _labdataIndex, value);
-            }
-        }
-
-        [Range(0, byte.MaxValue)]
-        public uint? TilesetIndex
-        {
-            get => _tilesetIndex;
-            set
-            {
-                if (value is not null)
-                    ValueChecker.Check(value.Value, 0, byte.MaxValue);
-                SetField(ref _tilesetIndex, value);
-            }
-        }
-
-        [Range(1, 3)]
-        public uint? SkyBackgroundIndex
-        {
-            get => _skyBackgroundIndex;
-            private set
-            {
-                if (value is not null)
-                    ValueChecker.Check(value.Value, 1, 3);
-                SetField(ref _skyBackgroundIndex, value);
-            }
-        }
-
-        [Range(0, byte.MaxValue)]
-        public uint? NpcGraphicFileIndex
-        {
-            get => _npcGraphicFileIndex;
-            private set
-            {
-                if (value is not null)
-                    ValueChecker.Check(value.Value, 0, byte.MaxValue);
-                SetField(ref _npcGraphicFileIndex, value);
-            }
-        }
-
-        public MapEnvironment Environment
-        {
-            get
-            {
-                if (Flags.HasFlag(MapFlags.Indoor))
-                    return MapEnvironment.Indoor;
-                if (Flags.HasFlag(MapFlags.Outdoor))
-                    return MapEnvironment.Outdoor;
-                return MapEnvironment.Dungeon;
-            }
-            set
-            {
-                Flags &= (MapFlags)0xf8; // mask out environment first
-
-                Flags |= value switch
-                {
-                    MapEnvironment.Indoor => MapFlags.Indoor,
-                    MapEnvironment.Outdoor => MapFlags.Outdoor,
-                    _ => MapFlags.Dungeon
-                };
-
-                HandleEnvironmentChanges();
-                OnPropertyChanged();
-            }
-        }
-
-        public bool AllowResting
-        {
-            get => Flags.HasFlag(MapFlags.CanRest);
-            set
-            {
-                if (value)
-                    Flags |= MapFlags.CanRest;
-                else
-                    Flags &= ~MapFlags.CanRest;
-
-                OnPropertyChanged();
-            }
-        }
-
-        public bool AllowUsingMagic
-        {
-            get => Flags.HasFlag(MapFlags.CanUseMagic);
-            set
-            {
-                if (value)
-                    Flags |= MapFlags.CanUseMagic;
-                else
-                    Flags &= ~MapFlags.CanUseMagic;
-
-                OnPropertyChanged();
-            }
-        }
-
-        public bool AlwaysSleepEightHours
-        {
-            get => Flags.HasFlag(MapFlags.NoSleepUntilDawn);
-            set
-            {
-                if (value)
-                    Flags |= MapFlags.NoSleepUntilDawn;
-                else
-                    Flags &= ~MapFlags.NoSleepUntilDawn;
-
-                OnPropertyChanged();
-            }
-        }
-
-        public bool WorldMap
-        {
-            get => Type == MapType.Map2D && Flags.HasFlag(MapFlags.WorldSurface);
-            set
-            {
-                if (value)
-                {
-                    if (Type != MapType.Map2D)
-                        throw new InvalidOperationException("Only 2D maps can be world maps.");
-                    Flags |= MapFlags.NoSleepUntilDawn;
-                }
-                else
-                    Flags &= ~MapFlags.NoSleepUntilDawn;
-
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// This disables the travel music on world maps
-        /// and is ignored on all other maps.
-        ///
-        /// Normally on world maps the music depends on the travel type.
-        /// If this is active, the map will instead play the song which
-        /// is specified in the map data.
-        ///
-        /// Advanced only.
-        /// </summary>
-        [AdvancedOnly]
-        public bool DisableTravelMusic
-        {
-            get => Flags.HasFlag(MapFlags.NoTravelMusic);
-            set
-            {
-                if (value)
-                    Flags |= MapFlags.NoTravelMusic;
-                else
-                    Flags &= ~MapFlags.NoTravelMusic;
-
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// Disables the usage of the spells "Word of marking" and "Word of returning".
-        ///
-        /// This is always true on the Forest Moon and Morag but
-        /// with this you can also disable it on Lyramion maps.
-        ///
-        /// Advanced only.
-        /// </summary>
-        [AdvancedOnly]
-        public bool DisableMarkAndReturn
-        {
-            get => Flags.HasFlag(MapFlags.NoMarkOrReturn);
-            set
-            {
-                if (value)
-                    Flags |= MapFlags.NoMarkOrReturn;
-                else
-                    Flags &= ~MapFlags.NoMarkOrReturn;
-
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// Disables the usage of the eagle and the broom.
-        ///
-        /// Advanced only.
-        /// </summary>
-        [AdvancedOnly]
-        public bool DisableEagleAndBroom
-        {
-            get => Flags.HasFlag(MapFlags.NoEagleOrBroom);
-            set
-            {
-                if (value)
-                    Flags |= MapFlags.NoEagleOrBroom;
-                else
-                    Flags &= ~MapFlags.NoEagleOrBroom;
-
-                OnPropertyChanged();
-            }
-        }
-
-        public TwoDimensionalData<MapTile2DData>? Tiles2D { get; set; }
-
-        public TwoDimensionalData<MapTile3DData>? Tiles3D { get; set; }
-
-        public DependentDataCollection<MapCharacterData, MapData> MapCharacters { get; private set; } = new();
-
-        public int Width => Tiles3D?.Width ?? Tiles2D?.Width ?? 0;
-
-        public int Height => Tiles3D?.Height ?? Tiles2D?.Height ?? 0;
-
-        /// <summary>
-        /// List of all event entries.
-        /// 
-        /// Each element represents the index of the first event in the event entry.
-        /// </summary>
-        public DictionaryList<MapEventEntryData> EventEntryList { get; private set; } = new();
-
-        /// <summary>
-        /// List of all existing map events.
-        /// </summary>
-        public DictionaryList<EventData> Events { get; private set; } = new();
-
-        /// <summary>
-        /// List of all goto (fast travel) points.
-        /// </summary>
-        public DictionaryList<MapGotoPointData>? GotoPoints { get; private set; }
-
-        #endregion
-
-
-        #region Constructors
-
-        public MapData()
-        {
-            MapCharacters.ItemChanged += MapCharactersChanged;
-        }
-
-        public static MapData CreateWorldMap(World world)
-        {
-            var mapData = new MapData();
-            mapData.SetupWorldMap(world);
-            return mapData;
-        }
-
-        public static MapData Create2DMap(MapEnvironment environment, World world, int width, int height)
-        {
-            var mapData = new MapData();
-            mapData.Setup2DMap(environment, world, width, height);
-            return mapData;
-        }
-
-        public static MapData Create3DMap(MapEnvironment environment, World world, int width, int height,
-            uint labdataIndex, uint paletteIndex)
-        {
-            var mapData = new MapData();
-            mapData.Setup3DMap(environment, world, width, height, labdataIndex, paletteIndex);
-            return mapData;
-        }
-
-        #endregion
-
-
-        #region Methods
-
-        public void Resize(int width, int height)
-        {
-            Tiles2D?.Resize(width, height, () => MapTile2DData.Empty);
-            Tiles3D?.Resize(width, height, () => MapTile3DData.Empty);
-        }
-
-        private void HandleEnvironmentChanges()
-        {
-            if (Type == MapType.Map3D)
-            {
-                if (SkyBackgroundIndex is not null && Environment != MapEnvironment.Outdoor)
-                    SkyBackgroundIndex = null;
-                else if (SkyBackgroundIndex is null && Environment == MapEnvironment.Outdoor)
-                    SkyBackgroundIndex = (uint)World + 1;
-            }
-        }
-
-        private void SetupWorldMap(World world)
-        {
-            Type = MapType.Map2D;
-            Flags = MapFlags.Outdoor |
-                    MapFlags.WorldSurface |
-                    MapFlags.CanRest |
-                    MapFlags.CanUseMagic |
-                    MapFlags.StationaryGraphics;
-            World = world;
-            SongIndex = (uint)Song.PloddingAlong;
-            // The tileset and palette indices match the world + 1 for world maps (1, 2, 3)
-            TilesetIndex = (uint)world + 1;
-            PaletteIndex = (uint)world + 1;
-            
-            Tiles2D = new(50, 50);
-
-            // Inputs are X and Y
-            Func<uint, uint, MapTile2DData> defaultTileCreator = world switch
-            {
-                World.ForestMoon => (x, y) => new MapTile2DData() { BackTileIndex = 7 + (x + y) % 8 },
-                World.Morag => (x, y) => new MapTile2DData() { BackTileIndex = 1 + (y % 8) * 6 + x % 6 },
-                _ => (x, _) => new MapTile2DData() { BackTileIndex = 215 + x % 4 }
+                MapEnvironment.Indoor => MapFlags.Indoor,
+                MapEnvironment.Outdoor => MapFlags.Outdoor,
+                _ => MapFlags.Dungeon
             };
 
-            for (int y = 0; y < 50; y++)
+            HandleEnvironmentChanges();
+            OnPropertyChanged();
+        }
+    }
+
+    public bool AllowResting
+    {
+        get => Flags.HasFlag(MapFlags.CanRest);
+        set
+        {
+            if (value)
+                Flags |= MapFlags.CanRest;
+            else
+                Flags &= ~MapFlags.CanRest;
+
+            OnPropertyChanged();
+        }
+    }
+
+    public bool AllowUsingMagic
+    {
+        get => Flags.HasFlag(MapFlags.CanUseMagic);
+        set
+        {
+            if (value)
+                Flags |= MapFlags.CanUseMagic;
+            else
+                Flags &= ~MapFlags.CanUseMagic;
+
+            OnPropertyChanged();
+        }
+    }
+
+    public bool AlwaysSleepEightHours
+    {
+        get => Flags.HasFlag(MapFlags.NoSleepUntilDawn);
+        set
+        {
+            if (value)
+                Flags |= MapFlags.NoSleepUntilDawn;
+            else
+                Flags &= ~MapFlags.NoSleepUntilDawn;
+
+            OnPropertyChanged();
+        }
+    }
+
+    public bool WorldMap
+    {
+        get => Type == MapType.Map2D && Flags.HasFlag(MapFlags.WorldSurface);
+        set
+        {
+            if (value)
             {
-                for (int x = 0; x < 50; x++)
-                {
-                    Tiles2D.Set(x, y, defaultTileCreator((uint)x, (uint)y));
-                }
+                if (Type != MapType.Map2D)
+                    throw new InvalidOperationException("Only 2D maps can be world maps.");
+                Flags |= MapFlags.NoSleepUntilDawn;
             }
+            else
+                Flags &= ~MapFlags.NoSleepUntilDawn;
 
-            Tiles2D.ItemChanged += TileChanged;
+            OnPropertyChanged();
+        }
+    }
 
-            foreach (var mapChar in MapCharacters)
-                mapChar.SetEmpty();
+    /// <summary>
+    /// This disables the travel music on world maps
+    /// and is ignored on all other maps.
+    ///
+    /// Normally on world maps the music depends on the travel type.
+    /// If this is active, the map will instead play the song which
+    /// is specified in the map data.
+    ///
+    /// Advanced only.
+    /// </summary>
+    [AdvancedOnly]
+    public bool DisableTravelMusic
+    {
+        get => Flags.HasFlag(MapFlags.NoTravelMusic);
+        set
+        {
+            if (value)
+                Flags |= MapFlags.NoTravelMusic;
+            else
+                Flags &= ~MapFlags.NoTravelMusic;
 
-            NpcGraphicFileIndex = null;
-            LabdataIndex = null;
-            Tiles3D = null;
-            SkyBackgroundIndex = null;
-            GotoPoints = null;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Disables the usage of the spells "Word of marking" and "Word of returning".
+    ///
+    /// This is always true on the Forest Moon and Morag but
+    /// with this you can also disable it on Lyramion maps.
+    ///
+    /// Advanced only.
+    /// </summary>
+    [AdvancedOnly]
+    public bool DisableMarkAndReturn
+    {
+        get => Flags.HasFlag(MapFlags.NoMarkOrReturn);
+        set
+        {
+            if (value)
+                Flags |= MapFlags.NoMarkOrReturn;
+            else
+                Flags &= ~MapFlags.NoMarkOrReturn;
+
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Disables the usage of the eagle and the broom.
+    ///
+    /// Advanced only.
+    /// </summary>
+    [AdvancedOnly]
+    public bool DisableEagleAndBroom
+    {
+        get => Flags.HasFlag(MapFlags.NoEagleOrBroom);
+        set
+        {
+            if (value)
+                Flags |= MapFlags.NoEagleOrBroom;
+            else
+                Flags &= ~MapFlags.NoEagleOrBroom;
+
+            OnPropertyChanged();
+        }
+    }
+
+    public TwoDimensionalData<MapTile2DData>? Tiles2D { get; set; }
+
+    public TwoDimensionalData<MapTile3DData>? Tiles3D { get; set; }
+
+    public DependentDataCollection<MapCharacterData, MapData> MapCharacters { get; private set; } = new();
+
+    public int Width => Tiles3D?.Width ?? Tiles2D?.Width ?? 0;
+
+    public int Height => Tiles3D?.Height ?? Tiles2D?.Height ?? 0;
+
+    /// <summary>
+    /// List of all event entries.
+    /// 
+    /// Each element represents the index of the first event in the event entry.
+    /// </summary>
+    public DictionaryList<MapEventEntryData> EventEntryList { get; private set; } = new();
+
+    /// <summary>
+    /// List of all existing map events.
+    /// </summary>
+    public DictionaryList<EventData> Events { get; private set; } = new();
+
+    /// <summary>
+    /// List of all goto (fast travel) points.
+    /// </summary>
+    public DictionaryList<MapGotoPointData>? GotoPoints { get; private set; }
+
+    #endregion
+
+
+    #region Constructors
+
+    public MapData()
+    {
+        MapCharacters.ItemChanged += MapCharactersChanged;
+    }
+
+    public static MapData CreateWorldMap(World world)
+    {
+        var mapData = new MapData();
+        mapData.SetupWorldMap(world);
+        return mapData;
+    }
+
+    public static MapData Create2DMap(MapEnvironment environment, World world, int width, int height)
+    {
+        var mapData = new MapData();
+        mapData.Setup2DMap(environment, world, width, height);
+        return mapData;
+    }
+
+    public static MapData Create3DMap(MapEnvironment environment, World world, int width, int height,
+        uint labdataIndex, uint paletteIndex)
+    {
+        var mapData = new MapData();
+        mapData.Setup3DMap(environment, world, width, height, labdataIndex, paletteIndex);
+        return mapData;
+    }
+
+    #endregion
+
+
+    #region Methods
+
+    public void Resize(int width, int height)
+    {
+        Tiles2D?.Resize(width, height, () => MapTile2DData.Empty);
+        Tiles3D?.Resize(width, height, () => MapTile3DData.Empty);
+    }
+
+    private void HandleEnvironmentChanges()
+    {
+        if (Type == MapType.Map3D)
+        {
+            if (SkyBackgroundIndex is not null && Environment != MapEnvironment.Outdoor)
+                SkyBackgroundIndex = null;
+            else if (SkyBackgroundIndex is null && Environment == MapEnvironment.Outdoor)
+                SkyBackgroundIndex = (uint)World + 1;
+        }
+    }
+
+    private void SetupWorldMap(World world)
+    {
+        Type = MapType.Map2D;
+        Flags = MapFlags.Outdoor |
+                MapFlags.WorldSurface |
+                MapFlags.CanRest |
+                MapFlags.CanUseMagic |
+                MapFlags.StationaryGraphics;
+        World = world;
+        SongIndex = (uint)Song.PloddingAlong;
+        // The tileset and palette indices match the world + 1 for world maps (1, 2, 3)
+        TilesetIndex = (uint)world + 1;
+        PaletteIndex = (uint)world + 1;
+        
+        Tiles2D = new(50, 50);
+
+        // Inputs are X and Y
+        Func<uint, uint, MapTile2DData> defaultTileCreator = world switch
+        {
+            World.ForestMoon => (x, y) => new MapTile2DData() { BackTileIndex = 7 + (x + y) % 8 },
+            World.Morag => (x, y) => new MapTile2DData() { BackTileIndex = 1 + (y % 8) * 6 + x % 6 },
+            _ => (x, _) => new MapTile2DData() { BackTileIndex = 215 + x % 4 }
+        };
+
+        for (int y = 0; y < 50; y++)
+        {
+            for (int x = 0; x < 50; x++)
+            {
+                Tiles2D.Set(x, y, defaultTileCreator((uint)x, (uint)y));
+            }
         }
 
-        private void Setup2DMap(MapEnvironment environment, World world, int width, int height)
+        Tiles2D.ItemChanged += TileChanged;
+
+        foreach (var mapChar in MapCharacters)
+            mapChar.SetEmpty();
+
+        NpcGraphicFileIndex = null;
+        LabdataIndex = null;
+        Tiles3D = null;
+        SkyBackgroundIndex = null;
+        GotoPoints = null;
+    }
+
+    private void Setup2DMap(MapEnvironment environment, World world, int width, int height)
+    {
+        Type = MapType.Map2D;
+        Flags = MapFlags.CanUseMagic;
+        if (environment == MapEnvironment.Outdoor)
+            Flags |= MapFlags.StationaryGraphics; // 2D outdoor maps always use this
+        Environment = environment; // Important to set it after Flags is assigned!
+        World = world;
+        SongIndex = (uint)(environment == MapEnvironment.Dungeon
+            ? Song.SapphireFireballsOfPureLove
+            : Song.OwnerOfALonelySword);
+        TilesetIndex = world switch
         {
-            Type = MapType.Map2D;
-            Flags = MapFlags.CanUseMagic;
-            if (environment == MapEnvironment.Outdoor)
-                Flags |= MapFlags.StationaryGraphics; // 2D outdoor maps always use this
-            Environment = environment; // Important to set it after Flags is assigned!
-            World = world;
-            SongIndex = (uint)(environment == MapEnvironment.Dungeon
-                ? Song.SapphireFireballsOfPureLove
-                : Song.OwnerOfALonelySword);
-            TilesetIndex = world switch
-            {
-                World.ForestMoon => 8,
-                World.Morag => 7,
-                _ => 4
-            };
-            PaletteIndex = world switch
-            {
-                World.ForestMoon => 10,
-                World.Morag => 9,
-                _ => 7
-            };
-            NpcGraphicFileIndex = world == World.ForestMoon ? 2u : 1u;
+            World.ForestMoon => 8,
+            World.Morag => 7,
+            _ => 4
+        };
+        PaletteIndex = world switch
+        {
+            World.ForestMoon => 10,
+            World.Morag => 9,
+            _ => 7
+        };
+        NpcGraphicFileIndex = world == World.ForestMoon ? 2u : 1u;
 
-            Tiles2D = new(width, height);
+        Tiles2D = new(width, height);
 
-            MapTile2DData DefaultTileCreator() => new() { BackTileIndex = 0 };
+        MapTile2DData DefaultTileCreator() => new() { BackTileIndex = 0 };
 
-            for (int y = 0; y < height; y++)
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
             {
-                for (int x = 0; x < width; x++)
-                {
-                    Tiles2D.Set(x, y, DefaultTileCreator());
-                }
+                Tiles2D.Set(x, y, DefaultTileCreator());
             }
-
-            Tiles2D.ItemChanged += TileChanged;
-
-            foreach (var mapChar in MapCharacters)
-                mapChar.SetEmpty();
-
-            LabdataIndex = null;
-            Tiles3D = null;
-            SkyBackgroundIndex = null;
-            GotoPoints = null;
         }
 
-        private void Setup3DMap(MapEnvironment environment, World world, int width, int height,
-            uint labdataIndex, uint paletteIndex)
+        Tiles2D.ItemChanged += TileChanged;
+
+        foreach (var mapChar in MapCharacters)
+            mapChar.SetEmpty();
+
+        LabdataIndex = null;
+        Tiles3D = null;
+        SkyBackgroundIndex = null;
+        GotoPoints = null;
+    }
+
+    private void Setup3DMap(MapEnvironment environment, World world, int width, int height,
+        uint labdataIndex, uint paletteIndex)
+    {
+        Type = MapType.Map3D;
+        Flags = MapFlags.CanUseMagic | MapFlags.Automapper;
+        Environment = environment; // Important to set it after Flags is assigned!
+        if (environment == MapEnvironment.Dungeon)
+            AlwaysSleepEightHours = true;
+        else if (environment == MapEnvironment.Outdoor)
+            Flags |= MapFlags.Sky;
+        World = world;
+        SongIndex = (uint)(environment switch {
+            MapEnvironment.Dungeon => Song.MistyDungeonHop,
+            MapEnvironment.Outdoor => Song.Capital,
+            _ => Song.TheAumRemainsTheSame
+        });
+        LabdataIndex = labdataIndex;
+        SkyBackgroundIndex = environment != MapEnvironment.Outdoor
+            ? null
+            : (uint)world + 1;
+        PaletteIndex = paletteIndex;
+        GotoPoints = new DictionaryList<MapGotoPointData>();
+        // TODO: change detection
+
+        Tiles3D = new(width, height);
+
+        for (int y = 0; y < height; y++)
         {
-            Type = MapType.Map3D;
-            Flags = MapFlags.CanUseMagic | MapFlags.Automapper;
-            Environment = environment; // Important to set it after Flags is assigned!
-            if (environment == MapEnvironment.Dungeon)
-                AlwaysSleepEightHours = true;
-            else if (environment == MapEnvironment.Outdoor)
-                Flags |= MapFlags.Sky;
-            World = world;
-            SongIndex = (uint)(environment switch {
-                MapEnvironment.Dungeon => Song.MistyDungeonHop,
-                MapEnvironment.Outdoor => Song.Capital,
-                _ => Song.TheAumRemainsTheSame
-            });
-            LabdataIndex = labdataIndex;
-            SkyBackgroundIndex = environment != MapEnvironment.Outdoor
-                ? null
-                : (uint)world + 1;
-            PaletteIndex = paletteIndex;
-            GotoPoints = new DictionaryList<MapGotoPointData>();
-            // TODO: change detection
-
-            Tiles3D = new(width, height);
-
-            for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
             {
-                for (int x = 0; x < width; x++)
-                {
-                    Tiles3D.Set(x, y, MapTile3DData.Empty);
-                }
+                Tiles3D.Set(x, y, MapTile3DData.Empty);
             }
-
-            Tiles3D.ItemChanged += TileChanged;
-
-            foreach (var mapChar in MapCharacters)
-                mapChar.SetEmpty();
-
-            TilesetIndex = null;
-            Tiles2D = null;
-            NpcGraphicFileIndex = null;
         }
 
-        #endregion
+        Tiles3D.ItemChanged += TileChanged;
+
+        foreach (var mapChar in MapCharacters)
+            mapChar.SetEmpty();
+
+        TilesetIndex = null;
+        Tiles2D = null;
+        NpcGraphicFileIndex = null;
+    }
+
+    #endregion
 
 
-        #region Serialization
+    #region Serialization
 
-        public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
+    public void Serialize(IDataWriter dataWriter, int majorVersion, bool advanced)
+    {
+        // Header
+        dataWriter.Write((ushort)Flags);
+        dataWriter.Write((byte)Type);
+        dataWriter.Write((byte)SongIndex);
+        dataWriter.Write((byte)Width);
+        dataWriter.Write((byte)Height);
+        dataWriter.Write((byte)(Type == MapType.Map2D ? Util.EnsureValue(TilesetIndex) : Util.EnsureValue(LabdataIndex)));
+        dataWriter.Write((byte)(Type == MapType.Map2D ? Util.EnsureValue(NpcGraphicFileIndex) : 0));
+        dataWriter.Write((byte)(Type == MapType.Map3D ? (SkyBackgroundIndex ?? 0) : 0));
+        dataWriter.Write((byte)PaletteIndex);
+        dataWriter.Write((byte)World);
+        dataWriter.Write((byte)0);
+
+        // Map characters
+        MapCharacters.Serialize(dataWriter, majorVersion, advanced);
+
+        // Tile data
+        IEnumerable<object>? tiles = Type == MapType.Map2D ? Tiles2D : Tiles3D;
+
+        if (tiles is null)
+            throw new NullReferenceException("Map tiles are missing.");
+
+        foreach (var tile in tiles)
+            (tile as IData)!.Serialize(dataWriter, majorVersion, advanced);
+
+        // Event entry list
+        dataWriter.Write((ushort)EventEntryList.Count);
+        foreach (var entry in EventEntryList)
+            entry.Serialize(dataWriter, majorVersion, advanced);
+
+        // Events
+        dataWriter.Write((ushort)Events.Count);
+        foreach (var mapEvent in Events)
+            mapEvent.Serialize(dataWriter, majorVersion, advanced);
+
+        // Map Character Positions
+        foreach (var mapChar in MapCharacters)
         {
-            // Header
-            dataWriter.Write((ushort)Flags);
-            dataWriter.Write((byte)Type);
-            dataWriter.Write((byte)SongIndex);
-            dataWriter.Write((byte)Width);
-            dataWriter.Write((byte)Height);
-            dataWriter.Write((byte)(Type == MapType.Map2D ? Util.EnsureValue(TilesetIndex) : Util.EnsureValue(LabdataIndex)));
-            dataWriter.Write((byte)(Type == MapType.Map2D ? Util.EnsureValue(NpcGraphicFileIndex) : 0));
-            dataWriter.Write((byte)(Type == MapType.Map3D ? (SkyBackgroundIndex ?? 0) : 0));
-            dataWriter.Write((byte)PaletteIndex);
-            dataWriter.Write((byte)World);
-            dataWriter.Write((byte)0);
+            if (mapChar.CharacterType is null)
+                continue;
 
-            // Map characters
-            MapCharacters.Serialize(dataWriter, majorVersion, advanced);
+            if (mapChar.CharacterType == CharacterType.Monster ||
+                (mapChar.MovementType != MapCharacterMovementType.Path &&
+                 mapChar.MovementType != MapCharacterMovementType.Hour))
+            {
+                mapChar.Position.Serialize(dataWriter, majorVersion, advanced);
+            }
+            else
+            {
+                mapChar.Path!.Serialize(dataWriter, majorVersion, advanced);
+            }
+        }
 
-            // Tile data
-            IEnumerable<object>? tiles = Type == MapType.Map2D ? Tiles2D : Tiles3D;
+        // Goto Points
+        var gotoPoints = GotoPoints?.ToList() ?? new List<MapGotoPointData>();
+        dataWriter.Write((ushort)gotoPoints.Count);
+        foreach (var gotoPoint in gotoPoints)
+            gotoPoint.Serialize(dataWriter, majorVersion, advanced);
 
-            if (tiles is null)
-                throw new NullReferenceException("Map tiles are missing.");
-
-            foreach (var tile in tiles)
-                (tile as IData)!.Serialize(dataWriter, majorVersion, advanced);
-
-            // Event entry list
-            dataWriter.Write((ushort)EventEntryList.Count);
+        // Event Entry Automap Types
+        if (Type == MapType.Map3D)
+        {
             foreach (var entry in EventEntryList)
-                entry.Serialize(dataWriter, majorVersion, advanced);
-
-            // Events
-            dataWriter.Write((ushort)Events.Count);
-            foreach (var mapEvent in Events)
-                mapEvent.Serialize(dataWriter, majorVersion, advanced);
-
-            // Map Character Positions
-            foreach (var mapChar in MapCharacters)
             {
-                if (mapChar.CharacterType is null)
-                    continue;
+                dataWriter.Write((byte)entry.AutomapType);
+            }
+        }
 
-                if (mapChar.CharacterType == CharacterType.Monster ||
-                    (mapChar.MovementType != MapCharacterMovementType.Path &&
-                     mapChar.MovementType != MapCharacterMovementType.Hour))
+        if (dataWriter.Position % 2 == 1)
+            dataWriter.Write(0);
+    }
+
+    public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
+    {
+        var mapData = new MapData();
+
+        mapData.Flags = (MapFlags)dataReader.ReadWord();
+        mapData.Type = (MapType)dataReader.ReadByte();
+        mapData.SongIndex = dataReader.ReadByte();
+        int width = dataReader.ReadByte();
+        int height = dataReader.ReadByte();
+        uint tilesetIndex = dataReader.ReadByte();
+        uint npcGraphicFileIndex = dataReader.ReadByte();
+        uint skyBackgroundIndex = dataReader.ReadByte();
+        mapData.PaletteIndex = dataReader.ReadByte();
+        mapData.World = (World)dataReader.ReadByte();
+
+        if (dataReader.ReadByte() != 0) // end of map header (this is an unused byte)
+            throw new InvalidDataException("Invalid map data");
+
+        // Map characters
+        mapData.MapCharacters = DependentDataCollection<MapCharacterData, MapData>.Deserialize(dataReader, 32, mapData, majorVersion, advanced);
+        mapData.MapCharacters.ItemChanged += mapData.MapCharactersChanged;
+
+        if (mapData.Type == MapType.Map2D)
+        {
+            mapData.TilesetIndex = tilesetIndex;
+            mapData.NpcGraphicFileIndex = npcGraphicFileIndex;
+            mapData.Tiles2D = new(width, height);
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
                 {
-                    mapChar.Position.Serialize(dataWriter, majorVersion, advanced);
-                }
-                else
-                {
-                    mapChar.Path!.Serialize(dataWriter, majorVersion, advanced);
+                    mapData.Tiles2D.Set(x, y, (MapTile2DData)MapTile2DData.Deserialize(dataReader, majorVersion, advanced));
                 }
             }
 
-            // Goto Points
-            var gotoPoints = GotoPoints?.ToList() ?? new List<MapGotoPointData>();
-            dataWriter.Write((ushort)gotoPoints.Count);
-            foreach (var gotoPoint in gotoPoints)
-                gotoPoint.Serialize(dataWriter, majorVersion, advanced);
+            mapData.Tiles2D.ItemChanged += mapData.TileChanged;
+
+            mapData.LabdataIndex = null;
+            mapData.Tiles3D = null;
+            mapData.SkyBackgroundIndex = null;
+        }
+        else
+        {
+            mapData.LabdataIndex = tilesetIndex;
+            mapData.SkyBackgroundIndex = skyBackgroundIndex == 0 ? null : skyBackgroundIndex;
+            mapData.Tiles3D = new(width, height);
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    mapData.Tiles3D.Set(x, y, (MapTile3DData)MapTile3DData.Deserialize(dataReader, majorVersion, advanced));
+                }
+            }
+
+            mapData.Tiles3D.ItemChanged += mapData.TileChanged;
+
+            mapData.TilesetIndex = null;
+            mapData.Tiles2D = null;
+            mapData.NpcGraphicFileIndex = null;
+        }
+
+        // Event entry list
+        int eventEntryListSize = dataReader.ReadWord();
+        var eventEntryList = DataCollection<MapEventEntryData>.Deserialize(dataReader, eventEntryListSize, majorVersion, advanced, 1);
+        mapData.EventEntryList = [.. eventEntryList];
+        // TODO: change detection
+
+        // Events
+        int numberOfEvents = dataReader.ReadWord();
+        var events = DataCollection<EventData>.Deserialize(dataReader, numberOfEvents, majorVersion, advanced, 0);
+        mapData.Events = [.. events];
+        // TODO: change detection
+
+        // Map Character Positions
+        foreach (var mapChar in mapData.MapCharacters)
+        {
+            if (mapChar.CharacterType == CharacterType.Monster)
+                mapChar.Position = (MapPositionData)MapPositionData.Deserialize(dataReader, majorVersion, advanced);
+            else if (mapChar.CharacterType is not null)
+            {
+                if (mapChar.MovementType == MapCharacterMovementType.Path || mapChar.MovementType == MapCharacterMovementType.Hour)
+                {
+                    mapChar.InitPath(mapChar.MovementType == MapCharacterMovementType.Hour,
+                        DataCollection<MapPositionData>.Deserialize(dataReader, mapChar.MovementType == MapCharacterMovementType.Hour ? 12 : 288, majorVersion, advanced, 0));
+                    mapChar.Position = mapChar.Path![0];
+                }
+                else
+                {
+                    mapChar.Position = (MapPositionData)MapPositionData.Deserialize(dataReader, majorVersion, advanced);
+                }
+            }
+        }
+
+        // Goto Points (Fast Travel)
+        int numGotoPoints = dataReader.ReadWord(); // Note: This is always present, even for 2D maps.
+
+        if (mapData.Type == MapType.Map2D)
+        {
+            dataReader.Position += numGotoPoints * GameDataRepository.GotoPointDataSize;
+            mapData.GotoPoints = null;
+        }
+        else
+        {
+            var gotoPoints = DataCollection<MapGotoPointData>.Deserialize(dataReader, numGotoPoints, majorVersion, advanced, 0);
+            mapData.GotoPoints = new DictionaryList<MapGotoPointData>(gotoPoints);
+            // TODO: change detection
 
             // Event Entry Automap Types
-            if (Type == MapType.Map3D)
-            {
-                foreach (var entry in EventEntryList)
-                {
-                    dataWriter.Write((byte)entry.AutomapType);
-                }
-            }
-
-            if (dataWriter.Position % 2 == 1)
-                dataWriter.Write(0);
+            foreach (var entry in mapData.EventEntryList)
+                entry.AutomapType = (AutomapType)dataReader.ReadByte();
         }
 
-        public static IData Deserialize(IDataReader dataReader, int majorVersion, bool advanced)
-        {
-            var mapData = new MapData();
+        if (dataReader.Position < dataReader.Size && dataReader.Position % 2 == 1)
+            dataReader.Position++;
 
-            mapData.Flags = (MapFlags)dataReader.ReadWord();
-            mapData.Type = (MapType)dataReader.ReadByte();
-            mapData.SongIndex = dataReader.ReadByte();
-            int width = dataReader.ReadByte();
-            int height = dataReader.ReadByte();
-            uint tilesetIndex = dataReader.ReadByte();
-            uint npcGraphicFileIndex = dataReader.ReadByte();
-            uint skyBackgroundIndex = dataReader.ReadByte();
-            mapData.PaletteIndex = dataReader.ReadByte();
-            mapData.World = (World)dataReader.ReadByte();
-
-            if (dataReader.ReadByte() != 0) // end of map header (this is an unused byte)
-                throw new InvalidDataException("Invalid map data");
-
-            // Map characters
-            mapData.MapCharacters = DependentDataCollection<MapCharacterData, MapData>.Deserialize(dataReader, 32, mapData, majorVersion, advanced);
-            mapData.MapCharacters.ItemChanged += mapData.MapCharactersChanged;
-
-            if (mapData.Type == MapType.Map2D)
-            {
-                mapData.TilesetIndex = tilesetIndex;
-                mapData.NpcGraphicFileIndex = npcGraphicFileIndex;
-                mapData.Tiles2D = new(width, height);
-
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        mapData.Tiles2D.Set(x, y, (MapTile2DData)MapTile2DData.Deserialize(dataReader, majorVersion, advanced));
-                    }
-                }
-
-                mapData.Tiles2D.ItemChanged += mapData.TileChanged;
-
-                mapData.LabdataIndex = null;
-                mapData.Tiles3D = null;
-                mapData.SkyBackgroundIndex = null;
-            }
-            else
-            {
-                mapData.LabdataIndex = tilesetIndex;
-                mapData.SkyBackgroundIndex = skyBackgroundIndex == 0 ? null : skyBackgroundIndex;
-                mapData.Tiles3D = new(width, height);
-
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        mapData.Tiles3D.Set(x, y, (MapTile3DData)MapTile3DData.Deserialize(dataReader, majorVersion, advanced));
-                    }
-                }
-
-                mapData.Tiles3D.ItemChanged += mapData.TileChanged;
-
-                mapData.TilesetIndex = null;
-                mapData.Tiles2D = null;
-                mapData.NpcGraphicFileIndex = null;
-            }
-
-            // Event entry list
-            int eventEntryListSize = dataReader.ReadWord();
-            var eventEntryList = DataCollection<MapEventEntryData>.Deserialize(dataReader, eventEntryListSize, majorVersion, advanced, 1);
-            mapData.EventEntryList = [.. eventEntryList];
-            // TODO: change detection
-
-            // Events
-            int numberOfEvents = dataReader.ReadWord();
-            var events = DataCollection<EventData>.Deserialize(dataReader, numberOfEvents, majorVersion, advanced, 0);
-            mapData.Events = [.. events];
-            // TODO: change detection
-
-            // Map Character Positions
-            foreach (var mapChar in mapData.MapCharacters)
-            {
-                if (mapChar.CharacterType == CharacterType.Monster)
-                    mapChar.Position = (MapPositionData)MapPositionData.Deserialize(dataReader, majorVersion, advanced);
-                else if (mapChar.CharacterType is not null)
-                {
-                    if (mapChar.MovementType == MapCharacterMovementType.Path || mapChar.MovementType == MapCharacterMovementType.Hour)
-                    {
-                        mapChar.InitPath(mapChar.MovementType == MapCharacterMovementType.Hour,
-                            DataCollection<MapPositionData>.Deserialize(dataReader, mapChar.MovementType == MapCharacterMovementType.Hour ? 12 : 288, majorVersion, advanced, 0));
-                        mapChar.Position = mapChar.Path![0];
-                    }
-                    else
-                    {
-                        mapChar.Position = (MapPositionData)MapPositionData.Deserialize(dataReader, majorVersion, advanced);
-                    }
-                }
-            }
-
-            // Goto Points (Fast Travel)
-            int numGotoPoints = dataReader.ReadWord(); // Note: This is always present, even for 2D maps.
-
-            if (mapData.Type == MapType.Map2D)
-            {
-                dataReader.Position += numGotoPoints * GameDataRepository.GotoPointDataSize;
-                mapData.GotoPoints = null;
-            }
-            else
-            {
-                var gotoPoints = DataCollection<MapGotoPointData>.Deserialize(dataReader, numGotoPoints, majorVersion, advanced, 0);
-                mapData.GotoPoints = new DictionaryList<MapGotoPointData>(gotoPoints);
-                // TODO: change detection
-
-                // Event Entry Automap Types
-                foreach (var entry in mapData.EventEntryList)
-                    entry.AutomapType = (AutomapType)dataReader.ReadByte();
-            }
-
-            if (dataReader.Position < dataReader.Size && dataReader.Position % 2 == 1)
-                dataReader.Position++;
-
-            return mapData;
-        }
-
-        public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
-        {
-            var mapData = (MapData)Deserialize(dataReader, majorVersion, advanced);
-            (mapData as IMutableIndex).Index = index;
-            return mapData;
-        }
-
-        #endregion
-
-
-        #region Equality
-
-        public bool Equals(MapData? other)
-        {
-            if (other is null) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return Index == other.Index &&
-                   Type == other.Type &&
-                   PaletteIndex == other.PaletteIndex &&
-                   SongIndex == other.SongIndex &&
-                   Flags == other.Flags &&
-                   World == other.World &&
-                   LabdataIndex == other.LabdataIndex &&
-                   TilesetIndex == other.TilesetIndex &&
-                   SkyBackgroundIndex == other.SkyBackgroundIndex &&
-                   NpcGraphicFileIndex == other.NpcGraphicFileIndex &&
-                   Equals(Tiles2D, other.Tiles2D) &&
-                   Equals(Tiles3D, other.Tiles3D) &&
-                   MapCharacters.Equals(other.MapCharacters) &&
-                   EventEntryList.Equals(other.EventEntryList) &&
-                   Events.Equals(other.Events);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (obj is null) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((MapData)obj);
-        }
-
-        public override int GetHashCode() => (int)Index;
-
-        public static bool operator ==(MapData? left, MapData? right)
-        {
-            return Equals(left, right);
-        }
-
-        public static bool operator !=(MapData? left, MapData? right)
-        {
-            return !Equals(left, right);
-        }
-
-        #endregion
-
-
-        #region Cloning
-
-        public MapData Copy()
-        {
-            var copy = new MapData();
-
-            copy.Type = Type;
-            copy.PaletteIndex = PaletteIndex;
-            copy.SongIndex = SongIndex;
-            copy.Flags = Flags;
-            copy.World = World;
-            copy.LabdataIndex = LabdataIndex;
-            copy.TilesetIndex = TilesetIndex;
-            copy.SkyBackgroundIndex = SkyBackgroundIndex;
-            copy.NpcGraphicFileIndex = NpcGraphicFileIndex;
-            copy.Tiles2D = Tiles2D?.Copy();
-            copy.Tiles3D = Tiles3D?.Copy();
-            copy.MapCharacters = MapCharacters.Copy();
-            copy.EventEntryList = new(EventEntryList.Select(e => e.Copy()));
-            copy.Events = new(Events.Select(e => e.Copy()));
-            copy.GotoPoints = GotoPoints is null ? null : new(GotoPoints.Select(e => e.Copy()));
-
-            (copy as IMutableIndex).Index = Index;
-
-            return copy;
-        }
-
-        public object Clone() => Copy();
-
-        #endregion
-
-
-        #region Property Changes
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(propertyName);
-            return true;
-        }
-
-        private void MapCharactersChanged(int index)
-        {
-            OnPropertyChanged(nameof(MapCharacters));
-        }
-
-        private void TileChanged(int x, int y)
-        {
-            if (Tiles2D is not null)
-                OnPropertyChanged(nameof(Tiles2D));
-            else if (Tiles3D is not null)
-                OnPropertyChanged(nameof(Tiles3D));
-        }
-
-        #endregion
-
+        return mapData;
     }
+
+    public static IIndexedData Deserialize(IDataReader dataReader, uint index, int majorVersion, bool advanced)
+    {
+        var mapData = (MapData)Deserialize(dataReader, majorVersion, advanced);
+        (mapData as IMutableIndex).Index = index;
+        return mapData;
+    }
+
+    #endregion
+
+
+    #region Equality
+
+    public bool Equals(MapData? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Index == other.Index &&
+               Type == other.Type &&
+               PaletteIndex == other.PaletteIndex &&
+               SongIndex == other.SongIndex &&
+               Flags == other.Flags &&
+               World == other.World &&
+               LabdataIndex == other.LabdataIndex &&
+               TilesetIndex == other.TilesetIndex &&
+               SkyBackgroundIndex == other.SkyBackgroundIndex &&
+               NpcGraphicFileIndex == other.NpcGraphicFileIndex &&
+               Equals(Tiles2D, other.Tiles2D) &&
+               Equals(Tiles3D, other.Tiles3D) &&
+               MapCharacters.Equals(other.MapCharacters) &&
+               EventEntryList.Equals(other.EventEntryList) &&
+               Events.Equals(other.Events);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is null) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != this.GetType()) return false;
+        return Equals((MapData)obj);
+    }
+
+    public override int GetHashCode() => (int)Index;
+
+    public static bool operator ==(MapData? left, MapData? right)
+    {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(MapData? left, MapData? right)
+    {
+        return !Equals(left, right);
+    }
+
+    #endregion
+
+
+    #region Cloning
+
+    public MapData Copy()
+    {
+        var copy = new MapData();
+
+        copy.Type = Type;
+        copy.PaletteIndex = PaletteIndex;
+        copy.SongIndex = SongIndex;
+        copy.Flags = Flags;
+        copy.World = World;
+        copy.LabdataIndex = LabdataIndex;
+        copy.TilesetIndex = TilesetIndex;
+        copy.SkyBackgroundIndex = SkyBackgroundIndex;
+        copy.NpcGraphicFileIndex = NpcGraphicFileIndex;
+        copy.Tiles2D = Tiles2D?.Copy();
+        copy.Tiles3D = Tiles3D?.Copy();
+        copy.MapCharacters = MapCharacters.Copy();
+        copy.EventEntryList = new(EventEntryList.Select(e => e.Copy()));
+        copy.Events = new(Events.Select(e => e.Copy()));
+        copy.GotoPoints = GotoPoints is null ? null : new(GotoPoints.Select(e => e.Copy()));
+
+        (copy as IMutableIndex).Index = Index;
+
+        return copy;
+    }
+
+    public object Clone() => Copy();
+
+    #endregion
+
+
+    #region Property Changes
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
+    }
+
+    private void MapCharactersChanged(int index)
+    {
+        OnPropertyChanged(nameof(MapCharacters));
+    }
+
+    private void TileChanged(int x, int y)
+    {
+        if (Tiles2D is not null)
+            OnPropertyChanged(nameof(Tiles2D));
+        else if (Tiles3D is not null)
+            OnPropertyChanged(nameof(Tiles3D));
+    }
+
+    #endregion
+
 }

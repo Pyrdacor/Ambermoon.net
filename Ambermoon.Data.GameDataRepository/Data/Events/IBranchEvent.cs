@@ -1,7 +1,6 @@
-﻿namespace Ambermoon.Data.GameDataRepository.Data.Events
+﻿namespace Ambermoon.Data.GameDataRepository.Data.Events;
+
+public interface IBranchEvent
 {
-    public interface IBranchEvent
-    {
-        public uint? BranchEventIndex { get; }
-    }
+    public uint? BranchEventIndex { get; }
 }

@@ -1,8 +1,7 @@
-﻿namespace Ambermoon.Data.GameDataRepository.Enumerations
+﻿namespace Ambermoon.Data.GameDataRepository.Enumerations;
+
+public enum AnimationType
 {
-    public enum AnimationType
-    {
-        Cycle,
-        Wave
-    }
+    Cycle,
+    Wave
 }

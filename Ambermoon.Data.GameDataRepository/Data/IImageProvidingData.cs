@@ -1,7 +1,6 @@
-﻿namespace Ambermoon.Data.GameDataRepository.Data
+﻿namespace Ambermoon.Data.GameDataRepository.Data;
+
+public interface IImageProvidingData : IIndexed
 {
-    public interface IImageProvidingData : IIndexed
-    {
-        uint GraphicIndex { get; }
-    }
+    uint GraphicIndex { get; }
 }
