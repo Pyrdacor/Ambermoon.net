@@ -87,6 +87,8 @@ public class RiddlemouthEventData : EventData
 
     public override bool AllowInConversations => false;
 
+    public override bool AllowOn2DMaps => false;
+
     #endregion
 
 
