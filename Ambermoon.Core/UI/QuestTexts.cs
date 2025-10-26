@@ -37,6 +37,7 @@ internal static class QuestTexts
         // Note: Max length = 44 characters
         { GameLanguage.German, new()
         {
+            { MainQuestType.LyramionsFaith, "Lyramions Schicksal" },
             { MainQuestType.Grandfather, "Großvaters Queste" },
             { MainQuestType.SwampFever, "Sumpffieber" },
             { MainQuestType.AlkemsRing, "Alkems Ring" },
@@ -57,6 +58,7 @@ internal static class QuestTexts
         } },
         { GameLanguage.English, new()
         {
+            { MainQuestType.LyramionsFaith, "Lyramion's Faith" },
             { MainQuestType.Grandfather, "Grandfather's Quest" },
             { MainQuestType.SwampFever, "Swamp Fever" },
             { MainQuestType.AlkemsRing, "Alkem's Ring" },
@@ -83,6 +85,8 @@ internal static class QuestTexts
         // Note: Max length = 43 characters
         { GameLanguage.German, new()
         {
+            // Lyramion's Faith
+            { SubQuestType.LyramionsFaith_TalkToShandraInNewlake, "Rede mit Shandra in Newlake" },
             // Grandfather's Quest
             { SubQuestType.Grandfather_TalkToGrandfather, "Rede mit deinem Großvater" },
             { SubQuestType.Grandfather_GoToWineCellar, "Gehe in den Weinkeller" },
@@ -108,10 +112,17 @@ internal static class QuestTexts
             // Golden Horseshoes
             { SubQuestType.GoldenHorseshoes_FindHorseshoes, "Finde die goldenen Hufeisen" },
             { SubQuestType.GoldenHorseshoes_ReturnHorseshoes, "Bring die goldenen Hufeisen zu Tolimar" },
+            // Sylphs
+            { SubQuestType.Sylphs_TalkToLadyHeidi, "Sprich mit Lady Heidi über Feen" },
+            { SubQuestType.Sylphs_FindTheHiddenItemInTheTree, "Finde den Gegenstand im Baum" },
+            { SubQuestType.Sylphs_FindTheSylphs, "Finde die Feen" },
+            { SubQuestType.Sylphs_RescueSelena, "Rette Selena" },
             // TODO ...
         } },
         { GameLanguage.English, new()
         {
+            // Lyramion's Faith
+            { SubQuestType.LyramionsFaith_TalkToShandraInNewlake, "Talk to Shandra in Newlake" },
             // Grandfather's Quest
             { SubQuestType.Grandfather_TalkToGrandfather, "Talk to your grandfather" },
             { SubQuestType.Grandfather_GoToWineCellar, "Go to the wine cellar" },
@@ -137,6 +148,11 @@ internal static class QuestTexts
             // Golden Horseshoes
             { SubQuestType.GoldenHorseshoes_FindHorseshoes, "Find the golden horseshoes" },
             { SubQuestType.GoldenHorseshoes_ReturnHorseshoes, "Return the golden horseshoes to Tolimar" },
+            // Sylphs
+            { SubQuestType.Sylphs_TalkToLadyHeidi, "Talk to Lady Heidi about fairies" },
+            { SubQuestType.Sylphs_FindTheHiddenItemInTheTree, "Find the item in the tree" },
+            { SubQuestType.Sylphs_FindTheSylphs, "Find the fairies" },
+            { SubQuestType.Sylphs_RescueSelena, "Rescue Selena" },
             // TODO ...
         } }
         // TODO ...

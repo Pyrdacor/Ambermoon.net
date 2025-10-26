@@ -418,6 +418,7 @@ namespace Ambermoon.Render
                         }
                         else if (trigger == EventTrigger.Mouth)
                         {
+                            game.QuestLog.CheckTextPopupNPC(map.Map.Index, characterIndex);
                             ShowPopup(map.Map.GetText((int)characterReference.Index, game.DataNameProvider.TextBlockMissing));
                             return true;
                         }

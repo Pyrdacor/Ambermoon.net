@@ -1,22 +1,61 @@
-﻿using Ambermoon.Data;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Ambermoon.Data;
+using static Ambermoon.EventExtensions;
 
 namespace Ambermoon.UI;
 
-class CustomGlobalVariableEvent(QuestLog questLog, Game game, Func<IEventProvider, Event, bool> eventTriggerCheck, uint globalVariable)
+// TODO: Support for text popup NPCs which are not events at all!
+// TODO: GlobalVar_SylphQuestStarted must be using this then!
+
+class CustomGlobalVariableEvent
 {
+    private readonly QuestLog questLog;
+    private readonly Game game;
+    private readonly uint globalVariable;
+    private readonly Func<IEventProvider, Event, bool> eventTriggerCheck;
+    private readonly Func<uint, uint, bool> textPopupNPCCheck;
+
+    private protected CustomGlobalVariableEvent(QuestLog questLog, Game game, Func<IEventProvider, Event, bool> eventTriggerCheck, uint globalVariable)
+    {
+        this.questLog = questLog;
+        this.game = game;
+        this.globalVariable = globalVariable;
+        this.eventTriggerCheck = eventTriggerCheck;
+    }
+
+    private protected CustomGlobalVariableEvent(QuestLog questLog, Game game, Func<uint, uint, bool> textPopupNPCCheck, uint globalVariable)
+    {
+        this.questLog = questLog;
+        this.game = game;
+        this.globalVariable = globalVariable;
+        this.textPopupNPCCheck = textPopupNPCCheck;
+    }
+
     public bool Check(IEventProvider eventProvider, Event @event)
     {
-        bool result = eventTriggerCheck(eventProvider, @event);
+        bool? result = eventTriggerCheck?.Invoke(eventProvider, @event);
 
-        if (result)
+        if (result == true)
         {
             game.CurrentSavegame.SetGlobalVariable(globalVariable, true);
             questLog.CheckEvent(eventProvider, new ActionEvent { TypeOfAction = ActionEvent.ActionType.SetGlobalVariable, ObjectIndex = globalVariable });
         }
 
-        return result;
+        return result ?? false;
+    }
+
+    public bool CheckTextPopupNPC(uint mapIndex, uint mapCharacterIndex)
+    {
+        bool? result = textPopupNPCCheck?.Invoke(mapIndex, mapCharacterIndex);
+
+        if (result == true)
+        {
+            game.CurrentSavegame.SetGlobalVariable(globalVariable, true);
+            questLog.CheckEvent(null, new ActionEvent { TypeOfAction = ActionEvent.ActionType.SetGlobalVariable, ObjectIndex = globalVariable });
+        }
+
+        return result ?? false;
     }
 }
 
@@ -32,6 +71,12 @@ file class CustomGlobalVariableNPCEvent(QuestLog questLog, Game game, Func<NPC, 
 
 }
 
+file class CustomGlobalVariableTextPopupNPCEvent(QuestLog questLog, Game game, Func<uint, uint, bool> textPopupNPCCheck, uint globalVariable)
+    : CustomGlobalVariableEvent(questLog, game, textPopupNPCCheck, globalVariable)
+{
+
+}
+
 partial class QuestLog
 {
     // Some quests have no real trigger. Mostly because they are just started by some
@@ -42,6 +87,7 @@ partial class QuestLog
     // in any case but we can't do much about it. To leave as much global vars as possible
     // we will start from the end.
     const uint GlobalVar_TolimarQuestStarted = 8191u;
+    const uint GlobalVar_SylphQuestStarted = 8190u;
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 
@@ -51,5 +97,10 @@ partial class QuestLog
         customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
             (npc, @event) => npc.Index == 10 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Keyword && c.KeywordIndex == 3,
             GlobalVar_TolimarQuestStarted));
+
+        // Talk to the cook of baron george
+        customGlobalVariableEvents.Add(new CustomGlobalVariableTextPopupNPCEvent(this, game,
+            (mapIndex, mapCharIndex) => mapIndex == 269 && mapCharIndex == 0, // Cook NPC
+            GlobalVar_SylphQuestStarted));
     }
 }

@@ -1,10 +1,10 @@
-﻿using Ambermoon.Data;
-using Ambermoon.Render;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using TextColor = Ambermoon.Data.Enumerations.Color;
+using Ambermoon.Data;
+using Ambermoon.Render;
 using Color = Ambermoon.Render.Color;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI;
 
@@ -76,6 +76,7 @@ public enum QuestSourceType
     PartyMember,
     Item, // Books etc
     MapEvent,
+    TextPopupNPC
 }
 
 public record SubQuest(QuestLog questLog, MainQuestType quest, QuestState initialState = QuestState.Inactive)
@@ -406,6 +407,12 @@ public partial class QuestLog
             foreach (var trigger in quest.Triggers)
                 trigger.CheckEvent(@event, quest);
         }
+    }
+
+    public void CheckTextPopupNPC(uint mapIndex, uint mapCharacterIndex)
+    {
+        foreach (var customGlobalVariableEvent in customGlobalVariableEvents)
+            customGlobalVariableEvent.CheckTextPopupNPC(mapIndex, mapCharacterIndex);
     }
 
     public void CheckItem(Item item, uint itemCount)

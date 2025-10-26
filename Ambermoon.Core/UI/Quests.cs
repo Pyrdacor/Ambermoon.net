@@ -7,6 +7,7 @@ namespace Ambermoon.UI;
 
 public enum MainQuestType
 {
+    LyramionsFaith,
     Grandfather,
     SwampFever,
     AlkemsRing,
@@ -23,10 +24,13 @@ public enum MainQuestType
     TowerOfBlackMagic,
     ValdynsReturn,
     AmbermoonPicture,
+    BrotherhoodOfTarbos,
 }
 
 public enum SubQuestType
 {
+    // Lyramion's Faith
+    LyramionsFaith_TalkToShandraInNewlake,
     // Grandfather's Quest
     Grandfather_TalkToGrandfather,
     Grandfather_GoToWineCellar,
@@ -49,9 +53,35 @@ public enum SubQuestType
     AlkemsRing_EnterTheCrypt,
     AlkemsRing_FindTheRing,
     AlkemsRing_ReturnTheRing,
+    // Thief Plague
+    ThiefPlague_SilverHand, // get it after talking to baron
+    // Sylphs
+    Sylphs_TalkToLadyHeidi, // get it when talking to the cook
+    Sylphs_FindTheHiddenItemInTheTree, // after talking to lady heidi
+    Sylphs_FindTheSylphs, // after finding the hidden item
+    Sylphs_RescueSelena, // after finding the sylphs
+    // Wine Trophies
+    WineTrophies_FindThem, // x/2, get it when talking to Canth or Norael about it
+    WineTrophies_ReturnThem, // x/2, after finding at least 1 trophy
+    // ChainOfOffice
+    ChainOfOffice_FindIt, // started by talking to heidi or baron about fairies
+    ChainOfOffice_ReturnIt, // after finding it
+    // Graveyard
+    Graveyard_GetBroochFromGravedigger, // after talking to Aman
+    Graveyard_ReturnBroochToAman, // after getting the brooch
+    // Monstereye
+    Monstereye_BuyIt, // after talking to Sandire
+    // Thief Guild
+    ThiefGuild_Enter, // after returning the brooch to Aman
     // Golden Horseshoes
     GoldenHorseshoes_FindHorseshoes,
     GoldenHorseshoes_ReturnHorseshoes,
+    // Orcs
+    // Sandra's Daughter
+    SandrasDaughter_GoToBurnvilleAndFindSabine, // after talking to sandra
+    SandrasDaughter_RescueSabine, // after finding sabine's note
+    // Brotherhood of Tarbos
+    BrotherhoodOfTarbos_X, // after talking to otram
     // ...
 }
 
@@ -490,13 +520,22 @@ partial class QuestLog
 {
     private MainQuest[] CreateQuests(bool advanced, int episode)
     {
-        static uint CreateMapEventSource(uint mapIndex, uint x, uint y)
+        static uint CreateMapEventSourceIndex(uint mapIndex, uint x, uint y)
         {
             uint sourceIndex = x & 0xff;
             sourceIndex <<= 8;
             sourceIndex |= y & 0xff;
             sourceIndex <<= 8;
             sourceIndex |= mapIndex & 0xffff;
+
+            return sourceIndex;
+        }
+
+        static uint CreateTextPopupNPCSourceIndex(uint mapIndex, uint mapCharacterIndex)
+        {
+            uint sourceIndex = mapIndex & 0xffff;
+            sourceIndex <<= 16;
+            sourceIndex |= mapCharacterIndex & 0xffff;
 
             return sourceIndex;
         }
@@ -526,6 +565,23 @@ partial class QuestLog
         return
         [
             #region Original quests
+            #region Lyramion's Faith
+            QuestFactory.CreateMainQuest(this, MainQuestType.LyramionsFaith,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_TalkToShandraInNewlake,
+                    Triggers =
+                    [
+                        // Activate
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 1), // "Wine" (same dialogue as for grandfather)
+                        // TODO: Completion
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 1, // Grandfather
+                }
+                // TODO ...
+            ),
+            #endregion
             #region Grandfather's Quest
             QuestFactory.CreateMainQuest(this, MainQuestType.Grandfather,
                 mainQuest => new SubQuest(this, mainQuest, QuestState.Active)
@@ -638,7 +694,8 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 1, // Grandfather
-                }),
+                }
+            ),
             #endregion
             #region Swamp fever
             QuestFactory.CreateMainQuest(this, MainQuestType.SwampFever,
@@ -752,7 +809,8 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 12, // Wat the fisherman
-                }),
+                }
+            ),
             #endregion
             #region Golden horseshoes
             QuestFactory.CreateMainQuest(this, MainQuestType.GoldenHorseshoes,
@@ -784,30 +842,108 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 10, // Tolimar
-                })
+                }
+            ),
             #endregion
-            /*QuestFactory.CreateMainQuest(this, MainQuestType.AlkemsRing,
-                mainQuest => new SubQuest(mainQuest, QuestState.Inactive)
+            #region Alkem's Ring
+            QuestFactory.CreateMainQuest(this, MainQuestType.AlkemsRing,
+                mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.AlkemsRing_EnterTheCrypt,
-                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
+                    Triggers =
+                    [
+                        // Activate
+                        new ItemObtainedTrigger(game, TriggerType.Activation, 289), // Crypt key
+                        // Complete
+                        new DoorUnlockedTrigger(game, TriggerType.Completion, 15), // Unlocked crypt door
+                    ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 18, // Alkem
                 },
-                mainQuest => new SubQuest(mainQuest, QuestState.Active)
+                mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.AlkemsRing_FindTheRing,
-                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 288), // Alkem's ring
+                    ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 18, // Alkem
                 },
-                mainQuest => new SubQuest(mainQuest, QuestState.Active)
+                mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.AlkemsRing_ReturnTheRing,
-                    Trigger = new GlobalVariableTrigger(game, QuestState.Active, 0),
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 81), // Returned the ring
+                    ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 18, // Alkem
-                })*/,
+                }
+            ),
+            #endregion
+            #region Sylphs
+            QuestFactory.CreateMainQuest(this, MainQuestType.Sylphs,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Sylphs_TalkToLadyHeidi,
+                    Triggers =
+                    [
+                        // Activate
+                        new GlobalVariableTrigger(game, TriggerType.Activation, GlobalVar_SylphQuestStarted), // Talked to cook
+                        // Complete
+                        new KeywordLearnedTrigger(game, TriggerType.Completion, 24), // Learned word "Fairies"
+                    ],
+                    SourceType = QuestSourceType.TextPopupNPC,
+                    SourceIndex = CreateTextPopupNPCSourceIndex(269, 0), // Cook
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Sylphs_FindTheHiddenItemInTheTree,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 283), // Weird stone
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 9, // Lady Heidi
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Sylphs_FindTheSylphs,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 78), // Learned Sylphic and word "Oknard" from Sariel, TODO: maybe also use it to unlock Orc progression?
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 9, // Lady Heidi
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Sylphs_RescueSelena,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 79), // Talked to Selena after rescue
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 17, // Sariel
+                }
+            ),
+            #endregion
             #endregion
             #region Advanced quests
             #endregion
