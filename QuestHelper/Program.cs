@@ -20,6 +20,7 @@ namespace QuestHelper
         NPCTalk,
         NPCGoldGiven,
         NPCFoodGiven,
+        Door
     }
 
     internal class Program
@@ -66,6 +67,11 @@ namespace QuestHelper
                     return data;
                 }
                 case QuestSourceType.Event:
+                {
+                    Console.Write("Map Name: ");
+                    return Console.ReadLine();
+                }
+                case QuestSourceType.Door:
                 {
                     Console.Write("Map Name: ");
                     return Console.ReadLine();
@@ -179,7 +185,14 @@ namespace QuestHelper
                 case QuestSourceType.Riddlemouth:
                 {
                     var mapName = data.ToLower();
-                    var maps = gameData.MapManager.Maps.Where(m => m.Name.ToLower().Contains(mapName)).ToList();
+
+                    var maps = (mapName switch
+                    {
+                        "lyramion" => gameData.MapManager.Maps.Where(m => m.IsLyramionWorldMap),
+                        "forestmoon" => gameData.MapManager.Maps.Where(m => m.IsForestMoonWorldMap),
+                        "morag" => gameData.MapManager.Maps.Where(m => m.IsMoragWorldMap),
+                        _ => gameData.MapManager.Maps.Where(m => m.Name.ToLower().Contains(mapName))
+                    }).ToList();
 
                     foreach (var map in maps)
                     {
@@ -202,7 +215,14 @@ namespace QuestHelper
                 case QuestSourceType.Lever:
                 {
                     var mapName = data.ToLower();
-                    var maps = gameData.MapManager.Maps.Where(m => m.Name.ToLower().Contains(mapName)).ToList();
+
+                    var maps = (mapName switch
+                    {
+                        "lyramion" => gameData.MapManager.Maps.Where(m => m.IsLyramionWorldMap),
+                        "forestmoon" => gameData.MapManager.Maps.Where(m => m.IsForestMoonWorldMap),
+                        "morag" => gameData.MapManager.Maps.Where(m => m.IsMoragWorldMap),
+                        _ => gameData.MapManager.Maps.Where(m => m.Name.ToLower().Contains(mapName))
+                    }).ToList();
 
                     foreach (var map in maps)
                     {
@@ -228,7 +248,14 @@ namespace QuestHelper
                     var dataParts = data.Split(',');
                     var mapName = dataParts[0].ToLower();
                     var text = dataParts[1].ToLower();
-                    var maps = gameData.MapManager.Maps.Where(m => m.Name.ToLower().Contains(mapName)).ToList();
+
+                    var maps = (mapName switch
+                    {
+                        "lyramion" => gameData.MapManager.Maps.Where(m => m.IsLyramionWorldMap),
+                        "forestmoon" => gameData.MapManager.Maps.Where(m => m.IsForestMoonWorldMap),
+                        "morag" => gameData.MapManager.Maps.Where(m => m.IsMoragWorldMap),
+                        _ => gameData.MapManager.Maps.Where(m => m.Name.ToLower().Contains(mapName))
+                    }).ToList();
 
                     foreach (var map in maps)
                     {
@@ -249,6 +276,11 @@ namespace QuestHelper
                                     foreach (var ev in chain)
                                         Console.WriteLine(ev);
                                 });
+                                var textPopupNPCs = map.CharacterReferences.Select((npc, index) => new { npc, index }).Where(c => c.npc != null && c.npc.Type == CharacterType.NPC && c.npc.CharacterFlags.HasFlag(Map.CharacterReference.Flags.TextPopup) && c.npc.Index == t.index).ToList();
+                                textPopupNPCs.ForEach(c =>
+                                {
+                                    Console.WriteLine($"Triggered by NPC {c.index} on map {map.Index}");
+                                });
                             });
                         }
                     }
@@ -258,11 +290,50 @@ namespace QuestHelper
                 case QuestSourceType.Event:
                 {
                     var mapName = data.ToLower();
-                    var maps = gameData.MapManager.Maps.Where(m => m.Name.ToLower().Contains(mapName)).ToList();
+
+                    var maps = (mapName switch
+                    {
+                        "lyramion" => gameData.MapManager.Maps.Where(m => m.IsLyramionWorldMap),
+                        "forestmoon" => gameData.MapManager.Maps.Where(m => m.IsForestMoonWorldMap),
+                        "morag" => gameData.MapManager.Maps.Where(m => m.IsMoragWorldMap),
+                        _ => gameData.MapManager.Maps.Where(m => m.Name.ToLower().Contains(mapName))
+                    }).ToList();
 
                     foreach (var map in maps)
                     {
                         var events = map.Events.Where(e => e is PopupTextEvent p && p.EventImageIndex != 0xff).Cast<PopupTextEvent>().ToList();
+
+                        if (events.Count > 0)
+                        {
+                            Console.WriteLine($"Map {map.Index} ({map.Name})");
+                            events.ForEach(e =>
+                            {
+                                var chain = GetAllEventsInSameChain(map, e);
+                                var location = GetEventLocation(map, e).First();
+                                Console.WriteLine($"Triggered from tile at {location.X},{location.Y}");
+                                foreach (var ev in chain)
+                                    Console.WriteLine(ev);
+                            });
+                        }
+                    }
+
+                    break;
+                }
+                case QuestSourceType.Door:
+                {
+                    var mapName = data.ToLower();
+
+                    var maps = (mapName switch
+                    {
+                        "lyramion" => gameData.MapManager.Maps.Where(m => m.IsLyramionWorldMap),
+                        "forestmoon" => gameData.MapManager.Maps.Where(m => m.IsForestMoonWorldMap),
+                        "morag" => gameData.MapManager.Maps.Where(m => m.IsMoragWorldMap),
+                        _ => gameData.MapManager.Maps.Where(m => m.Name.ToLower().Contains(mapName))
+                    }).ToList();
+
+                    foreach (var map in maps)
+                    {
+                        var events = map.Events.Where(e => e is DoorEvent).Cast<DoorEvent>().ToList();
 
                         if (events.Count > 0)
                         {
@@ -286,7 +357,7 @@ namespace QuestHelper
                     var items = gameData.ItemManager.Items.Where(item => item.Name.ToLower().Contains(itemName)).ToList();
                     var itemIndices = items.Select(i => i.Index).ToHashSet();
                     var chestReader = new ChestReader();
-                    var chests = gameData.Files["Save.00/Chest_data.amb"].Files.ToDictionary(entry => (uint)entry.Key, entry => Chest.Load(chestReader, entry.Value));
+                    var chests = gameData.Files["Save.00/Chest_data.amb"].Files.Where(entry => entry.Value.Size != 0).ToDictionary(entry => (uint)entry.Key, entry => { entry.Value.Position = 0; return Chest.Load(chestReader, entry.Value); });
 
                     foreach (var map in gameData.MapManager.Maps)
                     {

@@ -264,6 +264,8 @@ namespace Ambermoon.UI
         public TextAlign TextAlign = TextAlign.Center;
         public Render.Color BackgroundColor = null;
         public bool CenterOnScreen = false;
+        public bool Enabled = true;
+        public bool ShowBelow = false;
     }
 
     internal enum BattleFieldSlotColor
@@ -4531,7 +4533,7 @@ namespace Ambermoon.UI
             buttonGrid?.HideTooltips();
         }
 
-        void SetActiveTooltip(Position cursorPosition, Tooltip tooltip)
+        internal void SetActiveTooltip(Position cursorPosition, Tooltip tooltip)
         {
             if (tooltip == null) // remove
             {
@@ -4571,7 +4573,9 @@ namespace Ambermoon.UI
                 activeTooltipText.TextColor = tooltip.TextColor;
                 int x = Util.Limit(0, tooltip.CenterOnScreen ? (Global.VirtualScreenWidth - textWidth) / 2 : cursorPosition.X - textWidth / 2,
                     Global.VirtualScreenWidth - textWidth);
-                int y = cursorPosition.Y - text.LineCount * Global.GlyphLineHeight - 1;
+                int y = tooltip.ShowBelow
+                    ? cursorPosition.Y + 16 + 1
+                    : cursorPosition.Y - text.LineCount * Global.GlyphLineHeight - 1;
                 if (textWidth < Global.VirtualScreenWidth - 1)
                 {
                     if (x == 0)
@@ -5694,7 +5698,7 @@ namespace Ambermoon.UI
                 {
                     foreach (var tooltip in tooltips)
                     {
-                        if (tooltip.Area.Contains(position))
+                        if (tooltip.Enabled && tooltip.Area.Contains(position))
                         {
                             SetActiveTooltip(position, tooltip);
                             consumed = true;

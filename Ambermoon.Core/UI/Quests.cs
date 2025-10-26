@@ -31,6 +31,19 @@ public enum SubQuestType
 {
     // Lyramion's Faith
     LyramionsFaith_TalkToShandraInNewlake,
+    LyramionsFaith_BringShandrasStoneToGrandfather,
+    LyramionsFaith_UseShandrasStone,
+    LyramionsFaith_EnterTheTempleOfBrotherhood,
+    LyramionsFaith_ExploreTheTempleOfBrotherhood,
+    LyramionsFaith_ExploreTheHangar,
+    LyramionsFaith_FindTheNavStone,
+    LyramionsFaith_FlyToTheForestMoon,
+    LyramionsFaith_MeetTheDwarfLeader,
+    LyramionsFaith_FindAWayToLeaveForestMoon,
+    // TODO ...
+    LyramionsFaith_EnterSecretRoomInLibrary,
+    LyramionsFaith_FindRecipe,
+    LyramionsFaith_BrewDemonSleep,
     // Grandfather's Quest
     Grandfather_TalkToGrandfather,
     Grandfather_GoToWineCellar,
@@ -574,10 +587,171 @@ partial class QuestLog
                     [
                         // Activate
                         new KeywordLearnedTrigger(game, TriggerType.Activation, 1), // "Wine" (same dialogue as for grandfather)
-                        // TODO: Completion
+                        // Completion
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 193), // Talked to Shandra in Newlake
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 1, // Grandfather
+                },
+                mainQuest => new SubQuest(this, mainQuest, QuestState.Blocked)
+                {
+                    Type = SubQuestType.LyramionsFaith_EnterTheTempleOfBrotherhood,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Completion
+                        new EventDisabledTrigger(game, TriggerType.Completion, 431, 6), // Uses demon sleep and removed the guard demon
+                    ],
+                    SourceType = QuestSourceType.None,
+                    SourceIndex = 0,
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_ExploreTheTempleOfBrotherhood,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Completion
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 370), // Picked up the hangar key (needs defeat of S'Orel beforehand)
+                    ],
+                    SourceType = QuestSourceType.None,
+                    SourceIndex = 0,
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_ExploreTheHangar,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Completion
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 381), // Kire's note
+                    ],
+                    SourceType = QuestSourceType.None,
+                    SourceIndex = 0,
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_FindTheNavStone,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Completion
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 378), // Green navstone
+                    ],
+                    SourceType = QuestSourceType.Item,
+                    SourceIndex = 381, // Kire's note
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_FlyToTheForestMoon,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Completion
+                        new EventDisabledTrigger(game, TriggerType.Completion, 343, 16), // Long text triggered in Dor Kiredon
+                    ],
+                    SourceType = QuestSourceType.Item,
+                    SourceIndex = 381, // Kire's note
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_MeetTheDwarfLeader,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Completion
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 51), // Talked to Kire once
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 55, // Kire
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_FindAWayToLeaveForestMoon,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Completion
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 377, 379), // Blue or yellow navstone
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 55, // Kire
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_BringShandrasStoneToGrandfather,
+                    Triggers =
+                    [
+                        // Activate
+                        new ItemObtainedTrigger(game, TriggerType.Activation, 209), // Shandra's Amber
+                        // Completion
+                        new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_ShowedAmberToGrandfather), // Showed Amber to Grandfather
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 1, // Grandfather
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_UseShandrasStone,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Completion
+                        new EventDisabledTrigger(game, TriggerType.Completion, 428, 7), // Picked up the book key
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 1, // Grandfather
+                },                
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_EnterSecretRoomInLibrary,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Completion
+                        new DoorUnlockedTrigger(game, TriggerType.Completion, 29), // Unlocked secret door in library
+                    ],
+                    SourceType = QuestSourceType.Item,
+                    SourceIndex = 366, // Book key
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_FindRecipe,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Completion
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 345), // Recipe
+                    ],
+                    SourceType = QuestSourceType.None,
+                    SourceIndex = 0,
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_BrewDemonSleep,
+                    PostCompletionAction = subQuest =>
+                    {
+                        ActivateOtherQuest(MainQuestType.LyramionsFaith, SubQuestType.LyramionsFaith_EnterTheTempleOfBrotherhood)(subQuest);
+                    },
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Completion
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 343), // Demon Sleep
+                    ],
+                    SourceType = QuestSourceType.Item,
+                    SourceIndex = 345, // Recipe
                 }
                 // TODO ...
             ),

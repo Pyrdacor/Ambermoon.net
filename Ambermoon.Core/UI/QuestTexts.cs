@@ -32,6 +32,13 @@ internal static class QuestTexts
         // TODO ...
     };
 
+    public static readonly Dictionary<GameLanguage, string> Source = new()
+    {
+        { GameLanguage.German, "Quelle: " },
+        { GameLanguage.English, "Source: " },
+        // TODO ...
+    };
+
     public static readonly Dictionary<GameLanguage, Dictionary<MainQuestType, string>> MainQuests = new()
     {
         // Note: Max length = 44 characters
@@ -87,6 +94,19 @@ internal static class QuestTexts
         {
             // Lyramion's Faith
             { SubQuestType.LyramionsFaith_TalkToShandraInNewlake, "Rede mit Shandra in Newlake" },
+            { SubQuestType.LyramionsFaith_BringShandrasStoneToGrandfather, "Bring Shandras Bernstein zu Großvater" },
+            { SubQuestType.LyramionsFaith_UseShandrasStone, "Verwende Shandras Bernstein" },
+            { SubQuestType.LyramionsFaith_EnterTheTempleOfBrotherhood, "Betrete den Tempel der Bruderschaft" },
+            { SubQuestType.LyramionsFaith_ExploreTheTempleOfBrotherhood, "Erkunde den Tempel der Bruderschaft" },
+            { SubQuestType.LyramionsFaith_ExploreTheHangar, "Erkunde Hangar im Tempel" },
+            { SubQuestType.LyramionsFaith_FindTheNavStone, "Finde den Navstein" },
+            { SubQuestType.LyramionsFaith_FlyToTheForestMoon, "Fliege zum Waldmond" },
+            { SubQuestType.LyramionsFaith_MeetTheDwarfLeader, "Triff das Zwergenoberhaupt Kire" },
+            { SubQuestType.LyramionsFaith_FindAWayToLeaveForestMoon, "Finde einen Weg, den Waldmond zu verlassen" },
+            { SubQuestType.LyramionsFaith_EnterSecretRoomInLibrary, "Betrete den Geheimraum in der Bibliothek" },
+            { SubQuestType.LyramionsFaith_FindRecipe, "Finde das Rezept" },
+            { SubQuestType.LyramionsFaith_BrewDemonSleep, "Stelle den Trank \"Dämonenschlaf\" her" },
+            
             // Grandfather's Quest
             { SubQuestType.Grandfather_TalkToGrandfather, "Rede mit deinem Großvater" },
             { SubQuestType.Grandfather_GoToWineCellar, "Gehe in den Weinkeller" },
@@ -123,6 +143,18 @@ internal static class QuestTexts
         {
             // Lyramion's Faith
             { SubQuestType.LyramionsFaith_TalkToShandraInNewlake, "Talk to Shandra in Newlake" },
+            { SubQuestType.LyramionsFaith_BringShandrasStoneToGrandfather, "Deliver Shandra's Amber to grandfather" },
+            { SubQuestType.LyramionsFaith_UseShandrasStone, "Use Shandra's Amber" },
+            { SubQuestType.LyramionsFaith_EnterTheTempleOfBrotherhood, "Enter the temple of brotherhood" },
+            { SubQuestType.LyramionsFaith_ExploreTheTempleOfBrotherhood, "Explore the temple of brotherhood" },
+            { SubQuestType.LyramionsFaith_ExploreTheHangar, "Explore the hangar in the temple" },
+            { SubQuestType.LyramionsFaith_FindTheNavStone, "Find the navstone" },
+            { SubQuestType.LyramionsFaith_FlyToTheForestMoon, "Fly to the forest moon" },
+            { SubQuestType.LyramionsFaith_MeetTheDwarfLeader, "Meet the dwarf leader Kire" },
+            { SubQuestType.LyramionsFaith_FindAWayToLeaveForestMoon, "Find a way to leave the forest moon" },
+            { SubQuestType.LyramionsFaith_EnterSecretRoomInLibrary, "Enter the secret room in the library" },
+            { SubQuestType.LyramionsFaith_FindRecipe, "Find the recipe" },
+            { SubQuestType.LyramionsFaith_BrewDemonSleep, "Brew the \"Demon Sleep\" potion" },
             // Grandfather's Quest
             { SubQuestType.Grandfather_TalkToGrandfather, "Talk to your grandfather" },
             { SubQuestType.Grandfather_GoToWineCellar, "Go to the wine cellar" },

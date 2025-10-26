@@ -88,6 +88,7 @@ partial class QuestLog
     // we will start from the end.
     const uint GlobalVar_TolimarQuestStarted = 8191u;
     const uint GlobalVar_SylphQuestStarted = 8190u;
+    const uint GlobalVar_ShowedAmberToGrandfather = 8189u;
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 
@@ -102,5 +103,10 @@ partial class QuestLog
         customGlobalVariableEvents.Add(new CustomGlobalVariableTextPopupNPCEvent(this, game,
             (mapIndex, mapCharIndex) => mapIndex == 269 && mapCharIndex == 0, // Cook NPC
             GlobalVar_SylphQuestStarted));
+
+        // Show Shandra's amber to grandfather
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 1 && @event is ConversationEvent c && (c.Interaction == ConversationEvent.InteractionType.ShowItem || c.Interaction == ConversationEvent.InteractionType.GiveItem) && c.ItemIndex == 209,
+            GlobalVar_ShowedAmberToGrandfather));
     }
 }

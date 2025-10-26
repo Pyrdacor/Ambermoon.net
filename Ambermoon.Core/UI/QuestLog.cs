@@ -72,20 +72,21 @@ file static class QuestStateExtensions
 
 public enum QuestSourceType
 {
+    None,
     NPC,
     PartyMember,
     Item, // Books etc
     MapEvent,
-    TextPopupNPC
+    TextPopupNPC,
 }
 
-public record SubQuest(QuestLog questLog, MainQuestType quest, QuestState initialState = QuestState.Inactive)
+public record SubQuest(QuestLog QuestLog, MainQuestType MainQuestType, QuestState InitialState = QuestState.Inactive)
 {
-    private QuestState state = initialState;
+    private QuestState state = InitialState;
 
     private SubQuestType[] requiredCompletedQuests = [];
 
-    public MainQuest Quest => questLog.Quests.FirstOrDefault(q => q.Type == quest);
+    public MainQuest Quest => QuestLog.Quests.FirstOrDefault(q => q.Type == MainQuestType);
 
     public required IQuestTrigger[] Triggers { get; init; } = [];
 
@@ -240,6 +241,19 @@ public record SubQuest(QuestLog questLog, MainQuestType quest, QuestState initia
 
                 return $"{mapName} ({x}, {y})";
             }
+            case QuestSourceType.TextPopupNPC:
+            {
+                var charIndex = SourceIndex & 0xffff;
+                var map = game.MapManager.GetMap(SourceIndex >> 16);
+                string mapName = map.IsWorldMap
+                    ? game.DataNameProvider.GetWorldName(map.World)
+                    : map.Name;
+                var positions = map.CharacterReferences[charIndex].Positions;
+                var position = new Position(positions.Count == 1
+                    ? positions[0]
+                    : positions[(int)game.GameTime.TimeSlot % positions.Count]);
+                return $"{mapName} ({position.X}, {position.Y})";
+            }
             default:
                 return "";
         }
@@ -310,6 +324,7 @@ public partial class QuestLog
     private readonly Game game;
     private readonly IGameRenderView renderView;
     private readonly UIText[] texts = new UIText[TextLineCount];
+    private readonly Tooltip[] tooltips = new Tooltip[TextLineCount];
     private readonly Dictionary<MainQuestType, bool> questGroups = []; // boolean = expanded
     private readonly List<CollapseIndicator> collapseIndicators = [];
     internal MainQuest[] Quests { get; }
@@ -466,7 +481,26 @@ public partial class QuestLog
         popup.Click(position, MouseButtons.Left, out _);
     }
 
-    public void Hover(Position position) => popup?.Hover(position);
+    public void Hover(Position position)
+    {
+        bool consumed = false;
+
+        foreach (var tooltip in tooltips)
+        {
+            if (tooltip.Enabled && tooltip.Area.Contains(position))
+            {
+                game.Layout.SetActiveTooltip(position, tooltip);
+                consumed = true;
+                break;
+            }
+        }
+
+        if (!consumed)
+        {
+            game.Layout.SetActiveTooltip(position, null);
+            popup?.Hover(position);
+        }        
+    }
 
     public void ScrollTo(int y)
     {
@@ -497,16 +531,27 @@ public partial class QuestLog
         closeButton.LeftClickAction = () => game.Layout.ClosePopup();
         closeButton.Visible = true;
 
-        popup.Closed += () => Open = false;
+        popup.Closed += () =>
+        {
+            foreach (var tooltip in tooltips)
+                game.Layout.RemoveTooltip(tooltip);
+
+            Open = false;
+        };
 
         var textArea = new Rect(area.Left + 16 + 3, area.Top + 16 - 2 + 1, area.Width - 32 - 16, area.Height - 32 - 16);
 
         for (int i = 0; i < TextLineCount; i++)
         {
-            var text = texts[i] = popup.AddText(new Rect(textArea.X + 2, textArea.Y + i * Global.GlyphLineHeight, textArea.Width - 2, Global.GlyphLineHeight),
-                "", TextColor.LightGray, TextAlign.Left);
+            var textLineArea = new Rect(textArea.X + 2, textArea.Y + i * Global.GlyphLineHeight, textArea.Width - 2, Global.GlyphLineHeight);
+
+            var text = texts[i] = popup.AddText(textLineArea, "", TextColor.LightGray, TextAlign.Left);
             text.PaletteIndex = game.PrimaryUIPaletteIndex;
             text.Visible = false;
+
+            var tooltip = tooltips[i] = game.Layout.AddTooltip(textLineArea, "", TextColor.Yellow);
+            tooltip.Enabled = false;
+            tooltip.ShowBelow = true;
         }
 
         scrollbar = null;
@@ -678,7 +723,10 @@ public partial class QuestLog
             if (questIndex == quests.Length)
             {
                 for (int j = textIndex; j < TextLineCount; j++)
+                {
                     texts[j].Visible = false;
+                    tooltips[j].Enabled = false;
+                }
                 break;
             }
 
@@ -694,7 +742,10 @@ public partial class QuestLog
                 if (questIndex == quests.Length)
                 {
                     for (int j = textIndex; j < TextLineCount; j++)
+                    {
                         texts[j].Visible = false;
+                        tooltips[j].Enabled = false;
+                    }
                     break;
                 }
 
@@ -709,10 +760,13 @@ public partial class QuestLog
                 {
                     collapseIndicators.Add(new(new Position(textArea.Left, y + 1), popup, expanded, questIndex));
 
+                    tooltips[textIndex].Enabled = false;
+
                     var text = texts[textIndex++];
                     text.SetText(renderView.TextProcessor.CreateText(" " + GetMainQuestText(quest.Type)));
                     text.SetTextColor(quest.ToCompoundState().ToColor());
                     text.Visible = true;
+
                     y += 7;
                 }
 
@@ -742,6 +796,10 @@ public partial class QuestLog
 
                 if (iterationIndex >= scrollOffset)
                 {
+                    var tooptip = tooltips[textIndex];
+                    tooptip.Text = QuestTexts.Source[game.GameLanguage] + subQuest.GetSourceInfo(game);
+                    tooptip.Enabled = true;
+
                     var text = texts[textIndex++];
                     text.SetText(renderView.TextProcessor.CreateText("  " + GetSubQuestText(subQuest.Type, subQuest.CurrentAmount, subQuest.MinAmount)));
                     text.SetTextColor(subQuest.State.ToColor());
