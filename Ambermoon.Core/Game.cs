@@ -2299,19 +2299,16 @@ public class Game
         return currentBattle?.HasPartyMemberFled(partyMember) ?? false;
     }
 
-    public bool HasFoundItem(uint itemIndex, uint minAmount = 1)
+    public uint GetTotalItemCount(uint itemIndex)
     {
-        long foundCount = 0;
+        uint foundCount = 0;
 
         foreach (var partyMember in CurrentSavegame.PartyMembers.Values)
         {
-            foundCount += partyMember.Inventory.Slots.Where(s => s.ItemIndex == itemIndex).Sum(s => s.Amount);
-
-            if (foundCount >= minAmount)
-                return true;
+            foundCount += (uint)partyMember.Inventory.Slots.Where(s => s.ItemIndex == itemIndex).Sum(s => s.Amount);
         }
 
-        return false;
+        return foundCount;
     }
 
     /// <summary>
@@ -8771,6 +8768,8 @@ public class Game
                 }
                 else
                 {
+                    QuestLog.CheckEvent(conversationPartner, conversationEvent);
+
                     void HandleInteraction()
                     {
                         HandleNextEvent(eventType =>
@@ -8948,6 +8947,8 @@ public class Game
             if (character is PartyMember &&
                 (conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.JoinParty)) != null)
             {
+                QuestLog.CheckEvent(conversationPartner, conversationEvent);
+
                 layout.ButtonsDisabled = true;
                 currentInteractionType = InteractionType.JoinParty;
                 aborted = false;
@@ -8997,6 +8998,8 @@ public class Game
 
                 if ((conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.LeaveParty)) != null)
                 {
+                    QuestLog.CheckEvent(conversationPartner, conversationEvent);
+
                     currentInteractionType = InteractionType.LeaveParty;
                     layout.ButtonsDisabled = true;
                     aborted = false;
@@ -9126,6 +9129,8 @@ public class Game
 
                     if (conversationEvent != null)
                     {
+                        QuestLog.CheckEvent(conversationPartner, conversationEvent);
+
                         currentInteractionType = InteractionType.Leave;
                         layout.ButtonsDisabled = true;
                         aborted = false;

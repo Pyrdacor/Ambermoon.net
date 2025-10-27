@@ -72,12 +72,12 @@ file static class QuestStateExtensions
 
 public enum QuestSourceType
 {
-    None,
     NPC,
     PartyMember,
     Item, // Books etc
     MapEvent,
     TextPopupNPC,
+    Custom
 }
 
 public record SubQuest(QuestLog QuestLog, MainQuestType MainQuestType, QuestState InitialState = QuestState.Inactive)
@@ -171,13 +171,19 @@ public record SubQuest(QuestLog QuestLog, MainQuestType MainQuestType, QuestStat
                 state = value;
 
                 if (state == QuestState.Completed)
-                {
-                    CurrentAmount = 0;
+                {                  
                     PostCompletionAction?.Invoke(this);
                     Quest.SubQuestCompleted(this);
 
                     if (CanBeRepeated)
+                    {
+                        CurrentAmount = 0;
                         state = QuestState.Active;
+                    }
+                    else if (MinAmount != null && MinAmount > 1)
+                    {
+                        CurrentAmount = MinAmount.Value;
+                    }
                 }
                 else if (oldState == QuestState.Inactive && state == QuestState.Active)
                 {
@@ -254,6 +260,8 @@ public record SubQuest(QuestLog QuestLog, MainQuestType MainQuestType, QuestStat
                     : positions[(int)game.GameTime.TimeSlot % positions.Count]);
                 return $"{mapName} ({position.X}, {position.Y})";
             }
+            case QuestSourceType.Custom:
+                return QuestTexts.CustomSourceNames[game.GameLanguage][SourceIndex];
             default:
                 return "";
         }
@@ -583,6 +591,7 @@ public partial class QuestLog
         eyeButton.Pressed = game.Configuration.ShowCompletedQuests;
         eyeButton.LeftClickAction = ToggleCompletedQuests;
         eyeButton.Tooltip = game.Configuration.ShowButtonTooltips ? QuestTexts.ShowCompletedQuestsTooltip[game.GameLanguage] : null;
+        eyeButton.TooltipColor = TextColor.Yellow;
         eyeButton.Visible = true;
 
         Redraw();

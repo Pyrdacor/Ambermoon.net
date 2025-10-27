@@ -171,7 +171,7 @@ file class OrTrigger<TFirst, TSecond> : IQuestTrigger
 
     bool IQuestTrigger.CheckEvent(Event @event, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         if (firstTrigger.CheckEvent(@event, subQuest))
@@ -182,7 +182,7 @@ file class OrTrigger<TFirst, TSecond> : IQuestTrigger
 
     bool IQuestTrigger.CheckExploration(uint mapIndex, uint x, uint y, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         if (firstTrigger.CheckExploration(mapIndex, x, y, subQuest))
@@ -193,7 +193,7 @@ file class OrTrigger<TFirst, TSecond> : IQuestTrigger
 
     bool IQuestTrigger.CheckItem(Item item, uint itemCount, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         if (firstTrigger.CheckItem(item, itemCount, subQuest))
@@ -204,7 +204,7 @@ file class OrTrigger<TFirst, TSecond> : IQuestTrigger
 
     bool IQuestTrigger.CheckChestUnlock(uint chestIndex, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         if (firstTrigger.CheckChestUnlock(chestIndex, subQuest))
@@ -215,7 +215,7 @@ file class OrTrigger<TFirst, TSecond> : IQuestTrigger
 
     bool IQuestTrigger.CheckDoorUnlock(uint doorIndex, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         if (firstTrigger.CheckDoorUnlock(doorIndex, subQuest))
@@ -244,7 +244,7 @@ file class GlobalVariableTrigger(Game game, TriggerType triggerType, uint index,
 
     bool IQuestTrigger.CheckEvent(Event @event, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         if (@event is ActionEvent e && e.TypeOfAction == ActionEvent.ActionType.SetGlobalVariable && e.ObjectIndex == index && e.Value == (expectedValue ? 1 : 0))
@@ -269,7 +269,7 @@ file class TileChangeTrigger(Game game, TriggerType triggerType, uint mapIndex, 
 
     bool IQuestTrigger.CheckEvent(Event @event, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         if (@event is ChangeTileEvent e && e.MapIndex == mapIndex && e.X == x && e.Y == y && e.FrontTileIndex == expectedTile)
@@ -295,7 +295,7 @@ file class EventDisabledTrigger(Game game, TriggerType triggerType, uint mapInde
 
     bool IQuestTrigger.CheckEvent(Event @event, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         uint index = (mapIndex - 1) * 64 + eventIndex - 1;
@@ -322,7 +322,7 @@ file class CharacterVisibilityTrigger(Game game, TriggerType triggerType, uint m
 
     bool IQuestTrigger.CheckEvent(Event @event, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         uint index = (mapIndex - 1) * 32 + characterIndex - 1;
@@ -349,7 +349,7 @@ file class ItemObtainedTrigger(Game game, TriggerType triggerType, params uint[]
 
     bool IQuestTrigger.CheckItem(Item item, uint itemCount, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         if (itemIndices == null || itemIndices.Length == 0)
@@ -357,9 +357,20 @@ file class ItemObtainedTrigger(Game game, TriggerType triggerType, params uint[]
 
         if (item == null) // only check items you already have
         {
+            uint totalAmount = 0;
+            uint minAmount = subQuest.MinAmount ?? 1;
+
+            if (NewState != QuestState.Completed)
+                minAmount = 1;
+
             foreach (var itemIndex in itemIndices)
             {
-                if (game.HasFoundItem(itemIndex, subQuest.MinAmount ?? 1))
+                totalAmount += game.GetTotalItemCount(itemIndex);
+
+                if (NewState == QuestState.Completed && minAmount > 1)
+                    subQuest.CurrentAmount = Math.Min(minAmount, subQuest.CurrentAmount + totalAmount);
+
+                if (totalAmount >= minAmount)
                 {
                     subQuest.State = NewState;
                     return true;
@@ -375,19 +386,18 @@ file class ItemObtainedTrigger(Game game, TriggerType triggerType, params uint[]
             {
                 if (NewState == QuestState.Completed)
                 {
-                    if (subQuest.MinAmount == 0 || (subQuest.MinAmount ?? 1) <= subQuest.CurrentAmount + itemCount)
+                    uint minAmount = subQuest.MinAmount ?? 1;
+
+                    if (minAmount == 0 || minAmount <= subQuest.CurrentAmount + itemCount)
                     {
+                        if (minAmount > 1)
+                            subQuest.CurrentAmount = minAmount;
+
                         subQuest.State = NewState;
                         return true;
                     }
 
-                    uint minAmount = subQuest.MinAmount ?? 1;
-                    uint countToAdd = Math.Min(itemCount, (uint)(minAmount - subQuest.CurrentAmount));
-
-                    if (countToAdd == 0)
-                        break;
-
-                    subQuest.CurrentAmount += countToAdd;
+                    subQuest.CurrentAmount += itemCount;
                 }
                 else
                 {
@@ -413,7 +423,7 @@ file class ExplorationTrigger(Game game, TriggerType triggerType, uint mapIndex,
 
     bool IQuestTrigger.CheckExploration(uint mapIndex, uint x, uint y, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         if (this.mapIndex == mapIndex && this.x == x && this.y == y)
@@ -440,7 +450,7 @@ file class KeywordLearnedTrigger(Game game, TriggerType triggerType, uint keywor
 
     bool IQuestTrigger.CheckEvent(Event @event, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         if (@event is ActionEvent e && e.TypeOfAction == ActionEvent.ActionType.AddKeyword && e.ObjectIndex == keywordIndex && e.Value == 1)
@@ -481,7 +491,7 @@ file class ChestUnlockedTrigger(Game game, TriggerType triggerType, uint chestIn
 
     bool IQuestTrigger.CheckChestUnlock(uint chestIndex, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         if (this.chestIndex == chestIndex)
@@ -508,7 +518,7 @@ file class DoorUnlockedTrigger(Game game, TriggerType triggerType, uint doorInde
 
     bool IQuestTrigger.CheckDoorUnlock(uint doorIndex, SubQuest subQuest)
     {
-        if (OldState != QuestState.Any && subQuest.State != OldState)
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
         if (this.doorIndex == doorIndex)
@@ -593,9 +603,10 @@ partial class QuestLog
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 1, // Grandfather
                 },
-                mainQuest => new SubQuest(this, mainQuest, QuestState.Blocked)
+                mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.LyramionsFaith_EnterTheTempleOfBrotherhood,
+                    PostActivationAction = subQuest => subQuest.State = QuestState.Blocked,
                     Triggers =
                     [
                         // Activate
@@ -603,8 +614,8 @@ partial class QuestLog
                         // Completion
                         new EventDisabledTrigger(game, TriggerType.Completion, 431, 6), // Uses demon sleep and removed the guard demon
                     ],
-                    SourceType = QuestSourceType.None,
-                    SourceIndex = 0,
+                    SourceType = QuestSourceType.Custom,
+                    SourceIndex = (uint)QuestTexts.CustomSourceName.Shandra,
                 },
                 mainQuest => new SubQuest(this, mainQuest)
                 {
@@ -616,8 +627,8 @@ partial class QuestLog
                         // Completion
                         new ItemObtainedTrigger(game, TriggerType.Completion, 370), // Picked up the hangar key (needs defeat of S'Orel beforehand)
                     ],
-                    SourceType = QuestSourceType.None,
-                    SourceIndex = 0,
+                    SourceType = QuestSourceType.Custom,
+                    SourceIndex = (uint)QuestTexts.CustomSourceName.Shandra,
                 },
                 mainQuest => new SubQuest(this, mainQuest)
                 {
@@ -629,8 +640,8 @@ partial class QuestLog
                         // Completion
                         new ItemObtainedTrigger(game, TriggerType.Completion, 381), // Kire's note
                     ],
-                    SourceType = QuestSourceType.None,
-                    SourceIndex = 0,
+                    SourceType = QuestSourceType.Item,
+                    SourceIndex = 370, // Hangard key
                 },
                 mainQuest => new SubQuest(this, mainQuest)
                 {
@@ -709,7 +720,7 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 1, // Grandfather
-                },                
+                },
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.LyramionsFaith_EnterSecretRoomInLibrary,
@@ -720,8 +731,8 @@ partial class QuestLog
                         // Completion
                         new DoorUnlockedTrigger(game, TriggerType.Completion, 29), // Unlocked secret door in library
                     ],
-                    SourceType = QuestSourceType.Item,
-                    SourceIndex = 366, // Book key
+                    SourceType = QuestSourceType.Custom,
+                    SourceIndex = (uint)QuestTexts.CustomSourceName.Shandra,
                 },
                 mainQuest => new SubQuest(this, mainQuest)
                 {
@@ -733,8 +744,8 @@ partial class QuestLog
                         // Completion
                         new ItemObtainedTrigger(game, TriggerType.Completion, 345), // Recipe
                     ],
-                    SourceType = QuestSourceType.None,
-                    SourceIndex = 0,
+                    SourceType = QuestSourceType.Custom,
+                    SourceIndex = (uint)QuestTexts.CustomSourceName.Shandra,
                 },
                 mainQuest => new SubQuest(this, mainQuest)
                 {

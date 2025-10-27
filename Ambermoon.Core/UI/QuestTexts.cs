@@ -39,6 +39,18 @@ internal static class QuestTexts
         // TODO ...
     };
 
+    public enum CustomSourceName
+    {
+        Shandra
+    }
+
+    public static readonly Dictionary<GameLanguage, string[]> CustomSourceNames = new()
+    {
+        { GameLanguage.German, [ "Shandra" ] },
+        { GameLanguage.English, [ "Shandra" ] },
+        // TODO ...
+    };
+
     public static readonly Dictionary<GameLanguage, Dictionary<MainQuestType, string>> MainQuests = new()
     {
         // Note: Max length = 44 characters
