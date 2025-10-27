@@ -4048,7 +4048,7 @@ public class Game
                 if (QuestLog?.Open == true)
                 {
                     CursorType = CursorType.Sword;
-                    QuestLog.Click(relativePosition);
+                    QuestLog.Click(relativePosition, buttons);
                     return;
                 }
 

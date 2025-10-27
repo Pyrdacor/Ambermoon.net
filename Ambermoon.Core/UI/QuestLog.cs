@@ -380,7 +380,7 @@ public partial class QuestLog
 
         public void Destroy()
         {
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < rects.Length; i++)
                 rects[i]?.Delete();
         }
 
@@ -474,19 +474,31 @@ public partial class QuestLog
         }
     }
 
-    public void Click(Position position)
+    public void Click(Position position, MouseButtons buttons)
     {
         foreach (var collapseIndicator in collapseIndicators)
         {
             if (collapseIndicator.TestClick(position))
             {
-                questGroups[Quests[collapseIndicator.QuestIndex].Type] = !questGroups[Quests[collapseIndicator.QuestIndex].Type];
+                if (buttons == MouseButtons.Right)
+                {
+                    foreach (var questGroup in questGroups)
+                    {
+                        questGroups[questGroup.Key] = !questGroups[questGroup.Key];
+                    }
+                }
+                else
+                {
+                    questGroups[Quests[collapseIndicator.QuestIndex].Type] = !questGroups[Quests[collapseIndicator.QuestIndex].Type];
+                }
+
                 Redraw();
-                break;
+                return;
             }
         }
 
-        popup.Click(position, MouseButtons.Left, out _);
+        if (buttons == MouseButtons.Left)
+            popup.Click(position, MouseButtons.Left, out _);
     }
 
     public void Hover(Position position)
@@ -585,7 +597,7 @@ public partial class QuestLog
         AddColorRect(QuestState.Completed.ToColor());
         AddLegendText(QuestTexts.LegendCompleted[game.GameLanguage]);
 
-        var eyeButton = popup.AddButton(new Position(legendAreaX + 2, area.Bottom - 16 - Button.Height + 2));
+        var eyeButton = popup.AddButton(new Position(closeButton.Area.X - Button.Width - 1, closeButton.Area.Y));
         eyeButton.ButtonType = Data.Enumerations.ButtonType.Eye;
         eyeButton.ToggleButton = true;
         eyeButton.Pressed = game.Configuration.ShowCompletedQuests;
