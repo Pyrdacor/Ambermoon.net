@@ -2303,7 +2303,7 @@ public class Game
     {
         uint foundCount = 0;
 
-        foreach (var partyMember in CurrentSavegame.PartyMembers.Values)
+        foreach (var partyMember in PartyMembers)
         {
             foundCount += (uint)partyMember.Inventory.Slots.Where(s => s.ItemIndex == itemIndex).Sum(s => s.Amount);
         }
@@ -8688,6 +8688,8 @@ public class Game
 
                 if (string.Compare(keyword, expectedKeyword, true) == 0)
                 {
+                    QuestLog.CheckEvent(conversationPartner, e);
+
                     currentInteractionType = InteractionType.Keyword;
                     conversationEvent = e;
                     layout.ButtonsDisabled = true;

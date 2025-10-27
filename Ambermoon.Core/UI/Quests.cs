@@ -578,9 +578,9 @@ partial class QuestLog
             return (_) => Quests.FirstOrDefault(q => q.Type == mainQuest).SubQuests.FirstOrDefault(q => q.Type == otherQuest).State = QuestState.Completed;
         }
 
-        Action<SubQuest> CompleteOtherQuests(MainQuestType mainQuest, params SubQuestType[] otherQuest)
+        Action<SubQuest> CompleteOtherQuests(MainQuestType mainQuest, params SubQuestType[] otherQuests)
         {
-            var lookup = new HashSet<SubQuestType>(otherQuest);
+            var lookup = new HashSet<SubQuestType>(otherQuests);
             return (_) => Quests.FirstOrDefault(q => q.Type == mainQuest).SubQuests.Where(q => lookup.Contains(q.Type)).ToList().ForEach(q => q.State = QuestState.Completed);
         }
 
@@ -853,7 +853,6 @@ partial class QuestLog
                     {
                         AddAsRequiredTo(mainQuest, SubQuestType.Grandfather_FindHisEquipment)(subQuest);
                         CompleteOtherQuest(mainQuest, SubQuestType.Grandfather_TellGrandfatherAboutCaveIn)(subQuest);
-                        ActivateOtherQuest(MainQuestType.GoldenHorseshoes, SubQuestType.GoldenHorseshoes_FindHorseshoes)(subQuest);
                     },
                     Triggers =
                     [
