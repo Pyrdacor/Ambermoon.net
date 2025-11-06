@@ -16875,13 +16875,34 @@ public class Game
         CursorType = CursorType.Click;
     }
 
+    public bool IsQuestLogEnabled
+    {
+        get
+        {
+            if (QuestLog == null || BattleActive || PopupActive || !InputEnable || allInputDisabled)
+                return false;
+
+            if (!WindowActive)
+                return true;
+
+            return CurrentWindow.Window switch
+            {
+                Window.Merchant or Window.Event or Window.Battle or Window.BattlePositions or
+                Window.Trainer or Window.FoodDealer or Window.Healer or Window.HorseSalesman or
+                Window.RaftSalesman or Window.ShipSalesman or Window.Sage or Window.Blacksmith or
+                Window.Enchanter or Window.Automap => false,
+                _ => true,
+            };
+        }
+    }
+
     public void ToggleQuestLog()
     {
         if (QuestLog != null)
         {
             if (QuestLog.Open)
                 ClosePopup();
-            else if (!WindowActive && !PopupActive && InputEnable && !allInputDisabled)
+            else if (IsQuestLogEnabled)
                 QuestLog.Show();
         }
     }

@@ -357,7 +357,7 @@ namespace Ambermoon.Data.GameDataRepository
         //public Dictionary<uint, Place> Places { get; } = new();
         public DictionaryList<ItemData> Items { get; }
         public DictionaryList<Image> ItemImages { get; }
-        public DictionaryList<TextList> ItemTexts { get; } = new();
+        public DictionaryList<TextList> ItemTexts { get; } = [];
 
         #endregion
 
