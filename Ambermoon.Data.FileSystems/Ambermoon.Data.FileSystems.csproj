@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFrameworks>net8.0</TargetFrameworks>
+	<TargetFrameworks>net9.0</TargetFrameworks>
     <Nullable>disable</Nullable>
 	<Authors>Robert Schneckenhaus</Authors>
 	<Description>Library that provides file system abstraction for Ambermoon.</Description>
