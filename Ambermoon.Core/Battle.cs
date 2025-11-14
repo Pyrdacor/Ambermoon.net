@@ -3015,7 +3015,7 @@ namespace Ambermoon
 					// Base Damage = Caster Level * 3 / 2
 					// Dmg Increase % = (1 + (MaxTargetHP - CurrTargetHP) * 10 / MaxTargetHP) ^ 2
 					// MinDmg = 5
-                    // The max damage at level 50 would be 100 against a target with 10% LP or below.
+                    // The max damage at level 50 would be 150 against a target with 10% LP or below.
                     // But Level and INT bonus is applied as well which can also increase the damage
                     // by 50% or more.
                     //
@@ -4434,8 +4434,8 @@ namespace Ambermoon
         {
             int attackDamage = attacker.BaseAttackDamage + attacker.BonusAttackDamage;
             if (attacker is PartyMember)
-                attackDamage = game.AdjustAttackForNotUsedAmmunition(attacker, attackDamage);
-            attackDamage += (int)target.Attributes[Attribute.Strength].TotalCurrentValue / 25;
+                attackDamage = game.AdjustAttackDamageForNotUsedAmmunition(attacker, attackDamage);
+            attackDamage = game.AddAttributeDamageBonus(attacker, attackDamage);
             int defense = target.BaseDefense + target.BonusDefense + (int)target.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
 
             if (attackDamage > 0)

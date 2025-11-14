@@ -19,10 +19,11 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Ambermoon.Data;
-using Ambermoon.Data.Enumerations;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
+using Ambermoon.Render;
 
 namespace Ambermoon.UI
 {
@@ -112,32 +113,27 @@ namespace Ambermoon.UI
             }
         }
 
-        public static string GetAttributeTooltip(GameLanguage gameLanguage, Attribute attribute, PartyMember partyMember)
+        public static string GetAttributeTooltip(Features features, GameLanguage gameLanguage, Attribute attribute, PartyMember partyMember)
         {
             var formatString = AttributeTooltips[gameLanguage][(int)attribute];
+
+            if (FeatureBasedAttributeTooltips.TryGetValue(attribute, out var tooltips) && features.HasFlag(tooltips.Feature))
+                formatString = tooltips.Languages[gameLanguage];
+
             var attributeValue = partyMember.Attributes[attribute].TotalCurrentValue;
 
-            switch (attribute)
+            return attribute switch
             {
-                case Attribute.Strength:
-                    return string.Format(formatString, attributeValue, attributeValue / 25);
-                case Attribute.Intelligence:
-                    return string.Format(formatString, attributeValue / 25);
-                case Attribute.Dexterity:
-                    return string.Format(formatString, attributeValue, (attributeValue + partyMember.Attributes[Attribute.Luck].TotalCurrentValue) * 100 / 150);
-                case Attribute.Speed:
-                    return string.Format(formatString, 1 + attributeValue / 80);
-                case Attribute.Stamina:
-                    return string.Format(formatString, attributeValue / 25);
-                case Attribute.Charisma:
-                    return string.Format(formatString, attributeValue / 10);
-                case Attribute.Luck:
-                    return string.Format(formatString, attributeValue, (attributeValue + partyMember.Attributes[Attribute.Dexterity].TotalCurrentValue) * 100 / 150);
-                case Attribute.AntiMagic:
-                    return string.Format(formatString, attributeValue);
-                default:
-                    throw new AmbermoonException(ExceptionScope.Application, "Unsupported attribute tooltip");
-            }
+                Attribute.Strength => string.Format(formatString, attributeValue, attributeValue / 25, attributeValue / 50),
+                Attribute.Intelligence => string.Format(formatString, attributeValue / 25),
+                Attribute.Dexterity => string.Format(formatString, attributeValue, (attributeValue + partyMember.Attributes[Attribute.Luck].TotalCurrentValue) * 100 / 150, attributeValue / 25, attributeValue / 50),
+                Attribute.Speed => string.Format(formatString, 1 + attributeValue / 80),
+                Attribute.Stamina => string.Format(formatString, attributeValue / 25, attributeValue / 25),
+                Attribute.Charisma => string.Format(formatString, attributeValue / 10),
+                Attribute.Luck => string.Format(formatString, attributeValue, (attributeValue + partyMember.Attributes[Attribute.Dexterity].TotalCurrentValue) * 100 / 150),
+                Attribute.AntiMagic => string.Format(formatString, attributeValue),
+                _ => throw new AmbermoonException(ExceptionScope.Application, "Unsupported attribute tooltip"),
+            };
         }
 
         public static string GetSkillTooltip(GameLanguage gameLanguage, Skill skill, PartyMember partyMember)
@@ -158,6 +154,34 @@ namespace Ambermoon.UI
 
         public static string GetConditionTooltip(GameLanguage gameLanguage, Condition condition, PartyMember partyMember) => condition == Condition.Aging
             ? string.Format(ConditionTooltips[gameLanguage][condition], partyMember.Attributes[Attribute.Age].MaxValue) : ConditionTooltips[gameLanguage][condition];
+
+        static ImmutableDictionary<Attribute, (Features, ImmutableDictionary<GameLanguage, string>)> CreateFeatureBasedAttributeTooltips()
+        {
+            var root = ImmutableDictionary.CreateBuilder<Attribute, (Features, ImmutableDictionary<GameLanguage, string>)>();
+
+            root[Attribute.Strength] = (Features.AdjustedWeaponDamage, new Dictionary<GameLanguage, string>
+            {
+                [GameLanguage.German] = "Stärke^^Erhöht das Maximalgewicht um 1kg pro Punkt.^Außerdem wird pro 25 Punkte der Nahkampfschaden^um 1 und der Fernkampfschaden alle 50 Punkte^um 1 erhöht.^^Aktuell +{0}kg^        +{1} Nahkampfchaden^        +{2} Fernkampfschaden",
+                [GameLanguage.English] = "Strength^^Increases the max weight by 1kg per point.^Also increases close-ranged damage by 1 every 25 points and long-ranged damage by 1 every 50 points.^^Currently +{0}kg, +{1} close-ranged damage and +{2} long-ranged damage",
+                [GameLanguage.French] = "Force^^Augmente le poids maximum de 1kg par point.^Augmente également les dégâts au corps à corps de 1 tous les 25 points et les dégâts à distance de 1 tous les 50 points.^^Actuellement +{0}kg, +{1} dégâts au corps à corps et +{2} dégâts à distance",
+                [GameLanguage.Polish] = "Siła^^Zwiększa maksymalny udźwig o 1 kg na punkt.^Zwiększa również obrażenia w walce wręcz o 1 co 25 punktów oraz obrażenia dystansowe o 1 co 50 punktów.^^Obecnie +{0} kg, +{1} obrażeń w walce wręcz i +{2} obrażeń dystansowych",
+                [GameLanguage.Czech] = "Síla^^Zvyšuje maximální nosnost o 1 kg za bod.^Také zvyšuje poškození na blízko o 1 každých 25 bodů a poškození na dálku o 1 každých 50 bodů.^^V současné době +{0}kg, +{1} poškození na blízko a +{2} poškození na dálku"
+            }.ToImmutableDictionary());
+
+            // Dexterity
+            root[Attribute.Dexterity] = (Features.AdjustedWeaponDamage, new Dictionary<GameLanguage, string>
+            {
+                [GameLanguage.German] = "Geschicklichkeit^^Chance in Prozent, Schlösser-Fallen^nicht auszulösen.^^Erhöht zusammen mit Glück die^Chance Kämpfe zu vermeiden.^^Erhöht Fernkampfschaden um 1 alle 25 Punkte^und Nahkampfschaden um 1 alle 50 Punkte.^^Aktuell {0}% Fallen-Vermeidung^        {1}% Kampf-Vermeidung^        +{2} Fernkampfschaden^        +{3} Nahkampfschaden",
+                [GameLanguage.English] = "Dexterity^^Chance in percent to not trigger^a trap when messing with locks.^Adds, together with Luck,^to the chance of avoiding fights.^^Increases long-ranged damage by 1 every 25 points and close-ranged damage by 1 every 50 points.^^Currently {0}% trap avoid chance^          {1}% fight avoid chance^          +{2} long-ranged damage^          +{3} close-ranged damage",
+                [GameLanguage.French] = "Dextérité^^Chance en pourcentage de ne pas^déclencher un piège en manipulant^des serrures.^Ajoute, avec la Chance,^aux chances d'éviter les combats.^^Augmente les dégâts à longue portée de 1 tous les 25 points et les dégâts à courte portée de 1 tous les 50 points.^^Actuellement {0}% de chances d'éviter les pièges^            {1}% de chances d'éviter les combats^            +{2} dégâts à longue portée^            +{3} dégâts à courte portée",
+                [GameLanguage.Polish] = "Zręczność^^Szansa w procentach, by nie uruchomić pułapki^podczas majstrowania przy zamkach.^Dodaje się, wraz ze szczęściem,^do szansy na uniknięcie walki.^^Zwiększa obrażenia dystansowe o 1 co 25 punktów oraz obrażenia w zwarciu o 1 co 50 punktów.^^Obecnie {0}% szansy na uniknięcie pułapki^        {1}% szansy na uniknięcie walki^        +{2} obrażeń dystansowych^        +{3} obrażeń w zwarciu",
+                [GameLanguage.Czech] = "Obratnost^^Šance v procentech nespustit^ past při manipulaci se zámky.^Přidává spolu se štěstím^ k šanci vyhnout se boji.^^Zvyšuje poškození na dálku o 1 každých 25 bodů a poškození na blízko o 1 každých 50 bodů.^^V současné době {0}% šance vyhnout se pasti^                {1}% šance vyhnout se boji^                +{2} poškození na dálku^                +{3} poškození na blízko"
+            }.ToImmutableDictionary());
+
+            return root.ToImmutable();
+        }
+
+        static readonly ImmutableDictionary<Attribute, (Features Feature, ImmutableDictionary<GameLanguage, string> Languages)> FeatureBasedAttributeTooltips = CreateFeatureBasedAttributeTooltips();
 
         static readonly ImmutableDictionary<GameLanguage, string[]> AttributeTooltips = new Dictionary<GameLanguage, string[]>
         {

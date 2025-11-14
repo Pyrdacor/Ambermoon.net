@@ -40,7 +40,7 @@ namespace Ambermoon
                     Version = reader.ReadString(),
                     Language = reader.ReadString(),
                     Info = reader.ReadString(),
-                    Features = (Features)ReadWord(reader),
+                    Features = (Features)ReadDword(reader),
                     MergeWithPrevious = reader.ReadByte() != 0,
                     Size = ReadDword(reader),
                     SourceStream = reader.BaseStream

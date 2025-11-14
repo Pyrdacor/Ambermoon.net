@@ -5266,7 +5266,7 @@ public class Game
                         (attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}");
                 }
                 if (Configuration.ShowPlayerStatsTooltips)
-                    AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), GetAttributeTooltip(GameLanguage, attribute, partyMember));
+                    AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), GetAttributeTooltip(Features, GameLanguage, attribute, partyMember));
             }
             #endregion
             #region Skills
@@ -5417,7 +5417,35 @@ public class Game
             tooltip.Text = GetSecondaryStatTooltip(Features, GameLanguage, secondaryStat, partyMember);
     }
 
-    public int AdjustAttackForNotUsedAmmunition(Character character, int attack)
+    public int AddAttributeDamageBonus(Character character, int attackDamage)
+    {
+        if (!Features.HasFlag(Features.AdjustedWeaponDamage))
+        {
+            return attackDamage + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
+        }
+        else
+        {
+            var rightHandItemSlot = character.Equipment.Slots[EquipmentSlot.RightHand];
+
+            if (rightHandItemSlot != null && rightHandItemSlot.ItemIndex != 0 && rightHandItemSlot.Amount != 0)
+            {
+                var rightHandItem = ItemManager.GetItem(rightHandItemSlot.ItemIndex);
+
+                if (rightHandItem.Type == ItemType.LongRangeWeapon)
+                {
+                    return attackDamage +
+                        (int)character.Attributes[Attribute.Dexterity].TotalCurrentValue / 25 +
+                        (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 50;
+                }
+            }
+
+            return attackDamage +
+                (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25 +
+                (int)character.Attributes[Attribute.Dexterity].TotalCurrentValue / 50;
+        }
+    }
+
+    public int AdjustAttackDamageForNotUsedAmmunition(Character character, int attackDamage)
     {
         var leftHandItemSlot = character.Equipment.Slots[EquipmentSlot.LeftHand];
 
@@ -5430,16 +5458,16 @@ public class Game
                 var rightHandItemSlot = character.Equipment.Slots[EquipmentSlot.RightHand];
 
                 if (rightHandItemSlot == null || rightHandItemSlot.ItemIndex == 0 || rightHandItemSlot.Amount == 0)
-                    return attack - leftHandItem.Damage;
+                    return attackDamage - leftHandItem.Damage;
 
                 var rightHandItem = ItemManager.GetItem(rightHandItemSlot.ItemIndex);
 
                 if (rightHandItem.UsedAmmunitionType != leftHandItem.AmmunitionType)
-                    return attack - leftHandItem.Damage;
+                    return attackDamage - leftHandItem.Damage;
             }
         }
 
-        return attack;
+        return attackDamage;
     }
 
     void DisplayCharacterInfo(Character character, bool conversation)
@@ -5517,7 +5545,7 @@ public class Game
             SetupSecondaryStatTooltip(new Rect(214, 113, 42, 7), SecondaryStat.Gold);
             SetupSecondaryStatTooltip(new Rect(262, 113, 36, 7), SecondaryStat.Food);
             layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), UIPaletteIndex);
-            int attack = character.BaseAttackDamage + AdjustAttackForNotUsedAmmunition(character, character.BonusAttackDamage) + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
+            int attack = character.BaseAttackDamage + AddAttributeDamageBonus(character, AdjustAttackDamageForNotUsedAmmunition(character, character.BonusAttackDamage));
             if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
             {
                 if (attack > 0)
@@ -5630,18 +5658,18 @@ public class Game
             string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food));
         UpdateSecondaryStatTooltip(SecondaryStat.Gold);
         UpdateSecondaryStatTooltip(SecondaryStat.Food);
-        int attack = character.BaseAttackDamage + AdjustAttackForNotUsedAmmunition(character, character.BonusAttackDamage) + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
+        int attackDamage = character.BaseAttackDamage + AddAttributeDamageBonus(character, AdjustAttackDamageForNotUsedAmmunition(character, character.BonusAttackDamage));
         if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
         {
-            if (attack > 0)
-                attack = (attack * (100 + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
+            if (attackDamage > 0)
+                attackDamage = (attackDamage * (100 + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
             UpdateText(CharacterInfo.Attack, () =>
-                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack)));
+                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attackDamage < 0 ? '-' : '+'), Math.Abs(attackDamage)));
         }
         else
         {
             UpdateText(CharacterInfo.Attack, () =>
-                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack)));
+                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attackDamage < 0 ? '-' : '+'), Math.Abs(attackDamage)));
         }
         UpdateSecondaryStatTooltip(SecondaryStat.Damage);
         int defense = character.BaseDefense + character.BonusDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
