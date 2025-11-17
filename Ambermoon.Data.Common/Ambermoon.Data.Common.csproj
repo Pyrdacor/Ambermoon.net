@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFrameworks>net9.0</TargetFrameworks>
+	<TargetFrameworks>net8.0</TargetFrameworks>
     <RootNamespace>Ambermoon.Data</RootNamespace>
     <Authors>Robert Schneckenhaus</Authors>
     <Description>Library that provides basic interfaces for Ambermoon data. It is used by the Ambermoon.Data.Legacy package but can also be used by other abstractions to provide the data from different sources and data types.</Description>

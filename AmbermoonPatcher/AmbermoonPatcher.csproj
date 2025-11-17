@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
 	<RuntimeIdentifiers>win-x86;win-x64;linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PublishTrimmed>true</PublishTrimmed>
-	<Version>1.11.5</Version>
+	<Version>1.11.6</Version>
 	<Configurations>Debug;Release;DebugES;ReleaseES</Configurations>
 	<ApplicationManifest>app.manifest</ApplicationManifest>
 	<!--<PublishAot>true</PublishAot>-->

@@ -2,6 +2,7 @@
 
 ## 1.11.0 - Eleventh patch (August 2025 - November 2025)
 
+- Version [1.11.6](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.11.6): Fix non-working graphic effects, added STR/DEX/STA bonuses for Advanced
 - Version [1.11.5](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.11.5): Polish text adjustments
 - Version [1.11.4](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.11.4): Polish crash fix
 - Version [1.11.3](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.11.3): Added Advanced 1.33 version, APR calculation now differs in Advanced
