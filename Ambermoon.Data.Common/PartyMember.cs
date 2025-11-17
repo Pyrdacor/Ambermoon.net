@@ -222,6 +222,10 @@ namespace Ambermoon.Data
             uint spAdd = magicClass ? SpellPointsPerLevel * (uint)random(50, 100) / 100 + intelligence / 25 : 0;
             uint slpAdd = magicClass ? SpellLearningPointsPerLevel * (uint)random(50, 100) / 100 + intelligence / 25 : 0;
             uint tpAdd = TrainingPointsPerLevel * (uint)random(50, 100) / 100;
+
+            if (features?.HasFlag(Features.StaminaHPOnLevelUp) == true)
+                lpAdd += Attributes[Attribute.Stamina].TotalCurrentValue / 25;
+
             // In Ambermoon Advanced the level can decrease through exp exchanging.
             // SLP and TP won't be removed (as you might have spent parts of it).
             // But to avoid exploits, the max level a character ever reached is tracked.

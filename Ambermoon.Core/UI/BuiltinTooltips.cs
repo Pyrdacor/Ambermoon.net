@@ -161,21 +161,31 @@ namespace Ambermoon.UI
 
             root[Attribute.Strength] = (Features.AdjustedWeaponDamage, new Dictionary<GameLanguage, string>
             {
-                [GameLanguage.German] = "Stärke^^Erhöht das Maximalgewicht um 1kg pro Punkt.^Außerdem wird pro 25 Punkte der Nahkampfschaden^um 1 und der Fernkampfschaden alle 50 Punkte^um 1 erhöht.^^Aktuell +{0}kg^        +{1} Nahkampfchaden^        +{2} Fernkampfschaden",
-                [GameLanguage.English] = "Strength^^Increases the max weight by 1kg per point.^Also increases close-ranged damage by 1 every 25 points and long-ranged damage by 1 every 50 points.^^Currently +{0}kg, +{1} close-ranged damage and +{2} long-ranged damage",
-                [GameLanguage.French] = "Force^^Augmente le poids maximum de 1kg par point.^Augmente également les dégâts au corps à corps de 1 tous les 25 points et les dégâts à distance de 1 tous les 50 points.^^Actuellement +{0}kg, +{1} dégâts au corps à corps et +{2} dégâts à distance",
-                [GameLanguage.Polish] = "Siła^^Zwiększa maksymalny udźwig o 1 kg na punkt.^Zwiększa również obrażenia w walce wręcz o 1 co 25 punktów oraz obrażenia dystansowe o 1 co 50 punktów.^^Obecnie +{0} kg, +{1} obrażeń w walce wręcz i +{2} obrażeń dystansowych",
-                [GameLanguage.Czech] = "Síla^^Zvyšuje maximální nosnost o 1 kg za bod.^Také zvyšuje poškození na blízko o 1 každých 25 bodů a poškození na dálku o 1 každých 50 bodů.^^V současné době +{0}kg, +{1} poškození na blízko a +{2} poškození na dálku"
+                [GameLanguage.German] = "Stärke^^Erhöht das Maximalgewicht um 1kg pro Punkt.^^Außerdem wird alle 25 Punkte der Nahkampfschaden^um 1 und der Fernkampfschaden alle 50 Punkte^um 1 erhöht.^^Aktuell +{0}kg^        +{1} Nahkampfchaden^        +{2} Fernkampfschaden",
+                [GameLanguage.English] = "Strength^^Increases the max weight by 1kg per point.^^Also increases close-ranged damage by 1 every 25^points and long-ranged damage by 1 every 50 points.^^Currently +{0}kg^          +{1} close-ranged damage^          +{2} long-ranged damage",
+                [GameLanguage.French] = "Force^^Augmente le poids maximum de 1kg par point.^^Augmente également les dégâts au corps à^corps de 1 tous les 25 points et les^dégâts à distance de 1 tous les 50 points.^^Actuellement +{0}kg^             +{1} dégâts au corps à corps^             +{2} dégâts à distance",
+                [GameLanguage.Polish] = "Siła^^Zwiększa maksymalny udźwig o 1 kg na punkt.^^Zwiększa również obrażenia w walce wręcz o 1 co 25^punktów oraz obrażenia dystansowe o 1 co 50 punktów.^^Obecnie +{0} kg^        +{1} obrażeń w walce wręcz^        +{2} obrażeń dystansowych",
+                [GameLanguage.Czech] = "Síla^^Zvyšuje maximální nosnost o 1 kg za bod.^^Také zvyšuje poškození na blízko o 1 každých 25^bodů a poškození na dálku o 1 každých 50 bodů.^^V současné době +{0}kg^                +{1} poškození na blízko^                +{2} poškození na dálku"
             }.ToImmutableDictionary());
 
             // Dexterity
             root[Attribute.Dexterity] = (Features.AdjustedWeaponDamage, new Dictionary<GameLanguage, string>
             {
                 [GameLanguage.German] = "Geschicklichkeit^^Chance in Prozent, Schlösser-Fallen^nicht auszulösen.^^Erhöht zusammen mit Glück die^Chance Kämpfe zu vermeiden.^^Erhöht Fernkampfschaden um 1 alle 25 Punkte^und Nahkampfschaden um 1 alle 50 Punkte.^^Aktuell {0}% Fallen-Vermeidung^        {1}% Kampf-Vermeidung^        +{2} Fernkampfschaden^        +{3} Nahkampfschaden",
-                [GameLanguage.English] = "Dexterity^^Chance in percent to not trigger^a trap when messing with locks.^Adds, together with Luck,^to the chance of avoiding fights.^^Increases long-ranged damage by 1 every 25 points and close-ranged damage by 1 every 50 points.^^Currently {0}% trap avoid chance^          {1}% fight avoid chance^          +{2} long-ranged damage^          +{3} close-ranged damage",
-                [GameLanguage.French] = "Dextérité^^Chance en pourcentage de ne pas^déclencher un piège en manipulant^des serrures.^Ajoute, avec la Chance,^aux chances d'éviter les combats.^^Augmente les dégâts à longue portée de 1 tous les 25 points et les dégâts à courte portée de 1 tous les 50 points.^^Actuellement {0}% de chances d'éviter les pièges^            {1}% de chances d'éviter les combats^            +{2} dégâts à longue portée^            +{3} dégâts à courte portée",
-                [GameLanguage.Polish] = "Zręczność^^Szansa w procentach, by nie uruchomić pułapki^podczas majstrowania przy zamkach.^Dodaje się, wraz ze szczęściem,^do szansy na uniknięcie walki.^^Zwiększa obrażenia dystansowe o 1 co 25 punktów oraz obrażenia w zwarciu o 1 co 50 punktów.^^Obecnie {0}% szansy na uniknięcie pułapki^        {1}% szansy na uniknięcie walki^        +{2} obrażeń dystansowych^        +{3} obrażeń w zwarciu",
-                [GameLanguage.Czech] = "Obratnost^^Šance v procentech nespustit^ past při manipulaci se zámky.^Přidává spolu se štěstím^ k šanci vyhnout se boji.^^Zvyšuje poškození na dálku o 1 každých 25 bodů a poškození na blízko o 1 každých 50 bodů.^^V současné době {0}% šance vyhnout se pasti^                {1}% šance vyhnout se boji^                +{2} poškození na dálku^                +{3} poškození na blízko"
+                [GameLanguage.English] = "Dexterity^^Chance in percent to not trigger^a trap when messing with locks.^^Adds, together with Luck,^to the chance of avoiding fights.^^Increases long-ranged damage by 1 every 25 points^and close-ranged damage by 1 every 50 points.^^Currently {0}% trap avoid chance^          {1}% fight avoid chance^          +{2} long-ranged damage^          +{3} close-ranged damage",
+                [GameLanguage.French] = "Dextérité^^Chance en pourcentage de ne pas déclencher^un piège en manipulant des serrures.^^Ajoute, avec la Chance, aux chances d'éviter^les combats.^^Augmente les dégâts à longue portée de 1 tous les 25^points et à courte portée de 1 tous les 50 points.^^Actuellement {0}% de chances d'éviter les pièges^             {1}% de chances d'éviter les combats^             +{2} dégâts à longue portée^             +{3} dégâts à courte portée",
+                [GameLanguage.Polish] = "Zręczność^^Szansa w procentach, by nie uruchomić pułapki^podczas majstrowania przy zamkach.^^Dodaje się, wraz ze szczęściem,^do szansy na uniknięcie walki.^^Zwiększa obrażenia dystansowe o 1 co 25 punktów^oraz obrażenia w zwarciu o 1 co 50 punktów.^^Obecnie {0}% szansy na uniknięcie pułapki^        {1}% szansy na uniknięcie walki^        +{2} obrażeń dystansowych^        +{3} obrażeń w zwarciu",
+                [GameLanguage.Czech] = "Obratnost^^Šance v procentech nespustit^past při manipulaci se zámky.^^Přidává spolu se štěstím^k šanci vyhnout se boji.^^Zvyšuje poškození na dálku o 1 každých 25 bodů^a poškození na blízko o 1 každých 50 bodů.^^V současné době {0}% šance vyhnout se pasti^                {1}% šance vyhnout se boji^                +{2} poškození na dálku^                +{3} poškození na blízko"
+            }.ToImmutableDictionary());
+
+            // Stamina
+            root[Attribute.Stamina] = (Features.StaminaHPOnLevelUp, new Dictionary<GameLanguage, string>
+            {
+                [GameLanguage.German] = "Konstitution^^Erhöht die Abwehr um 1 pro 25 Punkte.^^Fügt pro 25 Punkte zusätzliche 1 LP^beim Level-Aufstieg hinzu.^^Aktuell +{0} Abwehr, +{1} LP",
+                [GameLanguage.English] = "Stamina^^Increases defense by 1 every 25 points.^^Adds 1 additional LP on^level up for every 25 points.^^Currently +{0} defense, +{1} LP",
+                [GameLanguage.French] = "Énergie^^Augmente la défense de 1 tous les 25 points.^^Ajoute 1 PV supplémentaire au niveau^supérieur pour chaque tranche de 25 points.^^Actuellement +{0} défense, +{1} PV",
+                [GameLanguage.Polish] = "Wytrzymałość^^Zwiększa obronę o 1 co 25 punktów.^^Dodaje 1 dodatkowy PZ na poziom,^za każde 25 punktów.^^Obecnie +{0} do obrony, +{1} PZ",
+                [GameLanguage.Czech] = "Stamina^^Zvyšuje obranu o 1 každých 25 bodů.^^Přidává 1 další BZ na úrovni^za každých 25 bodů.^^V současné době +{0} obrana, +{1} BZ"
             }.ToImmutableDictionary());
 
             return root.ToImmutable();
@@ -188,7 +198,7 @@ namespace Ambermoon.UI
             { GameLanguage.German, new string[]
             {
                 // Strength
-                "Stärke^^Erhöht das Maximalgewicht um 1kg pro Punkt.^Außerdem wird pro 25 Punkte der Schaden um 1 erhöht.^^Aktuell +{0}kg und +{1} Schaden",
+                "Stärke^^Erhöht das Maximalgewicht um 1kg pro Punkt.^^Außerdem wird pro 25 Punkte der Schaden um 1 erhöht.^^Aktuell +{0}kg und +{1} Schaden",
                 // Intelligence
                 "Intelligenz^^Fügt pro 25 Punkte zusätzliche 1 SP und^SLP beim Level-Aufstieg hinzu.^^Aktuell +{0} SP und SLP",
                 // Dexterity
@@ -207,13 +217,13 @@ namespace Ambermoon.UI
             { GameLanguage.English, new string[]
             {
                 // Strength
-                "Strength^^Increases the max weight by 1kg per point.^Also increases damage by 1 every 25 points.^^Currently +{0}kg and +{1} damage",
+                "Strength^^Increases the max weight by 1kg per point.^^Also increases damage by 1 every 25 points.^^Currently +{0}kg and +{1} damage",
                 // Intelligence
                 "Intelligence^^Adds 1 additional SP and SLP on^level up for every 25 points.^^Currently +{0} SP and SLP",
                 // Dexterity
-                "Dexterity^^Chance in percent to not trigger^a trap when messing with locks.^Adds, together with Luck,^to the chance of avoiding fights.^^Currently {0}% trap avoid chance^          {1}% fight avoid chance",
+                "Dexterity^^Chance in percent to not trigger^a trap when messing with locks.^^Adds, together with Luck,^to the chance of avoiding fights.^^Currently {0}% trap avoid chance^          {1}% fight avoid chance",
                 // Speed
-                "Speed^^Higher speed values let you act earlier in battle.^Every 80 points you can move 1 additional field^per round.^^Currently you can move {0} field(s).",
+                "Speed^^Higher speed values let you act earlier in battle.^^Every 80 points you can move 1 additional field^per round.^^Currently you can move {0} field(s).",
                 // Stamina
                 "Stamina^^Increases defense by 1 every 25 points.^^Currently +{0} defense",
                 // Charisma
@@ -226,13 +236,13 @@ namespace Ambermoon.UI
             { GameLanguage.French, new string[]
             {
                 // Strength
-                "Force^^Augmente le poids maximum de 1kg par point.^Augmente également les dégâts de^1 tous les 25 points.^^Actuellement +{0}kg et +{1} dégâts",
+                "Force^^Augmente le poids maximum de 1kg par point.^^Augmente également les dégâts de^1 tous les 25 points.^^Actuellement +{0}kg et +{1} dégâts",
                 // Intelligence
                 "Intelligence^^Ajoute 1 PS et 1 PAS supplémentaire^au niveau supérieur pour chaque^tranche de 25 points.^^Actuellement +{0} PS et +{0} PAS",
                 // Dexterity
-                "Dextérité^^Chance en pourcentage de ne pas^déclencher un piège en manipulant^des serrures.^Ajoute, avec la Chance,^aux chances d'éviter les combats.^^Actuellement:^  {0}% de chances d'éviter les pièges^  {1}% de chances d'éviter les combats",
+                "Dextérité^^Chance en pourcentage de ne pas^déclencher un piège en manipulant^des serrures.^^Ajoute, avec la Chance,^aux chances d'éviter les combats.^^Actuellement:^  {0}% de chances d'éviter les pièges^  {1}% de chances d'éviter les combats",
                 // Speed
-                "Vitesse^^Des valeurs de vitesse plus élevées vous^permettent d'agir plus tôt dans la bataille.^Tous les 80 points, vous pouvez vous déplacer^d'un champ supplémentaire par round.^^Actuellement, vous pouvez vous^déplacer de {0} champ(s).",
+                "Vitesse^^Des valeurs de vitesse plus élevées vous^permettent d'agir plus tôt dans la bataille.^^Tous les 80 points, vous pouvez vous déplacer^d'un champ supplémentaire par round.^^Actuellement, vous pouvez vous^déplacer de {0} champ(s).",
                 // Stamina
                 "Énergie^^Augmente la défense de 1 tous les 25 points.^^Actuellement +{0} défense",
                 // Charisma
@@ -245,13 +255,13 @@ namespace Ambermoon.UI
             { GameLanguage.Polish, new string[]
             {
                 // Strength
-                "Siła^^Zwiększa maksymalny udźwig o 1 kg na punkt.^ Zwiększa również obrażenia o 1 co 25 punktów.^^ Obecnie +{0} kg i +{1} obrażeń.",
+                "Siła^^Zwiększa maksymalny udźwig o 1 kg na punkt.^^Zwiększa również obrażenia o 1 co 25 punktów.^^Obecnie +{0} kg i +{1} obrażeń.",
                 // Intelligence
                 "Inteligencja^^Dodaje 1 dodatkowy PM i PNM^na poziom, za każde 25 punktów.^^Obecnie +{0} PM i PNM",
                 // Dexterity
-                "Zręczność^^Szansa w procentach, by nie uruchomić pułapki^podczas majstrowania przy zamkach.^Dodaje się, wraz ze szczęściem,^do szansy na uniknięcie walki.^^Obecnie {0}% szansy na uniknięcie pułapki^        {1}% szansy na uniknięcie walki.",
+                "Zręczność^^Szansa w procentach, by nie uruchomić pułapki^podczas majstrowania przy zamkach.^^Dodaje się, wraz ze szczęściem,^do szansy na uniknięcie walki.^^Obecnie {0}% szansy na uniknięcie pułapki^        {1}% szansy na uniknięcie walki.",
                 // Speed
-                "Szybkość^^Wyższa wartość szybkości pozwala działać wcześniej w walce.^Za każde 80 punktów możesz poruszyć się o 1 dodatkowe pole^na rundę.^^ Obecnie możesz poruszyć się o {0} pól.",
+                "Szybkość^^Wyższa wartość szybkości pozwala działać wcześniej w walce.^^Za każde 80 punktów możesz poruszyć się o 1 dodatkowe pole^na rundę.^^Obecnie możesz poruszyć się o {0} pól.",
                 // Stamina
                 "Wytrzymałość^^Zwiększa obronę o 1 co 25 punktów.^^Obecnie +{0} do obrony",
                 // Charisma
@@ -264,13 +274,13 @@ namespace Ambermoon.UI
             { GameLanguage.Czech, new string[]
             {
 	            // Strength
-	            "Síla^^Zvyšuje maximální nosnost o 1 kg za bod.^Také zvyšuje poškození o 1 každých 25 bodů.^^V současné době +{0}kg a +{1} poškození",
+	            "Síla^^Zvyšuje maximální nosnost o 1 kg za bod.^^Také zvyšuje poškození o 1 každých 25 bodů.^^V současné době +{0}kg a +{1} poškození",
 				// Intelligence
 	            "Inteligence^^Přidává 1 další BM a BUK na^úrovni za každých 25 bodů.^^Současně +{0} BM a BUK",
 				// Dexterity
-	            "Obratnost^^Šance v procentech nespustit^ past při manipulaci se zámky.^Přidává spolu se štěstím^ k šanci vyhnout se boji.^^V současné době {0}% šance vyhnout se pasti^ {1}% šance vyhnout se boji",
+	            "Obratnost^^Šance v procentech nespustit^past při manipulaci se zámky.^^Přidává spolu se štěstím^k šanci vyhnout se boji.^^V současné době {0}% šance vyhnout se pasti^                {1}% šance vyhnout se boji",
 				// Speed
-	            "Pohyb^^Vyšší hodnoty vám umožňují jednat v bitvě dříve.^Každých 80 bodů vám umožní posunout se o 1 pole^za kolo.^^V současné době se můžete posunout o {0} políček",
+	            "Pohyb^^Vyšší hodnoty vám umožňují jednat v bitvě dříve.^^Každých 80 bodů vám umožní posunout se o 1 pole^za kolo.^^V současné době se můžete posunout o {0} políček",
 				// Stamina
 	            "Stamina^^Zvyšuje obranu o 1 každých 25 bodů.^^V současné době +{0} obrana",
 				// Charisma
@@ -335,7 +345,7 @@ namespace Ambermoon.UI
                 // Attack
                 "Attaquer^^Chance de toucher un ennemi.^^Actuellement {0}% de chance de toucher",
                 // Parry
-                "Parer^^Chance de bloquer une attaque ennemie.^L'action de combat 'Parer' est nécessaire pour cela.^^ Actuellement {0}% de chances de blocage",
+                "Parer^^Chance de bloquer une attaque ennemie.^L'action de combat 'Parer' est nécessaire pour cela.^^Actuellement {0}% de chances de blocage",
                 // Swim
                 "Nager^^Réduction des dégâts en nageant.^^Actuellement {0}% de réduction des dégâts",
                 // Crit
@@ -356,7 +366,7 @@ namespace Ambermoon.UI
             { GameLanguage.Polish, new string[]
             {
                 // Attack
-                "Atak^^Szansa na trafienie przeciwnika.^^ Obecnie {0}% szansy na trafienie",
+                "Atak^^Szansa na trafienie przeciwnika.^^Obecnie {0}% szansy na trafienie",
                 // Parry
                 "Parowanie^^Szansa na zablokowanie ataku przeciwnika.^Konieczne jest wykonanie w trakcie walki akcji 'Obrona'.^^Obecnie {0}% szansy na zablokowanie.",
                 // Swim
@@ -531,7 +541,7 @@ namespace Ambermoon.UI
                 // Poisoned
                 { Condition.Poisoned, "Postać otrzymuje obrażenia^co rundę lub co godzinę." },
                 // Petrified
-                { Condition.Petrified, "Ekwipunek jest niedostępny.^Postać nie może wykonać żadnej^ akcji i nie starzeje się." },
+                { Condition.Petrified, "Ekwipunek jest niedostępny.^Postać nie może wykonać żadnej^akcji i nie starzeje się." },
                 // Diseased
                 { Condition.Diseased, "Postać traci codziennie punkt^losowo wybranej cechy." },
                 // Aging
@@ -692,7 +702,7 @@ namespace Ambermoon.UI
                 // Age
                 "Wiek postaci^^Umiera w maksymalnym wieku {0} lat.",
                 // LP
-                "Punkty życia^^Gdy osiągną 0^, postać umiera.",
+                "Punkty życia^^Gdy osiągną 0, postać umiera.",
                 // SP
                 "Punkty magii^^Służą do rzucania zaklęć.",
                 // SLP

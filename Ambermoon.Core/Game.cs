@@ -6462,6 +6462,10 @@ public class Game
                             {
                                 uint lpAdd = partyMember.HitPointsPerLevel * (uint)RandomInt(50, 100) / 100;
                                 uint tpAdd = partyMember.TrainingPointsPerLevel * (uint)RandomInt(50, 100) / 100;
+
+                                if (Features.HasFlag(Features.StaminaHPOnLevelUp))
+                                    lpAdd += partyMember.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
+
                                 partyMember.HitPoints.MaxValue += lpAdd;
                                 partyMember.HitPoints.CurrentValue += lpAdd;
                                 partyMember.TrainingPoints = (ushort)Math.Min(ushort.MaxValue, partyMember.TrainingPoints + tpAdd);
