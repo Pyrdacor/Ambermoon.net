@@ -31,7 +31,22 @@ namespace Ambermoon
 {
     internal class Tutorial
     {
-		static readonly ImmutableDictionary<GameLanguage, string> introductionTooltips = new Dictionary<GameLanguage, string>
+        const int MobileButtonAreaX = 202;
+        const int MobileButtonAreaY = 37 + 92;
+        const int MobileButtonAreaWidth = 108;
+        const int MobileButtonAreaHeight = 71;
+        const double MobileButtonAreaFactorX = MobileButtonAreaWidth / 1526.0;
+        const double MobileButtonAreaFactorY = MobileButtonAreaHeight / 994.0;
+        readonly int mobileButtonAreaIconWidth = Util.Round(MobileButtonAreaFactorX * 270);
+        readonly int mobileButtonAreaIconHeight = Util.Round(MobileButtonAreaFactorY * 276);
+        readonly int mobileButtonAreaArrowIconX = MobileButtonAreaX + Util.Round(MobileButtonAreaFactorX * 1116.0);
+        readonly int mobileButtonAreaArrowIconY = MobileButtonAreaY + Util.Round(MobileButtonAreaFactorY * 528.0);
+        readonly int mobileButtonAreaEyeIconX = MobileButtonAreaX + Util.Round(MobileButtonAreaFactorX * 136.0);
+        readonly int mobileButtonAreaEyeIconY = MobileButtonAreaY + Util.Round(MobileButtonAreaFactorY * 186.0);
+        Rect MobileButtonAreaArrowIconArea => new(mobileButtonAreaArrowIconX, mobileButtonAreaArrowIconY, mobileButtonAreaIconWidth, mobileButtonAreaIconHeight);
+        Rect MobileButtonAreaEyeIconArea => new(mobileButtonAreaEyeIconX, mobileButtonAreaEyeIconY, mobileButtonAreaIconWidth, mobileButtonAreaIconHeight);
+
+        static readonly ImmutableDictionary<GameLanguage, string> introductionTooltips = new Dictionary<GameLanguage, string>
 		{
 			{ GameLanguage.German, "Tutorial" },
 			{ GameLanguage.English, "Tutorial" },
@@ -168,28 +183,29 @@ namespace Ambermoon
 			{
                 // Tip 1
                 "Die Schaltflächen am unteren rechten Bildschirmrand enthalten sehr viele Funktionen " +
-				"des Spiels. Wenn du dich auf dem Hauptbildschirm befindest, kannst du eine zweite " +
-				"Belegung der Schaltflächen nutzen indem du deinen Finger länger auf der mittleren " +
-				"Schaltfläche gedrückt hälst.",
+				"des Spiels. Wenn du dich auf dem Hauptbildschirm befindest, kannst du weitere " +
+				"Schaltflächen einblenden, indem du die Schaltfläche in der unteren rechten Ecke " +
+				"antippst. Es gibt 3 Schaltflächen-Seiten, die du so durchschalten kannst.",
                 // Tip 2
-                "Wenn du eine Aktion wie das Auge wählst, siehst du über deinem Charakter " +
-				"ein Symbol. Wenn du dann auf der Karte ein Objekt antipst " +
-				"wird der Spieler mit diesem Objekt interagieren. Diese Aktionen haben aber " +
-                "eine begrenzte Reichweite!",
+                "Mit dem Steuerkreuz kannst du dich bewegen. Ein kurzes Antippen der Pfeile bewegt " +
+                "den Charakter einen Schritt in die gewünschte Richtung. Wenn du den Finger auf der " +
+                "Mitte des Steuerkreuzes gedrückt hälst und ihn dann bewegst, kannst du kontinuierlich " +
+                "in jede Richtung laufen.",
                 // Tip 3
-                "Im oberen Bereich siehst du die Spielerportraits. Du kannst die Portraits antippen um " +
-				"den aktiven Spieler auszuwählen. Wenn du den Finger gedrückt hälst gelangst du ins Inventar.",
+                "Wenn du eine Aktion wie das Auge wählst, siehst du über deinem Charakter " +
+				"ein Symbol. Wenn du dann auf der Karte ein Objekt antippst, wird der aktive " +
+				"Charakter mit diesem Objekt interagieren. Diese Aktionen haben aber eine " +
+                "begrenzte Reichweite!",
                 // Tip 4
                 "Du kannst auf der Karte deinen Finger gedrückt halten. Dies ermöglicht eine direkte " +
-				"Interaktion mit Objekten. Außerdem kannst du so auch laufen, wenn du dann den Finger bewegst. " +
-				"Und zum Schluss gibt es noch die Bewegungstasten.",
+                "Interaktion mit Objekten. Auch das hat natürlich eine begrenzte Reichweite, also solltest " +
+                "du nah am Zielobjekt stehen. In 3D-Bereichen ist dies ebenfalls mit Objekten vor dir möglich.",
                 // Tip 5
-                "Wenn du diese kurz antippst, bewegst du dich ein kleines Stück. Wenn du deinen Finger " +
-				"gedrückt hälst, läufst du kontinuierlich. Du kannst dabei auch die Richtung ändern, " +
-                "indem du deinen Finger auf die anderen Tasten bewegst.",
+                "Im oberen Bereich siehst du die Spielerportraits. Du kannst die Portraits antippen um " +
+				"den aktiven Spieler auszuwählen. Wenn du den Finger gedrückt hälst gelangst du ins Inventar.",
                 // Tip 6
                 "Wenn du diese Einführung nochmals sehen möchtest, kannst du ein neues Spiel starten und " +
-                "den Schalter für das Tutorial aktivieren.",
+                "dort den Schalter für das Tutorial aktivieren.",
                 // End
                 "Ich bin nun still und wünsche dir viel Spaß beim Spielen von Ambermoon!"
 			} },
@@ -410,33 +426,73 @@ namespace Ambermoon
                 tips.First()?.Invoke(renderView, () => ShowTipChain(renderView, tips.Skip(1)));
         }
 
+        /*
+         * // Tip 1
+                "Die Schaltflächen am unteren rechten Bildschirmrand enthalten sehr viele Funktionen " +
+				"des Spiels. Wenn du dich auf dem Hauptbildschirm befindest, kannst du weitere " +
+				"Schaltflächen einblenden, indem du die Schaltfläche in der unteren rechten Ecke " +
+				"antippst. Es gibt 3 Schaltflächen-Seiten, die du so durchschalten kannst.",
+                // Tip 2
+                "Mit dem Steuerkreuz kannst du dich bewegen. Ein kurzes Antippen der Pfeile bewegt " +
+                "den Charakter einen Schritt in die gewünschte Richtung. Wenn du den Finger auf der " +
+                "Mitte des Steuerkreuzes gedrückt hälst und ihn dann bewegst, kannst du kontinuierlich " +
+                "in jede Richtung laufen.",
+                // Tip 3
+                "Wenn du eine Aktion wie das Auge wählst, siehst du über deinem Charakter " +
+				"ein Symbol. Wenn du dann auf der Karte ein Objekt antippst, wird der aktive " +
+				"Charakter mit diesem Objekt interagieren. Diese Aktionen haben aber eine " +
+                "begrenzte Reichweite!",
+                // Tip 4
+                "Du kannst auf der Karte deinen Finger gedrückt halten. Dies ermöglicht eine direkte " +
+                "Interaktion mit Objekten. Auch das hat natürlich eine begrenzte Reichweite, also solltest " +
+                "du nah am Zielobjekt stehen. In 3D-Bereichen ist dies ebenfalls mit Objekten vor dir möglich.",
+                // Tip 5
+                "Im oberen Bereich siehst du die Spielerportraits. Du kannst die Portraits antippen um " +
+				"den aktiven Spieler auszuwählen. Wenn du den Finger gedrückt hälst gelangst du ins Inventar.",
+         */
+
+        /*float relX = 202.0f / Global.VirtualScreenWidth;// (float)Global.ButtonGridX / Global.VirtualScreenWidth;
+        float relY = (37.0f + 92.0f) / Global.VirtualScreenHeight;// (float)Global.ButtonGridY / Global.VirtualScreenHeight;
+        float relWidth = 108.5f / Global.VirtualScreenWidth;//3.0f * Ambermoon.UI.Button.Width / Global.VirtualScreenWidth;
+        float relHeight = 71.5f / Global.VirtualScreenHeight;// 3.0f * Ambermoon.UI.Button.Height / Global.VirtualScreenHeight;*/
+
         void ShowTip1(IGameRenderView renderView, Action next)
         {
             if (game.Configuration.IsMobile)
             {
-                ShowMarker(renderView, new Rect(Global.ButtonGridX + Button.Width - 1, Global.ButtonGridY + Button.Height - 1,
-                    Button.Width + 2, Button.Height + 2));
-                DrawTouchFinger(Global.ButtonGridX + Button.Width, Global.ButtonGridY + Button.Height * 2, true);
+                ShowMarker(renderView, new Rect(MobileButtonAreaX - 1, MobileButtonAreaY - 1,
+                    MobileButtonAreaWidth, MobileButtonAreaHeight));
+
+                var arrowIconArea = MobileButtonAreaArrowIconArea;
+                DrawTouchFinger(arrowIconArea.Center.X + 8, arrowIconArea.Center.Y + 16, false);
+
+                game.HideMobileTouchpadDisableOverlay = true;
             }
             else
             {
                 ShowMarker(renderView, new Rect(Global.ButtonGridX - 1, Global.ButtonGridY - 1,
                     3 * Button.Width + 2, 3 * Button.Height + 2));
             }
-			game.ShowMessagePopup(GetText(1), next);
+
+            game.ShowMessagePopup(GetText(1), next);
         }
 
         void ShowTip2(IGameRenderView renderView, Action next)
         {
-            ToggleButtons();
             if (game.Configuration.IsMobile)
             {
                 HideTouchFinger();
                 HideMarker();
-				ShowMarker(renderView, new Rect(Global.ButtonGridX - 1, Global.ButtonGridY - 1,
-				    Button.Width + 2, Button.Height + 2));
-			}
-			game.ShowMessagePopup(GetText(2), next);
+                ShowMarker(renderView, new Rect(MobileButtonAreaX - 1, MobileButtonAreaY - 1,
+                    MobileButtonAreaWidth, MobileButtonAreaHeight));
+                DrawTouchFinger(MobileButtonAreaX + MobileButtonAreaWidth / 2 + 4, MobileButtonAreaY + MobileButtonAreaHeight / 2 + 4, true);
+            }
+            else
+            {
+                ToggleButtons();
+            }
+                
+            game.ShowMessagePopup(GetText(2), next);
         }
 
         void ShowTip3(IGameRenderView renderView, Action next)
@@ -445,31 +501,41 @@ namespace Ambermoon
 
             if (game.Configuration.IsMobile)
             {
-                game.CurrentMobileAction = MobileAction.Eye;
-                DrawTouchFinger(Map2DViewArea.Right - 72, Map2DViewArea.Bottom - 50, false);
-				ShowMarker(renderView, new(Map2DViewArea.X + 16 - 2, Map2DViewArea.Y + 32 - 2, 20, 20));
-                game.SetClickHandler(next);
-			}
+                HideTouchFinger();
+
+                var eyeIconArea = MobileButtonAreaEyeIconArea;
+                ShowMarker(renderView, new Rect(eyeIconArea.X - 3, eyeIconArea.Y - 3,
+                    mobileButtonAreaIconWidth + 6, mobileButtonAreaIconHeight + 6));
+                DrawTouchFinger(eyeIconArea.Center.X + 4, eyeIconArea.Center.Y + 4, false);
+            }
             else
             {
                 ToggleButtons();
                 ShowMarker(renderView, Global.PartyMemberPortraitArea);
-                game.ShowMessagePopup(GetText(3), next);
             }
+
+            game.ShowMessagePopup(GetText(3), next);
         }
 
         void ShowTip4(IGameRenderView renderView, Action next)
         {
 			HideMarker();
 
-			if (game.Configuration.IsMobile)
+            if (game.Configuration.IsMobile)
+            {
+                game.CurrentMobileAction = MobileAction.Eye;
+                DrawTouchFinger(Map2DViewArea.Right - 72, Map2DViewArea.Bottom - 50, false);
+                ShowMarker(renderView, new(Map2DViewArea.X + 16 - 2, Map2DViewArea.Y + 32 - 2, 20, 20));
+                game.SetClickHandler(next);
+            }
+            /*if (game.Configuration.IsMobile)
             {
 				game.CurrentMobileAction = MobileAction.None;
 				DrawTouchFinger(Global.PartyMemberPortraitArea.X + 34, Global.PartyMemberPortraitArea.Y + 32, false, new(0, 0, Global.VirtualScreenHeight, 64), true);
 				ToggleButtons();
 				ShowMarker(renderView, Global.PartyMemberPortraitArea);
 				game.ShowMessagePopup(GetText(3), next);
-			}
+			}*/
             else
             {
                 ShowMarker(renderView, Map2DViewArea);
@@ -532,7 +598,8 @@ namespace Ambermoon
 
 		void ShowTutorialEnd(IGameRenderView renderView, Action next)
         {
- 			HideMarker();
+            game.HideMobileTouchpadDisableOverlay = false;
+            HideMarker();
             game.ShowMessagePopup(GetText(texts.Length), next);
         }
     }

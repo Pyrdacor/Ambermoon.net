@@ -499,6 +499,13 @@ public class Game
             }
         }
     }
+
+    public bool HideMobileTouchpadDisableOverlay
+    {
+        get;
+        set;
+    } = false;
+
     internal TravelType TravelType
     {
         get => travelType;
