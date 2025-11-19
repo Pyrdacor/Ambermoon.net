@@ -16918,7 +16918,8 @@ public class Game
     }
 
     internal void ShowMessagePopup(string text, Action closeAction = null,
-        TextAlign textAlign = TextAlign.Center, byte displayLayerOffset = 0)
+        TextAlign textAlign = TextAlign.Center, byte displayLayerOffset = 0,
+        Position offset = null)
     {
         if (layout.PopupActive)
         {
@@ -16935,7 +16936,7 @@ public class Game
             Resume();
             ResetCursor();
             closeAction?.Invoke();
-        }, true, true, false, textAlign, displayLayerOffset);
+        }, true, true, false, textAlign, displayLayerOffset, null, offset);
         CursorType = CursorType.Click;
         TrapMouse(popup.ContentArea);
     }

@@ -868,11 +868,14 @@ namespace Ambermoon.UI
 
         internal Popup OpenTextPopup(IText text, Action closeAction, bool disableButtons = false,
             bool closeOnClick = true, bool transparent = false, TextAlign textAlign = TextAlign.Left,
-            byte displayLayerOffset = 0, byte? paletteOverride = null)
+            byte displayLayerOffset = 0, byte? paletteOverride = null, Position offset = null)
         {
             const int maxTextWidth = 256;
             const int maxTextHeight = 112;
-            var popup = OpenTextPopup(text, new Position(16, 53), maxTextWidth, maxTextHeight, disableButtons,
+
+            offset ??= new();
+
+            var popup = OpenTextPopup(text, new Position(16 + offset.X, 53 + offset.Y), maxTextWidth, maxTextHeight, disableButtons,
                 closeOnClick, transparent, TextColor.BrightGray, closeAction, textAlign, displayLayerOffset, paletteOverride);
             return popup;
         }
