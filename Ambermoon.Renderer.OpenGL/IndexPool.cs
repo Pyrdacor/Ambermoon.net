@@ -19,64 +19,68 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.Renderer.OpenGL;
 
 internal class IndexPool
 {
-    readonly List<int> releasedIndices = new List<int>();
+    readonly LinkedList<int> releasedIndices = [];
+    readonly Dictionary<int, LinkedListNode<int>> releasedIndexNodesByIndex = [];
     int firstFree = 0;
+    readonly object releasedIndicesLock = new();
 
     public int AssignNextFreeIndex(out bool reused)
     {
-        if (releasedIndices.Count != 0)
+        lock (releasedIndicesLock)
         {
-            reused = true;
+            if (releasedIndices.Count != 0)
+            {
+                reused = true;
 
-            int index = releasedIndices[^1];
+                int index = releasedIndices.Last.Value;
 
-            // Remove last has O(1) while remove first has O(n)!
-            releasedIndices.RemoveAt(releasedIndices.Count - 1);
+                releasedIndices.RemoveLast();
+                releasedIndexNodesByIndex.Remove(index);
 
-            return index;
+                return index;
+            }
+
+            reused = false;
+
+            if (firstFree == int.MaxValue)
+            {
+                throw new AmbermoonException(ExceptionScope.Render, "No free index available.");
+            }
+
+            return firstFree++;
         }
-
-        reused = false;
-
-        if (firstFree == int.MaxValue)
-        {
-            throw new AmbermoonException(ExceptionScope.Render, "No free index available.");
-        }
-
-        return firstFree++;
     }
 
     public void UnassignIndex(int index)
     {
-        releasedIndices.Add(index);
+        lock (releasedIndicesLock)
+        {
+            releasedIndexNodesByIndex.Add(index, releasedIndices.AddLast(index));
+        }
     }
 
     public bool AssignIndex(int index)
     {
-        // The logic should prefer the last index so that this is much faster.
-        if (releasedIndices.Count != 0)
+        lock (releasedIndicesLock)
         {
-            if (releasedIndices[^1] == index)
+            if (releasedIndexNodesByIndex.TryGetValue(index, out var indexNode))
             {
-                releasedIndices.RemoveAt(releasedIndices.Count - 1);
+                releasedIndices.Remove(indexNode);
+                releasedIndexNodesByIndex.Remove(index);
                 return true;
             }
-            else if (releasedIndices.Contains(index))
-            {
-                releasedIndices.Remove(index);
-                return true;
-            }
+
+            if (index == firstFree)
+                ++firstFree;
+
+            return false;
         }
-
-        if (index == firstFree)
-            ++firstFree;
-
-        return false;
     }
 }
