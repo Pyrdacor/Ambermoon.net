@@ -1,7 +1,7 @@
 ﻿/*
  * IndexPool.cs - Pool of indices which handles index reusing
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -19,7 +19,6 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.Renderer.OpenGL;
