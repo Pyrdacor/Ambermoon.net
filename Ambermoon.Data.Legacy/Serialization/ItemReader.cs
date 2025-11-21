@@ -54,7 +54,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             item.InitialRecharges = dataReader.ReadByte();
             item.MaxRecharges = dataReader.ReadByte();
             item.MaxCharges = dataReader.ReadByte();
-            item.MaxRechargesSpell = dataReader.ReadByte();
+            item.RechargePrice = dataReader.ReadByte();
             item.MagicArmorLevel = (sbyte)dataReader.ReadByte();
             item.MagicAttackLevel = (sbyte)dataReader.ReadByte();
             item.Flags = (ItemFlags)dataReader.ReadByte();

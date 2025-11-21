@@ -46,7 +46,7 @@ namespace Ambermoon.Data
         public byte InitialRecharges { get; set; } // initial times of recharging
         public byte MaxRecharges { get; set; } // only used by enchanter
         public byte MaxCharges { get; set; }
-        public byte MaxRechargesSpell { get; set; } // only used by spell ChargeItem (unused in original code)
+        public byte RechargePrice { get; set; } // if 0, use enchanter base price
         public int MagicArmorLevel { get; set; } // M-B-R
         public int MagicAttackLevel { get; set; } // M-B-W
         public ItemFlags Flags { get; set; }

@@ -59,7 +59,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             dataWriter.Write(item.InitialRecharges);
             dataWriter.Write(item.MaxRecharges);
             dataWriter.Write(item.MaxCharges);
-            dataWriter.Write(item.MaxRechargesSpell);
+            dataWriter.Write(item.RechargePrice);
             WriteSignedByte(item.MagicArmorLevel);
             WriteSignedByte(item.MagicAttackLevel);
             dataWriter.WriteEnumAsByte(item.Flags);

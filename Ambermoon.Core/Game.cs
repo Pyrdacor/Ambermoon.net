@@ -10743,7 +10743,7 @@ public class Game
                     Error(DataNameProvider.ItemAlreadyFullyCharged);
                     return;
                 }
-                if (item.MaxRechargesSpell != 0 && item.MaxRechargesSpell != 255 && itemSlot.RechargeTimes >= item.MaxRechargesSpell)
+                if (item.MaxRecharges != 0 && item.MaxRecharges != 255 && itemSlot.RechargeTimes >= item.MaxRecharges)
                 {
                     Error(DataNameProvider.CannotRechargeAnymore);
                     return;
@@ -12741,13 +12741,18 @@ public class Game
                     });
                 }
 
-                if (enchanter.AvailableGold < enchanter.Cost)
+                var item = ItemManager.GetItem(itemSlot.ItemIndex);
+
+                int costPerCharge = item.RechargePrice;
+
+                if (costPerCharge == 0)
+                    costPerCharge = enchanter.Cost;
+
+                if (enchanter.AvailableGold < costPerCharge)
                 {
                     Error(DataNameProvider.NotEnoughMoney, true);
                     return;
                 }
-
-                var item = ItemManager.GetItem(itemSlot.ItemIndex);
 
                 if (item.Spell == Spell.None || (item.InitialCharges == 0 && item.MaxCharges == 0))
                 {
@@ -12778,10 +12783,10 @@ public class Game
                 void Enchant(uint charges)
                 {
                     ClosePopup();
-                    uint cost = charges * (uint)enchanter.Cost;
+                    uint totalCost = charges * (uint)costPerCharge;
 
                     nextClickHandler = null;
-                    layout.ShowPlaceQuestion($"{DataNameProvider.PriceForEnchanting}{cost}{DataNameProvider.AgreeOnPrice}", answer =>
+                    layout.ShowPlaceQuestion($"{DataNameProvider.PriceForEnchanting}{totalCost}{DataNameProvider.AgreeOnPrice}", answer =>
                     {
                         nextClickHandler = null;
                         EndSequence();
@@ -12792,7 +12797,7 @@ public class Game
                             void Enchant()
                             {
                                 layout.ShowChestMessage(null);
-                                enchanter.AvailableGold -= cost;
+                                enchanter.AvailableGold -= totalCost;
                                 updatePartyGold?.Invoke();
                                 itemSlot.NumRemainingCharges += (int)charges;
                                 itemSlot.RechargeTimes = (byte)Math.Min(255, itemSlot.RechargeTimes + 1);
@@ -12816,7 +12821,7 @@ public class Game
                 UntrapMouse();
 
                 layout.OpenAmountInputBox(DataNameProvider.HowManyCharges,
-                    item.GraphicIndex, item.Name, (uint)Util.Min(enchanter.AvailableGold / enchanter.Cost, numMissingCharges), Enchant,
+                    item.GraphicIndex, item.Name, (uint)Util.Min(enchanter.AvailableGold / costPerCharge, numMissingCharges), Enchant,
                     () =>
                     {
                         TrapMouse(itemArea);
