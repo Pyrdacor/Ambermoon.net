@@ -1,7 +1,7 @@
 ﻿/*
  * Credits.cs - Remake credits
  *
- * Copyright (C) 2021-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2021-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -69,12 +69,13 @@ namespace Ambermoon.Render
             AddText("Without him much of this wouldn't have been possible.");
 
             AddText("And of course I want to thank Alex Holland!", 3);
-            AddText("Not only managed he to save an english version");
-            AddText("of Ambermoon but also he knows so much about");
-            AddText("Ambermoon, Amberstar and Thalion. He also preserved");
-            AddText("so much knowledge and resources over the years that");
-            AddText("Ambermoon would not be possible without Alex I guess.");
-            AddText("Thank you so much for all you have done!");
+            AddText("Not only did he manage to preserve an English");
+            AddText("version of Ambermoon, but he also has incredible");
+            AddText("knowledge about Ambermoon, Amberstar and Thalion.");
+            AddText("Over the years, he has kept so much information and");
+            AddText("so many resources alive that Ambermoon likely");
+            AddText("wouldn’t exist today without him.");
+            AddText("Thank you so much for everything you have done!");
 
             AddText("I also want to thank Nico Bendlin and Jurie Horneman.", 3);
             AddText("Even though they don't have much time, they support");
@@ -83,7 +84,8 @@ namespace Ambermoon.Render
             AddText("Ambermoon source code and docs in May 2023.");
 
             AddText("And of course I want to thank my wife.", 3);
-            AddText("She was very patient and supportive with me.");
+            AddText("She was incredibly patient and supportive with me,");
+            AddText("and I’m truly grateful for that.");
 
             AddHeader("My supporters", 16);
             AddText("Every nerd also needs something to eat. So I am very", 1);
@@ -177,15 +179,15 @@ namespace Ambermoon.Render
             AddText("After this I will start creating the ~INK 17~third part~INK 31~.", 3);
             AddText("~INK 17~of the Amber trilogy~INK 31~. This will be a huge project.");
 
-            AddText("To stay informed visit me on github, follow me on", 3);
-            AddText("twitter or just stay in touch.");
+            AddText("To stay informed visit me on github, join my", 3);
+            AddText("discord server, become a patreon or mail me.");
 
             AddHeader("The real end", 9);
 
             AddText("Pyrdacor - trobt(at)web.de", 2);
             AddText("github.com/Pyrdacor");
             AddText("www.patreon.com/Pyrdacor");
-            AddText("twitter.com/Pyrdacor");
+            AddText("Discord Server: https://discord.gg/CCTt3bAh7g");
             AddText("www.pyrdacor.net");
 
             AddText("December 2022", 2);
