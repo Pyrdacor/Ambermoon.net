@@ -739,9 +739,9 @@ namespace Ambermoon.Data.Legacy.Serialization
             return clickGroups;
         }
 
-        static readonly byte[] GlyphMappingSearchBytes = new byte[4] { 0xff, 0x42, 0xff, 0xff };
-        static readonly byte[] AdvanceValuesSearchBytes = new byte[4] { 0x0b, 0x09, 0x09, 0x0a };
-        static readonly byte[] LargeAdvanceValuesSearchBytes = new byte[4] { 0x15, 0x11, 0x10, 0x13 };
+        static readonly byte[] GlyphMappingSearchBytes = [0xff, 0x42, 0xff, 0xff];
+        static readonly byte[] AdvanceValuesSearchBytes = [0x0b, 0x09, 0x09, 0x0a];
+        static readonly byte[] LargeAdvanceValuesSearchBytes = [0x15, 0x11, 0x10, 0x13];
 
         static int FindByteSequence(IDataReader reader, byte[] sequence)
         {

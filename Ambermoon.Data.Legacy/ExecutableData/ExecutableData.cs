@@ -90,16 +90,16 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         public Graphic[] SkyGradients { get; } = new Graphic[9];
         public Graphic[] DaytimePaletteReplacements { get; } = new Graphic[6];
 
-        static T Read<T>(IDataReader[] dataReaders, ref int readerIndex)
+        static T Read<T>(IDataReader[] dataReaders, int readerIndex)
         {
             var type = typeof(T);
             var dataReader = dataReaders[readerIndex];
 
             return (T)Activator.CreateInstance(type, BindingFlags.NonPublic | BindingFlags.Instance,
-                null, new object[] { dataReader }, null);
+                null, [dataReader], null);
         }
 
-        uint ReadOffsetAfterByteSequence(IDataReader dataReader, params byte[] sequence)
+        static uint ReadOffsetAfterByteSequence(IDataReader dataReader, params byte[] sequence)
         {
             long index = dataReader.FindByteSequence(sequence, dataReader.Position);
 
@@ -127,7 +127,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             var hunks = gameData.Files.TryGetValue("AM2_CPU", out var exe)
                 ? AmigaExecutable.Read(exe.Files[1])
-                : new List<IHunk>();
+                : [];
 
             gameData.Files.TryGetValue("Text.amb", out var textAmb);
             gameData.Files.TryGetValue("Objects.amb", out var objectsAmb);
@@ -193,15 +193,14 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
             if (hunks.Count > 0)
             {
-                dataHunkReaders = hunks.Where(h => h.Type == AmigaExecutable.HunkType.Data)
-                    .Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data)).ToArray();
+                dataHunkReaders = [.. hunks.Where(h => h.Type == HunkType.Data).Select(h => new DataReader(((Hunk)h).Data))];
 
                 // Note: First 160 bytes are copper commands which can be dynamically filled
                 // to move data to some Amiga registers. The area is permanently used by the
                 // copper.
                 dataHunkReaders[dataHunkIndex].Position = 160;
 
-                UIGraphics = Read<UIGraphics>(dataHunkReaders, ref dataHunkIndex);
+                UIGraphics = Read<UIGraphics>(dataHunkReaders, dataHunkIndex);
                 // Here follows the note period table for Sonic Arranger (110 words)
                 // Then the vibrato table (258 bytes)
                 // Then track data and many more SA tables
@@ -210,14 +209,40 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 var reader = dataHunkReaders[1];
                 codeReader.Position = 115000;
                 reader.Position = (int)ReadOffsetAfterByteSequence(codeReader, 0x34, 0x3c, 0x03, 0xe7, 0x41, 0xf9);
-                DigitGlyphs = Read<DigitGlyphs>(dataHunkReaders, ref dataHunkIndex);
+                DigitGlyphs = Read<DigitGlyphs>(dataHunkReaders, dataHunkIndex);
 
                 // TODO ...
 
-                codeReader.Position += 29000;
-                reader.Position = (int)ReadOffsetAfterByteSequence(codeReader, 0x22, 0x48, 0x41, 0xf9);
-                Glyphs = Read<Glyphs>(dataHunkReaders, ref dataHunkIndex);
-                Cursors = Read<Cursors>(dataHunkReaders, ref dataHunkIndex);
+                // NOTE: There is a new AM2_CPU format introduced to ease supporting new languages.
+                // Instead of storing the glyph data and character mappings somewhere inside data
+                // hunks which contain a lot of other stuff (including arbitrary sized texts), there
+                // is a new data hunk at the end solely for glyph-related data.
+                //
+                // Original AM2_CPUs have 3 data hunks, now there are 4.
+                bool newExeFormat = dataHunkReaders.Length == 4;
+
+                if (newExeFormat)
+                {
+                    codeReader.Position += 27500;
+
+                    codeReader.Position = (int)codeReader.FindByteSequence([0x48, 0xe7, 0x00, 0xc0, 0x41, 0xf9], codeReader.Position) + 180;
+                    reader.Position = (int)ReadOffsetAfterByteSequence(codeReader, 0x48, 0xe7, 0x00, 0xc0, 0x41, 0xf9);
+                    Cursors = Read<Cursors>(dataHunkReaders, dataHunkIndex);
+
+                    var glyphHunkReader = dataHunkReaders[^1];
+
+                    glyphHunkReader.Position = 2 * 224; // 224 chars (256 - 32) are mapped for normal and rune glyphs
+
+                    Glyphs = Read<Glyphs>(dataHunkReaders, dataHunkReaders.Length - 1);
+                }
+                else
+                {
+                    codeReader.Position += 29000;
+
+                    reader.Position = (int)ReadOffsetAfterByteSequence(codeReader, 0x22, 0x48, 0x41, 0xf9);
+                    Glyphs = Read<Glyphs>(dataHunkReaders, dataHunkIndex);
+                    Cursors = Read<Cursors>(dataHunkReaders, dataHunkIndex);
+                }
 
                 // Here are the 3 builtin palettes for primary UI, automap and secondary UI.
                 for (int i = 0; i < 3; ++i)
@@ -282,24 +307,24 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
             if (textContainer == null)
             {
-                FileList = Read<FileList>(dataHunkReaders, ref dataHunkIndex);
-                WorldNames = Read<WorldNames>(dataHunkReaders, ref dataHunkIndex);
-                Messages = Read<Messages>(dataHunkReaders, ref dataHunkIndex);
-                AutomapNames = Read<AutomapNames>(dataHunkReaders, ref dataHunkIndex);
-                OptionNames = Read<OptionNames>(dataHunkReaders, ref dataHunkIndex);
-                SongNames = Read<SongNames>(dataHunkReaders, ref dataHunkIndex);
-                SpellTypeNames = Read<SpellTypeNames>(dataHunkReaders, ref dataHunkIndex);
-                SpellNames = Read<SpellNames>(dataHunkReaders, ref dataHunkIndex);
-                LanguageNames = Read<LanguageNames>(dataHunkReaders, ref dataHunkIndex);
-                ClassNames = Read<ClassNames>(dataHunkReaders, ref dataHunkIndex);
-                RaceNames = Read<RaceNames>(dataHunkReaders, ref dataHunkIndex);
-                SkillNames = Read<SkillNames>(dataHunkReaders, ref dataHunkIndex);
-                AttributeNames = Read<AttributeNames>(dataHunkReaders, ref dataHunkIndex);
+                FileList = Read<FileList>(dataHunkReaders, dataHunkIndex);
+                WorldNames = Read<WorldNames>(dataHunkReaders, dataHunkIndex);
+                Messages = Read<Messages>(dataHunkReaders, dataHunkIndex);
+                AutomapNames = Read<AutomapNames>(dataHunkReaders, dataHunkIndex);
+                OptionNames = Read<OptionNames>(dataHunkReaders, dataHunkIndex);
+                SongNames = Read<SongNames>(dataHunkReaders, dataHunkIndex);
+                SpellTypeNames = Read<SpellTypeNames>(dataHunkReaders, dataHunkIndex);
+                SpellNames = Read<SpellNames>(dataHunkReaders, dataHunkIndex);
+                LanguageNames = Read<LanguageNames>(dataHunkReaders, dataHunkIndex);
+                ClassNames = Read<ClassNames>(dataHunkReaders, dataHunkIndex);
+                RaceNames = Read<RaceNames>(dataHunkReaders, dataHunkIndex);
+                SkillNames = Read<SkillNames>(dataHunkReaders, dataHunkIndex);
+                AttributeNames = Read<AttributeNames>(dataHunkReaders, dataHunkIndex);
                 SkillNames.AddShortNames(dataHunkReaders[dataHunkIndex]);
                 AttributeNames.AddShortNames(dataHunkReaders[dataHunkIndex]);
-                ItemTypeNames = Read<ItemTypeNames>(dataHunkReaders, ref dataHunkIndex);
-                ConditionNames = Read<ConditionNames>(dataHunkReaders, ref dataHunkIndex);
-                UITexts = Read<UITexts>(dataHunkReaders, ref dataHunkIndex);
+                ItemTypeNames = Read<ItemTypeNames>(dataHunkReaders, dataHunkIndex);
+                ConditionNames = Read<ConditionNames>(dataHunkReaders, dataHunkIndex);
+                UITexts = Read<UITexts>(dataHunkReaders, dataHunkIndex);
             }
             else
             {
@@ -375,7 +400,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             }
             else
             {
-                Buttons = Read<Buttons>(dataHunkReaders, ref dataHunkIndex);
+                Buttons = Read<Buttons>(dataHunkReaders, dataHunkIndex);
             }
 
             if (objectsAmbReader == null)
