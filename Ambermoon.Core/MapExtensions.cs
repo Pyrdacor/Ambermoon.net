@@ -134,6 +134,13 @@ namespace Ambermoon
                 {
                     return false;
                 }
+
+                if (ev.Type == EventType.StartBattle && hasRandomness)
+                {
+                    // Avoid triggering random encounters while moving on the same tile.
+                    if (LastMapEventPosition == new Position((int)x, (int)y) && map.Type == MapType.Map3D)
+                        return false;
+                }
             }
 
             LastMapEventIndexMap = map.Index;
