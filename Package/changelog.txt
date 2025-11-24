@@ -1,3 +1,14 @@
+Version 1.12
+============
+
+- Added original versions 1.20
+- Fixed a bug where random encounters happened way too often
+- Fixed an issue with render index managing
+- If an item has a recharge price it is now used at the enchanter
+- Fixed and improved the custom outro
+- Updated credits and the text now scrolls much smoother
+
+
 Version 1.11
 ============
 

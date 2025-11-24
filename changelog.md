@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.0 - Twelfth patch (November 2025)
+
+- Version [1.12.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.12.0): Integrates original 1.20, improved custom outro and credits, bugfixes
+
 ## 1.11.0 - Eleventh patch (August 2025 - November 2025)
 
 - Version [1.11.6](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.11.6): Fix non-working graphic effects, added STR/DEX/STA bonuses for Advanced
