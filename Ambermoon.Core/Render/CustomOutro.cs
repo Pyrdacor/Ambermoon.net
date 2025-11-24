@@ -1,7 +1,7 @@
 ﻿/*
  * CustomOutro.cs - Remake outro sequence
  *
- * Copyright (C) 2021-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2021-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -37,11 +37,11 @@ namespace Ambermoon.Render
         readonly Layout layout;
         readonly IGameRenderView renderView;
         readonly Savegame savegame;
-        readonly List<Popup> popups = new List<Popup>();
-        readonly List<ISprite> images = new List<ISprite>();
-        readonly List<UIText> texts = new List<UIText>();
-        readonly List<IColoredRect> areas = new List<IColoredRect>();
-        readonly List<Panel> panels = new List<Panel>();
+        readonly List<Popup> popups = [];
+        readonly List<ISprite> images = [];
+        readonly List<UIText> texts = [];
+        readonly List<IColoredRect> areas = [];
+        readonly List<Panel> panels = [];
         ISprite eagle = null;
         const uint EgilPortraiIndex = 5;
         const uint PyrdacorPortraitIndex = 95;
@@ -66,8 +66,8 @@ namespace Ambermoon.Render
                     ProcessText(LanguageDependentStrings[game.GameLanguage][textIndex]), 50, textColor));
             }
 
-            Position conversationImagePosition = new Position(31, 64);
-            Rect conversationArea = new Rect(62, 61, 120, 56);
+            Position conversationImagePosition = new(31, 64);
+            Rect conversationArea = new(62, 61, 120, 56);
 
             AddAction(TimeSpan.Zero, new ShowConversationPortraitAction(EgilPortraiIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 0);
@@ -226,82 +226,82 @@ namespace Ambermoon.Render
         {
             { GameLanguage.German, new List<string>
                 {
-                    "Egil: Es war ein fantastisches Abenteuer, doch nun muss auch ich Lebewohl sagen.",
-                    "Egil: Die Zwerge in Gemstone brauchen Freiwillige beim Aufbau ihrer Stadt.",
-                    "~HERO~: Ich hoffe wir werden uns wiedersehen. Gute Reise mein Freund!",
-                    " ^~HERO~: ...",
-                    " ^Unbekannter: Nicht so schnell ~HERO~!",
-                    " ^~HERO~: Wer bist du?",
-                    "Unbekannter: Mein Name ist ~INK 17~Pyrdacor~INK 31~. Ich habe nicht viel Zeit.",
-                    "Unbekannter: Aber so viel sei gesagt: Das Abenteuer ist noch nicht vorbei.",
-                    " ^~HERO~: Was meinst du damit?",
-                    " ^~INK 17~Der dritte Teil der Amber-Triologie~INK 31~ ist geplant.",
-                    " ^~HERO~: Krass!",
-                    "Pyrdacor: Danke, dass du ~INK 22~Ambermoon~INK 31~ gespielt hast! Ich hoffe du hattest Spaß."
+                    "Es war ein fantastisches Abenteuer, doch nun muss auch ich Lebewohl sagen.",
+                    "Die Zwerge in Gemstone brauchen Freiwillige beim Aufbau ihrer Stadt.",
+                    "Ich hoffe wir werden uns wiedersehen. Gute Reise mein Freund!",
+                    "$^...",
+                    "$^Nicht so schnell ~HERO~!",
+                    "$^Wer bist du?",
+                    "Mein Name ist ~INK 17~Pyrdacor~INK 31~. Ich habe nicht viel Zeit.",
+                    "Aber so viel sei gesagt: Das Abenteuer ist noch nicht vorbei.",
+                    "$^Was meinst du damit?",
+                    "$^~INK 17~Der dritte Teil der Amber-Triologie~INK 31~ ist geplant.",
+                    "$^Krass!",
+                    "Danke, dass du ~INK 22~Ambermoon~INK 31~ gespielt hast! Ich hoffe du hattest Spaß."
                 }
             },
             { GameLanguage.English, new List<string>
                 {
-                    "Egil: It was an amazing adventure but now I have to say Goodbye.",
-                    "Egil: The dwarfs of Gemstone need volunteers to rebuild their capital.",
-                    "~HERO~: I hope we see each other again. Have a good trip my friend!",
-                    " ^~HERO~: ...",
-                    " ^Stranger: Not so fast ~HERO~!",
-                    " ^~HERO~: Who are you?",
-                    "Stranger: My name is ~INK 17~Pyrdacor~INK 31~. I don't have much time.",
-                    "Stranger: But I can tell you this: The adventure is not over yet.",
-                    " ^~HERO~: What are you talking about?",
-                    " ^~INK 17~The third part of the Amber trilogy~INK 31~ is planned.",
-                    " ^~HERO~: Awesome!",
-                    "Pyrdacor: Thank you for playing ~INK 22~Ambermoon~INK 31~! I hope you had fun."
+                    "It was an amazing adventure but now I have to say Goodbye.",
+                    "The dwarfs of Gemstone need volunteers to rebuild their capital.",
+                    "I hope we see each other again. Have a good trip my friend!",
+                    "$^...",
+                    "$^Not so fast ~HERO~!",
+                    "$^Who are you?",
+                    "My name is ~INK 17~Pyrdacor~INK 31~. I don't have much time.",
+                    "But I can tell you this: The adventure is not over yet.",
+                    "$^What are you talking about?",
+                    "$^~INK 17~The third part of the Amber trilogy~INK 31~ is planned.",
+                    "$^Awesome!",
+                    "Thank you for playing ~INK 22~Ambermoon~INK 31~! I hope you had fun."
                 }
             },
             { GameLanguage.French, new List<string>
                 {
-                    "Egil: Ce fut une aventure extraordinaire, mais je dois maintenant dire au revoir..",
-                    "Egil: Les nains de Gemstone ont besoin de volontaires pour reconstruire leur capitale.",
-                    "~HERO~: J'espère que nous nous reverrons. Bon voyage mon ami !",
-                    " ^~HERO~: ...",
-                    " ^Inconnu: Pas si vite ~HERO~!",
-                    " ^~HERO~: Qui êtes-vous ?",
-                    "Inconnu: Je m'appelle ~INK 17~Pyrdacor~INK 31~. Je n'ai pas beaucoup de temps.",
-                    "Inconnu: Mais je peux vous dire ceci : L'aventure n'est pas encore terminée.",
-                    " ^~HERO~: De quoi parlez-vous ?",
-                    " ^~INK 17~Le troisième volet de la trilogie Amber~INK 31~ est prévu.",
-                    " ^~HERO~: Épatant !",
-                    "Pyrdacor: Merci d'avoir joué à ~INK 22~Ambermoon~INK 31~ ! J'espère que vous vous êtes bien amusés."
+                    "Ce fut une aventure extraordinaire, mais je dois maintenant dire au revoir..",
+                    "Les nains de Gemstone ont besoin de volontaires pour reconstruire leur capitale.",
+                    "J'espère que nous nous reverrons. Bon voyage mon ami !",
+                    "$^...",
+                    "$^Pas si vite ~HERO~!",
+                    "$^Qui êtes-vous ?",
+                    "Je m'appelle ~INK 17~Pyrdacor~INK 31~. Je n'ai pas beaucoup de temps.",
+                    "Mais je peux vous dire ceci : L'aventure n'est pas encore terminée.",
+                    "$^De quoi parlez-vous ?",
+                    "$^~INK 17~Le troisième volet de la trilogie Amber~INK 31~ est prévu.",
+                    "$^Épatant !",
+                    "Merci d'avoir joué à ~INK 22~Ambermoon~INK 31~ ! J'espère que vous vous êtes bien amusés."
                 }
             },
             { GameLanguage.Polish, new List<string>
                 {
-                    "Egil: To była niesamowita przygoda, ale teraz muszę się pożegnać.",
-                    "Egil: Krasnoludy z Gemstone potrzebują ochotników do odbudowy swojej stolicy.",
-                    "~HERO~: Mam nadzieję, że jeszcze się spotkamy. Udanej podróży przyjacielu!",
-                    " ^~HERO~: ...",
-                    " ^Nieznajomy: Nie tak szybko ~HERO~!",
-                    " ^~HERO~: Kim jesteś?",
-                    "Nieznajomy: Moje imię to ~INK 17~Pyrdacor~INK 31~. Nie mam zbyt wiele czasu.",
-                    "Nieznajomy: Ale mogę powiedzieć jedno: Przygoda jeszcze się nie skończyła.",
-                    " ^~HERO~: O czym ty mówisz?",
-                    " ^Planowana jest ~INK 17~Trzecia część trylogii Amber~INK 31~.",
-                    " ^~HERO~: Wspaniale!",
-                    "Pyrdacor: Dziękuję za grę w ~INK 22~Ambermoon~INK 31~! Mam nadzieję, że dobrze się bawiliście."
+                    "To była niesamowita przygoda, ale teraz muszę się pożegnać.",
+                    "Krasnoludy z Gemstone potrzebują ochotników do odbudowy swojej stolicy.",
+                    "Mam nadzieję, że jeszcze się spotkamy. Udanej podróży przyjacielu!",
+                    "$^...",
+                    "$^Nie tak szybko ~HERO~!",
+                    "$^Kim jesteś?",
+                    "Moje imię to ~INK 17~Pyrdacor~INK 31~. Nie mam zbyt wiele czasu.",
+                    "Ale mogę powiedzieć jedno: Przygoda jeszcze się nie skończyła.",
+                    "$^O czym ty mówisz?",
+                    "$^Planowana jest ~INK 17~Trzecia część trylogii Amber~INK 31~.",
+                    "$^ Wspaniale!",
+                    "Dziękuję za grę w ~INK 22~Ambermoon~INK 31~! Mam nadzieję, że dobrze się bawiliście."
                 }
             },
             { GameLanguage.Czech, new List<string>
 	            {
-					"Egil: Bylo to úžasné dobrodružství, ale teď se musím rozloučit.",
-					"Egil: Trpaslíci z Gemstone potřebují dobrovolníky na obnovu svého hlavního města.",
-					"~HERO~: Doufám, že se ještě uvidíme. Šťastnou cestu, příteli!",
-					" ^~HERO~: ...",
-					" ^Cizinec: Ne tak rychle ~HERO~!",
-					" ^~HERO~: Kdo jsi?",
-					"Cizinec: Jmenuji se ~INK 17~Pyrdacor~INK 31~. Nemám mnoho času.",
-					"Cizinec: Ale mohu vám říci toto: Dobrodružství ještě nekončí.",
-					" ^~HERO~: O čem to mluvíš?",
-					" ^~INK 17~Je v plánu třetí část~INK 31~ trilogie Amber.",
-					" ^~HERO~: Úžasné!",
-					"Pyrdacor: Děkuji, že jsi si zahrál ~INK 22~Ambermoon~INK 31~! Doufám, že jsi se bavil."
+					"Bylo to úžasné dobrodružství, ale teď se musím rozloučit.",
+					"Trpaslíci z Gemstone potřebují dobrovolníky na obnovu svého hlavního města.",
+					"Doufám, že se ještě uvidíme. Šťastnou cestu, příteli!",
+					"$^...",
+					"$^Ne tak rychle ~HERO~!",
+					"$^Kdo jsi?",
+					"Jmenuji se ~INK 17~Pyrdacor~INK 31~. Nemám mnoho času.",
+                    "Ale mohu vám říci toto: Dobrodružství ještě nekončí.",
+					"$^O čem to mluvíš?",
+					"$^~INK 17~Je v plánu třetí část~INK 31~ trilogie Amber.",
+					"$^Úžasné!",
+					"Děkuji, že jsi si zahrál ~INK 22~Ambermoon~INK 31~! Doufám, že jsi se bavil."
 				}
             }
 		}.ToImmutableDictionary();
@@ -440,10 +440,10 @@ namespace Ambermoon.Render
                 withPortraitBackground ? (byte)(displayLayer + 1) : displayLayer, null, null, layer));
         }
 
-        Popup AddPopup(Position position, int columns, int rows, byte displayLayer = 0)
+        Popup AddPopup(Position position, int columns, int rows)
         {
             var popup = new Popup(game, renderView, position, columns, rows,
-                false, (byte)Math.Max(0, displayLayer - Popup.BaseDisplayLayer));
+                false, 0);
 
             popups.Add(popup);
 
@@ -463,21 +463,15 @@ namespace Ambermoon.Render
             void Run(CustomOutro outro, Action finished);
         }
 
-        class ShowConversationPortraitAction : IAction
+        class ShowConversationPortraitAction(uint portraitIndex, Position position) : IAction
         {
-            readonly uint portraitIndex;
-            readonly Rect rect;
-
-            public ShowConversationPortraitAction(uint portraitIndex, Position position)
-            {
-                this.portraitIndex = portraitIndex;
-                rect = new Rect(position, new Size(32, 32));
-            }
+            readonly uint portraitIndex = portraitIndex;
+            readonly Rect rect = new(position, new Size(32, 32));
 
             public void Run(CustomOutro outro, Action finished)
             {
                 outro.AddPopup(rect.Position - new Position(15, 16), 11, 4);
-                outro.AddImage(Layer.UI, Graphics.PortraitOffset + portraitIndex - 1, rect, Popup.BaseDisplayLayer + 1, null, true);
+                outro.AddImage(Layer.UI, Graphics.PortraitOffset + portraitIndex - 1, rect, Popup.BaseDisplayLayer + 2, null, true);
                 finished?.Invoke();
             }
         }
@@ -491,36 +485,18 @@ namespace Ambermoon.Render
             }
         }
 
-        class CustomAction : IAction
+        class CustomAction(Action<Action> action) : IAction
         {
-            readonly Action<Action> action;
-
-            public CustomAction(Action<Action> action)
-            {
-                this.action = action;
-            }
-
             public void Run(CustomOutro outro, Action finished)
             {
                 action?.Invoke(finished);
             }
         }
 
-        class ShowConversationTextAction : IAction
+        class ShowConversationTextAction(Rect rect, string text, int millisecondsPerCharacter,
+            TextColor textColor) : IAction
         {
-            readonly Rect rect;
-            readonly string text;
-            readonly int millisecondsPerCharacter;
-            readonly TextColor textColor;
-
-            public ShowConversationTextAction(Rect rect, string text, int millisecondsPerCharacter,
-                TextColor textColor)
-            {
-                this.rect = new Rect(rect);
-                this.text = text;
-                this.millisecondsPerCharacter = millisecondsPerCharacter;
-                this.textColor = textColor;
-            }
+            readonly Rect rect = new(rect);
 
             public void Run(CustomOutro outro, Action finished)
             {
@@ -542,7 +518,7 @@ namespace Ambermoon.Render
                 {
                     var textLine = outro.renderView.TextProcessor.GetLines(wrappedText, i, 1);
                     texts[i] = outro.AddText(textLine, new Rect(position, new Size(textRect.Width, Global.GlyphLineHeight)),
-                        currentTextColor, TextAlign.Left, Popup.BaseDisplayLayer + 2);
+                        currentTextColor, TextAlign.Left, Popup.BaseDisplayLayer + 4);
                     texts[i].Visible = i == 0;
                     texts[i].Clip(clip);
                     clip = clip.CreateModified(0, Global.GlyphLineHeight, 0, 0);
@@ -553,6 +529,29 @@ namespace Ambermoon.Render
                     if (colorChange != 0)
                         currentTextColor = (TextColor)(colorChange - SpecialGlyph.FirstColor);
                 }
+
+                if (lineSize <= 1) // First line already processed?
+                {
+                    ++processedLines;
+                    processedLineCharacters = 0;
+
+                    if (wrappedText.LineCount == 1)
+                    {
+                        finished?.Invoke();
+                        return;
+                    }
+
+                    lineSize = wrappedText.Lines[1].Count(c => c < (byte)SpecialGlyph.NewLine);
+
+                    if (lineSize == 0)
+                    {
+                        finished?.Invoke();
+                        return;
+                    }
+
+                    texts[1].Visible = true;
+                }
+
                 DrawNextCharacter();
 
                 void DrawNextCharacter()
@@ -563,6 +562,7 @@ namespace Ambermoon.Render
                     {
                         ++processedTextLength;
                         texts[processedLines].IncreaseClipWidth(Global.GlyphWidth);
+
                         if (++processedLineCharacters == lineSize)
                         {
                             ++processedLines;
@@ -573,6 +573,7 @@ namespace Ambermoon.Render
                                 lineSize = wrappedText.Lines[processedLines].Count(c => c < (byte)SpecialGlyph.NewLine);
                             }
                         }
+
                         outro.game.AddTimedEvent(TimeSpan.FromMilliseconds(millisecondsPerCharacter), DrawNextCharacter);
                     }
                 }

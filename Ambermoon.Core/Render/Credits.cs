@@ -36,8 +36,8 @@ namespace Ambermoon.Render
         readonly IGameRenderView renderView;
         readonly Layout layout;
         readonly Action<Action> finishAction;
-        readonly List<IRenderText> texts = new List<IRenderText>();
-        readonly Queue<CreditsText> creditsTexts = new Queue<CreditsText>();
+        readonly List<IRenderText> texts = [];
+        readonly Queue<CreditsText> creditsTexts = new();
         double ticks = 0;
         double nextTextTicks = 0;
         double lastScrollTicks = 0;
@@ -74,8 +74,8 @@ namespace Ambermoon.Render
             AddText("knowledge about Ambermoon, Amberstar and Thalion.");
             AddText("Over the years, he has kept so much information and");
             AddText("so many resources alive that Ambermoon likely");
-            AddText("wouldn’t exist today without him.");
-            AddText("Thank you so much for everything you have done!");
+            AddText("wouldn't exist today without him.");
+            AddText("Thank you so much for everything you've done!");
 
             AddText("I also want to thank Nico Bendlin and Jurie Horneman.", 3);
             AddText("Even though they don't have much time, they support");
@@ -85,7 +85,7 @@ namespace Ambermoon.Render
 
             AddText("And of course I want to thank my wife.", 3);
             AddText("She was incredibly patient and supportive with me,");
-            AddText("and I’m truly grateful for that.");
+            AddText("and I'm truly grateful for that.");
 
             AddHeader("My supporters", 16);
             AddText("Every nerd also needs something to eat. So I am very", 1);
@@ -163,7 +163,8 @@ namespace Ambermoon.Render
             AddText("and skdubg who also helped fixing translation bugs.");
 
             AddText("Thanks to Czudak who created the app icon, convinced", 1);
-            AddText("me to create a patreon page and wrote about my project.");
+            AddText("me to create a patreon page and wrote about my");
+            AddText("project.");
 
             AddText("Matthias Steinwachs (the guy who made the incredible", 6);
             AddText("music for Ambermoon) started creating remixes of");
