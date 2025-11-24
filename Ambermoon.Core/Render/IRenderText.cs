@@ -52,6 +52,8 @@ namespace Ambermoon.Render
         IRenderText Create(byte defaultTextPaletteIndex, IRenderLayer layer, IText text, TextColor textColor, bool shadow);
         IRenderText Create(byte defaultTextPaletteIndex, IRenderLayer layer, IText text, TextColor textColor, bool shadow,
             Rect bounds, TextAlign textAlign = TextAlign.Left);
+        IRenderText Create(byte defaultTextPaletteIndex, IRenderLayer layer, IText text, TextColor textColor, bool shadow,
+            Rect bounds, int positionFactor, int sizeFactor, TextAlign textAlign = TextAlign.Left);
         IRenderText CreateDigits(byte defaultTextPaletteIndex, IRenderLayer layer, IText digits, TextColor textColor,
             bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left);
     }

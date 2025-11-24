@@ -97,11 +97,17 @@ internal class TextShader : TextureShader
 
     }
 
+    protected TextShader(State state, string[] vertexShaderLines)
+        : base(state, TextFragmentShader(state), vertexShaderLines)
+    {
+
+    }
+
     protected TextShader(State state, string[] fragmentShaderLines, string[] vertexShaderLines)
         : base(state, fragmentShaderLines, vertexShaderLines)
     {
 
     }
 
-    public new static TextShader Create(State state) => new TextShader(state);
+    public new static TextShader Create(State state) => new(state);
 }

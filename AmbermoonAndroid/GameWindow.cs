@@ -795,6 +795,7 @@ class GameWindow : IContextProvider
             return textureAtlasManager;
         });
         renderView.SetTextureFactor(Layer.Text, 2);
+        renderView.SetTextureFactor(Layer.SubPixelText, 2);
 
         if (configuration.ShowFantasyIntro)
         {
@@ -1178,6 +1179,7 @@ class GameWindow : IContextProvider
                     return textureAtlasManager;
                 });
                 renderView.SetTextureFactor(Layer.Text, 2);
+                renderView.SetTextureFactor(Layer.SubPixelText, 2);
                 InitGlyphs(fontProvider, textureAtlasManager);
                 var gameVersions = new List<GameVersion>(5);
                 for (int i = 0; i < versions.Count; ++i)

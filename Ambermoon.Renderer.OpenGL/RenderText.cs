@@ -30,9 +30,9 @@ using Render;
 
 internal class RenderText : RenderNode, IRenderText
 {
-    const int CharacterWidth = 6;
-    const int CharacterHeight = LineHeight; // important to show lower diacritics
-    const int LineHeight = 7;
+    public const int CharacterWidth = 6;
+    public const int CharacterHeight = LineHeight; // important to show lower diacritics
+    public const int LineHeight = 7;
     const byte ShadowColorIndex = (byte)TextColor.Black;
     protected int drawIndex = -1;
     byte displayLayer = 0;
@@ -50,6 +50,7 @@ internal class RenderText : RenderNode, IRenderText
     bool updatingPositions = false;
     protected readonly int characterWidth = CharacterWidth;
     protected readonly int characterHeight = CharacterHeight;
+    protected readonly int lineHeight = LineHeight;
 
     public RenderText(byte defaultTextPaletteIndex, Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping)
         : base(0, 0, virtualScreen)
@@ -74,8 +75,8 @@ internal class RenderText : RenderNode, IRenderText
 
     public RenderText(byte defaultTextPaletteIndex, Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
         IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign,
-        int characterWidth = CharacterWidth, int characterHeight = CharacterHeight)
-        : base(text.MaxLineSize * characterWidth, text.LineCount * characterHeight - (LineHeight - characterHeight), virtualScreen)
+        int characterWidth = CharacterWidth, int characterHeight = CharacterHeight, int lineHeight = LineHeight)
+        : base(text.MaxLineSize * characterWidth, text.LineCount * characterHeight - (lineHeight - characterHeight), virtualScreen)
     {
         paletteIndex = defaultTextPaletteIndex;
         this.glyphTextureMapping = glyphTextureMapping;
@@ -89,6 +90,7 @@ internal class RenderText : RenderNode, IRenderText
         Y = bounds.Top;
         this.characterWidth = characterWidth;
         this.characterHeight = characterHeight;
+        this.lineHeight = lineHeight;
     }
 
     public byte DisplayLayer
@@ -265,7 +267,7 @@ internal class RenderText : RenderNode, IRenderText
                 width = x - X;
 
             x = X;
-            y += LineHeight;
+            y += lineHeight;
             numEmptyCharacterInLine = 0;
 
             return y + characterHeight - 1 <= bounds.Bottom;
@@ -415,7 +417,8 @@ internal class RenderText : RenderNode, IRenderText
                 Layer = Layer,
                 PaletteIndex = PaletteIndex,
                 Visible = Visible,
-                ClipArea = ClipArea
+                ClipArea = ClipArea,
+                TextureSize = new Size(CharacterWidth, CharacterHeight),
             };
 
             characterSprites.Add(sprite);
@@ -434,7 +437,8 @@ internal class RenderText : RenderNode, IRenderText
                     Y = characterSprite.Y + 1,
                     Layer = Layer,
                     PaletteIndex = PaletteIndex,                        
-                    Visible = Visible
+                    Visible = Visible,
+                    TextureSize = new Size(CharacterWidth, CharacterHeight),
                 };
                 shadowSprite.ClipArea = ClipArea;
 
@@ -503,14 +507,9 @@ internal class RenderText : RenderNode, IRenderText
     }
 }
 
-public class RenderTextFactory : IRenderTextFactory
+public class RenderTextFactory(Rect virtualScreen) : IRenderTextFactory
 {
-    internal Rect VirtualScreen { get; private set; } = null;
-
-    public RenderTextFactory(Rect virtualScreen)
-    {
-        VirtualScreen = virtualScreen;
-    }
+    internal Rect VirtualScreen { get; private set; } = virtualScreen;
 
     /// <inheritdoc/>
     public Dictionary<byte, Position> GlyphTextureMapping { get; set; }
@@ -530,6 +529,14 @@ public class RenderTextFactory : IRenderTextFactory
     public IRenderText Create(byte defaultTextPaletteIndex, IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)
     {
         return new RenderText(defaultTextPaletteIndex, VirtualScreen, GlyphTextureMapping, layer, text, textColor, shadow, bounds, textAlign);
+    }
+
+    public IRenderText Create(byte defaultTextPaletteIndex, IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds,
+        int positionFactor, int sizeFactor, TextAlign textAlign = TextAlign.Left)
+    {
+        return new RenderText(defaultTextPaletteIndex, new(positionFactor * VirtualScreen.Position, sizeFactor * VirtualScreen.Size),
+            GlyphTextureMapping, layer, text, textColor, shadow, new(positionFactor * bounds.Position, sizeFactor * bounds.Size),
+            textAlign, sizeFactor * RenderText.CharacterWidth, sizeFactor * RenderText.CharacterHeight, sizeFactor * RenderText.LineHeight);
     }
 
     public IRenderText CreateDigits(byte defaultTextPaletteIndex, IRenderLayer layer, IText digits, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)

@@ -247,6 +247,11 @@ public class RenderLayer : IRenderLayer, IDisposable
             BaseZ = 0.70f,
             EnableBlending = false
         } },
+        { Layer.SubPixelText, new ()
+        {
+            BaseZ = 0.70f,
+            EnableBlending = false
+        } },
         { Layer.SmallDigits, new ()
         {
             BaseZ = 0.70f,
@@ -400,18 +405,25 @@ public class RenderLayer : IRenderLayer, IDisposable
         bool layered = Config.Layered;
         bool opaque = Config.Opaque;
 
-        RenderBuffer = new RenderBuffer(state, layer == Layer.Map3DCeiling || layer == Layer.Map3D || layer == Layer.Billboards3D,
-            supportAnimations, layered, !Config.SupportTextures, layer == Layer.Billboards3D, layer == Layer.Text || layer == Layer.SmallDigits,
-            opaque, layer == Layer.FOW, layer == Layer.Map3DBackground,
-            layer == Layer.Misc || layer == Layer.OutroText || layer == Layer.IntroText || layer == Layer.IntroGraphics, // textures with alpha
-            layer == Layer.Images || layer == Layer.MobileOverlays,
+        RenderBuffer = new RenderBuffer(state,
+            is3D: layer == Layer.Map3DCeiling || layer == Layer.Map3D || layer == Layer.Billboards3D,
+            supportAnimations, layered,
+            noTexture: !Config.SupportTextures,
+            isBillboard: layer == Layer.Billboards3D,
+            isText: layer == Layer.Text || layer == Layer.SmallDigits || layer == Layer.SubPixelText,
+            opaque,
+            fow: layer == Layer.FOW,
+            sky: layer == Layer.Map3DBackground,
+            texturesWithAlpha: layer == Layer.Misc || layer == Layer.OutroText || layer == Layer.IntroText || layer == Layer.IntroGraphics,
+            imageWithoutPalette: layer == Layer.Images || layer == Layer.MobileOverlays,
             Config.TextureFactor,
-            Config.SupportPaletteFading);
+            fading: Config.SupportPaletteFading,
+            subPixel: layer == Layer.SubPixelText);
 
         renderBufferSemiTransparentFactory = () =>
             new RenderBuffer(state, false, supportAnimations, layered, false, false, false, opaque, layer == Layer.FOW,
                 layer == Layer.Map3DBackground, layer == Layer.Misc || layer == Layer.OutroText || layer == Layer.IntroText || layer == Layer.IntroGraphics,
-                layer == Layer.Images || layer == Layer.MobileOverlays, Config.TextureFactor, Config.SupportPaletteFading);
+                layer == Layer.Images || layer == Layer.MobileOverlays, Config.TextureFactor, Config.SupportPaletteFading, layer == Layer.SubPixelText);
 
         if (Config.SupportColoredRects)
             renderBufferColorRects = new RenderBuffer(state, false, false, true, true);
@@ -514,6 +526,28 @@ public class RenderLayer : IRenderLayer, IDisposable
                 else if (Layer == Layer.Text || Layer == Layer.SmallDigits)
                 {
                     TextShader shader = RenderBuffer.TextShader;
+
+                    shader.UsePalette(Config.UsePalette);
+                    shader.SetPaletteCount(palette.Height);
+                    shader.UpdateMatrices(state);
+
+                    shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+                    state.Gl.ActiveTexture(GLEnum.Texture0);
+                    texture.Bind();
+
+                    if (palette != null)
+                    {
+                        shader.SetPalette(1);
+                        state.Gl.ActiveTexture(GLEnum.Texture1);
+                        palette.Bind();
+                    }
+
+                    shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
+                    shader.SetZ(Config.BaseZ);
+                }
+                else if (Layer == Layer.SubPixelText)
+                {
+                    SubPixelTextShader shader = RenderBuffer.SubPixelTextShader;
 
                     shader.UsePalette(Config.UsePalette);
                     shader.SetPaletteCount(palette.Height);

@@ -58,6 +58,7 @@ namespace Ambermoon
         UI,
         Items,
         Text,
+        SubPixelText,
         SmallDigits,
         MainMenuGraphics,
         MainMenuText,

@@ -190,6 +190,11 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
 
                 if (RenderLayer.DefaultLayerConfigs[layer].Use320x256)
                     Set320x256View(renderLayer);
+                else if (layer == Layer.SubPixelText)
+                {
+                    renderLayer.PositionTransformation = (FloatPosition position) => 0.1f * position;
+                    renderLayer.SizeTransformation = (FloatSize size) => 0.1f * size;
+                }
 
                 AddLayer(renderLayer);
             }

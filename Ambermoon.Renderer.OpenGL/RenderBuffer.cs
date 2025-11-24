@@ -56,22 +56,23 @@ public class RenderBuffer : IDisposable
     readonly FloatBuffer extrudeBuffer = null;
     readonly FloatPositionBuffer centerBuffer = null;
     readonly ByteBuffer radiusBuffer = null;
-    static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
-    static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
-    static readonly Dictionary<State, OpaqueTextureShader> opaqueTextureShaders = new Dictionary<State, OpaqueTextureShader>();
-    static readonly Dictionary<State, Texture3DShader> texture3DShaders = new Dictionary<State, Texture3DShader>();
-    static readonly Dictionary<State, Billboard3DShader> billboard3DShaders = new Dictionary<State, Billboard3DShader>();
-    static readonly Dictionary<State, TextShader> textShaders = new Dictionary<State, TextShader>();
-    static readonly Dictionary<State, FowShader> fowShaders = new Dictionary<State, FowShader>();
-    static readonly Dictionary<State, SkyShader> skyShaders = new Dictionary<State, SkyShader>();
-    static readonly Dictionary<State, AlphaTextureShader> alphaTextureShaders = new Dictionary<State, AlphaTextureShader>();
-    static readonly Dictionary<State, ImageShader> imageShaders = new Dictionary<State, ImageShader>();
-    static readonly Dictionary<State, FadingTextureShader> fadingTextureShaders = new Dictionary<State, FadingTextureShader>();
+    static readonly Dictionary<State, ColorShader> colorShaders = [];
+    static readonly Dictionary<State, TextureShader> textureShaders = [];
+    static readonly Dictionary<State, OpaqueTextureShader> opaqueTextureShaders = [];
+    static readonly Dictionary<State, Texture3DShader> texture3DShaders = [];
+    static readonly Dictionary<State, Billboard3DShader> billboard3DShaders = [];
+    static readonly Dictionary<State, TextShader> textShaders = [];
+    static readonly Dictionary<State, SubPixelTextShader> subPixelTextShaders = [];
+    static readonly Dictionary<State, FowShader> fowShaders = [];
+    static readonly Dictionary<State, SkyShader> skyShaders = [];
+    static readonly Dictionary<State, AlphaTextureShader> alphaTextureShaders = [];
+    static readonly Dictionary<State, ImageShader> imageShaders = [];
+    static readonly Dictionary<State, FadingTextureShader> fadingTextureShaders = [];
 
     public RenderBuffer(State state, bool is3D, bool supportAnimations, bool layered,
         bool noTexture = false, bool isBillboard = false, bool isText = false, bool opaque = false,
-        bool fow = false, bool sky = false, bool texturesWithAlpha = false, bool noPaletteImage = false,
-        uint textureFactor = 1, bool fading = false)
+        bool fow = false, bool sky = false, bool texturesWithAlpha = false, bool imageWithoutPalette = false,
+        uint textureFactor = 1, bool fading = false, bool subPixel = false)
     {
         this.state = state;
         this.textureFactor = textureFactor;
@@ -89,7 +90,7 @@ public class RenderBuffer : IDisposable
                 fadingTextureShaders[state] = FadingTextureShader.Create(state);
             vertexArrayObject = new VertexArrayObject(state, fadingTextureShaders[state].ShaderProgram);
         }
-        else if (noPaletteImage)
+        else if (imageWithoutPalette)
         {
             if (!imageShaders.ContainsKey(state))
                 imageShaders[state] = ImageShader.Create(state);
@@ -121,9 +122,18 @@ public class RenderBuffer : IDisposable
         }
         else if (isText)
         {
-            if (!textShaders.ContainsKey(state))
-                textShaders[state] = TextShader.Create(state);
-            vertexArrayObject = new VertexArrayObject(state, textShaders[state].ShaderProgram);
+            if (subPixel)
+            {
+                if (!subPixelTextShaders.ContainsKey(state))
+                    subPixelTextShaders[state] = SubPixelTextShader.Create(state);
+                vertexArrayObject = new VertexArrayObject(state, subPixelTextShaders[state].ShaderProgram);
+            }
+            else
+            {
+                if (!textShaders.ContainsKey(state))
+                    textShaders[state] = TextShader.Create(state);
+                vertexArrayObject = new VertexArrayObject(state, textShaders[state].ShaderProgram);
+            }
         }
         else
         {
@@ -168,7 +178,7 @@ public class RenderBuffer : IDisposable
             positionBuffer = new FloatPositionBuffer(state, false);
         indexBuffer = new IndexBuffer(state);
 
-        if (texturesWithAlpha || noPaletteImage)
+        if (texturesWithAlpha || imageWithoutPalette)
             alphaBuffer = new ByteBuffer(state, false);
 
         if (fow)
@@ -191,7 +201,7 @@ public class RenderBuffer : IDisposable
         }
         else
         {
-            if (!noPaletteImage)
+            if (!imageWithoutPalette)
                 paletteIndexBuffer = new ByteBuffer(state, true);
             textureAtlasOffsetBuffer = new PositionBuffer(state, !supportAnimations);
 
@@ -202,7 +212,7 @@ public class RenderBuffer : IDisposable
                 vertexArrayObject.AddBuffer(TextShader.DefaultTextColorIndexName, textColorIndexBuffer);
             }
 
-            if (!isText && !is3D && !noPaletteImage)
+            if (!isText && !is3D && !imageWithoutPalette)
             {
                 maskColorBuffer = new ByteBuffer(state, !supportAnimations);
 
@@ -251,12 +261,12 @@ public class RenderBuffer : IDisposable
             vertexArrayObject.AddBuffer(ColorShader.DefaultPositionName, positionBuffer);
         vertexArrayObject.AddBuffer("index", indexBuffer);
 
-        if (texturesWithAlpha || noPaletteImage)
+        if (texturesWithAlpha || imageWithoutPalette)
             vertexArrayObject.AddBuffer(AlphaTextureShader.DefaultAlphaName, alphaBuffer);
 
         if (!fow && !noTexture)
         {
-            if (!noPaletteImage)
+            if (!imageWithoutPalette)
                 vertexArrayObject.AddBuffer(TextureShader.DefaultPaletteIndexName, paletteIndexBuffer);
             vertexArrayObject.AddBuffer(TextureShader.DefaultTexCoordName, textureAtlasOffsetBuffer);
         }
@@ -281,6 +291,7 @@ public class RenderBuffer : IDisposable
     internal Texture3DShader Texture3DShader => texture3DShaders[state];
     internal Billboard3DShader Billboard3DShader => billboard3DShaders[state];
     internal TextShader TextShader => textShaders[state];
+    internal SubPixelTextShader SubPixelTextShader => subPixelTextShaders[state];
     internal FowShader FowShader => fowShaders[state];
     internal SkyShader SkyShader => skyShaders[state];
     internal AlphaTextureShader AlphaTextureShader => alphaTextureShaders[state];

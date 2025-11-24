@@ -42,6 +42,11 @@ namespace Ambermoon
             return new Size(size.Width * factor, size.Height * factor);
         }
 
+        public static Size operator *(int factor, Size size)
+        {
+            return size * factor;
+        }
+
         public static bool operator ==(Size size1, Size size2)
         {
             if (ReferenceEquals(size1, size2))

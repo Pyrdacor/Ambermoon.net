@@ -27,6 +27,9 @@ namespace Ambermoon.Render
 {
     internal class Credits
     {
+        const int LayerPositionFactor = 10;
+        const int LayerSizeFactor = 10;
+
         struct CreditsText
         {
             public uint EmptyLines;
@@ -191,7 +194,7 @@ namespace Ambermoon.Render
             AddText("Discord Server: https://discord.gg/CCTt3bAh7g");
             AddText("www.pyrdacor.net");
 
-            AddText("December 2022", 2);
+            AddText("November 2025", 2);
 
             lastText = creditsTexts.Peek();
             SetupNextText(lastText.EmptyLines);
@@ -218,9 +221,10 @@ namespace Ambermoon.Render
             var bounds = layout.GetTextRect(0, Global.VirtualScreenHeight, Global.VirtualScreenWidth, Global.GlyphLineHeight);
             var renderText = renderView.RenderTextFactory.Create(
                 (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
-                renderView.GetLayer(Layer.Text),
+                renderView.GetLayer(Layer.SubPixelText),
                 renderView.TextProcessor.ProcessText(text, null, null),
-                Data.Enumerations.Color.Bright, false, bounds, TextAlign.Center);
+                Data.Enumerations.Color.Bright, false, bounds,
+                LayerPositionFactor, LayerSizeFactor, TextAlign.Center);
             texts.Add(renderText);
             renderText.Visible = true;
         }
@@ -230,15 +234,15 @@ namespace Ambermoon.Render
             double tickDiff = ticks - lastScrollTicks;
             lastScrollTicks = ticks;
             lineScrollTicks += tickDiff;
-            int scrollAmount = Util.Round(lineScrollTicks / 6.0);
+            int scrollAmount = Util.Round(lineScrollTicks * LayerPositionFactor / 6.0);
 
             if (scrollAmount != 0)
             {
                 for (int i = texts.Count - 1; i >= 0; --i)
                 {
-                    texts[i].Place(new Rect(0, texts[i].Y - scrollAmount, Global.VirtualScreenWidth, texts[i].Height), TextAlign.Center);
+                    texts[i].Place(new Rect(0, texts[i].Y - scrollAmount, Global.VirtualScreenWidth * LayerSizeFactor, texts[i].Height * LayerSizeFactor), TextAlign.Center);
 
-                    if (texts[i].Y <= -Global.GlyphLineHeight)
+                    if (texts[i].Y <= -Global.GlyphLineHeight * LayerSizeFactor)
                     {
                         texts[i].Delete();
                         texts.RemoveAt(i);
@@ -246,8 +250,7 @@ namespace Ambermoon.Render
                 }
             }
 
-            lastScrollTicks -= lineScrollTicks - scrollAmount * 6;
-            lineScrollTicks = 0;
+            lineScrollTicks -= scrollAmount * 6.0 / LayerPositionFactor;
         }
 
         public void Update(double deltaTime)
