@@ -214,6 +214,65 @@ namespace Ambermoon.Data
             return true;
         }
 
+        private static readonly Dictionary<Class, Attribute[]> LevelShardAttributeUpgrades = new()
+        {
+            {
+                Class.Adventurer,
+                [Attribute.Stamina, Attribute.Intelligence, Attribute.Speed, Attribute.AntiMagic, Attribute.Strength]
+            },
+            {
+                Class.Warrior,
+                [Attribute.Stamina, Attribute.Strength, Attribute.Speed, Attribute.AntiMagic, Attribute.Strength]
+            },
+            {
+                Class.Paladin,
+                [Attribute.Stamina, Attribute.Intelligence, Attribute.Speed, Attribute.AntiMagic, Attribute.Strength]
+            },
+            {
+                Class.Thief,
+                [Attribute.Stamina, Attribute.Dexterity, Attribute.Speed, Attribute.AntiMagic, Attribute.Strength]
+            },
+            {
+                Class.Ranger,
+                [Attribute.Stamina, Attribute.Intelligence, Attribute.Speed, Attribute.AntiMagic, Attribute.Strength]
+            },
+            {
+                Class.Healer,
+                [Attribute.Intelligence, Attribute.Stamina, Attribute.Speed, Attribute.AntiMagic, Attribute.Intelligence]
+            },
+            {
+                Class.Alchemist,
+                [Attribute.Intelligence, Attribute.Stamina, Attribute.Speed, Attribute.AntiMagic, Attribute.Intelligence]
+            },
+            {
+                Class.Mystic,
+                [Attribute.Intelligence, Attribute.Stamina, Attribute.Speed, Attribute.AntiMagic, Attribute.Intelligence]
+            },
+            {
+                Class.Mage,
+                [Attribute.Intelligence, Attribute.Stamina, Attribute.Speed, Attribute.AntiMagic, Attribute.Intelligence]
+            },
+        };
+
+        public void AddLevelShardEffects(Func<int, int, int> random, Features? features)
+        {
+            if (Level < 50 || Level >= 55)
+                return;
+
+            if (!LevelShardAttributeUpgrades.TryGetValue(Class, out var attributeUpgrades))
+            {
+                Level++;
+                AddLevelUpEffects(random, features);
+                return;
+            }
+
+            var attribute = attributeUpgrades[Level++ - 50];
+
+            Attributes[attribute].MaxValue += 5;
+
+            AddLevelUpEffects(random, features);
+        }
+
         public void AddLevelUpEffects(Func<int, int, int> random, Features? features)
         {
             var intelligence = Attributes[Attribute.Intelligence].TotalCurrentValue;

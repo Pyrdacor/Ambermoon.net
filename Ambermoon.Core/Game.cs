@@ -6456,6 +6456,13 @@ public class Game
                 switch (rewardEvent.Operation)
                 {
                     case RewardEvent.RewardOperation.Increase:
+                        if (partyMember.Level >= 50 && Features.HasFlag(Features.LevelShards))
+                        {
+                            for (int i = 0; i < rewardEvent.Value; i++)
+                                partyMember.AddLevelShardEffects(RandomInt, Features);
+                            followAction?.Invoke();
+                            return;
+                        }
                         long levelUps = Util.Limit(0, rewardEvent.Value, 50 - partyMember.Level);
                         if (levelUps == 0)
                         {
