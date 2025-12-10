@@ -61,6 +61,9 @@ internal class IndexPool
     {
         lock (releasedIndicesLock)
         {
+            if (releasedIndexNodesByIndex.ContainsKey(index))
+                return;
+
             releasedIndexNodesByIndex.Add(index, releasedIndices.AddLast(index));
         }
     }
