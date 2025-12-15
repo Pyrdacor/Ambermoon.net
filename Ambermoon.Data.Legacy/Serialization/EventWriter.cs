@@ -312,6 +312,13 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write(shakeEvent.Unused2);
                     break;
                 }
+                case EventType.ShowMap:
+                {
+                    var showMapEvent = @event as ShowMapEvent;
+                    dataWriter.WriteEnumAsByte(showMapEvent.Options);
+                    dataWriter.Write(showMapEvent.Unused);
+                    break;
+                }
                 default:
                 {
                     var debugEvent = @event as DebugEvent;

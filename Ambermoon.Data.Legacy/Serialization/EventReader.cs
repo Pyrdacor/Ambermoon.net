@@ -545,6 +545,17 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
+                case EventType.ShowMap:
+                {
+                    var options = (ShowMapEvent.MapOptions)dataReader.ReadByte();
+                    var unused = dataReader.ReadBytes(8);
+                    @event = new ShowMapEvent
+                    {
+                        Options = options,
+                        Unused = unused
+                    };
+                    break;
+                }
                 default:
                 {
                     @event = new DebugEvent

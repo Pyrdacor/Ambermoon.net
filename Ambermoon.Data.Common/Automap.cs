@@ -35,6 +35,14 @@ public class Automap
 
     public void ExploreBlock(Map map, uint x, uint y)
     {
+        if (ExplorationBits.Length != (map.Width * map.Height + 7) / 8)
+        {
+            var newExplorationBits = new byte[(map.Width * map.Height + 7) / 8];
+
+            Buffer.BlockCopy(ExplorationBits, 0, newExplorationBits, 0, Math.Min(ExplorationBits.Length, newExplorationBits.Length));
+            ExplorationBits = newExplorationBits;
+        }
+
         ExploreBlock(x + y * (uint)map.Width);
     }
 

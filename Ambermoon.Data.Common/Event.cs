@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Ambermoon.Data
 {
@@ -123,6 +122,10 @@ namespace Ambermoon.Data
 		/// Shakes the screen (Ambermoon Advanced only).
 		/// </summary>
         Shake,
+        /// <summary>
+        /// Shows the dungeon map  (Ambermoon Advanced only).
+        /// </summary>
+        ShowMap,
     }
 
     public class Event
@@ -1439,6 +1442,38 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return $"{Type} {Shakes} shakes";
+        }
+    }
+
+    public class ShowMapEvent : Event
+    {
+        [Flags]
+        public enum MapOptions
+        {
+            None = 0,
+            ShowSecretDoors = 0x1,
+            ShowMonsters = 0x2,
+            ShowPersons = 0x4,
+            ShowTraps = 0x8
+        }
+
+        public MapOptions Options { get; set; }
+        public byte[] Unused { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new ShowMapEvent
+            {
+                Options = Options,
+                Unused = CloneBytes(Unused),
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
+        public override string ToString()
+        {
+            return $"{Type} Option={Options}";
         }
     }
 

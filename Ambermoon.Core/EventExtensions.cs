@@ -19,11 +19,12 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Ambermoon.Data;
-using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
+using static Ambermoon.Game;
 
 namespace Ambermoon
 {
@@ -1310,6 +1311,25 @@ namespace Ambermoon
                         return null;
                     }
                     break;
+                case EventType.ShowMap:
+                    if (@event is not ShowMapEvent showMapEvent)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid show map event.");
+
+                    var automapOptions = new AutomapOptions
+                    {
+                        SecretDoorsVisible = showMapEvent.Options.HasFlag(ShowMapEvent.MapOptions.ShowSecretDoors),
+                        MonstersVisible = showMapEvent.Options.HasFlag(ShowMapEvent.MapOptions.ShowMonsters),
+                        PersonsVisible = showMapEvent.Options.HasFlag(ShowMapEvent.MapOptions.ShowPersons),
+                        TrapsVisible = showMapEvent.Options.HasFlag(ShowMapEvent.MapOptions.ShowTraps),
+                        ShowGotoPoints = false // Important so the event chain is ensured to continue at the same spot
+                    };
+
+                    game.ShowAutomap(automapOptions, () =>
+                    {
+                        if (@event.Next != null)
+                            TriggerEventChain(map, game, EventTrigger.Always, x, y, @event.Next, true);
+                    });
+                    return null;
                 default:
                     Console.WriteLine($"Unknown event type found: {@event.Type}");
                     return @event.Next;

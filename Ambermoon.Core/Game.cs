@@ -10548,7 +10548,8 @@ public class Game
                     SecretDoorsVisible = false,
                     MonstersVisible = false,
                     PersonsVisible = false,
-                    TrapsVisible = true
+                    TrapsVisible = true,
+                    ShowGotoPoints = true
                 }, finishAction), null, finishAction);
                 break;
             case Spell.FindMonsters:
@@ -10557,7 +10558,8 @@ public class Game
                     SecretDoorsVisible = false,
                     MonstersVisible = true,
                     PersonsVisible = false,
-                    TrapsVisible = false
+                    TrapsVisible = false,
+                    ShowGotoPoints = true
                 }, finishAction), null, finishAction);
                 break;
             case Spell.FindPersons:
@@ -10566,7 +10568,8 @@ public class Game
                     SecretDoorsVisible = false,
                     MonstersVisible = false,
                     PersonsVisible = true,
-                    TrapsVisible = false
+                    TrapsVisible = false,
+                    ShowGotoPoints = true
                 }, finishAction), null, finishAction);
                 break;
             case Spell.FindSecretDoors:
@@ -10575,7 +10578,8 @@ public class Game
                     SecretDoorsVisible = true,
                     MonstersVisible = false,
                     PersonsVisible = false,
-                    TrapsVisible = false
+                    TrapsVisible = false,
+                    ShowGotoPoints = true
                 }, finishAction), null, finishAction);
                 break;
             case Spell.MysticalMapping:
@@ -10584,7 +10588,8 @@ public class Game
                     SecretDoorsVisible = true,
                     MonstersVisible = true,
                     PersonsVisible = true,
-                    TrapsVisible = true
+                    TrapsVisible = true,
+                    ShowGotoPoints = true
                 }, finishAction), null, finishAction);
                 break;
             case Spell.MysticalMapI:
@@ -15534,6 +15539,7 @@ public class Game
         public bool MonstersVisible;
         public bool PersonsVisible;
         public bool TrapsVisible;
+        public bool ShowGotoPoints;
     }
 
     // Elf harp
@@ -15811,7 +15817,8 @@ public class Game
             SecretDoorsVisible = showAll,
             MonstersVisible = showAll,
             PersonsVisible = showAll,
-            TrapsVisible = showAll
+            TrapsVisible = showAll,
+            ShowGotoPoints = true
         });
     }
 
@@ -16090,12 +16097,15 @@ public class Game
                         // draw nothing
                         return;
                     }
-                    var gotoPoint = Map.GotoPoints.FirstOrDefault(p => p.X == tx + 1 && p.Y == ty + 1); // positions of goto points are 1-based
-                    if (gotoPoint != null && CurrentSavegame.IsGotoPointActive(gotoPoint.Index))
+                    if (automapOptions.ShowGotoPoints)
                     {
-                        AddAutomapType(tx, ty, x, y, AutomapType.GotoPoint);
-                        gotoPoints.Add(KeyValuePair.Create(gotoPoint,
-                            layout.AddTooltip(new Rect(x, y, 8, 8), gotoPoint.Name, TextColor.White)));
+                        var gotoPoint = Map.GotoPoints.FirstOrDefault(p => p.X == tx + 1 && p.Y == ty + 1); // positions of goto points are 1-based
+                        if (gotoPoint != null && CurrentSavegame.IsGotoPointActive(gotoPoint.Index))
+                        {
+                            AddAutomapType(tx, ty, x, y, AutomapType.GotoPoint);
+                            gotoPoints.Add(KeyValuePair.Create(gotoPoint,
+                                layout.AddTooltip(new Rect(x, y, 8, 8), gotoPoint.Name, TextColor.White)));
+                        }
                     }
                     if (automapType != AutomapType.None && automapType != AutomapType.Monster && automapType != AutomapType.Person)
                         AddAutomapType(tx, ty, x, y, automapType);

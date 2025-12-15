@@ -344,6 +344,15 @@ internal sealed class EventData
                     },
                     NextEventIndex = next
                 };
+            case EventType.ShowMap:
+                return new()
+                {
+                    Event = new ShowMapEvent()
+                    {
+                        Options = dataReader.ReadEnum8<ShowMapEvent.MapOptions>(),
+                    },
+                    NextEventIndex = next
+                };
             default:
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid event type.");
         }
@@ -536,6 +545,10 @@ internal sealed class EventData
             case EventType.Shake:
                 var shakeEvent = (ShakeEvent)@event;
                 dataWriter.Write((ushort)shakeEvent.Shakes);
+                break;
+            case EventType.ShowMap:
+                var showMapEvent = (ShowMapEvent)@event;
+                dataWriter.WriteEnum8(showMapEvent.Options);
                 break;
             default:
                 throw new AmbermoonException(ExceptionScope.Application, "Invalid event type.");
