@@ -1330,6 +1330,31 @@ namespace Ambermoon
                             TriggerEventChain(map, game, EventTrigger.Always, x, y, @event.Next, true);
                     });
                     return null;
+                case EventType.ToggleSwitch:
+                    if (@event is not ToggleSwitchEvent toggleSwitchEvent)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid toggle switch event.");
+
+                    if (map != null)
+                    {
+                        bool isOn = game.GetMapFrontTileIndex(map, x, y) == toggleSwitchEvent.FrontTileIndexOn;
+
+                        game.UpdateMapTile(new ChangeTileEvent()
+                        {
+                            X = x,
+                            Y = y,
+                            MapIndex = map.Index,
+                            FrontTileIndex = isOn ? toggleSwitchEvent.FrontTileIndexOff : toggleSwitchEvent.FrontTileIndexOn
+                        });
+
+                        var globalVariables = toggleSwitchEvent.GlobalVariables.Where(gv => gv != 0);
+                        var savegame = game.CurrentSavegame;
+                        
+                        foreach (var globalVariable in globalVariables)
+                        {
+                            savegame.SetGlobalVariable(globalVariable, !savegame.GetGlobalVariable(globalVariable));
+                        }
+                    }                   
+                    return @event.Next;
                 default:
                     Console.WriteLine($"Unknown event type found: {@event.Type}");
                     return @event.Next;

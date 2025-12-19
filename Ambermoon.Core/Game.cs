@@ -7762,6 +7762,27 @@ public class Game
         }, null, null, save);
     }
 
+    internal uint GetMapFrontTileIndex(Map map, uint x, uint y)
+    {
+        map ??= Map;
+
+        if (map == null)
+            return 0;
+
+        if (map.Type == MapType.Map2D)
+            return map.Tiles[x, y].FrontTileIndex;
+        
+        var tile3D = map.Blocks[x, y];
+
+        if (tile3D.MapBorder)
+            return 255;
+
+        if (tile3D.WallIndex != 0)
+            return 100 + tile3D.WallIndex;
+
+        return tile3D.ObjectIndex;
+    }
+
     internal void UpdateMapTile(ChangeTileEvent changeTileEvent, uint? currentX = null, uint? currentY = null,
         bool save = true)
     {

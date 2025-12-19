@@ -353,6 +353,17 @@ internal sealed class EventData
                     },
                     NextEventIndex = next
                 };
+            case EventType.ToggleSwitch:
+                return new()
+                {
+                    Event = new ToggleSwitchEvent()
+                    {
+                        GlobalVariableBytes = dataReader.ReadBytes(5),
+                        FrontTileIndexOff = dataReader.ReadWord(),
+                        FrontTileIndexOn = dataReader.ReadWord(),
+                    },
+                    NextEventIndex = next
+                };
             default:
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid event type.");
         }
@@ -549,6 +560,12 @@ internal sealed class EventData
             case EventType.ShowMap:
                 var showMapEvent = (ShowMapEvent)@event;
                 dataWriter.WriteEnum8(showMapEvent.Options);
+                break;
+            case EventType.ToggleSwitch:
+                var toggleSwitchEvent = (ToggleSwitchEvent)@event;
+                dataWriter.Write(toggleSwitchEvent.GlobalVariableBytes);
+                dataWriter.Write(toggleSwitchEvent.FrontTileIndexOff);
+                dataWriter.Write(toggleSwitchEvent.FrontTileIndexOn);
                 break;
             default:
                 throw new AmbermoonException(ExceptionScope.Application, "Invalid event type.");

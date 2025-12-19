@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 
@@ -126,6 +127,10 @@ namespace Ambermoon.Data
         /// Shows the dungeon map  (Ambermoon Advanced only).
         /// </summary>
         ShowMap,
+        /// <summary>
+        /// Toggles the event tile appearance and optionally 1-4 global variables.
+        /// </summary>
+        ToggleSwitch,
     }
 
     public class Event
@@ -1474,6 +1479,78 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return $"{Type} Option={Options}";
+        }
+    }
+
+    public class ToggleSwitchEvent : Event
+    {
+        public uint FrontTileIndexOff { get; set; }
+        public uint FrontTileIndexOn { get; set; }
+        public byte[] GlobalVariableBytes { get; set; } // 5 bytes = 40 bits = 4 global vars with 10 bits each
+
+        // up to 4
+        public ReadOnlyCollection<uint> GlobalVariables
+        {
+            get
+            {
+                if (GlobalVariableBytes == null || GlobalVariableBytes.Length < 5)
+                    GlobalVariableBytes = [0, 0, 0, 0, 0];
+
+                uint globalVar1 = GlobalVariableBytes[0];
+                uint globalVar2 = GlobalVariableBytes[1];
+                uint globalVar3 = GlobalVariableBytes[2];
+                uint globalVar4 = GlobalVariableBytes[3];
+
+                globalVar1 <<= 2;
+                globalVar1 |= (globalVar2 >> 6);
+                globalVar2 &= 0x3f;
+                globalVar2 <<= 4;
+                globalVar2 |= (globalVar3 >> 4);
+                globalVar3 &= 0xf;
+                globalVar3 <<= 6;
+                globalVar3 |= (globalVar4 >> 2);
+                globalVar4 &= 0x3;
+                globalVar4 <<= 8;
+                globalVar4 |= GlobalVariableBytes[4];
+
+                return new List<uint>() { globalVar1, globalVar2, globalVar3, globalVar4 }.AsReadOnly();
+            }
+            set
+            {
+                if (value == null || value.Count != 4)
+                    throw new ArgumentException("Exactly 4 global variables required.");
+
+                var var1 = value[0] & 0x3ff;
+                var var2 = value[1] & 0x3ff;
+                var var3 = value[2] & 0x3ff;
+                var var4 = value[3] & 0x3ff;
+
+                if (GlobalVariableBytes == null || GlobalVariableBytes.Length < 5)
+                    GlobalVariableBytes = [0, 0, 0, 0, 0];
+
+                GlobalVariableBytes[0] = (byte)(var1 >> 2);
+                GlobalVariableBytes[1] = (byte)((var1 & 0x3) << 6 | (var2 >> 4));
+                GlobalVariableBytes[2] = (byte)((var2 & 0xf) << 4 | (var3 >> 6));
+                GlobalVariableBytes[3] = (byte)((var3 & 0x3f) << 2 | (var4 >> 8));
+                GlobalVariableBytes[4] = (byte)(var4 & 0xff);
+            }
+        }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new ToggleSwitchEvent
+            {
+                FrontTileIndexOff = FrontTileIndexOff,
+                FrontTileIndexOn = FrontTileIndexOn,
+                GlobalVariableBytes = CloneBytes(GlobalVariableBytes),
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
+        public override string ToString()
+        {
+            return $"{Type} OffTile={FrontTileIndexOff}, OnTile={FrontTileIndexOn}, GlobVars={string.Join(",", GlobalVariables.Where(v => v != 0))}";
         }
     }
 

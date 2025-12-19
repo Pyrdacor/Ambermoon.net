@@ -319,6 +319,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write(showMapEvent.Unused);
                     break;
                 }
+                case EventType.ToggleSwitch:
+                {
+                    var toggleSwitchEvent = @event as ToggleSwitchEvent;
+                    dataWriter.Write(toggleSwitchEvent.GlobalVariableBytes);
+                    dataWriter.Write(toggleSwitchEvent.FrontTileIndexOff);
+                    dataWriter.Write(toggleSwitchEvent.FrontTileIndexOn);
+                    break;
+                }
                 default:
                 {
                     var debugEvent = @event as DebugEvent;

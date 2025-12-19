@@ -556,6 +556,19 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
+                case EventType.ToggleSwitch:
+                {
+                    var globalVarBytes = dataReader.ReadBytes(5);
+                    var frontTileOff = dataReader.ReadWord();
+                    var frontTileOn = dataReader.ReadWord();
+                    @event = new ToggleSwitchEvent
+                    {
+                        GlobalVariableBytes = globalVarBytes,
+                        FrontTileIndexOff = frontTileOff,
+                        FrontTileIndexOn = frontTileOn,
+                    };
+                    break;
+                }
                 default:
                 {
                     @event = new DebugEvent
