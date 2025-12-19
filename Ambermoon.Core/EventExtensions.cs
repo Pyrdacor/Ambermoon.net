@@ -1340,8 +1340,8 @@ namespace Ambermoon
 
                         game.UpdateMapTile(new ChangeTileEvent()
                         {
-                            X = x,
-                            Y = y,
+                            X = x + 1, // The logic expects the coordinates to be
+                            Y = y + 1, // 1-based while here x and y are 0-based.
                             MapIndex = map.Index,
                             FrontTileIndex = isOn ? toggleSwitchEvent.FrontTileIndexOff : toggleSwitchEvent.FrontTileIndexOn
                         });
