@@ -20,12 +20,16 @@ namespace Ambermoon.Data.Legacy.Serialization
             foreach (var @event in events)
             {
                 dataWriter.WriteEnumAsByte(@event.Type);
-                SaveEvent(dataWriter, @event);
+                WriteEventData(dataWriter, @event);
                 dataWriter.Write((ushort)(@event.Next == null ? 0xffff : events.IndexOf(@event.Next)));
             }
         }
 
-        public static void SaveEvent(IDataWriter dataWriter, Event @event)
+        /// <summary>
+        /// Note that this only writes the 9 event data bytes. It assumes that the event type
+        /// byte is writter already and it won't write the next event word.
+        /// </summary>
+        public static void WriteEventData(IDataWriter dataWriter, Event @event)
         {
             switch (@event.Type)
             {
@@ -323,8 +327,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     var toggleSwitchEvent = @event as ToggleSwitchEvent;
                     dataWriter.Write(toggleSwitchEvent.GlobalVariableBytes);
-                    dataWriter.Write(toggleSwitchEvent.FrontTileIndexOff);
-                    dataWriter.Write(toggleSwitchEvent.FrontTileIndexOn);
+                    dataWriter.Write((ushort)toggleSwitchEvent.FrontTileIndexOff);
+                    dataWriter.Write((ushort)toggleSwitchEvent.FrontTileIndexOn);
                     break;
                 }
                 default:
