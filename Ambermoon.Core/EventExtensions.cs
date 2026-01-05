@@ -1365,10 +1365,12 @@ namespace Ambermoon
 
                     return ExecuteEvent(new ChangeTileEvent()
                     {
+                        Type = EventType.ChangeTile,
                         X = dynamicChangeTileEvent.X,
                         Y = dynamicChangeTileEvent.Y,
                         MapIndex = dynamicChangeTileEvent.MapIndex,
-                        FrontTileIndex = frontTileIndex
+                        FrontTileIndex = frontTileIndex,
+                        Next = dynamicChangeTileEvent.Next,
                     }, map, game, ref trigger, x, y, ref lastEventStatus, out aborted, out eventProvider, conversationPartner, characterIndex);
                 }
                 default:
