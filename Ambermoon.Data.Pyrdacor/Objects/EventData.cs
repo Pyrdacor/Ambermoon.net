@@ -564,8 +564,17 @@ internal sealed class EventData
             case EventType.ToggleSwitch:
                 var toggleSwitchEvent = (ToggleSwitchEvent)@event;
                 dataWriter.Write(toggleSwitchEvent.GlobalVariableBytes);
-                dataWriter.Write(toggleSwitchEvent.FrontTileIndexOff);
-                dataWriter.Write(toggleSwitchEvent.FrontTileIndexOn);
+                dataWriter.Write((ushort)toggleSwitchEvent.FrontTileIndexOff);
+                dataWriter.Write((ushort)toggleSwitchEvent.FrontTileIndexOn);
+                break;
+            case EventType.DynamicChangeTile:
+                var dynamicChangeTileEvent = (DynamicChangeTileEvent)@event;
+                dataWriter.Write((byte)dynamicChangeTileEvent.X);
+                dataWriter.Write((byte)dynamicChangeTileEvent.Y);
+                dataWriter.Write((ushort)dynamicChangeTileEvent.GlobalVariable);
+                dataWriter.Write((ushort)dynamicChangeTileEvent.FrontTileIndexOff);
+                dataWriter.Write((ushort)dynamicChangeTileEvent.FrontTileIndexOn);
+                dataWriter.Write((ushort)dynamicChangeTileEvent.MapIndex);
                 break;
             default:
                 throw new AmbermoonException(ExceptionScope.Application, "Invalid event type.");

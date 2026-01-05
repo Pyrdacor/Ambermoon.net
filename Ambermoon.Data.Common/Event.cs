@@ -131,6 +131,10 @@ namespace Ambermoon.Data
         /// Toggles the event tile appearance and optionally 1-4 global variables.
         /// </summary>
         ToggleSwitch,
+        /// <summary>
+        /// Dynamically changes a tile based on the state of a global variable.
+        /// </summary>
+        DynamicChangeTile,
     }
 
     public class Event
@@ -1551,6 +1555,43 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return $"{Type} OffTile={FrontTileIndexOff}, OnTile={FrontTileIndexOn}, GlobVars={string.Join(",", GlobalVariables.Where(v => v != 0))}";
+        }
+    }
+
+    public class DynamicChangeTileEvent : Event
+    {
+        public uint X { get; set; }
+        public uint Y { get; set; }
+        public uint GlobalVariable  { get; set; }
+        public uint FrontTileIndexOff { get; set; }
+        public uint FrontTileIndexOn { get; set; }
+        /// <summary>
+        /// 0 means same map
+        /// </summary>
+        public uint MapIndex { get; set; }
+        public uint WallIndexOff => FrontTileIndexOff > 100 && FrontTileIndexOff < 255 ? FrontTileIndexOff - 100 : 0;
+        public uint WallIndexOn => FrontTileIndexOn > 100 && FrontTileIndexOn < 255 ? FrontTileIndexOn - 100 : 0;
+        public uint ObjectIndexOff => FrontTileIndexOff <= 100 ? FrontTileIndexOff : 0;
+        public uint ObjectIndexOn => FrontTileIndexOn <= 100 ? FrontTileIndexOn : 0;
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new DynamicChangeTileEvent
+            {
+                X = X,
+                Y = Y,
+                GlobalVariable = GlobalVariable,
+                FrontTileIndexOff = FrontTileIndexOff,
+                FrontTileIndexOn = FrontTileIndexOn,
+                MapIndex = MapIndex,
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
+        public override string ToString()
+        {
+            return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, X {X}, Y {Y}, Front tile / Wall / Object {FrontTileIndexOff}/{FrontTileIndexOn}";
         }
     }
 

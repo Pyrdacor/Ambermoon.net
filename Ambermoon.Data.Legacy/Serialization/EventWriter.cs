@@ -331,6 +331,20 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write((ushort)toggleSwitchEvent.FrontTileIndexOn);
                     break;
                 }
+                case EventType.DynamicChangeTile:
+                {
+                    var dynamicChangeTileEvent = @event as DynamicChangeTileEvent;
+                    ushort frontTileIndexWord = (ushort)((dynamicChangeTileEvent.FrontTileIndexOff << 4) | ((dynamicChangeTileEvent.FrontTileIndexOn >> 8) & 0xf));
+                    byte frontTileIndexByte = (byte)(dynamicChangeTileEvent.FrontTileIndexOn & 0xff);
+                    
+                    dataWriter.Write((byte)dynamicChangeTileEvent.X);
+                    dataWriter.Write((byte)dynamicChangeTileEvent.Y);
+                    dataWriter.Write((ushort)dynamicChangeTileEvent.GlobalVariable);
+                    dataWriter.Write(frontTileIndexWord);
+                    dataWriter.Write(frontTileIndexByte);
+                    dataWriter.Write((ushort)dynamicChangeTileEvent.MapIndex);
+                    break;
+                }
                 default:
                 {
                     var debugEvent = @event as DebugEvent;

@@ -398,7 +398,7 @@ namespace Ambermoon
                 case EventType.ChangeTile:
                 {
                     if (@event is not ChangeTileEvent changeTileEvent)
-                        throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid change tile event.");
 
                     // Note: Savegame stores the front tile index for 2D and wall/object index for 3D.
                     // Note: If map index is 0 (same map) we have to replace it with the real map index
@@ -1355,6 +1355,22 @@ namespace Ambermoon
                         }
                     }                   
                     return @event.Next;
+                case EventType.DynamicChangeTile:
+                {
+                    if (@event is not DynamicChangeTileEvent dynamicChangeTileEvent)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid dynamic change tile event.");
+
+                    bool globalVarSet = game.CurrentSavegame.GetGlobalVariable(dynamicChangeTileEvent.GlobalVariable);
+                    uint frontTileIndex = globalVarSet ? dynamicChangeTileEvent.FrontTileIndexOn : dynamicChangeTileEvent.FrontTileIndexOff;
+
+                    return ExecuteEvent(new ChangeTileEvent()
+                    {
+                        X = dynamicChangeTileEvent.X,
+                        Y = dynamicChangeTileEvent.Y,
+                        MapIndex = dynamicChangeTileEvent.MapIndex,
+                        FrontTileIndex = frontTileIndex
+                    }, map, game, ref trigger, x, y, ref lastEventStatus, out aborted, out eventProvider, conversationPartner, characterIndex);
+                }
                 default:
                     Console.WriteLine($"Unknown event type found: {@event.Type}");
                     return @event.Next;

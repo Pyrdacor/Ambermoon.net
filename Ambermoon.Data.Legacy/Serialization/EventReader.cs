@@ -569,6 +569,32 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
+                case EventType.DynamicChangeTile:
+                {
+                    var x = dataReader.ReadByte();
+                    var y = dataReader.ReadByte();
+                    // Global var needs 10 bits
+                    // And we have 2 front tile indexes
+                    // We only have 5 bytes (= 40 bits) for that.
+                    // Easiest way: GlobalVar has full 16 bits
+                    // Remaining 24 bits are split into two 12 bit front tile indexes.
+                    var globalVar = dataReader.ReadWord();
+                    uint frontTileIndexOff = dataReader.ReadWord();
+                    uint frontTileIndexOn = dataReader.ReadByte();
+                    frontTileIndexOn |= ((frontTileIndexOff << 8) & 0xf00);
+                    frontTileIndexOff >>= 4;
+                    var mapIndex = dataReader.ReadWord();
+                    @event = new DynamicChangeTileEvent
+                    {
+                        X = x,
+                        Y = y,
+                        GlobalVariable = globalVar,
+                        FrontTileIndexOff = frontTileIndexOff,
+                        FrontTileIndexOn = frontTileIndexOn,
+                        MapIndex = mapIndex
+                    };
+                    break;
+                }
                 default:
                 {
                     @event = new DebugEvent
