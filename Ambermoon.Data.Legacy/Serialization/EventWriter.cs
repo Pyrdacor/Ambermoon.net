@@ -345,6 +345,32 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write((ushort)dynamicChangeTileEvent.MapIndex);
                     break;
                 }
+                case EventType.RectangularExploration:
+                {
+                    var rectangularExplorationEvent = @event as RectangularExplorationEvent;
+                    dataWriter.Write((byte)rectangularExplorationEvent.X);
+                    dataWriter.Write((byte)rectangularExplorationEvent.Y);
+                    dataWriter.Write((byte)rectangularExplorationEvent.Width);
+                    dataWriter.Write((byte)rectangularExplorationEvent.Height);
+                    dataWriter.WriteEnumAsByte(rectangularExplorationEvent.Exploration);
+                    dataWriter.Write((ushort)rectangularExplorationEvent.MapIndex);
+                    dataWriter.Write(rectangularExplorationEvent.Unused);
+                    break;
+                }
+                case EventType.VerticalLineReveal:
+                {
+                    var verticalLineRevealEvent = @event as VerticalLineRevealEvent;
+                    dataWriter.Write((byte)verticalLineRevealEvent.X1);
+                    dataWriter.Write((byte)verticalLineRevealEvent.Y1);
+                    dataWriter.Write((byte)verticalLineRevealEvent.Height1);
+                    dataWriter.Write((byte)verticalLineRevealEvent.X2);
+                    dataWriter.Write((byte)verticalLineRevealEvent.Y2);
+                    dataWriter.Write((byte)verticalLineRevealEvent.Height2);
+                    dataWriter.Write((byte)verticalLineRevealEvent.X3);
+                    dataWriter.Write((byte)verticalLineRevealEvent.Y3);
+                    dataWriter.Write((byte)verticalLineRevealEvent.Height3);
+                    break;
+                }
                 default:
                 {
                     var debugEvent = @event as DebugEvent;

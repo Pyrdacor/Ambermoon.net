@@ -1646,7 +1646,7 @@ namespace Ambermoon.Data
     /// </summary>
     public class RectangularExplorationEvent : Event
     {
-        public enum ExplorationType
+        public enum ExplorationType : byte
         {
             Hide,
             Reveal,
@@ -1662,6 +1662,7 @@ namespace Ambermoon.Data
         /// 0 means same map
         /// </summary>
         public uint MapIndex { get; set; }
+        public ushort Unused { get; set; }
 
         public override Event Clone(bool keepNext)
         {
@@ -1673,6 +1674,7 @@ namespace Ambermoon.Data
                 Height = Height,
                 Exploration = Exploration,
                 MapIndex = MapIndex,
+                Unused = Unused
             };
             CloneProperties(clone, keepNext);
             return clone;

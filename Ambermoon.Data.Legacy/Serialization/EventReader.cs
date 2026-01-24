@@ -595,6 +595,54 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
+                case EventType.RectangularExploration:
+                {
+                    var x = dataReader.ReadByte();
+                    var y = dataReader.ReadByte();
+                    var width = dataReader.ReadByte();
+                    var height = dataReader.ReadByte();
+                    var explorationType = (RectangularExplorationEvent.ExplorationType)dataReader.ReadByte();
+                    var mapIndex = dataReader.ReadWord();
+                    var unused = dataReader.ReadWord();
+
+                    @event = new RectangularExplorationEvent
+                    {
+                        X = x,
+                        Y = y,
+                        Width = width,
+                        Height = height,
+                        Exploration = explorationType,
+                        MapIndex = mapIndex,
+                        Unused = unused
+                    };
+                    break;
+                }
+                case EventType.VerticalLineReveal:
+                {
+                    var x1 = dataReader.ReadByte();
+                    var y1 = dataReader.ReadByte();
+                    var height1 = dataReader.ReadByte();
+                    var x2 = dataReader.ReadByte();
+                    var y2 = dataReader.ReadByte();
+                    var height2 = dataReader.ReadByte();
+                    var x3 = dataReader.ReadByte();
+                    var y3 = dataReader.ReadByte();
+                    var height3 = dataReader.ReadByte();
+
+                    @event = new VerticalLineRevealEvent
+                    {
+                        X1 = x1,
+                        Y1 = y1,
+                        Height1 = height1,
+                        X2 = x2,
+                        Y2 = y2,
+                        Height2 = height2,
+                        X3 = x3,
+                        Y3 = y3,
+                        Height3 = height3,
+                    };
+                    break;
+                }
                 default:
                 {
                     @event = new DebugEvent
