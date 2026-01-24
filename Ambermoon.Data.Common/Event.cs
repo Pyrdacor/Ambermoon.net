@@ -147,7 +147,7 @@ namespace Ambermoon.Data
 
     public interface IBranchEvent
     {
-        public uint AlternativeBranchEventIndex { get; }
+        public uint AlternativeBranchEventIndex { get; set; }
     }
 
     public class Event
@@ -233,7 +233,11 @@ namespace Ambermoon.Data
         public byte Unused { get; set; }
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
-        public uint AlternativeBranchEventIndex => UnlockFailedEventIndex;
+        public uint AlternativeBranchEventIndex
+        {
+            get => UnlockFailedEventIndex;
+            set => UnlockFailedEventIndex = value;
+        }
 
         public override Event Clone(bool keepNext)
         {
@@ -306,7 +310,11 @@ namespace Ambermoon.Data
         public bool NoSave => Flags.HasFlag(ChestFlags.NoSave);
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
-        public uint AlternativeBranchEventIndex => UnlockFailedEventIndex;
+        public uint AlternativeBranchEventIndex
+        {
+            get => UnlockFailedEventIndex;
+            set => UnlockFailedEventIndex = value;
+        }
         /// <summary>
         /// This gives the value to reduce the chance to find the chest.
         /// A value of 0 means that the chest is always available.
@@ -863,7 +871,11 @@ namespace Ambermoon.Data
         /// 0xffff means continue with next map event from the list.
         /// </summary>
         public uint ContinueIfFalseWithMapEventIndex { get; set; }
-        public uint AlternativeBranchEventIndex => ContinueIfFalseWithMapEventIndex;
+        public uint AlternativeBranchEventIndex
+        {
+            get => ContinueIfFalseWithMapEventIndex;
+            set => ContinueIfFalseWithMapEventIndex = value;
+        }
 
         public override Event Clone(bool keepNext)
         {
@@ -973,7 +985,11 @@ namespace Ambermoon.Data
 		/// 0xffff means continue with next map event from the list.
 		/// </summary>
 		public uint ContinueIfFalseWithMapEventIndex { get; set; }
-        public uint AlternativeBranchEventIndex => ContinueIfFalseWithMapEventIndex;
+        public uint AlternativeBranchEventIndex
+        {
+            get => ContinueIfFalseWithMapEventIndex;
+            set => ContinueIfFalseWithMapEventIndex = value;
+        }
 
         public override Event Clone(bool keepNext)
 		{
@@ -1138,7 +1154,11 @@ namespace Ambermoon.Data
         /// 0xffff means continue with next map event from the list.
         /// </summary>
         public uint ContinueIfFalseWithMapEventIndex { get; set; }
-        public uint AlternativeBranchEventIndex => ContinueIfFalseWithMapEventIndex;
+        public uint AlternativeBranchEventIndex
+        {
+            get => ContinueIfFalseWithMapEventIndex;
+            set => ContinueIfFalseWithMapEventIndex = value;
+        }
         public byte[] Unused { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -1285,7 +1305,11 @@ namespace Ambermoon.Data
         /// 0xffff means just stop the event list when selecting "No".
         /// </summary>
         public uint NoEventIndex { get; set; }
-        public uint AlternativeBranchEventIndex => NoEventIndex;
+        public uint AlternativeBranchEventIndex
+        {
+            get => NoEventIndex;
+            set => NoEventIndex = value;
+        }
 
         public override Event Clone(bool keepNext)
         {
