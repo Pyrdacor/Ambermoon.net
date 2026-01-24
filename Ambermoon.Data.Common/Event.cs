@@ -135,6 +135,19 @@ namespace Ambermoon.Data
         /// Dynamically changes a tile based on the state of a global variable.
         /// </summary>
         DynamicChangeTile,
+        /// <summary>
+        /// Changes exploration of a rectangular map area.
+        /// </summary>
+        RectangularExploration,
+        /// <summary>
+        /// Reveals up to 3 vertical lines on the current dungeon map.
+        /// </summary>
+        VerticalLineReveal,
+    }
+
+    public interface IBranchEvent
+    {
+        public uint AlternativeBranchEventIndex { get; }
     }
 
     public class Event
@@ -211,7 +224,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class DoorEvent : Event
+    public class DoorEvent : Event, IBranchEvent
     {
         public uint LockpickingChanceReduction { get; set; }
         public byte DoorIndex { get; set; }
@@ -220,6 +233,7 @@ namespace Ambermoon.Data
         public byte Unused { get; set; }
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
+        public uint AlternativeBranchEventIndex => UnlockFailedEventIndex;
 
         public override Event Clone(bool keepNext)
         {
@@ -244,7 +258,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class ChestEvent : Event
+    public class ChestEvent : Event, IBranchEvent
     {
         [Flags]
         public enum ChestFlags : byte
@@ -292,6 +306,7 @@ namespace Ambermoon.Data
         public bool NoSave => Flags.HasFlag(ChestFlags.NoSave);
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
+        public uint AlternativeBranchEventIndex => UnlockFailedEventIndex;
         /// <summary>
         /// This gives the value to reduce the chance to find the chest.
         /// A value of 0 means that the chest is always available.
@@ -798,7 +813,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class ConditionEvent : Event
+    public class ConditionEvent : Event, IBranchEvent
     {
         public enum ConditionType
         {
@@ -848,6 +863,7 @@ namespace Ambermoon.Data
         /// 0xffff means continue with next map event from the list.
         /// </summary>
         public uint ContinueIfFalseWithMapEventIndex { get; set; }
+        public uint AlternativeBranchEventIndex => ContinueIfFalseWithMapEventIndex;
 
         public override Event Clone(bool keepNext)
         {
@@ -923,7 +939,7 @@ namespace Ambermoon.Data
         }
     }
 
-	public class PartyMemberConditionEvent : Event
+	public class PartyMemberConditionEvent : Event, IBranchEvent
 	{
 		public enum PartyMemberConditionType : byte
 		{
@@ -957,8 +973,9 @@ namespace Ambermoon.Data
 		/// 0xffff means continue with next map event from the list.
 		/// </summary>
 		public uint ContinueIfFalseWithMapEventIndex { get; set; }
+        public uint AlternativeBranchEventIndex => ContinueIfFalseWithMapEventIndex;
 
-		public override Event Clone(bool keepNext)
+        public override Event Clone(bool keepNext)
 		{
 			var clone = new PartyMemberConditionEvent
 			{
@@ -1110,7 +1127,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class Dice100RollEvent : Event
+    public class Dice100RollEvent : Event, IBranchEvent
     {
         /// <summary>
         /// Chance in percent: 0 ~ 100
@@ -1121,6 +1138,7 @@ namespace Ambermoon.Data
         /// 0xffff means continue with next map event from the list.
         /// </summary>
         public uint ContinueIfFalseWithMapEventIndex { get; set; }
+        public uint AlternativeBranchEventIndex => ContinueIfFalseWithMapEventIndex;
         public byte[] Unused { get; set; }
 
         public override Event Clone(bool keepNext)
@@ -1258,7 +1276,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class DecisionEvent : Event
+    public class DecisionEvent : Event, IBranchEvent
     {
         public uint TextIndex { get; set; }
         public byte[] Unknown1 { get; set; }
@@ -1267,6 +1285,7 @@ namespace Ambermoon.Data
         /// 0xffff means just stop the event list when selecting "No".
         /// </summary>
         public uint NoEventIndex { get; set; }
+        public uint AlternativeBranchEventIndex => NoEventIndex;
 
         public override Event Clone(bool keepNext)
         {
@@ -1592,6 +1611,105 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, X {X}, Y {Y}, Front tile / Wall / Object {FrontTileIndexOff}/{FrontTileIndexOn}";
+        }
+    }
+
+    /// <summary>
+    /// Changes the exploration of a rectangular area of a map.
+    /// 
+    /// It is possible to reveal or hide areas but also to invert
+    /// the current exploration (e.g. hidden -> revealed and vice versa).
+    /// </summary>
+    public class RectangularExplorationEvent : Event
+    {
+        public enum ExplorationType
+        {
+            Hide,
+            Reveal,
+            Invert
+        }
+
+        public uint X { get; set; }
+        public uint Y { get; set; }
+        public uint Width { get; set; }
+        public uint Height { get; set; }
+        public ExplorationType Exploration { get; set; }
+        /// <summary>
+        /// 0 means same map
+        /// </summary>
+        public uint MapIndex { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new RectangularExplorationEvent
+            {
+                X = X,
+                Y = Y,
+                Width = Width,
+                Height = Height,
+                Exploration = Exploration,
+                MapIndex = MapIndex,
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
+        public override string ToString()
+        {
+            return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, {Exploration} ({X},{Y}):({Width}x{Height})";
+        }
+    }
+
+    /// <summary>
+    /// This event always targets the current map.
+    /// It can reveal up to 3 vertical lines on the dungeon map.
+    /// So it explores those tiles.
+    /// Each vertial line is given by the X and Y of the first tile
+    /// and a height value which specifies the number of tiles to
+    /// go down.
+    /// 
+    /// The benefit of this event is that you can reveal 3 areas
+    /// at once. For bigger rectangular areas the RectangularExplorationEvent
+    /// is more suitable. This is also true if you need to hide/toggle
+    /// exploration instead of revealing or need to specify a different
+    /// target map.
+    /// 
+    /// This event is mainly useful for non-rectangular shapes like circles
+    /// on the map which should be revealed.
+    /// </summary>
+    public class VerticalLineRevealEvent : Event
+    {
+        public uint X1 { get; set; }
+        public uint Y1 { get; set; }
+        public uint Height1 { get; set; }
+        public uint X2 { get; set; }
+        public uint Y2 { get; set; }
+        public uint Height2 { get; set; }
+        public uint X3 { get; set; }
+        public uint Y3 { get; set; }
+        public uint Height3 { get; set; }
+
+        public override Event Clone(bool keepNext)
+        {
+            var clone = new VerticalLineRevealEvent
+            {
+                X1 = X1,
+                Y1 = Y1,
+                Height1 = Height1,
+                X2 = X2,
+                Y2 = Y2,
+                Height2 = Height2,
+                X3 = X3,
+                Y3 = Y3,
+                Height3 = Height3,
+            };
+            CloneProperties(clone, keepNext);
+            return clone;
+        }
+
+        public override string ToString()
+        {
+            return $"{Type}: ({X1},{Y1}:{Height1}), ({X2},{Y2}:{Height2}), ({X3},{Y3}:{Height3})";
         }
     }
 

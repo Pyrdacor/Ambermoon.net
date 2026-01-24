@@ -19,19 +19,20 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Ambermoon.Data;
+using Ambermoon.Data.Audio;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Serialization;
 using Ambermoon.Render;
 using Ambermoon.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Attribute = Ambermoon.Data.Attribute;
-using TextColor = Ambermoon.Data.Enumerations.Color;
-using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
-using Ambermoon.Data.Audio;
+using static Ambermoon.Render.Character2D;
 using static Ambermoon.UI.BuiltinTooltips;
+using Attribute = Ambermoon.Data.Attribute;
+using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon;
 
@@ -6428,10 +6429,10 @@ public class Game
 
                 if (partyMember.AttacksPerRound != oldAttacksPerRound)
                 {
-                    var currentAttacksPerRoundIncreaseLevels = partyMember.Level / Math.Max(1, (int)partyMember.AttacksPerRound);
+                    var currentAttacksPerRoundIncreaseLevels = partyMember.Level / Math.Max(1, partyMember.AttacksPerRound - 1);
 
                     if (partyMember.AttacksPerRound == 1 && partyMember.AttacksPerRoundIncreaseLevels != 0)
-                        partyMember.AttacksPerRoundIncreaseLevels = (ushort)currentAttacksPerRoundIncreaseLevels;
+                        partyMember.AttacksPerRoundIncreaseLevels = (ushort)Math.Max(partyMember.AttacksPerRoundIncreaseLevels, partyMember.Level + 1);
                     else if (partyMember.AttacksPerRound > 1)
                         partyMember.AttacksPerRoundIncreaseLevels = (ushort)Math.Max(1, currentAttacksPerRoundIncreaseLevels);
                 }
@@ -7224,6 +7225,99 @@ public class Game
 
         customOutro = new CustomOutro(this, layout, CurrentSavegame);
         customOutro.Start();
+    }
+
+    private void ChangeMapAreaExploration(uint mapIndex, uint x, uint y, uint width, uint height,
+        RectangularExplorationEvent.ExplorationType explorationType)
+    {
+        if (width == 0 || height == 0)
+            return;
+
+        var map = MapManager.GetMap(mapIndex);
+
+        // we use 0-based coordinates
+        x = Math.Max(1, x) - 1;
+        y = Math.Max(1, y) - 1;
+
+        if (x >= map.Width || y >= map.Height)
+            return;
+
+        var automap = CurrentSavegame.Automaps.TryGetValue(mapIndex, out var existingAutomap)
+            ? existingAutomap
+            : new Automap() { ExplorationBits = new byte[(map.Width * map.Height + 7) / 8] };
+
+        uint startX = x;
+        uint endX = Math.Min(x + width, (uint)map.Width);
+        uint endY = Math.Min(y + height, (uint)map.Height);
+
+        for (; y < endY; y++)
+        {
+            int rowBaseBit = (int)(y * (uint)map.Width + x);
+
+            for (x = startX; x < endX; x++)
+            {
+                int bitIndex = rowBaseBit++;
+                int byteIndex = bitIndex >> 3;
+                byte mask = (byte)(1 << (bitIndex & 7));
+
+                switch (explorationType)
+                {
+                    case RectangularExplorationEvent.ExplorationType.Reveal:
+                        automap.ExplorationBits[byteIndex] |= mask;
+                        break;
+
+                    case RectangularExplorationEvent.ExplorationType.Hide:
+                        automap.ExplorationBits[byteIndex] &= (byte)~mask;
+                        break;
+
+                    case RectangularExplorationEvent.ExplorationType.Invert:
+                        automap.ExplorationBits[byteIndex] ^= mask;
+                        break;
+                }
+            }
+        }
+
+        CurrentSavegame.Automaps[Map.Index] = automap;
+    }
+
+    public void ExploreMapArea(RectangularExplorationEvent rectangularExplorationEvent)
+    {
+        if (!ingame || Map is null || !is3D)
+            return;
+
+        var mapIndex = rectangularExplorationEvent.MapIndex;
+
+        if (mapIndex == 0)
+            mapIndex = Map.Index;
+
+        ChangeMapAreaExploration(mapIndex, rectangularExplorationEvent.X, rectangularExplorationEvent.Y,
+            rectangularExplorationEvent.Width, rectangularExplorationEvent.Height, rectangularExplorationEvent.Exploration);
+    }
+
+    public void ExploreMapArea(VerticalLineRevealEvent verticalLineRevealEvent)
+    {
+        if (!ingame || Map is null || !is3D)
+            return;
+
+        var reveal = RectangularExplorationEvent.ExplorationType.Reveal;
+
+        if (verticalLineRevealEvent.Height1 != 0)
+        {
+            ChangeMapAreaExploration(Map.Index, verticalLineRevealEvent.X1, verticalLineRevealEvent.Y1,
+                1u, verticalLineRevealEvent.Height1, reveal);
+        }
+
+        if (verticalLineRevealEvent.Height2 != 0)
+        {
+            ChangeMapAreaExploration(Map.Index, verticalLineRevealEvent.X2, verticalLineRevealEvent.Y2,
+                1u, verticalLineRevealEvent.Height2, reveal);
+        }
+
+        if (verticalLineRevealEvent.Height3 != 0)
+        {
+            ChangeMapAreaExploration(Map.Index, verticalLineRevealEvent.X3, verticalLineRevealEvent.Y3,
+                1u, verticalLineRevealEvent.Height3, reveal);
+        }
     }
 
     public bool ExploreMap()

@@ -1373,6 +1373,18 @@ namespace Ambermoon
                         Next = dynamicChangeTileEvent.Next,
                     }, map, game, ref trigger, x, y, ref lastEventStatus, out aborted, out eventProvider, conversationPartner, characterIndex);
                 }
+                case EventType.RectangularExploration:
+                    if (@event is not RectangularExplorationEvent rectangularExplorationEvent)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid rectangular exploration event.");
+
+                    game.ExploreMapArea(rectangularExplorationEvent);
+                    break;
+                case EventType.VerticalLineReveal:
+                    if (@event is not VerticalLineRevealEvent verticalLineRevealEvent)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid vertical line reveal event.");
+
+                    game.ExploreMapArea(verticalLineRevealEvent);
+                    break;
                 default:
                     Console.WriteLine($"Unknown event type found: {@event.Type}");
                     return @event.Next;
