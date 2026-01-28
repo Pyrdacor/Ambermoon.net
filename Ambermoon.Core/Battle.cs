@@ -2261,7 +2261,7 @@ namespace Ambermoon
 
                 if (checkDeflection && !godmode)
                 {
-					uint antiMagicBuffValue = game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.AntiMagic);
+					uint antiMagicBuffValue = target is PartyMember ? game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.AntiMagic) : 0;
 
                     if (protectedCharacters.Contains(target) || game.RollDice100() < (int)(target.Attributes[Attribute.AntiMagic].TotalCurrentValue + antiMagicBuffValue))
                     {
@@ -4438,9 +4438,9 @@ namespace Ambermoon
             attackDamage = game.AddAttributeDamageBonus(attacker, attackDamage);
             int defense = target.BaseDefense + target.BonusDefense + (int)target.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
 
-            if (attackDamage > 0)
+            if (attackDamage > 0 && attacker is PartyMember)
                 attackDamage = (attackDamage * (100 + (int)game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
-            if (defense > 0)
+            if (defense > 0 && attacker is PartyMember)
                 defense = (defense * (100 + (int)game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection))) / 100;
 
             if (game.Features.HasFlag(Features.ExtendedCurseEffects))
