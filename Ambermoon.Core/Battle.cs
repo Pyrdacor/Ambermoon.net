@@ -4440,7 +4440,7 @@ namespace Ambermoon
 
             if (attackDamage > 0 && attacker is PartyMember)
                 attackDamage = (attackDamage * (100 + (int)game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
-            if (defense > 0 && attacker is PartyMember)
+            if (defense > 0 && target is PartyMember)
                 defense = (defense * (100 + (int)game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection))) / 100;
 
             if (game.Features.HasFlag(Features.ExtendedCurseEffects))
