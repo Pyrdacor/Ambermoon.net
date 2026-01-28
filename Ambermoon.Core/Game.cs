@@ -9560,6 +9560,7 @@ public class Game
             if (creatingItems && itemGrid.Disabled)
             {
                 creatingItems = false;
+                UpdateButtons();
                 HandleEvent();
             }
         }
