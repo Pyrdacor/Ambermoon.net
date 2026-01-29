@@ -55,14 +55,22 @@ artifacts:
     name: Ambermoon.net-Mac
   - path: AmbermoonInstall.exe
     name: AmbermoonInstaller
-  - path: AmbermoonAndroid.apk
+  - path: com.pyrdacor.AmbermoonAndroid.apk
     name: AmbermoonAndroid
   - path: nuget\*.nupkg
     name: NugetPackages
 
 after_build:
-    - ps: if (($env:APPVEYOR_REPO_TAG -eq $true) -or ($env:APPVEYOR_REPO_BRANCH -eq 'test-macos')) { ./publish.ps1 }
-    - ps: ./nuget.ps1
+    - ps: |
+        if ($env:APPVEYOR_REPO_BRANCH -match 'android-v\d+\.\d+\.\d+') {
+          dotnet publish --no-restore AmbermoonAndroid/AmbermoonAndroid.csproj -c Release -f net9.0-android35.0 -p:DefineConstants="GLES" -p:AndroidPackageFormat=apk
+          Copy-Item "./Ambermoon.Android/bin/Any CPU/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid.apk" "com.pyrdacor.AmbermoonAndroid.apk"
+        } else {
+          if (($env:APPVEYOR_REPO_TAG -eq $true) -or ($env:APPVEYOR_REPO_BRANCH -eq 'test-macos')) {
+            ./publish.ps1
+          }
+          ./nuget.ps1
+        }
 
 test: false
 
