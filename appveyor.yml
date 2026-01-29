@@ -16,13 +16,27 @@ for:
 
     image:
         - macos-monterey
+-
+    branches:
+        only:
+            - /android-v\d+\.\d+\.\d+/
+
+    image:
+        - Visual Studio 2022
+    build:
+        project: AmbermoonAndroid/AmbermoonAndroid.csproj
 
 platform: Any CPU
 configuration: Release
 
 before_build:
-  - ps: if ($env:CONFIGURATION -eq 'ReleaseAndroid') { dotnet workload install android }
-  - dotnet restore Ambermoon.net.sln --verbosity normal
+  - ps: |
+      if ($env:APPVEYOR_REPO_BRANCH -match 'android-v\d+\.\d+\.\d+') {
+        dotnet workload install android
+        dotnet restore AmbermoonAndroid/AmbermoonAndroid.csproj
+      } else {
+        dotnet restore Ambermoon.net.sln --verbosity normal
+      }
 
 build:
   parallel: true
@@ -41,6 +55,8 @@ artifacts:
     name: Ambermoon.net-Mac
   - path: AmbermoonInstall.exe
     name: AmbermoonInstaller
+  - path: AmbermoonAndroid.apk
+    name: AmbermoonAndroid
   - path: nuget\*.nupkg
     name: NugetPackages
 
@@ -141,6 +157,20 @@ deploy:
     force_update: true
     on:
       branch: 'test-macos'
+  - provider: GitHub
+    name: AmbermoonAndroid
+    artifact: AmbermoonAndroid
+    tag: $(APPVEYOR_REPO_TAG_NAME)
+    release: $(APPVEYOR_REPO_TAG_NAME)
+    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    auth_token:
+      secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
+    draft: true
+    prerelease: false
+    force_update: true
+    on:
+      APPVEYOR_REPO_TAG: true
+      APPVEYOR_REPO_TAG_NAME: /android-v\d+\.\d+\.\d+/
   - provider: NuGet
     name: NugetPackages
     api_key:
