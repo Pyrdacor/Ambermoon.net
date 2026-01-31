@@ -63,7 +63,7 @@ artifacts:
 after_build:
     - ps: |
         if ($env:APPVEYOR_REPO_BRANCH -match '^android-v\d+\.\d+\.\d+$') {
-          dotnet publish --no-restore AmbermoonAndroid/AmbermoonAndroid.csproj -c Release -f net9.0-android35.0 -p:DefineConstants="GLES" -p:AndroidPackageFormat=apk
+          dotnet publish AmbermoonAndroid/AmbermoonAndroid.csproj -c Release -f net9.0-android35.0 -p:DefineConstants="GLES" -p:AndroidPackageFormat=apk
           Copy-Item "./Ambermoon.Android/bin/Any CPU/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid.apk" "com.pyrdacor.AmbermoonAndroid.apk"
         } else {
           if (($env:APPVEYOR_REPO_TAG -eq $true) -or ($env:APPVEYOR_REPO_BRANCH -eq 'test-macos')) {
