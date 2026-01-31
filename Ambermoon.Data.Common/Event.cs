@@ -1533,7 +1533,7 @@ namespace Ambermoon.Data
     {
         public uint FrontTileIndexOff { get; set; }
         public uint FrontTileIndexOn { get; set; }
-        public byte[] GlobalVariableBytes { get; set; } // 5 bytes = 40 bits = 4 global vars with 10 bits each
+        public byte[] GlobalVariableBytes { get; set; } = [0, 0, 0, 0, 0]; // 5 bytes = 40 bits = 4 global vars with 10 bits each
 
         // up to 4
         public ReadOnlyCollection<uint> GlobalVariables
@@ -1542,6 +1542,8 @@ namespace Ambermoon.Data
             {
                 if (GlobalVariableBytes == null || GlobalVariableBytes.Length < 5)
                     GlobalVariableBytes = [0, 0, 0, 0, 0];
+                else if (GlobalVariableBytes.Length > 5)
+                    GlobalVariableBytes = GlobalVariableBytes[..^5];
 
                 uint globalVar1 = GlobalVariableBytes[0];
                 uint globalVar2 = GlobalVariableBytes[1];
