@@ -57,6 +57,8 @@ artifacts:
     name: AmbermoonInstaller
   - path: com.pyrdacor.AmbermoonAndroid.apk
     name: AmbermoonAndroid
+  - path: com.pyrdacor.AmbermoonAndroid-Signed.apk
+    name: AmbermoonAndroidSigned
   - path: nuget\*.nupkg
     name: NugetPackages
 
@@ -64,7 +66,8 @@ after_build:
     - ps: |
         if ($env:APPVEYOR_REPO_BRANCH -match '^android-v\d+\.\d+\.\d+$') {
           dotnet publish AmbermoonAndroid/AmbermoonAndroid.csproj -c Release -f net9.0-android35.0 -p:DefineConstants="GLES" -p:AndroidPackageFormat=apk
-          Copy-Item "./Ambermoon.Android/bin/Any CPU/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid.apk" "com.pyrdacor.AmbermoonAndroid.apk"
+          Copy-Item "./Ambermoon.Android/bin/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid.apk" "com.pyrdacor.AmbermoonAndroid.apk"
+          Copy-Item "./Ambermoon.Android/bin/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid-Signed.apk" "com.pyrdacor.AmbermoonAndroid-Signed.apk"
         } else {
           if (($env:APPVEYOR_REPO_TAG -eq $true) -or ($env:APPVEYOR_REPO_BRANCH -eq 'test-macos')) {
             ./publish.ps1
@@ -174,6 +177,20 @@ deploy:
   - provider: GitHub
     name: AmbermoonAndroid
     artifact: AmbermoonAndroid
+    tag: $(APPVEYOR_REPO_TAG_NAME)
+    release: $(APPVEYOR_REPO_TAG_NAME)
+    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    auth_token:
+      secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
+    draft: true
+    prerelease: false
+    force_update: true
+    on:
+      APPVEYOR_REPO_TAG: true
+      APPVEYOR_REPO_TAG_NAME: /^android-v\d+\.\d+\.\d+$/
+  - provider: GitHub
+    name: AmbermoonAndroidSigned
+    artifact: AmbermoonAndroidSigned
     tag: $(APPVEYOR_REPO_TAG_NAME)
     release: $(APPVEYOR_REPO_TAG_NAME)
     description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
