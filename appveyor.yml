@@ -66,8 +66,8 @@ after_build:
     - ps: |
         if ($env:APPVEYOR_REPO_BRANCH -match '^android-v\d+\.\d+\.\d+$') {
           dotnet publish AmbermoonAndroid/AmbermoonAndroid.csproj -c Release -f net9.0-android35.0 -p:DefineConstants="GLES" -p:AndroidPackageFormat=apk
-          Copy-Item "./Ambermoon.Android/bin/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid.apk" "com.pyrdacor.AmbermoonAndroid.apk"
-          Copy-Item "./Ambermoon.Android/bin/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid-Signed.apk" "com.pyrdacor.AmbermoonAndroid-Signed.apk"
+          Copy-Item "./AmbermoonAndroid/bin/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid.apk" "com.pyrdacor.AmbermoonAndroid.apk"
+          Copy-Item "./AmbermoonAndroid/bin/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid-Signed.apk" "com.pyrdacor.AmbermoonAndroid-Signed.apk"
         } else {
           if (($env:APPVEYOR_REPO_TAG -eq $true) -or ($env:APPVEYOR_REPO_BRANCH -eq 'test-macos')) {
             ./publish.ps1
