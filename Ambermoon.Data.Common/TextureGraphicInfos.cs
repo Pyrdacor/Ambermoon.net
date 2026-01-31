@@ -144,7 +144,26 @@ namespace Ambermoon.Data
 			new(64, 25),
 			new(16, 41),
 			new(16, 41), // 110
-		];
+            new(64, 51),
+            new(64, 50),
+            new(32, 11),
+            new(48, 13),
+            new(32, 20),
+            new(128, 15),
+            new(48, 12),
+            new(48, 27),
+            new(48, 27),
+            new(32, 25), // 120
+            new(32, 25),
+            new(32, 24),
+            new(32, 24),
+            new(32, 24),
+            new(32, 25),
+            new(32, 25),
+            new(32, 25),
+            new(32, 24),
+            new(32, 24), // 129
+        ];
         /* NOTE: You can find these values programmatically like this:
             using Ambermoon.Data.Legacy;
 
@@ -578,6 +597,11 @@ namespace Ambermoon.Data
             new(1, new(64, 60)),
             new(1, new(80, 78)),
             new(1, new(48, 78)), // 400
+            new(3, new(48, 72)),
+            new(1, new(48, 74)),
+            new(1, new(64, 88)),
+            new(1, new(128, 120)),
+            new(1, new(128, 69)), // 406
         ];
 
         /* NOTE: You can find these values programmatically like this:
