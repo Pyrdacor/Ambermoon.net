@@ -597,6 +597,7 @@ namespace Ambermoon.Data
             new(1, new(64, 60)),
             new(1, new(80, 78)),
             new(1, new(48, 78)), // 400
+            new(4, new(64, 64)),
             new(3, new(48, 72)),
             new(1, new(48, 74)),
             new(1, new(64, 88)),
