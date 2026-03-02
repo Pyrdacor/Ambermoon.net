@@ -6,19 +6,25 @@ namespace Ambermoon.Data.Legacy.Characters
 {
     public class CharacterManager : ICharacterManager
     {
-		readonly Dictionary<uint, NPC> npcs = new Dictionary<uint, NPC>();
-        readonly Dictionary<uint, Monster> monsters = new Dictionary<uint, Monster>();        
-        readonly Dictionary<uint, MonsterGroup> monsterGroups = new Dictionary<uint, MonsterGroup>();
+        readonly Dictionary<uint, PartyMember> initialPartyMembers = [];
+        readonly Dictionary<uint, NPC> npcs = [];
+        readonly Dictionary<uint, Monster> monsters = [];
+        readonly Dictionary<uint, MonsterGroup> monsterGroups = [];
 
         public CharacterManager(ILegacyGameData gameData)
         {
+            var partyMemberReader = new PartyMemberReader();
 			var npcReader = new NPCReader();
             var monsterReader = new MonsterReader(gameData);
             var monsterGroupReader = new MonsterGroupReader();
 
+            if (!gameData.Files.TryGetValue("Initial/Party_char.amb", out var partyCharacterContainer))
+                partyCharacterContainer = gameData.Files["Save.00/Party_char.amb"];
             if (!gameData.Files.TryGetValue("Monster_char_data.amb", out var monsterDataContainer))
                 monsterDataContainer = gameData.Files["Monster_char.amb"];
 
+            foreach (var partyMemberFile in partyCharacterContainer.Files.Where(f => f.Value.Size != 0))
+                initialPartyMembers.Add((uint)partyMemberFile.Key, PartyMember.Load((uint)partyMemberFile.Key, partyMemberReader, partyMemberFile.Value, gameData.Files["Party_texts.amb"].Files[partyMemberFile.Key]));
             foreach (var npcFile in gameData.Files["NPC_char.amb"].Files.Where(f => f.Value.Size != 0))
                 npcs.Add((uint)npcFile.Key, NPC.Load((uint)npcFile.Key, npcReader, npcFile.Value, gameData.Files["NPC_texts.amb"].Files[npcFile.Key]));
             foreach (var monsterFile in monsterDataContainer.Files.Where(f => f.Value.Size != 0))
@@ -27,7 +33,7 @@ namespace Ambermoon.Data.Legacy.Characters
                 monsterGroups.Add((uint)monsterGroupFile.Key, MonsterGroup.Load(this, monsterGroupReader, monsterGroupFile.Value));
 		}
 
-        public Monster GetMonster(uint index) => index == 0 || !monsters.ContainsKey(index) ? null : monsters[index];
+        public Monster GetMonster(uint index) => index == 0 || !monsters.TryGetValue(index, out Monster value) ? null : value;
 
         public Monster CloneMonster(Monster monster)
         {
@@ -43,12 +49,15 @@ namespace Ambermoon.Data.Legacy.Characters
             return clone;
 		}
 
-		public NPC GetNPC(uint index) => index == 0 || !npcs.ContainsKey(index) ? null : npcs[index];
+        public PartyMember GetInitialPartyMember(uint index) => index == 0 || !initialPartyMembers.TryGetValue(index, out PartyMember value) ? null : value;
 
-        public MonsterGroup GetMonsterGroup(uint index) => index == 0 || !monsterGroups.ContainsKey(index) ? null : monsterGroups[index];
+        public NPC GetNPC(uint index) => index == 0 || !npcs.TryGetValue(index, out NPC value) ? null : value;
 
-        public IReadOnlyList<NPC> NPCs => npcs.Values.ToList();
-        public IReadOnlyList<Monster> Monsters => monsters.Values.ToList();
-        public IReadOnlyDictionary<uint, MonsterGroup> MonsterGroups => monsterGroups;
+        public MonsterGroup GetMonsterGroup(uint index) => index == 0 || !monsterGroups.TryGetValue(index, out MonsterGroup value) ? null : value;
+
+        public IReadOnlyList<PartyMember> InitialPartyMembers => initialPartyMembers.Values.ToList().AsReadOnly();
+        public IReadOnlyList<NPC> NPCs => npcs.Values.ToList().AsReadOnly();
+        public IReadOnlyList<Monster> Monsters => monsters.Values.ToList().AsReadOnly();
+        public IReadOnlyDictionary<uint, MonsterGroup> MonsterGroups => monsterGroups.AsReadOnly();
     }
 }
