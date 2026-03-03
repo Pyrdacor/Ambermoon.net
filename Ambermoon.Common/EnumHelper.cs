@@ -5,13 +5,18 @@ namespace Ambermoon
 {
     public static class EnumHelper
     {
-        public static TEnum[] GetValues<TEnum>() => (TEnum[])Enum.GetValues(typeof(TEnum));
+        public static TEnum ParseFlagsEnum<TEnum>(string value, bool ignoreCase = false) where TEnum : struct
+        {
+            return Enum.Parse<TEnum>(value.Replace('|', ','), ignoreCase);
+        }
 
-        public static string GetName<TEnum>(TEnum value) => Enum.GetName(typeof(TEnum), value);
+        public static TEnum[] GetValues<TEnum>() where TEnum : struct => (TEnum[])Enum.GetValues(typeof(TEnum));
 
-        public static int NameCount<TEnum>() => Enum.GetNames(typeof(TEnum)).Length;
+        public static string GetName<TEnum>(TEnum value) where TEnum : struct => Enum.GetName(typeof(TEnum), value);
 
-        public static string GetFlagNames<TEnum>(TEnum value, int bytes)
+        public static int NameCount<TEnum>() where TEnum : struct => Enum.GetNames(typeof(TEnum)).Length;
+
+        public static string GetFlagNames<TEnum>(TEnum value, int bytes) where TEnum : struct
         {
             uint ToUint(TEnum value)
             {
