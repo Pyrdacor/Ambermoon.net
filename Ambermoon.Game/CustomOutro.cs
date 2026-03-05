@@ -21,18 +21,16 @@
 
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
+using Ambermoon.Render;
 using Ambermoon.UI;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
-namespace Ambermoon.Render
+namespace Ambermoon.Game
 {
     internal class CustomOutro
     {
-        Credits credits;
+        Credits? credits;
         readonly Game game;
         readonly Layout layout;
         readonly IGameRenderView renderView;
@@ -42,7 +40,7 @@ namespace Ambermoon.Render
         readonly List<UIText> texts = [];
         readonly List<IColoredRect> areas = [];
         readonly List<Panel> panels = [];
-        ISprite eagle = null;
+        ISprite? eagle = null;
         const uint EgilPortraiIndex = 5;
         const uint PyrdacorPortraitIndex = 95;
 
@@ -83,7 +81,7 @@ namespace Ambermoon.Render
 
                 void MoveShipLeft()
                 {
-                    --game.CurrentSavegame.TransportLocations[0].Position.X;
+                    --game.CurrentSavegame!.TransportLocations[0].Position.X;
                     game.UpdateTransportPosition(0);
 
                     if (--numMoves == 0)
@@ -209,7 +207,7 @@ namespace Ambermoon.Render
             {
                 game.Pause();
                 game.StartSequence();
-                layout.AddFadeEffect(new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight), Color.Black, FadeEffectType.FadeIn, Game.FadeTime);
+                layout.AddFadeEffect(new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight), Render.Color.Black, FadeEffectType.FadeIn, GameCore.FadeTime);
                 game.AddTimedEvent(TimeSpan.FromMilliseconds(Game.FadeTime), () =>
                 {
                     Clear();
@@ -314,7 +312,7 @@ namespace Ambermoon.Render
         {
             // Load initial save but use current game hero portrait and name.
             var hero = savegame.PartyMembers[1];
-            game.LoadInitial(hero.Name, hero.Gender == Gender.Female, hero.PortraitIndex, newSavegame =>
+            game.LoadInitialCustom(hero.Name, hero.Gender == Gender.Female, hero.PortraitIndex, newSavegame =>
             {
                 // Add Egil to second slot
                 newSavegame.CurrentPartyMemberIndices[1] = 8;

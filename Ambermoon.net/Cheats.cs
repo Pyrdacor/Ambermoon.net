@@ -1,15 +1,15 @@
-﻿using Ambermoon.Data;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Ambermoon.Data;
 
 namespace Ambermoon;
 
 class Cheats
 {
-    static readonly System.Random random = new System.Random(DateTime.Now.Millisecond);
+    static readonly System.Random random = new(DateTime.Now.Millisecond);
 
-    static readonly Dictionary<string, KeyValuePair<string, Action<Game, string[]>>> cheats = new()
+    static readonly Dictionary<string, KeyValuePair<string, Action<GameCore, string[]>>> cheats = new()
     {
         { "help",
             Create
@@ -229,7 +229,7 @@ class Cheats
         },
     };
 
-    static KeyValuePair<string, Action<Game, string[]>> Create(string help, Action<Game, string[]> action)
+    static KeyValuePair<string, Action<GameCore, string[]>> Create(string help, Action<GameCore, string[]> action)
         => KeyValuePair.Create(help, action);
 
     static string currentAutoFillInput = null;
@@ -241,7 +241,7 @@ class Cheats
     static List<ConsoleKeyInfo> trackedKeys = new();
     static bool inputDisabled = false;
 
-    public static void ProcessInput(string input, Game game)
+    public static void ProcessInput(string input, GameCore game)
     {
         if (inputDisabled)
             return;
@@ -251,7 +251,7 @@ class Cheats
         ProcessCurrentInput(game, true);
     }
 
-    public static void ProcessInput(ConsoleKeyInfo keyInfo, Game game)
+    public static void ProcessInput(ConsoleKeyInfo keyInfo, GameCore game)
     {
         if (inputDisabled)
         {
@@ -414,6 +414,12 @@ class Cheats
 
         if (!string.IsNullOrWhiteSpace(currentInput))
         {
+            if (currentInput.Equals("schnism", StringComparison.InvariantCultureIgnoreCase))
+            {
+                game.Schnism();
+                return;
+            }
+
             var parts = currentInput.Split(' ');
 
             if (parts.Length != 0)
@@ -458,7 +464,7 @@ class Cheats
         }
     }
 
-    static void Help(Game game, string[] args)
+    static void Help(GameCore game, string[] args)
     {
         if (args.Length != 0)
         {

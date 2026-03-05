@@ -28,11 +28,11 @@ namespace Ambermoon.Render
 {
     internal class Player2D : Character2D, IRenderPlayer
     {
-        readonly Game game;
+        readonly GameCore game;
         readonly Player player;
         readonly IMapManager mapManager;
 
-        public Player2D(Game game, IRenderLayer layer, Player player, RenderMap2D map,
+        public Player2D(GameCore game, IRenderLayer layer, Player player, RenderMap2D map,
             ISpriteFactory spriteFactory, Position startPosition,
             IMapManager mapManager)
             : base(game, layer, TextureAtlasManager.Instance.GetOrCreate(Layer.Characters),

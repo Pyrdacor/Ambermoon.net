@@ -2019,7 +2019,7 @@ namespace Ambermoon.Render
             return info;
         }
 
-        public bool TriggerEvents(Game game, EventTrigger trigger,
+        public bool TriggerEvents(GameCore game, EventTrigger trigger,
             uint x, uint y, Savegame savegame)
         {
             // first check for NPC interaction

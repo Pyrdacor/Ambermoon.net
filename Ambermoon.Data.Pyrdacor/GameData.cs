@@ -131,10 +131,14 @@ public class GameData : IGameData, IGraphicProvider
     const string MagicFonts = "FONT";
     const string MagicGotoPointNames = "GOTO";
 
-    public GameData(Stream stream)
+    public GameData(Stream stream, params (string Magic, Action<IDataReader> Action)[] customFileHandlers)
+        : this(new DataReader(stream), customFileHandlers)
     {
-        var reader = new DataReader(stream);
 
+    }
+
+    public GameData(IDataReader reader, params (string Magic, Action<IDataReader> Action)[] customFileHandlers)
+    {
         if (!FileHeader.CheckHeader(reader, "PYGD", true))
             throw new AmbermoonException(ExceptionScope.Data, "The given file is no Pyrdacor game data file.");
 
@@ -162,6 +166,9 @@ public class GameData : IGameData, IGraphicProvider
         fileHandlers.Add(MagicMapTexts, LoadMapTexts);
         fileHandlers.Add(MagicFonts, LoadFonts);
         fileHandlers.Add(MagicGotoPointNames, LoadGotoPointNames);
+
+        foreach (var customFileHandler in customFileHandlers)
+            fileHandlers.Add(customFileHandler.Magic, customFileHandler.Action);
 
         characterManager = new Lazy<ICharacterManager>(() => new CharacterManager
         (

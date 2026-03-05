@@ -756,6 +756,11 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
     string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
 
+    void StartMod(IGameData gameData, string savePath, GameLanguage gameLanguage)
+    {
+
+    }
+
     void StartGame(IGameData gameData, string savePath, GameLanguage gameLanguage, Features features, BinaryReader advancedDiffsReader)
     {
         // Load fantasy intro data
@@ -1625,10 +1630,17 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
                             try
                             {
-                                var advancedDiffsReader = gameData.Advanced ? (additionalData == null
-                                    ? LoadAdvancedDiffs()
-                                    : additionalData.TryGetValue("diffs", out var reader) ? reader : LoadAdvancedDiffs()) : null;
-                                StartGame(gameData as GameData, savePath, gameLanguage, features, advancedDiffsReader);
+                                if (features.HasFlag(Features.Mod))
+                                {
+                                    StartMod(gameData, savePath, gameLanguage);
+                                }
+                                else
+                                {
+                                    var advancedDiffsReader = gameData.Advanced ? (additionalData == null
+                                        ? LoadAdvancedDiffs()
+                                        : additionalData.TryGetValue("diffs", out var reader) ? reader : LoadAdvancedDiffs()) : null;
+                                    StartGame(gameData, savePath, gameLanguage, features, advancedDiffsReader);
+                                }
                             }
                             catch (Exception ex)
                             {

@@ -55,9 +55,9 @@ namespace Ambermoon.UI
         string currentText = "";
         bool visible = true;
 
-        public event Action<string> InputSubmitted;
-        public event Action Aborted;
-        public event Action<string> InputChanged;
+        public event Action<string>? InputSubmitted;
+        public event Action? Aborted;
+        public event Action<string>? InputChanged;
 
         public bool ReactToGlobalClicks
         {
@@ -136,11 +136,11 @@ namespace Ambermoon.UI
 
         public bool Whitespace => string.IsNullOrWhiteSpace(currentInput);
 
-        public static TextInput FocusedInput { get; private set; } = null;
+        public static TextInput? FocusedInput { get; private set; } = null;
 
-        public static event Action FocusChanged;
+        public static event Action? FocusChanged;
 
-        public TextInput(Game game, IGameRenderView renderView, Position position, int inputLength, byte displayLayer,
+        public TextInput(GameCore? game, IGameRenderView renderView, Position position, int inputLength, byte displayLayer,
             ClickAction leftClickAction, ClickAction rightClickAction, TextAlign textAlign)
         {
             this.leftClickAction = leftClickAction;

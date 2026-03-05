@@ -135,15 +135,15 @@ public class ChestEventData : EventData, IBranchEvent
     public ChestType ChestType
     {
         get =>
-            Flags.HasFlag(ChestEvent.ChestFlags.JunkPile)
+            Flags.HasFlag(ChestEvent.ChestFlags.Treasure)
                 ? ChestType.Junk
                 : ChestType.Chest;
         set
         {
             if (value == ChestType.Junk)
-                Flags |= ChestEvent.ChestFlags.JunkPile;
+                Flags |= ChestEvent.ChestFlags.Treasure;
             else
-                Flags &= ~ChestEvent.ChestFlags.JunkPile;
+                Flags &= ~ChestEvent.ChestFlags.Treasure;
         }
     }
 

@@ -274,7 +274,7 @@ namespace Ambermoon.Data
             /// This can also be interpreted as "temporary chest" which can't
             /// store any new items.
             /// </summary>
-            JunkPile = 0x01,
+            Treasure = 0x01,
             /// <summary>
             /// If true the chest contents are restored after closing the
             /// window.
@@ -306,7 +306,7 @@ namespace Ambermoon.Data
             }
         }
         public ChestFlags Flags { get; set; }
-        public bool CloseWhenEmpty => Flags.HasFlag(ChestFlags.JunkPile);
+        public bool CloseWhenEmpty => Flags.HasFlag(ChestFlags.Treasure);
         public bool NoSave => Flags.HasFlag(ChestFlags.NoSave);
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
@@ -328,7 +328,11 @@ namespace Ambermoon.Data
         /// for the search check between off (0) and on (not 0).
         /// </summary>
         public byte FindChanceReduction { get; set; }
-        public bool SearchSkillCheck => FindChanceReduction != 0;
+        public bool SearchSkillCheck
+        {
+            get => FindChanceReduction != 0;
+            set => FindChanceReduction = (byte)(value ? 50 : 0);
+        }
 
         public override Event Clone(bool keepNext)
         {
@@ -349,8 +353,8 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             string lockType = LockpickingChanceReduction == 0 ? "Open" : LockpickingChanceReduction >= 100 ? "No Lockpicking" : $"-{LockpickingChanceReduction}% Chance";
-            string chestType = Flags.HasFlag(ChestFlags.JunkPile) ? "Pile" : "Chest";
-            List<string> flags = new();
+            string chestType = Flags.HasFlag(ChestFlags.Treasure) ? "Treasure" : "Chest";
+            List<string> flags = [];
             if (Flags.HasFlag(ChestFlags.NoSave))
                 flags.Add("NoSave");
             if (SearchSkillCheck)

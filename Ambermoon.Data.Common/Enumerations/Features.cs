@@ -26,6 +26,7 @@ namespace Ambermoon.Data.Enumerations
         AdjustedWeaponDamage = 0x00010000,
         StaminaHPOnLevelUp = 0x00020000,
         LevelShards = 0x00040000, // TODO: Later add to AmbermoonAdvanced
+        Mod = 0x80000000,
         AmbermoonAdvanced =
             Elements |
             AdjustedSpellDamage |

@@ -294,7 +294,7 @@ namespace Ambermoon.Render
 
             for (int i = 0; i < eventGraphics.Count; ++i)
             {
-                eventGraphics[i].ReplaceColor(0, 32);
+                eventGraphics[i].ReplaceColor(0, 32); // Black instead of transparent
                 AddTexture(Layer.UI, Graphics.EventPictureOffset + (uint)i, eventGraphics[i]);
             }
 

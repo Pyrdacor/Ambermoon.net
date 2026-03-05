@@ -1,7 +1,7 @@
 ﻿/*
  * ItemAnimation.cs - Item animations like consume, destroy, shake or enchant
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2026  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -37,33 +37,33 @@ namespace Ambermoon.Render
             Shake
         }
 
-        static readonly Layer[] Layers = new Layer[]
-        {
+        static readonly Layer[] Layers =
+        [
             Layer.UI, Layer.UI, Layer.Items, Layer.Items, Layer.Items
-        };
+        ];
 
-        static readonly int[][] DestroyAnimationPositions = new int[][]
-        {
-            new [] { 0, -1, 1, -1, 1, -1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0 },
-            new [] { 0, -1, 1, -1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0 },
-            new [] { 1, -1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0 },
-            new [] { 1, -1, 1, -1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0 },
-            new [] { 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0 },
-            new [] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 },
-            new [] { 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0 },
-            new [] { 0, -1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0 }
-        };
+        static readonly int[][] DestroyAnimationPositions =
+        [
+            [0, -1, 1, -1, 1, -1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0],
+            [0, -1, 1, -1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0],
+            [1, -1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+            [1, -1, 1, -1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0],
+            [1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1],
+            [1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+            [0, -1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0]
+        ];
 
-        static Item GetItem(Game game, uint? itemIndex) => itemIndex == null ? null : game.ItemManager.GetItem(itemIndex.Value);
+        static Item? GetItem(GameCore game, uint? itemIndex) => itemIndex == null ? null : game.ItemManager.GetItem(itemIndex.Value);
 
-        static uint GetGraphicIndex(Game game, Type type, uint? itemIndex) => type switch
+        static uint GetGraphicIndex(GameCore game, Type type, uint? itemIndex) => type switch
         {
             Type.Enchant => Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ItemMagicAnimation),
             Type.Consume => Graphics.GetUIGraphicIndex(UIGraphic.ItemConsume),
             _ => GetItem(game, itemIndex)?.GraphicIndex ?? throw new AmbermoonException(ExceptionScope.Application, $"No item was given for item animtion '{type}'")
         };
 
-        static void PlayItemDestroyAnimation(Game game, IGameRenderView renderView, Position position, uint graphicIndex, Action finishAction)
+        static void PlayItemDestroyAnimation(GameCore game, IGameRenderView renderView, Position position, uint graphicIndex, Action? finishAction)
         {
             var sprites = new ISprite[128];
             var animationPositionIndices = new int[128];
@@ -132,32 +132,32 @@ namespace Ambermoon.Render
             Animate();
         }
 
-        public static void Play(Game game, IGameRenderView renderView, Type type, Position startPosition,
-            Action finishAction = null, TimeSpan? initialDelay = null, int pixelsPerSecond = 300,
-            Func<bool> visibilityChecker = null)
+        public static void Play(GameCore game, IGameRenderView renderView, Type type, Position startPosition,
+            Action? finishAction = null, TimeSpan? initialDelay = null, int pixelsPerSecond = 300,
+            Func<bool>? visibilityChecker = null)
         {
-            Play(game, renderView, type, startPosition, finishAction, initialDelay, null,
+            Play(game, renderView, type, startPosition, finishAction, initialDelay, Position.Zero,
                 GetGraphicIndex(game, type, null), null, pixelsPerSecond, visibilityChecker);
         }
 
-        public static void Play(Game game, IGameRenderView renderView, Type type, Position startPosition,
-            Action finishAction, TimeSpan? initialDelay, Position targetPosition, Item item,
-            int pixelsPerSecond = 300, Func<bool> visibilityChecker = null)
+        public static void Play(GameCore game, IGameRenderView renderView, Type type, Position startPosition,
+            Action? finishAction, TimeSpan? initialDelay, Position? targetPosition, Item item,
+            int pixelsPerSecond = 300, Func<bool>? visibilityChecker = null)
         {
             Play(game, renderView, type, startPosition, finishAction, initialDelay, targetPosition,
                 GetGraphicIndex(game, type, item?.Index), null, pixelsPerSecond, visibilityChecker);
         }
 
-        public static void Play(Game game, IGameRenderView renderView, Type type, Position startPosition,
-            Action finishAction, TimeSpan? initialDelay, Position targetPosition, UIItem item, int pixelsPerSecond = 300)
+        public static void Play(GameCore game, IGameRenderView renderView, Type type, Position startPosition,
+            Action? finishAction, TimeSpan? initialDelay, Position? targetPosition, UIItem? item, int pixelsPerSecond = 300)
         {
             Play(game, renderView, type, startPosition, finishAction, initialDelay, targetPosition,
                 GetGraphicIndex(game, type, item?.Item?.ItemIndex), item, pixelsPerSecond);
         }
 
-        static void Play(Game game, IGameRenderView renderView, Type type, Position startPosition,
-            Action finishAction, TimeSpan? initialDelay, Position targetPosition, uint graphicIndex,
-            UIItem item, int pixelsPerSecond = 300, Func<bool> visibilityChecker = null)
+        static void Play(GameCore game, IGameRenderView renderView, Type type, Position startPosition,
+            Action? finishAction, TimeSpan? initialDelay, Position? targetPosition, uint graphicIndex,
+            UIItem? item, int pixelsPerSecond = 300, Func<bool>? visibilityChecker = null)
         {
             void Start()
             {
@@ -212,12 +212,12 @@ namespace Ambermoon.Render
                     }
                     case Type.Move:
                     {
-                        PlayMoveAnimation(game, startPosition, targetPosition, item, finishAction, pixelsPerSecond);
+                        PlayMoveAnimation(game, startPosition, targetPosition!, item!, finishAction, pixelsPerSecond);
                         break;
                     }
                     case Type.Shake:
                     {
-                        PlayShakeAnimation(game, item, finishAction);
+                        PlayShakeAnimation(game, item!, finishAction);
                         break;
                     }
                     default:
@@ -233,8 +233,8 @@ namespace Ambermoon.Render
                 Start();
         }
 
-        static void PlayMoveAnimation(Game game, Position startPosition, Position targetPosition, UIItem item,
-            Action finishAction, int pixelsPerSecond = 300)
+        static void PlayMoveAnimation(GameCore game, Position startPosition, Position targetPosition, UIItem item,
+            Action? finishAction, int pixelsPerSecond = 300)
         {
             const int timePerFrame = 10;
             var dist = targetPosition - startPosition;
@@ -269,7 +269,7 @@ namespace Ambermoon.Render
             Move();
         }
 
-        static void PlayShakeAnimation(Game game, UIItem item, Action finishAction)
+        static void PlayShakeAnimation(GameCore game, UIItem item, Action? finishAction)
         {
             int baseX = item.Position.X;
             int minX = item.Position.X - 1;

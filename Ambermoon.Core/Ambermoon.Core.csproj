@@ -13,6 +13,7 @@
     <DebugType>portable</DebugType>
     <Configurations>Debug;Release;DebugAndroid;DebugES;ReleaseES</Configurations>
     <OutputType>Library</OutputType>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>portable</DebugType>

@@ -34,7 +34,7 @@ namespace Ambermoon.UI
     {
         readonly FilledArea[] filledAreas = new FilledArea[3];
 
-        public Panel(Game game, Rect fillArea, List<IColoredRect> layoutFilledAreas, Layout layout, byte displayLayer)
+        public Panel(GameCore game, Rect fillArea, List<IColoredRect> layoutFilledAreas, Layout layout, byte displayLayer)
         {
             // right and bottom border
             filledAreas[0] = new FilledArea(layoutFilledAreas, layout.CreateArea(fillArea.CreateModified(0, 0, 1, 1), game.GetUIColor(26), displayLayer));

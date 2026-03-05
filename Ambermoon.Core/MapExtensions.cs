@@ -53,7 +53,7 @@ namespace Ambermoon
 
         public static uint PositionToTileIndex(this Map map, uint x, uint y) => x + y * (uint)map.Width;
 
-        public static bool TriggerEvents(this Map map, Game game, EventTrigger trigger,
+        public static bool TriggerEvents(this Map map, GameCore game, EventTrigger trigger,
             uint x, uint y, Savegame savegame)
         {
             return TriggerEvents(map, game, trigger, x, y, savegame, out _);
@@ -78,7 +78,7 @@ namespace Ambermoon
             return hasMapEvent ? mapEventId : null;
         }
 
-        public static bool TriggerEvents(this Map map, Game game, EventTrigger trigger,
+        public static bool TriggerEvents(this Map map, GameCore game, EventTrigger trigger,
             uint x, uint y, Savegame savegame, out bool hasMapEvent, Func<Event, bool> filter = null)
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;

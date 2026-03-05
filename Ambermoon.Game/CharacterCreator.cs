@@ -21,12 +21,10 @@
 
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Ambermoon.UI;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
-namespace Ambermoon.UI
+namespace Ambermoon.Game
 {
     public class CharacterCreator
     {
@@ -34,43 +32,43 @@ namespace Ambermoon.UI
         readonly ITextureAtlas textureAtlas;
 
         readonly List<ILayerSprite> borders = new List<ILayerSprite>();
-        readonly IColoredRect backgroundFill = null;
-        readonly IRenderText header = null;
-        readonly Button leftButton = null;
-        readonly Button rightButton = null;
-        readonly Button maleButton = null;
-        readonly Button femaleButton = null;
-        readonly Button okButton = null;
-		readonly Button tutorialButton = null;
-		readonly IRenderText tutorialText = null;
-		readonly ILayerSprite portraitBackground = null;
-        readonly ILayerSprite portrait = null;
-        readonly TextInput nameInput = null;
+        readonly IColoredRect? backgroundFill = null;
+        readonly IRenderText? header = null;
+        readonly Button? leftButton = null;
+        readonly Button? rightButton = null;
+        readonly Button? maleButton = null;
+        readonly Button? femaleButton = null;
+        readonly Button? okButton = null;
+		readonly Button? tutorialButton = null;
+		readonly IRenderText? tutorialText = null;
+		readonly ILayerSprite? portraitBackground = null;
+        readonly ILayerSprite? portrait = null;
+        readonly TextInput? nameInput = null;
         readonly List<IColoredRect> portraitBorders = new(4);
         readonly List<IColoredRect> sunkenBoxParts = new(30);
-        IColoredRect fadeArea;
+        IColoredRect? fadeArea;
         const int FadeTime = 250;
         readonly DateTime? fadeInStartTime = null;
         DateTime? fadeOutStartTime = null;
         bool fadeIn = true;
         bool fadeOut = false;
-        Action afterFadeOutAction;
+        Action? afterFadeOutAction;
         bool isFemale = false;
         int portraitIndex = MalePortraitIndices[0];
 
-        static readonly int[] MalePortraitIndices = new int[]
-        {
+        static readonly int[] MalePortraitIndices =
+        [
             2, 25, 7, 23,
             // New in remake
             3, 16, 9, 17, 21
-        };
+        ];
 
-        static readonly int[] FemalePortraitIndices = new int[]
-        {
+        static readonly int[] FemalePortraitIndices =
+        [
             31, 38, 44, 51,
             // New in remake
             39, 40, 41, 47, 52
-        };
+        ];
 
         public CharacterCreator(IGameRenderView renderView, Game game, Action<string, bool, int> selectHandler)
         {
@@ -91,7 +89,7 @@ namespace Ambermoon.UI
             );
             void AddBorder(PopupFrame frame, int column, int row)
             {
-                var sprite = spriteFactory.Create(16, 16, true) as ILayerSprite;
+                var sprite = (spriteFactory.Create(16, 16, true) as ILayerSprite)!;
                 sprite.Layer = layer;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetPopupFrameGraphicIndex(frame));
                 sprite.PaletteIndex = 0;
@@ -145,7 +143,7 @@ namespace Ambermoon.UI
             okButton.Visible = true;
             okButton.LeftClickAction = () =>
             {
-                nameInput.Submit();
+                nameInput!.Submit();
                 afterFadeOutAction = () => selectHandler?.Invoke(nameInput.Text.ToUpper(), isFemale, portraitIndex);
                 DestroyAndFadeOut();
             };
@@ -161,7 +159,7 @@ namespace Ambermoon.UI
 			};
 			#endregion
 
-			portraitBackground = spriteFactory.Create(32, 34, true, 1) as ILayerSprite;
+			portraitBackground = (spriteFactory.Create(32, 34, true, 1) as ILayerSprite)!;
             portraitBackground.Layer = layer;
             portraitBackground.X = offset.X + 112;
             portraitBackground.Y = offset.Y + 32;
@@ -169,7 +167,7 @@ namespace Ambermoon.UI
             portraitBackground.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex + 3 - 1);
             portraitBackground.Visible = true;
 
-            portrait = spriteFactory.Create(32, 34, true, 2) as ILayerSprite;
+            portrait = (spriteFactory.Create(32, 34, true, 2) as ILayerSprite)!;
             portrait.Layer = layer;
             portrait.X = portraitBackground.X;
             portrait.Y = portraitBackground.Y;
@@ -223,7 +221,7 @@ namespace Ambermoon.UI
         {
             fadeOutStartTime = DateTime.Now;
             fadeOut = true;
-            fadeArea.Color = Render.Color.Transparent;
+            fadeArea!.Color = Render.Color.Transparent;
             fadeArea.Visible = true;
         }
 
@@ -244,7 +242,7 @@ namespace Ambermoon.UI
             portraitBorders.ForEach(b => b?.Delete());
             nameInput?.Destroy();
             sunkenBoxParts.ForEach(b => b?.Delete());
-            fadeArea.Delete();
+            fadeArea?.Delete();
             fadeArea = null;
         }
 
@@ -270,7 +268,7 @@ namespace Ambermoon.UI
 
         void UpdatePortrait()
         {
-            portrait.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.PortraitOffset + (uint)portraitIndex - 1);
+            portrait!.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.PortraitOffset + (uint)portraitIndex - 1);
         }
 
         Button CreateButton(Game game, Position position)
@@ -329,21 +327,21 @@ namespace Ambermoon.UI
         {
             if (fadeIn)
             {
-                var blackness = 1.0f - (float)(DateTime.Now - fadeInStartTime.Value).TotalMilliseconds / FadeTime;
+                var blackness = 1.0f - (float)(DateTime.Now - fadeInStartTime!.Value).TotalMilliseconds / FadeTime;
 
                 if (blackness <= 0.0f)
                 {
-                    fadeArea.Visible = false;
+                    fadeArea!.Visible = false;
                     fadeIn = false;
                 }
                 else
-                    fadeArea.Color = new Render.Color(0, 0, 0, Util.Round(blackness * 255));
+                    fadeArea!.Color = new Render.Color(0, 0, 0, Util.Round(blackness * 255));
             }
             else if (fadeOut)
             {
                 if (fadeArea != null)
                 {
-                    var blackness = (float)(DateTime.Now - fadeOutStartTime.Value).TotalMilliseconds / FadeTime;
+                    var blackness = (float)(DateTime.Now - fadeOutStartTime!.Value).TotalMilliseconds / FadeTime;
 
                     if (blackness >= 1.0f)
                     {
@@ -356,12 +354,12 @@ namespace Ambermoon.UI
             }
             else
             {
-                maleButton.Update(0u);
-                femaleButton.Update(0u);
-                leftButton.Update(0u);
-                rightButton.Update(0u);
-                okButton.Update(0u);
-                nameInput.Update();
+                maleButton?.Update(0u);
+                femaleButton?.Update(0u);
+                leftButton?.Update(0u);
+                rightButton?.Update(0u);
+                okButton?.Update(0u);
+                nameInput?.Update();
             }
         }
 
@@ -372,7 +370,7 @@ namespace Ambermoon.UI
 
             if (TextInput.FocusedInput == nameInput)
             {
-                nameInput.KeyDown(key);
+                nameInput?.KeyDown(key);
                 return;
             }
 
@@ -389,7 +387,7 @@ namespace Ambermoon.UI
                     SwapPortrait(1);
                     break;
                 case Key.Return:
-                    if (!okButton.Disabled)
+                    if (!okButton!.Disabled)
                         okButton.Press(0);
                     break;
             }
@@ -402,7 +400,7 @@ namespace Ambermoon.UI
 
             if (TextInput.FocusedInput == nameInput)
             {
-                nameInput.KeyChar(keyChar);
+                nameInput?.KeyChar(keyChar);
                 return;
             }
         }
@@ -415,12 +413,12 @@ namespace Ambermoon.UI
             if (buttons == MouseButtons.Left)
             {
                 position = renderView.ScreenToGame(position);
-                maleButton.LeftMouseUp(position, 0u);
-                femaleButton.LeftMouseUp(position, 0u);
-                leftButton.LeftMouseUp(position, 0u);
-                rightButton.LeftMouseUp(position, 0u);
-                okButton.LeftMouseUp(position, 0u);
-                tutorialButton.LeftMouseUp(position, 0u);
+                maleButton?.LeftMouseUp(position, 0u);
+                femaleButton?.LeftMouseUp(position, 0u);
+                leftButton?.LeftMouseUp(position, 0u);
+                rightButton?.LeftMouseUp(position, 0u);
+                okButton?.LeftMouseUp(position, 0u);
+                tutorialButton?.LeftMouseUp(position, 0u);
             }
         }
 
@@ -431,17 +429,17 @@ namespace Ambermoon.UI
 
             position = renderView.ScreenToGame(position);
 
-            if (nameInput.MouseDown(position, buttons))
+            if (nameInput?.MouseDown(position, buttons) == true)
                 return;
 
             if (buttons == MouseButtons.Left)
             {
-                maleButton.LeftMouseDown(position, 0u);
-                femaleButton.LeftMouseDown(position, 0u);
-                leftButton.LeftMouseDown(position, 0u);
-                rightButton.LeftMouseDown(position, 0u);
-                okButton.LeftMouseDown(position, 0u);
-				tutorialButton.LeftMouseDown(position, 0u);
+                maleButton?.LeftMouseDown(position, 0u);
+                femaleButton?.LeftMouseDown(position, 0u);
+                leftButton?.LeftMouseDown(position, 0u);
+                rightButton?.LeftMouseDown(position, 0u);
+                okButton?.LeftMouseDown(position, 0u);
+				tutorialButton?.LeftMouseDown(position, 0u);
 			}
         }
 

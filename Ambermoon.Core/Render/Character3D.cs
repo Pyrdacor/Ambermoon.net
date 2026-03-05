@@ -20,13 +20,14 @@
  */
 
 using System;
+using Ambermoon.Geometry;
 
-namespace Ambermoon.Geometry
+namespace Ambermoon.Render
 {
     internal class Character3D
     {
         const uint TimePerMovement = 2000; // in ms
-        const uint TicksPerMovement = TimePerMovement * Game.TicksPerSecond / 1000;
+        const uint TicksPerMovement = TimePerMovement * GameCore.TicksPerSecond / 1000;
         const float BlockDivider = 1.0f / Global.DistancePerBlock;
 
         enum State
@@ -38,10 +39,10 @@ namespace Ambermoon.Geometry
             BlockedToPlayer
         }
 
-        readonly Game game;
-        Position lastTilePosition;
-        Position targetTilePosition;
-        public FloatPosition RealPosition { get; private set; }
+        readonly GameCore game;
+        Position lastTilePosition = Position.Zero;
+        Position? targetTilePosition;
+        public FloatPosition RealPosition { get; private set; } = FloatPosition.Zero;
         Direction? direction = null;
         State currentState = State.IdleOnTile;
         uint lastMoveTicks = 0;
@@ -51,8 +52,8 @@ namespace Ambermoon.Geometry
         public Position Position => RealPosition.Round(BlockDivider);
         public bool Moving => currentState == State.MovingToTile || currentState == State.MovingTowardsPlayer;
 
-        public event Action RandomMovementRequested;
-        public event Func<FloatPosition, bool> MoveRequested;
+        public event Action? RandomMovementRequested;
+        public event Func<FloatPosition, bool>? MoveRequested;
 
         public bool Paused
         {
@@ -60,7 +61,7 @@ namespace Ambermoon.Geometry
             set;
         } = false;
 
-        public Character3D(Game game)
+        public Character3D(GameCore game)
         {
             this.game = game;
             ResetMovementTimer();
@@ -75,10 +76,10 @@ namespace Ambermoon.Geometry
             direction = null;
             currentState = State.IdleOnTile;
             lastMoveTicks = game.CurrentMapTicks;
-            NextMoveTimeSlot = waitForManualStart ? uint.MaxValue : (game.GameTime.TimeSlot + 1) % 288;
+            NextMoveTimeSlot = waitForManualStart ? uint.MaxValue : (game.GameTime!.TimeSlot + 1) % 288;
         }
 
-        public void MoveToTile(uint x, uint y, Position lastPosition = null)
+        public void MoveToTile(uint x, uint y, Position? lastPosition = null)
         {
             if (lastPosition != null) // Fixed route
             {
@@ -136,7 +137,7 @@ namespace Ambermoon.Geometry
 
             var nextPosition = RealPosition + diff * stepSize;
 
-            if (!MoveRequested(nextPosition))
+            if (MoveRequested?.Invoke(nextPosition) == false)
             {
                 currentState = State.BlockedToPlayer;
                 return;
@@ -180,14 +181,14 @@ namespace Ambermoon.Geometry
                 break;
             }
 
-            NextMoveTimeSlot = waitForManualStart ? uint.MaxValue : (game.GameTime.TimeSlot + 1) % 288;
+            NextMoveTimeSlot = waitForManualStart ? uint.MaxValue : (game.GameTime!.TimeSlot + 1) % 288;
             lastMoveTicks = game.CurrentMapTicks;
             movedTicks = 0;
         }
 
         public void ResetMovementTimer()
         {
-            NextMoveTimeSlot = (game.GameTime.TimeSlot + 1) % 288;
+            NextMoveTimeSlot = (game.GameTime!.TimeSlot + 1) % 288;
         }
 
         public void Update(uint ticks, FloatPosition playerPosition, bool moveRandom, bool canSeePlayer,
@@ -211,13 +212,13 @@ namespace Ambermoon.Geometry
                         movedTicks = 0;
                         MoveTowardsPlayer(playerPosition, ticks);
                     }
-                    else if (moveRandom && game.GameTime.TimeSlot >= NextMoveTimeSlot)
+                    else if (moveRandom && game.GameTime!.TimeSlot >= NextMoveTimeSlot)
                     {
                         ResetMovementTimer();
                         RandomMovementRequested?.Invoke();
                     }
                 }
-                else if (!onlyMoveWhenSeePlayer && moveRandom && game.GameTime.TimeSlot >= NextMoveTimeSlot)
+                else if (!onlyMoveWhenSeePlayer && moveRandom && game.GameTime!.TimeSlot >= NextMoveTimeSlot)
                 {
                     ResetMovementTimer();
                     RandomMovementRequested?.Invoke();
@@ -231,13 +232,13 @@ namespace Ambermoon.Geometry
                         movedTicks = 0;
                         MoveTowardsPlayer(playerPosition, ticks);
                     }
-                    else if (moveRandom && game.GameTime.TimeSlot >= NextMoveTimeSlot)
+                    else if (moveRandom && game.GameTime!.TimeSlot >= NextMoveTimeSlot)
                     {
                         ResetMovementTimer();
-                        MoveToTile((uint)targetTilePosition.X, (uint)targetTilePosition.Y);
+                        MoveToTile((uint)targetTilePosition!.X, (uint)targetTilePosition.Y);
                     }
                 }
-                else if (!onlyMoveWhenSeePlayer && moveRandom && game.GameTime.TimeSlot >= NextMoveTimeSlot)
+                else if (!onlyMoveWhenSeePlayer && moveRandom && game.GameTime!.TimeSlot >= NextMoveTimeSlot)
                 {
                     ResetMovementTimer();
 
@@ -294,7 +295,7 @@ namespace Ambermoon.Geometry
                     float stepSize = moveTicks * Global.DistancePerBlock / TicksPerMovement;
                     var nextPosition = RealPosition + diff * stepSize;
 
-                    if (!MoveRequested(nextPosition))
+                    if (MoveRequested?.Invoke(nextPosition) == false)
                     {
                         Stop(false);
                         currentState = State.BlockedToPlayer;

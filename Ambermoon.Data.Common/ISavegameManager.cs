@@ -1,5 +1,4 @@
 ﻿using Ambermoon.Data.Serialization;
-using System;
 
 namespace Ambermoon.Data
 {

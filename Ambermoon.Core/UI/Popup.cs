@@ -31,26 +31,26 @@ namespace Ambermoon.UI
     internal class Popup
     {
         public const byte BaseDisplayLayer = 20;
-        readonly Game game;
+        readonly GameCore game;
         readonly IGameRenderView renderView;
         readonly ITextureAtlas textureAtlas;
         readonly List<ILayerSprite> borders = [];
-        readonly IColoredRect fill;
+        readonly IColoredRect? fill;
         readonly List<UIText> texts = [];
         readonly List<IColoredRect> filledAreas = [];
         readonly List<ILayerSprite> sprites = [];
         readonly List<Button> buttons = [];
         readonly List<TextInput> inputs = [];
-        ListBox listBox = null;
-        Scrollbar scrollbar = null;
-        Popup popup = null;
+        ListBox? listBox = null;
+        Scrollbar? scrollbar = null;
+        Popup? popup = null;
         public Rect ContentArea { get; }
-        public Action ReturnAction { get; set; } = null;
+        public Action? ReturnAction { get; set; } = null;
         public byte DisplayLayer { get; private set; }
         public bool HasChildPopup => popup != null;
-        public event Action<bool> Scrolled;
+        public event Action<bool>? Scrolled;
 
-        public Popup(Game game, IGameRenderView renderView, Position position, int columns, int rows,
+        public Popup(GameCore game, IGameRenderView renderView, Position position, int columns, int rows,
             bool transparent, byte displayLayerOffset = 0)
         {
             if (columns < 3 || rows < 3)
@@ -63,7 +63,7 @@ namespace Ambermoon.UI
 
             void AddBorder(PopupFrame frame, int column, int row)
             {
-                var sprite = renderView.SpriteFactory.Create(16, 16, true, DisplayLayer) as ILayerSprite;
+                var sprite = (renderView.SpriteFactory.Create(16, 16, true, DisplayLayer) as ILayerSprite)!;
                 sprite.Layer = renderView.GetLayer(Layer.UI);
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetPopupFrameGraphicIndex(frame));
                 sprite.PaletteIndex = game.UIPaletteIndex;
@@ -121,7 +121,7 @@ namespace Ambermoon.UI
         public bool HasButtons => buttons.Count != 0;
         public bool HasList => listBox != null;
         public bool ClickCursor => CloseOnClick || texts.Any(text => text.WithScrolling);
-        public event Action Closed;
+        public event Action? Closed;
 
         public void OnClosed()
         {
@@ -186,14 +186,14 @@ namespace Ambermoon.UI
         }
 
         public UIText AddText(Rect bounds, string text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
-            bool shadow = true, byte displayLayer = 1, bool scrolling = false, Layout layout = null)
+            bool shadow = true, byte displayLayer = 1, bool scrolling = false, Layout? layout = null)
         {
             return AddText(bounds, renderView.TextProcessor.CreateText(text), textColor, textAlign,
                 shadow, (byte)Util.Min(255, displayLayer), scrolling, layout);
         }
 
         public UIText AddText(Rect bounds, IText text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
-            bool shadow = true, byte displayLayer = 1, bool scrolling = false, Layout layout = null)
+            bool shadow = true, byte displayLayer = 1, bool scrolling = false, Layout? layout = null)
         {
             UIText uiText;
             displayLayer = (byte)Util.Min(255, DisplayLayer + displayLayer);
@@ -217,7 +217,7 @@ namespace Ambermoon.UI
                         uiText.FreeScrollingEnded += () =>
                         {
                             if (closeAfterScroll)
-                                game.ClosePopup(true, game.Configuration.IsMobile);
+                                game.ClosePopup(true, game.CoreConfiguration.IsMobile);
                         };
                     }
                     else
@@ -256,8 +256,8 @@ namespace Ambermoon.UI
 
         public ILayerSprite AddImage(Rect area, uint imageIndex, Layer layer, byte displayLayer, byte paletteIndex)
         {
-            var sprite = renderView.SpriteFactory.Create(area.Width, area.Height, true,
-                (byte)Util.Min(255, this.DisplayLayer + displayLayer)) as ILayerSprite;
+            var sprite = (renderView.SpriteFactory.Create(area.Width, area.Height, true,
+                (byte)Util.Min(255, this.DisplayLayer + displayLayer)) as ILayerSprite)!;
             sprite.Layer = renderView.GetLayer(layer);
             sprite.PaletteIndex = paletteIndex;
             sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(layer).GetOffset(imageIndex);
@@ -305,16 +305,20 @@ namespace Ambermoon.UI
             FillArea(new Rect(position.X, position.Y, Button.Width + 1, Button.Height + 1), brightBorderColor, 1);
             FillArea(new Rect(position.X - 1, position.Y - 1, Button.Width + 1, Button.Height + 1), darkBorderColor, 2);
             FillArea(new Rect(position.X, position.Y, Button.Width, Button.Height), Color.Black, 3);
+
             var button = new Button(renderView, position, null);
+
             button.PaletteIndex = game.UIPaletteIndex;
             button.DisplayLayer = (byte)Util.Min(255, DisplayLayer + 4);
+
             buttons.Add(button);
+
             return button;
         }
 
         void ScrollTo(int offset)
         {
-            scrollbar.SetScrollPosition(offset, true);
+            scrollbar?.SetScrollPosition(offset, true);
         }
 
         public bool KeyChar(char ch)
@@ -384,7 +388,7 @@ namespace Ambermoon.UI
                 return true;
             }
 
-            if (game.Configuration.IsMobile && game.Layout.FreeTextScrollingActive && texts.Count > 0)
+            if (game.CoreConfiguration.IsMobile && game.Layout.FreeTextScrollingActive && texts.Count > 0)
             {
                 texts[0]?.MouseMove(yScroll, true);
                 return true;
@@ -620,7 +624,7 @@ namespace Ambermoon.UI
             buttons.ForEach(button => button.Hover(position));
         }
 
-        public ListBox AddOptionsListBox(List<KeyValuePair<string, Action<int, string>>> items)
+        public ListBox AddOptionsListBox(List<KeyValuePair<string, Action<int, string>?>> items)
         {
             if (listBox != null)
                 throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
@@ -628,7 +632,7 @@ namespace Ambermoon.UI
             return listBox = ListBox.CreateOptionsListbox(renderView, game, this, items);
         }
 
-        public ListBox AddSavegameListBox(List<KeyValuePair<string, Action<int, string>>> items,
+        public ListBox AddSavegameListBox(List<KeyValuePair<string, Action<int, string>?>> items,
             bool canEdit, int maxItems, int yOffset)
         {
             if (listBox != null)
@@ -637,8 +641,8 @@ namespace Ambermoon.UI
             return listBox = ListBox.CreateSavegameListbox(renderView, game, this, items, canEdit, maxItems, yOffset);
         }
 
-        public ListBox AddDictionaryListBox(List<KeyValuePair<string, Action<int, string>>> items,
-            Func<string, TextColor> colorProvider)
+        public ListBox AddDictionaryListBox(List<KeyValuePair<string, Action<int, string>?>> items,
+            Func<string, TextColor>? colorProvider)
         {
             if (listBox != null)
                 throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
@@ -646,7 +650,7 @@ namespace Ambermoon.UI
             return listBox = ListBox.CreateDictionaryListbox(renderView, game, this, items, colorProvider);
         }
 
-        public ListBox AddSpellListBox(List<KeyValuePair<string, Action<int, string>>> items)
+        public ListBox AddSpellListBox(List<KeyValuePair<string, Action<int, string>?>> items)
         {
             if (listBox != null)
                 throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
@@ -654,7 +658,7 @@ namespace Ambermoon.UI
             return listBox = ListBox.CreateSpellListbox(renderView, game, this, items);
         }
 
-        public ListBox AddSongListBox(List<KeyValuePair<string, Action<int, string>>> items)
+        public ListBox AddSongListBox(List<KeyValuePair<string, Action<int, string>?>> items)
         {
             if (listBox != null)
                 throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");

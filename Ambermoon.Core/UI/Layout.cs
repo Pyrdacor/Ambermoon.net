@@ -1,7 +1,7 @@
 ﻿/*
  * Layout.cs - Handles most of the UI interactions
  *
- * Copyright (C) 2020-2024  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2026  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -26,7 +26,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using static System.Collections.Specialized.BitVector32;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI
@@ -74,12 +73,12 @@ namespace Ambermoon.UI
             this.area = area;
         }
 
-        public Render.Color Color
+        public Render.Color? Color
         {
             get => Destroyed ? null : area.Color;
             set
             {
-                if (!Destroyed)
+                if (!Destroyed && value is not null)
                     area.Color = value;
             }
         }
@@ -104,15 +103,15 @@ namespace Ambermoon.UI
             }
         }
 
-        public Position Position
+        public Position? Position
         {
             get => Destroyed ? null : new Position(area.X, area.Y);
             set
             {
                 if (!Destroyed)
                 {
-                    area.X = value.X;
-                    area.Y = value.Y;
+                    area.X = value?.X ?? 0;
+                    area.Y = value?.Y ?? 0;
                 }
             }
         }
@@ -259,11 +258,11 @@ namespace Ambermoon.UI
 
     public class Tooltip
     {
-        public Rect Area;
-        public string Text;
+        public Rect? Area;
+        public string? Text;
         public TextColor TextColor = TextColor.White;
         public TextAlign TextAlign = TextAlign.Center;
-        public Render.Color BackgroundColor = null;
+        public Render.Color? BackgroundColor = null;
         public bool CenterOnScreen = false;
     }
 
@@ -284,8 +283,8 @@ namespace Ambermoon.UI
         // 3. Move item from a chest (etc) directly to another player via his portrait.
         internal class DraggedItem
         {
-            public UIItem Item { get; set; }
-            public ItemGrid SourceGrid { get; set; }
+            public UIItem? Item { get; set; }
+            public ItemGrid? SourceGrid { get; set; }
             public int? SourcePlayer { get; set; }
             public bool? Equipped { get; set; }
             public int SourceSlot { get; set; }
@@ -296,15 +295,15 @@ namespace Ambermoon.UI
             /// This returns true if dragging should continue.
             /// This is the case when there was an item at the drop location.
             /// </summary>
-            public bool Reset(Game game, Layout layout, bool scrollToItem = false)
+            public bool Reset(GameCore game, Layout layout, bool scrollToItem = false)
             {
                 // Reset in case 1: Is only possible while in first player inventory.
                 // Reset in case 2: Is also possible while in second player inventory.
                 //                  First players inventory is opened in addition on reset.
                 // Reset in case 3: Is only possible while in chest screen.
                 bool updateGrid = true;
-                ItemSlot updateSlot = Item.Item;
-                ItemSlot previousSlot = new ItemSlot();
+                ItemSlot updateSlot = Item!.Item;
+                ItemSlot previousSlot = new();
 
                 if (SourcePlayer != null)
                 {
@@ -312,11 +311,11 @@ namespace Ambermoon.UI
                     {
                         if (game.OpenPartyMember(SourcePlayer.Value, true))
                         {
-                            return layout.draggedItem.Reset(game, layout, true);
+                            return layout.draggedItem!.Reset(game, layout, true);
                         }                        
                     }
 
-                    var partyMember = game.GetPartyMember(SourcePlayer.Value);
+                    var partyMember = game.GetPartyMember(SourcePlayer.Value)!;
 
                     if (Equipped == true)
                     {
@@ -360,10 +359,12 @@ namespace Ambermoon.UI
                 else if (game.OpenStorage != null)
                 {
                     previousSlot.Replace(game.OpenStorage.Slots[SourceSlot % 6, SourceSlot / 6]);
-                    if (SourceGrid.DropItem(SourceSlot, this) == 0)
+
+                    if (SourceGrid!.DropItem(SourceSlot, this) == 0)
                     {
                         if (!previousSlot.Empty)
                             updateGrid = false;
+
                         previousSlot = new ItemSlot();
                     }
                 }
@@ -376,8 +377,9 @@ namespace Ambermoon.UI
 
                 if (!previousSlot.Empty) // There is an item at the target slot (dragged item was exchanged before)
                 {
-                    if (SourcePlayer != null && SourceGrid.DropItem(SourceSlot, this) == 0)
+                    if (SourcePlayer != null && SourceGrid!.DropItem(SourceSlot, this) == 0)
                         layout.DropItem();
+
                     return true;
                 }
 
@@ -431,12 +433,12 @@ namespace Ambermoon.UI
 
         class MonsterCombatGraphic
         {
-            public Monster Monster { get; set; }
+            public Monster? Monster { get; set; }
             public int Row{ get; set; }
             public int Column { get; set; }
-            public BattleAnimation Animation { get; set; }
-            public ILayerSprite BattleFieldSprite { get; set; }
-            public Tooltip Tooltip { get; set; }
+            public BattleAnimation? Animation { get; set; }
+            public ILayerSprite? BattleFieldSprite { get; set; }
+            public Tooltip? Tooltip { get; set; }
         }
 
         class PortraitAnimation
@@ -451,11 +453,11 @@ namespace Ambermoon.UI
             public uint StartTicks;
             public int Offset;
             public int InitialOffset;
-            public ILayerSprite PrimarySprite;
-            public ILayerSprite SecondarySprite;
+            public ILayerSprite? PrimarySprite;
+            public ILayerSprite? SecondarySprite;
             public MoveType Movement;
             public byte InitialDisplayLayer;
-            public event Action Finished;
+            public event Action? Finished;
 
             public void OnFinished() => Finished?.Invoke();
         }
@@ -470,69 +472,69 @@ namespace Ambermoon.UI
 
         class BattleFieldSlotMarker
         {
-            public ISprite Sprite = null;
+            public ISprite? Sprite = null;
             public uint? BlinkStartTicks = null;
             public bool ToggleColors = false;
         }
 
         public LayoutType Type { get; private set; }
-        readonly Game game;
+        readonly GameCore game;
         readonly ILayerSprite sprite;
         readonly ITextureAtlas textureAtlas;
         readonly IRenderLayer renderLayer;
         readonly IRenderLayer textLayer;
         readonly IItemManager itemManager;
-        readonly List<ISprite> portraitBorders = new List<ISprite>();
-        readonly ISprite[] portraitBackgrounds = new ISprite[Game.MaxPartyMembers];
-        readonly ILayerSprite[] portraitBarBackgrounds = new ILayerSprite[Game.MaxPartyMembers];
-        readonly ISprite[] portraits = new ISprite[Game.MaxPartyMembers];
-        readonly ILayerSprite healerSymbol = null;
-        readonly IRenderText[] portraitNames = new IRenderText[Game.MaxPartyMembers];
-        readonly PartyMemberPortaitState[] portraitStates = new PartyMemberPortaitState[Game.MaxPartyMembers];
-        readonly ILayerSprite[] characterStatusIcons = new ILayerSprite[Game.MaxPartyMembers];
-        readonly Bar[] characterBars = new Bar[Game.MaxPartyMembers * 4]; // 2 bars and each has fill and shadow color
-        ISprite sprite80x80Picture;
-        ISprite eventPicture;
-        readonly Dictionary<SpecialItemPurpose, ILayerSprite> specialItemSprites = new Dictionary<SpecialItemPurpose, ILayerSprite>();
-        readonly Dictionary<SpecialItemPurpose, UIText> specialItemTexts = new Dictionary<SpecialItemPurpose, UIText>();
-        readonly Dictionary<ActiveSpellType, ILayerSprite> activeSpellSprites = new Dictionary<ActiveSpellType, ILayerSprite>();
-        readonly Dictionary<ActiveSpellType, IColoredRect> activeSpellDurationBackgrounds = new Dictionary<ActiveSpellType, IColoredRect>();
-        readonly Dictionary<ActiveSpellType, Bar> activeSpellDurationBars = new Dictionary<ActiveSpellType, Bar>();
-        readonly List<MonsterCombatGraphic> monsterCombatGraphics = new List<MonsterCombatGraphic>();
-        PortraitAnimation portraitAnimation = null;
-        readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
-        UIText freeScrolledText = null;
+        readonly List<ISprite> portraitBorders = [];
+        readonly ISprite?[] portraitBackgrounds = new ISprite?[GameCore.MaxPartyMembers];
+        readonly ILayerSprite[] portraitBarBackgrounds = new ILayerSprite[GameCore.MaxPartyMembers];
+        readonly ISprite?[] portraits = new ISprite?[GameCore.MaxPartyMembers];
+        readonly ILayerSprite? healerSymbol = null;
+        readonly IRenderText?[] portraitNames = new IRenderText?[GameCore.MaxPartyMembers];
+        readonly PartyMemberPortaitState[] portraitStates = new PartyMemberPortaitState[GameCore.MaxPartyMembers];
+        readonly ILayerSprite?[] characterStatusIcons = new ILayerSprite?[GameCore.MaxPartyMembers];
+        readonly Bar[] characterBars = new Bar[GameCore.MaxPartyMembers * 4]; // 2 bars and each has fill and shadow color
+        ISprite? sprite80x80Picture;
+        ISprite? eventPicture;
+        readonly Dictionary<SpecialItemPurpose, ILayerSprite> specialItemSprites = [];
+        readonly Dictionary<SpecialItemPurpose, UIText> specialItemTexts = [];
+        readonly Dictionary<ActiveSpellType, ILayerSprite> activeSpellSprites = [];
+        readonly Dictionary<ActiveSpellType, IColoredRect> activeSpellDurationBackgrounds = [];
+        readonly Dictionary<ActiveSpellType, Bar> activeSpellDurationBars = [];
+        readonly List<MonsterCombatGraphic> monsterCombatGraphics = [];
+        PortraitAnimation? portraitAnimation = null;
+        readonly List<ItemGrid> itemGrids = [];
+        UIText? freeScrolledText = null;
         public bool FreeTextScrollingActive => freeScrolledText != null;
-        internal UIText ChestText { get; private set; } = null;
+        internal UIText? ChestText { get; private set; } = null;
         public bool TextWaitsForClick => ChestText?.WithScrolling == true || InventoryMessageWaitsForClick || FreeTextScrollingActive;
-        Button questionYesButton = null;
-        Button questionNoButton = null;
-        DraggedItem draggedItem = null;
+        Button? questionYesButton = null;
+        Button? questionNoButton = null;
+        DraggedItem? draggedItem = null;
         uint draggedGold = 0;
         uint draggedFood = 0;
         public bool OptionMenuOpen { get; private set; } = false;
-        event Action FullscreenOptionUpdateRequested;
+        event Action? FullscreenOptionUpdateRequested;
         public bool IsDragging => draggedItem != null || draggedGold != 0 || draggedFood != 0;
-        public DraggedItem GetDraggedItem() => draggedItem;
-        Action<uint> draggedGoldOrFoodRemover = null;
-        readonly List<IColoredRect> barAreas = new List<IColoredRect>();
-        readonly List<IColoredRect> filledAreas = new List<IColoredRect>();
-        readonly List<IColoredRect> fadeEffectAreas = new List<IColoredRect>();
-        readonly List<FadeEffect> fadeEffects = new List<FadeEffect>();
-        readonly List<ISprite> additionalSprites = new List<ISprite>();
-        readonly List<UIText> texts = new List<UIText>();
-        readonly List<Tooltip> tooltips = new List<Tooltip>();
-        readonly Dictionary<int, BattleFieldSlotMarker> battleFieldSlotMarkers = new Dictionary<int, BattleFieldSlotMarker>();
-        public const uint TicksPerBlink = Game.TicksPerSecond / 4;
-        IColoredRect activeTooltipBackground = null;
-        IColoredRect[] activeTooltipBorders = new IColoredRect[4];
-        IRenderText activeTooltipText = null;
-        Tooltip activeTooltip = null;
-        UIText inventoryMessage = null;
-        UIText battleMessage = null;
-        readonly List<BattleAnimation> battleEffectAnimations = new List<BattleAnimation>();
+        public DraggedItem? GetDraggedItem() => draggedItem;
+        Action<uint>? draggedGoldOrFoodRemover = null;
+        readonly List<IColoredRect> barAreas = [];
+        readonly List<IColoredRect> filledAreas = [];
+        readonly List<IColoredRect> fadeEffectAreas = [];
+        readonly List<FadeEffect> fadeEffects = [];
+        readonly List<ISprite> additionalSprites = [];
+        readonly List<UIText> texts = [];
+        readonly List<Tooltip> tooltips = [];
+        readonly Dictionary<int, BattleFieldSlotMarker> battleFieldSlotMarkers = [];
+        public const uint TicksPerBlink = GameCore.TicksPerSecond / 4;
+        IColoredRect? activeTooltipBackground = null;
+        readonly IColoredRect?[] activeTooltipBorders = new IColoredRect?[4];
+        IRenderText? activeTooltipText = null;
+        Tooltip? activeTooltip = null;
+        UIText? inventoryMessage = null;
+        UIText? battleMessage = null;
+        readonly List<BattleAnimation> battleEffectAnimations = [];
         readonly ButtonGrid buttonGrid;
-        Popup activePopup = null;
+        Popup? activePopup = null;
         bool ignoreNextMouseUp = false;
         public bool PopupActive => activePopup != null;
         public bool PopupDisableButtons => activePopup?.DisableButtons == true;
@@ -541,11 +543,11 @@ namespace Ambermoon.UI
         uint? ticksPerMovement = null;
         internal IGameRenderView RenderView { get; }
         public bool TransportEnabled { get; set; } = false;
-        public event Action<int, int, MouseButtons> BattleFieldSlotClicked;
-        public event Action DraggedItemDropped;
+        public event Action<int, int, MouseButtons>? BattleFieldSlotClicked;
+        public event Action? DraggedItemDropped;
         public int GlyphHeight { get; }
 
-        public Layout(Game game, IGameRenderView renderView, IItemManager itemManager)
+        public Layout(GameCore game, IGameRenderView renderView, IItemManager itemManager)
         {
             this.game = game;
             RenderView = renderView;
@@ -557,7 +559,7 @@ namespace Ambermoon.UI
 
             GlyphHeight = renderView.FontProvider.GetFont().GlyphHeight;
 
-            sprite = RenderView.SpriteFactory.Create(320, 163, true) as ILayerSprite;
+            sprite = (RenderView.SpriteFactory.Create(320, 163, true) as ILayerSprite)!;
             sprite.Layer = renderLayer;
             sprite.X = Global.LayoutX;
             sprite.Y = Global.LayoutY;
@@ -569,7 +571,7 @@ namespace Ambermoon.UI
             buttonGrid = new ButtonGrid(renderView);
             buttonGrid.RightMouseClicked += ButtonGrid_RightMouseClicked;
 
-            healerSymbol = RenderView.SpriteFactory.Create(32, 29, true) as ILayerSprite;
+            healerSymbol = (RenderView.SpriteFactory.Create(32, 29, true) as ILayerSprite)!;
             healerSymbol.Layer = renderLayer;
             healerSymbol.X = 0;
             healerSymbol.Y = 0;
@@ -592,18 +594,18 @@ namespace Ambermoon.UI
             portraitBorders.ForEach(b => b.Visible = show);
             portraitBarBackgrounds.ToList().ForEach(b => b.Visible = show);
 
-            for (int i = 0; i < Game.MaxPartyMembers; ++i)
+            for (int i = 0; i < GameCore.MaxPartyMembers; ++i)
             {
                 if (!show)
                 {
                     if (portraitBackgrounds[i] != null)
-                        portraitBackgrounds[i].Visible = false;
+                        portraitBackgrounds[i]!.Visible = false;
                     if (portraits[i] != null)
-                        portraits[i].Visible = false;
+                        portraits[i]!.Visible = false;
                     if (portraitNames[i] != null)
-                        portraitNames[i].Visible = false;
+                        portraitNames[i]!.Visible = false;
                     if (characterStatusIcons[i] != null)
-                        characterStatusIcons[i].Visible = false;
+                        characterStatusIcons[i]!.Visible = false;
                 }
 
                 bool showBar = show;
@@ -618,7 +620,7 @@ namespace Ambermoon.UI
 
                 if (showBar)
                 {
-                    showBar = game.GetPartyMember(i).Class.IsMagic();
+                    showBar = game.GetPartyMember(i)?.Class.IsMagic() ?? false;
                 }
 
                 for (int n = 0; n < 2; ++n)
@@ -649,9 +651,9 @@ namespace Ambermoon.UI
         void AddStaticSprites()
         {
             var barBackgroundTexCoords = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.CharacterValueBarFrames));
-            for (int i = 0; i < Game.MaxPartyMembers; ++i)
+            for (int i = 0; i < GameCore.MaxPartyMembers; ++i)
             {
-                var barBackgroundSprite = portraitBarBackgrounds[i] = RenderView.SpriteFactory.Create(16, 36, true) as ILayerSprite;
+                var barBackgroundSprite = portraitBarBackgrounds[i] = (RenderView.SpriteFactory.Create(16, 36, true) as ILayerSprite)!;
                 barBackgroundSprite.Layer = renderLayer;
                 barBackgroundSprite.PaletteIndex = game.PrimaryUIPaletteIndex;
                 barBackgroundSprite.TextureAtlasOffset = barBackgroundTexCoords;
@@ -681,7 +683,7 @@ namespace Ambermoon.UI
             portraitBorders.Add(sprite);
 
             // Thin portrait borders
-            for (int i = 0; i < Game.MaxPartyMembers; ++i)
+            for (int i = 0; i < GameCore.MaxPartyMembers; ++i)
             {
                 sprite = RenderView.SpriteFactory.Create(32, 1, true);
                 sprite.Layer = renderLayer;
@@ -744,8 +746,8 @@ namespace Ambermoon.UI
             game.Pause();
             var area = Type switch
             {
-                LayoutType.Map2D => Game.Map2DViewArea,
-                LayoutType.Map3D => Game.Map3DViewArea,
+                LayoutType.Map2D => GameCore.Map2DViewArea,
+                LayoutType.Map3D => GameCore.Map3DViewArea,
                 LayoutType.Battle => Global.CombatBackgroundArea,
                 _ => throw new AmbermoonException(ExceptionScope.Application, "Open option menu from the current window is not supported.")
             };
@@ -828,7 +830,7 @@ namespace Ambermoon.UI
 
         internal Popup OpenTextPopup(IText text, Position position, int maxWidth, int maxTextHeight,
             bool disableButtons = true, bool closeOnClick = true, bool transparent = false,
-            TextColor textColor = TextColor.BrightGray, Action closeAction = null, TextAlign textAlign = TextAlign.Left,
+            TextColor textColor = TextColor.BrightGray, Action? closeAction = null, TextAlign textAlign = TextAlign.Left,
             byte displayLayerOffset = 0, byte? paletteOverride = null)
         {
             buttonGrid?.HideTooltips();
@@ -860,15 +862,15 @@ namespace Ambermoon.UI
             if (closeAction != null)
                  activePopup.Closed += closeAction;
 
-            if (scrolling && game.Configuration.IsMobile)
+            if (scrolling && game.CoreConfiguration.IsMobile)
                 activePopup.CanAbort = false;
 
             return activePopup;
         }
 
-        internal Popup OpenTextPopup(IText text, Action closeAction, bool disableButtons = false,
+        internal Popup OpenTextPopup(IText text, Action? closeAction, bool disableButtons = false,
             bool closeOnClick = true, bool transparent = false, TextAlign textAlign = TextAlign.Left,
-            byte displayLayerOffset = 0, byte? paletteOverride = null, Position offset = null)
+            byte displayLayerOffset = 0, byte? paletteOverride = null, Position? offset = null)
         {
             const int maxTextWidth = 256;
             const int maxTextHeight = 112;
@@ -923,8 +925,8 @@ namespace Ambermoon.UI
             decreaseButton.RightClickAction = () => ChangeInputValueTo(0);
             increaseButton.InstantAction = true;
             decreaseButton.InstantAction = true;
-            increaseButton.ContinuousActionDelayInTicks = Game.TicksPerSecond / 5;
-            decreaseButton.ContinuousActionDelayInTicks = Game.TicksPerSecond / 5;
+            increaseButton.ContinuousActionDelayInTicks = GameCore.TicksPerSecond / 5;
+            decreaseButton.ContinuousActionDelayInTicks = GameCore.TicksPerSecond / 5;
             increaseButton.ContinuousActionDelayReductionInTicks = 1;
             decreaseButton.ContinuousActionDelayReductionInTicks = 1;
             // OK button
@@ -1061,7 +1063,7 @@ namespace Ambermoon.UI
                 return;
 
             activePopup = null;
-            ClosePopup(popup, raiseEvent);
+            ClosePopup(popup!, raiseEvent);
         }
 
         internal void ClearLeftUpIgnoring() => ignoreNextMouseUp = false;
@@ -1078,26 +1080,26 @@ namespace Ambermoon.UI
                 }, ClosePopup, ClosePopup);
         }
 
-        internal void OpenLoadMenu(Action<Action> preLoadAction = null, Action abortAction = null,
+        internal void OpenLoadMenu(Action<Action>? preLoadAction = null, Action? abortAction = null,
             bool loadInitialSavegameOnFailure = false)
         {
-            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _, Game.NumBaseSavegameSlots);
-            bool extended = game.Configuration.ExtendedSavegameSlots;
+            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _, GameCore.NumBaseSavegameSlots);
+            bool extended = game.CoreConfiguration.ExtendedSavegameSlots;
             if (extended)
             {
                 var additionalSavegameSlots = game.GetAdditionalSavegameSlots();
-                int remaining = Game.NumAdditionalSavegameSlots - Math.Min(Game.NumAdditionalSavegameSlots, additionalSavegameSlots?.Names?.Length ?? 0);
+                int remaining = GameCore.NumAdditionalSavegameSlots - Math.Min(GameCore.NumAdditionalSavegameSlots, additionalSavegameSlots?.Names?.Length ?? 0);
                 if (additionalSavegameSlots?.Names != null)
-                    savegameNames = Enumerable.Concat(savegameNames, additionalSavegameSlots.Names.Take(Game.NumAdditionalSavegameSlots).Select(n => n ?? "")).ToArray();
+                    savegameNames = Enumerable.Concat(savegameNames, additionalSavegameSlots.Names.Take(GameCore.NumAdditionalSavegameSlots).Select(n => n ?? "")).ToArray();
                 if (remaining != 0)
                     savegameNames = Enumerable.Concat(savegameNames, Enumerable.Repeat("", remaining)).ToArray();
             }
             var position = extended ? new Position(13, 38) : new Position(16, 62);
             int maxItems = extended ? 16 : 10;
             var savegamePopup = OpenPopup(position, extended ? 19 : 18, extended ? 10 : 7, true, false);
-            activePopup.AddText(new Rect(24, extended ? 54 : 78, 272, 6), game.DataNameProvider.LoadWhichSavegame, TextColor.BrightGray, TextAlign.Center);
+            activePopup!.AddText(new Rect(24, extended ? 54 : 78, 272, 6), game.DataNameProvider.LoadWhichSavegame, TextColor.BrightGray, TextAlign.Center);
             var listBox = activePopup.AddSavegameListBox(savegameNames.Select(name =>
-                new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => Load(slot + 1, name))
+                new KeyValuePair<string, Action<int, string>?>(name, (int slot, string name) => Load(slot + 1, name))
             ).ToList(), false, maxItems, extended ? -23 : 0);
 
             if (extended)
@@ -1125,7 +1127,7 @@ namespace Ambermoon.UI
                         ClosePopup();
                         game.LoadGame(slot, true, loadInitialSavegameOnFailure, preLoadAction, false, s =>
                         {
-                            if (game.Configuration.ShowSaveLoadMessage)
+                            if (game.CoreConfiguration.ShowSaveLoadMessage)
                             {
                                 game.ShowBriefMessagePopup(
                                     s == 0 ? CustomTexts.GetText(game.GameLanguage, CustomTexts.Index.InitialGameLoaded) :
@@ -1140,23 +1142,25 @@ namespace Ambermoon.UI
 
         void OpenSaveMenu()
         {
-            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _, Game.NumBaseSavegameSlots);
-            bool extended = game.Configuration.ExtendedSavegameSlots;
+            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _, GameCore.NumBaseSavegameSlots);
+            bool extended = game.CoreConfiguration.ExtendedSavegameSlots;
             if (extended)
             {
                 var additionalSavegameSlots = game.GetAdditionalSavegameSlots();
-                int remaining = Game.NumAdditionalSavegameSlots - Math.Min(Game.NumAdditionalSavegameSlots, additionalSavegameSlots?.Names?.Length ?? 0);
+                int remaining = GameCore.NumAdditionalSavegameSlots - Math.Min(GameCore.NumAdditionalSavegameSlots, additionalSavegameSlots?.Names?.Length ?? 0);
                 if (additionalSavegameSlots?.Names != null)
-                    savegameNames = Enumerable.Concat(savegameNames, additionalSavegameSlots.Names.Take(Game.NumAdditionalSavegameSlots).Select(n => n ?? "")).ToArray();
+                    savegameNames = Enumerable.Concat(savegameNames, additionalSavegameSlots.Names.Take(GameCore.NumAdditionalSavegameSlots).Select(n => n ?? "")).ToArray();
                 if (remaining != 0)
                     savegameNames = Enumerable.Concat(savegameNames, Enumerable.Repeat("", remaining)).ToArray();
             }
             var position = extended ? new Position(13, 38) : new Position(16, 62);
             int maxItems = extended ? 16 : 10;
+
             OpenPopup(position, extended ? 19 : 18, extended ? 10 : 7, true, false);
-            activePopup.AddText(new Rect(24, extended ? 54 : 78, 272, 6), game.DataNameProvider.SaveWhichSavegame, TextColor.BrightGray, TextAlign.Center);
+            activePopup!.AddText(new Rect(24, extended ? 54 : 78, 272, 6), game.DataNameProvider.SaveWhichSavegame, TextColor.BrightGray, TextAlign.Center);
+
             var listBox = activePopup.AddSavegameListBox(savegameNames.Select(name =>
-                new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => Save(slot + 1, name))
+                new KeyValuePair<string, Action<int, string>?>(name, (int slot, string name) => Save(slot + 1, name))
             ).ToList(), true, maxItems, extended ? -23 : 0);
 
             if (extended)
@@ -1195,9 +1199,11 @@ namespace Ambermoon.UI
                 void Save(int slot, string name)
                 {
                     game.SaveGame(slot, name);
+
                     if (additionalSavegameSlots != null)
                         additionalSavegameSlots.ContinueSavegameSlot = slot;
-                    if (game.Configuration.ShowSaveLoadMessage)
+
+                    if (game.CoreConfiguration.ShowSaveLoadMessage)
                     {
                         game.ShowBriefMessagePopup(
                             string.Format(CustomTexts.GetText(game.GameLanguage, CustomTexts.Index.GameSaved), name),
@@ -1523,54 +1529,59 @@ namespace Ambermoon.UI
         void OpenOptions()
         {
             int page = 0;
+
             OpenPopup(new Position(48, 62), 14, 7, true, false);
-            activePopup.AddText(new Rect(56, 78, 208, 6), game.DataNameProvider.OptionsHeader, TextColor.BrightGray, TextAlign.Center);
+            activePopup!.AddText(new Rect(56, 78, 208, 6), game.DataNameProvider.OptionsHeader, TextColor.BrightGray, TextAlign.Center);
+
             var optionNames = OptionNames[game.GameLanguage];
             bool changedConfiguration = false;
             bool windowChange = false; // an option was changed that affects the window (screen ratio, resolution, fullscreen)
-            ListBox listBox = null;
+            ListBox? listBox = null;
             var on = game.DataNameProvider.On;
             var off = game.DataNameProvider.Off;
-            string windowModeNameProvider(WindowMode windowMode) => windowMode switch
+            int width = game.CoreConfiguration.Width ?? 1280;
+            bool cheatsEnabled = !game.CoreConfiguration.IsMobile && game.CoreConfiguration.EnableCheats;            
+            Action<int, string>? nullOptionAction = null;
+            List<KeyValuePair<string, Action<int, string>?>> options = new(OptionCount);
+
+            string WindowModeNameProvider(WindowMode windowMode) => windowMode switch
             {
                 WindowMode.Fullscreen => on,
                 WindowMode.FullsizedWindow => FullsizedWindowName[game.GameLanguage],
                 _ => off,
             };
-            int width = game.Configuration.Width ?? 1280;
-            bool cheatsEnabled = !game.Configuration.IsMobile && game.Configuration.EnableCheats;
-            Action<int, string> toggleResolutionAction = (index, _) => ToggleResolution();
-            Action<int, string> nullOptionAction = null;
-            List<KeyValuePair<string, Action<int, string>>> options = new(OptionCount);
-            void AddOption(Action<int, string> action) => options.Add(KeyValuePair.Create("", action));
- 
+
+            void ToggleResolutionAction(int index, string _) => ToggleResolution();
+
+            void AddOption(Action<int, string>? action) => options.Add(KeyValuePair.Create("", action));
+
             // Page 1
             AddOption((index, _) => ToggleMusic());
             AddOption((index, _) => ToggleVolume());
-            AddOption(game.Configuration.WindowMode != WindowMode.Normal || game.Configuration.IsMobile ? null : toggleResolutionAction);
-            AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleFullscreen());
+            AddOption(game.CoreConfiguration.WindowMode != WindowMode.Normal || game.CoreConfiguration.IsMobile ? null : ToggleResolutionAction);
+            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleFullscreen());
             AddOption(RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilter()) : nullOptionAction);
             AddOption(RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilterAddition()) : nullOptionAction);
             AddOption(RenderView.AllowEffects ? ((index, _) => ToggleEffects()) : nullOptionAction);
             // Page 2
             AddOption((index, _) => ToggleBattleSpeed());
-            AddOption(game.Configuration.IsMobile ? null : (index, _) => Toggle3DMovement());
-            AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleTurnWithArrowKeys());
-            AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleTooltips());
-            AddOption(game.Configuration.IsMobile ? null : (index, _) => TogglePlayerStatsTooltips());
+            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => Toggle3DMovement());
+            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleTurnWithArrowKeys());
+            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleTooltips());
+            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => TogglePlayerStatsTooltips());
             AddOption((index, _) => ToggleFloorAndCeiling());
-            AddOption(game.Configuration.ShowFloor && game.Configuration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
+            AddOption(game.CoreConfiguration.ShowFloor && game.CoreConfiguration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
             // Page 3
             AddOption((index, _) => ToggleAutoDerune());
-            AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleExtendedSaves());
-            AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleExternalMusic());
+            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleExtendedSaves());
+            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleExternalMusic());
             AddOption((index, _) => TogglePyrdacorLogo());
             AddOption((index, _) => ToggleFantasyIntro());
             AddOption((index, _) => ToggleIntro());
             AddOption((index, _) => ToggleAdvancedLogo());
             // Page 4
             AddOption((index, _) => ToggleSaveLoadInfo());
-            AddOption(game.Configuration.IsMobile ? null : (index, _) => ToggleCheats());
+            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleCheats());
 
             void UpdateFullscreenOption()
             {
@@ -1584,7 +1595,7 @@ namespace Ambermoon.UI
 
             string GetResolutionString()
             {
-                var resolution = game.Configuration.GetScreenResolution();
+                var resolution = game.CoreConfiguration.GetScreenResolution();
                 return $"{resolution.Width}x{resolution.Height}";
             }
             void SetOptionString(int optionIndex, string value)
@@ -1598,29 +1609,29 @@ namespace Ambermoon.UI
                 int remainingSpace = 31 - optionString.Length - value.Length;
                 optionString += new string(' ', remainingSpace);
                 optionString += value;
-                listBox.SetItemText(index, optionString);
+                listBox!.SetItemText(index, optionString);
             }
-            void SetOptionAction(int optionIndex, Action<int, string> action)
+            void SetOptionAction(int optionIndex, Action<int, string>? action)
             {
                 int index = optionIndex - page * OptionsPerPage;
 
                 if (index < 0 || index >= OptionsPerPage)
                     return;
 
-                listBox.SetItemAction(index, action);
+                listBox!.SetItemAction(index, action);
             }
             string GetFloorAndCeilingValueString()
             {
                 int index = 0;
 
-                if (game.Configuration.ShowFloor)
+                if (game.CoreConfiguration.ShowFloor)
                 {
-                    if (game.Configuration.ShowCeiling)
+                    if (game.CoreConfiguration.ShowCeiling)
                         index = 3;
                     else
                         index = 1;
                 }
-                else if (game.Configuration.ShowCeiling)
+                else if (game.CoreConfiguration.ShowCeiling)
                 {
                     index = 2;
                 }
@@ -1628,34 +1639,34 @@ namespace Ambermoon.UI
                 return FloorAndCeilingValues[game.GameLanguage][index];
             }
             // Page 1
-            void SetMusic() => SetOptionString(0, game.Configuration.Music ? on : off);
-            void SetVolume() => SetOptionString(1, Util.Limit(0, game.Configuration.Volume, 100).ToString());
+            void SetMusic() => SetOptionString(0, game.CoreConfiguration.Music ? on : off);
+            void SetVolume() => SetOptionString(1, Util.Limit(0, game.CoreConfiguration.Volume, 100).ToString());
             void SetResolution() => SetOptionString(2, GetResolutionString());
-            void SetFullscreen() => SetOptionString(3, windowModeNameProvider(game.Configuration.WindowMode));
-            void SetGraphicFilter() => SetOptionString(4, game.Configuration.GraphicFilter == GraphicFilter.None ? off : game.Configuration.GraphicFilter.ToString());
-            void SetGraphicFilterOverlay() => SetOptionString(5, game.Configuration.GraphicFilterOverlay == GraphicFilterOverlay.None ? off : game.Configuration.GraphicFilterOverlay.ToString());
-            void SetEffects() => SetOptionString(6, game.Configuration.Effects == Effects.None ? off : game.Configuration.Effects.ToString());
+            void SetFullscreen() => SetOptionString(3, WindowModeNameProvider(game.CoreConfiguration.WindowMode));
+            void SetGraphicFilter() => SetOptionString(4, game.CoreConfiguration.GraphicFilter == GraphicFilter.None ? off : game.CoreConfiguration.GraphicFilter.ToString());
+            void SetGraphicFilterOverlay() => SetOptionString(5, game.CoreConfiguration.GraphicFilterOverlay == GraphicFilterOverlay.None ? off : game.CoreConfiguration.GraphicFilterOverlay.ToString());
+            void SetEffects() => SetOptionString(6, game.CoreConfiguration.Effects == Effects.None ? off : game.CoreConfiguration.Effects.ToString());
             // Page 2
-            void SetBattleSpeed() => SetOptionString(7, game.Configuration.BattleSpeed == 0 ? DefaultBattleSpeedName[game.GameLanguage] : $"+{game.Configuration.BattleSpeed}%");
-            void Set3DMovement() => SetOptionString(8, Movement3DValues[game.GameLanguage][Util.Limit(0, (int)game.Configuration.Movement3D, 1)]);
-            void SetTurnWithArrowKeys() => SetOptionString(9, game.Configuration.TurnWithArrowKeys ? on : off);
-            void SetTooltips() => SetOptionString(10, game.Configuration.ShowButtonTooltips ? on : off);
-            void SetPlayerStatsTooltips() => SetOptionString(11, game.Configuration.ShowPlayerStatsTooltips ? on : off);
+            void SetBattleSpeed() => SetOptionString(7, game.CoreConfiguration.BattleSpeed == 0 ? DefaultBattleSpeedName[game.GameLanguage] : $"+{game.CoreConfiguration.BattleSpeed}%");
+            void Set3DMovement() => SetOptionString(8, Movement3DValues[game.GameLanguage][Util.Limit(0, (int)game.CoreConfiguration.Movement3D, 1)]);
+            void SetTurnWithArrowKeys() => SetOptionString(9, game.CoreConfiguration.TurnWithArrowKeys ? on : off);
+            void SetTooltips() => SetOptionString(10, game.CoreConfiguration.ShowButtonTooltips ? on : off);
+            void SetPlayerStatsTooltips() => SetOptionString(11, game.CoreConfiguration.ShowPlayerStatsTooltips ? on : off);
             void SetFloorAndCeiling() => SetOptionString(12, GetFloorAndCeilingValueString());
-            void SetFog() => SetOptionString(13, game.Configuration.ShowFog ? on : off);
+            void SetFog() => SetOptionString(13, game.CoreConfiguration.ShowFog ? on : off);
             // Page 3
-            void SetAutoDerune() => SetOptionString(14, game.Configuration.AutoDerune ? on : off);
-            void SetExtendedSaves() => SetOptionString(15, game.Configuration.ExtendedSavegameSlots ? on : off);
-            void SetExternalMusic() => SetOptionString(16, game.Configuration.ExternalMusic ? on : off);
-            void SetPyrdacorLogo() => SetOptionString(17, game.Configuration.ShowPyrdacorLogo ? on : off);
-            void SetFantasyIntro() => SetOptionString(18, game.Configuration.ShowFantasyIntro ? on : off);
-            void SetIntro() => SetOptionString(19, game.Configuration.ShowIntro ? on : off);
-            void SetAdvancedLogo() => SetOptionString(20, game.Configuration.ShowAdvancedLogo ? on : off);
+            void SetAutoDerune() => SetOptionString(14, game.CoreConfiguration.AutoDerune ? on : off);
+            void SetExtendedSaves() => SetOptionString(15, game.CoreConfiguration.ExtendedSavegameSlots ? on : off);
+            void SetExternalMusic() => SetOptionString(16, game.CoreConfiguration.ExternalMusic ? on : off);
+            void SetPyrdacorLogo() => SetOptionString(17, game.CoreConfiguration.ShowPyrdacorLogo ? on : off);
+            void SetFantasyIntro() => SetOptionString(18, game.CoreConfiguration.ShowFantasyIntro ? on : off);
+            void SetIntro() => SetOptionString(19, game.CoreConfiguration.ShowIntro ? on : off);
+            void SetAdvancedLogo() => SetOptionString(20, game.CoreConfiguration.ShowAdvancedLogo ? on : off);
             // Page 4
-            void SetSaveLoadInfo() => SetOptionString(21, game.Configuration.ShowSaveLoadMessage ? on : off);
+            void SetSaveLoadInfo() => SetOptionString(21, game.CoreConfiguration.ShowSaveLoadMessage ? on : off);
             void SetCheats() => SetOptionString(22, cheatsEnabled ? on : off);
 
-            void UpdateShowFogOption() => SetOptionAction(13, game.Configuration.ShowFloor && game.Configuration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
+            void UpdateShowFogOption() => SetOptionAction(13, game.CoreConfiguration.ShowFloor && game.CoreConfiguration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
 
             void ShowOptions()
             {
@@ -1698,8 +1709,8 @@ namespace Ambermoon.UI
 
             void ToggleMusic()
             {
-                game.Configuration.Music = !game.Configuration.Music;
-                game.AudioOutput.Enabled = game.Configuration.Music;
+                game.CoreConfiguration.Music = !game.CoreConfiguration.Music;
+                game.AudioOutput.Enabled = game.CoreConfiguration.Music;
                 if (game.AudioOutput.Available && game.AudioOutput.Enabled)
                     game.ContinueMusic();
                 SetMusic();
@@ -1707,54 +1718,54 @@ namespace Ambermoon.UI
             }
             void ToggleVolume()
             {
-                game.Configuration.Volume = ((game.Configuration.Volume + 10) / 10) * 10;
-                while (game.Configuration.Volume > 100)
-                    game.Configuration.Volume -= 100;
-                game.Configuration.Volume = Math.Max(0, game.Configuration.Volume);
-                game.AudioOutput.Volume = game.Configuration.Volume / 100.0f;
+                game.CoreConfiguration.Volume = ((game.CoreConfiguration.Volume + 10) / 10) * 10;
+                while (game.CoreConfiguration.Volume > 100)
+                    game.CoreConfiguration.Volume -= 100;
+                game.CoreConfiguration.Volume = Math.Max(0, game.CoreConfiguration.Volume);
+                game.AudioOutput.Volume = game.CoreConfiguration.Volume / 100.0f;
                 SetVolume();
                 changedConfiguration = true;
             }
             void ToggleGraphicFilter()
             {
-                game.Configuration.GraphicFilter = (GraphicFilter)(((int)game.Configuration.GraphicFilter + 1) % EnumHelper.GetValues<GraphicFilter>().Length);
+                game.CoreConfiguration.GraphicFilter = (GraphicFilter)(((int)game.CoreConfiguration.GraphicFilter + 1) % EnumHelper.GetValues<GraphicFilter>().Length);
                 SetGraphicFilter();
                 changedConfiguration = true;
                 game.NotifyConfigurationChange(false);
             }
             void ToggleGraphicFilterAddition()
             {
-                game.Configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)game.Configuration.GraphicFilterOverlay + 1) % EnumHelper.GetValues<GraphicFilterOverlay>().Length);
+                game.CoreConfiguration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)game.Configuration.GraphicFilterOverlay + 1) % EnumHelper.GetValues<GraphicFilterOverlay>().Length);
                 SetGraphicFilterOverlay();
                 changedConfiguration = true;
                 game.NotifyConfigurationChange(false);
             }
             void ToggleResolution()
             {
-                if (game.Configuration.WindowMode != WindowMode.Normal)
+                if (game.CoreConfiguration.WindowMode != WindowMode.Normal)
                     return;
 
                 game.NotifyResolutionChange(width);
-                width = game.Configuration.Width.Value;
+                width = game.CoreConfiguration.Width!.Value;
                 SetResolution();
                 changedConfiguration = true;
                 windowChange = true;
             }
             void FullscreenUpdated()
             {
-                listBox.SetItemAction(2, game.Configuration.WindowMode != WindowMode.Normal ? null : toggleResolutionAction);
-                options[2] = KeyValuePair.Create(options[2].Key, game.Configuration.WindowMode != WindowMode.Normal || game.Configuration.IsMobile ? null : toggleResolutionAction);
+                listBox!.SetItemAction(2, game.CoreConfiguration.WindowMode != WindowMode.Normal ? null : (Action<int, string>)ToggleResolutionAction);
+                options[2] = KeyValuePair.Create(options[2].Key, game.CoreConfiguration.WindowMode != WindowMode.Normal || game.CoreConfiguration.IsMobile ? null : (Action<int, string>)ToggleResolutionAction);
 
-                if (game.Configuration.WindowMode == WindowMode.Normal)
+                if (game.CoreConfiguration.WindowMode == WindowMode.Normal)
                     SetResolution();
 
                 SetFullscreen();
             }
             void ToggleFullscreen()
             {
-                game.Configuration.WindowMode = (WindowMode)(((int)game.Configuration.WindowMode + 1) % 3);
+                game.CoreConfiguration.WindowMode = (WindowMode)(((int)game.CoreConfiguration.WindowMode + 1) % 3);
 
-                game.RequestFullscreenChange(game.Configuration.WindowMode);
+                game.RequestFullscreenChange(game.CoreConfiguration.WindowMode);
 
                 FullscreenUpdated();
 
@@ -1763,79 +1774,81 @@ namespace Ambermoon.UI
             }
             void ToggleBattleSpeed()
             {
-                if (game.Configuration.BattleSpeed >= 100)
-                    game.Configuration.BattleSpeed = 0;
+                if (game.CoreConfiguration.BattleSpeed >= 100)
+                    game.CoreConfiguration.BattleSpeed = 0;
                 else
-                    game.Configuration.BattleSpeed += 10;
+                    game.CoreConfiguration.BattleSpeed += 10;
+
                 SetBattleSpeed();
-                game.SetBattleSpeed(game.Configuration.BattleSpeed);
+                game.SetBattleSpeed(game.CoreConfiguration.BattleSpeed);
+
                 changedConfiguration = true;
             }
             void Toggle3DMovement()
             {
-                game.Configuration.Movement3D = (Movement3D)(((int)game.Configuration.Movement3D + 1) % 2);
+                game.CoreConfiguration.Movement3D = (Movement3D)(((int)game.CoreConfiguration.Movement3D + 1) % 2);
                 Set3DMovement();
                 changedConfiguration = true;
             }
             void ToggleTurnWithArrowKeys()
             {
-                game.Configuration.TurnWithArrowKeys = !game.Configuration.TurnWithArrowKeys;
+                game.CoreConfiguration.TurnWithArrowKeys = !game.CoreConfiguration.TurnWithArrowKeys;
                 SetTurnWithArrowKeys();
                 changedConfiguration = true;
             }
             void ToggleTooltips()
             {
-                game.Configuration.ShowButtonTooltips = !game.Configuration.ShowButtonTooltips;
+                game.CoreConfiguration.ShowButtonTooltips = !game.CoreConfiguration.ShowButtonTooltips;
                 SetTooltips();
                 changedConfiguration = true;
             }
             void TogglePlayerStatsTooltips()
             {
-                game.Configuration.ShowPlayerStatsTooltips = !game.Configuration.ShowPlayerStatsTooltips;
+                game.CoreConfiguration.ShowPlayerStatsTooltips = !game.CoreConfiguration.ShowPlayerStatsTooltips;
                 SetPlayerStatsTooltips();
                 changedConfiguration = true;
             }
             void ToggleFog()
             {
-                game.Configuration.ShowFog = !game.Configuration.ShowFog;
+                game.CoreConfiguration.ShowFog = !game.CoreConfiguration.ShowFog;
                 SetFog();
                 changedConfiguration = true;
             }
             void ToggleFloorAndCeiling()
             {
-                if (!game.Configuration.ShowFloor && !game.Configuration.ShowCeiling)
+                if (!game.CoreConfiguration.ShowFloor && !game.CoreConfiguration.ShowCeiling)
                 {
-                    game.Configuration.ShowFloor = true;
+                    game.CoreConfiguration.ShowFloor = true;
                 }
-                else if (game.Configuration.ShowFloor && !game.Configuration.ShowCeiling)
+                else if (game.CoreConfiguration.ShowFloor && !game.CoreConfiguration.ShowCeiling)
                 {
-                    game.Configuration.ShowFloor = false;
-                    game.Configuration.ShowCeiling = true;
+                    game.CoreConfiguration.ShowFloor = false;
+                    game.CoreConfiguration.ShowCeiling = true;
                 }
-                else if (!game.Configuration.ShowFloor && game.Configuration.ShowCeiling)
+                else if (!game.CoreConfiguration.ShowFloor && game.CoreConfiguration.ShowCeiling)
                 {
-                    game.Configuration.ShowFloor = true;
+                    game.CoreConfiguration.ShowFloor = true;
                 }
                 else
                 {
-                    game.Configuration.ShowFloor = false;
-                    game.Configuration.ShowCeiling = false;
+                    game.CoreConfiguration.ShowFloor = false;
+                    game.CoreConfiguration.ShowCeiling = false;
                 }
                 SetFloorAndCeiling();
-                if ((!game.Configuration.ShowFloor || !game.Configuration.ShowCeiling) && game.Configuration.ShowFog)
+                if ((!game.CoreConfiguration.ShowFloor || !game.CoreConfiguration.ShowCeiling) && game.CoreConfiguration.ShowFog)
                     ToggleFog();
                 UpdateShowFogOption();
                 changedConfiguration = true;
             }
             void ToggleExtendedSaves()
             {
-                game.Configuration.ExtendedSavegameSlots = !game.Configuration.ExtendedSavegameSlots;
+                game.CoreConfiguration.ExtendedSavegameSlots = !game.CoreConfiguration.ExtendedSavegameSlots;
                 SetExtendedSaves();
                 changedConfiguration = true;
             }
             void ToggleExternalMusic()
             {
-                game.Configuration.ExternalMusic = !game.Configuration.ExternalMusic;
+                game.CoreConfiguration.ExternalMusic = !game.CoreConfiguration.ExternalMusic;
                 SetExternalMusic();
                 changedConfiguration = true;
             }
@@ -1847,44 +1860,44 @@ namespace Ambermoon.UI
             }
             void ToggleAutoDerune()
             {
-                game.Configuration.AutoDerune = !game.Configuration.AutoDerune;
+                game.CoreConfiguration.AutoDerune = !game.CoreConfiguration.AutoDerune;
                 SetAutoDerune();
                 changedConfiguration = true;
             }
             void TogglePyrdacorLogo()
             {
-                game.Configuration.ShowPyrdacorLogo = !game.Configuration.ShowPyrdacorLogo;
+                game.CoreConfiguration.ShowPyrdacorLogo = !game.CoreConfiguration.ShowPyrdacorLogo;
                 SetPyrdacorLogo();
                 changedConfiguration = true;
             }
             void ToggleAdvancedLogo()
             {
-                game.Configuration.ShowAdvancedLogo = !game.Configuration.ShowAdvancedLogo;
+                game.CoreConfiguration.ShowAdvancedLogo = !game.CoreConfiguration.ShowAdvancedLogo;
                 SetAdvancedLogo();
                 changedConfiguration = true;
             }
             void ToggleFantasyIntro()
             {
-                game.Configuration.ShowFantasyIntro = !game.Configuration.ShowFantasyIntro;
+                game.CoreConfiguration.ShowFantasyIntro = !game.CoreConfiguration.ShowFantasyIntro;
                 SetFantasyIntro();
                 changedConfiguration = true;
             }
             void ToggleIntro()
             {
-                game.Configuration.ShowIntro = !game.Configuration.ShowIntro;
+                game.CoreConfiguration.ShowIntro = !game.CoreConfiguration.ShowIntro;
                 SetIntro();
                 changedConfiguration = true;
             }
             void ToggleEffects()
             {
-                game.Configuration.Effects = (Effects)(((int)game.Configuration.Effects + 1) % EnumHelper.GetValues<Effects>().Length);
+                game.CoreConfiguration.Effects = (Effects)(((int)game.CoreConfiguration.Effects + 1) % EnumHelper.GetValues<Effects>().Length);
                 SetEffects();
                 changedConfiguration = true;
                 game.NotifyConfigurationChange(false);
             }
             void ToggleSaveLoadInfo()
             {
-                game.Configuration.ShowSaveLoadMessage = !game.Configuration.ShowSaveLoadMessage;
+                game.CoreConfiguration.ShowSaveLoadMessage = !game.CoreConfiguration.ShowSaveLoadMessage;
                 SetSaveLoadInfo();
                 changedConfiguration = true;
             }
@@ -1901,7 +1914,7 @@ namespace Ambermoon.UI
                 CloseOptionMenu();
                 if (changedConfiguration)
                 {
-                    game.Configuration.EnableCheats = cheatsEnabled;
+                    game.CoreConfiguration.EnableCheats = cheatsEnabled;
                     game.NotifyConfigurationChange(windowChange);
                 }
             };
@@ -1968,42 +1981,42 @@ namespace Ambermoon.UI
             };
         }
 
-        event Action ExternalGraphicFilterChanged;
+        event Action? ExternalGraphicFilterChanged;
 
         public void OnExternalGraphicFilterChanged()
         {
             ExternalGraphicFilterChanged?.Invoke();
         }
 
-        event Action ExternalGraphicFilterOverlayChanged;
+        event Action? ExternalGraphicFilterOverlayChanged;
 
         public void OnExternalGraphicFilterOverlayChanged()
         {
             ExternalGraphicFilterOverlayChanged?.Invoke();
         }
 
-        event Action ExternalEffectsChanged;
+        event Action? ExternalEffectsChanged;
 
         public void OnExternalEffectsChanged()
         {
             ExternalEffectsChanged?.Invoke();
         }
 
-        event Action BattleSpeedChanged;
+        event Action? BattleSpeedChanged;
 
         public void OnExternalBattleSpeedChanged()
         {
             BattleSpeedChanged?.Invoke();
         }
 
-        event Action MusicChanged;
+        event Action? MusicChanged;
 
         public void OnExternalMusicChanged()
         {
             MusicChanged?.Invoke();
         }
 
-        event Action VolumeChanged;
+        event Action? VolumeChanged;
 
         public void OnExternalVolumeChanged()
         {
@@ -2206,7 +2219,7 @@ namespace Ambermoon.UI
 			switch (Type)
             {
                 case LayoutType.Map2D:
-                    if (game.Configuration.IsMobile)
+                    if (game.CoreConfiguration.IsMobile)
                     {
                         for (int i = 0; i < 9; i++)
                             buttonGrid.SetButton(i, ButtonType.Empty, true, null, false);
@@ -2229,15 +2242,15 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(1, ButtonType.Hand, false, null, false, GetTooltip(Button.TooltipType.Hand), () => CursorType.Hand);
                         buttonGrid.SetButton(2, ButtonType.Mouth, false, null, false, GetTooltip(Button.TooltipType.Mouth), () => CursorType.Mouth);
                         buttonGrid.SetButton(3, ButtonType.Transport, !TransportEnabled, game.ToggleTransport, false, GetTooltip(Button.TooltipType.Transport));
-                        buttonGrid.SetButton(4, ButtonType.Spells, game?.CanUseSpells() != true, () => game.CastSpell(false), false, GetTooltip(Button.TooltipType.Spells));
-                        buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true || game?.TravelType.CanCampOn() != true, () => game.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
+                        buttonGrid.SetButton(4, ButtonType.Spells, game?.CanUseSpells() != true, () => game!.CastSpell(false), false, GetTooltip(Button.TooltipType.Spells));
+                        buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true || game?.TravelType.CanCampOn() != true, () => game!.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false, null);
-                        buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
+                        buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game!.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
                         buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
                     }
                     break;
                 case LayoutType.Map3D:
-                    if (game.Configuration.IsMobile)
+                    if (game.CoreConfiguration.IsMobile)
                     {
                         for (int i = 0; i < 9; i++)
                             buttonGrid.SetButton(i, ButtonType.Empty, true, null, false);
@@ -2266,21 +2279,21 @@ namespace Ambermoon.UI
                             }
                         }, true, GetTooltip(Button.TooltipType.Mouth));
                         buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // Never enabled or usable in 3D maps
-                        buttonGrid.SetButton(4, ButtonType.Spells, game?.CanUseSpells() != true, () => game.CastSpell(false), false, GetTooltip(Button.TooltipType.Spells));
-                        buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
-                        buttonGrid.SetButton(6, ButtonType.Map, false, game.ShowAutomap, false, GetTooltip(Button.TooltipType.Automap));
+                        buttonGrid.SetButton(4, ButtonType.Spells, game?.CanUseSpells() != true, () => game!.CastSpell(false), false, GetTooltip(Button.TooltipType.Spells));
+                        buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game!.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
+                        buttonGrid.SetButton(6, ButtonType.Map, false, game!.ShowAutomap, false, GetTooltip(Button.TooltipType.Automap));
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
                         buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
                     }
                     break;
                 case LayoutType.Inventory:
                 {
-                    bool hasInventoryItems = game.CurrentInventory.Inventory.Slots.Any(item => item.ItemIndex != 0);
+                    bool hasInventoryItems = game.CurrentInventory!.Inventory.Slots.Any(item => item.ItemIndex != 0);
                     bool hasEquippedItems = game.CurrentInventory.Equipment.Slots.Any(item => item.Value.ItemIndex != 0);
                     bool canUseItem = (hasInventoryItems || hasEquippedItems) && game.CurrentInventory.Conditions.CanUseItem(game.CurrentInventory.Race == Race.Animal);
                     bool animalOrAbove = game.CurrentInventory.Race >= Race.Animal;
                     bool multiplePartyMembers = game.PartyMembers.Count(p => p != null) > 1;
-                    buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, false), false, GetTooltip(Button.TooltipType.Stats));
+                    buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex!.Value, false), false, GetTooltip(Button.TooltipType.Stats));
                     buttonGrid.SetButton(1, ButtonType.UseItem, !canUseItem, () => PickInventoryItemForAction(UseItem,
                         true, game.DataNameProvider.WhichItemToUseMessage), true, GetTooltip(Button.TooltipType.UseItem));
                     buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false, GetTooltip(Button.TooltipType.Exit));
@@ -2305,7 +2318,7 @@ namespace Ambermoon.UI
                     break;
                 }
                 case LayoutType.Stats:
-                    buttonGrid.SetButton(0, ButtonType.Inventory, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, true), false, GetTooltip(Button.TooltipType.Inventory));
+                    buttonGrid.SetButton(0, ButtonType.Inventory, false, () => game.OpenPartyMember(game.CurrentInventoryIndex!.Value, true), false, GetTooltip(Button.TooltipType.Inventory));
                     buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false, GetTooltip(Button.TooltipType.Exit));
                     buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
@@ -2563,15 +2576,17 @@ namespace Ambermoon.UI
         }
 
         internal Popup OpenAmountInputBox(string message, uint? imageIndex, string name, uint maxAmount,
-            Action<uint> submitAction, Action abortAction = null)
+            Action<uint>? submitAction, Action? abortAction = null)
         {
             buttonGrid?.HideTooltips();
             ClosePopup(false);
+
             activePopup = new Popup(game, RenderView, new Position(64, 64), 11, 6, false)
             {
                 DisableButtons = true,
                 CloseOnClick = false
             };
+
             if (imageIndex != null)
             {
                 // Item display (also gold or food)
@@ -2613,8 +2628,8 @@ namespace Ambermoon.UI
             decreaseButton.RightClickAction = () => ChangeInputValueTo(0);
             increaseButton.InstantAction = true;
             decreaseButton.InstantAction = true;
-            increaseButton.ContinuousActionDelayInTicks = Game.TicksPerSecond / 5;
-            decreaseButton.ContinuousActionDelayInTicks = Game.TicksPerSecond / 5;
+            increaseButton.ContinuousActionDelayInTicks = GameCore.TicksPerSecond / 5;
+            decreaseButton.ContinuousActionDelayInTicks = GameCore.TicksPerSecond / 5;
             increaseButton.ContinuousActionDelayReductionInTicks = 1;
             decreaseButton.ContinuousActionDelayReductionInTicks = 1;
             // OK button
@@ -2760,12 +2775,12 @@ namespace Ambermoon.UI
             {
                 void Use(bool broke)
                 {
-                    ReduceItemCharge(itemSlot, true, itemGrid == itemGrids[1], game.CurrentInventory, () =>
+                    ReduceItemCharge(itemSlot, true, itemGrid == itemGrids[1], game.CurrentInventory!, () =>
                     {
                         if (broke && itemGrid == itemGrids[1]) // equipped
                         {
                             // Try to unequip
-                            var emptyInventorySlot = game.CurrentInventory.Inventory.Slots.FirstOrDefault(s => s.Empty);
+                            var emptyInventorySlot = game.CurrentInventory!.Inventory.Slots.FirstOrDefault(s => s.Empty);
 
                             if (emptyInventorySlot != null)
                             {
@@ -2774,7 +2789,7 @@ namespace Ambermoon.UI
                                 if (slot == (int)EquipmentSlot.RightHand - 1 && item.NumberOfHands == 2)
                                 {
                                     // For equipped two-handed weapons also remove the red cross in second hand slot
-                                    itemGrids[1].GetItemSlot(slot + 2).Clear();
+                                    itemGrids[1].GetItemSlot(slot + 2)!.Clear();
                                     if (game.CurrentWindow.Window == Window.Inventory)
                                         itemGrids[1].UpdateItem(slot + 2);
                                 }
@@ -2804,7 +2819,7 @@ namespace Ambermoon.UI
                     itemSlot.Flags |= ItemSlotFlags.Broken;
                     UpdateItemSlot(itemSlot);
 
-                    string message = game.CurrentInventory.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, item.Name);
+                    string message = game.CurrentInventory!.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, item.Name);
                     game.ShowMessagePopup(message, () => Use(true));
                 }
                 else
@@ -2826,7 +2841,7 @@ namespace Ambermoon.UI
                 return;
             }
 
-            if (!item.Classes.Contains(user.Class))
+            if (!item.Classes.Contains(user!.Class))
             {
                 SetInventoryMessage(game.DataNameProvider.WrongClassToUseItem, true);
                 return;
@@ -2838,7 +2853,7 @@ namespace Ambermoon.UI
                 {
                     itemSlot.Flags |= ItemSlotFlags.Broken;
                     UpdateItemSlot(itemSlot);
-                    string message = game.CurrentInventory.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, item.Name);
+                    string message = game.CurrentInventory!.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, item.Name);
                     game.ShowMessagePopup(message, ShowText);
                 }
                 else
@@ -2848,7 +2863,7 @@ namespace Ambermoon.UI
 
                 void ShowText()
                 {
-                    if (game.Configuration.AutoDerune && item.Index == 145) // Special case: rune alphabet
+                    if (game.CoreConfiguration.AutoDerune && item.Index == 145) // Special case: rune alphabet
                     {
                         game.Pause();
                         game.InputEnable = false;
@@ -2869,7 +2884,7 @@ namespace Ambermoon.UI
             }
             else if (item.Type == ItemType.SpecialItem)
             {
-                if (game.CurrentSavegame.IsSpecialItemActive(item.SpecialItemPurpose))
+                if (game.CurrentSavegame!.IsSpecialItemActive(item.SpecialItemPurpose))
                 {
                     SetInventoryMessage(game.DataNameProvider.SpecialItemAlreadyInUse, true);
                 }
@@ -2896,7 +2911,7 @@ namespace Ambermoon.UI
                         return;
                     }
 
-                    var worldFlag = (WorldFlag)(1 << (int)game.Map.World);
+                    var worldFlag = (WorldFlag)(1 << (int)game.Map!.World);
 
                     if (!game.SpellInfos[item.Spell].Worlds.HasFlag(worldFlag))
                     {
@@ -2915,7 +2930,7 @@ namespace Ambermoon.UI
                         }
                     }
 
-                    if (item.Spell == Spell.SelfHealing && !game.CurrentInventory.Alive)
+                    if (item.Spell == Spell.SelfHealing && !game.CurrentInventory!.Alive)
                     {
                         SetInventoryMessage(game.DataNameProvider.ItemHasNoEffectHere, true);
                         return;
@@ -2943,7 +2958,7 @@ namespace Ambermoon.UI
             {
                 if (item.Spell != Spell.None)
                 {
-                    var worldFlag = (WorldFlag)(1 << (int)game.Map.World);
+                    var worldFlag = (WorldFlag)(1 << (int)game.Map!.World);
 
                     if (!game.SpellInfos[item.Spell].Worlds.HasFlag(worldFlag))
                     {
@@ -3018,7 +3033,7 @@ namespace Ambermoon.UI
                                 if (wasInputEnabled)
                                     game.InputEnable = true;
                                 game.UpdateCursor();
-                                game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true);
+                                game.UseSpell(game.CurrentInventory!, item.Spell, itemGrid, true);
                             });
                         }
                     }
@@ -3044,12 +3059,12 @@ namespace Ambermoon.UI
                             });
                         }
                     }
-                    else if (item.Spell == Spell.SelfHealing && !game.CurrentInventory.Alive)
+                    else if (item.Spell == Spell.SelfHealing && !game.CurrentInventory!.Alive)
                     {
                         SetInventoryMessage(game.DataNameProvider.ItemHasNoEffectHere, true);
                         return;
                     }
-                    else if (item.Spell == Spell.SelfReviving && game.CurrentInventory.Alive)
+                    else if (item.Spell == Spell.SelfReviving && game.CurrentInventory!.Alive)
                     {
                         SetInventoryMessage(game.DataNameProvider.IsNotDead, true);
                         return;
@@ -3081,9 +3096,9 @@ namespace Ambermoon.UI
                                     var item = itemManager.GetItem(itemSlot.ItemIndex);
 
                                     if (equipped)
-                                        game.EquipmentRemoved(usingPlayer, itemSlot.ItemIndex, 1, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
+                                        game.EquipmentRemoved(usingPlayer!, itemSlot.ItemIndex, 1, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
                                     else
-                                        usingPlayer.TotalWeight -= item.Weight;
+                                        usingPlayer!.TotalWeight -= item.Weight;
 
                                     itemSlot.Remove(1);
                                 }
@@ -3213,11 +3228,11 @@ namespace Ambermoon.UI
             }
         }
 
-        void GiveGold(Chest chest)
+        void GiveGold(Chest? chest)
         {
             // Note: 96 is the object icon index for coins (gold).
             OpenAmountInputBox(game.DataNameProvider.GiveHowMuchGoldMessage,
-                96, game.DataNameProvider.GoldName, chest == null ? game.CurrentInventory.Gold : chest.Gold,
+                96, game.DataNameProvider.GoldName, chest == null ? game.CurrentInventory!.Gold : chest.Gold,
                 GiveAmount);
 
             void GiveAmount(uint amount)
@@ -3238,8 +3253,8 @@ namespace Ambermoon.UI
                 game.CursorType = CursorType.Gold;
                 game.TrapMouse(Global.PartyMemberPortraitArea);
                 draggedGoldOrFoodRemover = chest == null
-                    ? (Action<uint>)(gold => {
-                        game.CurrentInventory.RemoveGold(gold);
+                    ? (gold => {
+                        game.CurrentInventory!.RemoveGold(gold);
                         game.UpdateCharacterInfo();
                         UpdateLayoutButtons();
                         game.UntrapMouse();
@@ -3253,31 +3268,33 @@ namespace Ambermoon.UI
                         game.UntrapMouse();
                         ButtonsDisabled = false;
                     };
+
                 if (chest != null)
                     ShowChestMessage(game.DataNameProvider.GiveToWhom);
                 else
                     SetInventoryMessage(game.DataNameProvider.GiveToWhom);
+
 				ButtonsDisabled = true;
 
-				for (int i = 0; i < Game.MaxPartyMembers; ++i)
+				for (int i = 0; i < GameCore.MaxPartyMembers; ++i)
                 {
                     var partyMember = game.GetPartyMember(i);
 
                     if (partyMember != null && partyMember != game.CurrentInventory)
                     {
-                        UpdateCharacterStatus(i, partyMember == game.CurrentInventory ? (UIGraphic?)null :
+                        UpdateCharacterStatus(i, partyMember == game.CurrentInventory ? null :
                             partyMember.Race != Race.Animal && partyMember.MaxGoldToTake >= amount && !game.HasPartyMemberFled(partyMember) ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
                     }
                 }
             }
         }
 
-        void GiveFood(Chest chest)
+        void GiveFood(Chest? chest)
         {
-            GiveFood(chest == null ? game.CurrentInventory.Food : chest.Food,
+            GiveFood(chest == null ? game.CurrentInventory!.Food : chest.Food,
                 chest == null
-                    ? (Action<uint>)(food => {
-                        game.CurrentInventory.RemoveFood(food);
+                    ? (food => {
+                        game.CurrentInventory!.RemoveFood(food);
                         game.UpdateCharacterInfo();
                         UpdateLayoutButtons();
                         game.UntrapMouse();
@@ -3292,8 +3309,10 @@ namespace Ambermoon.UI
 						ButtonsDisabled = false;
 					},
                 chest == null
-                    ? (Action)(() => SetInventoryMessage(game.DataNameProvider.GiveToWhom))
-                    : () => ShowChestMessage(game.DataNameProvider.GiveToWhom), null, () =>
+                    ? () => SetInventoryMessage(game.DataNameProvider.GiveToWhom)
+                    : () => ShowChestMessage(game.DataNameProvider.GiveToWhom),
+                null,
+                () =>
                     {
                         if (chest != null)
                             ShowClickChestMessage(game.DataNameProvider.NoOneCanCarryThatMuch);
@@ -3302,7 +3321,7 @@ namespace Ambermoon.UI
                     });
         }
 
-        internal void GiveFood(uint food, Action<uint> foodRemover, Action setup, Action abortAction, Action cannotCarryHandler)
+        internal void GiveFood(uint food, Action<uint>? foodRemover, Action? setup, Action? abortAction, Action? cannotCarryHandler)
         {
             // Note: 109 is the object icon index for food.
             OpenAmountInputBox(game.DataNameProvider.GiveHowMuchFoodMessage,
@@ -3325,7 +3344,7 @@ namespace Ambermoon.UI
                 draggedGoldOrFoodRemover = foodRemover;
                 setup?.Invoke();
 
-                for (int i = 0; i < Game.MaxPartyMembers; ++i)
+                for (int i = 0; i < GameCore.MaxPartyMembers; ++i)
                 {
                     var partyMember = game.GetPartyMember(i);
 
@@ -3338,9 +3357,10 @@ namespace Ambermoon.UI
             }
         }
 
-        internal void ShowChestMessage(string message, TextAlign textAlign = TextAlign.Center)
+        internal void ShowChestMessage(string? message, TextAlign textAlign = TextAlign.Center)
         {
             ChestText?.Destroy();
+
             if (message != null)
             {
                 var bounds = new Rect(114, 46, 189, 48);
@@ -3352,7 +3372,7 @@ namespace Ambermoon.UI
             }
         }
 
-        internal void ShowClickChestMessage(string message, Action clickEvent = null, bool remainAfterClick = false)
+        internal void ShowClickChestMessage(string message, Action? clickEvent = null, bool remainAfterClick = false)
         {
             var bounds = new Rect(114, 46, 189, 48);
             ChestText?.Destroy();
@@ -3379,7 +3399,7 @@ namespace Ambermoon.UI
             game.InputEnable = false;
         }
 
-        Button AddButton(Position position, ButtonType type, Action leftClickAction, byte displayLayer,
+        Button AddButton(Position position, ButtonType type, Action? leftClickAction, byte displayLayer,
             List<FilledArea> areas, bool allowOnlyOnce = false)
         {
             var brightBorderColor = game.GetUIColor(31);
@@ -3457,7 +3477,7 @@ namespace Ambermoon.UI
         {
             // Note: 96 is the object icon index for coins (gold).
             OpenAmountInputBox(game.DataNameProvider.DropHowMuchGoldMessage,
-                96, game.DataNameProvider.GoldName, game.CurrentInventory.Gold,
+                96, game.DataNameProvider.GoldName, game.CurrentInventory!.Gold,
                 DropAmount);
 
             void DropAmount(uint amount)
@@ -3629,7 +3649,7 @@ namespace Ambermoon.UI
 
         internal void ClickInventoryMessage() => inventoryMessage?.InvokeClickEvent();
 
-        internal void SetInventoryMessage(string message, bool waitForClick = false)
+        internal void SetInventoryMessage(string? message, bool waitForClick = false)
         {
             if (message == null)
             {
@@ -3919,38 +3939,38 @@ namespace Ambermoon.UI
             // Note: Don't remove fadeEffects or bars here.
         }
 
-        public void SetActiveCharacter(int slot, List<PartyMember> partyMembers)
+        public void SetActiveCharacter(int slot, List<PartyMember?> partyMembers)
         {
             for (int i = 0; i < portraitNames.Length; ++i)
             {
-                if (portraitNames[i] != null)
+                if (portraitNames[i] != null) // In this case partyMembers[i] is also non-null
                 {
                     if (i == slot)
-                        portraitNames[i].TextColor = TextColor.ActivePartyMember;
-                    else if (!partyMembers[i].Alive || !partyMembers[i].Conditions.CanSelect())
-                        portraitNames[i].TextColor = TextColor.DeadPartyMember;
-                    else if (game.HasPartyMemberFled(partyMembers[i]))
-                        portraitNames[i].TextColor = TextColor.DeadPartyMember;
+                        portraitNames[i]!.TextColor = TextColor.ActivePartyMember;
+                    else if (!partyMembers[i]!.Alive || !partyMembers[i]!.Conditions.CanSelect())
+                        portraitNames[i]!.TextColor = TextColor.DeadPartyMember;
+                    else if (game.HasPartyMemberFled(partyMembers[i]!))
+                        portraitNames[i]!.TextColor = TextColor.DeadPartyMember;
                     else
-                        portraitNames[i].TextColor = TextColor.PartyMember;
+                        portraitNames[i]!.TextColor = TextColor.PartyMember;
                 }
             }
         }
 
         public void UpdateCharacterNameColors(int activeSlot)
         {
-            var partyMembers = Enumerable.Range(0, Game.MaxPartyMembers).Select(i => game.GetPartyMember(i)).ToList();
+            var partyMembers = Enumerable.Range(0, GameCore.MaxPartyMembers).Select(game.GetPartyMember).ToList();
 
             for (int i = 0; i < portraitNames.Length; ++i)
             {
-                if (portraitNames[i] != null)
+                if (portraitNames[i] != null) // In this case partyMembers[i] is also non-null
                 {
-                    if (!partyMembers[i].Alive || !partyMembers[i].Conditions.CanSelect())
-                        portraitNames[i].TextColor = TextColor.DeadPartyMember;
-                    else if (game.HasPartyMemberFled(partyMembers[i]))
-                        portraitNames[i].TextColor = TextColor.DeadPartyMember;
+                    if (!partyMembers[i]!.Alive || !partyMembers[i]!.Conditions.CanSelect())
+                        portraitNames[i]!.TextColor = TextColor.DeadPartyMember;
+                    else if (game.HasPartyMemberFled(partyMembers[i]!))
+                        portraitNames[i]!.TextColor = TextColor.DeadPartyMember;
                     else
-                        portraitNames[i].TextColor = activeSlot == i ? TextColor.ActivePartyMember : TextColor.PartyMember;
+                        portraitNames[i]!.TextColor = activeSlot == i ? TextColor.ActivePartyMember : TextColor.PartyMember;
                 }
             }
         }
@@ -3971,7 +3991,7 @@ namespace Ambermoon.UI
             }
         }
 
-        bool PlayPortraitAnimation(int slot, PartyMember partyMember, Action finishAction = null, bool forceAnimation = false)
+        bool PlayPortraitAnimation(int slot, PartyMember? partyMember, Action? finishAction = null, bool forceAnimation = false)
         {
             var newState = partyMember == null ? PartyMemberPortaitState.Empty
                 : partyMember.Alive ? PartyMemberPortaitState.Normal : PartyMemberPortaitState.Dead;
@@ -3988,9 +4008,10 @@ namespace Ambermoon.UI
             uint newGraphicIndex = newState switch
             {
                 PartyMemberPortaitState.Empty => Graphics.GetUIGraphicIndex(UIGraphic.EmptyCharacterSlot),
-                PartyMemberPortaitState.Dead => partyMember.Race == Race.Animal ? Graphics.GetUIGraphicIndex(UIGraphic.CatSkull) : Graphics.GetUIGraphicIndex(UIGraphic.Skull),
-                _ => Graphics.PortraitOffset + partyMember.PortraitIndex - 1
+                PartyMemberPortaitState.Dead => partyMember!.Race == Race.Animal ? Graphics.GetUIGraphicIndex(UIGraphic.CatSkull) : Graphics.GetUIGraphicIndex(UIGraphic.Skull),
+                _ => Graphics.PortraitOffset + partyMember!.PortraitIndex - 1
             };
+
             if (animation)
             {
                 // If dismissed, the mask moves down from the top in front of the portrait.
@@ -3998,8 +4019,8 @@ namespace Ambermoon.UI
                 // If added to party, the mask moves down, revealing the portrait.
                 // If portraits are exchanged, the old portrait moves down, revealing the new one.
                 int yOffset = newState == PartyMemberPortaitState.Normal ? 0 : -34;
-                var sprite = portraits[slot] as ILayerSprite;
-                var overlaySprite = RenderView.SpriteFactory.Create(32, 34, true, 1) as ILayerSprite;
+                var sprite = (portraits[slot] as ILayerSprite)!;
+                var overlaySprite = (RenderView.SpriteFactory.Create(32, 34, true, 1) as ILayerSprite)!;
                 overlaySprite.Layer = renderLayer;
                 overlaySprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
                 overlaySprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
@@ -4039,7 +4060,7 @@ namespace Ambermoon.UI
             }
             else
             {
-                portraits[slot].TextureAtlasOffset = textureAtlas.GetOffset(newGraphicIndex);
+                portraits[slot]!.TextureAtlasOffset = textureAtlas.GetOffset(newGraphicIndex);
                 finishAction?.Invoke();
                 return false;
             }
@@ -4052,21 +4073,22 @@ namespace Ambermoon.UI
         {
             if (slot == null)
             {
-                healerSymbol.Visible = false;
+                healerSymbol!.Visible = false;
             }
             else
             {
                 var area = Global.PartyMemberPortraitAreas[slot.Value];
-                healerSymbol.X = area.X + 1;
+
+                healerSymbol!.X = area.X + 1;
                 healerSymbol.Y = area.Y + 1;
                 healerSymbol.Visible = true;
             }
         }
 
-        public void DestroyItem(ItemSlot itemSlot, TimeSpan initialDelay, bool consumed = false, Action finishAction = null,
-            Position animationPosition = null, bool applyRemoveEffects = true)
+        public void DestroyItem(ItemSlot itemSlot, TimeSpan initialDelay, bool consumed = false, Action? finishAction = null,
+            Position? animationPosition = null, bool applyRemoveEffects = true)
         {
-            ItemGrid itemGrid = null;
+            ItemGrid? itemGrid = null;
             int slotIndex = -1;
 
             foreach (var grid in itemGrids)
@@ -4086,7 +4108,7 @@ namespace Ambermoon.UI
             bool equipment = game.CurrentWindow.Window == Window.Inventory && itemGrid == itemGrids[1];
 
             // Scroll inventory into view if item is not visible
-            if (!equipment && !itemGrid.SlotVisible(slotIndex))
+            if (!equipment && !itemGrid!.SlotVisible(slotIndex))
             {
                 int scrollOffset = slotIndex;
 
@@ -4101,7 +4123,7 @@ namespace Ambermoon.UI
                 var item = itemManager.GetItem(itemSlot.ItemIndex);
                 var partyMember = game.CurrentInventory ?? game.CurrentPartyMember;
 
-                partyMember.TotalWeight -= item.Weight;
+                partyMember!.TotalWeight -= item.Weight;
 
                 if (equipment)
                     game.EquipmentRemoved(itemSlot.ItemIndex, 1, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
@@ -4112,35 +4134,37 @@ namespace Ambermoon.UI
 
             if (consumed)
             {
-                ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Consume, animationPosition ?? itemGrid.GetSlotPosition(slotIndex),
-                    finishAction, initialDelay, 300, () => itemGrid.SlotVisible(slotIndex));
+                ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Consume, animationPosition ?? itemGrid!.GetSlotPosition(slotIndex),
+                    finishAction, initialDelay, 300, () => itemGrid!.SlotVisible(slotIndex));
+
                 if (applyRemoveEffects)
                 {
                     game.AddTimedEvent(initialDelay + TimeSpan.FromMilliseconds(200), () =>
                     {
                         ApplyItemRemoveEffects();
                         itemSlot.Remove(1);
-                        itemGrid.SetItem(slotIndex, itemSlot);
+                        itemGrid!.SetItem(slotIndex, itemSlot);
                     });
                 }
             }
             else
             {
-                ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Destroy, animationPosition ?? itemGrid.GetSlotPosition(slotIndex),
-                    finishAction, initialDelay, null, itemManager.GetItem(itemSlot.ItemIndex), 300, () => itemGrid.SlotVisible(slotIndex));
+                ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Destroy, animationPosition ?? itemGrid!.GetSlotPosition(slotIndex),
+                    finishAction, initialDelay, null, itemManager.GetItem(itemSlot.ItemIndex), 300, () => itemGrid!.SlotVisible(slotIndex));
+
                 if (applyRemoveEffects)
                 {
                     game.AddTimedEvent(initialDelay, () =>
                     {
                         ApplyItemRemoveEffects();
                         itemSlot.Remove(1);
-                        itemGrid.SetItem(slotIndex, itemSlot);
+                        itemGrid!.SetItem(slotIndex, itemSlot);
                     });
                 }
             }
         }
 
-        public UIItem GetItem(ItemSlot itemSlot)
+        public UIItem? GetItem(ItemSlot itemSlot)
         {
             foreach (var itemGrid in itemGrids)
             {
@@ -4153,7 +4177,7 @@ namespace Ambermoon.UI
             return null;
         }
 
-        public Position GetItemSlotPosition(ItemSlot itemSlot, bool allowScrollIntoView)
+        public Position? GetItemSlotPosition(ItemSlot itemSlot, bool allowScrollIntoView)
         {
             foreach (var itemGrid in itemGrids)
             {
@@ -4196,8 +4220,8 @@ namespace Ambermoon.UI
         /// <summary>
         /// Set portait to 0 to remove the portrait.
         /// </summary>
-        public void SetCharacter(int slot, PartyMember partyMember, bool initialize = false,
-            Action portraitAnimationFinishedHandler = null, bool forceAnimation = false, bool forceUpdate = false)
+        public void SetCharacter(int slot, PartyMember? partyMember, bool initialize = false,
+            Action? portraitAnimationFinishedHandler = null, bool forceAnimation = false, bool forceUpdate = false)
         {
             var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, true, 2);
             sprite.Layer = renderLayer;
@@ -4317,8 +4341,9 @@ namespace Ambermoon.UI
                 }
                 else
                 {
-                    uint ticksPerCondition = Game.TicksPerSecond * 2;
+                    uint ticksPerCondition = GameCore.TicksPerSecond * 2;
                     int index = (int)((game.CurrentTicks % (conditionCount * ticksPerCondition)) / ticksPerCondition);
+
                     UpdateCharacterStatus(slot, Graphics.GetConditionGraphic(conditions[index]));
                 }
             }
@@ -4330,14 +4355,14 @@ namespace Ambermoon.UI
 
         public void FillCharacterBars(PartyMember partyMember) => FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
 
-        public void FillCharacterBars(int slot, PartyMember partyMember)
+        public void FillCharacterBars(int slot, PartyMember? partyMember)
         {
             bool alive = partyMember?.Alive == true;
-            uint hp = !alive ? 0 : partyMember.HitPoints.CurrentValue;
-            uint sp = !alive ? 0 : partyMember.SpellPoints.CurrentValue;
+            uint hp = !alive ? 0 : partyMember!.HitPoints.CurrentValue;
+            uint sp = !alive ? 0 : partyMember!.SpellPoints.CurrentValue;
             float lpPercentage = !alive ? 0.0f
-                : Math.Min(1.0f, (float)hp / partyMember.HitPoints.TotalMaxValue);
-            float spPercentage = !alive || !partyMember.Class.IsMagic() ? 0.0f
+                : Math.Min(1.0f, (float)hp / partyMember!.HitPoints.TotalMaxValue);
+            float spPercentage = !alive || !partyMember!.Class.IsMagic() ? 0.0f
                 : Math.Min(1.0f, (float)sp / partyMember.SpellPoints.TotalMaxValue);
 
             characterBars[slot * 4 + 0]?.Fill(lpPercentage, hp != 0);
@@ -4524,10 +4549,10 @@ namespace Ambermoon.UI
         }
 
         public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer,
-            string tooltip, TextColor? tooltipTextColor, Layer? layer, out Tooltip createdTooltip, bool visible = true)
+            string? tooltip, TextColor? tooltipTextColor, Layer? layer, out Tooltip? createdTooltip, bool visible = true)
         {
             createdTooltip = null;
-            var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, true) as ILayerSprite;
+            var sprite = (RenderView.SpriteFactory.Create(rect.Width, rect.Height, true) as ILayerSprite)!;
             sprite.TextureAtlasOffset = layer == null ? textureAtlas.GetOffset(textureIndex)
                 : TextureAtlasManager.Instance.GetOrCreate(layer.Value).GetOffset(textureIndex);
             sprite.DisplayLayer = displayLayer;
@@ -4545,7 +4570,7 @@ namespace Ambermoon.UI
         }
 
         public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2,
-            string tooltip = null, TextColor? tooltipTextColor = null, Layer? layer = null, bool visible = true)
+            string? tooltip = null, TextColor? tooltipTextColor = null, Layer? layer = null, bool visible = true)
         {
             return AddSprite(rect, textureIndex, paletteIndex, displayLayer, tooltip, tooltipTextColor, layer, out _, visible);
         }
@@ -4596,7 +4621,7 @@ namespace Ambermoon.UI
             buttonGrid?.HideTooltips();
         }
 
-        void SetActiveTooltip(Position cursorPosition, Tooltip tooltip)
+        void SetActiveTooltip(Position? cursorPosition, Tooltip? tooltip)
         {
             if (tooltip == null) // remove
             {
@@ -4745,7 +4770,7 @@ namespace Ambermoon.UI
             {
                 freeScrolledText = scrollableText;
 
-                if (game.Configuration.IsMobile)
+                if (game.CoreConfiguration.IsMobile)
                 {
                     if (activePopup != null)
                         activePopup.CanAbort = !activePopup.HasButtons && !activePopup.HasList && !activePopup.HasChildPopup;
@@ -4788,20 +4813,22 @@ namespace Ambermoon.UI
 
         public void AddEventPicture(uint index, out byte palette)
         {
-            var sprite = eventPicture ??= RenderView.SpriteFactory.Create(320, 92, true, 10) as ILayerSprite;
+            var sprite = eventPicture ??= (RenderView.SpriteFactory.Create(320, 92, true, 10) as ILayerSprite)!;
             palette = sprite.PaletteIndex = index switch
             {
-                0 => 26,
-                1 => 31,
-                2 => 32,
-                3 => 32,
-                4 => 32,
-                5 => 32,
-                6 => 32,
-                7 => 32,
-                8 => 37,
-                9 => 50,
-                10 => 51,
+                // NOTE: These indexes are 1 lower than the subfile number in the container!
+                0 => 26, // Valdyn portal
+                1 => 31, // Grandfather in bed
+                2 => 32, // Airship Lyramion -> Kire's moon
+                3 => 32, // Airship Lyramion -> Morag
+                4 => 32, // Airship Kire's moon -> Lyramion
+                5 => 32, // Airship Kire's moon -> Morag (identical image to 3)
+                6 => 32, // Airship Morag -> Lyramion
+                7 => 32, // Airship Morag -> Kire's moon
+                8 => 37, // Game over 
+                9 => 50, // Meeting Sheera
+                10 => 51, // Sheera portal merge
+                11 => 55, // Moranian rebels
                 _ => throw new AmbermoonException(ExceptionScope.Data, $"Invalid event picture index: {index}. Valid indices are 0 to 9.")
             };
             sprite.Layer = renderLayer;
@@ -4845,7 +4872,7 @@ namespace Ambermoon.UI
                 ChestText?.Destroy();
                 ChestText = null;
             }
-            else if (game.OpenStorage is not Game.ConversationItems)
+            else if (game.OpenStorage is not GameCore.ConversationItems)
             {
                 SetInventoryMessage(null);
             }
@@ -4986,14 +5013,14 @@ namespace Ambermoon.UI
 
             if (portraitAnimation != null)
             {
-                const int animationTime = (int)Game.TicksPerSecond;
+                const int animationTime = (int)GameCore.TicksPerSecond;
                 uint elapsed = (game.BattleActive ? game.CurrentNormalizedBattleTicks : game.CurrentAnimationTicks) - portraitAnimation.StartTicks;
 
                 if (elapsed > animationTime)
                 {
-                    portraitAnimation.PrimarySprite.Y = 1;
+                    portraitAnimation.PrimarySprite!.Y = 1;
                     portraitAnimation.PrimarySprite.DisplayLayer = portraitAnimation.InitialDisplayLayer;
-                    portraitAnimation.SecondarySprite.Delete();
+                    portraitAnimation.SecondarySprite!.Delete();
                     var tempAnimation = portraitAnimation;
                     portraitAnimation = null;
                     tempAnimation.OnFinished();
@@ -5137,12 +5164,12 @@ namespace Ambermoon.UI
 
         public bool ScrollY(int yScroll)
         {
-            bool down = game.Configuration.IsMobile ? yScroll > 0 : yScroll < 0;
+            bool down = game.CoreConfiguration.IsMobile ? yScroll > 0 : yScroll < 0;
 
-            if (OptionMenuOpen && PopupActive && activePopup.Scroll(down, yScroll))
+            if (OptionMenuOpen && PopupActive && activePopup!.Scroll(down, yScroll))
                 return true;
 
-            if (game.Configuration.IsMobile && PopupActive && freeScrolledText != null && activePopup.CanAbort)
+            if (game.CoreConfiguration.IsMobile && PopupActive && freeScrolledText != null && activePopup.CanAbort)
             {
                 if (activePopup.Scroll(down, yScroll))
                     return true;
@@ -5151,7 +5178,7 @@ namespace Ambermoon.UI
             if (!game.InputEnable)
                 return false;
 
-            if (PopupActive && activePopup.Scroll(down, yScroll))
+            if (PopupActive && activePopup!.Scroll(down, yScroll))
                 return true;
 
             if (HasScrollableItemGrid)
@@ -5356,7 +5383,7 @@ namespace Ambermoon.UI
                         ClosePopup();
                         return true;
                     }
-                    else if (game.Configuration.IsMobile && activePopup.CanAbort &&
+                    else if (game.CoreConfiguration.IsMobile && activePopup.CanAbort &&
 						!OptionMenuOpen && !activePopup.HasTextInput() && !activePopup.HasButtons &&
                         !activePopup.HasList)
                     {
@@ -5444,7 +5471,7 @@ namespace Ambermoon.UI
                 return false;
             }
 
-            for (int i = 0; i < Game.MaxPartyMembers; ++i)
+            for (int i = 0; i < GameCore.MaxPartyMembers; ++i)
             {
                 var partyMember = game.GetPartyMember(i);
 
@@ -5648,20 +5675,20 @@ namespace Ambermoon.UI
 
         void PostItemDrag()
         {
-            for (int i = 0; i < Game.MaxPartyMembers; ++i)
+            for (int i = 0; i < GameCore.MaxPartyMembers; ++i)
             {
                 var partyMember = game.GetPartyMember(i);
 
                 if (partyMember?.Alive == true)
                 {
-                    UpdateCharacterStatus(i, partyMember.CanTakeItems(itemManager, draggedItem.Item.Item) &&
+                    UpdateCharacterStatus(i, partyMember.CanTakeItems(itemManager, draggedItem!.Item!.Item) &&
                         !game.HasPartyMemberFled(partyMember) ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
                 }
             }
 
             if (game.CurrentWindow.Window != Window.Inventory && (game.OpenStorage is Chest || game.OpenStorage is Merchant))
                 ShowChestMessage(game.DataNameProvider.WhereToMoveIt);
-            else if (game.OpenStorage is not Game.ConversationItems)
+            else if (game.OpenStorage is not GameCore.ConversationItems)
                 SetInventoryMessage(game.DataNameProvider.WhereToMoveIt);
         }
 
@@ -5689,8 +5716,7 @@ namespace Ambermoon.UI
             }
         }
 
-        internal void DragItems(UIItem uiItem, bool takeAll, Action<DraggedItem, int> dragAction,
-            Func<DraggedItem> dragger)
+        internal void DragItems(UIItem uiItem, bool takeAll, Action<DraggedItem?, int> dragAction, Func<DraggedItem> dragger)
         {
             void DragItem(uint amount)
             {
@@ -5707,6 +5733,7 @@ namespace Ambermoon.UI
             else
             {
                 var item = itemManager.GetItem(uiItem.Item.ItemIndex);
+
                 OpenAmountInputBox(game.DataNameProvider.TakeHowManyMessage, item.GraphicIndex, item.Name,
                     (uint)uiItem.Item.Amount, DragItem);
             }
@@ -5716,7 +5743,7 @@ namespace Ambermoon.UI
         {
             if (draggedItem != null)
             {
-                draggedItem.Item.Position = position;
+                draggedItem.Item!.Position = position;
             }
         }
 
@@ -5724,13 +5751,13 @@ namespace Ambermoon.UI
         {
             if (freeScrolledText != null)
             {
-                freeScrolledText?.MouseMove(diff.Y, game.Configuration.IsMobile);
+                freeScrolledText?.MouseMove(diff.Y, game.CoreConfiguration.IsMobile);
             }
         }
 
         public void HoverButtonGrid(Position position)
         {
-            if (game.Configuration.ShowButtonTooltips)
+            if (game.CoreConfiguration.ShowButtonTooltips)
             {
                 HideTooltip();
                 buttonGrid?.Hover(position);
@@ -5741,7 +5768,7 @@ namespace Ambermoon.UI
         {
             if (PopupActive)
             {
-                activePopup.Hover(position);
+                activePopup!.Hover(position);
                 return true;
             }
 
@@ -5753,7 +5780,7 @@ namespace Ambermoon.UI
 
             if (draggedItem != null)
             {
-                draggedItem.Item.Position = position;
+                draggedItem.Item!.Position = position;
                 cursorType = CursorType.SmallArrow;
             }
             else if (cursorType == CursorType.None || (cursorType >= CursorType.ArrowUp && cursorType <= CursorType.Wait))
@@ -5778,7 +5805,7 @@ namespace Ambermoon.UI
                 {
                     foreach (var tooltip in tooltips)
                     {
-                        if (tooltip.Area.Contains(position))
+                        if (tooltip!.Area!.Contains(position))
                         {
                             SetActiveTooltip(position, tooltip);
                             consumed = true;
@@ -5797,7 +5824,7 @@ namespace Ambermoon.UI
             return consumed;
         }
 
-        public Action GetButtonAction(int index) => buttonGrid.GetButtonAction(index);
+        public Action? GetButtonAction(int index) => buttonGrid.GetButtonAction(index);
 
         public CursorType? PressButton(int index, uint currentTicks)
         {
@@ -5945,16 +5972,16 @@ namespace Ambermoon.UI
             });
         }
 
-        public BattleAnimation UpdateMonsterCombatSprite(Monster monster, MonsterAnimationType animationType, uint animationTicks, uint totalTicks)
+        public BattleAnimation? UpdateMonsterCombatSprite(Monster monster, MonsterAnimationType animationType, uint animationTicks, uint totalTicks)
         {
             var monsterCombatGraphic = monsterCombatGraphics.FirstOrDefault(g => g.Monster == monster);
 
             if (monsterCombatGraphic != null)
             {
-                var animation = monsterCombatGraphic.Animation;
+                var animation = monsterCombatGraphic.Animation!;
 
                 if (animationTicks == 0) // new animation
-                    animation.Play(monster.GetAnimationFrameIndices(animationType), Game.TicksPerSecond / 6, totalTicks);
+                    animation.Play(monster.GetAnimationFrameIndices(animationType), GameCore.TicksPerSecond / 6, totalTicks);
 
                 animation.Update(totalTicks);
 
@@ -6039,7 +6066,7 @@ namespace Ambermoon.UI
                 battleFieldSlotMarkers.Add(exceptionSlotIndex, exceptionSlot);
         }
 
-        public void SetBattleMessage(string message, TextColor textColor = TextColor.White)
+        public void SetBattleMessage(string? message, TextColor textColor = TextColor.White)
         {
             if (message == null)
             {

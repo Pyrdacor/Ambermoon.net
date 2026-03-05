@@ -126,12 +126,10 @@ public interface IAdditionalSaveSlotProvider
     void RequestSave(ISavegameManager savegameManager, IGameData gameData);
 }
 
-public interface IConfiguration
+public interface ICoreConfiguration
 {
     bool FirstStart { get; set; }
     bool IsMobile { get; }
-    event Action SaveRequested;
-
     int? Width { get; set; }
     int? Height { get; set; }
     int? FullscreenWidth { get; set; }
@@ -139,11 +137,7 @@ public interface IConfiguration
     [Obsolete("Use WindowMode instead.")]
     bool? Fullscreen { get; set; }
     WindowMode WindowMode { get; set; }
-    bool UseDataPath { get; set; }
-    string DataPath { get; set; }
-    SaveOption SaveOption { get; set; }
     int GameVersionIndex { get; set; }
-    bool LegacyMode { get; set; }
     bool Music { get; set; }
     int Volume { get; set; }
     bool ExternalMusic { get; set; }
@@ -155,40 +149,49 @@ public interface IConfiguration
     bool AutoDerune { get; set; }
     bool EnableCheats { get; set; }
     bool ShowButtonTooltips { get; set; }
-    bool ShowFantasyIntro { get; set; }
-    bool ShowIntro { get; set; }
     [Obsolete("Use GraphicFilter instead.")]
     bool? UseGraphicFilter { get; set; }
     GraphicFilter GraphicFilter { get; set; }
     GraphicFilterOverlay GraphicFilterOverlay { get; set; }
     Effects Effects { get; set; }
     bool ShowPlayerStatsTooltips { get; set; }
-    bool ShowPyrdacorLogo { get; set; }
-    bool ShowAdvancedLogo { get; set; }
-    [Obsolete("Now the fantasy intro is shown instead.")]
-    bool? ShowThalionLogo { get; set; }
+    bool ShowPyrdacorLogo { get; set; }    
     bool ShowFloor { get; set; }
     bool ShowCeiling { get; set; }
-    bool ShowFog { get; set; }
+    bool ShowFog { get; set; }    
+    bool ShowSaveLoadMessage { get; set; }
+    Movement3D Movement3D { get; set; }
+    bool TurnWithArrowKeys { get; set; }
+    GameLanguage Language { get; set; }
+    bool LegacyMode { get; set; }
+
+    event Action SaveRequested;
+    void RequestSave();    
+}
+
+public interface IConfiguration : ICoreConfiguration
+{
+    bool UseDataPath { get; set; }
+    string DataPath { get; set; }
+    SaveOption SaveOption { get; set; }
     bool ExtendedSavegameSlots { get; set; }
     [Obsolete("Use AdditionalSavegameSlots instead.")]
     string[] AdditionalSavegameNames { get; set; }
     [Obsolete("Use AdditionalSavegameSlots instead.")]
     int? ContinueSavegameSlot { get; set; }
     AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
-    bool ShowSaveLoadMessage { get; set; }
-    Movement3D Movement3D { get; set; }
-    bool TurnWithArrowKeys { get; set; }
-    GameLanguage Language { get; set; }
+    bool ShowAdvancedLogo { get; set; }
+    [Obsolete("Now the fantasy intro is shown instead.")]
+    bool? ShowThalionLogo { get; set; }
+    bool ShowFantasyIntro { get; set; }
+    bool ShowIntro { get; set; }
 
-    void RequestSave();
     AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots(string gameVersionName);
-
-	}
+}
 
 public static class ConfigurationExtensions
 {
-    public static Size GetScreenResolution(this IConfiguration configuration)
+    public static Size GetScreenResolution(this ICoreConfiguration configuration)
     {
         int? width = configuration.Width;
         int? height = configuration.Height;
@@ -205,7 +208,7 @@ public static class ConfigurationExtensions
             width = height * 16 / 10;
         }
 
-        return new Size(width.Value, height.Value);
+        return new Size(width!.Value, height!.Value);
     }
 
     public static Size GetScreenSize(this IConfiguration configuration)

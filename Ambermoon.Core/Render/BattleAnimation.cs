@@ -1,7 +1,7 @@
 ﻿/*
  * BattleAnimation.cs - Animations in battle
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2026  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -105,10 +105,11 @@ namespace Ambermoon.Render
             Scale = startScale = initialScale;
         }
 
-        public void SetStartFrame(Position centerPosition, float initialScale = 1.0f)
+        public void SetStartFrame(Position? centerPosition, float initialScale = 1.0f)
         {
             if (centerPosition != null)
                 baseSpriteLocation = new Position(centerPosition);
+
             Scale = startScale = initialScale;
         }
 

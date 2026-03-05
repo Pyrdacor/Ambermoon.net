@@ -28,16 +28,16 @@ namespace Ambermoon.UI
 {
     internal class ListBox
     {
-        readonly Game game;
+        readonly GameCore game;
         readonly IGameRenderView renderView;
-        readonly List<KeyValuePair<string, Action<int, string>>> items;
-        readonly List<Rect> itemAreas = new List<Rect>(10);
-        readonly List<IRenderText> itemIndices = new List<IRenderText>(10);
-        readonly List<IRenderText> itemTexts = new List<IRenderText>(10);
+        readonly List<KeyValuePair<string, Action<int, string>?>> items;
+        readonly List<Rect> itemAreas = new(10);
+        readonly List<IRenderText> itemIndices = new(10);
+        readonly List<IRenderText> itemTexts = new(10);
         readonly IColoredRect hoverBox;
-        readonly TextInput editInput;
+        readonly TextInput? editInput;
         readonly int maxItems;
-        readonly Func<string, TextColor> colorProvider;
+        readonly Func<string, TextColor>? colorProvider;
         int hoveredItem = -1;
         int scrollOffset = 0;
         int editingItem = -1;
@@ -46,14 +46,14 @@ namespace Ambermoon.UI
         int ScrollRange => items.Count - itemAreas.Count;
         public bool Editing => editingItem != -1;
         public Rect Bounds { get; private set; }
-        Position lastHoverPosition = new Position();
+        Position lastHoverPosition = new();
 
-        public event Action<int> HoverItem;
+        public event Action<int>? HoverItem;
 
-        ListBox(IGameRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items,
+        ListBox(IGameRenderView renderView, GameCore game, Popup popup, List<KeyValuePair<string, Action<int, string>?>> items,
             Rect area, Position itemBasePosition, int itemHeight, int hoverBoxWidth, Position relativeHoverBoxOffset,
             bool withIndex, int maxItems, char? fallbackChar = null, bool canEdit = false,
-            Func<string, TextColor> colorProvider = null)
+            Func<string, TextColor>? colorProvider = null)
         {
             this.game = game;
             this.renderView = renderView;
@@ -102,35 +102,35 @@ namespace Ambermoon.UI
             }
         }
 
-        public static ListBox CreateOptionsListbox(IGameRenderView renderView, Game game, Popup popup,
-            List<KeyValuePair<string, Action<int, string>>> items)
+        public static ListBox CreateOptionsListbox(IGameRenderView renderView, GameCore game, Popup popup,
+            List<KeyValuePair<string, Action<int, string>?>> items)
         {
             return new ListBox(renderView, game, popup, items, new Rect(64, 85, 191, 52), new Position(67, 87), 7, 189, new Position(-2, -1), false, 7);
         }
 
-        public static ListBox CreateSavegameListbox(IGameRenderView renderView, Game game, Popup popup,
-            List<KeyValuePair<string, Action<int, string>>> items, bool canEdit, int maxItems, int yOffset)
+        public static ListBox CreateSavegameListbox(IGameRenderView renderView, GameCore game, Popup popup,
+            List<KeyValuePair<string, Action<int, string>?>> items, bool canEdit, int maxItems, int yOffset)
         {
             return new ListBox(renderView, game, popup, items, new Rect(32, 85 + yOffset, 256, maxItems * Global.GlyphLineHeight + 3),
                 new Position(33, 87 + yOffset), 7, 237, new Position(16, -1), true, maxItems, '?', canEdit);
         }
 
-        public static ListBox CreateDictionaryListbox(IGameRenderView renderView, Game game, Popup popup,
-            List<KeyValuePair<string, Action<int, string>>> items, Func<string, TextColor> colorProvider)
+        public static ListBox CreateDictionaryListbox(IGameRenderView renderView, GameCore game, Popup popup,
+            List<KeyValuePair<string, Action<int, string>?>> items, Func<string, TextColor>? colorProvider)
         {
             return new ListBox(renderView, game, popup, items, new Rect(48, 48, 130, 115),
                 new Position(52, 50), 7, 127, new Position(-3, -1), false, 16, null, false, colorProvider);
         }
 
-        public static ListBox CreateSpellListbox(IGameRenderView renderView, Game game, Popup popup,
-            List<KeyValuePair<string, Action<int, string>>> items)
+        public static ListBox CreateSpellListbox(IGameRenderView renderView, GameCore game, Popup popup,
+            List<KeyValuePair<string, Action<int, string>?>> items)
         {
             return new ListBox(renderView, game, popup, items, new Rect(48, 56, 162, 115),
                 new Position(52, 58), 7, 159, new Position(-3, -1), false, 16);
         }
 
-        public static ListBox CreateSongListbox(IGameRenderView renderView, Game game, Popup popup,
-            List<KeyValuePair<string, Action<int, string>>> items)
+        public static ListBox CreateSongListbox(IGameRenderView renderView, GameCore game, Popup popup,
+            List<KeyValuePair<string, Action<int, string>?>> items)
         {
             return new ListBox(renderView, game, popup, items, new Rect(32, 50, 192, 115),
                 new Position(36, 52), 7, 189, new Position(-3, -1), false, 16);
@@ -222,9 +222,9 @@ namespace Ambermoon.UI
             int itemIndex = editingItem;
             editingItem = -1;
             if (editInput == TextInput.FocusedInput)
-                editInput.Submit();
+                editInput?.Submit();
             AbortEdit(itemIndex);
-            itemTexts[itemIndex - scrollOffset].Text = renderView.TextProcessor.CreateText(editInput.Text);
+            itemTexts[itemIndex - scrollOffset].Text = renderView.TextProcessor.CreateText(editInput!.Text);
             items[itemIndex] = KeyValuePair.Create(editInput.Text, items[itemIndex].Value);
             items[itemIndex].Value?.Invoke(itemIndex, items[itemIndex].Key);
             Hover(lastHoverPosition);
@@ -237,7 +237,7 @@ namespace Ambermoon.UI
 
             itemTexts[(index ?? editingItem) - scrollOffset].Visible = true;
             editingItem = -1;
-            editInput.LoseFocus();
+            editInput!.LoseFocus();
             editInput.Visible = false;
             Hover(lastHoverPosition);
         }
@@ -247,7 +247,7 @@ namespace Ambermoon.UI
             editingItem = itemIndex;
             SetHoveredItem(-1);
             itemTexts[row].Visible = false;
-            editInput.MoveTo(new Position(itemTexts[row].X, itemTexts[row].Y));
+            editInput!.MoveTo(new Position(itemTexts[row].X, itemTexts[row].Y));
             editInput.Visible = true;
             editInput.SetText(items[itemIndex].Key);
             editInput.SetFocus();
@@ -290,7 +290,7 @@ namespace Ambermoon.UI
                     if (items[scrollOffset + i].Value == null)
                         return false;
 
-                    items[scrollOffset + i].Value.Invoke(scrollOffset + i, items[scrollOffset + i].Key);
+                    items[scrollOffset + i].Value?.Invoke(scrollOffset + i, items[scrollOffset + i].Key);
                     return true;
                 }
             }
@@ -364,7 +364,7 @@ namespace Ambermoon.UI
             }
         }
 
-        public void SetItemAction(int index, Action<int, string> action)
+        public void SetItemAction(int index, Action<int, string>? action)
         {
             items[index] = KeyValuePair.Create(items[index].Key, action);
             PostScrollUpdate();

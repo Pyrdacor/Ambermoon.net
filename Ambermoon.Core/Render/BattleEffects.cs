@@ -60,11 +60,11 @@ namespace Ambermoon.Render
 
     internal static class BattleEffects
     {
-        static List<BattleEffectInfo> Effects(params BattleEffectInfo[] battleEffects) => new List<BattleEffectInfo>(battleEffects);
+        static List<BattleEffectInfo> Effects(params BattleEffectInfo[] battleEffects) => [.. battleEffects];
 
-        public static readonly int[] RowYOffsets = new[] { 81, 88, 98, 111, 124 };
+        public static readonly int[] RowYOffsets = [81, 88, 98, 111, 124];
 
-        static Position GetProjectileTargetPosition(IGameRenderView renderView, uint tile, Character[] battleField)
+        static Position GetProjectileTargetPosition(IGameRenderView renderView, uint tile, Character?[] battleField)
         {
             if (battleField[(int)tile] is Monster monster)
             {
@@ -76,7 +76,7 @@ namespace Ambermoon.Render
             }
         }
 
-        static Position GetCenterPosition(IGameRenderView renderView, uint tile, Character[] battleField, int yOffset = 0)
+        static Position GetCenterPosition(IGameRenderView renderView, uint tile, Character?[] battleField, int yOffset = 0)
         {
             var offset = new Position(0, yOffset);
 
@@ -90,6 +90,7 @@ namespace Ambermoon.Render
             }
         }
 
+        // TODO: Not used. Why?
         static BattleEffectInfo CreateSimpleEffect(IGameRenderView renderView, uint sourceTile, uint targetTile, CombatGraphicIndex graphicIndex,
             Character[] battleField, uint duration, float startScale = 1.0f, float scaleChangePerY = 0.0f)
         {
@@ -115,7 +116,7 @@ namespace Ambermoon.Render
         }
 
         static BattleEffectInfo CreateSimpleEffect(IGameRenderView renderView, uint tile, CombatGraphicIndex graphicIndex,
-            Character[] battleField, uint duration, Func<bool, int> yOffsetProvider = null, float scale = 1.0f, bool ground = false)
+            Character?[] battleField, uint duration, Func<bool, int>? yOffsetProvider = null, float scale = 1.0f, bool ground = false)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var position = GetCenterPosition(renderView, tile, battleField, yOffsetProvider?.Invoke(battleField[tile] is Monster) ?? 0);
@@ -145,7 +146,7 @@ namespace Ambermoon.Render
             };
         }
 
-        static float GetScaleFromRow(IGameRenderView renderView, uint tile, Character[] battleField)
+        static float GetScaleFromRow(IGameRenderView renderView, uint tile, Character?[] battleField)
         {
             if (battleField[(int)tile]?.Type == CharacterType.PartyMember)
                 return 2.0f;
@@ -154,7 +155,7 @@ namespace Ambermoon.Render
         }
 
         static BattleEffectInfo CreateFlyingEffect(IGameRenderView renderView, uint sourceTile, uint targetTile,
-            CombatGraphicIndex graphicIndex, Character[] battleField, float baseScale = 1.0f)
+            CombatGraphicIndex graphicIndex, Character?[] battleField, float baseScale = 1.0f)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var startPosition = GetProjectileTargetPosition(renderView, sourceTile, battleField);
@@ -191,17 +192,17 @@ namespace Ambermoon.Render
             int targetColumn = (int)targetTile % 6;
             int targetRow = (int)targetTile / 6;
 
-            return Util.Limit(Game.TicksPerSecond / 5, (uint)((Math.Abs(targetColumn - sourceColumn) + Math.Abs(targetRow - sourceRow) * 2) * Game.TicksPerSecond / 12),
-                15 * Game.TicksPerSecond / 12);
+            return Util.Limit(GameCore.TicksPerSecond / 5, (uint)((Math.Abs(targetColumn - sourceColumn) + Math.Abs(targetRow - sourceRow) * 2) * GameCore.TicksPerSecond / 12),
+                15 * GameCore.TicksPerSecond / 12);
         }
 
-        public static List<BattleEffectInfo> GetEffectInfo(IGameRenderView renderView, BattleEffect battleEffect, uint sourceTile, uint targetTile,
-            Character[] battleField, float scale = 1.0f)
+        public static List<BattleEffectInfo>? GetEffectInfo(IGameRenderView renderView, BattleEffect battleEffect, uint sourceTile, uint targetTile,
+            Character?[] battleField, float scale = 1.0f)
         {
             return battleEffect switch
             {
-                BattleEffect.HurtMonster => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.Blood, battleField, Game.TicksPerSecond / 3)),
-                BattleEffect.HurtPlayer => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.AttackClaw, battleField, Game.TicksPerSecond / 2, _ => -28)),
+                BattleEffect.HurtMonster => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.Blood, battleField, GameCore.TicksPerSecond / 3)),
+                BattleEffect.HurtPlayer => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.AttackClaw, battleField, GameCore.TicksPerSecond / 2, _ => -28)),
                 BattleEffect.MonsterArrowAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.ArrowGreenMonster, battleField)),
                 BattleEffect.MonsterBoltAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.ArrowRedMonster, battleField)),
                 BattleEffect.PlayerArrowAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.ArrowGreenHuman, battleField)),
@@ -209,9 +210,9 @@ namespace Ambermoon.Render
                 BattleEffect.SlingstoneAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.Slingstone, battleField)),
                 BattleEffect.SlingdaggerAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.Slingdagger, battleField)),
                 BattleEffect.SickleAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.FlyingSickle, battleField, 1.5f)),
-                BattleEffect.Death => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.DeathAnimation, battleField, Game.TicksPerSecond * 5 / 4, null, scale, true)),
-                BattleEffect.BlockSpell => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.SpellBlock, battleField, Game.TicksPerSecond / 2, monster => monster ? -32 : -46)),
-                BattleEffect.PlayerAttack => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.AttackSword, battleField, Game.TicksPerSecond / 4, _ => -10)),
+                BattleEffect.Death => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.DeathAnimation, battleField, GameCore.TicksPerSecond * 5 / 4, null, scale, true)),
+                BattleEffect.BlockSpell => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.SpellBlock, battleField, GameCore.TicksPerSecond / 2, monster => monster ? -32 : -46)),
+                BattleEffect.PlayerAttack => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.AttackSword, battleField, GameCore.TicksPerSecond / 4, _ => -10)),
                 _ => null
             };
         }

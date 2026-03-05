@@ -40,7 +40,7 @@ namespace Ambermoon.Render
             Sleep
         }
 
-        readonly Game game;
+        readonly GameCore game;
         readonly ISpriteFactory spriteFactory;
         readonly ITextureAtlas textureAtlas;
         IAnimatedSprite topSprite; // for non-world maps the upper half is drawn separatly
@@ -109,7 +109,7 @@ namespace Ambermoon.Render
             _ => throw new ArgumentOutOfRangeException("Invalid character state")
         });
 
-        public Character2D(Game game, IRenderLayer layer, ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
+        public Character2D(GameCore game, IRenderLayer layer, ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
             Func<CharacterDirection?, Character2DAnimationInfo> animationInfoProvider, RenderMap2D map, Position startPosition,
             Func<uint> paletteIndexProvider, Func<CharacterDirection?, Position> drawOffsetProvider)
         {

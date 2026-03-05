@@ -32,7 +32,7 @@ namespace Ambermoon.UI
     internal class ButtonGrid
     {
         readonly Button[] buttons = new Button[9];
-        public event Action RightMouseClicked;
+        public event Action? RightMouseClicked;
         bool rightMouseDown = false;
         readonly Rect area;
         bool visible = true;
@@ -57,7 +57,7 @@ namespace Ambermoon.UI
             }
         }
 
-        public Action GetButtonAction(int index) => buttons[index].LeftClickAction;
+        public Action? GetButtonAction(int index) => buttons[index].LeftClickAction;
 
         public bool IsButtonPressed(int index) => buttons[index].Pressed;
 
@@ -84,8 +84,8 @@ namespace Ambermoon.UI
 
 		public Button GetButton(int index) => buttons[index];
 
-		public void SetButton(int slot, ButtonType buttonType, bool disabled, Action action,
-            bool instantAction, string tooltip = null, Func<CursorType> cursorChangeAction = null,
+		public void SetButton(int slot, ButtonType buttonType, bool disabled, Action? action,
+            bool instantAction, string? tooltip = null, Func<CursorType>? cursorChangeAction = null,
             uint? continuousActionDelayInTicks = null)
         {
             buttons[slot].ButtonType = buttonType;

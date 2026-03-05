@@ -38,8 +38,8 @@ namespace Ambermoon.UI
         public bool Scrolling { get; private set; } = false;
         int? scrollStartPosition = null;
         bool disabled = false;
-        Rect BarArea => new Rect(position, new Size(vertical ? scrollArea.Width : barSize, vertical ? barSize : scrollArea.Height));
-        public event Action<int> Scrolled;
+        Rect BarArea => new(position, new Size(vertical ? scrollArea.Width : barSize, vertical ? barSize : scrollArea.Height));
+        public event Action<int>? Scrolled;
         public int ScrollOffset { get; private set; } = 0;
         public bool Disabled
         {
@@ -74,7 +74,7 @@ namespace Ambermoon.UI
             }
         }
 
-        public Scrollbar(Game game, Layout layout, ScrollbarType type, Rect scrollArea, int width, int height, int scrollRange, byte displayLayer = 1)
+        public Scrollbar(GameCore game, Layout layout, ScrollbarType type, Rect scrollArea, int width, int height, int scrollRange, byte displayLayer = 1)
         {
             this.scrollArea = scrollArea;
             vertical = type == ScrollbarType.SmallVertical || type == ScrollbarType.LargeVertical; // Note: There are no horizontal ones in Ambermoon.
@@ -83,7 +83,7 @@ namespace Ambermoon.UI
             position = new Position(scrollArea.Position);
             baseType = type;
 
-            backgroundSprite = layout.RenderView.SpriteFactory.Create(scrollArea.Width, scrollArea.Height, true) as ILayerSprite;
+            backgroundSprite = (layout.RenderView.SpriteFactory.Create(scrollArea.Width, scrollArea.Height, true) as ILayerSprite)!;
             backgroundSprite.Layer = layout.RenderView.GetLayer(Layer.UI);
             backgroundSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + type switch
             {
@@ -98,7 +98,7 @@ namespace Ambermoon.UI
             backgroundSprite.Visible = true;
 
             // We add 1 to height because there is 1 pixel row for a shadow.
-            sprite = layout.RenderView.SpriteFactory.Create(width, height + 1, true) as ILayerSprite;
+            sprite = (layout.RenderView.SpriteFactory.Create(width, height + 1, true) as ILayerSprite)!;
             sprite.Layer = layout.RenderView.GetLayer(Layer.UI);
             sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + (uint)type);
             sprite.DisplayLayer = (byte)Math.Min(255, displayLayer + 2);

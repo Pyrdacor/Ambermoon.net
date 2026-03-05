@@ -26,6 +26,7 @@ using System.Linq;
 using Ambermoon.Render;
 using Ambermoon.UI;
 using static Ambermoon.Game;
+using static Ambermoon.GameCore;
 
 namespace Ambermoon
 {
@@ -313,17 +314,17 @@ namespace Ambermoon
 			} },
 		}.ToImmutableDictionary();
 
-		readonly Game game;
+		readonly GameCore game;
         readonly IColoredRect[] markers = new IColoredRect[4];
         readonly string[] texts;
         readonly string introductionText;
-        readonly DrawTouchFingerHandler drawTouchFingerRequest;
+        readonly DrawTouchFingerHandler? drawTouchFingerRequest;
 
-		public Tutorial(Game game, DrawTouchFingerHandler drawTouchFingerRequest)
+		public Tutorial(GameCore game, DrawTouchFingerHandler? drawTouchFingerRequest)
         {
             this.game = game;
             this.drawTouchFingerRequest = drawTouchFingerRequest;
-			var textSource = game.Configuration.IsMobile ? mobileTips : tips;
+			var textSource = game.CoreConfiguration.IsMobile ? mobileTips : tips;
 			texts = textSource.TryGetValue(game.GameLanguage, out var languageTexts)
                 ? languageTexts : textSource[GameLanguage.English];
 			introductionText = introduction.TryGetValue(game.GameLanguage, out var text)

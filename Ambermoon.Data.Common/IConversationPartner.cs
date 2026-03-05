@@ -8,5 +8,7 @@ namespace Ambermoon.Data
         List<string> Texts { get; }
         List<Event> Events { get; }
         List<Event> EventList { get; }
+        Language SpokenLanguages { get; set; }
+        ExtendedLanguage SpokenExtendedLanguages { get; set; }
     }
 }

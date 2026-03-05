@@ -32,20 +32,20 @@ namespace Ambermoon
     {
         public class EventProvider
         {
-            public Event Event { get; private set; } = null;
-            public void Provide(Event @event)
+            public Event? Event { get; private set; } = null;
+            public void Provide(Event? @event)
             {
                 Event = @event;
                 Provided?.Invoke(@event);
             }
 
-            public event Action<Event> Provided;
+            public event Action<Event?>? Provided;
         }
 
-        public static Event ExecuteEvent(this Event @event, Map map, Game game,
+        public static Event? ExecuteEvent(this Event @event, Map map, GameCore game,
             ref EventTrigger trigger, uint x, uint y, ref bool lastEventStatus,
-            out bool aborted, out EventProvider eventProvider,
-            IConversationPartner conversationPartner = null, uint? characterIndex = null)
+            out bool aborted, out EventProvider? eventProvider,
+            IConversationPartner? conversationPartner = null, uint? characterIndex = null)
         {
             eventProvider = null;
 
@@ -107,7 +107,7 @@ namespace Ambermoon
                     if (@event is not ChestEvent chestEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
-                    var totalSearchValue = game.CurrentPartyMember.Skills[Skill.Searching].TotalCurrentValue;
+                    var totalSearchValue = game.CurrentPartyMember!.Skills[Skill.Searching].TotalCurrentValue;
 
 					// Search bonus in AA
 					if (game.Features.HasFlag(Features.ClairvoyanceGrantsSearchSkill) &&
@@ -166,7 +166,7 @@ namespace Ambermoon
                     }                    
 
                     bool eventStatus = lastEventStatus;
-                    EventProvider provider = null;
+                    EventProvider? provider = null;
 
                     if (conversationPartner != null)
                         provider = eventProvider = new EventProvider();
@@ -292,7 +292,7 @@ namespace Ambermoon
                 {
                     if (@event is not RewardEvent rewardEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid reward event.");
-                    EventProvider provider = null;
+                    EventProvider? provider = null;
                     if (conversationPartner != null)
                         provider = eventProvider = new EventProvider();
                     bool eventStatus = lastEventStatus;
@@ -312,7 +312,7 @@ namespace Ambermoon
                     switch (rewardEvent.Target)
                     {
                         case RewardEvent.RewardTarget.ActivePlayer:
-                            Reward(game.CurrentPartyMember, Done);
+                            Reward(game.CurrentPartyMember!, Done);
                             break;
                         case RewardEvent.RewardTarget.RandomPlayer:
                         {
@@ -618,7 +618,7 @@ namespace Ambermoon
                             break;
                         }
                         case ConditionEvent.ConditionType.HasCondition:
-                            if (game.CurrentPartyMember.Conditions.HasFlag((Condition)(1 << (int)conditionEvent.ObjectIndex)) != (conditionEvent.Value != 0))
+                            if (game.CurrentPartyMember!.Conditions.HasFlag((Condition)(1 << (int)conditionEvent.ObjectIndex)) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -664,7 +664,7 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.HasGold:
-                            if ((game.CurrentPartyMember.Gold >= conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+                            if ((game.CurrentPartyMember!.Gold >= conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -672,7 +672,7 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.HasFood:
-                            if ((game.CurrentPartyMember.Food >= conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+                            if ((game.CurrentPartyMember!.Food >= conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -744,7 +744,7 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.LeadClass:
-                            if (((uint)game.CurrentPartyMember.Class == conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+                            if (((uint)game.CurrentPartyMember!.Class == conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -764,7 +764,7 @@ namespace Ambermoon
 
                             int mask = (1 << (4 + (int)elementIndex));
 
-                            if ((((int)game.CurrentPartyMember.BattleFlags & mask) != 0) != (conditionEvent.Value != 0))
+                            if ((((int)game.CurrentPartyMember!.BattleFlags & mask) != 0) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -782,7 +782,7 @@ namespace Ambermoon
                             break;
                         case ConditionEvent.ConditionType.Attribute:
                         {
-                            var attribute = game.CurrentPartyMember.Attributes[(Data.Attribute)conditionEvent.ObjectIndex];
+                            var attribute = game.CurrentPartyMember!.Attributes[(Data.Attribute)conditionEvent.ObjectIndex];
                             var totalValue = attribute.CurrentValue + attribute.BonusValue;
 
 							// Anti-magic bonus
@@ -802,7 +802,7 @@ namespace Ambermoon
                         }
                         case ConditionEvent.ConditionType.Skill:
                         {
-                            var skill = game.CurrentPartyMember.Skills[(Skill)conditionEvent.ObjectIndex];
+                            var skill = game.CurrentPartyMember!.Skills[(Skill)conditionEvent.ObjectIndex];
                             var totalValue = skill.CurrentValue + skill.BonusValue;
 
                             // Search bonus in AA
@@ -1005,10 +1005,10 @@ namespace Ambermoon
                         case ActionEvent.ActionType.AddCondition:
                         {
                             var condition = (Condition)(1 << (int)actionEvent.ObjectIndex);
-                            if (ClearSetToggle(() => game.CurrentPartyMember.Conditions.HasFlag(condition)))
+                            if (ClearSetToggle(() => game.CurrentPartyMember!.Conditions.HasFlag(condition)))
                                 game.AddCondition(condition);
                             else
-                                game.RemoveCondition(condition, game.CurrentPartyMember);
+                                game.RemoveCondition(condition, game.CurrentPartyMember!);
                             break;
                         }
                         case ActionEvent.ActionType.AddGold:
@@ -1273,14 +1273,14 @@ namespace Ambermoon
 
 					bool result = conditionEvent.Target switch
                     {
-					    PartyMemberConditionEvent.PartyMemberConditionTarget.ActivePlayer => filter(game.CurrentPartyMember) && CheckSingle(game.CurrentPartyMember),
+					    PartyMemberConditionEvent.PartyMemberConditionTarget.ActivePlayer => filter(game.CurrentPartyMember!) && CheckSingle(game.CurrentPartyMember!),
 					    PartyMemberConditionEvent.PartyMemberConditionTarget.All => partyMembers.Count == partyMembers.Where(filter).Count() && partyMembers.All(CheckSingle),
 					    PartyMemberConditionEvent.PartyMemberConditionTarget.Any => partyMembers.Where(filter).Any(CheckSingle),
 						PartyMemberConditionEvent.PartyMemberConditionTarget.Min => CheckAggregation(Enumerable.Min),
 						PartyMemberConditionEvent.PartyMemberConditionTarget.Max => CheckAggregation(Enumerable.Max),
 						PartyMemberConditionEvent.PartyMemberConditionTarget.Average => CheckAggregation(Enumerable.Average),
 						PartyMemberConditionEvent.PartyMemberConditionTarget.Random => CheckRandom(),
-                        PartyMemberConditionEvent.PartyMemberConditionTarget.ActiveInventory => filter(game.CurrentInventory) && CheckSingle(game.CurrentInventory),
+                        PartyMemberConditionEvent.PartyMemberConditionTarget.ActiveInventory => filter(game.CurrentInventory!) && CheckSingle(game.CurrentInventory!),
                         >= PartyMemberConditionEvent.PartyMemberConditionTarget.FirstCharacter => CheckPartyMember(1u + (uint)conditionEvent.Target - (uint)PartyMemberConditionEvent.PartyMemberConditionTarget.FirstCharacter),
 					};
 
@@ -1299,7 +1299,7 @@ namespace Ambermoon
                     if (shakeEvent.Shakes > 0)
                     {
                         game.StartSequence();
-                        var shakeTime = TimeSpan.FromMilliseconds(6000.0 / Game.TicksPerSecond);
+                        var shakeTime = TimeSpan.FromMilliseconds(6000.0 / GameCore.TicksPerSecond);
                         game.ShakeScreen(shakeTime, (int)shakeEvent.Shakes, 3);
                         game.AddTimedEvent(shakeTime * shakeEvent.Shakes, () =>
                         {
@@ -1393,7 +1393,7 @@ namespace Ambermoon
             return @event.Next;
         }
 
-        public static bool TriggerEventChain(this Map map, Game game, EventTrigger trigger, uint x, uint y,
+        public static bool TriggerEventChain(this Map map, GameCore game, EventTrigger trigger, uint x, uint y,
             Event firstMapEvent, bool lastEventStatus = false)
         {
             var mapEvent = firstMapEvent;
@@ -1409,7 +1409,7 @@ namespace Ambermoon
             return true;
         }
 
-        public static Event GetSecondaryBranchSuccessor(this Event @event, List<Event> events)
+        public static Event? GetSecondaryBranchSuccessor(this Event @event, List<Event> events)
         {
             uint nextEventIndex = 0xffff;
 

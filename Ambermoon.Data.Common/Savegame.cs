@@ -364,7 +364,7 @@ namespace Ambermoon.Data
 
         #endregion
 
-        public PartyMember GetPartyMember(int slot) => CurrentPartyMemberIndices[slot] == 0 ? null : PartyMembers[CurrentPartyMemberIndices[slot]];
+        public PartyMember? GetPartyMember(int slot) => CurrentPartyMemberIndices[slot] == 0 ? null : PartyMembers[CurrentPartyMemberIndices[slot]];
 
         public static Savegame Load(ISavegameSerializer savegameSerializer, SavegameInputFiles savegameFiles, IFileContainer partyTextsContainer)
         {

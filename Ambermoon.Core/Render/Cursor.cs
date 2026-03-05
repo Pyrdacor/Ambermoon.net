@@ -93,7 +93,7 @@ namespace Ambermoon.Render
             }
         }
 
-        public void UpdatePosition(Position screenPosition, Game game)
+        public void UpdatePosition(Position screenPosition, GameCore game)
         {
             var viewPosition = renderView.ScreenToGame(screenPosition);
 
@@ -109,7 +109,7 @@ namespace Ambermoon.Render
             }
         }
 
-        public void UpdatePalette(Game game)
+        public void UpdatePalette(GameCore game)
         {
             lock (sprite)
             {

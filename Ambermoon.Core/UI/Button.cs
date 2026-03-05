@@ -453,19 +453,19 @@ namespace Ambermoon.UI
         uint lastActionTimeInTicks = 0;
         uint? continuousActionDelayInTicks = null;
         uint? initialContinuousActionDelayInTicks = null;
-        readonly IRenderText tooltip = null;
-        string tooltipText = null;
+        readonly IRenderText? tooltip = null;
+        string? tooltipText = null;
 
         public Button(IGameRenderView renderView, Position position,
-            TextureAtlasManager textureAtlasManager = null)
+            TextureAtlasManager? textureAtlasManager = null)
         {
             this.renderView = renderView;
             Area = new Rect(position, new Size(Width, Height));
             byte paletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
 
-            frameSprite = renderView.SpriteFactory.Create(Width, Height, true, 3) as ILayerSprite;
-            disableOverlay = renderView.SpriteFactory.Create(Width, Height - 6, true, 7) as ILayerSprite;
-            iconSprite = renderView.SpriteFactory.Create(Width, Height - 4, true, 5) as ILayerSprite;
+            frameSprite = (renderView.SpriteFactory.Create(Width, Height, true, 3) as ILayerSprite)!;
+            disableOverlay = (renderView.SpriteFactory.Create(Width, Height - 6, true, 7) as ILayerSprite)!;
+            iconSprite = (renderView.SpriteFactory.Create(Width, Height - 4, true, 5) as ILayerSprite)!;
 
             var layer = renderView.GetLayer(Layer.UI);
             frameSprite.Layer = layer;
@@ -500,14 +500,14 @@ namespace Ambermoon.UI
             tooltip.Visible = false;
         }
 
-        public string Tooltip
+        public string? Tooltip
         {
             get => tooltipText;
             set
             {
                 tooltipText = value;
 
-                if (string.IsNullOrWhiteSpace(tooltipText))
+                if (string.IsNullOrWhiteSpace(tooltipText) && tooltip != null)
                     tooltip.Visible = false;
             }
         }
@@ -518,14 +518,17 @@ namespace Ambermoon.UI
             set;
         } = Data.Enumerations.Color.White;
 
-        public Position TooltipOffset
+        public Position? TooltipOffset
         {
             get;
             set;
         } = null;
 
-        public void SetTooltip(string text)
+        public void SetTooltip(string? text)
         {
+            if (tooltip == null)
+                return;
+
             bool visible = !string.IsNullOrWhiteSpace(text);
 
             if (visible)
@@ -578,19 +581,19 @@ namespace Ambermoon.UI
             }
         }
 
-        public Action LeftClickAction
+        public Action? LeftClickAction
         {
             get;
             set;
         }
 
-        public Action RightClickAction
+        public Action? RightClickAction
         {
             get;
             set;
         }
 
-        public Func<CursorType> CursorChangeAction
+        public Func<CursorType>? CursorChangeAction
         {
             get;
             set;
@@ -819,7 +822,7 @@ namespace Ambermoon.UI
             return cursorChangeAction?.Invoke();
         }
 
-        internal void PressImmediately(Game game, bool rightMouse = false, bool delayedPressAnimation = false)
+        internal void PressImmediately(GameCore game, bool rightMouse = false, bool delayedPressAnimation = false)
         {
             if (!Disabled)
             {
