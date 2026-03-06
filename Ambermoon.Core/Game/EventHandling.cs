@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
-using Ambermoon.Data.Serialization;
 using Ambermoon.Render;
 using Ambermoon.UI;
+using Attribute = Ambermoon.Data.Attribute;
 
 namespace Ambermoon;
 

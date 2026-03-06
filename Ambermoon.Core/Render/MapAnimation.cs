@@ -55,13 +55,13 @@ namespace Ambermoon.Render
 			}
         }
 
-        readonly Game game;
+        readonly GameCore game;
         // Key: Number of frames
-        readonly Dictionary<int, AnimationInfo> forwardAnimationInfos = new();
-		readonly Dictionary<int, AnimationInfo> waveAnimationInfos = new();
-		readonly Dictionary<int, bool> waveAnimationsRunningBackwards = new();
+        readonly Dictionary<int, AnimationInfo> forwardAnimationInfos = [];
+        readonly Dictionary<int, AnimationInfo> waveAnimationInfos = [];
+		readonly Dictionary<int, bool> waveAnimationsRunningBackwards = [];
 
-		public MapAnimation(Game game)
+		public MapAnimation(GameCore game)
         {
             this.game = game;
 

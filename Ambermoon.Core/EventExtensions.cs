@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
-using static Ambermoon.Game;
+using static Ambermoon.GameCore;
 
 namespace Ambermoon
 {
@@ -1126,7 +1126,7 @@ namespace Ambermoon
                                 aborted = true;
                                 return null;
                             }
-                            game.ShowConversation(conversationPartner, characterIndex, conversationEvent, new Game.ConversationItems());
+                            game.ShowConversation(conversationPartner, characterIndex, conversationEvent, new GameCore.ConversationItems());
                             return null;
                         default:
                             // Note: this is handled by the conversation window.

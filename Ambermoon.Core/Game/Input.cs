@@ -579,7 +579,7 @@ partial class GameCore
             {
                 LoadGame(saveGameId, false, false, null, false, _ =>
                 {
-                    if (Configuration.ShowSaveLoadMessage)
+                    if (CoreConfiguration.ShowSaveLoadMessage)
                     {
                         ShowBriefMessagePopup(
                             string.Format(CustomTexts.GetText(GameLanguage, CustomTexts.Index.GameLoaded), saveGameId),
@@ -591,7 +591,7 @@ partial class GameCore
             {
                 string name = $"QuickSave{saveGameId}";
                 SaveGame(saveGameId, name);
-                if (Configuration.ShowSaveLoadMessage)
+                if (CoreConfiguration.ShowSaveLoadMessage)
                 {
                     ShowBriefMessagePopup(
                         string.Format(CustomTexts.GetText(GameLanguage, CustomTexts.Index.GameSaved), name),
@@ -878,7 +878,7 @@ partial class GameCore
                             return;
                     }
 
-                    var @event = renderMap2D.GetEvent(tileX, tileY, CurrentSavegame);
+                    var @event = renderMap2D.GetEvent(tileX, tileY, CurrentSavegame!);
 
                     void TriggerEvent(EventTrigger trigger)
                     {
@@ -952,7 +952,7 @@ partial class GameCore
                     }
                     else if (@event is DoorEvent doorEvent)
                     {
-                        if (CurrentSavegame.IsDoorLocked(doorEvent.Index))
+                        if (CurrentSavegame!.IsDoorLocked(doorEvent.Index))
                         {
                             TriggerEvent(EventTrigger.Eye);
                             return;
@@ -1061,7 +1061,7 @@ partial class GameCore
                             PlayTimedSequence(steps, () =>
                             {
                                 turnAction?.Invoke();
-                                CurrentSavegame.CharacterDirection = player!.Direction = player3D!.Direction;
+                                CurrentSavegame!.CharacterDirection = player!.Direction = player3D!.Direction;
                             }, 65);
                         }
 

@@ -127,7 +127,7 @@ namespace Ambermoon.Render
             }
         }
 
-        public static MapCharacter2D Create(Game game, IGameRenderView renderView, IMapManager mapManager,
+        public static MapCharacter2D Create(GameCore game, IGameRenderView renderView, IMapManager mapManager,
             RenderMap2D map, uint characterIndex, Map.CharacterReference characterReference)
         {
             var layer = characterReference.CharacterFlags.HasFlag(Flags.UseTileset)
@@ -136,7 +136,7 @@ namespace Ambermoon.Render
         }
 
         public override void Update(uint ticks, ITime gameTime,
-			bool allowInstantMovement, Position lastPlayerPosition,
+			bool allowInstantMovement, Position? lastPlayerPosition,
 			MapAnimation mapAnimation, Tileset.TileFlags tileFlags)
         {
             if (!Active || Paused)

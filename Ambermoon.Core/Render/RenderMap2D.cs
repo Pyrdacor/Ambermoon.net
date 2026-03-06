@@ -33,9 +33,9 @@ namespace Ambermoon.Render
         {
             // This is the array index in the savegame transport location array.
             public int Index { get; set; }
-            public Position Position { get; set; }
-            public ISprite Sprite { get; set; }
-            public Position Offset { get; set; }
+            public required Position Position { get; set; }
+            public required ISprite Sprite { get; set; }
+            public required Position Offset { get; set; }
         }
 
         public const int TILE_WIDTH = 16;
@@ -43,30 +43,30 @@ namespace Ambermoon.Render
         public const int NUM_VISIBLE_TILES_X = 11; // maps will always be at least 11x11 in size
         public const int NUM_VISIBLE_TILES_Y = 9; // maps will always be at least 11x11 in size
         const int NUM_TILES = NUM_VISIBLE_TILES_X * NUM_VISIBLE_TILES_Y;
-        readonly Game game;
-        public Map Map { get; private set; } = null;
-        Map[] adjacentMaps = null;
-        Tileset tileset = null;
-        readonly IMapManager mapManager = null;
-        readonly IGameRenderView renderView = null;
-        ITextureAtlas textureAtlas = null;
-        readonly List<IAnimatedSprite> backgroundTileSprites = new List<IAnimatedSprite>(NUM_TILES);
-        readonly List<IAnimatedSprite> foregroundTileSprites = new List<IAnimatedSprite>(NUM_TILES);
-        readonly List<Transport> mapTransports = new List<Transport>();
+        readonly GameCore game;
+        public Map? Map { get; private set; } = null;
+        Map[]? adjacentMaps = null;
+        Tileset? tileset = null;
+        readonly IMapManager? mapManager = null;
+        readonly IGameRenderView? renderView = null;
+        ITextureAtlas? textureAtlas = null;
+        readonly List<IAnimatedSprite> backgroundTileSprites = new(NUM_TILES);
+        readonly List<IAnimatedSprite> foregroundTileSprites = new(NUM_TILES);
+        readonly List<Transport> mapTransports = [];
         uint ticksPerFrame = 0;
         bool worldMap = false;
         uint lastFrame = 0;
-        Position lastUpdateScroll = null;
-        Map lastUpdateMap = null;
-        readonly Dictionary<uint, MapCharacter2D> mapCharacters = new Dictionary<uint, MapCharacter2D>();
+        Position? lastUpdateScroll = null;
+        Map? lastUpdateMap = null;
+        readonly Dictionary<uint, MapCharacter2D> mapCharacters = [];
         readonly MapAnimation mapAnimation;
 
-        public event Action<Map, Map[]> MapChanged;
+        public event Action<Map?, Map[]>? MapChanged;
 
         public uint ScrollX { get; private set; } = 0;
         public uint ScrollY { get; private set; } = 0;
 
-        public RenderMap2D(Game game, Map map, IMapManager mapManager, IGameRenderView renderView,
+        public RenderMap2D(GameCore game, Map map, IMapManager mapManager, IGameRenderView renderView,
             uint initialScrollX = 0, uint initialScrollY = 0)
         {
             this.game = game;
@@ -98,7 +98,7 @@ namespace Ambermoon.Render
             SetMap(map, initialScrollX, initialScrollY);
         }
 
-        public void Update(uint ticks, ITime gameTime, bool monstersCanMoveImmediately, Position lastPlayerPosition)
+        public void Update(uint ticks, ITime gameTime, bool monstersCanMoveImmediately, Position? lastPlayerPosition)
         {
             uint frame = ticks / ticksPerFrame;
 
@@ -120,7 +120,7 @@ namespace Ambermoon.Render
 
                             if (background.NumFrames > 1)
                             {
-								var backTile = tileset.Tiles[(int)tile.BackTileIndex - 1];
+								var backTile = tileset!.Tiles[(int)tile.BackTileIndex - 1];
 
                                 background.CurrentFrame = (uint)mapAnimation.UpdateFrameIndex
                                 (
@@ -138,7 +138,7 @@ namespace Ambermoon.Render
 
 							if (foreground.NumFrames > 1)
 							{
-								var frontTile = tileset.Tiles[(int)tile.FrontTileIndex - 1];
+								var frontTile = tileset!.Tiles[(int)tile.FrontTileIndex - 1];
 
 								foreground.CurrentFrame = (uint)mapAnimation.UpdateFrameIndex
 								(
@@ -182,7 +182,7 @@ namespace Ambermoon.Render
 
 			if (tile.FrontTileIndex != 0)
 			{
-				var frontTile = tileset.Tiles[(int)tile.FrontTileIndex - 1];
+				var frontTile = tileset!.Tiles[(int)tile.FrontTileIndex - 1];
 
                 if (frontTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison))
                     return true;
@@ -190,7 +190,7 @@ namespace Ambermoon.Render
 			
             if (tile.BackTileIndex != 0)
 			{
-				var backTile = tileset.Tiles[(int)tile.BackTileIndex - 1];
+				var backTile = tileset!.Tiles[(int)tile.BackTileIndex - 1];
 
                 if (backTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison))
                     return true;
@@ -199,7 +199,7 @@ namespace Ambermoon.Render
             return false;
 		}
 
-        bool TestCharacterInteraction(MapCharacter2D mapCharacter, bool cursor, Position position)
+        static bool TestCharacterInteraction(MapCharacter2D mapCharacter, bool cursor, Position position)
         {
             if (!mapCharacter.Visible || !mapCharacter.Active)
                 return false;
@@ -226,18 +226,18 @@ namespace Ambermoon.Render
                 }
             }
 
-            if (x >= Map.Width)
+            if (x >= Map!.Width)
             {
                 if (y >= Map.Height)
-                    return adjacentMaps[2].TriggerEvents(game, trigger, x - (uint)Map.Width,
+                    return adjacentMaps![2].TriggerEvents(game, trigger, x - (uint)Map.Width,
                         y - (uint)Map.Height, savegame);
                 else
-                    return adjacentMaps[0].TriggerEvents(game, trigger, x - (uint)Map.Width,
+                    return adjacentMaps![0].TriggerEvents(game, trigger, x - (uint)Map.Width,
                         y, savegame);
             }
             else if (y >= Map.Height)
             {
-                return adjacentMaps[1].TriggerEvents(game, trigger, x, y - (uint)Map.Height,
+                return adjacentMaps![1].TriggerEvents(game, trigger, x, y - (uint)Map.Height,
                     savegame);
             }
             else
@@ -248,16 +248,16 @@ namespace Ambermoon.Render
 
         public Event GetEvent(uint x, uint y, Savegame savegame)
         {
-            if (x >= Map.Width)
+            if (x >= Map!.Width)
             {
                 if (y >= Map.Height)
-                    return adjacentMaps[2].GetEvent(x - (uint)Map.Width, y - (uint)Map.Height, savegame);
+                    return adjacentMaps![2].GetEvent(x - (uint)Map.Width, y - (uint)Map.Height, savegame);
                 else
-                    return adjacentMaps[0].GetEvent(x - (uint)Map.Width, y, savegame);
+                    return adjacentMaps![0].GetEvent(x - (uint)Map.Width, y, savegame);
             }
             else if (y >= Map.Height)
             {
-                return adjacentMaps[1].GetEvent(x, y - (uint)Map.Height, savegame);
+                return adjacentMaps![1].GetEvent(x, y - (uint)Map.Height, savegame);
             }
             else
             {
@@ -276,7 +276,7 @@ namespace Ambermoon.Render
         /// </summary>
         /// <param name="position">Position inside the map view in pixels</param>
         /// <returns>Null if not a valid map position or the transformed position otherwise</returns>
-        public Position PositionToTile(Position position)
+        public Position? PositionToTile(Position position)
         {
             if (position.X < 0 || position.Y < 0 ||
                 position.X >= Global.Map2DViewWidth || position.Y >= Global.Map2DViewHeight)
@@ -294,7 +294,7 @@ namespace Ambermoon.Render
             return new Position((int)ScrollX + NUM_VISIBLE_TILES_X / 2, (int)ScrollY + NUM_VISIBLE_TILES_Y / 2);
         }
 
-        public MapCharacter2D GetCharacterFromTile(uint x, uint y)
+        public MapCharacter2D? GetCharacterFromTile(uint x, uint y)
         {
             return mapCharacters.Values.FirstOrDefault(mapCharacter => mapCharacter.Active && mapCharacter.Position.X == x && mapCharacter.Position.Y == y);
         }
@@ -302,9 +302,9 @@ namespace Ambermoon.Render
         public Map GetMapFromTile(uint x, uint y)
         {
             if (adjacentMaps == null)
-                return Map;
+                return Map!;
 
-            if (x >= Map.Width)
+            if (x >= Map!.Width)
             {
                 if (y >= Map.Height)
                     return adjacentMaps[2];
@@ -327,16 +327,16 @@ namespace Ambermoon.Render
         {
             get
             {
-                if (x >= Map.Width)
+                if (x >= Map!.Width)
                 {
                     if (y >= Map.Height)
-                        return adjacentMaps[2].Tiles[x - Map.Width, y - Map.Height];
+                        return adjacentMaps![2].Tiles[x - Map.Width, y - Map.Height];
                     else
-                        return adjacentMaps[0].Tiles[x - Map.Width, y];
+                        return adjacentMaps![0].Tiles[x - Map.Width, y];
                 }
                 else if (y >= Map.Height)
                 {
-                    return adjacentMaps[1].Tiles[x, y - Map.Height];
+                    return adjacentMaps![1].Tiles[x, y - Map.Height];
                 }
                 else
                 {
@@ -367,9 +367,9 @@ namespace Ambermoon.Render
             mapTransports.Clear();
         }
 
-        void RepositionTransports(Map lastMap)
+        void RepositionTransports(Map? lastMap)
         {
-            if (lastMap == null || !lastMap.UseTravelTypes || !Map.UseTravelTypes)
+            if (lastMap == null || !lastMap.UseTravelTypes || !Map!.UseTravelTypes)
                 return;
 
             var offset = Map.MapOffset - lastMap.MapOffset;
@@ -387,12 +387,12 @@ namespace Ambermoon.Render
                 if (transport.Position.X >= lastMap.Width)
                 {
                     if (transport.Position.Y >= lastMap.Height)
-                        lastMapIndex = lastMap.DownRightMapIndex.Value;
+                        lastMapIndex = lastMap.DownRightMapIndex!.Value;
                     else
-                        lastMapIndex = lastMap.RightMapIndex.Value;
+                        lastMapIndex = lastMap.RightMapIndex!.Value;
                 }
                 else if (transport.Position.Y >= lastMap.Height)
-                    lastMapIndex = lastMap.RightMapIndex.Value;
+                    lastMapIndex = lastMap.RightMapIndex!.Value;
 
                 if (lastMapIndex != Map.Index &&
                     lastMapIndex != Map.RightMapIndex &&
@@ -437,9 +437,9 @@ namespace Ambermoon.Render
 
             var position = new Position((int)x, (int)y);
 
-            if (mapIndex != Map.Index)
+            if (mapIndex != Map!.Index)
             {
-                if (mapIndex != adjacentMaps[0].Index &&
+                if (mapIndex != adjacentMaps![0].Index &&
                     mapIndex != adjacentMaps[1].Index &&
                     mapIndex != adjacentMaps[2].Index)
                     return;
@@ -450,12 +450,12 @@ namespace Ambermoon.Render
                     position.Y += Map.Height;
             }
 
-            var info = renderView.GameData.StationaryImageInfos[travelType];
+            var info = renderView!.GameData.StationaryImageInfos[travelType];
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Characters);
             var sprite = renderView.SpriteFactory.Create(info.Width, info.Height, false);
             var offset = new Position((TILE_WIDTH - info.Width) / 2 - 2, (TILE_HEIGHT - info.Height) / 2 - 2);
             sprite.Layer = renderView.GetLayer(Layer.Characters);
-            sprite.ClipArea = Game.Map2DViewArea;
+            sprite.ClipArea = GameCore.Map2DViewArea;
             sprite.BaseLineOffset = TILE_HEIGHT / 2;
             sprite.PaletteIndex = (byte)game.GetPlayerPaletteIndex();
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.TransportGraphicOffset + travelType.AsStationaryImageIndex());
@@ -479,9 +479,9 @@ namespace Ambermoon.Render
             }
             else
             {
-                var backTile = tileset.Tiles[(int)tile.BackTileIndex - 1];
+                var backTile = tileset!.Tiles[(int)tile.BackTileIndex - 1];
                 var backGraphicIndex = backTile.GraphicIndex;
-                backgroundTileSprites[spriteIndex].TextureAtlasOffset = textureAtlas.GetOffset(backGraphicIndex - 1);
+                backgroundTileSprites[spriteIndex].TextureAtlasOffset = textureAtlas!.GetOffset(backGraphicIndex - 1);
                 backgroundTileSprites[spriteIndex].NumFrames = (uint)backTile.NumAnimationFrames;
                 backgroundTileSprites[spriteIndex].CurrentFrame = 0;
                 backgroundTileSprites[spriteIndex].Alternate = backTile.Flags.HasFlag(Tileset.TileFlags.WaveAnimation);
@@ -494,9 +494,9 @@ namespace Ambermoon.Render
             }
             else
             {
-                var frontTile = tileset.Tiles[(int)tile.FrontTileIndex - 1];
+                var frontTile = tileset!.Tiles[(int)tile.FrontTileIndex - 1];
                 var frontGraphicIndex = frontTile.GraphicIndex;
-                foregroundTileSprites[spriteIndex].TextureAtlasOffset = textureAtlas.GetOffset(frontGraphicIndex - 1);
+                foregroundTileSprites[spriteIndex].TextureAtlasOffset = textureAtlas!.GetOffset(frontGraphicIndex - 1);
                 foregroundTileSprites[spriteIndex].NumFrames = (uint)frontTile.NumAnimationFrames;
                 foregroundTileSprites[spriteIndex].CurrentFrame = 0;
                 foregroundTileSprites[spriteIndex].Alternate = frontTile.Flags.HasFlag(Tileset.TileFlags.WaveAnimation);
@@ -507,7 +507,7 @@ namespace Ambermoon.Render
 
         void UpdateTiles()
         {
-            var backLayer = renderView.GetLayer((Layer)((uint)Layer.MapBackground1 + tileset.Index - 1));
+            var backLayer = renderView!.GetLayer((Layer)((uint)Layer.MapBackground1 + tileset!.Index - 1));
             var frontLayer = renderView.GetLayer((Layer)((uint)Layer.MapForeground1 + tileset.Index - 1));
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate((Layer)((uint)Layer.MapBackground1 + tileset.Index - 1));
             int index = 0;
@@ -527,7 +527,7 @@ namespace Ambermoon.Render
 
                     backgroundTileSprites[index].Layer = backLayer;
                     backgroundTileSprites[index].TextureAtlasWidth = textureAtlas.Texture.Width;
-                    backgroundTileSprites[index].PaletteIndex = (byte)(Map.PaletteIndex - 1);
+                    backgroundTileSprites[index].PaletteIndex = (byte)(Map!.PaletteIndex - 1);
                     foregroundTileSprites[index].Layer = frontLayer;
                     foregroundTileSprites[index].TextureAtlasWidth = textureAtlas.Texture.Width;
                     foregroundTileSprites[index].PaletteIndex = (byte)(Map.PaletteIndex - 1);
@@ -568,7 +568,7 @@ namespace Ambermoon.Render
                 }
             }
 
-            Update(0, game.GameTime, false, null);
+            Update(0, game.GameTime!, false, null);
         }
 
         public bool IsMapVisible(uint index)
@@ -613,11 +613,11 @@ namespace Ambermoon.Render
                 index == Map.DownRightMapIndex;
         }
 
-        public void LimitScrollOffset(ref uint x, ref uint y, Map map = null)
+        public void LimitScrollOffset(ref uint x, ref uint y, Map? map = null)
         {
             map ??= Map;
 
-            if (map.IsWorldMap)
+            if (map!.IsWorldMap)
             {
                 x = (uint)Util.Limit(0, (long)x - NUM_VISIBLE_TILES_X / 2, map.Width - 1);
                 y = (uint)Util.Limit(0, (long)y - NUM_VISIBLE_TILES_Y / 2, map.Height - 1);
@@ -631,18 +631,18 @@ namespace Ambermoon.Render
 
         public void LimitScrollOffset(Position position, out Map newMap)
         {
-            newMap = Map;
+            newMap = Map!;
 
-            if (Map.IsWorldMap)
+            if (Map!.IsWorldMap)
             {
                 if (position.X < 0)
                 {
-                    newMap = game.MapManager.GetMap(Map.LeftMapIndex.Value);
+                    newMap = game.MapManager.GetMap(Map.LeftMapIndex!.Value);
                     position.X += Map.Width;
                 }
                 if (position.Y < 0)
                 {
-                    newMap = game.MapManager.GetMap(newMap.UpMapIndex.Value);
+                    newMap = game.MapManager.GetMap(newMap.UpMapIndex!.Value);
                     position.Y += newMap.Height;
                 }
 
@@ -667,7 +667,7 @@ namespace Ambermoon.Render
             var lastMap = Map;
             map.Reset();
             Map = map;
-            tileset = mapManager.GetTilesetForMap(map);
+            tileset = mapManager!.GetTilesetForMap(map);
             ticksPerFrame = map.TicksPerAnimationFrame;
 
             if (map.IsWorldMap)
@@ -675,9 +675,9 @@ namespace Ambermoon.Render
                 worldMap = true;
                 adjacentMaps =
                 [
-                    mapManager.GetMap(map.RightMapIndex.Value),
-                    mapManager.GetMap(map.DownMapIndex.Value),
-                    mapManager.GetMap(map.DownRightMapIndex.Value)
+                    mapManager.GetMap(map.RightMapIndex!.Value),
+                    mapManager.GetMap(map.DownMapIndex!.Value),
+                    mapManager.GetMap(map.DownRightMapIndex!.Value)
                 ];
             }
             else
@@ -696,19 +696,19 @@ namespace Ambermoon.Render
             AddCharacters(map);
 
             if (map.IsWorldMap)
-                InvokeMapChangedHandler(lastMap, map, adjacentMaps[0], adjacentMaps[1], adjacentMaps[2]);
+                InvokeMapChangedHandler(lastMap, map, adjacentMaps![0], adjacentMaps[1], adjacentMaps[2]);
             else
                 InvokeMapChangedHandler(lastMap, map);
         }
 
         internal void InvokeMapChange()
         {
-            if (Map.IsWorldMap)
+            if (Map!.IsWorldMap)
             {
                 InvokeMapChangedHandler(null, Map,
-                    mapManager.GetMap(Map.RightMapIndex.Value),
-                    mapManager.GetMap(Map.DownMapIndex.Value),
-                    mapManager.GetMap(Map.DownRightMapIndex.Value));
+                    mapManager!.GetMap(Map.RightMapIndex!.Value),
+                    mapManager.GetMap(Map.DownMapIndex!.Value),
+                    mapManager.GetMap(Map.DownRightMapIndex!.Value));
             }
             else
                 InvokeMapChangedHandler(null, Map);
@@ -723,15 +723,15 @@ namespace Ambermoon.Render
                 if (characterReference == null)
                     break;
 
-                var mapCharacter = MapCharacter2D.Create(game, renderView, mapManager, this, characterIndex, characterReference);
-                mapCharacter.Active = !game.CurrentSavegame.GetCharacterBit(map.Index, characterIndex);
+                var mapCharacter = MapCharacter2D.Create(game, renderView!, mapManager!, this, characterIndex, characterReference);
+                mapCharacter.Active = !game.CurrentSavegame!.GetCharacterBit(map.Index, characterIndex);
                 mapCharacters.Add(characterIndex, mapCharacter);
             }
         }
 
         public void CheckIfMonsterSeesPlayer(MapCharacter2D monster, bool visible)
         {
-            if (Map.IsWorldMap)
+            if (Map!.IsWorldMap)
             {
                 game.MonsterSeesPlayer = false;
                 return;
@@ -757,7 +757,7 @@ namespace Ambermoon.Render
         {
             game.MonsterSeesPlayer = false;
 
-            if (!Map.IsWorldMap)
+            if (!Map!.IsWorldMap)
             {
                 bool check = true;
 
@@ -786,20 +786,20 @@ namespace Ambermoon.Render
         public bool MonsterSeesPlayer(Position monsterPosition, uint? playerX = null, uint? playerY = null)
         {
             var position = new Position((int)(playerX ?? (uint)game.RenderPlayer.Position.X), (int)(playerY ?? (uint)game.RenderPlayer.Position.Y));
-            return !Geometry.Raycast2D.TestRay(Map, position.X, position.Y, monsterPosition.X, monsterPosition.Y, tile => tile.BlocksSight(tileset));
+            return !Geometry.Raycast2D.TestRay(Map!, position.X, position.Y, monsterPosition.X, monsterPosition.Y, tile => tile.BlocksSight(tileset));
         }
 
         public void UpdateCharacterVisibility(uint characterIndex)
         {
-            if (Map.CharacterReferences[characterIndex] == null)
+            if (Map!.CharacterReferences[characterIndex] == null)
                 throw new AmbermoonException(ExceptionScope.Application, "Null map character");
 
-            mapCharacters[characterIndex].Active = !game.CurrentSavegame.GetCharacterBit(Map.Index, characterIndex);
+            mapCharacters[characterIndex].Active = !game.CurrentSavegame!.GetCharacterBit(Map.Index, characterIndex);
 
             CheckIfMonstersSeePlayer();
         }
 
-        void InvokeMapChangedHandler(Map lastMap, params Map[] maps)
+        void InvokeMapChangedHandler(Map? lastMap, params Map[] maps)
         {
             MapChanged?.Invoke(lastMap, maps);
         }
@@ -811,21 +811,21 @@ namespace Ambermoon.Render
 
             if (worldMap)
             {
-                if (newScrollX < 0 || newScrollY < 0 || newScrollX >= Map.Width || newScrollY >= Map.Height)
+                if (newScrollX < 0 || newScrollY < 0 || newScrollX >= Map!.Width || newScrollY >= Map.Height)
                 {
                     Map newMap;
 
                     if (newScrollX < 0)
-                        newMap = mapManager.GetMap(Map.LeftMapIndex.Value);
-                    else if (newScrollX >= Map.Width)
-                        newMap = mapManager.GetMap(Map.RightMapIndex.Value);
+                        newMap = mapManager!.GetMap(Map!.LeftMapIndex!.Value);
+                    else if (newScrollX >= Map!.Width)
+                        newMap = mapManager!.GetMap(Map.RightMapIndex!.Value);
                     else
                         newMap = Map;
 
                     if (newScrollY < 0)
-                        newMap = mapManager.GetMap(newMap.UpMapIndex.Value);
+                        newMap = mapManager!.GetMap(newMap.UpMapIndex!.Value);
                     else if (newScrollY >= Map.Height)
-                        newMap = mapManager.GetMap(newMap.DownMapIndex.Value);
+                        newMap = mapManager!.GetMap(newMap.DownMapIndex!.Value);
 
                     uint newMapScrollX = newScrollX < 0 ? (uint)(Map.Width + newScrollX) : (uint)(newScrollX % Map.Width);
                     uint newMapScrollY = newScrollY < 0 ? (uint)(Map.Height + newScrollY) : (uint)(newScrollY % Map.Height);
@@ -838,7 +838,7 @@ namespace Ambermoon.Render
             }
             else
             {
-                if (newScrollX < 0 || newScrollY < 0 || newScrollX > Map.Width - NUM_VISIBLE_TILES_X || newScrollY > Map.Height - NUM_VISIBLE_TILES_Y)
+                if (newScrollX < 0 || newScrollY < 0 || newScrollX > Map!.Width - NUM_VISIBLE_TILES_X || newScrollY > Map.Height - NUM_VISIBLE_TILES_Y)
                     return false;
             }
 
@@ -870,7 +870,7 @@ namespace Ambermoon.Render
             if (!worldMap)
             {
                 // check scroll offset for non-world maps
-                if (ScrollX > Map.Width - NUM_VISIBLE_TILES_X)
+                if (ScrollX > Map!.Width - NUM_VISIBLE_TILES_X)
                     throw new AmbermoonException(ExceptionScope.Render, "Map scroll x position is outside the map bounds.");
                 if (ScrollY > Map.Height - NUM_VISIBLE_TILES_Y)
                     throw new AmbermoonException(ExceptionScope.Render, "Map scroll y position is outside the map bounds.");
@@ -884,8 +884,8 @@ namespace Ambermoon.Render
         {
             var tile = map.Tiles[x, y];
             var tilesetTile = tile.BackTileIndex == 0
-                ? tileset.Tiles[tile.FrontTileIndex - 1]
-                : tileset.Tiles[tile.BackTileIndex - 1];
+                ? tileset!.Tiles[tile.FrontTileIndex - 1]
+                : tileset!.Tiles[tile.BackTileIndex - 1];
             return tilesetTile.CombatBackgroundIndex;
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 
 namespace Ambermoon;
 
@@ -111,7 +112,7 @@ partial class GameCore
 
         void DealDamage()
         {
-            DamageAllPartyMembers(p => damageValues[SlotFromPartyMember(p).Value],
+            DamageAllPartyMembers(p => damageValues[SlotFromPartyMember(p)!.Value],
                 null, null, someoneDied =>
                 {
                     GameTime_HoursPassed(hoursPassed);
@@ -147,9 +148,9 @@ partial class GameCore
 
         ProcessPoisonDamage(hours, someoneDied =>
         {
-            if (!notTiredNorExhausted && !swamLastTick && Map.UseTravelTypes && TravelType == TravelType.Swim)
+            if (!notTiredNorExhausted && !swamLastTick && Map!.UseTravelTypes && TravelType == TravelType.Swim)
             {
-                int hours = (int)(24 + GameTime.Hour - lastSwimDamageHour) % 24;
+                int hours = (int)(24 + GameTime!.Hour - lastSwimDamageHour) % 24;
                 int minutes = (int)GameTime.Minute - (int)lastSwimDamageMinute;
                 DoSwimDamage((uint)(hours * 12 + minutes / 5), someoneDrown =>
                 {
@@ -178,7 +179,7 @@ partial class GameCore
                 {
                     if (exhaustedHours > 0)
                         GameTime_GotExhausted(exhaustedHours, passedHours);
-                    else if (CurrentSavegame.HoursWithoutSleep >= 24)
+                    else if (CurrentSavegame!.HoursWithoutSleep >= 24)
                         GameTime_GotTired(passedHours);
                     else
                         GameTime_HoursPassed(passedHours, true);
@@ -201,7 +202,7 @@ partial class GameCore
             {
                 if (exhaustedHours > 0)
                     GameTime_GotExhausted(exhaustedHours, passedHours);
-                else if (CurrentSavegame.HoursWithoutSleep >= 24)
+                else if (CurrentSavegame!.HoursWithoutSleep >= 24)
                     GameTime_GotTired(passedHours);
                 else
                     GameTime_HoursPassed(passedHours, true);

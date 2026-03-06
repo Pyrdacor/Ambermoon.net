@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
@@ -120,18 +121,18 @@ partial class GameCore
 
                 if (is3D)
                 {
-                    renderMap3D.Update(CurrentMapTicks, GameTime);
+                    renderMap3D!.Update(CurrentMapTicks, GameTime!);
                 }
                 else // 2D
                 {
-                    renderMap2D.Update(CurrentMapTicks, GameTime, monstersCanMoveImmediately, lastPlayerPosition);
+                    renderMap2D!.Update(CurrentMapTicks, GameTime!, monstersCanMoveImmediately, lastPlayerPosition);
                 }
 
                 monstersCanMoveImmediately = false;
 
                 var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
 
-                if (moveTicks >= movement.MovementTicks(is3D, Map.UseTravelTypes, TravelType))
+                if (moveTicks >= movement.MovementTicks(is3D, Map!.UseTravelTypes, TravelType))
                 {
                     lastMoveTicksReset = CurrentTicks;
 
@@ -226,7 +227,7 @@ partial class GameCore
             }
 
             if (!WindowActive && player2D != null)
-                fow2D.Center = player2D.DisplayArea.Center;
+                fow2D!.Center = player2D.DisplayArea.Center;
         }
 
         layout.Update(CurrentTicks);
@@ -245,7 +246,7 @@ partial class GameCore
                 uint b = (colorMod & 0x00fu);
                 r = (r << 16) | (r << 20);
                 b |= (b << 4);
-                drugOverlay.Color = new Render.Color(r | b);
+                drugOverlay!.Color = new Render.Color(r | b);
                 lastDrugColorChangeTicks = CurrentAnimationTicks;
             }
 
@@ -255,12 +256,12 @@ partial class GameCore
                 lastDrugMouseMoveTicks = CurrentAnimationTicks;
             }
 
-            drugOverlay.Visible = true;
+            drugOverlay!.Visible = true;
         }
         else
         {
             renderView.DrugColorComponent = null;
-            drugOverlay.Visible = false;
+            drugOverlay!.Visible = false;
         }
     }
 
@@ -297,7 +298,7 @@ partial class GameCore
             if (disableTimeEvents)
                 return;
 
-            if (Map.Flags.HasFlag(MapFlags.Dungeon) &&
+            if (Map!.Flags.HasFlag(MapFlags.Dungeon) &&
                 !CurrentSavegame.IsSpellActive(ActiveSpellType.Light) &&
                 lightIntensity > 0)
             {
@@ -351,11 +352,12 @@ partial class GameCore
         currentBattle = null;
 
         ClearPartyMembers();
+
         for (int i = 0; i < MaxPartyMembers; ++i)
         {
             if (savegame.CurrentPartyMemberIndices[i] != 0)
             {
-                var partyMember = savegame.GetPartyMember(i);
+                var partyMember = savegame.GetPartyMember(i)!;
                 CheckWeight(partyMember);
                 AddPartyMember(i, partyMember);
             }
