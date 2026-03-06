@@ -405,7 +405,7 @@ class Cheats
         }
     }
 
-    static void ProcessCurrentInput(Game game, bool redirectedInput)
+    static void ProcessCurrentInput(GameCore game, bool redirectedInput)
     {
         if (currentAutoFillInput != null)
             currentInput = currentAutoFillInput;
@@ -492,7 +492,7 @@ class Cheats
         Console.WriteLine();
     }
 
-    static void Godmode(Game game, string[] args)
+    static void Godmode(GameCore game, string[] args)
     {
         bool activate = args.Length == 0 ? !game.Godmode : !int.TryParse(args[0], out int active) || active != 0;
 
@@ -516,7 +516,7 @@ class Cheats
         game.Godmode = activate;
     }
 
-    static void NoClip(Game game, string[] args)
+    static void NoClip(GameCore game, string[] args)
     {
         bool activate = args.Length == 0 ? !game.NoClip : !int.TryParse(args[0], out int active) || active != 0;
 
@@ -536,7 +536,7 @@ class Cheats
         game.NoClip = activate;
     }
 
-    static void Netsrak(Game game, string[] args)
+    static void Netsrak(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -640,12 +640,12 @@ class Cheats
         }
     }
 
-    static void ShowMaps(Game game, string[] args)
+    static void ShowMaps(GameCore game, string[] args)
     {
         ShowList(args, game.MapManager.Maps, map => map.Name, map => map.Index);
     }
 
-    static void Teleport(Game game, string[] args)
+    static void Teleport(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -799,7 +799,7 @@ class Cheats
         Console.WriteLine();
     }
 
-    static void ShowMonsters(Game game, string[] args)
+    static void ShowMonsters(GameCore game, string[] args)
     {
         var monsterGroups = game.CharacterManager.MonsterGroups.ToList();
 
@@ -824,14 +824,14 @@ class Cheats
         }
     }
 
-    static void ShowPartyMembers(Game game, string[] args)
+    static void ShowPartyMembers(GameCore game, string[] args)
     {
         var partyMembers = game.GetCurrentSavegame().PartyMembers;
 
         ShowList(args, partyMembers, p => p.Value.Name, p => p.Key, false);
     }
 
-    static void StartBattle(Game game, string[] args)
+    static void StartBattle(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -853,12 +853,12 @@ class Cheats
         }
     }
 
-    static void ShowItems(Game game, string[] args)
+    static void ShowItems(GameCore game, string[] args)
     {
         ShowList(args, game.ItemManager.Items, item => item.Name, item => item.Index);
     }
 
-    static void Give(Game game, string[] args)
+    static void Give(GameCore game, string[] args)
     {
         // TODO: If the char has no items and the inventory is open,
         //       the buttons are still disabled after give.
@@ -868,7 +868,7 @@ class Cheats
         {
             int? partyMemberIndex = args.Length < argIndex + 1 ? (int?)null : int.TryParse(args[argIndex], out int i) ? i : -1;
 
-            if (partyMemberIndex != null && (partyMemberIndex < 1 || partyMemberIndex > Game.MaxPartyMembers))
+            if (partyMemberIndex != null && (partyMemberIndex < 1 || partyMemberIndex > GameCore.MaxPartyMembers))
             {
                 Console.WriteLine("Party member index was invalid or outside the range 1~6.");
                 Console.WriteLine();
@@ -1058,7 +1058,7 @@ class Cheats
         }
     }
 
-    static void Fly(Game game, string[] args)
+    static void Fly(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -1074,7 +1074,7 @@ class Cheats
         Console.WriteLine();
     }
 
-    static void Explore(Game game, string[] args)
+    static void Explore(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -1090,7 +1090,7 @@ class Cheats
         Console.WriteLine();
     }
 
-    static PartyMember GetPartyMemberByIdOrSlotOrName(Game game, string partyMemberIdOrName,
+    static PartyMember GetPartyMemberByIdOrSlotOrName(GameCore game, string partyMemberIdOrName,
         Func<PartyMember, bool> filter, Func<PartyMember> afterFilterEmptyHandler,
         Func<PartyMember[], PartyMember> afterFilterMoreThanOnceHandler, bool numberIsSlot)
     {
@@ -1100,7 +1100,7 @@ class Cheats
 		{
             if (numberIsSlot)
             {
-                if (partyMemberId < 1 || partyMemberId > Game.MaxPartyMembers)
+                if (partyMemberId < 1 || partyMemberId > GameCore.MaxPartyMembers)
                 {
                     Console.WriteLine("Party member slot was outside the range 1~6.");
                     Console.WriteLine();
@@ -1176,7 +1176,7 @@ class Cheats
         return partyMember;
 	}
 
-    static void Kill(Game game, string[] args)
+    static void Kill(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -1274,7 +1274,7 @@ class Cheats
         game.KillPartyMember(partyMember, deathCondition);
     }
 
-    static void Revive(Game game, string[] args)
+    static void Revive(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -1342,7 +1342,7 @@ class Cheats
         });
     }
 
-    static void Berserk(Game game, string[] args)
+    static void Berserk(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -1352,7 +1352,7 @@ class Cheats
         Console.WriteLine();
     }
 
-    static void EndFight(Game game, bool flee)
+    static void EndFight(GameCore game, bool flee)
     {
         Console.WriteLine();
 
@@ -1363,11 +1363,11 @@ class Cheats
         }
     }
 
-    static void Win(Game game, string[] args) => EndFight(game, false);
+    static void Win(GameCore game, string[] args) => EndFight(game, false);
 
-    static void Flee(Game game, string[] args) => EndFight(game, true);
+    static void Flee(GameCore game, string[] args) => EndFight(game, true);
 
-    static void Light(Game game, string[] args)
+    static void Light(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -1379,7 +1379,7 @@ class Cheats
         Console.WriteLine();
     }
 
-    static void Where(Game game, string[] args)
+    static void Where(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -1389,7 +1389,7 @@ class Cheats
         Console.WriteLine();
     }
 
-    static void Level(Game game, string[] args)
+    static void Level(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -1405,7 +1405,7 @@ class Cheats
         {
             int? partyMemberIndex = args.Length < argIndex + 1 ? (int?)null : int.TryParse(args[argIndex], out int i) ? i : -1;
 
-            if (partyMemberIndex != null && partyMemberIndex > Game.MaxPartyMembers)
+            if (partyMemberIndex != null && partyMemberIndex > GameCore.MaxPartyMembers)
             {
                 Console.WriteLine("Party member index was invalid or outside the range 0~6.");
                 Console.WriteLine();
@@ -1489,7 +1489,7 @@ class Cheats
         actions[0]();
     }
 
-    static void Invite(Game game, string[] args)
+    static void Invite(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -1548,11 +1548,11 @@ class Cheats
         }
     }
 
-    static PartyMember[] GetPartyMembers(Game game, string[] args, int argIndex)
+    static PartyMember[] GetPartyMembers(GameCore game, string[] args, int argIndex)
     {
         int? partyMemberIndex = args.Length < argIndex + 1 ? null : int.TryParse(args[argIndex], out int i) ? i : -1;
 
-        if (partyMemberIndex != null && partyMemberIndex > Game.MaxPartyMembers)
+        if (partyMemberIndex != null && partyMemberIndex > GameCore.MaxPartyMembers)
         {
             Console.WriteLine("Party member index was invalid or outside the range 0~6.");
             Console.WriteLine();
@@ -1645,7 +1645,7 @@ class Cheats
         return null;
     }
 
-    static void Curse(Game game, string[] args)
+    static void Curse(GameCore game, string[] args)
     {
         Console.WriteLine();
 
@@ -1789,7 +1789,7 @@ class Cheats
         }
     }
 
-    static void Cleanse(Game game, string[] args)
+    static void Cleanse(GameCore game, string[] args)
     {
         Console.WriteLine();
 
