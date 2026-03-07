@@ -26,7 +26,7 @@ namespace Ambermoon
 {
     internal static class InteractionExtensions
     {
-        public static void ExecuteEvents(this IConversationPartner conversationPartner, Game game, EventTrigger trigger,
+        public static void ExecuteEvents(this IConversationPartner conversationPartner, GameCore game, EventTrigger trigger,
             uint characterIndex)
         {
             var @event = conversationPartner.EventList.FirstOrDefault(e => e is ConversationEvent ce &&
@@ -37,12 +37,12 @@ namespace Ambermoon
                 uint x = (uint)game.RenderPlayer.Position.X;
                 uint y = (uint)game.RenderPlayer.Position.Y;
                 bool lastEventStatus = false;
-                @event.ExecuteEvent(game.Map, game, ref trigger, x, y, ref lastEventStatus, out bool _, out var _,
+                @event.ExecuteEvent(game.Map!, game, ref trigger, x, y, ref lastEventStatus, out bool _, out var _,
                     conversationPartner, characterIndex);
             }
             else
             {
-                game.ShowConversation(conversationPartner, characterIndex, null, new Game.ConversationItems());
+                game.ShowConversation(conversationPartner, characterIndex, null, new GameCore.ConversationItems());
             }
         }
     }

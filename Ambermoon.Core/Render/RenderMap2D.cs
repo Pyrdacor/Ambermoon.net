@@ -66,7 +66,7 @@ namespace Ambermoon.Render
         public uint ScrollX { get; private set; } = 0;
         public uint ScrollY { get; private set; } = 0;
 
-        public RenderMap2D(GameCore game, Map map, IMapManager mapManager, IGameRenderView renderView,
+        public RenderMap2D(GameCore game, Map? map, IMapManager mapManager, IGameRenderView renderView,
             uint initialScrollX = 0, uint initialScrollY = 0)
         {
             this.game = game;
@@ -656,9 +656,9 @@ namespace Ambermoon.Render
             }
         }
 
-        public void SetMap(Map map, uint initialScrollX = 0, uint initialScrollY = 0)
+        public void SetMap(Map? map, uint initialScrollX = 0, uint initialScrollY = 0)
         {
-            if (Map == map)
+            if (Map == map || map == null)
                 return;
 
             if (map.Type != MapType.Map2D)

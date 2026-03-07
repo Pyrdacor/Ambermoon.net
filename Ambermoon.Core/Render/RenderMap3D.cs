@@ -53,7 +53,7 @@ namespace Ambermoon.Render
                 this.alternateAnimation = alternateAnimation;
                 this.noAnimation = noAnimation;
                 this.numFrames = numFrames;
-                ticksPerFrame = Math.Max(1, (uint)Util.Round(Game.TicksPerSecond / Math.Max(0.001f, fps)));
+                ticksPerFrame = Math.Max(1, (uint)Util.Round(GameCore.TicksPerSecond / Math.Max(0.001f, fps)));
             }
 
             public void Destroy()
@@ -98,7 +98,7 @@ namespace Ambermoon.Render
 
         class MapCharacter : IMapCharacter
         {
-            readonly Game game;
+            readonly GameCore game;
             readonly RenderMap3D map;
             readonly ISurface3D surface;
             readonly uint characterIndex;
@@ -128,7 +128,7 @@ namespace Ambermoon.Render
 
             public void ResetMovementTimer() => character3D?.ResetMovementTimer();
 
-            public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
+            public MapCharacter(GameCore game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
                 Labdata.ObjectPosition objectPosition, uint textureIndex, MapCharacter parent,
                 bool alternateAnimation, bool noAnimation, uint numFrames, float fps = 1.0f)
@@ -138,7 +138,7 @@ namespace Ambermoon.Render
                 this.map = map;
                 this.characterIndex = characterIndex;
                 this.numFrames = numFrames;
-                ticksPerFrame = Math.Max(1, (uint)Util.Round(Game.TicksPerSecond / Math.Max(0.001f, fps)));
+                ticksPerFrame = Math.Max(1, (uint)Util.Round(GameCore.TicksPerSecond / Math.Max(0.001f, fps)));
                 this.characterReference = characterReference;
                 this.textureIndex = textureIndex;
                 this.objectPosition = objectPosition;
@@ -272,7 +272,7 @@ namespace Ambermoon.Render
 
                 bool TriggerCharacterEvents(uint eventIndex)
                 {
-                    if ((long)game.CurrentTicks - lastInteractionTicks < Game.TicksPerSecond)
+                    if ((long)game.CurrentTicks - lastInteractionTicks < GameCore.TicksPerSecond)
                         return false;
 
                     var @event = map.Map.EventList[(int)eventIndex - 1];
@@ -317,7 +317,7 @@ namespace Ambermoon.Render
                 {
                     if (trigger == EventTrigger.Move)
                     {
-                        if ((long)game.CurrentTicks - lastInteractionTicks < Game.TicksPerSecond)
+                        if ((long)game.CurrentTicks - lastInteractionTicks < GameCore.TicksPerSecond)
                             return false;
 
                         if (game.Teleporting || game.Map != map.Map)
@@ -822,42 +822,42 @@ namespace Ambermoon.Render
         public const float ReferenceWallHeight = 341.0f; // 2/3 of block size -> 512
         // Each of the 8 subobjects is sorted in Z (the first has an extrude of 5% of the block size, the rest is lower).
         const float ExtrudeStep = 0.05f * Global.DistancePerBlock * 0.125f;
-        readonly Game game;
-        readonly ICamera3D camera = null;
-        readonly IMapManager mapManager = null;
-        readonly IGameRenderView renderView = null;
-        ITextureAtlas textureAtlas = null;
-        IColoredRect floorColor = null;
-        IColoredRect ceilingColor = null;
-        Color baseFloorColor = null;
-        Color baseCeilingColor = null;
-        List<IColoredRect> skyColors = null;
-        readonly List<KeyValuePair<Position, IColoredRect>> stars = new List<KeyValuePair<Position, IColoredRect>>();
-        SkySprite horizonSprite = null;
-        IColoredRect horizonFog = null;
-        ISurface3D floor = null;
-        ISurface3D ceiling = null;
-        Labdata labdata = null;
+        readonly GameCore game;
+        readonly ICamera3D? camera = null;
+        readonly IMapManager? mapManager = null;
+        readonly IGameRenderView? renderView = null;
+        ITextureAtlas? textureAtlas = null;
+        IColoredRect? floorColor = null;
+        IColoredRect? ceilingColor = null;
+        Color? baseFloorColor = null;
+        Color? baseCeilingColor = null;
+        List<IColoredRect>? skyColors = null;
+        readonly List<KeyValuePair<Position, IColoredRect>> stars = [];
+        SkySprite? horizonSprite = null;
+        IColoredRect? horizonFog = null;
+        ISurface3D? floor = null;
+        ISurface3D? ceiling = null;
+        Labdata? labdata = null;
         readonly List<uint>[] characterBlockingBlocks = new List<uint>[15]; // 15 collision classes
-        readonly List<uint> monsterBlockSightBlocks = new List<uint>();
-        readonly Dictionary<uint, List<ICollisionBody>> blockCollisionBodies = new Dictionary<uint, List<ICollisionBody>>();
-        readonly Dictionary<uint, List<ISurface3D>> walls = new Dictionary<uint, List<ISurface3D>>();
-        readonly Dictionary<uint, List<MapObject>> objects = new Dictionary<uint, List<MapObject>>();
-        readonly Dictionary<uint, MapCharacter> mapCharacters = new Dictionary<uint, MapCharacter>();
-        static readonly Dictionary<uint, ITextureAtlas> labdataTextures = new Dictionary<uint, ITextureAtlas>(); // contains all textures for a labdata (floor, walls, objects and overlays)
-        static Graphic[] labBackgroundGraphics = null;
-        public uint CombatBackgroundIndex => labdata.CombatBackground;
+        readonly List<uint> monsterBlockSightBlocks = [];
+        readonly Dictionary<uint, List<ICollisionBody>> blockCollisionBodies = [];
+        readonly Dictionary<uint, List<ISurface3D>> walls = [];
+        readonly Dictionary<uint, List<MapObject>> objects = [];
+        readonly Dictionary<uint, MapCharacter> mapCharacters = [];
+        static readonly Dictionary<uint, ITextureAtlas> labdataTextures = []; // contains all textures for a labdata (floor, walls, objects and overlays)
+        static Graphic[]? labBackgroundGraphics = null;
+        public uint CombatBackgroundIndex => labdata?.CombatBackground ?? 0;
         /// <summary>
         /// This contains all block indices that could be changed by map events for labdatas.
         /// </summary>
-        static readonly Dictionary<uint, List<uint>> labdataChangeableBlocks = new Dictionary<uint, List<uint>>();
-        public Map Map { get; private set; } = null;
+        static readonly Dictionary<uint, List<uint>> labdataChangeableBlocks = [];
+        public Map? Map { get; private set; } = null;
         /// <summary>
         ///  This is the height for the renderer. It is expressed in relation
         ///  to the block size (e.g. wall is 2/3 as height as a block is wide).
         /// </summary>
-        float WallHeight => labdata.WallHeight * Global.DistancePerBlock / BlockSize;
-        public event Action<Map> MapChanged;
+        float WallHeight => labdata!.WallHeight * Global.DistancePerBlock / BlockSize;
+        public event Action<Map?>? MapChanged;
 
         public static void Reset() => MapCharacter.Reset();
 
@@ -870,7 +870,7 @@ namespace Ambermoon.Render
             {
                 if (character.MapObjectIndex != 0)
                 {
-                    var mapObject = labdata.Objects[(int)character.MapObjectIndex - 1];
+                    var mapObject = labdata!.Objects[(int)character.MapObjectIndex - 1];
                     automapType = mapObject.AutomapType;
                 }
             }
@@ -886,7 +886,7 @@ namespace Ambermoon.Render
 
         public bool IsBlockingPlayer(uint x, uint y) => characterBlockingBlocks[0].Contains(x + y * (uint)Map.Width);
 
-        public RenderMap3D(Game game, Map map, IMapManager mapManager, IGameRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
+        public RenderMap3D(GameCore game, Map? map, IMapManager mapManager, IGameRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
         {
             this.game = game;
             camera = renderView.Camera3D;

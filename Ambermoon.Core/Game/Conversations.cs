@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
+using Ambermoon.Render;
 using Ambermoon.UI;
 using static Ambermoon.Data.ConversationEvent;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon;
 
@@ -22,12 +24,12 @@ partial class GameCore
     /// The event chain may also contain rewards, new keywords, etc.
     /// </summary>
     internal void ShowConversation(IConversationPartner conversationPartner, uint? characterIndex,
-        Event conversationEvent, ConversationItems createdItems, bool showInitialText = true)
+        Event? conversationEvent, ConversationItems createdItems, bool showInitialText = true)
     {
         if (!(conversationPartner is Character character))
             throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
 
-        if ((character.SpokenLanguages & CurrentPartyMember.SpokenLanguages) == 0 &&
+        if ((character.SpokenLanguages & CurrentPartyMember!.SpokenLanguages) == 0 &&
             (character.SpokenExtendedLanguages & CurrentPartyMember.SpokenExtendedLanguages) == 0)
         {
             ShowMessagePopup(DataNameProvider.YouDontSpeakSameLanguage);
@@ -37,7 +39,7 @@ partial class GameCore
         IEnumerable<ConversationEvent> GetMatchingEvents(Func<ConversationEvent, bool> filter)
             => conversationPartner.EventList.OfType<ConversationEvent>().Where(filter);
 
-        ConversationEvent GetFirstMatchingEvent(Func<ConversationEvent, bool> filter)
+        ConversationEvent? GetFirstMatchingEvent(Func<ConversationEvent, bool> filter)
             => conversationPartner.EventList.OfType<ConversationEvent>().FirstOrDefault(filter);
 
         void SwitchPlayer()
@@ -62,16 +64,16 @@ partial class GameCore
         var textArea = new Rect(17, 44, 174, 79);
         UIText? conversationText = null;
         ItemGrid? itemGrid = null;
-        var oldKeywords = new List<string>(Dictionary);
+        var oldKeywords = new List<string>(Dictionary!);
         var newKeywords = new List<string>();
         uint amount = 0; // gold, food, etc
         UIText? moveItemMessage = null;
         layout.DraggedItemDropped += DraggedItemDropped;
         closeWindowHandler = _ => CleanUp();
 
-        void SetText(string text, Action followAction = null)
+        void SetText(string text, Action? followAction = null)
         {
-            conversationText.Visible = true;
+            conversationText!.Visible = true;
             conversationText.SetText(ProcessText(text));
             conversationText.Clicked += TextClicked;
             CursorType = CursorType.Click;
@@ -144,7 +146,7 @@ partial class GameCore
                 ShowCreatedItems();
             }
 
-            itemGrid.Disabled = false;
+            itemGrid!.Disabled = false;
             itemGrid.DisableDrag = true;
             CursorType = CursorType.Sword;
             var itemArea = new Rect(16, 139, 151, 53);
@@ -167,7 +169,7 @@ partial class GameCore
             SetupRightClickAbort();
             void CheckItem(ItemSlot itemSlot)
             {
-                void MoveBack(Action followAction)
+                void MoveBack(Action? followAction)
                 {
                     StartSequence();
                     itemGrid.HideTooltip();
@@ -182,7 +184,7 @@ partial class GameCore
                 EndSequence();
                 message?.Destroy();
                 message = null;
-                layout.GetItem(itemSlot).Dragged = true; // Keep it above UI
+                layout.GetItem(itemSlot)!.Dragged = true; // Keep it above UI
                 UntrapMouse();
                 layout.ButtonsDisabled = false;
                 conversationEvent = GetFirstMatchingEvent(e => e.Interaction == interactionType && e.ItemIndex == itemSlot.ItemIndex);
@@ -411,7 +413,7 @@ partial class GameCore
                     return;
                 }
 
-                if (Map.World != World.Lyramion) // TODO: You can still leave in Morag hangar and prison like in the original
+                if (Map!.World != World.Lyramion) // TODO: You can still leave in Morag hangar and prison like in the original
                 {
                     SetText(DataNameProvider.DenyLeavingPartyOnMoon);
                     return;
@@ -439,8 +441,8 @@ partial class GameCore
             {
                 if (GetPartyMember(i) == null)
                 {
-                    var partyMember = character as PartyMember;
-                    CurrentSavegame.CurrentPartyMemberIndices[i] =
+                    var partyMember = (character as PartyMember)!;
+                    CurrentSavegame!.CurrentPartyMemberIndices[i] =
                         CurrentSavegame.PartyMembers.FirstOrDefault(p => p.Value == partyMember).Key;
                     this.AddPartyMember(i, partyMember, followAction, true);
                     // Set battle position
@@ -456,7 +458,7 @@ partial class GameCore
                     }
                     layout.EnableButton(4, true); // Enable "Ask to leave"
                     layout.EnableButton(5, false); // Disable "Ask to join"
-                    SetMapCharacterBit(Map.Index, characterIndex.Value, true);
+                    SetMapCharacterBit(Map!.Index, characterIndex!.Value, true);
                     if (partyMember.CharacterBitIndex == 0xffff || partyMember.CharacterBitIndex == 0x0000)
                         partyMember.CharacterBitIndex = (ushort)(((Map.Index - 1) << 5) | characterIndex.Value);
                     break;
@@ -464,16 +466,16 @@ partial class GameCore
             }
         }
 
-        void RemovePartyMember(Action followAction)
+        void RemovePartyMember(Action? followAction)
         {
-            var partyMember = character as PartyMember;
+            var partyMember = (character as PartyMember)!;
             var index = partyMember.CharacterBitIndex;
             if (index == 0xffff)
                 index = PartyMemberCharacterBits[partyMember.Index];
             uint mapIndex = 1 + ((uint)index >> 5);
             uint characterIndex = (uint)index & 0x1f;
-            this.RemovePartyMember(SlotFromPartyMember(character as PartyMember).Value, false, followAction);
-            CurrentSavegame.CurrentPartyMemberIndices[SlotFromPartyMember(partyMember).Value] = 0;
+            this.RemovePartyMember(SlotFromPartyMember(partyMember)!.Value, false, followAction);
+            CurrentSavegame!.CurrentPartyMemberIndices[SlotFromPartyMember(partyMember)!.Value] = 0;
             SetMapCharacterBit(mapIndex, characterIndex, false);
         }
 
@@ -481,13 +483,13 @@ partial class GameCore
         {
             if (createdItemSlots.Any(item => !item.Empty))
             {
-                itemGrid.Disabled = false;
+                itemGrid!.Disabled = false;
                 itemGrid.DisableDrag = false;
                 itemGrid.Initialize(createdItemSlots, false);
             }
             else
             {
-                itemGrid.Disabled = true;
+                itemGrid!.Disabled = true;
             }
         }
 
@@ -574,14 +576,14 @@ partial class GameCore
             layout.ButtonsDisabled = false;
         }
 
-        void HandleNextEvent(Action<EventType> followAction = null)
+        void HandleNextEvent(Action<EventType>? followAction = null)
         {
             conversationEvent = conversationEvent?.Next;
             layout.ButtonsDisabled = conversationEvent != null;
             HandleEvent(followAction);
         }
 
-        void HandleEvent(Action<EventType> followAction = null)
+        void HandleEvent(Action<EventType>? followAction = null)
         {
             if (conversationEvent == null || aborted)
             {
@@ -705,14 +707,14 @@ partial class GameCore
                     conversationEvent.Type == EventType.Riddlemouth ||
                     conversationEvent.Type == EventType.StartBattle)
                 {
-                    CloseWindow(() => EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always,
-                        (uint)player.Position.X, (uint)player.Position.Y, conversationEvent, true));
+                    CloseWindow(() => EventExtensions.TriggerEventChain(Map!, this, EventTrigger.Always,
+                        (uint)player!.Position.X, (uint)player.Position.Y, conversationEvent, true));
                 }
                 else
                 {
                     var trigger = EventTrigger.Always;
-                    conversationEvent = EventExtensions.ExecuteEvent(conversationEvent, Map, this, ref trigger,
-                        (uint)player.Position.X, (uint)player.Position.Y, ref lastEventStatus, out aborted,
+                    conversationEvent = EventExtensions.ExecuteEvent(conversationEvent, Map!, this, ref trigger,
+                        (uint)player!.Position.X, (uint)player.Position.Y, ref lastEventStatus, out aborted,
                         out var eventProvider, conversationPartner);
                     layout.ButtonsDisabled = conversationEvent != null;
 
@@ -756,7 +758,7 @@ partial class GameCore
             {
                 moveItemMessage = layout.AddText(textArea, DataNameProvider.WhereToMoveIt,
                     TextColor.BrightGray, TextAlign.Center);
-                var draggedSourceSlot = itemGrid.GetItemSlot(slotIndex);
+                var draggedSourceSlot = itemGrid.GetItemSlot(slotIndex)!;
                 if (updateSlot)
                     draggedSourceSlot.Remove(amount);
                 createdItemSlots[slotIndex].Replace(draggedSourceSlot);
@@ -766,7 +768,7 @@ partial class GameCore
 
         void DraggedItemDropped()
         {
-            itemGrid.Disabled = !createdItemSlots.Any(slot => !slot.Empty);
+            itemGrid!.Disabled = !createdItemSlots.Any(slot => !slot.Empty);
             moveItemMessage?.Destroy();
             moveItemMessage = null;
 
@@ -800,7 +802,7 @@ partial class GameCore
             DisplayCharacterInfo(character, true);
 
             if (character.Type != CharacterType.PartyMember ||
-                SlotFromPartyMember(character as PartyMember) == null)
+                SlotFromPartyMember((character as PartyMember)!) == null)
                 layout.EnableButton(4, false); // Disable "Ask to leave" if not in party
             if (character is PartyMember partyMember && PartyMembers.Contains(partyMember))
                 layout.EnableButton(5, false); // Disable "Ask to join" if already in party
