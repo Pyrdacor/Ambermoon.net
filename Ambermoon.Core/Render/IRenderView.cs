@@ -73,9 +73,9 @@ public interface IGameRenderView : IRenderView
     Action<float> AspectProcessor { get; }
     void SetLight(float light);
     void Set3DFade(float fade);
-    void SetSkyColorReplacement(uint? skyColor, Color replaceColor);
-    PaletteReplacement PaletteReplacement { get; set; }
-    PaletteReplacement HorizonPaletteReplacement { get; set; }
+    void SetSkyColorReplacement(uint? skyColor, Color? replaceColor);
+    PaletteReplacement? PaletteReplacement { get; set; }
+    PaletteReplacement? HorizonPaletteReplacement { get; set; }
     int? DrugColorComponent { get; set; }
     PaletteFading PaletteFading { get; set; }
     void SetFog(Color fogColor, float distance);

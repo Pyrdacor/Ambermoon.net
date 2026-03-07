@@ -31,7 +31,7 @@ namespace Ambermoon.Render
     internal class MapCharacter2D : Character2D, IMapCharacter
     {
         static readonly Position NullOffset = new(0, 0);
-        readonly Game game;
+        readonly GameCore game;
         readonly Map map;
         readonly Tileset tileset;
         readonly uint characterIndex;
@@ -57,19 +57,19 @@ namespace Ambermoon.Render
 
         public void ResetLastInteractionTime() => lastInteractionTicks = game.CurrentTicks;
 
-        private MapCharacter2D(Game game, IGameRenderView renderView, Layer layer, IMapManager mapManager,
+        private MapCharacter2D(GameCore game, IGameRenderView renderView, Layer layer, IMapManager mapManager,
             RenderMap2D map, uint characterIndex, Map.CharacterReference characterReference)
             : base(game, renderView.GetLayer(layer), TextureAtlasManager.Instance.GetOrCreate(layer),
-                renderView.SpriteFactory, direction => AnimationProvider(game, map.Map, mapManager,
+                renderView.SpriteFactory, direction => AnimationProvider(game, map.Map!, mapManager,
                     characterReference, renderView.GraphicProvider, direction), map,
-                GetStartPosition(characterReference), () => Math.Max(1, map.Map.PaletteIndex) - 1, _ => NullOffset)
+                GetStartPosition(characterReference), () => Math.Max(1, map.Map!.PaletteIndex) - 1, _ => NullOffset)
         {
             this.game = game;
-            this.map = map.Map;
+            this.map = map.Map!;
             tileset = mapManager.GetTilesetForMap(this.map);
             this.characterIndex = characterIndex;
             this.characterReference = characterReference;
-            lastTimeSlot = game.GameTime.TimeSlot;
+            lastTimeSlot = game.GameTime!.TimeSlot;
         }
 
         static Position GetStartPosition(Map.CharacterReference characterReference)
@@ -80,7 +80,7 @@ namespace Ambermoon.Render
             return new Position(position.X - 1, position.Y - 1);
         }
 
-        static Character2DAnimationInfo AnimationProvider(Game game, Map map, IMapManager mapManager,
+        static Character2DAnimationInfo AnimationProvider(GameCore game, Map map, IMapManager mapManager,
             Map.CharacterReference characterReference, IGraphicProvider graphicProvider, CharacterDirection? direction)
         {
             bool usesTileset = characterReference.CharacterFlags.HasFlag(Flags.UseTileset);
@@ -131,7 +131,7 @@ namespace Ambermoon.Render
             RenderMap2D map, uint characterIndex, Map.CharacterReference characterReference)
         {
             var layer = characterReference.CharacterFlags.HasFlag(Flags.UseTileset)
-                ? (Layer)((uint)Layer.MapForeground1 + map.Map.TilesetOrLabdataIndex - 1) : Layer.Characters;
+                ? (Layer)((uint)Layer.MapForeground1 + map.Map!.TilesetOrLabdataIndex - 1) : Layer.Characters;
             return new MapCharacter2D(game, renderView, layer, mapManager, map, characterIndex, characterReference);
         }
 
@@ -162,7 +162,7 @@ namespace Ambermoon.Render
                 if (mapEventId != 0)
                 {
                     // Note: Won't work for world maps but there are no characters.
-                    if (game.CurrentSavegame.IsEventActive(Map.Map.Index, mapEventId - 1))
+                    if (game.CurrentSavegame!.IsEventActive(Map.Map!.Index, mapEventId - 1))
                     {
                         switch (Map.Map.EventList[(int)mapEventId - 1].Type)
                         {
@@ -317,7 +317,7 @@ namespace Ambermoon.Render
         void Deactivate()
         {
             Active = false;
-            game.CurrentSavegame.SetCharacterBit(map.Index, characterIndex, true);
+            game.CurrentSavegame!.SetCharacterBit(map.Index, characterIndex, true);
 
             if (game.CurrentMapCharacter == this)
                 game.CurrentMapCharacter = null;
@@ -352,7 +352,7 @@ namespace Ambermoon.Render
 
             bool TriggerCharacterEvents(uint eventIndex)
             {
-                if ((long)game.CurrentTicks - lastInteractionTicks < Game.TicksPerSecond)
+                if ((long)game.CurrentTicks - lastInteractionTicks < GameCore.TicksPerSecond)
                     return false;
 
                 var @event = map.EventList[(int)eventIndex - 1];
@@ -395,7 +395,7 @@ namespace Ambermoon.Render
 
             if (characterReference.CharacterFlags.HasFlag(Flags.TextPopup))
             {
-                if (characterReference.EventIndex != 0 && game.CurrentSavegame.IsEventActive(map.Index, characterReference.EventIndex - 1))
+                if (characterReference.EventIndex != 0 && game.CurrentSavegame!.IsEventActive(map.Index, characterReference.EventIndex - 1))
                 {
                     return TriggerCharacterEvents(characterReference.EventIndex);
                 }
@@ -435,14 +435,14 @@ namespace Ambermoon.Render
             switch (characterReference.Type)
             {
                 case CharacterType.PartyMember:
-                    return HandleConversation(game.CurrentSavegame.PartyMembers[characterReference.Index]);
+                    return HandleConversation(game.CurrentSavegame!.PartyMembers[characterReference.Index]);
                 case CharacterType.NPC:
                     return HandleConversation(game.CharacterManager.GetNPC(characterReference.Index));
                 case CharacterType.Monster:
                 {
                     if (trigger == EventTrigger.Move)
                     {
-                        if ((long)game.CurrentTicks - lastInteractionTicks < Game.TicksPerSecond)
+                        if ((long)game.CurrentTicks - lastInteractionTicks < GameCore.TicksPerSecond)
                             return false;
 
                         if (game.Teleporting || game.Map != Map.Map)
@@ -484,7 +484,7 @@ namespace Ambermoon.Render
                             }
                             else
                             {
-                                var attributes = game.CurrentPartyMember.Attributes;
+                                var attributes = game.CurrentPartyMember!.Attributes;
                                 var dex = attributes[Data.Attribute.Dexterity].TotalCurrentValue;
                                 var luk = attributes[Data.Attribute.Luck].TotalCurrentValue;
                                 if (game.RandomInt(0, 149) >= dex + luk)
@@ -505,7 +505,7 @@ namespace Ambermoon.Render
                     break;
                 }
                 case CharacterType.MapObject:
-                    if (characterReference.EventIndex != 0 && game.CurrentSavegame.IsEventActive(map.Index, characterReference.EventIndex - 1))
+                    if (characterReference.EventIndex != 0 && game.CurrentSavegame!.IsEventActive(map.Index, characterReference.EventIndex - 1))
                         return TriggerCharacterEvents(characterReference.EventIndex);
                     break;
             }
@@ -516,7 +516,7 @@ namespace Ambermoon.Render
         public void StopMonsterForOneTimeSlot()
         {
             lastInteractionTicks = game.CurrentTicks;
-            lastTimeSlot = game.GameTime.TimeSlot;
+            lastTimeSlot = game.GameTime!.TimeSlot;
             disallowInstantMovementUntilTimeSlot = (lastTimeSlot + 1) % 288;
         }
 
