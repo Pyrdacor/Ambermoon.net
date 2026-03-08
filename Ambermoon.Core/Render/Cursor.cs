@@ -31,17 +31,17 @@ namespace Ambermoon.Render
         readonly ISprite sprite;
         readonly Dictionary<CursorType, Position> cursorHotspots = [];
         CursorType type = CursorType.Sword;
-        internal Position Hotspot { get; private set; } = null;
+        internal Position? Hotspot { get; private set; } = null;
         protected virtual bool Visible
         {
             get => sprite.Visible;
             set => sprite.Visible = value;
         }
 
-        public Cursor(IGameRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager textureAtlasManager = null)
+        public Cursor(IGameRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager? textureAtlasManager = null)
         {
             this.renderView = renderView;
-            textureAtlas = (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.Cursor);
+            textureAtlas = (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.Cursor)!;
             sprite = renderView.SpriteFactory.Create(16, 16, true);
             sprite.PaletteIndex = 0;
             sprite.Layer = renderView.GetLayer(Layer.Cursor);
@@ -93,7 +93,7 @@ namespace Ambermoon.Render
             }
         }
 
-        public void UpdatePosition(Position screenPosition, GameCore game)
+        public void UpdatePosition(Position screenPosition, GameCore? game)
         {
             var viewPosition = renderView.ScreenToGame(screenPosition);
 
@@ -102,7 +102,7 @@ namespace Ambermoon.Render
                 lock (sprite)
                 {
                     sprite.PaletteIndex = game?.UIPaletteIndex ?? 0;
-                    sprite.X = viewPosition.X - Hotspot.X;
+                    sprite.X = viewPosition.X - Hotspot!.X;
                     sprite.Y = viewPosition.Y - Hotspot.Y;
 					Visible = Type != CursorType.None;
                 }
@@ -120,7 +120,7 @@ namespace Ambermoon.Render
 
 	public class InvisibleCursor : Cursor
 	{
-		public InvisibleCursor(IGameRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager textureAtlasManager = null)
+		public InvisibleCursor(IGameRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager? textureAtlasManager = null)
             : base(renderView, cursorHotspots, textureAtlasManager)
 		{
 		}

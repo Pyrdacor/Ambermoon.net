@@ -111,7 +111,7 @@ namespace Ambermoon
 
 					// Search bonus in AA
 					if (game.Features.HasFlag(Features.ClairvoyanceGrantsSearchSkill) &&
-						game.CurrentSavegame.IsSpellActive(ActiveSpellType.Clairvoyance))
+						game.CurrentSavegame!.IsSpellActive(ActiveSpellType.Clairvoyance))
 					{
 						totalSearchValue += game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Clairvoyance);
 					}
@@ -244,7 +244,7 @@ namespace Ambermoon
                             if (changeBuffsEvent.Add)
                                 game.ActivateBuff((ActiveSpellType)i, changeBuffsEvent.Value, changeBuffsEvent.Duration);
                             else
-                                game.CurrentSavegame.ActiveSpells[i] = null;                            
+                                game.CurrentSavegame!.ActiveSpells[i] = null;                            
                         }
 
                         if (!changeBuffsEvent.Add)
@@ -262,7 +262,7 @@ namespace Ambermoon
                             }
                             else
                             {
-                                game.CurrentSavegame.ActiveSpells[index] = null;
+                                game.CurrentSavegame!.ActiveSpells[index] = null;
 
                                 if (index == (int)ActiveSpellType.Light)
                                     game.UpdateLight();
@@ -467,7 +467,7 @@ namespace Ambermoon
                     switch (conditionEvent.TypeOfCondition)
                     {
                         case ConditionEvent.ConditionType.GlobalVariable:
-                            if (game.CurrentSavegame.GetGlobalVariable(conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+                            if (game.CurrentSavegame!.GetGlobalVariable(conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -475,7 +475,7 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.EventBit:
-                            if (game.CurrentSavegame.GetEventBit(1 + (conditionEvent.ObjectIndex >> 6), conditionEvent.ObjectIndex & 0x3f) != (conditionEvent.Value != 0))
+                            if (game.CurrentSavegame!.GetEventBit(1 + (conditionEvent.ObjectIndex >> 6), conditionEvent.ObjectIndex & 0x3f) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -483,7 +483,7 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.DoorOpen:
-                            if (game.CurrentSavegame.IsDoorLocked(conditionEvent.ObjectIndex) != (conditionEvent.Value == 0))
+                            if (game.CurrentSavegame!.IsDoorLocked(conditionEvent.ObjectIndex) != (conditionEvent.Value == 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -491,7 +491,7 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.ChestOpen:
-                            if (game.CurrentSavegame.IsChestLocked(conditionEvent.ObjectIndex) != (conditionEvent.Value == 0))
+                            if (game.CurrentSavegame!.IsChestLocked(conditionEvent.ObjectIndex) != (conditionEvent.Value == 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -499,7 +499,7 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.CharacterBit:
-                            if (game.CurrentSavegame.GetCharacterBit(1 + (conditionEvent.ObjectIndex >> 5), conditionEvent.ObjectIndex & 0x1f)
+                            if (game.CurrentSavegame!.GetCharacterBit(1 + (conditionEvent.ObjectIndex >> 5), conditionEvent.ObjectIndex & 0x1f)
                                 != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
@@ -573,7 +573,7 @@ namespace Ambermoon
                             break;
                         }
                         case ConditionEvent.ConditionType.KnowsKeyword:
-                            if (game.CurrentSavegame.IsDictionaryWordKnown(conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+                            if (game.CurrentSavegame!.IsDictionaryWordKnown(conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -589,7 +589,7 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.GameOptionSet:
-                            if (game.CurrentSavegame.IsGameOptionActive((Data.Enumerations.Option)(1 << (int)conditionEvent.ObjectIndex)) != (conditionEvent.Value != 0))
+                            if (game.CurrentSavegame!.IsGameOptionActive((Data.Enumerations.Option)(1 << (int)conditionEvent.ObjectIndex)) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -698,7 +698,7 @@ namespace Ambermoon
                             break;
                         case ConditionEvent.ConditionType.TransportAtLocation:
                         {
-                            var transport = game.CurrentSavegame.TransportLocations.FirstOrDefault(l => l != null && l.MapIndex == map.Index && l.Position.X == x + 1 && l.Position.Y == y + 1);
+                            var transport = game.CurrentSavegame!.TransportLocations.FirstOrDefault(l => l != null && l.MapIndex == map.Index && l.Position.X == x + 1 && l.Position.Y == y + 1);
                             bool result = true;
                             if (transport == null)
                             {
@@ -787,7 +787,7 @@ namespace Ambermoon
 
 							// Anti-magic bonus
 							if ((Data.Attribute)conditionEvent.ObjectIndex == Data.Attribute.AntiMagic &&
-								game.CurrentSavegame.IsSpellActive(ActiveSpellType.AntiMagic))
+								game.CurrentSavegame!.IsSpellActive(ActiveSpellType.AntiMagic))
 							{
 								totalValue += game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.AntiMagic);
 							}
@@ -808,7 +808,7 @@ namespace Ambermoon
                             // Search bonus in AA
                             if ((Skill)conditionEvent.ObjectIndex == Skill.Searching &&
                                 game.Features.HasFlag(Features.ClairvoyanceGrantsSearchSkill) &&
-                                game.CurrentSavegame.IsSpellActive(ActiveSpellType.Clairvoyance))
+                                game.CurrentSavegame!.IsSpellActive(ActiveSpellType.Clairvoyance))
                             {
                                 totalValue += game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Clairvoyance);
                             }
@@ -855,7 +855,7 @@ namespace Ambermoon
                         }
                     }
 
-                    if (conditionEvent.Next == null || !(conditionEvent.Next is ConditionEvent followEvent) ||
+                    if (conditionEvent.Next == null || conditionEvent.Next is not ConditionEvent followEvent ||
                         (followEvent.TypeOfCondition != ConditionEvent.ConditionType.Eye &&
                          followEvent.TypeOfCondition != ConditionEvent.ConditionType.Hand &&
                          followEvent.TypeOfCondition != ConditionEvent.ConditionType.Mouth))
@@ -886,7 +886,7 @@ namespace Ambermoon
                     switch (actionEvent.TypeOfAction)
                     {
                         case ActionEvent.ActionType.SetGlobalVariable:
-                            game.CurrentSavegame.SetGlobalVariable(actionEvent.ObjectIndex,
+                            game.CurrentSavegame!.SetGlobalVariable(actionEvent.ObjectIndex,
                                 ClearSetToggle(() => game.CurrentSavegame.GetGlobalVariable(actionEvent.ObjectIndex)));
                             break;
                         case ActionEvent.ActionType.SetEventBit:
@@ -894,27 +894,27 @@ namespace Ambermoon
                             var mapIndex = 1 + (actionEvent.ObjectIndex >> 6);
                             var eventIndex = actionEvent.ObjectIndex & 0x3f;
                             game.SetMapEventBit(mapIndex, eventIndex,
-                                ClearSetToggle(() => game.CurrentSavegame.GetEventBit(mapIndex, eventIndex)));
+                                ClearSetToggle(() => game.CurrentSavegame!.GetEventBit(mapIndex, eventIndex)));
                             break;
                         }
                         case ActionEvent.ActionType.LockDoor:
-                            if (ClearSetToggle(() => !game.CurrentSavegame.IsDoorLocked(actionEvent.ObjectIndex)))
-                                game.CurrentSavegame.UnlockDoor(actionEvent.ObjectIndex);
+                            if (ClearSetToggle(() => !game.CurrentSavegame!.IsDoorLocked(actionEvent.ObjectIndex)))
+                                game.CurrentSavegame!.UnlockDoor(actionEvent.ObjectIndex);
                             else
-                                game.CurrentSavegame.LockDoor(actionEvent.ObjectIndex);
+                                game.CurrentSavegame!.LockDoor(actionEvent.ObjectIndex);
                             break;
                         case ActionEvent.ActionType.LockChest:
-                            if (ClearSetToggle(() => !game.CurrentSavegame.IsChestLocked(actionEvent.ObjectIndex)))
-                                game.CurrentSavegame.UnlockChest(actionEvent.ObjectIndex);
+                            if (ClearSetToggle(() => !game.CurrentSavegame!.IsChestLocked(actionEvent.ObjectIndex)))
+                                game.CurrentSavegame!.UnlockChest(actionEvent.ObjectIndex);
                             else
-                                game.CurrentSavegame.LockChest(actionEvent.ObjectIndex);
+                                game.CurrentSavegame!.LockChest(actionEvent.ObjectIndex);
                             break;
                         case ActionEvent.ActionType.SetCharacterBit:
                         {
                             var mapIndex = 1 + (actionEvent.ObjectIndex >> 5);
                             var eventIndex = actionEvent.ObjectIndex & 0x1f;
                             game.SetMapCharacterBit(mapIndex, eventIndex,
-                                ClearSetToggle(() => game.CurrentSavegame.GetCharacterBit(mapIndex, eventIndex)));
+                                ClearSetToggle(() => game.CurrentSavegame!.GetCharacterBit(mapIndex, eventIndex)));
                             break;
                         }
                         case ActionEvent.ActionType.AddItem:
@@ -989,12 +989,12 @@ namespace Ambermoon
                             // Note: This may also remove a keyword but this is no real use case.
                             // We will only add keywords here and ignore the action value.
                             // The original code seems to do the same.
-                            game.CurrentSavegame.AddDictionaryWord(actionEvent.ObjectIndex);
+                            game.CurrentSavegame!.AddDictionaryWord(actionEvent.ObjectIndex);
                             break;
                         case ActionEvent.ActionType.SetGameOption:
                         {
-                            var option = (Data.Enumerations.Option)(1 << (int)actionEvent.ObjectIndex);
-                            game.CurrentSavegame.SetGameOption(option, ClearSetToggle(() => game.CurrentSavegame.IsGameOptionActive(option)));
+                            var option = (Option)(1 << (int)actionEvent.ObjectIndex);
+                            game.CurrentSavegame!.SetGameOption(option, ClearSetToggle(() => game.CurrentSavegame.IsGameOptionActive(option)));
                             break;
                         }
                         case ActionEvent.ActionType.SetDirection:
@@ -1126,7 +1126,7 @@ namespace Ambermoon
                                 aborted = true;
                                 return null;
                             }
-                            game.ShowConversation(conversationPartner, characterIndex, conversationEvent, new GameCore.ConversationItems());
+                            game.ShowConversation(conversationPartner!, characterIndex, conversationEvent, new GameCore.ConversationItems());
                             return null;
                         default:
                             // Note: this is handled by the conversation window.
@@ -1351,7 +1351,7 @@ namespace Ambermoon
                         
                         foreach (var globalVariable in globalVariables)
                         {
-                            savegame.SetGlobalVariable(globalVariable, !savegame.GetGlobalVariable(globalVariable));
+                            savegame!.SetGlobalVariable(globalVariable, !savegame.GetGlobalVariable(globalVariable));
                         }
                     }                   
                     return @event.Next;
@@ -1360,7 +1360,7 @@ namespace Ambermoon
                     if (@event is not DynamicChangeTileEvent dynamicChangeTileEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid dynamic change tile event.");
 
-                    bool globalVarSet = game.CurrentSavegame.GetGlobalVariable(dynamicChangeTileEvent.GlobalVariable);
+                    bool globalVarSet = game.CurrentSavegame!.GetGlobalVariable(dynamicChangeTileEvent.GlobalVariable);
                     uint frontTileIndex = globalVarSet ? dynamicChangeTileEvent.FrontTileIndexOn : dynamicChangeTileEvent.FrontTileIndexOff;
 
                     return ExecuteEvent(new ChangeTileEvent()

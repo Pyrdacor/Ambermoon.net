@@ -108,20 +108,20 @@ partial class GameCore
         }
         else // 2D
         {
-            var tilePosition = renderMap2D.PositionToTile(position);
+            var tilePosition = renderMap2D!.PositionToTile(position);
 
             if (CoreConfiguration.IsMobile)
             {
                 int range = trigger == EventTrigger.Mouth ? 3 : 2;
 
-                int xDist = Math.Abs(player2D.Position.X - tilePosition.X);
+                int xDist = Math.Abs(player2D!.Position.X - tilePosition!.X);
                 int yDist = Math.Abs(player2D.Position.Y - tilePosition.Y);
 
                 if (xDist > range || yDist > range)
                     return false;
             }
 
-            return TriggerMapEvents(trigger, (uint)tilePosition.X, (uint)tilePosition.Y);
+            return TriggerMapEvents(trigger, (uint)tilePosition!.X, (uint)tilePosition.Y);
         }
     }
 
@@ -132,23 +132,23 @@ partial class GameCore
 
         if (is3D)
         {
-            return renderMap3D.TriggerEvents(this, trigger, x, y, CurrentSavegame);
+            return renderMap3D!.TriggerEvents(this, trigger, x, y, CurrentSavegame!);
         }
         else // 2D
         {
-            return renderMap2D.TriggerEvents(player2D, trigger, x, y, MapManager,
-                CurrentTicks, CurrentSavegame);
+            return renderMap2D!.TriggerEvents(player2D!, trigger, x, y, MapManager,
+                CurrentTicks, CurrentSavegame!);
         }
     }
 
     internal bool TestUseItemMapEvent(uint itemIndex, out uint x, out uint y, out EventType eventType)
     {
-        x = (uint)player.Position.X;
+        x = (uint)player!.Position.X;
         y = (uint)player.Position.Y;
         uint eventX = x;
         uint eventY = y;
-        var @event = is3D ? Map.GetEvent(x, y, CurrentSavegame) : renderMap2D.GetEvent(x, y, CurrentSavegame);
-        var map = is3D ? Map : renderMap2D.GetMapFromTile(x, y);
+        var @event = is3D ? Map!.GetEvent(x, y, CurrentSavegame!) : renderMap2D!.GetEvent(x, y, CurrentSavegame!);
+        var map = is3D ? Map : renderMap2D!.GetMapFromTile(x, y);
 
         // In the remake we allow using keys (including lockpick) to open a nearby chest/door.
         // This will only happen if nearby chests/doors can be opened with it. The chest or
@@ -162,9 +162,9 @@ partial class GameCore
             if (!isKey)
                 return false;
 
-            if (@event is ChestEvent chestEvent && CurrentSavegame.IsChestLocked(chestEvent.RealChestIndex - 1))
+            if (@event is ChestEvent chestEvent && CurrentSavegame!.IsChestLocked(chestEvent.RealChestIndex - 1))
                 return true;
-            if (@event is DoorEvent doorEvent && CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex))
+            if (@event is DoorEvent doorEvent && CurrentSavegame!.IsDoorLocked(doorEvent.DoorIndex))
                 return true;
 
             return false;
@@ -187,7 +187,7 @@ partial class GameCore
             bool lastEventStatus = true;
             var trigger = (EventTrigger)((uint)EventTrigger.Item0 + itemIndex);
 
-            @event = EventExtensions.ExecuteEvent(conditionEvent, map, this, ref trigger, eventX, eventY, ref lastEventStatus, out bool _, out var _);
+            @event = EventExtensions.ExecuteEvent(conditionEvent, map!, this, ref trigger, eventX, eventY, ref lastEventStatus, out bool _, out var _);
 
             return TestEvent(out eventType);
         }
@@ -195,7 +195,7 @@ partial class GameCore
         if (TestEvent(out eventType))
             return true;
 
-        var mapWidth = Map.IsWorldMap ? int.MaxValue : Map.Width;
+        var mapWidth = Map!.IsWorldMap ? int.MaxValue : Map.Width;
         var mapHeight = Map.IsWorldMap ? int.MaxValue : Map.Height;
 
         if (is3D)
@@ -206,7 +206,7 @@ partial class GameCore
             if (position != player.Position &&
                 position.X >= 0 && position.X < Map.Width &&
                 position.Y >= 0 && position.Y < Map.Height &&
-                renderMap3D.IsBlockingPlayer(position))
+                renderMap3D!.IsBlockingPlayer(position))
             {
                 // Only check the forward position if it is blocking.
                 // Sometimes use item events might be placed on walls etc.
@@ -214,7 +214,7 @@ partial class GameCore
                 // player can walk on the empty tile and use the item there.
                 x = (uint)position.X;
                 y = (uint)position.Y;
-                @event = Map.GetEvent(x, y, CurrentSavegame);
+                @event = Map.GetEvent(x, y, CurrentSavegame!);
                 eventX = x;
                 eventY = y;
 
@@ -251,7 +251,7 @@ partial class GameCore
             {
                 eventX = (uint)(x + offset.X);
                 eventY = (uint)(y + offset.Y);
-                @event = renderMap2D.GetEvent(eventX, eventY, CurrentSavegame);
+                @event = renderMap2D!.GetEvent(eventX, eventY, CurrentSavegame!);
 
                 return TestEvent(out eventType);
             }
@@ -275,7 +275,7 @@ partial class GameCore
             return false;
         }
 
-        bool consumed = TriggerMapEvents(trigger.Value, (uint)player.Position.X, (uint)player.Position.Y);
+        bool consumed = TriggerMapEvents(trigger.Value, (uint)player!.Position.X, (uint)player.Position.Y);
 
         if (is3D)
         {
@@ -286,10 +286,10 @@ partial class GameCore
             if (trigger != EventTrigger.Move)
             {
                 camera3D.GetForwardPosition(Global.DistancePerBlock, out float x, out float z, false, false);
-                var position = Geometry.Geometry.CameraToBlockPosition(Map, x, z);
+                var position = Geometry.Geometry.CameraToBlockPosition(Map!, x, z);
 
                 if (position != player.Position &&
-                    position.X >= 0 && position.X < Map.Width &&
+                    position.X >= 0 && position.X < Map!.Width &&
                     position.Y >= 0 && position.Y < Map.Height)
                 {
                     return TriggerMapEvents(trigger.Value, (uint)position.X, (uint)position.Y);
@@ -311,7 +311,7 @@ partial class GameCore
     {
         if (Map!.Type == MapType.Map3D)
         {
-            eventIndex = Map.GetEventIndex((uint)position.X, (uint)position.Y, CurrentSavegame);
+            eventIndex = Map.GetEventIndex((uint)position.X, (uint)position.Y, CurrentSavegame!);
             mapIndex = Map.Index;
         }
         else
@@ -323,12 +323,12 @@ partial class GameCore
 
             if (map.IsWorldMap)
             {
-                map = renderMap2D.GetMapFromTile(x, y);
+                map = renderMap2D!.GetMapFromTile(x, y);
                 x %= 50;
                 y %= 50;
             }
 
-            eventIndex = map.GetEventIndex(x, y, CurrentSavegame);
+            eventIndex = map.GetEventIndex(x, y, CurrentSavegame!);
             mapIndex = map.Index;
         }
     }
@@ -340,11 +340,11 @@ partial class GameCore
     {
         blocked = false;
 
-        if (!ingame || layout.OptionMenuOpen || BattleActive || (!force && (WindowActive || layout.PopupActive)))
+        if (!Ingame || layout.OptionMenuOpen || BattleActive || (!force && (WindowActive || layout.PopupActive)))
             return false;
 
         if (mapIndex == 0)
-            mapIndex = Map.Index;
+            mapIndex = Map!.Index;
 
         var newMap = MapManager.GetMap(mapIndex);
 
@@ -357,14 +357,14 @@ partial class GameCore
         if (!newMap.UseTravelTypes && (TravelType != TravelType.Walk && TravelType != TravelType.Swim))
             return false;
 
-        bool mapChange = newMap.Index != Map.Index;
-        var player = is3D ? (IRenderPlayer)player3D : player2D;
+        bool mapChange = newMap.Index != Map!.Index;
+        var player = is3D ? (IRenderPlayer)player3D! : player2D;
         bool mapTypeChanged = Map.Type != newMap.Type;
 
         // The position (x, y) is 1-based in the data so we subtract 1.
         // If the position is 0,0 the current position should be used.
-        uint newX = x == 0 ? (uint)player.Position.X : x - 1;
-        uint newY = y == 0 ? (uint)player.Position.Y : y - 1;
+        uint newX = x == 0 ? (uint)player!.Position.X : x - 1;
+        uint newY = y == 0 ? (uint)player!.Position.Y : y - 1;
 
         if (newMap.Type == MapType.Map2D)
         {
@@ -391,17 +391,17 @@ partial class GameCore
 
         if (!is3D && !mapChange)
         {
-            renderMap2D.ScrollToPlayer(newX, newY);
+            renderMap2D!.ScrollToPlayer(newX, newY);
         }
 
         if (direction == CharacterDirection.Keep)
             direction = PlayerDirection;
 
-        player.MoveTo(newMap, newX, newY, CurrentTicks, true, direction, UpdateMapNameAndLight);
-        this.player.Position.X = RenderPlayer.Position.X;
+        player!.MoveTo(newMap, newX, newY, CurrentTicks, true, direction, UpdateMapNameAndLight);
+        this.player!.Position.X = RenderPlayer.Position.X;
         this.player.Position.Y = RenderPlayer.Position.Y;
         // This will update the appearance.
-        TravelType = TravelType;
+        TravelType = travelType;
 
         void UpdateMapNameAndLight(Map map)
         {
@@ -420,7 +420,7 @@ partial class GameCore
         if (mapChange && !WindowActive)
         {
             // Color of the filled upper right area may need update cause of palette change.
-            mapViewRightFillArea.Color = GetUIColor(28);
+            mapViewRightFillArea!.Color = GetUIColor(28);
         }
 
         if (!mapChange) // Otherwise the map change handler takes care of this
@@ -444,7 +444,7 @@ partial class GameCore
         uint targetY = teleportEvent.Y == 0 ? y + 1 : teleportEvent.Y;
 
         ResetMoveKeys();
-        ResetMapCharacterInteraction(Map);
+        ResetMapCharacterInteraction(Map!);
 
         if (PopupActive)
             layout.ClosePopup(false, true);
@@ -454,7 +454,7 @@ partial class GameCore
             levitating = false;
             Teleport(teleportEvent.MapIndex, targetX, targetY, teleportEvent.Direction, out _, true);
 
-            if (Map.IsWorldMap && teleportEvent.NewTravelType != null && teleportEvent.NewTravelType != TravelType)
+            if (Map!.IsWorldMap && teleportEvent.NewTravelType != null && teleportEvent.NewTravelType != TravelType)
                 TravelType = teleportEvent.NewTravelType.Value;
 
             if (TravelType.UsesMapObject() &&
@@ -462,8 +462,8 @@ partial class GameCore
             {
                 ToggleTransport();
                 var transport = GetTransportAtPlayerLocation(out int? index);
-                CurrentSavegame.TransportLocations[index.Value] = null;
-                renderMap2D.RemoveTransport(index.Value);
+                CurrentSavegame!.TransportLocations[index!.Value] = null;
+                renderMap2D!.RemoveTransport(index.Value);
             }
 
             Teleporting = false;
@@ -480,7 +480,7 @@ partial class GameCore
                 RunTransition();
                 break;
             case TeleportEvent.TransitionType.WindGate:
-                if (CurrentSavegame.IsSpecialItemActive(SpecialItemPurpose.WindChain))
+                if (CurrentSavegame!.IsSpecialItemActive(SpecialItemPurpose.WindChain))
                     RunTransition();
                 else
                     Teleporting = false;
@@ -563,7 +563,7 @@ partial class GameCore
 
     #region Chests & Doors
 
-    internal Chest GetChest(uint index) => CurrentSavegame.Chests[index];
+    internal Chest GetChest(uint index) => CurrentSavegame!.Chests[index];
     internal Chest GetInitialChest(uint index)
     {
         if (initialChests.Count == 0)
@@ -606,8 +606,8 @@ partial class GameCore
     internal void ChestClosed()
     {
         // This is called by manually close the chest window via the Exit button
-        var chestEvent = (ChestEvent)currentWindow.WindowParameters[0];
-        var position = (Position)currentWindow.WindowParameters[4];
+        var chestEvent = (ChestEvent)currentWindow.WindowParameters[0]!;
+        var position = (Position)currentWindow.WindowParameters[4]!;
 
         CloseWindow(() =>
         {
@@ -620,7 +620,7 @@ partial class GameCore
 
             if (chestEvent.Next != null)
             {
-                Map.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
+                Map!.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
                     (uint)(position?.Y ?? 0), chestEvent.Next, false);
             }
         });
@@ -628,8 +628,8 @@ partial class GameCore
 
     void ChestRemoved()
     {
-        var chestEvent = (ChestEvent)currentWindow.WindowParameters[0];
-        var position = (Position)currentWindow.WindowParameters[4];
+        var chestEvent = (ChestEvent)currentWindow.WindowParameters[0]!;
+        var position = (Position)currentWindow.WindowParameters[4]!;
 
         CloseWindow(() =>
         {
@@ -648,13 +648,13 @@ partial class GameCore
                     GetEventIndex(position, out var eventIndex, out var mapIndex);
 
                     if (eventIndex != null)
-                        CurrentSavegame.SetEventBit(mapIndex.Value, eventIndex.Value - 1, true);
+                        CurrentSavegame!.SetEventBit(mapIndex!.Value, eventIndex.Value - 1, true);
                 }
             }
 
             if (chestEvent.Next != null)
             {
-                Map.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
+                Map!.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
                     (uint)(position?.Y ?? 0), chestEvent.Next, true);
             }
         });
@@ -741,7 +741,7 @@ partial class GameCore
         }
     }
 
-    void ShowLoot(ITreasureStorage storage, string? initialText, Action initialTextClosedEvent, ChestEvent? chestEvent = null,
+    void ShowLoot(ITreasureStorage storage, string? initialText, Action? initialTextClosedEvent, ChestEvent? chestEvent = null,
         bool triggerFollowEvents = false, uint eventX = 0, uint eventY = 0)
     {
         if (chestEvent?.Next != null && triggerFollowEvents)
@@ -752,7 +752,7 @@ partial class GameCore
                 oldCloseWindowHandler?.Invoke(backToMap);
 
                 if (backToMap)
-                    EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, eventX, eventY, chestEvent.Next, true);
+                    EventExtensions.TriggerEventChain(Map!, this, EventTrigger.Always, eventX, eventY, chestEvent.Next, true);
             };
         }
         OpenStorage = storage;
@@ -813,7 +813,7 @@ partial class GameCore
         }
     }
 
-    internal bool ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map map,
+    internal bool ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map? map,
         Position position, bool fromEvent, bool triggerFollowEvents = false, uint usedItem = 0)
     {
         var chest = GetChest(chestEvent.RealChestIndex);
@@ -826,7 +826,7 @@ partial class GameCore
                 GetEventIndex(position, out var eventIndex, out var mapIndex);
 
                 if (eventIndex != null)
-                    CurrentSavegame.SetEventBit(mapIndex.Value, eventIndex.Value - 1, true);
+                    CurrentSavegame!.SetEventBit(mapIndex!.Value, eventIndex.Value - 1, true);
             }
 
             return false; // Chest has gone due to looting
@@ -837,15 +837,15 @@ partial class GameCore
         void OpenChest()
         {
             bool changed = !chest.Equals(GetInitialChest(chestEvent.RealChestIndex), false);
-            string initialText = changed ? null : map != null && fromEvent && chestEvent.TextIndex != 255 ?
+            string? initialText = changed ? null : map != null && fromEvent && chestEvent.TextIndex != 255 ?
                 map.GetText((int)chestEvent.TextIndex, DataNameProvider.TextBlockMissing) : null;
             layout.Reset();
             ShowMap(false);
             SetWindow(Window.Chest, chestEvent, foundTrap, disarmedTrap, map, position, triggerFollowEvents);
             CursorType = CursorType.Sword;
-            ResetMapCharacterInteraction(map ?? Map, true);
+            ResetMapCharacterInteraction(map ?? Map!, true);
 
-            if (chestEvent.LockpickingChanceReduction != 0 && CurrentSavegame.IsChestLocked(chestEvent.RealChestIndex - 1))
+            if (chestEvent.LockpickingChanceReduction != 0 && CurrentSavegame!.IsChestLocked(chestEvent.RealChestIndex - 1))
             {
                 ShowLocked(Picture80x80.ChestClosed, () =>
                 {
@@ -853,12 +853,12 @@ partial class GameCore
                     currentWindow.Window = Window.Chest; // This avoids returning to locked screen when closing chest window.
                     ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true, true));
                 }, null, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
-                chestEvent.UnlockFailedEventIndex == 0xffff ? null : () => map.TriggerEventChain(this, EventTrigger.Always,
-                (uint)position.X, (uint)position.Y, map.Events[(int)chestEvent.UnlockFailedEventIndex], true),
+                chestEvent.UnlockFailedEventIndex == 0xffff ? null : () => (map ?? Map!).TriggerEventChain(this, EventTrigger.Always,
+                (uint)position.X, (uint)position.Y, (map ?? Map!).Events[(int)chestEvent.UnlockFailedEventIndex], true),
                 () =>
                 {
                     if (chestEvent.Next != null)
-                        map.TriggerEventChain(this, EventTrigger.Always, (uint)position.X, (uint)position.Y, chestEvent.Next, false);
+                        (map ?? Map!).TriggerEventChain(this, EventTrigger.Always, (uint)position.X, (uint)position.Y, chestEvent.Next, false);
                 }, usedItem, keyUser);
             }
             else
@@ -881,14 +881,14 @@ partial class GameCore
         bool fromEvent, bool moved, uint usedItem = 0)
     {
         var keyUser = usedItem != 0 ? CurrentInventory : null;
-        if (!CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex))
+        if (!CurrentSavegame!.IsDoorLocked(doorEvent.DoorIndex))
             return false;
 
         void ShowDoorAction()
         {
-            string initialText = fromEvent && doorEvent.TextIndex != 255 ?
+            string? initialText = fromEvent && doorEvent.TextIndex != 255 ?
                 map.GetText((int)doorEvent.TextIndex, DataNameProvider.TextBlockMissing) : null;
-            string unlockText = doorEvent.UnlockTextIndex != 255 ?
+            string? unlockText = doorEvent.UnlockTextIndex != 255 ?
                 map.GetText((int)doorEvent.UnlockTextIndex, DataNameProvider.TextBlockMissing) : null;
             layout.Reset();
             ShowMap(false);
@@ -897,11 +897,13 @@ partial class GameCore
             {
                 if (moved && !is3D)
                 {
-                    player2D.Position.X = player.Position.X = (int)x;
+                    player2D!.Position.X = player!.Position.X = (int)x;
                     player2D.Position.Y = player.Position.Y = (int)y;
                     player2D.UpdateAppearance(CurrentTicks);
                 }
+
                 CurrentSavegame.UnlockDoor(doorEvent.DoorIndex);
+
                 if (unlockText != null)
                 {
                     layout.ShowClickChestMessage(unlockText, Close);
@@ -910,6 +912,7 @@ partial class GameCore
                 {
                     Close();
                 }
+
                 void Close()
                 {
                     CloseWindow(() =>
@@ -936,7 +939,7 @@ partial class GameCore
                         }
                         else
                         {
-                            EventExtensions.TriggerEventChain(map ?? Map, this, EventTrigger.Always, x, y, doorEvent.Next, true);
+                            EventExtensions.TriggerEventChain(map ?? Map!, this, EventTrigger.Always, x, y, doorEvent.Next, true);
                         }
                     });
                 }
@@ -960,16 +963,16 @@ partial class GameCore
         return true;
     }
 
-    void ShowLocked(Picture80x80 picture80X80, Action openedAction, string initialMessage,
-        uint keyIndex, uint lockpickingChanceReduction, bool foundTrap, bool disarmedTrap, Action failedAction,
-        Action abortAction, uint usedKey = 0, PartyMember? keyUser = null)
+    void ShowLocked(Picture80x80 picture80X80, Action openedAction, string? initialMessage,
+        uint keyIndex, uint lockpickingChanceReduction, bool foundTrap, bool disarmedTrap, Action? failedAction,
+        Action? abortAction, uint usedKey = 0, PartyMember? keyUser = null)
     {
         layout.SetLayout(LayoutType.Items);
         layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
         var itemArea = new Rect(16, 139, 151, 53);
         var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
         itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
-        var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, Enumerable.Repeat((ItemSlot)null, 24).ToList(),
+        var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, Enumerable.Repeat((ItemSlot?)null, 24).ToList(),
             false, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
         layout.AddItemGrid(itemGrid);
         itemGrid.Disabled = true;
@@ -977,7 +980,7 @@ partial class GameCore
         bool hasTrap = failedAction != null;
         bool chest = picture80X80 == Picture80x80.ChestClosed;
 
-        layout.EnableButton(1, CurrentPartyMember.Inventory.Slots.Any(s => s?.Empty == false));
+        layout.EnableButton(1, CurrentPartyMember!.Inventory.Slots.Any(s => s?.Empty == false));
         layout.EnableButton(3, !foundTrap);
         layout.EnableButton(6, foundTrap && !disarmedTrap);
 
@@ -1050,7 +1053,7 @@ partial class GameCore
 
         void CheckKey(ItemSlot itemSlot, bool showItemsAfterwards, bool removeItemFromCharacter)
         {
-            bool isActivePlayerItem = removeItemFromCharacter || keyUser.Index == CurrentPartyMember.Index;
+            bool isActivePlayerItem = removeItemFromCharacter || keyUser!.Index == CurrentPartyMember.Index;
             var targetPlayer = isActivePlayerItem ? CurrentPartyMember : keyUser;
 
             StartSequence();
@@ -1059,7 +1062,7 @@ partial class GameCore
             itemGrid.PlayMoveAnimation(itemSlot, targetPosition, () =>
             {
                 bool canOpen = keyIndex == itemSlot.ItemIndex || (keyIndex == 0 && itemSlot.ItemIndex == LockpickItemIndex);
-                var item = layout.GetItem(itemSlot);
+                var item = layout.GetItem(itemSlot)!;
                 var itemIndex = itemSlot.ItemIndex;
                 item.ShowItemAmount = false;
 
@@ -1203,7 +1206,7 @@ partial class GameCore
                                         // If the item was used and therefore consumed/destroyed, we have to add it back. 
                                         if (item.Flags.HasFlag(ItemFlags.DestroyAfterUsage))
                                         {
-                                            targetPlayer.AddItem(itemIndex, item.Flags.HasFlag(ItemFlags.Stackable));
+                                            targetPlayer!.AddItem(itemIndex, item.Flags.HasFlag(ItemFlags.Stackable));
                                             InventoryItemAdded(itemIndex, 1, targetPlayer);
 
                                             if (isActivePlayerItem)
@@ -1229,7 +1232,7 @@ partial class GameCore
             {
                 // Failed
                 // Note: The trap is triggered by the follow-up event (if given) but only if a dice roll against DEX fails.
-                bool trapDisarmed = (bool)currentWindow.WindowParameters[2]; // Don't use the parameter as we could have disarmed it just yet.
+                bool trapDisarmed = (bool)currentWindow.WindowParameters[2]!; // Don't use the parameter as we could have disarmed it just yet.
                 if (hasTrap && !trapDisarmed && RollDice100() >= CurrentPartyMember.Attributes[Attribute.Dexterity].TotalCurrentValue)
                 {
                     CloseWindow(failedAction);
@@ -1319,7 +1322,7 @@ partial class GameCore
     readonly Places places;
     IPlace? currentPlace = null;
 
-    internal Merchant GetMerchant(uint index) => CurrentSavegame.Merchants[index];
+    internal Merchant GetMerchant(uint index) => CurrentSavegame!.Merchants[index];
 
     #endregion
 
@@ -1328,8 +1331,8 @@ partial class GameCore
 
     internal void TriggerTrap(TrapEvent trapEvent, bool lastEventStatus, uint x, uint y)
     {
-        Func<PartyMember, bool> targetFilter = null;
-        Func<PartyMember, bool> genderFilter = null;
+        Func<PartyMember, bool>? targetFilter = null;
+        Func<PartyMember, bool>? genderFilter = null;
 
         if (trapEvent.AffectedGenders != GenderFlag.None && trapEvent.AffectedGenders != GenderFlag.Both)
         {
@@ -1395,12 +1398,12 @@ partial class GameCore
 
             if (trapEvent.Next != null)
             {
-                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, x,
+                EventExtensions.TriggerEventChain(Map!, this, EventTrigger.Always, x,
                     y, trapEvent.Next, lastEventStatus);
             }
             else
             {
-                ResetMapCharacterInteraction(Map);
+                ResetMapCharacterInteraction(Map!);
             }
         }
     }
@@ -1454,7 +1457,7 @@ partial class GameCore
             else
                 player3D!.TurnRight(halfStepSize);
 
-            CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
+            CurrentSavegame!.CharacterDirection = player!.Direction = player3D.Direction;
         }
 
         PlayTimedSequence(fullSteps + 1, Step, 65, () =>
@@ -1463,7 +1466,7 @@ partial class GameCore
 
             if (nextEvent != null)
             {
-                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always,
+                EventExtensions.TriggerEventChain(Map!, this, EventTrigger.Always,
                     (uint)player!.Position.X, (uint)player.Position.Y, nextEvent, true);
             }
         });
@@ -1651,19 +1654,19 @@ partial class GameCore
                         if (rewardEvent.Languages != null)
                             partyMember.SpokenLanguages |= rewardEvent.Languages.Value;
                         else
-                            partyMember.SpokenExtendedLanguages |= rewardEvent.ExtendedLanguages.Value;
+                            partyMember.SpokenExtendedLanguages |= rewardEvent.ExtendedLanguages!.Value;
                         break;
                     case RewardEvent.RewardOperation.Remove:
                         if (rewardEvent.Languages != null)
                             partyMember.SpokenLanguages &= ~rewardEvent.Languages.Value;
                         else
-                            partyMember.SpokenExtendedLanguages &= ~rewardEvent.ExtendedLanguages.Value;
+                            partyMember.SpokenExtendedLanguages &= ~rewardEvent.ExtendedLanguages!.Value;
                         break;
                     case RewardEvent.RewardOperation.Toggle:
                         if (rewardEvent.Languages != null)
                             partyMember.SpokenLanguages ^= rewardEvent.Languages.Value;
                         else
-                            partyMember.SpokenExtendedLanguages ^= rewardEvent.ExtendedLanguages.Value;
+                            partyMember.SpokenExtendedLanguages ^= rewardEvent.ExtendedLanguages!.Value;
                         break;
                 }
                 break;

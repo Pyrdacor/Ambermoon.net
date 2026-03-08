@@ -34,7 +34,6 @@ partial class GameCore
 
     readonly NameProvider nameProvider;
     readonly TextDictionary textDictionary;
-    List<string>? dictionary;
     internal IDataNameProvider DataNameProvider { get; }
     public ICharacterManager CharacterManager { get; }
 

@@ -3238,7 +3238,7 @@ namespace Ambermoon
              75, 100, 100,  75,  50, 100, 150,   0  // Water spells
         ];
 
-        public void StartMonsterAnimation(Monster monster, Action<BattleAnimation> setupAction, Action<BattleAnimation> finishAction)
+        public void StartMonsterAnimation(Monster monster, Action<BattleAnimation> setupAction, Action<BattleAnimation>? finishAction)
         {
             if (setupAction == null)
                 return;

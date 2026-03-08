@@ -53,7 +53,6 @@ partial class GameCore
     readonly Position trappedMousePositionOffset = new();
     MobileAction currentMobileAction = MobileAction.None;
     readonly ILayerSprite mobileActionIndicator;
-    bool fingerDown = false;
     bool targetMode2DActive = false;
     bool disableUntrapping = false;
 
@@ -72,7 +71,7 @@ partial class GameCore
 
             currentMobileAction = value;
             var layer = Layer.Cursor;
-            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer)!;
             mobileActionIndicator.Visible = false;
             try
             {
@@ -426,13 +425,11 @@ partial class GameCore
 
     public virtual void OnFingerDown(Position position)
     {
-        fingerDown = true;
         lastMobileAutomapFingerPosition = renderView.ScreenToGame(position);
     }
 
     public virtual void OnFingerUp(Position position)
     {
-        fingerDown = false;
         lastMobileAutomapFingerPosition = renderView.ScreenToGame(position);
 
         if (!CoreConfiguration.IsMobile)
@@ -448,8 +445,6 @@ partial class GameCore
 
     public virtual void OnFingerMoveTo(Position position)
     {
-        fingerDown = true;
-
         if (!CoreConfiguration.IsMobile)
             return;
 
@@ -574,7 +569,7 @@ partial class GameCore
         {
             case Key.Escape:
             {
-                if (ingame)
+                if (Ingame)
                 {
                     if (layout.PopupActive)
                     {
@@ -767,7 +762,7 @@ partial class GameCore
 
         if (!WindowActive && !layout.PopupActive)
         {
-            if (char.ToLower(keyChar) == 'm' && ingame && is3D)
+            if (char.ToLower(keyChar) == 'm' && Ingame && is3D)
                 ShowAutomap();
         }
     }
@@ -994,7 +989,7 @@ partial class GameCore
         lastMousePosition = new Position(position);
 
         // Special case to abort multiple monster start animations in battle
-        if (ingame && allInputDisabled && !pickingNewLeader && currentWindow.Window == Window.Battle &&
+        if (Ingame && allInputDisabled && !pickingNewLeader && currentWindow.Window == Window.Battle &&
             currentBattle?.StartAnimationPlaying == true && currentBattle.WaitForClick)
         {
             currentBattle.Click(CurrentBattleTicks);
@@ -1015,7 +1010,7 @@ partial class GameCore
 
         position = GetMousePosition(position);
 
-        if (ingame)
+        if (Ingame)
         {
             var relativePosition = renderView.ScreenToGame(position);
 

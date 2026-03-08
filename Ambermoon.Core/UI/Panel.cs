@@ -32,7 +32,7 @@ namespace Ambermoon.UI
     /// </summary>
     class Panel
     {
-        readonly FilledArea[] filledAreas = new FilledArea[3];
+        readonly FilledArea?[] filledAreas = new FilledArea?[3];
 
         public Panel(GameCore game, Rect fillArea, List<IColoredRect> layoutFilledAreas, Layout layout, byte displayLayer)
         {

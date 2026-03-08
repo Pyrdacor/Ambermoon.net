@@ -271,7 +271,7 @@ partial class GameCore
         itemDragCancelledHandler?.Invoke();
     }
 
-    internal void ShowItemPopup(ItemSlot itemSlot, Action closeAction)
+    internal void ShowItemPopup(ItemSlot itemSlot, Action? closeAction)
     {
         var item = ItemManager.GetItem(itemSlot.ItemIndex);
         var popup = layout.OpenPopup(new Position(16, 84), 18, 6, true, false);

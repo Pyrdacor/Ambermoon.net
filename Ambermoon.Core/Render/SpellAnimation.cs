@@ -55,7 +55,7 @@ namespace Ambermoon.Render
             this.fromMonster = fromMonster;
             startPosition = sourcePosition;
             this.targetRow = targetRow;
-            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects);
+            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects)!;
         }
 
         public SpellAnimation(GameCore game, Layout layout)
@@ -64,7 +64,7 @@ namespace Ambermoon.Render
             this.layout = layout;
             renderView = layout.RenderView;
             fromMonster = false;
-            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects);
+            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects)!;
         }
 
         void ShowOverlay(Color color)
@@ -220,7 +220,7 @@ namespace Ambermoon.Render
             }
             animation.AnimationFinished += AnimationEnded;
             animation.ScaleType = BattleAnimation.AnimationScaleType.None;
-            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!;
             animation.SetStartFrame(textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(graphicIndex)), frameSize,
                 area.Position + startOffset, 1.0f, false, frameSize, BattleAnimation.HorizontalAnchor.Left, BattleAnimation.VerticalAnchor.Top);
             var ticks = battle != null ? game.CurrentBattleTicks : game.CurrentAnimationTicks;
@@ -371,7 +371,7 @@ namespace Ambermoon.Render
                     Position position;
                     if (fromMonster)
                     {
-                        position = layout.GetMonsterCombatCenterPosition(startPosition, battle.GetCharacterAt(startPosition) as Monster);
+                        position = layout.GetMonsterCombatCenterPosition(startPosition, (battle!.GetCharacterAt(startPosition) as Monster)!);
                     }
                     else
                     {
@@ -495,7 +495,7 @@ namespace Ambermoon.Render
                     }
                     else // target is monster
                     {
-                        targetPosition = layout.GetMonsterCombatCenterPosition(position, battle.GetCharacterAt(position) as Monster);
+                        targetPosition = layout.GetMonsterCombatCenterPosition(position, (battle!.GetCharacterAt(position) as Monster)!);
                     }
                     if (targetPosition.Y > Global.CombatBackgroundArea.Bottom - 20)
                         targetPosition.Y = Global.CombatBackgroundArea.Bottom - 20;
@@ -542,7 +542,7 @@ namespace Ambermoon.Render
                     }
                     else // target is monster
                     {
-                        return layout.GetMonsterCombatTopPosition(position, battle.GetCharacterAt(position) as Monster) - new Position(0, 6);
+                        return layout.GetMonsterCombatTopPosition(position, (battle!.GetCharacterAt(position) as Monster)!) - new Position(0, 6);
                     }
                 }
                 case Spell.Earthslide:
@@ -812,7 +812,7 @@ namespace Ambermoon.Render
                             float startScale = game.RandomInt(50, 150) / 100.0f;
                             uint timeAdd = last ? 2u : 0u; // last animation should end a bit later as it triggers the finish handler
                             var animation = AddAnimation(CombatGraphicIndex.GreenStar, frames, startPosition, new Position(targetX, targetYOffset + Util.Round(dyFactor * yDiff) - 8),
-                                GameCore.TicksPerSecond * 5 / 2 + timeAdd, startScale, 0.0f, 255, last ? (Action)null : () => { });
+                                GameCore.TicksPerSecond * 5 / 2 + timeAdd, startScale, 0.0f, 255, last ? null : () => { });
                             animation.AnimationUpdated += Updated;
                             animation.AnimationFinished += Finished;
                             void Updated(float progress)
@@ -1008,7 +1008,7 @@ namespace Ambermoon.Render
                     float scale = GetScaleYRelativeToCombatArea(info.GraphicInfo.Height, 1.15f) *
                         (fromMonster ? 1.2f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
                     void AddFlameAnimation(int width, float startScale, float endScale, Position startGroundPosition, Position endGroundPosition,
-                        int startFrame, uint duration, Action finishAction)
+                        int startFrame, uint duration, Action? finishAction)
                     {
                         // Note: The start frame is also used for the x-offset
                         int[] frames = (startFrame == 0 ? Enumerable.Range(0, 8) :
@@ -1039,7 +1039,7 @@ namespace Ambermoon.Render
                             leftPosition, frame, primaryDuration, () =>
                         {
                             AddFlameAnimation(width, baseScale, 0.5f * baseScale, leftPosition,
-                                new Position(endX, leftPosition.Y), frame, secondaryDuration, frame == 3 ? (Action)(() =>
+                                new Position(endX, leftPosition.Y), frame, secondaryDuration, frame == 3 ? (() =>
                                 {
                                     HideOverlay();
                                     this.finishAction?.Invoke();
@@ -1083,7 +1083,7 @@ namespace Ambermoon.Render
                     float scale = GetScaleYRelativeToCombatArea(info.GraphicInfo.Height, 0.9f) *
                         (fromMonster ? 1.5f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
                     void AddIceAnimation(int width, float startScale, float endScale, Position startGroundPosition, Position endGroundPosition,
-                        int index, uint duration, Action finishAction)
+                        int index, uint duration, Action? finishAction)
                     {
                         int[] frames = new int[] { 0, 0, 1, 1, 0, 0, 1, 1 };
                         int startXOffset = index * width * 7 / 8;
@@ -1111,7 +1111,7 @@ namespace Ambermoon.Render
                             leftPosition, frame, primaryDuration, () =>
                             {
                                 AddIceAnimation(width, baseScale, 0.5f * baseScale, leftPosition,
-                                    new Position(endX, leftPosition.Y), frame, secondaryDuration, frame == 3 ? (Action)(() =>
+                                    new Position(endX, leftPosition.Y), frame, secondaryDuration, frame == 3 ? (() =>
                                     {
                                         HideOverlay();
                                         this.finishAction?.Invoke();
@@ -1318,7 +1318,7 @@ namespace Ambermoon.Render
             // Used for all curses
             void PlayCurse(CombatGraphicIndex iconGraphicIndex)
             {
-                if (!battle.CheckSpell(battle.GetCharacterAt(startPosition), battle.GetCharacterAt(tile), spell, null, false, false, false))
+                if (!battle!.CheckSpell(battle.GetCharacterAt(startPosition)!, battle.GetCharacterAt(tile)!, spell, null, false, false, false))
                 {
                     this.finishAction?.Invoke();
                 }
@@ -1333,7 +1333,7 @@ namespace Ambermoon.Render
                     var targetPosition = GetTargetPosition(tile) - new Position(0, Util.Round(6 * scale));
                     game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
                     {
-                        void AddCurseAnimation(CombatGraphicIndex graphicIndex, Action finishAction, bool reverse, byte displayLayer)
+                        void AddCurseAnimation(CombatGraphicIndex graphicIndex, Action? finishAction, bool reverse, byte displayLayer)
                         {
                             AddAnimation(graphicIndex, 1, targetPosition, targetPosition, reverse ? GameCore.TicksPerSecond / 4 : GameCore.TicksPerSecond / 2,
                                 reverse ? scale : 0.0f, reverse ? 0.5f * scale : scale, displayLayer, finishAction);
@@ -1354,8 +1354,8 @@ namespace Ambermoon.Render
             void PlayHolyLight()
             {
                 // Should always be a monster but just in case we check here.
-                if (battle.GetCharacterAt(tile) is Monster monster &&
-                    battle.CheckSpell(battle.GetCharacterAt(startPosition), monster, spell, null, false, false, false))
+                if (battle!.GetCharacterAt(tile) is Monster monster &&
+                    battle.CheckSpell(battle!.GetCharacterAt(startPosition)!, monster, spell, null, false, false, false))
                 {
                     var position = GetTargetPosition(tile) + new Position(0, 4);
                     int beamHeight = 8 + position.Y - Global.CombatBackgroundArea.Top;
@@ -1391,7 +1391,7 @@ namespace Ambermoon.Render
             }
 
             // Used for Winddevil, Windhowler and Whirlwind
-            void PlayWhirlwind(int startTile, bool materialize, Action finishAction = null)
+            void PlayWhirlwind(int startTile, bool materialize, Action? finishAction = null)
             {
                 var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Whirlwind);
                 var baseScale = spell switch
@@ -1454,7 +1454,7 @@ namespace Ambermoon.Render
                         startPosition, endPosition, (uint)duration, startScale, endScale, displayLayer, Finished)
                         : AddAnimation(CombatGraphicIndex.Whirlwind, frames,
                             startPosition, endPosition, (uint)duration, startScale, endScale, displayLayer, Finished);
-                    if (startTile == tile && battle.GetCharacterAt(tile) is Monster monster)
+                    if (startTile == tile && battle!.GetCharacterAt(tile) is Monster monster)
                     {
                         int remainingTicks = duration;
                         const int TimePerScaling = (int)GameCore.TicksPerSecond / 2;
@@ -1545,7 +1545,7 @@ namespace Ambermoon.Render
                     }
                     else
                     {
-                        CastOn(spell, battle.GetCharacterAt(tile) as PartyMember, this.finishAction);
+                        CastOn(spell, (battle!.GetCharacterAt(tile) as PartyMember)!, this.finishAction);
                     }
                     break;
                 case Spell.RemovePanic:
@@ -1738,8 +1738,8 @@ namespace Ambermoon.Render
                     break;
                 case Spell.DissolveVictim:
                 {
-                    var target = battle.GetCharacterAt(tile);
-                    if (!battle.CheckSpell(battle.GetCharacterAt(startPosition), target, spell, null, false, false, false))
+                    var target = battle!.GetCharacterAt(tile)!;
+                    if (!battle.CheckSpell(battle.GetCharacterAt(startPosition)!, target, spell, null, false, false, false))
                     {
                         this.finishAction?.Invoke();
                     }
@@ -1785,7 +1785,7 @@ namespace Ambermoon.Render
                             AddAnimation(CombatGraphicIndex.LargeStone, 1, startPosition, headPosition, GameCore.TicksPerSecond / 4,
                                 scale, scale, displayLayer, () =>
                                 {
-                                    if (battle.GetCharacterAt(tile) is Monster monster)
+                                    if (battle!.GetCharacterAt(tile) is Monster monster)
                                     {
                                         const float squashFactor = 0.8f;
                                         int squashAmount = Util.Round(monster.MappedFrameHeight * monsterScale * (1.0f - squashFactor));

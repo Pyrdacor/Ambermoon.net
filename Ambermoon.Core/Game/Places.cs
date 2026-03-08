@@ -22,7 +22,7 @@ partial class GameCore
         int openingHour = enterPlaceEvent.OpeningHour;
         int closingHour = enterPlaceEvent.ClosingHour == 0 ? 24 : enterPlaceEvent.ClosingHour;
 
-        if (GameTime.Hour >= openingHour && GameTime.Hour < closingHour)
+        if (GameTime!.Hour >= openingHour && GameTime.Hour < closingHour)
         {
             switch (enterPlaceEvent.PlaceType)
             {
@@ -114,7 +114,7 @@ partial class GameCore
     }
 
     void ShowPlaceWindow(string placeName, string? welcomeText, Picture80x80 picture, IPlace place, Action<Action, ItemGrid>? placeSetup,
-        Action? activePlayerSwitchedHandler, Func<string>? exitChecker = null, Action? closeAction = null, int numItemSlots = 12)
+        Action? activePlayerSwitchedHandler, Func<string?>? exitChecker = null, Action? closeAction = null, int numItemSlots = 12)
     {
         OpenStorage = place;
         layout.SetLayout(LayoutType.Items);
@@ -373,8 +373,8 @@ partial class GameCore
         if (showWelcome)
             sage.AvailableGold = 0;
 
-        Action updatePartyGold = null;
-        ItemGrid itemsGrid = null;
+        Action? updatePartyGold = null;
+        ItemGrid? itemsGrid = null;
 
         void SetupSage(Action updateGold, ItemGrid itemGrid)
         {
@@ -392,15 +392,16 @@ partial class GameCore
             void ShowDefaultMessage() => layout.ShowChestMessage(DataNameProvider.ExamineWhichItemSage, TextAlign.Left);
             void ShowItems(bool equipment, bool scrollIdentification = false)
             {
-                itemsGrid.Disabled = false;
+                itemsGrid!.Disabled = false;
                 itemsGrid.DisableDrag = true;
                 ShowDefaultMessage();
                 CursorType = CursorType.Sword;
                 var itemArea = new Rect(16, 139, 151, 53);
                 TrapMouse(itemArea);
                 layout.ButtonsDisabled = true;
-                itemsGrid.Initialize(equipment ? CurrentPartyMember.Equipment.Slots.Where(s => s.Value.ItemIndex != 0).Select(s => s.Value).ToList()
-                : CurrentPartyMember.Inventory.Slots.ToList(), false);
+                itemsGrid.Initialize(equipment ? CurrentPartyMember!.Equipment.Slots.Where(s => s.Value.ItemIndex != 0).Select(s => s.Value).ToList()
+                : CurrentPartyMember!.Inventory.Slots.ToList(), false);
+
                 void SetupRightClickAbort()
                 {
                     nextClickHandler = buttons =>
@@ -504,7 +505,7 @@ partial class GameCore
 
                         if (answer)
                         {
-                            ItemAnimation.Play(this, renderView, ItemAnimation.Type.Enchant, layout.GetItemSlotPosition(itemSlot, true),
+                            ItemAnimation.Play(this, renderView, ItemAnimation.Type.Enchant, layout.GetItemSlotPosition(itemSlot, true)!,
                                 Finish, TimeSpan.FromMilliseconds(50));
                         }
                         else
@@ -532,8 +533,8 @@ partial class GameCore
         if (showWelcome)
             healer.AvailableGold = 0;
 
-        Action updatePartyGold = null;
-        ItemGrid conditionGrid = null;
+        Action? updatePartyGold = null;
+        ItemGrid? conditionGrid = null;
 
         void SetupHealer(Action updateGold, ItemGrid itemGrid)
         {
@@ -544,13 +545,15 @@ partial class GameCore
         void Heal(uint lp)
         {
             nextClickHandler = null;
+
             layout.ShowPlaceQuestion($"{DataNameProvider.PriceForHealing}{lp * healer.HealLPCost}{DataNameProvider.AgreeOnPrice}", answer =>
             {
                 if (answer) // yes
                 {
                     healer.AvailableGold -= lp * (uint)healer.HealLPCost;
                     updatePartyGold?.Invoke();
-                    currentlyHealedMember.HitPoints.CurrentValue += lp;
+                    currentlyHealedMember!.HitPoints.CurrentValue += lp;
+
                     PlayerSwitched();
                     PlayHealAnimation(currentlyHealedMember, () => layout.FillCharacterBars(currentlyHealedMember));
                 }
@@ -596,13 +599,13 @@ partial class GameCore
 
         void PlayerSwitched()
         {
-            layout.EnableButton(0, currentlyHealedMember.HitPoints.CurrentValue < currentlyHealedMember.HitPoints.TotalMaxValue);
+            layout.EnableButton(0, currentlyHealedMember!.HitPoints.CurrentValue < currentlyHealedMember.HitPoints.TotalMaxValue);
             layout.EnableButton(3, currentlyHealedMember.Equipment.Slots.Any(slot => slot.Value.Flags.HasFlag(ItemSlotFlags.Cursed)));
             layout.EnableButton(6, ((uint)currentlyHealedMember.Conditions & (uint)healableConditions) != 0);
         }
 
         uint GetMaxLPHealing() => Math.Max(0, Util.Min(healer.AvailableGold / (uint)healer.HealLPCost,
-            currentlyHealedMember.HitPoints.TotalMaxValue - currentlyHealedMember.HitPoints.CurrentValue));
+            currentlyHealedMember!.HitPoints.TotalMaxValue - currentlyHealedMember.HitPoints.CurrentValue));
 
         Fade(() =>
         {
@@ -615,11 +618,11 @@ partial class GameCore
             ShowPlaceWindow(healer.Name, showWelcome ? DataNameProvider.WelcomeHealer : null,
                 Picture80x80.Healer, healer, SetupHealer, PlayerSwitched);
             // This will show the healing symbol on top of the portrait.
-            SetActivePartyMember(SlotFromPartyMember(currentlyHealedMember).Value);
+            SetActivePartyMember(SlotFromPartyMember(currentlyHealedMember!)!.Value);
             // Heal LP button
             layout.AttachEventToButton(0, () =>
             {
-                conditionGrid.Disabled = true;
+                conditionGrid!.Disabled = true;
 
                 if (healer.AvailableGold < healer.HealLPCost)
                 {
@@ -636,7 +639,7 @@ partial class GameCore
             // Remove curse button
             layout.AttachEventToButton(3, () =>
             {
-                conditionGrid.Disabled = true;
+                conditionGrid!.Disabled = true;
 
                 if (healer.AvailableGold < healer.RemoveCurseCost)
                 {
@@ -645,8 +648,9 @@ partial class GameCore
                 }
 
                 int maxCursesToRemove = Math.Min((int)healer.AvailableGold / healer.RemoveCurseCost,
-                    currentlyHealedMember.Equipment.Slots.Count(slot => slot.Value.Flags.HasFlag(ItemSlotFlags.Cursed)));
+                    currentlyHealedMember!.Equipment.Slots.Count(slot => slot.Value.Flags.HasFlag(ItemSlotFlags.Cursed)));
                 nextClickHandler = null;
+
                 layout.ShowPlaceQuestion($"{DataNameProvider.PriceForRemovingCurses}{maxCursesToRemove * healer.RemoveCurseCost}{DataNameProvider.AgreeOnPrice}", answer =>
                 {
                     if (answer) // yes
@@ -655,7 +659,7 @@ partial class GameCore
                         updatePartyGold?.Invoke();
                         PlayerSwitched();
                         allInputDisabled = true;
-                        OpenPartyMember(SlotFromPartyMember(currentlyHealedMember).Value, true, () =>
+                        OpenPartyMember(SlotFromPartyMember(currentlyHealedMember)!.Value, true, () =>
                         {
                             var equipSlots = currentlyHealedMember.Equipment.Slots.ToList();
 
@@ -676,7 +680,7 @@ partial class GameCore
             });
             layout.AttachEventToButton(6, () =>
             {
-                conditionGrid.Disabled = false;
+                conditionGrid!.Disabled = false;
                 conditionGrid.DisableDrag = true;
                 layout.ShowChestMessage(DataNameProvider.WhichConditionToHeal, TextAlign.Left);
                 CursorType = CursorType.Sword;
@@ -685,7 +689,7 @@ partial class GameCore
                 var slots = new List<ItemSlot>(12);
                 var slotConditions = new List<Condition>(12);
                 // Ensure that only one dead state is present
-                if (currentlyHealedMember.Conditions.HasFlag(Condition.DeadDust))
+                if (currentlyHealedMember!.Conditions.HasFlag(Condition.DeadDust))
                     currentlyHealedMember.Conditions = Condition.DeadDust;
                 else if (currentlyHealedMember.Conditions.HasFlag(Condition.DeadAshes))
                     currentlyHealedMember.Conditions = Condition.DeadAshes;
@@ -805,8 +809,8 @@ partial class GameCore
             blacksmith.AvailableGold = 0;
 
         // Note: The blacksmith uses the same 80x80 image as the sage.
-        Action updatePartyGold = null;
-        ItemGrid itemsGrid = null;
+        Action? updatePartyGold = null;
+        ItemGrid? itemsGrid = null;
 
         void SetupBlacksmith(Action updateGold, ItemGrid itemGrid)
         {
@@ -820,7 +824,7 @@ partial class GameCore
             ShowMap(false);
             SetWindow(Window.Blacksmith, blacksmith);
             ShowPlaceWindow(blacksmith.Name, showWelcome ? DataNameProvider.WelcomeBlacksmith : null,
-                Map.World switch
+                Map!.World switch
                 {
                     World.Lyramion => Picture80x80.Sage,
                     World.ForestMoon => Picture80x80.DwarfMerchant,
@@ -831,14 +835,14 @@ partial class GameCore
             // Repair item button
             layout.AttachEventToButton(3, () =>
             {
-                itemsGrid.Disabled = false;
+                itemsGrid!.Disabled = false;
                 itemsGrid.DisableDrag = true;
                 ShowDefaultMessage();
                 CursorType = CursorType.Sword;
                 var itemArea = new Rect(16, 139, 151, 53);
                 TrapMouse(itemArea);
                 layout.ButtonsDisabled = true;
-                itemsGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+                itemsGrid.Initialize(CurrentPartyMember!.Inventory.Slots.ToList(), false);
                 void SetupRightClickAbort()
                 {
                     nextClickHandler = buttons =>
@@ -857,7 +861,9 @@ partial class GameCore
                         return false;
                     };
                 }
+
                 SetupRightClickAbort();
+
                 void DisableItemGrid()
                 {
                     itemsGrid.HideTooltip();
@@ -865,7 +871,9 @@ partial class GameCore
                     itemsGrid.Disabled = true;
                     layout.ButtonsDisabled = false;
                 }
+
                 itemsGrid.ItemClicked += ItemClicked;
+
                 void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
                 {
                     itemsGrid.HideTooltip();
@@ -932,7 +940,7 @@ partial class GameCore
         if (showWelcome)
             inn.AvailableGold = 0;
 
-        Action updatePartyGold = null;
+        Action? updatePartyGold = null;
 
         void SetupInn(Action updateGold, ItemGrid _)
         {
@@ -945,7 +953,7 @@ partial class GameCore
             ShowMap(false);
             SetWindow(Window.Inn, inn, useText);
             ShowPlaceWindow(inn.Name, showWelcome ? DataNameProvider.WelcomeInnkeeper : null,
-                Map.World switch
+                Map!.World switch
                 {
                     World.Lyramion => Picture80x80.Innkeeper,
                     World.ForestMoon => Picture80x80.DwarfMerchant,
@@ -976,7 +984,7 @@ partial class GameCore
                             layout.GetButtonAction(2)?.Invoke(); // Call close handler
                             OpenStorage = null;
                             Teleport((uint)inn.BedroomMapIndex, (uint)inn.BedroomX,
-                                (uint)inn.BedroomY, player.Direction, out _, true);
+                                (uint)inn.BedroomY, player!.Direction, out _, true);
                             OpenCamp(true, inn.Healing);
                         });
                     }
@@ -1043,7 +1051,7 @@ partial class GameCore
             if (!tile.AllowMovement(tileset, travelType)) // Can't be placed there
                 return false;
 
-            if (CurrentSavegame.TransportLocations.Any(t => t != null && t.MapIndex == map.Index &&
+            if (CurrentSavegame!.TransportLocations.Any(t => t != null && t.MapIndex == map.Index &&
                 t.Position.X == salesman.SpawnX && t.Position.Y == salesman.SpawnY))
                 return false;
 
@@ -1119,7 +1127,7 @@ partial class GameCore
 
         int spawnIndex = -1;
 
-        for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
+        for (int i = 0; i < CurrentSavegame!.TransportLocations.Length; ++i)
         {
             if (CurrentSavegame.TransportLocations[i] == null)
             {
@@ -1162,7 +1170,7 @@ partial class GameCore
         if (showWelcome)
             foodDealer.AvailableGold = 0;
 
-        Action updatePartyGold = null;
+        Action? updatePartyGold = null;
 
         void SetupFoodDealer(Action updateGold, ItemGrid _)
         {
@@ -1187,7 +1195,7 @@ partial class GameCore
             ShowMap(false);
             SetWindow(Window.FoodDealer, foodDealer);
             ShowPlaceWindow(foodDealer.Name, showWelcome ? DataNameProvider.WelcomeFoodDealer : null,
-                Map.World switch
+                Map!.World switch
                 {
                     World.Lyramion => Picture80x80.Merchant,
                     World.ForestMoon => Picture80x80.DwarfMerchant,
@@ -1265,7 +1273,7 @@ partial class GameCore
                         layout.ChestText.Clicked -= ClickedWelcomeMessage;
                     ExecuteNextUpdateCycle(ShowDefaultMessage);
                 }
-                layout.ChestText.Clicked += ClickedWelcomeMessage;
+                layout.ChestText!.Clicked += ClickedWelcomeMessage;
             }
         });
     }
@@ -1277,7 +1285,7 @@ partial class GameCore
         if (showWelcome)
             trainer.AvailableGold = 0;
 
-        Action updatePartyGold = null;
+        Action? updatePartyGold = null;
 
         void SetupTrainer(Action updateGold, ItemGrid _)
         {
@@ -1303,7 +1311,7 @@ partial class GameCore
 
         void PlayerSwitched()
         {
-            layout.EnableButton(3, CurrentPartyMember.Skills[trainer.Skill].CurrentValue < CurrentPartyMember.Skills[trainer.Skill].MaxValue);
+            layout.EnableButton(3, CurrentPartyMember!.Skills[trainer.Skill].CurrentValue < CurrentPartyMember.Skills[trainer.Skill].MaxValue);
         }
 
         uint GetMaxTrains() => Math.Max(0, Util.Min(trainer.AvailableGold / (uint)trainer.Cost, CurrentPartyMember.TrainingPoints,
@@ -1353,7 +1361,7 @@ partial class GameCore
                     return;
                 }
 
-                if (CurrentPartyMember.TrainingPoints == 0)
+                if (CurrentPartyMember!.TrainingPoints == 0)
                 {
                     layout.ShowClickChestMessage(DataNameProvider.NotEnoughTrainingPoints);
                     return;
@@ -1369,8 +1377,8 @@ partial class GameCore
         });
     }
 
-    void OpenMerchant(uint merchantIndex, string placeName, string buyText, bool isLibrary,
-        bool showWelcome, ItemSlot[] boughtItems)
+    void OpenMerchant(uint merchantIndex, string placeName, string? buyText, bool isLibrary,
+        bool showWelcome, ItemSlot[]? boughtItems)
     {
         var merchant = GetMerchant(1 + merchantIndex);
         currentPlace = merchant;
@@ -1383,9 +1391,9 @@ partial class GameCore
             layout.Reset();
             ShowMap(false);
             SetWindow(Window.Merchant, merchantIndex, placeName, buyText, isLibrary, boughtItems);
-            ShowMerchantWindow(merchant, placeName, showWelcome ? isLibrary ? DataNameProvider.WelcomeMagician :
-                DataNameProvider.WelcomeMerchant : null, buyText,
-                isLibrary ? Picture80x80.Librarian : Map.World switch
+            ShowMerchantWindow(merchant, placeName, showWelcome ? (isLibrary ? DataNameProvider.WelcomeMagician :
+                DataNameProvider.WelcomeMerchant) : null, buyText,
+                isLibrary ? Picture80x80.Librarian : Map!.World switch
                 {
                     World.Lyramion => Picture80x80.Merchant,
                     World.ForestMoon => Picture80x80.DwarfMerchant,
@@ -1396,26 +1404,32 @@ partial class GameCore
         });
     }
 
-    void ShowMerchantWindow(Merchant merchant, string placeName, string initialText,
-        string buyText, Picture80x80 picture, bool buysGoods, ItemSlot[] boughtItems)
+    void ShowMerchantWindow(Merchant merchant, string placeName, string? initialText,
+        string? buyText, Picture80x80 picture, bool buysGoods, ItemSlot[]? boughtItems)
     {
         // TODO: use buyText?
 
         OpenStorage = merchant;
+
         layout.SetLayout(LayoutType.Items);
         layout.AddText(new Rect(120, 37, 29 * Global.GlyphWidth, Global.GlyphLineHeight),
             renderView.TextProcessor.CreateText(placeName), TextColor.White);
         layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
+
         var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
         itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
         var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, merchant.Slots.ToList(),
             false, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical, false,
             () => merchant.AvailableGold);
+
         itemGrid.Disabled = false;
+
         layout.AddItemGrid(itemGrid);
         layout.Set80x80Picture(picture);
+
         var itemArea = new Rect(16, 139, 151, 53);
         int mode = -1; // -1: show bought items, 0: buy, 3: sell, 4: examine (= button index)
+
         if (boughtItems == null)
         {
             // Note: Don't use boughtItems ??= Enumerable.Repeat(new ItemSlot(), 24).ToArray();
@@ -1424,12 +1438,13 @@ partial class GameCore
             for (int i = 0; i < boughtItems.Length; ++i)
                 boughtItems[i] = new ItemSlot();
         }
+
         boughtItems ??= Enumerable.Repeat(new ItemSlot(), 24).ToArray();
         currentWindow.WindowParameters[4] = boughtItems;
 
         void UpdateSellButton()
         {
-            layout.EnableButton(3, buysGoods && CurrentPartyMember.Inventory.Slots.Any(s => !s.Empty));
+            layout.EnableButton(3, buysGoods && CurrentPartyMember!.Inventory.Slots.Any(s => !s.Empty));
         }
 
         void SetupRightClickAbort()
@@ -1451,7 +1466,7 @@ partial class GameCore
             };
         }
 
-        void AssignButton(int index, bool merchantItems, string messageText, TextAlign textAlign, Func<bool> checker)
+        void AssignButton(int index, bool merchantItems, string messageText, TextAlign textAlign, Func<bool>? checker)
         {
             layout.AttachEventToButton(index, () =>
             {
@@ -1460,11 +1475,16 @@ partial class GameCore
 
                 mode = index;
                 itemGrid.DisableDrag = true;
+
                 layout.ShowChestMessage(messageText, textAlign);
+
                 CursorType = CursorType.Sword;
+
                 TrapMouse(itemArea);
                 FillItems(merchantItems);
+
                 itemGrid.ShowPrice = mode == 0; // buy
+
                 SetupRightClickAbort();
             });
         }
@@ -1562,7 +1582,7 @@ partial class GameCore
 
         void FillItems(bool fromMerchant)
         {
-            itemGrid.Initialize(fromMerchant ? merchant.Slots.ToList() : CurrentPartyMember.Inventory.Slots.ToList(), fromMerchant);
+            itemGrid.Initialize(fromMerchant ? merchant.Slots.ToList() : CurrentPartyMember!.Inventory.Slots.ToList(), fromMerchant);
         }
 
         void ShowBoughtItems()
@@ -1575,7 +1595,7 @@ partial class GameCore
 
         uint CalculatePrice(uint price)
         {
-            var charisma = CurrentPartyMember.Attributes[Attribute.Charisma].TotalCurrentValue;
+            var charisma = CurrentPartyMember!.Attributes[Attribute.Charisma].TotalCurrentValue;
             var basePrice = price / 3;
             var bonus = (uint)Util.Floor(Util.Floor(charisma / 10) * (price / 100.0f));
             return basePrice + bonus;
@@ -1597,7 +1617,7 @@ partial class GameCore
             if (mode == -1)
             {
                 foreach (var partyMember in PartyMembers)
-                    layout.UpdateCharacterStatus(SlotFromPartyMember(partyMember).Value);
+                    layout.UpdateCharacterStatus(SlotFromPartyMember(partyMember)!.Value);
                 itemGrid.Refresh();
             }
         };

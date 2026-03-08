@@ -1,7 +1,7 @@
 ﻿/*
  * IConfiguration.cs - Configuration interface
  *
- * Copyright (C) 2020-2025  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2026  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -19,12 +19,9 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Ambermoon.Data;
 using Ambermoon.Render;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace Ambermoon;
 
@@ -72,25 +69,6 @@ public static class ScreenResolutions
     }
 }
 
-public class AdditionalSavegameSlots
-{
-    public required string GameVersionName { get; set; }
-    public string[] BaseNames { get; set; } = new string[GameCore.NumBaseSavegameSlots];
-    public string[] Names { get; set; } = new string[GameCore.NumAdditionalSavegameSlots];
-    public int ContinueSavegameSlot { get; set; } = 0;
-    public DateTime? LastSavesSync { get; set; } = null;
-
-    public static AdditionalSavegameSlots Load(string path)
-    {
-        return JsonConvert.DeserializeObject<AdditionalSavegameSlots>(File.ReadAllText(path));
-    }
-
-    public void Save(string path)
-    {
-        File.WriteAllText(path, JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.Indented));
-    }
-}
-
 public enum GraphicFilter
 {
     None,        
@@ -120,12 +98,6 @@ public enum Movement3D
     WASDQE
 }
 
-public interface IAdditionalSaveSlotProvider
-{
-    AdditionalSavegameSlots GetOrCreateAdditionalSavegameNames(string gameVersionName);
-    void RequestSave(ISavegameManager savegameManager, IGameData gameData);
-}
-
 public interface ICoreConfiguration
 {
     bool FirstStart { get; set; }
@@ -140,7 +112,6 @@ public interface ICoreConfiguration
     int GameVersionIndex { get; set; }
     bool Music { get; set; }
     int Volume { get; set; }
-    bool ExternalMusic { get; set; }
     [Obsolete("Use BattleSpeed instead.")]
     bool? FastBattleMode { get; set; }
     int BattleSpeed { get; set; }
@@ -164,29 +135,16 @@ public interface ICoreConfiguration
     bool TurnWithArrowKeys { get; set; }
     GameLanguage Language { get; set; }
     bool LegacyMode { get; set; }
-
-    event Action SaveRequested;
-    void RequestSave();    
-}
-
-public interface IConfiguration : ICoreConfiguration
-{
-    bool UseDataPath { get; set; }
-    string DataPath { get; set; }
-    SaveOption SaveOption { get; set; }
     bool ExtendedSavegameSlots { get; set; }
-    [Obsolete("Use AdditionalSavegameSlots instead.")]
-    string[] AdditionalSavegameNames { get; set; }
-    [Obsolete("Use AdditionalSavegameSlots instead.")]
-    int? ContinueSavegameSlot { get; set; }
-    AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
     bool ShowAdvancedLogo { get; set; }
     [Obsolete("Now the fantasy intro is shown instead.")]
     bool? ShowThalionLogo { get; set; }
     bool ShowFantasyIntro { get; set; }
     bool ShowIntro { get; set; }
+    bool ExternalMusic { get; set; }
 
-    AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots(string gameVersionName);
+    event Action SaveRequested;
+    void RequestSave();    
 }
 
 public static class ConfigurationExtensions
@@ -211,7 +169,7 @@ public static class ConfigurationExtensions
         return new Size(width!.Value, height!.Value);
     }
 
-    public static Size GetScreenSize(this IConfiguration configuration)
+    public static Size GetScreenSize(this ICoreConfiguration configuration)
     {
         int? width = configuration.Width;
         int? height = configuration.Height;

@@ -63,11 +63,11 @@ namespace Ambermoon.Render
             _ => GetItem(game, itemIndex)?.GraphicIndex ?? throw new AmbermoonException(ExceptionScope.Application, $"No item was given for item animtion '{type}'")
         };
 
-        static void PlayItemDestroyAnimation(GameCore game, IGameRenderView renderView, Position position, uint graphicIndex, Action? finishAction)
+        static void PlayItemDestroyAnimation(GameCore game, IGameRenderView renderView, Position? position, uint graphicIndex, Action? finishAction)
         {
             var sprites = new ISprite[128];
             var animationPositionIndices = new int[128];
-            var offset = TextureAtlasManager.Instance.GetOrCreate(Layer.Items).GetOffset(graphicIndex);
+            var offset = TextureAtlasManager.Instance.GetOrCreate(Layer.Items)!.GetOffset(graphicIndex);
             var layer = renderView.GetLayer(Layer.Items);
 
             for (int y = 0; y < 8; ++y)
@@ -82,7 +82,7 @@ namespace Ambermoon.Render
                         int textureFactor = (int)layer.TextureFactor;
                         sprite.TextureAtlasOffset = offset + new Position(x * 2 + y % 2, y * 2 + x % 2) * textureFactor;
                         sprite.PaletteIndex = game.UIPaletteIndex;
-                        sprite.X = position.X + x * 2 + y % 2;
+                        sprite.X = position!.X + x * 2 + y % 2;
                         sprite.Y = position.Y + y * 2 + x % 2;
                         sprite.Visible = true;
                         animationPositionIndices[index] = game.RandomInt(0, DestroyAnimationPositions.Length - 1);
@@ -110,7 +110,7 @@ namespace Ambermoon.Render
                     {
                         int amplitude = i < 64 ? 1 : 2;
                         var animationPositionIndex = animationPositionIndices[i];
-                        int centerX = position.X + 8;
+                        int centerX = position!.X + 8;
                         int xFactor = sprites[i].X < centerX ? -1 : 1;
                         int x = DestroyAnimationPositions[animationPositionIndex][frame * 2] * amplitude;
                         int y = DestroyAnimationPositions[animationPositionIndex][frame * 2 + 1] * amplitude;
@@ -148,14 +148,14 @@ namespace Ambermoon.Render
                 GetGraphicIndex(game, type, item?.Index), null, pixelsPerSecond, visibilityChecker);
         }
 
-        public static void Play(GameCore game, IGameRenderView renderView, Type type, Position startPosition,
+        public static void Play(GameCore game, IGameRenderView renderView, Type type, Position? startPosition,
             Action? finishAction, TimeSpan? initialDelay, Position? targetPosition, UIItem? item, int pixelsPerSecond = 300)
         {
             Play(game, renderView, type, startPosition, finishAction, initialDelay, targetPosition,
                 GetGraphicIndex(game, type, item?.Item?.ItemIndex), item, pixelsPerSecond);
         }
 
-        static void Play(GameCore game, IGameRenderView renderView, Type type, Position startPosition,
+        static void Play(GameCore game, IGameRenderView renderView, Type type, Position? startPosition,
             Action? finishAction, TimeSpan? initialDelay, Position? targetPosition, uint graphicIndex,
             UIItem? item, int pixelsPerSecond = 300, Func<bool>? visibilityChecker = null)
         {
@@ -170,7 +170,7 @@ namespace Ambermoon.Render
                 game.StartSequence();
                 int typeIndex = (int)type;
                 var layer = Layers[typeIndex];
-                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
+                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer)!;
                 var offset = textureAtlas.GetOffset(graphicIndex);
 
                 switch (type)
@@ -189,7 +189,7 @@ namespace Ambermoon.Render
                         sprite.TextureAtlasOffset = offset;
                         sprite.Layer = renderView.GetLayer(layer);
                         sprite.PaletteIndex = game.UIPaletteIndex;
-                        sprite.X = startPosition.X;
+                        sprite.X = startPosition!.X;
                         sprite.Y = startPosition.Y;
                         sprite.Visible = true;
                         void Animate()
@@ -233,7 +233,7 @@ namespace Ambermoon.Render
                 Start();
         }
 
-        static void PlayMoveAnimation(GameCore game, Position startPosition, Position targetPosition, UIItem item,
+        static void PlayMoveAnimation(GameCore game, Position? startPosition, Position targetPosition, UIItem item,
             Action? finishAction, int pixelsPerSecond = 300)
         {
             const int timePerFrame = 10;
@@ -271,7 +271,7 @@ namespace Ambermoon.Render
 
         static void PlayShakeAnimation(GameCore game, UIItem item, Action? finishAction)
         {
-            int baseX = item.Position.X;
+            int baseX = item.Position!.X;
             int minX = item.Position.X - 1;
             int maxX = item.Position.X + 1;
             bool right = true;

@@ -120,7 +120,7 @@ public abstract partial class GameCore
         ouchSprite.ClipArea = Map2DViewArea;
         ouchSprite.Layer = renderView.GetLayer(Layer.UI);
         ouchSprite.PaletteIndex = currentUIPaletteIndex;
-        ouchSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Ouch));
+        ouchSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Ouch));
         ouchSprite.Visible = false;
         ouchEvent.Action = () => ouchSprite.Visible = false;
 
@@ -130,7 +130,7 @@ public abstract partial class GameCore
             mobileClickIndicator.Layer = renderView.GetLayer(Layer.Cursor);
             mobileClickIndicator.Visible = false;
             mobileClickIndicator.PaletteIndex = PrimaryUIPaletteIndex;
-            mobileClickIndicator.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Cursor).GetOffset((uint)CursorType.Click);
+            mobileClickIndicator.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Cursor)!.GetOffset((uint)CursorType.Click);
         }
 
         for (int i = 0; i < MaxPartyMembers; ++i)
@@ -138,7 +138,7 @@ public abstract partial class GameCore
             hurtPlayerSprites[i] = (renderView.SpriteFactory.Create(32, 26, true, 200) as ILayerSprite)!;
             hurtPlayerSprites[i].Layer = renderView.GetLayer(Layer.UI);
             hurtPlayerSprites[i].PaletteIndex = PrimaryUIPaletteIndex;
-            hurtPlayerSprites[i].TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.DamageSplash));
+            hurtPlayerSprites[i].TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.DamageSplash));
             hurtPlayerSprites[i].Visible = false;
             hurtPlayerDamageTexts[i] = renderView.RenderTextFactory.Create((byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1));
             hurtPlayerDamageTexts[i].Layer = renderView.GetLayer(Layer.Text);
@@ -160,7 +160,7 @@ public abstract partial class GameCore
         battleRoundActiveSprite.Layer = renderView.GetLayer(Layer.UI);
         battleRoundActiveSprite.PaletteIndex = PrimaryUIPaletteIndex;
         battleRoundActiveSprite.DisplayLayer = 2;
-        battleRoundActiveSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)
+        battleRoundActiveSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!
             .GetOffset(Graphics.CombatGraphicOffset + (uint)CombatGraphicIndex.UISwordAndMace);
         battleRoundActiveSprite.X = 240;
         battleRoundActiveSprite.Y = 150;
@@ -171,7 +171,7 @@ public abstract partial class GameCore
         var monsterGraphicDictionary = CharacterManager.Monsters.ToDictionary(m => m.Index, m => m.CombatGraphic);
         textureAtlasManager.AddFromGraphics(Layer.BattleMonsterRow, monsterGraphicDictionary);
         var monsterGraphicAtlas = textureAtlasManager.GetOrCreate(Layer.BattleMonsterRow);
-        renderView.GetLayer(Layer.BattleMonsterRow).Texture = monsterGraphicAtlas.Texture;
+        renderView.GetLayer(Layer.BattleMonsterRow).Texture = monsterGraphicAtlas!.Texture;
 
         layout.ShowPortraitArea(false);
 

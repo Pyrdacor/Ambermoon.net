@@ -30,9 +30,9 @@ partial class GameCore
     readonly List<TimedGameEvent> timedEvents = [];
     Func<MouseButtons, bool>? nextClickHandler = null;
 
-    public event Action QuitRequested;
+    public event Action? QuitRequested;
 
-    internal bool ingame { get; private set; } = false; // TODO: Uppercase
+    internal bool Ingame { get; private set; } = false;
     internal uint CurrentTicks { get; private set; } = 0;
     internal uint CurrentMapTicks { get; private set; } = 0;
     internal uint CurrentBattleTicks { get; private set; } = 0;
@@ -64,6 +64,8 @@ partial class GameCore
     protected abstract int Provider_ContinueSavegameSlot();
     protected abstract int Provider_NumSavegameSlots();
     protected abstract bool Provider_HasSavegames();
+    protected abstract IEnumerable<string> Provider_AdditionalSavegameNames();
+    protected abstract Action<int>? Provider_ContinueGameSlotUpdater();
 
     #endregion
 
@@ -102,7 +104,7 @@ partial class GameCore
         if (!proceed)
             return;
 
-        if (ingame)
+        if (Ingame)
         {
             CurrentAnimationTicks = UpdateTicks(CurrentAnimationTicks, deltaTime);
 
@@ -284,7 +286,7 @@ partial class GameCore
         }
         changedMaps.Clear();
 
-        ingame = true;
+        Ingame = true;
         CurrentSavegame = savegame;
         GameTime = new SavegameTime(savegame);
         lastSwimDamageHour = GameTime.Hour;
@@ -485,7 +487,7 @@ partial class GameCore
     {
         if (SavegameManager.HasCrashSavegame())
         {
-            ingame = true;
+            Ingame = true;
             ShowDecisionPopup(GetCustomText(CustomTexts.Index.LoadCrashedGame), response =>
             {
                 if (response == PopupTextEvent.Response.Yes)
@@ -697,7 +699,7 @@ partial class GameCore
 
         Util.SafeCall(UntrapMouse);
         allInputDisabled = true;
-        ingame = false;
+        Ingame = false;
         Util.SafeCall(() => AudioOutput?.Stop());
         Util.SafeCall(() => AudioOutput?.Reset());
         Util.SafeCall(Cleanup);
@@ -736,9 +738,9 @@ partial class GameCore
             timedEvents.Add(timedGameEvent);
     }
 
-    internal void AddTimedEvent(TimeSpan delay, Action action) => AddTimedEvent(delay, action, false);
+    internal void AddTimedEvent(TimeSpan delay, Action? action) => AddTimedEvent(delay, action, false);
 
-    internal void AddTimedEvent(TimeSpan delay, Action action, bool ignoreFastBattleMode)
+    internal void AddTimedEvent(TimeSpan delay, Action? action, bool ignoreFastBattleMode)
     {
         if (!ignoreFastBattleMode && currentBattle != null && CoreConfiguration.BattleSpeed != 0 && currentWindow.Window == Window.Battle)
             delay = TimeSpan.FromMilliseconds(Math.Max(1.0, delay.TotalMilliseconds / BattleTimeFactor));
@@ -750,7 +752,7 @@ partial class GameCore
         });
     }
 
-    internal void ExecuteNextUpdateCycle(Action action)
+    internal void ExecuteNextUpdateCycle(Action? action)
     {
         AddTimedEvent(TimeSpan.FromMilliseconds(0), action);
     }

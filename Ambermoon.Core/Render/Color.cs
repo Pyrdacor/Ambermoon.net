@@ -105,7 +105,7 @@ namespace Ambermoon.Render
             if (ReferenceEquals(color1, color2))
                 return true;
 
-            if (ReferenceEquals(color1, null) || ReferenceEquals(color2, null))
+            if (color1 is null || color2 is null)
                 return false;
 
             return color1.R == color2.R && color1.G == color2.G &&
@@ -117,19 +117,19 @@ namespace Ambermoon.Render
             if (ReferenceEquals(color1, color2))
                 return false;
 
-            if (ReferenceEquals(color1, null) || ReferenceEquals(color2, null))
+            if (color1 is null || color2 is null)
                 return true;
 
             return color1.R != color2.R || color1.G != color2.G ||
                 color1.B != color2.B || color1.A != color2.A;
         }
 
-        public bool Equals(Color other)
+        public bool Equals(Color? other)
         {
-            return this == other;
+            return other is not null && this == other;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj == null)
                 return false;
@@ -145,17 +145,17 @@ namespace Ambermoon.Render
             return HashCode.Combine(R, G, B, A);
         }
 
-        public bool Equals(Color x, Color y)
+        public bool Equals(Color? x, Color? y)
         {
-            if (ReferenceEquals(x, null))
-                return ReferenceEquals(y, null);
+            if (x is null)
+                return y is null;
 
-            return x == y;
+            return y is not null && x == y;
         }
 
-        public int GetHashCode(Color obj)
+        public int GetHashCode(Color? obj)
         {
-            return (obj == null) ? 0 : obj.GetHashCode();
+            return (obj is null) ? 0 : obj.GetHashCode();
         }
 
         public Color WithFactor(float factor)

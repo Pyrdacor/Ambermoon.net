@@ -37,8 +37,8 @@ namespace Ambermoon.UI
         readonly IGameRenderView renderView;
         readonly ITextureAtlas textureAtlas;
         readonly ITextureAtlas flagsTextureAtlas;
-        readonly IConfiguration configuration;
-        readonly List<ILayerSprite> borders = new();
+        readonly ICoreConfiguration configuration;
+        readonly List<ILayerSprite> borders = [];
         readonly Cursor? cursor = null;
         readonly IRenderText? headerRenderText = null;
         readonly IRenderText[] versionTexts = new IRenderText[5];
@@ -86,12 +86,12 @@ namespace Ambermoon.UI
 		public event Action<int, Func<IGameData>, bool>? Closed;
 
         public VersionSelector(string ambermoonNetVersion, IGameRenderView renderView, TextureAtlasManager textureAtlasManager,
-            List<GameVersion> gameVersions, Cursor cursor, int selectedVersion, SaveOption saveOption, IConfiguration configuration)
+            List<GameVersion> gameVersions, Cursor cursor, int selectedVersion, SaveOption saveOption, ICoreConfiguration configuration)
         {
             this.renderView = renderView;
             this.configuration = configuration;
-            textureAtlas = textureAtlasManager.GetOrCreate(Layer.UI);
-            flagsTextureAtlas = textureAtlasManager.GetOrCreate(Layer.Misc);
+            textureAtlas = textureAtlasManager.GetOrCreate(Layer.UI)!;
+            flagsTextureAtlas = textureAtlasManager.GetOrCreate(Layer.Misc)!;
             var fontTextureAtlas = textureAtlasManager.GetOrCreate(Layer.Text);
             var spriteFactory = renderView.SpriteFactory;
             var layer = renderView.GetLayer(Layer.UI);
@@ -108,7 +108,7 @@ namespace Ambermoon.UI
             );
             void AddBorder(PopupFrame frame, int column, int row)
             {
-                var sprite = spriteFactory.Create(16, 16, true) as ILayerSprite;
+                var sprite = (spriteFactory.Create(16, 16, true) as ILayerSprite)!;
                 sprite.Layer = layer;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetPopupFrameGraphicIndex(frame));
                 sprite.PaletteIndex = 0;
@@ -246,7 +246,7 @@ namespace Ambermoon.UI
                 var language = (GameLanguage)i;
                 if (configuration.Language == language)
                     flagSunkenBox = AddSunkenBox(languageButtonArea.CreateModified(-2, -2, 4, 4), 1, 28);
-                var languageChangeButton = renderView.SpriteFactory.Create(FlagWidth, FlagHeight, true, 3) as ILayerSprite;
+                var languageChangeButton = (renderView.SpriteFactory.Create(FlagWidth, FlagHeight, true, 3) as ILayerSprite)!;
                 languageChangeButton.Layer = renderLayer;
                 languageChangeButton.TextureAtlasOffset = GetFlagImageOffset(language, textureFactor);
                 languageChangeButton.X = languageButtonArea.X;
@@ -295,7 +295,7 @@ namespace Ambermoon.UI
         {
             int languageCount = EnumHelper.GetValues<GameLanguage>().Length;
             int x = languageChangeButtons[0].X;
-            int sunkenBoxDist = flagSunkenBox[0].X - x;
+            int sunkenBoxDist = flagSunkenBox![0].X - x;
             int textureFactor = (int)renderView.GetLayer(Layer.Misc).TextureFactor;
 
             for (int i = 0; i < languageCount; ++i)
@@ -447,7 +447,8 @@ namespace Ambermoon.UI
 
         void ShowSaveOptionButton(bool show)
         {
-            changeSaveOptionButton.Visible = show;
+            changeSaveOptionButton!.Visible = show;
+
             foreach (var background in buttonBackgrounds[changeSaveOptionButton])
                 background.Visible = show;
         }
@@ -457,15 +458,16 @@ namespace Ambermoon.UI
             var button = new Button(renderView, position, textureAtlasManager);
             button.Disabled = false;
             button.DisplayLayer = 8;
-            AddSunkenBox(new Rect(position.X - 1, position.Y - 1, Button.Width + 2, Button.Height + 2), 2, 0,
-                button);
+
+            AddSunkenBox(new Rect(position.X - 1, position.Y - 1, Button.Width + 2, Button.Height + 2), 2, 0, button);
+
             return button;
         }
 
         void UpdateHeaderText()
         {
             var headerText = GetHeaderText();
-            headerRenderText.Text = renderView.TextProcessor.CreateText(headerText);
+            headerRenderText!.Text = renderView.TextProcessor.CreateText(headerText);
             gameDataVersionTooltipText = renderView.TextProcessor.CreateText(GetVersionInfoTooltip());
             gameDataVersionTooltipText = renderView.TextProcessor.WrapText(gameDataVersionTooltipText,
                 new Rect(0, 0, 300, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
@@ -474,8 +476,8 @@ namespace Ambermoon.UI
         void UpdateSaveOptionTexts()
         {
             string optionText = GetSavegameOptionText(selectedSaveOption);
-            saveOptionText.Text = renderView.TextProcessor.CreateText(optionText);
-            saveOptionTooltip.Area.Size.Width = optionText.Length * Global.GlyphWidth;
+            saveOptionText!.Text = renderView.TextProcessor.CreateText(optionText);
+            saveOptionTooltip.Area!.Size.Width = optionText.Length * Global.GlyphWidth;
             UpdateSaveOptionTooltip();
         }
 
@@ -507,7 +509,7 @@ namespace Ambermoon.UI
         }
 
         IColoredRect[] AddSunkenBox(Rect area, byte displayLayer = 1, byte fillColorIndex = 27,
-            Button associatedButton = null)
+            Button? associatedButton = null)
         {
             var darkBorderColor = GetPaletteColor(26);
             var brightBorderColor = GetPaletteColor(31);
@@ -526,27 +528,29 @@ namespace Ambermoon.UI
 
             if (associatedButton != null)
             {
-                return buttonBackgrounds[associatedButton] = new IColoredRect[]
-                {
+                return buttonBackgrounds[associatedButton] =
+                [
                     upperArea, leftArea, fillArea, rightArea, lowerArea
-                };
+                ];
             }
             else
             {
-                return new IColoredRect[]
-                {
+                return
+                [
                     upperArea, leftArea, fillArea, rightArea, lowerArea
-                };
+                ];
             }
         }
 
         IColoredRect FillArea(Rect area, Color color, byte displayLayer = 1)
         {
             var filledArea = renderView.ColoredRectFactory.Create(area.Width, area.Height, color, displayLayer);
+
             filledArea.Layer = renderView.GetLayer(Layer.UI);
             filledArea.X = area.Left;
             filledArea.Y = area.Top;
             filledArea.Visible = true;
+
             return filledArea;
         }
 
@@ -569,8 +573,8 @@ namespace Ambermoon.UI
         public void Update(double deltaTime)
         {
             ticks = GameCore.UpdateTicks(ticks, deltaTime);
-            okButton.Update(ticks);
-            changeSaveOptionButton.Update(ticks);
+            okButton!.Update(ticks);
+            changeSaveOptionButton!.Update(ticks);
         }
 
         public void Render()
@@ -599,11 +603,12 @@ namespace Ambermoon.UI
                 case Key.Return:
                 case Key.Space:
                 {
-                    var action = okButton.LeftClickAction;
+                    var action = okButton!.LeftClickAction;
                     okButton.LeftClickAction = () =>
                     {
                         if (!configuration.IsMobile)
                             okButton.Release(true);
+
                         okButton.Disabled = true;
                         action?.Invoke();
                     };
@@ -633,8 +638,8 @@ namespace Ambermoon.UI
             {
                 position = renderView.ScreenToGame(position);
 
-                okButton.LeftMouseUp(position, 0u);
-                changeSaveOptionButton.LeftMouseUp(position, 0u);
+                okButton!.LeftMouseUp(position, 0u);
+                changeSaveOptionButton!.LeftMouseUp(position, 0u);
             }
         }
 
@@ -670,9 +675,9 @@ namespace Ambermoon.UI
 
                 if (configuration.IsMobile)
                 {
-					if (gameDataVersionTooltipArea.Contains(position))
+					if (gameDataVersionTooltipArea!.Contains(position))
 					{
-						ShowTooltip(position, gameDataVersionTooltipText, NormalTooltipColor, true);
+						ShowTooltip(position, gameDataVersionTooltipText!, NormalTooltipColor, true);
 					}
 					else
 					{
@@ -680,8 +685,8 @@ namespace Ambermoon.UI
 					}
 				}
 
-                okButton.LeftMouseDown(position, 0u);
-                changeSaveOptionButton.LeftMouseDown(position, 0u);
+                okButton!.LeftMouseDown(position, 0u);
+                changeSaveOptionButton!.LeftMouseDown(position, 0u);
             }
         }
 
@@ -710,7 +715,7 @@ namespace Ambermoon.UI
 
 		void ShowTooltip(Position position, IText text, TextColor textColor, bool up)
 		{
-			tooltipText.Text = text;
+			tooltipText!.Text = text;
 			tooltipText.TextColor = textColor;
 
 			int textWidth = text.MaxLineSize * Global.GlyphWidth;
@@ -730,14 +735,14 @@ namespace Ambermoon.UI
 
 		void HideTooltip()
 		{
-			tooltipText.Visible = false;
+			tooltipText!.Visible = false;
 			tooltipBorder?.Delete();
 			tooltipBackground?.Delete();
 		}
 
 		public void OnMouseMove(Position position, MouseButtons buttons)
         {
-            cursor.UpdatePosition(position, null);
+            cursor!.UpdatePosition(position, null);
 
             position = renderView.ScreenToGame(position);
 
@@ -752,13 +757,13 @@ namespace Ambermoon.UI
 
             HighlightVersion(-1);
 
-            if (IsSelectedVersionFromExternalData() && currentSaveTooltipText != null && saveOptionTooltip.Area.Contains(position))
+            if (IsSelectedVersionFromExternalData() && currentSaveTooltipText != null && saveOptionTooltip.Area!.Contains(position))
             {
                 ShowTooltip(position, currentSaveTooltipText, saveOptionTooltip.TextColor, false);
             }
-            else if (gameDataVersionTooltipArea.Contains(position))
+            else if (gameDataVersionTooltipArea!.Contains(position))
             {
-                ShowTooltip(position, gameDataVersionTooltipText, NormalTooltipColor, true);
+                ShowTooltip(position, gameDataVersionTooltipText!, NormalTooltipColor, true);
             }
             else
             {

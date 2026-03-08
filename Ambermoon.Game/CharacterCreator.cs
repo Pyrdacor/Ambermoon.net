@@ -73,8 +73,8 @@ namespace Ambermoon.Game
         public CharacterCreator(IGameRenderView renderView, Game game, Action<string, bool, int> selectHandler)
         {
             this.renderView = renderView;
-            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
-            var fontTextureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Text);
+            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!;
+            var fontTextureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Text)!;
             var spriteFactory = renderView.SpriteFactory;
             var layer = renderView.GetLayer(Layer.UI);
 

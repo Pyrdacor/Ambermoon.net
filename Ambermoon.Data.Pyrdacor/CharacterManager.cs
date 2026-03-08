@@ -5,14 +5,18 @@ using Ambermoon.Data.Pyrdacor.Extensions;
 namespace Ambermoon.Data.Pyrdacor;
 
 internal class CharacterManager(
+    Func<Dictionary<uint, PartyMember>> initialPartyMemberProvider,
     Func<Dictionary<uint, NPC>> npcProvider,
     Func<Dictionary<uint, Monster>> monsterProvider,
     Func<Dictionary<uint, MonsterGroup>> monsterGroupProvider)
     : ICharacterManager
 {
+    readonly Lazy<Dictionary<uint, PartyMember>> initialPartyMembers = new(initialPartyMemberProvider);
     readonly Lazy<Dictionary<uint, NPC>> npcs = new(npcProvider);
     readonly Lazy<Dictionary<uint, Monster>> monsters = new(monsterProvider);        
     readonly Lazy<Dictionary<uint, MonsterGroup>> monsterGroups = new(monsterGroupProvider);
+
+    public PartyMember? GetInitialPartyMember(uint index) => initialPartyMembers.Value.GetByIndex(index);
 
     public Monster? GetMonster(uint index) => monsters.Value.GetByIndex(index);
 
@@ -34,6 +38,7 @@ internal class CharacterManager(
         return clone;
     }
 
+    public IReadOnlyList<PartyMember> InitialPartyMembers => initialPartyMembers.Value.Values.ToList().AsReadOnly();
     public IReadOnlyList<NPC> NPCs => npcs.Value.Values.ToList().AsReadOnly();
 	public IReadOnlyList<Monster> Monsters => monsters.Value.Values.ToList().AsReadOnly();
     public IReadOnlyDictionary<uint, MonsterGroup> MonsterGroups => monsterGroups.Value.AsReadOnly();

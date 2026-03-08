@@ -86,17 +86,5 @@ namespace Ambermoon
 
             return max;
         }
-
-        internal static (ulong, DateTime, Version) GenerateAppIdent()
-        {
-            var now = DateTime.UtcNow;
-            var asm = Assembly.GetEntryAssembly();
-            var version = asm.GetName().Version;
-            string ident = $"{now.Ticks}-{version.Major}.{version.Minor}.{version.Build}-Ambermoon.net";
-
-            // TODO
-
-            return (0, now, version);
-		}
     }
 }

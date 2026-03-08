@@ -54,10 +54,10 @@ namespace Ambermoon.Render
                 return false;
 
             bool canMove = true;
-            var map = Map.Map;
+            var map = Map.Map!;
             int newX = Position.X + x;
             int newY = Position.Y + y;
-            Map.Tile tile = null;
+            Map.Tile? tile = null;
 
             if (!map.IsWorldMap)
             {
@@ -80,7 +80,7 @@ namespace Ambermoon.Render
             if (canMove)
             {
                 var tileset = mapManager.GetTilesetForMap(map);
-                canMove = tile.AllowMovement(tileset, travelType);
+                canMove = tile!.AllowMovement(tileset, travelType);
 
                 if (!canMove && travelType == TravelType.Swim && tile.AllowMovement(tileset, TravelType.Walk))
                     canMove = true; // go on land
@@ -91,19 +91,22 @@ namespace Ambermoon.Render
                     // or door event at the new position
                     var mapEventId = Map[(uint)newX, (uint)newY]?.MapEventId;
 
-                    if (mapEventId > 0 && game.CurrentSavegame.IsEventActive(map.Index, mapEventId.Value - 1))
+                    if (mapEventId > 0 && game.CurrentSavegame!.IsEventActive(map.Index, mapEventId.Value - 1))
                     {
                         var trigger = EventTrigger.Move;
                         bool lastEventStatus = false;
 
-                        bool HasSpecialEvent(Event ev, out Event @event, Map map)
+                        bool HasSpecialEvent(Event? ev, out Event? @event, Map map)
                         {
                             @event = null;
+
+                            if (ev == null)
+                                return false;
 
                             if (ev.Type == EventType.EnterPlace ||
                                 (ev is TeleportEvent teleportEvent && teleportEvent.Transition != TeleportEvent.TransitionType.WindGate) ||
                                 ev.Type == EventType.Riddlemouth ||
-                                (ev.Type == EventType.Chest && Map.Map.IsWorldMap) ||
+                                (ev.Type == EventType.Chest && Map.Map!.IsWorldMap) ||
                                 (ev is DoorEvent doorEvent && game.CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex)))
                             {
                                 @event = ev;
@@ -135,11 +138,11 @@ namespace Ambermoon.Render
                         {
                             if (travelType.BlockedByTeleport())
                             {
-                                if (@event.Type == EventType.Teleport && !mapManager.GetMap((@event as TeleportEvent).MapIndex).UseTravelTypes)
+                                if (@event is TeleportEvent teleportEvent && !mapManager.GetMap(teleportEvent.MapIndex).UseTravelTypes)
                                 {
                                     canMove = false;
                                 }
-                                else if (@event.Type == EventType.Door)
+                                else if (@event is DoorEvent)
                                 {
                                     canMove = false;
                                 }
@@ -171,12 +174,12 @@ namespace Ambermoon.Render
                 var newDirection = CharacterDirection.Down;
                 var lastPlayerPosition = new Position(player.Position);
 
-                if (x > 0 && (map.IsWorldMap || (newX >= 6 && Map.ScrollX < Map.Map.Width - RenderMap2D.NUM_VISIBLE_TILES_X)))
+                if (x > 0 && (map.IsWorldMap || (newX >= 6 && Map.ScrollX < Map.Map!.Width - RenderMap2D.NUM_VISIBLE_TILES_X)))
                     scrollX = 1;
                 else if (x < 0 && (map.IsWorldMap || (newX <= map.Width - 7 && Map.ScrollX > 0)))
                     scrollX = -1;
 
-                if (y > 0 && (map.IsWorldMap || (newY >= 5 && Map.ScrollY < Map.Map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y)))
+                if (y > 0 && (map.IsWorldMap || (newY >= 5 && Map.ScrollY < Map.Map!.Height - RenderMap2D.NUM_VISIBLE_TILES_Y)))
                     scrollY = 1;
                 else if (y < 0 && (map.IsWorldMap || (newY <= map.Height - 6 && Map.ScrollY > 0)))
                     scrollY = -1;
@@ -190,7 +193,7 @@ namespace Ambermoon.Render
                 else if (x < 0)
                     newDirection = CharacterDirection.Left;
 
-                game.CurrentSavegame.CharacterDirection = player.Direction = newDirection;
+                game.CurrentSavegame!.CharacterDirection = player.Direction = newDirection;
 
                 Map.Scroll(scrollX, scrollY);
 
@@ -229,7 +232,7 @@ namespace Ambermoon.Render
                     // adjust player position on map transition
                     var position = Map.GetCenterPosition();
 
-                    MoveTo(Map.Map, (uint)position.X, (uint)position.Y, ticks, false, player.Direction);
+                    MoveTo(Map.Map!, (uint)position.X, (uint)position.Y, ticks, false, player.Direction);
 
                     game.ResetMapCharacterInteraction(map);
 
@@ -239,7 +242,7 @@ namespace Ambermoon.Render
                             (uint)position.Y, mapManager, ticks, game.CurrentSavegame);
                     }
 
-                    if (Map.Map.Type == MapType.Map2D)
+                    if (Map.Map!.Type == MapType.Map2D)
                     {
                         player.Position.X = Position.X;
                         player.Position.Y = Position.Y;
@@ -275,9 +278,9 @@ namespace Ambermoon.Render
 
                     if (newDirection != Direction)
                     {
-                        MoveTo(Map.Map, (uint)Position.X, (uint)Position.Y, ticks, true, newDirection);
+                        MoveTo(Map.Map!, (uint)Position.X, (uint)Position.Y, ticks, true, newDirection);
                         player.Direction = newDirection;
-                        game.CurrentSavegame.CharacterDirection = newDirection;
+                        game.CurrentSavegame!.CharacterDirection = newDirection;
                         UpdateAppearance(game.CurrentTicks);
                         tile = Map[(uint)Position.X, (uint)Position.Y];
                         bool hidePlayer = tile.Type == Data.Map.TileType.Invisible && game.CanSee();
@@ -291,10 +294,10 @@ namespace Ambermoon.Render
 
         public void UpdateAppearance(uint ticks)
         {
-            MoveTo(Map.Map, (uint)Position.X, (uint)Position.Y, ticks, true, null);
+            MoveTo(Map.Map!, (uint)Position.X, (uint)Position.Y, ticks, true, null);
         }
 
-        public override void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection, Action<Map> mapInitAction = null)
+        public override void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection, Action<Map>? mapInitAction = null)
         {
             if (Map.Map != map)
                 Visible = true; // reset visibility before changing map

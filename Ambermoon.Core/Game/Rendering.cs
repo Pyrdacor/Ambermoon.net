@@ -39,7 +39,7 @@ partial class GameCore
     IColoredRect? drugOverlay = null;
     uint lastDrugColorChangeTicks = 0;
     uint lastDrugMouseMoveTicks = 0;
-    public Action DrugTicked;
+    public Action? DrugTicked;
     ILayerSprite? mobileClickIndicator = null;
 
     /// <summary>
@@ -89,7 +89,7 @@ partial class GameCore
         }
         else
         {
-            var playerArea = player2D.DisplayArea;
+            var playerArea = player2D!.DisplayArea;
             ouchSprite.X = playerArea.X + 16;
             ouchSprite.Y = playerArea.Y - 24;
             ouchSprite.Resize(Math.Min(32, Map2DViewArea.Right - ouchSprite.X),
@@ -162,7 +162,7 @@ partial class GameCore
 
     public void UpdateCharacterBars()
     {
-        if (!ingame || layout == null || CurrentSavegame == null)
+        if (!Ingame || layout == null || CurrentSavegame == null)
             return;
 
         for (int i = 0; i < MaxPartyMembers; ++i)
@@ -173,7 +173,7 @@ partial class GameCore
 
     public void UpdateCharacterStatus(PartyMember partyMember)
     {
-        if (!ingame || layout == null || CurrentSavegame == null)
+        if (!Ingame || layout == null || CurrentSavegame == null)
             return;
 
         layout.UpdateCharacterStatus(partyMember);
@@ -327,9 +327,9 @@ partial class GameCore
     readonly ICamera3D camera3D = null;
     Position? lastPlayerPosition = null;
 
-    internal IRenderPlayer RenderPlayer => Is3D ? player3D : player2D;
-    internal int PlayerAngle => Is3D ? Util.Round(player3D.Angle) : (int)player2D.Direction.ToAngle();
-    internal CharacterDirection PlayerDirection => Is3D ? player3D.Direction : player2D.Direction;
+    internal IRenderPlayer RenderPlayer => Is3D ? player3D! : player2D!;
+    internal int PlayerAngle => Is3D ? Util.Round(player3D!.Angle) : (int)player2D!.Direction.ToAngle();
+    internal CharacterDirection PlayerDirection => Is3D ? player3D!.Direction : player2D!.Direction;
 
     #endregion
 
@@ -443,14 +443,14 @@ partial class GameCore
                     cursor.Type == CursorType.Hand))
                 {
                     int yOffset = Map?.UseTravelTypes == true ? 12 : 0;
-                    TrapMouse(new Rect(player2D.DisplayArea.X - 9, player2D.DisplayArea.Y - 9 - yOffset, 33, 49));
+                    TrapMouse(new Rect(player2D!.DisplayArea.X - 9, player2D.DisplayArea.Y - 9 - yOffset, 33, 49));
                 }
                 else if (!is3D && !WindowActive && !layout.PopupActive &&
                     (cursor.Type == CursorType.Mouth ||
                     cursor.Type == CursorType.Target))
                 {
                     int yOffset = Map?.UseTravelTypes == true ? 12 : 0;
-                    TrapMouse(new Rect(player2D.DisplayArea.X - 25, player2D.DisplayArea.Y - 25 - yOffset, 65, 65));
+                    TrapMouse(new Rect(player2D!.DisplayArea.X - 25, player2D.DisplayArea.Y - 25 - yOffset, 65, 65));
                 }
                 else if (!disableUntrapping)
                 {
@@ -523,11 +523,11 @@ partial class GameCore
             if (!WindowActive && !layout.PopupActive && (mapViewArea.Contains(relativePosition) || clickMoveActive))
             {
                 // Change arrow cursors when hovering the map
-                if (ingame && cursor.Type >= CursorType.Sword && cursor.Type <= CursorType.Wait)
+                if (Ingame && cursor.Type >= CursorType.Sword && cursor.Type <= CursorType.Wait)
                 {
-                    if (Map.Type == MapType.Map2D)
+                    if (Map!.Type == MapType.Map2D)
                     {
-                        var playerArea = player2D.DisplayArea;
+                        var playerArea = player2D!.DisplayArea;
                         playerArea.Position.Y = playerArea.Bottom - RenderMap2D.TILE_HEIGHT;
                         playerArea.Size.Height = RenderMap2D.TILE_HEIGHT;
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Ambermoon.Data;
 using Ambermoon.Data.Serialization;
@@ -8,13 +9,20 @@ namespace Ambermoon;
 
 partial class GameCore
 {
+    public const int NumBaseSavegameSlots = 10;
     internal Savegame? CurrentSavegame { get; private set; }
     internal ISavegameManager SavegameManager { get; }
     private protected readonly ISavegameSerializer savegameSerializer;
+    internal IEnumerable<string> AdditionalSavegameNames => Provider_AdditionalSavegameNames();
 
     public Savegame? GetCurrentSavegame()
     {
         return CurrentSavegame;
+    }
+
+    internal void SetAdditionalSavegamesContinueSlot(int slot)
+    {
+        Provider_ContinueGameSlotUpdater()?.Invoke(slot);
     }
 
     private protected void FixSavegameValues(Savegame savegame)

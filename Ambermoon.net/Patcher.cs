@@ -798,7 +798,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
             }
         }
 
-        ticks += Util.Round(Game.TicksPerSecond * (float)deltaTime);
+        ticks += Util.Round(GameCore.TicksPerSecond * (float)deltaTime);
     }
 
     public void Render()

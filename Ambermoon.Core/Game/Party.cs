@@ -43,7 +43,7 @@ partial class GameCore
     internal int? CurrentInventoryIndex { get; set; } = null;
     internal Character? CurrentCaster { get; set; } = null;
     internal Character? CurrentSpellTarget { get; set; } = null;
-    public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : LimitPartyPosition(Map.MapOffset + player.Position);
+    public Position PartyPosition => !Ingame || Map == null || player == null ? new Position() : LimitPartyPosition(Map.MapOffset + player.Position);
 
     internal TravelType TravelType
     {
@@ -62,7 +62,7 @@ partial class GameCore
             if (Map?.UseTravelTypes == true)
             {
                 player2D?.UpdateAppearance(CurrentTicks);
-                GetTransportsInVisibleArea(out TransportLocation transportAtPlayerIndex);
+                GetTransportsInVisibleArea(out TransportLocation? transportAtPlayerIndex);
 
                 if (player2D != null)
                 {
@@ -97,7 +97,7 @@ partial class GameCore
         if (direction == CharacterDirection.Random)
             direction = (CharacterDirection)RandomInt(0, 3);
 
-        CurrentSavegame.CharacterDirection = direction;
+        CurrentSavegame!.CharacterDirection = direction;
 
         if (Is3D)
             player3D!.TurnTowards((int)direction * 90.0f);
@@ -271,7 +271,7 @@ partial class GameCore
                 if (HasPartyMemberFled(partyMember))
                     return;
 
-                CurrentSavegame.ActivePartyMemberSlot = index;
+                CurrentSavegame!.ActivePartyMemberSlot = index;
                 currentPickingActionMember = CurrentPartyMember = partyMember;
                 layout.SetActiveCharacter(index, Enumerable.Range(0, MaxPartyMembers).Select(GetPartyMember).ToList());
                 layout.SetCharacterHealSymbol(null);
@@ -391,13 +391,13 @@ partial class GameCore
             {
                 ForeachPartyMember(ShowDamageSplash, p => damagedPlayers.Contains(p), () =>
                 {
-                    layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
+                    layout.UpdateCharacterNameColors(CurrentSavegame!.ActivePartyMemberSlot);
                     followAction?.Invoke(damagedPlayers.Any(player => !player.Alive));
                 });
             }
             else
             {
-                layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
+                layout.UpdateCharacterNameColors(CurrentSavegame!.ActivePartyMemberSlot);
                 followAction?.Invoke(damagedPlayers.Any(player => !player.Alive));
             }
         });
@@ -503,7 +503,7 @@ partial class GameCore
         {
             var mapEventId = Map!.Blocks[x, y].MapEventId;
 
-            if (mapEventId == 0 || !CurrentSavegame.IsEventActive(Map.Index, mapEventId - 1))
+            if (mapEventId == 0 || !CurrentSavegame!.IsEventActive(Map.Index, mapEventId - 1))
                 return false;
 
             var @event = Map.EventList[(int)mapEventId - 1];
@@ -520,10 +520,10 @@ partial class GameCore
         {
             // Also try forward position
             camera3D.GetForwardPosition(Global.DistancePerBlock, out float x, out float z, false, false);
-            var position = Geometry.Geometry.CameraToBlockPosition(Map, x, z);
+            var position = Geometry.Geometry.CameraToBlockPosition(Map!, x, z);
 
             if (position == player.Position ||
-                position.X < 0 || position.X >= Map.Width ||
+                position.X < 0 || position.X >= Map!.Width ||
                 position.Y < 0 || position.Y >= Map.Height ||
                 !HasClimbEvent((uint)position.X, (uint)position.Y))
             {
@@ -539,7 +539,7 @@ partial class GameCore
         {
             // Attach player to ladder or hole
             float angle = camera3D.Angle;
-            Geometry.Geometry.BlockToCameraPosition(Map, levitatePosition, out float x, out float z);
+            Geometry.Geometry.BlockToCameraPosition(Map!, levitatePosition, out float x, out float z);
             camera3D.SetPosition(-x, z);
             camera3D.TurnTowards(angle);
             camera3D.GetBackwardPosition(0.5f * Global.DistancePerBlock, out x, out z, false, false);
@@ -559,7 +559,7 @@ partial class GameCore
                     else
                     {
                         levitating = true;
-                        EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, (uint)levitatePosition.X,
+                        EventExtensions.TriggerEventChain(Map!, this, EventTrigger.Levitating, (uint)levitatePosition.X,
                             (uint)levitatePosition.Y, climbEvent, true);
                     }
                 });
@@ -595,7 +595,7 @@ partial class GameCore
     {
         // Attach player to ladder or hole
         float angle = camera3D.Angle;
-        Geometry.Geometry.BlockToCameraPosition(Map, new Position((int)tileX, (int)tileY), out float x, out float z);
+        Geometry.Geometry.BlockToCameraPosition(Map!, new Position((int)tileX, (int)tileY), out float x, out float z);
         camera3D.SetPosition(-x, z);
         camera3D.TurnTowards(angle);
         camera3D.GetBackwardPosition(0.45f * Global.DistancePerBlock, out x, out z, false, false);
@@ -680,7 +680,7 @@ partial class GameCore
                 return;
             }
 
-            var @event = Map.GetEvent((uint)checkPosition.X, (uint)checkPosition.Y, CurrentSavegame);
+            var @event = Map.GetEvent((uint)checkPosition.X, (uint)checkPosition.Y, CurrentSavegame!);
 
             // Avoid jumping through closed doors, riddlemouths and place entrances.
             if (@event != null)
@@ -700,8 +700,8 @@ partial class GameCore
                 }
 
                 if (!aborted &&
-                    ((@event is DoorEvent door && CurrentSavegame.IsDoorLocked(door.DoorIndex)) ||
-                    @event.Type == EventType.Riddlemouth ||
+                    ((@event is DoorEvent door && CurrentSavegame!.IsDoorLocked(door.DoorIndex)) ||
+                    @event!.Type == EventType.Riddlemouth ||
                     @event.Type == EventType.EnterPlace))
                 {
                     ShowMessagePopup(DataNameProvider.CannotJumpThroughWalls);
@@ -723,8 +723,8 @@ partial class GameCore
         if (updateSavegame)
         {
             var map = Is3D ? Map : renderMap2D!.GetMapFromTile((uint)player!.Position.X, (uint)player.Position.Y);
-            CurrentSavegame.CurrentMapIndex = map!.Index;
-            CurrentSavegame.CurrentMapX = 1u + (uint)(player!.Position.X % Map.Width);
+            CurrentSavegame!.CurrentMapIndex = map!.Index;
+            CurrentSavegame.CurrentMapX = 1u + (uint)(player!.Position.X % Map!.Width);
             CurrentSavegame.CurrentMapY = 1u + (uint)(player.Position.Y % Map.Height);
             CurrentSavegame.CharacterDirection = player.Direction;
         }
@@ -735,7 +735,7 @@ partial class GameCore
             if (layout.ButtonGridPage == 1)
                 layout.EnableButton(3, false);
 
-            if (mapChange && Map.Type == MapType.Map2D)
+            if (mapChange && Map!.Type == MapType.Map2D)
             {
                 renderMap2D!.ClearTransports();
 
@@ -752,7 +752,7 @@ partial class GameCore
 
             if (Map!.UseTravelTypes)
             {
-                var transports = GetTransportsInVisibleArea(out TransportLocation transportAtPlayerIndex);
+                var transports = GetTransportsInVisibleArea(out TransportLocation? transportAtPlayerIndex);
                 var tile = renderMap2D![player!.Position];
                 var tileType = tile.Type;
 
@@ -770,7 +770,7 @@ partial class GameCore
                 else if (tileType != Map.TileType.Water && TravelType == TravelType.Swim)
                     TravelType = TravelType.Walk;
 
-                var transportLocations = CurrentSavegame.TransportLocations.ToList();
+                var transportLocations = CurrentSavegame!.TransportLocations.ToList();
                 foreach (var transport in transports)
                 {
                     renderMap2D.PlaceTransport(transport.MapIndex,
@@ -833,26 +833,26 @@ partial class GameCore
             monstersCanMoveImmediately = false;
             if (lastMap == null || !lastMap.IsWorldMap ||
                 !Map!.IsWorldMap || Map.World != lastMap.World)
-                ResetMoveKeys(lastMap == null || lastMap.Type != Map.Type);
+                ResetMoveKeys(lastMap == null || lastMap.Type != Map!.Type);
             if (!WindowActive)
-                layout.UpdateLayoutButtons(movement.MovementTicks(Map.Type == MapType.Map3D, Map.UseTravelTypes, TravelType.Walk));
+                layout.UpdateLayoutButtons(movement.MovementTicks(Map!.Type == MapType.Map3D, Map.UseTravelTypes, TravelType.Walk));
 
             // Update UI palette
             UpdateUIPalette(true);
 
-            if (!Map.IsWorldMap || TravelType == TravelType.Walk)
+            if (!Map!.IsWorldMap || TravelType == TravelType.Walk)
                 PlayMapMusic();
         }
         else
         {
             this.lastPlayerPosition = lastPlayerPosition;
-            monstersCanMoveImmediately = Map.Type == MapType.Map2D && !Map.IsWorldMap;
+            monstersCanMoveImmediately = Map!.Type == MapType.Map2D && !Map.IsWorldMap;
         }
 
         if (Map.Type == MapType.Map3D)
         {
             // Explore
-            if (!CurrentSavegame.Automaps.TryGetValue(Map.Index, out var automap))
+            if (!CurrentSavegame!.Automaps.TryGetValue(Map.Index, out var automap))
             {
                 automap = new Automap { ExplorationBits = new byte[(Map.Width * Map.Height + 7) / 8] };
                 CurrentSavegame.Automaps.Add(Map.Index, automap);
@@ -866,7 +866,7 @@ partial class GameCore
                 {
                     for (int x = -1; x <= 1; ++x)
                     {
-                        int totalX = player3D.Position.X + x;
+                        int totalX = player3D!.Position.X + x;
                         int totalY = player3D.Position.Y + y;
 
                         if (totalX < 0 || totalX >= Map.Width ||
@@ -922,7 +922,7 @@ partial class GameCore
             }
 
             // Save goto points
-            uint testX = 1u + (uint)player.Position.X;
+            uint testX = 1u + (uint)player!.Position.X;
             uint testY = 1u + (uint)player.Position.Y;
             var gotoPoint = Map.GotoPoints.FirstOrDefault(p => p.X == testX && p.Y == testY);
             if (gotoPoint != null)
@@ -988,7 +988,7 @@ partial class GameCore
         if (Godmode)
             return;
 
-        target ??= CurrentPartyMember;
+        target ??= CurrentPartyMember!;
 
         if (condition >= Condition.DeadCorpse && target.Alive)
         {
@@ -1010,7 +1010,7 @@ partial class GameCore
             }
         }
 
-        layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
+        layout.UpdateCharacterNameColors(CurrentSavegame!.ActivePartyMemberSlot);
         layout.UpdateCharacter(target);
     }
 
@@ -1027,9 +1027,9 @@ partial class GameCore
             if (BattleActive)
             {
                 UpdateBattleStatus(partyMember);
-                currentBattle.RemoveCondition(condition, target);
+                currentBattle!.RemoveCondition(condition, target);
             }
-            layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
+            layout.UpdateCharacterNameColors(CurrentSavegame!.ActivePartyMemberSlot);
             layout.UpdateCharacter(partyMember);
 
             if (removeExhaustion)
@@ -1095,7 +1095,7 @@ partial class GameCore
 
     void ActivateLight(uint duration, uint level)
     {
-        CurrentSavegame.ActivateSpell(ActiveSpellType.Light, duration, level);
+        CurrentSavegame!.ActivateSpell(ActiveSpellType.Light, duration, level);
         UpdateLight(false, true);
     }
 
@@ -1104,7 +1104,7 @@ partial class GameCore
         if (buff == ActiveSpellType.Light)
             ActivateLight(duration, value);
         else
-            CurrentSavegame.ActivateSpell(buff, duration, value);
+            CurrentSavegame!.ActivateSpell(buff, duration, value);
     }
 
     public void Revive(Character caster, List<PartyMember> affectedMembers, Action? finishAction = null)
@@ -1176,7 +1176,7 @@ partial class GameCore
                     }
                 }
 
-                layout.SetCharacter(SlotFromPartyMember(partyMember).Value, partyMember, false, Finish);
+                layout.SetCharacter(SlotFromPartyMember(partyMember)!.Value, partyMember, false, Finish);
 
                 if (currentWindow.Window == Window.Inventory && partyMember == CurrentInventory)
                     UpdateCharacterInfo();
@@ -1250,7 +1250,7 @@ partial class GameCore
         {
             if (GetPartyMember(i) == null)
             {
-                CurrentSavegame.CurrentPartyMemberIndices[i] =
+                CurrentSavegame!.CurrentPartyMemberIndices[i] =
                     CurrentSavegame.PartyMembers.FirstOrDefault(p => p.Value == partyMember).Key;
                 this.AddPartyMember(i, partyMember, null, true);
                 // Set battle position
@@ -1315,7 +1315,7 @@ partial class GameCore
         return null;
     }
 
-    internal void ProcessPoisonDamage(uint times, Action<bool> followAction = null)
+    internal void ProcessPoisonDamage(uint times, Action<bool>? followAction = null)
     {
         uint GetDamage()
         {
@@ -1353,7 +1353,7 @@ partial class GameCore
         void Start(bool toDawn)
         {
             // Set this first to avoid tired/exhausted warning when increasing the game time.
-            GameTime.HoursWithoutSleep = 0;
+            GameTime!.HoursWithoutSleep = 0;
             uint hoursToAdd = 8;
             uint minutesToAdd = 0;
 
@@ -1429,8 +1429,8 @@ partial class GameCore
             Recover(0);
         }
 
-        if (!inn && !Map.Flags.HasFlag(MapFlags.NoSleepUntilDawn) &&
-            (GameTime.Hour >= 20 || GameTime.Hour < 4)) // Sleep until dawn
+        if (!inn && !Map!.Flags.HasFlag(MapFlags.NoSleepUntilDawn) &&
+            (GameTime!.Hour >= 20 || GameTime.Hour < 4)) // Sleep until dawn
         {
             layout.ShowClickChestMessage(DataNameProvider.SleepUntilDawn, () => Start(true));
         }
@@ -1567,27 +1567,28 @@ partial class GameCore
 
     internal void SpeakToParty()
     {
-        var hero = GetPartyMember(0);
+        var hero = GetPartyMember(0)!;
 
         if (!hero.Alive || !hero.Conditions.CanTalk())
         {
             ShowMessagePopup(DataNameProvider.UnableToTalk);
             return;
         }
-        if (CurrentSavegame.ActivePartyMemberSlot != 0)
+        if (CurrentSavegame!.ActivePartyMemberSlot != 0)
             SetActivePartyMember(0);
 
         Pause();
         layout.OpenTextPopup(ProcessText(DataNameProvider.WhoToTalkTo),
             null, true, false, false, TextAlign.Center);
         PickTargetPlayer();
+
         void TargetPlayerPicked(int characterSlot)
         {
             ResetMoveKeys(true);
 
             if (characterSlot != -1)
             {
-                var partyMember = GetPartyMember(characterSlot);
+                var partyMember = GetPartyMember(characterSlot)!;
 
                 if (!partyMember.Alive || partyMember.Conditions.HasFlag(Condition.Petrified))
                 {
@@ -1600,6 +1601,7 @@ partial class GameCore
             ClosePopup();
             UntrapMouse();
             InputEnable = true;
+
             if (!WindowActive)
                 Resume();
 
@@ -1609,7 +1611,8 @@ partial class GameCore
                     ExecuteNextUpdateCycle(() => ShowMessagePopup(DataNameProvider.SelfTalkingIsMad));
                 else
                 {
-                    var partyMember = GetPartyMember(characterSlot);
+                    var partyMember = GetPartyMember(characterSlot)!;
+
                     ExecuteNextUpdateCycle(() => ShowConversation(partyMember, null, null, new ConversationItems()));
                 }
             }
@@ -1712,7 +1715,7 @@ partial class GameCore
             SetWindow(Window.Camp, inn, healing);
             lastPlayedSong = PlayMusic(Song.BarBrawlin);
             layout.SetLayout(LayoutType.Items);
-            layout.Set80x80Picture(inn ? Picture80x80.RestInn : Map.Flags.HasFlag(MapFlags.Outdoor) ? Picture80x80.RestOutdoor : Picture80x80.RestDungeon);
+            layout.Set80x80Picture(inn ? Picture80x80.RestInn : Map!.Flags.HasFlag(MapFlags.Outdoor) ? Picture80x80.RestOutdoor : Picture80x80.RestDungeon);
             layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
             var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
             itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
@@ -1785,7 +1788,7 @@ partial class GameCore
             // sleep button
             layout.AttachEventToButton(6, () =>
             {
-                if (!inn && CurrentSavegame.HoursWithoutSleep < 8)
+                if (!inn && CurrentSavegame!.HoursWithoutSleep < 8)
                 {
                     layout.ShowClickChestMessage(DataNameProvider.RestingWouldHaveNoEffect);
                 }
@@ -1863,7 +1866,7 @@ partial class GameCore
         });
     }
 
-    void AddExperience(List<PartyMember> partyMembers, uint amount, Action finishedEvent = null)
+    void AddExperience(List<PartyMember> partyMembers, uint amount, Action? finishedEvent = null)
     {
         void Add(int index)
         {

@@ -176,6 +176,32 @@ public class Game : GameCore
         return hasSavegames;
     }
 
+    protected override IEnumerable<string> Provider_AdditionalSavegameNames()
+    {
+        var additionalSavegameSlots = GetAdditionalSavegameSlots();
+        int remaining = NumAdditionalSavegameSlots - Math.Min(NumAdditionalSavegameSlots, additionalSavegameSlots?.Names?.Length ?? 0);
+
+        IEnumerable<string> additionalSavegameNames = [];
+
+        if (additionalSavegameSlots?.Names != null)
+            additionalSavegameNames = Enumerable.Concat(additionalSavegameNames, additionalSavegameSlots.Names.Take(NumAdditionalSavegameSlots).Select(n => n ?? ""));
+        if (remaining != 0)
+            additionalSavegameNames = Enumerable.Concat(additionalSavegameNames, Enumerable.Repeat("", remaining));
+
+        return additionalSavegameNames;
+    }
+
+    protected override Action<int>? Provider_ContinueGameSlotUpdater()
+    {
+        return slot =>
+        {
+            var additionalSavegameSlots = GetAdditionalSavegameSlots();
+
+            if (additionalSavegameSlots != null)
+                additionalSavegameSlots.ContinueSavegameSlot = slot;
+        };
+    }
+
     #endregion
 
 
@@ -188,8 +214,6 @@ public class Game : GameCore
 
     #region Misc
 
-    const string schnismEasterEgg = "schnismschnismschnism";
-    string schnism = "";
     CharacterCreator? characterCreator = null;    
     public bool Advanced => renderView.GameData.Advanced;   
 
@@ -254,7 +278,6 @@ public class Game : GameCore
     readonly IAdditionalSaveSlotProvider additionalSaveSlotProvider;
     public event Func<ILegacyGameData, int, int, int, Savegame, Savegame>? RequestAdvancedSavegamePatching;
 
-    public const int NumBaseSavegameSlots = 10; // TODO: Make game/mod dependent?
     public const int NumAdditionalSavegameSlots = 20;
 
     // Used for the custom outro

@@ -37,6 +37,7 @@ public class GameData : IGameData, IGraphicProvider
     readonly Lazy<Font> introLargeFont;
     readonly Lazy<Places> places;
     readonly Lazy<IngameFontProvider> ingameFontProvider;
+    readonly Lazy<Dictionary<uint, PartyMember>> initialPartyMembers;
 
     public bool Loaded { get; } = false;
 
@@ -170,8 +171,11 @@ public class GameData : IGameData, IGraphicProvider
         foreach (var customFileHandler in customFileHandlers)
             fileHandlers.Add(customFileHandler.Magic, customFileHandler.Action);
 
+        initialPartyMembers = new(() => savegameManager!.Value.LoadInitial(this, new SavegameSerializer()).PartyMembers);
+
         characterManager = new Lazy<ICharacterManager>(() => new CharacterManager
         (
+            () => initialPartyMembers.Value,
             () => npcLoader!.LoadAll(),
             () => monsterLoader!.LoadAll(),
             () => monsterGroupLoader!.LoadAll()
@@ -250,6 +254,8 @@ public class GameData : IGameData, IGraphicProvider
     void LoadSavegame(IDataReader dataReader)
     {
         // TODO
+        // TODO initial party members
+
         throw new NotImplementedException();
     }
 

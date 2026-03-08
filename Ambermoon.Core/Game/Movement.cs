@@ -152,7 +152,7 @@ partial class GameCore
                 UntrapMouse();
             }
 
-            CurrentSavegame.CharacterDirection = player!.Direction = player3D!.Direction;
+            CurrentSavegame!.CharacterDirection = player!.Direction = player3D!.Direction;
         }
         else
         {
@@ -187,7 +187,7 @@ partial class GameCore
                     break;
             }
 
-            CurrentSavegame.CharacterDirection = player!.Direction = player2D!.Direction;
+            CurrentSavegame!.CharacterDirection = player!.Direction = player2D!.Direction;
         }
     }
 
@@ -252,7 +252,7 @@ partial class GameCore
             else if (CanPartyMove())
             {
                 player3D!.MoveLeft(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
-                CurrentSavegame.CharacterDirection = player!.Direction = player3D.Direction;
+                CurrentSavegame!.CharacterDirection = player!.Direction = player3D.Direction;
             }
         }
         else if (right && !left)
@@ -266,7 +266,7 @@ partial class GameCore
             else if (CanPartyMove())
             {
                 player3D!.MoveRight(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
-                CurrentSavegame.CharacterDirection = player!.Direction = player3D.Direction;
+                CurrentSavegame!.CharacterDirection = player!.Direction = player3D.Direction;
             }
         }
         if (is3D)
@@ -276,14 +276,14 @@ partial class GameCore
                 int turns = tapped ? 6 : 1;
 
                 player3D!.TurnLeft(movement.TurnSpeed3D * turns);
-                CurrentSavegame.CharacterDirection = player!.Direction = player3D.Direction;
+                CurrentSavegame!.CharacterDirection = player!.Direction = player3D.Direction;
             }
             else if (!turnLeft && turnRight)
             {
                 int turns = tapped ? 6 : 1;
 
                 player3D!.TurnRight(movement.TurnSpeed3D * turns);
-                CurrentSavegame.CharacterDirection = player!.Direction = player3D.Direction;
+                CurrentSavegame!.CharacterDirection = player!.Direction = player3D.Direction;
             }
         }
         if (up && !down)
@@ -297,7 +297,7 @@ partial class GameCore
             else if (CanPartyMove())
             {
                 bool moved = player3D!.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
-                CurrentSavegame.CharacterDirection = player!.Direction = player3D.Direction;
+                CurrentSavegame!.CharacterDirection = player!.Direction = player3D.Direction;
 
                 if (tapped && moved)
                 {
@@ -324,7 +324,7 @@ partial class GameCore
             else if (CanPartyMove())
             {
                 player3D!.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
-                CurrentSavegame.CharacterDirection = player!.Direction = player3D.Direction;
+                CurrentSavegame!.CharacterDirection = player!.Direction = player3D.Direction;
             }
         }
     }

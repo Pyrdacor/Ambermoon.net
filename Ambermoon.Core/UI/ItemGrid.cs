@@ -47,7 +47,7 @@ internal class ItemGrid
     IRenderText? hoveredItemName;
     IRenderText? hoveredItemPrice;
     readonly bool allowExternalDrop;
-    readonly Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>, bool> pickupAction;
+    readonly Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem?, int>, bool> pickupAction;
     readonly int slotsPerPage;
     readonly int slotsPerScroll;
     Scrollbar? scrollbar;
@@ -94,7 +94,7 @@ internal class ItemGrid
                     item?.Destroy();
             }
 
-            var slotTexCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(
+            var slotTexCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!.GetOffset(
                 Graphics.GetCustomUIGraphicIndex(disabled ? UICustomGraphic.ItemSlotDisabled : UICustomGraphic.ItemSlotBackground));
             foreach (var background in slotBackgrounds)
                 background.TextureAtlasOffset = slotTexCoords;
@@ -121,7 +121,7 @@ internal class ItemGrid
     }
 
     private ItemGrid(GameCore game, Layout layout, IGameRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
-        List<ItemSlot?> slots, bool allowExternalDrop, Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>, bool> pickupAction,
+        List<ItemSlot?> slots, bool allowExternalDrop, Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem?, int>, bool> pickupAction,
         int slotsPerPage, int slotsPerScroll, int numTotalSlots, Rect? scrollbarArea = null, Size? scrollbarSize = null,
         ScrollbarType? scrollbarType = null, bool showPrice = false, Func<uint>? availableGoldProvider = null)
     {
@@ -155,7 +155,7 @@ internal class ItemGrid
     void CreateSlotBackgrounds()
     {
         var layer = renderView.GetLayer(Layer.UI);
-        var texCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ItemSlotBackground));
+        var texCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ItemSlotBackground));
         byte paletteIndex = game.UIPaletteIndex;
 
         for (int i = 0; i < slotBackgrounds.Length; ++i)
@@ -177,7 +177,7 @@ internal class ItemGrid
         Action<ItemGrid, int, ItemSlot> equipHandler, Action<ItemGrid, int, ItemSlot> useHandler)
     {
         var grid = new ItemGrid(game, layout, renderView, itemManager, slotPositions, slots, true,
-            (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
+            (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem?, int> dragAction, bool takeAll) =>
                 layout.DragItems(item, takeAll, dragAction,
                 () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, false)),
             12, 3, 24, new Rect(109 + 3 * 22, 76, 6, 112), new Size(6, 56), ScrollbarType.LargeVertical);
@@ -208,7 +208,7 @@ internal class ItemGrid
         Action<ItemGrid, int, ItemSlot> unequipHandler, Action<ItemGrid, int, ItemSlot> useHandler)
     {
         var grid = new ItemGrid(game, layout, renderView, itemManager, slotPositions, slots, true,
-            (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
+            (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem?, int> dragAction, bool takeAll) =>
             {
                 if (equipChecker(item.Item))
                 {
@@ -352,7 +352,7 @@ internal class ItemGrid
         bool showPrice = false, Func<uint>? availableGoldProvider = null)
     {
         var grid =  new ItemGrid(game, layout, renderView, itemManager, slotPositions, slots, allowExternalDrop,
-            (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
+            (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem?, int> dragAction, bool takeAll) =>
                 layout.DragItems(item, takeAll, dragAction, () => Layout.DraggedItem.FromExternal(itemGrid, slot, item)),
                 slotsPerPage, slotsPerScroll, numTotalSlots, scrollbarArea, scrollbarSize, scrollbarType, showPrice, availableGoldProvider);
         grid.dropSlotProvider = (position, broken, _) => grid.SlotFromPosition(position);
@@ -744,9 +744,9 @@ internal class ItemGrid
         scrollbar?.LeftMouseUp();
     }
 
-    public bool Click(Position position, Layout.DraggedItem draggedItem,
+    public bool Click(Position position, Layout.DraggedItem? draggedItem,
         out ItemAction itemAction, MouseButtons mouseButtons, ref CursorType cursorType,
-        Action<Layout.DraggedItem> dragHandler, KeyModifiers keyModifiers = KeyModifiers.None)
+        Action<Layout.DraggedItem>? dragHandler, KeyModifiers keyModifiers = KeyModifiers.None)
     {
         itemAction = ItemAction.None;
 
@@ -859,9 +859,9 @@ internal class ItemGrid
 
     void Pickup(int slot, UIItem itemSlot, bool takeAll, Action<Layout.DraggedItem>? additionalAction)
     {
-        pickupAction(this, slot, itemSlot, (Layout.DraggedItem item, int amount) =>
+        pickupAction(this, slot, itemSlot, (Layout.DraggedItem? item, int amount) =>
         {
-            item.Item!.Item.Amount = amount;
+            item!.Item!.Item.Amount = amount;
             item.Item.Update(false);
             ItemDragged?.Invoke(slot, item.Item.Item, amount, true);
             if (items[slot]!.Item.Empty)
@@ -964,7 +964,7 @@ internal class ItemGrid
         }
     }
 
-    public void PlayMoveAnimation(ItemSlot itemSlot, Position targetPosition, Action? finishAction,
+    public void PlayMoveAnimation(ItemSlot itemSlot, Position? targetPosition, Action? finishAction,
         int pixelsPerSecond = 300)
     {
         var slotPosition = GetSlotPosition(SlotFromItemSlot(itemSlot));

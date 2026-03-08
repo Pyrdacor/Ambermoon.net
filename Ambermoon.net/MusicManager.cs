@@ -18,7 +18,7 @@ namespace Ambermoon
         {
             { "mp3", LoadMp3 }
         };
-        readonly IConfiguration configuration;
+        readonly ICoreConfiguration configuration;
         readonly Dictionary<Song, ISong> externalSongs = new();
         IAudioOutput audioOutput = null;
         IAudioStream currentStream = null;
@@ -26,7 +26,7 @@ namespace Ambermoon
         readonly ISongManager songManager = null;
         readonly object startMutex = new();
 
-        public MusicManager(IConfiguration configuration, IGameData gameData)
+        public MusicManager(ICoreConfiguration configuration, IGameData gameData)
         {
             songManager = gameData.SongManager;
 

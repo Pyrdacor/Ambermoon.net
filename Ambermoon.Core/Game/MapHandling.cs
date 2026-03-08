@@ -21,7 +21,7 @@ partial class GameCore
 
     public bool Is3D => is3D;
     internal IMapCharacter? CurrentMapCharacter { get; set; } // This is set when interacting with a map character
-    public Map? Map => !ingame ? null : Is3D ? renderMap3D?.Map : renderMap2D?.Map;
+    public Map? Map => !Ingame ? null : Is3D ? renderMap3D?.Map : renderMap2D?.Map;
     public IMapManager MapManager { get; }
     internal bool MonsterSeesPlayer { get; set; } = false;
 
@@ -45,7 +45,7 @@ partial class GameCore
             {
                 if (lastPlayedSong != null && lastPlayedSong != Song.BarBrawlin)
                     PlayMusic(lastPlayedSong.Value);
-                else if (Map.UseTravelMusic)
+                else if (Map!.UseTravelMusic)
                     PlayMusic(TravelType.TravelSong());
                 else
                     PlayMusic(Song.Default);
@@ -72,7 +72,7 @@ partial class GameCore
         else
         {
             if (show)
-                layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false, Map.UseTravelTypes, TravelType));
+                layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false, Map!.UseTravelTypes, TravelType));
             for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                 renderView.GetLayer((Layer)i).Visible = show;
         }
@@ -85,13 +85,13 @@ partial class GameCore
 
             foreach (var specialItem in EnumHelper.GetValues<SpecialItemPurpose>())
             {
-                if (CurrentSavegame.IsSpecialItemActive(specialItem))
+                if (CurrentSavegame!.IsSpecialItemActive(specialItem))
                     layout.AddSpecialItem(specialItem);
             }
 
             foreach (var activeSpell in EnumHelper.GetValues<ActiveSpellType>())
             {
-                if (CurrentSavegame.ActiveSpells[(int)activeSpell] != null)
+                if (CurrentSavegame!.ActiveSpells[(int)activeSpell] != null)
                     layout.AddActiveSpell(activeSpell, CurrentSavegame.ActiveSpells[(int)activeSpell], false);
             }
         }
@@ -158,7 +158,7 @@ partial class GameCore
         if (x >= map.Width || y >= map.Height)
             return;
 
-        var automap = CurrentSavegame.Automaps.TryGetValue(mapIndex, out var existingAutomap)
+        var automap = CurrentSavegame!.Automaps.TryGetValue(mapIndex, out var existingAutomap)
             ? existingAutomap
             : new Automap() { ExplorationBits = new byte[(map.Width * map.Height + 7) / 8] };
 
@@ -193,12 +193,12 @@ partial class GameCore
             }
         }
 
-        CurrentSavegame.Automaps[Map.Index] = automap;
+        CurrentSavegame.Automaps[Map!.Index] = automap;
     }
 
     public void ExploreMapArea(RectangularExplorationEvent rectangularExplorationEvent)
     {
-        if (!ingame || Map is null || !Is3D)
+        if (!Ingame || Map is null || !Is3D)
             return;
 
         var mapIndex = rectangularExplorationEvent.MapIndex;
@@ -212,7 +212,7 @@ partial class GameCore
 
     public void ExploreMapArea(VerticalLineRevealEvent verticalLineRevealEvent)
     {
-        if (!ingame || Map is null || !Is3D)
+        if (!Ingame || Map is null || !Is3D)
             return;
 
         var reveal = RectangularExplorationEvent.ExplorationType.Reveal;
@@ -238,10 +238,10 @@ partial class GameCore
 
     public bool ExploreMap()
     {
-        if (!ingame || Map is null || !Is3D)
+        if (!Ingame || Map is null || !Is3D)
             return false;
 
-        if (!CurrentSavegame.Automaps.TryGetValue(Map.Index, out var automap))
+        if (!CurrentSavegame!.Automaps.TryGetValue(Map.Index, out var automap))
         {
             automap = new Automap { ExplorationBits = Enumerable.Repeat((byte)0xff, (Map.Width * Map.Height + 7) / 8).ToArray() };
             CurrentSavegame.Automaps[Map.Index] = automap;
@@ -261,7 +261,7 @@ partial class GameCore
 
         if (currentWindow.Window == Window.Automap && nextClickHandler != null)
         {
-            var automapOptions = (AutomapOptions)currentWindow.WindowParameters[0];
+            var automapOptions = (AutomapOptions)currentWindow.WindowParameters[0]!;
             var oldCloseWindowHandler = closeWindowHandler;
             closeWindowHandler = backToMap =>
             {
@@ -319,14 +319,14 @@ partial class GameCore
             if (TravelType.UsesMapObject())
             {
                 index = null;
-                for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
+                for (int i = 0; i < CurrentSavegame!.TransportLocations.Length; ++i)
                 {
                     if (CurrentSavegame.TransportLocations[i] == null)
                     {
                         CurrentSavegame.TransportLocations[i] = new TransportLocation
                         {
                             MapIndex = mapIndex,
-                            Position = Map.IsWorldMap
+                            Position = Map!.IsWorldMap
                                 ? new Position((int)x % 50 + 1, (int)y % 50 + 1)
                                 : new Position((int)x + 1, (int)y + 1),
                             TravelType = TravelType
@@ -337,7 +337,7 @@ partial class GameCore
                 }
 
                 if (index != null)
-                    renderMap2D.PlaceTransport(mapIndex, Map.IsWorldMap ? x % 50 : x, Map.IsWorldMap ? y % 50 : y, TravelType, index.Value);
+                    renderMap2D.PlaceTransport(mapIndex, Map!.IsWorldMap ? x % 50 : x, Map.IsWorldMap ? y % 50 : y, TravelType, index.Value);
                 else
                     return;
             }
@@ -360,11 +360,11 @@ partial class GameCore
             if (layout.ButtonGridPage == 1)
                 layout.EnableButton(5, TravelType.CanCampOn());
 
-            renderMap2D.TriggerEvents(player2D!, EventTrigger.Move, x, y, MapManager, CurrentTicks, CurrentSavegame);
+            renderMap2D.TriggerEvents(player2D!, EventTrigger.Move, x, y, MapManager, CurrentTicks, CurrentSavegame!);
         }
         else if (transport != null && TravelType == TravelType.Walk)
         {
-            CurrentSavegame.TransportLocations[index.Value] = null;
+            CurrentSavegame!.TransportLocations[index!.Value] = null;
             renderMap2D.RemoveTransport(index.Value);
             ActivateTransport(transport.TravelType);
         }
@@ -373,13 +373,13 @@ partial class GameCore
     TransportLocation? GetTransportAtPlayerLocation(out int? index)
     {
         index = null;
-        var mapIndex = renderMap2D!.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index;
+        var mapIndex = renderMap2D!.GetMapFromTile((uint)player!.Position.X, (uint)player.Position.Y).Index;
         // Note: Savegame stores positions 1-based but we 0-based so increase by 1,1 for tests below.
         var position = Map!.IsWorldMap
             ? new Position(player.Position.X % 50 + 1, player.Position.Y % 50 + 1)
             : new Position(player.Position.X + 1, player.Position.Y + 1);
 
-        for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
+        for (int i = 0; i < CurrentSavegame!.TransportLocations.Length; ++i)
         {
             var transport = CurrentSavegame.TransportLocations[i];
 
@@ -396,12 +396,12 @@ partial class GameCore
         return null;
     }
 
-    List<TransportLocation> GetTransportsInVisibleArea(out TransportLocation transportAtPlayerIndex)
+    List<TransportLocation> GetTransportsInVisibleArea(out TransportLocation? transportAtPlayerIndex)
     {
         transportAtPlayerIndex = null;
         var transports = new List<TransportLocation>();
 
-        if (!Map.UseTravelTypes)
+        if (!Map!.UseTravelTypes)
             return transports;
 
         var mapIndex = renderMap2D!.GetMapFromTile((uint)player!.Position.X, (uint)player.Position.Y).Index;
@@ -410,7 +410,7 @@ partial class GameCore
             ? new Position(player.Position.X % 50 + 1, player.Position.Y % 50 + 1)
             : new Position(player.Position.X + 1, player.Position.Y + 1);
 
-        for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
+        for (int i = 0; i < CurrentSavegame!.TransportLocations.Length; ++i)
         {
             var transport = CurrentSavegame.TransportLocations[i];
 
@@ -511,7 +511,7 @@ partial class GameCore
         bool save = true)
     {
         bool sameMap = changeTileEvent.MapIndex == 0 || changeTileEvent.MapIndex == Map!.Index;
-        var map = sameMap ? Map : MapManager.GetMap(changeTileEvent.MapIndex);
+        var map = sameMap ? Map! : MapManager.GetMap(changeTileEvent.MapIndex);
         uint x = changeTileEvent.X == 0
             ? (currentX ?? throw new AmbermoonException(ExceptionScope.Data, "No change tile position given"))
             : changeTileEvent.X - 1;
@@ -522,10 +522,10 @@ partial class GameCore
         if (save)
         {
             // Add it to the savegame as well.
-            var changeEvents = CurrentSavegame.TileChangeEvents;
+            var changeEvents = CurrentSavegame!.TileChangeEvents;
 
             if (!changeEvents.ContainsKey(map!.Index))
-                changeEvents[map.Index] = new() { changeTileEvent };
+                changeEvents[map.Index] = [changeTileEvent];
             else
             {
                 var existing = changeEvents[map.Index].FirstOrDefault(e => e.X == changeTileEvent.X && e.Y == changeTileEvent.Y);
@@ -564,12 +564,12 @@ partial class GameCore
 
     internal void SetMapEventBit(uint mapIndex, uint eventListIndex, bool bit)
     {
-        CurrentSavegame.SetEventBit(mapIndex, eventListIndex, bit);
+        CurrentSavegame!.SetEventBit(mapIndex, eventListIndex, bit);
     }
 
     internal void SetMapCharacterBit(uint mapIndex, uint characterIndex, bool bit)
     {
-        CurrentSavegame.SetCharacterBit(mapIndex, characterIndex, bit);
+        CurrentSavegame!.SetCharacterBit(mapIndex, characterIndex, bit);
 
         // Note: That might not work for world maps but there are no characters on those maps.
         if (Map!.Index == mapIndex)
@@ -598,14 +598,14 @@ partial class GameCore
         var mapIndex = 1 + characterBit / 32;
         var characterIndex = characterBit % 32;
 
-        return !CurrentSavegame.GetCharacterBit(mapIndex, characterIndex);
+        return !CurrentSavegame!.GetCharacterBit(mapIndex, characterIndex);
     }
 
     internal void UpdateTransportPosition(int index)
     {
         if (!is3D && Map!.UseTravelTypes)
         {
-            var transport = CurrentSavegame.TransportLocations[index];
+            var transport = CurrentSavegame!.TransportLocations[index];
             renderMap2D!.RemoveTransport(index);
             renderMap2D.PlaceTransport(transport.MapIndex, (uint)transport.Position.X - 1,
                 (uint)transport.Position.Y - 1, transport.TravelType, index);
@@ -616,7 +616,7 @@ partial class GameCore
     {
         bool lightBuffBurningOut = false;
 
-        if (!CurrentSavegame.IsSpellActive(ActiveSpellType.Light) && minutesPassed == 5)
+        if (!CurrentSavegame!.IsSpellActive(ActiveSpellType.Light) && minutesPassed == 5)
         {
             uint lastHour;
 
@@ -800,7 +800,7 @@ partial class GameCore
                 uint lastIntensity = lightIntensity;
 
                 lightIntensity = GetDaytimeLightIntensity();
-                lightIntensity = Math.Min(255, lightIntensity + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
+                lightIntensity = Math.Min(255, lightIntensity + CurrentSavegame!.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
 
                 if (!Is3D && (lastIntensity != lightIntensity || mapChange))
                 {
@@ -827,11 +827,11 @@ partial class GameCore
             {
                 if (Is3D)
                 {
-                    if (mapChange && !CurrentSavegame.IsSpellActive(ActiveSpellType.Light))
+                    if (mapChange && !CurrentSavegame!.IsSpellActive(ActiveSpellType.Light))
                         lightIntensity = 0;
                     else
                     {
-                        var lightLevel = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light);
+                        var lightLevel = CurrentSavegame!.GetActiveSpellLevel(ActiveSpellType.Light);
                         if (lightLevel > 0 || !playerSwitched)
                         {
                             lightIntensity = Math.Min(255, 176 + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
@@ -843,7 +843,7 @@ partial class GameCore
                 else
                 {
                     uint lastIntensity = lightIntensity;
-                    lightIntensity = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32;
+                    lightIntensity = CurrentSavegame!.GetActiveSpellLevel(ActiveSpellType.Light) * 32;
 
                     if (lastIntensity != lightIntensity)
                     {
@@ -874,13 +874,15 @@ partial class GameCore
             uint lightBuffIntensity = Map!.Flags.HasFlag(MapFlags.Outdoor)
                 ? (uint)Math.Max(0, (customOutdoorLightIntensity ?? lightIntensity) - (long)GetDaytimeLightIntensity())
                 : lightIntensity;
+
             renderMap3D!.UpdateSky(lightEffectProvider, GameTime!, lightBuffIntensity);
             renderMap3D.SetColorLightFactor(light3D);
             renderMap3D.SetFog(Map, MapManager.GetLabdataForMap(Map));
         }
         else // 2D
         {
-            GetTransportsInVisibleArea(out TransportLocation transportAtPlayerIndex);
+            GetTransportsInVisibleArea(out TransportLocation? transportAtPlayerIndex);
+
             player2D ??= new Player2D(this, renderView.GetLayer(Layer.Characters), player!, renderMap2D!,
                 renderView.SpriteFactory, new Position(0, 0), MapManager);
             player2D.BaselineOffset = !CanSee() || transportAtPlayerIndex != null ? MaxBaseLine :
@@ -895,11 +897,13 @@ partial class GameCore
             Pause();
             var popup = layout.OpenPopup(Map2DViewArea.Position, 11, 9, true, false);
             var contentArea = popup.ContentArea;
+
             CursorType = CursorType.Sword;
             TrapMouse(contentArea);
+
             const int numVisibleTilesX = 72; // (11 - 2) * 16 / 2
             const int numVisibleTilesY = 56; // (9 - 2) * 16 / 2
-            int displayWidth = Map.IsWorldMap ? numVisibleTilesX : Math.Min(numVisibleTilesX, Map.Width);
+            int displayWidth = Map!.IsWorldMap ? numVisibleTilesX : Math.Min(numVisibleTilesX, Map.Width);
             int displayHeight = Map.IsWorldMap ? numVisibleTilesY : Math.Min(numVisibleTilesY, Map.Height);
             var baseX = popup.ContentArea.Position.X + (numVisibleTilesX - displayWidth); // 1 tile = 2 pixel, half of it is 1, it's actually * 1 here
             var baseY = popup.ContentArea.Position.Y + (numVisibleTilesY - displayHeight); // 1 tile = 2 pixel, half of it is 1, it's actually * 1 here
@@ -908,14 +912,15 @@ partial class GameCore
             int drawX = baseX;
             int drawY = baseY;
 
-            var rightMap = Map.IsWorldMap ? MapManager.GetMap(Map.RightMapIndex.Value) : null;
-            var downMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownMapIndex.Value) : null;
-            var downRightMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownRightMapIndex.Value) : null;
-            Func<Map, int, int, KeyValuePair<byte, byte?>> tileColorProvider = null;
+            var rightMap = Map.IsWorldMap ? MapManager.GetMap(Map.RightMapIndex!.Value) : null;
+            var downMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownMapIndex!.Value) : null;
+            var downRightMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownRightMapIndex!.Value) : null;
+            Func<Map, int, int, KeyValuePair<byte, byte?>>? tileColorProvider = null;
 
             if (is3D)
             {
                 var labdata = MapManager.GetLabdataForMap(Map);
+
                 tileColorProvider = (map, x, y) =>
                 {
                     // Note: In original this seems bugged. The map border is drawn in different colors depending on savegame and who knows what.
@@ -930,12 +935,14 @@ partial class GameCore
             {
                 // Possible adjacent maps should use the same tileset so don't bother to provide 4 tilesets here.
                 var tileset = MapManager.GetTilesetForMap(Map);
+
                 tileColorProvider = (map, x, y) =>
                 {
                     var backTileIndex = map.Tiles[x, y].BackTileIndex;
                     var frontTileIndex = map.Tiles[x, y].FrontTileIndex;
                     byte backColorIndex = tileset.Tiles[backTileIndex - 1].ColorIndex;
-                    byte? frontColorIndex = frontTileIndex == 0 ? (byte?)null : tileset.Tiles[frontTileIndex - 1].ColorIndex;
+                    byte? frontColorIndex = frontTileIndex == 0 ? null : tileset.Tiles[frontTileIndex - 1].ColorIndex;
+
                     return KeyValuePair.Create(backColorIndex, frontColorIndex);
                 };
             }
@@ -947,13 +954,16 @@ partial class GameCore
                     GetPaletteColor((int)map.PaletteIndex, renderView.GraphicProvider.PaletteIndexFromColorIndex(map, tileColors.Key)), 100);
                 filledAreas.Add(backArea);
                 backArea.Visible = visible;
+
                 if (tileColors.Value != null)
                 {
                     var color = GetPaletteColor((int)map.PaletteIndex, renderView.GraphicProvider.PaletteIndexFromColorIndex(map, tileColors.Value.Value));
                     var upperRightArea = layout.FillArea(new Rect(drawX + 1, drawY, 1, 1), color, 110);
                     var lowerLeftArea = layout.FillArea(new Rect(drawX, drawY + 1, 1, 1), color, 110);
+
                     filledAreas.Add(upperRightArea);
                     filledAreas.Add(lowerLeftArea);
+
                     upperRightArea.Visible = visible;
                     lowerLeftArea.Visible = visible;
                 }
@@ -1007,7 +1017,7 @@ partial class GameCore
             // 16x10 pixels per frame, stored as one image of 16x40 pixels
             // The real position inside each frame has an offset of 7,4
             var positionMarkerGraphicIndex = Graphics.GetUIGraphicIndex(UIGraphic.PlusBlinkAnimation);
-            var positionMarker = popup.AddImage(new Rect(baseX + player.Position.X * 2 - 7, baseY + player.Position.Y * 2 - 4, 16, 10),
+            var positionMarker = popup.AddImage(new Rect(baseX + player!.Position.X * 2 - 7, baseY + player.Position.Y * 2 - 4, 16, 10),
                 positionMarkerGraphicIndex, Layer.UI, 120, UIPaletteIndex);
             positionMarker.ClipArea = contentArea;
             var positionMarkerBaseTextureOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(positionMarkerGraphicIndex);
@@ -1111,13 +1121,14 @@ partial class GameCore
 
     internal void ShowAutomap()
     {
-        if (!Map.Flags.HasFlag(MapFlags.Automapper))
+        if (!Map!.Flags.HasFlag(MapFlags.Automapper))
         {
             ShowMessagePopup(DataNameProvider.AutomapperNotWorkingHere);
             return;
         }
 
-        bool showAll = CurrentSavegame.IsSpellActive(ActiveSpellType.MysticMap);
+        bool showAll = CurrentSavegame!.IsSpellActive(ActiveSpellType.MysticMap);
+
         ShowAutomap(new AutomapOptions
         {
             SecretDoorsVisible = showAll,
@@ -1130,7 +1141,7 @@ partial class GameCore
 
     
 
-    internal void ShowAutomap(AutomapOptions automapOptions, Action finishAction = null)
+    internal void ShowAutomap(AutomapOptions automapOptions, Action? finishAction = null)
     {
         mobileAutomapScroll.X = 0;
         mobileAutomapScroll.Y = 0;
@@ -1190,6 +1201,7 @@ partial class GameCore
                 void ShowLegendPage(int page)
                 {
                     legendPage = page;
+
                     AddTimedEvent(TimeSpan.FromSeconds(4), ToggleLegendPage);
 
                     void SetLegendEntry(int index, AutomapType? automapType)
@@ -1201,7 +1213,7 @@ partial class GameCore
                         }
                         else
                         {
-                            legendSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetAutomapGraphicIndex(automapType.Value.ToGraphic().Value));
+                            legendSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetAutomapGraphicIndex(automapType.Value.ToGraphic()!.Value));
                             legendTexts[index].SetText(renderView.TextProcessor.CreateText(DataNameProvider.GetAutomapName(automapType.Value)));
                             legendSprites[index].Visible = true;
                             legendTexts[index].Visible = true;
@@ -1261,21 +1273,22 @@ partial class GameCore
                 ShowLegendPage(0);
                 var locationArea = new Rect(217, 166, 86, 22);
                 layout.AddPanel(locationArea, 11);
-                if (CurrentSavegame.IsSpecialItemActive(SpecialItemPurpose.MapLocation))
+                if (CurrentSavegame!.IsSpecialItemActive(SpecialItemPurpose.MapLocation))
                 {
                     layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 3, 70, Global.GlyphLineHeight), DataNameProvider.Location, TextColor.White, TextAlign.Left, 15);
-                    layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 12, 70, Global.GlyphLineHeight), $"X:{player3D.Position.X + 1,-2} Y:{player3D.Position.Y + 1}", TextColor.White, TextAlign.Left, 15);
+                    layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 12, 70, Global.GlyphLineHeight), $"X:{player3D!.Position.X + 1,-2} Y:{player3D.Position.Y + 1}", TextColor.White, TextAlign.Left, 15);
                 }
                 DrawPin(locationArea.Right - 16, locationArea.Bottom - 32, 16, 16, false);
                 #endregion
 
                 #region Map
-                var automap = CurrentSavegame.Automaps.TryGetValue(Map.Index, out var a) ? a : null;
+                var automap = CurrentSavegame.Automaps.TryGetValue(Map!.Index, out var a) ? a : null;
+
                 void DrawPin(int x, int y, byte upperDisplayLayer, byte lowerDisplayLayer, bool onMap)
                 {
                     var pinHead = !CurrentSavegame.IsSpecialItemActive(SpecialItemPurpose.Compass)
                         ? AutomapGraphic.PinUpperHalf
-                        : AutomapGraphic.PinDirectionUp + (int)player3D.PreciseDirection;
+                        : AutomapGraphic.PinDirectionUp + (int)player3D!.PreciseDirection;
                     var upperSprite = layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAutomapGraphicIndex(pinHead), paletteIndex, upperDisplayLayer);
                     var lowerSprite = layout.AddSprite(new Rect(x, y + 16, 16, 16), Graphics.GetAutomapGraphicIndex(AutomapGraphic.PinLowerHalf), paletteIndex, lowerDisplayLayer);
 
@@ -1368,7 +1381,7 @@ partial class GameCore
                 }
                 void AddTile(int tx, int ty, int x, int y)
                 {
-                    renderMap3D.CharacterTypeFromBlock((uint)tx, (uint)ty, out var automapType);
+                    renderMap3D!.CharacterTypeFromBlock((uint)tx, (uint)ty, out var automapType);
 
                     if (automapType == AutomapType.None)
                         automapType = renderMap3D.AutomapTypeFromBlock((uint)tx, (uint)ty);
@@ -1458,7 +1471,8 @@ partial class GameCore
                 #endregion
 
                 #region Map content
-                FilledArea mapFill = null;
+                FilledArea? mapFill = null;
+
                 void FillMap()
                 {
                     mapFill?.Destroy();
@@ -1735,7 +1749,7 @@ partial class GameCore
 
                         foreach (var gotoPoint in gotoPoints)
                         {
-                            gotoPoint.Value.Area.Position.X -= diffX;
+                            gotoPoint.Value.Area!.Position.X -= diffX;
                             gotoPoint.Value.Area.Position.Y -= diffY;
                         }
 
@@ -1758,11 +1772,11 @@ partial class GameCore
                         {
                             var mousePosition = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
 
-                            var clickedGotoPoint = gotoPoints.FirstOrDefault(gotoPoint => gotoPoint.Value.Area.Contains(mousePosition));
+                            var clickedGotoPoint = gotoPoints.FirstOrDefault(gotoPoint => gotoPoint.Value.Area!.Contains(mousePosition));
 
                             // Be a bit more forgiving on mobile devices if they not exactly hit the small circle
                             if (clickedGotoPoint.Key == null && CoreConfiguration.IsMobile)
-                                clickedGotoPoint = gotoPoints.FirstOrDefault(gotoPoint => gotoPoint.Value.Area.CreateModified(-6, -6, 12, 12).Contains(mousePosition));
+                                clickedGotoPoint = gotoPoints.FirstOrDefault(gotoPoint => gotoPoint.Value.Area!.CreateModified(-6, -6, 12, 12).Contains(mousePosition));
 
                             if (clickedGotoPoint.Key != null)
                             {
@@ -1802,7 +1816,7 @@ partial class GameCore
                                                     var xDiff = Math.Abs((int)clickedGotoPoint.Key.X - (player3D.Position.X + 1));
                                                     var yDiff = Math.Abs((int)clickedGotoPoint.Key.Y - (player3D.Position.Y + 1));
                                                     uint ticks = (uint)Util.Round((xDiff + yDiff) * 0.2f);
-                                                    GameTime.Ticks(ticks);
+                                                    GameTime!.Ticks(ticks);
                                                     Teleport(Map.Index, clickedGotoPoint.Key.X, clickedGotoPoint.Key.Y, clickedGotoPoint.Key.Direction, out _, true);
                                                 });
                                             }
@@ -1826,7 +1840,7 @@ partial class GameCore
 
                 bool closed = false;
 
-                void Exit(Action followAction = null)
+                void Exit(Action? followAction = null)
                 {
                     var exitAction = finishAction == null ? followAction : () =>
                     {
@@ -1902,7 +1916,7 @@ partial class GameCore
                 CheckScroll();
 
                 // Initial scroll
-                int startScrollX = Math.Max(0, (player.Position.X - 6) / 2);
+                int startScrollX = Math.Max(0, (player!.Position.X - 6) / 2);
                 int startScrollY = Math.Max(0, (player.Position.Y - 8) / 2);
                 Scroll(startScrollX, startScrollY);
 

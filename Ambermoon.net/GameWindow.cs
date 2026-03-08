@@ -44,7 +44,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
     IMouse mouse = null;
     ICursor cursor = null;
     MainMenu mainMenu = null;
-    Func<Game> gameCreator = null;
+    Func<Game.Game> gameCreator = null;
     MusicManager musicManager = null;
     AudioOutput audioOutput = null;
     IRenderText infoText = null;
@@ -72,7 +72,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
     public int Height { get; private set; }
     VersionSelector versionSelector = null;
     Intro intro = null;
-    public Game Game { get; private set; }
+    public Game.Game Game { get; private set; }
     public WindowMode WindowMode
     {
         get => configuration.WindowMode;
@@ -848,7 +848,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             try
             {
                 var savegameManager = new RemakeSavegameManager(savePath, configuration);
-                savegameManager.GetSavegameNames(gameData, out int currentSavegame, Game.NumBaseSavegameSlots);
+                savegameManager.GetSavegameNames(gameData, out int currentSavegame, GameCore.NumBaseSavegameSlots);
                 if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
                     currentSavegame = savegameManager.ContinueSavegameSlot;
                 bool canContinue = currentSavegame != 0;
@@ -866,7 +866,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                         {
                             var version = Assembly.GetEntryAssembly().GetName().Version;
                             string versionString = $"Ambermoon.net V{version.Major}.{version.Minor}.{version.Build:00}";
-                            var game = new Game(configuration, gameLanguage, renderView, graphicProvider,
+                            var game = new Game.Game(configuration, gameLanguage, renderView, graphicProvider,
                                 savegameManager, savegameSerializer, gameData.Dictionary, cursor, audioOutput,
                                 musicManager, FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
                                 new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
@@ -954,6 +954,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                             };
 
                             game.Run(continueGame, ConvertMousePosition(mouse.Position));
+
                             return game;
                         };
                     }
@@ -1385,7 +1386,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => digitTextureAtlas.GetOffset((uint)x));
     }
 
-    GameRenderView CreateRenderView(IGameData gameData, IConfiguration configuration, IGraphicProvider graphicProvider,
+    GameRenderView CreateRenderView(IGameData gameData, ICoreConfiguration configuration, IGraphicProvider graphicProvider,
         IFontProvider fontProvider, Graphic[] additionalPalettes, Func<TextureAtlasManager> textureAtlasManagerProvider)
     {
         bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;
@@ -1846,7 +1847,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y);
     }
 
-    void UpdateWindow(IConfiguration configuration)
+    void UpdateWindow(ICoreConfiguration configuration)
     {
         if (WindowMode == WindowMode.Normal)
         {
@@ -1894,7 +1895,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
     public void Run(Configuration configuration)
     {
         this.configuration = configuration;
-        var screenSize = configuration.GetScreenSize();
+        var screenSize = (configuration as ICoreConfiguration).GetScreenSize();
         Width = screenSize.Width;
         Height = screenSize.Height;
 

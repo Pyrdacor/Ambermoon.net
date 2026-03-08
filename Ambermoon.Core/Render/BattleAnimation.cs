@@ -55,7 +55,7 @@ namespace Ambermoon.Render
         Position baseTextureCoords;
         uint startAnimationTicks;
         uint ticksPerFrame;
-        int[] frameIndices;
+        int[]? frameIndices;
         float scale = 1.0f;
         float endScale = 1.0f;
         float startScale = 1.0f;
@@ -73,8 +73,8 @@ namespace Ambermoon.Render
         /// </summary>
         public float ReferenceScale { get; set; } = 1.0f;
 
-        public event Action AnimationFinished;
-        public event Action<float> AnimationUpdated;
+        public event Action? AnimationFinished;
+        public event Action<float>? AnimationUpdated;
 
         public BattleAnimation(ILayerSprite sprite)
         {
@@ -89,8 +89,8 @@ namespace Ambermoon.Render
             wasVisible = sprite.Visible;
         }
 
-        public void SetStartFrame(Position textureOffset, Size size, Position centerPosition = null,
-            float initialScale = 1.0f, bool mirrorX = false, Size customTextureSize = null,
+        public void SetStartFrame(Position textureOffset, Size size, Position? centerPosition = null,
+            float initialScale = 1.0f, bool mirrorX = false, Size? customTextureSize = null,
             HorizontalAnchor anchorX = HorizontalAnchor.Center, VerticalAnchor anchorY = VerticalAnchor.Center)
         {
             if (centerPosition != null)
@@ -181,7 +181,7 @@ namespace Ambermoon.Render
 
         public void Destroy() => sprite?.Delete();
 
-        public void Play(int[] frameIndices, uint ticksPerFrame, uint ticks, Position endPosition = null, float? endScale = null)
+        public void Play(int[] frameIndices, uint ticksPerFrame, uint ticks, Position? endPosition = null, float? endScale = null)
         {
             Finished = false;
             this.frameIndices = frameIndices;
@@ -195,7 +195,7 @@ namespace Ambermoon.Render
             startAnimationTicks = ticks;
         }
 
-        public void PlayWithoutAnimating(uint durationInTicks, uint ticks, Position endPosition = null, float? endScale = null)
+        public void PlayWithoutAnimating(uint durationInTicks, uint ticks, Position? endPosition = null, float? endScale = null)
         {
             Play(new int[] { 0 }, durationInTicks, ticks, endPosition, endScale);
         }
@@ -228,7 +228,7 @@ namespace Ambermoon.Render
             uint elapsed = ticks - startAnimationTicks;
             uint frame = elapsed / ticksPerFrame;
 
-            if (frame >= frameIndices.Length)
+            if (frame >= frameIndices!.Length)
             {
                 baseSpriteLocation.X = endX;
                 baseSpriteLocation.Y = endY;

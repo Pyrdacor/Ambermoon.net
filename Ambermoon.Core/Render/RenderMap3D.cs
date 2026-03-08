@@ -1244,7 +1244,7 @@ namespace Ambermoon.Render
 
                 graphics.Add(10002u, labBackgroundGraphics![(int)Map.World]);
 
-                labdataTextures.Add(Map.TilesetOrLabdataIndex, TextureAtlasManager.Instance.CreateFromGraphics(graphics, 1));
+                labdataTextures.Add(Map.TilesetOrLabdataIndex, TextureAtlasManager.CreateFromGraphics(graphics, 1));
             }
 
             textureAtlas = labdataTextures[Map.TilesetOrLabdataIndex];

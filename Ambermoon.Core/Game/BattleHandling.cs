@@ -74,7 +74,7 @@ partial class GameCore
     public bool StartBattle(uint monsterGroupIndex)
     {
         if (WindowActive || BattleActive || layout.PopupActive ||
-            allInputDisabled || !inputEnable || !ingame)
+            allInputDisabled || !inputEnable || !Ingame)
             return false;
 
         uint? combatBackgroundIndex = null;
@@ -181,8 +181,7 @@ partial class GameCore
                 if (stackable)
                     slot = slots.FirstOrDefault(s => s.ItemIndex == item.ItemIndex && s.Amount < 99);
 
-                if (slot == null)
-                    slot = slots.FirstOrDefault(s => s.Empty);
+                slot ??= slots.FirstOrDefault(s => s.Empty);
 
                 if (slot == null) // doesn't fit
                     break;
@@ -624,7 +623,7 @@ partial class GameCore
         if (index != -1)
         {
             var textureIndex = Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)graphicIndex - 1;
-            partyMemberBattleFieldSprites[index]!.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(textureIndex);
+            partyMemberBattleFieldSprites[index]!.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!.GetOffset(textureIndex);
         }
     }
 
@@ -895,7 +894,7 @@ partial class GameCore
 
                 foreach (var action in roundPlayerBattleActions)
                     CheckPlayerActionVisuals(GetPartyMember(action.Key)!, action.Value);
-                layout.SetBattleFieldSlotColor(currentBattle.GetSlotFromCharacter(CurrentPartyMember), BattleFieldSlotColor.Yellow);
+                layout.SetBattleFieldSlotColor(currentBattle.GetSlotFromCharacter(CurrentPartyMember!), BattleFieldSlotColor.Yellow);
                 layout.SetBattleMessage(null);
                 if (RecheckActivePartyMember(out bool gameOver))
                 {
@@ -912,16 +911,16 @@ partial class GameCore
                     {
                         if (partyMemberBattleFieldTooltips[i] != null)
                         {
-                            var partyMember = GetPartyMember(i);
+                            var partyMember = GetPartyMember(i)!;
                             int position = currentBattle.GetSlotFromCharacter(partyMember);
-                            partyMemberBattleFieldTooltips[i].Area = new Rect
+                            partyMemberBattleFieldTooltips[i]!.Area = new Rect
                             (
                                 Global.BattleFieldX + (position % 6) * Global.BattleFieldSlotWidth,
                                 Global.BattleFieldY + (position / 6) * Global.BattleFieldSlotHeight - 1,
                                 Global.BattleFieldSlotWidth,
                                 Global.BattleFieldSlotHeight + 1
                             );
-                            partyMemberBattleFieldTooltips[i].Text =
+                            partyMemberBattleFieldTooltips[i]!.Text =
                                 $"{partyMember.HitPoints.CurrentValue}/{partyMember.HitPoints.TotalMaxValue}^{partyMember.Name}";
                         }
                     }
@@ -932,7 +931,7 @@ partial class GameCore
             {
                 if (character is PartyMember partyMember)
                 {
-                    int slot = SlotFromPartyMember(partyMember).Value;
+                    int slot = SlotFromPartyMember(partyMember)!.Value;
                     layout.SetCharacter(slot, partyMember);
                     layout.UpdateCharacterStatus(slot, null);
                     roundPlayerBattleActions.Remove(slot);
@@ -963,7 +962,7 @@ partial class GameCore
                         PlayMusic(lastPlayedSong.Value);
                         lastPlayedSong = temp;
                     }
-                    else if (Map.UseTravelMusic)
+                    else if (Map!.UseTravelMusic)
                         PlayMusic(travelType.TravelSong());
                     else
                         PlayMusic(Song.Default);
@@ -978,7 +977,7 @@ partial class GameCore
                     {
                         if (nextEvent != null)
                         {
-                            EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always,
+                            EventExtensions.TriggerEventChain(Map!, this, EventTrigger.Always,
                                 x, y, nextEvent, true);
                         }
                     });
@@ -1001,7 +1000,7 @@ partial class GameCore
                             allInputDisabled = false;
                             if (nextEvent != null)
                             {
-                                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, x, y, nextEvent, false);
+                                EventExtensions.TriggerEventChain(Map!, this, EventTrigger.Always, x, y, nextEvent, false);
                             }
                         }
 

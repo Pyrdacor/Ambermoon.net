@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data.Legacy;
+using Ambermoon.Game;
 using Ambermoon.Render;
 using Newtonsoft.Json;
 using System;
@@ -247,7 +248,7 @@ internal class Configuration : IConfiguration
         {
             GameVersionName = f,
             ContinueSavegameSlot = 0,
-            Names = new string[Game.NumAdditionalSavegameSlots]
+            Names = new string[Game.Game.NumAdditionalSavegameSlots]
         }).ToArray();
 
         // Copy old savegame names to new format
@@ -259,7 +260,7 @@ internal class Configuration : IConfiguration
 
             additionalSavegameSlot.ContinueSavegameSlot = ContinueSavegameSlot ?? 0;
 
-            for (int i = 0; i < Math.Min(Game.NumAdditionalSavegameSlots, AdditionalSavegameNames.Length); ++i)
+            for (int i = 0; i < Math.Min(Game.Game.NumAdditionalSavegameSlots, AdditionalSavegameNames.Length); ++i)
                 additionalSavegameSlot.Names[i] = AdditionalSavegameNames[i];
         }
 
@@ -282,7 +283,7 @@ internal class Configuration : IConfiguration
             {
                 GameVersionName = gameVersionName,
                 ContinueSavegameSlot = 0,
-                Names = new string[Game.NumAdditionalSavegameSlots]
+                Names = new string[Game.Game.NumAdditionalSavegameSlots]
             };
 
             AdditionalSavegameSlots = Enumerable.Concat(AdditionalSavegameSlots, [savegameSlots]).ToArray();
@@ -448,11 +449,13 @@ internal class Configuration : IConfiguration
                 {
                     // Ticks of last saving, slot index (1 .. 30)
                     Tuple<long, int> mostRecentSavegameSlotOfVersion = Tuple.Create(0L, -1);
-                    var slots = savegameSlots[versionIndex] = new AdditionalSavegameSlots();
+                    var slots = savegameSlots[versionIndex] = new AdditionalSavegameSlots()
+                    {
+                        GameVersionName = savegameFolder
+                    };
                     string savePath = GetSavePath(savegameFolder, false);
-                    slots.GameVersionName = savegameFolder;
 
-                    for (int i = 0; i < Game.NumAdditionalSavegameSlots; ++i)
+                    for (int i = 0; i < Game.Game.NumAdditionalSavegameSlots; ++i)
                         slots.Names[i] = "";
 
                     static long GetLastWriteTicksOfSaveFiles(DirectoryInfo saveFolder)
@@ -475,12 +478,12 @@ internal class Configuration : IConfiguration
                             {
                                 if (int.TryParse(saveFolder.Name[5..], out int index))
                                 {
-                                    if (index > 10 && index <= 10 + Game.NumAdditionalSavegameSlots)
+                                    if (index > 10 && index <= 10 + Game.Game.NumAdditionalSavegameSlots)
                                     {
                                         slots.Names[index - 10] = saveFolder.Name.Replace('.', ' ');
                                     }
 
-                                    if (index >= 1 && index <= 10 + Game.NumAdditionalSavegameSlots)
+                                    if (index >= 1 && index <= 10 + Game.Game.NumAdditionalSavegameSlots)
                                     {
                                         long lastWriteTicks = Math.Max(saveFolder.LastWriteTime.Ticks, GetLastWriteTicksOfSaveFiles(saveFolder));
 

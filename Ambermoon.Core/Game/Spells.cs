@@ -116,9 +116,9 @@ partial class GameCore
                 {
                     if (caster is PartyMember partyMember)
                     {
-                        partyMember.MarkOfReturnMapIndex = (ushort)(Map.IsWorldMap ?
-                            renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index : Map.Index);
-                        partyMember.MarkOfReturnX = (ushort)(player.Position.X + 1); // stored 1-based
+                        partyMember.MarkOfReturnMapIndex = (ushort)(Map!.IsWorldMap ?
+                            renderMap2D!.GetMapFromTile((uint)player!.Position.X, (uint)player.Position.Y).Index : Map.Index);
+                        partyMember.MarkOfReturnX = (ushort)(player!.Position.X + 1); // stored 1-based
                         partyMember.MarkOfReturnY = (ushort)(player.Position.Y + 1); // stored 1-based
                         ShowMessagePopup(DataNameProvider.MarksPosition, finishAction);
                     }
@@ -143,7 +143,7 @@ partial class GameCore
                         {
                             void Return()
                             {
-                                Teleport(partyMember.MarkOfReturnMapIndex, partyMember.MarkOfReturnX, partyMember.MarkOfReturnY, player.Direction, out _, true);
+                                Teleport(partyMember.MarkOfReturnMapIndex, partyMember.MarkOfReturnX, partyMember.MarkOfReturnY, player!.Direction, out _, true);
                                 finishAction?.Invoke();
                             }
                             ShowMessagePopup(DataNameProvider.ReturnToMarkedPosition, () =>
@@ -151,7 +151,7 @@ partial class GameCore
                                 var targetMap = MapManager.GetMap(partyMember.MarkOfReturnMapIndex);
                                 // Note: The original fades always if the map index does not match.
                                 // But we improve it here a bit so that moving inside the same world map won't fade.
-                                if (targetMap.Index == Map.Index || (targetMap.IsWorldMap && Map.IsWorldMap && targetMap.World == Map.World))
+                                if (targetMap.Index == Map!.Index || (targetMap.IsWorldMap && Map.IsWorldMap && targetMap.World == Map.World))
                                     Return();
                                 else
                                     Fade(Return);
@@ -168,32 +168,32 @@ partial class GameCore
             case Spell.MagicalShield:
                 // Duration: 30 (150 minutes = 2h30m)
                 // Level: 10 (10% defense increase)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 30, 10), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.Protection, 30, 10), finishAction);
                 break;
             case Spell.MagicalWall:
                 // Duration: 90 (450 minutes = 7h30m)
                 // Level: 20 (20% defense increase)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 90, 20), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.Protection, 90, 20), finishAction);
                 break;
             case Spell.MagicalBarrier:
                 // Duration: 180 (900 minutes = 15h)
                 // Level: 30 (30% defense increase)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.Protection, 180, 30), finishAction);
                 break;
             case Spell.MagicalWeapon:
                 // Duration: 30 (150 minutes = 2h30m)
                 // Level: 10 (10% damage increase)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 30, 10), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.Attack, 30, 10), finishAction);
                 break;
             case Spell.MagicalAssault:
                 // Duration: 90 (450 minutes = 7h30m)
                 // Level: 20 (20% damage increase)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 90, 20), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.Attack, 90, 20), finishAction);
                 break;
             case Spell.MagicalAttack:
                 // Duration: 180 (900 minutes = 15h)
                 // Level: 30 (30% damage increase)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.Attack, 180, 30), finishAction);
                 break;
             case Spell.Levitation:
                 Cast(Levitate, finishAction);
@@ -213,34 +213,34 @@ partial class GameCore
             case Spell.AntiMagicWall:
                 // Duration: 30 (150 minutes = 2h30m)
                 // Level: 15 (15% anti-magic protection)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 30, 15), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.AntiMagic, 30, 15), finishAction);
                 break;
             case Spell.AntiMagicSphere:
                 // Duration: 180 (900 minutes = 15h)
                 // Level: 25 (25% anti-magic protection)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25), finishAction);
                 break;
             case Spell.AlchemisticGlobe:
                 // Duration: 180 (900 minutes = 15h)
                 Cast(() =>
                 {
                     ActivateLight(180, 3);
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30);
+                    CurrentSavegame!.ActivateSpell(ActiveSpellType.Protection, 180, 30);
                     CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30);
                     CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25);
                 }, finishAction);
                 break;
             case Spell.Knowledge:
                 // Duration: 30 (150 minutes = 2h30m)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 30, 20), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.Clairvoyance, 30, 20), finishAction);
                 break;
             case Spell.Clairvoyance:
                 // Duration: 90 (450 minutes = 7h30m)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 90, 40), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.Clairvoyance, 90, 40), finishAction);
                 break;
             case Spell.SeeTheTruth:
                 // Duration: 180 (900 minutes = 15h)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 60), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 60), finishAction);
                 break;
             case Spell.MapView:
                 Cast(() => OpenMiniMap(finishAction), null, finishAction);
@@ -316,21 +316,21 @@ partial class GameCore
                 break;
             case Spell.MysticalMapI:
                 // Duration: 32 (160 minutes = 2h40m)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 32, 1), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.MysticMap, 32, 1), finishAction);
                 break;
             case Spell.MysticalMapII:
                 // Duration: 60 (300 minutes = 5h)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 60, 1), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.MysticMap, 60, 1), finishAction);
                 break;
             case Spell.MysticalMapIII:
                 // Duration: 90 (450 minutes = 7h30m)
-                Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 90, 1), finishAction);
+                Cast(() => CurrentSavegame!.ActivateSpell(ActiveSpellType.MysticMap, 90, 1), finishAction);
                 break;
             case Spell.MysticalGlobe:
                 // Duration: 180 (900 minutes = 15h)
                 Cast(() =>
                 {
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 60);
+                    CurrentSavegame!.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 60);
                     CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 180, 1);
                 }, finishAction);
                 break;
@@ -348,10 +348,10 @@ partial class GameCore
                     {
                         StartSequence();
                         var travelInfoEagle = renderView.GameData.GetTravelGraphicInfo(TravelType.Eagle, CharacterDirection.Right);
-                        var currentTravelInfo = renderView.GameData.GetTravelGraphicInfo(TravelType, player.Direction);
+                        var currentTravelInfo = renderView.GameData.GetTravelGraphicInfo(TravelType, player!.Direction);
                         int diffX = (int)travelInfoEagle.OffsetX - (int)currentTravelInfo.OffsetX;
                         int diffY = (int)travelInfoEagle.OffsetY - (int)currentTravelInfo.OffsetY;
-                        var targetPosition = player2D.DisplayArea.Position + new Position(diffX, diffY);
+                        var targetPosition = player2D!.DisplayArea.Position + new Position(diffX, diffY);
                         var position = new Position(Global.Map2DViewX - (int)travelInfoEagle.Width, targetPosition.Y - (int)travelInfoEagle.Height);
                         var eagle = layout.AddMapCharacterSprite(new Rect(position, new Size((int)travelInfoEagle.Width, (int)travelInfoEagle.Height)),
                             Graphics.TravelGraphicOffset + (uint)TravelType.Eagle * 4 + 1, ushort.MaxValue);
@@ -374,7 +374,7 @@ partial class GameCore
                                 ActivateTransport(TravelType.Eagle);
                                 // Update direction to right
                                 player.Direction = CharacterDirection.Right; // Set this before player2D.MoveTo!
-                                player2D.MoveTo(Map, (uint)player2D.Position.X, (uint)player2D.Position.Y, CurrentTicks, true, CharacterDirection.Right);
+                                player2D.MoveTo(Map!, (uint)player2D.Position.X, (uint)player2D.Position.Y, CurrentTicks, true, CharacterDirection.Right);
                                 finishAction?.Invoke();
                             }
                             else
@@ -405,7 +405,7 @@ partial class GameCore
 
     void TrySpell(Action successAction, Action failAction)
     {
-        long chance = CurrentPartyMember.Skills[Skill.UseMagic].TotalCurrentValue;
+        long chance = CurrentPartyMember!.Skills[Skill.UseMagic].TotalCurrentValue;
 
         if (Features.HasFlag(Features.ExtendedCurseEffects) &&
             CurrentPartyMember.Conditions.HasFlag(Condition.Drugged))
@@ -422,18 +422,18 @@ partial class GameCore
         TrySpell(successAction, () => ShowMessagePopup(DataNameProvider.TheSpellFailed));
     }
 
-    void ApplySpellEffect(Spell spell, Character caster, ItemSlot itemSlot, Action finishAction, bool checkFail)
+    void ApplySpellEffect(Spell spell, Character caster, ItemSlot itemSlot, Action? finishAction, bool checkFail)
     {
         CurrentSpellTarget = null;
 
-        void Cast(Action action, Action finishAction = null, Action failAction = null)
+        void Cast(Action action, Action? finishAction = null, Action? failAction = null)
         {
             this.Cast(action, finishAction, failAction, checkFail);
         }
 
-        void PlayItemMagicAnimation(Action animationFinishAction = null)
+        void PlayItemMagicAnimation(Action? animationFinishAction = null)
         {
-            ItemAnimation.Play(this, renderView, ItemAnimation.Type.Enchant, layout.GetItemSlotPosition(itemSlot, true),
+            ItemAnimation.Play(this, renderView, ItemAnimation.Type.Enchant, layout.GetItemSlotPosition(itemSlot, true)!,
                 animationFinishAction ?? finishAction, TimeSpan.FromMilliseconds(50));
         }
 
@@ -535,7 +535,7 @@ partial class GameCore
                     PlayItemMagicAnimation(() =>
                     {
                         bool couldDuplicate = false;
-                        var inventorySlots = CurrentInventory.Inventory.Slots;
+                        var inventorySlots = CurrentInventory!.Inventory.Slots;
 
                         if (item.Flags.HasFlag(ItemFlags.Stackable))
                         {
@@ -621,7 +621,7 @@ partial class GameCore
         }
     }
 
-    void ExchangeExp(PartyMember caster, PartyMember target, Action finishAction)
+    void ExchangeExp(PartyMember caster, PartyMember target, Action? finishAction)
     {
         uint casterExp = caster.ExperiencePoints;
         uint targetExp = target.ExperiencePoints;
@@ -673,11 +673,11 @@ partial class GameCore
         });
     }
 
-    void ApplySpellEffect(Spell spell, Character caster, Character target, Action finishAction, bool checkFail)
+    void ApplySpellEffect(Spell spell, Character caster, Character target, Action? finishAction, bool checkFail)
     {
         CurrentSpellTarget = target;
 
-        void Cast(Action action, Action finishAction = null, Action failAction = null)
+        void Cast(Action action, Action? finishAction = null, Action? failAction = null)
         {
             this.Cast(action, finishAction, failAction, checkFail);
         }
@@ -748,7 +748,7 @@ partial class GameCore
                 Cast(() => ++target.Food, finishAction);
                 break;
             case Spell.ExpExchange:
-                Cast(() => ExchangeExp(caster as PartyMember, target as PartyMember, finishAction), null, finishAction);
+                Cast(() => ExchangeExp((caster as PartyMember)!, (target as PartyMember)!, finishAction), null, finishAction);
                 break;
             case Spell.SelfHealing:
                 Cast(() =>
@@ -763,14 +763,14 @@ partial class GameCore
                 {
                     target.Conditions &= ~Condition.DeadCorpse;
                     target.HitPoints.CurrentValue = target.HitPoints.TotalMaxValue;
-                    PartyMemberRevived(target as PartyMember, finishAction, false);
+                    PartyMemberRevived((target as PartyMember)!, finishAction, false);
                 }, null, finishAction);
                 break;
             }
             case Spell.SelfReviving:
             case Spell.WakeTheDead:
             {
-                if (!(target is PartyMember targetPlayer))
+                if (target is not PartyMember targetPlayer)
                 {
                     // Should not happen
                     finishAction?.Invoke();
@@ -820,7 +820,7 @@ partial class GameCore
             }
             case Spell.ChangeAshes:
             {
-                if (!(target is PartyMember targetPlayer))
+                if (target is not PartyMember targetPlayer)
                 {
                     // Should not happen
                     finishAction?.Invoke();
@@ -866,7 +866,7 @@ partial class GameCore
             }
             case Spell.ChangeDust:
             {
-                if (!(target is PartyMember targetPlayer))
+                if (target is not PartyMember targetPlayer)
                 {
                     // Should not happen
                     finishAction?.Invoke();
@@ -936,7 +936,7 @@ partial class GameCore
                     target.Conditions &= ~Condition.DeadAshes;
                     target.Conditions &= ~Condition.DeadDust;
                     target.HitPoints.CurrentValue = 1;
-                    PartyMemberRevived(target as PartyMember, HealAll);
+                    PartyMemberRevived((target as PartyMember)!, HealAll);
                 }
                 else
                 {
@@ -1109,7 +1109,7 @@ partial class GameCore
                             {
                                 var target = GetPartyMember(characterSlot);
 
-                                if (caster.Race == Race.Animal || target.Race == Race.Animal)
+                                if (caster.Race == Race.Animal || target!.Race == Race.Animal)
                                 {
                                     ShowMessagePopup(DataNameProvider.CannotExchangeExpWithAnimals);
                                     return;
@@ -1232,7 +1232,7 @@ partial class GameCore
 
                     if (spell == Spell.RemoveCurses)
                     {
-                        var target = GetPartyMember(characterSlot);
+                        var target = GetPartyMember(characterSlot)!;
                         var firstCursedItem = target.Equipment.Slots.Values.FirstOrDefault(s => s.Flags.HasFlag(ItemSlotFlags.Cursed));
 
                         if (firstCursedItem == null)
@@ -1257,7 +1257,7 @@ partial class GameCore
 
                     return true; // move forward to item selection
                 }
-                bool TargetItemPicked(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
+                bool TargetItemPicked(ItemGrid? itemGrid, int slotIndex, ItemSlot? itemSlot)
                 {
                     this.TargetItemPicked -= TargetItemPicked;
                     itemGrid?.HideTooltip();

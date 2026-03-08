@@ -665,9 +665,9 @@ partial class GameCore
             layout.ClosePopup();
             abortAction?.Invoke();
         };
-        var dictionaryList = popup.AddDictionaryListBox(Dictionary!.OrderBy(entry => entry).Select(entry => new KeyValuePair<string, Action<int, string?>?>
+        var dictionaryList = popup.AddDictionaryListBox(Dictionary!.OrderBy(entry => entry).Select(entry => new KeyValuePair<string, Action<int, string>?>
         (
-            entry, (int _, string? text) =>
+            entry, (int _, string text) =>
             {
                 layout.ClosePopup(false);
                 choiceHandler?.Invoke(text!);
@@ -710,9 +710,9 @@ partial class GameCore
 
             return entry;
         }
-        var spellList = popup.AddSpellListBox(spells.Select(spell => new KeyValuePair<string, Action<int, string?>?>
+        var spellList = popup.AddSpellListBox(spells.Select(spell => new KeyValuePair<string, Action<int, string>?>
         (
-            GetSpellEntry(spell.Key, spell.Value == null), spell.Value != null ? null : ((int index, string? _) =>
+            GetSpellEntry(spell.Key, spell.Value == null), spell.Value != null ? null : ((int index, string _) =>
             {
                 UntrapMouse();
                 layout.ClosePopup(false);

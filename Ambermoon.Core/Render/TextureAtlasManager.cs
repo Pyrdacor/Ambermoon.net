@@ -28,10 +28,10 @@ namespace Ambermoon.Render
 {
     public class TextureAtlasManager
     {
-        static TextureAtlasManager instance = null;
-        static ITextureAtlasBuilderFactory factory = null;
-        readonly Dictionary<Layer, ITextureAtlasBuilder> atlasBuilders = new Dictionary<Layer, ITextureAtlasBuilder>();
-        readonly Dictionary<Layer, ITextureAtlas> atlas = new Dictionary<Layer, ITextureAtlas>();
+        static TextureAtlasManager? instance = null;
+        static ITextureAtlasBuilderFactory? factory = null;
+        readonly Dictionary<Layer, ITextureAtlasBuilder> atlasBuilders = [];
+        readonly Dictionary<Layer, ITextureAtlas> atlas = [];
 
         public static TextureAtlasManager Instance
         {
@@ -71,15 +71,15 @@ namespace Ambermoon.Render
 
         public bool HasLayer(Layer layer) => atlas.ContainsKey(layer);
 
-        public ITextureAtlas GetOrCreate(Layer layer)
+        public ITextureAtlas? GetOrCreate(Layer layer)
         {
             if (!atlas.ContainsKey(layer))
             {
-                if (!atlasBuilders.ContainsKey(layer))
+                if (!atlasBuilders.TryGetValue(layer, out ITextureAtlasBuilder? value))
                     return null; // no texture for this layer
 
                 if (layer == Layer.BattleMonsterRow)
-                    atlas.Add(layer, atlasBuilders[layer].Create(1));
+                    atlas.Add(layer, value.Create(1));
                 else if (layer == Layer.Images || layer == Layer.MobileOverlays)
                     atlas.Add(layer, atlasBuilders[layer].Create(4));
                 else
@@ -95,9 +95,9 @@ namespace Ambermoon.Render
                 AddTexture(layer, graphic.Key, graphic.Value);
         }
 
-        public ITextureAtlas CreateFromGraphics(Dictionary<uint, Graphic> graphics, uint bytesPerPixel)
+        public static ITextureAtlas CreateFromGraphics(Dictionary<uint, Graphic> graphics, uint bytesPerPixel)
         {
-            var builder = factory.Create();
+            var builder = factory!.Create();
 
             foreach (var graphic in graphics)
                 builder.AddTexture(graphic.Key, graphic.Value);
@@ -107,7 +107,7 @@ namespace Ambermoon.Render
 
         public Texture CreatePalette(IPaletteProvider paletteProvider, params Graphic[] additionalPalettes)
         {
-            var paletteBuilder = factory.Create();
+            var paletteBuilder = factory!.Create();
             uint index = 0;
 
             foreach (var palette in paletteProvider.Palettes)

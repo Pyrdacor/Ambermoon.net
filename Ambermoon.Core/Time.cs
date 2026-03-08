@@ -275,12 +275,12 @@ namespace Ambermoon
             }
         }
 
-        public event Action<uint> MinuteChanged;
-        public event Action<uint> HourChanged;
-        public event Action<uint> GotTired;
-        public event Action<uint, uint> GotExhausted;
-        public event Action<uint, uint> NewDay;
-        public event Action<uint, uint> NewYear;
+        public event Action<uint>? MinuteChanged;
+        public event Action<uint>? HourChanged;
+        public event Action<uint>? GotTired;
+        public event Action<uint, uint>? GotExhausted;
+        public event Action<uint, uint>? NewDay;
+        public event Action<uint, uint>? NewYear;
 
         public void Wait(uint hours)
         {

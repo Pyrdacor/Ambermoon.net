@@ -43,7 +43,7 @@ namespace Ambermoon.Render
         readonly GameCore game;
         readonly ISpriteFactory spriteFactory;
         readonly ITextureAtlas textureAtlas;
-        IAnimatedSprite topSprite; // for non-world maps the upper half is drawn separatly
+        IAnimatedSprite? topSprite; // for non-world maps the upper half is drawn separatly
         readonly IAnimatedSprite sprite;
         readonly Func<CharacterDirection?, Character2DAnimationInfo> animationInfoProvider;
         readonly Func<uint> paletteIndexProvider;
@@ -171,7 +171,7 @@ namespace Ambermoon.Render
                     topSprite.TextureAtlasOffset = sprite.TextureAtlasOffset;
                     int textureFactor = (int)(sprite.Layer?.TextureFactor ?? 1);
                     sprite.TextureAtlasOffset += new Position(0, topSprite.Height * textureFactor);
-                    topSprite.Layer = sprite.Layer;
+                    topSprite.Layer = sprite.Layer!;
                     topSprite.PaletteIndex = sprite.PaletteIndex;
                     topSprite.ClipArea = GameCore.Map2DViewArea;
                     topSprite.X = sprite.X;
@@ -201,11 +201,11 @@ namespace Ambermoon.Render
 
         void UpdateBaseline()
         {
-            if (this is Player2D && baselineOffset == Game.MaxBaseLine)
+            if (this is Player2D && baselineOffset == GameCore.MaxBaseLine)
             {
-                sprite.BaseLineOffset = Game.MaxBaseLine;
+                sprite.BaseLineOffset = GameCore.MaxBaseLine;
                 if (topSprite != null)
-                    topSprite.BaseLineOffset = Game.MaxBaseLine;
+                    topSprite.BaseLineOffset = GameCore.MaxBaseLine;
             }
             else
             {
@@ -224,10 +224,10 @@ namespace Ambermoon.Render
 
         public void SetDirection(CharacterDirection direction, uint ticks)
         {
-            MoveTo(Map.Map, (uint)Position.X, (uint)Position.Y, ticks, true, direction);
+            MoveTo(Map.Map!, (uint)Position.X, (uint)Position.Y, ticks, true, direction);
         }
 
-        public virtual void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection, Action<Map> mapInitAction = null)
+        public virtual void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection, Action<Map>? mapInitAction = null)
         {
             if (newDirection == CharacterDirection.Random)
                 newDirection = (CharacterDirection)game.RandomInt(0, 3);

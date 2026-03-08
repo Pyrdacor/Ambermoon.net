@@ -42,7 +42,7 @@ namespace Ambermoon
     {
         static uint? LastMapEventIndexMap = null;
         static uint? LastMapEventIndex = null;
-        static Position LastMapEventPosition = null;
+        static Position? LastMapEventPosition = null;
 
         public static void Reset()
         {
@@ -59,7 +59,7 @@ namespace Ambermoon
             return TriggerEvents(map, game, trigger, x, y, savegame, out _);
         }
 
-        public static Event GetEvent(this Map map, uint x, uint y, Savegame savegame)
+        public static Event? GetEvent(this Map map, uint x, uint y, Savegame savegame)
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
             bool hasMapEvent = mapEventId != 0 && savegame.IsEventActive(map.Index, mapEventId - 1);
@@ -79,7 +79,7 @@ namespace Ambermoon
         }
 
         public static bool TriggerEvents(this Map map, GameCore game, EventTrigger trigger,
-            uint x, uint y, Savegame savegame, out bool hasMapEvent, Func<Event, bool> filter = null)
+            uint x, uint y, Savegame savegame, out bool hasMapEvent, Func<Event, bool>? filter = null)
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
 
@@ -135,7 +135,7 @@ namespace Ambermoon
                     return false;
                 }
 
-                if (ev.Type == EventType.StartBattle && hasRandomness)
+                if (ev?.Type == EventType.StartBattle && hasRandomness)
                 {
                     // Avoid triggering random encounters while moving on the same tile.
                     if (LastMapEventPosition == new Position((int)x, (int)y) && map.Type == MapType.Map3D)

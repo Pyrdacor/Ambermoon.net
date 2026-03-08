@@ -29,25 +29,25 @@ namespace Ambermoon.UI
 {
     public class UIText
     {
-        readonly IGameRenderView renderView;
-        IText text;
+        readonly IGameRenderView? renderView;
+        IText? text;
         readonly IRenderText renderText;
-        readonly Rect bounds;
+        readonly Rect? bounds;
         bool allowScrolling;
         bool freeScrolling = false;
         bool isScrolling = false;
         int lineOffset = 0;
         readonly int numVisibleLines;
-        readonly Action<TimeSpan, Action> timedEventCreator;
+        readonly Action<TimeSpan, Action>? timedEventCreator;
         IReadOnlyList<TextColor> textColorsPerLine;
         TextColor defaultTextColor = TextColor.BrightGray;
         public bool WithScrolling { get; internal set; }
-        public bool CanScroll => WithScrolling && this.text.LineCount > numVisibleLines;
+        public bool CanScroll => WithScrolling && this.text?.LineCount > numVisibleLines;
         public int NumVisibleLines => numVisibleLines;
 
 
-        public event Action FreeScrollingStarted;
-        public event Action FreeScrollingEnded;
+        public event Action? FreeScrollingStarted;
+        public event Action? FreeScrollingEnded;
 
         public bool Visible
         {
@@ -66,12 +66,12 @@ namespace Ambermoon.UI
         /// text was scrolled to the end. It is
         /// true for non-scrollable texts.
         /// </summary>
-        public event Action<bool> Clicked;
+        public event Action<bool>? Clicked;
         /// <summary>
         /// The boolean gives information if the
         /// text was just scrolled to the end.
         /// </summary>
-        public event Action<bool> Scrolled;
+        public event Action<bool>? Scrolled;
 
         public UIText(IRenderText renderText)
         {
@@ -83,7 +83,7 @@ namespace Ambermoon.UI
 
         public UIText(IGameRenderView renderView, byte paletteIndex, IText text, Rect bounds, byte displayLayer = 1,
             TextColor textColor = TextColor.BrightGray, bool shadow = true, TextAlign textAlign = TextAlign.Left,
-            bool allowScrolling = false, Action<TimeSpan, Action> timedEventCreator = null)
+            bool allowScrolling = false, Action<TimeSpan, Action>? timedEventCreator = null)
         {
             this.renderView = renderView;
             this.text = renderView.TextProcessor.WrapText(text, bounds, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
@@ -118,14 +118,14 @@ namespace Ambermoon.UI
         {
             if (textColorsPerLine != null && lineOffset >= 0 && lineOffset < textColorsPerLine.Count)
                 renderText.TextColor = textColorsPerLine[lineOffset];
-            renderText.Text = renderView.TextProcessor.WrapText(
+            renderText.Text = renderView!.TextProcessor.WrapText(
                 renderView.TextProcessor.GetLines(text, lineOffset, numVisibleLines), bounds,
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
         }
 
         public void SetText(IText text)
         {
-            this.text = renderView.TextProcessor.WrapText(text, bounds, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+            this.text = renderView!.TextProcessor.WrapText(text, bounds, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             renderText.TextColor = defaultTextColor;
             textColorsPerLine = renderText.GetTextColorPerLine(this.text);
             allowScrolling = WithScrolling;
@@ -183,7 +183,7 @@ namespace Ambermoon.UI
                 }
                 else if (y > 0)
                 {
-                    if (lineOffset < text.LineCount - numVisibleLines)
+                    if (lineOffset < text!.LineCount - numVisibleLines)
                     {
                         if (mobile)
                         {
@@ -217,7 +217,7 @@ namespace Ambermoon.UI
 
             if (allowScrolling)
             {
-                if (lineOffset >= text.LineCount - numVisibleLines)
+                if (lineOffset >= text!.LineCount - numVisibleLines)
                 {
                     allowScrolling = false;
                     bool wasScrollable = text.LineCount > numVisibleLines;
