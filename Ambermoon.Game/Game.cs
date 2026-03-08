@@ -311,7 +311,6 @@ public class Game : GameCore
     }
 
 
-    // TODO
     public override void OnMouseDown(Position position, MouseButtons buttons, KeyModifiers keyModifiers = KeyModifiers.None)
     {
         if (characterCreator != null)
@@ -338,6 +337,53 @@ public class Game : GameCore
         }
 
         base.OnMouseUp(cursorPosition, buttons);
+    }
+
+    public override void OnMouseMove(Position position, MouseButtons buttons)
+    {
+        if (outro?.Active != true && !InputEnable && !layout.PopupActive)
+            UntrapMouse();
+
+        if (outro?.Active == true)
+        {
+            SetLastMousePosition(new Position(position));
+            CursorType = CursorType.None;
+        }
+        else
+        {
+            base.OnMouseMove(position, buttons);
+        }
+    }
+
+    public override void OnKeyDown(Key key, KeyModifiers modifiers, bool tapped = false)
+    {
+#if DEBUG
+        if (key == Key.F5 && modifiers == KeyModifiers.Control)
+            System.Diagnostics.Debugger.Break();
+#endif
+        if (characterCreator != null)
+        {
+            characterCreator.OnKeyDown(key, modifiers);
+            return;
+        }
+
+        if (outro?.Active == true)
+        {
+            if (key == Key.Escape)
+                outro.Abort();
+
+            return;
+        }
+
+        base.OnKeyDown(key, modifiers, tapped);
+    }
+
+    public override void OnKeyUp(Key key, KeyModifiers modifiers)
+    {
+        if (characterCreator != null)
+            return;
+
+        base.OnKeyUp(key, modifiers);
     }
 
     public override void OnKeyChar(char keyChar)

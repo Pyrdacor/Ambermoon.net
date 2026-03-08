@@ -645,7 +645,7 @@ partial class GameCore
         UpdateLight(false, false, false, null, lightBuffBurningOut ? lightIntensity : (uint?)null);
 
         if (lightOff)
-            renderMap3D?.SetFog(Map, MapManager.GetLabdataForMap(Map), lightOff);
+            renderMap3D?.SetFog(Map!, MapManager.GetLabdataForMap(Map), lightOff);
     }
 
     void RenderMap3D_MapChanged(Map map)
@@ -654,7 +654,7 @@ partial class GameCore
         RunSavegameTileChangeEvents(map.Index);
     }
 
-    void RenderMap2D_MapChanged(Map lastMap, Map[] maps)
+    void RenderMap2D_MapChanged(Map? lastMap, Map[] maps)
     {
         if (lastMap == null || !lastMap.IsWorldMap ||
             !maps[0].IsWorldMap || lastMap.World != maps[0].World)

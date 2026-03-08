@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 
@@ -101,7 +102,7 @@ partial class GameCore
                     PlayTimedSequence(steps, () =>
                     {
                         turnAction?.Invoke();
-                        CurrentSavegame.CharacterDirection = player!.Direction = player3D!.Direction;
+                        CurrentSavegame!.CharacterDirection = player!.Direction = player3D!.Direction;
                     }, 65);
                 }
 

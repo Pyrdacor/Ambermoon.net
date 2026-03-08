@@ -19,6 +19,7 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 
@@ -26,13 +27,13 @@ namespace Ambermoon;
 
 public class GameVersion
 {
-    public string Version;
+    public required string Version;
     public GameLanguage Language;
-    public string Info;
+    public required string Info;
     public Features Features;
     public bool MergeWithPrevious;
     public bool ExternalData;
-    public Func<IGameData> DataProvider;
+    public required Func<IGameData> DataProvider;
 
     internal const string RemakeReleaseDate = "24-11-2025";
 }

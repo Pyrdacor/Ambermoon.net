@@ -1,7 +1,7 @@
 ﻿/*
  * Player3D.cs - 3D player implementation
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2026  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -28,26 +28,25 @@ namespace Ambermoon.Render
 {
     using Geometry = Geometry.Geometry;
 
-    class Player3D : IRenderPlayer
+    class Player3D(GameCore game, Player player, IMapManager mapManager, ICamera3D camera, RenderMap3D map) : IRenderPlayer
     {
-        readonly Game game = null;
-        readonly IMapManager mapManager;
-        readonly RenderMap3D map;
-        readonly Player player;
+        readonly GameCore game = game;
+        readonly RenderMap3D map = map;
         float angle = 0.0f;
         // Original uses 120/512 but it feels bad.
         public const float CollisionRadius = 72.0f * Global.DistancePerBlock / RenderMap3D.BlockSize;
         public const float TriggerEventRadius = 88.0f * Global.DistancePerBlock / RenderMap3D.BlockSize; // TODO: use this
 
-        Position lastPosition;
-        public Position Position { get; private set; }
-        public ICamera3D Camera { get; }
+        Position? lastPosition;
+        public Position Position { get; private set; } = Position.Zero;
+        public ICamera3D Camera { get; } = camera;
         public float Angle
         {
             get => angle;
             private set
             {
                 angle = value;
+
                 while (angle <= -360.0f)
                     angle += 360.0f;
                 while (angle >= 360.0f)
@@ -55,19 +54,10 @@ namespace Ambermoon.Render
             }
         }
 
-        public Player3D(Game game, Player player, IMapManager mapManager, ICamera3D camera, RenderMap3D map, int x, int y)
-        {
-            this.game = game;
-            this.player = player;
-            this.mapManager = mapManager;
-            this.map = map;
-            Camera = camera;
-        }
-
         void ResetCameraPosition()
         {
             lastPosition = new Position(Position);
-            Geometry.BlockToCameraPosition(map.Map, Position, out float x, out float z);
+            Geometry.BlockToCameraPosition(map.Map!, Position, out float x, out float z);
             Camera.SetPosition(-x, z);
         }
 
@@ -76,7 +66,7 @@ namespace Ambermoon.Render
             Camera.SetPosition(-Camera.X, Camera.Z, y);
         }
 
-        public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection, Action<Map> mapInitAction = null)
+        public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection, Action<Map>? mapInitAction = null)
         {
             if (newDirection == CharacterDirection.Random)
                 newDirection = (CharacterDirection)game.RandomInt(0, 3);
@@ -110,7 +100,7 @@ namespace Ambermoon.Render
             {
                 var oldMapIndex = map.Index;
                 SetPosition((int)x, (int)y, ticks, false);
-                game.PlayerMoved(oldMapIndex != game.Map.Index);
+                game.PlayerMoved(oldMapIndex != game.Map!.Index);
 
                 if (newDirection != null)
                 {
@@ -130,15 +120,15 @@ namespace Ambermoon.Render
 
             if (triggerEvents)
             {
-                map.Map.TriggerEvents(game, EventTrigger.Move, (uint)Position.X, (uint)Position.Y, game.CurrentSavegame);
+                map.Map!.TriggerEvents(game, EventTrigger.Move, (uint)Position.X, (uint)Position.Y, game.CurrentSavegame!);
             }
         }
 
         bool TestCollision(float x, float z, float lastMapX, float lastMapY)
         {
-            Geometry.CameraToWorldPosition(map.Map, x, z, out float mapX, out float mapY);
+            Geometry.CameraToWorldPosition(map.Map!, x, z, out float mapX, out float mapY);
 
-            if (mapX < 0 || mapY < 0 || mapX > map.Map.Width - 0.5f || mapY > map.Map.Height - 0.5f)
+            if (mapX < 0 || mapY < 0 || mapX > map.Map!.Width - 0.5f || mapY > map.Map.Height - 0.5f)
                 return true;
 
             if (game.NoClip)
@@ -151,7 +141,7 @@ namespace Ambermoon.Render
         }
 
         public List<Position> GetTouchedPositions(float radius)
-            => Geometry.CameraToTouchedBlockPositions(map.Map, Camera.X, Camera.Z, radius);
+            => Geometry.CameraToTouchedBlockPositions(map.Map!, Camera.X, Camera.Z, radius);
 
         delegate void PositionProvider(float distance, out float newX, out float newY, bool noX, bool noZ);
 
@@ -170,7 +160,7 @@ namespace Ambermoon.Render
 
                     if (!considerPosition)
                     {
-                        Geometry.BlockToCameraPosition(map.Map, touchedPosition, out float touchX, out float touchY);
+                        Geometry.BlockToCameraPosition(map.Map!, touchedPosition, out float touchX, out float touchY);
                         bool sameXDirection = Math.Sign(newX - oldX) == Math.Sign(touchX - oldX);
                         bool sameYDirection = Math.Sign(newY - oldY) == Math.Sign(touchY - oldY);
 
@@ -180,7 +170,7 @@ namespace Ambermoon.Render
 
                     if (!considerNonExitPosition && considerPosition)
                     {
-                        Geometry.BlockToCameraPosition(map.Map, touchedPosition, out float touchX, out float touchY);
+                        Geometry.BlockToCameraPosition(map.Map!, touchedPosition, out float touchX, out float touchY);
                         considerNonExitPosition = Math.Abs(touchY - newY) < 0.275f * Global.DistancePerBlock &&
                             Math.Abs(touchX - newX) < 0.275f * Global.DistancePerBlock;
                     }
@@ -189,9 +179,9 @@ namespace Ambermoon.Render
                     // stands should never be considered. Otherwise we would get stuck.
                     if (considerPosition)
                     {
-                        var block = map.Map.Blocks[(uint)touchedPosition.X, (uint)touchedPosition.Y];
+                        var block = map.Map!.Blocks[(uint)touchedPosition.X, (uint)touchedPosition.Y];
 
-                        if (block.MapEventId != 0 && game.CurrentSavegame.IsEventActive(map.Map.Index, block.MapEventId - 1))
+                        if (block.MapEventId != 0 && game.CurrentSavegame!.IsEventActive(map.Map.Index, block.MapEventId - 1))
                         {
                             var @event = map.Map.EventList[(int)block.MapEventId - 1];
 
@@ -240,16 +230,16 @@ namespace Ambermoon.Render
                         }
 
                         bool hasMapEvent = false;
-                        var oldMapIndex = map.Map.Index;
+                        var oldMapIndex = map.Map!.Index;
                         var oldMapPosition = new Position(Position);
                         anyEventTriggered = anyEventTriggered || map.Map.TriggerEvents(game, EventTrigger.Move,
-                            (uint)touchedPosition.X, (uint)touchedPosition.Y, game.CurrentSavegame, out hasMapEvent,
+                            (uint)touchedPosition.X, (uint)touchedPosition.Y, game.CurrentSavegame!, out hasMapEvent,
                             Filter);
 
                         if (!anyEventTouched && hasMapEvent)
                             anyEventTouched = true;
 
-                        if (oldMapIndex != game.Map.Index)
+                        if (oldMapIndex != game.Map!.Index)
                         {
                             game.PlayerMoved(true);
                             break; // map changed
@@ -263,7 +253,7 @@ namespace Ambermoon.Render
                 }
 
                 if (!anyEventTouched)
-                    map.Map.ClearLastEvent();
+                    map.Map!.ClearLastEvent();
 
                 return anyEventTriggered;
             }
@@ -274,7 +264,7 @@ namespace Ambermoon.Render
                 float oldY = Camera.Z;
                 mover(distance, noX, noZ);
 
-                var touchedPositions = Geometry.CameraToTouchedBlockPositions(map.Map, Camera.X, Camera.Z, 0.75f * Global.DistancePerBlock);
+                var touchedPositions = Geometry.CameraToTouchedBlockPositions(map.Map!, Camera.X, Camera.Z, 0.75f * Global.DistancePerBlock);
                 Position = touchedPositions[0];
                 bool moved = false;
 
@@ -283,9 +273,9 @@ namespace Ambermoon.Render
                     player.Position.X = Position.X;
                     player.Position.Y = Position.Y;
                     lastPosition = new Position(Position);
-                    game.GameTime.MoveTick(map.Map, TravelType.Walk);
+                    game.GameTime!.MoveTick(map.Map!, TravelType.Walk);
                     moved = true;
-                    game.ResetMapCharacterInteraction(map.Map);
+                    game.ResetMapCharacterInteraction(map.Map!);
                 }
 
                 if (!TriggerEvents(touchedPositions, oldX, oldY, Camera.X, Camera.Z))
@@ -300,11 +290,11 @@ namespace Ambermoon.Render
 
             bool TestMoveStop(float newX, float newY)
             {
-                var touchedPositions = Geometry.CameraToTouchedBlockPositions(map.Map, Camera.X, Camera.Z, 0.75f * Global.DistancePerBlock);
+                var touchedPositions = Geometry.CameraToTouchedBlockPositions(map.Map!, Camera.X, Camera.Z, 0.75f * Global.DistancePerBlock);
 
                 foreach (var touchedPosition in touchedPositions)
                 {
-                    if (map.Map.StopMovingTowards(game.CurrentSavegame, touchedPosition.X, touchedPosition.Y))
+                    if (map.Map!.StopMovingTowards(game.CurrentSavegame, touchedPosition.X, touchedPosition.Y))
                     {
                         if (TriggerEvents(touchedPositions, Camera.X, Camera.Z, newX, newY))
                             return true;
@@ -314,7 +304,7 @@ namespace Ambermoon.Render
                 return false;
             }
 
-			Geometry.CameraToWorldPosition(map.Map, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
+			Geometry.CameraToWorldPosition(map.Map!, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
             float collisionTestDistance = distance + (turning ? 0.334f : 0.2f) * Global.DistancePerBlock;
             positionProvider(collisionTestDistance, out float newX, out float newY, false, false);
 
@@ -396,7 +386,7 @@ namespace Ambermoon.Render
 
         public void TurnTowards(FloatPosition position)
         {
-            Geometry.CameraToMapPosition(map.Map, Camera.X, Camera.Z, out float mapX, out float mapY);
+            Geometry.CameraToMapPosition(map.Map!, Camera.X, Camera.Z, out float mapX, out float mapY);
             var playerPosition = new FloatPosition(mapX - 0.5f * Global.DistancePerBlock, mapY - 0.5f * Global.DistancePerBlock);
             double diffX = position.X - playerPosition.X;
             double diffY = position.Y - playerPosition.Y;

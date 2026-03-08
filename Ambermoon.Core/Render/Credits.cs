@@ -255,7 +255,7 @@ namespace Ambermoon.Render
 
         public void Update(double deltaTime)
         {
-            ticks += Game.TicksPerSecond * deltaTime;
+            ticks += GameCore.TicksPerSecond * deltaTime;
 
             Scroll();
 
@@ -274,7 +274,7 @@ namespace Ambermoon.Render
                 var text = creditsTexts.Dequeue();
 
                 if (creditsTexts.Count == 0)
-                    nextTextTicks = ticks + 9.25 * Game.TicksPerSecond;
+                    nextTextTicks = ticks + 9.25 * GameCore.TicksPerSecond;
                 else
                     SetupNextText(1 + creditsTexts.Peek().EmptyLines);
 

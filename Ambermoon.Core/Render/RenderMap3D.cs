@@ -857,7 +857,7 @@ namespace Ambermoon.Render
         ///  to the block size (e.g. wall is 2/3 as height as a block is wide).
         /// </summary>
         float WallHeight => labdata!.WallHeight * Global.DistancePerBlock / BlockSize;
-        public event Action<Map?>? MapChanged;
+        public event Action<Map>? MapChanged;
 
         public static void Reset() => MapCharacter.Reset();
 

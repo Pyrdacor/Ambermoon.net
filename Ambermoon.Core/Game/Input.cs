@@ -32,7 +32,7 @@ partial class GameCore
 
     const int Mobile3DThreshold = 32;
 
-    public delegate void DrawTouchFingerHandler(int x, int y, bool longPress, Rect clipArea, bool behindPopup);
+    public delegate void DrawTouchFingerHandler(int x, int y, bool longPress, Rect? clipArea, bool behindPopup);
 
     private protected readonly DrawTouchFingerHandler? drawTouchFingerRequest;
     private protected readonly Action<bool>? showMobileTouchPadHandler;
@@ -94,7 +94,7 @@ partial class GameCore
             }
         }
     }
-    private protected Position LastMousePosition => new(lastMousePosition);
+    private protected void SetLastMousePosition(Position position) => lastMousePosition = position;
 
     /// <summary>
     /// The 3x3 buttons will always be enabled!
@@ -190,16 +190,13 @@ partial class GameCore
         trappedMousePositionOffset.Y = 0;
     }
 
-    public void OnMouseMove(Position position, MouseButtons buttons)
+    public virtual void OnMouseMove(Position position, MouseButtons buttons)
     {
-        if (outro?.Active != true && !InputEnable && !layout.PopupActive)
-            UntrapMouse();
-
         if (Trapped)
         {
             var trappedPosition = position + trappedMousePositionOffset;
 
-            if (trappedPosition.X < trapMouseArea.Left)
+            if (trappedPosition.X < trapMouseArea!.Left)
             {
                 if (position.X < lastMousePosition.X)
                     trappedMousePositionOffset.X += lastMousePosition.X - position.X;
@@ -227,19 +224,11 @@ partial class GameCore
             }
         }
 
-        if (outro?.Active == true)
-        {
-            lastMousePosition = new Position(position);
-            CursorType = CursorType.None;
-        }
-        else
-        {
-            layout.MouseMoved(position - lastMousePosition);
+        layout.MouseMoved(position - lastMousePosition);
 
-            lastMousePosition = new Position(position);
-            position = GetMousePosition(position);
-            UpdateCursor(position, buttons);
-        }
+        lastMousePosition = new Position(position);
+        position = GetMousePosition(position);
+        UpdateCursor(position, buttons);
     }
 
     public virtual void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
@@ -430,7 +419,7 @@ partial class GameCore
         }
     }
 
-    internal void SetClickHandler(Action action)
+    internal void SetClickHandler(Action? action)
     {
         nextClickHandler = _ => { action?.Invoke(); return true; };
     }
@@ -475,26 +464,8 @@ partial class GameCore
         }
     }
 
-    public void OnKeyDown(Key key, KeyModifiers modifiers, bool tapped = false)
-    {
-#if DEBUG
-        if (key == Key.F5 && modifiers == KeyModifiers.Control)
-            System.Diagnostics.Debugger.Break();
-#endif
-        if (characterCreator != null)
-        {
-            characterCreator.OnKeyDown(key, modifiers);
-            return;
-        }
-
-        if (outro?.Active == true)
-        {
-            if (key == Key.Escape)
-                outro.Abort();
-
-            return;
-        }
-
+    public virtual void OnKeyDown(Key key, KeyModifiers modifiers, bool tapped = false)
+    {      
         if (allInputDisabled || pickingNewLeader || GameOverButtonsVisible)
             return;
 
@@ -713,9 +684,9 @@ partial class GameCore
         lastMoveTicksReset = CurrentTicks;
     }
 
-    public void OnKeyUp(Key key, KeyModifiers modifiers)
+    public virtual void OnKeyUp(Key key, KeyModifiers modifiers)
     {
-        if (characterCreator != null || allInputDisabled || pickingTargetPlayer || pickingTargetInventory)
+        if (allInputDisabled || pickingTargetPlayer || pickingTargetInventory)
             return;
 
         if (!InputEnable || pickingNewLeader)

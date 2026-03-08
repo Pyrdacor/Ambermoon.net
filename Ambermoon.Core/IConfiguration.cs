@@ -74,9 +74,9 @@ public static class ScreenResolutions
 
 public class AdditionalSavegameSlots
 {
-    public string GameVersionName { get; set; }
-    public string[] BaseNames { get; set; } = new string[Game.NumBaseSavegameSlots];
-    public string[] Names { get; set; } = new string[Game.NumAdditionalSavegameSlots];
+    public required string GameVersionName { get; set; }
+    public string[] BaseNames { get; set; } = new string[GameCore.NumBaseSavegameSlots];
+    public string[] Names { get; set; } = new string[GameCore.NumAdditionalSavegameSlots];
     public int ContinueSavegameSlot { get; set; } = 0;
     public DateTime? LastSavesSync { get; set; } = null;
 

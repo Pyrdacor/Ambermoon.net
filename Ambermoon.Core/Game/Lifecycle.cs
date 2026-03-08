@@ -384,20 +384,23 @@ partial class GameCore
         bool is3D = map.Type == MapType.Map3D;
         renderMap2D = new RenderMap2D(this, null, MapManager, renderView);
         renderMap3D = new RenderMap3D(this, null, MapManager, renderView, 0, 0, CharacterDirection.Up);
-        player3D = new Player3D(this, player, MapManager, camera3D, renderMap3D, 0, 0);
+        player3D = new Player3D(this, player, MapManager, camera3D, renderMap3D);
         player.MovementAbility = PlayerMovementAbility.Walking;
         renderMap2D.MapChanged += RenderMap2D_MapChanged;
         renderMap3D.MapChanged += RenderMap3D_MapChanged;
         TravelType = savegame.TravelType;
+
         if (is3D)
             Start3D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection, true);
         else
             Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection, true);
+
         if (!map.IsWorldMap)
         {
             player.Position.X = (int)savegame.CurrentMapX - 1;
             player.Position.Y = (int)savegame.CurrentMapY - 1;
         }
+
         TravelType = savegame.TravelType; // Yes this is necessary twice.
 
         ShowMap(true);
@@ -414,7 +417,7 @@ partial class GameCore
             ToggleButtonGridPage();
 
         if (!is3D)
-            player2D.Visible = true;
+            player2D!.Visible = true;
 
         if (!TravelType.IgnoreEvents())
         {
@@ -548,13 +551,13 @@ partial class GameCore
         {
             if (xOffset < 0)
             {
-                map = MapManager.GetMap(map.LeftMapIndex.Value);
+                map = MapManager.GetMap(map.LeftMapIndex!.Value);
                 xOffset += map.Width;
                 playerX += (uint)map.Width;
             }
             if (yOffset < 0)
             {
-                map = MapManager.GetMap(map.UpMapIndex.Value);
+                map = MapManager.GetMap(map.UpMapIndex!.Value);
                 yOffset += map.Height;
                 playerY += (uint)map.Height;
             }
@@ -565,9 +568,9 @@ partial class GameCore
             yOffset = Util.Limit(0, yOffset, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y);
         }
 
-        if (renderMap2D.Map != map)
+        if (renderMap2D!.Map != map)
         {
-            renderMap2D.SetMap(map, (uint)xOffset, (uint)yOffset);
+            renderMap2D!.SetMap(map, (uint)xOffset, (uint)yOffset);
             mapInitAction?.Invoke(map);
         }
         else
@@ -578,17 +581,14 @@ partial class GameCore
             renderMap2D.InvokeMapChange();
         }
 
-        if (player2D == null)
-        {
-            player2D = new Player2D(this, renderView.GetLayer(Layer.Characters), player, renderMap2D,
-                renderView.SpriteFactory, new Position(0, 0), MapManager);
-        }
+        player2D ??= new Player2D(this, renderView.GetLayer(Layer.Characters), player!, renderMap2D,
+            renderView.SpriteFactory, new Position(0, 0), MapManager);
 
         player2D.Visible = true;
         player2D.RecheckTopSprite();
         player2D.MoveTo(map, playerX, playerY, CurrentTicks, true, direction);
 
-        player.Position.X = (int)playerX;
+        player!.Position.X = (int)playerX;
         player.Position.Y = (int)playerY;
         player.Direction = direction;
 
@@ -616,15 +616,17 @@ partial class GameCore
 
         is3D = true;
         TravelType = TravelType.Walk;
-        renderMap2D.Destroy();
-        renderMap3D.SetMap(map, playerX, playerY, direction, CurrentPartyMember?.Race ?? Race.Human, true);
+        renderMap2D?.Destroy();
+        renderMap3D!.SetMap(map, playerX, playerY, direction, CurrentPartyMember?.Race ?? Race.Human, true);
         UpdateUIPalette(true);
         mapInitAction?.Invoke(map);
-        player3D.SetPosition((int)playerX, (int)playerY, CurrentTicks, !initial);
+        player3D!.SetPosition((int)playerX, (int)playerY, CurrentTicks, !initial);
         player3D.TurnTowards((int)direction * 90.0f);
+
         if (player2D != null)
             player2D.Visible = false;
-        player.Position.X = (int)playerX;
+
+        player!.Position.X = (int)playerX;
         player.Position.Y = (int)playerY;
         player.Direction = direction;
 
@@ -633,6 +635,7 @@ partial class GameCore
         renderView.GetLayer(Layer.Map3DCeiling).Visible = true;
         renderView.GetLayer(Layer.Map3D).Visible = true;
         renderView.GetLayer(Layer.Billboards3D).Visible = true;
+
         for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
             renderView.GetLayer((Layer)i).Visible = false;
 

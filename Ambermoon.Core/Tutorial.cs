@@ -25,7 +25,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using Ambermoon.Render;
 using Ambermoon.UI;
-using static Ambermoon.Game;
 using static Ambermoon.GameCore;
 
 namespace Ambermoon
@@ -384,7 +383,7 @@ namespace Ambermoon
                 marker?.Delete();
         }
 
-        void DrawTouchFinger(int x, int y, bool longPress, Rect clipArea = null, bool behindPopup = false)
+        void DrawTouchFinger(int x, int y, bool longPress, Rect? clipArea = null, bool behindPopup = false)
         {
             drawTouchFingerRequest?.Invoke(x, y, longPress, clipArea, behindPopup);
 		}
@@ -403,18 +402,18 @@ namespace Ambermoon
 
         void ShowTips(IGameRenderView renderView)
         {
-            if (game.Configuration.IsMobile)
+            if (game.CoreConfiguration.IsMobile)
                 ShowTipChain(renderView, ShowTip1, ShowTip2, ShowTip3, ShowTip4, ShowTip5, ShowTip6, ShowTutorialEnd);
             else
 				ShowTipChain(renderView, ShowTip1, ShowTip2, ShowTip3, ShowTip4, ShowTutorialEnd);
 		}
 
-        static void ShowTipChain(IGameRenderView renderView, params Action<IGameRenderView, Action>[] tips)
+        static void ShowTipChain(IGameRenderView renderView, params Action<IGameRenderView, Action?>[] tips)
         {
-            ShowTipChain(renderView, tips as IEnumerable<Action<IGameRenderView, Action>>);
+            ShowTipChain(renderView, tips as IEnumerable<Action<IGameRenderView, Action?>>);
         }
 
-        static void ShowTipChain(IGameRenderView renderView, IEnumerable<Action<IGameRenderView, Action>> tips)
+        static void ShowTipChain(IGameRenderView renderView, IEnumerable<Action<IGameRenderView, Action?>> tips)
         {
             var count = tips.Count();
 
@@ -424,16 +423,16 @@ namespace Ambermoon
                 tips.First()?.Invoke(renderView, () => ShowTipChain(renderView, tips.Skip(1)));
         }
 
-        void ShowMessagePopup(int textId, Action closeAction = null, int yOffset = 0)
+        void ShowMessagePopup(int textId, Action? closeAction = null, int yOffset = 0)
         {
             game.ShowMessagePopup(GetText(textId), closeAction, TextAlign.Center, 0, new(0, yOffset));
         }
 
-        void ShowTip1(IGameRenderView renderView, Action next)
+        void ShowTip1(IGameRenderView renderView, Action? next)
         {
             int yOffset = 0;
 
-            if (game.Configuration.IsMobile)
+            if (game.CoreConfiguration.IsMobile)
             {
                 ShowMarker(renderView, new Rect(MobileButtonAreaX - 1, MobileButtonAreaY - 1,
                     MobileButtonAreaWidth, MobileButtonAreaHeight));
@@ -453,11 +452,11 @@ namespace Ambermoon
             ShowMessagePopup(1, next, yOffset);
         }
 
-        void ShowTip2(IGameRenderView renderView, Action next)
+        void ShowTip2(IGameRenderView renderView, Action? next)
         {
             int yOffset = 0;
 
-            if (game.Configuration.IsMobile)
+            if (game.CoreConfiguration.IsMobile)
             {
                 HideTouchFinger();
                 HideMarker();
@@ -475,13 +474,13 @@ namespace Ambermoon
             ShowMessagePopup(2, next, yOffset);
         }
 
-        void ShowTip3(IGameRenderView renderView, Action next)
+        void ShowTip3(IGameRenderView renderView, Action? next)
         {
             int yOffset = 0;
 
             HideMarker();
 
-            if (game.Configuration.IsMobile)
+            if (game.CoreConfiguration.IsMobile)
             {
                 HideTouchFinger();
 
@@ -501,11 +500,11 @@ namespace Ambermoon
             ShowMessagePopup(3, next, yOffset);
         }
 
-        void ShowTip4(IGameRenderView renderView, Action next)
+        void ShowTip4(IGameRenderView renderView, Action? next)
         {
 			HideMarker();
 
-            if (game.Configuration.IsMobile)
+            if (game.CoreConfiguration.IsMobile)
             {
                 DrawTouchFinger(Map2DViewArea.Right - 72, Map2DViewArea.Bottom - 50, false);
                 ShowMarker(renderView, new(Map2DViewArea.X + 16 - 2, Map2DViewArea.Y + 32 - 2, 20, 20));
@@ -520,7 +519,7 @@ namespace Ambermoon
             }
         }
 
-		void ShowTip5(IGameRenderView renderView, Action next)
+		void ShowTip5(IGameRenderView renderView, Action? next)
         {
             // Mobile only
             game.CurrentMobileAction = MobileAction.None;
@@ -530,11 +529,12 @@ namespace Ambermoon
 			ShowMessagePopup(4, () =>
             {
                 HideTouchFinger();
-                game.ExecuteNextUpdateCycle(next);
+                if (next != null)
+                    game.ExecuteNextUpdateCycle(next);
             }, -20);
 		}
 
-        void ShowTip6(IGameRenderView renderView, Action next)
+        void ShowTip6(IGameRenderView renderView, Action? next)
         {
             // Mobile only            
             DrawTouchFinger(Global.PartyMemberPortraitArea.X + 34, Global.PartyMemberPortraitArea.Y + 32, false, new(0, 0, Global.VirtualScreenHeight, 64), true);
@@ -563,7 +563,7 @@ namespace Ambermoon
             });
         }
 
-		void ShowTutorialEnd(IGameRenderView renderView, Action next)
+		void ShowTutorialEnd(IGameRenderView renderView, Action? next)
         {
             HideMarker();
             game.ShowMessagePopup(GetText(texts.Length), () =>

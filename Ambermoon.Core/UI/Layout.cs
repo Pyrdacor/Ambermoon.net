@@ -1735,7 +1735,7 @@ namespace Ambermoon.UI
             }
             void ToggleGraphicFilterAddition()
             {
-                game.CoreConfiguration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)game.Configuration.GraphicFilterOverlay + 1) % EnumHelper.GetValues<GraphicFilterOverlay>().Length);
+                game.CoreConfiguration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)game.CoreConfiguration.GraphicFilterOverlay + 1) % EnumHelper.GetValues<GraphicFilterOverlay>().Length);
                 SetGraphicFilterOverlay();
                 changedConfiguration = true;
                 game.NotifyConfigurationChange(false);

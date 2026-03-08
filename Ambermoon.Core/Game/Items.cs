@@ -4,6 +4,7 @@ using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using Ambermoon.UI;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon;
 

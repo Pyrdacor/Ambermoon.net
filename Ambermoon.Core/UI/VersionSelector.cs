@@ -39,27 +39,27 @@ namespace Ambermoon.UI
         readonly ITextureAtlas flagsTextureAtlas;
         readonly IConfiguration configuration;
         readonly List<ILayerSprite> borders = new();
-        readonly Cursor cursor = null;
-        readonly IRenderText headerRenderText = null;
+        readonly Cursor? cursor = null;
+        readonly IRenderText? headerRenderText = null;
         readonly IRenderText[] versionTexts = new IRenderText[5];
         readonly IRenderText[] versionTextHighlightShadows = new IRenderText[5];
         readonly IColoredRect[] versionHighlights = new IColoredRect[5];
-        readonly Rect gameDataVersionTooltipArea = null;
-        IText gameDataVersionTooltipText = null;
-        readonly IColoredRect selectedVersionMarker = null;
-        readonly Button changeSaveOptionButton = null;
-        readonly IRenderText saveOptionText = null;
+        readonly Rect? gameDataVersionTooltipArea = null;
+        IText? gameDataVersionTooltipText = null;
+        readonly IColoredRect? selectedVersionMarker = null;
+        readonly Button? changeSaveOptionButton = null;
+        readonly IRenderText? saveOptionText = null;
         readonly Tooltip saveOptionTooltip = new();
-        readonly IRenderText tooltipText = null;
-        readonly Dictionary<Button, IColoredRect[]> buttonBackgrounds = new();
-        readonly List<List<GameVersion>> mergedGameVersions = new();
-        readonly List<GameLanguage> selectedVersionLanguages = new();
-		readonly IColoredRect[] flagSunkenBox = null;
-        IColoredRect tooltipBorder = null;
-        IColoredRect tooltipBackground = null;
-        readonly List<ILayerSprite> languageChangeButtons = new();
-        IText currentSaveTooltipText = null;
-        readonly Button okButton = null;
+        readonly IRenderText? tooltipText = null;
+        readonly Dictionary<Button, IColoredRect[]> buttonBackgrounds = [];
+        readonly List<List<GameVersion>> mergedGameVersions = [];
+        readonly List<GameLanguage> selectedVersionLanguages = [];
+		readonly IColoredRect[]? flagSunkenBox = null;
+        IColoredRect? tooltipBorder = null;
+        IColoredRect? tooltipBackground = null;
+        readonly List<ILayerSprite> languageChangeButtons = [];
+        IText? currentSaveTooltipText = null;
+        readonly Button? okButton = null;
         readonly List<Rect> versionAreas = new(5);
         int selectedSaveOption = 0;
         int selectedVersion = 0;
@@ -75,15 +75,15 @@ namespace Ambermoon.UI
 
                     bool externalVersion = IsSelectedVersionFromExternalData();
                     ShowSaveOptionButton(externalVersion);
-                    saveOptionText.Visible = externalVersion;
-                    selectedVersionMarker.X = versionAreas[value].X;
+                    saveOptionText!.Visible = externalVersion;
+                    selectedVersionMarker!.X = versionAreas[value].X;
                     selectedVersionMarker.Y = versionAreas[value].Y;
                 }
             }
         }
         uint ticks = 0;
 
-		public event Action<int, Func<IGameData>, bool> Closed;
+		public event Action<int, Func<IGameData>, bool>? Closed;
 
         public VersionSelector(string ambermoonNetVersion, IGameRenderView renderView, TextureAtlasManager textureAtlasManager,
             List<GameVersion> gameVersions, Cursor cursor, int selectedVersion, SaveOption saveOption, IConfiguration configuration)
@@ -568,7 +568,7 @@ namespace Ambermoon.UI
 
         public void Update(double deltaTime)
         {
-            ticks = Game.UpdateTicks(ticks, deltaTime);
+            ticks = GameCore.UpdateTicks(ticks, deltaTime);
             okButton.Update(ticks);
             changeSaveOptionButton.Update(ticks);
         }
@@ -607,7 +607,7 @@ namespace Ambermoon.UI
                         okButton.Disabled = true;
                         action?.Invoke();
                     };
-                    okButton.ContinuousActionDelayInTicks = 3 * Game.TicksPerSecond / 2;
+                    okButton.ContinuousActionDelayInTicks = 3 * GameCore.TicksPerSecond / 2;
                     okButton.Pressed = true;
                     break;
                 }
