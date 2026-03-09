@@ -21,7 +21,7 @@ internal class ExplorationData : IFileSpec<ExplorationData>, IFileSpec
         this.automap = automap;
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData __)
+    public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
         automap = Automap.Load(new AutomapReader(), dataReader);
     }

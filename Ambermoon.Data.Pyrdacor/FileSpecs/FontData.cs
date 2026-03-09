@@ -30,7 +30,7 @@ internal class FontData : IFileSpec<FontData>, IFileSpec
         this.font = font;
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData __)
+    public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
         font = new Font(dataReader);
     }

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Ambermoon.Data.Legacy.Characters;
+﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.Compressions;
 using Ambermoon.Data.Pyrdacor.Extensions;
@@ -27,19 +26,19 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
         this.character = character;
     }
 
-    public void Read(IDataReader dataReader, uint index, GameData gameData)
+    public void Read(IDataReader dataReader, uint index, GameData gameData, byte version)
     {
         switch (dataReader.PeekByte())
         {
             case 0: // party member
-                ReadPartyMember(dataReader, index, gameData);
+                ReadPartyMember(dataReader, index, gameData, version);
                 break;
             case 1: // NPC
-                ReadNPC(dataReader, index, gameData);
+                ReadNPC(dataReader, index, gameData, version);
                 break;
             case 2: // monster
-                // TODO
-                throw new NotImplementedException();
+                ReadMonster(dataReader, index, gameData, version);
+                break;
             default:
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid character data.");
         }
@@ -66,6 +65,8 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
             dataWriter.Write((byte)(partyMember.InventoryInaccessible ? 0xff : 0));
             dataWriter.Write((byte)partyMember.PortraitIndex);
             dataWriter.Write((byte)partyMember.JoinPercentage);
+            dataWriter.WriteEnum8(partyMember.SpokenExtendedLanguages);
+            dataWriter.Write((byte)(partyMember.MaxReachedLevel));
             dataWriter.WriteEnum8(partyMember.SpellTypeImmunity);
             dataWriter.Write((byte)partyMember.AttacksPerRound);
             dataWriter.WriteEnum8(partyMember.BattleFlags);
@@ -138,6 +139,8 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
         }
         else if (character is NPC npc)
         {
+            // TODO: There were some changes to some properties. Align with the legacy writer!
+
             dataWriter.WriteEnum8(CharacterType.NPC);
             dataWriter.WriteEnum8(npc.Gender);
             dataWriter.WriteEnum8(npc.Race);
@@ -145,6 +148,8 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
             dataWriter.Write((byte)npc.Level);
             dataWriter.WriteEnum8(npc.SpokenLanguages);
             dataWriter.Write((byte)npc.PortraitIndex);
+            dataWriter.Write((byte)npc.JoinPercentage);
+            dataWriter.WriteEnum8(npc.SpokenExtendedLanguages);
             dataWriter.Write((ushort)npc.Attributes[Attribute.Age].CurrentValue);
             dataWriter.Write((ushort)npc.LookAtCharTextIndex);
             dataWriter.Write(npc.Name);
@@ -154,8 +159,75 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
         }
         else if (character is Monster monster)
         {
-            // TODO
-            throw new NotImplementedException();
+            // TODO: There were some changes to some properties. Align with the legacy writer!
+
+            dataWriter.WriteEnum8(CharacterType.Monster);
+            dataWriter.WriteEnum8(monster.Gender);
+            dataWriter.WriteEnum8(monster.Race);
+            dataWriter.WriteEnum8(monster.Class);
+            dataWriter.WriteEnum8(monster.SpellMastery);
+            dataWriter.Write((byte)monster.Level);
+            dataWriter.Write((byte)monster.NumberOfOccupiedHands);
+            dataWriter.Write((byte)monster.NumberOfOccupiedFingers);
+            dataWriter.WriteEnum8(monster.AdvancedMonsterFlags);
+            dataWriter.WriteEnum8(monster.CombatGraphicIndex);
+            dataWriter.Write((byte)monster.SpellChancePercentage);
+            dataWriter.Write((byte)monster.MagicHitBonus);
+            dataWriter.Write((byte)monster.Morale);
+            dataWriter.WriteEnum8(monster.SpellTypeImmunity);
+            dataWriter.Write((byte)monster.AttacksPerRound);
+            dataWriter.WriteEnum8(monster.BattleFlags);
+            dataWriter.WriteEnum8(monster.Element);
+            dataWriter.Write((ushort)monster.Gold);
+            dataWriter.Write((ushort)monster.Food);
+            dataWriter.WriteEnum16(monster.Conditions);
+            dataWriter.Write((ushort)monster.DefeatExperience);
+            dataWriter.Write((ushort)monster.BattleRoundSpellPointUsage);
+            foreach (var attribute in monster.Attributes) // Note: this includes Age and the 10th unused attribute
+            {
+                dataWriter.Write((ushort)attribute.CurrentValue);
+                dataWriter.Write((ushort)attribute.MaxValue);
+                dataWriter.WriteShort((short)attribute.BonusValue);
+                dataWriter.Write((ushort)attribute.StoredValue);
+            }
+            foreach (var skill in monster.Skills)
+            {
+                dataWriter.Write((ushort)skill.CurrentValue);
+                dataWriter.Write((ushort)skill.MaxValue);
+                dataWriter.WriteShort((short)skill.BonusValue);
+                dataWriter.Write((ushort)skill.StoredValue);
+            }
+            dataWriter.Write((ushort)monster.HitPoints.CurrentValue);
+            dataWriter.Write((ushort)monster.HitPoints.MaxValue);
+            dataWriter.WriteShort((short)monster.HitPoints.BonusValue);
+            dataWriter.Write((ushort)monster.SpellPoints.CurrentValue);
+            dataWriter.Write((ushort)monster.SpellPoints.MaxValue);
+            dataWriter.WriteShort((short)monster.SpellPoints.BonusValue);
+            dataWriter.WriteShort(monster.BaseDefense);
+            dataWriter.WriteShort(monster.BonusDefense);
+            dataWriter.WriteShort(monster.BaseAttackDamage);
+            dataWriter.WriteShort(monster.BonusAttackDamage);
+            dataWriter.WriteShort(monster.MagicAttack);
+            dataWriter.WriteShort(monster.MagicDefense);
+            dataWriter.Write(monster.LearnedHealingSpells);
+            dataWriter.Write(monster.LearnedAlchemisticSpells);
+            dataWriter.Write(monster.LearnedMysticSpells);
+            dataWriter.Write(monster.LearnedDestructionSpells);
+            dataWriter.Write(monster.LearnedSpellsType5);
+            dataWriter.Write(monster.LearnedSpellsType6);
+            dataWriter.Write(monster.LearnedSpellsType7);
+            dataWriter.Write(monster.Name);
+
+            // Equipment
+            foreach (var equipmentSlot in EnumHelper.GetValues<EquipmentSlot>())
+            {
+                if (equipmentSlot != EquipmentSlot.None)
+                    ItemSlotWriter.WriteItemSlot(monster.Equipment.Slots[equipmentSlot], dataWriter);
+            }
+
+            // Inventory
+            for (int i = 0; i < Inventory.Width * Inventory.Height; ++i)
+                ItemSlotWriter.WriteItemSlot(monster.Inventory.Slots[i], dataWriter);
         }
         else
         {
@@ -163,7 +235,7 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
         }
     }
 
-    private void ReadNPC(IDataReader dataReader, uint index, GameData gameData)
+    private void ReadNPC(IDataReader dataReader, uint index, GameData gameData, byte _)
     {
         var npc = new NPC()
         {
@@ -172,12 +244,16 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
 
         dataReader.Position++; // skip character type
 
+        // TODO: There were some changes to some properties. Align with the legacy reader!
+
         npc.Gender = dataReader.ReadEnum8<Gender>();
         npc.Race = dataReader.ReadEnum8<Race>();
         npc.Class = dataReader.ReadEnum8<Class>();
         npc.Level = dataReader.ReadByte();
         npc.SpokenLanguages = dataReader.ReadEnum8<Language>();
         npc.PortraitIndex = dataReader.ReadByte();
+        npc.JoinPercentage = dataReader.ReadByte();
+        npc.SpokenExtendedLanguages = dataReader.ReadEnum8<ExtendedLanguage>();
         npc.Attributes[Attribute.Age].CurrentValue = dataReader.ReadWord();
         npc.LookAtCharTextIndex = dataReader.ReadWord();
         npc.Name = dataReader.ReadString();
@@ -191,7 +267,7 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
         character = npc;
     }
 
-    private void ReadPartyMember(IDataReader dataReader, uint index, GameData gameData)
+    private void ReadPartyMember(IDataReader dataReader, uint index, GameData gameData, byte _)
     {
         var partyMember = new PartyMember()
         {
@@ -213,6 +289,8 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
         partyMember.InventoryInaccessible = dataReader.ReadByte() != 0;
         partyMember.PortraitIndex = dataReader.ReadByte();
         partyMember.JoinPercentage = dataReader.ReadByte();
+        partyMember.SpokenExtendedLanguages = dataReader.ReadEnum8<ExtendedLanguage>();
+        partyMember.MaxReachedLevel = dataReader.ReadByte();
         partyMember.SpellTypeImmunity = dataReader.ReadEnum8<SpellTypeImmunity>();
         partyMember.AttacksPerRound = dataReader.ReadByte();
         partyMember.BattleFlags = dataReader.ReadEnum8<BattleFlags>();
@@ -291,5 +369,89 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
         partyMember.Texts = gameData.PartyTexts.TryGetValue(index, out var texts) ? texts.ToList() : [];
 
         character = partyMember;
+    }
+
+    private void ReadMonster(IDataReader dataReader, uint index, GameData gameData, byte _)
+    {
+        var monster = new Monster()
+        {
+            Index = index
+        };
+
+        dataReader.Position++; // skip character type
+
+        // TODO: There were some changes to some properties. Align with the legacy reader!
+
+        monster.Gender = dataReader.ReadEnum8<Gender>();
+        monster.Race = dataReader.ReadEnum8<Race>();
+        monster.Class = dataReader.ReadEnum8<Class>();
+        monster.SpellMastery = dataReader.ReadEnum8<SpellTypeMastery>();
+        monster.Level = dataReader.ReadByte();
+        monster.NumberOfOccupiedHands = dataReader.ReadByte();
+        monster.NumberOfOccupiedFingers = dataReader.ReadByte();
+        monster.AdvancedMonsterFlags = dataReader.ReadEnum8<AdvancedMonsterFlags>();
+        monster.CombatGraphicIndex = dataReader.ReadEnum8<MonsterGraphicIndex>();
+        monster.SpellChancePercentage = dataReader.ReadByte();
+        monster.MagicHitBonus = dataReader.ReadByte();
+        monster.Morale = dataReader.ReadByte();
+        monster.SpellTypeImmunity = dataReader.ReadEnum8<SpellTypeImmunity>();
+        monster.AttacksPerRound = dataReader.ReadByte();
+        monster.BattleFlags = dataReader.ReadEnum8<BattleFlags>();
+        monster.Element = dataReader.ReadEnum8<CharacterElement>();
+        monster.Gold = dataReader.ReadWord();
+        monster.Food = dataReader.ReadWord();
+        monster.Conditions = dataReader.ReadEnum16<Condition>();
+        monster.DefeatExperience = dataReader.ReadWord();
+        monster.BattleRoundSpellPointUsage = dataReader.ReadWord();
+
+        foreach (var attribute in monster.Attributes) // Note: this includes Age and the 10th unused attribute
+        {
+            attribute.CurrentValue = dataReader.ReadWord();
+            attribute.MaxValue = dataReader.ReadWord();
+            attribute.BonusValue = dataReader.ReadShort();
+            attribute.StoredValue = dataReader.ReadWord();
+        }
+
+        foreach (var skill in monster.Skills)
+        {
+            skill.CurrentValue = dataReader.ReadWord();
+            skill.MaxValue = dataReader.ReadWord();
+            skill.BonusValue = dataReader.ReadShort();
+            skill.StoredValue = dataReader.ReadWord();
+        }
+
+        monster.HitPoints.CurrentValue = dataReader.ReadWord();
+        monster.HitPoints.MaxValue = dataReader.ReadWord();
+        monster.HitPoints.BonusValue = dataReader.ReadShort();
+        monster.SpellPoints.CurrentValue = dataReader.ReadWord();
+        monster.SpellPoints.MaxValue = dataReader.ReadWord();
+        monster.SpellPoints.BonusValue = dataReader.ReadShort();
+        monster.BaseDefense = dataReader.ReadShort();
+        monster.BonusDefense = dataReader.ReadShort();
+        monster.BaseAttackDamage = dataReader.ReadShort();
+        monster.BonusAttackDamage = dataReader.ReadShort();
+        monster.MagicAttack = dataReader.ReadShort();
+        monster.MagicDefense = dataReader.ReadShort();
+        monster.LearnedHealingSpells = dataReader.ReadDword();
+        monster.LearnedAlchemisticSpells = dataReader.ReadDword();
+        monster.LearnedMysticSpells = dataReader.ReadDword();
+        monster.LearnedDestructionSpells = dataReader.ReadDword();
+        monster.LearnedSpellsType5 = dataReader.ReadDword();
+        monster.LearnedSpellsType6 = dataReader.ReadDword();
+        monster.LearnedSpellsType7 = dataReader.ReadDword();
+        monster.Name = dataReader.ReadString();
+
+        // Equipment
+        foreach (var equipmentSlot in EnumHelper.GetValues<EquipmentSlot>())
+        {
+            if (equipmentSlot != EquipmentSlot.None)
+                ItemSlotReader.ReadItemSlot(monster.Equipment.Slots[equipmentSlot], dataReader);
+        }
+
+        // Inventory
+        for (int i = 0; i < Inventory.Width * Inventory.Height; ++i)
+            ItemSlotReader.ReadItemSlot(monster.Inventory.Slots[i], dataReader);
+
+        character = monster;
     }
 }

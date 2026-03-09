@@ -21,7 +21,7 @@ internal class ChestData : IFileSpec<ChestData>, IFileSpec
         this.chest = chest;
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData __)
+    public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
         chest = Chest.Load(new ChestReader(), dataReader);
     }

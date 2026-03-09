@@ -73,7 +73,7 @@ internal static class PADF
             reader = decompressor.Decompress(reader);
         }
 
-        fileSpec.Read(reader, 1u, gameData);
+        fileSpec.Read(reader, 1u, gameData, fileSpecVersion);
 
         return fileSpec;
     }

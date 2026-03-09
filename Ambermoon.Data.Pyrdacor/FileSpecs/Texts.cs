@@ -23,7 +23,7 @@ internal class Texts : IFileSpec<Texts>, IFileSpec
         this.textList = textList;
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData __)
+    public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
         textList = new TextList(dataReader);
     }

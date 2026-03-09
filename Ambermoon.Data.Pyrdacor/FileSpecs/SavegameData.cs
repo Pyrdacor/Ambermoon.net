@@ -9,7 +9,7 @@ internal class SavegameData : IFileSpec<SavegameData>, IFileSpec
     public static byte SupportedVersion => 0;
     public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0>();
 
-    public void Read(IDataReader dataReader, uint _, GameData __)
+    public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
         throw new NotImplementedException();
     }

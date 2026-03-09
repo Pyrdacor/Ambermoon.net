@@ -22,7 +22,7 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
         this.map = map;
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData gameData)
+    public void Read(IDataReader dataReader, uint _, GameData gameData, byte __)
     {
         map = new Map();
 

@@ -333,7 +333,7 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
         return FromTiles(-1, tiles, alpha, 0);
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData __)
+    public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
         int numGraphics = dataReader.ReadWord();
         paletteIndex = dataReader.ReadByte();

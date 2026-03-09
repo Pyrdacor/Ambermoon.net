@@ -23,7 +23,7 @@ internal class ItemData : IFileSpec<ItemData>, IFileSpec
         this.item = item;
     }
 
-    public void Read(IDataReader dataReader, uint index, GameData _)
+    public void Read(IDataReader dataReader, uint index, GameData _, byte ___)
     {
         item = Item.Load(index, new ItemReader(), dataReader);
     }

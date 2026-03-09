@@ -21,7 +21,7 @@ internal class MerchantData : IFileSpec<MerchantData>, IFileSpec
         this.merchant = merchant;
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData __)
+    public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
         merchant = Merchant.Load(new MerchantReader(), dataReader);
     }

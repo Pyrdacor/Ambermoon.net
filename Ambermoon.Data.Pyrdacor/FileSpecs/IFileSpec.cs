@@ -15,7 +15,7 @@ public interface IFileSpec
     static virtual string Magic => "UNK";
     static virtual byte SupportedVersion => 0;
     static virtual ushort PreferredCompression => ICompression.GetIdentifier<NullCompression>();
-    void Read(IDataReader dataReader, uint index, GameData gameData);
+    void Read(IDataReader dataReader, uint index, GameData gameData, byte version);
     void Write(IDataWriter dataWriter);
     abstract string GetMagic();
     abstract byte GetSupportedVersion();

@@ -23,7 +23,7 @@ internal class TilesetData : IFileSpec<TilesetData>, IFileSpec
         this.tileset = tileset;
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData __)
+    public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
         tileset = new Tileset();
         new TilesetReader().ReadTileset(tileset, dataReader);

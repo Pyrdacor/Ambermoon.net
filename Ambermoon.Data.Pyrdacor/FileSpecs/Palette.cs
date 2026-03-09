@@ -23,7 +23,7 @@ internal class Palette : IFileSpec<Palette>, IFileSpec
         this.graphic = graphic;
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData __)
+    public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
         int paletteCount = dataReader.ReadWord();
         graphic = new Graphic();

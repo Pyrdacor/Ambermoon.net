@@ -23,7 +23,7 @@ internal class LocationData : IFileSpec<LocationData>, IFileSpec
         this.place = place;
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData __)
+    public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
         place = new Place { Data = dataReader.ReadBytes(32) };
     }

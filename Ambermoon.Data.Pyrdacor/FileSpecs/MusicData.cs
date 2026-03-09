@@ -25,7 +25,7 @@ internal class MusicData : IFileSpec<MusicData>, IFileSpec
         this.songData = songData;
     }
 
-    public void Read(IDataReader dataReader, uint index, GameData gameData)
+    public void Read(IDataReader dataReader, uint index, GameData gameData, byte _)
     {
         var initialPosition = dataReader.Position;
         song = (gameData.SongManager as SongManager)!.LoadSong(dataReader, (int)index, true, true) as Song;

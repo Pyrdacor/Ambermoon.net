@@ -102,7 +102,7 @@ internal static class PADP
         for (int i = 0; i < fileCount; ++i)
         {
             var fileSpec = fileSpecProvider();
-            fileSpec.Read(new DataReader(reader.ReadBytes(fileSizes[i])), fileIndices[i], gameData);
+            fileSpec.Read(new DataReader(reader.ReadBytes(fileSizes[i])), fileIndices[i], gameData, fileSpecVersion);
             files.Add(fileIndices[i], fileSpec);
         }
 

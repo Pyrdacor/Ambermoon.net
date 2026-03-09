@@ -23,7 +23,7 @@ internal class MonsterGroups : IFileSpec<MonsterGroups>, IFileSpec
         this.monsterGroup = monsterGroup;
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData gameData)
+    public void Read(IDataReader dataReader, uint _, GameData gameData, byte __)
     {
         monsterGroup = MonsterGroup.Load(gameData.CharacterManager ??
             throw new AmbermoonException(ExceptionScope.Application, "Character manager was not created before monster group loading."),
