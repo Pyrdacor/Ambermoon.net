@@ -21,6 +21,9 @@ public class GameData : IGameData, IGraphicProvider
     LazyContainerLoader<ItemData, Item> itemLoader;
     LazyContainerLoader<Texts, string> itemNameLoader;
     LazyContainerLoader<Texts, TextList> itemTextLoader;
+    LazyContainerLoader<MapData, Map> mapLoader;
+    LazyContainerLoader<Texts, TextList> mapTextLoader;
+    LazyContainerLoader<LabyrinthData, Labdata> labdataLoader;
     LazyContainerLoader<LocationData, Place> locationLoader;
     LazyContainerLoader<Texts, string> locationNameLoader;
     LazyContainerLoader<TilesetData, Tileset> tilesetLoader;
@@ -29,6 +32,7 @@ public class GameData : IGameData, IGraphicProvider
     readonly Lazy<SongManager> songManager;
     readonly Lazy<ICharacterManager> characterManager;
     readonly Lazy<IItemManager> itemManager;
+    readonly Lazy<IMapManager> mapManager;
     readonly Lazy<ISavegameManager> savegameManager;
     readonly Lazy<IngameFont> ingameFont;
     readonly Lazy<Font> outroSmallFont;
@@ -69,7 +73,7 @@ public class GameData : IGameData, IGraphicProvider
 
     public ILightEffectProvider LightEffectProvider => throw new NotImplementedException();
 
-    public IMapManager MapManager => throw new NotImplementedException();
+    public IMapManager MapManager => mapManager!.Value;
 
     public IGraphicProvider GraphicProvider => this;
 
@@ -185,6 +189,14 @@ public class GameData : IGameData, IGraphicProvider
         (
             () => itemLoader!.LoadAll(),
             () => itemTextLoader!.LoadAll()
+        ));
+
+        mapManager = new Lazy<IMapManager>(() => new MapManager
+        (
+            () => mapLoader!.LoadAll(),
+            () => mapTextLoader!.LoadAll(),
+            () => labdataLoader!.LoadAll(),
+            () => tilesetLoader!.LoadAll()
         ));
 
         ingameFont = new Lazy<IngameFont>(() => new IngameFont

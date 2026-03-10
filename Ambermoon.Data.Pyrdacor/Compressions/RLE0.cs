@@ -16,7 +16,12 @@ internal class RLE0 : ICompression<RLE0>, ICompression
             var b = dataReader.ReadByte();
 
             if (b == 0)
-                decompressedData.AddRange(Enumerable.Repeat((byte)0, 1 + dataReader.ReadByte()));
+            {
+                int count = 1 + dataReader.ReadByte();
+
+                while (--count >= 0)
+                    decompressedData.Add(0);
+            }
             else
                 decompressedData.Add(b);
         }

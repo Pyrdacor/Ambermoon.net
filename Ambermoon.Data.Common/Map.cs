@@ -353,12 +353,12 @@ namespace Ambermoon.Data
         public Block[,] Blocks { get; set; }
         public Tile[,] InitialTiles { get; set; }
         public Block[,] InitialBlocks { get; set; }
-        public List<Event> Events { get; } = new List<Event>();
-        public List<Event> EventList { get; } = new List<Event>();
-        public List<string> Texts { get; set; } = new List<string>();
+        public List<Event> Events { get; } = [];
+        public List<Event> EventList { get; } = [];
+        public List<string> Texts { get; set; } = [];
         public CharacterReference[] CharacterReferences { get; } = new CharacterReference[32];
-        public List<GotoPoint> GotoPoints { get; set; } = new List<GotoPoint>();
-        public List<AutomapType> EventAutomapTypes { get; set; } = new List<AutomapType>();
+        public List<GotoPoint> GotoPoints { get; set; } = [];
+        public List<AutomapType> EventAutomapTypes { get; set; } = [];
         public bool IsLyramionWorldMap => IsWorldMap && World == World.Lyramion;
         public bool IsForestMoonWorldMap => IsWorldMap && World == World.ForestMoon;
         public bool IsMoragWorldMap => IsWorldMap && World == World.Morag;

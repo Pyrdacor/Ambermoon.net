@@ -11,6 +11,8 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
     public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
     Map? map = null;
     ushort? templateMapIndex = null;
+    bool resolved = false;
+    Dictionary<ushort, byte> mapEventOnTileIndex = [];
 
     public MapData()
     {
@@ -20,6 +22,54 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
     public MapData(Map map)
     {
         this.map = map;
+        resolved = true;
+    }
+
+    public Map GetMap(IMapManager mapManager)
+    {
+        if (map == null)
+            throw new NullReferenceException("Map was null");
+
+        if (resolved || templateMapIndex == null)
+            return map;
+
+        resolved = true;
+
+        var templateMap = mapManager.GetMap(templateMapIndex.Value);
+
+        if (templateMap.Width != map.Width || templateMap.Height != map.Height)
+            throw new AmbermoonException(ExceptionScope.Data, "Width or height mismatch with template map.");
+
+        if (map.Type == MapType.Map2D)
+        {
+            map.Tiles = (Map.Tile[,])templateMap.InitialTiles.Clone();
+            map.InitialTiles = (Map.Tile[,])templateMap.InitialTiles.Clone();
+
+            AssignEvents(map.Tiles, map.InitialTiles);
+        }
+        else
+        {
+            map.Blocks = (Map.Block[,])templateMap.InitialBlocks.Clone();
+            map.InitialBlocks = (Map.Block[,])templateMap.InitialBlocks.Clone();
+
+            AssignEvents(map.Blocks, map.InitialBlocks);
+        }
+
+        void AssignEvents(Map.IEventOnMap[,] tiles, Map.IEventOnMap[,] initialTiles)
+        {
+            foreach (var (tileIndex, mapEventId) in mapEventOnTileIndex)
+            {
+                int x = tileIndex % map.Width;
+                int y = tileIndex / map.Width;
+
+                tiles[x, y].MapEventId = mapEventId;
+                initialTiles[x, y].MapEventId = mapEventId;
+            }
+        }
+
+        mapEventOnTileIndex.Clear();
+
+        return map;
     }
 
     public void Read(IDataReader dataReader, uint _, GameData gameData, byte __)
@@ -31,10 +81,13 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
         if (map.Flags.HasFlag(MapFlags.SharedMapData))
         {
             templateMapIndex = dataReader.ReadWord();
+            resolved = false;
         }
         else
         {
             templateMapIndex = null;
+            resolved = true;
+
             var tileset = gameData.GetTileset(map.TilesetOrLabdataIndex);
 
             if (map.Type == MapType.Map2D)
@@ -109,16 +162,25 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
                     }
                 }
             }
+        }
 
-            EventReader.ReadEvents(dataReader, map.Events, map.EventList);
+        EventReader.ReadEvents(dataReader, map.Events, map.EventList);
 
-            int usedEventCount = dataReader.ReadWord();
+        int usedEventCount = dataReader.ReadWord();
 
-            if (usedEventCount != 0)
+        if (usedEventCount != 0)
+        {
+            if (map.EventList.Count == 0)
+                throw new AmbermoonException(ExceptionScope.Data, "The map has no events but references some.");
+
+            Action<ushort, byte> eventAssigner;
+
+            if (map.Flags.HasFlag(MapFlags.SharedMapData))
             {
-                if (map.EventList.Count == 0)
-                    throw new AmbermoonException(ExceptionScope.Data, "The map has no events but references some.");
-
+                eventAssigner = mapEventOnTileIndex.Add;
+            }
+            else
+            {
                 var initialEventsOnMap = map.Type == MapType.Map2D
                     ? map.InitialTiles.Cast<Map.IEventOnMap>().ToArray()
                     : map.InitialBlocks.Cast<Map.IEventOnMap>().ToArray();
@@ -126,87 +188,92 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
                     ? map.Tiles.Cast<Map.IEventOnMap>().ToArray()
                     : map.Blocks.Cast<Map.IEventOnMap>().ToArray();
 
-                for (int i = 0; i < usedEventCount; ++i)
+                eventAssigner = (tileIndex, mapEventId) =>
                 {
-                    int tileIndex = dataReader.ReadWord();
-
-                    if (tileIndex >= map.Width * map.Height)
-                        throw new AmbermoonException(ExceptionScope.Data, "Invalid tile index for map event.");
-
-                    uint eventIndex = dataReader.ReadByte();
-
-                    if (eventIndex >= map.EventList.Count)
-                        throw new AmbermoonException(ExceptionScope.Data, "Invalid event index for map event.");
-
-                    initialEventsOnMap[tileIndex].MapEventId = eventIndex;
-                    eventsOnMap[tileIndex].MapEventId = eventIndex;
-                }
-            }
-
-            int characterCount = dataReader.ReadByte();
-
-            if (characterCount > 32)
-                throw new AmbermoonException(ExceptionScope.Data, "Too many characters on map.");
-
-            for (int i = 0; i < characterCount; ++i)
-            {
-                var index = dataReader.ReadByte();
-                var collisionClass = dataReader.ReadByte();
-                var typeAndFlags = dataReader.ReadByte();
-                var eventIndex = dataReader.ReadByte();
-                var gfxIndex = dataReader.ReadWord();
-                var tileFlags = dataReader.ReadDword();
-
-                var character = map.CharacterReferences[i] = index == 0 ? null : new Map.CharacterReference
-                {
-                    Index = index,
-                    Type = (CharacterType)(typeAndFlags & 0x03),
-                    CharacterFlags = (Map.CharacterReference.Flags)(typeAndFlags >> 2),
-                    CollisionClass = collisionClass,
-                    EventIndex = eventIndex,
-                    GraphicIndex = gfxIndex,
-                    TileFlags = (Tileset.TileFlags)tileFlags,
-                    CombatBackgroundIndex = tileFlags >> 28
+                    initialEventsOnMap[tileIndex].MapEventId = mapEventId;
+                    eventsOnMap[tileIndex].MapEventId = mapEventId;
                 };
-
-                if (character != null)
-                {
-                    int positionCount = 288;
-
-                    if (character.CharacterFlags.HasFlag(Map.CharacterReference.Flags.RandomMovement))
-                        positionCount = 1;
-                    else if (character.Type != CharacterType.Monster && character.CharacterFlags.HasFlag(Map.CharacterReference.Flags.Stationary))
-                        positionCount = 1;
-
-                    for (int p = 0; p < positionCount; ++p)
-                        character.Positions.Add(new Position(dataReader.ReadByte(), dataReader.ReadByte()));
-                }
             }
 
-            if (map.Type == MapType.Map3D)
+            for (int i = 0; i < usedEventCount; ++i)
             {
-                int gotoPointCount = dataReader.ReadByte();
+                ushort tileIndex = dataReader.ReadWord();
 
-                for (int i = 0; i < gotoPointCount; ++i)
-                {
-                    uint x = dataReader.ReadByte();
-                    uint y = dataReader.ReadByte();
-                    var direction = (CharacterDirection)dataReader.ReadByte();
-                    byte index = dataReader.ReadByte();
+                if (tileIndex >= map.Width * map.Height)
+                    throw new AmbermoonException(ExceptionScope.Data, "Invalid tile index for map event.");
 
-                    map.GotoPoints.Add(new Map.GotoPoint
-                    {
-                        X = x,
-                        Y = y,
-                        Direction = direction,
-                        Index = index,
-                        Name = gameData.GetGotoPointName(index)
-                    });
-                }
+                byte mapEventId = dataReader.ReadByte();
 
-                if (map.EventList.Count != 0)
-                    map.EventAutomapTypes.AddRange(dataReader.ReadBytes(map.EventList.Count).Select(t => (Enumerations.AutomapType)t));
+                if (mapEventId >= map.EventList.Count)
+                    throw new AmbermoonException(ExceptionScope.Data, "Invalid event index for map event.");
+
+                eventAssigner(tileIndex, mapEventId);
             }
+        }
+
+        int characterCount = dataReader.ReadByte();
+
+        if (characterCount > 32)
+            throw new AmbermoonException(ExceptionScope.Data, "Too many characters on map.");
+
+        for (int i = 0; i < characterCount; ++i)
+        {
+            var index = dataReader.ReadByte();
+            var collisionClass = dataReader.ReadByte();
+            var typeAndFlags = dataReader.ReadByte();
+            var eventIndex = dataReader.ReadByte();
+            var gfxIndex = dataReader.ReadWord();
+            var tileFlags = dataReader.ReadDword();
+
+            var character = map.CharacterReferences[i] = index == 0 ? null : new Map.CharacterReference
+            {
+                Index = index,
+                Type = (CharacterType)(typeAndFlags & 0x03),
+                CharacterFlags = (Map.CharacterReference.Flags)(typeAndFlags >> 2),
+                CollisionClass = collisionClass,
+                EventIndex = eventIndex,
+                GraphicIndex = gfxIndex,
+                TileFlags = (Tileset.TileFlags)tileFlags,
+                CombatBackgroundIndex = tileFlags >> 28
+            };
+
+            if (character != null)
+            {
+                int positionCount = 288;
+
+                if (character.CharacterFlags.HasFlag(Map.CharacterReference.Flags.RandomMovement))
+                    positionCount = 1;
+                else if (character.Type != CharacterType.Monster && character.CharacterFlags.HasFlag(Map.CharacterReference.Flags.Stationary))
+                    positionCount = 1;
+
+                for (int p = 0; p < positionCount; ++p)
+                    character.Positions.Add(new Position(dataReader.ReadByte(), dataReader.ReadByte()));
+            }
+        }
+
+        if (map.Type == MapType.Map3D)
+        {
+            int gotoPointCount = dataReader.ReadByte();
+
+            for (int i = 0; i < gotoPointCount; ++i)
+            {
+                uint x = dataReader.ReadByte();
+                uint y = dataReader.ReadByte();
+                var direction = (CharacterDirection)dataReader.ReadByte();
+                byte index = dataReader.ReadByte();
+
+                map.GotoPoints.Add(new Map.GotoPoint
+                {
+                    X = x,
+                    Y = y,
+                    Direction = direction,
+                    Index = index,
+                    Name = gameData.GetGotoPointName(index)
+                });
+            }
+
+            if (map.EventList.Count != 0)
+                map.EventAutomapTypes.AddRange(dataReader.ReadBytes(map.EventList.Count).Select(t => (Enumerations.AutomapType)t));
         }
     }
 
