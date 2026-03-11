@@ -9,7 +9,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 {
     public class SavegameSerializer : ISavegameSerializer
     {
-        void ReadSaveData(Savegame savegame, IDataReader dataReader)
+        public static void ReadSaveData(SavegameData savegame, IDataReader dataReader)
         {
             savegame.Year = dataReader.ReadWord();
             savegame.Month = dataReader.ReadWord();
@@ -136,7 +136,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
         }
 
-        void WriteSaveData(Savegame savegame, IDataWriter dataWriter)
+        public static void WriteSaveData(SavegameData savegame, IDataWriter dataWriter)
         {
             int startOffset = dataWriter.Position;
 

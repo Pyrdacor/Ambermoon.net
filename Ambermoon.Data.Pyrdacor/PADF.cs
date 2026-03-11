@@ -4,6 +4,8 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor;
 
+using SavegameData = FileSpecs.SavegameData;
+
 /// <summary>
 /// Pyrdacor's Ambermoon Data File
 /// </summary>

@@ -23,11 +23,10 @@ namespace Ambermoon.Data
         public uint Level;
     }
 
-    public class Savegame
+    public class SavegameData
     {
         #region Map
 
-        public Dictionary<uint, Automap> Automaps { get; } = new Dictionary<uint, Automap>();
         public uint CurrentMapIndex { get; set; }
         public uint CurrentMapX { get; set; }
         public uint CurrentMapY { get; set; }
@@ -155,9 +154,9 @@ namespace Ambermoon.Data
 
         #endregion
 
+
         #region Party
 
-        public Dictionary<uint, PartyMember> PartyMembers { get; } = new Dictionary<uint, PartyMember>();
         public uint[] CurrentPartyMemberIndices { get; } = new uint[6];
         public int ActivePartyMemberSlot = 0; // 0 - 5
         public byte[] BattlePositions { get; } = new byte[6];
@@ -235,6 +234,7 @@ namespace Ambermoon.Data
 
         #endregion
 
+
         #region Chests and merchants
 
         public byte[] ChestUnlockStates { get; set; }
@@ -304,10 +304,9 @@ namespace Ambermoon.Data
 
             DoorUnlockStates[doorIndex / 8] |= (byte)(1 << ((int)doorIndex % 8));
         }
-        public Dictionary<uint, Chest> Chests { get; } = new Dictionary<uint, Chest>();
-        public Dictionary<uint, Merchant> Merchants { get; } = new Dictionary<uint, Merchant>();
 
         #endregion
+
 
         #region Events
 
@@ -324,6 +323,7 @@ namespace Ambermoon.Data
         public Dictionary<uint, List<ChangeTileEvent>> TileChangeEvents { get; } = new Dictionary<uint, List<ChangeTileEvent>>();
 
         #endregion
+
 
         #region Misc
 
@@ -363,8 +363,16 @@ namespace Ambermoon.Data
         }
 
         #endregion
+    }
 
-        public PartyMember? GetPartyMember(int slot) => CurrentPartyMemberIndices[slot] == 0 ? null : PartyMembers[CurrentPartyMemberIndices[slot]];
+    public class Savegame : SavegameData
+    {
+        public Dictionary<uint, Automap> Automaps { get; } = [];
+        public Dictionary<uint, PartyMember> PartyMembers { get; } = [];
+        public Dictionary<uint, Chest> Chests { get; } = new Dictionary<uint, Chest>();
+        public Dictionary<uint, Merchant> Merchants { get; } = new Dictionary<uint, Merchant>();
+
+        public PartyMember GetPartyMember(int slot) => CurrentPartyMemberIndices[slot] == 0 ? null : PartyMembers[CurrentPartyMemberIndices[slot]];
 
         public static Savegame Load(ISavegameSerializer savegameSerializer, SavegameInputFiles savegameFiles, IFileContainer partyTextsContainer)
         {

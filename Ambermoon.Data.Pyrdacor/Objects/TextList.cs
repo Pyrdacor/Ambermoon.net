@@ -6,6 +6,11 @@ internal class TextList
 {
     readonly List<string> texts;
 
+    public TextList(List<string> texts)
+    {
+        this.texts = texts;
+    }
+
     public TextList(IDataReader dataReader)
     {
         int count = dataReader.ReadWord();

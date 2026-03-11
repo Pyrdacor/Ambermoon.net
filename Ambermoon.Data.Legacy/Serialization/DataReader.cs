@@ -3,7 +3,6 @@ using SonicArranger;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Ambermoon.Data.Legacy.Serialization
@@ -238,23 +237,10 @@ namespace Ambermoon.Data.Legacy.Serialization
             if (offset + sequence.Length > data.Length)
                 return -1;
 
-            long lastIndex = data.Length - sequence.Length;
+            var span = data.AsSpan((int)offset);
+            int index = span.IndexOf(sequence);
 
-            for (long i = offset; i <= lastIndex; ++i)
-            {
-                int j = 0;
-
-                for (; j < sequence.Length; ++j)
-                {
-                    if (data[i + j] != sequence[j])
-                        break;
-                }
-
-                if (j == sequence.Length)
-                    return i;
-            }
-
-            return -1;
+            return index < 0 ? -1 : offset + index;
         }
 
         public long FindString(string str, long offset)

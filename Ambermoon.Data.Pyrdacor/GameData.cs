@@ -1,25 +1,30 @@
 ﻿using Ambermoon.Data.Audio;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy.Audio;
-using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
 using Ambermoon.Data.Pyrdacor.Objects;
+using Ambermoon.Data.Pyrdacor.Serialization;
 using Ambermoon.Data.Serialization;
 using Ambermoon.Render;
 
 namespace Ambermoon.Data.Pyrdacor;
 
-public class GameData : IGameData, IGraphicProvider
+using Savegame = SavegameData;
+using SavegameData = FileSpecs.SavegameData;
+
+public partial class GameData : IGameData, IGraphicProvider
 {
     LazyFileLoader<Palette, Graphic> paletteLoader;
+    LazyFileLoader<SavegameData, Savegame> savegameLoader;
     LazyContainerLoader<FontData, Font> fontLoader;
     LazyContainerLoader<MonsterGroups, MonsterGroup> monsterGroupLoader;
+    LazyContainerLoader<CharacterData, PartyMember> partyLoader;
     LazyContainerLoader<CharacterData, Monster> monsterLoader;
     LazyContainerLoader<CharacterData, NPC> npcLoader;
     LazyContainerLoader<Texts, TextList> npcTextLoader;
     LazyContainerLoader<Texts, TextList> partyTextLoader;
     LazyContainerLoader<ItemData, Item> itemLoader;
-    LazyContainerLoader<Texts, string> itemNameLoader;
+    LazyFileLoader<Texts, TextList> itemNameLoader;
     LazyContainerLoader<Texts, TextList> itemTextLoader;
     LazyContainerLoader<MapData, Map> mapLoader;
     LazyContainerLoader<Texts, TextList> mapTextLoader;
@@ -41,7 +46,6 @@ public class GameData : IGameData, IGraphicProvider
     readonly Lazy<Font> introLargeFont;
     readonly Lazy<Places> places;
     readonly Lazy<IngameFontProvider> ingameFontProvider;
-    readonly Lazy<Dictionary<uint, PartyMember>> initialPartyMembers;
 
     public bool Loaded { get; } = false;
 
@@ -117,6 +121,7 @@ public class GameData : IGameData, IGraphicProvider
 
     const string MagicPalette = "PALS";
     const string MagicSavegame = "SAVE";
+    const string MagicPlayers = "PLAY";
     const string MagicMonsters = "MONS";
     const string MagicNPCs = "NPCS";
     const string MagicNPCTexts = "NTXT";
@@ -137,7 +142,7 @@ public class GameData : IGameData, IGraphicProvider
     const string MagicGotoPointNames = "GOTO";
 
     public GameData(Stream stream, params (string Magic, Action<IDataReader> Action)[] customFileHandlers)
-        : this(new DataReader(stream), customFileHandlers)
+        : this(new DataReaderLE(stream), customFileHandlers)
     {
 
     }
@@ -152,7 +157,8 @@ public class GameData : IGameData, IGraphicProvider
         // all file specs have been loaded from the game data.
 
         fileHandlers.Add(MagicPalette, LoadPalettes);
-        fileHandlers.Add(MagicSavegame, LoadSavegame);
+        fileHandlers.Add(MagicSavegame, LoadSavegame); // Only the Party_data.sav
+        fileHandlers.Add(MagicPlayers, LoadParty); // Initial party
         fileHandlers.Add(MagicMonsters, LoadMonsters);
         fileHandlers.Add(MagicNPCs, LoadNPCs);
         fileHandlers.Add(MagicNPCTexts, LoadNPCTexts);
@@ -173,13 +179,16 @@ public class GameData : IGameData, IGraphicProvider
         fileHandlers.Add(MagicGotoPointNames, LoadGotoPointNames);
 
         foreach (var customFileHandler in customFileHandlers)
-            fileHandlers.Add(customFileHandler.Magic, customFileHandler.Action);
+        {
+            if (fileHandlers.ContainsKey(customFileHandler.Magic))
+                throw new ArgumentException($"Custom file handler magic {customFileHandler.Magic} is already used by another file type.");
 
-        initialPartyMembers = new(() => savegameManager!.Value.LoadInitial(this, new SavegameSerializer()).PartyMembers);
+            fileHandlers.Add(customFileHandler.Magic, customFileHandler.Action);
+        }
 
         characterManager = new Lazy<ICharacterManager>(() => new CharacterManager
         (
-            () => initialPartyMembers.Value,
+            () => partyLoader!.LoadAll(),
             () => npcLoader!.LoadAll(),
             () => monsterLoader!.LoadAll(),
             () => monsterGroupLoader!.LoadAll()
@@ -246,7 +255,7 @@ public class GameData : IGameData, IGraphicProvider
 
             int dataLength = (int)(reader.ReadDword() & int.MaxValue);
 
-            loader?.Invoke(new DataReader(reader.ReadBytes(dataLength)));
+            loader?.Invoke(new DataReaderLE(reader.ReadBytes(dataLength)));
         }
 
         Loaded = true;
@@ -254,71 +263,74 @@ public class GameData : IGameData, IGraphicProvider
 
     internal Tileset GetTileset(uint index) => tilesetLoader.Load((ushort)index);
     internal string? GetGotoPointName(int index) => gotoPointNameLoader.Load().GetText(index);
+    internal string? GetItemName(int index) => itemNameLoader.Load().GetText(index);
 
 
     #region Loaders
 
     void LoadPalettes(IDataReader dataReader)
     {
-        paletteLoader = new LazyFileLoader<Palette, Graphic>(dataReader, this, p => p.Graphic);
+        paletteLoader = new(dataReader, this, p => p.Graphic);
     }
 
     void LoadSavegame(IDataReader dataReader)
     {
-        // TODO
-        // TODO initial party members
+        savegameLoader = new(dataReader, this, p => p.Savegame);
+    }
 
-        throw new NotImplementedException();
+    void LoadParty(IDataReader dataReader)
+    {
+        partyLoader = new(dataReader, this, n => (n.Character as PartyMember)!);
     }
 
     void LoadMonsters(IDataReader dataReader)
     {
-        monsterLoader = new LazyContainerLoader<CharacterData, Monster>(dataReader, this, m => (m.Character as Monster)!);
+        monsterLoader = new(dataReader, this, m => (m.Character as Monster)!);
     }
 
     void LoadNPCs(IDataReader dataReader)
     {
-        npcLoader = new LazyContainerLoader<CharacterData, NPC>(dataReader, this, n => (n.Character as NPC)!);
+        npcLoader = new(dataReader, this, n => (n.Character as NPC)!);
     }
 
     void LoadNPCTexts(IDataReader dataReader)
     {
-        npcTextLoader = new LazyContainerLoader<Texts, TextList>(dataReader, this, t => t.TextList);
+        npcTextLoader = new(dataReader, this, t => t.TextList);
     }
 
     void LoadPartyTexts(IDataReader dataReader)
     {
-        partyTextLoader = new LazyContainerLoader<Texts, TextList>(dataReader, this, t => t.TextList);
+        partyTextLoader = new(dataReader, this, t => t.TextList);
     }
 
     void LoadMonsterGroups(IDataReader dataReader)
     {
-        monsterGroupLoader = new LazyContainerLoader<MonsterGroups, MonsterGroup>(dataReader, this, g => g.MonsterGroup);
+        monsterGroupLoader = new(dataReader, this, g => g.MonsterGroup);
     }
 
     void LoadItems(IDataReader dataReader)
     {
-        itemLoader = new LazyContainerLoader<ItemData, Item>(dataReader, this, i => i.Item);
+        itemLoader = new(dataReader, this, i => i.Item);
     }
 
     void LoadItemNames(IDataReader dataReader)
     {
-        itemNameLoader = new LazyContainerLoader<Texts, string>(dataReader, this, t => t.TextList.First()!);
+        itemNameLoader = new(dataReader, this, t => t.TextList);
     }
 
     void LoadItemTexts(IDataReader dataReader)
     {
-        itemTextLoader = new LazyContainerLoader<Texts, TextList>(dataReader, this, t => t.TextList);
+        itemTextLoader = new(dataReader, this, t => t.TextList);
     }
 
     void LoadLocations(IDataReader dataReader)
     {
-        locationLoader = new LazyContainerLoader<LocationData, Place>(dataReader, this, l => l.Place);
+        locationLoader = new(dataReader, this, l => l.Place);
     }
 
     void LoadLocationNames(IDataReader dataReader)
     {
-        locationNameLoader = new LazyContainerLoader<Texts, string>(dataReader, this, t => t.TextList.First()!);
+        locationNameLoader = new(dataReader, this, t => t.TextList.First()!);
     }
 
     void LoadOutro(IDataReader dataReader)
@@ -333,7 +345,7 @@ public class GameData : IGameData, IGraphicProvider
 
     void LoadTilesets(IDataReader dataReader)
     {
-        tilesetLoader = new LazyContainerLoader<TilesetData, Tileset>(dataReader, this, t => t.Tileset);
+        tilesetLoader = new(dataReader, this, t => t.Tileset);
     }
 
     void LoadLabyrinthData(IDataReader dataReader)
@@ -353,12 +365,12 @@ public class GameData : IGameData, IGraphicProvider
 
     void LoadFonts(IDataReader dataReader)
     {
-        fontLoader = new LazyContainerLoader<FontData, Font>(dataReader, this, f => f.Font);
+        fontLoader = new(dataReader, this, f => f.Font);
     }
 
     void LoadGotoPointNames(IDataReader dataReader)
     {
-        gotoPointNameLoader = new LazyFileLoader<Texts, TextList>(dataReader, this, n => n.TextList);
+        gotoPointNameLoader = new(dataReader, this, n => n.TextList);
     }
 
     void LoadTileGraphics(IDataReader dataReader)
