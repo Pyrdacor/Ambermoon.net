@@ -28,6 +28,14 @@ internal static class SerializationExtensions
         return (TEnum)Enum.ToObject(typeof(TEnum), value);
     }
 
+    public static TEnum ReadEnum32<TEnum>(this IDataReader dataReader)
+        where TEnum : struct, Enum
+    {
+        var value = dataReader.ReadDword();
+
+        return (TEnum)Enum.ToObject(typeof(TEnum), value);
+    }
+
     public static short ReadShort(this IDataReader dataReader)
     {
         var value = dataReader.ReadWord();
@@ -51,6 +59,12 @@ internal static class SerializationExtensions
         where TEnum : struct, Enum
     {
         dataWriter.Write(Convert.ToUInt16(value));
+    }
+
+    public static void WriteEnum32<TEnum>(this IDataWriter dataWriter, TEnum value)
+        where TEnum : struct, Enum
+    {
+        dataWriter.Write(Convert.ToUInt32(value));
     }
 
     public static void WriteShort(this IDataWriter dataWriter, short value)

@@ -1,18 +1,38 @@
 ﻿using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.Compressions;
+using Ambermoon.Data.Pyrdacor.Extensions;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.FileSpecs;
 
 internal class MapData : IFileSpec<MapData>, IFileSpec
 {
+    public static bool UseMapDataSharing { get; set; } = false;
+
+    // The shared map data feature is a bit tricky because you would have to check all previous maps for
+    // identical map data to be able to use it. For now, we keep a static list of potential maps where
+    // we know they are identical in the original game data to the first map and can be used for testing.
+    // We still will do the comparison as mods might change this.
+    static readonly HashSet<uint> potentialSharedDataMapIndices =
+    [
+        2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 47,
+        48, 49, 50, 51, 52, 53, 55, 56, 63, 64, 65, 66, 67, 68, 76,
+        77, 78, 79, 80, 81, 82, 83, 84, 95, 96, 97, 98, 99, 100, 111,
+        112, 113, 114, 115, 127, 128, 129, 130, 143, 144, 145, 146,
+        147, 148, 159, 160, 161, 162, 163, 173, 174, 175, 176, 177,
+        178, 189, 190, 191, 192, 193, 194, 205, 206, 207, 208, 209,
+        210, 221, 222, 223, 224, 225, 226, 235, 236, 237, 238, 239,
+        240, 241, 242, 243, 244, 245, 251, 252, 253, 254, 255, 256
+    ];
+
     public static string Magic => "MAP";
     public static byte SupportedVersion => 0;
     public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
     Map? map = null;
     ushort? templateMapIndex = null;
     bool resolved = false;
-    Dictionary<ushort, byte> mapEventOnTileIndex = [];
+    readonly Dictionary<ushort, byte> mapEventOnTileIndex = [];
 
     public MapData()
     {
@@ -282,10 +302,156 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
         if (map == null)
             throw new AmbermoonException(ExceptionScope.Application, "Map data was null when trying to write it.");
 
+        bool sharedMapData = UseMapDataSharing && potentialSharedDataMapIndices.Contains(map.Index);
+
+        if (sharedMapData)
+            map.Flags |= MapFlags.SharedMapData;
+
         MapWriter.WriteMapHeader(map, dataWriter);
 
-        // TODO
+        var usedEvents = new Dictionary<int, uint>();
 
-        throw new NotImplementedException();
+        if (sharedMapData)
+        {
+            dataWriter.Write((ushort)1); // For now only map 1 shares the data
+
+            if (map.Type == MapType.Map2D)
+            {
+                map.Tiles.ForEach((tile, index) =>
+                {
+                    if (tile.MapEventId != 0)
+                        usedEvents.Add(index, tile.MapEventId);
+                });
+            }
+            else // 3D
+            {
+                map.Blocks.ForEach((block, index) =>
+                {
+                    if (block.MapEventId != 0)
+                        usedEvents.Add(index, block.MapEventId);
+                });
+            }
+        }
+        else
+        {
+            if (map.Type == MapType.Map2D)
+            {
+                var backTiles = new byte[map.Width * map.Height];
+                var frontTiles = new byte[map.Width * map.Height * 2];
+                int index = 0;
+
+                unsafe
+                {
+                    fixed (byte* backFixedPtr = backTiles)
+                    fixed (byte* frontFixedPtr = frontTiles)
+                    {
+                        byte* backPtr = backFixedPtr;
+                        ushort* frontPtr = (ushort*)frontFixedPtr;
+
+                        for (int y = 0; y < map.Height; ++y)
+                        {
+                            for (int x = 0; x < map.Width; ++x)
+                            {
+                                var tile = map.InitialTiles[x, y];
+
+                                *backPtr++ = (byte)tile.BackTileIndex;
+                                *frontPtr++ = (ushort)tile.FrontTileIndex;
+
+                                if (tile.MapEventId != 0)
+                                    usedEvents.Add(index, tile.MapEventId);
+
+                                index++;
+                            }
+                        }
+                    }
+                }
+
+                dataWriter.Write(backTiles);
+                dataWriter.Write(frontTiles);
+            }
+            else // 3D
+            {
+                var blocks = new byte[map.Width * map.Height];
+                int index = 0;
+
+                unsafe
+                {
+                    fixed (byte* blockFixedPtr = blocks)
+                    {
+                        byte* blockPtr = blockFixedPtr;
+
+                        for (int y = 0; y < map.Height; ++y)
+                        {
+                            for (int x = 0; x < map.Width; ++x)
+                            {
+                                var block = map.InitialBlocks[x, y];
+
+                                *blockPtr++ = (byte)
+                                (
+                                    block.MapBorder
+                                        ? 0xff
+                                        : block.WallIndex != 0
+                                            ? 100 + block.WallIndex
+                                            : block.ObjectIndex
+                                );
+
+                                if (block.MapEventId != 0)
+                                    usedEvents.Add(index, block.MapEventId);
+
+                                index++;
+                            }
+                        }
+                    }
+                }
+
+                dataWriter.Write(blocks);
+            }
+        }
+
+        EventWriter.WriteEvents(dataWriter, map.Events, map.EventList);
+
+        dataWriter.Write((ushort)usedEvents.Count);
+
+        foreach (var (tileIndex, mapEventId) in usedEvents)
+        {
+            dataWriter.Write((ushort)tileIndex);
+            dataWriter.Write((byte)mapEventId);
+        }
+
+        var mapCharacters = map.CharacterReferences.Where(cr => cr != null).ToArray();
+
+        dataWriter.Write((byte)mapCharacters.Length);
+
+        foreach (var character in mapCharacters)
+        {
+            dataWriter.Write((byte)character.Index);
+            dataWriter.Write((byte)character.CollisionClass);
+            dataWriter.Write((byte)(((byte)character.Type & 0x03) | ((byte)character.CharacterFlags << 2)));
+            dataWriter.Write((byte)character.EventIndex);
+            dataWriter.Write((ushort)character.GraphicIndex);
+            dataWriter.Write((uint)character.TileFlags | (uint)((character.CombatBackgroundIndex & 0xf) << 28));
+
+            character.Positions.ForEach(p =>
+            {
+                dataWriter.Write((byte)p.X);
+                dataWriter.Write((byte)p.Y);
+            });
+
+            if (map.Type == MapType.Map3D)
+            {
+                dataWriter.Write((byte)map.GotoPoints.Count);
+
+                foreach (var gotoPoint in map.GotoPoints)
+                {
+                    dataWriter.Write((byte)gotoPoint.X);
+                    dataWriter.Write((byte)gotoPoint.Y);
+                    dataWriter.WriteEnum8(gotoPoint.Direction);
+                    dataWriter.Write((byte)gotoPoint.Index);
+                }
+
+                if (map.EventList.Count != 0)
+                    map.EventAutomapTypes.ForEach(t => dataWriter.Write((byte)t));
+            }
+        }
     }
 }

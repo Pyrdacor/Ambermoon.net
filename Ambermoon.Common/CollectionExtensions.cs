@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
+﻿using System.Collections.Generic;
 
 namespace Ambermoon
 {
@@ -40,6 +38,39 @@ namespace Ambermoon
         {
             int x = list.BinarySearch(value, comparer);
             list.Insert((x >= 0) ? x : ~x, value);
+        }
+
+        public delegate void Array2DForEachDelegate<T>(T item, int x, int y);
+        public delegate void Array2DForEachIndexDelegate<T>(T item, int index);
+
+        public static void ForEach<T>(this T[,] array, Array2DForEachDelegate<T> action)
+        {
+            int height = array.GetLength(0);
+            int width = array.GetLength(1);
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    action(array[y, x], x, y);
+                }
+            }
+        }
+
+        public static void ForEach<T>(this T[,] array, Array2DForEachIndexDelegate<T> action)
+        {
+            int height = array.GetLength(0);
+            int width = array.GetLength(1);
+
+            int index = 0;
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    action(array[y, x], index++);
+                }
+            }
         }
     }
 }
