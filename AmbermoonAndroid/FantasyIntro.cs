@@ -39,7 +39,7 @@ namespace AmbermoonAndroid
             {
                 TextureAtlasManager.Instance.AddFromGraphics(Layer.FantasyIntroGraphics,
                     fantasyIntroData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
-                var borders256 = new DataReader(FileProvider.GetBorderData());
+                var borders256 = DataReader.FromData(FileProvider.GetBorderData());
                 borderTextureIndexOffset = (uint)fantasyIntroData.Graphics.Keys.Max() + 1;
                 var borderGraphicInfo = new GraphicInfo
                 {

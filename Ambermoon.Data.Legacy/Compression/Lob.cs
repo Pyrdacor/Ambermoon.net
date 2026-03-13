@@ -157,7 +157,7 @@ namespace Ambermoon.Data.Legacy.Compression
                 }
             }
 
-            return new DataReader(decodedData);
+            return DataReader.FromData(decodedData);
         }
     }
 }

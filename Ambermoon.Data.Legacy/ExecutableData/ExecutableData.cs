@@ -158,10 +158,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
         }
 
-        public ExecutableData(List<AmigaExecutable.IHunk> hunks, IDataReader textAmbReader, IDataReader objectsAmbReader,
+        public ExecutableData(List<IHunk> hunks, IDataReader textAmbReader, IDataReader objectsAmbReader,
             IDataReader buttonGraphicsReader)
         {
-            var firstCodeHunk = hunks?.FirstOrDefault(h => h.Type == AmigaExecutable.HunkType.Code);
+            var firstCodeHunk = hunks?.FirstOrDefault(h => h.Type == HunkType.Code);
 
             if (firstCodeHunk == null && textAmbReader == null)
             {
@@ -169,7 +169,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 return;
             }
 
-            var codeReader = firstCodeHunk == null ? null : new DataReader((firstCodeHunk as AmigaExecutable.Hunk?)?.Data);
+            var codeReader = firstCodeHunk == null ? null : DataReader.FromData((firstCodeHunk as Hunk?)?.Data);
             TextContainer textContainer = null;
 
             if (textAmbReader != null)
@@ -184,8 +184,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             else
             {
                 codeReader.Position = 6;
-                DataVersionString = codeReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
-                DataInfoString = codeReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+                DataVersionString = codeReader.ReadNullTerminatedString(Encoding);
+                DataInfoString = codeReader.ReadNullTerminatedString(Encoding);
             }
 
             DataReader[] dataHunkReaders = null;
@@ -193,7 +193,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
             if (hunks.Count > 0)
             {
-                dataHunkReaders = [.. hunks.Where(h => h.Type == HunkType.Data).Select(h => new DataReader(((Hunk)h).Data))];
+                dataHunkReaders = [.. hunks.Where(h => h.Type == HunkType.Data).Select(h => DataReader.FromData(((Hunk)h).Data))];
 
                 // Note: First 160 bytes are copper commands which can be dynamically filled
                 // to move data to some Amiga registers. The area is permanently used by the
@@ -332,15 +332,15 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 {
                     var hunkReader = dataHunkReaders[1];
                     int dataHunks = 0;
-                    AmigaExecutable.Reloc32Hunk? relocHunk = null;
+                    Reloc32Hunk? relocHunk = null;
                     foreach (var hunk in hunks)
                     {
-                        if (hunk.Type == AmigaExecutable.HunkType.Data)
+                        if (hunk.Type == HunkType.Data)
                             ++dataHunks;
 
-                        if (hunk.Type == AmigaExecutable.HunkType.RELOC32 && dataHunks == 2)
+                        if (hunk.Type == HunkType.RELOC32 && dataHunks == 2)
                         {
-                            relocHunk = (AmigaExecutable.Reloc32Hunk)hunk;
+                            relocHunk = (Reloc32Hunk)hunk;
                             break;
                         }
                     }
@@ -370,7 +370,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
                         uint offset = hunkReader.ReadDword();
 
-                        var fileNameReader = new DataReader(((Hunk)hunks[hunkIndex]).Data);
+                        var fileNameReader = DataReader.FromData(((Hunk)hunks[hunkIndex]).Data);
                         fileNameReader.Position = (int)offset;
                         FileList.ReadFileEntry(fileNameReader);
                     }

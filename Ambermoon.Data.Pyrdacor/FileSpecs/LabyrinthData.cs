@@ -48,7 +48,17 @@ internal class LabyrinthData : IFileSpec<LabyrinthData>, IFileSpec
 
             wall.Flags = dataReader.ReadEnum32<TileFlags>();
             wall.TextureIndex = dataReader.ReadByte();
-            wall.AutomapType = dataReader.ReadEnum8<AutomapType>();
+
+            if (dataReader.PeekByte() == 0xff)
+            {
+                dataReader.ReadByte();
+                wall.AutomapType = AutomapType.Invalid;
+            }
+            else
+            {
+                wall.AutomapType = dataReader.ReadEnum8<AutomapType>();
+            }
+
             wall.ColorIndex = dataReader.ReadByte();
 
             int overlayCount = dataReader.ReadByte();
@@ -129,13 +139,13 @@ internal class LabyrinthData : IFileSpec<LabyrinthData>, IFileSpec
 
         foreach (var wall in labdata.Walls)
         {
-            dataWriter.WriteEnum32(wall.Flags);
+            dataWriter.Write((uint)wall.Flags);
             dataWriter.Write((byte)wall.TextureIndex);
             dataWriter.WriteEnum8(wall.AutomapType);
             dataWriter.Write((byte)wall.ColorIndex);
-            dataWriter.Write((byte)wall.Overlays.Length);
+            dataWriter.Write((byte)(wall.Overlays?.Length ?? 0));
 
-            foreach (var overlay in wall.Overlays)
+            foreach (var overlay in wall.Overlays ?? [])
             {
                 dataWriter.Write(overlay.Blend);
                 dataWriter.Write((byte)overlay.TextureIndex);
@@ -148,7 +158,7 @@ internal class LabyrinthData : IFileSpec<LabyrinthData>, IFileSpec
 
         foreach (var objectData in labdata.ObjectInfos)
         {
-            dataWriter.WriteEnum32(objectData.Flags);
+            dataWriter.Write((uint)objectData.Flags);
             dataWriter.Write((ushort)objectData.TextureIndex);
             dataWriter.Write((byte)objectData.NumAnimationFrames);
             dataWriter.Write((byte)objectData.ColorIndex);
@@ -160,7 +170,10 @@ internal class LabyrinthData : IFileSpec<LabyrinthData>, IFileSpec
 
         foreach (var obj in labdata.Objects)
         {
-            dataWriter.WriteEnum8(obj.AutomapType);
+            if (obj.AutomapType == AutomapType.Invalid)
+                dataWriter.Write((byte)0xff);
+            else
+                dataWriter.WriteEnum8(obj.AutomapType);
 
             var subObjects = obj.SubObjects.Where(s => s.Object.TextureWidth != 0).ToList();
 

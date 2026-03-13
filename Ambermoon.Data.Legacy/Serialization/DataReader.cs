@@ -1,23 +1,25 @@
-﻿using Ambermoon.Data.Serialization;
-using SonicArranger;
-using System;
+﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Ambermoon.Data.Serialization;
+using SonicArranger;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
 #pragma warning disable CS8981
-    using word = UInt16;
     using dword = UInt32;
     using qword = UInt64;
+    using word = UInt16;
 #pragma warning restore CS8981
 
     public class DataReader : IDataReader, ICustomReader
     {
         public static readonly Encoding Encoding;
-        protected readonly byte[] data;
-        private int position = 0;
+        readonly byte[] data;
+        int position;
+
         public int Position
         {
             get => position;
@@ -29,19 +31,28 @@ namespace Ambermoon.Data.Legacy.Serialization
                 position = value;
             }
         }
-        public int Size => data == null ? 0 : data.Length;
 
-        public byte this[int index] => data[index];
+        private byte[] Data { init => data = value; }
+
+        public int Size => data.Length;
+
+        ReadOnlySpan<byte> Span => data;
 
         static DataReader()
         {
             Encoding = new AmbermoonEncoding();
         }
 
+        private DataReader()
+        {
+            position = 0;
+        }
+
         public DataReader(byte[] data, int offset, int length)
         {
             this.data = new byte[length];
             Buffer.BlockCopy(data, offset, this.data, 0, length);
+            position = 0;
         }
 
         public DataReader(byte[] data, int offset)
@@ -66,7 +77,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         {
             long pos = stream.CanSeek ? stream.Position : -1;
             data = new byte[stream.Length];
-            stream.Read(data, 0, data.Length);
+            stream.ReadExactly(data, 0, data.Length);
             if (pos != -1)
                 stream.Position = pos;
         }
@@ -85,76 +96,95 @@ namespace Ambermoon.Data.Legacy.Serialization
                 stream.Position = pos;
         }
 
+        public static DataReader FromData(byte[] data)
+        {
+            return new DataReader
+            {
+                Data = data
+            };
+        }
+
+        public void AlignToDword()
+        {
+            position = (position + 3) & ~3;
+        }
+
+        public void AlignToWord()
+        {
+            position = (position + 1) & ~1;
+        }
+
+        public long FindByteSequence(byte[] sequence, long offset)
+        {
+            if (offset + sequence.Length > data.Length)
+                return -1;
+
+            int index = Span.Slice((int)offset).IndexOf(sequence);
+
+            return index < 0 ? -1 : offset + index;
+        }
+
+        public long FindString(string str, long offset)
+        {
+            return FindByteSequence(DataReader.Encoding.GetBytes(str), offset);
+        }
+
+        public byte PeekByte()
+        {
+            return data[position];
+        }
+
+        public word PeekWord()
+        {
+            return BinaryPrimitives.ReadUInt16BigEndian(Span[position..]);
+        }
+
+        public dword PeekDword()
+        {
+            return BinaryPrimitives.ReadUInt32BigEndian(Span[position..]);
+        }
+
         public bool ReadBool()
         {
-            CheckOutOfRange(1);
-            return data[Position++] != 0;
+            return ReadByte() != 0;
         }
 
         public byte ReadByte()
         {
-            CheckOutOfRange(1);
-            return data[Position++];
+            return data[position++];
+        }
+
+        public byte[] ReadBytes(int amount)
+        {
+            var bytes = Span.Slice(position, amount).ToArray();
+            position += amount;
+            return bytes;
+        }
+
+        public string ReadChar() => ReadString(1);
+
+        public dword ReadDword()
+        {
+            uint value = BinaryPrimitives.ReadUInt32BigEndian(Span[position..]);
+            position += 4;
+            return value;
         }
 
         public word ReadWord()
         {
-            CheckOutOfRange(2);
-            return (word)((data[Position++] << 8) | data[Position++]);
-        }
-
-        public dword ReadDword()
-        {
-            CheckOutOfRange(4);
-            return (((dword)data[Position++] << 24) | ((dword)data[Position++] << 16) | ((dword)data[Position++] << 8) | data[Position++]);
+            ushort value = BinaryPrimitives.ReadUInt16BigEndian(Span[position..]);
+            position += 2;
+            return value;
         }
 
         public qword ReadQword()
         {
-            CheckOutOfRange(8);
-            return (((qword)data[Position++] << 56) | ((qword)data[Position++] << 48) | ((qword)data[Position++] << 40) |
-                ((qword)data[Position++] << 32) | ((qword)data[Position++] << 24) | ((qword)data[Position++] << 16) |
-                ((qword)data[Position++] << 8) | data[Position++]);
+            ulong value = BinaryPrimitives.ReadUInt64BigEndian(Span[position..]);
+            position += 8;
+            return value;
         }
 
-        public string ReadChar()
-        {
-            return ReadString(1);
-        }
-
-        public string ReadString()
-        {
-            return ReadString(Encoding);
-        }
-
-        public string ReadString(Encoding encoding)
-        {
-            CheckOutOfRange(1);
-            int length = ReadByte();
-            return ReadString(length, encoding);
-        }
-
-        public string ReadString(int length)
-        {
-            return ReadString(length, Encoding);
-        }
-
-        public string ReadString(int length, Encoding encoding)
-        {
-            if (length == 0)
-                return string.Empty;
-
-            CheckOutOfRange(length);
-            var str = encoding.GetString(data, Position, length);
-            str = str.Replace(encoding.GetString(new byte[] { 0xb4 }), "'");
-            Position += length;
-            return str;
-        }
-
-        public string ReadNullTerminatedString()
-        {
-            return ReadNullTerminatedString(Encoding);
-        }
+        public string ReadNullTerminatedString() => ReadNullTerminatedString(Encoding);
 
         public string ReadNullTerminatedString(Encoding encoding)
         {
@@ -173,7 +203,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     try
                     {
-                        encoding.GetString([.. buffer]);
+                        encoding.GetString(buffer.ToArray());
                     }
                     catch (ArgumentException)
                     {
@@ -184,83 +214,44 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             try
             {
-                return encoding.GetString([.. buffer]);
+                return encoding.GetString(buffer.ToArray());
             }
             catch (ArgumentException)
             {
-                return encoding.GetString([.. buffer.Take(buffer.Count - 1)]) + "?";
+                return encoding.GetString(buffer.Take(buffer.Count - 1).ToArray()) + "?";
             }
         }
 
-        public byte PeekByte()
+        public string ReadString() => ReadString(Encoding);
+
+        public string ReadString(Encoding encoding)
         {
-            CheckOutOfRange(1);
-            return data[Position];
+            int length = ReadByte();
+            return ReadString(length, encoding);
         }
 
-        public word PeekWord()
-        {
-            CheckOutOfRange(2);
-            return (word)((data[Position] << 8) | data[Position + 1]);
-        }
+        public string ReadString(int length) => ReadString(length, Encoding);
 
-        public dword PeekDword()
+        public string ReadString(int length, Encoding encoding)
         {
-            CheckOutOfRange(4);
-            return (dword)((data[Position] << 24) | (data[Position + 1] << 16) | (data[Position + 2] << 8) | data[Position + 3]);
+            if (length == 0)
+                return string.Empty;
+
+            var str = encoding.GetString(data, position, length);
+            str = str.Replace(encoding.GetString([0xb4]), "'");
+            position += length;
+            return str;
         }
 
         public byte[] ReadToEnd()
         {
-            return ReadBytes(Size - Position);
-        }
-
-        public byte[] ReadBytes(int amount)
-        {
-            var data = new byte[amount];
-            Buffer.BlockCopy(this.data, Position, data, 0, data.Length);
-            Position += amount;
-            return data;
-        }
-
-        protected void CheckOutOfRange(int sizeToRead)
-        {
-            if (Position + sizeToRead > data.Length)
-                throw new System.IO.EndOfStreamException("Read beyond the data size.");
-        }
-
-        public long FindByteSequence(byte[] sequence, long offset)
-        {
-            if (data == null)
-                return -1;
-
-            if (offset + sequence.Length > data.Length)
-                return -1;
-
-            var span = data.AsSpan((int)offset);
-            int index = span.IndexOf(sequence);
-
-            return index < 0 ? -1 : offset + index;
-        }
-
-        public long FindString(string str, long offset)
-        {
-            return FindByteSequence(Encoding.GetBytes(str), offset);
-        }
-
-        public void AlignToWord()
-        {
-            if (Position % 2 == 1)
-                ++Position;
-        }
-
-        public void AlignToDword()
-        {
-            if (Position % 4 != 0)
-                Position += 4 - Position % 4;
+            var result = Span[position..].ToArray();
+            position = Size;
+            return result;
         }
 
         public byte[] ToArray() => data;
+
 
         // SonicArranger.ICustomReader implementation
         public char[] ReadChars(int amount) => Encoding.ASCII.GetChars(ReadBytes(amount));

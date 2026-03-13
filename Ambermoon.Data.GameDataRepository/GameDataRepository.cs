@@ -455,7 +455,7 @@ public class GameDataRepository : IDisposable, INotifyPropertyChanged
 
         var paletteFiles = ReadFileContainer("Palettes.amb");
         Palettes = paletteFiles.Select(paletteFile => Palette.Deserialize((uint)paletteFile.Key, paletteFile.Value)).ToDictionaryList();
-        var builtinPalettesData = new DataReader(StaticData.BuiltinPalettes);
+        var builtinPalettesData = DataReader.FromData(StaticData.BuiltinPalettes);
         UserInterfacePalette = Palette.Deserialize(1000, builtinPalettesData);
         DungeonMapPalette = Palette.Deserialize(1001, builtinPalettesData);
         SecondaryUserInterfacePalette = Palette.Deserialize(1002, builtinPalettesData);

@@ -1,15 +1,14 @@
-﻿using System.Text;
+﻿using System.Buffers.Binary;
+using System.Text;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.Serialization;
 
-internal unsafe class DataReaderLE : IDataReader
+public class DataReaderLE : IDataReader
 {
-    byte* dataPointer;
-    readonly byte* startPointer;
     readonly byte[] data;
-    private int position = 0;
+    int position;
 
     public int Position
     {
@@ -20,56 +19,35 @@ internal unsafe class DataReaderLE : IDataReader
                 throw new IndexOutOfRangeException("Data index out of range.");
 
             position = value;
-            dataPointer = startPointer + position; 
         }
     }
 
-    public int Size { get; }
+    public int Size => data.Length;
+
+    ReadOnlySpan<byte> Span => data;
 
     public DataReaderLE(byte[] data)
     {
-        position = 0;
-        Size = data.Length;
         this.data = data;
-
-        fixed (byte* ptr = &data[0])
-        {
-            dataPointer = ptr;
-            startPointer = ptr;
-        }
+        position = 0;
     }
 
     public DataReaderLE(Stream stream)
     {
+        int size = (int)(stream.Length - stream.Position);
+        data = new byte[size];
+        stream.ReadExactly(data);
         position = 0;
-        Size = (int)(stream.Length - stream.Position);
-        data = new byte[Size];
-        
-        stream.ReadExactly(data, 0, data.Length);
-
-        fixed (byte* ptr = &data[0])
-        {
-            dataPointer = ptr;
-            startPointer = ptr;
-        }
     }
 
     public void AlignToDword()
     {
-        while (position % 4 != 0)
-        {
-            position++;
-            dataPointer++;
-        }
+        position = (position + 3) & ~3;
     }
 
     public void AlignToWord()
     {
-        if (position % 2 == 1)
-        {
-            position++;
-            dataPointer++;
-        }
+        position = (position + 1) & ~1;
     }
 
     public long FindByteSequence(byte[] sequence, long offset)
@@ -77,8 +55,7 @@ internal unsafe class DataReaderLE : IDataReader
         if (offset + sequence.Length > data.Length)
             return -1;
 
-        var span = data.AsSpan((int)offset);
-        int index = span.IndexOf(sequence);
+        int index = Span.Slice((int)offset).IndexOf(sequence);
 
         return index < 0 ? -1 : offset + index;
     }
@@ -90,17 +67,17 @@ internal unsafe class DataReaderLE : IDataReader
 
     public byte PeekByte()
     {
-        return *dataPointer;
-    }
-
-    public uint PeekDword()
-    {
-        return *(uint*)dataPointer;
+        return data[position];
     }
 
     public ushort PeekWord()
     {
-        return *(ushort*)dataPointer;
+        return BinaryPrimitives.ReadUInt16LittleEndian(Span[position..]);
+    }
+
+    public uint PeekDword()
+    {
+        return BinaryPrimitives.ReadUInt32LittleEndian(Span[position..]);
     }
 
     public bool ReadBool()
@@ -110,15 +87,13 @@ internal unsafe class DataReaderLE : IDataReader
 
     public byte ReadByte()
     {
-        position++;
-        return *dataPointer++;
+        return data[position++];
     }
 
     public byte[] ReadBytes(int amount)
     {
-        var bytes = data[position..(position + amount)];
+        var bytes = Span.Slice(position, amount).ToArray();
         position += amount;
-
         return bytes;
     }
 
@@ -126,9 +101,22 @@ internal unsafe class DataReaderLE : IDataReader
 
     public uint ReadDword()
     {
-        uint value = *(uint*)dataPointer;
-        dataPointer += 4;
+        uint value = BinaryPrimitives.ReadUInt32LittleEndian(Span[position..]);
         position += 4;
+        return value;
+    }
+
+    public ushort ReadWord()
+    {
+        ushort value = BinaryPrimitives.ReadUInt16LittleEndian(Span[position..]);
+        position += 2;
+        return value;
+    }
+
+    public ulong ReadQword()
+    {
+        ulong value = BinaryPrimitives.ReadUInt64LittleEndian(Span[position..]);
+        position += 8;
         return value;
     }
 
@@ -151,7 +139,7 @@ internal unsafe class DataReaderLE : IDataReader
             {
                 try
                 {
-                    encoding.GetString([.. buffer]);
+                    encoding.GetString(buffer.ToArray());
                 }
                 catch (ArgumentException)
                 {
@@ -162,20 +150,12 @@ internal unsafe class DataReaderLE : IDataReader
 
         try
         {
-            return encoding.GetString([.. buffer]);
+            return encoding.GetString(buffer.ToArray());
         }
         catch (ArgumentException)
         {
-            return encoding.GetString([.. buffer.Take(buffer.Count - 1)]) + "?";
+            return encoding.GetString(buffer.Take(buffer.Count - 1).ToArray()) + "?";
         }
-    }
-
-    public ulong ReadQword()
-    {
-        ulong value = *(ulong*)dataPointer;
-        dataPointer += 8;
-        position += 8;
-        return value;
     }
 
     public string ReadString() => ReadString(DataReader.Encoding);
@@ -199,14 +179,11 @@ internal unsafe class DataReaderLE : IDataReader
         return str;
     }
 
-    public byte[] ReadToEnd() => data[Position..];
-
-    public ushort ReadWord()
+    public byte[] ReadToEnd()
     {
-        ushort value = *(ushort*)dataPointer;
-        dataPointer += 2;
-        position += 2;
-        return value;
+        var result = Span[position..].ToArray();
+        position = Size;
+        return result;
     }
 
     public byte[] ToArray() => data;

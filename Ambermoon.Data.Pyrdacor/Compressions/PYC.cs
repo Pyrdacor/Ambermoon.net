@@ -7,11 +7,11 @@ namespace Ambermoon.Data.Pyrdacor.Compressions;
 
 internal class PycCompression : ICompression<PycCompression>, ICompression
 {
-    public static ushort Identifier => 0xBB5C;
+    public static ushort Identifier => 0x5CBB;
 
     public IDataReader Decompress(IDataReader dataReader)
     {
-        return new DataReader(PycDecompressor.Decompress(dataReader.ReadToEnd()));
+        return DataReader.FromData(PycDecompressor.Decompress(dataReader.ReadToEnd()));
     }
 
     public IDataWriter Compress(IDataWriter dataWriter)

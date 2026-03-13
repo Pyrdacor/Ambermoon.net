@@ -1,6 +1,8 @@
-﻿using Ambermoon.Data.Legacy.Serialization;
+﻿using System.Drawing;
+using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.Compressions;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
+using Ambermoon.Data.Pyrdacor.Serialization;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor;
@@ -66,22 +68,33 @@ internal static class PADP
 
         var files = new Dictionary<ushort, IFileSpec>();
         int fileCount = reader.ReadWord();
-
-        if (fileCount >= ushort.MaxValue)
-            throw new AmbermoonException(ExceptionScope.Data, $"Too many files given in PADP. Allowed are {ushort.MaxValue - 1}, given are {fileCount}.");
+        bool allFilesSameSize = (fileCount & 0x8000) != 0;
+        fileCount &= 0x7fff;
 
         if (fileCount == 0)
             return files;
 
         var fileSizes = new ushort[fileCount];
 
-        for (int i = 0; i < fileCount; ++i)
-            fileSizes[i] = reader.ReadWord();
+        if (allFilesSameSize)
+        {
+            var fileSize = fileSizes[0] = reader.ReadWord();
+
+            for (int i = 1; i < fileCount; ++i)
+                fileSizes[i] = fileSize;
+        }
+        else
+        {
+            for (int i = 0; i < fileCount; ++i)
+                fileSizes[i] = reader.ReadWord();
+        }
 
         var fileIndices = new ushort[fileCount];
 
         if (reader.PeekWord() == 0) // no file indices
         {
+            reader.Position += 2;
+
             for (int i = 1; i <= fileCount; ++i)
                 fileIndices[i - 1] = (ushort)i;
         }
@@ -102,7 +115,7 @@ internal static class PADP
         for (int i = 0; i < fileCount; ++i)
         {
             var fileSpec = fileSpecProvider();
-            fileSpec.Read(new DataReader(reader.ReadBytes(fileSizes[i])), fileIndices[i], gameData, fileSpecVersion);
+            fileSpec.Read(new DataReaderLE(reader.ReadBytes(fileSizes[i])), fileIndices[i], gameData, fileSpecVersion);
             files.Add(fileIndices[i], fileSpec);
         }
 
@@ -111,7 +124,9 @@ internal static class PADP
 
     public static void Write<T>(IDataWriter writer, IDictionary<ushort, T> fileSpecs, ICompression? compression = null) where T : IFileSpec, new()
     {
-        InternalWrite<T>(writer, fileSpecs, compression, false);
+        bool writeNoFileIndices = fileSpecs.Keys.Min() == 1 && fileSpecs.Keys.Max() == fileSpecs.Count;
+
+        InternalWrite<T>(writer, fileSpecs, compression, writeNoFileIndices);
     }
 
     public static void Write<T>(IDataWriter writer, IEnumerable<T> fileSpecs, ICompression? compression = null) where T : IFileSpec, new()
@@ -124,8 +139,8 @@ internal static class PADP
 
     private static void InternalWrite<T>(IDataWriter writer, IDictionary<ushort, T> fileSpecs, ICompression? compression, bool writeNoFileIndices) where T : IFileSpec, new()
     {
-        if (fileSpecs.Count >= ushort.MaxValue)
-            throw new AmbermoonException(ExceptionScope.Data, $"Too many files given for PADP. Allowed are {ushort.MaxValue - 1}, given are {fileSpecs.Count}.");
+        if (fileSpecs.Count >= short.MaxValue)
+            throw new AmbermoonException(ExceptionScope.Data, $"Too many files given for PADP. Allowed are {short.MaxValue}, given are {fileSpecs.Count}.");
 
         if (!writeNoFileIndices && fileSpecs.Keys.Any(k => k == 0))
             throw new AmbermoonException(ExceptionScope.Data, $"Sub-file key 0 is now allowed. Make sure to start at index 1.");
@@ -137,9 +152,9 @@ internal static class PADP
 
         writer.WriteWithoutLength(fileType);
         writer.Write(supportedVersion);
-        writer.Write((ushort)fileSpecs.Count);
 
-        IDataWriter dataWriter = new Legacy.Serialization.DataWriter();
+        IDataWriter dataWriter = new DataWriterLE();
+        List<int> sizes = [];
 
         // Write file sizes and write the data to dataWriter
         foreach (var fileSpec in fileSpecs)
@@ -151,7 +166,18 @@ internal static class PADP
             if (size > ushort.MaxValue)
                 throw new AmbermoonException(ExceptionScope.Data, $"Sub-file {fileSpec.Key} is too large. Max size is {ushort.MaxValue}, but file had {size}.");
 
-            writer.Write((ushort)size);
+            sizes.Add(size);
+        }
+
+        if (sizes.Distinct().Count() == 1)
+        {
+            writer.Write((ushort)(fileSpecs.Count | 0x8000));
+            writer.Write((ushort)sizes[0]);
+        }
+        else
+        {
+            writer.Write((ushort)fileSpecs.Count);
+            sizes.ForEach(size => writer.Write((ushort)size));
         }
 
         // Write file indices

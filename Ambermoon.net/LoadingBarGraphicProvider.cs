@@ -7,7 +7,7 @@ internal class LoadingBarGraphicProvider
 {
     static Graphic LoadImage(byte[] imageData)
     {
-        var dataReader = new DataReader(imageData);
+        var dataReader = DataReader.FromData(imageData);
         int width = dataReader.ReadWord();
         int height = dataReader.ReadWord();
         int numColors = dataReader.ReadByte();

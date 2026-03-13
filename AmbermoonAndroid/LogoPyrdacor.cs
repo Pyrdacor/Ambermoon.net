@@ -52,7 +52,7 @@ namespace AmbermoonAndroid
             var decompressedStream = new MemoryStream();
             deflateStream.CopyTo(decompressedStream);
             deflateStream.Dispose();
-            var logoData = new DataReader(decompressedStream.ToArray());
+            var logoData = DataReader.FromData(decompressedStream.ToArray());
 
             int commandCount = logoData.ReadByte();
             commands = new Queue<Command>(commandCount);

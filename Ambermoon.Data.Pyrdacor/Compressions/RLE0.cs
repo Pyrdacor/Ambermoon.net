@@ -5,7 +5,7 @@ namespace Ambermoon.Data.Pyrdacor.Compressions;
 
 internal class RLE0 : ICompression<RLE0>, ICompression
 {
-    public static ushort Identifier => 0x2E50;
+    public static ushort Identifier => 0x502E;
 
     public IDataReader Decompress(IDataReader dataReader)
     {
@@ -26,7 +26,7 @@ internal class RLE0 : ICompression<RLE0>, ICompression
                 decompressedData.Add(b);
         }
 
-        return new DataReader([.. decompressedData]);
+        return DataReader.FromData([.. decompressedData]);
     }
 
     public IDataWriter Compress(IDataWriter dataWriter)

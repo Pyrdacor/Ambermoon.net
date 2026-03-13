@@ -1127,7 +1127,7 @@ class GameWindow : IContextProvider
                 }
             }
 
-            var flagsData = new DataReader(FileProvider.GetFlagsData());
+            var flagsData = DataReader.FromData(FileProvider.GetFlagsData());
             var flagsPalette = new Graphic
             {
                 Width = 32,
@@ -1156,7 +1156,7 @@ class GameWindow : IContextProvider
                 additionalPalettes = [new() { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] }, flagsPalette];
             }
 
-            fontProvider ??= new IngameFontProvider(new DataReader(FileProvider.GetIngameFontData()), gameData.FontProvider.GetFont());
+            fontProvider ??= new IngameFontProvider(DataReader.FromData(FileProvider.GetIngameFontData()), gameData.FontProvider.GetFont());
 
             switchRenderViewAction = () =>
             {

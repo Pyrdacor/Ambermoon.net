@@ -346,7 +346,7 @@ namespace Ambermoon.Data.Legacy.Compression
             if (reader.Position % 2 != 0 && reader.Position < reader.Size)
                 ++reader.Position;
 
-            return new DataReader(decodedData);
+            return DataReader.FromData(decodedData);
         }
     }
 }

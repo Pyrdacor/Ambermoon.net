@@ -29,9 +29,9 @@ public partial class GameData : IGameData, IGraphicProvider
     LazyContainerLoader<MapData, Map> mapLoader;
     LazyContainerLoader<Texts, TextList> mapTextLoader;
     LazyContainerLoader<LabyrinthData, Labdata> labdataLoader;
+    LazyContainerLoader<TilesetData, Tileset> tilesetLoader;
     LazyContainerLoader<LocationData, Place> locationLoader;
     LazyContainerLoader<Texts, string> locationNameLoader;
-    LazyContainerLoader<TilesetData, Tileset> tilesetLoader;
     LazyFileLoader<Texts, TextList> gotoPointNameLoader;
     readonly Dictionary<string, Action<IDataReader>> fileHandlers = [];
     readonly Lazy<SongManager> songManager;
@@ -45,6 +45,7 @@ public partial class GameData : IGameData, IGraphicProvider
     readonly Lazy<Font> introSmallFont;
     readonly Lazy<Font> introLargeFont;
     readonly Lazy<Places> places;
+    readonly Lazy<Dictionary<int, Graphic>> palettes;
     readonly Lazy<IngameFontProvider> ingameFontProvider;
 
     public bool Loaded { get; } = false;
@@ -89,7 +90,7 @@ public partial class GameData : IGameData, IGraphicProvider
 
     public TextDictionary Dictionary => throw new NotImplementedException();
 
-    public Dictionary<int, Graphic> Palettes => throw new NotImplementedException();
+    public Dictionary<int, Graphic> Palettes => palettes!.Value;
 
     public Dictionary<int, int> NPCGraphicOffsets => throw new NotImplementedException();
 
@@ -219,6 +220,24 @@ public partial class GameData : IGameData, IGraphicProvider
         introSmallFont = new Lazy<Font>(() => fontLoader!.Load(FontData.IntroSmallFontIndex));
         introLargeFont = new Lazy<Font>(() => fontLoader!.Load(FontData.IntroLargeFontIndex));
         ingameFontProvider = new Lazy<IngameFontProvider>(() => new(ingameFont!.Value));
+        palettes = new Lazy<Dictionary<int, Graphic>>(() =>
+        {
+            var result = new Dictionary<int, Graphic>();
+            var paletteGraphics = paletteLoader!.Load();
+
+            for (int y = 0; y < paletteGraphics.Height; y++)
+            {
+                result.Add(y, new Graphic
+                {
+                    Width = paletteGraphics.Width,
+                    Height = 1,
+                    Data = paletteGraphics.Data.Skip(y * paletteGraphics.Width * 4).Take(paletteGraphics.Width * 4).ToArray(),
+                    IndexedGraphic = false
+                });
+            }
+
+            return result;
+        });
         places = new Lazy<Places>(() =>
         {
             var places = new Places();
@@ -350,17 +369,17 @@ public partial class GameData : IGameData, IGraphicProvider
 
     void LoadLabyrinthData(IDataReader dataReader)
     {
-
+        labdataLoader = new(dataReader, this, l => l.Labdata);
     }
 
     void LoadMaps(IDataReader dataReader)
     {
-
+        mapLoader = new(dataReader, this, m => m.Map);
     }
 
     void LoadMapTexts(IDataReader dataReader)
     {
-
+        mapTextLoader = new(dataReader, this, t => t.TextList);
     }
 
     void LoadFonts(IDataReader dataReader)
@@ -481,7 +500,7 @@ public partial class GameData : IGameData, IGraphicProvider
 
     void LoadMusic(IDataReader dataReader)
     {
-
+        
     }
 
     public List<Graphic> GetGraphics(GraphicType type)

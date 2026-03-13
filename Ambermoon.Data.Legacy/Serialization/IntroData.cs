@@ -136,7 +136,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         {
             var introHunks = Read(gameData.Files["Ambermoon_intro"].Files[1]);
             var introDataHunks = introHunks
-                .Where(h => h.Type == HunkType.Data).Select(h => new DataReader(((Hunk)h).Data))
+                .Where(h => h.Type == HunkType.Data).Select(h => DataReader.FromData(((Hunk)h).Data))
                 .ToList();
             var graphicReader = new GraphicReader();
 
@@ -215,7 +215,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 var reader = introDataHunks[1];
 
                 if (reader.PeekDword() == 0x494d5021) // "IMP!", may be imploded
-                    reader = new DataReader(Deploder.DeplodeFimp(reader).Reverse().ToArray());
+                    reader = DataReader.FromData(Deploder.DeplodeFimp(reader).Reverse().ToArray());
 
                 var graphicInfo = new GraphicInfo
                 {
@@ -292,7 +292,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             foreach (var dataBlock in hunk2Data)
             {
-                var blockReader = new DataReader(dataBlock);
+                var blockReader = DataReader.FromData(dataBlock);
                 int left = int.MaxValue;
                 int right = -1;
                 int top = int.MaxValue;
@@ -545,7 +545,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             #endregion
 
-            LoadFonts(new DataReader(((Hunk)introHunks[0]).Data));
+            LoadFonts(DataReader.FromData(((Hunk)introHunks[0]).Data));
 
             // Special handling of the new "remake-only" Intro_texts.amb
             if (gameData.Files.TryGetValue("Intro_texts.amb", out var introTextsContainer))

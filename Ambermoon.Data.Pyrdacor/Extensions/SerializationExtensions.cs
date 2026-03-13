@@ -43,6 +43,12 @@ internal static class SerializationExtensions
         return unchecked((short)value);
     }
 
+    public static string ReadLongString(this IDataReader dataReader)
+    {
+        int length = dataReader.ReadWord();
+        return dataReader.ReadString(length);
+    }
+
     public static void WriteEnum8<TEnum>(this IDataWriter dataWriter, TEnum value)
         where TEnum : struct, Enum
     {
@@ -70,5 +76,11 @@ internal static class SerializationExtensions
     public static void WriteShort(this IDataWriter dataWriter, short value)
     {
         dataWriter.Write(unchecked((ushort)value));
+    }
+
+    public static void WriteLongString(this IDataWriter dataWriter, string text)
+    {
+        dataWriter.Write((ushort)text.Length);
+        dataWriter.WriteWithoutLength(text);
     }
 }

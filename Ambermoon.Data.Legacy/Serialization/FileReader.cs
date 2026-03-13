@@ -41,7 +41,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             {
                 Name = name,
                 FileType = FileType.None,
-                Files = new Dictionary<int, IDataReader> { { 1, new DataReader(fileData) } }
+                Files = new Dictionary<int, IDataReader> { { 1, DataReader.FromData(fileData) } }
             };
         }
 
@@ -51,7 +51,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             {
                 Name = name,
                 FileType = FileType.AMBR,
-                Files = fileData.ToDictionary(f => f.Key, f => (IDataReader)new DataReader(f.Value))
+                Files = fileData.ToDictionary(f => f.Key, f => (IDataReader)DataReader.FromData(f.Value))
             };
         }
 
@@ -65,7 +65,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public IFileContainer ReadRawFile(string name, byte[] rawData)
         {
-            return ReadFile(name, new DataReader(rawData));
+            return ReadFile(name, DataReader.FromData(rawData));
         }
 
         public IFileContainer ReadFile(string name, IDataReader reader)
@@ -95,7 +95,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     break;
                 default: // raw format
                     var fileContainer = new FileContainer { Name = name };
-                    fileContainer.Files.Add(1, new DataReader(reader.ToArray()));
+                    fileContainer.Files.Add(1, DataReader.FromData(reader.ToArray()));
                     return fileContainer;
             }
 
@@ -146,7 +146,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     for (int i = 1; i <= fileCount; ++i)
                     {
                         int fileSize = fileSizeProvider();
-                        fileContainer.Files.Add(i, fileSize == 0 ? new DataReader(Array.Empty<byte>()) : DecodeFile(new DataReader(reader, offset, fileSize), fileInfo.FileType, i));
+                        fileContainer.Files.Add(i, fileSize == 0 ? DataReader.FromData([]) : DecodeFile(new DataReader(reader, offset, fileSize), fileInfo.FileType, i));
                         offset += fileSize;
                     }
 
@@ -183,7 +183,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         if (fileEntries.TryGetValue((uint)i, out var entry) && entry.Value > 0)
                             fileContainer.Files.Add(i, DecodeFile(new DataReader(reader, offset + entry.Key, entry.Value), fileInfo.FileType, i));
                         else
-                            fileContainer.Files.Add(i, new DataReader(Array.Empty<byte>()));
+                            fileContainer.Files.Add(i, DataReader.FromData([]));
                     }
                 }
             }
@@ -199,11 +199,11 @@ namespace Ambermoon.Data.Legacy.Serialization
             if (fileType == FileType.JH)
             {
                 reader.Position += 4; // skip header
-                reader = new DataReader(JH.Crypt(reader, (ushort)(((header & 0xffff0000u) >> 16) ^ (header & 0x0000ffffu))));
+                reader = DataReader.FromData(JH.Crypt(reader, (ushort)(((header & 0xffff0000u) >> 16) ^ (header & 0x0000ffffu))));
             }
             else if (containerType == FileType.AMNC) // AMNC archives are always encoded
             {
-                reader = new DataReader(JH.Crypt(reader, (ushort)fileNumber));
+                reader = DataReader.FromData(JH.Crypt(reader, (ushort)fileNumber));
             }
 
             header = reader.Size < 4 ? 0 : reader.PeekDword(); // Note: The header might have changed above.
@@ -221,7 +221,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 if (containerType == FileType.AMNP)
                 {
                     reader.Position += 4; // skip decoded size
-                    reader = new DataReader(JH.Crypt(reader, (ushort)fileNumber));
+                    reader = DataReader.FromData(JH.Crypt(reader, (ushort)fileNumber));
                     reader.Position += 4; // skip encoded size
                 }
                 else
@@ -240,7 +240,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     if (reader.ReadDword() != (uint)FileType.None)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid AMNP file data.");
 
-                    reader = new DataReader(JH.Crypt(reader, (ushort)fileNumber));
+                    reader = DataReader.FromData(JH.Crypt(reader, (ushort)fileNumber));
                 }
 
                 return reader;

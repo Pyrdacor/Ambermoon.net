@@ -227,10 +227,10 @@ namespace Ambermoon.Data.Legacy
 
             static IDataReader WriterToReader(IDataWriter writer)
             {
-                return new DataReader(writer.ToArray());
+                return DataReader.FromData(writer.ToArray());
             }
 
-            readonly Dictionary<string, FileContainerWriter> files = new Dictionary<string, FileContainerWriter>();
+            readonly Dictionary<string, FileContainerWriter> files = [];
 
             internal IReadOnlyDictionary<string, FileContainerWriter> Files => files;
 
@@ -350,7 +350,7 @@ namespace Ambermoon.Data.Legacy
                 {
                     var hunks = AmigaExecutable.Read(exe);
                     var hunk = (AmigaExecutable.Hunk)hunks.First(h => h.Type == AmigaExecutable.HunkType.Code);
-                    var reader = new DataReader(hunk.Data);
+                    var reader = DataReader.FromData(hunk.Data);
                     reader.Position = 6;
                     string versionString = reader.ReadNullTerminatedString();
                     var versionMatch = VersionRegex.Matches(versionString).LastOrDefault();
@@ -398,7 +398,7 @@ namespace Ambermoon.Data.Legacy
                         return null;
                     if (file == "Text.amb")
                         return new FileReader().ReadRawFile(file, File.ReadAllBytes(path)).Files[1];
-                    return new DataReader(File.ReadAllBytes(path));
+                    return DataReader.FromData(File.ReadAllBytes(path));
                 });
             }
 
@@ -414,12 +414,11 @@ namespace Ambermoon.Data.Legacy
 
                 return GetFirstReader(file =>
                 {
-                    if (adf.ContainsKey(file))
+                    if (adf.TryGetValue(file, out byte[] data))
                     {
-                        var data = adf[file];
                         if (file == "Text.amb")
                             return new FileReader().ReadRawFile(file, data).Files[1];
-                        return new DataReader(data);
+                        return DataReader.FromData(data);
                     }
 
                     return null;

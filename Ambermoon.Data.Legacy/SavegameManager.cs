@@ -25,15 +25,15 @@ namespace Ambermoon.Data.Legacy
 
             if (File.Exists(savesPath))
             {
-                return SavegameSerializer.GetSavegameNames(new DataReader(File.ReadAllBytes(savesPath)), ref current);
+                return SavegameSerializer.GetSavegameNames(DataReader.FromData(File.ReadAllBytes(savesPath)), ref current);
             }
-            else if (!(gameData as ILegacyGameData).Files.ContainsKey("Saves"))
+            else if (!(gameData as ILegacyGameData).Files.TryGetValue("Saves", out IFileContainer value))
             {
                 return Enumerable.Repeat("", totalSavegames).ToArray();
             }
             else
             {
-                return SavegameSerializer.GetSavegameNames((gameData as ILegacyGameData).Files["Saves"].Files[1], ref current);
+                return SavegameSerializer.GetSavegameNames(value.Files[1], ref current);
             }            
         }
 
@@ -341,7 +341,7 @@ namespace Ambermoon.Data.Legacy
                 }
                 else
                 {
-                    legacyGameData.Files[name].Files[1] = new DataReader(writer.ToArray());
+                    legacyGameData.Files[name].Files[1] = DataReader.FromData(writer.ToArray());
                 }
             }
 
@@ -353,7 +353,7 @@ namespace Ambermoon.Data.Legacy
                 }
                 else
                 {
-                    legacyGameData.Files[name].Files[fileIndex] = new DataReader(writer.ToArray());
+                    legacyGameData.Files[name].Files[fileIndex] = DataReader.FromData(writer.ToArray());
                 }
             }
 

@@ -93,11 +93,11 @@ namespace Ambermoon.Data.Legacy.Serialization
         {
             var outroHunks = AmigaExecutable.Read(gameData.Files["Ambermoon_extro"].Files[1]);
             var codeHunks = outroHunks.Where(h => h.Type == AmigaExecutable.HunkType.Code)
-                .Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data))
+                .Select(h => DataReader.FromData(((AmigaExecutable.Hunk)h).Data))
                 .ToList();
             var dataHunks = outroHunks
                 .Where(h => h.Type == AmigaExecutable.HunkType.Data)
-                .Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data))
+                .Select(h => DataReader.FromData(((AmigaExecutable.Hunk)h).Data))
                 .ToList();
             var graphicReader = new GraphicReader();
             var graphicInfo = new GraphicInfo

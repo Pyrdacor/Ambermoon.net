@@ -382,7 +382,7 @@ public static class AmigaExecutable
 
         var deplodedData = Deplode(imploderHunks, out var hunkSizes, out var hunkMemFlags);
         var hunks = new List<IHunk>();
-        var reader = new DataReader(deplodedData);
+        var reader = DataReader.FromData(deplodedData);
         int hunkSizeIndex = 0;
 
         while (true)

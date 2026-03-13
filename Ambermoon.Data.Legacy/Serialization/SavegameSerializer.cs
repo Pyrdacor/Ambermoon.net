@@ -377,7 +377,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 WriteCurrentSlot(data, currentSlot);
                 Buffer.BlockCopy(nameData, 0, data, 2 + slot * 39, 39);
-                legacyGameData.Files["Saves"].Files[1] = new DataReader(data);
+                legacyGameData.Files["Saves"].Files[1] = DataReader.FromData(data);
 
                 // If someone replaces the saves manually outside the game and also the Saves file,
                 // it might be reflected in game but when saving, those changes will be lost.
@@ -386,9 +386,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                 if (externalSavesPath != null && File.Exists(externalSavesPath))
                 {
                     int externalCurrentSlot = 0;
-                    var externalSavesReader = new DataReader(File.ReadAllBytes(externalSavesPath));
+                    var externalSavesReader = DataReader.FromData(File.ReadAllBytes(externalSavesPath));
                     var externalSaveNames = GetSavegameNames(externalSavesReader, ref externalCurrentSlot);
-                    var internalSaveNames = GetSavegameNames(new DataReader(data), ref currentSlot);
+                    var internalSaveNames = GetSavegameNames(DataReader.FromData(data), ref currentSlot);
                     var basePath = Path.GetDirectoryName(externalSavesPath);
 
                     for (int i = 0; i < 10; i++)

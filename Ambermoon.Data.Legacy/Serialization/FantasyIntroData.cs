@@ -110,7 +110,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         public FantasyIntroData(GameData gameData)
         {
             var fantasyIntroHunks = AmigaExecutable.Read(gameData.Files["Fantasy_intro"].Files[1])
-                .Where(h => h.Type == AmigaExecutable.HunkType.Data).Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data))
+                .Where(h => h.Type == AmigaExecutable.HunkType.Data).Select(h => DataReader.FromData(((AmigaExecutable.Hunk)h).Data))
                 .ToList();
             var graphicReader = new GraphicReader();
             int i;
@@ -172,7 +172,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             // unknown data
 
             hunk0.Position = 0x1CE22;
-            var positionData = new DataReader(hunk0.ReadBytes(761 * 4)); // 761 entries, each entry has x and y as word each
+            var positionData = DataReader.FromData(hunk0.ReadBytes(761 * 4)); // 761 entries, each entry has x and y as word each
 
             #endregion
 

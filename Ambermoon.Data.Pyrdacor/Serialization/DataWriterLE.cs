@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Buffers.Binary;
+using System.Text;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 
@@ -22,50 +23,47 @@ public class DataWriterLE : IDataWriter
         }
     }
 
+    public DataWriterLE()
+    {
+    }
+
     public DataWriterLE(byte[] data)
     {
         this.data.AddRange(data);
+        Position = data.Length;
     }
 
     public void Write(bool value)
     {
-        data.Add((byte)(value ? 1 : 0));
-        ++Position;
+        data.Add(value ? (byte)1 : (byte)0);
+        Position++;
     }
 
     public void Write(byte value)
     {
         data.Add(value);
-        ++Position;
+        Position++;
     }
 
     public void Write(ushort value)
     {
-        data.Add((byte)value);
-        data.Add((byte)(value >> 8));
-        Position += 2;
+        Span<byte> buffer = stackalloc byte[2];
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer, value);
+        Write(buffer);
     }
 
     public void Write(uint value)
     {
-        data.Add((byte)value);
-        data.Add((byte)(value >> 8));
-        data.Add((byte)(value >> 16));
-        data.Add((byte)(value >> 24));
-        Position += 4;
+        Span<byte> buffer = stackalloc byte[4];
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer, value);
+        Write(buffer);
     }
 
     public void Write(ulong value)
     {
-        data.Add((byte)value);
-        data.Add((byte)(value >> 8));
-        data.Add((byte)(value >> 16));
-        data.Add((byte)(value >> 24));
-        data.Add((byte)(value >> 32));
-        data.Add((byte)(value >> 40));
-        data.Add((byte)(value >> 48));
-        data.Add((byte)(value >> 56));
-        Position += 8;
+        Span<byte> buffer = stackalloc byte[8];
+        BinaryPrimitives.WriteUInt64LittleEndian(buffer, value);
+        Write(buffer);
     }
 
     public void Write(char value)
@@ -116,7 +114,8 @@ public class DataWriterLE : IDataWriter
 
     public void WriteNullTerminated(string value, Encoding encoding)
     {
-        Write(encoding.GetBytes(value + "\0"));
+        Write(encoding.GetBytes(value));
+        Write((byte)0);
     }
 
     public void WriteWithoutLength(string value)
@@ -130,6 +129,12 @@ public class DataWriterLE : IDataWriter
     }
 
     public void Write(byte[] bytes)
+    {
+        data.AddRange(bytes);
+        Position += bytes.Length;
+    }
+
+    public void Write(ReadOnlySpan<byte> bytes)
     {
         data.AddRange(bytes);
         Position += bytes.Length;
@@ -150,37 +155,23 @@ public class DataWriterLE : IDataWriter
 
     public void Replace(int offset, ushort value)
     {
-        if (offset < 0 || offset + 2 > Size)
-            throw new IndexOutOfRangeException("Index was outside the data writer size.");
-
-        data[offset + 0] = (byte)value;
-        data[offset + 1] = (byte)(value >> 8);
+        Span<byte> buffer = stackalloc byte[2];
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer, value);
+        Replace(offset, buffer);
     }
 
     public void Replace(int offset, uint value)
     {
-        if (offset < 0 || offset + 4 > Size)
-            throw new IndexOutOfRangeException("Index was outside the data writer size.");
-
-        data[offset + 0] = (byte)value;
-        data[offset + 1] = (byte)(value >> 8);
-        data[offset + 2] = (byte)(value >> 16);
-        data[offset + 3] = (byte)(value >> 24);
+        Span<byte> buffer = stackalloc byte[4];
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer, value);
+        Replace(offset, buffer);
     }
 
     public void Replace(int offset, ulong value)
     {
-        if (offset < 0 || offset + 8 > Size)
-            throw new IndexOutOfRangeException("Index was outside the data writer size.");
-
-        data[offset + 0] = (byte)value;
-        data[offset + 1] = (byte)(value >> 8);
-        data[offset + 2] = (byte)(value >> 16);
-        data[offset + 3] = (byte)(value >> 24);
-        data[offset + 4] = (byte)(value >> 32);
-        data[offset + 5] = (byte)(value >> 40);
-        data[offset + 6] = (byte)(value >> 48);
-        data[offset + 7] = (byte)(value >> 56);
+        Span<byte> buffer = stackalloc byte[8];
+        BinaryPrimitives.WriteUInt64LittleEndian(buffer, value);
+        Replace(offset, buffer);
     }
 
     public void Replace(int offset, byte[] data)
@@ -198,11 +189,20 @@ public class DataWriterLE : IDataWriter
         if (dataOffset < 0 || dataOffset + length > data.Length)
             throw new IndexOutOfRangeException("Index was outside the given data array.");
 
-        if (offset < 0 || offset + data.Length > Size)
+        if (offset < 0 || offset + length > Size)
             throw new IndexOutOfRangeException("Index was outside the data writer size.");
 
-        for (int i = 0; i < length; ++i)
+        for (int i = 0; i < length; i++)
             this.data[offset + i] = data[dataOffset + i];
+    }
+
+    public void Replace(int offset, ReadOnlySpan<byte> bytes)
+    {
+        if (offset < 0 || offset + bytes.Length > Size)
+            throw new IndexOutOfRangeException("Index was outside the data writer size.");
+
+        for (int i = 0; i < bytes.Length; i++)
+            data[offset + i] = bytes[i];
     }
 
     public void CopyTo(Stream stream)
@@ -217,9 +217,11 @@ public class DataWriterLE : IDataWriter
         return data.GetRange(offset, length).ToArray();
     }
 
-    public void WriteEnumAsByte<T>(T value) where T : struct, Enum, IConvertible => Write(value.ToByte(null));
+    public void WriteEnumAsByte<T>(T value) where T : struct, Enum, IConvertible
+        => Write(value.ToByte(null));
 
-    public void WriteEnumAsWord<T>(T value) where T : struct, Enum, IConvertible => Write(value.ToUInt16(null));
+    public void WriteEnumAsWord<T>(T value) where T : struct, Enum, IConvertible
+        => Write(value.ToUInt16(null));
 
     public void Remove(int index, int count)
     {
@@ -232,5 +234,6 @@ public class DataWriterLE : IDataWriter
     public void Clear()
     {
         data.Clear();
+        Position = 0;
     }
 }

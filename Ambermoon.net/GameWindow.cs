@@ -786,7 +786,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             audioOutput.Enabled = audioOutput.Available && configuration.Music;
             if (configuration.ShowPyrdacorLogo)
             {
-                logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
+                logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(DataReader.FromData(Resources.Song), 0, false, false));
                 additionalPalettes = logoPyrdacor.Palettes;
             }
             else
@@ -799,7 +799,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             advancedLogo = new AdvancedLogo();
 
         musicManager = new MusicManager(configuration, gameData);
-        fontProvider ??= new IngameFontProvider(new DataReader(Resources.IngameFont), gameData.FontProvider.GetFont());
+        fontProvider ??= new IngameFontProvider(DataReader.FromData(Resources.IngameFont), gameData.FontProvider.GetFont());
 
         // Create render view
         renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, additionalPalettes, () =>
@@ -1206,7 +1206,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                 }
             }
 
-            var flagsData = new DataReader(Resources.Flags);
+            var flagsData = DataReader.FromData(Resources.Flags);
             var flagsPalette = new Graphic
             {
                 Width = 32,
@@ -1227,7 +1227,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             audioOutput.Enabled = audioOutput.Available && configuration.Music;
             if (configuration.ShowPyrdacorLogo)
             {
-                logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
+                logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(DataReader.FromData(Resources.Song), 0, false, false));
                 additionalPalettes = [logoPyrdacor.Palettes[0], flagsPalette];
             }
             else
@@ -1235,7 +1235,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                 additionalPalettes = [new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] }, flagsPalette];
             }
 
-            fontProvider ??= new IngameFontProvider(new DataReader(Resources.IngameFont), gameData.FontProvider.GetFont());
+            fontProvider ??= new IngameFontProvider(DataReader.FromData(Resources.IngameFont), gameData.FontProvider.GetFont());
 
             switchRenderViewAction = () =>
             {

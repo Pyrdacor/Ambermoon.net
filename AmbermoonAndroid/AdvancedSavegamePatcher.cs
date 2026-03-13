@@ -74,7 +74,7 @@ internal class AdvancedSavegamePatcher
         public Patch(BinaryReader reader)
         {
             int size = (int)(reader.ReadBEUInt32() & int.MaxValue);
-            patchReader = new DataReader(reader.ReadBytes(size));
+            patchReader = DataReader.FromData(reader.ReadBytes(size));
         }
 
         // This will patch the save files inside the game data
@@ -754,7 +754,7 @@ internal class AdvancedSavegamePatcher
         IFileContainer PatchFile(ILegacyGameData gameData, int fileIndex, IFileContainer oldFile, List<ManualPartyDataChange> partyDataChanges, int episodeKey)
         {
             int size = patchReader.ReadBEInt16();
-            var reader = new DataReader(patchReader.ReadBytes(size));
+            var reader = DataReader.FromData(patchReader.ReadBytes(size));
             var subFiles = oldFile.Files.ToDictionary(f => f.Key, f => new DataWriter(f.Value.ToArray()));
             int lastSubFileIndex = -1;
 

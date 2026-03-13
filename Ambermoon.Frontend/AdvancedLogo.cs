@@ -93,7 +93,7 @@ public class AdvancedLogo
             var decompressedStream = new MemoryStream();
             deflateStream.CopyTo(decompressedStream);
             deflateStream.Dispose();
-            var logoData = new DataReader(decompressedStream.ToArray());
+            var logoData = DataReader.FromData(decompressedStream.ToArray());
             var logoAdvancedGraphic = LoadImage(logoData);
 
             if (!textureAtlasManager.HasLayer(Layer.Images))

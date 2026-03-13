@@ -34,6 +34,8 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
     bool resolved = false;
     readonly Dictionary<ushort, byte> mapEventOnTileIndex = [];
 
+    public Map Map => map!;
+
     public MapData()
     {
 
@@ -224,7 +226,7 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
 
                 byte mapEventId = dataReader.ReadByte();
 
-                if (mapEventId >= map.EventList.Count)
+                if (mapEventId == 0 || mapEventId > map.EventList.Count)
                     throw new AmbermoonException(ExceptionScope.Data, "Invalid event index for map event.");
 
                 eventAssigner(tileIndex, mapEventId);

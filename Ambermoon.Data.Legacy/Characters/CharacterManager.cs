@@ -41,7 +41,7 @@ namespace Ambermoon.Data.Legacy.Characters
 			var monsterWriter = new MonsterWriter();
 			monsterWriter.WriteMonster(monster, writer);
 
-			var reader = new DataReader(writer.ToArray());
+			var reader = DataReader.FromData(writer.ToArray());
 			var monsterReader = new MonsterReader();
             var clone = Monster.Load(monster.Index, monsterReader, reader);
             clone.CombatGraphic = monster.CombatGraphic;

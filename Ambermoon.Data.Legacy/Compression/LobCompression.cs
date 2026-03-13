@@ -28,7 +28,7 @@ namespace Ambermoon.Data.Legacy.Compression
 
         public static DataReader Decompress(byte[] data, uint decodedSize, LobType lobType = LobType.Ambermoon)
         {
-            return Decompress(new DataReader(data), decodedSize, lobType);
+            return Decompress(DataReader.FromData(data), decodedSize, lobType);
         }
 
         public static DataReader Decompress(IDataReader reader, uint decodedSize, LobType lobType = LobType.Ambermoon)

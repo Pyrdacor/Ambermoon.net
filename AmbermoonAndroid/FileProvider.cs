@@ -115,7 +115,7 @@ namespace AmbermoonAndroid
 
         private static Graphic LoadSpecialGraphic(byte[] imageData)
 		{
-            var dataReader = new DataReader(imageData);
+            var dataReader = DataReader.FromData(imageData);
             int width = dataReader.ReadWord();
             int height = dataReader.ReadWord();
             int numColors = dataReader.ReadByte();

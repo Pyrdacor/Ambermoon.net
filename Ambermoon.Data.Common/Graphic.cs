@@ -212,11 +212,10 @@ namespace Ambermoon.Data
 
         public static Graphic FromIndexedData(int width, int height, byte[] data)
         {
-            if (data == null)
-                throw new ArgumentNullException("Graphic data was null.");
+            ArgumentNullException.ThrowIfNull(data);
 
             if (data.Length != width * height)
-                throw new ArgumentOutOfRangeException("Invalid graphic data size.");
+                throw new IndexOutOfRangeException("Invalid graphic data size.");
 
             return new Graphic
             {
@@ -229,7 +228,7 @@ namespace Ambermoon.Data
 
         public static Graphic CreateGradient(int width, int height, int startY, int rowsPerIncrease, byte colorIndex, byte endColorIndex)
         {
-            Graphic graphic = new Graphic(width, height, colorIndex) { IndexedGraphic = true };
+            var graphic = new Graphic(width, height, colorIndex) { IndexedGraphic = true };
 
             for (int y = startY; y < height; ++y)
             {
@@ -246,8 +245,7 @@ namespace Ambermoon.Data
         {
             if (IndexedGraphic)
             {
-                if (palette == null)
-                    throw new ArgumentNullException(nameof(palette));
+                ArgumentNullException.ThrowIfNull(palette);
 
                 byte[] data = new byte[Width * Height * 4];
 

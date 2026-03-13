@@ -41,7 +41,7 @@ namespace Ambermoon
             {
                 TextureAtlasManager.Instance.AddFromGraphics(Layer.FantasyIntroGraphics,
                     fantasyIntroData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
-                var borders256 = new DataReader(Resources.Borders256);
+                var borders256 = DataReader.FromData(Resources.Borders256);
                 borderTextureIndexOffset = (uint)fantasyIntroData.Graphics.Keys.Max() + 1;
                 var borderGraphicInfo = new GraphicInfo
                 {

@@ -236,7 +236,7 @@ namespace Ambermoon.Data.Legacy.Compression
             if ((reader.Position - start) % 2 != 0)
                 ++reader.Position; // skip align byte
 
-            return new DataReader(decodedData);
+            return DataReader.FromData(decodedData);
         }
     }
 }
