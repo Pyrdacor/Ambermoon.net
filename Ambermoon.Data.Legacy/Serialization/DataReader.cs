@@ -17,8 +17,8 @@ namespace Ambermoon.Data.Legacy.Serialization
     public class DataReader : IDataReader, ICustomReader
     {
         public static readonly Encoding Encoding;
-        readonly byte[] data;
-        int position;
+        private readonly byte[] data;
+        private int position;
 
         public int Position
         {
@@ -36,7 +36,9 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public int Size => data.Length;
 
-        ReadOnlySpan<byte> Span => data;
+        private ReadOnlySpan<byte> Span => data;
+
+        public byte this[int index] => data[index];
 
         static DataReader()
         {
