@@ -94,9 +94,12 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
         return map;
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData gameData, byte __)
+    public void Read(IDataReader dataReader, uint index, GameData gameData, byte __)
     {
-        map = new Map();
+        map = new Map
+        {
+            Index = index
+        };
 
         MapReader.ReadMapHeader(map, dataReader);
 
@@ -110,16 +113,16 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
             templateMapIndex = null;
             resolved = true;
 
-            var tileset = gameData.GetTileset(map.TilesetOrLabdataIndex);
-
             if (map.Type == MapType.Map2D)
             {
+                var tileset = gameData.GetTileset(map.TilesetOrLabdataIndex);
+
                 map.Tiles = new Map.Tile[map.Width, map.Height];
                 map.InitialTiles = new Map.Tile[map.Width, map.Height];
 
                 var backTiles = dataReader.ReadBytes(map.Width * map.Height);
                 var frontTiles = dataReader.ReadBytes(map.Width * map.Height * 2);
-                int index = 0;
+                int tileIndex = 0;
 
                 unsafe
                 {
@@ -135,19 +138,19 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
 
                                 map.InitialTiles[x, y] = new Map.Tile
                                 {
-                                    BackTileIndex = backTiles[index],
+                                    BackTileIndex = backTiles[tileIndex],
                                     FrontTileIndex = frontTileIndex,
                                     MapEventId = 0
                                 };
                                 map.Tiles[x, y] = new Map.Tile
                                 {
-                                    BackTileIndex = backTiles[index],
+                                    BackTileIndex = backTiles[tileIndex],
                                     FrontTileIndex = frontTileIndex,
                                     MapEventId = 0
                                 };
                                 map.InitialTiles[x, y].Type = map.Tiles[x, y].Type = Map.TileTypeFromTile(map.InitialTiles[x, y], tileset);
 
-                                ++index;
+                                ++tileIndex;
                             }
                         }
                     }
@@ -159,13 +162,13 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
                 map.InitialBlocks = new Map.Block[map.Width, map.Height];
 
                 var indices = dataReader.ReadBytes(map.Width * map.Height);
-                int index = 0;
+                int blockIndex = 0;
 
                 for (int y = 0; y < map.Height; ++y)
                 {
                     for (int x = 0; x < map.Width; ++x)
                     {
-                        uint blockDataIndex = indices[index++];
+                        uint blockDataIndex = indices[blockIndex++];
 
                         map.InitialBlocks[x, y] = new Map.Block
                         {
@@ -240,16 +243,16 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
 
         for (int i = 0; i < characterCount; ++i)
         {
-            var index = dataReader.ReadByte();
+            var characterIndex = dataReader.ReadByte();
             var collisionClass = dataReader.ReadByte();
             var typeAndFlags = dataReader.ReadByte();
             var eventIndex = dataReader.ReadByte();
             var gfxIndex = dataReader.ReadWord();
             var tileFlags = dataReader.ReadDword();
 
-            var character = map.CharacterReferences[i] = index == 0 ? null : new Map.CharacterReference
+            var character = map.CharacterReferences[i] = characterIndex == 0 ? null : new Map.CharacterReference
             {
-                Index = index,
+                Index = characterIndex,
                 Type = (CharacterType)(typeAndFlags & 0x03),
                 CharacterFlags = (Map.CharacterReference.Flags)(typeAndFlags >> 2),
                 CollisionClass = collisionClass,
@@ -263,9 +266,9 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
             {
                 int positionCount = 288;
 
-                if (character.CharacterFlags.HasFlag(Map.CharacterReference.Flags.RandomMovement))
+                if (character.CharacterFlags.HasFlag(Map.CharacterReference.Flags.RandomMovement) || character.Type == CharacterType.Monster)
                     positionCount = 1;
-                else if (character.Type != CharacterType.Monster && character.CharacterFlags.HasFlag(Map.CharacterReference.Flags.Stationary))
+                else if (character.CharacterFlags.HasFlag(Map.CharacterReference.Flags.Stationary))
                     positionCount = 1;
 
                 for (int p = 0; p < positionCount; ++p)
@@ -282,15 +285,15 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
                 uint x = dataReader.ReadByte();
                 uint y = dataReader.ReadByte();
                 var direction = (CharacterDirection)dataReader.ReadByte();
-                byte index = dataReader.ReadByte();
+                byte gotoPointIndex = dataReader.ReadByte();
 
                 map.GotoPoints.Add(new Map.GotoPoint
                 {
                     X = x,
                     Y = y,
                     Direction = direction,
-                    Index = index,
-                    Name = gameData.GetGotoPointName(index)
+                    Index = gotoPointIndex,
+                    Name = gameData.GetGotoPointName(gotoPointIndex)
                 });
             }
 
@@ -438,22 +441,22 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
                 dataWriter.Write((byte)p.X);
                 dataWriter.Write((byte)p.Y);
             });
+        }
 
-            if (map.Type == MapType.Map3D)
+        if (map.Type == MapType.Map3D)
+        {
+            dataWriter.Write((byte)map.GotoPoints.Count);
+
+            foreach (var gotoPoint in map.GotoPoints)
             {
-                dataWriter.Write((byte)map.GotoPoints.Count);
-
-                foreach (var gotoPoint in map.GotoPoints)
-                {
-                    dataWriter.Write((byte)gotoPoint.X);
-                    dataWriter.Write((byte)gotoPoint.Y);
-                    dataWriter.WriteEnum8(gotoPoint.Direction);
-                    dataWriter.Write((byte)gotoPoint.Index);
-                }
-
-                if (map.EventList.Count != 0)
-                    map.EventAutomapTypes.ForEach(t => dataWriter.Write((byte)t));
+                dataWriter.Write((byte)gotoPoint.X);
+                dataWriter.Write((byte)gotoPoint.Y);
+                dataWriter.WriteEnum8(gotoPoint.Direction);
+                dataWriter.Write((byte)gotoPoint.Index);
             }
+
+            if (map.EventList.Count != 0)
+                map.EventAutomapTypes.ForEach(t => dataWriter.Write((byte)t));
         }
     }
 }

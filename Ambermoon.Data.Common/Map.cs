@@ -317,7 +317,7 @@ namespace Ambermoon.Data
             return clone;
         }
 
-        public uint Index { get; private set; }
+        public uint Index { get; init; }
         public string Name => IsWorldMap || Index < 256 ? $"{World}{Index:000}" : Texts[0];
         public MapFlags Flags { get; set; }
         public MapType Type { get; set; }

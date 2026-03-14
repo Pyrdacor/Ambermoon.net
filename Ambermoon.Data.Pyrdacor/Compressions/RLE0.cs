@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Pyrdacor.Serialization;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.Compressions;
@@ -26,7 +27,7 @@ internal class RLE0 : ICompression<RLE0>, ICompression
                 decompressedData.Add(b);
         }
 
-        return DataReader.FromData([.. decompressedData]);
+        return new DataReaderLE([.. decompressedData]);
     }
 
     public IDataWriter Compress(IDataWriter dataWriter)
@@ -71,6 +72,6 @@ internal class RLE0 : ICompression<RLE0>, ICompression
 
         WriteZeros();
 
-        return new DataWriter([..compressedData]);
+        return new DataWriterLE([..compressedData]);
     }
 }

@@ -9,6 +9,7 @@ namespace Ambermoon.Data.Pyrdacor
         Func<Dictionary<uint, Tileset>> tilesetProvider
     ) : IMapManager
     {
+        bool mapTextsAdded = false;
         readonly Lazy<Dictionary<uint, Map>> maps = new(mapProvider);
         readonly Lazy<Dictionary<uint, TextList>> mapTexts = new(mapTextProvider);
         readonly Lazy<Dictionary<uint, Labdata>> labdata = new(labdataProvider);
@@ -30,8 +31,29 @@ namespace Ambermoon.Data.Pyrdacor
 
         public Labdata? GetLabdataForMap(Map map) => map.Type == MapType.Map2D ? null : labdata.Value!.GetValueOrDefault(map.TilesetOrLabdataIndex, null);
 
-        public IReadOnlyList<Map> Maps => maps.Value.Values.ToList().AsReadOnly();
+        public IReadOnlyList<Map> Maps
+        {
+            get
+            {
+                if (!mapTextsAdded)
+                {
+                    foreach (var map in maps.Value.Values)
+                    {
+                        if (map.Texts.Count == 0)
+                        {
+                            map.Texts = mapTexts.Value.TryGetValue(map.Index, out TextList? textList) ? textList.ToList() : [];
+                        }
+                    }
+
+                    mapTextsAdded = true;
+                }
+
+                return maps.Value.Values.ToList().AsReadOnly();
+            }
+        }
+
         public IReadOnlyList<Labdata> Labdata => labdata.Value.Values.ToList().AsReadOnly();
+
         public IReadOnlyList<Tileset> Tilesets => tilesets.Value.Values.ToList().AsReadOnly();
     }
 }
