@@ -395,7 +395,7 @@ namespace Ambermoon.Data.Legacy
             }
         }
 
-        Graphic ReadPalette(GraphicReader graphicReader, IDataReader reader)
+        static Graphic ReadPalette(GraphicReader graphicReader, IDataReader reader)
         {
             reader.Position = 0;
             var paletteGraphic = new Graphic();
@@ -411,7 +411,7 @@ namespace Ambermoon.Data.Legacy
             return paletteGraphic;
         }
 
-        static GraphicInfo paletteGraphicInfo = new GraphicInfo
+        static GraphicInfo paletteGraphicInfo = new()
         {
             Width = 32,
             Height = 1,

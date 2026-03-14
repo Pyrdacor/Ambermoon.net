@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data.Audio;
 using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Audio;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
 using Ambermoon.Data.Pyrdacor.Objects;
@@ -9,44 +10,51 @@ using Ambermoon.Render;
 
 namespace Ambermoon.Data.Pyrdacor;
 
+using Font = Objects.Font;
 using Savegame = SavegameData;
 using SavegameData = FileSpecs.SavegameData;
 
 public partial class GameData : IGameData, IGraphicProvider
 {
-    LazyFileLoader<Palette, Graphic> paletteLoader;
-    LazyFileLoader<SavegameData, Savegame> savegameLoader;
-    LazyContainerLoader<FontData, Font> fontLoader;
-    LazyContainerLoader<MonsterGroups, MonsterGroup> monsterGroupLoader;
-    LazyContainerLoader<CharacterData, PartyMember> partyLoader;
-    LazyContainerLoader<CharacterData, Monster> monsterLoader;
-    LazyContainerLoader<CharacterData, NPC> npcLoader;
-    LazyContainerLoader<Texts, TextList> npcTextLoader;
-    LazyContainerLoader<Texts, TextList> partyTextLoader;
-    LazyContainerLoader<ItemData, Item> itemLoader;
-    LazyFileLoader<Texts, TextList> itemNameLoader;
-    LazyContainerLoader<Texts, TextList> itemTextLoader;
-    LazyContainerLoader<MapData, Map> mapLoader;
-    LazyContainerLoader<Texts, TextList> mapTextLoader;
-    LazyContainerLoader<LabyrinthData, Labdata> labdataLoader;
-    LazyContainerLoader<TilesetData, Tileset> tilesetLoader;
-    LazyContainerLoader<LocationData, Place> locationLoader;
-    LazyContainerLoader<Texts, string> locationNameLoader;
-    LazyFileLoader<Texts, TextList> gotoPointNameLoader;
+    LazyFileLoader<Palette, Graphic> paletteLoader = null!;
+    LazyFileLoader<SavegameData, Savegame> savegameLoader = null!;
+    LazyContainerLoader<FontData, Font> fontLoader = null!;
+    LazyContainerLoader<MonsterGroups, MonsterGroup> monsterGroupLoader = null!;
+    LazyContainerLoader<CharacterData, PartyMember> partyLoader = null!;
+    LazyContainerLoader<CharacterData, Monster> monsterLoader = null!;
+    LazyContainerLoader<CharacterData, NPC> npcLoader  = null!;
+    LazyContainerLoader<Texts, TextList> npcTextLoader = null!;
+    LazyContainerLoader<Texts, TextList> partyTextLoader = null!;
+    LazyContainerLoader<ItemData, Item> itemLoader = null!;
+    LazyFileLoader<Texts, TextList> itemNameLoader = null!;
+    LazyContainerLoader<Texts, TextList> itemTextLoader = null!;
+    LazyContainerLoader<MapData, Map> mapLoader = null!;
+    LazyContainerLoader<Texts, TextList> mapTextLoader = null!;
+    LazyContainerLoader<LabyrinthData, Labdata> labdataLoader = null!;
+    LazyContainerLoader<TilesetData, Tileset> tilesetLoader = null!;
+    LazyContainerLoader<LocationData, Place> locationLoader = null!;
+    LazyContainerLoader<Texts, string> locationNameLoader = null!;
+    LazyFileLoader<Texts, TextList> gotoPointNameLoader = null!;
+    LazyFileLoader<GraphicAtlas, Graphic> layoutGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlas, Graphic> npcGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlas, Graphic> itemGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlas, Graphic> wallGraphicLoader = null!; // includes overlays on walls
+    LazyFileLoader<GraphicAtlas, Graphic> objectGraphicLoader = null!;
+    LazyContainerLoader<GraphicAtlas, Graphic> tileGraphicLoader = null!; // one entry per tileset
     readonly Dictionary<string, Action<IDataReader>> fileHandlers = [];
-    readonly Lazy<SongManager> songManager;
-    readonly Lazy<ICharacterManager> characterManager;
-    readonly Lazy<IItemManager> itemManager;
-    readonly Lazy<IMapManager> mapManager;
-    readonly Lazy<ISavegameManager> savegameManager;
-    readonly Lazy<IngameFont> ingameFont;
-    readonly Lazy<Font> outroSmallFont;
-    readonly Lazy<Font> outroLargeFont;
-    readonly Lazy<Font> introSmallFont;
-    readonly Lazy<Font> introLargeFont;
-    readonly Lazy<Places> places;
-    readonly Lazy<Dictionary<int, Graphic>> palettes;
-    readonly Lazy<IngameFontProvider> ingameFontProvider;
+    readonly Lazy<SongManager> songManager = null!;
+    readonly Lazy<ICharacterManager> characterManager = null!;
+    readonly Lazy<IItemManager> itemManager = null!;
+    readonly Lazy<IMapManager> mapManager = null!;
+    readonly Lazy<ISavegameManager> savegameManager = null!;
+    readonly Lazy<IngameFont> ingameFont = null!;
+    readonly Lazy<Font> outroSmallFont = null!;
+    readonly Lazy<Font> outroLargeFont = null!;
+    readonly Lazy<Font> introSmallFont = null!;
+    readonly Lazy<Font> introLargeFont = null!;
+    readonly Lazy<Places> places = null!;
+    readonly Lazy<Dictionary<int, Graphic>> palettes = null!;
+    readonly Lazy<IngameFontProvider> ingameFontProvider = null!;
 
     public bool Loaded { get; } = false;
 
@@ -126,11 +134,15 @@ public partial class GameData : IGameData, IGraphicProvider
     const string MagicMonsters = "MONS";
     const string MagicNPCs = "NPCS";
     const string MagicNPCTexts = "NTXT";
+    const string MagicNPCGraphics = "NGFX";
     const string MagicPartyTexts = "PTXT";
+    const string MagicPartyGraphics = "PGFX";
+    const string MagicTravelGraphics = "TRAV";
     const string MagicMonsterGroups = "MOGS";
     const string MagicItems = "ITEM";
     const string MagicItemNames = "INAM";
     const string MagicItemTexts = "ITXT";
+    const string MagicItemGraphics = "IGFX";
     const string MagicLocations = "LOCS";
     const string MagicLocationNames = "LNAM";
     const string MagicOutro = "OUTR";
@@ -141,6 +153,16 @@ public partial class GameData : IGameData, IGraphicProvider
     const string MagicMapTexts = "MTXT";
     const string MagicFonts = "FONT";
     const string MagicGotoPointNames = "GOTO";
+    const string MagicLayouts = "LAYO";
+    const string MagicWallGraphics = "WALL";
+    const string MagicObjectGraphics = "OBJG";
+    const string MagicOverlayGraphics = "OVER";
+    const string MagicEventGraphics = "EVEG";
+    const string MagicCombatBackgrounds = "COMB";
+    const string MagicCombatGraphics = "COMG";
+    const string MagicPortraits = "PORT";
+    const string MagicUIGraphics = "UGFX";
+    const string MagicWorldBackgrounds = "WOBG";
 
     public GameData(Stream stream, params (string Magic, Action<IDataReader> Action)[] customFileHandlers)
         : this(new DataReaderLE(stream), customFileHandlers)
@@ -178,6 +200,7 @@ public partial class GameData : IGameData, IGraphicProvider
         fileHandlers.Add(MagicMapTexts, LoadMapTexts);
         fileHandlers.Add(MagicFonts, LoadFonts);
         fileHandlers.Add(MagicGotoPointNames, LoadGotoPointNames);
+        fileHandlers.Add(MagicLayouts, LoadLayoutGraphics);
 
         foreach (var customFileHandler in customFileHandlers)
         {
@@ -394,17 +417,17 @@ public partial class GameData : IGameData, IGraphicProvider
 
     void LoadTileGraphics(IDataReader dataReader)
     {
-
+        tileGraphicLoader = new(dataReader, this, g => g.Texture!);
     }
 
-    void Load3DObjectGraphics(IDataReader dataReader)
+    void LoadObjectGraphics(IDataReader dataReader)
     {
-
+        objectGraphicLoader = new(dataReader, this, g => g.Texture!);
     }
 
-    void Load3DWallGraphics(IDataReader dataReader)
+    void LoadWallGraphics(IDataReader dataReader)
     {
-
+        wallGraphicLoader = new(dataReader, this, g => g.Texture!);
     }
 
     void Load3DOverlayGraphics(IDataReader dataReader)
@@ -424,7 +447,7 @@ public partial class GameData : IGameData, IGraphicProvider
 
     void LoadLayoutGraphics(IDataReader dataReader)
     {
-
+        layoutGraphicLoader = new(dataReader, this, g => g.Texture!);
     }
 
     // These include the riddlemouth, combat and button graphics but not the battle field player/monster sprites and not the layouts!
@@ -508,39 +531,44 @@ public partial class GameData : IGameData, IGraphicProvider
         throw new NotImplementedException();
     }
 
-    public CombatBackgroundInfo Get2DCombatBackground(uint index)
-    {
-        throw new NotImplementedException();
-    }
-
-    public CombatBackgroundInfo Get3DCombatBackground(uint index)
-    {
-        throw new NotImplementedException();
-    }
-
-    public CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index)
-    {
-        throw new NotImplementedException();
-    }
-
-    public float GetMonsterRowImageScaleFactor(MonsterRow row)
-    {
-        throw new NotImplementedException();
-    }
-
-    public byte PaletteIndexFromColorIndex(Map map, byte colorIndex)
-    {
-        throw new NotImplementedException();
-    }
-
     public CombatBackgroundInfo Get2DCombatBackground(uint index, bool advanced)
     {
-        throw new NotImplementedException();
+        if (advanced && CombatBackgrounds.AdvancedReplacements2D.TryGetValue(index, out var info))
+            return info;
+
+        return CombatBackgrounds.Info2D[index];
     }
 
     public CombatBackgroundInfo Get3DCombatBackground(uint index, bool advanced)
     {
-        throw new NotImplementedException();
+        if (advanced && CombatBackgrounds.AdvancedReplacements3D.TryGetValue(index, out var info))
+            return info;
+
+        return CombatBackgrounds.Info3D[index];
+    }
+
+    public CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index) => CombatGraphics.Info[index];
+
+    public float GetMonsterRowImageScaleFactor(MonsterRow row) => row switch
+    {
+        MonsterRow.Farthest => 0.7f,
+        MonsterRow.Far => 0.8f,
+        MonsterRow.Near => 1.25f,
+        _ => 1.0f,
+    };
+
+    static readonly byte[] ColorIndexMapping =
+    [
+        0x00, 0x1F, 0x1E, 0x1D, 0x1C, 0x1B, 0x1A, 0x12, 0x13, 0x14, 0x11, 0x10, 0x09, 0x0A, 0x18, 0x17,
+        0x00, 0x01, 0x1F, 0x12, 0x1C, 0x14, 0x15, 0x06, 0x08, 0x0A, 0x04, 0x02, 0x0E, 0x0C, 0x13, 0x10,
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
+    ];
+
+    public byte PaletteIndexFromColorIndex(Map map, byte colorIndex)
+    {
+        int offset = map.Type == MapType.Map3D ? 32 : map.IsWorldMap ? 16 : 0;
+
+        return ColorIndexMapping[offset + colorIndex % 16];
     }
 
     #endregion

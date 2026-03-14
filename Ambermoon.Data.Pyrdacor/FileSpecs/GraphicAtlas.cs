@@ -3,8 +3,19 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.FileSpecs;
 
+/// <summary>
+/// The graphic atlas stores all graphics for a specific render layer.
+/// For example all wall graphics or all item graphics.
+/// It can store the graphics as a single texture atlas or as individual tiles.
+/// The format is optimized for the original Amiga graphics but can also be used for RGBA graphics with some limitations.
+/// The texture atlas can optionally use a palette from the game data and apply a color index offset to it.
+/// If the palette is not fixed (e.g. for 3D walls), a value of 255 should be used for the palette index.
+/// This allows to use the same texture atlas with different palettes.
+/// </summary>
 public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
 {
+    public const byte MultiplePalettes = 255;
+
     private static class TexturePacker
     {
         private class EmptyArea(Rect area)
@@ -89,12 +100,12 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
             }
         }
 
-        public static KeyValuePair<Graphic, List<Rect>> PackTextureAtlas(List<Graphic> graphics, bool indexed)
+        public static KeyValuePair<Graphic, SortedList<int, Rect>> PackTextureAtlas(List<Graphic> graphics, bool indexed)
         {
             if (graphics.Count == 0)
-                return KeyValuePair.Create(new Graphic(0, 0, 0) { IndexedGraphic = indexed }, new List<Rect>());
+                return KeyValuePair.Create(new Graphic(0, 0, 0) { IndexedGraphic = indexed }, new SortedList<int, Rect>());
             else if (graphics.Count == 1)
-                return KeyValuePair.Create(graphics[0], new List<Rect>() { new Rect(0, 0, graphics[0].Width, graphics[0].Height) });
+                return KeyValuePair.Create(graphics[0], new SortedList<int, Rect>() { { 0, new Rect(0, 0, graphics[0].Width, graphics[0].Height) } });
 
             // Order by max size graphics and prefer wider ones if equal
             var sortedGraphics = new List<Graphic>(graphics);
@@ -186,18 +197,18 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
                 }
             }
 
-            return KeyValuePair.Create(graphic, new SortedList<int, Rect>(textureAreas).Values.ToList());
+            return KeyValuePair.Create(graphic, new SortedList<int, Rect>(textureAreas));
         }
     }
 
-    private readonly List<Rect> textureAreas = new();
+    private readonly SortedList<int, Rect> textureAreas = [];
     private int? paletteIndex;
     private byte flags;
 
     public static string Magic => "GFX";
     public static byte SupportedVersion => 0;
     public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
-    public IReadOnlyList<Rect> TextureAreas => textureAreas.AsReadOnly();
+    public IReadOnlyList<Rect> TextureAreas => textureAreas.Values.AsReadOnly();
     public Graphic? Texture { get; private set; }
 
     public GraphicAtlas()
@@ -205,7 +216,7 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
 
     }
 
-    private GraphicAtlas(int? paletteIndex, byte flags, Graphic texture, List<Rect> textureAreas)
+    private GraphicAtlas(int? paletteIndex, byte flags, Graphic texture, SortedList<int, Rect> textureAreas)
     {
         this.paletteIndex = paletteIndex >= 0 ? paletteIndex : null;
         this.flags = flags;
@@ -224,19 +235,21 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
         }
 
         byte flags = 0x00; // no tiles
+
         if (alpha)
             flags |= 0x40;
         if (paletteIndex >= 0)
             flags |= 0x20;
-        flags = (byte)(flags | (colorIndexOffset & 0x1f));
+
+        flags |= (byte)(colorIndexOffset & 0x1f);
 
         Graphic texture;
-        List<Rect> textureAreas;
+        SortedList<int, Rect> textureAreas;
 
         if (graphics.Count == 0)
         {
             texture = new Graphic(0, 0, 0) { IndexedGraphic = paletteIndex >= 0 };
-            textureAreas = new();
+            textureAreas = [];
         }
         else
         {
@@ -262,14 +275,16 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
         }
 
         byte flags = 0x80; // tiles
+
         if (alpha)
             flags |= 0x40;
         if (paletteIndex >= 0)
             flags |= 0x20;
-        flags = (byte)(flags | (colorIndexOffset & 0x1f));
+
+        flags |= (byte)(colorIndexOffset & 0x1f);
 
         Graphic texture;
-        List<Rect> textureAreas = new();
+        SortedList<int, Rect> textureAreas = [];
 
         if (tiles.Count == 0)
             texture = new Graphic(0, 0, 0) { IndexedGraphic = paletteIndex >= 0 };
@@ -316,7 +331,7 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
                 int row = tileIndex / tilesPerRow;
 
                 texture.AddOverlay((uint)(column * tileWidth), (uint)(row * tileHeight), tile, false);
-                textureAreas.Add(new Rect(column * tileWidth, row * tileHeight, tileWidth, tileHeight));
+                textureAreas.Add(tileIndex, new Rect(column * tileWidth, row * tileHeight, tileWidth, tileHeight));
             }
         }
 
@@ -325,21 +340,22 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
 
     public static GraphicAtlas FromGraphics(List<Graphic> graphics, bool alpha, int colorIndexOffset = 0)
     {
-        return FromGraphics(-1, graphics, alpha, 0);
+        return FromGraphics(-1, graphics, alpha, colorIndexOffset);
     }
 
     public static GraphicAtlas FromTiles(List<Graphic> tiles, bool alpha, int colorIndexOffset = 0)
     {
-        return FromTiles(-1, tiles, alpha, 0);
+        return FromTiles(-1, tiles, alpha, colorIndexOffset);
     }
 
     public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
         int numGraphics = dataReader.ReadWord();
-        paletteIndex = dataReader.ReadByte();
         flags = dataReader.ReadByte();
-        textureAreas.Clear();           
         bool usePalette = (flags & 0x20) != 0;
+
+        paletteIndex = usePalette ? dataReader.ReadByte() : -1;        
+        textureAreas.Clear();
 
         if (numGraphics == 0)
         {
@@ -348,7 +364,7 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
                 Width = 0,
                 Height = 0,
                 IndexedGraphic = usePalette,
-                Data = Array.Empty<byte>()
+                Data = []
             };
             return;
         }
@@ -431,7 +447,7 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
                 int column = i % tilesPerRow;
                 int row = i / tilesPerRow;
 
-                textureAreas.Add(new Rect(column * width, row * height, width, height));
+                textureAreas.Add(i, new Rect(column * width, row * height, width, height));
             }
         }
         else
@@ -449,15 +465,15 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
                 int x = dataReader.ReadWord();
                 int y = dataReader.ReadWord();
 
-                textureAreas.Add(new Rect(x, y, width, height));
+                textureAreas.Add(i, new Rect(x, y, width, height));
             }
 
             LoadAtlas();
 
-            if (textureAreas.Min(a => a.Left) < 0 ||
-                textureAreas.Min(a => a.Top) < 0 ||
-                textureAreas.Max(a => a.Right) > Texture!.Width ||
-                textureAreas.Max(a => a.Bottom) > Texture.Height)
+            if (textureAreas.Values.Min(a => a.Left) < 0 ||
+                textureAreas.Values.Min(a => a.Top) < 0 ||
+                textureAreas.Values.Max(a => a.Right) > Texture!.Width ||
+                textureAreas.Values.Max(a => a.Bottom) > Texture.Height)
                 throw new AmbermoonException(ExceptionScope.Data, "Texture atlas entry was outside the atlas boundaries.");
         }
     }
@@ -467,22 +483,25 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
         if (textureAreas.Count > ushort.MaxValue)
             throw new AmbermoonException(ExceptionScope.Data, $"Texture atlas areas are limited to {ushort.MaxValue}.");
 
-        if (paletteIndex is null && (flags & 0x20) != 0)
+        bool usePalette = (flags & 0x20) != 0;
+
+        if (paletteIndex is null && usePalette)
             throw new AmbermoonException(ExceptionScope.Data, "Texture atlas has the 'use palette' flag set but no palette index was given.");
 
-        if (paletteIndex is not null && (flags & 0x20) == 0)
+        if (paletteIndex is not null && !usePalette)
             throw new AmbermoonException(ExceptionScope.Data, "Texture atlas has the 'use palette' flag cleared but a palette index was given.");
 
         dataWriter.Write((ushort)textureAreas.Count);
-        dataWriter.Write((byte)(paletteIndex ?? 0));
         dataWriter.Write(flags);
+
+        if (usePalette)
+            dataWriter.Write((byte)paletteIndex!);       
 
         if (textureAreas.Count == 0)
             return;
 
-        bool tiles = (flags & 0x80) == 0;
+        bool tiles = (flags & 0x80) != 0;
         bool alpha = (flags & 0x40) != 0;
-        bool usePalette = (flags & 0x20) != 0;
         int colorIndexOffset = flags & 0x1f;
 
         void WriteRBGAImageSize(int width, int height)
@@ -570,7 +589,7 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
         {
             var totalArea = new Rect(0, 0, Texture!.Width, Texture.Height);
 
-            foreach (var area in textureAreas)
+            foreach (var (_, area) in textureAreas)
             {
                 if (!usePalette)
                     WriteRBGAImageSize(area.Width, area.Height);
