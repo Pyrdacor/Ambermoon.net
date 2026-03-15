@@ -555,7 +555,7 @@ namespace Ambermoon.UI
             renderLayer = renderView.GetLayer(Layer.UI);
             textLayer = renderView.GetLayer(Layer.Text);
             this.itemManager = itemManager;
-            byte paletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
+            byte paletteIndex = (byte)(renderView.GraphicInfoProvider.PrimaryUIPaletteIndex - 1);
 
             GlyphHeight = renderView.FontProvider.GetFont().GlyphHeight;
 
@@ -999,7 +999,7 @@ namespace Ambermoon.UI
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             var textBounds = new Rect(48, 95, maxTextWidth, Math.Max(minLines + 1, processedText.LineCount) * Global.GlyphLineHeight);
             var renderText = RenderView.RenderTextFactory.Create(
-                (byte)(RenderView.GraphicProvider.DefaultTextPaletteIndex - 1), textLayer,
+                (byte)(RenderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1), textLayer,
                 processedText, TextColor.BrightGray, true, GetTextRect(textBounds), textAlign);
             renderText.PaletteIndex = game.TextPaletteIndex;
             int popupRows = Math.Max(minLines + 2, 2 + (textBounds.Height + 36) / 16);
@@ -4286,7 +4286,7 @@ namespace Ambermoon.UI
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground);
-                sprite.PaletteIndex = (byte)(RenderView.GraphicProvider.PrimaryUIPaletteIndex + 3 - 1);
+                sprite.PaletteIndex = (byte)(RenderView.GraphicInfoProvider.PrimaryUIPaletteIndex + 3 - 1);
                 sprite.Visible = true;
             }
 
@@ -4639,7 +4639,7 @@ namespace Ambermoon.UI
             {
                 if (activeTooltipText == null)
                 {
-                    activeTooltipText = RenderView.RenderTextFactory.Create((byte)(RenderView.GraphicProvider.DefaultTextPaletteIndex - 1));
+                    activeTooltipText = RenderView.RenderTextFactory.Create((byte)(RenderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1));
                     activeTooltipText.Shadow = true;
                     activeTooltipText.DisplayLayer = 250;
                     activeTooltipText.Layer = RenderView.GetLayer(Layer.Text);
@@ -5854,7 +5854,7 @@ namespace Ambermoon.UI
             int row = position / 6;
             var combatBackgroundArea = Global.CombatBackgroundArea;
             int centerX = combatBackgroundArea.Width / 2;
-            float sizeMultiplier = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
+            float sizeMultiplier = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
             int slotWidth = Util.Round(40 * sizeMultiplier);
             int height = Util.Round(sizeMultiplier * monster.MappedFrameHeight);
             return new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height / 2);
@@ -5866,7 +5866,7 @@ namespace Ambermoon.UI
             int row = position / 6;
             var combatBackgroundArea = Global.CombatBackgroundArea;
             int centerX = combatBackgroundArea.Width / 2;
-            float sizeMultiplier = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
+            float sizeMultiplier = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
             int slotWidth = Util.Round(40 * sizeMultiplier);
             return new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row]);
         }
@@ -5877,7 +5877,7 @@ namespace Ambermoon.UI
             int row = position / 6;
             var combatBackgroundArea = Global.CombatBackgroundArea;
             int centerX = combatBackgroundArea.Width / 2;
-            float sizeMultiplier = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
+            float sizeMultiplier = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
             int slotWidth = Util.Round(40 * sizeMultiplier);
             int height = Util.Round(sizeMultiplier * monster.MappedFrameHeight);
             return new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height);
@@ -5901,7 +5901,7 @@ namespace Ambermoon.UI
         public BattleAnimation AddMonsterCombatSprite(int column, int row, Monster monster, byte displayLayer,
             byte paletteIndex)
         {
-            float sizeMultiplier = RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);            
+            float sizeMultiplier = RenderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);            
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleMonsterRow)!;
             var sprite = (RenderView.SpriteFactory.Create((int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight, true) as ILayerSprite)!;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(monster.Index);

@@ -1396,10 +1396,10 @@ namespace Ambermoon
                         }
 
                         var newDisplayPosition = layout.GetMonsterCombatCenterPosition((int)battleAction.ActionParameter % 6, (int)newRow, monster);
-                        animation.AnimationFinished += MoveAnimationFinished;
+                        animation!.AnimationFinished += MoveAnimationFinished;
                         var frames = monster.GetAnimationFrameIndices(MonsterAnimationType.Move);
                         animation.Play(frames, (uint)Math.Max(Math.Abs(newRow - currentRow), Math.Abs(newColumn - currentColumn)) * GameCore.TicksPerSecond / (2 * (uint)frames.Length),
-                            battleTicks, newDisplayPosition, layout.RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
+                            battleTicks, newDisplayPosition, layout.RenderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
                         currentBattleAnimation = animation;
                         currentlyAnimatedMonster = monster;
                     }

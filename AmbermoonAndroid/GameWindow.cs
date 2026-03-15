@@ -751,7 +751,7 @@ class GameWindow : IContextProvider
         var outroFontLarge = new Font(outroData.LargeGlyphs, 10, (uint)outroData.Glyphs.Count);
 
         // Load game data
-        var graphicProvider = gameData.GraphicProvider;
+        var graphicProvider = gameData.GraphicInfoProvider;
 
         if (!musicInitialized)
         {
@@ -784,7 +784,7 @@ class GameWindow : IContextProvider
             foreach (var twinlakeImagePart in introData.TwinlakeImageParts)
                 introGraphics.Add(++twinlakeFrameOffset, twinlakeImagePart.Graphic);
             textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
-                introFontLarge.GlyphGraphics, introGraphics, features);
+                introFontLarge.GlyphGraphics, introGraphics, features, 10);
             logoPyrdacor?.Initialize(textureAtlasManager);
             AdvancedLogo.Initialize(textureAtlasManager, FileProvider.GetAdvancedLogoData);
             var graphics = TutorialFinger.GetGraphics(1u); // Donate button is 0
@@ -1163,9 +1163,9 @@ class GameWindow : IContextProvider
                 loadingBar.Destroy();
                 loadingBar = null;
 
-                renderView = CreateRenderView(gameData, configuration, gameData.GraphicProvider, fontProvider, additionalPalettes, () =>
+                renderView = CreateRenderView(gameData, configuration, gameData.GraphicInfoProvider, fontProvider, additionalPalettes, () =>
                 {
-                    textureAtlasManager.AddUIOnly(gameData.GraphicProvider, fontProvider);
+                    textureAtlasManager.AddUIOnly(gameData.GraphicInfoProvider, fontProvider);
                     logoPyrdacor?.Initialize(textureAtlasManager);
                     AdvancedLogo.Initialize(textureAtlasManager, FileProvider.GetAdvancedLogoData);
                     textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
@@ -1265,7 +1265,7 @@ class GameWindow : IContextProvider
         renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => digitTextureAtlas.GetOffset((uint)x));
     }
 
-    GameRenderView CreateRenderView(IGameData gameData, IConfiguration configuration, IGraphicProvider graphicProvider,
+    GameRenderView CreateRenderView(IGameData gameData, ICoreConfiguration configuration, IGraphicProvider graphicProvider,
         IFontProvider fontProvider, Graphic[] additionalPalettes, Func<TextureAtlasManager> textureAtlasManagerProvider)
     {
         bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;

@@ -26,7 +26,7 @@ namespace Ambermoon.Data
         IReadOnlyList<Position> CursorHotspots { get; }
         Places Places { get; }
         IItemManager ItemManager { get; }
-        IGraphicProvider GraphicProvider { get; }
+        IGraphicInfoProvider GraphicInfoProvider { get; }
         IFontProvider FontProvider { get; }
         IDataNameProvider DataNameProvider { get; }
         ILightEffectProvider LightEffectProvider { get; }

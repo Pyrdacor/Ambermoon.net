@@ -904,7 +904,7 @@ internal class ItemGrid
             {
                 hoveredItemName = renderView.RenderTextFactory.Create
                 (
-                    (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
+                    (byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1),
                     renderView.GetLayer(Layer.Text),
                     itemNameText,
                     Data.Enumerations.Color.White, true
@@ -928,7 +928,7 @@ internal class ItemGrid
                 {
                     hoveredItemPrice = renderView.RenderTextFactory.Create
                     (
-                        (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
+                        (byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1),
                         renderView.GetLayer(Layer.Text),
                         itemPriceText,
                         color, true

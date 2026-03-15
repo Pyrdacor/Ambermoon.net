@@ -560,10 +560,10 @@ partial class GameCore
 
         bool advancedBackgrounds = Features.HasFlag(Features.AdvancedCombatBackgrounds);
         var combatBackground = is3D
-        ? renderView.GraphicProvider.Get3DCombatBackground(combatBackgroundIndex.Value, advancedBackgrounds)
-        : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex.Value, advancedBackgrounds);
+        ? renderView.GraphicInfoProvider.Get3DCombatBackground(combatBackgroundIndex.Value, advancedBackgrounds)
+        : renderView.GraphicInfoProvider.Get2DCombatBackground(combatBackgroundIndex.Value, advancedBackgrounds);
         paletteIndex = (byte)(combatBackground.Palettes[GameTime!.CombatBackgroundPaletteIndex()] - 1);
-        layout.AddSprite(Global.CombatBackgroundArea, Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
+        layout.AddSprite(Global.CombatBackgroundArea, combatBackground.GraphicIndex - 1,
             paletteIndex, 1, null, null, Layer.CombatBackground);
         layout.FillArea(new Rect(0, 132, 320, 68), Render.Color.Black, 0);
         layout.FillArea(new Rect(5, 139, 84, 56), GetUIColor(28), 1);
@@ -797,7 +797,7 @@ partial class GameCore
             animation.AnimationFinished += MoveAnimationFinished;
             animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Move).Take(1).ToArray(),
                 timePerMonster, CurrentBattleTicks, newDisplayPosition,
-                layout.RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
+                layout.RenderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
         }
 
         for (int i = 0; i < monsters.Count; ++i)

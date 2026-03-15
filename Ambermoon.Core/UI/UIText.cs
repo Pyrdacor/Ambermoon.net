@@ -90,7 +90,7 @@ namespace Ambermoon.UI
             this.bounds = bounds;
             this.allowScrolling = allowScrolling;
             renderText = renderView.RenderTextFactory.Create(
-                (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
+                (byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1),
                 renderView.GetLayer(Layer.Text),
                 this.text, textColor, shadow, bounds, textAlign);
             renderText.DisplayLayer = displayLayer;

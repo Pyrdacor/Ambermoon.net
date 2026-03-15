@@ -68,7 +68,7 @@ namespace AmbermoonAndroid
             this.renderView = renderView;
             renderLayer = renderView.GetLayer(Layer.FantasyIntroGraphics);
             colorLayer = renderView.GetLayer(Layer.FantasyIntroEffects);
-            paletteOffset = renderView.GraphicProvider.FirstFantasyIntroPaletteIndex;
+            paletteOffset = renderView.GraphicInfoProvider.FirstFantasyIntroPaletteIndex;
 
             EnsureTextures(renderView, fantasyIntroData);
 
@@ -124,7 +124,7 @@ namespace AmbermoonAndroid
 
             // Note: all colors beside the background graphic use the
             // first palette so we just use paletteOffset here.
-            var colorPaletteData = renderView.GraphicProvider.Palettes[paletteOffset].Data;
+            var colorPaletteData = renderView.GraphicInfoProvider.Palettes[paletteOffset].Data;
             for (int i = 0; i < 32; ++i)
             {
                 // Index 0 is transparent and 16 too as Amiga sprites can only use the upper 16 colors.

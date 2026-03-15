@@ -894,9 +894,9 @@ namespace Ambermoon.Render
             this.renderView = renderView;
 
             for (int i = 0; i < characterBlockingBlocks.Length; ++i)
-                characterBlockingBlocks[i] = new List<uint>();
+                characterBlockingBlocks[i] = [];
 
-            EnsureLabBackgroundGraphics(renderView.GraphicProvider);
+            EnsureLabBackgroundGraphics(renderView.GraphicInfoProvider);
 
             // Create stars
             var starLayer = renderView.GetLayer(Layer.Map3DBackground);
@@ -1187,10 +1187,9 @@ namespace Ambermoon.Render
             monsterBlockSightBlocks.Clear();
         }
 
-        void EnsureLabBackgroundGraphics(IGraphicProvider graphicProvider)
+        void EnsureLabBackgroundGraphics(IGraphicInfoProvider graphicInfoProvider)
         {
-            if (labBackgroundGraphics == null)
-                labBackgroundGraphics = graphicProvider.GetGraphics(GraphicType.LabBackground).ToArray();
+            labBackgroundGraphics ??= graphicInfoProvider.GetLabBackgroundGraphics().ToArray();
         }
 
         void EnsureChangeableBlocks()
@@ -1836,12 +1835,11 @@ namespace Ambermoon.Render
                 return;
             }
 
-            var skyParts = lightEffectProvider.GetSkyParts(Map, time.Hour, time.Minute,
-                renderView!.GraphicProvider);
+            var skyParts = lightEffectProvider.GetSkyParts(Map, time.Hour, time.Minute);
             var paletteReplacement = lightEffectProvider.GetLightPaletteReplacement(Map, time.Hour, time.Minute,
-                buffLightIntensity, renderView.GraphicProvider);
+                buffLightIntensity, renderView!.GraphicInfoProvider);
             var horizonPaletteReplacement = lightEffectProvider.GetLightPaletteReplacement(Map, time.Hour, time.Minute,
-                0, renderView.GraphicProvider);
+                0, renderView.GraphicInfoProvider);
 
             renderView.PaletteReplacement = paletteReplacement;
             renderView.HorizonPaletteReplacement = horizonPaletteReplacement;

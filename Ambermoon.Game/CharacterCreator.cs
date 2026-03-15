@@ -164,7 +164,7 @@ namespace Ambermoon.Game
             portraitBackground.X = offset.X + 112;
             portraitBackground.Y = offset.Y + 32;
             portraitBackground.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground);
-            portraitBackground.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex + 3 - 1);
+            portraitBackground.PaletteIndex = (byte)(renderView.GraphicInfoProvider.PrimaryUIPaletteIndex + 3 - 1);
             portraitBackground.Visible = true;
 
             portrait = (spriteFactory.Create(32, 34, true, 2) as ILayerSprite)!;
@@ -172,7 +172,7 @@ namespace Ambermoon.Game
             portrait.X = portraitBackground.X;
             portrait.Y = portraitBackground.Y;
             portrait.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.PortraitOffset + (uint)portraitIndex - 1);
-            portrait.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
+            portrait.PaletteIndex = (byte)(renderView.GraphicInfoProvider.PrimaryUIPaletteIndex - 1);
             portrait.Visible = true;
 
             // draw border around portrait
@@ -313,7 +313,7 @@ namespace Ambermoon.Game
             byte displayLayer = 1, char? fallbackChar = null)
         {
             var renderText = renderView.RenderTextFactory.Create(
-                (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
+                (byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1),
                 renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(text, fallbackChar), textColor, shadow);
             renderText.DisplayLayer = displayLayer;

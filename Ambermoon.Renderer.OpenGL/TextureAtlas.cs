@@ -30,11 +30,57 @@ using Render;
 
 internal class TextureAtlas : ITextureAtlas
 {
-    readonly Dictionary<uint, Position> textureOffsets = new Dictionary<uint, Position>();
+    readonly Dictionary<uint, Position> textureOffsets = [];
 
     public Render.Texture Texture
     {
         get;
+    }
+
+    internal TextureAtlas(State state, IGraphicAtlas graphicAtlas)
+    {
+        Texture = new MutableTexture(state, graphicAtlas.Graphic);
+        textureOffsets = graphicAtlas.Offsets;
+    }
+
+    internal TextureAtlas(State state, Dictionary<uint, IGraphicAtlas> graphicAtlasesWithOffsets)
+    {
+        if (graphicAtlasesWithOffsets.Count == 0)
+        {
+            Texture = new Texture(state, 0, 0, Render.Texture.PixelFormat.RGBA8, []);
+            textureOffsets = [];
+        }
+        else if (graphicAtlasesWithOffsets.Count == 1)
+        {
+            var graphicAtlas = graphicAtlasesWithOffsets.First();
+            Texture = new MutableTexture(state, graphicAtlas.Value.Graphic);
+            uint offset = graphicAtlas.Key;
+            textureOffsets = offset == 0 ? graphicAtlas.Value.Offsets : graphicAtlas.Value.Offsets.ToDictionary(entry => offset + entry.Key, entry => entry.Value);
+        }
+        else
+        {
+            var builder = new TextureAtlasBuilder(state);
+
+            foreach (var entry in graphicAtlasesWithOffsets)
+            {
+                builder.AddTexture(entry.Key, entry.Value.Graphic);
+            }
+
+            var textureAtlas = builder.Create(graphicAtlasesWithOffsets.First().Value.Graphic.IndexedGraphic ? 1u : 4u);
+
+            Texture = textureAtlas.Texture;
+            textureOffsets = [];
+
+            foreach (var entry in graphicAtlasesWithOffsets)
+            {
+                var basePosition = textureAtlas.GetOffset(entry.Key);
+
+                foreach (var offset in entry.Value.Offsets)
+                {
+                    textureOffsets.Add(entry.Key + offset.Key, basePosition + offset.Value);
+                }
+            }
+        }
     }
 
     internal TextureAtlas(Texture texture, Dictionary<uint, Position> textureOffsets)
@@ -49,10 +95,9 @@ internal class TextureAtlas : ITextureAtlas
     }
 }
 
-internal class TextureAtlasBuilder : ITextureAtlasBuilder
+internal class TextureAtlasBuilder(State state) : ITextureAtlasBuilder
 {
-    readonly Dictionary<uint, Graphic> textures = new Dictionary<uint, Graphic>();
-    readonly State state = null;
+    readonly Dictionary<uint, Graphic> textures = [];
 
     // key = max height of category
     class TextureCategorySorter : IComparer<KeyValuePair<uint, List<uint>>>
@@ -61,11 +106,6 @@ internal class TextureAtlasBuilder : ITextureAtlasBuilder
         {
             return x.Key.CompareTo(y.Key);
         }
-    }
-
-    public TextureAtlasBuilder(State state)
-    {
-        this.state = state;
     }
 
     public void AddTexture(uint index, Graphic texture)
@@ -84,7 +124,7 @@ internal class TextureAtlasBuilder : ITextureAtlasBuilder
         uint height = 0u;
         uint xOffset = 0u;
         uint yOffset = 0u;
-        Dictionary<uint, Position> textureOffsets = new Dictionary<uint, Position>();
+        var textureOffsets = new Dictionary<uint, Position>();
 
         foreach (var textureEntry in textures)
         {
@@ -257,17 +297,11 @@ internal class TextureAtlasBuilder : ITextureAtlasBuilder
     }
 }
 
-public class TextureAtlasBuilderFactory : ITextureAtlasBuilderFactory
+public class TextureAtlasBuilderFactory(State state) : ITextureAtlasBuilderFactory, ITextureAtlasConverter
 {
-    readonly State state = null;
+    public ITextureAtlas Convert(IGraphicAtlas graphicAtlas) => new TextureAtlas(state, graphicAtlas);
 
-    public TextureAtlasBuilderFactory(State state)
-    {
-        this.state = state;
-    }
+    public ITextureAtlas Convert(Dictionary<uint, IGraphicAtlas> graphicAtlasesWithOffsets) => new TextureAtlas(state, graphicAtlasesWithOffsets);
 
-    public ITextureAtlasBuilder Create()
-    {
-        return new TextureAtlasBuilder(state);
-    }
+    public ITextureAtlasBuilder Create() => new TextureAtlasBuilder(state);
 }

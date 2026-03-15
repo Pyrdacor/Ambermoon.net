@@ -49,7 +49,7 @@ public abstract partial class GameCore
     public Features Features { get; }
 
     // NOTE: The content of the game core is spread across multiple source files in the "Game" folder.
-    public GameCore(ICoreConfiguration configuration, GameLanguage gameLanguage, IGameRenderView renderView, IGraphicProvider graphicProvider,
+    public GameCore(ICoreConfiguration configuration, GameLanguage gameLanguage, IGameRenderView renderView, IGraphicInfoProvider graphicInfoProvider,
         ISavegameManager savegameManager, ISavegameSerializer savegameSerializer, TextDictionary textDictionary,
         Cursor cursor, IAudioOutput audioOutput, ISongManager songManager, FullscreenChangeHandler fullscreenChangeHandler,
         ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider,
@@ -68,9 +68,9 @@ public abstract partial class GameCore
 
         this.gameVersionName = gameVersionName;
 
-        currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
-        SecondaryUIPaletteIndex = (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1);
-        AutomapPaletteIndex = (byte)(renderView.GraphicProvider.AutomapPaletteIndex - 1);
+        currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicInfoProvider.PrimaryUIPaletteIndex - 1);
+        SecondaryUIPaletteIndex = (byte)(renderView.GraphicInfoProvider.SecondaryUIPaletteIndex - 1);
+        AutomapPaletteIndex = (byte)(renderView.GraphicInfoProvider.AutomapPaletteIndex - 1);
 
         this.fullscreenChangeHandler = fullscreenChangeHandler;
         this.resolutionChangeHandler = resolutionChangeHandler;
@@ -99,7 +99,7 @@ public abstract partial class GameCore
         this.lightEffectProvider = renderView.GameData.LightEffectProvider;
         camera3D = renderView.Camera3D;
         windowTitle = renderView.RenderTextFactory.Create(
-            (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
+            (byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1),
             renderView.GetLayer(Layer.Text),
             renderView.TextProcessor.CreateText(""), TextColor.BrightGray, true,
             layout.GetTextRect(8, 40, 192, 10), TextAlign.Center);
@@ -140,7 +140,7 @@ public abstract partial class GameCore
             hurtPlayerSprites[i].PaletteIndex = PrimaryUIPaletteIndex;
             hurtPlayerSprites[i].TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.DamageSplash));
             hurtPlayerSprites[i].Visible = false;
-            hurtPlayerDamageTexts[i] = renderView.RenderTextFactory.Create((byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1));
+            hurtPlayerDamageTexts[i] = renderView.RenderTextFactory.Create((byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1));
             hurtPlayerDamageTexts[i].Layer = renderView.GetLayer(Layer.Text);
             hurtPlayerDamageTexts[i].DisplayLayer = 201;
             hurtPlayerDamageTexts[i].TextAlign = TextAlign.Center;

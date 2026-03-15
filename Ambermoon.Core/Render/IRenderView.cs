@@ -63,7 +63,7 @@ public interface IRenderView : IRenderLayerFactory
 public interface IGameRenderView : IRenderView
 {
     IGameData GameData { get; }
-    IGraphicProvider GraphicProvider { get; }
+    IGraphicInfoProvider GraphicInfoProvider { get; }
     IFontProvider FontProvider { get; }       
     ISurface3DFactory Surface3DFactory { get; }
     IRenderTextFactory RenderTextFactory { get; }

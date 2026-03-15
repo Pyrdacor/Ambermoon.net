@@ -173,7 +173,7 @@ namespace Ambermoon.UI
         {
             position = Global.GetTextRect(renderView, new Rect(position, new Size(Global.GlyphWidth, Global.GlyphLineHeight))).Position;
             var renderText = renderView.RenderTextFactory.Create(
-                (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1), 
+                (byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1), 
                 renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(text, fallbackChar), textColor, shadow);
             renderText.DisplayLayer = (byte)Util.Min(255, this.DisplayLayer + displayLayer);

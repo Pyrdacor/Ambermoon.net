@@ -53,12 +53,12 @@ namespace Ambermoon.Data.Legacy
 		// - 3D maps
 		// Each tile or wall provides a color index in the range 0..15.
 		// This index is used inside the mapping to get the associated palette index.
-		static readonly byte[] ColorIndexMapping = new byte[48]
-        {
+		static readonly byte[] ColorIndexMapping =
+        [
             0x00, 0x1F, 0x1E, 0x1D, 0x1C, 0x1B, 0x1A, 0x12, 0x13, 0x14, 0x11, 0x10, 0x09, 0x0A, 0x18, 0x17,
             0x00, 0x01, 0x1F, 0x12, 0x1C, 0x14, 0x15, 0x06, 0x08, 0x0A, 0x04, 0x02, 0x0E, 0x0C, 0x13, 0x10,
             0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
-        };
+        ];
 
         public byte PaletteIndexFromColorIndex(Map map, byte colorIndex)
         {
@@ -428,16 +428,16 @@ namespace Ambermoon.Data.Legacy
 
         static GraphicProvider()
         {
-            AddGraphicFiles(GraphicType.Tileset1, new GraphicFile("1Icon_gfx.amb", 0, 1));
-            AddGraphicFiles(GraphicType.Tileset2, new GraphicFile("3Icon_gfx.amb", 0, 2));
-            AddGraphicFiles(GraphicType.Tileset3, new GraphicFile("2Icon_gfx.amb", 0, 3));
-            AddGraphicFiles(GraphicType.Tileset4, new GraphicFile("2Icon_gfx.amb", 0, 4));
-            AddGraphicFiles(GraphicType.Tileset5, new GraphicFile("2Icon_gfx.amb", 0, 5));
-            AddGraphicFiles(GraphicType.Tileset6, new GraphicFile("2Icon_gfx.amb", 0, 6));
-            AddGraphicFiles(GraphicType.Tileset7, new GraphicFile("2Icon_gfx.amb", 0, 7));
-            AddGraphicFiles(GraphicType.Tileset8, new GraphicFile("3Icon_gfx.amb", 0, 8));
-            AddGraphicFiles(GraphicType.Tileset9, new GraphicFile("3Icon_gfx.amb", 0, 9, true));
-            AddGraphicFiles(GraphicType.Tileset10, new GraphicFile("2Icon_gfx.amb", 0, 10, true));
+            AddGraphicFiles(GraphicType.Tileset1 + 0, new GraphicFile("1Icon_gfx.amb", 0, 1));
+            AddGraphicFiles(GraphicType.Tileset1 + 1, new GraphicFile("3Icon_gfx.amb", 0, 2));
+            AddGraphicFiles(GraphicType.Tileset1 + 2, new GraphicFile("2Icon_gfx.amb", 0, 3));
+            AddGraphicFiles(GraphicType.Tileset1 + 3, new GraphicFile("2Icon_gfx.amb", 0, 4));
+            AddGraphicFiles(GraphicType.Tileset1 + 4, new GraphicFile("2Icon_gfx.amb", 0, 5));
+            AddGraphicFiles(GraphicType.Tileset1 + 5, new GraphicFile("2Icon_gfx.amb", 0, 6));
+            AddGraphicFiles(GraphicType.Tileset1 + 6, new GraphicFile("2Icon_gfx.amb", 0, 7));
+            AddGraphicFiles(GraphicType.Tileset1 + 7, new GraphicFile("3Icon_gfx.amb", 0, 8));
+            AddGraphicFiles(GraphicType.Tileset1 + 8, new GraphicFile("3Icon_gfx.amb", 0, 9, true));
+            AddGraphicFiles(GraphicType.Tileset1 + 9, new GraphicFile("2Icon_gfx.amb", 0, 10, true));
             AddGraphicFiles(GraphicType.Player, new GraphicFile("Party_gfx.amb"));
             AddGraphicFiles(GraphicType.Portrait, new GraphicFile("Portraits.amb"));
             AddGraphicFiles(GraphicType.Item, new GraphicFile("Object_icons"));
@@ -522,16 +522,7 @@ namespace Ambermoon.Data.Legacy
 
             switch (type)
             {
-                case GraphicType.Tileset1:
-                case GraphicType.Tileset2:
-                case GraphicType.Tileset3:
-                case GraphicType.Tileset4:
-                case GraphicType.Tileset5:
-                case GraphicType.Tileset6:
-                case GraphicType.Tileset7:
-                case GraphicType.Tileset8:
-                case GraphicType.Tileset9:
-                case GraphicType.Tileset10:
+                case >= GraphicType.Tileset1:
                     info.Alpha = true;
                     break;
                 case GraphicType.Player:
@@ -613,5 +604,7 @@ namespace Ambermoon.Data.Legacy
             MonsterRow.Near => 1.25f,
             _ => 1.0f,
         };
+
+        public List<Graphic> GetLabBackgroundGraphics() => GetGraphics(GraphicType.LabBackground);
     }
 }

@@ -14,7 +14,7 @@ using Font = Objects.Font;
 using Savegame = SavegameData;
 using SavegameData = FileSpecs.SavegameData;
 
-public partial class GameData : IGameData, IGraphicProvider
+public partial class GameData : IGameData, IGraphicAtlasProvider
 {
     LazyFileLoader<Palette, Graphic> paletteLoader = null!;
     LazyFileLoader<SavegameData, Savegame> savegameLoader = null!;
@@ -87,7 +87,7 @@ public partial class GameData : IGameData, IGraphicProvider
 
     public IMapManager MapManager => mapManager!.Value;
 
-    public IGraphicProvider GraphicProvider => this;
+    public IGraphicInfoProvider GraphicInfoProvider => this;
 
     public IIntroData IntroData => throw new NotImplementedException();
 
@@ -509,11 +509,6 @@ public partial class GameData : IGameData, IGraphicProvider
         
     }
 
-    public List<Graphic> GetGraphics(GraphicType type)
-    {
-        throw new NotImplementedException();
-    }
-
     public CombatBackgroundInfo Get2DCombatBackground(uint index, bool advanced)
     {
         if (advanced && CombatBackgrounds.AdvancedReplacements2D.TryGetValue(index, out var info))
@@ -552,6 +547,43 @@ public partial class GameData : IGameData, IGraphicProvider
         int offset = map.Type == MapType.Map3D ? 32 : map.IsWorldMap ? 16 : 0;
 
         return ColorIndexMapping[offset + colorIndex % 16];
+    }
+
+    public IGraphicAtlas GetGraphicAtlas(GraphicType type)
+    {
+        // Notes:
+        // - For the event images make sure to replace color index 0 with 32 to use black color and not transparency.
+        // - For the combat graphics, exclude the sword and face graphic and put it into the UIElements layer instead.
+        //   The index must be Graphics.CombatGraphicOffset + CombatGraphicIndex.UISwordAndMace which is 2541.
+        // - For tileset1++, make sure you provide at least an empty atlas if you don't have data for that tileset.
+
+        return type switch
+        {
+            >= GraphicType.Tileset1 => throw new NotImplementedException(),
+            GraphicType.Player => throw new NotImplementedException(),
+            GraphicType.Portrait => throw new NotImplementedException(),
+            //GraphicType.Item => itemGraphicLoader.Load(),
+            /*GraphicType.Layout,
+            GraphicType.LabBackground,
+            GraphicType.Cursor,
+            GraphicType.Pics80x80,
+            GraphicType.UIElements,
+            GraphicType.EventPictures,
+            GraphicType.TravelGfx,
+            GraphicType.Transports,
+            GraphicType.NPC,
+            GraphicType.CombatBackground,
+            GraphicType.CombatGraphics,
+            GraphicType.BattleFieldIcons,
+            GraphicType.AutomapGraphics,
+            GraphicType.RiddlemouthGraphics*/
+            _ => throw new ArgumentOutOfRangeException(nameof(type))
+        };
+    }
+
+    public List<Graphic> GetLabBackgroundGraphics()
+    {
+        throw new NotImplementedException();
     }
 
     #endregion

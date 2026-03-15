@@ -355,7 +355,7 @@ partial class GameCore
 
     internal Color GetPaletteColor(int paletteIndex, int colorIndex)
     {
-        var paletteData = renderView.GraphicProvider.Palettes[paletteIndex].Data;
+        var paletteData = renderView.GraphicInfoProvider.Palettes[paletteIndex].Data;
         return new Color
         (
             paletteData[colorIndex * 4 + 0],
@@ -365,7 +365,7 @@ partial class GameCore
         );
     }
 
-    public Color GetPrimaryUIColor(int colorIndex) => GetPaletteColor(renderView.GraphicProvider.PrimaryUIPaletteIndex, colorIndex);
+    public Color GetPrimaryUIColor(int colorIndex) => GetPaletteColor(renderView.GraphicInfoProvider.PrimaryUIPaletteIndex, colorIndex);
 
     public Color GetUIColor(int colorIndex) => GetPaletteColor(1 + UIPaletteIndex, colorIndex);
 

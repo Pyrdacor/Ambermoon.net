@@ -59,7 +59,7 @@ namespace Ambermoon.Data.Legacy
         private ExecutableData.ExecutableData executableData;
         public IReadOnlyList<Position> CursorHotspots => executableData?.Cursors.Entries.Select(c => new Position(c.HotspotX - 1, c.HotspotY - 1)).ToList().AsReadOnly();
         public Places Places { get; private set; }
-        public IGraphicProvider GraphicProvider { get; private set; }
+        public IGraphicInfoProvider GraphicInfoProvider { get; private set; }
         public ICharacterManager CharacterManager { get; private set; }
         public IItemManager ItemManager => executableData?.ItemManager;
         public IFontProvider FontProvider { get; private set; }
@@ -806,7 +806,7 @@ namespace Ambermoon.Data.Legacy
                 additionalPalettes.AddRange(OutroData.OutroPalettes);
             if (FantasyIntroData?.FantasyIntroPalettes != null)
                 additionalPalettes.AddRange(FantasyIntroData.FantasyIntroPalettes);
-            GraphicProvider = TryLoad(() => new GraphicProvider(this, executableData, additionalPalettes));
+            GraphicInfoProvider = TryLoad(() => new GraphicProvider(this, executableData, additionalPalettes));
             UpdateProgress();
             CharacterManager = TryLoad(() => new CharacterManager(this));
             UpdateProgress();

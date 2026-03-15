@@ -300,14 +300,14 @@ public class Game : GameCore
     #endregion
 
 
-    public Game(IConfiguration configuration, GameLanguage gameLanguage, IGameRenderView renderView, IGraphicProvider graphicProvider,
+    public Game(IConfiguration configuration, GameLanguage gameLanguage, IGameRenderView renderView, IGraphicInfoProvider graphicInfoProvider,
         ISavegameManager savegameManager, ISavegameSerializer savegameSerializer, TextDictionary textDictionary,
         Cursor cursor, IAudioOutput audioOutput, ISongManager songManager, FullscreenChangeHandler fullscreenChangeHandler,
         ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory,
         Features features, string gameVersionName, string version, Action<bool, string> keyboardRequest,
         IAdditionalSaveSlotProvider additionalSaveSlotProvider, DrawTouchFingerHandler? drawTouchFingerRequest = null,
         Action<bool>? showMobileTouchPadHandler = null)
-        : base(configuration, gameLanguage, renderView, graphicProvider, savegameManager, savegameSerializer,
+        : base(configuration, gameLanguage, renderView, graphicInfoProvider, savegameManager, savegameSerializer,
             textDictionary, cursor, audioOutput, songManager, fullscreenChangeHandler, resolutionChangeHandler,
             pressedKeyProvider, features, gameVersionName, version, keyboardRequest, drawTouchFingerRequest,
             showMobileTouchPadHandler)

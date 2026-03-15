@@ -181,7 +181,7 @@ namespace AmbermoonAndroid
                 sprite.Layer = renderView.GetLayer(Layer.Misc);
                 sprite.X = (Global.VirtualScreenWidth - frameSize.Width) / 2;
                 sprite.Y = (Global.VirtualScreenHeight - frameSize.Height) / 2;
-                sprite.PaletteIndex = (byte)(renderView.GraphicProvider.FirstFantasyIntroPaletteIndex + 1);
+                sprite.PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstFantasyIntroPaletteIndex + 1);
                 return sprite;
             }
 
@@ -199,7 +199,7 @@ namespace AmbermoonAndroid
                 var emptyText = renderView.TextProcessor.CreateText(text, '?');
                 var position = Global.GetTextRect(renderView, textArea).Position;
                 renderText = renderView.RenderTextFactory.Create(
-                    (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1), 
+                    (byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1), 
                     renderView.GetLayer(Layer.Text), emptyText, Data.Enumerations.Color.White, false);
                 renderText.Place(Global.GetTextRect(renderView, textArea), TextAlign.Center);
                 textOverlay = renderView.ColoredRectFactory.Create(textArea.Width, textArea.Height + 2, Color.Black, 255);

@@ -62,7 +62,7 @@ namespace AmbermoonAndroid
 
             background = renderView.SpriteFactory.Create(320, 200, true) as ILayerSprite;
             background.Layer = renderView.GetLayer(Layer.MainMenuGraphics);
-            background.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + paletteIndices[IntroGraphic.MainMenuBackground] - 1);
+            background.PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + paletteIndices[IntroGraphic.MainMenuBackground] - 1);
             background.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MainMenuBackground);
             background.TextureSize = new Size(320, 256);
             background.X = 0;
@@ -81,7 +81,7 @@ namespace AmbermoonAndroid
             }
 
             var text = renderView.TextProcessor.CreateText("");
-            loadingText = new UI.UIText(renderView, (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1), text,
+            loadingText = new UI.UIText(renderView, (byte)(renderView.GraphicInfoProvider.SecondaryUIPaletteIndex - 1), text,
                 Global.GetTextRect(renderView, new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6)),
                 254, TextColor.White, false, TextAlign.Center);
             loadingText.Visible = false;

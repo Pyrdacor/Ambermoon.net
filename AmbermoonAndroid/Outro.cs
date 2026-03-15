@@ -56,7 +56,7 @@ namespace AmbermoonAndroid
             renderLayer = renderView.GetLayer(Layer.OutroGraphics);
             picture = renderView.SpriteFactory.Create(160, 128, true, 1) as ILayerSprite;
             picture.Layer = renderLayer;
-            picture.PaletteIndex = paletteOffset = renderView.GraphicProvider.FirstOutroPaletteIndex;
+            picture.PaletteIndex = paletteOffset = renderView.GraphicInfoProvider.FirstOutroPaletteIndex;
             picture.Visible = false;
 
             fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);

@@ -20,6 +20,7 @@
  */
 
 using System;
+using Ambermoon.Data;
 
 namespace Ambermoon.Renderer.OpenGL;
 
@@ -37,6 +38,15 @@ internal class MutableTexture : Texture
         this.width = width;
         this.height = height;
         data = new byte[width * height * bytesPerPixel]; // initialized with zeros so non-occupied areas will be transparent
+    }
+
+    public MutableTexture(State state, Graphic graphic)
+        : base(state, graphic.Width, graphic.Height)
+    {
+        this.bytesPerPixel = graphic.IndexedGraphic ? 1u : 4u;
+        this.width = graphic.Width;
+        this.height = graphic.Height;
+        data = graphic.Data;
     }
 
     public override int Width => width;

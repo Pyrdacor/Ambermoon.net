@@ -777,7 +777,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         var outroFontLarge = new Font(outroData.LargeGlyphs, 10, (uint)outroData.Glyphs.Count);
 
         // Load game data
-        var graphicProvider = gameData.GraphicProvider;
+        var graphicInfoProvider = gameData.GraphicInfoProvider;
 
         if (audioOutput == null)
         {
@@ -802,15 +802,15 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         fontProvider ??= new IngameFontProvider(DataReader.FromData(Resources.IngameFont), gameData.FontProvider.GetFont());
 
         // Create render view
-        renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, additionalPalettes, () =>
+        renderView = CreateRenderView(gameData, configuration, graphicInfoProvider, fontProvider, additionalPalettes, () =>
         {
             var textureAtlasManager = TextureAtlasManager.Instance;
             var introGraphics = introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value);
             uint twinlakeFrameOffset = (uint)introData.Graphics.Keys.Max();
             foreach (var twinlakeImagePart in introData.TwinlakeImageParts)
                 introGraphics.Add(++twinlakeFrameOffset, twinlakeImagePart.Graphic);
-            textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
-                introFontLarge.GlyphGraphics, introGraphics, features);
+            textureAtlasManager.AddAll(gameData, graphicInfoProvider, fontProvider, introFont.GlyphGraphics,
+                    introFontLarge.GlyphGraphics, introGraphics, features, 10);
             logoPyrdacor?.Initialize(textureAtlasManager);
             AdvancedLogo.Initialize(textureAtlasManager, () => Resources.Advanced);
             return textureAtlasManager;
@@ -837,7 +837,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
         var text = renderView.TextProcessor.CreateText("");
         infoText = renderView.RenderTextFactory.Create(
-            (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
+            (byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1),
             renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
             Global.GetTextRect(renderView, new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6)), TextAlign.Center);
         infoText.DisplayLayer = 254;
@@ -866,7 +866,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                         {
                             var version = Assembly.GetEntryAssembly().GetName().Version;
                             string versionString = $"Ambermoon.net V{version.Major}.{version.Minor}.{version.Build:00}";
-                            var game = new Game.Game(configuration, gameLanguage, renderView, graphicProvider,
+                            var game = new Game.Game(configuration, gameLanguage, renderView, graphicInfoProvider,
                                 savegameManager, savegameSerializer, gameData.Dictionary, cursor, audioOutput,
                                 musicManager, FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
                                 new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
@@ -1242,9 +1242,9 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                 loadingBar.Destroy();
                 loadingBar = null;
 
-                renderView = CreateRenderView(gameData, configuration, gameData.GraphicProvider, fontProvider, additionalPalettes, () =>
+                renderView = CreateRenderView(gameData, configuration, gameData.GraphicInfoProvider, fontProvider, additionalPalettes, () =>
                 {
-                    textureAtlasManager.AddUIOnly(gameData.GraphicProvider, fontProvider);
+                    textureAtlasManager.AddUIOnly(gameData.GraphicInfoProvider, fontProvider);
                     logoPyrdacor?.Initialize(textureAtlasManager);
                     AdvancedLogo.Initialize(textureAtlasManager, () => Resources.Advanced);
                     textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
@@ -1386,13 +1386,13 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => digitTextureAtlas.GetOffset((uint)x));
     }
 
-    GameRenderView CreateRenderView(IGameData gameData, ICoreConfiguration configuration, IGraphicProvider graphicProvider,
+    GameRenderView CreateRenderView(IGameData gameData, ICoreConfiguration configuration, IGraphicInfoProvider graphicInfoProvider,
         IFontProvider fontProvider, Graphic[] additionalPalettes, Func<TextureAtlasManager> textureAtlasManagerProvider)
     {
         bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;
         var useFrameBuffer = true;
         var useEffects = configuration.Effects != Effects.None;
-        var renderView = new GameRenderView(this, gameData, graphicProvider, fontProvider,
+        var renderView = new GameRenderView(this, gameData, graphicInfoProvider, fontProvider,
             new TextProcessor(fontProvider.GetFont().GlyphCount), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
             new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
             () => KeyValuePair.Create(AnyIntroActive() ? 0 : (int)configuration.GraphicFilter, AnyIntroActive() ? 0 : (int)configuration.GraphicFilterOverlay),

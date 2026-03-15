@@ -1,7 +1,7 @@
 ﻿/*
  * TextureAtlasManager.cs - Manages texture atlases
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2026  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -23,6 +23,7 @@ using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Render
 {
@@ -30,19 +31,11 @@ namespace Ambermoon.Render
     {
         static TextureAtlasManager? instance = null;
         static ITextureAtlasBuilderFactory? factory = null;
+        static ITextureAtlasConverter? converter = null;
         readonly Dictionary<Layer, ITextureAtlasBuilder> atlasBuilders = [];
         readonly Dictionary<Layer, ITextureAtlas> atlas = [];
 
-        public static TextureAtlasManager Instance
-        {
-            get
-            {
-                if (instance == null)
-                    instance = new TextureAtlasManager();
-
-                return instance;
-            }
-        }
+        public static TextureAtlasManager Instance => instance ??= new TextureAtlasManager();
 
         TextureAtlasManager()
         {
@@ -52,6 +45,11 @@ namespace Ambermoon.Render
         public static void RegisterFactory(ITextureAtlasBuilderFactory factory)
         {
             TextureAtlasManager.factory = factory;
+        }
+
+        public static void RegisterConverter(ITextureAtlasConverter converter)
+        {
+            TextureAtlasManager.converter = converter;
         }
 
         // Note: Animation frames must be added as one large compound graphic.
@@ -95,6 +93,27 @@ namespace Ambermoon.Render
                 AddTexture(layer, graphic.Key, graphic.Value);
         }
 
+        public void AddAtlas(Layer layer, IGraphicAtlas atlas)
+        {
+            if (this.atlas.ContainsKey(layer))
+                throw new AmbermoonException(ExceptionScope.Application, $"Texture atlas already created for layer {layer}.");
+            
+            this.atlas.Add(layer, converter!.Convert(atlas));
+        }
+
+        public void AddAtlases(Layer layer, params (uint Offset, IGraphicAtlas Atlas)[] atlases)
+        {
+            AddAtlases(layer, atlases.ToDictionary(a => a.Offset, a => a.Atlas));
+        }
+
+        public void AddAtlases(Layer layer, Dictionary<uint, IGraphicAtlas> atlases)
+        {
+            if (this.atlas.ContainsKey(layer))
+                throw new AmbermoonException(ExceptionScope.Application, $"Texture atlas already created for layer {layer}.");
+
+            this.atlas.Add(layer, converter!.Convert(atlases));
+        }
+
         public static ITextureAtlas CreateFromGraphics(Dictionary<uint, Graphic> graphics, uint bytesPerPixel)
         {
             var builder = factory!.Create();
@@ -105,7 +124,7 @@ namespace Ambermoon.Render
             return builder.Create(bytesPerPixel);
         }
 
-        public Texture CreatePalette(IPaletteProvider paletteProvider, params Graphic[] additionalPalettes)
+        public static Texture CreatePalette(IPaletteProvider paletteProvider, params Graphic[] additionalPalettes)
         {
             var paletteBuilder = factory!.Create();
             uint index = 0;
@@ -125,9 +144,10 @@ namespace Ambermoon.Render
         public static KeyValuePair<TextureAtlasManager, Action> CreateUIOnly(IGraphicProvider graphicProvider, IFontProvider fontProvider)
         {
             var textureAtlasManager = new TextureAtlasManager();
-            return KeyValuePair.Create<TextureAtlasManager, Action>(textureAtlasManager, () =>
+
+            return KeyValuePair.Create(textureAtlasManager, () =>
             {
-                textureAtlasManager.AddUI(graphicProvider, false);
+                textureAtlasManager.AddUI(graphicProvider, [], false);
                 textureAtlasManager.AddCursors(graphicProvider);
                 textureAtlasManager.AddFont(fontProvider);
             });
@@ -138,35 +158,61 @@ namespace Ambermoon.Render
             return new TextureAtlasManager();
         }
 
-        public void AddUIOnly(IGraphicProvider graphicProvider, IFontProvider fontProvider)
+        public void AddUIOnly(IGraphicInfoProvider graphicInfoProvider, IFontProvider fontProvider)
         {
-            AddUI(graphicProvider, false);
-            AddCursors(graphicProvider);
+            var uiGraphicAtlases = new Dictionary<uint, IGraphicAtlas>();
+
+            AddUI(graphicInfoProvider, uiGraphicAtlases, false);
+            AddCursors(graphicInfoProvider);
             AddFont(fontProvider);
+
+            if (graphicInfoProvider is IGraphicAtlasProvider graphicAtlasProvider)
+                AddAtlases(Layer.UI, uiGraphicAtlases);
         }
 
-        void AddUI(IGraphicProvider graphicProvider, bool withLayout = true)
+        void AddUI(IGraphicInfoProvider graphicInfoProvider, Dictionary<uint, IGraphicAtlas> uiGraphicAtlases, bool withLayout = true)
         {
             if (withLayout)
             {
-                var layoutGraphics = graphicProvider.GetGraphics(GraphicType.Layout);
+                if (graphicInfoProvider is IGraphicProvider graphicProvider1)
+                {
+                    var layoutGraphics = graphicProvider1.GetGraphics(GraphicType.Layout);
 
-                for (int i = 0; i < layoutGraphics.Count; ++i)
-                    AddTexture(Layer.UI, Graphics.LayoutOffset + (uint)i, layoutGraphics[i]);
+                    for (int i = 0; i < layoutGraphics.Count; ++i)
+                        AddTexture(Layer.UI, Graphics.LayoutOffset + (uint)i, layoutGraphics[i]);
+                }
+                else if (graphicInfoProvider is IGraphicAtlasProvider graphicAtlasProvider)
+                {
+                    uiGraphicAtlases.Add(Graphics.LayoutOffset, graphicAtlasProvider.GetGraphicAtlas(GraphicType.Layout));
+                }
             }
 
-            var uiElementGraphics = graphicProvider.GetGraphics(GraphicType.UIElements);
+            if (graphicInfoProvider is IGraphicProvider graphicProvider)
+            {
+                var uiElementGraphics = graphicProvider.GetGraphics(GraphicType.UIElements);
 
-            for (int i = 0; i < uiElementGraphics.Count; ++i)
-                AddTexture(Layer.UI, Graphics.UICustomGraphicOffset + (uint)i, uiElementGraphics[i]);
+                for (int i = 0; i < uiElementGraphics.Count; ++i)
+                    AddTexture(Layer.UI, Graphics.UICustomGraphicOffset + (uint)i, uiElementGraphics[i]);
+            }
+            else if (graphicInfoProvider is IGraphicAtlasProvider graphicAtlasProvider)
+            {
+                uiGraphicAtlases.Add(Graphics.UICustomGraphicOffset, graphicAtlasProvider.GetGraphicAtlas(GraphicType.UIElements));
+            }
         }
 
-        void AddCursors(IGraphicProvider graphicProvider)
+        void AddCursors(IGraphicInfoProvider graphicInfoProvider)
         {
-            var cursorGraphics = graphicProvider.GetGraphics(GraphicType.Cursor);
+            if (graphicInfoProvider is IGraphicProvider graphicProvider)
+            {
+                var cursorGraphics = graphicProvider.GetGraphics(GraphicType.Cursor);
 
-            for (int i = 0; i < cursorGraphics.Count; ++i)
-                AddTexture(Layer.Cursor, (uint)i, cursorGraphics[i]);
+                for (int i = 0; i < cursorGraphics.Count; ++i)
+                    AddTexture(Layer.Cursor, (uint)i, cursorGraphics[i]);
+            }
+            else if (graphicInfoProvider is IGraphicAtlasProvider graphicAtlasProvider)
+            {
+                AddAtlas(Layer.Cursor, graphicAtlasProvider.GetGraphicAtlas(GraphicType.Cursor));
+            }
         }
 
         void AddFont(IFontProvider fontProvider)
@@ -197,26 +243,42 @@ namespace Ambermoon.Render
             builder.ReplaceTexture(index, graphic);
         }
 
-        public void AddAll(IGameData gameData, IGraphicProvider graphicProvider, IFontProvider fontProvider,
+        public void AddAll(IGameData gameData, IGraphicInfoProvider graphicInfoProvider, IFontProvider fontProvider,
             Dictionary<uint, Graphic> introTextGlyphs, Dictionary<uint, Graphic> introLargeTextGlyphs,
-            Dictionary<uint, Graphic> introGraphics, Features features)
+            Dictionary<uint, Graphic> introGraphics, Features features, int numTilesets)
         {
-            if (gameData == null)
-                throw new ArgumentNullException(nameof(gameData));
+            ArgumentNullException.ThrowIfNull(gameData);
+            ArgumentNullException.ThrowIfNull(graphicInfoProvider);
 
-            if (graphicProvider == null)
-                throw new ArgumentNullException(nameof(graphicProvider));
+            var graphicProvider = graphicInfoProvider as IGraphicProvider;
+            var graphicAtlasProvider = graphicInfoProvider as IGraphicAtlasProvider;
+
+            if (graphicProvider == null && graphicAtlasProvider == null)
+                throw new AmbermoonException(ExceptionScope.Application, "GraphicInfoProvider must implement IGraphicProvider or IGraphicAtlasProvider.");
 
             #region Map 2D
 
-            for (int i = (int)GraphicType.Tileset1; i <= (int)GraphicType.Tileset10; ++i)
+            if (graphicProvider is not null)
             {
-                var tilesetGraphics = graphicProvider.GetGraphics((GraphicType)i);
-
-                for (uint graphicIndex = 0; graphicIndex < tilesetGraphics.Count; ++graphicIndex)
+                for (int i = 0; i < numTilesets; ++i)
                 {
-                    AddTexture(Layer.MapBackground1 + i, graphicIndex, tilesetGraphics[(int)graphicIndex]);
-                    AddTexture(Layer.MapForeground1 + i, graphicIndex, tilesetGraphics[(int)graphicIndex]);
+                    var tilesetGraphics = graphicProvider.GetGraphics(GraphicType.Tileset1 + i);
+
+                    for (uint graphicIndex = 0; graphicIndex < tilesetGraphics.Count; ++graphicIndex)
+                    {
+                        AddTexture(Layer.MapBackground1 + i, graphicIndex, tilesetGraphics[(int)graphicIndex]);
+                        AddTexture(Layer.MapForeground1 + i, graphicIndex, tilesetGraphics[(int)graphicIndex]);
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < numTilesets; ++i)
+                {
+                    var atlas = graphicAtlasProvider!.GetGraphicAtlas(GraphicType.Tileset1 + i);
+
+                    AddAtlas(Layer.MapBackground1 + i, atlas);
+                    AddAtlas(Layer.MapForeground1 + i, atlas);
                 }
             }
 
@@ -224,78 +286,114 @@ namespace Ambermoon.Render
 
             #region Player 2D
 
-            var playerGraphics = graphicProvider.GetGraphics(GraphicType.Player);
+            if (graphicProvider is not null)
+            {
+                var playerGraphics = graphicProvider.GetGraphics(GraphicType.Player);
 
-            if (playerGraphics.Count != 3 * 17)
-                throw new AmbermoonException(ExceptionScope.Data, "Wrong number of player graphics.");
+                if (playerGraphics.Count != 3 * 17)
+                    throw new AmbermoonException(ExceptionScope.Data, "Wrong number of player graphics.");
 
-            // There are 3 player characters (one for each world, first lyramion, second forest moon, third morag).
-            // Each has 17 frames: 3 back, 3 right, 3 front, 3 left, 1 sit back, 1 sit right, 1 sit front, 1 sit left, 1 bed/sleep.
-            // All have a dimension of 16x32 pixels.
-            for (int i = 0; i < playerGraphics.Count; ++i)
-                AddTexture(Layer.Characters, (uint)i, playerGraphics[i]);
+                // There are 3 player characters (one for each world, first lyramion, second forest moon, third morag).
+                // Each has 17 frames: 3 back, 3 right, 3 front, 3 left, 1 sit back, 1 sit right, 1 sit front, 1 sit left, 1 bed/sleep.
+                // All have a dimension of 16x32 pixels.
+                for (int i = 0; i < playerGraphics.Count; ++i)
+                    AddTexture(Layer.Characters, (uint)i, playerGraphics[i]);
 
-            // On world maps the travel graphics are used.
-            // Only 4 sprites are used (one for each direction).
-            var travelGraphics = graphicProvider.GetGraphics(GraphicType.TravelGfx);
-            int count = features.HasFlag(Features.WaspTransport) ? 12 : 11;
+                // On world maps the travel graphics are used.
+                // Only 4 sprites are used (one for each direction).
+                var travelGraphics = graphicProvider.GetGraphics(GraphicType.TravelGfx);
+                int count = features.HasFlag(Features.WaspTransport) ? 12 : 11;
 
-            if (travelGraphics.Count != count * 4)
-                throw new AmbermoonException(ExceptionScope.Data, "Wrong number of travel graphics.");
+                if (travelGraphics.Count != count * 4)
+                    throw new AmbermoonException(ExceptionScope.Data, "Wrong number of travel graphics.");
 
-            for (int i = 0; i < travelGraphics.Count; ++i)
-                AddTexture(Layer.Characters, Graphics.TravelGraphicOffset + (uint)i, travelGraphics[i]);
+                for (int i = 0; i < travelGraphics.Count; ++i)
+                    AddTexture(Layer.Characters, Graphics.TravelGraphicOffset + (uint)i, travelGraphics[i]);
 
-            var transportGraphics = graphicProvider.GetGraphics(GraphicType.Transports);
+                var transportGraphics = graphicProvider.GetGraphics(GraphicType.Transports);
 
-            if (transportGraphics.Count != 5)
-                throw new AmbermoonException(ExceptionScope.Data, "Wrong number of transport graphics.");
+                if (transportGraphics.Count != 5)
+                    throw new AmbermoonException(ExceptionScope.Data, "Wrong number of transport graphics.");
 
-            for (int i = 0; i < transportGraphics.Count; ++i)
-                AddTexture(Layer.Characters, Graphics.TransportGraphicOffset + (uint)i, transportGraphics[i]);
+                for (int i = 0; i < transportGraphics.Count; ++i)
+                    AddTexture(Layer.Characters, Graphics.TransportGraphicOffset + (uint)i, transportGraphics[i]);
 
-            var npcGraphics = graphicProvider.GetGraphics(GraphicType.NPC);
+                var npcGraphics = graphicProvider.GetGraphics(GraphicType.NPC);
 
-            if (npcGraphics.Count < 34)
-                throw new AmbermoonException(ExceptionScope.Data, "Wrong number of NPC graphics.");
+                if (npcGraphics.Count < 34)
+                    throw new AmbermoonException(ExceptionScope.Data, "Wrong number of NPC graphics.");
 
-            for (int i = 0; i < npcGraphics.Count; ++i)
-                AddTexture(Layer.Characters, Graphics.NPCGraphicOffset + (uint)i, npcGraphics[i]);
+                for (int i = 0; i < npcGraphics.Count; ++i)
+                    AddTexture(Layer.Characters, Graphics.NPCGraphicOffset + (uint)i, npcGraphics[i]);
+            }
+            else
+            {
+                AddAtlases(Layer.Characters,
+                    (0u, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.Player)),
+                    (Graphics.TravelGraphicOffset, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.TravelGfx)),
+                    (Graphics.TransportGraphicOffset, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.Transports)),
+                    (Graphics.NPCGraphicOffset, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.NPC)));
+            }
 
             #endregion
 
             #region UI Layout
 
-            AddUI(graphicProvider);
+            Dictionary<uint, IGraphicAtlas> uiGraphicAtlases = [];
+
+            AddUI(graphicInfoProvider, uiGraphicAtlases);
 
             #endregion
 
             #region Portraits
 
-            var portraits = graphicProvider.GetGraphics(GraphicType.Portrait);
+            if (graphicProvider is not null)
+            {
+                var portraits = graphicProvider.GetGraphics(GraphicType.Portrait);
 
-            for (int i = 0; i < portraits.Count; ++i)
-                AddTexture(Layer.UI, Graphics.PortraitOffset + (uint)i, portraits[i]);
+                for (int i = 0; i < portraits.Count; ++i)
+                    AddTexture(Layer.UI, Graphics.PortraitOffset + (uint)i, portraits[i]);
+            }
+            else
+            {
+                uiGraphicAtlases.Add(Graphics.PortraitOffset, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.Portrait));
+            }
 
             #endregion
 
             #region Pics 80x80
 
-            var pics80x80Graphics = graphicProvider.GetGraphics(GraphicType.Pics80x80);
+            if (graphicProvider is not null)
+            {
+                var pics80x80Graphics = graphicProvider.GetGraphics(GraphicType.Pics80x80);
 
-            for (int i = 0; i < pics80x80Graphics.Count; ++i)
-                AddTexture(Layer.UI, Graphics.Pics80x80Offset + (uint)i, pics80x80Graphics[i]);
+                for (int i = 0; i < pics80x80Graphics.Count; ++i)
+                    AddTexture(Layer.UI, Graphics.Pics80x80Offset + (uint)i, pics80x80Graphics[i]);
+            }
+            else
+            {
+                uiGraphicAtlases.Add(Graphics.Pics80x80Offset, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.Pics80x80));
+            }
 
             #endregion
 
             #region Event pix
 
-            var eventGraphics = graphicProvider.GetGraphics(GraphicType.EventPictures);
-
-            for (int i = 0; i < eventGraphics.Count; ++i)
+            if (graphicProvider is not null)
             {
-                eventGraphics[i].ReplaceColor(0, 32); // Black instead of transparent
-                AddTexture(Layer.UI, Graphics.EventPictureOffset + (uint)i, eventGraphics[i]);
+                var eventGraphics = graphicProvider.GetGraphics(GraphicType.EventPictures);
+
+                for (int i = 0; i < eventGraphics.Count; ++i)
+                {
+                    eventGraphics[i].ReplaceColor(0, 32); // Black instead of transparent
+                    AddTexture(Layer.UI, Graphics.EventPictureOffset + (uint)i, eventGraphics[i]);
+                }
+            }
+            else
+            {
+                // Note: We assume, that the new graphic atlas format will
+                // take care of the color replacement already!
+                uiGraphicAtlases.Add(Graphics.EventPictureOffset, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.EventPictures));
             }
 
             #endregion
@@ -308,66 +406,110 @@ namespace Ambermoon.Render
 
             #region Items
 
-            var itemGraphics = graphicProvider.GetGraphics(GraphicType.Item);
+            if (graphicProvider is not null)
+            {
+                var itemGraphics = graphicProvider.GetGraphics(GraphicType.Item);
 
-            for (int i = 0; i < itemGraphics.Count; ++i)
-                AddTexture(Layer.Items, (uint)i, itemGraphics[i]);
+                for (int i = 0; i < itemGraphics.Count; ++i)
+                    AddTexture(Layer.Items, (uint)i, itemGraphics[i]);
+            }
+            else
+            {
+                AddAtlas(Layer.Items, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.Item));
+            }
 
             #endregion
 
             #region Cursors
 
-            AddCursors(graphicProvider);
+            AddCursors(graphicInfoProvider);
 
             #endregion
 
             #region Combat backgrounds
 
-            var combatBackgrounds = graphicProvider.GetGraphics(GraphicType.CombatBackground);
+            if (graphicProvider is not null)
+            {
+                var combatBackgrounds = graphicProvider.GetGraphics(GraphicType.CombatBackground);
 
-            for (int i = 0; i < combatBackgrounds.Count; ++i)
-                AddTexture(Layer.CombatBackground, Graphics.CombatBackgroundOffset + (uint)i, combatBackgrounds[i]);
+                for (int i = 0; i < combatBackgrounds.Count; ++i)
+                    AddTexture(Layer.CombatBackground, (uint)i, combatBackgrounds[i]);
+            }
+            else
+            {
+                AddAtlas(Layer.CombatBackground, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.CombatBackground));
+            }
 
             #endregion
 
             #region Combat graphics (without battle field icons)
 
-            var combatGraphics = graphicProvider.GetGraphics(GraphicType.CombatGraphics);
-
-            for (int i = 0; i < combatGraphics.Count; ++i)
+            if (graphicProvider is not null)
             {
-                // Note: One graphic is an UI element so we put it into the UI layer. The rest goes into the BattleEffects layer.
-                AddTexture(i == (int)CombatGraphicIndex.UISwordAndMace ? Layer.UI : Layer.BattleEffects, Graphics.CombatGraphicOffset + (uint)i, combatGraphics[i]);
+                var combatGraphics = graphicProvider.GetGraphics(GraphicType.CombatGraphics);
+
+                for (int i = 0; i < combatGraphics.Count; ++i)
+                {
+                    // Note: One graphic is an UI element so we put it into the UI layer. The rest goes into the BattleEffects layer.
+                    AddTexture(i == (int)CombatGraphicIndex.UISwordAndMace ? Layer.UI : Layer.BattleEffects, Graphics.CombatGraphicOffset + (uint)i, combatGraphics[i]);
+                }
+            }
+            else
+            {
+                // NOTE: The new graphic atlas format will include the Sword and Mace image in the custom UI elements.
+                // So here we only handle the battle effects graphics.
+                AddAtlas(Layer.BattleEffects, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.CombatGraphics));
             }
 
             #endregion
 
             #region Battle field icons
 
-            var battleFieldIcons = graphicProvider.GetGraphics(GraphicType.BattleFieldIcons);
-
-            for (int i = 0; i < battleFieldIcons.Count; ++i)
+            if (graphicProvider is not null)
             {
-                AddTexture(Layer.UI, Graphics.BattleFieldIconOffset + (uint)i, battleFieldIcons[i]);
+                var battleFieldIcons = graphicProvider.GetGraphics(GraphicType.BattleFieldIcons);
+
+                for (int i = 0; i < battleFieldIcons.Count; ++i)
+                {
+                    AddTexture(Layer.UI, Graphics.BattleFieldIconOffset + (uint)i, battleFieldIcons[i]);
+                }
+            }
+            else
+            {
+                uiGraphicAtlases.Add(Graphics.BattleFieldIconOffset, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.BattleFieldIcons));
             }
 
             #endregion
 
             #region Automap graphics
 
-            var automapGraphics = graphicProvider.GetGraphics(GraphicType.AutomapGraphics);
+            if (graphicProvider is not null)
+            {
+                var automapGraphics = graphicProvider.GetGraphics(GraphicType.AutomapGraphics);
 
-            for (int i = 0; i < automapGraphics.Count; ++i)
-                AddTexture(Layer.UI, Graphics.AutomapOffset + (uint)i, automapGraphics[i]);
+                for (int i = 0; i < automapGraphics.Count; ++i)
+                    AddTexture(Layer.UI, Graphics.AutomapOffset + (uint)i, automapGraphics[i]);
+            }
+            else
+            {
+                uiGraphicAtlases.Add(Graphics.AutomapOffset, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.AutomapGraphics));
+            }
 
             #endregion
 
             #region Riddlemouth graphics
 
-            var riddlemouthGraphics = graphicProvider.GetGraphics(GraphicType.RiddlemouthGraphics);
+            if (graphicProvider is not null)
+            {
+                var riddlemouthGraphics = graphicProvider.GetGraphics(GraphicType.RiddlemouthGraphics);
 
-            for (int i = 0; i < riddlemouthGraphics.Count; ++i)
-                AddTexture(Layer.UI, Graphics.RiddlemouthOffset + (uint)i, riddlemouthGraphics[i]);
+                for (int i = 0; i < riddlemouthGraphics.Count; ++i)
+                    AddTexture(Layer.UI, Graphics.RiddlemouthOffset + (uint)i, riddlemouthGraphics[i]);
+            }
+            else
+            {
+                uiGraphicAtlases.Add(Graphics.RiddlemouthOffset, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.RiddlemouthGraphics));
+            }
 
             #endregion
 
@@ -403,6 +545,9 @@ namespace Ambermoon.Render
             }
 
             #endregion
+
+            if (graphicAtlasProvider is not null)
+                AddAtlases(Layer.UI, uiGraphicAtlases);
         }
     }
 }

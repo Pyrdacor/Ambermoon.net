@@ -153,10 +153,12 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         this.screenBufferModeProvider = screenBufferModeProvider;
         this.effectProvider = effectProvider;
 
-        TextureAtlasManager.RegisterFactory(new TextureAtlasBuilderFactory(State));
+        var factoryAndConverter = new TextureAtlasBuilderFactory(State);
+        TextureAtlasManager.RegisterFactory(factoryAndConverter);
+        TextureAtlasManager.RegisterConverter(factoryAndConverter);
 
         var textureAtlasManager = textureAtlasManagerProvider();
-        var palette = textureAtlasManager.CreatePalette(paletteProvider, additionalPalettes);
+        var palette = TextureAtlasManager.CreatePalette(paletteProvider, additionalPalettes);
 
         static void Set320x256View(IRenderLayer renderLayer)
         {
@@ -957,24 +959,24 @@ public class GameRenderView : RenderView, IGameRenderView, IDisposable
     public IFowFactory FowFactory => fowFactory;
     public ICamera3D Camera3D => camera3D;
     public IGameData GameData { get; }
-    public IGraphicProvider GraphicProvider { get; }
+    public IGraphicInfoProvider GraphicInfoProvider { get; }
     public IFontProvider FontProvider { get; }
     public ITextProcessor TextProcessor { get; }
     public Action<float> AspectProcessor { get; }
 
-    public GameRenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
+    public GameRenderView(IContextProvider contextProvider, IGameData gameData, IGraphicInfoProvider graphicInfoProvider,
         IFontProvider fontProvider, ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
         int framebufferWidth, int framebufferHeight, Size windowSize, ref bool useFrameBuffer, ref bool useEffectFrameBuffer,
         Func<KeyValuePair<int, int>> screenBufferModeProvider, Func<int> effectProvider, Graphic[] additionalPalettes,
         DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
         OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
-        : base(contextProvider, graphicProvider, textureAtlasManagerProvider, framebufferWidth, framebufferHeight, windowSize,
+        : base(contextProvider, graphicInfoProvider, textureAtlasManagerProvider, framebufferWidth, framebufferHeight, windowSize,
             ref useEffectFrameBuffer, ref useEffectFrameBuffer, screenBufferModeProvider, effectProvider, additionalPalettes,
             state => new Camera3D(state), deviceType, sizingPolicy, orientationPolicy)
     {
         AspectProcessor = UpdateAspect;
         GameData = gameData;
-        GraphicProvider = graphicProvider;
+        GraphicInfoProvider = graphicInfoProvider;
         FontProvider = fontProvider;
         TextProcessor = textProcessor;
 

@@ -951,13 +951,13 @@ partial class GameCore
                 bool visible = popup.ContentArea.Contains(drawX + 1, drawY + 1);
                 var tileColors = tileColorProvider(map, x, y);
                 var backArea = layout.FillArea(new Rect(drawX, drawY, 2, 2),
-                    GetPaletteColor((int)map.PaletteIndex, renderView.GraphicProvider.PaletteIndexFromColorIndex(map, tileColors.Key)), 100);
+                    GetPaletteColor((int)map.PaletteIndex, renderView.GraphicInfoProvider.PaletteIndexFromColorIndex(map, tileColors.Key)), 100);
                 filledAreas.Add(backArea);
                 backArea.Visible = visible;
 
                 if (tileColors.Value != null)
                 {
-                    var color = GetPaletteColor((int)map.PaletteIndex, renderView.GraphicProvider.PaletteIndexFromColorIndex(map, tileColors.Value.Value));
+                    var color = GetPaletteColor((int)map.PaletteIndex, renderView.GraphicInfoProvider.PaletteIndexFromColorIndex(map, tileColors.Value.Value));
                     var upperRightArea = layout.FillArea(new Rect(drawX + 1, drawY, 1, 1), color, 110);
                     var lowerLeftArea = layout.FillArea(new Rect(drawX, drawY + 1, 1, 1), color, 110);
 
@@ -1156,9 +1156,9 @@ partial class GameCore
                 //       Each horizontal map background tile is 16 pixels wide and can contain 2 map tiles/blocks.
                 //       Each vertical map background tile is 32 pixels height and can contain 4 map tiles/blocks.
                 //       Fill inner map area with AA7744 (index 6). Lines (like walls) are drawn with 663300 (index 7).
-                byte paletteIndex = (byte)(renderView.GraphicProvider.AutomapPaletteIndex - 1);
-                var backgroundColor = GetPaletteColor(renderView.GraphicProvider.AutomapPaletteIndex, 6);
-                var foregroundColor = GetPaletteColor(renderView.GraphicProvider.AutomapPaletteIndex, 7);
+                byte paletteIndex = (byte)(renderView.GraphicInfoProvider.AutomapPaletteIndex - 1);
+                var backgroundColor = GetPaletteColor(renderView.GraphicInfoProvider.AutomapPaletteIndex, 6);
+                var foregroundColor = GetPaletteColor(renderView.GraphicInfoProvider.AutomapPaletteIndex, 7);
                 var labdata = MapManager.GetLabdataForMap(Map);
                 int legendPage = 0;
                 ILayerSprite[] legendSprites = new ILayerSprite[8];

@@ -99,7 +99,7 @@ namespace Ambermoon.Render
             bool mirrorX = false, byte palette = 17, byte[]? maskColors = null, bool removeWhenFinished = true,
             uint? customStartTicks = null)
         {
-            var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
+            var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(graphicIndex);
             var textureSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height);
             var size = customBaseSize ?? textureSize;
             var sprite = (renderView.SpriteFactory.Create(size.Width, size.Height, true, displayLayer) as ILayerSprite)!;
@@ -512,7 +512,7 @@ namespace Ambermoon.Render
                     }
                     else // target is monster
                     {
-                        int yOffset = Util.Round(32 * renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row)) + 8;
+                        int yOffset = Util.Round(32 * renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)row)) + 8;
                         if (spell != Spell.Winddevil)
                             yOffset += 6;
                         return Layout.GetMonsterCombatGroundPosition(renderView, position) - new Position(0, yOffset);
@@ -529,7 +529,7 @@ namespace Ambermoon.Render
                     else // target is monster
                     {
                         int row = position / 6;
-                        int yOffset = Util.Round(32 * renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row)) + 16;
+                        int yOffset = Util.Round(32 * renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)row)) + 16;
                         return Layout.GetMonsterCombatGroundPosition(renderView, position) - new Position(0, yOffset);
                     }
                 }
@@ -880,8 +880,8 @@ namespace Ambermoon.Render
                     break;
                 case Spell.Earthslide:
                 {
-                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Landslide);
-                    float scale = fromMonster ? 1.333f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow);
+                    var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(CombatGraphicIndex.Landslide);
+                    float scale = fromMonster ? 1.333f : renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow);
                     float endScale = GetScaleXRelativeToCombatArea(info.GraphicInfo.Width, scale * 0.875f);
                     scale = endScale * 0.4f;
                     int halfSpriteHeight = Util.Round(0.5f * scale * info.GraphicInfo.Height);
@@ -965,7 +965,7 @@ namespace Ambermoon.Render
                         {
                             var position = rowPosition + new Position(game.RandomInt(0, rowEndPosition.X - rowPosition.X), 0);
                             var endPosition = new Position(Util.Limit(rowPosition.X, position.X + game.RandomInt(-20, 20), rowEndPosition.X), position.Y);
-                            var scale = 1.5f * (fromMonster ? 2.0f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
+                            var scale = 1.5f * (fromMonster ? 2.0f : renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
                             byte displayLayer = fromMonster ? (byte)255 : (byte)(targetRow * 60 + 60);
                             uint duration = (uint)Util.Round((250.0f - whiteDuration) * 0.001f * GameCore.TicksPerSecond);
                             if (game.CoreConfiguration.BattleSpeed != 0)
@@ -989,7 +989,7 @@ namespace Ambermoon.Render
                     var monsterRow = fromMonster ? MonsterRow.Farthest : MonsterRow.Near;
                     byte displayLayer = (byte)(fromMonster ? 0 : 180); // Behind row 0 or 3
                     PlayMaterialization(GetTargetPosition(lastPosition), CombatGraphicIndex.Whirlwind,
-                        renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow) * 1.75f, displayLayer, this.finishAction);
+                        renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor(monsterRow) * 1.75f, displayLayer, this.finishAction);
                     break;
                 }
                 case Spell.Firebeam:
@@ -1003,10 +1003,10 @@ namespace Ambermoon.Render
                 case Spell.Firestorm:
                 {
                     ShowOverlay(Color.FireOverlay);
-                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
+                    var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
                     const float scaleReducePerFlame = 0.225f;
                     float scale = GetScaleYRelativeToCombatArea(info.GraphicInfo.Height, 1.15f) *
-                        (fromMonster ? 1.2f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
+                        (fromMonster ? 1.2f : renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
                     void AddFlameAnimation(int width, float startScale, float endScale, Position startGroundPosition, Position endGroundPosition,
                         int startFrame, uint duration, Action? finishAction)
                     {
@@ -1052,7 +1052,7 @@ namespace Ambermoon.Render
                 {
                     ShowOverlay(Color.FireOverlay);
                     var position = new Position(Global.CombatBackgroundArea.Center) + new Position(0, 30);
-                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
+                    var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
                     AddAnimation(CombatGraphicIndex.BigFlame, Enumerable.Range(0, 16).Select(i => i % 8).ToArray(),
                         position, position, GameCore.TicksPerSecond * 3, 0.5f, 3.5f, (byte)(fromMonster ? 255 : 120),
                         () =>
@@ -1078,10 +1078,10 @@ namespace Ambermoon.Render
                 case Spell.Icestorm:
                 {
                     ShowOverlay(Color.IceOverlay);
-                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.IceBlock);
+                    var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(CombatGraphicIndex.IceBlock);
                     const float scaleReducePerIceBlock = 0.225f;
                     float scale = GetScaleYRelativeToCombatArea(info.GraphicInfo.Height, 0.9f) *
-                        (fromMonster ? 1.5f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
+                        (fromMonster ? 1.5f : renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
                     void AddIceAnimation(int width, float startScale, float endScale, Position startGroundPosition, Position endGroundPosition,
                         int index, uint duration, Action? finishAction)
                     {
@@ -1181,7 +1181,7 @@ namespace Ambermoon.Render
             // It used the following color sequence which is encoded in palette 52 at index 1-6:
             // Black -> dark red -> light purple -> dark purple -> dark beige -> light beige.
             // See materializeColorIndices above.
-            byte paletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex + 1);
+            byte paletteIndex = (byte)(renderView.GraphicInfoProvider.PrimaryUIPaletteIndex + 1);
             var animation = AddMaskedAnimation(combatGraphicIndex, position, endPosition ?? position, duration,
                 scale, endScale ?? scale, displayLayer, finishAction, materializeColorIndices, paletteIndex);
             setupAnimation?.Invoke(animation);
@@ -1203,8 +1203,8 @@ namespace Ambermoon.Render
                     RemoveAnimation(animations[0], false); // Remove when finished
                     finishedAction?.Invoke();
                 };
-                var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Landslide);
-                float scale = fromMonster ? 2.0f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow);
+                var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(CombatGraphicIndex.Landslide);
+                float scale = fromMonster ? 2.0f : renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow);
                 scale = GetScaleXRelativeToCombatArea(info.GraphicInfo.Width, scale * 0.85f);
                 scale *= 0.4f;
                 animations[0].AnchorY = BattleAnimation.VerticalAnchor.Bottom;
@@ -1223,7 +1223,7 @@ namespace Ambermoon.Render
                     RemoveAnimation(animations[0], false); // Remove when finished
                     finishedAction?.Invoke();
                 };
-                var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Whirlwind);
+                var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(CombatGraphicIndex.Whirlwind);
                 var scale = animations[0].Scale;
                 animations[0].AnchorY = BattleAnimation.VerticalAnchor.Bottom;
                 animations[0].ScaleType = BattleAnimation.AnimationScaleType.Both;
@@ -1329,7 +1329,7 @@ namespace Ambermoon.Render
                     finishAction?.Invoke(game.CurrentBattleTicks, true, false); // Play hurt animation but do not finish.
                     this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks, false, true); // This is called after the animation to finish.
 
-                    float scale = fromMonster ? 2.0f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                    float scale = fromMonster ? 2.0f : renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
                     var targetPosition = GetTargetPosition(tile) - new Position(0, Util.Round(6 * scale));
                     game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
                     {
@@ -1363,7 +1363,7 @@ namespace Ambermoon.Render
                     var startPosition = new Position(position.X, Global.CombatBackgroundArea.Top - beamHeight / 2);
                     var endPosition = new Position(position.X, position.Y - beamHeight / 2);
                     byte displayLayer = (byte)((tile / 6) * 60); // Show behind the monsters
-                    float rowScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                    float rowScale = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
                     int beamWidth = Util.Round(rowScale * monster.MappedFrameWidth);
                     AddAnimation(CombatGraphicIndex.HolyBeam, 1, startPosition, endPosition, GameCore.TicksPerSecond * 3 / 2, 1, 1, displayLayer, () =>
                     {
@@ -1393,14 +1393,14 @@ namespace Ambermoon.Render
             // Used for Winddevil, Windhowler and Whirlwind
             void PlayWhirlwind(int startTile, bool materialize, Action? finishAction = null)
             {
-                var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Whirlwind);
+                var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(CombatGraphicIndex.Whirlwind);
                 var baseScale = spell switch
                 {
                     Spell.Winddevil => 1.25f,
                     _ => 1.75f
                 };
-                var startScale = baseScale * (fromMonster && startTile >= 18 ? 1.75f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startTile / 6)));
-                var endScale = baseScale * (fromMonster ? 1.75f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6)));
+                var startScale = baseScale * (fromMonster && startTile >= 18 ? 1.75f : renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startTile / 6)));
+                var endScale = baseScale * (fromMonster ? 1.75f : renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6)));
                 byte displayLayer = (byte)Math.Min(255, (startTile / 6) * 60);
                 byte endDisplayLayer = (byte)Math.Min(255, (tile / 6) * 60);
                 float GetDiffDurationFactor()
@@ -1458,7 +1458,7 @@ namespace Ambermoon.Render
                     {
                         int remainingTicks = duration;
                         const int TimePerScaling = (int)GameCore.TicksPerSecond / 2;
-                        float baseScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                        float baseScale = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
                         var basePosition = Layout.GetMonsterCombatCenterPosition(renderView, tile, monster);
                         var hurtFrames = monster.GetAnimationFrameIndices(MonsterAnimationType.Hurt);
                         void PlayScale(float additionalScale)
@@ -1570,10 +1570,10 @@ namespace Ambermoon.Render
                 case Spell.GhostWeapon:
                 case Spell.GhostInferno:
                 {
-                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
+                    var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
                     var monsterRow = (MonsterRow)(fromMonster ? this.startPosition / 6 : tile / 6);
                     float startScale = 3.0f;
-                    float endScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow) * 1.5f;
+                    float endScale = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor(monsterRow) * 1.5f;
                     var startPosition = GetSourcePosition();
                     var endPosition = GetTargetPosition(tile);
                     int maxStartOffset = Util.Round(0.75f * startScale * info.GraphicInfo.Width);
@@ -1657,7 +1657,7 @@ namespace Ambermoon.Render
                     finishAction?.Invoke(game.CurrentBattleTicks, true, false); // Play hurt animation but do not finish.
                     this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks, false, true); // This is called after the animation to finish.
 
-                    float endScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                    float endScale = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
                     game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
                     {
                         byte displayLayer = (byte)(fromMonster ? 255 : ((tile / 6) * 60 + 60));
@@ -1672,7 +1672,7 @@ namespace Ambermoon.Render
                 {
                     // Both spells use the same animation. For magical arrows it is just called multiple times.
                     var monsterRow = (MonsterRow)(fromMonster ? startPosition / 6 : tile / 6);
-                    float endScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow);
+                    float endScale = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor(monsterRow);
                     var graphic = fromMonster ? CombatGraphicIndex.MagicProjectileMonster : CombatGraphicIndex.MagicProjectileHuman;
                     var sourcePosition = GetSourcePosition();
                     var targetPosition = GetTargetPosition(tile);
@@ -1769,9 +1769,9 @@ namespace Ambermoon.Render
                 case Spell.Mudsling:
                 case Spell.Rockfall:
                 {
-                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.LargeStone);
+                    var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(CombatGraphicIndex.LargeStone);
                     float baseScale = spell == Spell.Mudsling ? 1.0f : 1.5f;
-                    var monsterScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                    var monsterScale = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
                     float rowScale = fromMonster ? 2.0f : monsterScale;
                     float scale = baseScale * rowScale;
                     var spellSpriteHeight = Util.Round(info.GraphicInfo.Height * scale);
@@ -1870,10 +1870,10 @@ namespace Ambermoon.Render
                 }
                 case Spell.Firebeam:
                 {
-                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.FireBall);
+                    var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(CombatGraphicIndex.FireBall);
                     var monsterRow = (MonsterRow)(fromMonster ? this.startPosition / 6 : tile / 6);
                     float startScale = 2.0f;
-                    float endScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow);
+                    float endScale = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor(monsterRow);
                     var startPosition = GetSourcePosition();
                     var endPosition = GetTargetPosition(tile);
                     int maxStartOffset = Util.Round(0.75f * startScale * info.GraphicInfo.Width);
@@ -1924,7 +1924,7 @@ namespace Ambermoon.Render
                 case Spell.Fireball:
                 {
                     var monsterRow = (MonsterRow)(fromMonster ? startPosition / 6 : tile / 6);
-                    float endScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow);
+                    float endScale = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor(monsterRow);
                     AddAnimation(CombatGraphicIndex.FireBall, 8, GetSourcePosition(), GetTargetPosition(tile),
                         BattleEffects.GetFlyDuration((uint)startPosition, (uint)tile),
                         fromMonster ? endScale : 2.0f, fromMonster ? 2.0f : endScale, 255, () => { HideOverlay(); PlayBurn(); });
@@ -1966,7 +1966,7 @@ namespace Ambermoon.Render
                 case Spell.Iceball:
                 {
                     var monsterRow = (MonsterRow)(fromMonster ? startPosition / 6 : tile / 6);
-                    float endScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow);
+                    float endScale = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor(monsterRow);
                     AddAnimation(CombatGraphicIndex.IceBall, 1, GetSourcePosition(), GetTargetPosition(tile),
                         BattleEffects.GetFlyDuration((uint)startPosition, (uint)tile),
                         fromMonster ? endScale : 2.0f, fromMonster ? 2.0f : endScale, 255, () => { HideOverlay(); PlayChill(); });

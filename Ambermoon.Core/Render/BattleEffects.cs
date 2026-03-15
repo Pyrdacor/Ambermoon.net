@@ -94,7 +94,7 @@ namespace Ambermoon.Render
         static BattleEffectInfo CreateSimpleEffect(IGameRenderView renderView, uint sourceTile, uint targetTile, CombatGraphicIndex graphicIndex,
             Character[] battleField, uint duration, float startScale = 1.0f, float scaleChangePerY = 0.0f)
         {
-            var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
+            var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(graphicIndex);
             var startPosition = GetCenterPosition(renderView, sourceTile, battleField);
             var endPosition = GetCenterPosition(renderView, targetTile, battleField);
             float endScale = startScale + (endPosition.Y - startPosition.Y) * scaleChangePerY;
@@ -118,7 +118,7 @@ namespace Ambermoon.Render
         static BattleEffectInfo CreateSimpleEffect(IGameRenderView renderView, uint tile, CombatGraphicIndex graphicIndex,
             Character?[] battleField, uint duration, Func<bool, int>? yOffsetProvider = null, float scale = 1.0f, bool ground = false)
         {
-            var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
+            var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(graphicIndex);
             var position = GetCenterPosition(renderView, tile, battleField, yOffsetProvider?.Invoke(battleField[tile] is Monster) ?? 0);
             scale *= GetScaleFromRow(renderView, tile, battleField);
 
@@ -151,13 +151,13 @@ namespace Ambermoon.Render
             if (battleField[(int)tile]?.Type == CharacterType.PartyMember)
                 return 2.0f;
 
-            return renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+            return renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
         }
 
         static BattleEffectInfo CreateFlyingEffect(IGameRenderView renderView, uint sourceTile, uint targetTile,
             CombatGraphicIndex graphicIndex, Character?[] battleField, float baseScale = 1.0f)
         {
-            var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
+            var info = renderView.GraphicInfoProvider.GetCombatGraphicInfo(graphicIndex);
             var startPosition = GetProjectileTargetPosition(renderView, sourceTile, battleField);
             var endPosition = GetProjectileTargetPosition(renderView, targetTile, battleField);
             var sourceScale = GetScaleFromRow(renderView, sourceTile, battleField);

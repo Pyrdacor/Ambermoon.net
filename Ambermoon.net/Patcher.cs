@@ -616,7 +616,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
 
     Render.Color GetPaletteColor(byte colorIndex)
     {
-        var paletteData = renderView.GraphicProvider.Palettes[renderView.GraphicProvider.PrimaryUIPaletteIndex].Data;
+        var paletteData = renderView.GraphicInfoProvider.Palettes[renderView.GraphicInfoProvider.PrimaryUIPaletteIndex].Data;
         return new Render.Color
         (
             paletteData[colorIndex * 4 + 0],
@@ -654,7 +654,7 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
 
         try
         {
-            var uiText = new UI.UIText(renderView, (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
+            var uiText = new UI.UIText(renderView, (byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1),
                 renderView.TextProcessor.WrapText(renderView.TextProcessor.CreateText(text, '?'),
                 area, new Size(Global.GlyphWidth, Global.GlyphLineHeight)), Global.GetTextRect(renderView, area), displayLayer);
             uiText.SetTextColor(color);

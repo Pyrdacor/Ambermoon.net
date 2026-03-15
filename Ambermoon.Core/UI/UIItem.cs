@@ -73,7 +73,7 @@ namespace Ambermoon.UI
             this.merchantItem = merchantItem;
             sprite = (renderView.SpriteFactory.Create(16, 16, true) as ILayerSprite)!;
             sprite.Layer = renderView.GetLayer(Layer.Items);
-            sprite.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
+            sprite.PaletteIndex = (byte)(renderView.GraphicInfoProvider.PrimaryUIPaletteIndex - 1);
 
             Update(true);
         }
@@ -114,7 +114,7 @@ namespace Ambermoon.UI
 
                     if (amountDisplay == null && stackable)
                     {
-                        amountDisplay = renderView.RenderTextFactory.Create((byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1));
+                        amountDisplay = renderView.RenderTextFactory.Create((byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1));
                         amountDisplay.Layer = renderView.GetLayer(Layer.Text);
                         amountDisplay.TextColor = TextColor.White;
                         amountDisplay.Shadow = true;
@@ -150,7 +150,7 @@ namespace Ambermoon.UI
             }
             else if (Item.Stacked)
             {
-                amountDisplay = renderView.RenderTextFactory.Create((byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1));
+                amountDisplay = renderView.RenderTextFactory.Create((byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1));
                 amountDisplay.Layer = renderView.GetLayer(Layer.Text);
                 amountDisplay.TextColor = TextColor.White;
                 amountDisplay.Shadow = true;
@@ -166,7 +166,7 @@ namespace Ambermoon.UI
                 {
                     brokenOverlay = (renderView.SpriteFactory.Create(16, 16, true, (byte)((sprite?.DisplayLayer ?? 0) + 1)) as ILayerSprite)!;
                     brokenOverlay.Layer = renderView.GetLayer(Layer.UI);
-                    brokenOverlay.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
+                    brokenOverlay.PaletteIndex = (byte)(renderView.GraphicInfoProvider.PrimaryUIPaletteIndex - 1);
                     brokenOverlay.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!
                         .GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BrokenItemOverlay)); ;
                 }

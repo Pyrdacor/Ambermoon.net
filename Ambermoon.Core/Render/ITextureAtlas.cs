@@ -19,6 +19,7 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System.Collections.Generic;
 using Ambermoon.Data;
 
 namespace Ambermoon.Render
@@ -44,5 +45,11 @@ namespace Ambermoon.Render
     public interface ITextureAtlasBuilderFactory
     {
         ITextureAtlasBuilder Create();
+    }
+
+    public interface ITextureAtlasConverter
+    {
+        ITextureAtlas Convert(IGraphicAtlas graphicAtlas);
+        ITextureAtlas Convert(Dictionary<uint, IGraphicAtlas> graphicAtlasesWithOffsets);
     }
 }

@@ -251,7 +251,7 @@ namespace Ambermoon.UI
                 languageChangeButton.TextureAtlasOffset = GetFlagImageOffset(language, textureFactor);
                 languageChangeButton.X = languageButtonArea.X;
                 languageChangeButton.Y = languageButtonArea.Y;
-                languageChangeButton.PaletteIndex = (byte)(renderView.GraphicProvider.FirstFantasyIntroPaletteIndex + 2);
+                languageChangeButton.PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstFantasyIntroPaletteIndex + 2);
                 languageChangeButton.Visible = true;
                 languageChangeButtons.Add(languageChangeButton);
                 languageButtonArea.Position.X += FlagWidth + 4;
@@ -498,7 +498,7 @@ namespace Ambermoon.UI
 
         Color GetPaletteColor(byte colorIndex)
         {
-            var paletteData = renderView.GraphicProvider.Palettes[renderView.GraphicProvider.PrimaryUIPaletteIndex].Data;
+            var paletteData = renderView.GraphicInfoProvider.Palettes[renderView.GraphicInfoProvider.PrimaryUIPaletteIndex].Data;
             return new Color
             (
                 paletteData[colorIndex * 4 + 0],
@@ -559,13 +559,13 @@ namespace Ambermoon.UI
         {
             position = Global.GetTextRect(renderView, new Rect(position, new Size(Global.GlyphWidth, Global.GlyphLineHeight))).Position;
             var renderText = renderView.RenderTextFactory.Create(
-                (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
+                (byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1),
                 renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(text, fallbackChar), textColor, shadow);
             renderText.DisplayLayer = displayLayer;
             renderText.X = position.X;
             renderText.Y = position.Y;
-            renderText.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
+            renderText.PaletteIndex = (byte)(renderView.GraphicInfoProvider.PrimaryUIPaletteIndex - 1);
             renderText.Visible = true;
             return renderText;
         }

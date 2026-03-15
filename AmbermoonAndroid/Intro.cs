@@ -192,7 +192,7 @@ namespace AmbermoonAndroid
                 logo.Layer = renderView.GetLayer(Layer.IntroGraphics);
                 logo.TextureSize = size;
                 logo.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics).GetOffset((uint)introGraphic);
-                logo.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[introGraphic] - 1);
+                logo.PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[introGraphic] - 1);
                 logo.X = 160; // start in the center
                 logo.Y = 100; // start in the center of the 200 height portion
                 logo.Alpha = 0;
@@ -720,7 +720,7 @@ namespace AmbermoonAndroid
                     objects[i].Layer = layer;
                     objects[i].ClipArea = new Rect(0, 0, 320, 200);
                     objects[i].TextureAtlasOffset = textureAtlas.GetOffset((uint)graphicIndex);
-                    objects[i].PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[graphicIndex] - 1);
+                    objects[i].PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[graphicIndex] - 1);
                     objects[i].Visible = false;
                 }
 
@@ -730,7 +730,7 @@ namespace AmbermoonAndroid
                     meteorSparks[i].Layer = layer;
                     meteorSparks[i].TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MeteorSparks);
                     meteorSparks[i].BaseFrame = (uint)i * 15;
-                    meteorSparks[i].PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.MeteorSparks] - 1);
+                    meteorSparks[i].PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.MeteorSparks] - 1);
                     meteorSparks[i].Visible = false;
                     meteorSparks[i].X = 48 + i * 144;
                     meteorSparks[i].Y = 153;
@@ -739,7 +739,7 @@ namespace AmbermoonAndroid
                 town = renderView.SpriteFactory.Create(160, 128, true, 150) as ILayerSprite;
                 town.Layer = layer;
                 town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone);
-                town.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Gemstone] - 1);
+                town.PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Gemstone] - 1);
                 town.Visible = false;
 
                 black = renderView.ColoredRectFactory.Create(320, 256, Color.Black, 120);
@@ -763,7 +763,7 @@ namespace AmbermoonAndroid
                 glowingMeteorOverlay.Layer = meteor.Layer;
                 glowingMeteorOverlay.ClipArea = new Rect(0, 0, 320, 200);
                 glowingMeteorOverlay.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.GlowingMeteor);
-                glowingMeteorOverlay.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.GlowingMeteor] - 1);
+                glowingMeteorOverlay.PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.GlowingMeteor] - 1);
                 glowingMeteorOverlay.X = meteor.X;
                 glowingMeteorOverlay.Y = meteor.Y;
                 glowingMeteorOverlay.Visible = true;
@@ -1046,13 +1046,13 @@ namespace AmbermoonAndroid
                 this.startTicks = startTicks;
                 var layer = renderView.GetLayer(Layer.IntroGraphics);
                 textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
-                byte paletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Twinlake] - 1);
+                byte paletteIndex = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Twinlake] - 1);
                 uint partAtlasOffset = (uint)introData.Graphics.Keys.Max();
 
                 frame = renderView.SpriteFactory.Create(288, 200, true, 0) as ILayerSprite;
                 frame.Layer = layer;
                 frame.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Frame);
-                frame.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Frame] - 1);
+                frame.PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Frame] - 1);
                 frame.X = 16;
                 frame.Y = 0;
                 frame.Visible = true;
@@ -1170,13 +1170,13 @@ namespace AmbermoonAndroid
                 meteor.Layer = layer;
                 meteor.ClipArea = new Rect(0, 0, 320, 200);
                 meteor.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Meteor);
-                meteor.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Meteor] - 1);
+                meteor.PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Meteor] - 1);
                 meteor.Visible = false;
 
                 town = renderView.SpriteFactory.Create(160, 128, true, 50) as ILayerSprite;
                 town.Layer = layer;
                 town.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.Gemstone);
-                town.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Gemstone] - 1);
+                town.PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.Gemstone] - 1);
                 town.X = 80;
                 town.Y = 36;
                 town.Visible = true;
@@ -1348,7 +1348,7 @@ namespace AmbermoonAndroid
                 background.Layer = layer;
                 background.TextureSize = new Size(320, 256);
                 background.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MainMenuBackground);
-                background.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.MainMenuBackground] - 1);
+                background.PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.MainMenuBackground] - 1);
                 background.X = 0;
                 background.Y = 0;
                 background.Visible = true;
@@ -1359,7 +1359,7 @@ namespace AmbermoonAndroid
                     cloud.Layer = layer;
                     cloud.TextureSize = new Size(112, 128);
                     cloud.TextureAtlasOffset = textureAtlas.GetOffset(i < 2 ? (uint)IntroGraphic.CloudsLeft : (uint)IntroGraphic.CloudsRight);
-                    cloud.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.CloudsLeft] - 1);
+                    cloud.PaletteIndex = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.CloudsLeft] - 1);
                     cloud.X = i < 2 ? 80 : 208 - 80;
                     cloud.Y = (i % 2) * 100;
                     cloud.Visible = true;
@@ -1412,8 +1412,8 @@ namespace AmbermoonAndroid
 
                 renderView.PaletteFading = new()
                 {
-                    SourcePalette = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + 5 - 1),
-                    DestinationPalette = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.MainMenuBackground] - 1),
+                    SourcePalette = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + 5 - 1),
+                    DestinationPalette = (byte)(renderView.GraphicInfoProvider.FirstIntroPaletteIndex + IntroData.GraphicPalettes[IntroGraphic.MainMenuBackground] - 1),
                     SourceFactor = 1.0f - factor,
                 };
 

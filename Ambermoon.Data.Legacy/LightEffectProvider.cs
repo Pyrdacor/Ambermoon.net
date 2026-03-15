@@ -27,7 +27,7 @@ namespace Ambermoon.Data.Legacy
         }
 
         public PaletteReplacement GetLightPaletteReplacement(Map map, uint hour, uint minute,
-            uint buffLightIntensity, IGraphicProvider graphicProvider)
+            uint buffLightIntensity, IGraphicInfoProvider graphicInfoProvider)
         {
             PaletteReplacement CachePaletteReplacement(uint stage, Func<PaletteReplacement> creator)
             {
@@ -58,9 +58,9 @@ namespace Ambermoon.Data.Legacy
                 if (buffLightIntensity > 0)
                 {
                     if (hour < 5)
-                        return GetLightPaletteReplacement(map, Math.Min(8, 4 + buffLightIntensity / 16), 0, 0, graphicProvider);
+                        return GetLightPaletteReplacement(map, Math.Min(8, 4 + buffLightIntensity / 16), 0, 0, graphicInfoProvider);
                     else
-                        return GetLightPaletteReplacement(map, Math.Max(18, 22 - buffLightIntensity / 16), 0, 0, graphicProvider);
+                        return GetLightPaletteReplacement(map, Math.Max(18, 22 - buffLightIntensity / 16), 0, 0, graphicInfoProvider);
                 }
 
                 stage = 0;
@@ -69,22 +69,22 @@ namespace Ambermoon.Data.Legacy
             else if (hour >= 9 && hour < 18) // Day
             {
                 stage = 1;
-                basePalette = graphicProvider.Palettes[(int)map.PaletteIndex];
+                basePalette = graphicInfoProvider.Palettes[(int)map.PaletteIndex];
             }
             else if (hour >= 18 && hour < 20) // Dawn phase I
             {
                 if (buffLightIntensity > 0)
-                    return GetLightPaletteReplacement(map, Math.Max(17, hour - buffLightIntensity / 16), 0, 0, graphicProvider);
+                    return GetLightPaletteReplacement(map, Math.Max(17, hour - buffLightIntensity / 16), 0, 0, graphicInfoProvider);
 
                 stage = 1000 + hour * 60 + minute;
-                basePalette = graphicProvider.Palettes[(int)map.PaletteIndex];
+                basePalette = graphicInfoProvider.Palettes[(int)map.PaletteIndex];
                 blendPalette = executableData.DaytimePaletteReplacements[worldIndex * 2 + 1];
                 destFactor = 255 * ((hour - 18) * 60 + minute) / 120;
             }
             else if (hour >= 20 && hour < 22) // Dawn phase II
             {
                 if (buffLightIntensity > 0)
-                    return GetLightPaletteReplacement(map, Math.Max(17, hour - buffLightIntensity / 16), 0, 0, graphicProvider);
+                    return GetLightPaletteReplacement(map, Math.Max(17, hour - buffLightIntensity / 16), 0, 0, graphicInfoProvider);
 
                 stage = 3000 + hour * 60 + minute;
                 basePalette = executableData.DaytimePaletteReplacements[worldIndex * 2 + 1];
@@ -94,7 +94,7 @@ namespace Ambermoon.Data.Legacy
             else if (hour >= 5 && hour < 7) // Dusk phase I
             {
                 if (buffLightIntensity > 0)
-                    return GetLightPaletteReplacement(map, Math.Min(9, hour + buffLightIntensity / 16), 0, 0, graphicProvider);
+                    return GetLightPaletteReplacement(map, Math.Min(9, hour + buffLightIntensity / 16), 0, 0, graphicInfoProvider);
 
                 stage = 5000 + hour * 60 + minute;
                 basePalette = executableData.DaytimePaletteReplacements[worldIndex * 2 + 0];
@@ -104,11 +104,11 @@ namespace Ambermoon.Data.Legacy
             else if (hour >= 7 && hour < 9) // Dusk phase II
             {
                 if (buffLightIntensity > 0)
-                    return GetLightPaletteReplacement(map, Math.Min(9, hour + buffLightIntensity / 16), 0, 0, graphicProvider);
+                    return GetLightPaletteReplacement(map, Math.Min(9, hour + buffLightIntensity / 16), 0, 0, graphicInfoProvider);
 
                 stage = 7000 + hour * 60 + minute;
                 basePalette = executableData.DaytimePaletteReplacements[worldIndex * 2 + 1];
-                blendPalette = graphicProvider.Palettes[(int)map.PaletteIndex];
+                blendPalette = graphicInfoProvider.Palettes[(int)map.PaletteIndex];
                 destFactor = 255 * ((hour - 7) * 60 + minute) / 120;
             }
 
@@ -142,7 +142,7 @@ namespace Ambermoon.Data.Legacy
             });
         }
 
-        public IEnumerable<SkyPart> GetSkyParts(Map map, uint hour, uint minute, IGraphicProvider graphicProvider)
+        public IEnumerable<SkyPart> GetSkyParts(Map map, uint hour, uint minute)
         {
             if (!map.Flags.HasFlag(MapFlags.Outdoor))
                 return null;

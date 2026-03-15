@@ -23,9 +23,8 @@ namespace Ambermoon.Data
 
     public interface ILightEffectProvider
     {
-        IEnumerable<SkyPart> GetSkyParts(Map map, uint hour, uint minute,
-            IGraphicProvider graphicProvider);
+        IEnumerable<SkyPart> GetSkyParts(Map map, uint hour, uint minute);
         PaletteReplacement GetLightPaletteReplacement(Map map, uint hour, uint minute,
-            uint buffLightIntensity, IGraphicProvider graphicProvider);
+            uint buffLightIntensity, IGraphicInfoProvider graphicInfoProvider);
     }
 }

@@ -61,7 +61,7 @@ namespace Ambermoon.Render
             RenderMap2D map, uint characterIndex, Map.CharacterReference characterReference)
             : base(game, renderView.GetLayer(layer), TextureAtlasManager.Instance.GetOrCreate(layer),
                 renderView.SpriteFactory, direction => AnimationProvider(game, map.Map!, mapManager,
-                    characterReference, renderView.GraphicProvider, direction), map,
+                    characterReference, renderView.GraphicInfoProvider, direction), map,
                 GetStartPosition(characterReference), () => Math.Max(1, map.Map!.PaletteIndex) - 1, _ => NullOffset)
         {
             this.game = game;
@@ -81,7 +81,7 @@ namespace Ambermoon.Render
         }
 
         static Character2DAnimationInfo AnimationProvider(GameCore game, Map map, IMapManager mapManager,
-            Map.CharacterReference characterReference, IGraphicProvider graphicProvider, CharacterDirection? direction)
+            Map.CharacterReference characterReference, IGraphicInfoProvider graphicInfoProvider, CharacterDirection? direction)
         {
             bool usesTileset = characterReference.CharacterFlags.HasFlag(Flags.UseTileset);
 
@@ -109,14 +109,15 @@ namespace Ambermoon.Render
             else
             {
                 var playerAnimationInfo = game.GetPlayerAnimationInfo(direction);
+
                 return new Character2DAnimationInfo
                 {
                     FrameWidth = 16, // NPC width
                     FrameHeight = 32, // NPC height
-                    StandFrameIndex = Graphics.GetNPCGraphicIndex(map.NPCGfxIndex, characterReference.GraphicIndex, graphicProvider),
+                    StandFrameIndex = Graphics.GetNPCGraphicIndex(map.NPCGfxIndex, characterReference.GraphicIndex, graphicInfoProvider),
                     SitFrameIndex = playerAnimationInfo.SitFrameIndex,
                     SleepFrameIndex = playerAnimationInfo.SleepFrameIndex,
-                    NumStandFrames = (uint)graphicProvider.NPCGraphicFrameCounts[(int)map.NPCGfxIndex][(int)characterReference.GraphicIndex],
+                    NumStandFrames = (uint)graphicInfoProvider.NPCGraphicFrameCounts[(int)map.NPCGfxIndex][(int)characterReference.GraphicIndex],
                     NumSitFrames = playerAnimationInfo.NumSitFrames,
                     NumSleepFrames = playerAnimationInfo.NumSleepFrames,
                     TicksPerFrame = map.TicksPerAnimationFrame * 2,

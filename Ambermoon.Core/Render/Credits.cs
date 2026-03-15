@@ -220,7 +220,7 @@ namespace Ambermoon.Render
         {
             var bounds = layout.GetTextRect(0, Global.VirtualScreenHeight, Global.VirtualScreenWidth, Global.GlyphLineHeight);
             var renderText = renderView.RenderTextFactory.Create(
-                (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
+                (byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1),
                 renderView.GetLayer(Layer.SubPixelText),
                 renderView.TextProcessor.ProcessText(text, null, null),
                 Data.Enumerations.Color.Bright, false, bounds,

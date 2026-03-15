@@ -38,7 +38,6 @@ namespace Ambermoon.Render
         public const uint Pics80x80Offset = 150u;
         public const uint EventPictureOffset = 200u;
         public const uint UICustomGraphicOffset = 250u;
-        public const uint CombatBackgroundOffset = 2000u;
         public const uint CombatGraphicOffset = 2500u;
         public const uint BattleFieldIconOffset = 3000u;
         public const uint AutomapOffset = 3200u;
@@ -80,7 +79,7 @@ namespace Ambermoon.Render
         };
         public static uint GetConditionGraphicIndex(Condition condition) => GetUIGraphicIndex(GetConditionGraphic(condition)!.Value);
         public static uint GetAutomapGraphicIndex(AutomapGraphic automapGraphic) => AutomapOffset + (uint)automapGraphic;
-        public static uint GetNPCGraphicIndex(uint npcFileIndex, uint npcIndex, IGraphicProvider graphicProvider) =>
-            NPCGraphicOffset + (graphicProvider.NPCGraphicOffsets.TryGetValue((int)npcFileIndex, out var offset) ? (uint)offset : 0) + npcIndex;
+        public static uint GetNPCGraphicIndex(uint npcFileIndex, uint npcIndex, IGraphicInfoProvider graphicInfoProvider) =>
+            NPCGraphicOffset + (graphicInfoProvider.NPCGraphicOffsets.TryGetValue((int)npcFileIndex, out var offset) ? (uint)offset : 0) + npcIndex;
 	}
 }

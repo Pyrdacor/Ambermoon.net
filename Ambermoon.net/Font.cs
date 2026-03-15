@@ -44,7 +44,7 @@ namespace Ambermoon
                     sprite.X = totalWidth;
                     sprite.Y = 0;
                     sprite.Layer = renderView.GetLayer(layer);
-                    sprite.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
+                    sprite.PaletteIndex = (byte)(renderView.GraphicInfoProvider.PrimaryUIPaletteIndex - 1);
                     sprite.Visible = false;
                     renderGlyphs.Add(sprite);
                     totalWidth += glyph.Advance;
