@@ -5,7 +5,7 @@ namespace Ambermoon.Data.Pyrdacor.FileSpecs;
 
 /// <summary>
 /// The graphic atlas stores all graphics for a specific render layer.
-/// For example all wall graphics or all item graphics.
+/// For example all event graphics or all item graphics.
 /// It can store the graphics as a single texture atlas or as individual tiles.
 /// The format is optimized for the original Amiga graphics but can also be used for RGBA graphics with some limitations.
 /// The texture atlas can optionally use a palette from the game data and apply a color index offset to it.

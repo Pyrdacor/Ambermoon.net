@@ -1203,7 +1203,7 @@ namespace Ambermoon.Render
                 {
                     if (mapEvent.Type == EventType.ChangeTile)
                     {
-                        if (!(mapEvent is ChangeTileEvent changeTileEvent))
+                        if (mapEvent is not ChangeTileEvent changeTileEvent)
                             throw new AmbermoonException(ExceptionScope.Data, "Invalid map event.");
 
                         uint index = Map.PositionToTileIndex(changeTileEvent.X - 1, changeTileEvent.Y - 1);

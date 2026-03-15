@@ -38,8 +38,7 @@ public partial class GameData : IGameData, IGraphicProvider
     LazyFileLoader<GraphicAtlas, Graphic> layoutGraphicLoader = null!;
     LazyFileLoader<GraphicAtlas, Graphic> npcGraphicLoader = null!;
     LazyFileLoader<GraphicAtlas, Graphic> itemGraphicLoader = null!;
-    LazyFileLoader<GraphicAtlas, Graphic> wallGraphicLoader = null!; // includes overlays on walls
-    LazyFileLoader<GraphicAtlas, Graphic> objectGraphicLoader = null!;
+    LazyFileLoader<Textures, Textures> texturesLoader = null!;
     LazyContainerLoader<GraphicAtlas, Graphic> tileGraphicLoader = null!; // one entry per tileset
     readonly Dictionary<string, Action<IDataReader>> fileHandlers = [];
     readonly Lazy<SongManager> songManager = null!;
@@ -154,9 +153,7 @@ public partial class GameData : IGameData, IGraphicProvider
     const string MagicFonts = "FONT";
     const string MagicGotoPointNames = "GOTO";
     const string MagicLayouts = "LAYO";
-    const string MagicWallGraphics = "WALL";
-    const string MagicObjectGraphics = "OBJG";
-    const string MagicOverlayGraphics = "OVER";
+    const string MagicTextures = "TX3D";
     const string MagicEventGraphics = "EVEG";
     const string MagicCombatBackgrounds = "COMB";
     const string MagicCombatGraphics = "COMG";
@@ -229,6 +226,7 @@ public partial class GameData : IGameData, IGraphicProvider
             () => mapLoader!.LoadAll(),
             () => mapTextLoader!.LoadAll(),
             () => labdataLoader!.LoadAll(),
+            () => texturesLoader!.Load(),
             () => tilesetLoader!.LoadAll()
         ));
 
@@ -420,24 +418,9 @@ public partial class GameData : IGameData, IGraphicProvider
         tileGraphicLoader = new(dataReader, this, g => g.Texture!);
     }
 
-    void LoadObjectGraphics(IDataReader dataReader)
+    void LoadTextures(IDataReader dataReader)
     {
-        objectGraphicLoader = new(dataReader, this, g => g.Texture!);
-    }
-
-    void LoadWallGraphics(IDataReader dataReader)
-    {
-        wallGraphicLoader = new(dataReader, this, g => g.Texture!);
-    }
-
-    void Load3DOverlayGraphics(IDataReader dataReader)
-    {
-
-    }
-
-    void Load3DFloorGraphics(IDataReader dataReader)
-    {
-
+        texturesLoader = new(dataReader, this, g => g);
     }
 
     void LoadAutomapGraphics(IDataReader dataReader)
