@@ -19,6 +19,7 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Ambermoon.Data;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;

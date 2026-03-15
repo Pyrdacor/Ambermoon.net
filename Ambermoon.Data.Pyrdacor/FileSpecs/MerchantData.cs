@@ -11,6 +11,8 @@ internal class MerchantData : IFileSpec<MerchantData>, IFileSpec
     public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0>();
     Merchant? merchant = null;
 
+    public Merchant Merchant => merchant!;
+
     public MerchantData()
     {
 

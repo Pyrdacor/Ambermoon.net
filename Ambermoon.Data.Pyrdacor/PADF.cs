@@ -28,17 +28,20 @@ internal static class PADF
         AddFileSpec<ChestData>();
         AddFileSpec<ExplorationData>();
         AddFileSpec<FontData>();
-        AddFileSpec<GraphicAtlas>();
+        AddFileSpec<GraphicAtlasData>();
+        AddFileSpec<GraphicsInfoData>();
         AddFileSpec<ItemData>();
         AddFileSpec<LabyrinthData>();
         AddFileSpec<LocationData>();
         AddFileSpec<MapData>();
         AddFileSpec<MerchantData>();
         AddFileSpec<MonsterGroups>();
+        AddFileSpec<MusicData>();
         AddFileSpec<OutroSequenceData>();
         AddFileSpec<Palette>();
         AddFileSpec<SavegameData>();
         AddFileSpec<Texts>();
+        AddFileSpec<Textures>();
         AddFileSpec<TilesetData>();
 
         static void AddCompression(KeyValuePair<ushort, ICompression> compression)

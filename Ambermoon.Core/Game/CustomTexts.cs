@@ -21,6 +21,7 @@
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using Ambermoon.Data;
 
 namespace Ambermoon
 {

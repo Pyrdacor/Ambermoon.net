@@ -1,4 +1,5 @@
-﻿using Ambermoon.Data.Legacy;
+﻿using Ambermoon.Data;
+using Ambermoon.Data.Legacy;
 using Ambermoon.Game;
 using Ambermoon.Render;
 using Newtonsoft.Json;

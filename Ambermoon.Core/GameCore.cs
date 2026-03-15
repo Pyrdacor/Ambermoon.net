@@ -35,15 +35,6 @@ using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon;
 
-public enum GameLanguage
-{
-    English,
-    German,
-    French,
-    Polish,
-    Czech
-}
-
 public abstract partial class GameCore
 {
     public Features Features { get; }

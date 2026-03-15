@@ -28,7 +28,7 @@ namespace Ambermoon.Data.Legacy.Characters
                 EventReader.ReadEvents(fallbackDataReader, partyMember.Events, partyMember.EventList);
                 System.Console.WriteLine("Fixed corrupted savegame");
             }
-            partyMember.Texts = partyTextReader == null ? new List<string>() : TextReader.ReadTexts(partyTextReader);
+            partyMember.Texts = partyTextReader == null ? [] : TextReader.ReadTexts(partyTextReader);
         }
     }
 }

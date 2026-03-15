@@ -11,6 +11,8 @@ internal class ChestData : IFileSpec<ChestData>, IFileSpec
     public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0>();
     Chest? chest = null;
 
+    public Chest Chest => chest!;
+
     public ChestData()
     {
 

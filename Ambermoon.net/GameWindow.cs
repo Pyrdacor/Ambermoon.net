@@ -1078,7 +1078,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             // no versions
             configuration.GameVersionIndex = 0;
             gameData.Load(dataPath);
-            selectHandler?.Invoke(gameData, Configuration.GetSavePath(Configuration.ExternalSavegameFolder), gameData.Language.ToGameLanguage(),
+            selectHandler?.Invoke(gameData, Configuration.GetSavePath(Configuration.ExternalSavegameFolder), gameData.Language,
                 gameData.Advanced ? Features.AmbermoonAdvanced : Features.None);
             return false;
         }

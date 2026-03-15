@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using Ambermoon.Data;
 using Ambermoon.Render;
 using Ambermoon.UI;
 using static Ambermoon.GameCore;

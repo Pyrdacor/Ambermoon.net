@@ -451,7 +451,7 @@ namespace Ambermoon.Render
             }
 
             var info = renderView!.GameData.StationaryImageInfos[travelType];
-            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Characters);
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Characters)!;
             var sprite = renderView.SpriteFactory.Create(info.Width, info.Height, false);
             var offset = new Position((TILE_WIDTH - info.Width) / 2 - 2, (TILE_HEIGHT - info.Height) / 2 - 2);
             sprite.Layer = renderView.GetLayer(Layer.Characters);

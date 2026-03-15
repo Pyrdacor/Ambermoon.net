@@ -2,6 +2,6 @@
 {
     public interface ITextDictionaryReader
     {
-        void ReadTextDictionary(TextDictionary textDictionary, IDataReader dataReader, string language);
+        void ReadTextDictionary(TextDictionary textDictionary, IDataReader dataReader, GameLanguage language);
     }
 }

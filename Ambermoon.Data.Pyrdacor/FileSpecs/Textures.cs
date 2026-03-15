@@ -1,5 +1,4 @@
-﻿using Ambermoon.Data.Legacy.Serialization;
-using Ambermoon.Data.Pyrdacor.Compressions;
+﻿using Ambermoon.Data.Pyrdacor.Compressions;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.FileSpecs;
@@ -10,6 +9,7 @@ public class Textures : IFileSpec<Textures>, IFileSpec
     private readonly Dictionary<int, Graphic> objectGraphics = [];
     private readonly Dictionary<int, Graphic> overlayGraphics = [];
     private readonly Dictionary<int, Graphic> floorGraphics = [];
+    private readonly List<Graphic> backgroundGraphics = [];
 
     public static string Magic => "TEX";
     public static byte SupportedVersion => 0;
@@ -18,6 +18,7 @@ public class Textures : IFileSpec<Textures>, IFileSpec
     public IReadOnlyDictionary<int, Graphic> ObjectGraphics => objectGraphics.AsReadOnly();
     public IReadOnlyDictionary<int, Graphic> OverlayGraphics => overlayGraphics.AsReadOnly();
     public IReadOnlyDictionary<int, Graphic> FloorGraphics => floorGraphics.AsReadOnly();
+    public IReadOnlyList<Graphic> BackgroundGraphics => backgroundGraphics.AsReadOnly();
 
     public Textures()
     {
@@ -29,13 +30,15 @@ public class Textures : IFileSpec<Textures>, IFileSpec
         Dictionary<int, Graphic> wallGraphics,
         Dictionary<int, Graphic> objectGraphics,
         Dictionary<int, Graphic> overlayGraphics,
-        Dictionary<int, Graphic> floorGraphics
+        Dictionary<int, Graphic> floorGraphics,
+        List<Graphic> backgroundGraphics
     )
     {
         this.wallGraphics = wallGraphics;
         this.objectGraphics = objectGraphics;
         this.overlayGraphics = overlayGraphics;
         this.floorGraphics = floorGraphics;
+        this.backgroundGraphics = backgroundGraphics;
     }
 
     public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
@@ -44,6 +47,7 @@ public class Textures : IFileSpec<Textures>, IFileSpec
         int numObjectGraphics = dataReader.ReadWord();
         int numOverlayGraphics = dataReader.ReadWord();
         int numFloorGraphics = dataReader.ReadWord();
+        int numBackgroundGraphics = dataReader.ReadByte();
 
         Graphic LoadGraphic(int width, int height)
         {
@@ -92,6 +96,11 @@ public class Textures : IFileSpec<Textures>, IFileSpec
         {
             floorGraphics.Add(i, LoadGraphic(64, 64));
         }
+
+        for (int i = 0; i < numBackgroundGraphics; i++)
+        {
+            backgroundGraphics.Add(LoadGraphic(144, 20));
+        }
     }
 
     public void Write(IDataWriter dataWriter)
@@ -100,6 +109,7 @@ public class Textures : IFileSpec<Textures>, IFileSpec
         dataWriter.Write((ushort)objectGraphics.Count);
         dataWriter.Write((ushort)overlayGraphics.Count);
         dataWriter.Write((ushort)floorGraphics.Count);
+        dataWriter.Write((byte)backgroundGraphics.Count);
 
         void WriteGraphic(Graphic graphic, bool encoded)
         {
@@ -145,6 +155,11 @@ public class Textures : IFileSpec<Textures>, IFileSpec
         foreach (var floorGraphic in floorGraphics.Values)
         {
             WriteGraphic(floorGraphic, false);
+        }
+
+        foreach (var backgroundGraphic in backgroundGraphics)
+        {
+            WriteGraphic(backgroundGraphic, false);
         }
     }
 }

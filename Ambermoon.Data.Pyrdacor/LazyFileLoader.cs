@@ -38,6 +38,13 @@ namespace Ambermoon.Data.Pyrdacor
             return valueProvider(items[key]);
         }
 
+        public U LoadOrDefault(ushort key, U defaultValue)
+        {
+            items ??= loader();
+
+            return items.TryGetValue(key, out var item) ? valueProvider(item) : defaultValue;
+        }
+
         public Dictionary<uint, U> LoadAll()
         {
             items ??= loader();

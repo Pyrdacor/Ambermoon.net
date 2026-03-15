@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data.Pyrdacor.Compressions;
+using Ambermoon.Data.Pyrdacor.Objects;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.FileSpecs;
@@ -12,7 +13,7 @@ namespace Ambermoon.Data.Pyrdacor.FileSpecs;
 /// If the palette is not fixed (e.g. for 3D walls), a value of 255 should be used for the palette index.
 /// This allows to use the same texture atlas with different palettes.
 /// </summary>
-public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
+public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
 {
     public const byte MultiplePalettes = 255;
 
@@ -209,22 +210,22 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
     public static byte SupportedVersion => 0;
     public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
     public IReadOnlyList<Rect> TextureAreas => textureAreas.Values.AsReadOnly();
-    public Graphic? Texture { get; private set; }
+    public GraphicAtlas? Atlas { get; private set; }
 
-    public GraphicAtlas()
+    public GraphicAtlasData()
     {
 
     }
 
-    private GraphicAtlas(int? paletteIndex, byte flags, Graphic texture, SortedList<int, Rect> textureAreas)
+    private GraphicAtlasData(int? paletteIndex, byte flags, Graphic texture, SortedList<int, Rect> textureAreas)
     {
         this.paletteIndex = paletteIndex >= 0 ? paletteIndex : null;
         this.flags = flags;
-        Texture = texture;
+        Atlas = new(texture, textureAreas.ToDictionary(area => (uint)area.Key, area => new Position(area.Value.Position)));
         this.textureAreas = textureAreas;
     }
 
-    public static GraphicAtlas FromGraphics(int paletteIndex, List<Graphic> graphics, bool alpha, int colorIndexOffset = 0)
+    public static GraphicAtlasData FromGraphics(int paletteIndex, List<Graphic> graphics, bool alpha, int colorIndexOffset = 0)
     {
         if (graphics.Count != 0)
         {
@@ -258,10 +259,10 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
             textureAreas = textureAtlasInfo.Value;
         }
 
-        return new GraphicAtlas(paletteIndex, flags, texture, textureAreas);
+        return new GraphicAtlasData(paletteIndex, flags, texture, textureAreas);
     }
 
-    public static GraphicAtlas FromTiles(int paletteIndex, List<Graphic> tiles, bool alpha, int colorIndexOffset = 0)
+    public static GraphicAtlasData FromTiles(int paletteIndex, List<Graphic> tiles, bool alpha, int colorIndexOffset = 0)
     {
         if (tiles.Select(t => new { t.Width, t.Height, t.IndexedGraphic, t.Data.Length }).Distinct().Count() > 1)
             throw new AmbermoonException(ExceptionScope.Data, "Tile graphics are expected to have all the same size and color depth.");
@@ -335,15 +336,15 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
             }
         }
 
-        return new GraphicAtlas(paletteIndex, flags, texture, textureAreas);
+        return new GraphicAtlasData(paletteIndex, flags, texture, textureAreas);
     }
 
-    public static GraphicAtlas FromGraphics(List<Graphic> graphics, bool alpha, int colorIndexOffset = 0)
+    public static GraphicAtlasData FromGraphics(List<Graphic> graphics, bool alpha, int colorIndexOffset = 0)
     {
         return FromGraphics(-1, graphics, alpha, colorIndexOffset);
     }
 
-    public static GraphicAtlas FromTiles(List<Graphic> tiles, bool alpha, int colorIndexOffset = 0)
+    public static GraphicAtlasData FromTiles(List<Graphic> tiles, bool alpha, int colorIndexOffset = 0)
     {
         return FromTiles(-1, tiles, alpha, colorIndexOffset);
     }
@@ -359,19 +360,20 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
 
         if (numGraphics == 0)
         {
-            Texture = new Graphic
+            Atlas = new(new Graphic
             {
                 Width = 0,
                 Height = 0,
                 IndexedGraphic = usePalette,
                 Data = []
-            };
+            }, []);
             return;
         }
 
         bool tiles = (flags & 0x80) == 0;
         bool alpha = (flags & 0x40) != 0;
         int colorIndexOffset = flags & 0x1f;
+        Graphic texture;
 
         void ReadRBGAImageSize(out int width, out int height)
         {
@@ -402,7 +404,7 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
             int width = dataReader.ReadWord();
             int height = dataReader.ReadWord();
 
-            Texture = new Graphic
+            texture = new Graphic
             {
                 Width = width,
                 Height = height,
@@ -414,13 +416,13 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
             {
                 if (alpha)
                 {
-                    for (int i = 0; i < Texture.Data.Length; ++i)
-                        Texture.Data[i] = Texture.Data[i] == 0 ? (byte)0 : (byte)(colorIndexOffset + Texture.Data[i]);
+                    for (int i = 0; i < texture.Data.Length; ++i)
+                        texture.Data[i] = texture.Data[i] == 0 ? (byte)0 : (byte)(colorIndexOffset + texture.Data[i]);
                 }
                 else
                 {
-                    for (int i = 0; i < Texture.Data.Length; ++i)
-                        Texture.Data[i] = (byte)(colorIndexOffset + Texture.Data[i]);
+                    for (int i = 0; i < texture.Data.Length; ++i)
+                        texture.Data[i] = (byte)(colorIndexOffset + texture.Data[i]);
                 }
             }
         }
@@ -437,10 +439,10 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
 
             LoadAtlas();
 
-            if (Texture!.Width % width != 0 || Texture.Height % height != 0)
+            if (texture!.Width % width != 0 || texture.Height % height != 0)
                 throw new AmbermoonException(ExceptionScope.Data, "Tiled texture atlas dimensions don't fit to the given tile size.");
 
-            int tilesPerRow = Texture.Width / width;
+            int tilesPerRow = texture.Width / width;
 
             for (int i = 0; i < numGraphics; ++i)
             {
@@ -472,10 +474,12 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
 
             if (textureAreas.Values.Min(a => a.Left) < 0 ||
                 textureAreas.Values.Min(a => a.Top) < 0 ||
-                textureAreas.Values.Max(a => a.Right) > Texture!.Width ||
-                textureAreas.Values.Max(a => a.Bottom) > Texture.Height)
+                textureAreas.Values.Max(a => a.Right) > texture!.Width ||
+                textureAreas.Values.Max(a => a.Bottom) > texture.Height)
                 throw new AmbermoonException(ExceptionScope.Data, "Texture atlas entry was outside the atlas boundaries.");
         }
+
+        Atlas = new(texture, textureAreas.ToDictionary(area => (uint)area.Key, area => new Position(area.Value.Position)));
     }
 
     public void Write(IDataWriter dataWriter)
@@ -535,15 +539,17 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
             dataWriter.Write((byte)height);
         }
 
+        var texture = Atlas!.Graphic;
+
         void WriteAtlas()
         {
-            if (Texture.Width > ushort.MaxValue || Texture.Height > ushort.MaxValue)
+            if (texture.Width > ushort.MaxValue || texture.Height > ushort.MaxValue)
                 throw new AmbermoonException(ExceptionScope.Data, $"Texture atlas size exceeded max value of {ushort.MaxValue}x{ushort.MaxValue}.");
 
-            if (Texture.Width * Texture.Height * (usePalette ? 1 : 4) != Texture.Data.Length)
+            if (texture.Width * texture.Height * (usePalette ? 1 : 4) != texture.Data.Length)
                 throw new AmbermoonException(ExceptionScope.Data, "Texture atlas data size does not match the excepted size based on the dimensions and format.");
 
-            var data = usePalette && colorIndexOffset != 0 ? new byte[Texture.Data.Length] : Texture.Data;
+            var data = usePalette && colorIndexOffset != 0 ? new byte[texture.Data.Length] : texture.Data;
 
             if (usePalette && colorIndexOffset != 0)
             {
@@ -557,18 +563,18 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
 
                 if (alpha)
                 {
-                    for (int i = 0; i < Texture.Data.Length; ++i)
-                        data[i] = Texture.Data[i] == 0 ? (byte)0 : AdjustAndCheck(Texture.Data[i]);
+                    for (int i = 0; i < texture.Data.Length; ++i)
+                        data[i] = texture.Data[i] == 0 ? (byte)0 : AdjustAndCheck(texture.Data[i]);
                 }
                 else
                 {
-                    for (int i = 0; i < Texture.Data.Length; ++i)
-                        data[i] = AdjustAndCheck(Texture.Data[i]);
+                    for (int i = 0; i < texture.Data.Length; ++i)
+                        data[i] = AdjustAndCheck(texture.Data[i]);
                 }
             }
 
-            dataWriter.Write((ushort)Texture.Width);
-            dataWriter.Write((ushort)Texture.Height);
+            dataWriter.Write((ushort)texture.Width);
+            dataWriter.Write((ushort)texture.Height);
             dataWriter.Write(data);
         }
 
@@ -577,7 +583,7 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
             int width = textureAreas[0].Width;
             int height = textureAreas[0].Height;
 
-            if (Texture!.Width % width != 0 || Texture.Height % height != 0)
+            if (texture!.Width % width != 0 || texture.Height % height != 0)
                 throw new AmbermoonException(ExceptionScope.Data, "Tiled texture atlas dimensions don't fit to the given tile size.");
 
             if (!usePalette)
@@ -587,7 +593,7 @@ public class GraphicAtlas : IFileSpec<GraphicAtlas>, IFileSpec
         }
         else
         {
-            var totalArea = new Rect(0, 0, Texture!.Width, Texture.Height);
+            var totalArea = new Rect(0, 0, texture!.Width, texture.Height);
 
             foreach (var (_, area) in textureAreas)
             {

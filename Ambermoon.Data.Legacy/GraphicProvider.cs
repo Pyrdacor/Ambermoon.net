@@ -42,9 +42,12 @@ namespace Ambermoon.Data.Legacy
         };
 
         readonly GameData gameData;
-		public Dictionary<int, Graphic> Palettes { get; }
-        public Dictionary<int, int> NPCGraphicOffsets { get; } = new Dictionary<int, int>();
-        public Dictionary<int, List<int>> NPCGraphicFrameCounts { get; } = new Dictionary<int, List<int>>();
+        readonly Dictionary<int, int> npcGraphicOffsets = [];
+        readonly Dictionary<int, List<int>> npcGraphicFrameCounts = [];
+
+        public Dictionary<int, Graphic> Palettes { get; }
+        public IReadOnlyDictionary<int, int> NPCGraphicOffsets => npcGraphicOffsets.AsReadOnly();
+        public IReadOnlyDictionary<int, List<int>> NPCGraphicFrameCounts => npcGraphicFrameCounts.AsReadOnly();
 
 		// Note: Found this at 0x12BE in data1 hunk of AM2_CPU (1.05 german)
 		// These are 3 color index mappings for:
@@ -102,8 +105,8 @@ namespace Ambermoon.Data.Legacy
                 Width = 32,
                 Height = 1,
                 IndexedGraphic = false,
-                Data = new byte[]
-                {
+                Data =
+                [
                     // The first colors are used for spells which use a materialize animation (earth and wind spells, waterfall, etc).
                     // The animation uses black, dark red, light purple, dark purple, dark beige, light beige in that order.
                     // We start with these color at offset 1. We leave the first color as fully transparent.
@@ -118,7 +121,7 @@ namespace Ambermoon.Data.Legacy
                     // some UI colors (TODO: character with condition?)
                     0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x66, 0x66, 0x55, 0xff, 0x44, 0x44, 0x33, 0xff,
                     0x22, 0x22, 0x22, 0xff, 0x88, 0x88, 0x77, 0xff, 0xaa, 0xaa, 0x99, 0xff, 0xcc, 0xcc, 0xbb, 0xff
-                }
+                ]
             });
 
             const int additionalPaletteCount = 9 + 6 + 2; // Intro, Outro, Fantasy Intro
@@ -142,7 +145,7 @@ namespace Ambermoon.Data.Legacy
             {
                 if (type == GraphicType.Cursor)
                 {
-                    var cursorGraphics = graphics[GraphicType.Cursor] = new List<Graphic>();
+                    var cursorGraphics = graphics[GraphicType.Cursor] = [];
 
                     foreach (var cursor in executableData.Cursors.Entries)
                         cursorGraphics.Add(cursor.Graphic);
@@ -182,9 +185,9 @@ namespace Ambermoon.Data.Legacy
                     var graphic = new Graphic();
                     foreach (var file in gameData.Files["NPC_gfx.amb"].Files)
                     {
-                        NPCGraphicOffsets.Add(file.Key, npcGraphics.Count);
+                        npcGraphicOffsets.Add(file.Key, npcGraphics.Count);
                         var frameCounts = new List<int>();
-						NPCGraphicFrameCounts.Add(file.Key, frameCounts);
+                        npcGraphicFrameCounts.Add(file.Key, frameCounts);
 						var reader = file.Value;
                         reader.Position = 0;
 
@@ -605,6 +608,6 @@ namespace Ambermoon.Data.Legacy
             _ => 1.0f,
         };
 
-        public List<Graphic> GetLabBackgroundGraphics() => GetGraphics(GraphicType.LabBackground);
+        public IReadOnlyList<Graphic> GetLabBackgroundGraphics() => GetGraphics(GraphicType.LabBackground).AsReadOnly();
     }
 }

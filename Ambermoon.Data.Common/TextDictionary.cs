@@ -5,15 +5,15 @@ namespace Ambermoon.Data
 {
     public class TextDictionary
     {
-        public string Language { get; set; }
-        public List<string> Entries { get; } = new List<string>();
+        public GameLanguage Language { get; set; }
+        public List<string> Entries { get; } = [];
 
         private TextDictionary()
         {
 
         }
 
-        public static TextDictionary Load(ITextDictionaryReader textDictionaryReader, KeyValuePair<string, IDataReader> dictionary)
+        public static TextDictionary Load(ITextDictionaryReader textDictionaryReader, KeyValuePair<GameLanguage, IDataReader> dictionary)
         {
             var textDictionary = new TextDictionary();
 

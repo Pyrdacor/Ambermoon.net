@@ -40,9 +40,9 @@ namespace Ambermoon.Data.Legacy
             void AppendLine(string text);
         }
 
-        public Dictionary<string, IFileContainer> Files { get; } = new Dictionary<string, IFileContainer>();
-        public Dictionary<string, IDataReader> Dictionaries { get; } = new Dictionary<string, IDataReader>();
-        public Dictionary<TravelType, GraphicInfo> StationaryImageInfos { get; } = new Dictionary<TravelType, GraphicInfo>
+        public Dictionary<string, IFileContainer> Files { get; } = [];
+        public Dictionary<GameLanguage?, IDataReader> Dictionaries { get; } = [];
+        public IReadOnlyDictionary<TravelType, GraphicInfo> StationaryImageInfos { get; } = new Dictionary<TravelType, GraphicInfo>
         {
             { TravelType.Horse, new GraphicInfo { Width = 32, Height = 22, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
             { TravelType.Raft, new GraphicInfo { Width = 32, Height = 11, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
@@ -74,19 +74,21 @@ namespace Ambermoon.Data.Legacy
         public bool Loaded { get; private set; } = false;
         public GameDataSource GameDataSource { get; private set; } = GameDataSource.Memory;
         public string Version { get; private set; } = "Unknown";
-        public string Language { get; private set; } = "Unknown";
+        public GameLanguage Language { get; private set; } = GameLanguage.English;
         public bool Advanced { get; private set; } = false;
         public TextDictionary Dictionary { get; private set; }
 
-        public KeyValuePair<string, IDataReader> GetDictionary()
+        public KeyValuePair<GameLanguage, IDataReader> GetDictionary()
         {
-            if (versionPreference != VersionPreference.Pre114 && Dictionaries.TryGetValue("", out var dictionary))
+            if (versionPreference != VersionPreference.Pre114 && Dictionaries.TryGetValue(null, out var dictionary))
                 return KeyValuePair.Create(Language, dictionary);
 
-            if (Dictionaries.TryGetValue(Language.ToLower(), out dictionary))
+            if (Dictionaries.TryGetValue(Language, out dictionary))
                 return KeyValuePair.Create(Language, dictionary);
 
-            return Dictionaries.First();
+            var first = Dictionaries.First();
+
+            return KeyValuePair.Create(first.Key ?? GameLanguage.English, first.Value);
         }
 
         public GameData(LoadPreference loadPreference = LoadPreference.PreferExtracted, ILogger logger = null, bool stopAtFirstError = true,
@@ -550,9 +552,10 @@ namespace Ambermoon.Data.Legacy
                 if (IsDictionary(file))
                 {
                     if (file.ToLower() == "dict.amb")
-                        Dictionaries.Add("", Files[file].Files[1]);
+                        Dictionaries.Add(null, Files[file].Files[1]);
                     else
-                        Dictionaries.Add(file.ToLower().Split('.').Last(), Files[file].Files[1]);
+                        Dictionaries.Add(file.ToLower().Split('.').Last().ToGameLanguage(), Files[file].Files[1]);
+
                     foundNoDictionary = false;
                 }
 
@@ -730,14 +733,14 @@ namespace Ambermoon.Data.Legacy
                 {
                     var info = GetInfo(null, () => textAmb.Files[1]);
                     Version = info.Version;
-                    Language = info.Language;
+                    Language = info.Language.ToGameLanguage();
                     Advanced = info.Advanced;
                 }
                 else if (Files.TryGetValue("AM2_CPU", out var exe) || Files.TryGetValue("AM2_BLIT", out exe))
                 {
                     var info = GetInfo(() => exe.Files[1], null);
                     Version = info.Version;
-                    Language = info.Language;
+                    Language = info.Language.ToGameLanguage();
                     Advanced = info.Advanced;
                 }
             }
@@ -898,7 +901,7 @@ namespace Ambermoon.Data.Legacy
             return travelGraphicInfos[(int)type * 4 + (int)direction];
         }
 
-        public Character2DAnimationInfo PlayerAnimationInfo => new Character2DAnimationInfo
+        public Character2DAnimationInfo PlayerAnimationInfo => new()
         {
             FrameWidth = 16,
             FrameHeight = 32,

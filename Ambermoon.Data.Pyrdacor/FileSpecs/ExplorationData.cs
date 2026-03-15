@@ -11,6 +11,8 @@ internal class ExplorationData : IFileSpec<ExplorationData>, IFileSpec
     public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0>();
     Automap? automap = null;
 
+    public Automap Automap => automap!;
+
     public ExplorationData()
     {
 

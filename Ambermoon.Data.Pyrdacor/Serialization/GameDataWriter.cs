@@ -8,7 +8,7 @@ namespace Ambermoon.Data.Pyrdacor;
 
 partial class GameData
 {
-    private static void WritePalettes(IDataWriter dataWriter, Dictionary<int, IDataReader> palettes)
+    private static void WritePalettes(IDataWriter dataWriter, Dictionary<int, IDataReader> palettes, IGraphicInfoProvider graphicInfoProvider)
     {
         var graphic = new Graphic()
         {
@@ -44,7 +44,15 @@ partial class GameData
             }
         }
 
-        var palette = new Palette(graphic);
+        var palette = new Palette(graphic)
+        {
+            PrimaryUIPaletteIndex = graphicInfoProvider.PrimaryUIPaletteIndex,
+            AutomapPaletteIndex = graphicInfoProvider.AutomapPaletteIndex,
+            SecondaryUIPaletteIndex = graphicInfoProvider.SecondaryUIPaletteIndex,
+            FirstIntroPaletteIndex = graphicInfoProvider.FirstIntroPaletteIndex,
+            FirstOutroPaletteIndex = graphicInfoProvider.FirstOutroPaletteIndex,
+            FirstFantasyIntroPaletteIndex = graphicInfoProvider.FirstFantasyIntroPaletteIndex,
+        };
 
         PADF.Write(dataWriter, palette);
     }
@@ -57,6 +65,36 @@ partial class GameData
 
             return new Texts(new Objects.TextList(texts));
         }));
+    }
+
+    private static void WriteGraphics(IDataWriter dataWriter, List<Graphic> graphics, bool tiles, bool alpha, bool usePalette, int? fixedPaletteIndex = null, int colorIndexOffset = 0)
+    {
+        GraphicAtlasData graphicAtlas;
+
+        if (tiles)
+        {
+            if (usePalette)
+            {
+                graphicAtlas = GraphicAtlasData.FromTiles(fixedPaletteIndex ?? GraphicAtlasData.MultiplePalettes, graphics, alpha, colorIndexOffset);
+            }
+            else
+            {
+                graphicAtlas = GraphicAtlasData.FromTiles(graphics, alpha, colorIndexOffset);
+            }
+        }
+        else
+        {
+            if (usePalette)
+            {
+                graphicAtlas = GraphicAtlasData.FromGraphics(fixedPaletteIndex ?? GraphicAtlasData.MultiplePalettes, graphics, alpha, colorIndexOffset);
+            }
+            else
+            {
+                graphicAtlas = GraphicAtlasData.FromGraphics(graphics, alpha, colorIndexOffset);
+            }
+        }
+
+        PADF.Write(dataWriter, graphicAtlas);
     }
 
     public static void WriteLegacyGameData(IDataWriter dataWriter, Legacy.GameData gameData)
@@ -78,7 +116,7 @@ partial class GameData
             fileCount++;
         }
 
-        WriteSection(MagicPalette, () => WritePalettes(dataWriter, gameData.Files["Palettes.amb"].Files));
+        WriteSection(MagicPalette, () => WritePalettes(dataWriter, gameData.Files["Palettes.amb"].Files, gameData.GraphicInfoProvider));
 
         WriteSection(MagicSavegame, () =>
         {
@@ -134,6 +172,12 @@ partial class GameData
         WriteSection(MagicLocations, () => PADP.Write(dataWriter, gameData.Places.Entries.Select(place => new LocationData(place))));
         // TODO: outro
         // TODO: texts (messages, etc)
+
+        var graphicProvider = (gameData.GraphicInfoProvider as IGraphicProvider)!;
+
+        WriteSection(MagicItemGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Item), tiles: true, alpha: true, usePalette: true, fixedPaletteIndex: graphicProvider.PrimaryUIPaletteIndex));
+        WriteSection(MagicLayouts, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Layout), tiles: true, alpha: false, usePalette: true));
+        WriteSection(MagicNPCGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.NPC), tiles: true, alpha: false, usePalette: true));
 
         // TODO ...
 

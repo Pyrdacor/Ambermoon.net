@@ -38,24 +38,3 @@ public class GameVersion
     internal const string RemakeReleaseDate = "24-11-2025";
 }
 
-public static class GameLanguageExtensions
-{
-    public static GameLanguage ToGameLanguage(this string languageString)
-    {
-        if (Enum.TryParse(languageString, out GameLanguage gameLanguage))
-            return gameLanguage;
-
-        languageString = languageString.ToLower().Trim();
-
-        if (languageString == "german" || languageString == "deutsch" || languageString == "ger" || languageString == "de")
-            return GameLanguage.German;
-        if (languageString == "french" || languageString == "français" || languageString == "fre" || languageString == "fr")
-            return GameLanguage.French;
-        if (languageString == "polish" || languageString == "polski" || languageString == "pol" || languageString == "pl")
-            return GameLanguage.Polish;
-        if (languageString == "czech" || languageString == "český" || languageString == "česky" || languageString == "ces" || languageString == "cze" || languageString == "cs")
-            return GameLanguage.Czech;
-
-        return GameLanguage.English;
-    }
-}

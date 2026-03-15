@@ -16,7 +16,9 @@ using SavegameData = FileSpecs.SavegameData;
 
 public partial class GameData : IGameData, IGraphicAtlasProvider
 {
-    LazyFileLoader<Palette, Graphic> paletteLoader = null!;
+    readonly ISavegameManager savegameManager;
+    LazyFileLoader<GameDataInfo, GameDataInfo> gameDataInfoLoader = null!;
+    LazyFileLoader<Palette, Palette> paletteLoader = null!;
     LazyFileLoader<SavegameData, Savegame> savegameLoader = null!;
     LazyContainerLoader<FontData, Font> fontLoader = null!;
     LazyContainerLoader<MonsterGroups, MonsterGroup> monsterGroupLoader = null!;
@@ -35,17 +37,33 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     LazyContainerLoader<LocationData, Place> locationLoader = null!;
     LazyContainerLoader<Texts, string> locationNameLoader = null!;
     LazyFileLoader<Texts, TextList> gotoPointNameLoader = null!;
-    LazyFileLoader<GraphicAtlas, Graphic> layoutGraphicLoader = null!;
-    LazyFileLoader<GraphicAtlas, Graphic> npcGraphicLoader = null!;
-    LazyFileLoader<GraphicAtlas, Graphic> itemGraphicLoader = null!;
+    LazyContainerLoader<ChestData, Chest> chestLoader = null!;
+    LazyContainerLoader<MerchantData, Merchant> merchantLoader = null!;
+    LazyContainerLoader<ExplorationData, Automap> explorationDataLoader = null!;
+    LazyFileLoader<GraphicsInfoData, GraphicsInfoData> graphicsInfoLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> layoutGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> npcGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> playerGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> itemGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> portraitGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> eventGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> cursorGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> pics80x80GraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> uiGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> travelGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> transportGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> combatBackgroudLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> combatGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> battleFieldIconLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> automapGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> riddlemouthGraphicLoader = null!;
     LazyFileLoader<Textures, Textures> texturesLoader = null!;
-    LazyContainerLoader<GraphicAtlas, Graphic> tileGraphicLoader = null!; // one entry per tileset
+    LazyContainerLoader<GraphicAtlasData, GraphicAtlas> tileGraphicLoader = null!; // one entry per tileset
     readonly Dictionary<string, Action<IDataReader>> fileHandlers = [];
     readonly Lazy<SongManager> songManager = null!;
     readonly Lazy<ICharacterManager> characterManager = null!;
     readonly Lazy<IItemManager> itemManager = null!;
     readonly Lazy<IMapManager> mapManager = null!;
-    readonly Lazy<ISavegameManager> savegameManager = null!;
     readonly Lazy<IngameFont> ingameFont = null!;
     readonly Lazy<Font> outroSmallFont = null!;
     readonly Lazy<Font> outroLargeFont = null!;
@@ -59,19 +77,22 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public GameDataSource GameDataSource => GameDataSource.Memory;
 
-    public bool Advanced { get; private set; }
+    public bool Advanced => gameDataInfoLoader.Load().Advanced;
+
+    public GameLanguage Language => gameDataInfoLoader.Load().Language;
+
+    public string Version => gameDataInfoLoader.Load().Version;
 
     public ICharacterManager CharacterManager => characterManager!.Value;
 
-    public ISavegameManager SavegameManager => savegameManager!.Value;
+    public ISavegameManager SavegameManager => savegameManager;
 
     public ISongManager SongManager => songManager!.Value;
 
-    // TODO
-    public Dictionary<TravelType, GraphicInfo> StationaryImageInfos => throw new NotImplementedException();
+    public IReadOnlyDictionary<TravelType, GraphicInfo> StationaryImageInfos
+        => graphicsInfoLoader.Load().StationaryImageInfos;
 
-    // TODO
-    public Character2DAnimationInfo PlayerAnimationInfo => throw new NotImplementedException();
+    public Character2DAnimationInfo PlayerAnimationInfo => graphicsInfoLoader.Load().PlayerAnimationInfo;
 
     public IReadOnlyList<Position> CursorHotspots => throw new NotImplementedException();
 
@@ -99,34 +120,36 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public Dictionary<int, Graphic> Palettes => palettes!.Value;
 
-    public Dictionary<int, int> NPCGraphicOffsets => throw new NotImplementedException();
+    public byte DefaultTextPaletteIndex => paletteLoader.Load().DefaultTextPaletteIndex;
 
-    public byte DefaultTextPaletteIndex => throw new NotImplementedException();
+    public byte PrimaryUIPaletteIndex => paletteLoader.Load().PrimaryUIPaletteIndex;
 
-    public byte PrimaryUIPaletteIndex => throw new NotImplementedException();
+    public byte SecondaryUIPaletteIndex => paletteLoader.Load().SecondaryUIPaletteIndex;
 
-    public byte SecondaryUIPaletteIndex => throw new NotImplementedException();
+    public byte AutomapPaletteIndex => paletteLoader.Load().AutomapPaletteIndex;
 
-    public byte AutomapPaletteIndex => throw new NotImplementedException();
+    public byte FirstIntroPaletteIndex => paletteLoader.Load().FirstIntroPaletteIndex;
 
-    public byte FirstIntroPaletteIndex => throw new NotImplementedException();
+    public byte FirstOutroPaletteIndex => paletteLoader.Load().FirstOutroPaletteIndex;
 
-    public byte FirstOutroPaletteIndex => throw new NotImplementedException();
+    public byte FirstFantasyIntroPaletteIndex => paletteLoader.Load().FirstFantasyIntroPaletteIndex;
 
-    public byte FirstFantasyIntroPaletteIndex => throw new NotImplementedException();
+    public IReadOnlyDictionary<int, int> NPCGraphicOffsets
+        => graphicsInfoLoader.Load().NPCGraphicOffsets;
 
-    public Dictionary<int, List<int>> NPCGraphicFrameCounts => throw new NotImplementedException();
+    public IReadOnlyDictionary<int, List<int>> NPCGraphicFrameCounts
+        => graphicsInfoLoader.Load().NPCGraphicFrameCounts;
 
     internal Dictionary<uint, TextList> NPCTexts => npcTextLoader.LoadAll();
 
     internal Dictionary<uint, TextList> PartyTexts => partyTextLoader.LoadAll();
 
-    // TODO
     public TravelGraphicInfo GetTravelGraphicInfo(TravelType type, CharacterDirection direction)
     {
-        throw new NotImplementedException();
+        return graphicsInfoLoader.Load().TravelGraphicInfos[type][(int)direction];
     }
 
+    const string MagicInfo = "INFO"; 
     const string MagicPalette = "PALS";
     const string MagicSavegame = "SAVE";
     const string MagicPlayers = "PLAY";
@@ -134,6 +157,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     const string MagicNPCs = "NPCS";
     const string MagicNPCTexts = "NTXT";
     const string MagicNPCGraphics = "NGFX";
+    const string MagicGraphicsInfo = "GFXI"; // NPC graphic frame counts, player offsets, etc
     const string MagicPartyTexts = "PTXT";
     const string MagicPartyGraphics = "PGFX";
     const string MagicTravelGraphics = "TRAV";
@@ -157,25 +181,44 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     const string MagicEventGraphics = "EVEG";
     const string MagicCombatBackgrounds = "COMB";
     const string MagicCombatGraphics = "COMG";
+    const string MagicBattleFieldIcons = "BFIC";
     const string MagicPortraits = "PORT";
     const string MagicUIGraphics = "UGFX";
     const string MagicWorldBackgrounds = "WOBG";
+    const string MagicCursors = "CURS";
+    const string MagicPictures80x80 = "8080";
+    const string MagicTransportGraphics = "TRAN";
+    const string MagicAutomapGraphics = "TRAN";
+    /*LazyFileLoader<GraphicAtlasData, GraphicAtlas> cursorGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> pics80x80GraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> uiGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> travelGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> transportGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> combatBackgroudLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> combatGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> battleFieldIconLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> automapGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> riddlemouthGraphicLoader = null!;*/
+    // TODO: Load horizon graphics?
 
-    public GameData(Stream stream, params (string Magic, Action<IDataReader> Action)[] customFileHandlers)
-        : this(new DataReaderLE(stream), customFileHandlers)
+    public GameData(Stream stream, ISavegameManager savegameManager, params (string Magic, Action<IDataReader> Action)[] customFileHandlers)
+        : this(new DataReaderLE(stream), savegameManager, customFileHandlers)
     {
 
     }
 
-    public GameData(IDataReader reader, params (string Magic, Action<IDataReader> Action)[] customFileHandlers)
+    public GameData(IDataReader reader, ISavegameManager savegameManager, params (string Magic, Action<IDataReader> Action)[] customFileHandlers)
     {
         if (!FileHeader.CheckHeader(reader, "PYGD", true))
             throw new AmbermoonException(ExceptionScope.Data, "The given file is no Pyrdacor game data file.");
+
+        this.savegameManager = savegameManager;
 
         // Note: The loaders are all lazy loaded as well as the managers. This allows any order of the loaded
         // file specs as the data is only used when some object is requested by the game. At that point in time
         // all file specs have been loaded from the game data.
 
+        fileHandlers.Add(MagicInfo, LoadInfo);
         fileHandlers.Add(MagicPalette, LoadPalettes);
         fileHandlers.Add(MagicSavegame, LoadSavegame); // Only the Party_data.sav
         fileHandlers.Add(MagicPlayers, LoadParty); // Initial party
@@ -198,6 +241,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         fileHandlers.Add(MagicFonts, LoadFonts);
         fileHandlers.Add(MagicGotoPointNames, LoadGotoPointNames);
         fileHandlers.Add(MagicLayouts, LoadLayoutGraphics);
+        fileHandlers.Add(MagicGraphicsInfo, LoadGraphicsInfo);
 
         foreach (var customFileHandler in customFileHandlers)
         {
@@ -241,10 +285,11 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         introSmallFont = new Lazy<Font>(() => fontLoader!.Load(FontData.IntroSmallFontIndex));
         introLargeFont = new Lazy<Font>(() => fontLoader!.Load(FontData.IntroLargeFontIndex));
         ingameFontProvider = new Lazy<IngameFontProvider>(() => new(ingameFont!.Value));
+
         palettes = new Lazy<Dictionary<int, Graphic>>(() =>
         {
             var result = new Dictionary<int, Graphic>();
-            var paletteGraphics = paletteLoader!.Load();
+            var paletteGraphics = paletteLoader!.Load().Graphic;
 
             for (int y = 0; y < paletteGraphics.Height; y++)
             {
@@ -259,6 +304,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
             return result;
         });
+
         places = new Lazy<Places>(() =>
         {
             var places = new Places();
@@ -308,9 +354,14 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     #region Loaders
 
+    void LoadInfo(IDataReader dataReader)
+    {
+        gameDataInfoLoader = new(dataReader, this, p => p);
+    }
+
     void LoadPalettes(IDataReader dataReader)
     {
-        paletteLoader = new(dataReader, this, p => p.Graphic);
+        paletteLoader = new(dataReader, this, p => p);
     }
 
     void LoadSavegame(IDataReader dataReader)
@@ -413,9 +464,14 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         gotoPointNameLoader = new(dataReader, this, n => n.TextList);
     }
 
+    void LoadGraphicsInfo(IDataReader dataReader)
+    {
+        graphicsInfoLoader = new(dataReader, this, g => g);
+    }
+
     void LoadTileGraphics(IDataReader dataReader)
     {
-        tileGraphicLoader = new(dataReader, this, g => g.Texture!);
+        tileGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     void LoadTextures(IDataReader dataReader)
@@ -430,7 +486,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     void LoadLayoutGraphics(IDataReader dataReader)
     {
-        layoutGraphicLoader = new(dataReader, this, g => g.Texture!);
+        layoutGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     // These include the riddlemouth, combat and button graphics but not the battle field player/monster sprites and not the layouts!
@@ -456,7 +512,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     void LoadEventGraphics(IDataReader dataReader)
     {
-
+        eventGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     void Load80x80Graphics(IDataReader dataReader)
@@ -486,17 +542,17 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     void LoadPartyGraphics(IDataReader dataReader)
     {
-
+        playerGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     void LoadItemGraphics(IDataReader dataReader)
     {
-
+        itemGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     void LoadPortraitGraphics(IDataReader dataReader)
     {
-
+        portraitGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     void LoadStationaryGraphics(IDataReader dataReader)
@@ -525,7 +581,10 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         return CombatBackgrounds.Info3D[index];
     }
 
-    public CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index) => CombatGraphics.Info[index];
+    public CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index)
+    {
+        return graphicsInfoLoader.Load().CombatGraphicInfos[index];
+    }
 
     public float GetMonsterRowImageScaleFactor(MonsterRow row) => row switch
     {
@@ -559,32 +618,29 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
         return type switch
         {
-            >= GraphicType.Tileset1 => throw new NotImplementedException(),
-            GraphicType.Player => throw new NotImplementedException(),
-            GraphicType.Portrait => throw new NotImplementedException(),
-            //GraphicType.Item => itemGraphicLoader.Load(),
-            /*GraphicType.Layout,
-            GraphicType.LabBackground,
-            GraphicType.Cursor,
-            GraphicType.Pics80x80,
-            GraphicType.UIElements,
-            GraphicType.EventPictures,
-            GraphicType.TravelGfx,
-            GraphicType.Transports,
-            GraphicType.NPC,
-            GraphicType.CombatBackground,
-            GraphicType.CombatGraphics,
-            GraphicType.BattleFieldIcons,
-            GraphicType.AutomapGraphics,
-            GraphicType.RiddlemouthGraphics*/
+            >= GraphicType.Tileset1 => tileGraphicLoader.LoadOrDefault((ushort)(type - GraphicType.Tileset1), new GraphicAtlas()),
+            GraphicType.Player => playerGraphicLoader.Load(),
+            GraphicType.Portrait => portraitGraphicLoader.Load(),
+            GraphicType.Item => itemGraphicLoader.Load(),
+            GraphicType.Layout => layoutGraphicLoader.Load(),
+            GraphicType.LabBackground => throw new NotImplementedException("Use GetLabBackgroundGraphics instead"), // Should not be used when using current GameData
+            GraphicType.Cursor => throw new NotImplementedException(),
+            GraphicType.Pics80x80 => throw new NotImplementedException(),
+            GraphicType.UIElements => throw new NotImplementedException(),
+            GraphicType.EventPictures => eventGraphicLoader.Load(),
+            GraphicType.TravelGfx => throw new NotImplementedException(),
+            GraphicType.Transports => throw new NotImplementedException(),
+            GraphicType.NPC => npcGraphicLoader.Load(),
+            GraphicType.CombatBackground => throw new NotImplementedException(),
+            GraphicType.CombatGraphics => throw new NotImplementedException(),
+            GraphicType.BattleFieldIcons => throw new NotImplementedException(),
+            GraphicType.AutomapGraphics => throw new NotImplementedException(),
+            GraphicType.RiddlemouthGraphics => throw new NotImplementedException(),
             _ => throw new ArgumentOutOfRangeException(nameof(type))
         };
     }
 
-    public List<Graphic> GetLabBackgroundGraphics()
-    {
-        throw new NotImplementedException();
-    }
+    public IReadOnlyList<Graphic> GetLabBackgroundGraphics() => texturesLoader.Load().BackgroundGraphics;
 
     #endregion
 }

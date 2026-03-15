@@ -32,6 +32,11 @@ internal class SavegameData : IFileSpec<SavegameData>, IFileSpec
         SavegameSerializer.ReadSaveData(savegame, dataReader);
     }
 
+    public static void ReadInto(Savegame savegame, IDataReader dataReader, uint _, GameData __, byte ___)
+    {
+        SavegameSerializer.ReadSaveData(savegame, dataReader);
+    }
+
     public void Write(IDataWriter dataWriter)
     {
         SavegameSerializer.WriteSaveData(savegame, dataWriter);

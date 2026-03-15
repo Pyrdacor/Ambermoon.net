@@ -41,12 +41,12 @@ public interface IPaletteProvider
 
 public interface IGraphicInfoProvider : IPaletteProvider
 {
-    Dictionary<int, int> NPCGraphicOffsets { get; }
-    Dictionary<int, List<int>> NPCGraphicFrameCounts { get; }
+    IReadOnlyDictionary<int, int> NPCGraphicOffsets { get; }
+    IReadOnlyDictionary<int, List<int>> NPCGraphicFrameCounts { get; }
     CombatBackgroundInfo Get2DCombatBackground(uint index, bool advanced);
     CombatBackgroundInfo Get3DCombatBackground(uint index, bool advanced);
     CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index);
-    List<Graphic> GetLabBackgroundGraphics();
+    IReadOnlyList<Graphic> GetLabBackgroundGraphics();
     float GetMonsterRowImageScaleFactor(MonsterRow row);
     byte PaletteIndexFromColorIndex(Map map, byte colorIndex);
     byte DefaultTextPaletteIndex { get; }
