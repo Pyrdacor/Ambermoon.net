@@ -80,10 +80,7 @@ namespace Ambermoon.Data.Legacy
 
         public KeyValuePair<GameLanguage, IDataReader> GetDictionary()
         {
-            if (versionPreference != VersionPreference.Pre114 && Dictionaries.TryGetValue(null, out var dictionary))
-                return KeyValuePair.Create(Language, dictionary);
-
-            if (Dictionaries.TryGetValue(Language, out dictionary))
+            if (Dictionaries.TryGetValue(Language, out var dictionary))
                 return KeyValuePair.Create(Language, dictionary);
 
             var first = Dictionaries.First();
@@ -546,13 +543,12 @@ namespace Ambermoon.Data.Legacy
                         : GameDataSource.ADF;
                 }
 
-                if (log != null)
-                    log.AppendLine("succeeded");
+                log?.AppendLine("succeeded");
 
                 if (IsDictionary(file))
                 {
                     if (file.ToLower() == "dict.amb")
-                        Dictionaries.Add(null, Files[file].Files[1]);
+                        Dictionaries.Add(Language, Files[file].Files[1]);
                     else
                         Dictionaries.Add(file.ToLower().Split('.').Last().ToGameLanguage(), Files[file].Files[1]);
 
