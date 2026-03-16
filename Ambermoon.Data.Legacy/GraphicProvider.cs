@@ -9,6 +9,8 @@ namespace Ambermoon.Data.Legacy
 {
     public class GraphicProvider : IGraphicProvider
     {
+        public const int MaxTilesets = 10;
+
         struct GraphicFile
         {
             public string File;
@@ -394,6 +396,12 @@ namespace Ambermoon.Data.Legacy
                 else
                 {
                     LoadGraphics(type);
+
+                    if (type == GraphicType.Tileset1)
+                    {
+                        for (int t = 1; t < MaxTilesets; t++)
+                            LoadGraphics(type + t);
+                    }
                 }
             }
         }
@@ -460,10 +468,11 @@ namespace Ambermoon.Data.Legacy
         {
             if (!graphics.ContainsKey(type))
             {
-                graphics.Add(type, new List<Graphic>());
+                var graphicList = new List<Graphic>();
                 var reader = new GraphicReader();
                 var info = GraphicInfoFromType(type);
-                var graphicList = graphics[type];
+
+                graphics.Add(type, graphicList);
 
                 void LoadGraphic(IDataReader graphicDataReader, byte maskColor = 0)
                 {
@@ -477,9 +486,12 @@ namespace Ambermoon.Data.Legacy
                     }
                 }
 
+                if (!graphicFiles.TryGetValue(type, out var files) && type >= GraphicType.Tileset1)
+                    return;
+
                 var allFiles = new SortedDictionary<int, IDataReader>();
 
-                foreach (var graphicFile in graphicFiles[type])
+                foreach (var graphicFile in files)
                 {
                     var containerFile = gameData.Files[graphicFile.File];
 
@@ -514,7 +526,7 @@ namespace Ambermoon.Data.Legacy
             }
         }
 
-        GraphicInfo GraphicInfoFromType(GraphicType type)
+        static GraphicInfo GraphicInfoFromType(GraphicType type)
         {
             var info = new GraphicInfo
             {
