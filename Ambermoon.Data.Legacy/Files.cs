@@ -93,10 +93,10 @@ namespace Ambermoon.Data.Legacy
 
         public static ImmutableDictionary<string, char> New114Files = new Dictionary<string, char>
         {
-            { "Dict.amb", 'G' },
             { "Button_graphics", 'A' },
             { "Objects.amb", 'A' },
             { "Text.amb", 'A' },
+            { "Dict.amb", 'G' },
             { "Monster_char.amb", 'H' }
         }.ToImmutableDictionary();
 
@@ -105,13 +105,13 @@ namespace Ambermoon.Data.Legacy
             { "Monster_char_data.amb", "Monster_char.amb" }
         }.ToImmutableDictionary();
 
-        public static List<string> Removed114Files = new()
-        {
+        public static List<string> Removed114Files =
+        [
             "Dictionary.english",
             "Dictionary.german",
             "Monster_char_data.amb",
             "AM2_BLIT"
-        };
+        ];
 
         // Key: Filename, Value: Disk letter
         public static readonly ImmutableDictionary<string, char> AmigaFiles = new Dictionary<string, char>

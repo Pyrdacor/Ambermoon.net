@@ -522,6 +522,7 @@ namespace Ambermoon.Data.Legacy
                     ambermoonFiles.Add(file.Key, file.Value);
             }
 
+            bool dictAmbLoaded = false;
             float progress = 0.0f;
             float progressPerFile = (savesOnly ? 1.0f : 0.45f) / ambermoonFiles.Count;
             // If not only saves are loaded a lot of the time is needed after the files are loaded for image loading etc.
@@ -547,8 +548,12 @@ namespace Ambermoon.Data.Legacy
 
                 if (IsDictionary(file))
                 {
-                    if (file.ToLower() == "dict.amb")
-                        Dictionaries.Add(Language, Files[file].Files[1]);
+                    if (file.Equals("dict.amb", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        // Language is replaced later
+                        Dictionaries.Add(GameLanguage.English, Files[file].Files[1]);
+                        dictAmbLoaded = true;
+                    }
                     else
                         Dictionaries.Add(file.ToLower().Split('.').Last().ToGameLanguage(), Files[file].Files[1]);
 
@@ -635,7 +640,7 @@ namespace Ambermoon.Data.Legacy
                             loadedDisks.Add(disk, loadedDisk);
                     }
 
-                    if (!loadedDisks.ContainsKey(disk) || !loadedDisks[disk].ContainsKey(name))
+                    if (!loadedDisks.TryGetValue(disk, out Dictionary<string, byte[]> value) || !value.ContainsKey(name))
                     {
                         if (versionPreference != VersionPreference.Pre114 &&
                             Legacy.Files.Renamed114Files.TryGetValue(name, out string newName) &&
@@ -699,7 +704,7 @@ namespace Ambermoon.Data.Legacy
                     else
                     {
                         GameDataSource = GameDataSource == GameDataSource.LegacyFiles ? GameDataSource.ADFAndLegacyFiles : GameDataSource.ADF;
-                        Files.Add(name, fileReader.ReadRawFile(name, loadedDisks[disk][name]));
+                        Files.Add(name, fileReader.ReadRawFile(name, value[name]));
                         HandleFileLoaded(name, false);
                     }
                 }
@@ -738,6 +743,12 @@ namespace Ambermoon.Data.Legacy
                     Version = info.Version;
                     Language = info.Language.ToGameLanguage();
                     Advanced = info.Advanced;
+                }
+
+                if (dictAmbLoaded && Language != GameLanguage.English)
+                {
+                    Dictionaries[Language] = Dictionaries[GameLanguage.English];
+                    Dictionaries.Remove(GameLanguage.English);
                 }
             }
             catch
