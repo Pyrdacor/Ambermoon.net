@@ -13,5 +13,6 @@ namespace Ambermoon.Data
         IReadOnlyList<NPC> NPCs { get; }
         IReadOnlyList<Monster> Monsters { get; }
         IReadOnlyDictionary<uint, MonsterGroup> MonsterGroups { get; }
+        IGraphicAtlas MonsterGraphicAtlas { get; }
     }
 }

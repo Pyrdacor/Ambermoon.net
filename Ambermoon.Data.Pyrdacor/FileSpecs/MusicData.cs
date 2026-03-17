@@ -9,30 +9,23 @@ internal class MusicData : IFileSpec<MusicData>, IFileSpec
     public static string Magic => "MUS";
     public static byte SupportedVersion => 0;
     public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
-    Song? song = null;
     byte[]? songData = null;
 
-    public Song Song => song!;
+    public byte[] SongData => songData!;
 
     public MusicData()
     {
 
     }
 
-    public MusicData(Song song, byte[] songData)
+    public MusicData(byte[] songData)
     {
-        this.song = song;
         this.songData = songData;
     }
 
-    public void Read(IDataReader dataReader, uint index, GameData gameData, byte _)
+    public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
-        var initialPosition = dataReader.Position;
-        song = (gameData.SongManager as SongManager)!.LoadSong(dataReader, (int)index, true, true) as Song;
-        var position = dataReader.Position;
-        dataReader.Position = initialPosition;
-        songData = dataReader.ReadBytes(position - initialPosition);
-        dataReader.Position = position;
+        songData = dataReader.ReadToEnd();
     }
 
     public void Write(IDataWriter dataWriter)

@@ -101,7 +101,7 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
             }
         }
 
-        public static KeyValuePair<Graphic, SortedList<int, Rect>> PackTextureAtlas(List<Graphic> graphics, bool indexed)
+        public static KeyValuePair<Graphic, SortedList<int, Rect>> PackTextureAtlas(Dictionary<int, Graphic> graphics, bool indexed)
         {
             if (graphics.Count == 0)
                 return KeyValuePair.Create(new Graphic(0, 0, 0) { IndexedGraphic = indexed }, new SortedList<int, Rect>());
@@ -109,24 +109,30 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
                 return KeyValuePair.Create(graphics[0], new SortedList<int, Rect>() { { 0, new Rect(0, 0, graphics[0].Width, graphics[0].Height) } });
 
             // Order by max size graphics and prefer wider ones if equal
-            var sortedGraphics = new List<Graphic>(graphics);
+            var sortedGraphics = new List<KeyValuePair<int, Graphic>>(graphics.ToList());
+
             sortedGraphics.Sort((a, b) =>
             {
-                int result = (b.Width * b.Height).CompareTo(a.Width * a.Height);
+                int result = (b.Value.Width * b.Value.Height).CompareTo(a.Value.Width * a.Value.Height);
 
-                return result != 0 ? result : b.Width.CompareTo(a.Width);
+                return result != 0 ? result : b.Value.Width.CompareTo(a.Value.Width);
             });
-            int totalPixels = sortedGraphics.Sum(g => g.Width * g.Height);
-            int maxWidth = sortedGraphics[0].Width;
-            int height = sortedGraphics[0].Height;
+
+            int totalPixels = sortedGraphics.Sum(g => g.Value.Width * g.Value.Height);
+            int maxWidth = sortedGraphics.Max(g => g.Value.Width);
+            int height = sortedGraphics[0].Value.Height;
+
             while (maxWidth < 320 && totalPixels < maxWidth * height * 2)
                 maxWidth *= 2;
 
             var textureAreas = new Dictionary<int, Rect>();
             var emptyAreas = new List<EmptyArea>();
             var graphic = new Graphic(maxWidth, height, 0);
-            graphic.AddOverlay(0, 0, sortedGraphics[0]);
-            int index = graphics.IndexOf(sortedGraphics[0]);
+
+            graphic.AddOverlay(0, 0, sortedGraphics[0].Value);
+
+            int index = sortedGraphics[0].Key;
+
             textureAreas.Add(index, new Rect(0, 0, graphic.Width, graphic.Height));
 
             void AddEmptyArea(Rect area)
@@ -148,24 +154,25 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
                 graphic = newGraphic;                    
             }
 
-            if (sortedGraphics[0].Width < maxWidth)
-                AddEmptyArea(new Rect(sortedGraphics[0].Width, 0, maxWidth - sortedGraphics[0].Width, height));
+            if (sortedGraphics[0].Value.Width < maxWidth)
+                AddEmptyArea(new Rect(sortedGraphics[0].Value.Width, 0, maxWidth - sortedGraphics[0].Value.Width, height));
 
             for (int i = 1; i < sortedGraphics.Count; ++i)
             {
                 var nextGraphic = sortedGraphics[i];
-                index = graphics.IndexOf(nextGraphic);
+
+                index = nextGraphic.Key;
 
                 if (emptyAreas.Count == 0)
                 {
                     int y = graphic.Height;
-                    IncreaseHeight(nextGraphic.Height);
-                    graphic.AddOverlay(0u, (uint)y, nextGraphic);
-                    textureAreas.Add(index, new Rect(0, y, nextGraphic.Width, nextGraphic.Height));
+                    IncreaseHeight(nextGraphic.Value.Height);
+                    graphic.AddOverlay(0u, (uint)y, nextGraphic.Value);
+                    textureAreas.Add(index, new Rect(0, y, nextGraphic.Value.Width, nextGraphic.Value.Height));
                     continue;
                 }
 
-                var areaSize = new Size(nextGraphic.Width, nextGraphic.Height);
+                var areaSize = new Size(nextGraphic.Value.Width, nextGraphic.Value.Height);
                 bool success = false;
 
                 foreach (var emptyArea in emptyAreas)
@@ -175,16 +182,16 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
                     if (result == EmptyArea.FillResult.FullFit)
                     {
                         success = true;
-                        graphic.AddOverlay((uint)position!.X, (uint)position.Y, nextGraphic);
-                        textureAreas.Add(index, new Rect(position.X, position.Y, nextGraphic.Width, nextGraphic.Height));
+                        graphic.AddOverlay((uint)position!.X, (uint)position.Y, nextGraphic.Value);
+                        textureAreas.Add(index, new Rect(position.X, position.Y, nextGraphic.Value.Width, nextGraphic.Value.Height));
                         emptyAreas.Remove(emptyArea);
                         break;
                     }
                     else if (result == EmptyArea.FillResult.PartialFit)
                     {
                         success = true;
-                        graphic.AddOverlay((uint)position!.X, (uint)position.Y, nextGraphic);
-                        textureAreas.Add(index, new Rect(position.X, position.Y, nextGraphic.Width, nextGraphic.Height));
+                        graphic.AddOverlay((uint)position!.X, (uint)position.Y, nextGraphic.Value);
+                        textureAreas.Add(index, new Rect(position.X, position.Y, nextGraphic.Value.Width, nextGraphic.Value.Height));
                         break;
                     }
                 }
@@ -192,9 +199,9 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
                 if (!success)
                 {
                     int y = graphic.Height;
-                    IncreaseHeight(nextGraphic.Height);
-                    graphic.AddOverlay(0u, (uint)y, nextGraphic);
-                    textureAreas.Add(index, new Rect(0, y, nextGraphic.Width, nextGraphic.Height));
+                    IncreaseHeight(nextGraphic.Value.Height);
+                    graphic.AddOverlay(0u, (uint)y, nextGraphic.Value);
+                    textureAreas.Add(index, new Rect(0, y, nextGraphic.Value.Width, nextGraphic.Value.Height));
                 }
             }
 
@@ -225,6 +232,46 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         this.textureAreas = textureAreas;
     }
 
+    public static GraphicAtlasData FromIndexedGraphics(int? paletteIndex, Dictionary<int, Graphic> graphics, bool alpha, int colorIndexOffset = 0)
+    {
+        if (graphics.Count != 0)
+        {
+            var first = graphics.First().Value;
+
+            if (paletteIndex >= 0 && !first.IndexedGraphic)
+                throw new AmbermoonException(ExceptionScope.Data, "FromIndexedGraphics was called with a palette index but the given graphics are not indexed. Use indexed graphics instead.");
+            else if (paletteIndex < 0 && first.IndexedGraphic)
+                throw new AmbermoonException(ExceptionScope.Data, "FromIndexedGraphics was called without a palette index but the given graphics are indexed. Use RGBA graphics instead.");
+        }
+
+        byte flags = 0x00; // no tiles
+
+        if (alpha)
+            flags |= 0x40;
+        if (paletteIndex != null)
+            flags |= 0x20;
+
+        flags |= (byte)(colorIndexOffset & 0x1f);
+
+        Graphic texture;
+        SortedList<int, Rect> textureAreas;
+
+        if (graphics.Count == 0)
+        {
+            texture = new Graphic(0, 0, 0) { IndexedGraphic = paletteIndex != null };
+            textureAreas = [];
+        }
+        else
+        {
+            var textureAtlasInfo = TexturePacker.PackTextureAtlas(graphics, graphics.First().Value.IndexedGraphic);
+            texture = textureAtlasInfo.Key;
+            textureAreas = textureAtlasInfo.Value;
+        }
+
+        return new GraphicAtlasData(paletteIndex, flags, texture, textureAreas);
+    }
+
+
     public static GraphicAtlasData FromGraphics(int paletteIndex, List<Graphic> graphics, bool alpha, int colorIndexOffset = 0)
     {
         if (graphics.Count != 0)
@@ -254,7 +301,10 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         }
         else
         {
-            var textureAtlasInfo = TexturePacker.PackTextureAtlas(graphics, graphics[0].IndexedGraphic);
+            var textureAtlasInfo = TexturePacker.PackTextureAtlas(graphics
+                .Select((g, i) => new { Graphic = g, Index = i })
+                .ToDictionary(graphic => graphic.Index, graphic => graphic.Graphic),
+                graphics[0].IndexedGraphic);
             texture = textureAtlasInfo.Key;
             textureAreas = textureAtlasInfo.Value;
         }
@@ -332,7 +382,7 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
                 int row = tileIndex / tilesPerRow;
 
                 texture.AddOverlay((uint)(column * tileWidth), (uint)(row * tileHeight), tile, false);
-                textureAreas.Add(tileIndex, new Rect(column * tileWidth, row * tileHeight, tileWidth, tileHeight));
+                textureAreas.Add(tileIndex++, new Rect(column * tileWidth, row * tileHeight, tileWidth, tileHeight));
             }
         }
 
@@ -349,9 +399,25 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         return FromTiles(-1, tiles, alpha, colorIndexOffset);
     }
 
+    internal void ReuseTextureArea(int index, int reuseAreaIndex)
+    {
+        textureAreas.Add(index, textureAreas[reuseAreaIndex]);
+    }
+
     public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
         int numGraphics = dataReader.ReadWord();
+        List<int>? indices = null;
+
+        if ((numGraphics & 0x8000) != 0) // Explicit indices flag
+        {
+            numGraphics &= 0x7fff;
+            indices = new(numGraphics);
+
+            for (int i = 0; i < numGraphics; ++i)
+                indices.Add(dataReader.ReadWord());
+        }
+
         flags = dataReader.ReadByte();
         bool usePalette = (flags & 0x20) != 0;
 
@@ -374,30 +440,6 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         bool alpha = (flags & 0x40) != 0;
         int colorIndexOffset = flags & 0x1f;
         Graphic texture;
-
-        void ReadRBGAImageSize(out int width, out int height)
-        {
-            // RGBA graphics can have larger sizes so we
-            // store the width and height as words.
-            width = dataReader.ReadWord();
-            height = dataReader.ReadWord();
-        }
-
-        void ReadAmigaImageSize(out int width, out int height)
-        {
-            // The palette images are considered to be
-            // the original Amiga ones so we limit the
-            // sizes to 320x256.
-            width = dataReader.ReadByte();
-            height = dataReader.ReadByte();
-
-            if (width == 0)
-                width = 256;
-            else if (width == 1)
-                width = 320;
-            if (height == 0)
-                height = 256;
-        }
 
         void LoadAtlas()
         {
@@ -429,13 +471,8 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
 
         if (tiles)
         {
-            int width;
-            int height;
-
-            if (!usePalette)
-                ReadRBGAImageSize(out width, out height);
-            else
-                ReadAmigaImageSize(out width, out height);
+            int width = dataReader.ReadWord();
+            int height = dataReader.ReadWord();
 
             LoadAtlas();
 
@@ -448,26 +485,22 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
             {
                 int column = i % tilesPerRow;
                 int row = i / tilesPerRow;
+                int index = indices != null ? indices[i] : i;
 
-                textureAreas.Add(i, new Rect(column * width, row * height, width, height));
+                textureAreas.Add(index, new Rect(column * width, row * height, width, height));
             }
         }
         else
         {
             for (int i = 0; i < numGraphics; ++i)
             {
-                int width;
-                int height;
-
-                if (!usePalette)
-                    ReadRBGAImageSize(out width, out height);
-                else
-                    ReadAmigaImageSize(out width, out height);
-
+                int width = dataReader.ReadWord();
+                int height = dataReader.ReadWord();
                 int x = dataReader.ReadWord();
                 int y = dataReader.ReadWord();
+                int index = indices != null ? indices[i] : i;
 
-                textureAreas.Add(i, new Rect(x, y, width, height));
+                textureAreas.Add(index, new Rect(x, y, width, height));
             }
 
             LoadAtlas();
@@ -484,8 +517,8 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
 
     public void Write(IDataWriter dataWriter)
     {
-        if (textureAreas.Count > ushort.MaxValue)
-            throw new AmbermoonException(ExceptionScope.Data, $"Texture atlas areas are limited to {ushort.MaxValue}.");
+        if (textureAreas.Count > short.MaxValue)
+            throw new AmbermoonException(ExceptionScope.Data, $"Texture atlas areas are limited to {short.MaxValue}.");
 
         bool usePalette = (flags & 0x20) != 0;
 
@@ -495,7 +528,17 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         if (paletteIndex is not null && !usePalette)
             throw new AmbermoonException(ExceptionScope.Data, "Texture atlas has the 'use palette' flag cleared but a palette index was given.");
 
-        dataWriter.Write((ushort)textureAreas.Count);
+        bool explicitIndices = textureAreas.Keys.Order().Select((index, i) => index != i).Any(differ => differ);
+        ushort count = (ushort)(explicitIndices ? textureAreas.Count | 0x8000 : textureAreas.Count);
+
+        dataWriter.Write(count);
+
+        if (explicitIndices)
+        {
+            foreach (var area in textureAreas.OrderBy(area => area.Key))
+                dataWriter.Write((ushort)area.Key);
+        }
+
         dataWriter.Write(flags);
 
         if (usePalette)
@@ -508,35 +551,13 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         bool alpha = (flags & 0x40) != 0;
         int colorIndexOffset = flags & 0x1f;
 
-        void WriteRBGAImageSize(int width, int height)
+        void WriteImageSize(int width, int height)
         {
             if (width <= 0 || height <= 0 || width > ushort.MaxValue || height > ushort.MaxValue)
                 throw new AmbermoonException(ExceptionScope.Data, $"Given texture size is out of range. Should be 1x1 to {ushort.MaxValue}x{ushort.MaxValue}.");
 
-            // RGBA graphics can have larger sizes so we
-            // store the width and height as words.
             dataWriter.Write((ushort)width);
             dataWriter.Write((ushort)height);
-        }
-
-        void WriteAmigaImageSize(int width, int height)
-        {
-            if (width <= 1 || height <= 1 || (width != 320 && width > 256) || height > 256)
-                throw new AmbermoonException(ExceptionScope.Data, "Given texture size is out of range. Should be 2x2 to 256x256 or exactly 320xH where H is at max 256.");
-
-            // The palette images are considered to be
-            // the original Amiga ones so we limit the
-            // sizes to 320x256.
-            if (width == 256)
-                width = 0;
-            else if (width == 320)
-                width = 1;
-
-            if (height == 256)
-                height = 0;
-
-            dataWriter.Write((byte)width);
-            dataWriter.Write((byte)height);
         }
 
         var texture = Atlas!.Graphic;
@@ -586,21 +607,15 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
             if (texture!.Width % width != 0 || texture.Height % height != 0)
                 throw new AmbermoonException(ExceptionScope.Data, "Tiled texture atlas dimensions don't fit to the given tile size.");
 
-            if (!usePalette)
-                WriteRBGAImageSize(width, height);
-            else
-                WriteAmigaImageSize(width, height);
+            WriteImageSize(width, height);
         }
         else
         {
             var totalArea = new Rect(0, 0, texture!.Width, texture.Height);
 
-            foreach (var (_, area) in textureAreas)
+            foreach (var (_, area) in textureAreas.OrderBy(area => area.Key))
             {
-                if (!usePalette)
-                    WriteRBGAImageSize(area.Width, area.Height);
-                else
-                    WriteAmigaImageSize(area.Width, area.Height);
+                WriteImageSize(area.Width, area.Height);
 
                 if (area.X < 0 || area.Y < 0 || area.X > ushort.MaxValue || area.Y > ushort.MaxValue ||
                     !totalArea.Contains(area.Position) || !totalArea.Contains(new Position(area.Right - 1, area.Bottom - 1)))

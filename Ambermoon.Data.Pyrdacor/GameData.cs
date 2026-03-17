@@ -2,9 +2,9 @@
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Audio;
+using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
 using Ambermoon.Data.Pyrdacor.Objects;
-using Ambermoon.Data.Pyrdacor.Serialization;
 using Ambermoon.Data.Serialization;
 using Ambermoon.Render;
 
@@ -36,29 +36,31 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     LazyContainerLoader<TilesetData, Tileset> tilesetLoader = null!;
     LazyContainerLoader<LocationData, Place> locationLoader = null!;
     LazyContainerLoader<Texts, string> locationNameLoader = null!;
+    LazyContainerLoader<OutroSequenceData, OutroData> outroSequenceLoader = null!;
     LazyFileLoader<Texts, TextList> gotoPointNameLoader = null!;
-    LazyContainerLoader<ChestData, Chest> chestLoader = null!;
-    LazyContainerLoader<MerchantData, Merchant> merchantLoader = null!;
-    LazyContainerLoader<ExplorationData, Automap> explorationDataLoader = null!;
+    LazyContainerLoader<ChestData, Chest> initialChestLoader = null!;
     LazyFileLoader<GraphicsInfoData, GraphicsInfoData> graphicsInfoLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> layoutGraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> npcGraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> playerGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> monsterGraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> itemGraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> portraitGraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> eventGraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> cursorGraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> pics80x80GraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> uiGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> riddlemouthGraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> travelGraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> transportGraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> combatBackgroudLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> combatGraphicLoader = null!;
-    LazyFileLoader<GraphicAtlasData, GraphicAtlas> battleFieldIconLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> battleFieldSpriteLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> automapGraphicLoader = null!;
-    LazyFileLoader<GraphicAtlasData, GraphicAtlas> riddlemouthGraphicLoader = null!;
-    LazyFileLoader<Textures, Textures> texturesLoader = null!;
     LazyContainerLoader<GraphicAtlasData, GraphicAtlas> tileGraphicLoader = null!; // one entry per tileset
+    LazyFileLoader<Texts, TextList> dictionaryLoader = null!;
+    LazyFileLoader<Textures, Textures> texturesLoader = null!;
+    LazyContainerLoader<MusicData, byte[]> musicLoader = null!;
     readonly Dictionary<string, Action<IDataReader>> fileHandlers = [];
     readonly Lazy<SongManager> songManager = null!;
     readonly Lazy<ICharacterManager> characterManager = null!;
@@ -152,8 +154,9 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     const string MagicInfo = "INFO"; 
     const string MagicPalette = "PALS";
     const string MagicSavegame = "SAVE";
-    const string MagicPlayers = "PLAY";
+    const string MagicInitialParty = "PLAY";
     const string MagicMonsters = "MONS";
+    const string MagicMonsterGraphics = "MONG";
     const string MagicNPCs = "NPCS";
     const string MagicNPCTexts = "NTXT";
     const string MagicNPCGraphics = "NGFX";
@@ -161,6 +164,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     const string MagicPartyTexts = "PTXT";
     const string MagicPartyGraphics = "PGFX";
     const string MagicTravelGraphics = "TRAV";
+    const string MagicTransportGraphics = "TRAN";
     const string MagicMonsterGroups = "MOGS";
     const string MagicItems = "ITEM";
     const string MagicItemNames = "INAM";
@@ -179,30 +183,24 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     const string MagicLayouts = "LAYO";
     const string MagicTextures = "TX3D";
     const string MagicEventGraphics = "EVEG";
+    const string MagicTileGraphics = "TILG";
     const string MagicCombatBackgrounds = "COMB";
     const string MagicCombatGraphics = "COMG";
-    const string MagicBattleFieldIcons = "BFIC";
+    const string MagicBattleFieldSprites = "BFSP";
     const string MagicPortraits = "PORT";
     const string MagicUIGraphics = "UGFX";
-    const string MagicWorldBackgrounds = "WOBG";
+    const string MagicRiddlemouthGraphics = "RIDG";
     const string MagicCursors = "CURS";
     const string MagicPictures80x80 = "8080";
-    const string MagicTransportGraphics = "TRAN";
-    const string MagicAutomapGraphics = "TRAN";
-    /*LazyFileLoader<GraphicAtlasData, GraphicAtlas> cursorGraphicLoader = null!;
-    LazyFileLoader<GraphicAtlasData, GraphicAtlas> pics80x80GraphicLoader = null!;
-    LazyFileLoader<GraphicAtlasData, GraphicAtlas> uiGraphicLoader = null!;
-    LazyFileLoader<GraphicAtlasData, GraphicAtlas> travelGraphicLoader = null!;
-    LazyFileLoader<GraphicAtlasData, GraphicAtlas> transportGraphicLoader = null!;
-    LazyFileLoader<GraphicAtlasData, GraphicAtlas> combatBackgroudLoader = null!;
-    LazyFileLoader<GraphicAtlasData, GraphicAtlas> combatGraphicLoader = null!;
-    LazyFileLoader<GraphicAtlasData, GraphicAtlas> battleFieldIconLoader = null!;
-    LazyFileLoader<GraphicAtlasData, GraphicAtlas> automapGraphicLoader = null!;
-    LazyFileLoader<GraphicAtlasData, GraphicAtlas> riddlemouthGraphicLoader = null!;*/
+    const string MagicAutomapGraphics = "AUMG";
+    const string MagicInitialChests = "CHES";
+    const string MagicDictionary = "DICT";
+    const string MagicMusic = "MUSI";
+
     // TODO: Load horizon graphics?
 
     public GameData(Stream stream, ISavegameManager savegameManager, params (string Magic, Action<IDataReader> Action)[] customFileHandlers)
-        : this(new DataReaderLE(stream), savegameManager, customFileHandlers)
+        : this(new DataReader(stream), savegameManager, customFileHandlers)
     {
 
     }
@@ -221,15 +219,22 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         fileHandlers.Add(MagicInfo, LoadInfo);
         fileHandlers.Add(MagicPalette, LoadPalettes);
         fileHandlers.Add(MagicSavegame, LoadSavegame); // Only the Party_data.sav
-        fileHandlers.Add(MagicPlayers, LoadParty); // Initial party
+        fileHandlers.Add(MagicInitialParty, LoadInitialParty);
         fileHandlers.Add(MagicMonsters, LoadMonsters);
+        fileHandlers.Add(MagicMonsterGraphics, LoadMonsterGraphics);
         fileHandlers.Add(MagicNPCs, LoadNPCs);
         fileHandlers.Add(MagicNPCTexts, LoadNPCTexts);
+        fileHandlers.Add(MagicNPCGraphics, LoadNPCGraphics);
+        fileHandlers.Add(MagicGraphicsInfo, LoadGraphicsInfo);
         fileHandlers.Add(MagicPartyTexts, LoadPartyTexts);
+        fileHandlers.Add(MagicPartyGraphics, LoadPartyGraphics);
+        fileHandlers.Add(MagicTravelGraphics, LoadTravelGraphics);
+        fileHandlers.Add(MagicTransportGraphics, LoadTransportGraphics);
         fileHandlers.Add(MagicMonsterGroups, LoadMonsterGroups);
         fileHandlers.Add(MagicItems, LoadItems);
         fileHandlers.Add(MagicItemNames, LoadItemNames);
         fileHandlers.Add(MagicItemTexts, LoadItemTexts);
+        fileHandlers.Add(MagicItemGraphics, LoadItemGraphics);
         fileHandlers.Add(MagicLocations, LoadLocations);
         fileHandlers.Add(MagicLocationNames, LoadLocationNames);
         fileHandlers.Add(MagicOutro, LoadOutro);
@@ -241,7 +246,21 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         fileHandlers.Add(MagicFonts, LoadFonts);
         fileHandlers.Add(MagicGotoPointNames, LoadGotoPointNames);
         fileHandlers.Add(MagicLayouts, LoadLayoutGraphics);
-        fileHandlers.Add(MagicGraphicsInfo, LoadGraphicsInfo);
+        fileHandlers.Add(MagicTextures, LoadTextures);
+        fileHandlers.Add(MagicEventGraphics, LoadEventGraphics);
+        fileHandlers.Add(MagicTileGraphics, LoadTileGraphics);
+        fileHandlers.Add(MagicCombatBackgrounds, LoadCombatBackgroundGraphics);
+        fileHandlers.Add(MagicCombatGraphics, LoadCombatGraphics);
+        fileHandlers.Add(MagicBattleFieldSprites, LoadBattleFieldSprites);
+        fileHandlers.Add(MagicPortraits, LoadPortraitGraphics);
+        fileHandlers.Add(MagicUIGraphics, LoadUIGraphics);
+        fileHandlers.Add(MagicRiddlemouthGraphics, LoadRiddlemouthGraphics);
+        fileHandlers.Add(MagicCursors, LoadCursors);
+        fileHandlers.Add(MagicPictures80x80, Load80x80Graphics);
+        fileHandlers.Add(MagicAutomapGraphics, LoadAutomapGraphics);
+        fileHandlers.Add(MagicInitialChests, LoadInitialChests);
+        fileHandlers.Add(MagicDictionary, LoadDictionary);
+        fileHandlers.Add(MagicMusic, LoadMusic);
 
         foreach (var customFileHandler in customFileHandlers)
         {
@@ -251,12 +270,15 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
             fileHandlers.Add(customFileHandler.Magic, customFileHandler.Action);
         }
 
+        songManager = new Lazy<SongManager>(() => new SongManager(musicLoader.LoadAll()));
+
         characterManager = new Lazy<ICharacterManager>(() => new CharacterManager
         (
             () => partyLoader!.LoadAll(),
             () => npcLoader!.LoadAll(),
             () => monsterLoader!.LoadAll(),
-            () => monsterGroupLoader!.LoadAll()
+            () => monsterGroupLoader!.LoadAll(),
+            () => monsterGraphicLoader!.Load()
         ));
 
         itemManager = new Lazy<IItemManager>(() => new ItemManager
@@ -341,7 +363,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
             int dataLength = (int)(reader.ReadDword() & int.MaxValue);
 
-            loader?.Invoke(new DataReaderLE(reader.ReadBytes(dataLength)));
+            loader?.Invoke(new DataReader(reader.ReadBytes(dataLength)));
         }
 
         Loaded = true;
@@ -364,12 +386,17 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         paletteLoader = new(dataReader, this, p => p);
     }
 
+    void LoadCursors(IDataReader dataReader)
+    {
+        cursorGraphicLoader = new(dataReader, this, p => p.Atlas!);
+    }
+
     void LoadSavegame(IDataReader dataReader)
     {
         savegameLoader = new(dataReader, this, p => p.Savegame);
     }
 
-    void LoadParty(IDataReader dataReader)
+    void LoadInitialParty(IDataReader dataReader)
     {
         partyLoader = new(dataReader, this, n => (n.Character as PartyMember)!);
     }
@@ -426,12 +453,13 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     void LoadOutro(IDataReader dataReader)
     {
-
+        // TODO
+        // outroSequenceLoader = new(dataReader, this, o => o.OutroData);
     }
 
     void LoadTexts(IDataReader dataReader)
     {
-
+        // TODO
     }
 
     void LoadTilesets(IDataReader dataReader)
@@ -481,7 +509,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     void LoadAutomapGraphics(IDataReader dataReader)
     {
-
+        automapGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     void LoadLayoutGraphics(IDataReader dataReader)
@@ -489,25 +517,34 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         layoutGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
-    // These include the riddlemouth, combat and button graphics but not the battle field player/monster sprites and not the layouts!
     void LoadUIGraphics(IDataReader dataReader)
     {
+        uiGraphicLoader = new(dataReader, this, g => g.Atlas!);
+    }
 
+    void LoadRiddlemouthGraphics(IDataReader dataReader)
+    {
+        riddlemouthGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     void LoadBattleFieldSprites(IDataReader dataReader)
     {
-
+        battleFieldSpriteLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     void LoadCombatBackgroundGraphics(IDataReader dataReader)
     {
-
+        combatBackgroudLoader = new(dataReader, this, g => g.Atlas!);
     }
 
+    void LoadCombatGraphics(IDataReader dataReader)
+    {
+        combatGraphicLoader = new(dataReader, this, g => g.Atlas!);
+    }
+        
     void LoadDictionary(IDataReader dataReader)
     {
-
+        dictionaryLoader = new(dataReader, this, d => d.TextList);
     }
 
     void LoadEventGraphics(IDataReader dataReader)
@@ -517,32 +554,37 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     void Load80x80Graphics(IDataReader dataReader)
     {
-
+        pics80x80GraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     void LoadHorizonGraphics(IDataReader dataReader)
     {
-
+        // TODO
     }
 
     void LoadMonsterGraphics(IDataReader dataReader)
     {
-
+        monsterGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     void LoadNPCGraphics(IDataReader dataReader)
     {
-
-    }
-
-    void LoadTravelGraphics(IDataReader dataReader)
-    {
-
+        npcGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     void LoadPartyGraphics(IDataReader dataReader)
     {
         playerGraphicLoader = new(dataReader, this, g => g.Atlas!);
+    }
+
+    void LoadTravelGraphics(IDataReader dataReader)
+    {
+        travelGraphicLoader = new(dataReader, this, g => g.Atlas!);
+    }
+
+    void LoadTransportGraphics(IDataReader dataReader)
+    {
+        transportGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
     void LoadItemGraphics(IDataReader dataReader)
@@ -555,14 +597,14 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         portraitGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
-    void LoadStationaryGraphics(IDataReader dataReader)
-    {
-
-    }
-
     void LoadMusic(IDataReader dataReader)
     {
-        
+        musicLoader = new(dataReader, this, m => m.SongData);
+    }
+
+    void LoadInitialChests(IDataReader dataReader)
+    {
+        initialChestLoader = new(dataReader, this, c => c.Chest);
     }
 
     public CombatBackgroundInfo Get2DCombatBackground(uint index, bool advanced)
@@ -624,18 +666,18 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
             GraphicType.Item => itemGraphicLoader.Load(),
             GraphicType.Layout => layoutGraphicLoader.Load(),
             GraphicType.LabBackground => throw new NotImplementedException("Use GetLabBackgroundGraphics instead"), // Should not be used when using current GameData
-            GraphicType.Cursor => throw new NotImplementedException(),
-            GraphicType.Pics80x80 => throw new NotImplementedException(),
-            GraphicType.UIElements => throw new NotImplementedException(),
+            GraphicType.Cursor => cursorGraphicLoader.Load(),
+            GraphicType.Pics80x80 => pics80x80GraphicLoader.Load(),
+            GraphicType.UIElements => uiGraphicLoader.Load(),
             GraphicType.EventPictures => eventGraphicLoader.Load(),
-            GraphicType.TravelGfx => throw new NotImplementedException(),
-            GraphicType.Transports => throw new NotImplementedException(),
+            GraphicType.TravelGfx => travelGraphicLoader.Load(),
+            GraphicType.Transports => transportGraphicLoader.Load(),
             GraphicType.NPC => npcGraphicLoader.Load(),
-            GraphicType.CombatBackground => throw new NotImplementedException(),
-            GraphicType.CombatGraphics => throw new NotImplementedException(),
-            GraphicType.BattleFieldIcons => throw new NotImplementedException(),
-            GraphicType.AutomapGraphics => throw new NotImplementedException(),
-            GraphicType.RiddlemouthGraphics => throw new NotImplementedException(),
+            GraphicType.CombatBackground => combatBackgroudLoader.Load(),
+            GraphicType.CombatGraphics => combatGraphicLoader.Load(),
+            GraphicType.BattleFieldIcons => battleFieldSpriteLoader.Load(),
+            GraphicType.AutomapGraphics => automapGraphicLoader.Load(),
+            GraphicType.RiddlemouthGraphics => riddlemouthGraphicLoader.Load(),
             _ => throw new ArgumentOutOfRangeException(nameof(type))
         };
     }

@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.Extensions;
+using Ambermoon.Data.Pyrdacor.Objects;
 
 namespace Ambermoon.Data.Pyrdacor;
 
@@ -8,16 +9,22 @@ internal class CharacterManager(
     Func<Dictionary<uint, PartyMember>> initialPartyMemberProvider,
     Func<Dictionary<uint, NPC>> npcProvider,
     Func<Dictionary<uint, Monster>> monsterProvider,
-    Func<Dictionary<uint, MonsterGroup>> monsterGroupProvider)
+    Func<Dictionary<uint, MonsterGroup>> monsterGroupProvider,
+    Func<GraphicAtlas> monsterGraphicProvider)
     : ICharacterManager
 {
     readonly Lazy<Dictionary<uint, PartyMember>> initialPartyMembers = new(initialPartyMemberProvider);
     readonly Lazy<Dictionary<uint, NPC>> npcs = new(npcProvider);
     readonly Lazy<Dictionary<uint, Monster>> monsters = new(monsterProvider);        
     readonly Lazy<Dictionary<uint, MonsterGroup>> monsterGroups = new(monsterGroupProvider);
+    readonly Lazy<GraphicAtlas> monsterGraphics = new(monsterGraphicProvider);
 
     public PartyMember? GetInitialPartyMember(uint index) => initialPartyMembers.Value.GetByIndex(index);
 
+    // NOTE: We don't provide a CombatGraphic for monsters as it is only used to create
+    // the texture atlas but only if it is not provided in the MonsterGraphicAtlas
+    // property (which we provide). Other projects which depend on the CombatGraphic
+    // property of the Monster class might be affected by this!
     public Monster? GetMonster(uint index) => monsters.Value.GetByIndex(index);
 
     public NPC? GetNPC(uint index) => npcs.Value.GetByIndex(index);
@@ -42,4 +49,5 @@ internal class CharacterManager(
     public IReadOnlyList<NPC> NPCs => npcs.Value.Values.ToList().AsReadOnly();
 	public IReadOnlyList<Monster> Monsters => monsters.Value.Values.ToList().AsReadOnly();
     public IReadOnlyDictionary<uint, MonsterGroup> MonsterGroups => monsterGroups.Value.AsReadOnly();
+    public IGraphicAtlas? MonsterGraphicAtlas => monsterGraphics.Value;
 }

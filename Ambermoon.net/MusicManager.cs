@@ -19,7 +19,7 @@ namespace Ambermoon
             { "mp3", LoadMp3 }
         };
         readonly ICoreConfiguration configuration;
-        readonly Dictionary<Song, ISong> externalSongs = new();
+        readonly Dictionary<Song, ISong> externalSongs = [];
         IAudioOutput audioOutput = null;
         IAudioStream currentStream = null;
         protected static readonly Song[] Songs = EnumHelper.GetValues<Song>().Skip(1).ToArray();

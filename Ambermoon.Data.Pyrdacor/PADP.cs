@@ -1,8 +1,6 @@
-﻿using System.Drawing;
-using Ambermoon.Data.Legacy.Serialization;
+﻿using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.Compressions;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
-using Ambermoon.Data.Pyrdacor.Serialization;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor;
@@ -65,28 +63,28 @@ internal static class PADP
 
         if (fileSpecVersion > supportedVersion)
             throw new AmbermoonException(ExceptionScope.Data, $"This application only supports {fileType} versions up to {(int)supportedVersion} but file has version {(int)fileSpecVersion}");
-
-        var files = new Dictionary<ushort, IFileSpec>();
+        
         int fileCount = reader.ReadWord();
         bool allFilesSameSize = (fileCount & 0x8000) != 0;
         fileCount &= 0x7fff;
 
         if (fileCount == 0)
-            return files;
+            return [];
 
-        var fileSizes = new ushort[fileCount];
+        var files = new Dictionary<ushort, IFileSpec>(fileCount);
+        var fileSizes = new int[fileCount];
 
         if (allFilesSameSize)
         {
-            var fileSize = fileSizes[0] = reader.ReadWord();
+            var fileSize = EncodedInt.Read(reader);
 
-            for (int i = 1; i < fileCount; ++i)
+            for (int i = 0; i < fileCount; ++i)
                 fileSizes[i] = fileSize;
         }
         else
         {
             for (int i = 0; i < fileCount; ++i)
-                fileSizes[i] = reader.ReadWord();
+                fileSizes[i] = EncodedInt.Read(reader);
         }
 
         var fileIndices = new ushort[fileCount];
@@ -115,7 +113,7 @@ internal static class PADP
         for (int i = 0; i < fileCount; ++i)
         {
             var fileSpec = fileSpecProvider();
-            fileSpec.Read(new DataReaderLE(reader.ReadBytes(fileSizes[i])), fileIndices[i], gameData, fileSpecVersion);
+            fileSpec.Read(new DataReader(reader.ReadBytes(fileSizes[i])), fileIndices[i], gameData, fileSpecVersion);
             files.Add(fileIndices[i], fileSpec);
         }
 
@@ -153,18 +151,19 @@ internal static class PADP
         writer.WriteWithoutLength(fileType);
         writer.Write(supportedVersion);
 
-        IDataWriter dataWriter = new DataWriterLE();
+        IDataWriter dataWriter = new DataWriter();
         List<int> sizes = [];
+        var orderedFileSpecs = fileSpecs.OrderBy(f => f.Key).ToList();
 
         // Write file sizes and write the data to dataWriter
-        foreach (var fileSpec in fileSpecs)
+        foreach (var fileSpec in orderedFileSpecs)
         {
             int position = dataWriter.Position;
             fileSpec.Value.Write(dataWriter);
             int size = dataWriter.Position - position;
 
-            if (size > ushort.MaxValue)
-                throw new AmbermoonException(ExceptionScope.Data, $"Sub-file {fileSpec.Key} is too large. Max size is {ushort.MaxValue}, but file had {size}.");
+            if (size > int.MaxValue)
+                throw new AmbermoonException(ExceptionScope.Data, $"Sub-file {fileSpec.Key} is too large. Max size is {int.MaxValue}, but file had {size}.");
 
             sizes.Add(size);
         }
@@ -172,12 +171,12 @@ internal static class PADP
         if (sizes.Distinct().Count() == 1)
         {
             writer.Write((ushort)(fileSpecs.Count | 0x8000));
-            writer.Write((ushort)sizes[0]);
+            EncodedInt.Write(writer, sizes[0]);
         }
         else
         {
             writer.Write((ushort)fileSpecs.Count);
-            sizes.ForEach(size => writer.Write((ushort)size));
+            sizes.ForEach(size => EncodedInt.Write(writer, size));
         }
 
         // Write file indices
@@ -187,7 +186,7 @@ internal static class PADP
         }
         else
         {
-            foreach (var fileSpec in fileSpecs)
+            foreach (var fileSpec in orderedFileSpecs)
             {
                 writer.Write(fileSpec.Key);
             }

@@ -17,6 +17,21 @@ namespace Ambermoon.Data.Legacy.Audio
                 SonicArranger.Stream.ChannelMode.Mono, true, true);
         }
 
+        public SongManager(Dictionary<Enumerations.Song, DataReader> songDataReaders)
+        {
+            void AddSong(Enumerations.Song song, DataReader reader)
+            {
+                int songIndex = song == Enumerations.Song.Menu ? 1 : 0;
+
+                songs.Add(song, CreateSong(song, songIndex, reader));
+            }
+
+            foreach (var songData in songDataReaders)
+            {
+                AddSong(songData.Key, songData.Value);
+            }
+        }
+
         public SongManager(ILegacyGameData gameData)
         {
             if (gameData == null)

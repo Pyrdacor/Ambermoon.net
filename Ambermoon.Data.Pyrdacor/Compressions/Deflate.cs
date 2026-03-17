@@ -1,5 +1,4 @@
 ﻿using Ambermoon.Data.Legacy.Serialization;
-using Ambermoon.Data.Pyrdacor.Serialization;
 using Ambermoon.Data.Serialization;
 using System.IO.Compression;
 
@@ -7,7 +6,7 @@ namespace Ambermoon.Data.Pyrdacor.Compressions;
 
 internal class Deflate : ICompression<Deflate>, ICompression
 {
-    public static ushort Identifier => 0xF1DE;
+    public static ushort Identifier => 0xDEF1;
 
     public IDataReader Decompress(IDataReader dataReader)
     {
@@ -16,7 +15,7 @@ internal class Deflate : ICompression<Deflate>, ICompression
         using var decompressor = new DeflateStream(compressedFileStream, CompressionMode.Decompress);
         decompressor.CopyTo(targetStream);
         targetStream.Position = 0;
-        return new DataReaderLE(targetStream);
+        return new DataReader(targetStream);
     }
 
     public IDataWriter Compress(IDataWriter dataWriter)
@@ -29,6 +28,6 @@ internal class Deflate : ICompression<Deflate>, ICompression
             sourceStream.CopyTo(compressor);
         }
 
-        return new DataWriterLE(compressedStream.ToArray());
+        return new DataWriter(compressedStream.ToArray());
     }
 }

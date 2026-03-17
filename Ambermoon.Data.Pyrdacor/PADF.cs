@@ -1,6 +1,6 @@
-﻿using Ambermoon.Data.Pyrdacor.Compressions;
+﻿using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Pyrdacor.Compressions;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
-using Ambermoon.Data.Pyrdacor.Serialization;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor;
@@ -91,7 +91,7 @@ internal static class PADF
         writer.WriteWithoutLength(IFileSpec.GetMagic<T>());
         writer.Write(IFileSpec.GetSupportedVersion<T>());
 
-        IDataWriter dataWriter = new DataWriterLE();
+        IDataWriter dataWriter = new DataWriter();
         fileSpec.Write(dataWriter);
 
         compression ??= IFileSpec.GetPreferredCompression<T>();

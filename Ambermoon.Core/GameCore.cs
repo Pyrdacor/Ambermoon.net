@@ -159,8 +159,17 @@ public abstract partial class GameCore
 
         // Create texture atlas for monsters in battle
         var textureAtlasManager = TextureAtlasManager.Instance;
-        var monsterGraphicDictionary = CharacterManager.Monsters.ToDictionary(m => m.Index, m => m.CombatGraphic);
-        textureAtlasManager.AddFromGraphics(Layer.BattleMonsterRow, monsterGraphicDictionary);
+
+        if (CharacterManager.MonsterGraphicAtlas != null)
+        {
+            textureAtlasManager.AddAtlas(Layer.BattleMonsterRow, CharacterManager.MonsterGraphicAtlas);
+        }
+        else
+        {
+            var monsterGraphicDictionary = CharacterManager.Monsters.ToDictionary(m => m.Index, m => m.CombatGraphic);
+            textureAtlasManager.AddFromGraphics(Layer.BattleMonsterRow, monsterGraphicDictionary);
+        }
+
         var monsterGraphicAtlas = textureAtlasManager.GetOrCreate(Layer.BattleMonsterRow);
         renderView.GetLayer(Layer.BattleMonsterRow).Texture = monsterGraphicAtlas!.Texture;
 

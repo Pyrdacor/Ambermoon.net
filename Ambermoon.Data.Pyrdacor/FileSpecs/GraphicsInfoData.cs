@@ -31,19 +31,19 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
 
     public GraphicsInfoData
     (
-        Dictionary<int, int> npcGraphicOffsets,
-        Dictionary<int, List<int>> npcGraphicFrameCounts,
-        Dictionary<CombatGraphicIndex, CombatGraphicInfo> combatGraphicInfos,
-        Dictionary<TravelType, GraphicInfo> stationaryImageInfos,
-        Dictionary<TravelType, TravelGraphicInfo[]> travelGraphicInfos,
+        IReadOnlyDictionary<int, int> npcGraphicOffsets,
+        IReadOnlyDictionary<int, List<int>> npcGraphicFrameCounts,
+        IReadOnlyDictionary<CombatGraphicIndex, CombatGraphicInfo> combatGraphicInfos,
+        IReadOnlyDictionary<TravelType, GraphicInfo> stationaryImageInfos,
+        IReadOnlyDictionary<TravelType, TravelGraphicInfo[]> travelGraphicInfos,
         Character2DAnimationInfo playerAnimationInfo
     )
     {
-        this.npcGraphicOffsets = npcGraphicOffsets;
-        this.npcGraphicFrameCounts = npcGraphicFrameCounts;
-        this.combatGraphicInfos = combatGraphicInfos;
-        this.stationaryImageInfos = stationaryImageInfos;
-        this.travelGraphicInfos = travelGraphicInfos;
+        this.npcGraphicOffsets = new(npcGraphicOffsets);
+        this.npcGraphicFrameCounts = new(npcGraphicFrameCounts);
+        this.combatGraphicInfos = new(combatGraphicInfos);
+        this.stationaryImageInfos = new(stationaryImageInfos);
+        this.travelGraphicInfos = new(travelGraphicInfos);
         this.playerAnimationInfo = playerAnimationInfo;
     }
 
