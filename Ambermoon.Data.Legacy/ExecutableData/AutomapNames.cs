@@ -15,13 +15,16 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class AutomapNames
     {
-        readonly Dictionary<AutomapType, string> entries = new Dictionary<AutomapType, string>();
+        readonly Dictionary<AutomapType, string> entries = [];
         public IReadOnlyDictionary<AutomapType, string> Entries => entries;
 
         internal AutomapNames(List<string> names)
         {
             if (names.Count != 17)
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid number of automap type names.");
+
+            entries.Add(AutomapType.None, "");
+            entries.Add(AutomapType.Wall, "");
 
             for (int i = 0; i < names.Count; ++i)
                 entries.Add(AutomapType.Riddlemouth + (ushort)i, names[i]);

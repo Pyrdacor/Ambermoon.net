@@ -14,6 +14,11 @@ internal class TextList
 
     readonly List<string> texts;
 
+    public TextList(IReadOnlyList<string> texts)
+    {
+        this.texts = new(texts);
+    }
+
     public TextList(List<string> texts)
     {
         this.texts = texts;
@@ -56,4 +61,6 @@ internal class TextList
     }
 
     public List<string> ToList() => [.. texts];
+
+    public Dictionary<int, string> ToDictionary(int startIndex = 0) => texts.Select((text, index) => new { Text = text, Index = index }).ToDictionary(t => startIndex + t.Index, t => t.Text);
 }

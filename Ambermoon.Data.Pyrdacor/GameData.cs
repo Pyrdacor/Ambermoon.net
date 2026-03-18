@@ -1,7 +1,6 @@
 ﻿using Ambermoon.Data.Audio;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy;
-using Ambermoon.Data.Legacy.Audio;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
 using Ambermoon.Data.Pyrdacor.Objects;
@@ -61,6 +60,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     LazyFileLoader<Texts, TextList> dictionaryLoader = null!;
     LazyFileLoader<Textures, Textures> texturesLoader = null!;
     LazyContainerLoader<MusicData, byte[]> musicLoader = null!;
+    LazyContainerLoader<Texts, TextList> textLoader = null!; // all kind of texts, names and messages, key is the MessageTextType
     readonly Dictionary<string, Action<IDataReader>> fileHandlers = [];
     readonly Lazy<SongManager> songManager = null!;
     readonly Lazy<ICharacterManager> characterManager = null!;
@@ -74,6 +74,8 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     readonly Lazy<Places> places = null!;
     readonly Lazy<Dictionary<int, Graphic>> palettes = null!;
     readonly Lazy<IngameFontProvider> ingameFontProvider = null!;
+    readonly Lazy<TextDictionary> dictionary = null!;
+    readonly Lazy<IDataNameProvider> dataNameProvider = null!;
 
     public bool Loaded { get; } = false;
 
@@ -118,7 +120,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public IOutroData OutroData => throw new NotImplementedException();
 
-    public TextDictionary Dictionary => throw new NotImplementedException();
+    public TextDictionary Dictionary => dictionary!.Value;
 
     public Dictionary<int, Graphic> Palettes => palettes!.Value;
 
@@ -270,6 +272,8 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
             fileHandlers.Add(customFileHandler.Magic, customFileHandler.Action);
         }
 
+        dictionary = new Lazy<TextDictionary>(() => TextDictionary.Load(gameDataInfoLoader.Load().Language, dictionaryLoader.Load().ToList()));
+
         songManager = new Lazy<SongManager>(() => new SongManager(musicLoader.LoadAll()));
 
         characterManager = new Lazy<ICharacterManager>(() => new CharacterManager
@@ -349,6 +353,20 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
                 places.Entries.Add(location.Value);
             }
             return places;
+        });
+
+        dataNameProvider = new Lazy<IDataNameProvider>(() =>
+        {
+            var info = gameDataInfoLoader.Load();
+            var date = info.ReleaseDate;
+            var name = info.Name;
+            
+            if (info.Advanced)
+                name += " Advanced";
+
+            var texts = textLoader.LoadAll().ToDictionary(kv => (MessageTextType)(int)kv.Key, kv => (IReadOnlyDictionary<int, string>)kv.Value.ToDictionary().AsReadOnly());
+
+            return new DataNameProvider($"{name} {info.Version}", $"{date.Day:00}-{date.Month:00}-{date.Year:0000} / {info.Language}", texts);
         });
 
         // Read all files
@@ -459,7 +477,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     void LoadTexts(IDataReader dataReader)
     {
-        // TODO
+        textLoader = new(dataReader, this, t => t.TextList);
     }
 
     void LoadTilesets(IDataReader dataReader)

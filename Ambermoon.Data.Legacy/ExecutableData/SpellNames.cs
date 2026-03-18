@@ -15,8 +15,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class SpellNames
     {
-        readonly Dictionary<Spell, string> entries = new Dictionary<Spell, string>();
-        readonly Dictionary<SpellSchool, List<string>> entriesPerType = new Dictionary<SpellSchool, List<string>>();
+        readonly Dictionary<Spell, string> entries = [];
+        readonly Dictionary<SpellSchool, List<string>> entriesPerType = [];
         public IReadOnlyDictionary<Spell, string> Entries => entries;
         public IReadOnlyDictionary<SpellSchool, List<string>> EntriesPerType => entriesPerType;
 
@@ -26,7 +26,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid number of spell names.");
 
             for (int i = 0; i < 7; ++i)
-                entriesPerType.Add((SpellSchool)i, new List<string>());
+                entriesPerType.Add((SpellSchool)i, []);
 
             for (int i = 0; i < names.Count; ++i)
             {

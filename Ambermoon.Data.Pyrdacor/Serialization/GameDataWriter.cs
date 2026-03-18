@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Characters;
+using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
 using Ambermoon.Data.Pyrdacor.Objects;
@@ -170,8 +171,7 @@ partial class GameData
 
             static string CreateHash(Graphic graphic)
             {
-                using var md5 = System.Security.Cryptography.MD5.Create();
-                var hashBytes = md5.ComputeHash(graphic.Data);
+                var hashBytes = System.Security.Cryptography.MD5.HashData(graphic.Data);
                 return $"{graphic.Width},{graphic.Height}," + Convert.ToBase64String(hashBytes);
             }
 
@@ -237,7 +237,42 @@ partial class GameData
         WriteSection(MagicLocationNames, () => PADF.Write(dataWriter, new Texts(new TextList([.. gameData.Places.Entries.Select(place => place.Name)]))));
 
         // TODO: outro
-        // TODO: texts (messages, etc)
+
+        WriteSection(MagicTexts, () =>
+        {
+            var texts = new Dictionary<ushort, Texts>();
+
+            void AddTextDict<TKey>(MessageTextType textType, IReadOnlyDictionary<TKey, string> textList)
+            {
+                AddTextList(MessageTextType.UI, textList.OrderBy(e => e.Key).Select(e => e.Value).ToList());
+            }
+
+            void AddTextList(MessageTextType textType, IReadOnlyList<string> textList)
+            {
+                texts.Add((ushort)MessageTextType.UI, new Texts(new(textList)));
+            }
+
+            AddTextDict(MessageTextType.UI, gameData.ExecutableData.UITexts.Entries);
+            AddTextDict(MessageTextType.Condition, gameData.ExecutableData.ConditionNames.Entries);
+            AddTextDict(MessageTextType.Class, gameData.ExecutableData.ClassNames.Entries);
+            GenderFlag[] genders = [GenderFlag.Male, GenderFlag.Female, GenderFlag.Both];
+            AddTextList(MessageTextType.Gender, genders.Select(gameData.DataNameProvider.GetGenderName).ToList());
+            AddTextDict(MessageTextType.Language, gameData.ExecutableData.LanguageNames.Entries);
+            AddTextDict(MessageTextType.Race, gameData.ExecutableData.RaceNames.Entries);
+            AddTextDict(MessageTextType.Spell, gameData.ExecutableData.SpellNames.Entries);
+            AddTextDict(MessageTextType.SpellType, gameData.ExecutableData.SpellTypeNames.Entries);
+            AddTextDict(MessageTextType.World, gameData.ExecutableData.WorldNames.Entries);
+            AddTextDict(MessageTextType.ItemType, gameData.ExecutableData.ItemTypeNames.Entries);
+            AddTextDict(MessageTextType.Song, gameData.ExecutableData.SongNames.Entries);
+            AddTextDict(MessageTextType.Attribute, gameData.ExecutableData.AttributeNames.Entries);
+            AddTextDict(MessageTextType.Skill, gameData.ExecutableData.SkillNames.Entries);
+            AddTextDict(MessageTextType.AttributeShortcut, gameData.ExecutableData.AttributeNames.ShortNames);
+            AddTextDict(MessageTextType.SkillShortcut, gameData.ExecutableData.SkillNames.ShortNames);
+            AddTextDict(MessageTextType.Automap, gameData.ExecutableData.AutomapNames.Entries);
+            AddTextList(MessageTextType.Message, gameData.ExecutableData.Messages.Entries);
+
+            PADP.Write(dataWriter, texts);
+        });
 
         WriteSection(MagicTilesets, () => PADP.Write(dataWriter, gameData.MapManager.Tilesets.Select(tileset => new TilesetData(tileset))));
         WriteSection(MagicLabyrinthData, () => PADP.Write(dataWriter, gameData.MapManager.Labdata.Select(labdata => new LabyrinthData(labdata))));

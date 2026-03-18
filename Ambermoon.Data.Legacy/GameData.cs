@@ -56,12 +56,12 @@ namespace Ambermoon.Data.Legacy
         private readonly ILogger log;
         private readonly bool stopAtFirstError;
         private readonly List<TravelGraphicInfo> travelGraphicInfos = new(44);
-        private ExecutableData.ExecutableData executableData;
-        public IReadOnlyList<Position> CursorHotspots => executableData?.Cursors.Entries.Select(c => new Position(c.HotspotX - 1, c.HotspotY - 1)).ToList().AsReadOnly();
+        internal ExecutableData.ExecutableData ExecutableData;
+        public IReadOnlyList<Position> CursorHotspots => ExecutableData?.Cursors.Entries.Select(c => new Position(c.HotspotX - 1, c.HotspotY - 1)).ToList().AsReadOnly();
         public Places Places { get; private set; }
         public IGraphicInfoProvider GraphicInfoProvider { get; private set; }
         public ICharacterManager CharacterManager { get; private set; }
-        public IItemManager ItemManager => executableData?.ItemManager;
+        public IItemManager ItemManager => ExecutableData?.ItemManager;
         public IFontProvider FontProvider { get; private set; }
         public IDataNameProvider DataNameProvider { get; private set; }
         public ILightEffectProvider LightEffectProvider { get; private set; }
@@ -762,12 +762,12 @@ namespace Ambermoon.Data.Legacy
                 progressTracker?.Invoke(progress);
             }
 
-            executableData = TryLoad(() => ExecutableData.ExecutableData.FromGameData(this));
+            ExecutableData = TryLoad(() => Legacy.ExecutableData.ExecutableData.FromGameData(this));
             // We assume 3% of time for this
             progress += 0.03f;
             progressTracker?.Invoke(progress);
 
-            if (executableData?.FileList == null && stopAtFirstError)
+            if (ExecutableData?.FileList == null && stopAtFirstError)
                 throw new AmbermoonException(ExceptionScope.Data, "Incomplete game data. AM2_CPU is missing.");
 
             T TryLoad<T>(Func<T> provider) where T : class
@@ -816,21 +816,21 @@ namespace Ambermoon.Data.Legacy
                 additionalPalettes.AddRange(OutroData.OutroPalettes);
             if (FantasyIntroData?.FantasyIntroPalettes != null)
                 additionalPalettes.AddRange(FantasyIntroData.FantasyIntroPalettes);
-            GraphicInfoProvider = TryLoad(() => new GraphicProvider(this, executableData, additionalPalettes));
+            GraphicInfoProvider = TryLoad(() => new GraphicProvider(this, ExecutableData, additionalPalettes));
             UpdateProgress();
             CharacterManager = TryLoad(() => new CharacterManager(this));
             UpdateProgress();
-            if (executableData?.ItemManager != null && Files.TryGetValue("Object_texts.amb", out var objTexts))
+            if (ExecutableData?.ItemManager != null && Files.TryGetValue("Object_texts.amb", out var objTexts))
             {              
                 foreach (var objectTextFile in objTexts.Files)
-                    executableData.ItemManager.AddTexts((uint)objectTextFile.Key, Serialization.TextReader.ReadTexts(objectTextFile.Value));
+                    ExecutableData.ItemManager.AddTexts((uint)objectTextFile.Key, Serialization.TextReader.ReadTexts(objectTextFile.Value));
             }
             UpdateProgress();
-            FontProvider = TryLoad(() => new FontProvider(executableData));
+            FontProvider = TryLoad(() => new FontProvider(ExecutableData));
             UpdateProgress();
-            DataNameProvider = TryLoad(() => new DataNameProvider(executableData));
+            DataNameProvider = TryLoad(() => new DataNameProvider(ExecutableData));
             UpdateProgress();
-            LightEffectProvider = TryLoad(() => new LightEffectProvider(executableData));
+            LightEffectProvider = TryLoad(() => new LightEffectProvider(ExecutableData));
             UpdateProgress();
             MapManager = TryLoad(() => new MapManager(this, new MapReader(), new TilesetReader(), new LabdataReader(), stopAtFirstError));
             UpdateProgress();

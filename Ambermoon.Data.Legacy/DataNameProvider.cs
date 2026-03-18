@@ -5,15 +5,8 @@
     using System.Linq;
     using System.Numerics;
 
-    public class DataNameProvider : IDataNameProvider
+    public class DataNameProvider(ExecutableData.ExecutableData executableData) : IDataNameProvider
     {
-        readonly ExecutableData.ExecutableData executableData;
-
-        public DataNameProvider(ExecutableData.ExecutableData executableData)
-        {
-            this.executableData = executableData;
-        }
-
         public string On => executableData.UITexts.Entries[UITextIndex.On];
         public string Off => executableData.UITexts.Entries[UITextIndex.Off];
         public string DataVersionString => executableData.DataVersionString;

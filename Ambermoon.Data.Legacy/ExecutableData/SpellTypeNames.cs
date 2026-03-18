@@ -13,7 +13,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class SpellTypeNames
     {
-        readonly Dictionary<SpellSchool, string> entries = new Dictionary<SpellSchool, string>();
+        readonly Dictionary<SpellSchool, string> entries = [];
         public IReadOnlyDictionary<SpellSchool, string> Entries => entries;
 
         internal SpellTypeNames(List<string> names)
