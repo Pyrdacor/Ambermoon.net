@@ -12,7 +12,7 @@ internal class LabyrinthData : IFileSpec<LabyrinthData>, IFileSpec
 {
     public static string Magic => "LAB";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     Labdata? labdata = null;
 
     public Labdata Labdata => labdata!;

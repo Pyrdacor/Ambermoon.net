@@ -2,20 +2,11 @@
 
 namespace Ambermoon.Data.Legacy
 {
-    internal class Font : IFont
+    internal class Font(ExecutableData.Glyphs glyphs, ExecutableData.DigitGlyphs digitGlyphs) : IFont
     {
-        readonly ExecutableData.Glyphs glyphs;
-        readonly ExecutableData.DigitGlyphs digitGlyphs;
-
         public int GlyphCount => glyphs.Entries.Count;
 
         public int GlyphHeight => 7;
-
-        public Font(ExecutableData.Glyphs glyphs, ExecutableData.DigitGlyphs digitGlyphs)
-        {
-            this.glyphs = glyphs;
-            this.digitGlyphs = digitGlyphs;
-        }
 
         public Graphic GetGlyphGraphic(uint glyphIndex)
         {

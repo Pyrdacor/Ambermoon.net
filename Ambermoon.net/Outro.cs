@@ -38,13 +38,22 @@ namespace Ambermoon
         {
             if (textureAtlas == null)
             {
-                TextureAtlasManager.Instance.AddFromGraphics(Layer.OutroGraphics,
-                    outroData.Graphics.Select((g, i) => new { Graphic = g, Index = i }).ToDictionary(g => (uint)g.Index, g => g.Graphic));
-                textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.OutroGraphics);
+                var textureAtlasManager = TextureAtlasManager.Instance;
+
+                if (outroData.GraphicAtlas != null)
+                {
+                    textureAtlasManager.AddAtlas(Layer.OutroGraphics, outroData.GraphicAtlas);
+                }
+                else
+                {
+                    textureAtlasManager.AddFromGraphics(Layer.OutroGraphics,
+                        outroData.Graphics.Select((g, i) => new { Graphic = g, Index = i }).ToDictionary(g => (uint)g.Index, g => g.Graphic));
+                }
+                textureAtlas = textureAtlasManager.GetOrCreate(Layer.OutroGraphics);
                 renderView.GetLayer(Layer.OutroGraphics).Texture = textureAtlas.Texture;
-                TextureAtlasManager.Instance.AddFromGraphics(Layer.OutroText, outroFont.GlyphGraphics);
-                TextureAtlasManager.Instance.AddFromGraphics(Layer.OutroText, outroFontLarge.GlyphGraphics);
-                renderView.GetLayer(Layer.OutroText).Texture = TextureAtlasManager.Instance.GetOrCreate(Layer.OutroText).Texture;
+                textureAtlasManager.AddFromGraphics(Layer.OutroText, outroFont.GlyphGraphics);
+                textureAtlasManager.AddFromGraphics(Layer.OutroText, outroFontLarge.GlyphGraphics);
+                renderView.GetLayer(Layer.OutroText).Texture = textureAtlasManager.GetOrCreate(Layer.OutroText).Texture;
             }
         }
 

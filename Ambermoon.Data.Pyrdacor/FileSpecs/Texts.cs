@@ -8,7 +8,7 @@ internal class Texts : IFileSpec<Texts>, IFileSpec
 {
     public static string Magic => "TXT";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     TextList? textList = null;
 
     public TextList TextList => textList!;

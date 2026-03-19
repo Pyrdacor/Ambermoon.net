@@ -13,7 +13,7 @@ public class Textures : IFileSpec<Textures>, IFileSpec
 
     public static string Magic => "TEX";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     public IReadOnlyDictionary<int, Graphic> WallGraphics => wallGraphics.AsReadOnly();
     public IReadOnlyDictionary<int, Graphic> ObjectGraphics => objectGraphics.AsReadOnly();
     public IReadOnlyDictionary<int, Graphic> OverlayGraphics => overlayGraphics.AsReadOnly();

@@ -8,7 +8,7 @@ internal class LocationData : IFileSpec<LocationData>, IFileSpec
 {
     public static string Magic => "LOC";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0Compression>();
     Place? place = null;
 
     public Place Place => place!;

@@ -11,8 +11,8 @@ internal class NullCompression : ICompression<NullCompression>, ICompression
         return dataReader;
     }
 
-    public IDataWriter Compress(IDataWriter dataWriter)
+    public byte[] Compress(byte[] data)
     {
-        return dataWriter;
+        return data;
     }
 }

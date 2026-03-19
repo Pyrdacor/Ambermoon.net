@@ -8,7 +8,7 @@ internal class MerchantData : IFileSpec<MerchantData>, IFileSpec
 {
     public static string Magic => "MER";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0Compression>();
     Merchant? merchant = null;
 
     public Merchant Merchant => merchant!;

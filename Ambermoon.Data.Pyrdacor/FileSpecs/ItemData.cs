@@ -8,7 +8,7 @@ internal class ItemData : IFileSpec<ItemData>, IFileSpec
 {
     public static string Magic => "ITM";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     Item? item = null;
 
     public Item Item => item!;

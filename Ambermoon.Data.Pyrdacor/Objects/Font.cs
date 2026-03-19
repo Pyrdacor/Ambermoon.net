@@ -31,9 +31,30 @@ internal class Font
 {
     readonly List<Glyph> glyphs;
     
-    public bool Monospace { get; }
+    public bool Monospace { get; private init; }
     public int GlyphCount => glyphs.Count;
-    public int GlyphHeight { get; }
+    public int GlyphHeight { get; private init; }
+
+    public Font(List<Glyph> glyphs)
+    {
+        this.glyphs = glyphs;
+
+        if (glyphs.Count == 0)
+        {
+            Monospace = true;
+            GlyphHeight = 0;
+        }
+        else
+        {
+            int glyphWidth = glyphs[0].Graphic.Width;
+            GlyphHeight = glyphs[0].Graphic.Height;
+
+            Monospace = glyphs.All(glyph => glyph.Graphic.Width == glyphWidth);
+
+            if (glyphs.Any(glyph => glyph.Graphic.Height != GlyphHeight))
+                throw new InvalidDataException("All glyphs must have the same height.");
+        }
+    }
 
     public Font(IDataReader dataReader)
     {

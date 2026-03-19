@@ -10,7 +10,7 @@ internal class SavegameData : IFileSpec<SavegameData>, IFileSpec
 {
     public static string Magic => "SAV";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0Compression>();
     Savegame savegame = new();
 
     public Savegame Savegame => savegame;

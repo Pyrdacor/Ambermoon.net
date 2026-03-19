@@ -52,7 +52,7 @@ internal static class PADF
         AddCompression(ICompression.NoCompression);
         AddCompression(ICompression.Deflate);
         AddCompression(ICompression.RLE0);
-        AddCompression(ICompression.PYC);
+        AddCompression(ICompression.Delta);
     }
 
     public static IFileSpec Read(IDataReader reader, GameData gameData)
@@ -91,13 +91,17 @@ internal static class PADF
         writer.WriteWithoutLength(IFileSpec.GetMagic<T>());
         writer.Write(IFileSpec.GetSupportedVersion<T>());
 
-        IDataWriter dataWriter = new DataWriter();
+        var dataWriter = new DataWriter();
         fileSpec.Write(dataWriter);
 
         compression ??= IFileSpec.GetPreferredCompression<T>();
         writer.Write(compression.GetIdentifier());
-        dataWriter = compression.Compress(dataWriter);
+        var data = compression.Compress(dataWriter.ToArray());
 
-        writer.Write(dataWriter.ToArray());
+#if DEBUG
+        Console.WriteLine($"Compression ratio for file spec {T.Magic}: {((double)data.Length * 100 / dataWriter.Size):0.00}% (Before: {dataWriter.Size} B, After: {data.Length} B)");
+#endif
+
+        writer.Write(data);
     }
 }

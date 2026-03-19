@@ -8,7 +8,7 @@ internal class ExplorationData : IFileSpec<ExplorationData>, IFileSpec
 {
     public static string Magic => "EXP";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0Compression>();
     Automap? automap = null;
 
     public Automap Automap => automap!;

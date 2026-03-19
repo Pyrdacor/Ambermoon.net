@@ -28,7 +28,7 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
 
     public static string Magic => "MAP";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     Map? map = null;
     ushort? templateMapIndex = null;
     bool resolved = false;

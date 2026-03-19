@@ -16,7 +16,7 @@ internal class TextList
 
     public TextList(IReadOnlyList<string> texts)
     {
-        this.texts = new(texts);
+        this.texts = [.. texts];
     }
 
     public TextList(List<string> texts)

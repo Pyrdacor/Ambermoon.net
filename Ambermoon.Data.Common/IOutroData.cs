@@ -50,6 +50,7 @@ namespace Ambermoon.Data
         IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>> OutroActions { get; }
         IReadOnlyList<Graphic> OutroPalettes { get; }
         IReadOnlyList<Graphic> Graphics { get; }
+        IGraphicAtlas GraphicAtlas { get; }
         IReadOnlyList<string> Texts { get; }
         IReadOnlyDictionary<uint, OutroGraphicInfo> GraphicInfos { get; }
         IReadOnlyDictionary<char, Glyph> Glyphs { get; }

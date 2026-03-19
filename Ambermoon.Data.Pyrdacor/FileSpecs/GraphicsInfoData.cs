@@ -9,12 +9,12 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
 {
     public static string Magic => "GIN";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
-    Dictionary<int, int> npcGraphicOffsets = new(2);
-    Dictionary<int, List<int>> npcGraphicFrameCounts = new(2);
-    Dictionary<CombatGraphicIndex, CombatGraphicInfo> combatGraphicInfos = new(42);
-    Dictionary<TravelType, GraphicInfo> stationaryImageInfos = new(5);
-    Dictionary<TravelType, TravelGraphicInfo[]> travelGraphicInfos = new(20);
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
+    readonly Dictionary<int, int> npcGraphicOffsets = new(2);
+    readonly Dictionary<int, List<int>> npcGraphicFrameCounts = new(2);
+    readonly Dictionary<CombatGraphicIndex, CombatGraphicInfo> combatGraphicInfos = new(42);
+    readonly Dictionary<TravelType, GraphicInfo> stationaryImageInfos = new(5);
+    readonly Dictionary<TravelType, TravelGraphicInfo[]> travelGraphicInfos = new(20);
     Character2DAnimationInfo playerAnimationInfo = new();
 
     public IReadOnlyDictionary<int, int> NPCGraphicOffsets => npcGraphicOffsets.AsReadOnly();

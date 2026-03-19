@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
-    // The intro texts are grouped by sections which
+    // The outro texts are grouped by sections which
     // are divided by clicks.
     //
     // 1. Destruction of the temple of brotherhood
@@ -73,6 +73,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         public IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>> OutroActions => outroActions.ToDictionary(a => a.Key, a => (IReadOnlyList<OutroAction>)a.Value.AsReadOnly()).AsReadOnly();
         public IReadOnlyList<Graphic> OutroPalettes => outroPalettes.AsReadOnly();
         public IReadOnlyList<Graphic> Graphics => graphics.OrderBy(g => g.Key).Select(g => g.Value.Key).ToList().AsReadOnly();
+        public IGraphicAtlas GraphicAtlas { get; } = null; // If null, the atlas is created from Graphics property
         public IReadOnlyList<string> Texts => texts.AsReadOnly();
         public IReadOnlyDictionary<uint, OutroGraphicInfo> GraphicInfos => graphics.OrderBy(g => g.Key).Select((g, i) => new { GraphicEntry = g, Index = i })
             .ToDictionary(g => g.GraphicEntry.Key, g => new OutroGraphicInfo

@@ -11,7 +11,7 @@ namespace Ambermoon
 {
     class Text
     {
-        readonly List<IAlphaSprite> renderGlyphs = new List<IAlphaSprite>();
+        readonly List<IAlphaSprite> renderGlyphs = [];
         bool visible = false;
         readonly int totalWidth = 0;
         int baseX = 0;

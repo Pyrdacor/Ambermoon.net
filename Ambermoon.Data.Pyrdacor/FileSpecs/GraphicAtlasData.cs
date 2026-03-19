@@ -101,7 +101,7 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
             }
         }
 
-        public static KeyValuePair<Graphic, SortedList<int, Rect>> PackTextureAtlas(Dictionary<int, Graphic> graphics, bool indexed)
+        public static KeyValuePair<Graphic, SortedList<int, Rect>> PackTextureAtlas(IDictionary<int, Graphic> graphics, bool indexed)
         {
             if (graphics.Count == 0)
                 return KeyValuePair.Create(new Graphic(0, 0, 0) { IndexedGraphic = indexed }, new SortedList<int, Rect>());
@@ -215,7 +215,7 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
 
     public static string Magic => "GFX";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     public IReadOnlyList<Rect> TextureAreas => textureAreas.Values.AsReadOnly();
     public GraphicAtlas? Atlas { get; private set; }
 
@@ -232,7 +232,7 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         this.textureAreas = textureAreas;
     }
 
-    public static GraphicAtlasData FromIndexedGraphics(int? paletteIndex, Dictionary<int, Graphic> graphics, bool alpha, int colorIndexOffset = 0)
+    public static GraphicAtlasData FromIndexedGraphics(int? paletteIndex, IDictionary<int, Graphic> graphics, bool alpha, int colorIndexOffset = 0)
     {
         if (graphics.Count != 0)
         {
@@ -272,7 +272,7 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
     }
 
 
-    public static GraphicAtlasData FromGraphics(int paletteIndex, List<Graphic> graphics, bool alpha, int colorIndexOffset = 0)
+    public static GraphicAtlasData FromGraphics(int paletteIndex, IReadOnlyList<Graphic> graphics, bool alpha, int colorIndexOffset = 0)
     {
         if (graphics.Count != 0)
         {
@@ -312,7 +312,7 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         return new GraphicAtlasData(paletteIndex, flags, texture, textureAreas);
     }
 
-    public static GraphicAtlasData FromTiles(int paletteIndex, List<Graphic> tiles, bool alpha, int colorIndexOffset = 0)
+    public static GraphicAtlasData FromTiles(int paletteIndex, IReadOnlyList<Graphic> tiles, bool alpha, int colorIndexOffset = 0)
     {
         if (tiles.Select(t => new { t.Width, t.Height, t.IndexedGraphic, t.Data.Length }).Distinct().Count() > 1)
             throw new AmbermoonException(ExceptionScope.Data, "Tile graphics are expected to have all the same size and color depth.");
@@ -389,12 +389,12 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         return new GraphicAtlasData(paletteIndex, flags, texture, textureAreas);
     }
 
-    public static GraphicAtlasData FromGraphics(List<Graphic> graphics, bool alpha, int colorIndexOffset = 0)
+    public static GraphicAtlasData FromGraphics(IReadOnlyList<Graphic> graphics, bool alpha, int colorIndexOffset = 0)
     {
         return FromGraphics(-1, graphics, alpha, colorIndexOffset);
     }
 
-    public static GraphicAtlasData FromTiles(List<Graphic> tiles, bool alpha, int colorIndexOffset = 0)
+    public static GraphicAtlasData FromTiles(IReadOnlyList<Graphic> tiles, bool alpha, int colorIndexOffset = 0)
     {
         return FromTiles(-1, tiles, alpha, colorIndexOffset);
     }

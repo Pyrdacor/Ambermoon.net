@@ -807,12 +807,16 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             var textureAtlasManager = TextureAtlasManager.Instance;
             var introGraphics = introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value);
             uint twinlakeFrameOffset = (uint)introData.Graphics.Keys.Max();
+
             foreach (var twinlakeImagePart in introData.TwinlakeImageParts)
                 introGraphics.Add(++twinlakeFrameOffset, twinlakeImagePart.Graphic);
+
             textureAtlasManager.AddAll(gameData, graphicInfoProvider, fontProvider, introFont.GlyphGraphics,
-                    introFontLarge.GlyphGraphics, introGraphics, features, 10);
+                introFontLarge.GlyphGraphics, introGraphics, features, 10);
+
             logoPyrdacor?.Initialize(textureAtlasManager);
             AdvancedLogo.Initialize(textureAtlasManager, () => Resources.Advanced);
+
             return textureAtlasManager;
         });
         renderView.SetTextureFactor(Layer.Text, 2);

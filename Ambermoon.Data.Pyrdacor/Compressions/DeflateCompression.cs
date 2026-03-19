@@ -4,7 +4,7 @@ using System.IO.Compression;
 
 namespace Ambermoon.Data.Pyrdacor.Compressions;
 
-internal class Deflate : ICompression<Deflate>, ICompression
+internal class DeflateCompression : ICompression<DeflateCompression>, ICompression
 {
     public static ushort Identifier => 0xDEF1;
 
@@ -18,9 +18,9 @@ internal class Deflate : ICompression<Deflate>, ICompression
         return new DataReader(targetStream);
     }
 
-    public IDataWriter Compress(IDataWriter dataWriter)
+    public byte[] Compress(byte[] data)
     {
-        using Stream sourceStream = new MemoryStream(dataWriter.ToArray());
+        using Stream sourceStream = new MemoryStream(data);
         using var compressedStream = new MemoryStream();
 
         using (var compressor = new DeflateStream(compressedStream, CompressionLevel.Optimal))
@@ -28,6 +28,6 @@ internal class Deflate : ICompression<Deflate>, ICompression
             sourceStream.CopyTo(compressor);
         }
 
-        return new DataWriter(compressedStream.ToArray());
+        return compressedStream.ToArray();
     }
 }

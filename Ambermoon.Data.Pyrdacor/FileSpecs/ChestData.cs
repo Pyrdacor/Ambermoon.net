@@ -8,7 +8,7 @@ internal class ChestData : IFileSpec<ChestData>, IFileSpec
 {
     public static string Magic => "CHE";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0Compression>();
     Chest? chest = null;
 
     public Chest Chest => chest!;

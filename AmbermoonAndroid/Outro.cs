@@ -30,19 +30,29 @@ namespace AmbermoonAndroid
         readonly IColoredRect fadeArea;
         Action fadeMidAction = null;
         long fadeStartTicks = 0;
-        const long HalfFadeDurationInTicks = 3 * Game.TicksPerSecond / 4;
+        const long HalfFadeDurationInTicks = 3 * GameCore.TicksPerSecond / 4;
 
         static void EnsureTextures(IGameRenderView renderView, IOutroData outroData, Font outroFont, Font outroFontLarge)
         {
             if (textureAtlas == null)
             {
-                TextureAtlasManager.Instance.AddFromGraphics(Layer.OutroGraphics,
-                    outroData.Graphics.Select((g, i) => new { Graphic = g, Index = i }).ToDictionary(g => (uint)g.Index, g => g.Graphic));
-                textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.OutroGraphics);
+                var textureAtlasManager = TextureAtlasManager.Instance;
+
+                if (outroData.GraphicAtlas != null)
+                {
+                    textureAtlasManager.AddAtlas(Layer.OutroGraphics, outroData.GraphicAtlas);
+                }
+                else
+                {
+                    textureAtlasManager.AddFromGraphics(Layer.OutroGraphics,
+                        outroData.Graphics.Select((g, i) => new { Graphic = g, Index = i }).ToDictionary(g => (uint)g.Index, g => g.Graphic));
+                }
+
+                textureAtlas = textureAtlasManager.GetOrCreate(Layer.OutroGraphics);
                 renderView.GetLayer(Layer.OutroGraphics).Texture = textureAtlas.Texture;
-                TextureAtlasManager.Instance.AddFromGraphics(Layer.OutroText, outroFont.GlyphGraphics);
-                TextureAtlasManager.Instance.AddFromGraphics(Layer.OutroText, outroFontLarge.GlyphGraphics);
-                renderView.GetLayer(Layer.OutroText).Texture = TextureAtlasManager.Instance.GetOrCreate(Layer.OutroText).Texture;
+                textureAtlasManager.AddFromGraphics(Layer.OutroText, outroFont.GlyphGraphics);
+                textureAtlasManager.AddFromGraphics(Layer.OutroText, outroFontLarge.GlyphGraphics);
+                renderView.GetLayer(Layer.OutroText).Texture = textureAtlasManager.GetOrCreate(Layer.OutroText).Texture;
             }
         }
 
@@ -101,7 +111,7 @@ namespace AmbermoonAndroid
         public void Update(double deltaTime)
         {
             if (waitForClick || fadeMidAction != null || speedIndex != 0)
-                ticks += (long)Math.Round(Game.TicksPerSecond * deltaTime);
+                ticks += (long)Math.Round(GameCore.TicksPerSecond * deltaTime);
 
             if (fadeArea.Visible || fadeMidAction != null)
             {
@@ -164,7 +174,7 @@ namespace AmbermoonAndroid
             if (speedIndex == 0)
                 return; // paused
 
-            double pixelsPerTick = PixelScrollPerSecond[speedIndex] / Game.TicksPerSecond;
+            double pixelsPerTick = PixelScrollPerSecond[speedIndex] / GameCore.TicksPerSecond;
             long scrollTicks = (long)Math.Round((actions[actionIndex - 1].ScrollAmount - scrolledAmount) / pixelsPerTick);
             scrolledAmount = 0;
             scrollStartTicks = ticks;
@@ -174,7 +184,7 @@ namespace AmbermoonAndroid
         void Scroll()
         {
             long scrollTicks = ticks - scrollStartTicks;
-            double pixelsPerTick = PixelScrollPerSecond[speedIndex] / Game.TicksPerSecond;
+            double pixelsPerTick = PixelScrollPerSecond[speedIndex] / GameCore.TicksPerSecond;
             int scrollAmount = (int)Math.Round(scrollTicks * pixelsPerTick);
             int delta = scrollAmount - scrolledAmount;
 
@@ -244,7 +254,7 @@ namespace AmbermoonAndroid
                 {
                     if (action.TextIndex != null)
                         PrintText(action.TextDisplayX, outroData.Texts[action.TextIndex.Value], action.LargeText);
-                    double pixelsPerTick = PixelScrollPerSecond[speedIndex] / Game.TicksPerSecond;
+                    double pixelsPerTick = PixelScrollPerSecond[speedIndex] / GameCore.TicksPerSecond;
                     long scrollTicks = (long)Math.Round(action.ScrollAmount / pixelsPerTick);
                     ++actionIndex;
                     scrolledAmount = 0;

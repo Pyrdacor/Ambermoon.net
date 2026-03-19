@@ -151,7 +151,7 @@ internal static class PADP
         writer.WriteWithoutLength(fileType);
         writer.Write(supportedVersion);
 
-        IDataWriter dataWriter = new DataWriter();
+        var dataWriter = new DataWriter();
         List<int> sizes = [];
         var orderedFileSpecs = fileSpecs.OrderBy(f => f.Key).ToList();
 
@@ -195,9 +195,13 @@ internal static class PADP
         // Compress data if needed
         compression ??= IFileSpec.GetPreferredCompression<T>();
         writer.Write(compression.GetIdentifier());
-        dataWriter = compression.Compress(dataWriter);
+        var data = compression.Compress(dataWriter.ToArray());
+
+#if DEBUG
+        Console.WriteLine($"Compression ratio for file spec {T.Magic}: {((double)data.Length * 100 / dataWriter.Size):0.00}% (Before: {dataWriter.Size} B, After: {data.Length} B)");
+#endif
 
         // Write data
-        writer.Write(dataWriter.ToArray());
+        writer.Write(data);
     }
 }

@@ -8,7 +8,7 @@ internal class FontData : IFileSpec<FontData>, IFileSpec
 {
     public static string Magic => "FNT";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     Font? font = null;
 
     public const ushort IngameFontIndex = 1;

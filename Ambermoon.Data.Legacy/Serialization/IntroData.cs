@@ -67,11 +67,11 @@ namespace Ambermoon.Data.Legacy.Serialization
 
     public class IntroData : IIntroData
     {
-        readonly List<IntroTwinlakeImagePart> twinlakeImageParts = new();
-        readonly List<IIntroTextCommand> textCommands = new();
-        readonly List<string> textCommandTexts = new();
-        readonly List<Graphic> introPalettes = new();
-        readonly Dictionary<IntroGraphic, Graphic> graphics = new();
+        readonly List<IntroTwinlakeImagePart> twinlakeImageParts = [];
+        readonly List<IIntroTextCommand> textCommands = [];
+        readonly List<string> textCommandTexts = [];
+        readonly List<Graphic> introPalettes = [];
+        readonly Dictionary<IntroGraphic, Graphic> graphics = [];
         static readonly ImmutableDictionary<IntroGraphic, byte> graphicPalettes = new Dictionary<IntroGraphic, byte>
         {
             { IntroGraphic.Frame, 8 },
@@ -101,9 +101,9 @@ namespace Ambermoon.Data.Legacy.Serialization
             Height = 1,
             GraphicFormat = GraphicFormat.XRGB16
         };
-        readonly Dictionary<IntroText, string> texts = new();
-        readonly Dictionary<char, Glyph> glyphs = new();
-        readonly Dictionary<char, Glyph> largeGlyphs = new();
+        readonly Dictionary<IntroText, string> texts = [];
+        readonly Dictionary<char, Glyph> glyphs = [];
+        readonly Dictionary<char, Glyph> largeGlyphs = [];
 
         public IReadOnlyList<Graphic> IntroPalettes => introPalettes.AsReadOnly();
         public static IReadOnlyDictionary<IntroGraphic, byte> GraphicPalettes => graphicPalettes;

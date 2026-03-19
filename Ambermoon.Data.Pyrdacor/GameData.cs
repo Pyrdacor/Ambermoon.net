@@ -17,9 +17,10 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 {
     readonly ISavegameManager savegameManager;
     LazyFileLoader<GameDataInfo, GameDataInfo> gameDataInfoLoader = null!;
-    LazyFileLoader<Palette, Palette> paletteLoader = null!;
+    LazyContainerLoader<Palette, Palette> paletteLoader = null!;
     LazyFileLoader<SavegameData, Savegame> savegameLoader = null!;
     LazyContainerLoader<FontData, Font> fontLoader = null!;
+    LazyContainerLoader<GlyphMappingData, GlyphMapping> glyphMappingLoader = null!;
     LazyContainerLoader<MonsterGroups, MonsterGroup> monsterGroupLoader = null!;
     LazyContainerLoader<CharacterData, PartyMember> partyLoader = null!;
     LazyContainerLoader<CharacterData, Monster> monsterLoader = null!;
@@ -35,7 +36,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     LazyContainerLoader<TilesetData, Tileset> tilesetLoader = null!;
     LazyContainerLoader<LocationData, Place> locationLoader = null!;
     LazyContainerLoader<Texts, string> locationNameLoader = null!;
-    LazyContainerLoader<OutroSequenceData, OutroData> outroSequenceLoader = null!;
+    LazyFileLoader<OutroSequenceData, IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>>> outroSequenceLoader = null!;
     LazyFileLoader<Texts, TextList> gotoPointNameLoader = null!;
     LazyContainerLoader<ChestData, Chest> initialChestLoader = null!;
     LazyFileLoader<GraphicsInfoData, GraphicsInfoData> graphicsInfoLoader = null!;
@@ -57,6 +58,11 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> battleFieldSpriteLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> automapGraphicLoader = null!;
     LazyContainerLoader<GraphicAtlasData, GraphicAtlas> tileGraphicLoader = null!; // one entry per tileset
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> outroGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> introGraphicLoader = null!;
+    LazyFileLoader<Texts, TextList> outroTextLoader = null!;
+    LazyFileLoader<Texts, TextList> introTextLoader = null!;
+    LazyContainerLoader<OutroGraphicsInfoData, OutroGraphicInfo> outroGraphicsInfoLoader = null!;
     LazyFileLoader<Texts, TextList> dictionaryLoader = null!;
     LazyFileLoader<Textures, Textures> texturesLoader = null!;
     LazyContainerLoader<MusicData, byte[]> musicLoader = null!;
@@ -66,11 +72,15 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     readonly Lazy<ICharacterManager> characterManager = null!;
     readonly Lazy<IItemManager> itemManager = null!;
     readonly Lazy<IMapManager> mapManager = null!;
+    readonly Lazy<Palette> gamePalette = null!;
     readonly Lazy<IngameFont> ingameFont = null!;
     readonly Lazy<Font> outroSmallFont = null!;
     readonly Lazy<Font> outroLargeFont = null!;
     readonly Lazy<Font> introSmallFont = null!;
     readonly Lazy<Font> introLargeFont = null!;
+    readonly Lazy<IOutroData> outroData = null!;
+    readonly Lazy<IIntroData> introData = null!;
+    readonly Lazy<IFantasyIntroData> fantasyIntroData = null!;
     readonly Lazy<Places> places = null!;
     readonly Lazy<Dictionary<int, Graphic>> palettes = null!;
     readonly Lazy<IngameFontProvider> ingameFontProvider = null!;
@@ -87,11 +97,11 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public string Version => gameDataInfoLoader.Load().Version;
 
-    public ICharacterManager CharacterManager => characterManager!.Value;
+    public ICharacterManager CharacterManager => characterManager.Value;
 
     public ISavegameManager SavegameManager => savegameManager;
 
-    public ISongManager SongManager => songManager!.Value;
+    public ISongManager SongManager => songManager.Value;
 
     public IReadOnlyDictionary<TravelType, GraphicInfo> StationaryImageInfos
         => graphicsInfoLoader.Load().StationaryImageInfos;
@@ -100,17 +110,17 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public IReadOnlyList<Position> CursorHotspots => throw new NotImplementedException();
 
-    public Places Places => places!.Value;
+    public Places Places => places.Value;
 
-    public IItemManager ItemManager => itemManager!.Value;
+    public IItemManager ItemManager => itemManager.Value;
 
-    public IFontProvider FontProvider => ingameFontProvider!.Value;
+    public IFontProvider FontProvider => ingameFontProvider.Value;
 
-    public IDataNameProvider DataNameProvider => throw new NotImplementedException();
+    public IDataNameProvider DataNameProvider => dataNameProvider.Value;
 
     public ILightEffectProvider LightEffectProvider => throw new NotImplementedException();
 
-    public IMapManager MapManager => mapManager!.Value;
+    public IMapManager MapManager => mapManager.Value;
 
     public IGraphicInfoProvider GraphicInfoProvider => this;
 
@@ -120,23 +130,23 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public IOutroData OutroData => throw new NotImplementedException();
 
-    public TextDictionary Dictionary => dictionary!.Value;
+    public TextDictionary Dictionary => dictionary.Value;
 
-    public Dictionary<int, Graphic> Palettes => palettes!.Value;
+    public Dictionary<int, Graphic> Palettes => palettes.Value;
 
-    public byte DefaultTextPaletteIndex => paletteLoader.Load().DefaultTextPaletteIndex;
+    public byte DefaultTextPaletteIndex => gamePalette.Value.DefaultTextPaletteIndex;
 
-    public byte PrimaryUIPaletteIndex => paletteLoader.Load().PrimaryUIPaletteIndex;
+    public byte PrimaryUIPaletteIndex => gamePalette.Value.PrimaryUIPaletteIndex;
 
-    public byte SecondaryUIPaletteIndex => paletteLoader.Load().SecondaryUIPaletteIndex;
+    public byte SecondaryUIPaletteIndex => gamePalette.Value.SecondaryUIPaletteIndex;
 
-    public byte AutomapPaletteIndex => paletteLoader.Load().AutomapPaletteIndex;
+    public byte AutomapPaletteIndex => gamePalette.Value.AutomapPaletteIndex;
 
-    public byte FirstIntroPaletteIndex => paletteLoader.Load().FirstIntroPaletteIndex;
+    public byte FirstIntroPaletteIndex => gamePalette.Value.FirstIntroPaletteIndex;
 
-    public byte FirstOutroPaletteIndex => paletteLoader.Load().FirstOutroPaletteIndex;
+    public byte FirstOutroPaletteIndex => gamePalette.Value.FirstOutroPaletteIndex;
 
-    public byte FirstFantasyIntroPaletteIndex => paletteLoader.Load().FirstFantasyIntroPaletteIndex;
+    public byte FirstFantasyIntroPaletteIndex => gamePalette.Value.FirstFantasyIntroPaletteIndex;
 
     public IReadOnlyDictionary<int, int> NPCGraphicOffsets
         => graphicsInfoLoader.Load().NPCGraphicOffsets;
@@ -181,6 +191,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     const string MagicMaps = "MAPS";
     const string MagicMapTexts = "MTXT";
     const string MagicFonts = "FONT";
+    const string MagicGlyphMappings = "GMAP";
     const string MagicGotoPointNames = "GOTO";
     const string MagicLayouts = "LAYO";
     const string MagicTextures = "TX3D";
@@ -198,6 +209,11 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     const string MagicInitialChests = "CHES";
     const string MagicDictionary = "DICT";
     const string MagicMusic = "MUSI";
+    const string MagicOutroGraphics = "OUTG";
+    const string MagicIntroGraphics = "INTG";
+    const string MagicOutroTexts = "OUTT";
+    const string MagicIntroTexts = "INTT";
+    const string MagicOutroGraphicInfos = "OUGI";
 
     // TODO: Load horizon graphics?
 
@@ -239,13 +255,14 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         fileHandlers.Add(MagicItemGraphics, LoadItemGraphics);
         fileHandlers.Add(MagicLocations, LoadLocations);
         fileHandlers.Add(MagicLocationNames, LoadLocationNames);
-        fileHandlers.Add(MagicOutro, LoadOutro);
+        fileHandlers.Add(MagicOutro, LoadOutroSequences);
         fileHandlers.Add(MagicTexts, LoadTexts);
         fileHandlers.Add(MagicTilesets, LoadTilesets);
         fileHandlers.Add(MagicLabyrinthData, LoadLabyrinthData);
         fileHandlers.Add(MagicMaps, LoadMaps);
         fileHandlers.Add(MagicMapTexts, LoadMapTexts);
         fileHandlers.Add(MagicFonts, LoadFonts);
+        fileHandlers.Add(MagicGlyphMappings, LoadGlyphMappings);
         fileHandlers.Add(MagicGotoPointNames, LoadGotoPointNames);
         fileHandlers.Add(MagicLayouts, LoadLayoutGraphics);
         fileHandlers.Add(MagicTextures, LoadTextures);
@@ -263,6 +280,11 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         fileHandlers.Add(MagicInitialChests, LoadInitialChests);
         fileHandlers.Add(MagicDictionary, LoadDictionary);
         fileHandlers.Add(MagicMusic, LoadMusic);
+        fileHandlers.Add(MagicOutroGraphics, LoadOutroGraphics);
+        fileHandlers.Add(MagicIntroGraphics, LoadIntroGraphics);
+        fileHandlers.Add(MagicOutroTexts, LoadOutroTexts);
+        fileHandlers.Add(MagicIntroTexts, LoadIntroTexts);
+        fileHandlers.Add(MagicOutroGraphicInfos, LoadOutroGraphicInfos);
 
         foreach (var customFileHandler in customFileHandlers)
         {
@@ -300,6 +322,8 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
             () => tilesetLoader!.LoadAll()
         ));
 
+        gamePalette = new Lazy<Palette>(() => paletteLoader!.Load(Palette.GamePalettesIndex));
+
         ingameFont = new Lazy<IngameFont>(() => new IngameFont
         (
             () => fontLoader!.Load(FontData.IngameFontIndex),
@@ -310,12 +334,12 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         outroLargeFont = new Lazy<Font>(() => fontLoader!.Load(FontData.OutroLargeFontIndex));
         introSmallFont = new Lazy<Font>(() => fontLoader!.Load(FontData.IntroSmallFontIndex));
         introLargeFont = new Lazy<Font>(() => fontLoader!.Load(FontData.IntroLargeFontIndex));
-        ingameFontProvider = new Lazy<IngameFontProvider>(() => new(ingameFont!.Value));
+        ingameFontProvider = new Lazy<IngameFontProvider>(() => new(ingameFont.Value));
 
         palettes = new Lazy<Dictionary<int, Graphic>>(() =>
         {
             var result = new Dictionary<int, Graphic>();
-            var paletteGraphics = paletteLoader!.Load().Graphic;
+            var paletteGraphics = paletteLoader!.Load(Palette.GamePalettesIndex).Graphic;
 
             for (int y = 0; y < paletteGraphics.Height; y++)
             {
@@ -329,6 +353,26 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
             }
 
             return result;
+        });
+
+        outroData = new Lazy<IOutroData>(() =>
+        {
+            var smallGlyphs = outroSmallFont.Value;
+            var largeGlyphs = outroSmallFont.Value;
+            var smallGlyphMapping = glyphMappingLoader!.Load(GlyphMappingData.OutroSmallGlyphMappingIndex);
+            var largeGlyphMapping = glyphMappingLoader!.Load(GlyphMappingData.OutroLargeGlyphMappingIndex);
+
+            return new OutroData
+            {
+                OutroActions = outroSequenceLoader!.Load(),
+                OutroPalettes = paletteLoader.Load(Palette.OutroPalettesIndex).Slice(),
+                Graphics = null,
+                GraphicAtlas = outroGraphicLoader.Load(),
+                Texts = outroTextLoader.Load().ToList(),
+                GraphicInfos = outroGraphicsInfoLoader.LoadAll(),
+                Glyphs = smallGlyphMapping.Mapping.ToDictionary(kv => kv.Key, kv => smallGlyphs.GetGlyph((uint)kv.Value)),
+                LargeGlyphs = largeGlyphMapping.Mapping.ToDictionary(kv => kv.Key, kv => largeGlyphs.GetGlyph((uint)kv.Value)),
+            };
         });
 
         places = new Lazy<Places>(() =>
@@ -469,10 +513,9 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         locationNameLoader = new(dataReader, this, t => t.TextList.First()!);
     }
 
-    void LoadOutro(IDataReader dataReader)
+    void LoadOutroSequences(IDataReader dataReader)
     {
-        // TODO
-        // outroSequenceLoader = new(dataReader, this, o => o.OutroData);
+        outroSequenceLoader = new(dataReader, this, o => o.Sequences);
     }
 
     void LoadTexts(IDataReader dataReader)
@@ -503,6 +546,11 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     void LoadFonts(IDataReader dataReader)
     {
         fontLoader = new(dataReader, this, f => f.Font);
+    }
+
+    void LoadGlyphMappings(IDataReader dataReader)
+    {
+        glyphMappingLoader = new(dataReader, this, g => g.GlyphMapping);
     }
 
     void LoadGotoPointNames(IDataReader dataReader)
@@ -623,6 +671,31 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     void LoadInitialChests(IDataReader dataReader)
     {
         initialChestLoader = new(dataReader, this, c => c.Chest);
+    }
+
+    void LoadOutroGraphics(IDataReader dataReader)
+    {
+        outroGraphicLoader = new(dataReader, this, g => g.Atlas!);
+    }
+
+    void LoadIntroGraphics(IDataReader dataReader)
+    {
+        introGraphicLoader = new(dataReader, this, g => g.Atlas!);
+    }
+
+    void LoadOutroTexts(IDataReader dataReader)
+    {
+        outroTextLoader = new(dataReader, this, t => t.TextList);
+    }
+
+    void LoadIntroTexts(IDataReader dataReader)
+    {
+        introTextLoader = new(dataReader, this, t => t.TextList);
+    }
+
+    void LoadOutroGraphicInfos(IDataReader dataReader)
+    {
+        outroGraphicsInfoLoader = new(dataReader, this, t => t.OutroGraphicInfo);
     }
 
     public CombatBackgroundInfo Get2DCombatBackground(uint index, bool advanced)

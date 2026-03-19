@@ -8,7 +8,7 @@ internal class MusicData : IFileSpec<MusicData>, IFileSpec
 {
     public static string Magic => "MUS";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     byte[]? songData = null;
 
     public byte[] SongData => songData!;

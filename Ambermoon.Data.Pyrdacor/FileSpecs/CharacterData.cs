@@ -11,7 +11,7 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
 {
     public static string Magic => "CHR";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     Character? character = null;
 
     public Character Character => character!;

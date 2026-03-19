@@ -11,13 +11,13 @@ public interface ICompression
 {
     static virtual ushort Identifier => 0xFFFF;
     IDataReader Decompress(IDataReader dataReader);
-    IDataWriter Compress(IDataWriter dataWriter);
+    byte[] Compress(byte[] data);
     abstract ushort GetIdentifier();
 
     public static KeyValuePair<ushort, ICompression> NoCompression { get; } = Create<NullCompression>();
-    public static KeyValuePair<ushort, ICompression> Deflate { get; } = Create<Deflate>();
-    public static KeyValuePair<ushort, ICompression> RLE0 { get; } = Create<RLE0>();
-    public static KeyValuePair<ushort, ICompression> PYC { get; } = Create<PycCompression>();
+    public static KeyValuePair<ushort, ICompression> Deflate { get; } = Create<DeflateCompression>();
+    public static KeyValuePair<ushort, ICompression> RLE0 { get; } = Create<RLE0Compression>();
+    public static KeyValuePair<ushort, ICompression> Delta { get; } = Create<DeltaCompression>();
 
     public static ushort GetIdentifier<T>() where T : ICompression
     {

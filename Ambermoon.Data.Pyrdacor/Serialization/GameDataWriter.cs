@@ -1,7 +1,6 @@
 ﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Characters;
-using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
 using Ambermoon.Data.Pyrdacor.Objects;
@@ -12,7 +11,9 @@ namespace Ambermoon.Data.Pyrdacor;
 
 partial class GameData
 {
-    private static void WritePalettes(IDataWriter dataWriter, Dictionary<int, IDataReader> palettes, IGraphicInfoProvider graphicInfoProvider)
+    private static void WritePalettes(IDataWriter dataWriter, Dictionary<int, IDataReader> palettes,
+        IReadOnlyList<Graphic> introPalettes, IReadOnlyList<Graphic> outroPalettes,
+        IGraphicInfoProvider graphicInfoProvider)
     {
         var graphic = new Graphic()
         {
@@ -48,7 +49,7 @@ partial class GameData
             }
         }
 
-        var palette = new Palette(graphic)
+        var gamePalette = new Palette(graphic)
         {
             PrimaryUIPaletteIndex = graphicInfoProvider.PrimaryUIPaletteIndex,
             AutomapPaletteIndex = graphicInfoProvider.AutomapPaletteIndex,
@@ -58,7 +59,27 @@ partial class GameData
             FirstFantasyIntroPaletteIndex = graphicInfoProvider.FirstFantasyIntroPaletteIndex,
         };
 
-        PADF.Write(dataWriter, palette);
+        var outroPaletteGraphic = new Graphic(32, introPalettes.Count, 0);
+
+        for (int i = 0; i < outroPalettes.Count; i++)
+            outroPaletteGraphic.AddOverlay(0, (uint)i, outroPalettes[i], false);
+
+        var introPaletteGraphic = new Graphic(32, introPalettes.Count, 0);
+
+        for (int i = 0; i < introPalettes.Count; i++)
+            introPaletteGraphic.AddOverlay(0, (uint)i, introPalettes[i], false);
+
+        var outroPalette = new Palette(outroPaletteGraphic);
+        var introPalette = new Palette(introPaletteGraphic);
+
+        var paletteEntries = new Dictionary<ushort, Palette>
+        {
+            { Palette.GamePalettesIndex, gamePalette },
+            { Palette.OutroPalettesIndex, outroPalette },
+            { Palette.IntroPalettesIndex, introPalette },
+        };
+
+        PADP.Write(dataWriter, paletteEntries);
     }
 
     private static void WriteTexts(IDataWriter dataWriter, Dictionary<int, IDataReader> textFiles)
@@ -71,7 +92,7 @@ partial class GameData
         }));
     }
 
-    private static void WriteGraphics(IDataWriter dataWriter, List<Graphic> graphics, bool tiles, bool alpha, bool usePalette, int? fixedPaletteIndex = null, int colorIndexOffset = 0)
+    private static void WriteGraphics(IDataWriter dataWriter, IReadOnlyList<Graphic> graphics, bool tiles, bool alpha, bool usePalette, int? fixedPaletteIndex = null, int colorIndexOffset = 0)
     {
         GraphicAtlasData graphicAtlas;
 
@@ -101,7 +122,7 @@ partial class GameData
         PADF.Write(dataWriter, graphicAtlas);
     }
 
-    private static void WriteIndexedGraphics(IDataWriter dataWriter, Dictionary<int, Graphic> graphics, bool alpha, bool usePalette, int? fixedPaletteIndex = null, int colorIndexOffset = 0)
+    private static void WriteIndexedGraphics(IDataWriter dataWriter, IDictionary<int, Graphic> graphics, bool alpha, bool usePalette, int? fixedPaletteIndex = null, int colorIndexOffset = 0)
     {
         var graphicAtlas = GraphicAtlasData.FromIndexedGraphics(usePalette ? (fixedPaletteIndex ?? GraphicAtlasData.MultiplePalettes) : null, graphics, alpha, colorIndexOffset);
 
@@ -130,6 +151,7 @@ partial class GameData
         var graphicProvider = (gameData.GraphicInfoProvider as IGraphicProvider)!;
         var info = new GameDataInfo()
         {
+            Name = "Ambermoon",
             Advanced = gameData.Advanced,
             Version = gameData.Version,
             Language = gameData.Language,
@@ -137,7 +159,8 @@ partial class GameData
 
         WriteSection(MagicInfo, () => PADF.Write(dataWriter, info));
 
-        WriteSection(MagicPalette, () => WritePalettes(dataWriter, gameData.Files["Palettes.amb"].Files, gameData.GraphicInfoProvider));
+        WriteSection(MagicPalette, () => WritePalettes(dataWriter, gameData.Files["Palettes.amb"].Files,
+            gameData.IntroData.IntroPalettes, gameData.OutroData.OutroPalettes, gameData.GraphicInfoProvider));
 
         WriteSection(MagicSavegame, () =>
         {
@@ -147,7 +170,45 @@ partial class GameData
             PADF.Write(dataWriter, new FileSpecs.SavegameData(savegame));
         });
 
-        // TODO: fonts
+        WriteSection(MagicFonts, () =>
+        {
+            var ingameFont = new FontData(new(gameData.ExecutableData.Glyphs.Entries.Select(g => new Glyph { Graphic = g, Advance = 6 }).ToList()));
+            var ingameDigitFont = new FontData(new(gameData.ExecutableData.DigitGlyphs.Entries.Select(g => new Glyph { Graphic = g, Advance = 5 }).ToList()));
+            var outroSmallFont = new FontData(new(gameData.OutroData.Glyphs.OrderBy(g => g.Key).Select(g => g.Value).ToList()));
+            var outroLargeFont = new FontData(new(gameData.OutroData.LargeGlyphs.OrderBy(g => g.Key).Select(g => g.Value).ToList()));
+            var introSmallFont = new FontData(new(gameData.IntroData.Glyphs.OrderBy(g => g.Key).Select(g => g.Value).ToList()));
+            var introLargeFont = new FontData(new(gameData.IntroData.LargeGlyphs.OrderBy(g => g.Key).Select(g => g.Value).ToList()));
+
+            var fonts = new Dictionary<ushort, FontData>
+            {
+                { FontData.IngameFontIndex, ingameFont },
+                { FontData.IngameDigitFontIndex, ingameDigitFont },
+                { FontData.OutroSmallFontIndex, outroSmallFont },
+                { FontData.OutroLargeFontIndex, outroLargeFont },
+                { FontData.IntroSmallFontIndex, introSmallFont },
+                { FontData.IntroLargeFontIndex, introLargeFont },
+            };
+
+            PADP.Write(dataWriter, fonts);
+        });
+
+        WriteSection(MagicGlyphMappings, () =>
+        {
+            var outroSmallGlyphMapping = new GlyphMappingData(new(gameData.OutroData.Glyphs.OrderBy(g => g.Key).Select((g, index) => new { g, index }).ToDictionary(e => e.g.Key, e => e.index)));
+            var outroLargeGlyphMapping = new GlyphMappingData(new(gameData.OutroData.LargeGlyphs.OrderBy(g => g.Key).Select((g, index) => new { g, index }).ToDictionary(e => e.g.Key, e => e.index)));
+            var introSmallGlyphMapping = new GlyphMappingData(new(gameData.IntroData.Glyphs.OrderBy(g => g.Key).Select((g, index) => new { g, index }).ToDictionary(e => e.g.Key, e => e.index)));
+            var introLargeGlyphMapping = new GlyphMappingData(new(gameData.IntroData.LargeGlyphs.OrderBy(g => g.Key).Select((g, index) => new { g, index }).ToDictionary(e => e.g.Key, e => e.index)));
+
+            var glyphMappings = new Dictionary<ushort, GlyphMappingData>
+            {
+                { GlyphMappingData.OutroSmallGlyphMappingIndex, outroSmallGlyphMapping },
+                { GlyphMappingData.OutroLargeGlyphMappingIndex, outroLargeGlyphMapping },
+                { GlyphMappingData.IntroSmallGlyphMappingIndex, introSmallGlyphMapping },
+                { GlyphMappingData.IntroLargeGlyphMappingIndex, introLargeGlyphMapping },
+            };
+
+            PADP.Write(dataWriter, glyphMappings);
+        });
 
         WriteSection(MagicInitialParty, () =>
         {
@@ -412,6 +473,12 @@ partial class GameData
         }
 
         WriteSection(MagicMusic, () => PADP.Write(dataWriter, songData.ToDictionary(song => (ushort)song.Key, song => new MusicData(song.Value))));
+
+        WriteSection(MagicOutroGraphics, () => WriteGraphics(dataWriter, gameData.OutroData.Graphics, true, false, true, gameData.GraphicInfoProvider.FirstOutroPaletteIndex));
+
+        WriteSection(MagicIntroGraphics, () => WriteIndexedGraphics(dataWriter, gameData.IntroData.Graphics.ToDictionary(g => (int)g.Key, g => g.Value), true, true));
+
+        WriteSection(MagicOutroGraphicInfos, () => PADP.Write(dataWriter, gameData.OutroData.GraphicInfos.ToDictionary(info => (ushort)info.Key, info => new OutroGraphicsInfoData(info.Value))));
 
         dataWriter.Replace(fileCountPosition, (ushort)fileCount);
     }

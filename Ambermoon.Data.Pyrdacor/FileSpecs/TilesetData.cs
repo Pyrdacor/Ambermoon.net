@@ -8,7 +8,7 @@ internal class TilesetData : IFileSpec<TilesetData>, IFileSpec
 {
     public static string Magic => "TIL";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<Deflate>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     Tileset? tileset = null;
 
     public Tileset Tileset => tileset!;

@@ -8,7 +8,7 @@ internal class MonsterGroups : IFileSpec<MonsterGroups>, IFileSpec
 {
     public static string Magic => "MOG";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0Compression>();
     MonsterGroup? monsterGroup = null;
 
     public MonsterGroup MonsterGroup => monsterGroup!;
