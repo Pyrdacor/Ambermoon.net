@@ -63,4 +63,7 @@ internal class TextList
     public List<string> ToList() => [.. texts];
 
     public Dictionary<int, string> ToDictionary(int startIndex = 0) => texts.Select((text, index) => new { Text = text, Index = index }).ToDictionary(t => startIndex + t.Index, t => t.Text);
+
+    public Dictionary<TKey, string> ToDictionary<TKey>(TKey startKey = default) where TKey : struct, Enum
+        => texts.Select((text, index) => new { Text = text, Index = index }).ToDictionary(t => (TKey)Enum.ToObject(typeof(TKey), Convert.ToInt32(startKey) + t.Index), t => t.Text);
 }

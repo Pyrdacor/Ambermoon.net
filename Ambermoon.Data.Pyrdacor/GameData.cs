@@ -63,6 +63,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     LazyFileLoader<Texts, TextList> outroTextLoader = null!;
     LazyFileLoader<Texts, TextList> introTextLoader = null!;
     LazyContainerLoader<OutroGraphicsInfoData, OutroGraphicInfo> outroGraphicsInfoLoader = null!;
+    LazyFileLoader<IntroGraphicsInfoData, IntroGraphicsInfo> introGraphicsInfoLoader = null!;
     LazyFileLoader<Texts, TextList> dictionaryLoader = null!;
     LazyFileLoader<Textures, Textures> texturesLoader = null!;
     LazyContainerLoader<MusicData, byte[]> musicLoader = null!;
@@ -124,11 +125,11 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public IGraphicInfoProvider GraphicInfoProvider => this;
 
-    public IIntroData IntroData => throw new NotImplementedException();
+    public IIntroData IntroData => introData.Value;
 
     public IFantasyIntroData FantasyIntroData => throw new NotImplementedException();
 
-    public IOutroData OutroData => throw new NotImplementedException();
+    public IOutroData OutroData => outroData.Value;
 
     public TextDictionary Dictionary => dictionary.Value;
 
@@ -214,6 +215,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     const string MagicOutroTexts = "OUTT";
     const string MagicIntroTexts = "INTT";
     const string MagicOutroGraphicInfos = "OUGI";
+    const string MagicIntroGraphicInfos = "INGI";
 
     // TODO: Load horizon graphics?
 
@@ -285,6 +287,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         fileHandlers.Add(MagicOutroTexts, LoadOutroTexts);
         fileHandlers.Add(MagicIntroTexts, LoadIntroTexts);
         fileHandlers.Add(MagicOutroGraphicInfos, LoadOutroGraphicInfos);
+        fileHandlers.Add(MagicIntroGraphicInfos, LoadIntroGraphicInfos);
 
         foreach (var customFileHandler in customFileHandlers)
         {
@@ -373,6 +376,41 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
                 Glyphs = smallGlyphMapping.Mapping.ToDictionary(kv => kv.Key, kv => smallGlyphs.GetGlyph((uint)kv.Value)),
                 LargeGlyphs = largeGlyphMapping.Mapping.ToDictionary(kv => kv.Key, kv => largeGlyphs.GetGlyph((uint)kv.Value)),
             };
+        });
+
+        introData = new Lazy<IIntroData>(() =>
+        {
+            var smallGlyphs = introSmallFont.Value;
+            var largeGlyphs = introSmallFont.Value;
+            var smallGlyphMapping = glyphMappingLoader!.Load(GlyphMappingData.IntroSmallGlyphMappingIndex);
+            var largeGlyphMapping = glyphMappingLoader!.Load(GlyphMappingData.IntroLargeGlyphMappingIndex);
+            var introGraphicsInfo = introGraphicsInfoLoader.Load();
+            var graphicSizes = introGraphicsInfo.GraphicSizes;
+            var twinlakeImageParts = introGraphicsInfo.TwinlakeImageParts;
+
+            return new IntroData
+            {
+                IntroPalettes = paletteLoader.Load(Palette.IntroPalettesIndex).Slice(),
+                Graphics = introGraphicLoader.Load().ToDictionary<IntroGraphic>(graphicSizes),
+                Texts = introTextLoader.Load().ToDictionary<IntroText>(),
+                Glyphs = smallGlyphMapping.Mapping.ToDictionary(kv => kv.Key, kv => smallGlyphs.GetGlyph((uint)kv.Value)),
+                LargeGlyphs = largeGlyphMapping.Mapping.ToDictionary(kv => kv.Key, kv => largeGlyphs.GetGlyph((uint)kv.Value)),
+                TwinlakeImageParts = twinlakeImageParts,
+            };
+
+            /*
+            public interface IIntroTextCommand
+            {
+                IntroTextCommandType Type { get; }
+                int[] Args { get; }
+            }
+
+            public interface IIntroData
+            {
+                ...
+                IReadOnlyList<IIntroTextCommand> TextCommands { get; }
+                IReadOnlyList<string> TextCommandTexts { get; }
+            }*/
         });
 
         places = new Lazy<Places>(() =>
@@ -696,6 +734,11 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     void LoadOutroGraphicInfos(IDataReader dataReader)
     {
         outroGraphicsInfoLoader = new(dataReader, this, t => t.OutroGraphicInfo);
+    }
+
+    void LoadIntroGraphicInfos(IDataReader dataReader)
+    {
+        introGraphicsInfoLoader = new(dataReader, this, t => t.GraphicsInfo);
     }
 
     public CombatBackgroundInfo Get2DCombatBackground(uint index, bool advanced)
