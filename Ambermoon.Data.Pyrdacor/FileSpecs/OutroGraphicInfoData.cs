@@ -3,35 +3,43 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.FileSpecs;
 
-internal class OutroGraphicsInfoData : IFileSpec<OutroGraphicsInfoData>, IFileSpec
+using OutroGraphicInfo = Objects.OutroGraphicInfo;
+
+internal class OutroGraphicInfoData : IFileSpec<OutroGraphicInfoData>, IFileSpec
 {
     public static string Magic => "OGI";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<NullCompression>();
     OutroGraphicInfo? outroGraphicInfo;
 
     public OutroGraphicInfo OutroGraphicInfo => outroGraphicInfo!.Value;
 
-    public OutroGraphicsInfoData()
+    public OutroGraphicInfoData()
     {
 
     }
 
-    public OutroGraphicsInfoData(OutroGraphicInfo outroGraphicInfo)
+    public OutroGraphicInfoData(Data.OutroGraphicInfo outroGraphicInfo, uint imageDataOffset)
     {
-        this.outroGraphicInfo = outroGraphicInfo;
+        this.outroGraphicInfo = new()
+        {
+            ImageDataOffset = imageDataOffset,
+            Width = outroGraphicInfo.Width,
+            Height = outroGraphicInfo.Height,
+            PaletteIndex = outroGraphicInfo.PaletteIndex
+        };
     }
 
     public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
-        uint index = dataReader.ReadByte();
+        uint imageDataOffset = dataReader.ReadDword();
         int width = dataReader.ReadWord();
         int height = dataReader.ReadWord();
         byte paletteIndex = dataReader.ReadByte();
 
         outroGraphicInfo = new()
         {
-            GraphicIndex = index,
+            ImageDataOffset = imageDataOffset,
             Width = width,
             Height = height,
             PaletteIndex = paletteIndex
@@ -42,7 +50,7 @@ internal class OutroGraphicsInfoData : IFileSpec<OutroGraphicsInfoData>, IFileSp
     {
         var outroGraphicInfo = OutroGraphicInfo;
 
-        dataWriter.Write((byte)outroGraphicInfo.GraphicIndex);
+        dataWriter.Write((uint)outroGraphicInfo.ImageDataOffset);
         dataWriter.Write((ushort)outroGraphicInfo.Width);
         dataWriter.Write((ushort)outroGraphicInfo.Height);
         dataWriter.Write((byte)outroGraphicInfo.PaletteIndex);

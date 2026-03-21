@@ -20,7 +20,7 @@ public sealed class GraphicAtlas : IGraphicAtlas
         return graphics;
     }
 
-    public IReadOnlyDictionary<TKey, Graphic> ToDictionary<TKey>(Dictionary<uint, Size> graphicSizes) where TKey : struct, Enum
+    public IReadOnlyDictionary<TKey, Graphic> ToDictionary<TKey>(IDictionary<uint, Size> graphicSizes) where TKey : struct, Enum
     {
         var graphics = new Dictionary<TKey, Graphic>();
 

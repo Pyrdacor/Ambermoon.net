@@ -62,8 +62,8 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> introGraphicLoader = null!;
     LazyFileLoader<Texts, TextList> outroTextLoader = null!;
     LazyFileLoader<Texts, TextList> introTextLoader = null!;
-    LazyContainerLoader<OutroGraphicsInfoData, OutroGraphicInfo> outroGraphicsInfoLoader = null!;
-    LazyFileLoader<IntroGraphicsInfoData, IntroGraphicsInfo> introGraphicsInfoLoader = null!;
+    LazyContainerLoader<OutroGraphicInfoData, Objects.OutroGraphicInfo> outroGraphicsInfoLoader = null!;
+    LazyFileLoader<IntroAssetData, IntroAssets> introAssetLoader = null!;
     LazyFileLoader<Texts, TextList> dictionaryLoader = null!;
     LazyFileLoader<Textures, Textures> texturesLoader = null!;
     LazyContainerLoader<MusicData, byte[]> musicLoader = null!;
@@ -215,7 +215,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     const string MagicOutroTexts = "OUTT";
     const string MagicIntroTexts = "INTT";
     const string MagicOutroGraphicInfos = "OUGI";
-    const string MagicIntroGraphicInfos = "INGI";
+    const string MagicIntroAssets = "INAS";
 
     // TODO: Load horizon graphics?
 
@@ -287,7 +287,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         fileHandlers.Add(MagicOutroTexts, LoadOutroTexts);
         fileHandlers.Add(MagicIntroTexts, LoadIntroTexts);
         fileHandlers.Add(MagicOutroGraphicInfos, LoadOutroGraphicInfos);
-        fileHandlers.Add(MagicIntroGraphicInfos, LoadIntroGraphicInfos);
+        fileHandlers.Add(MagicIntroAssets, LoadIntroAssets);
 
         foreach (var customFileHandler in customFileHandlers)
         {
@@ -372,7 +372,13 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
                 Graphics = null,
                 GraphicAtlas = outroGraphicLoader.Load(),
                 Texts = outroTextLoader.Load().ToList(),
-                GraphicInfos = outroGraphicsInfoLoader.LoadAll(),
+                GraphicInfos = outroGraphicsInfoLoader.LoadAll().ToDictionary(info => info.Value.ImageDataOffset, info => new OutroGraphicInfo()
+                {
+                    GraphicIndex = info.Key - 1,
+                    Width = info.Value.Width,
+                    Height = info.Value.Height,
+                    PaletteIndex = info.Value.PaletteIndex
+                }),
                 Glyphs = smallGlyphMapping.Mapping.ToDictionary(kv => kv.Key, kv => smallGlyphs.GetGlyph((uint)kv.Value)),
                 LargeGlyphs = largeGlyphMapping.Mapping.ToDictionary(kv => kv.Key, kv => largeGlyphs.GetGlyph((uint)kv.Value)),
             };
@@ -384,33 +390,20 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
             var largeGlyphs = introSmallFont.Value;
             var smallGlyphMapping = glyphMappingLoader!.Load(GlyphMappingData.IntroSmallGlyphMappingIndex);
             var largeGlyphMapping = glyphMappingLoader!.Load(GlyphMappingData.IntroLargeGlyphMappingIndex);
-            var introGraphicsInfo = introGraphicsInfoLoader.Load();
-            var graphicSizes = introGraphicsInfo.GraphicSizes;
-            var twinlakeImageParts = introGraphicsInfo.TwinlakeImageParts;
+            var introAssets = introAssetLoader.Load();
+            var graphicSizes = introAssets.GraphicSizes;
 
             return new IntroData
             {
                 IntroPalettes = paletteLoader.Load(Palette.IntroPalettesIndex).Slice(),
-                Graphics = introGraphicLoader.Load().ToDictionary<IntroGraphic>(graphicSizes),
+                Graphics = introGraphicLoader.Load().ToDictionary<IntroGraphic>(graphicSizes.ToDictionary(e => (uint)e.Key, e => e.Value)),
                 Texts = introTextLoader.Load().ToDictionary<IntroText>(),
                 Glyphs = smallGlyphMapping.Mapping.ToDictionary(kv => kv.Key, kv => smallGlyphs.GetGlyph((uint)kv.Value)),
                 LargeGlyphs = largeGlyphMapping.Mapping.ToDictionary(kv => kv.Key, kv => largeGlyphs.GetGlyph((uint)kv.Value)),
-                TwinlakeImageParts = twinlakeImageParts,
+                TwinlakeImageParts = introAssets.TwinlakeImageParts,
+                TextCommands = introAssets.TextCommands,
+                TextCommandTexts = introAssets.TextCommandTexts,
             };
-
-            /*
-            public interface IIntroTextCommand
-            {
-                IntroTextCommandType Type { get; }
-                int[] Args { get; }
-            }
-
-            public interface IIntroData
-            {
-                ...
-                IReadOnlyList<IIntroTextCommand> TextCommands { get; }
-                IReadOnlyList<string> TextCommandTexts { get; }
-            }*/
         });
 
         places = new Lazy<Places>(() =>
@@ -736,9 +729,9 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         outroGraphicsInfoLoader = new(dataReader, this, t => t.OutroGraphicInfo);
     }
 
-    void LoadIntroGraphicInfos(IDataReader dataReader)
+    void LoadIntroAssets(IDataReader dataReader)
     {
-        introGraphicsInfoLoader = new(dataReader, this, t => t.GraphicsInfo);
+        introAssetLoader = new(dataReader, this, t => t.Assets);
     }
 
     public CombatBackgroundInfo Get2DCombatBackground(uint index, bool advanced)

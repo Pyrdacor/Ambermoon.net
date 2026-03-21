@@ -1,33 +1,41 @@
 ﻿using Ambermoon.Data.Legacy.Serialization;
-using Ambermoon.Data.Pyrdacor.Compressions;
-using Ambermoon.Data.Pyrdacor.FileSpecs;
+using Ambermoon.Data.Pyrdacor.Extensions;
 using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.Objects;
 
-internal class IntroGraphicsInfo : IFileSpec<IntroGraphicsInfo>, IFileSpec
+internal class IntroAssets
 {
-    public static string Magic => "IGI";
-    public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     readonly Dictionary<IntroGraphic, Size> graphicSizes = [];
     readonly List<IntroTwinlakeImagePart> twinlakeImageParts = [];
+    readonly List<IIntroTextCommand> textCommands = [];
+    readonly List<string> textCommandTexts = [];
 
     public IReadOnlyDictionary<IntroGraphic, Size> GraphicSizes => graphicSizes.AsReadOnly();
     public IReadOnlyList<IIntroTwinlakeImagePart> TwinlakeImageParts => twinlakeImageParts.AsReadOnly();
+    public IReadOnlyList<IIntroTextCommand> TextCommands => textCommands.AsReadOnly();
+    public IReadOnlyList<string> TextCommandTexts => textCommandTexts.AsReadOnly();
 
-    public IntroGraphicsInfo()
+    public IntroAssets()
     {
 
     }
 
-    public IntroGraphicsInfo(Dictionary<IntroGraphic, Size> graphicSizes, List<IntroTwinlakeImagePart> twinlakeImageParts)
+    public IntroAssets
+    (
+        Dictionary<IntroGraphic, Size> graphicSizes,
+        List<IntroTwinlakeImagePart> twinlakeImageParts,
+        List<TextCommand> textCommands,
+        List<string> textCommandTexts
+    )
     {
         this.graphicSizes = graphicSizes;
         this.twinlakeImageParts = twinlakeImageParts;
+        this.textCommands = textCommands.Cast<IIntroTextCommand>().ToList();
+        this.textCommandTexts = textCommandTexts;
     }
 
-    public IntroGraphicsInfo(IDataReader dataReader)
+    public IntroAssets(IDataReader dataReader)
     {
         int graphicCount = dataReader.ReadByte();
 
@@ -69,6 +77,41 @@ internal class IntroGraphicsInfo : IFileSpec<IntroGraphicsInfo>, IFileSpec
                 }
             });
         }
+
+        textCommands.Clear();
+        textCommandTexts.Clear();
+
+        while (TextCommand.TryParse(dataReader, textCommandTexts, out var textCommand))
+            textCommands.Add(textCommand!);
+    }
+
+    private void WriteTextCommands(IDataWriter dataWriter)
+    {
+        foreach (var textCommand in TextCommands)
+        {
+            dataWriter.WriteEnum8(textCommand.Type);
+
+            switch (textCommand.Type)
+            {
+                case IntroTextCommandType.Add:
+                    dataWriter.Write((byte)textCommand.Args[0]); // X
+                    dataWriter.Write((byte)textCommand.Args[1]); // Y
+                    string text = TextCommandTexts[textCommand.Args[2]];
+                    dataWriter.WriteNullTerminated(text);
+                    break;
+                case IntroTextCommandType.Wait:
+                    dataWriter.Write((byte)textCommand.Args[0]); // Ticks
+                    break;
+                case IntroTextCommandType.SetTextColor:
+                    dataWriter.Write((ushort)textCommand.Args[0]); // Color
+                    break;
+                default:
+                    // No args
+                    break;
+            }
+        }
+
+        dataWriter.Write((byte)255); // end marker
     }
 
     public void Write(IDataWriter dataWriter)
@@ -94,5 +137,7 @@ internal class IntroGraphicsInfo : IFileSpec<IntroGraphicsInfo>, IFileSpec
             dataWriter.Write((ushort)twinlakeImagePart.Graphic.Height);
             dataWriter.Write(twinlakeImagePart.Graphic.Data);
         }
+
+        WriteTextCommands(dataWriter);
     }
 }

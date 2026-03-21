@@ -59,15 +59,27 @@ partial class GameData
             FirstFantasyIntroPaletteIndex = graphicInfoProvider.FirstFantasyIntroPaletteIndex,
         };
 
-        var outroPaletteGraphic = new Graphic(32, introPalettes.Count, 0);
+        var outroPaletteGraphic = new Graphic
+        {
+            Width = 32,
+            Height = outroPalettes.Count,
+            Data = new byte[32 * outroPalettes.Count * 4],
+            IndexedGraphic = false
+        };
 
         for (int i = 0; i < outroPalettes.Count; i++)
-            outroPaletteGraphic.AddOverlay(0, (uint)i, outroPalettes[i], false);
+            Buffer.BlockCopy(outroPalettes[i].Data, 0, outroPaletteGraphic.Data, i * 128, 128);
 
-        var introPaletteGraphic = new Graphic(32, introPalettes.Count, 0);
+        var introPaletteGraphic = new Graphic
+        {
+            Width = 32,
+            Height = introPalettes.Count,
+            Data = new byte[32 * introPalettes.Count * 4],
+            IndexedGraphic = false
+        };
 
         for (int i = 0; i < introPalettes.Count; i++)
-            introPaletteGraphic.AddOverlay(0, (uint)i, introPalettes[i], false);
+            Buffer.BlockCopy(introPalettes[i].Data, 0, introPaletteGraphic.Data, i * 128, 128);
 
         var outroPalette = new Palette(outroPaletteGraphic);
         var introPalette = new Palette(introPaletteGraphic);
@@ -305,12 +317,12 @@ partial class GameData
 
             void AddTextDict<TKey>(MessageTextType textType, IReadOnlyDictionary<TKey, string> textList)
             {
-                AddTextList(MessageTextType.UI, textList.OrderBy(e => e.Key).Select(e => e.Value).ToList());
+                AddTextList(textType, textList.OrderBy(e => e.Key).Select(e => e.Value).ToList());
             }
 
             void AddTextList(MessageTextType textType, IReadOnlyList<string> textList)
             {
-                texts.Add((ushort)MessageTextType.UI, new Texts(new(textList)));
+                texts.Add((ushort)textType, new Texts(new(textList)));
             }
 
             AddTextDict(MessageTextType.UI, gameData.ExecutableData.UITexts.Entries);
@@ -474,11 +486,22 @@ partial class GameData
 
         WriteSection(MagicMusic, () => PADP.Write(dataWriter, songData.ToDictionary(song => (ushort)song.Key, song => new MusicData(song.Value))));
 
-        WriteSection(MagicOutroGraphics, () => WriteGraphics(dataWriter, gameData.OutroData.Graphics, true, false, true, gameData.GraphicInfoProvider.FirstOutroPaletteIndex));
+        WriteSection(MagicOutroGraphics, () => WriteGraphics(dataWriter, gameData.OutroData.Graphics, false, false, true, gameData.GraphicInfoProvider.FirstOutroPaletteIndex));
 
         WriteSection(MagicIntroGraphics, () => WriteIndexedGraphics(dataWriter, gameData.IntroData.Graphics.ToDictionary(g => (int)g.Key, g => g.Value), true, true));
 
-        WriteSection(MagicOutroGraphicInfos, () => PADP.Write(dataWriter, gameData.OutroData.GraphicInfos.ToDictionary(info => (ushort)info.Key, info => new OutroGraphicsInfoData(info.Value))));
+        WriteSection(MagicOutroGraphicInfos, () => PADP.Write(dataWriter, gameData.OutroData.GraphicInfos.ToDictionary(info => (ushort)(1 + info.Value.GraphicIndex), info => new OutroGraphicInfoData(info.Value, info.Key))));
+
+        WriteSection(MagicIntroAssets, () =>
+        {
+            var introData = gameData.IntroData;
+            var introAssets = new IntroAssets(introData.Graphics.ToDictionary(g => g.Key, g => new Size(g.Value.Width, g.Value.Height)),
+                introData.TwinlakeImageParts.Cast<IntroTwinlakeImagePart>().ToList(),
+                introData.TextCommands.Cast<TextCommand>().ToList(),
+                introData.TextCommandTexts.ToList());
+
+            PADF.Write(dataWriter, new IntroAssetData(introAssets));
+        });
 
         dataWriter.Replace(fileCountPosition, (ushort)fileCount);
     }

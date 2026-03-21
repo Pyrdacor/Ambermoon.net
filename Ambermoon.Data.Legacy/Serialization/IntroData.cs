@@ -45,13 +45,13 @@ namespace Ambermoon.Data.Legacy.Serialization
                     texts.Add(dataReader.ReadNullTerminatedString());
                     break;
                 case IntroTextCommandType.Wait:
-                    args = new int[1] { dataReader.ReadByte() }; // Ticks
+                    args = [dataReader.ReadByte()]; // Ticks
                     break;
                 case IntroTextCommandType.SetTextColor:
-                    args = new int[1] { dataReader.ReadWord() }; // Color
+                    args = [dataReader.ReadWord()]; // Color
                     break;
                 default:
-                    args = Array.Empty<int>();
+                    args = [];
                     break;
             }
 

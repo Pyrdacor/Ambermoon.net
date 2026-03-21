@@ -4,32 +4,32 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.FileSpecs;
 
-internal class IntroGraphicsInfoData : IFileSpec<IntroGraphicsInfoData>, IFileSpec
+internal class IntroAssetData : IFileSpec<IntroAssetData>, IFileSpec
 {
-    public static string Magic => "IGI";
+    public static string Magic => "IAD";
     public static byte SupportedVersion => 0;
     public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
-    IntroGraphicsInfo? graphicsInfo;
+    IntroAssets? assets;
 
-    public IntroGraphicsInfo GraphicsInfo => graphicsInfo!;
+    public IntroAssets Assets => assets!;
 
-    public IntroGraphicsInfoData()
+    public IntroAssetData()
     {
 
     }
 
-    public IntroGraphicsInfoData(IntroGraphicsInfo introGraphicsInfo)
+    public IntroAssetData(IntroAssets introGraphicsInfo)
     {
-        this.graphicsInfo = introGraphicsInfo;
+        this.assets = introGraphicsInfo;
     }
 
     public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
-        graphicsInfo = new(dataReader);
+        assets = new(dataReader);
     }
 
     public void Write(IDataWriter dataWriter)
     {
-        GraphicsInfo.Write(dataWriter);
+        Assets.Write(dataWriter);
     }
 }
