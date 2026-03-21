@@ -45,7 +45,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// cursors, glyphs and their mappings,
     /// button graphics and items.
     /// </summary>
-    public class ExecutableData
+    public class ExecutableData : ILightEffectDataProvider
     {
         // TODO: at offste 0x79be in data hunk 1 (german 1.05) there is the info about combat backgrounds
         // descibed here https://gitlab.com/ambermoon/research/-/wikis/Amberfiles/Combat_background.

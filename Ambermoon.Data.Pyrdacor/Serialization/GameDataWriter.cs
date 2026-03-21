@@ -515,6 +515,8 @@ partial class GameData
             PADF.Write(dataWriter, new FantasyIntroAssetData(fantasyIntroAssets));
         });
 
+        WriteSection(MagicLightEffectData, () => PADF.Write(dataWriter, new LightEffectData(gameData.ExecutableData)));
+
         dataWriter.Replace(fileCountPosition, (ushort)fileCount);
     }
 }

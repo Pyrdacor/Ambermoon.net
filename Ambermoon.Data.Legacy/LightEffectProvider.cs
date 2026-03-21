@@ -3,28 +3,28 @@ using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy
 {
-    public class LightEffectProvider : ILightEffectProvider
+    public interface ILightEffectDataProvider
     {
-        readonly ExecutableData.ExecutableData executableData;
-        readonly Dictionary<uint, List<SkyPart>> skyPartCache = new Dictionary<uint, List<SkyPart>>();
-        readonly Dictionary<uint, PaletteReplacement> paletteReplaceCache = new Dictionary<uint, PaletteReplacement>();
+        Graphic[] SkyGradients { get; }
+        Graphic[] DaytimePaletteReplacements { get; }
+    }
+
+    public class LightEffectProvider(ILightEffectDataProvider lightEffectDataProvider) : ILightEffectProvider
+    {
+        readonly Dictionary<uint, List<SkyPart>> skyPartCache = [];
+        readonly Dictionary<uint, PaletteReplacement> paletteReplaceCache = [];
 
         /// <summary>
         /// This was extracted from the original code. These are the brightness levels
         /// for outdoor maps. At least they are used to blend colors dependent on daytime
         /// on those maps.
         /// </summary>
-        public static readonly byte[] OutdoorBrightnessLevels = new byte[24]
-        {
+        public static readonly byte[] OutdoorBrightnessLevels =
+        [
             0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x28, 0x40,
             0xc8, 0xc8, 0xc8, 0xc8, 0xc8, 0xc8, 0xc8, 0xc8,
             0xc8, 0x40, 0x40, 0x28, 0x10, 0x10, 0x10, 0x10
-        };
-
-        public LightEffectProvider(ExecutableData.ExecutableData executableData)
-        {
-            this.executableData = executableData;
-        }
+        ];
 
         public PaletteReplacement GetLightPaletteReplacement(Map map, uint hour, uint minute,
             uint buffLightIntensity, IGraphicInfoProvider graphicInfoProvider)
@@ -64,7 +64,7 @@ namespace Ambermoon.Data.Legacy
                 }
 
                 stage = 0;
-                basePalette = executableData.DaytimePaletteReplacements[worldIndex * 2 + 0];
+                basePalette = lightEffectDataProvider.DaytimePaletteReplacements[worldIndex * 2 + 0];
             }
             else if (hour >= 9 && hour < 18) // Day
             {
@@ -78,7 +78,7 @@ namespace Ambermoon.Data.Legacy
 
                 stage = 1000 + hour * 60 + minute;
                 basePalette = graphicInfoProvider.Palettes[(int)map.PaletteIndex];
-                blendPalette = executableData.DaytimePaletteReplacements[worldIndex * 2 + 1];
+                blendPalette = lightEffectDataProvider.DaytimePaletteReplacements[worldIndex * 2 + 1];
                 destFactor = 255 * ((hour - 18) * 60 + minute) / 120;
             }
             else if (hour >= 20 && hour < 22) // Dawn phase II
@@ -87,8 +87,8 @@ namespace Ambermoon.Data.Legacy
                     return GetLightPaletteReplacement(map, Math.Max(17, hour - buffLightIntensity / 16), 0, 0, graphicInfoProvider);
 
                 stage = 3000 + hour * 60 + minute;
-                basePalette = executableData.DaytimePaletteReplacements[worldIndex * 2 + 1];
-                blendPalette = executableData.DaytimePaletteReplacements[worldIndex * 2 + 0];
+                basePalette = lightEffectDataProvider.DaytimePaletteReplacements[worldIndex * 2 + 1];
+                blendPalette = lightEffectDataProvider.DaytimePaletteReplacements[worldIndex * 2 + 0];
                 destFactor = 255 * ((hour - 20) * 60 + minute) / 120;
             }
             else if (hour >= 5 && hour < 7) // Dusk phase I
@@ -97,8 +97,8 @@ namespace Ambermoon.Data.Legacy
                     return GetLightPaletteReplacement(map, Math.Min(9, hour + buffLightIntensity / 16), 0, 0, graphicInfoProvider);
 
                 stage = 5000 + hour * 60 + minute;
-                basePalette = executableData.DaytimePaletteReplacements[worldIndex * 2 + 0];
-                blendPalette = executableData.DaytimePaletteReplacements[worldIndex * 2 + 1];
+                basePalette = lightEffectDataProvider.DaytimePaletteReplacements[worldIndex * 2 + 0];
+                blendPalette = lightEffectDataProvider.DaytimePaletteReplacements[worldIndex * 2 + 1];
                 destFactor = 255 * ((hour - 5) * 60 + minute) / 120;
             }
             else if (hour >= 7 && hour < 9) // Dusk phase II
@@ -107,7 +107,7 @@ namespace Ambermoon.Data.Legacy
                     return GetLightPaletteReplacement(map, Math.Min(9, hour + buffLightIntensity / 16), 0, 0, graphicInfoProvider);
 
                 stage = 7000 + hour * 60 + minute;
-                basePalette = executableData.DaytimePaletteReplacements[worldIndex * 2 + 1];
+                basePalette = lightEffectDataProvider.DaytimePaletteReplacements[worldIndex * 2 + 1];
                 blendPalette = graphicInfoProvider.Palettes[(int)map.PaletteIndex];
                 destFactor = 255 * ((hour - 7) * 60 + minute) / 120;
             }
@@ -171,39 +171,39 @@ namespace Ambermoon.Data.Legacy
             if (hour >= 22 || hour < 5) // Night
             {
                 stage = 0;
-                baseGraphic = executableData.SkyGradients[worldIndex * 3 + 0];
+                baseGraphic = lightEffectDataProvider.SkyGradients[worldIndex * 3 + 0];
             }
             else if (hour >= 9 && hour < 18) // Day
             {
                 stage = 1;
-                baseGraphic = executableData.SkyGradients[worldIndex * 3 + 2];
+                baseGraphic = lightEffectDataProvider.SkyGradients[worldIndex * 3 + 2];
             }
             else if (hour >= 18 && hour < 20) // Dawn phase I
             {
                 stage = 1000 + hour * 60 + minute;
-                baseGraphic = executableData.SkyGradients[worldIndex * 3 + 2];
-                blendGraphic = executableData.SkyGradients[worldIndex * 3 + 1];
+                baseGraphic = lightEffectDataProvider.SkyGradients[worldIndex * 3 + 2];
+                blendGraphic = lightEffectDataProvider.SkyGradients[worldIndex * 3 + 1];
                 destFactor = 255 * ((hour - 18) * 60 + minute) / 120;
             }
             else if (hour >= 20 && hour < 22) // Dawn phase II
             {
                 stage = 3000 + hour * 60 + minute;
-                baseGraphic = executableData.SkyGradients[worldIndex * 3 + 1];
-                blendGraphic = executableData.SkyGradients[worldIndex * 3 + 0];
+                baseGraphic = lightEffectDataProvider.SkyGradients[worldIndex * 3 + 1];
+                blendGraphic = lightEffectDataProvider.SkyGradients[worldIndex * 3 + 0];
                 destFactor = 255 * ((hour - 20) * 60 + minute) / 120;
             }
             else if (hour >= 5 && hour < 7) // Dusk phase I
             {
                 stage = 5000 + hour * 60 + minute;
-                baseGraphic = executableData.SkyGradients[worldIndex * 3 + 0];
-                blendGraphic = executableData.SkyGradients[worldIndex * 3 + 1];
+                baseGraphic = lightEffectDataProvider.SkyGradients[worldIndex * 3 + 0];
+                blendGraphic = lightEffectDataProvider.SkyGradients[worldIndex * 3 + 1];
                 destFactor = 255 * ((hour - 5) * 60 + minute) / 120;
             }
             else if (hour >= 7 && hour < 9) // Dusk phase II
             {
                 stage = 7000 + hour * 60 + minute;
-                baseGraphic = executableData.SkyGradients[worldIndex * 3 + 1];
-                blendGraphic = executableData.SkyGradients[worldIndex * 3 + 2];              
+                baseGraphic = lightEffectDataProvider.SkyGradients[worldIndex * 3 + 1];
+                blendGraphic = lightEffectDataProvider.SkyGradients[worldIndex * 3 + 2];              
                 destFactor = 255 * ((hour - 7) * 60 + minute) / 120;
             }
 

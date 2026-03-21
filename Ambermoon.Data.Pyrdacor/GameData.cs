@@ -66,6 +66,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     LazyContainerLoader<OutroGraphicInfoData, Objects.OutroGraphicInfo> outroGraphicsInfoLoader = null!;
     LazyFileLoader<IntroAssetData, IntroAssets> introAssetLoader = null!;
     LazyFileLoader<FantasyIntroAssetData, FantasyIntroAssets> fantasyIntroAssetLoader = null!;
+    LazyFileLoader<LightEffectData, LightEffectDataProvider> lightEffectDataLoader = null!;
     LazyFileLoader<Texts, TextList> dictionaryLoader = null!;
     LazyFileLoader<Textures, Textures> texturesLoader = null!;
     LazyContainerLoader<MusicData, byte[]> musicLoader = null!;
@@ -89,6 +90,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     readonly Lazy<IngameFontProvider> ingameFontProvider = null!;
     readonly Lazy<TextDictionary> dictionary = null!;
     readonly Lazy<IDataNameProvider> dataNameProvider = null!;
+    readonly Lazy<ILightEffectProvider> lightEffectProvider = null!;
 
     public bool Loaded { get; } = false;
 
@@ -121,7 +123,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public IDataNameProvider DataNameProvider => dataNameProvider.Value;
 
-    public ILightEffectProvider LightEffectProvider => throw new NotImplementedException();
+    public ILightEffectProvider LightEffectProvider => lightEffectProvider.Value;
 
     public IMapManager MapManager => mapManager.Value;
 
@@ -129,7 +131,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public IIntroData IntroData => introData.Value;
 
-    public IFantasyIntroData FantasyIntroData => throw new NotImplementedException();
+    public IFantasyIntroData FantasyIntroData => fantasyIntroData.Value;
 
     public IOutroData OutroData => outroData.Value;
 
@@ -220,8 +222,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     const string MagicOutroGraphicInfos = "OUGI";
     const string MagicIntroAssets = "INAS";
     const string MagicFantasyIntroAssets = "FINA";
-
-    // TODO: Load horizon graphics?
+    const string MagicLightEffectData = "LEDT";
 
     public GameData(Stream stream, ISavegameManager savegameManager, params (string Magic, Action<IDataReader> Action)[] customFileHandlers)
         : this(new DataReader(stream), savegameManager, customFileHandlers)
@@ -293,7 +294,8 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         fileHandlers.Add(MagicIntroTexts, LoadIntroTexts);
         fileHandlers.Add(MagicOutroGraphicInfos, LoadOutroGraphicInfos);
         fileHandlers.Add(MagicIntroAssets, LoadIntroAssets);
-        fileHandlers.Add(MagicFantasyIntroAssets, LoadFantasyIntroAssets);        
+        fileHandlers.Add(MagicFantasyIntroAssets, LoadFantasyIntroAssets);
+        fileHandlers.Add(MagicLightEffectData, LoadLightEffectData);
 
         foreach (var customFileHandler in customFileHandlers)
         {
@@ -462,6 +464,8 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
             return new DataNameProvider($"{name} {info.Version}", $"{date.Day:00}-{date.Month:00}-{date.Year:0000} / {info.Language}", texts);
         });
+
+        lightEffectProvider = new Lazy<ILightEffectProvider>(() => new LightEffectProvider(lightEffectDataLoader.Load()));
 
         // Read all files
         int fileCount = reader.ReadWord();
@@ -673,11 +677,6 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         pics80x80GraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
-    void LoadHorizonGraphics(IDataReader dataReader)
-    {
-        // TODO
-    }
-
     void LoadMonsterGraphics(IDataReader dataReader)
     {
         monsterGraphicLoader = new(dataReader, this, g => g.Atlas!);
@@ -762,6 +761,11 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     {
         fantasyIntroAssetLoader = new(dataReader, this, t => t.Assets);
     }
+
+    void LoadLightEffectData(IDataReader dataReader)
+    {
+        lightEffectDataLoader = new(dataReader, this, t => t.LightEffectDataProvider);
+    }    
 
     public CombatBackgroundInfo Get2DCombatBackground(uint index, bool advanced)
     {
