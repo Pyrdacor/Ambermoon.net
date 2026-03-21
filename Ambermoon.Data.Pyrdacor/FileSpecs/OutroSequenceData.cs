@@ -34,6 +34,8 @@ internal class OutroSequenceData : IFileSpec<OutroSequenceData>, IFileSpec
             int numActions = dataReader.ReadByte();
             var actions = new List<OutroAction>(numActions);
 
+            ushort? AsTextIndex(ushort value) => value == 0xffff ? null : value;
+
             for (int j = 0; j < numActions; j++)
             {
                 var command = (OutroCommand)dataReader.ReadByte();
@@ -47,7 +49,7 @@ internal class OutroSequenceData : IFileSpec<OutroSequenceData>, IFileSpec
                         actions.Add(new OutroAction { Command = command, ImageOffset = dataReader.ReadWord() });
                         break;
                     case OutroCommand.PrintTextAndScroll:
-                        actions.Add(new OutroAction { Command = command, LargeText = dataReader.ReadBool(), ScrollAmount = dataReader.ReadWord(), TextDisplayX = dataReader.ReadByte(), TextIndex = dataReader.ReadWord() });
+                        actions.Add(new OutroAction { Command = command, LargeText = dataReader.ReadBool(), ScrollAmount = dataReader.ReadWord(), TextDisplayX = dataReader.ReadByte(), TextIndex = AsTextIndex(dataReader.ReadWord()) });
                         break;
                 }
             }
@@ -83,7 +85,7 @@ internal class OutroSequenceData : IFileSpec<OutroSequenceData>, IFileSpec
                         dataWriter.Write(action.LargeText);
                         dataWriter.Write((ushort)action.ScrollAmount);
                         dataWriter.Write((byte)action.TextDisplayX);
-                        dataWriter.Write((ushort)action.TextIndex!.Value);
+                        dataWriter.Write((ushort)(action.TextIndex ?? 0xffff));
                         break;
                 }
             }
