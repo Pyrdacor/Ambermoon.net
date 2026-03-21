@@ -16,6 +16,8 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
     readonly Dictionary<TravelType, GraphicInfo> stationaryImageInfos = new(5);
     readonly Dictionary<TravelType, TravelGraphicInfo[]> travelGraphicInfos = new(20);
     Character2DAnimationInfo playerAnimationInfo = new();
+    readonly List<Position> cursorHotspots = [];
+
 
     public IReadOnlyDictionary<int, int> NPCGraphicOffsets => npcGraphicOffsets.AsReadOnly();
     public IReadOnlyDictionary<int, List<int>> NPCGraphicFrameCounts => npcGraphicFrameCounts.AsReadOnly();
@@ -23,6 +25,7 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
     public IReadOnlyDictionary<TravelType, GraphicInfo> StationaryImageInfos => stationaryImageInfos.AsReadOnly();
     public IReadOnlyDictionary<TravelType, TravelGraphicInfo[]> TravelGraphicInfos => travelGraphicInfos.AsReadOnly();
     public Character2DAnimationInfo PlayerAnimationInfo => playerAnimationInfo;
+    public IReadOnlyList<Position> CursorHotspots => cursorHotspots;
 
     public GraphicsInfoData()
     {
@@ -36,7 +39,8 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
         IReadOnlyDictionary<CombatGraphicIndex, CombatGraphicInfo> combatGraphicInfos,
         IReadOnlyDictionary<TravelType, GraphicInfo> stationaryImageInfos,
         IReadOnlyDictionary<TravelType, TravelGraphicInfo[]> travelGraphicInfos,
-        Character2DAnimationInfo playerAnimationInfo
+        Character2DAnimationInfo playerAnimationInfo,
+        IReadOnlyList<Position> cursorHotspots
     )
     {
         this.npcGraphicOffsets = new(npcGraphicOffsets);
@@ -45,6 +49,7 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
         this.stationaryImageInfos = new(stationaryImageInfos);
         this.travelGraphicInfos = new(travelGraphicInfos);
         this.playerAnimationInfo = playerAnimationInfo;
+        this.cursorHotspots = new(cursorHotspots);
     }
 
     public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
@@ -53,6 +58,10 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
         int totalFrameCount = 0;
         npcGraphicFrameCounts.Clear();
         npcGraphicOffsets.Clear();
+        combatGraphicInfos.Clear();
+        stationaryImageInfos.Clear();
+        travelGraphicInfos.Clear();
+        cursorHotspots.Clear();
 
         for (int i = 0; i < npcGraphicFileCount; i++)
         {
@@ -138,6 +147,16 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
         playerAnimationInfo.NoDirections = dataReader.ReadBool();
         playerAnimationInfo.IgnoreTileType = dataReader.ReadBool();
         playerAnimationInfo.UseTopSprite = dataReader.ReadBool();
+
+        int numCursorHotspots = dataReader.ReadByte();
+
+        for (int i = 0; i < numCursorHotspots; i++)
+        {
+            int x = dataReader.ReadByte();
+            int y = dataReader.ReadByte();
+
+            cursorHotspots.Add(new(x, y));
+        }
     }
 
     public void Write(IDataWriter dataWriter)
@@ -205,5 +224,13 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
         dataWriter.Write(playerAnimationInfo.NoDirections);
         dataWriter.Write(playerAnimationInfo.IgnoreTileType);
         dataWriter.Write(playerAnimationInfo.UseTopSprite);
+
+        dataWriter.Write((byte)cursorHotspots.Count);
+
+        foreach (var cursorHotspot in cursorHotspots)
+        {
+            dataWriter.Write((byte)cursorHotspot.X);
+            dataWriter.Write((byte)cursorHotspot.Y);
+        }
     }
 }

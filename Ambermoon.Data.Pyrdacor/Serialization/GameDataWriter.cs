@@ -286,7 +286,8 @@ partial class GameData
 
         var travelGraphicInfos = EnumHelper.GetValues<TravelType>().ToDictionary(t => t, t => CreateTravelGraphicInfos(t).ToArray());
         var graphicInfos = new GraphicsInfoData(graphicProvider.NPCGraphicOffsets, graphicProvider.NPCGraphicFrameCounts,
-            CombatGraphics.Info, gameData.StationaryImageInfos, travelGraphicInfos, gameData.PlayerAnimationInfo);
+            CombatGraphics.Info, gameData.StationaryImageInfos, travelGraphicInfos, gameData.PlayerAnimationInfo,
+            gameData.CursorHotspots);
         WriteSection(MagicGraphicsInfo, () => PADF.Write(dataWriter, graphicInfos));
 
         WriteSection(MagicPartyTexts, () => WriteTexts(dataWriter, gameData.Files["Party_texts.amb"].Files));

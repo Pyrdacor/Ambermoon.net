@@ -109,7 +109,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public Character2DAnimationInfo PlayerAnimationInfo => graphicsInfoLoader.Load().PlayerAnimationInfo;
 
-    public IReadOnlyList<Position> CursorHotspots => throw new NotImplementedException();
+    public IReadOnlyList<Position> CursorHotspots => graphicsInfoLoader.Load().CursorHotspots;
 
     public Places Places => places.Value;
 
