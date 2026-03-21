@@ -310,7 +310,7 @@ partial class GameData
         WriteSection(MagicLocations, () => PADP.Write(dataWriter, gameData.Places.Entries.Select(place => new LocationData(place))));
         WriteSection(MagicLocationNames, () => PADF.Write(dataWriter, new Texts(new TextList([.. gameData.Places.Entries.Select(place => place.Name)]))));
 
-        // TODO: outro
+        WriteSection(MagicOutro, () => PADF.Write(dataWriter, new OutroSequenceData(gameData.OutroData.OutroActions)));
 
         WriteSection(MagicTexts, () =>
         {
