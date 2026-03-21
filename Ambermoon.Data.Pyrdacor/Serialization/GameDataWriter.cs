@@ -491,6 +491,8 @@ partial class GameData
 
         WriteSection(MagicIntroGraphics, () => WriteIndexedGraphics(dataWriter, gameData.IntroData.Graphics.ToDictionary(g => (int)g.Key, g => g.Value), true, true));
 
+        WriteSection(MagicFantasyIntroGraphics, () => WriteIndexedGraphics(dataWriter, gameData.FantasyIntroData.Graphics.ToDictionary(g => (int)g.Key, g => g.Value), true, true));
+
         WriteSection(MagicOutroGraphicInfos, () => PADP.Write(dataWriter, gameData.OutroData.GraphicInfos.ToDictionary(info => (ushort)(1 + info.Value.GraphicIndex), info => new OutroGraphicInfoData(info.Value, info.Key))));
 
         WriteSection(MagicIntroAssets, () =>
@@ -502,6 +504,15 @@ partial class GameData
                 introData.TextCommandTexts.ToList());
 
             PADF.Write(dataWriter, new IntroAssetData(introAssets));
+        });
+
+        WriteSection(MagicFantasyIntroAssets, () =>
+        {
+            var fantasyIntroData = gameData.FantasyIntroData;
+            var fantasyIntroAssets = new FantasyIntroAssets(fantasyIntroData.Graphics.ToDictionary(g => g.Key, g => new Size(g.Value.Width, g.Value.Height)),
+                fantasyIntroData.Actions.ToList());
+
+            PADF.Write(dataWriter, new FantasyIntroAssetData(fantasyIntroAssets));
         });
 
         dataWriter.Replace(fileCountPosition, (ushort)fileCount);

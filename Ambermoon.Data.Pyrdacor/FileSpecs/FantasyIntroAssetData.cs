@@ -4,21 +4,21 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.FileSpecs;
 
-internal class IntroAssetData : IFileSpec<IntroAssetData>, IFileSpec
+internal class FantasyIntroAssetData : IFileSpec<FantasyIntroAssetData>, IFileSpec
 {
-    public static string Magic => "IAD";
+    public static string Magic => "FIA";
     public static byte SupportedVersion => 0;
     public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
-    IntroAssets? assets;
+    FantasyIntroAssets? assets;
 
-    public IntroAssets Assets => assets!;
+    public FantasyIntroAssets Assets => assets!;
 
-    public IntroAssetData()
+    public FantasyIntroAssetData()
     {
 
     }
 
-    public IntroAssetData(IntroAssets assets)
+    public FantasyIntroAssetData(FantasyIntroAssets assets)
     {
         this.assets = assets;
     }

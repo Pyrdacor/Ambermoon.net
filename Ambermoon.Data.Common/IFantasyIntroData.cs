@@ -20,20 +20,13 @@ namespace Ambermoon.Data
         FadeOut
     }
 
-    public readonly struct FantasyIntroAction
+    public readonly struct FantasyIntroAction(uint frames, FantasyIntroCommand command, params int[] parameters)
     {
-        public FantasyIntroAction(uint frames, FantasyIntroCommand command, params int[] parameters)
-        {
-            Frames = frames;
-            Command = command;
-            Parameters = parameters;
-        }
+        public uint Frames { get; } = frames;
 
-        public uint Frames { get; }
+        public FantasyIntroCommand Command { get; } = command;
 
-        public FantasyIntroCommand Command { get; }
-
-        public int[] Parameters { get; }
+        public int[] Parameters { get; } = parameters;
 
     }
 
@@ -67,9 +60,8 @@ namespace Ambermoon.Data
 
     public interface IFantasyIntroData
     {
-        public Queue<FantasyIntroAction> Actions { get; }
-        public IReadOnlyList<Graphic> FantasyIntroPalettes { get; }
-        public static IReadOnlyDictionary<FantasyIntroGraphic, byte> GraphicPalettes { get; }
-        public IReadOnlyDictionary<FantasyIntroGraphic, Graphic> Graphics { get; }
+        Queue<FantasyIntroAction> Actions { get; }
+        IReadOnlyList<Graphic> FantasyIntroPalettes { get; }
+        IReadOnlyDictionary<FantasyIntroGraphic, Graphic> Graphics { get; }
     }
 }

@@ -6,8 +6,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 {
     public class FantasyIntroData : IFantasyIntroData
     {
-        static readonly Position[] WandSparkPositions = new[]
-        {
+        static readonly Position[] WandSparkPositions =
+        [
             new Position(38, 13), new Position(40, 14), new Position(41, 13),
             new Position(43, 14), new Position(45, 16), new Position(41, 13),
             new Position(39, 14), new Position(37, 14), new Position(38, 17),
@@ -15,10 +15,10 @@ namespace Ambermoon.Data.Legacy.Serialization
             new Position(58, 33), new Position(58, 36), new Position(58, 37),
             new Position(55, 30), new Position(54, 29), new Position(50, 23),
             new Position(45, 18)
-        };
+        ];
 
-        static readonly int[] WritingSparkImageIndex = new[]
-        {
+        static readonly int[] WritingSparkImageIndex =
+        [
             6, 3, 0, 3, 6, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             4, 1, 4, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             8, 5, 2, 5, 8, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -27,19 +27,19 @@ namespace Ambermoon.Data.Legacy.Serialization
             8, 8, 8, 5, 5, 5, 0, 0, 0, 5, 5, 5, 8, 8, 8, -1,
             3, 0, 3, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             5, 0, 5, -1, 0,64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        };
+        ];
 
-        static readonly int[] Spark0ColorIndices = new[]
-        {
+        static readonly int[] Spark0ColorIndices =
+        [
             9, 11, 13, 14, 13, 12, 12, 11, 10, 10, 9, 9, 10, 14, 12, 10,
             26, 28, 24, 26, 28, 14, 27, 26, 25, 14, 20, 9, -1
-        };
+        ];
 
-        static readonly int[] Spark1ColorIndices = new[]
-        {
+        static readonly int[] Spark1ColorIndices =
+        [
             9, 10, 11, 12, 11, 10, 9, 9, 9, 11, 14, 13, 12, 11, 10, 0,
             9, 10, 11, 12, 11, 10, 9, 9, 9, 11, 14, -1, -2, -3, 0
-        };
+        ];
 
         record WritingSparkDummy
         {

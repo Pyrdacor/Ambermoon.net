@@ -60,10 +60,12 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     LazyContainerLoader<GraphicAtlasData, GraphicAtlas> tileGraphicLoader = null!; // one entry per tileset
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> outroGraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> introGraphicLoader = null!;
+    LazyFileLoader<GraphicAtlasData, GraphicAtlas> fantasyIntroGraphicLoader = null!;
     LazyFileLoader<Texts, TextList> outroTextLoader = null!;
     LazyFileLoader<Texts, TextList> introTextLoader = null!;
     LazyContainerLoader<OutroGraphicInfoData, Objects.OutroGraphicInfo> outroGraphicsInfoLoader = null!;
     LazyFileLoader<IntroAssetData, IntroAssets> introAssetLoader = null!;
+    LazyFileLoader<FantasyIntroAssetData, FantasyIntroAssets> fantasyIntroAssetLoader = null!;
     LazyFileLoader<Texts, TextList> dictionaryLoader = null!;
     LazyFileLoader<Textures, Textures> texturesLoader = null!;
     LazyContainerLoader<MusicData, byte[]> musicLoader = null!;
@@ -212,10 +214,12 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     const string MagicMusic = "MUSI";
     const string MagicOutroGraphics = "OUTG";
     const string MagicIntroGraphics = "INTG";
+    const string MagicFantasyIntroGraphics = "FING";
     const string MagicOutroTexts = "OUTT";
     const string MagicIntroTexts = "INTT";
     const string MagicOutroGraphicInfos = "OUGI";
     const string MagicIntroAssets = "INAS";
+    const string MagicFantasyIntroAssets = "FINA";
 
     // TODO: Load horizon graphics?
 
@@ -284,10 +288,12 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         fileHandlers.Add(MagicMusic, LoadMusic);
         fileHandlers.Add(MagicOutroGraphics, LoadOutroGraphics);
         fileHandlers.Add(MagicIntroGraphics, LoadIntroGraphics);
+        fileHandlers.Add(MagicFantasyIntroGraphics, LoadFantasyIntroGraphics);
         fileHandlers.Add(MagicOutroTexts, LoadOutroTexts);
         fileHandlers.Add(MagicIntroTexts, LoadIntroTexts);
         fileHandlers.Add(MagicOutroGraphicInfos, LoadOutroGraphicInfos);
         fileHandlers.Add(MagicIntroAssets, LoadIntroAssets);
+        fileHandlers.Add(MagicFantasyIntroAssets, LoadFantasyIntroAssets);        
 
         foreach (var customFileHandler in customFileHandlers)
         {
@@ -403,6 +409,19 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
                 TwinlakeImageParts = introAssets.TwinlakeImageParts,
                 TextCommands = introAssets.TextCommands,
                 TextCommandTexts = introAssets.TextCommandTexts,
+            };
+        });
+
+        fantasyIntroData = new Lazy<IFantasyIntroData>(() =>
+        {
+            var fantasyIntroAssets = fantasyIntroAssetLoader.Load();
+            var graphicSizes = fantasyIntroAssets.GraphicSizes;
+
+            return new FantasyIntroData
+            {
+                Actions = new(fantasyIntroAssets.Actions),
+                FantasyIntroPalettes = paletteLoader.Load(Palette.FantasyIntroPalettesIndex).Slice(),
+                Graphics = fantasyIntroGraphicLoader.Load().ToDictionary<FantasyIntroGraphic>(graphicSizes.ToDictionary(e => (uint)e.Key, e => e.Value)),
             };
         });
 
@@ -714,6 +733,11 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         introGraphicLoader = new(dataReader, this, g => g.Atlas!);
     }
 
+    void LoadFantasyIntroGraphics(IDataReader dataReader)
+    {
+        fantasyIntroGraphicLoader = new(dataReader, this, g => g.Atlas!);
+    }
+
     void LoadOutroTexts(IDataReader dataReader)
     {
         outroTextLoader = new(dataReader, this, t => t.TextList);
@@ -732,6 +756,11 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     void LoadIntroAssets(IDataReader dataReader)
     {
         introAssetLoader = new(dataReader, this, t => t.Assets);
+    }
+
+    void LoadFantasyIntroAssets(IDataReader dataReader)
+    {
+        fantasyIntroAssetLoader = new(dataReader, this, t => t.Assets);
     }
 
     public CombatBackgroundInfo Get2DCombatBackground(uint index, bool advanced)
