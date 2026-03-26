@@ -60,6 +60,7 @@ internal class Configuration : IConfiguration
     public WindowMode WindowMode { get; set; } = WindowMode.Normal;
     public bool UseDataPath { get; set; } = false;
     public string DataPath { get; set; } = ExecutableDirectoryPath;
+    public string ModPath { get; set; } = "Mods";
     public SaveOption SaveOption { get; set; } = SaveOption.ProgramFolder;
     public int GameVersionIndex { get; set; } = -1;
     public bool LegacyMode { get; set; } = false;

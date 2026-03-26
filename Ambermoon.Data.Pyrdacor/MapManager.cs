@@ -31,7 +31,7 @@ namespace Ambermoon.Data.Pyrdacor
             return map;
         }
 
-        public Tileset? GetTilesetForMap(Map map) => map.Type == MapType.Map2D ? null : tilesets.Value!.GetValueOrDefault(map.TilesetOrLabdataIndex, null);
+        public Tileset? GetTilesetForMap(Map map) => map.Type == MapType.Map3D ? null : tilesets.Value!.GetValueOrDefault(map.TilesetOrLabdataIndex, null);
 
         public Labdata? GetLabdataForMap(Map map) => map.Type == MapType.Map2D ? null : labdata.Value!.GetValueOrDefault(map.TilesetOrLabdataIndex, null);
 

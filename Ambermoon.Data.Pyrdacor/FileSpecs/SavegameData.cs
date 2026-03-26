@@ -4,8 +4,6 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.FileSpecs;
 
-using Savegame = Data.SavegameData;
-
 internal class SavegameData : IFileSpec<SavegameData>, IFileSpec
 {
     public static string Magic => "SAV";
@@ -29,7 +27,7 @@ internal class SavegameData : IFileSpec<SavegameData>, IFileSpec
     {
         savegame = new();
 
-        SavegameSerializer.ReadSaveData(savegame, dataReader);
+        ReadInto(savegame, dataReader, _, __, ___);
     }
 
     public static void ReadInto(Savegame savegame, IDataReader dataReader, uint _, GameData __, byte ___)

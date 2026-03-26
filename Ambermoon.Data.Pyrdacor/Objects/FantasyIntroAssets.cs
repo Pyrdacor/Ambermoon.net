@@ -45,7 +45,7 @@ internal class FantasyIntroAssets
             });
         }
 
-        int actionCount = dataReader.ReadWord();
+        int actionCount = (int)(dataReader.ReadDword() & int.MaxValue);
 
         actions.Clear();
 
@@ -73,7 +73,7 @@ internal class FantasyIntroAssets
             dataWriter.Write((ushort)graphicSize.Height);
         }
 
-        dataWriter.Write((byte)actions.Count);
+        dataWriter.Write((uint)actions.Count);
 
         foreach (var action in actions)
         {

@@ -14,11 +14,12 @@ namespace Ambermoon
         public uint Offset;
         public uint Size;
         public Stream SourceStream;
+        public string ModPath;
     }
 
-    class BuiltinVersionLoader
+    static class BuiltinVersionLoader
     {
-        public List<BuiltinVersion> Load(BinaryReader reader)
+        public static List<BuiltinVersion> Load(BinaryReader reader)
         {
             int ReadWord(BinaryReader reader)
             {

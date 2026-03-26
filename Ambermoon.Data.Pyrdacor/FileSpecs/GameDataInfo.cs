@@ -4,7 +4,7 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Pyrdacor.FileSpecs;
 
-internal class GameDataInfo : IFileSpec<GameDataInfo>, IFileSpec
+public class GameDataInfo : IFileSpec<GameDataInfo>, IFileSpec
 {
     string name = ""; // usually "Ambermoon" but can be used for mods or other games using the same format
     bool advanced = false;

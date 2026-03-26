@@ -6,9 +6,9 @@ namespace Ambermoon.Data.Legacy
 {
     public class MapManager : IMapManager
     {
-        readonly Dictionary<uint, Map> maps = new Dictionary<uint, Map>();
-        readonly Dictionary<uint, Tileset> tilesets = new Dictionary<uint, Tileset>(8);
-        readonly Dictionary<uint, Labdata> labdata = new Dictionary<uint, Labdata>(29);
+        readonly Dictionary<uint, Map> maps = new(530);
+        readonly Dictionary<uint, Tileset> tilesets = new(10);
+        readonly Dictionary<uint, Labdata> labdata = new(100);
 
         public IReadOnlyList<Map> Maps => maps.Values.ToList();
         public IReadOnlyList<Labdata> Labdata => labdata.Values.ToList();

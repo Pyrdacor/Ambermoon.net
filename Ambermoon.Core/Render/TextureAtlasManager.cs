@@ -196,7 +196,19 @@ namespace Ambermoon.Render
             }
             else if (graphicInfoProvider is IGraphicAtlasProvider graphicAtlasProvider)
             {
-                uiGraphicAtlases.Add(Graphics.UICustomGraphicOffset, graphicAtlasProvider.GetGraphicAtlas(GraphicType.UIElements));
+                var uiElementGraphicAtlas = graphicAtlasProvider!.GetGraphicAtlas(GraphicType.UIElements);
+
+                // The last entry is the sword and mace image for the battle window.
+                var oldSwordAndMaceKey = uiElementGraphicAtlas.Offsets.Keys.Max();
+                uint newSwordAndMaceKey = Graphics.CombatGraphicOffset + (uint)CombatGraphicIndex.UISwordAndMace - Graphics.UICustomGraphicOffset;
+
+                if (oldSwordAndMaceKey != newSwordAndMaceKey)
+                {
+                    uiElementGraphicAtlas.Offsets[newSwordAndMaceKey] = uiElementGraphicAtlas.Offsets[oldSwordAndMaceKey];
+                    uiElementGraphicAtlas.Offsets.Remove(oldSwordAndMaceKey);
+                }
+
+                uiGraphicAtlases.Add(Graphics.UICustomGraphicOffset, uiElementGraphicAtlas);
             }
         }
 

@@ -28,7 +28,7 @@ internal class LightEffectData : IFileSpec<LightEffectData>, IFileSpec
     {
         void ReadPaletteColors(byte[] data)
         {
-            int colorCount = data.Length / 2;
+            int colorCount = data.Length / 4;
             int index = 0;
 
             for (int c = 0; c < colorCount; c++)
@@ -98,7 +98,7 @@ internal class LightEffectData : IFileSpec<LightEffectData>, IFileSpec
 
         void WriteColorData(byte[] pixelData)
         {
-            for (int i = 0; i < pixelData.Length / 4; i += 4)
+            for (int i = 0; i < pixelData.Length; i += 4)
             {
                 int r = pixelData[i] >> 4;
                 int g = pixelData[i + 1] >> 4;

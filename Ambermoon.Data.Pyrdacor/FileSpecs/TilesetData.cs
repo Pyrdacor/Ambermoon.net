@@ -23,10 +23,12 @@ internal class TilesetData : IFileSpec<TilesetData>, IFileSpec
         this.tileset = tileset;
     }
 
-    public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
+    public void Read(IDataReader dataReader, uint index, GameData __, byte ___)
     {
         tileset = new Tileset();
         new TilesetReader().ReadTileset(tileset, dataReader);
+
+        tileset.Index = index;
     }
 
     public void Write(IDataWriter dataWriter)

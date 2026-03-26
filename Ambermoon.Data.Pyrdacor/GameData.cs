@@ -10,12 +10,11 @@ using Ambermoon.Render;
 namespace Ambermoon.Data.Pyrdacor;
 
 using Font = Objects.Font;
-using Savegame = SavegameData;
 using SavegameData = FileSpecs.SavegameData;
 
 public partial class GameData : IGameData, IGraphicAtlasProvider
 {
-    readonly ISavegameManager savegameManager;
+    ISavegameManager? savegameManager;
     LazyFileLoader<GameDataInfo, GameDataInfo> gameDataInfoLoader = null!;
     LazyContainerLoader<Palette, Palette> paletteLoader = null!;
     LazyFileLoader<SavegameData, Savegame> savegameLoader = null!;
@@ -35,10 +34,12 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     LazyContainerLoader<LabyrinthData, Labdata> labdataLoader = null!;
     LazyContainerLoader<TilesetData, Tileset> tilesetLoader = null!;
     LazyContainerLoader<LocationData, Place> locationLoader = null!;
-    LazyContainerLoader<Texts, string> locationNameLoader = null!;
+    LazyFileLoader<Texts, TextList> locationNameLoader = null!;
     LazyFileLoader<OutroSequenceData, IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>>> outroSequenceLoader = null!;
     LazyFileLoader<Texts, TextList> gotoPointNameLoader = null!;
     LazyContainerLoader<ChestData, Chest> initialChestLoader = null!;
+    LazyContainerLoader<MerchantData, Merchant> initialMerchantLoader = null!;
+    LazyContainerLoader<ExplorationData, Automap> initialAutomapLoader = null!;
     LazyFileLoader<GraphicsInfoData, GraphicsInfoData> graphicsInfoLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> layoutGraphicLoader = null!;
     LazyFileLoader<GraphicAtlasData, GraphicAtlas> npcGraphicLoader = null!;
@@ -104,7 +105,17 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public ICharacterManager CharacterManager => characterManager.Value;
 
-    public ISavegameManager SavegameManager => savegameManager;
+    public ISavegameManager? SavegameManager
+    {
+        get => savegameManager;
+        set
+        {
+            if (Loaded)
+                throw new InvalidOperationException("You can't change the savegame manager after game data is fully loaded.");
+
+            savegameManager = value;
+        }
+    }
 
     public ISongManager SongManager => songManager.Value;
 
@@ -168,74 +179,123 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         return graphicsInfoLoader.Load().TravelGraphicInfos[type][(int)direction];
     }
 
-    const string MagicInfo = "INFO"; 
-    const string MagicPalette = "PALS";
-    const string MagicSavegame = "SAVE";
-    const string MagicInitialParty = "PLAY";
-    const string MagicMonsters = "MONS";
-    const string MagicMonsterGraphics = "MONG";
-    const string MagicNPCs = "NPCS";
-    const string MagicNPCTexts = "NTXT";
-    const string MagicNPCGraphics = "NGFX";
-    const string MagicGraphicsInfo = "GFXI"; // NPC graphic frame counts, player offsets, etc
-    const string MagicPartyTexts = "PTXT";
-    const string MagicPartyGraphics = "PGFX";
-    const string MagicTravelGraphics = "TRAV";
-    const string MagicTransportGraphics = "TRAN";
-    const string MagicMonsterGroups = "MOGS";
-    const string MagicItems = "ITEM";
-    const string MagicItemNames = "INAM";
-    const string MagicItemTexts = "ITXT";
-    const string MagicItemGraphics = "IGFX";
-    const string MagicLocations = "LOCS";
-    const string MagicLocationNames = "LNAM";
-    const string MagicOutro = "OUTR";
-    const string MagicTexts = "TEXT";
-    const string MagicTilesets = "TILE";
-    const string MagicLabyrinthData = "LABY";
-    const string MagicMaps = "MAPS";
-    const string MagicMapTexts = "MTXT";
-    const string MagicFonts = "FONT";
-    const string MagicGlyphMappings = "GMAP";
-    const string MagicGotoPointNames = "GOTO";
-    const string MagicLayouts = "LAYO";
-    const string MagicTextures = "TX3D";
-    const string MagicEventGraphics = "EVEG";
-    const string MagicTileGraphics = "TILG";
-    const string MagicCombatBackgrounds = "COMB";
-    const string MagicCombatGraphics = "COMG";
-    const string MagicBattleFieldSprites = "BFSP";
-    const string MagicPortraits = "PORT";
-    const string MagicUIGraphics = "UGFX";
-    const string MagicRiddlemouthGraphics = "RIDG";
-    const string MagicCursors = "CURS";
-    const string MagicPictures80x80 = "8080";
-    const string MagicAutomapGraphics = "AUMG";
-    const string MagicInitialChests = "CHES";
-    const string MagicDictionary = "DICT";
-    const string MagicMusic = "MUSI";
-    const string MagicOutroGraphics = "OUTG";
-    const string MagicIntroGraphics = "INTG";
-    const string MagicFantasyIntroGraphics = "FING";
-    const string MagicOutroTexts = "OUTT";
-    const string MagicIntroTexts = "INTT";
-    const string MagicOutroGraphicInfos = "OUGI";
-    const string MagicIntroAssets = "INAS";
-    const string MagicFantasyIntroAssets = "FINA";
-    const string MagicLightEffectData = "LEDT";
+    public const string MagicInfo = "INFO";
+    public const string MagicPalette = "PALS";
+    public const string MagicSavegame = "SAVE";
+    public const string MagicInitialParty = "PLAY";
+    public const string MagicMonsters = "MONS";
+    public const string MagicMonsterGraphics = "MONG";
+    public const string MagicNPCs = "NPCS";
+    public const string MagicNPCTexts = "NTXT";
+    public const string MagicNPCGraphics = "NGFX";
+    public const string MagicGraphicsInfo = "GFXI"; // NPC graphic frame counts, player offsets, etc
+    public const string MagicPartyTexts = "PTXT";
+    public const string MagicPartyGraphics = "PGFX";
+    public const string MagicTravelGraphics = "TRAV";
+    public const string MagicTransportGraphics = "TRAN";
+    public const string MagicMonsterGroups = "MOGS";
+    public const string MagicItems = "ITEM";
+    public const string MagicItemNames = "INAM";
+    public const string MagicItemTexts = "ITXT";
+    public const string MagicItemGraphics = "IGFX";
+    public const string MagicLocations = "LOCS";
+    public const string MagicLocationNames = "LNAM";
+    public const string MagicOutro = "OUTR";
+    public const string MagicTexts = "TEXT";
+    public const string MagicTilesets = "TILE";
+    public const string MagicLabyrinthData = "LABY";
+    public const string MagicMaps = "MAPS";
+    public const string MagicMapTexts = "MTXT";
+    public const string MagicFonts = "FONT";
+    public const string MagicGlyphMappings = "GMAP";
+    public const string MagicGotoPointNames = "GOTO";
+    public const string MagicLayouts = "LAYO";
+    public const string MagicTextures = "TX3D";
+    public const string MagicEventGraphics = "EVEG";
+    public const string MagicTileGraphics = "TILG";
+    public const string MagicCombatBackgrounds = "COMB";
+    public const string MagicCombatGraphics = "COMG";
+    public const string MagicBattleFieldSprites = "BFSP";
+    public const string MagicPortraits = "PORT";
+    public const string MagicUIGraphics = "UGFX";
+    public const string MagicRiddlemouthGraphics = "RIDG";
+    public const string MagicCursors = "CURS";
+    public const string MagicPictures80x80 = "8080";
+    public const string MagicAutomapGraphics = "AUMG";
+    public const string MagicInitialChests = "CHES";
+    public const string MagicInitialMerchants = "MERC";
+    public const string MagicInitialAutomaps = "EXPL";
+    public const string MagicDictionary = "DICT";
+    public const string MagicMusic = "MUSI";
+    public const string MagicOutroGraphics = "OUTG";
+    public const string MagicIntroGraphics = "INTG";
+    public const string MagicFantasyIntroGraphics = "FING";
+    public const string MagicOutroTexts = "OUTT";
+    public const string MagicIntroTexts = "INTT";
+    public const string MagicOutroGraphicInfos = "OUGI";
+    public const string MagicIntroAssets = "INAS";
+    public const string MagicFantasyIntroAssets = "FINA";
+    public const string MagicLightEffectData = "LEDT";
 
-    public GameData(Stream stream, ISavegameManager savegameManager, params (string Magic, Action<IDataReader> Action)[] customFileHandlers)
-        : this(new DataReader(stream), savegameManager, customFileHandlers)
+    public GameData(Stream stream, params (string Magic, Action<IDataReader, GameData> Action)[] customFileHandlers)
+        : this(new DataReader(stream), customFileHandlers)
     {
 
     }
 
-    public GameData(IDataReader reader, ISavegameManager savegameManager, params (string Magic, Action<IDataReader> Action)[] customFileHandlers)
+    // This is only used to read the info entry.
+    private GameData(IDataReader reader)
     {
+        int position = reader.Position;
+
         if (!FileHeader.CheckHeader(reader, "PYGD", true))
             throw new AmbermoonException(ExceptionScope.Data, "The given file is no Pyrdacor game data file.");
 
-        this.savegameManager = savegameManager;
+        fileHandlers.Add(MagicInfo, LoadInfo);
+
+        // Read all files
+        int fileCount = reader.ReadWord();
+
+        for (int i = 0; i < fileCount; ++i)
+        {
+            var file = reader.ReadString(4);
+            int dataLength = (int)(reader.ReadDword() & int.MaxValue);
+
+            if (file == MagicInfo)
+            {
+                LoadInfo(new DataReader(reader.ReadBytes(dataLength)));
+                reader.Position = position;
+                Loaded = true;
+                return;
+            }
+
+            reader.Position += dataLength;
+        }
+
+        Loaded = false;
+    }
+
+    public static GameDataInfo ReadGameDataInfo(IDataReader reader)
+    {
+        try
+        {
+            var gameData = new GameData(reader);
+
+            if (!gameData.Loaded)
+                throw new InvalidDataException("No game data info found");
+
+            return gameData.gameDataInfoLoader.Load();
+        }
+        catch
+        {
+            throw new InvalidDataException("No valid Pyrdacor game data file.");
+        }
+    }
+
+    public GameData(IDataReader reader, params (string Magic, Action<IDataReader, GameData> Action)[] customFileHandlers)
+    {
+        if (!FileHeader.CheckHeader(reader, "PYGD", true))
+            throw new AmbermoonException(ExceptionScope.Data, "The given file is no Pyrdacor game data file.");
 
         // Note: The loaders are all lazy loaded as well as the managers. This allows any order of the loaded
         // file specs as the data is only used when some object is requested by the game. At that point in time
@@ -285,6 +345,8 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         fileHandlers.Add(MagicPictures80x80, Load80x80Graphics);
         fileHandlers.Add(MagicAutomapGraphics, LoadAutomapGraphics);
         fileHandlers.Add(MagicInitialChests, LoadInitialChests);
+        fileHandlers.Add(MagicInitialMerchants, LoadInitialMerchants);
+        fileHandlers.Add(MagicInitialAutomaps, LoadInitialAutomaps);        
         fileHandlers.Add(MagicDictionary, LoadDictionary);
         fileHandlers.Add(MagicMusic, LoadMusic);
         fileHandlers.Add(MagicOutroGraphics, LoadOutroGraphics);
@@ -302,7 +364,17 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
             if (fileHandlers.ContainsKey(customFileHandler.Magic))
                 throw new ArgumentException($"Custom file handler magic {customFileHandler.Magic} is already used by another file type.");
 
-            fileHandlers.Add(customFileHandler.Magic, customFileHandler.Action);
+            void ProvideData(IDataReader dataReader)
+            {
+                var fileSpec = PADF.Read(dataReader, this);
+
+                if (fileSpec is RawData rawData)
+                    customFileHandler.Action?.Invoke(new DataReader(rawData.Data), this);
+                else
+                    throw new InvalidDataException("Invalid custom file data.");
+            }
+
+            fileHandlers.Add(customFileHandler.Magic, ProvideData);
         }
 
         dictionary = new Lazy<TextDictionary>(() => TextDictionary.Load(gameDataInfoLoader.Load().Language, dictionaryLoader.Load().ToList()));
@@ -350,15 +422,55 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         palettes = new Lazy<Dictionary<int, Graphic>>(() =>
         {
             var result = new Dictionary<int, Graphic>();
-            var paletteGraphics = paletteLoader!.Load(Palette.GamePalettesIndex).Graphic;
+            var gamePaletteInfo = paletteLoader!.Load(Palette.GamePalettesIndex);
+            var paletteGraphics = gamePaletteInfo.Graphic;
 
             for (int y = 0; y < paletteGraphics.Height; y++)
             {
                 result.Add(y, new Graphic
                 {
-                    Width = paletteGraphics.Width,
+                    Width = 32,
                     Height = 1,
-                    Data = paletteGraphics.Data.Skip(y * paletteGraphics.Width * 4).Take(paletteGraphics.Width * 4).ToArray(),
+                    Data = paletteGraphics.Data.Skip(y * 32 * 4).Take(32 * 4).ToArray(),
+                    IndexedGraphic = false
+                });
+            }
+
+            var introPaletteGraphics = paletteLoader!.Load(Palette.IntroPalettesIndex).Graphic;
+
+            for (int y = 0; y < introPaletteGraphics.Height; y++)
+            {
+                result.Add(gamePaletteInfo.FirstIntroPaletteIndex + y, new Graphic
+                {
+                    Width = 32,
+                    Height = 1,
+                    Data = introPaletteGraphics.Data.Skip(y * 32 * 4).Take(32 * 4).ToArray(),
+                    IndexedGraphic = false
+                });
+            }
+
+            var outroPaletteGraphics = paletteLoader!.Load(Palette.OutroPalettesIndex).Graphic;
+
+            for (int y = 0; y < outroPaletteGraphics.Height; y++)
+            {
+                result.Add(gamePaletteInfo.FirstOutroPaletteIndex + y, new Graphic
+                {
+                    Width = 32,
+                    Height = 1,
+                    Data = outroPaletteGraphics.Data.Skip(y * 32 * 4).Take(32 * 4).ToArray(),
+                    IndexedGraphic = false
+                });
+            }
+
+            var fantasyIntroPaletteGraphics = paletteLoader!.Load(Palette.FantasyIntroPalettesIndex).Graphic;
+
+            for (int y = 0; y < fantasyIntroPaletteGraphics.Height; y++)
+            {
+                result.Add(gamePaletteInfo.FirstFantasyIntroPaletteIndex + y, new Graphic
+                {
+                    Width = 32,
+                    Height = 1,
+                    Data = fantasyIntroPaletteGraphics.Data.Skip(y * 32 * 4).Take(32 * 4).ToArray(),
                     IndexedGraphic = false
                 });
             }
@@ -431,7 +543,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         {
             var places = new Places();
             var locationData = locationLoader!.LoadAll();
-            var locationNames = locationNameLoader!.LoadAll();
+            var locationNames = locationNameLoader!.Load().ToDictionary(1);
 
             if (locationData.Count != locationNames.Count)
                 throw new AmbermoonException(ExceptionScope.Data, "Mismatch between number of location data and location name entries.");
@@ -441,7 +553,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
             foreach (var location in locationData.OrderBy(location => location.Key))
             {
-                if (!locationNames.TryGetValue(location.Key, out var name))
+                if (!locationNames.TryGetValue((int)location.Key, out var name))
                     throw new AmbermoonException(ExceptionScope.Data, $"Missing location name for location data {location.Key}.");
 
                 location.Value.Name = name;
@@ -564,7 +676,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     void LoadLocationNames(IDataReader dataReader)
     {
-        locationNameLoader = new(dataReader, this, t => t.TextList.First()!);
+        locationNameLoader = new(dataReader, this, t => t.TextList);
     }
 
     void LoadOutroSequences(IDataReader dataReader)
@@ -722,6 +834,16 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
         initialChestLoader = new(dataReader, this, c => c.Chest);
     }
 
+    void LoadInitialMerchants(IDataReader dataReader)
+    {
+        initialMerchantLoader = new(dataReader, this, m => m.Merchant);
+    }
+
+    void LoadInitialAutomaps(IDataReader dataReader)
+    {
+        initialAutomapLoader = new(dataReader, this, m => m.Automap);
+    }
+
     void LoadOutroGraphics(IDataReader dataReader)
     {
         outroGraphicLoader = new(dataReader, this, g => g.Atlas!);
@@ -813,7 +935,6 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     public IGraphicAtlas GetGraphicAtlas(GraphicType type)
     {
         // Notes:
-        // - For the event images make sure to replace color index 0 with 32 to use black color and not transparency.
         // - For the combat graphics, exclude the sword and face graphic and put it into the UIElements layer instead.
         //   The index must be Graphics.CombatGraphicOffset + CombatGraphicIndex.UISwordAndMace which is 2541.
         // - For tileset1++, make sure you provide at least an empty atlas if you don't have data for that tileset.

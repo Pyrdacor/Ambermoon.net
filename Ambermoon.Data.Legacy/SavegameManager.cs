@@ -42,14 +42,14 @@ namespace Ambermoon.Data.Legacy
             SavegameSerializer.WriteSavegameName(gameData, slot, ref name, externalSavesPath);
         }
 
-        public static readonly string[] SaveFileNames = new string[5]
-        {
+        public static readonly string[] SaveFileNames =
+        [
             "Party_data.sav",
             "Party_char.amb",
             "Chest_data.amb",
             "Merchant_data.amb",
             "Automap.amb"
-        };
+        ];
 
         public Savegame Load(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot, int totalSavegames)
         {

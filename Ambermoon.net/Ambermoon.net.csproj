@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-	<LangVersion>12</LangVersion>
+    <TargetFramework>net9.0</TargetFramework>
+	<LangVersion>13</LangVersion>
     <RootNamespace>Ambermoon</RootNamespace>
     <RuntimeIdentifiers>win-x86;win-x64;linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
     <Version>1.12.0</Version>
@@ -83,7 +83,7 @@
 
   <ItemGroup>
     <PackageReference Include="glfw" Version="3.4.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="NLayer" Version="1.16.0" />
     <PackageReference Include="Silk.NET.GLFW" Version="2.22.0" />
     <PackageReference Include="Silk.NET.Input" Version="2.22.0" />
@@ -102,6 +102,7 @@
     <ProjectReference Include="..\Ambermoon.Data.Legacy\Ambermoon.Data.Legacy.csproj" />
     <ProjectReference Include="..\Ambermoon.Frontend\Ambermoon.Frontend.csproj" />
     <ProjectReference Include="..\Ambermoon.Game\Ambermoon.Game.csproj" />
+    <ProjectReference Include="..\Ambermoon.Mod\Ambermoon.Mod.csproj" />
     <ProjectReference Include="..\Ambermoon.Renderer.OpenGL\Ambermoon.Renderer.OpenGL.csproj" />
     <ProjectReference Include="..\AmbermoonAdditionalDataLoader\AmbermoonAdditionalDataLoader.csproj" />
     <ProjectReference Include="..\AmbermoonPatcher\AmbermoonPatcher.csproj" />

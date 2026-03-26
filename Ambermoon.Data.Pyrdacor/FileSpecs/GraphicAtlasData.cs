@@ -436,7 +436,7 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
             return;
         }
 
-        bool tiles = (flags & 0x80) == 0;
+        bool tiles = (flags & 0x80) != 0;
         bool alpha = (flags & 0x40) != 0;
         int colorIndexOffset = flags & 0x1f;
         Graphic texture;

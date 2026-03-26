@@ -34,7 +34,7 @@ internal class OutroSequenceData : IFileSpec<OutroSequenceData>, IFileSpec
             int numActions = dataReader.ReadByte();
             var actions = new List<OutroAction>(numActions);
 
-            ushort? AsTextIndex(ushort value) => value == 0xffff ? null : value;
+            static ushort? AsTextIndex(ushort value) => value == 0xffff ? null : value;
 
             for (int j = 0; j < numActions; j++)
             {

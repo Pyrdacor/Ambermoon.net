@@ -2,6 +2,7 @@
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Pyrdacor.Compressions;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
 using Ambermoon.Data.Pyrdacor.Objects;
 using Ambermoon.Data.Serialization;
@@ -11,9 +12,9 @@ namespace Ambermoon.Data.Pyrdacor;
 
 partial class GameData
 {
-    private static void WritePalettes(IDataWriter dataWriter, Dictionary<int, IDataReader> palettes,
+    private static void WritePalettes(IDataWriter dataWriter, Dictionary<int, Graphic> palettes,
         IReadOnlyList<Graphic> introPalettes, IReadOnlyList<Graphic> outroPalettes,
-        IGraphicInfoProvider graphicInfoProvider)
+        IReadOnlyList<Graphic> fantasyIntroPalettes, IGraphicInfoProvider graphicInfoProvider)
     {
         var graphic = new Graphic()
         {
@@ -27,9 +28,7 @@ partial class GameData
 
         foreach (var pal in palettes.OrderBy(p => p.Key))
         {
-            pal.Value.Position = 0;
-
-            var data = pal.Value.ReadBytes(64);
+            var data = pal.Value.Data;
 
             for (int i = 0; i < 32; i++)
             {
@@ -51,6 +50,7 @@ partial class GameData
 
         var gamePalette = new Palette(graphic)
         {
+            DefaultTextPaletteIndex = graphicInfoProvider.DefaultTextPaletteIndex,
             PrimaryUIPaletteIndex = graphicInfoProvider.PrimaryUIPaletteIndex,
             AutomapPaletteIndex = graphicInfoProvider.AutomapPaletteIndex,
             SecondaryUIPaletteIndex = graphicInfoProvider.SecondaryUIPaletteIndex,
@@ -81,14 +81,27 @@ partial class GameData
         for (int i = 0; i < introPalettes.Count; i++)
             Buffer.BlockCopy(introPalettes[i].Data, 0, introPaletteGraphic.Data, i * 128, 128);
 
+        var fantasyIntroPaletteGraphic = new Graphic
+        {
+            Width = 32,
+            Height = fantasyIntroPalettes.Count,
+            Data = new byte[32 * fantasyIntroPalettes.Count * 4],
+            IndexedGraphic = false
+        };
+
+        for (int i = 0; i < fantasyIntroPalettes.Count; i++)
+            Buffer.BlockCopy(fantasyIntroPalettes[i].Data, 0, fantasyIntroPaletteGraphic.Data, i * 128, 128);
+
         var outroPalette = new Palette(outroPaletteGraphic);
         var introPalette = new Palette(introPaletteGraphic);
+        var fantasyIntroPalette = new Palette(fantasyIntroPaletteGraphic);
 
         var paletteEntries = new Dictionary<ushort, Palette>
         {
             { Palette.GamePalettesIndex, gamePalette },
             { Palette.OutroPalettesIndex, outroPalette },
             { Palette.IntroPalettesIndex, introPalette },
+            { Palette.FantasyIntroPalettesIndex, fantasyIntroPalette },
         };
 
         PADP.Write(dataWriter, paletteEntries);
@@ -100,8 +113,27 @@ partial class GameData
         {
             var texts = TextReader.ReadTexts(file.Value);
 
-            return new Texts(new Objects.TextList(texts));
+            return new Texts(new TextList(texts));
         }));
+    }
+
+    private static void WriteTexts(IDataWriter dataWriter, IReadOnlyList<string> texts)
+    {
+        PADF.Write(dataWriter, new Texts(new TextList(texts)));
+    }
+
+    private static IReadOnlyList<Graphic> TransparentToBlack(IReadOnlyList<Graphic> graphics)
+    {
+        return graphics.Select(graphic =>
+        {
+            for (int i = 0; i < graphic.Data.Length; i++)
+            {
+                if (graphic.Data[i] == 0)
+                    graphic.Data[i] = 32;
+            }
+
+            return graphic;
+        }).ToList();
     }
 
     private static void WriteGraphics(IDataWriter dataWriter, IReadOnlyList<Graphic> graphics, bool tiles, bool alpha, bool usePalette, int? fixedPaletteIndex = null, int colorIndexOffset = 0)
@@ -141,13 +173,44 @@ partial class GameData
         PADF.Write(dataWriter, graphicAtlas);
     }
 
-    public static void WriteLegacyGameData(IDataWriter dataWriter, Legacy.GameData gameData)
+    public static void WriteGameDataInfo(IDataWriter dataWriter, string name, bool advanced, string version, GameLanguage language)
+    {
+        var info = new GameDataInfo()
+        {
+            Name = name,
+            Advanced = advanced,
+            Version = version,
+            Language = language,
+        };
+
+        PADF.Write(dataWriter, info);
+    }
+
+    public static void WriteFile(IDataWriter dataWriter, byte[] data, bool compress)
+    {
+        PADF.Write(dataWriter, new RawData(data), compress ? new DeflateCompression() : new NullCompression());
+    }
+
+    public static void WriteContainer(IDataWriter dataWriter, IReadOnlyList<byte[]> files, bool compress)
+    {
+        WriteContainer(dataWriter, files.Select((f, i) => new { f, i }).ToDictionary(f => (ushort)(1 + f.i), f => f.f), compress);
+    }
+
+    public static void WriteContainer(IDataWriter dataWriter, IDictionary<ushort, byte[]> files, bool compress)
+    {
+        PADP.Write(dataWriter, files.ToDictionary(f => f.Key, f => new RawData(f.Value)), compress ? new DeflateCompression() : new NullCompression());
+    }
+
+    public static void WriteLegacyGameData(IDataWriter dataWriter, Legacy.GameData gameData,
+        params (string Magic, Action<IDataWriter> DataWriter)[] customDataWriters)
     {
         dataWriter.WriteWithoutLength("PYGD");
 
         int fileCount = 0;
         int fileCountPosition = dataWriter.Position;
         dataWriter.Write((ushort)0); // Will be replaced by file count later
+
+        var customDataWriterMagic = customDataWriters?.Select(w => w.Magic).ToHashSet() ?? [];
 
         void WriteSection(string magic, Action write)
         {
@@ -160,6 +223,14 @@ partial class GameData
             fileCount++;
         }
 
+        void WriteDefaultSection(string magic, Action write)
+        {
+            if (customDataWriterMagic.Contains(magic))
+                return;
+
+            WriteSection(magic, write);
+        }
+
         var graphicProvider = (gameData.GraphicInfoProvider as IGraphicProvider)!;
         var info = new GameDataInfo()
         {
@@ -169,20 +240,33 @@ partial class GameData
             Language = gameData.Language,
         };
 
-        WriteSection(MagicInfo, () => PADF.Write(dataWriter, info));
+        WriteDefaultSection(MagicInfo, () => PADF.Write(dataWriter, info));
 
-        WriteSection(MagicPalette, () => WritePalettes(dataWriter, gameData.Files["Palettes.amb"].Files,
-            gameData.IntroData.IntroPalettes, gameData.OutroData.OutroPalettes, gameData.GraphicInfoProvider));
-
-        WriteSection(MagicSavegame, () =>
+        if (customDataWriters != null)
         {
-            var savegame = new SavegameData();
+            foreach (var customDataWriter in customDataWriters)
+            {
+                WriteSection(customDataWriter.Magic, () => customDataWriter.DataWriter(dataWriter));
+            }
+        }
+
+        WriteDefaultSection(MagicPalette, () => WritePalettes(dataWriter,
+            gameData.GraphicInfoProvider.Palettes
+                .OrderBy(p => p.Key)
+                .TakeWhile(p => p.Key < gameData.GraphicInfoProvider.FirstIntroPaletteIndex)
+                .ToDictionary(p => p.Key, p => p.Value),
+            gameData.IntroData.IntroPalettes, gameData.OutroData.OutroPalettes,
+            gameData.FantasyIntroData.FantasyIntroPalettes, gameData.GraphicInfoProvider));
+
+        WriteDefaultSection(MagicSavegame, () =>
+        {
+            var savegame = new Savegame();
             var savegameReader = (gameData.Files.TryGetValue("Initial/Party_data.sav", out var sgReader) ? sgReader : gameData.Files["Save.00/Party_data.sav"]).Files[1];
             SavegameSerializer.ReadSaveData(savegame, savegameReader);
             PADF.Write(dataWriter, new FileSpecs.SavegameData(savegame));
         });
 
-        WriteSection(MagicFonts, () =>
+        WriteDefaultSection(MagicFonts, () =>
         {
             var ingameFont = new FontData(new(gameData.ExecutableData.Glyphs.Entries.Select(g => new Glyph { Graphic = g, Advance = 6 }).ToList()));
             var ingameDigitFont = new FontData(new(gameData.ExecutableData.DigitGlyphs.Entries.Select(g => new Glyph { Graphic = g, Advance = 5 }).ToList()));
@@ -204,7 +288,7 @@ partial class GameData
             PADP.Write(dataWriter, fonts);
         });
 
-        WriteSection(MagicGlyphMappings, () =>
+        WriteDefaultSection(MagicGlyphMappings, () =>
         {
             var outroSmallGlyphMapping = new GlyphMappingData(new(gameData.OutroData.Glyphs.OrderBy(g => g.Key).Select((g, index) => new { g, index }).ToDictionary(e => e.g.Key, e => e.index)));
             var outroLargeGlyphMapping = new GlyphMappingData(new(gameData.OutroData.LargeGlyphs.OrderBy(g => g.Key).Select((g, index) => new { g, index }).ToDictionary(e => e.g.Key, e => e.index)));
@@ -222,7 +306,7 @@ partial class GameData
             PADP.Write(dataWriter, glyphMappings);
         });
 
-        WriteSection(MagicInitialParty, () =>
+        WriteDefaultSection(MagicInitialParty, () =>
         {
             var partyMemberReader = new PartyMemberReader();
             var partyFiles = (gameData.Files.TryGetValue("Initial/Party_char.amb", out var pcReader) ? pcReader : gameData.Files["Save.00/Party_char.amb"]).Files;
@@ -230,7 +314,7 @@ partial class GameData
                 new CharacterData(PartyMember.Load((uint)file.Key, partyMemberReader, file.Value, null))));
         });
 
-        WriteSection(MagicMonsters, () =>
+        WriteDefaultSection(MagicMonsters, () =>
         {
             var monsterReader = new MonsterReader();
             var monsterFiles = (gameData.Files.TryGetValue("Monster_char.amb", out var mcReader) ? mcReader : gameData.Files["Monster_char_data.amb"]).Files;
@@ -238,7 +322,7 @@ partial class GameData
                 new CharacterData(Monster.Load((uint)file.Key, monsterReader, file.Value))));
         });
 
-        WriteSection(MagicMonsterGraphics, () =>
+        WriteDefaultSection(MagicMonsterGraphics, () =>
         {
             var monsterGraphics = gameData.CharacterManager.Monsters.ToDictionary(monster => (int)monster.Index, monster => monster.CombatGraphic);
 
@@ -264,17 +348,19 @@ partial class GameData
                     }
                 }
             }
+
+            PADF.Write(dataWriter, atlas);
         });
 
-        WriteSection(MagicNPCs, () =>
+        WriteDefaultSection(MagicNPCs, () =>
         {
             var npcReader = new NPCReader();
             PADP.Write(dataWriter, gameData.Files["NPC_char.amb"].Files.Where(file => file.Value.Size != 0).ToDictionary(file => (ushort)file.Key,
                 file => new CharacterData(NPC.Load((uint)file.Key, npcReader, file.Value, null))));
         });
 
-        WriteSection(MagicNPCTexts, () => WriteTexts(dataWriter, gameData.Files["NPC_texts.amb"].Files));
-        WriteSection(MagicNPCGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.NPC), tiles: false, alpha: false, usePalette: true));
+        WriteDefaultSection(MagicNPCTexts, () => WriteTexts(dataWriter, gameData.Files["NPC_texts.amb"].Files));
+        WriteDefaultSection(MagicNPCGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.NPC), tiles: false, alpha: false, usePalette: true));
 
         IEnumerable<TravelGraphicInfo> CreateTravelGraphicInfos(TravelType travelType)
         {
@@ -288,31 +374,31 @@ partial class GameData
         var graphicInfos = new GraphicsInfoData(graphicProvider.NPCGraphicOffsets, graphicProvider.NPCGraphicFrameCounts,
             CombatGraphics.Info, gameData.StationaryImageInfos, travelGraphicInfos, gameData.PlayerAnimationInfo,
             gameData.CursorHotspots);
-        WriteSection(MagicGraphicsInfo, () => PADF.Write(dataWriter, graphicInfos));
+        WriteDefaultSection(MagicGraphicsInfo, () => PADF.Write(dataWriter, graphicInfos));
 
-        WriteSection(MagicPartyTexts, () => WriteTexts(dataWriter, gameData.Files["Party_texts.amb"].Files));
-        WriteSection(MagicPartyGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Player), tiles: false, alpha: false, usePalette: true));
-        WriteSection(MagicTravelGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.TravelGfx), tiles: false, alpha: false, usePalette: true));
-        WriteSection(MagicTransportGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Transports), tiles: false, alpha: false, usePalette: true));
+        WriteDefaultSection(MagicPartyTexts, () => WriteTexts(dataWriter, gameData.Files["Party_texts.amb"].Files));
+        WriteDefaultSection(MagicPartyGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Player), tiles: false, alpha: false, usePalette: true));
+        WriteDefaultSection(MagicTravelGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.TravelGfx), tiles: false, alpha: false, usePalette: true));
+        WriteDefaultSection(MagicTransportGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Transports), tiles: false, alpha: false, usePalette: true));
 
-        WriteSection(MagicMonsterGroups, () =>
+        WriteDefaultSection(MagicMonsterGroups, () =>
         {
             var monsterGroupReader = new MonsterGroupReader();
             PADP.Write(dataWriter, gameData.Files["Monster_groups.amb"].Files.Where(file => file.Value.Size != 0).ToDictionary(file => (ushort)file.Key,
                 file => new MonsterGroups(MonsterGroup.Load(gameData.CharacterManager, monsterGroupReader, file.Value))));
         });
 
-        WriteSection(MagicItems, () => PADP.Write(dataWriter, gameData.ItemManager.Items.Select(item => new ItemData(item))));
-        WriteSection(MagicItemTexts, () => WriteTexts(dataWriter, gameData.Files["Object_texts.amb"].Files));
-        WriteSection(MagicItemNames, () => PADF.Write(dataWriter, new Texts(new TextList([.. gameData.ItemManager.Items.Select(item => item.Name)]))));
-        WriteSection(MagicItemGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Item), tiles: true, alpha: true, usePalette: true, fixedPaletteIndex: graphicProvider.PrimaryUIPaletteIndex));
+        WriteDefaultSection(MagicItems, () => PADP.Write(dataWriter, gameData.ItemManager.Items.Select(item => new ItemData(item))));
+        WriteDefaultSection(MagicItemTexts, () => WriteTexts(dataWriter, gameData.Files["Object_texts.amb"].Files));
+        WriteDefaultSection(MagicItemNames, () => PADF.Write(dataWriter, new Texts(new TextList([.. gameData.ItemManager.Items.Select(item => item.Name)]))));
+        WriteDefaultSection(MagicItemGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Item), tiles: true, alpha: true, usePalette: true, fixedPaletteIndex: graphicProvider.PrimaryUIPaletteIndex));
         
-        WriteSection(MagicLocations, () => PADP.Write(dataWriter, gameData.Places.Entries.Select(place => new LocationData(place))));
-        WriteSection(MagicLocationNames, () => PADF.Write(dataWriter, new Texts(new TextList([.. gameData.Places.Entries.Select(place => place.Name)]))));
+        WriteDefaultSection(MagicLocations, () => PADP.Write(dataWriter, gameData.Places.Entries.Select(place => new LocationData(place))));
+        WriteDefaultSection(MagicLocationNames, () => PADF.Write(dataWriter, new Texts(new TextList([.. gameData.Places.Entries.Select(place => place.Name)]))));
 
-        WriteSection(MagicOutro, () => PADF.Write(dataWriter, new OutroSequenceData(gameData.OutroData.OutroActions)));
+        WriteDefaultSection(MagicOutro, () => PADF.Write(dataWriter, new OutroSequenceData(gameData.OutroData.OutroActions)));
 
-        WriteSection(MagicTexts, () =>
+        WriteDefaultSection(MagicTexts, () =>
         {
             var texts = new Dictionary<ushort, Texts>();
 
@@ -348,16 +434,16 @@ partial class GameData
             PADP.Write(dataWriter, texts);
         });
 
-        WriteSection(MagicTilesets, () => PADP.Write(dataWriter, gameData.MapManager.Tilesets.Select(tileset => new TilesetData(tileset))));
-        WriteSection(MagicLabyrinthData, () => PADP.Write(dataWriter, gameData.MapManager.Labdata.Select(labdata => new LabyrinthData(labdata))));
-        WriteSection(MagicMaps, () => PADP.Write(dataWriter, gameData.MapManager.Maps.ToDictionary(map => (ushort)map.Index, map => new MapData(map))));
-        WriteSection(MagicMapTexts, () => PADP.Write(dataWriter, gameData.MapManager.Maps.ToDictionary(map => (ushort)map.Index, map => new Texts(new Objects.TextList(map.Texts)))));
+        WriteDefaultSection(MagicTilesets, () => PADP.Write(dataWriter, gameData.MapManager.Tilesets.Select(tileset => new TilesetData(tileset))));
+        WriteDefaultSection(MagicLabyrinthData, () => PADP.Write(dataWriter, gameData.MapManager.Labdata.Select(labdata => new LabyrinthData(labdata))));
+        WriteDefaultSection(MagicMaps, () => PADP.Write(dataWriter, gameData.MapManager.Maps.ToDictionary(map => (ushort)map.Index, map => new MapData(map))));
+        WriteDefaultSection(MagicMapTexts, () => PADP.Write(dataWriter, gameData.MapManager.Maps.ToDictionary(map => (ushort)map.Index, map => new Texts(new Objects.TextList(map.Texts)))));
 
         // TODO: fonts
 
-        WriteSection(MagicGotoPointNames, () => PADF.Write(dataWriter, new Texts(new TextList([.. gameData.MapManager.Maps.SelectMany(map => map.GotoPoints ?? []).OrderBy(gotoPoint => gotoPoint.Index).Select(gotoPoint => gotoPoint.Name)])))); // Note: This assumes there are no gaps!
+        WriteDefaultSection(MagicGotoPointNames, () => PADF.Write(dataWriter, new Texts(new TextList([.. gameData.MapManager.Maps.SelectMany(map => map.GotoPoints ?? []).OrderBy(gotoPoint => gotoPoint.Index).Select(gotoPoint => gotoPoint.Name)])))); // Note: This assumes there are no gaps!
         
-        WriteSection(MagicLayouts, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Layout), tiles: true, alpha: false, usePalette: true));
+        WriteDefaultSection(MagicLayouts, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Layout), tiles: true, alpha: false, usePalette: true));
 
         var wallGraphics = new Dictionary<int, Graphic>();
         var objectGraphics = new Dictionary<int, Graphic>();
@@ -435,28 +521,37 @@ partial class GameData
         }
 
         var textures = new Textures(wallGraphics, objectGraphics, overlayGraphics, floorGraphics, graphicProvider.GetGraphics(GraphicType.LabBackground));
-        WriteSection(MagicTextures, () => PADF.Write(dataWriter, textures));
+        WriteDefaultSection(MagicTextures, () => PADF.Write(dataWriter, textures));
 
-        WriteSection(MagicEventGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.EventPictures), tiles: true, alpha: false, usePalette: true));
-        WriteSection(MagicTileGraphics, () => PADP.Write(dataWriter,
+        WriteDefaultSection(MagicEventGraphics, () => WriteGraphics(dataWriter, TransparentToBlack(graphicProvider.GetGraphics(GraphicType.EventPictures)), tiles: true, alpha: false, usePalette: true));
+        WriteDefaultSection(MagicTileGraphics, () => PADP.Write(dataWriter,
             Enumerable.Range(1, 10)
                 .Select(i => new { Index = (ushort)i, Graphics = graphicProvider.GetGraphics(GraphicType.Tileset1 + i - 1) })
                 .Where(tileset => tileset.Graphics.Count != 0)
                 .ToDictionary(tileset => tileset.Index, tileset => GraphicAtlasData.FromTiles(GraphicAtlasData.MultiplePalettes, tileset.Graphics, alpha: true))));
-        WriteSection(MagicCombatBackgrounds, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.CombatBackground), tiles: true, alpha: false, usePalette: true));
-        WriteSection(MagicCombatGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.CombatGraphics), tiles: false, alpha: true, usePalette: true));
-        WriteSection(MagicBattleFieldSprites, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.BattleFieldIcons), tiles: true, alpha: true, usePalette: true));
-        WriteSection(MagicPortraits, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Portrait), tiles: true, alpha: true, usePalette: true));
+        WriteDefaultSection(MagicCombatBackgrounds, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.CombatBackground), tiles: true, alpha: false, usePalette: true));
+        Graphic swordAndMaceUIGraphic = null!;
+        WriteDefaultSection(MagicCombatGraphics, () =>
+        {
+            var combatGraphics = graphicProvider.GetGraphics(GraphicType.CombatGraphics);
 
-        // TODO:
-        // WriteSection(MagicUIGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Portrait), tiles: true, alpha: true, usePalette: true));
+            // Exclude sword and mace
+            swordAndMaceUIGraphic = combatGraphics[^1];
+            combatGraphics.RemoveAt(combatGraphics.Count - 1);
 
-        WriteSection(MagicRiddlemouthGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.RiddlemouthGraphics), tiles: false, alpha: false, usePalette: true));
-        WriteSection(MagicCursors, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Cursor), tiles: true, alpha: true, usePalette: true));
-        WriteSection(MagicPictures80x80, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Pics80x80), tiles: true, alpha: false, usePalette: true));
-        WriteSection(MagicAutomapGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.AutomapGraphics), tiles: false, alpha: true, usePalette: true));
+            WriteGraphics(dataWriter, combatGraphics, tiles: false, alpha: true, usePalette: true);
+        });
+        WriteDefaultSection(MagicBattleFieldSprites, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.BattleFieldIcons), tiles: true, alpha: true, usePalette: true));
+        WriteDefaultSection(MagicPortraits, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Portrait), tiles: true, alpha: true, usePalette: true));
 
-        WriteSection(MagicInitialChests, () =>
+        WriteSection(MagicUIGraphics, () => WriteGraphics(dataWriter, [..graphicProvider.GetGraphics(GraphicType.UIElements), swordAndMaceUIGraphic], tiles: false, alpha: true, usePalette: true));
+
+        WriteDefaultSection(MagicRiddlemouthGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.RiddlemouthGraphics), tiles: false, alpha: false, usePalette: true));
+        WriteDefaultSection(MagicCursors, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Cursor), tiles: true, alpha: true, usePalette: true));
+        WriteDefaultSection(MagicPictures80x80, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Pics80x80), tiles: true, alpha: false, usePalette: true));
+        WriteDefaultSection(MagicAutomapGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.AutomapGraphics), tiles: false, alpha: true, usePalette: true));
+
+        WriteDefaultSection(MagicInitialChests, () =>
         {
             var chestReader = new ChestReader();
             var container = gameData.Files.TryGetValue("Initial/Chest_data.amb", out var c) ? c : gameData.Files["Save.00/Chest_data.amb"];
@@ -464,8 +559,24 @@ partial class GameData
             PADP.Write(dataWriter, container.Files.Where(file => file.Value.Size != 0).ToDictionary(file => (ushort)file.Key,
                 file => new ChestData(Chest.Load(chestReader, file.Value))));
         });
+        WriteDefaultSection(MagicInitialMerchants, () =>
+        {
+            var merchantReader = new MerchantReader();
+            var container = gameData.Files.TryGetValue("Initial/Merchant_data.amb", out var m) ? m : gameData.Files["Save.00/Merchant_data.amb"];
 
-        WriteSection(MagicDictionary, () => PADF.Write(dataWriter, new Texts(new TextList([.. gameData.Dictionary.Entries]))));
+            PADP.Write(dataWriter, container.Files.Where(file => file.Value.Size != 0).ToDictionary(file => (ushort)file.Key,
+                file => new MerchantData(Merchant.Load(merchantReader, file.Value))));
+        });
+        WriteDefaultSection(MagicInitialAutomaps, () =>
+        {
+            var automapReader = new AutomapReader();
+            var container = gameData.Files.TryGetValue("Initial/Automap.amb", out var a) ? a : gameData.Files["Save.00/Automap.amb"];
+
+            PADP.Write(dataWriter, container.Files.Where(file => file.Value.Size != 0).ToDictionary(file => (ushort)file.Key,
+                file => new ExplorationData(Automap.Load(automapReader, file.Value))));
+        });
+
+        WriteDefaultSection(MagicDictionary, () => PADF.Write(dataWriter, new Texts(new TextList([.. gameData.Dictionary.Entries]))));
 
         var songData = new Dictionary<Song, byte[]>();
         var introMusicContainer = gameData.Files["Intro_music"];
@@ -485,17 +596,17 @@ partial class GameData
             songData.Add(song, file.Value.ReadToEnd());
         }
 
-        WriteSection(MagicMusic, () => PADP.Write(dataWriter, songData.ToDictionary(song => (ushort)song.Key, song => new MusicData(song.Value))));
+        WriteDefaultSection(MagicMusic, () => PADP.Write(dataWriter, songData.ToDictionary(song => (ushort)song.Key, song => new MusicData(song.Value))));
 
-        WriteSection(MagicOutroGraphics, () => WriteGraphics(dataWriter, gameData.OutroData.Graphics, false, false, true, gameData.GraphicInfoProvider.FirstOutroPaletteIndex));
+        WriteDefaultSection(MagicOutroGraphics, () => WriteGraphics(dataWriter, gameData.OutroData.Graphics, false, false, true, gameData.GraphicInfoProvider.FirstOutroPaletteIndex));
 
-        WriteSection(MagicIntroGraphics, () => WriteIndexedGraphics(dataWriter, gameData.IntroData.Graphics.ToDictionary(g => (int)g.Key, g => g.Value), true, true));
+        WriteDefaultSection(MagicIntroGraphics, () => WriteIndexedGraphics(dataWriter, gameData.IntroData.Graphics.ToDictionary(g => (int)g.Key, g => g.Value), true, true));
 
-        WriteSection(MagicFantasyIntroGraphics, () => WriteIndexedGraphics(dataWriter, gameData.FantasyIntroData.Graphics.ToDictionary(g => (int)g.Key, g => g.Value), true, true));
+        WriteDefaultSection(MagicFantasyIntroGraphics, () => WriteIndexedGraphics(dataWriter, gameData.FantasyIntroData.Graphics.ToDictionary(g => (int)g.Key, g => g.Value), true, true));
 
-        WriteSection(MagicOutroGraphicInfos, () => PADP.Write(dataWriter, gameData.OutroData.GraphicInfos.ToDictionary(info => (ushort)(1 + info.Value.GraphicIndex), info => new OutroGraphicInfoData(info.Value, info.Key))));
+        WriteDefaultSection(MagicOutroGraphicInfos, () => PADP.Write(dataWriter, gameData.OutroData.GraphicInfos.ToDictionary(info => (ushort)(1 + info.Value.GraphicIndex), info => new OutroGraphicInfoData(info.Value, info.Key))));
 
-        WriteSection(MagicIntroAssets, () =>
+        WriteDefaultSection(MagicIntroAssets, () =>
         {
             var introData = gameData.IntroData;
             var introAssets = new IntroAssets(introData.Graphics.ToDictionary(g => g.Key, g => new Size(g.Value.Width, g.Value.Height)),
@@ -506,7 +617,7 @@ partial class GameData
             PADF.Write(dataWriter, new IntroAssetData(introAssets));
         });
 
-        WriteSection(MagicFantasyIntroAssets, () =>
+        WriteDefaultSection(MagicFantasyIntroAssets, () =>
         {
             var fantasyIntroData = gameData.FantasyIntroData;
             var fantasyIntroAssets = new FantasyIntroAssets(fantasyIntroData.Graphics.ToDictionary(g => g.Key, g => new Size(g.Value.Width, g.Value.Height)),
@@ -515,7 +626,11 @@ partial class GameData
             PADF.Write(dataWriter, new FantasyIntroAssetData(fantasyIntroAssets));
         });
 
-        WriteSection(MagicLightEffectData, () => PADF.Write(dataWriter, new LightEffectData(gameData.ExecutableData)));
+        WriteDefaultSection(MagicIntroTexts, () => WriteTexts(dataWriter, gameData.IntroData.Texts.OrderBy(e => e.Key).Select(e => e.Value).ToList()));
+
+        WriteDefaultSection(MagicOutroTexts, () => WriteTexts(dataWriter, gameData.OutroData.Texts));
+
+        WriteDefaultSection(MagicLightEffectData, () => PADF.Write(dataWriter, new LightEffectData(gameData.ExecutableData)));
 
         dataWriter.Replace(fileCountPosition, (ushort)fileCount);
     }

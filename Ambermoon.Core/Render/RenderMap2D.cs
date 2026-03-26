@@ -515,8 +515,6 @@ namespace Ambermoon.Render
             if (mapChange)
                 lastUpdateScroll = null;
             lastUpdateMap = Map;
-            int scrolledX = lastUpdateScroll == null ? 0 : (int)ScrollX - lastUpdateScroll.X;
-            int scrolledY = lastUpdateScroll == null ? 0 : (int)ScrollY - lastUpdateScroll.Y;
             lastUpdateScroll = new Position((int)ScrollX, (int)ScrollY);
 
             for (uint row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
@@ -526,7 +524,7 @@ namespace Ambermoon.Render
                     var tile = this[ScrollX + column, ScrollY + row];
 
                     backgroundTileSprites[index].Layer = backLayer;
-                    backgroundTileSprites[index].TextureAtlasWidth = textureAtlas.Texture.Width;
+                    backgroundTileSprites[index].TextureAtlasWidth = textureAtlas!.Texture.Width;
                     backgroundTileSprites[index].PaletteIndex = (byte)(Map!.PaletteIndex - 1);
                     foregroundTileSprites[index].Layer = frontLayer;
                     foregroundTileSprites[index].TextureAtlasWidth = textureAtlas.Texture.Width;

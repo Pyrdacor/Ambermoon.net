@@ -14,7 +14,7 @@ internal class Palette : IFileSpec<Palette>, IFileSpec
     public const ushort GamePalettesIndex = 1;
     public const ushort OutroPalettesIndex = 2;
     public const ushort IntroPalettesIndex = 3;
-    public const ushort FantasyIntroPalettesIndex = 3;
+    public const ushort FantasyIntroPalettesIndex = 4;
 
     public Graphic Graphic => graphic!;
     public byte DefaultTextPaletteIndex { get; set; } = 0xff;

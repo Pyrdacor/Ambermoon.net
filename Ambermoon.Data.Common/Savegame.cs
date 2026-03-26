@@ -369,8 +369,8 @@ namespace Ambermoon.Data
     {
         public Dictionary<uint, Automap> Automaps { get; } = [];
         public Dictionary<uint, PartyMember> PartyMembers { get; } = [];
-        public Dictionary<uint, Chest> Chests { get; } = new Dictionary<uint, Chest>();
-        public Dictionary<uint, Merchant> Merchants { get; } = new Dictionary<uint, Merchant>();
+        public Dictionary<uint, Chest> Chests { get; } = [];
+        public Dictionary<uint, Merchant> Merchants { get; } = [];
 
         public PartyMember GetPartyMember(int slot) => CurrentPartyMemberIndices[slot] == 0 ? null : PartyMembers[CurrentPartyMemberIndices[slot]];
 

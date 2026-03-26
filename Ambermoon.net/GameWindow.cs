@@ -25,6 +25,7 @@ using MousePosition = System.Numerics.Vector2;
 using WindowDimension = Silk.NET.Maths.Vector2D<int>;
 using Thread = System.Threading.Thread;
 using System.Globalization;
+using Ambermoon.Game;
 
 namespace Ambermoon;
 
@@ -851,10 +852,27 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         {
             try
             {
-                var savegameManager = new RemakeSavegameManager(savePath, configuration);
-                savegameManager.GetSavegameNames(gameData, out int currentSavegame, GameCore.NumBaseSavegameSlots);
-                if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
-                    currentSavegame = savegameManager.ContinueSavegameSlot;
+                ISavegameManager savegameManager;
+                IAdditionalSaveSlotProvider additionalSaveSlotProvider = null;
+                int currentSavegame = 0;
+
+                if (gameData is Mod.ModGameData modGameData)
+                {
+                    savegameManager = modGameData.SavegameManager;
+                    savegameManager.GetSavegameNames(gameData, out currentSavegame, GameCore.NumBaseSavegameSlots);
+                }
+                else
+                {
+                    var remakeSavegameManager = new RemakeSavegameManager(savePath, configuration);
+                    remakeSavegameManager.GetSavegameNames(gameData, out currentSavegame, GameCore.NumBaseSavegameSlots);
+
+                    if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
+                        currentSavegame = remakeSavegameManager.ContinueSavegameSlot;
+
+                    savegameManager = remakeSavegameManager;
+                    additionalSaveSlotProvider = remakeSavegameManager;
+                }
+
                 bool canContinue = currentSavegame != 0;
                 var cursor = new Render.Cursor(renderView, gameData.CursorHotspots);
                 cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
@@ -874,7 +892,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                                 savegameManager, savegameSerializer, gameData.Dictionary, cursor, audioOutput,
                                 musicManager, FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
                                 new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
-                                Path.GetFileName(savePath), versionString, null, savegameManager);
+                                Path.GetFileName(savePath), versionString, null, additionalSaveSlotProvider);
 
                             game.QuitRequested += window.Close;
                             game.MousePositionChanged += position =>
@@ -946,8 +964,8 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                             AdvancedSavegamePatcher advancedSavegamePatcher = null;
 
                             // Load advanced diffs (is null for non-advanced versions)
-                            if (advancedDiffsReader != null)
-                                advancedSavegamePatcher = new AdvancedSavegamePatcher(advancedDiffsReader, savegameManager);
+                            if (advancedDiffsReader != null && savegameManager is SavegameManager sgManager)
+                                advancedSavegamePatcher = new AdvancedSavegamePatcher(advancedDiffsReader, sgManager);
 
                             game.RequestAdvancedSavegamePatching += (gameData, saveSlot, sourceEpisode, targetEpisode, savegame) =>
                             {
@@ -1072,7 +1090,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         var textureAtlasManager = TextureAtlasManager.CreateEmpty();
         createdTextureAtlasManager = textureAtlasManager;
 
-        var gameData = new GameData();
+        IGameData gameData = new GameData();
         var dataPath = configuration.UseDataPath ? configuration.DataPath : Configuration.BundleDirectory;
 
         if (versions == null || versions.Count == 0)
@@ -1081,34 +1099,43 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
             // no versions
             configuration.GameVersionIndex = 0;
-            gameData.Load(dataPath);
+            (gameData as GameData).Load(dataPath);
             selectHandler?.Invoke(gameData, Configuration.GetSavePath(Configuration.ExternalSavegameFolder), gameData.Language,
                 gameData.Advanced ? Features.AmbermoonAdvanced : Features.None);
             return false;
         }
 
-        GameData LoadBuiltinVersionData(BuiltinVersion builtinVersion, Func<ILegacyGameData> fallbackGameDataProvider,
+        IGameData LoadBuiltinVersionData(BuiltinVersion builtinVersion, Func<ILegacyGameData> fallbackGameDataProvider,
             Action<float> progressTracker = null)
         {
-            var gameData = new GameData(GameData.LoadPreference.PreferExtracted
-#if DEBUG
-                , new Logger()
-#endif
-            );
             builtinVersion.SourceStream.Position = builtinVersion.Offset;
             var buffer = new byte[(int)builtinVersion.Size];
-            builtinVersion.SourceStream.Read(buffer, 0, buffer.Length);
-            var tempStream = new MemoryStream(buffer);
-            // If the builtin version has a base version, it can provide files called "Intro_texts.amb" and "Extro_texts.amb"
-            // which only contains the intro and outro texts. It is then merged with the base version's Ambermoon_intro or Ambermoon_extro file.
-            var optionalAdditionalFiles = fallbackGameDataProvider == null ? null : new Dictionary<string, char>()
+            builtinVersion.SourceStream.ReadExactly(buffer, 0, buffer.Length);
+
+            if (buffer.Length >= 4 && buffer[0] == 'P' && buffer[1] == 'Y' && buffer[2] == 'G' && buffer[3] == 'D')
             {
-                { "Intro_texts.amb", 'A' },
-                { "Extro_texts.amb", 'A' }
-            };
-            gameData.LoadFromMemoryZip(tempStream, fallbackGameDataProvider, optionalAdditionalFiles,
-                progressTracker);
-            return gameData;
+                return new Mod.ModGameData(new DataReader(buffer), builtinVersion.ModPath ?? configuration.ModPath, configuration);
+            }
+            else
+            {
+                var gameData = new GameData(GameData.LoadPreference.PreferExtracted
+#if DEBUG
+                    , new Logger()
+#endif
+                );
+
+                var tempStream = new MemoryStream(buffer);
+                // If the builtin version has a base version, it can provide files called "Intro_texts.amb" and "Extro_texts.amb"
+                // which only contains the intro and outro texts. It is then merged with the base version's Ambermoon_intro or Ambermoon_extro file.
+                var optionalAdditionalFiles = fallbackGameDataProvider == null ? null : new Dictionary<string, char>()
+                {
+                    { "Intro_texts.amb", 'A' },
+                    { "Extro_texts.amb", 'A' }
+                };
+                gameData.LoadFromMemoryZip(tempStream, fallbackGameDataProvider, optionalAdditionalFiles,
+                    progressTracker);
+                return gameData;
+            }
         }
 
         GameData LoadGameDataFromDataPath()
@@ -1173,7 +1200,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
                 Func<ILegacyGameData> fallbackGameDataProvider = baseVersionIndices.Contains(configuration.GameVersionIndex)
                     ? null
-                    : () => LoadBuiltinVersionData(versions[baseVersionIndices.Last(idx => idx < configuration.GameVersionIndex)], null, progressTracker);
+                    : () => (ILegacyGameData)LoadBuiltinVersionData(versions[baseVersionIndices.Last(idx => idx < configuration.GameVersionIndex)], null, progressTracker);
                 gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex], fallbackGameDataProvider, progressTracker);
             }
             else
@@ -1197,7 +1224,8 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
         gameDataPromise.ResultReady += (gameData) =>
         {
-            var builtinVersionDataProviders = new Func<ILegacyGameData>[versions.Count];
+            var builtinVersionDataProviders = new Func<IGameData>[versions.Count];
+
             for (int i = 0; i < versions.Count; ++i)
             {
                 int index = i;
@@ -1206,7 +1234,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                 else
                 {
                     var lastBaseVersion = baseVersionIndices.Last(idx => idx < index);
-                    builtinVersionDataProviders[i] = () => configuration.GameVersionIndex == index ? gameData : LoadBuiltinVersionData(versions[index], builtinVersionDataProviders[lastBaseVersion]);
+                    builtinVersionDataProviders[i] = () => configuration.GameVersionIndex == index ? gameData : LoadBuiltinVersionData(versions[index], (Func<ILegacyGameData>)builtinVersionDataProviders[lastBaseVersion]);
                 }
             }
 
@@ -1226,9 +1254,12 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             };
             flagsGraphic.Data = flagsData.ReadBytes(flagsGraphic.Width * flagsGraphic.Height);
 
-            audioOutput = new AudioOutput();
-            audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
+            audioOutput = new AudioOutput
+            {
+                Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f
+            };
             audioOutput.Enabled = audioOutput.Available && configuration.Music;
+
             if (configuration.ShowPyrdacorLogo)
             {
                 logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(DataReader.FromData(Resources.Song), 0, false, false));
@@ -1604,8 +1635,43 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
                         if (builtinVersionReader != null)
                         {
-                            var versionLoader = new BuiltinVersionLoader();
-                            versions = versionLoader.Load(builtinVersionReader);
+                            versions = BuiltinVersionLoader.Load(builtinVersionReader);
+                        }
+
+                        try
+                        {
+                            var modPath = configuration.ModPath;
+
+                            if (!Path.IsPathRooted(modPath))
+                                modPath = Path.Combine(Configuration.ExecutableDirectoryPath, modPath);
+
+                            if (Directory.Exists(modPath))
+                            {
+                                var modFiles = Directory.EnumerateFiles(modPath, "*.mod", SearchOption.AllDirectories);
+
+                                foreach (var modFile in modFiles)
+                                {
+                                    var stream = File.OpenRead(modFile);
+                                    var gameInfo = Data.Pyrdacor.GameData.ReadGameDataInfo(new DataReader(stream));
+
+                                    (versions ?? []).Add(new BuiltinVersion
+                                    {
+                                        Version = gameInfo.Version,
+                                        Language = gameInfo.Language.ToString(),
+                                        Info = gameInfo.Name,
+                                        Features = Features.None, // TODO
+                                        MergeWithPrevious = false, // TODO
+                                        Offset = 0,
+                                        Size = (uint)stream.Length,
+                                        SourceStream = stream,
+                                        ModPath = modPath
+                                    });
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            // ignore
                         }
 
                         return versions;
