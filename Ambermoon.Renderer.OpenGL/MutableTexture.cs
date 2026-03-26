@@ -26,7 +26,7 @@ namespace Ambermoon.Renderer.OpenGL;
 
 internal class MutableTexture : Texture
 {
-    uint bytesPerPixel = 4;
+    readonly uint bytesPerPixel = 4;
     int width = 0;
     int height = 0;
     byte[] data = null;

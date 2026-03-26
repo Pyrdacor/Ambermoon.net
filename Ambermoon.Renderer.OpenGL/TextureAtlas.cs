@@ -39,8 +39,12 @@ internal class TextureAtlas : ITextureAtlas
 
     internal TextureAtlas(State state, IGraphicAtlas graphicAtlas)
     {
-        Texture = new MutableTexture(state, graphicAtlas.Graphic);
+        var texture = new MutableTexture(state, graphicAtlas.Graphic);
         textureOffsets = graphicAtlas.Offsets;
+
+        texture.Finish(0);
+
+        Texture = texture;
     }
 
     internal TextureAtlas(State state, Dictionary<uint, IGraphicAtlas> graphicAtlasesWithOffsets)
@@ -53,9 +57,13 @@ internal class TextureAtlas : ITextureAtlas
         else if (graphicAtlasesWithOffsets.Count == 1)
         {
             var graphicAtlas = graphicAtlasesWithOffsets.First();
-            Texture = new MutableTexture(state, graphicAtlas.Value.Graphic);
+            var texture = new MutableTexture(state, graphicAtlas.Value.Graphic);
             uint offset = graphicAtlas.Key;
+
             textureOffsets = offset == 0 ? graphicAtlas.Value.Offsets : graphicAtlas.Value.Offsets.ToDictionary(entry => offset + entry.Key, entry => entry.Value);
+
+            texture.Finish(0);
+            Texture = texture;
         }
         else
         {

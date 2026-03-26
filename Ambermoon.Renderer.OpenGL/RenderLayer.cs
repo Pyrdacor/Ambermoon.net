@@ -813,9 +813,9 @@ public class RenderLayerFactory : IRenderLayerFactory
 
     public IRenderLayer Create(Layer layer, Render.Texture texture, Render.Texture palette)
     {
-        if (texture != null && !(texture is Texture))
+        if (texture != null && texture is not Texture)
             throw new AmbermoonException(ExceptionScope.Render, "The given texture is not valid for this renderer.");
-        if (palette != null && !(palette is Texture))
+        if (palette != null && palette is not Texture)
             throw new AmbermoonException(ExceptionScope.Render, "The given palette is not valid for this renderer.");
 
         return layer switch

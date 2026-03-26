@@ -118,13 +118,8 @@ namespace Ambermoon.Render
         }
     }
 
-	public class InvisibleCursor : Cursor
+	public class InvisibleCursor(IGameRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager? textureAtlasManager = null) : Cursor(renderView, cursorHotspots, textureAtlasManager)
 	{
-		public InvisibleCursor(IGameRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager? textureAtlasManager = null)
-            : base(renderView, cursorHotspots, textureAtlasManager)
-		{
-		}
-
-		protected override bool Visible { get => false; set => base.Visible = false; }
+        protected override bool Visible { get => false; set => base.Visible = false; }
 	}
 }
