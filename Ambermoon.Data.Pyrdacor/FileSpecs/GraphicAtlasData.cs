@@ -25,10 +25,8 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
             {
                 int IComparer<EmptyArea>.Compare(EmptyArea? x, EmptyArea? y)
                 {
-                    if (x is null)
-                        return -1;
-                    if (y is null)
-                        return 1;
+                    if (x is null) return -1;
+                    if (y is null) return 1;
                     return (x.area.Width * x.area.Height).CompareTo(y.area.Width * y.area.Height);
                 }
             }
@@ -39,6 +37,7 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
                 PartialFit,
                 FullFit
             }
+
             private readonly Rect area = area;
             public static readonly Comparer AreaComparer = new();
             public List<EmptyArea> FreeChildAreas { get; } = [];
@@ -59,40 +58,58 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
                 {
                     position = new Position(area.Position);
 
-                    if (areaSize.Width == area.Width)
-                    {
-                        if (areaSize.Height == area.Height)
-                            return FillResult.FullFit;
+                    bool exactWidth = areaSize.Width == area.Width;
+                    bool exactHeight = areaSize.Height == area.Height;
 
+                    if (exactWidth && exactHeight)
+                        return FillResult.FullFit;
+
+                    if (exactWidth)
+                    {
                         AddFreeChildArea(new Rect(area.X, area.Y + areaSize.Height, area.Width, area.Height - areaSize.Height));
-                        return FillResult.PartialFit;
                     }
-                    else if (areaSize.Height == area.Height)
+                    else if (exactHeight)
                     {
                         AddFreeChildArea(new Rect(area.X + areaSize.Width, area.Y, area.Width - areaSize.Width, area.Height));
-                        return FillResult.PartialFit;
                     }
                     else
                     {
-                        AddFreeChildArea(new Rect(area.X + areaSize.Width, area.Y, area.Width - areaSize.Width, areaSize.Height));
-                        AddFreeChildArea(new Rect(area.X, area.Y + areaSize.Height, area.Width, area.Height - areaSize.Height));
-                        return FillResult.PartialFit;
+                        // Split: choose direction that leaves the larger remaining area more usable.
+                        // Compare splitting horizontally-first vs vertically-first and pick the one
+                        // that produces a more square-like larger remainder.
+                        int remainW = area.Width - areaSize.Width;
+                        int remainH = area.Height - areaSize.Height;
+
+                        if (remainW * area.Height >= area.Width * remainH)
+                        {
+                            // Right remainder is larger — give it full height
+                            AddFreeChildArea(new Rect(area.X + areaSize.Width, area.Y, remainW, area.Height));
+                            AddFreeChildArea(new Rect(area.X, area.Y + areaSize.Height, areaSize.Width, remainH));
+                        }
+                        else
+                        {
+                            // Bottom remainder is larger — give it full width
+                            AddFreeChildArea(new Rect(area.X, area.Y + areaSize.Height, area.Width, remainH));
+                            AddFreeChildArea(new Rect(area.X + areaSize.Width, area.Y, remainW, areaSize.Height));
+                        }
                     }
+
+                    return FillResult.PartialFit;
                 }
                 else
                 {
-                    // They are sorted small to large which is good.
-                    // We try to fit the area into the smallest areas first.
-                    foreach (var freeChildArea in FreeChildAreas)
+                    // Try to fit into child areas, smallest first
+                    for (int i = 0; i < FreeChildAreas.Count; i++)
                     {
-                        var result = freeChildArea.TryAddArea(areaSize, out position);
+                        var result = FreeChildAreas[i].TryAddArea(areaSize, out position);
 
                         if (result == FillResult.FullFit)
                         {
-                            FreeChildAreas.Remove(freeChildArea);
+                            FreeChildAreas.RemoveAt(i);
                             return FillResult.PartialFit;
                         }
-                        else if (result == FillResult.PartialFit)
+
+                        if (result == FillResult.PartialFit)
                             return FillResult.PartialFit;
                     }
 
@@ -104,108 +121,162 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         public static KeyValuePair<Graphic, SortedList<int, Rect>> PackTextureAtlas(IDictionary<int, Graphic> graphics, bool indexed)
         {
             if (graphics.Count == 0)
-                return KeyValuePair.Create(new Graphic(0, 0, 0) { IndexedGraphic = indexed }, new SortedList<int, Rect>());
-            else if (graphics.Count == 1)
-                return KeyValuePair.Create(graphics[0], new SortedList<int, Rect>() { { 0, new Rect(0, 0, graphics[0].Width, graphics[0].Height) } });
+                return KeyValuePair.Create(
+                    new Graphic(0, 0, 0) { IndexedGraphic = indexed },
+                    new SortedList<int, Rect>());
 
-            // Order by max size graphics and prefer wider ones if equal
-            var sortedGraphics = new List<KeyValuePair<int, Graphic>>(graphics.ToList());
+            if (graphics.Count == 1)
+            {
+                var single = graphics.First();
+                return KeyValuePair.Create(
+                    single.Value,
+                    new SortedList<int, Rect>
+                    {
+                    { single.Key, new Rect(0, 0, single.Value.Width, single.Value.Height) }
+                    });
+            }
 
+            // Order by area descending, prefer wider ones if equal
+            var sortedGraphics = graphics.ToList();
             sortedGraphics.Sort((a, b) =>
             {
                 int result = (b.Value.Width * b.Value.Height).CompareTo(a.Value.Width * a.Value.Height);
-
                 return result != 0 ? result : b.Value.Width.CompareTo(a.Value.Width);
             });
 
             int totalPixels = sortedGraphics.Sum(g => g.Value.Width * g.Value.Height);
             int maxWidth = sortedGraphics.Max(g => g.Value.Width);
-            int height = sortedGraphics[0].Value.Height;
 
-            while (maxWidth < 320 && totalPixels < maxWidth * height * 2)
+            // Ensure width is at least enough and a reasonable power-of-2-like size
+            while (maxWidth < 320 && totalPixels > maxWidth * maxWidth)
                 maxWidth *= 2;
 
-            var textureAreas = new Dictionary<int, Rect>();
+            // Estimate total height needed with some headroom for fragmentation
+            int estimatedHeight = Math.Max(
+                sortedGraphics[0].Value.Height,
+                (int)(totalPixels * 1.3 / maxWidth));
+
+            var textureAreas = new Dictionary<int, Rect>(graphics.Count);
             var emptyAreas = new List<EmptyArea>();
-            var graphic = new Graphic(maxWidth, height, 0);
 
-            graphic.AddOverlay(0, 0, sortedGraphics[0].Value);
-
-            int index = sortedGraphics[0].Key;
-
-            textureAreas.Add(index, new Rect(0, 0, graphic.Width, graphic.Height));
-
-            void AddEmptyArea(Rect area)
+            // Pre-allocate with estimated size to avoid repeated reallocation
+            int bytesPerPixel = indexed ? 1 : 4;
+            var graphic = new Graphic
             {
-                emptyAreas.AddSorted(new EmptyArea(area), EmptyArea.AreaComparer);
-            }
+                IndexedGraphic = indexed,
+                Width = maxWidth,
+                Height = estimatedHeight,
+                Data = new byte[maxWidth * estimatedHeight * bytesPerPixel]
+            };
 
-            void IncreaseHeight(int amount)
-            {
-                var newGraphic = new Graphic
-                {
-                    IndexedGraphic = graphic.IndexedGraphic,
-                    Width = graphic.Width,
-                    Height = graphic.Height + amount,
-                    Data = new byte[graphic.Width * (graphic.Height + amount) * (graphic.IndexedGraphic ? 1 : 4)]
-                };
-                Array.Copy(graphic.Data, newGraphic.Data, graphic.Data.Length);
-                AddEmptyArea(new Rect(0, graphic.Height, graphic.Width, amount));
-                graphic = newGraphic;                    
-            }
+            // Start with the entire atlas as one empty area
+            emptyAreas.Add(new EmptyArea(new Rect(0, 0, maxWidth, estimatedHeight)));
 
-            if (sortedGraphics[0].Value.Width < maxWidth)
-                AddEmptyArea(new Rect(sortedGraphics[0].Value.Width, 0, maxWidth - sortedGraphics[0].Value.Width, height));
-
-            for (int i = 1; i < sortedGraphics.Count; ++i)
+            for (int i = 0; i < sortedGraphics.Count; i++)
             {
                 var nextGraphic = sortedGraphics[i];
-
-                index = nextGraphic.Key;
-
-                if (emptyAreas.Count == 0)
-                {
-                    int y = graphic.Height;
-                    IncreaseHeight(nextGraphic.Value.Height);
-                    graphic.AddOverlay(0u, (uint)y, nextGraphic.Value);
-                    textureAreas.Add(index, new Rect(0, y, nextGraphic.Value.Width, nextGraphic.Value.Height));
-                    continue;
-                }
-
+                int index = nextGraphic.Key;
                 var areaSize = new Size(nextGraphic.Value.Width, nextGraphic.Value.Height);
-                bool success = false;
+                bool placed = false;
 
-                foreach (var emptyArea in emptyAreas)
+                // Try existing empty areas, largest first for better fit
+                for (int j = emptyAreas.Count - 1; j >= 0; j--)
                 {
-                    var result = emptyArea.TryAddArea(areaSize, out var position);
+                    var result = emptyAreas[j].TryAddArea(areaSize, out var position);
 
                     if (result == EmptyArea.FillResult.FullFit)
                     {
-                        success = true;
                         graphic.AddOverlay((uint)position!.X, (uint)position.Y, nextGraphic.Value);
                         textureAreas.Add(index, new Rect(position.X, position.Y, nextGraphic.Value.Width, nextGraphic.Value.Height));
-                        emptyAreas.Remove(emptyArea);
+                        emptyAreas.RemoveAt(j);
+                        placed = true;
                         break;
                     }
-                    else if (result == EmptyArea.FillResult.PartialFit)
+
+                    if (result == EmptyArea.FillResult.PartialFit)
                     {
-                        success = true;
                         graphic.AddOverlay((uint)position!.X, (uint)position.Y, nextGraphic.Value);
                         textureAreas.Add(index, new Rect(position.X, position.Y, nextGraphic.Value.Width, nextGraphic.Value.Height));
+                        placed = true;
                         break;
                     }
                 }
 
-                if (!success)
+                if (!placed)
                 {
+                    // Grow the atlas
                     int y = graphic.Height;
-                    IncreaseHeight(nextGraphic.Value.Height);
-                    graphic.AddOverlay(0u, (uint)y, nextGraphic.Value);
-                    textureAreas.Add(index, new Rect(0, y, nextGraphic.Value.Width, nextGraphic.Value.Height));
+                    int growHeight = Math.Max(nextGraphic.Value.Height, estimatedHeight / 4);
+                    GrowGraphic(ref graphic, growHeight, bytesPerPixel);
+                    emptyAreas.AddSorted(
+                        new EmptyArea(new Rect(0, y, graphic.Width, growHeight)),
+                        EmptyArea.AreaComparer);
+
+                    // Now place into the newly added area (last/largest)
+                    for (int j = emptyAreas.Count - 1; j >= 0; j--)
+                    {
+                        var result = emptyAreas[j].TryAddArea(areaSize, out var position);
+
+                        if (result == EmptyArea.FillResult.FullFit)
+                        {
+                            graphic.AddOverlay((uint)position!.X, (uint)position.Y, nextGraphic.Value);
+                            textureAreas.Add(index, new Rect(position.X, position.Y, nextGraphic.Value.Width, nextGraphic.Value.Height));
+                            emptyAreas.RemoveAt(j);
+                            break;
+                        }
+
+                        if (result == EmptyArea.FillResult.PartialFit)
+                        {
+                            graphic.AddOverlay((uint)position!.X, (uint)position.Y, nextGraphic.Value);
+                            textureAreas.Add(index, new Rect(position.X, position.Y, nextGraphic.Value.Width, nextGraphic.Value.Height));
+                            break;
+                        }
+                    }
                 }
             }
 
+            // Trim unused height
+            TrimGraphic(ref graphic, textureAreas, bytesPerPixel);
+
             return KeyValuePair.Create(graphic, new SortedList<int, Rect>(textureAreas));
+        }
+
+        private static void GrowGraphic(ref Graphic graphic, int additionalHeight, int bytesPerPixel)
+        {
+            var newGraphic = new Graphic
+            {
+                IndexedGraphic = graphic.IndexedGraphic,
+                Width = graphic.Width,
+                Height = graphic.Height + additionalHeight,
+                Data = new byte[graphic.Width * (graphic.Height + additionalHeight) * bytesPerPixel]
+            };
+            Array.Copy(graphic.Data, newGraphic.Data, graphic.Data.Length);
+            graphic = newGraphic;
+        }
+
+        private static void TrimGraphic(ref Graphic graphic, Dictionary<int, Rect> textureAreas, int bytesPerPixel)
+        {
+            // Find the actual used height
+            int usedHeight = 0;
+            foreach (var area in textureAreas.Values)
+            {
+                int bottom = area.Y + area.Height;
+                if (bottom > usedHeight)
+                    usedHeight = bottom;
+            }
+
+            if (usedHeight < graphic.Height)
+            {
+                var trimmed = new Graphic
+                {
+                    IndexedGraphic = graphic.IndexedGraphic,
+                    Width = graphic.Width,
+                    Height = usedHeight,
+                    Data = new byte[graphic.Width * usedHeight * bytesPerPixel]
+                };
+                Array.Copy(graphic.Data, trimmed.Data, trimmed.Data.Length);
+                graphic = trimmed;
+            }
         }
     }
 

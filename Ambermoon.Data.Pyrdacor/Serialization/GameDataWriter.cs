@@ -28,24 +28,8 @@ partial class GameData
 
         foreach (var pal in palettes.OrderBy(p => p.Key))
         {
-            var data = pal.Value.Data;
-
-            for (int i = 0; i < 32; i++)
-            {
-                var r = data[i * 2 + 0] & 0xf;
-                var gb = data[i * 2 + 1];
-                var g = gb >> 4;
-                var b = gb & 0xf;
-
-                r |= (r << 4);
-                g |= (g << 4);
-                b |= (b << 4);
-
-                graphic.Data[dataIndex++] = (byte)r;
-                graphic.Data[dataIndex++] = (byte)g;
-                graphic.Data[dataIndex++] = (byte)b;
-                graphic.Data[dataIndex++] = 0xff;
-            }
+            Buffer.BlockCopy(pal.Value.Data, 0, graphic.Data, dataIndex, 32 * 4);
+            dataIndex += 32 * 4;
         }
 
         var gamePalette = new Palette(graphic)
