@@ -157,7 +157,7 @@ partial class GameData
         PADF.Write(dataWriter, graphicAtlas);
     }
 
-    public static void WriteGameDataInfo(IDataWriter dataWriter, string name, bool advanced, string version, GameLanguage language)
+    public static void WriteGameDataInfo(IDataWriter dataWriter, string name, bool advanced, string version, GameLanguage language, DateOnly releaseDate)
     {
         var info = new GameDataInfo()
         {
@@ -165,6 +165,8 @@ partial class GameData
             Advanced = advanced,
             Version = version,
             Language = language,
+            ReleaseDate = releaseDate,
+
         };
 
         PADF.Write(dataWriter, info);

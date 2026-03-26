@@ -15,6 +15,7 @@ using SavegameData = FileSpecs.SavegameData;
 public partial class GameData : IGameData, IGraphicAtlasProvider
 {
     ISavegameManager? savegameManager;
+    readonly Lazy<Savegame> initialSavegame;
     LazyFileLoader<GameDataInfo, GameDataInfo> gameDataInfoLoader = null!;
     LazyContainerLoader<Palette, Palette> paletteLoader = null!;
     LazyFileLoader<SavegameData, Savegame> savegameLoader = null!;
@@ -145,6 +146,8 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
     public IFantasyIntroData FantasyIntroData => fantasyIntroData.Value;
 
     public IOutroData OutroData => outroData.Value;
+
+    public Savegame InitialSavegame => initialSavegame.Value;
 
     public TextDictionary Dictionary => dictionary.Value;
 
@@ -381,6 +384,8 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
         songManager = new Lazy<SongManager>(() => new SongManager(musicLoader.LoadAll()));
 
+        initialSavegame = new Lazy<Savegame>(() => LoadInitial());
+
         characterManager = new Lazy<ICharacterManager>(() => new CharacterManager
         (
             () => partyLoader!.LoadAll(),
@@ -427,7 +432,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
             for (int y = 0; y < paletteGraphics.Height; y++)
             {
-                result.Add(y, new Graphic
+                result.Add(1 + y, new Graphic
                 {
                     Width = 32,
                     Height = 1,

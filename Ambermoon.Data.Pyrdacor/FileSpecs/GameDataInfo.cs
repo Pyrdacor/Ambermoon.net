@@ -10,7 +10,7 @@ public class GameDataInfo : IFileSpec<GameDataInfo>, IFileSpec
     bool advanced = false;
     string version = "";
     GameLanguage language = GameLanguage.English;
-    DateTime releaseDate = DateTime.MinValue;
+    DateOnly releaseDate = DateOnly.FromDateTime(DateTime.Today);
 
     public static string Magic => "INF";
     public static byte SupportedVersion => 0;
@@ -40,7 +40,7 @@ public class GameDataInfo : IFileSpec<GameDataInfo>, IFileSpec
         internal init => language = value;
     }
 
-    public DateTime ReleaseDate
+    public DateOnly ReleaseDate
     {
         get => releaseDate;
         internal init => releaseDate = value;
@@ -52,7 +52,7 @@ public class GameDataInfo : IFileSpec<GameDataInfo>, IFileSpec
         advanced = dataReader.ReadBool();
         language = dataReader.ReadEnum8<GameLanguage>();
         version = dataReader.ReadString();
-        releaseDate = DateTime.ParseExact(dataReader.ReadString(8), "ddMMyyyy", null);
+        releaseDate = DateOnly.ParseExact(dataReader.ReadString(8), "ddMMyyyy", null);
     }
 
     public void Write(IDataWriter dataWriter)

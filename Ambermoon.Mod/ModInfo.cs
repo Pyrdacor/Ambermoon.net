@@ -8,4 +8,4 @@ public record ModVersion(int Major, int Minor)
     }
 }
 
-public record ModInfo(string Name, string Description, ModVersion Version, params string[] Authors);
+public record ModInfo(string Name, string Description, ModVersion Version, DateOnly ReleaseDate, params string[] Authors);

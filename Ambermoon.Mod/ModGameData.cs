@@ -53,7 +53,7 @@ public class ModGameData : IModGameData
         var modInfo = mod.Info;
 
         GameData.WriteLegacyGameData(dataWriter, baseGameData,
-            (GameData.MagicInfo, dataWriter => GameData.WriteGameDataInfo(dataWriter, modInfo.Name, advanced, modInfo.Version.ToString(), language)),
+            (GameData.MagicInfo, dataWriter => GameData.WriteGameDataInfo(dataWriter, modInfo.Name, advanced, modInfo.Version.ToString(), language, modInfo.ReleaseDate)),
             (ModSpecMagic, dataWriter => GameData.WriteFile(dataWriter, File.ReadAllBytes(modAssemblyPath), true))
         );
     }
@@ -83,5 +83,5 @@ public class ModGameData : IModGameData
     public TravelGraphicInfo GetTravelGraphicInfo(TravelType type, CharacterDirection direction)
         => gameData.GetTravelGraphicInfo(type, direction);
 
-    public Savegame LoadInitial() => gameData.LoadInitial();
+    public Savegame LoadInitial() => gameData.InitialSavegame;
 }

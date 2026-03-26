@@ -499,6 +499,7 @@ namespace Ambermoon.UI
         Color GetPaletteColor(byte colorIndex)
         {
             var paletteData = renderView.GraphicInfoProvider.Palettes[renderView.GraphicInfoProvider.PrimaryUIPaletteIndex].Data;
+
             return new Color
             (
                 paletteData[colorIndex * 4 + 0],

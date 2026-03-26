@@ -62,7 +62,7 @@ partial class GameData : ISavegameSerializer
         return savegame;
     }
 
-    public Savegame LoadInitial()
+    private Savegame LoadInitial()
     {
         var savegame = savegameLoader.Load();
 
