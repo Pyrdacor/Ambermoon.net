@@ -13,11 +13,13 @@ namespace Ambermoon.Data.Legacy.Serialization
             {
                 var tileFlags = dataReader.ReadDword();
 
-                tileset.Tiles[i] = new Tileset.Tile();
-                tileset.Tiles[i].GraphicIndex = dataReader.ReadWord();
-                tileset.Tiles[i].NumAnimationFrames = dataReader.ReadByte();
-                tileset.Tiles[i].ColorIndex = dataReader.ReadByte();
-                tileset.Tiles[i].Flags = (Tileset.TileFlags)tileFlags;
+                tileset.Tiles[i] = new Tileset.Tile
+                {
+                    GraphicIndex = dataReader.ReadWord(),
+                    NumAnimationFrames = dataReader.ReadByte(),
+                    ColorIndex = dataReader.ReadByte(),
+                    Flags = (Tileset.TileFlags)tileFlags
+                };
             }
         }
     }

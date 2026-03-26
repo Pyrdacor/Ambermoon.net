@@ -934,14 +934,9 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public IGraphicAtlas GetGraphicAtlas(GraphicType type)
     {
-        // Notes:
-        // - For the combat graphics, exclude the sword and face graphic and put it into the UIElements layer instead.
-        //   The index must be Graphics.CombatGraphicOffset + CombatGraphicIndex.UISwordAndMace which is 2541.
-        // - For tileset1++, make sure you provide at least an empty atlas if you don't have data for that tileset.
-
         return type switch
         {
-            >= GraphicType.Tileset1 => tileGraphicLoader.LoadOrDefault((ushort)(type - GraphicType.Tileset1), new GraphicAtlas()),
+            >= GraphicType.Tileset1 => tileGraphicLoader.LoadOrDefault((ushort)(1 + type - GraphicType.Tileset1), new GraphicAtlas()),
             GraphicType.Player => playerGraphicLoader.Load(),
             GraphicType.Portrait => portraitGraphicLoader.Load(),
             GraphicType.Item => itemGraphicLoader.Load(),

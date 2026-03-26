@@ -1,7 +1,7 @@
 ﻿/*
  * TextureAtlas.cs - Texture atlas creating and handling
  *
- * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2026  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
