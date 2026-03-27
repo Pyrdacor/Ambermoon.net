@@ -107,7 +107,8 @@ internal static class PADP
         if (PADF.Compressions.TryGetValue(compression, out var decompressor))
         {
             reader.Position += 2;
-            reader = decompressor.Decompress(reader);
+            int compressedSize = (int)(reader.ReadDword() & int.MaxValue);
+            reader = decompressor.Decompress(new DataReader(reader.ReadBytes(compressedSize)));
         }
 
         for (int i = 0; i < fileCount; ++i)
@@ -201,7 +202,7 @@ internal static class PADP
         Console.WriteLine($"Compression ratio for file spec {T.Magic}: {((double)data.Length * 100 / dataWriter.Size):0.00}% (Before: {dataWriter.Size} B, After: {data.Length} B)");
 #endif
 
-        // Write data
+        writer.Write((uint)data.Length);
         writer.Write(data);
     }
 }

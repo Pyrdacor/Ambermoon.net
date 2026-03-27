@@ -83,7 +83,8 @@ internal static class PADF
         if (Compressions.TryGetValue(compression, out var decompressor))
         {
             reader.Position += 2;
-            reader = decompressor.Decompress(reader);
+            int compressedSize = (int)(reader.ReadDword() & int.MaxValue);
+            reader = decompressor.Decompress(new DataReader(reader.ReadBytes(compressedSize)));
         }
 
         fileSpec.Read(reader, 1u, gameData, fileSpecVersion);
@@ -109,6 +110,7 @@ internal static class PADF
         Console.WriteLine($"Compression ratio for file spec {T.Magic}: {((double)data.Length * 100 / dataWriter.Size):0.00}% (Before: {dataWriter.Size} B, After: {data.Length} B)");
 #endif
 
+        writer.Write((uint)data.Length);
         writer.Write(data);
     }
 }

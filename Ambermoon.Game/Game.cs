@@ -57,7 +57,9 @@ public class Game : GameCore
             if (Configuration.AdditionalSavegameSlots != null)
             {
                 var additionalSavegameSlots = GetAdditionalSavegameSlots();
-                additionalSavegameSlots.ContinueSavegameSlot = slot;
+
+                if (additionalSavegameSlots != null)
+                    additionalSavegameSlots.ContinueSavegameSlot = slot;
             }
         }
 
@@ -90,22 +92,25 @@ public class Game : GameCore
         {
             var additionalSavegameSlots = GetAdditionalSavegameSlots();
 
-            if (additionalSavegameSlots.Names == null)
-                additionalSavegameSlots.Names = new string[NumAdditionalSavegameSlots];
-            else if (additionalSavegameSlots.Names.Length > NumAdditionalSavegameSlots)
-                additionalSavegameSlots.Names = additionalSavegameSlots.Names.Take(NumAdditionalSavegameSlots).ToArray();
-            else if (additionalSavegameSlots.Names.Length < NumAdditionalSavegameSlots)
-                additionalSavegameSlots.Names = Enumerable.Concat(additionalSavegameSlots.Names,
-                    Enumerable.Repeat("", NumAdditionalSavegameSlots - additionalSavegameSlots.Names.Length)).ToArray();
+            if (additionalSavegameSlots != null)
+            {
+                if (additionalSavegameSlots.Names == null)
+                    additionalSavegameSlots.Names = new string[NumAdditionalSavegameSlots];
+                else if (additionalSavegameSlots.Names.Length > NumAdditionalSavegameSlots)
+                    additionalSavegameSlots.Names = additionalSavegameSlots.Names.Take(NumAdditionalSavegameSlots).ToArray();
+                else if (additionalSavegameSlots.Names.Length < NumAdditionalSavegameSlots)
+                    additionalSavegameSlots.Names = Enumerable.Concat(additionalSavegameSlots.Names,
+                        Enumerable.Repeat("", NumAdditionalSavegameSlots - additionalSavegameSlots.Names.Length)).ToArray();
 
-            if (slot > NumBaseSavegameSlots) // 1-based slot
-                additionalSavegameSlots.Names[slot - Game.NumBaseSavegameSlots - 1] = name;
-            else
-                additionalSavegameSlots.BaseNames[slot - 1] = name;
+                if (slot > NumBaseSavegameSlots) // 1-based slot
+                    additionalSavegameSlots.Names[slot - Game.NumBaseSavegameSlots - 1] = name;
+                else
+                    additionalSavegameSlots.BaseNames[slot - 1] = name;
 
-            additionalSavegameSlots.ContinueSavegameSlot = slot;
+                additionalSavegameSlots.ContinueSavegameSlot = slot;
 
-            additionalSaveSlotProvider.RequestSave(SavegameManager, renderView.GameData);
+                additionalSaveSlotProvider?.RequestSave(SavegameManager, renderView.GameData);
+            }
         }
     }
 
@@ -275,7 +280,7 @@ public class Game : GameCore
 
     #region Savegames
 
-    readonly IAdditionalSaveSlotProvider additionalSaveSlotProvider;
+    readonly IAdditionalSaveSlotProvider? additionalSaveSlotProvider;
     public event Func<ILegacyGameData, int, int, int, Savegame, Savegame>? RequestAdvancedSavegamePatching;
 
     public const int NumAdditionalSavegameSlots = 20;
@@ -295,7 +300,7 @@ public class Game : GameCore
         Start(initialSavegame, postStartAction);
     }
 
-    internal AdditionalSavegameSlots GetAdditionalSavegameSlots() => additionalSaveSlotProvider.GetOrCreateAdditionalSavegameNames(GameVersionName);
+    internal AdditionalSavegameSlots? GetAdditionalSavegameSlots() => additionalSaveSlotProvider?.GetOrCreateAdditionalSavegameNames(GameVersionName);
 
     #endregion
 
@@ -305,7 +310,7 @@ public class Game : GameCore
         Cursor cursor, IAudioOutput audioOutput, ISongManager songManager, FullscreenChangeHandler fullscreenChangeHandler,
         ResolutionChangeHandler resolutionChangeHandler, Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory,
         Features features, string gameVersionName, string version, Action<bool, string> keyboardRequest,
-        IAdditionalSaveSlotProvider additionalSaveSlotProvider, DrawTouchFingerHandler? drawTouchFingerRequest = null,
+        IAdditionalSaveSlotProvider? additionalSaveSlotProvider, DrawTouchFingerHandler? drawTouchFingerRequest = null,
         Action<bool>? showMobileTouchPadHandler = null)
         : base(configuration, gameLanguage, renderView, graphicInfoProvider, savegameManager, savegameSerializer,
             textDictionary, cursor, audioOutput, songManager, fullscreenChangeHandler, resolutionChangeHandler,

@@ -17,6 +17,8 @@ public class ModGameData : IModGameData
 
     public string ModDirectory { get; }
 
+    internal GameData GameData => gameData;
+
     public ISavegameManager SavegameManager => gameData.SavegameManager!;
 
     public ModGameData(IDataReader dataReader, string modDirectory, ICoreConfiguration coreConfiguration)

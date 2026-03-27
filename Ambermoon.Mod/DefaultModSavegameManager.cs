@@ -74,7 +74,20 @@ public class DefaultModSavegameManager : ISavegameManager
         if (!File.Exists(file))
             throw new FileNotFoundException($"File \"{file}\" was not found.");
 
-        return GameData.LoadGame(new DataReader(File.ReadAllBytes(file)), (gameData as GameData)!);
+        var savegame = GameData.LoadGame(new DataReader(File.ReadAllBytes(file)), (gameData as ModGameData)!.GameData);
+
+        config.Current = saveSlot;
+
+        try
+        {
+            SaveConfig();
+        }
+        catch
+        {
+            // ignore
+        }
+
+        return savegame;
     }
 
     public Savegame LoadInitial(IGameData gameData, ISavegameSerializer savegameSerializer)
@@ -105,6 +118,10 @@ public class DefaultModSavegameManager : ISavegameManager
         GameData.SaveGame(writer, savegame);
 
         File.WriteAllBytes(Path.Combine(savegamePath, $"Save{saveSlot:00}.sav"), writer.ToArray());
+
+        config.Current = saveSlot;
+
+        WriteSavegameName(gameData, saveSlot, ref name, "");
     }
 
     public void SaveCrashedGame(ISavegameSerializer savegameSerializer, Savegame savegame)

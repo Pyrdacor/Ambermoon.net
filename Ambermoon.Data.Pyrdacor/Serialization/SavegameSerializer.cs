@@ -41,7 +41,7 @@ partial class GameData : ISavegameSerializer
 
         int compressedSaveDataSize = (int)(dataReader.ReadDword() & int.MaxValue);
         var compressedSaveData = dataReader.ReadBytes(compressedSaveDataSize);
-        var saveDataReader = new RLE0Compression().Decompress(dataReader);
+        var saveDataReader = new RLE0Compression().Decompress(new DataReader(compressedSaveData));
 
         FileSpecs.SavegameData.ReadInto(savegame, saveDataReader, 0, null!, 0);
 

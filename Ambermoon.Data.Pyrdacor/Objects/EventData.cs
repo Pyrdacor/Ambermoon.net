@@ -21,6 +21,7 @@ internal sealed class EventData
                 {
                     Event = new TeleportEvent()
                     {
+                        Type = type,
                         X = dataReader.ReadByte(),
                         Y = dataReader.ReadByte(),
                         Direction = dataReader.ReadEnum8<CharacterDirection>(),
@@ -35,6 +36,7 @@ internal sealed class EventData
                 {
                     Event = new DoorEvent()
                     {
+                        Type = type,
                         LockpickingChanceReduction = dataReader.ReadByte(),
                         DoorIndex = dataReader.ReadByte(),
                         TextIndex = dataReader.ReadByte(),
@@ -49,6 +51,7 @@ internal sealed class EventData
                 {
                     Event = new ChestEvent()
                     {
+                        Type = type,
                         LockpickingChanceReduction = dataReader.ReadByte(),
                         FindChanceReduction = dataReader.ReadByte(),
                         TextIndex = dataReader.ReadByte(),
@@ -64,6 +67,7 @@ internal sealed class EventData
                 {
                     Event = new PopupTextEvent()
                     {
+                        Type = type,
                         EventImageIndex = dataReader.ReadByte(),
                         PopupTrigger = dataReader.ReadEnum8<EventTrigger>(),
                         TriggerIfBlind = dataReader.ReadByte() != 0,
@@ -76,6 +80,7 @@ internal sealed class EventData
                 {
                     Event = new SpinnerEvent()
                     {
+                        Type = type,
                         Direction = dataReader.ReadEnum8<CharacterDirection>(),
                     },
                     NextEventIndex = next
@@ -85,6 +90,7 @@ internal sealed class EventData
                 {
                     Event = new TrapEvent()
                     {
+                        Type = type,
                         Ailment = dataReader.ReadEnum8<TrapEvent.TrapAilment>(),
                         Target = dataReader.ReadEnum8<TrapEvent.TrapTarget>(),
                         AffectedGenders = dataReader.ReadEnum8<GenderFlag>(),
@@ -100,6 +106,7 @@ internal sealed class EventData
                 {
                     Event = new ChangeBuffsEvent()
                     {
+                        Type = type,
                         AffectedBuff = affectedBuffs == 0 ? null : (ActiveSpellType)(affectedBuffs - 1),
                         Add = dataReader.ReadByte() != 0,
                         Value = dataReader.ReadWord(),
@@ -113,6 +120,7 @@ internal sealed class EventData
                 {
                     Event = new RiddlemouthEvent()
                     {
+                        Type = type,
                         RiddleTextIndex = dataReader.ReadByte(),
                         SolutionTextIndex = dataReader.ReadByte(),
                         CorrectAnswerDictionaryIndex1 = dataReader.ReadWord(),
@@ -125,6 +133,7 @@ internal sealed class EventData
                 {
                     Event = new RewardEvent()
                     {
+                        Type = type,
                         TypeOfReward = dataReader.ReadEnum8<RewardEvent.RewardType>(),
                         Operation = dataReader.ReadEnum8<RewardEvent.RewardOperation>(),
                         Random = dataReader.ReadByte() != 0,
@@ -139,6 +148,7 @@ internal sealed class EventData
                 {
                     Event = new ChangeTileEvent()
                     {
+                        Type = type,
                         X = dataReader.ReadByte(),
                         Y = dataReader.ReadByte(),
                         FrontTileIndex = dataReader.ReadWord(),
@@ -151,6 +161,7 @@ internal sealed class EventData
                 {
                     Event = new StartBattleEvent()
                     {
+                        Type = type,
                         MonsterGroupIndex = dataReader.ReadWord(),
                     },
                     NextEventIndex = next
@@ -166,6 +177,7 @@ internal sealed class EventData
                 {
                     Event = new EnterPlaceEvent()
                     {
+                        Type = type,
                         ClosedTextIndex = dataReader.ReadByte(),
                         PlaceType = placeType,
                         OpeningHour = dataReader.ReadByte(),
@@ -182,6 +194,7 @@ internal sealed class EventData
                 {
                     Event = new ConditionEvent()
                     {
+                        Type = type,
                         TypeOfCondition = dataReader.ReadEnum8<ConditionEvent.ConditionType>(),
                         Value = dataReader.ReadByte(),
                         Count = dataReader.ReadByte(),
@@ -196,6 +209,7 @@ internal sealed class EventData
                 {
                     Event = new ActionEvent()
                     {
+                        Type = type,
                         TypeOfAction = dataReader.ReadEnum8<ActionEvent.ActionType>(),
                         Value = dataReader.ReadByte(),
                         Count = dataReader.ReadByte(),
@@ -208,6 +222,7 @@ internal sealed class EventData
                 {
                     Event = new Dice100RollEvent()
                     {
+                        Type = type,
                         Chance = dataReader.ReadByte(),
                         ContinueIfFalseWithMapEventIndex = dataReader.ReadWord(),
                     },
@@ -224,6 +239,7 @@ internal sealed class EventData
                 {
                     Event = new ConversationEvent()
                     {
+                        Type = type,
                         Interaction = interaction,
                         Value = (ushort)value,
                     },
@@ -235,6 +251,7 @@ internal sealed class EventData
                 {
                     Event = new PrintTextEvent()
                     {
+                        Type = type,
                         NPCTextIndex = dataReader.ReadByte(),
                     },
                     NextEventIndex = next
@@ -250,6 +267,7 @@ internal sealed class EventData
                 {
                     Event = new CreateEvent()
                     {
+                        Type = type,
                         TypeOfCreation = creationType,
                         Amount = dataReader.ReadWord(),
                         ItemIndex = itemIndex,
@@ -262,6 +280,7 @@ internal sealed class EventData
                 {
                     Event = new DecisionEvent()
                     {
+                        Type = type,
                         TextIndex = dataReader.ReadByte(),
                         NoEventIndex = dataReader.ReadWord(),
                     },
@@ -272,6 +291,7 @@ internal sealed class EventData
                 {
                     Event = new ChangeMusicEvent()
                     {
+                        Type = type,
                         MusicIndex = dataReader.ReadByte(),
                         Volume = dataReader.ReadByte(),
                     },
@@ -280,7 +300,10 @@ internal sealed class EventData
             case EventType.Exit:
                 return new()
                 {
-                    Event = new ExitEvent(),
+                    Event = new ExitEvent
+                    {
+                        Type = type,
+                    },
                     NextEventIndex = next
                 };
             case EventType.Spawn:
@@ -288,6 +311,7 @@ internal sealed class EventData
                 {
                     Event = new SpawnEvent()
                     {
+                        Type = type,
                         X = dataReader.ReadByte(),
                         Y = dataReader.ReadByte(),
                         TravelType = dataReader.ReadEnum8<TravelType>(),                        
@@ -298,7 +322,10 @@ internal sealed class EventData
             case EventType.Interact:
                 return new()
                 {
-                    Event = new InteractEvent(),
+                    Event = new InteractEvent
+                    {
+                        Type = type,
+                    },
                     NextEventIndex = next
                 };
             case EventType.RemovePartyMember:
@@ -306,6 +333,7 @@ internal sealed class EventData
                 {
                     Event = new RemovePartyMemberEvent()
                     {
+                        Type = type,
                         CharacterIndex = dataReader.ReadByte(),
                         ChestIndexEquipment = dataReader.ReadByte(),
                         ChestIndexInventory = dataReader.ReadByte(),
@@ -317,6 +345,7 @@ internal sealed class EventData
                 {
                     Event = new DelayEvent()
                     {
+                        Type = type,
                         Milliseconds = dataReader.ReadWord(),
                     },
                     NextEventIndex = next
@@ -326,6 +355,7 @@ internal sealed class EventData
                 {
                     Event = new PartyMemberConditionEvent()
                     {
+                        Type = type,
                         TypeOfCondition = dataReader.ReadEnum8<PartyMemberConditionEvent.PartyMemberConditionType>(),
                         ConditionValueIndex = dataReader.ReadByte(),
                         Target = dataReader.ReadEnum8<PartyMemberConditionEvent.PartyMemberConditionTarget>(),
@@ -340,6 +370,7 @@ internal sealed class EventData
                 {
                     Event = new ShakeEvent()
                     {
+                        Type = type,
                         Shakes = dataReader.ReadWord(),
                     },
                     NextEventIndex = next
@@ -349,6 +380,7 @@ internal sealed class EventData
                 {
                     Event = new ShowMapEvent()
                     {
+                        Type = type,
                         Options = dataReader.ReadEnum8<ShowMapEvent.MapOptions>(),
                     },
                     NextEventIndex = next
@@ -358,6 +390,7 @@ internal sealed class EventData
                 {
                     Event = new ToggleSwitchEvent()
                     {
+                        Type = type,
                         GlobalVariableBytes = dataReader.ReadBytes(5),
                         FrontTileIndexOff = dataReader.ReadWord(),
                         FrontTileIndexOn = dataReader.ReadWord(),
