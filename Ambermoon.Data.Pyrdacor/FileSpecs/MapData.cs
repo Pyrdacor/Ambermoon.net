@@ -32,7 +32,7 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
     Map? map = null;
     ushort? templateMapIndex = null;
     bool resolved = false;
-    readonly Dictionary<ushort, byte> mapEventOnTileIndex = [];
+    readonly Dictionary<Position, byte> mapEventOnTileIndex = [];
 
     public Map Map => map!;
 
@@ -79,13 +79,13 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
 
         void AssignEvents(Map.IEventOnMap[,] tiles, Map.IEventOnMap[,] initialTiles)
         {
-            foreach (var (tileIndex, mapEventId) in mapEventOnTileIndex)
+            foreach (var (tilePosition, mapEventId) in mapEventOnTileIndex)
             {
-                int x = tileIndex % map.Width;
-                int y = tileIndex / map.Width;
+                int tileX = tilePosition.X;
+                int tileY = tilePosition.Y;
 
-                tiles[x, y].MapEventId = mapEventId;
-                initialTiles[x, y].MapEventId = mapEventId;
+                tiles[tileX, tileY].MapEventId = mapEventId;
+                initialTiles[tileX, tileY].MapEventId = mapEventId;
             }
         }
 
@@ -198,33 +198,34 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
             if (map.EventList.Count == 0)
                 throw new AmbermoonException(ExceptionScope.Data, "The map has no events but references some.");
 
-            Action<ushort, byte> eventAssigner;
+            Action<byte, byte, byte> eventAssigner;
 
             if (map.Flags.HasFlag(MapFlags.SharedMapData))
             {
-                eventAssigner = mapEventOnTileIndex.Add;
+                eventAssigner = (x, y, mapEventId) => mapEventOnTileIndex.Add(new(x, y), mapEventId);
             }
             else
             {
-                var initialEventsOnMap = map.Type == MapType.Map2D
-                    ? map.InitialTiles.Cast<Map.IEventOnMap>().ToArray()
-                    : map.InitialBlocks.Cast<Map.IEventOnMap>().ToArray();
-                var eventsOnMap = map.Type == MapType.Map2D
-                    ? map.Tiles.Cast<Map.IEventOnMap>().ToArray()
-                    : map.Blocks.Cast<Map.IEventOnMap>().ToArray();
+                Map.IEventOnMap[,] initialEventsOnMap = map.Type == MapType.Map2D
+                    ? map.InitialTiles
+                    : map.InitialBlocks;
+                Map.IEventOnMap[,] eventsOnMap = map.Type == MapType.Map2D
+                    ? map.Tiles
+                    : map.Blocks;
 
-                eventAssigner = (tileIndex, mapEventId) =>
+                eventAssigner = (tileX, tileY, mapEventId) =>
                 {
-                    initialEventsOnMap[tileIndex].MapEventId = mapEventId;
-                    eventsOnMap[tileIndex].MapEventId = mapEventId;
+                    initialEventsOnMap[tileX, tileY].MapEventId = mapEventId;
+                    eventsOnMap[tileX, tileY].MapEventId = mapEventId;
                 };
             }
 
             for (int i = 0; i < usedEventCount; ++i)
             {
-                ushort tileIndex = dataReader.ReadWord();
+                byte tileX = dataReader.ReadByte();
+                byte tileY = dataReader.ReadByte();
 
-                if (tileIndex >= map.Width * map.Height)
+                if (tileX >= map.Width || tileY >= map.Height)
                     throw new AmbermoonException(ExceptionScope.Data, "Invalid tile index for map event.");
 
                 byte mapEventId = dataReader.ReadByte();
@@ -232,7 +233,7 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
                 if (mapEventId == 0 || mapEventId > map.EventList.Count)
                     throw new AmbermoonException(ExceptionScope.Data, "Invalid event index for map event.");
 
-                eventAssigner(tileIndex, mapEventId);
+                eventAssigner(tileX, tileY, mapEventId);
             }
         }
 
@@ -314,7 +315,7 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
 
         MapWriter.WriteMapHeader(map, dataWriter);
 
-        var usedEvents = new Dictionary<int, uint>();
+        var usedEvents = new Dictionary<Position, uint>();
 
         if (sharedMapData)
         {
@@ -322,19 +323,25 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
 
             if (map.Type == MapType.Map2D)
             {
-                map.Tiles.ForEach((tile, index) =>
+                for (int y = 0; y < map.Height; y++)
                 {
-                    if (tile.MapEventId != 0)
-                        usedEvents.Add(index, tile.MapEventId);
-                });
+                    for (int x = 0; x < map.Width; x++)
+                    {
+                        if (map.InitialTiles[x, y].MapEventId != 0)
+                            usedEvents.Add(new(x, y), map.InitialTiles[x, y].MapEventId);
+                    }
+                }
             }
             else // 3D
             {
-                map.Blocks.ForEach((block, index) =>
+                for (int y = 0; y < map.Height; y++)
                 {
-                    if (block.MapEventId != 0)
-                        usedEvents.Add(index, block.MapEventId);
-                });
+                    for (int x = 0; x < map.Width; x++)
+                    {
+                        if (map.InitialBlocks[x, y].MapEventId != 0)
+                            usedEvents.Add(new(x, y), map.InitialBlocks[x, y].MapEventId);
+                    }
+                }
             }
         }
         else
@@ -343,7 +350,6 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
             {
                 var backTiles = new byte[map.Width * map.Height];
                 var frontTiles = new byte[map.Width * map.Height * 2];
-                int index = 0;
 
                 unsafe
                 {
@@ -363,9 +369,7 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
                                 *frontPtr++ = (ushort)tile.FrontTileIndex;
 
                                 if (tile.MapEventId != 0)
-                                    usedEvents.Add(index, tile.MapEventId);
-
-                                index++;
+                                    usedEvents.Add(new(x, y), tile.MapEventId);
                             }
                         }
                     }
@@ -377,7 +381,6 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
             else // 3D
             {
                 var blocks = new byte[map.Width * map.Height];
-                int index = 0;
 
                 unsafe
                 {
@@ -401,9 +404,7 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
                                 );
 
                                 if (block.MapEventId != 0)
-                                    usedEvents.Add(index, block.MapEventId);
-
-                                index++;
+                                    usedEvents.Add(new(x, y), block.MapEventId);
                             }
                         }
                     }
@@ -417,9 +418,10 @@ internal class MapData : IFileSpec<MapData>, IFileSpec
 
         dataWriter.Write((ushort)usedEvents.Count);
 
-        foreach (var (tileIndex, mapEventId) in usedEvents)
+        foreach (var (tilePosition, mapEventId) in usedEvents)
         {
-            dataWriter.Write((ushort)tileIndex);
+            dataWriter.Write((byte)tilePosition.X);
+            dataWriter.Write((byte)tilePosition.Y);
             dataWriter.Write((byte)mapEventId);
         }
 
