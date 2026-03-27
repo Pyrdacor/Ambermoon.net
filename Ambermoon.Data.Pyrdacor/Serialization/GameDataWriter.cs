@@ -120,7 +120,7 @@ partial class GameData
         }).ToList();
     }
 
-    private static void WriteGraphics(IDataWriter dataWriter, IReadOnlyList<Graphic> graphics, bool tiles, bool alpha, bool usePalette, int? fixedPaletteIndex = null, int colorIndexOffset = 0)
+    private static void WriteGraphics(IDataWriter dataWriter, IReadOnlyList<Graphic> graphics, bool tiles, bool alpha, bool usePalette, int? fixedPaletteIndex = null, int colorIndexOffset = 0, int? forcedTilesPerRow = null)
     {
         GraphicAtlasData graphicAtlas;
 
@@ -128,11 +128,11 @@ partial class GameData
         {
             if (usePalette)
             {
-                graphicAtlas = GraphicAtlasData.FromTiles(fixedPaletteIndex ?? GraphicAtlasData.MultiplePalettes, graphics, alpha, colorIndexOffset);
+                graphicAtlas = GraphicAtlasData.FromTiles(fixedPaletteIndex ?? GraphicAtlasData.MultiplePalettes, graphics, alpha, colorIndexOffset, forcedTilesPerRow);
             }
             else
             {
-                graphicAtlas = GraphicAtlasData.FromTiles(graphics, alpha, colorIndexOffset);
+                graphicAtlas = GraphicAtlasData.FromTiles(graphics, alpha, colorIndexOffset, forcedTilesPerRow);
             }
         }
         else
@@ -363,7 +363,7 @@ partial class GameData
         WriteDefaultSection(MagicGraphicsInfo, () => PADF.Write(dataWriter, graphicInfos));
 
         WriteDefaultSection(MagicPartyTexts, () => WriteTexts(dataWriter, gameData.Files["Party_texts.amb"].Files));
-        WriteDefaultSection(MagicPartyGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Player), tiles: false, alpha: false, usePalette: true));
+        WriteDefaultSection(MagicPartyGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Player), tiles: true, alpha: true, usePalette: true, fixedPaletteIndex: null, colorIndexOffset: 0, forcedTilesPerRow: 17));
         WriteDefaultSection(MagicTravelGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.TravelGfx), tiles: false, alpha: false, usePalette: true));
         WriteDefaultSection(MagicTransportGraphics, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Transports), tiles: false, alpha: false, usePalette: true));
 
@@ -470,9 +470,28 @@ partial class GameData
         MergeGraphics(objectGraphics, (index, dataReader) =>
         {
             var graphic = new Graphic() { IndexedGraphic = true };
-            var info = TextureGraphicInfos.ObjectGraphicInfos[index - 1];
+            var (info, frames) = TextureGraphicInfos.ObjectGraphicInfos[index - 1];
 
-            graphicReader.ReadGraphic(graphic, dataReader, info);
+            if (frames == 1)
+                graphicReader.ReadGraphic(graphic, dataReader, info);
+            else
+            {
+                var compoundGraphic = new Graphic
+                {
+                    Width = frames * info.Width,
+                    Height = info.Height,
+                    IndexedGraphic = true,
+                    Data = new byte[frames * info.Width * info.Height]
+                };
+
+                for (int i = 0; i < frames; i++)
+                {
+                    graphicReader.ReadGraphic(graphic, dataReader, info);
+                    compoundGraphic.AddOverlay((uint)(i * graphic.Width), 0, graphic, false);
+                }
+
+                graphic = compoundGraphic;
+            }
 
             return graphic;
 

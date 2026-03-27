@@ -16,7 +16,7 @@ namespace Ambermoon.Data
         public virtual PlaceType PlaceType => PlaceType.Merchant;
         public string Name { get; set; }
 
-        private protected Merchant()
+        public Merchant()
         {
 
         }

@@ -6,9 +6,12 @@ namespace Ambermoon.Data.Pyrdacor.FileSpecs;
 
 internal class MerchantData : IFileSpec<MerchantData>, IFileSpec
 {
+    private static readonly MerchantReader merchantReader = new();
+    private static readonly MerchantWriter merchantWriter = new();
+
     public static string Magic => "MER";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0Compression>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     Merchant? merchant = null;
 
     public Merchant Merchant => merchant!;
@@ -25,7 +28,7 @@ internal class MerchantData : IFileSpec<MerchantData>, IFileSpec
 
     public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
-        merchant = Merchant.Load(new MerchantReader(), dataReader);
+        merchant = Merchant.Load(merchantReader, dataReader);
     }
 
     public void Write(IDataWriter dataWriter)
@@ -33,6 +36,6 @@ internal class MerchantData : IFileSpec<MerchantData>, IFileSpec
         if (merchant == null)
             throw new AmbermoonException(ExceptionScope.Application, "Merchant data was null when trying to write it.");
 
-        new MerchantWriter().WriteMerchant(merchant, dataWriter);
+        merchantWriter.WriteMerchant(merchant, dataWriter);
     }
 }

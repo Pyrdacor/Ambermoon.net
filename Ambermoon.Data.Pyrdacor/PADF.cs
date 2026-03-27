@@ -59,6 +59,7 @@ internal static class PADF
         AddCompression(ICompression.NoCompression);
         AddCompression(ICompression.Deflate);
         AddCompression(ICompression.RLE0);
+        AddCompression(ICompression.RLEX);
         AddCompression(ICompression.Delta);
     }
 

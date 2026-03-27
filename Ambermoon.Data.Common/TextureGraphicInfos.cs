@@ -13,14 +13,14 @@ namespace Ambermoon.Data
             Height = 80
         };
 
-        public static GraphicInfo[] ObjectGraphicInfos => [.. ObjectGraphicFrameCountsAndSizes.Select(size =>
-            new GraphicInfo
+        public static (GraphicInfo, int Frames)[] ObjectGraphicInfos => [.. ObjectGraphicFrameCountsAndSizes.Select(size =>
+            (new GraphicInfo
             {
                 Alpha = true,
                 GraphicFormat = GraphicFormat.Texture4Bit,
-                Width = size.Key * size.Value.Width,
+                Width = size.Value.Width,
                 Height = size.Value.Height,
-            })];
+            }, size.Key))];
 
         public static GraphicInfo[] OverlayGraphicInfos => [.. OverlayGraphicSizes.Select(size =>
             new GraphicInfo

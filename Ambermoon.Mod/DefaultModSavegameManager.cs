@@ -74,17 +74,24 @@ public class DefaultModSavegameManager : ISavegameManager
         if (!File.Exists(file))
             throw new FileNotFoundException($"File \"{file}\" was not found.");
 
-        var savegame = GameData.LoadGame(new DataReader(File.ReadAllBytes(file)), (gameData as ModGameData)!.GameData);
+        var reader = new DataReader(File.ReadAllBytes(file));
+        var savegame = GameData.LoadGame(reader, (gameData as ModGameData)!.GameData);
 
-        config.Current = saveSlot;
+        // NOTE: We store the name at the end in case mods want to access it without a separate config etc.
+        // You can load it like this at this position: string name = reader.ReadString();
 
-        try
+        if (saveSlot < 99)
         {
-            SaveConfig();
-        }
-        catch
-        {
-            // ignore
+            config.Current = saveSlot;
+
+            try
+            {
+                SaveConfig();
+            }
+            catch
+            {
+                // ignore
+            }
         }
 
         return savegame;
@@ -116,17 +123,21 @@ public class DefaultModSavegameManager : ISavegameManager
         var writer = new DataWriter();
 
         GameData.SaveGame(writer, savegame);
+        writer.Write(name);
 
         File.WriteAllBytes(Path.Combine(savegamePath, $"Save{saveSlot:00}.sav"), writer.ToArray());
 
-        config.Current = saveSlot;
+        if (saveSlot < 99)
+        {
+            config.Current = saveSlot;
 
-        WriteSavegameName(gameData, saveSlot, ref name, "");
+            WriteSavegameName(gameData, saveSlot, ref name, "");
+        }
     }
 
     public void SaveCrashedGame(ISavegameSerializer savegameSerializer, Savegame savegame)
     {
-        Save(null!, savegameSerializer, 99, "", savegame);
+        Save(null!, savegameSerializer, 99, "-CRASH-SAVEGAME-", savegame);
     }
 
     public void SetActiveSavegame(IGameData gameData, int slot)

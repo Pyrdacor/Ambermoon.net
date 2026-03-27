@@ -66,7 +66,8 @@ internal static class PADP
         
         int fileCount = reader.ReadWord();
         bool allFilesSameSize = (fileCount & 0x8000) != 0;
-        fileCount &= 0x7fff;
+        bool smallSizes = (fileCount & 0x4000) != 0;
+        fileCount &= 0x3fff;
 
         if (fileCount == 0)
             return [];
@@ -76,7 +77,7 @@ internal static class PADP
 
         if (allFilesSameSize)
         {
-            var fileSize = EncodedInt.Read(reader);
+            var fileSize = smallSizes ? reader.ReadByte() : EncodedInt.Read(reader);
 
             for (int i = 0; i < fileCount; ++i)
                 fileSizes[i] = fileSize;
@@ -84,7 +85,7 @@ internal static class PADP
         else
         {
             for (int i = 0; i < fileCount; ++i)
-                fileSizes[i] = EncodedInt.Read(reader);
+                fileSizes[i] = smallSizes ? reader.ReadByte() : EncodedInt.Read(reader);
         }
 
         var fileIndices = new ushort[fileCount];
@@ -130,16 +131,16 @@ internal static class PADP
 
     public static void Write<T>(IDataWriter writer, IEnumerable<T> fileSpecs, ICompression? compression = null) where T : IFileSpec, new()
     {
-        if (fileSpecs.Count() >= ushort.MaxValue)
-            throw new AmbermoonException(ExceptionScope.Data, $"Too many files given for PADP. Allowed are {ushort.MaxValue - 1}, given are {fileSpecs.Count()}.");
+        if (fileSpecs.Count() >= 0x4000)
+            throw new AmbermoonException(ExceptionScope.Data, $"Too many files given for PADP. Allowed are {0x4000 - 1}, given are {fileSpecs.Count()}.");
 
         InternalWrite(writer, fileSpecs.Select((s, i) => new { i, s }).ToDictionary(s => (ushort)(1 + s.i), s => s.s), compression, true);
     }
 
     private static void InternalWrite<T>(IDataWriter writer, IDictionary<ushort, T> fileSpecs, ICompression? compression, bool writeNoFileIndices) where T : IFileSpec, new()
     {
-        if (fileSpecs.Count >= short.MaxValue)
-            throw new AmbermoonException(ExceptionScope.Data, $"Too many files given for PADP. Allowed are {short.MaxValue}, given are {fileSpecs.Count}.");
+        if (fileSpecs.Count >= 0x4000)
+            throw new AmbermoonException(ExceptionScope.Data, $"Too many files given for PADP. Allowed are {0x4000 - 1}, given are {fileSpecs.Count}.");
 
         if (!writeNoFileIndices && fileSpecs.Keys.Any(k => k == 0))
             throw new AmbermoonException(ExceptionScope.Data, $"Sub-file key 0 is now allowed. Make sure to start at index 1.");
@@ -171,8 +172,21 @@ internal static class PADP
 
         if (sizes.Distinct().Count() == 1)
         {
-            writer.Write((ushort)(fileSpecs.Count | 0x8000));
-            EncodedInt.Write(writer, sizes[0]);
+            if (sizes[0] < 256)
+            {
+                writer.Write((ushort)(fileSpecs.Count | 0xc000));
+                writer.Write((byte)sizes[0]);
+            }
+            else
+            {
+                writer.Write((ushort)(fileSpecs.Count | 0x8000));
+                EncodedInt.Write(writer, sizes[0]);
+            }
+        }
+        else if (sizes.Max() < 256)
+        {
+            writer.Write((ushort)(fileSpecs.Count | 0x4000));
+            sizes.ForEach(size => writer.Write((byte)size));
         }
         else
         {

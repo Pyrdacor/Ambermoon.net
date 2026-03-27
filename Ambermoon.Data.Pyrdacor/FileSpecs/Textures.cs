@@ -62,17 +62,8 @@ public class Textures : IFileSpec<Textures>, IFileSpec
 
         Graphic ReadEncodedGraphic()
         {
-            int width = dataReader.ReadByte();
-            int height;
-
-            if ((width & 0x80) == 0)
-                height = 1 + dataReader.ReadByte();
-            else
-                height = dataReader.ReadWord();
-
-            width &= 0x7f;
-            width++;
-            width <<= 4;
+            int width = SmallEncodedInt.Read(dataReader);
+            int height = SmallEncodedInt.Read(dataReader);
 
             return LoadGraphic(width, height);
         }
@@ -121,17 +112,8 @@ public class Textures : IFileSpec<Textures>, IFileSpec
 
             if (encoded)
             {
-                int width = (graphic.Width >> 4) - 1;
-                int height = graphic.Height - 1;
-
-                if (height > 255)
-                    width |= 0x80;
-
-                dataWriter.Write((byte)width);
-                if (height > 255)
-                    dataWriter.Write((ushort)height);
-                else
-                    dataWriter.Write((byte)height);
+                SmallEncodedInt.Write(dataWriter, (short)graphic.Width);
+                SmallEncodedInt.Write(dataWriter, (short)graphic.Height);
             }
 
             dataWriter.Write(graphic.Data);

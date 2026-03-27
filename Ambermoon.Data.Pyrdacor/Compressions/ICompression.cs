@@ -17,6 +17,7 @@ public interface ICompression
     public static KeyValuePair<ushort, ICompression> NoCompression { get; } = Create<NullCompression>();
     public static KeyValuePair<ushort, ICompression> Deflate { get; } = Create<DeflateCompression>();
     public static KeyValuePair<ushort, ICompression> RLE0 { get; } = Create<RLE0Compression>();
+    public static KeyValuePair<ushort, ICompression> RLEX { get; } = Create<RLEXCompression>();
     public static KeyValuePair<ushort, ICompression> Delta { get; } = Create<DeltaCompression>();
 
     public static ushort GetIdentifier<T>() where T : ICompression

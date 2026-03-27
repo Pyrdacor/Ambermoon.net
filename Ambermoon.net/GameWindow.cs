@@ -1647,25 +1647,35 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
                             if (Directory.Exists(modPath))
                             {
-                                var modFiles = Directory.EnumerateFiles(modPath, "*.mod", SearchOption.AllDirectories);
+                                var modDirectories = Directory.GetDirectories(modPath);
 
-                                foreach (var modFile in modFiles)
+                                foreach (var modDirectory in modDirectories)
                                 {
-                                    var stream = File.OpenRead(modFile);
-                                    var gameInfo = Data.Pyrdacor.GameData.ReadGameDataInfo(new DataReader(stream));
+                                    var modFiles = Directory.GetFiles(modPath, "*.mod", SearchOption.AllDirectories);
+                                    string modName = Path.GetFileName(modDirectory);
 
-                                    (versions ?? []).Add(new BuiltinVersion
+                                    // Prefer mod files which have the same name as the mod directory but otherwise pick any.
+                                    var modFile = modFiles.FirstOrDefault(file => string.Equals(Path.GetFileNameWithoutExtension(file), modName, StringComparison.InvariantCultureIgnoreCase))
+                                        ?? modFiles.FirstOrDefault();
+
+                                    if (modFile != null)
                                     {
-                                        Version = gameInfo.Version,
-                                        Language = gameInfo.Language.ToString(),
-                                        Info = gameInfo.Name,
-                                        Features = Features.None, // TODO
-                                        MergeWithPrevious = false, // TODO
-                                        Offset = 0,
-                                        Size = (uint)stream.Length,
-                                        SourceStream = stream,
-                                        ModPath = modPath
-                                    });
+                                        var stream = File.OpenRead(modFile);
+                                        var gameInfo = Data.Pyrdacor.GameData.ReadGameDataInfo(new DataReader(stream));
+
+                                        (versions ?? []).Add(new BuiltinVersion
+                                        {
+                                            Version = gameInfo.Version,
+                                            Language = gameInfo.Language.ToString(),
+                                            Info = gameInfo.Name,
+                                            Features = Features.None, // TODO
+                                            MergeWithPrevious = false, // TODO
+                                            Offset = 0,
+                                            Size = (uint)stream.Length,
+                                            SourceStream = stream,
+                                            ModPath = modDirectory
+                                        });
+                                    }
                                 }
                             }
                         }

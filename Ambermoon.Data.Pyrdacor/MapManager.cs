@@ -1,5 +1,7 @@
-﻿using Ambermoon.Data.Pyrdacor.FileSpecs;
+﻿using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Pyrdacor.FileSpecs;
 using Ambermoon.Data.Pyrdacor.Objects;
+using static Ambermoon.Data.Labdata;
 
 namespace Ambermoon.Data.Pyrdacor
 {
@@ -12,7 +14,6 @@ namespace Ambermoon.Data.Pyrdacor
     ) : IMapManager
     {
         bool mapTextsAdded = false;
-        bool texturesAdded = false;
         readonly Lazy<Dictionary<uint, Map>> maps = new(mapProvider);
         readonly Lazy<Dictionary<uint, TextList>> mapTexts = new(mapTextProvider);
         readonly Lazy<Dictionary<uint, Labdata>> labdata = new(labdataProvider);
@@ -65,31 +66,27 @@ namespace Ambermoon.Data.Pyrdacor
 
             if (labdata.WallGraphics.Count == 0)
             {
-                labdata.WallGraphics.AddRange(labdata.Walls.Select(wall => textures.Value.WallGraphics[(int)wall.TextureIndex - 1]));
+                labdata.WallGraphics.AddRange(labdata.Walls.Select(wall =>
+                {
+                    var wallGraphic = textures.Value.WallGraphics[(int)wall.TextureIndex - 1].Clone();
+
+                    if (wall.Overlays != null && wall.Overlays.Length != 0)
+                    {
+                        foreach (var overlay in wall.Overlays)
+                        {
+                            wallGraphic.AddOverlay(overlay.PositionX, overlay.PositionY,
+                                textures.Value.OverlayGraphics[(int)overlay.TextureIndex - 1],
+                                overlay.Blend);
+                        }
+                    }
+
+                    return wallGraphic;
+                }));
             }
+
             if (labdata.ObjectGraphics.Count == 0)
             {
-                foreach (var objectInfo in labdata.ObjectInfos)
-                {
-                    if (objectInfo.NumAnimationFrames == 1)
-                    {
-                        labdata.ObjectGraphics.Add(textures.Value.ObjectGraphics[(int)objectInfo.TextureIndex - 1]);
-                    }
-                    else
-                    {
-                        var compoundGraphic = new Graphic((int)objectInfo.NumAnimationFrames * (int)objectInfo.TextureWidth,
-                            (int)objectInfo.TextureHeight, 0);
-
-                        for (uint i = 0; i < objectInfo.NumAnimationFrames; ++i)
-                        {
-                            var partialGraphic = textures.Value.ObjectGraphics[(int)objectInfo.TextureIndex - 1];
-
-                            compoundGraphic.AddOverlay(i * objectInfo.TextureWidth, 0u, partialGraphic, false);
-                        }
-
-                        labdata.ObjectGraphics.Add(compoundGraphic);
-                    }
-                }
+                labdata.ObjectGraphics.AddRange(labdata.ObjectInfos.Select(objectInfo => textures.Value.ObjectGraphics[(int)objectInfo.TextureIndex - 1]));
             }
 
             labdata.FloorGraphic ??= labdata.FloorTextureIndex == 0 ? null : textures.Value.FloorGraphics[labdata.FloorTextureIndex - 1];

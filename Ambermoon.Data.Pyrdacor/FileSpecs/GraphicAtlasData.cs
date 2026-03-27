@@ -383,7 +383,7 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         return new GraphicAtlasData(paletteIndex, flags, texture, textureAreas);
     }
 
-    public static GraphicAtlasData FromTiles(int paletteIndex, IReadOnlyList<Graphic> tiles, bool alpha, int colorIndexOffset = 0)
+    public static GraphicAtlasData FromTiles(int paletteIndex, IReadOnlyList<Graphic> tiles, bool alpha, int colorIndexOffset = 0, int? forcedTilesPerRow = null)
     {
         if (tiles.Select(t => new { t.Width, t.Height, t.IndexedGraphic, t.Data.Length }).Distinct().Count() > 1)
             throw new AmbermoonException(ExceptionScope.Data, "Tile graphics are expected to have all the same size and color depth.");
@@ -419,7 +419,7 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
                 throw new AmbermoonException(ExceptionScope.Data, "Tile graphics are expected to have a size greater than zero.");
 
             int totalDimensions = tiles.Count * tileWidth * tileHeight;
-            int tilesPerRow = Util.Floor(Math.Sqrt(totalDimensions) / tileWidth);
+            int tilesPerRow = forcedTilesPerRow ?? Util.Floor(Math.Sqrt(totalDimensions) / tileWidth);
             int rows = (tiles.Count + tilesPerRow - 1) / tilesPerRow;
             int atlasWidth = tilesPerRow * tileWidth;
             int atlasHeight = rows * tileHeight;
@@ -465,9 +465,9 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         return FromGraphics(-1, graphics, alpha, colorIndexOffset);
     }
 
-    public static GraphicAtlasData FromTiles(IReadOnlyList<Graphic> tiles, bool alpha, int colorIndexOffset = 0)
+    public static GraphicAtlasData FromTiles(IReadOnlyList<Graphic> tiles, bool alpha, int colorIndexOffset = 0, int? forcedTilesPerRow = null)
     {
-        return FromTiles(-1, tiles, alpha, colorIndexOffset);
+        return FromTiles(-1, tiles, alpha, colorIndexOffset, forcedTilesPerRow);
     }
 
     internal void ReuseTextureArea(int index, int reuseAreaIndex)

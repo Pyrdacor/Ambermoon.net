@@ -6,9 +6,12 @@ namespace Ambermoon.Data.Pyrdacor.FileSpecs;
 
 internal class ChestData : IFileSpec<ChestData>, IFileSpec
 {
+    private static readonly ChestReader chestReader = new();
+    private static readonly ChestWriter chestWriter = new();
+
     public static string Magic => "CHE";
     public static byte SupportedVersion => 0;
-    public static ushort PreferredCompression => ICompression.GetIdentifier<RLE0Compression>();
+    public static ushort PreferredCompression => ICompression.GetIdentifier<DeflateCompression>();
     Chest? chest = null;
 
     public Chest Chest => chest!;
@@ -25,7 +28,7 @@ internal class ChestData : IFileSpec<ChestData>, IFileSpec
 
     public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
     {
-        chest = Chest.Load(new ChestReader(), dataReader);
+        chest = Chest.Load(chestReader, dataReader);
     }
 
     public void Write(IDataWriter dataWriter)
@@ -33,6 +36,6 @@ internal class ChestData : IFileSpec<ChestData>, IFileSpec
         if (chest == null)
             throw new AmbermoonException(ExceptionScope.Application, "Chest data was null when trying to write it.");
 
-        new ChestWriter().WriteChest(chest, dataWriter);
+        chestWriter.WriteChest(chest, dataWriter);
     }
 }
