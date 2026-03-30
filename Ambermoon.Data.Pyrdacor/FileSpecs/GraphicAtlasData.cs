@@ -1,4 +1,5 @@
-﻿using Ambermoon.Data.Pyrdacor.Compressions;
+﻿using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Pyrdacor.Compressions;
 using Ambermoon.Data.Pyrdacor.Objects;
 using Ambermoon.Data.Serialization;
 
@@ -19,263 +20,396 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
 
     private static class TexturePacker
     {
-        private class EmptyArea(Rect area)
+        private interface IGraphicInfo
         {
-            public class Comparer : IComparer<EmptyArea>
+            int Index { get; }
+            Size Size { get; }
+
+            void Deconstruct(out int index, out Size size);
+        }
+        private record GraphicInfo(int Index, Size Size) : IGraphicInfo
+        {
+            public void Deconstruct(out int index, out Size size)
             {
-                int IComparer<EmptyArea>.Compare(EmptyArea? x, EmptyArea? y)
+                index = Index;
+                size = Size;
+            }
+        }
+        private record GraphicContainer(int Index, Size Size) : IGraphicInfo
+        {
+            public List<PlacedGraphic> Children { get; } = [];
+
+            public GraphicContainer? Parent { get; private set; } = null;
+
+            public void AddChild(Position position, IGraphicInfo child)
+            {
+                Children.Add(new PlacedGraphic(position, child));
+
+                if (child is GraphicContainer container)
+                    container.Parent = this;
+            }
+
+            public void Deconstruct(out int index, out Size size)
+            {
+                index = Index;
+                size = Size;
+            }
+        }
+        private record PlacedGraphic(Position Position, IGraphicInfo GraphicInfo);
+
+        private class WidthPrioComparer : IComparer<IGraphicInfo>
+        {
+            public int Compare(IGraphicInfo? x, IGraphicInfo? y)
+            {
+                if (y is null) return -1;
+                if (x is null) return 1;
+
+                int result = x.Size.Width.CompareTo(y.Size.Width);
+
+                return result != 0 ? result : x.Size.Height.CompareTo(y.Size.Height);
+            }
+        }
+
+        private class HeightPrioComparer : IComparer<IGraphicInfo>
+        {
+            public int Compare(IGraphicInfo? x, IGraphicInfo? y)
+            {
+                if (y is null) return -1;
+                if (x is null) return 1;
+
+                int result = x.Size.Height.CompareTo(y.Size.Height);
+
+                return result != 0 ? result : x.Size.Width.CompareTo(y.Size.Width);
+            }
+        }
+
+        public static KeyValuePair<Graphic, SortedList<int, Rect>> PackTextureAtlas(IDictionary<int, Graphic> graphics)
+        {
+            if (graphics.Count == 0)
+            {
+                return KeyValuePair.Create<Graphic, SortedList<int, Rect>>(new Graphic(0, 0, 0), []);
+            }
+            else if (graphics.Count == 1)
+            {
+                var first = graphics.First();
+
+                return KeyValuePair.Create(first.Value, new SortedList<int, Rect>(1)
                 {
-                    if (x is null) return -1;
-                    if (y is null) return 1;
-                    return (x.area.Width * x.area.Height).CompareTo(y.area.Width * y.area.Height);
+                    { first.Key, new Rect(0, 0, first.Value.Width, first.Value.Height) }
+                });
+            }
+
+            var widthPrioComparer = new WidthPrioComparer();
+            var heightPrioComparer = new HeightPrioComparer();
+            IEnumerable<IGraphicInfo> graphicInfos = graphics.Select(g => new GraphicInfo(g.Key, new Size(g.Value.Width, g.Value.Height)));
+            var widestList = graphicInfos.OrderBy(g => g.Size.Width).ThenBy(g => g.Size.Height).ToList();
+            var highestList = graphicInfos.OrderBy(g => g.Size.Height).ThenBy(g => g.Size.Width).ToList();
+
+            var emptyAreas = new List<(GraphicContainer, Rect)>(graphics.Count);
+            int containerIndex = -1;
+
+            while (widestList.Count != 1)
+            {
+                var widest = widestList[^1];
+                var highest = highestList[^1];
+                bool widthPrio = widest.Size.Width > highest.Size.Height;
+
+                if (widestList.Count > 1)
+                {
+                    widthPrio = widestList[^2].Size.Width > highestList[^2].Size.Height;
                 }
-            }
 
-            public enum FillResult
-            {
-                NotFit,
-                PartialFit,
-                FullFit
-            }
+                GraphicContainer? container;
 
-            private readonly Rect area = area;
-            public static readonly Comparer AreaComparer = new();
-            public List<EmptyArea> FreeChildAreas { get; } = [];
-
-            private void AddFreeChildArea(Rect area)
-            {
-                FreeChildAreas.AddSorted(new EmptyArea(area), AreaComparer);
-            }
-
-            public FillResult TryAddArea(Size areaSize, out Position? position)
-            {
-                position = null;
-
-                if (areaSize.Width > area.Width || areaSize.Height > area.Height)
-                    return FillResult.NotFit;
-
-                if (FreeChildAreas.Count == 0)
+                if (widthPrio)
                 {
-                    position = new Position(area.Position);
-
-                    bool exactWidth = areaSize.Width == area.Width;
-                    bool exactHeight = areaSize.Height == area.Height;
-
-                    if (exactWidth && exactHeight)
-                        return FillResult.FullFit;
-
-                    if (exactWidth)
-                    {
-                        AddFreeChildArea(new Rect(area.X, area.Y + areaSize.Height, area.Width, area.Height - areaSize.Height));
-                    }
-                    else if (exactHeight)
-                    {
-                        AddFreeChildArea(new Rect(area.X + areaSize.Width, area.Y, area.Width - areaSize.Width, area.Height));
-                    }
-                    else
-                    {
-                        // Split: choose direction that leaves the larger remaining area more usable.
-                        // Compare splitting horizontally-first vs vertically-first and pick the one
-                        // that produces a more square-like larger remainder.
-                        int remainW = area.Width - areaSize.Width;
-                        int remainH = area.Height - areaSize.Height;
-
-                        if (remainW * area.Height >= area.Width * remainH)
-                        {
-                            // Right remainder is larger — give it full height
-                            AddFreeChildArea(new Rect(area.X + areaSize.Width, area.Y, remainW, area.Height));
-                            AddFreeChildArea(new Rect(area.X, area.Y + areaSize.Height, areaSize.Width, remainH));
-                        }
-                        else
-                        {
-                            // Bottom remainder is larger — give it full width
-                            AddFreeChildArea(new Rect(area.X, area.Y + areaSize.Height, area.Width, remainH));
-                            AddFreeChildArea(new Rect(area.X + areaSize.Width, area.Y, remainW, areaSize.Height));
-                        }
-                    }
-
-                    return FillResult.PartialFit;
+                    container = ProcessStripePacking(true, widest.Index, widest.Size.Width);
                 }
                 else
                 {
-                    // Try to fit into child areas, smallest first
-                    for (int i = 0; i < FreeChildAreas.Count; i++)
-                    {
-                        var result = FreeChildAreas[i].TryAddArea(areaSize, out position);
-
-                        if (result == FillResult.FullFit)
-                        {
-                            FreeChildAreas.RemoveAt(i);
-                            return FillResult.PartialFit;
-                        }
-
-                        if (result == FillResult.PartialFit)
-                            return FillResult.PartialFit;
-                    }
-
-                    return FillResult.NotFit;
+                    container = ProcessStripePacking(false, highest.Index, highest.Size.Height);
                 }
-            }
-        }
 
-        public static KeyValuePair<Graphic, SortedList<int, Rect>> PackTextureAtlas(IDictionary<int, Graphic> graphics, bool indexed)
-        {
-            if (graphics.Count == 0)
-                return KeyValuePair.Create(
-                    new Graphic(0, 0, 0) { IndexedGraphic = indexed },
-                    new SortedList<int, Rect>());
-
-            if (graphics.Count == 1)
-            {
-                var single = graphics.First();
-                return KeyValuePair.Create(
-                    single.Value,
-                    new SortedList<int, Rect>
-                    {
-                    { single.Key, new Rect(0, 0, single.Value.Width, single.Value.Height) }
-                    });
-            }
-
-            // Order by area descending, prefer wider ones if equal
-            var sortedGraphics = graphics.ToList();
-            sortedGraphics.Sort((a, b) =>
-            {
-                int result = (b.Value.Width * b.Value.Height).CompareTo(a.Value.Width * a.Value.Height);
-                return result != 0 ? result : b.Value.Width.CompareTo(a.Value.Width);
-            });
-
-            int totalPixels = sortedGraphics.Sum(g => g.Value.Width * g.Value.Height);
-            int maxWidth = sortedGraphics.Max(g => g.Value.Width);
-
-            // Ensure width is at least enough and a reasonable power-of-2-like size
-            while (maxWidth < 320 && totalPixels > maxWidth * maxWidth)
-                maxWidth *= 2;
-
-            // Estimate total height needed with some headroom for fragmentation
-            int estimatedHeight = Math.Max(
-                sortedGraphics[0].Value.Height,
-                (int)(totalPixels * 1.3 / maxWidth));
-
-            var textureAreas = new Dictionary<int, Rect>(graphics.Count);
-            var emptyAreas = new List<EmptyArea>();
-
-            // Pre-allocate with estimated size to avoid repeated reallocation
-            int bytesPerPixel = indexed ? 1 : 4;
-            var graphic = new Graphic
-            {
-                IndexedGraphic = indexed,
-                Width = maxWidth,
-                Height = estimatedHeight,
-                Data = new byte[maxWidth * estimatedHeight * bytesPerPixel]
-            };
-
-            // Start with the entire atlas as one empty area
-            emptyAreas.Add(new EmptyArea(new Rect(0, 0, maxWidth, estimatedHeight)));
-
-            for (int i = 0; i < sortedGraphics.Count; i++)
-            {
-                var nextGraphic = sortedGraphics[i];
-                int index = nextGraphic.Key;
-                var areaSize = new Size(nextGraphic.Value.Width, nextGraphic.Value.Height);
-                bool placed = false;
-
-                // Try existing empty areas, largest first for better fit
-                for (int j = emptyAreas.Count - 1; j >= 0; j--)
+                if (container == null)
                 {
-                    var result = emptyAreas[j].TryAddArea(areaSize, out var position);
-
-                    if (result == EmptyArea.FillResult.FullFit)
+                    // No possible packing -> switch pack direction
+                    if (widthPrio)
                     {
-                        graphic.AddOverlay((uint)position!.X, (uint)position.Y, nextGraphic.Value);
-                        textureAreas.Add(index, new Rect(position.X, position.Y, nextGraphic.Value.Width, nextGraphic.Value.Height));
-                        emptyAreas.RemoveAt(j);
-                        placed = true;
-                        break;
+                        container = ProcessStripePacking(false, widest.Index, widest.Size.Height);
+                    }
+                    else
+                    {
+                        container = ProcessStripePacking(true, highest.Index, highest.Size.Width);
                     }
 
-                    if (result == EmptyArea.FillResult.PartialFit)
+                    if (container?.Children.Count == 1)
                     {
-                        graphic.AddOverlay((uint)position!.X, (uint)position.Y, nextGraphic.Value);
-                        textureAreas.Add(index, new Rect(position.X, position.Y, nextGraphic.Value.Width, nextGraphic.Value.Height));
-                        placed = true;
-                        break;
+                        var child = container.Children[0];
+
+                        if (widest.Size.Width <= highest.Size.Height)
+                        {
+                            container = new GraphicContainer(container.Index, new Size(widest.Size.Width, widest.Size.Height + child.GraphicInfo.Size.Height));
+
+                            container.AddChild(Position.Zero, widest);
+                            container.AddChild(new Position(0, widest.Size.Height), child.GraphicInfo);
+                        }
+                        else
+                        {
+                            container = new GraphicContainer(container.Index, new Size(widest.Size.Width + child.GraphicInfo.Size.Width, widest.Size.Height));
+
+                            container.AddChild(Position.Zero, widest);
+                            container.AddChild(new Position(widest.Size.Width, 0), child.GraphicInfo);
+                        }
+                    }
+                }
+                else if (container.Children.Count == 1)
+                {
+                    var child = container.Children[0];
+
+                    if (widthPrio)
+                    {
+                        container = new GraphicContainer(container.Index, new Size(widest.Size.Width, widest.Size.Height + child.GraphicInfo.Size.Height));
+
+                        container.AddChild(Position.Zero, widest);
+                        container.AddChild(new Position(0, widest.Size.Height), child.GraphicInfo);
+                    }
+                    else
+                    {
+                        container = new GraphicContainer(container.Index, new Size(widest.Size.Width + child.GraphicInfo.Size.Width, widest.Size.Height));
+
+                        container.AddChild(Position.Zero, widest);
+                        container.AddChild(new Position(widest.Size.Width, 0), child.GraphicInfo);
                     }
                 }
 
-                if (!placed)
+                foreach (var child in container!.Children)
                 {
-                    // Grow the atlas
-                    int y = graphic.Height;
-                    int growHeight = Math.Max(nextGraphic.Value.Height, estimatedHeight / 4);
-                    GrowGraphic(ref graphic, growHeight, bytesPerPixel);
-                    emptyAreas.AddSorted(
-                        new EmptyArea(new Rect(0, y, graphic.Width, growHeight)),
-                        EmptyArea.AreaComparer);
+                    widestList.Remove(child.GraphicInfo);
+                    highestList.Remove(child.GraphicInfo);
+                }
 
-                    // Now place into the newly added area (last/largest)
-                    for (int j = emptyAreas.Count - 1; j >= 0; j--)
+                if (container.Parent == null)
+                {
+                    widestList.AddSorted(container!, widthPrioComparer);
+                    highestList.AddSorted(container!, heightPrioComparer);
+                }
+            }
+
+            var rootContainer = (widestList[0] as GraphicContainer)!;
+            var graphic = new Graphic(rootContainer.Size.Width, rootContainer.Size.Height, 0);
+            var textureAreas = new SortedList<int, Rect>(graphics.Count);
+
+            ProcessContainer(Position.Zero, rootContainer);
+
+            void ProcessContainer(Position position, GraphicContainer container)
+            {
+                foreach (var entry in container.Children)
+                {
+                    if (entry.GraphicInfo is GraphicInfo graphicInfo)
                     {
-                        var result = emptyAreas[j].TryAddArea(areaSize, out var position);
-
-                        if (result == EmptyArea.FillResult.FullFit)
-                        {
-                            graphic.AddOverlay((uint)position!.X, (uint)position.Y, nextGraphic.Value);
-                            textureAreas.Add(index, new Rect(position.X, position.Y, nextGraphic.Value.Width, nextGraphic.Value.Height));
-                            emptyAreas.RemoveAt(j);
-                            break;
-                        }
-
-                        if (result == EmptyArea.FillResult.PartialFit)
-                        {
-                            graphic.AddOverlay((uint)position!.X, (uint)position.Y, nextGraphic.Value);
-                            textureAreas.Add(index, new Rect(position.X, position.Y, nextGraphic.Value.Width, nextGraphic.Value.Height));
-                            break;
-                        }
+                        var gfx = graphics[graphicInfo.Index];
+                        var pos = position + entry.Position;
+                        graphic.AddOverlay(pos.X, pos.Y, gfx, false);
+                        textureAreas.Add(graphicInfo.Index, new Rect(pos, graphicInfo.Size));
+                    }
+                    else if (entry.GraphicInfo is GraphicContainer subContainer)
+                    {
+                        ProcessContainer(position + entry.Position, subContainer);
                     }
                 }
             }
 
-            // Trim unused height
-            TrimGraphic(ref graphic, textureAreas, bytesPerPixel);
+            return KeyValuePair.Create(graphic, textureAreas);
 
-            return KeyValuePair.Create(graphic, new SortedList<int, Rect>(textureAreas));
-        }
-
-        private static void GrowGraphic(ref Graphic graphic, int additionalHeight, int bytesPerPixel)
-        {
-            var newGraphic = new Graphic
+            GraphicContainer? ProcessStripePacking(bool buildWidth, int templateIndex, int templateDimension)
             {
-                IndexedGraphic = graphic.IndexedGraphic,
-                Width = graphic.Width,
-                Height = graphic.Height + additionalHeight,
-                Data = new byte[graphic.Width * (graphic.Height + additionalHeight) * bytesPerPixel]
-            };
-            Array.Copy(graphic.Data, newGraphic.Data, graphic.Data.Length);
-            graphic = newGraphic;
-        }
+                var collection = buildWidth ? widestList : highestList;
+                int index = collection.Count - 2;
+                int x = 0;
+                int y = 0;
+                int preferredOtherDim = -1;
 
-        private static void TrimGraphic(ref Graphic graphic, Dictionary<int, Rect> textureAreas, int bytesPerPixel)
-        {
-            // Find the actual used height
-            int usedHeight = 0;
-            foreach (var area in textureAreas.Values)
-            {
-                int bottom = area.Y + area.Height;
-                if (bottom > usedHeight)
-                    usedHeight = bottom;
-            }
+                Func<Size, int> dimension = buildWidth ? g => g.Width : g => g.Height;
+                Func<Size, int> otherDimension = buildWidth ? g => g.Height : g => g.Width;
+                Action<Size> advancer = buildWidth ? g => x += g.Width : g => y += g.Height;
+                Func<Size, bool> checker = buildWidth ? g => x + g.Width <= templateDimension : g => y + g.Height <= templateDimension;
+                int bestMatchIndex = -1;
+                int bestMatchDimension = -1;
+                int bestMatchOtherDimension = -1;
+                var mergedGraphics = new List<(Position Position, IGraphicInfo)>(40);
+                var emptyContainerAreas = new List<Rect>(10);
+                var biggestEmptyAreas = emptyAreas.OrderByDescending(a => buildWidth ? a.Item2.Width : a.Item2.Height).ThenBy(a => buildWidth ? a.Item2.Height : a.Item2.Width);
 
-            if (usedHeight < graphic.Height)
-            {
-                var trimmed = new Graphic
+                var (key, size) = collection[index];
+
+                var fittingEmptyArea = biggestEmptyAreas.FirstOrDefault(a => a.Item2.Width >= size.Width && a.Item2.Height >= size.Height);
+
+                if (fittingEmptyArea.Item2 != null)
                 {
-                    IndexedGraphic = graphic.IndexedGraphic,
-                    Width = graphic.Width,
-                    Height = usedHeight,
-                    Data = new byte[graphic.Width * usedHeight * bytesPerPixel]
-                };
-                Array.Copy(graphic.Data, trimmed.Data, trimmed.Data.Length);
-                graphic = trimmed;
+                    var fittingContainer = fittingEmptyArea.Item1;
+                    var area = fittingEmptyArea.Item2;
+
+                    fittingContainer.AddChild(area.Position, collection[index]);
+
+                    // TODO: Maybe later also keep the potential remaining area
+                    emptyAreas.Remove(fittingEmptyArea);
+
+                    return fittingContainer;
+                }
+
+                while (index >= 0)
+                {
+                    (key, size) = collection[index];
+
+                    if (checker(size))
+                    {
+                        if (bestMatchIndex != -1)
+                        {
+                            // Already found a match but maybe this is better?
+                            // It has to be the same width and closer height value.
+                            int dim = dimension(size);
+
+                            if (dim == bestMatchDimension)
+                            {
+                                int otherDim = otherDimension(size);
+                                int diff = otherDim - preferredOtherDim;
+
+                                if (diff == 0 || Math.Abs(diff) < Math.Abs(bestMatchOtherDimension - preferredOtherDim) ||
+                                    (diff < 0 && Math.Abs(diff) == Math.Abs(bestMatchOtherDimension - preferredOtherDim)))
+                                {
+                                    bestMatchIndex = index;
+                                    bestMatchOtherDimension = otherDim;
+
+                                    if (diff == 0) // perfect match, directly use it!
+                                    {
+                                        bestMatchIndex = -1;
+                                        bestMatchDimension = -1;
+                                        bestMatchOtherDimension = -1;
+
+                                        mergedGraphics.Add((new Position(x, y), collection[index]));
+                                        advancer(size);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // Keep the previous best match.
+                                var entry = collection[bestMatchIndex];
+                                (key, size) = entry;
+
+                                if (buildWidth)
+                                {
+                                    if (size.Height > preferredOtherDim)
+                                    {
+                                        emptyContainerAreas.Add(new Rect(0, preferredOtherDim, x, size.Height - preferredOtherDim));
+                                    }
+                                    else if (size.Height < preferredOtherDim)
+                                    {
+                                        emptyContainerAreas.Add(new Rect(x, size.Height, size.Width, preferredOtherDim - size.Height));
+                                    }
+                                }
+                                else
+                                {
+                                    if (size.Width > preferredOtherDim)
+                                    {
+                                        emptyContainerAreas.Add(new Rect(preferredOtherDim, 0, size.Width - preferredOtherDim, y));
+                                    }
+                                    else if (size.Width < preferredOtherDim)
+                                    {
+                                        emptyContainerAreas.Add(new Rect(size.Width, y, preferredOtherDim - size.Width, size.Height));
+                                    }
+                                }
+
+                                index = bestMatchIndex;
+                                preferredOtherDim = Math.Max(preferredOtherDim, otherDimension(size));
+                                bestMatchIndex = -1;
+                                bestMatchDimension = -1;
+                                bestMatchOtherDimension = -1;
+
+                                mergedGraphics.Add((new Position(x, y), entry));
+                                advancer(size);
+                            }
+
+                            index--;
+
+                            continue;
+                        }
+
+                        if (preferredOtherDim == -1)
+                        {
+                            preferredOtherDim = otherDimension(size);
+                            bestMatchIndex = -1;
+                            bestMatchDimension = -1;
+                            bestMatchOtherDimension = -1;
+
+                            mergedGraphics.Add((new Position(x, y), collection[index]));
+                            advancer(size);
+                        }
+                        else
+                        {
+                            bestMatchIndex = index;
+                            bestMatchOtherDimension = otherDimension(size);
+
+                            if (bestMatchOtherDimension == preferredOtherDim)
+                            {
+                                bestMatchDimension = -1;
+                                bestMatchOtherDimension = -1;
+                            }
+                            else
+                            {
+                                bestMatchDimension = dimension(size);
+                            }
+                        }
+                    }
+
+                    index--;
+                }
+
+                // Processed everything but there is a match pending?
+                if (bestMatchIndex != -1)
+                {
+                    var entry = collection[bestMatchIndex];
+                    size = entry.Size;
+
+                    if (buildWidth)
+                    {
+                        if (size.Height > preferredOtherDim)
+                        {
+                            emptyContainerAreas.Add(new Rect(0, preferredOtherDim, x, size.Height - preferredOtherDim));
+                        }
+                        else if (size.Height < preferredOtherDim)
+                        {
+                            emptyContainerAreas.Add(new Rect(x, size.Height, size.Width, preferredOtherDim - size.Height));
+                        }
+                    }
+                    else
+                    {
+                        if (size.Width > preferredOtherDim)
+                        {
+                            emptyContainerAreas.Add(new Rect(preferredOtherDim, 0, size.Width - preferredOtherDim, y));
+                        }
+                        else if (size.Width < preferredOtherDim)
+                        {
+                            emptyContainerAreas.Add(new Rect(size.Width, y, preferredOtherDim - size.Width, size.Height));
+                        }
+                    }
+
+                    preferredOtherDim = Math.Max(preferredOtherDim, otherDimension(size));
+                    mergedGraphics.Add((new Position(x, y), entry));
+                    advancer(size);
+                }
+
+                var container = new GraphicContainer(containerIndex--, buildWidth ? new Size(x, preferredOtherDim) : new Size(preferredOtherDim, y));
+
+                foreach (var (position, info) in mergedGraphics)
+                    container.AddChild(position, info);
+
+                foreach (var emptyContainerArea in emptyContainerAreas)
+                {
+                    emptyAreas.Add((container, emptyContainerArea));
+                }
+
+                return container;
             }
         }
     }
@@ -334,7 +468,7 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         }
         else
         {
-            var textureAtlasInfo = TexturePacker.PackTextureAtlas(graphics, graphics.First().Value.IndexedGraphic);
+            var textureAtlasInfo = /*TexturePacker.PackTextureAtlas(graphics)*/TexturePacker.PackTextureAtlas(graphics);
             texture = textureAtlasInfo.Key;
             textureAreas = textureAtlasInfo.Value;
         }
@@ -372,10 +506,9 @@ public class GraphicAtlasData : IFileSpec<GraphicAtlasData>, IFileSpec
         }
         else
         {
-            var textureAtlasInfo = TexturePacker.PackTextureAtlas(graphics
+            var textureAtlasInfo = TexturePacker.PackTextureAtlas/*TexturePacker.PackTextureAtlas*/(graphics
                 .Select((g, i) => new { Graphic = g, Index = i })
-                .ToDictionary(graphic => graphic.Index, graphic => graphic.Graphic),
-                graphics[0].IndexedGraphic);
+                .ToDictionary(graphic => graphic.Index, graphic => graphic.Graphic));
             texture = textureAtlasInfo.Key;
             textureAreas = textureAtlasInfo.Value;
         }

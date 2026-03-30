@@ -228,6 +228,21 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
             // Inventory
             for (int i = 0; i < Inventory.Width * Inventory.Height; ++i)
                 ItemSlotWriter.WriteItemSlot(monster.Inventory.Slots[i], dataWriter);
+
+            // Monster data
+            foreach (var animation in monster.Animations)
+                dataWriter.Write(animation.FrameIndices);
+
+            foreach (var animation in monster.Animations)
+                dataWriter.Write((byte)animation.UsedAmount);
+
+            dataWriter.Write(monster.MonsterPalette);
+            dataWriter.Write(monster.AlternateAnimationBits);
+            dataWriter.Write(monster.PaddingByte);
+            dataWriter.Write((ushort)monster.FrameWidth);
+            dataWriter.Write((ushort)monster.FrameHeight);
+            dataWriter.Write((ushort)monster.MappedFrameWidth);
+            dataWriter.Write((ushort)monster.MappedFrameHeight);
         }
         else
         {
@@ -451,6 +466,27 @@ internal class CharacterData : IFileSpec<CharacterData>, IFileSpec
         // Inventory
         for (int i = 0; i < Inventory.Width * Inventory.Height; ++i)
             ItemSlotReader.ReadItemSlot(monster.Inventory.Slots[i], dataReader);
+
+        // Monster data
+        for (int i = 0; i < 8; ++i)
+        {
+            monster.Animations[i] = new Monster.Animation
+            {
+                FrameIndices = dataReader.ReadBytes(32)
+            };
+        }
+
+        foreach (var animation in monster.Animations)
+            animation.UsedAmount = dataReader.ReadByte();
+
+        monster.AtariPalette = new byte[16];
+        monster.MonsterPalette = dataReader.ReadBytes(32);        
+        monster.AlternateAnimationBits = dataReader.ReadByte();
+        monster.PaddingByte = dataReader.ReadByte();
+        monster.FrameWidth = dataReader.ReadWord();
+        monster.FrameHeight = dataReader.ReadWord();
+        monster.MappedFrameWidth = dataReader.ReadWord();
+        monster.MappedFrameHeight = dataReader.ReadWord();
 
         character = monster;
     }

@@ -49,7 +49,7 @@ namespace Ambermoon.Render
 
     public interface ITextureAtlasConverter
     {
-        ITextureAtlas Convert(IGraphicAtlas graphicAtlas);
+        ITextureAtlas Convert(IGraphicAtlas graphicAtlas, uint offset);
         ITextureAtlas Convert(Dictionary<uint, IGraphicAtlas> graphicAtlasesWithOffsets);
     }
 }

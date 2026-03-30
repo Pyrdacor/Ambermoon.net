@@ -93,12 +93,12 @@ namespace Ambermoon.Render
                 AddTexture(layer, graphic.Key, graphic.Value);
         }
 
-        public void AddAtlas(Layer layer, IGraphicAtlas atlas)
+        public void AddAtlas(Layer layer, IGraphicAtlas atlas, uint offset = 0)
         {
             if (this.atlas.ContainsKey(layer))
                 throw new AmbermoonException(ExceptionScope.Application, $"Texture atlas already created for layer {layer}.");
             
-            this.atlas.Add(layer, converter!.Convert(atlas));
+            this.atlas.Add(layer, converter!.Convert(atlas, offset));
         }
 
         public void AddAtlases(Layer layer, params (uint Offset, IGraphicAtlas Atlas)[] atlases)
@@ -470,7 +470,7 @@ namespace Ambermoon.Render
             {
                 // NOTE: The new graphic atlas format will include the Sword and Mace image in the custom UI elements.
                 // So here we only handle the battle effects graphics.
-                AddAtlas(Layer.BattleEffects, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.CombatGraphics));
+                AddAtlas(Layer.BattleEffects, graphicAtlasProvider!.GetGraphicAtlas(GraphicType.CombatGraphics), Graphics.CombatGraphicOffset);
             }
 
             #endregion

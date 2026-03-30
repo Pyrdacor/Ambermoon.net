@@ -4215,7 +4215,7 @@ namespace Ambermoon
             float initialScale = 1.0f, float endScale = 1.0f, bool mirrorX = false, byte? endDisplayLayer = null)
         {
             var effectAnimation = effectAnimations![index];
-            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects);
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects)!;
             effectAnimation.SetDisplayLayer(initialDisplayLayer);
             effectAnimation.SetStartFrame(textureAtlas.GetOffset(graphicIndex), frameSize, startPosition, initialScale, mirrorX);
             effectAnimation.AnimationFinished += EffectAnimationFinished;

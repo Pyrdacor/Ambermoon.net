@@ -163,7 +163,7 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
     {
         dataWriter.Write((byte)npcGraphicOffsets.Count);
         
-        foreach (var npcGraphicOffset in npcGraphicOffsets)
+        foreach (var npcGraphicOffset in npcGraphicOffsets.OrderBy(i => i.Key))
         {
             dataWriter.Write((byte)npcGraphicOffset.Key);
             var frameCounts = npcGraphicFrameCounts[npcGraphicOffset.Key];
@@ -175,7 +175,7 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
 
         dataWriter.Write((ushort)combatGraphicInfos.Count);
 
-        foreach (var combatGraphicInfo in combatGraphicInfos)
+        foreach (var combatGraphicInfo in combatGraphicInfos.OrderBy(i => i.Key))
         {
             var info = combatGraphicInfo.Value;
 
@@ -187,7 +187,7 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
 
         dataWriter.Write((byte)stationaryImageInfos.Count);
 
-        foreach (var stationaryImageInfo in stationaryImageInfos)
+        foreach (var stationaryImageInfo in stationaryImageInfos.OrderBy(i => i.Key))
         {
             var info = stationaryImageInfo.Value;
 
@@ -197,7 +197,7 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
 
         dataWriter.Write((byte)travelGraphicInfos.Count);
 
-        foreach (var travelGraphicInfo in travelGraphicInfos)
+        foreach (var travelGraphicInfo in travelGraphicInfos.OrderBy(i => i.Key))
         {
             var infos = travelGraphicInfo.Value;
 

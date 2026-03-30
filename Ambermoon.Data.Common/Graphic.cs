@@ -170,6 +170,9 @@ namespace Ambermoon.Data
             return graphic;
         }
 
+        public void AddOverlay(int x, int y, Graphic overlay, bool blend = true)
+            => AddOverlay((uint)x, (uint)y, overlay, blend);
+
         public void AddOverlay(uint x, uint y, Graphic overlay, bool blend = true)
         {
             if (!overlay.IndexedGraphic || !IndexedGraphic)
@@ -255,6 +258,8 @@ namespace Ambermoon.Data
 
                     if (index != alphaIndex)
                     {
+                        index %= 32;
+
                         for (int c = 0; c < 4; ++c)
                             data[i * 4 + c] = palette.Data[index * 4 + c];
                     }

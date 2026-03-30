@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Characters;
+using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.Compressions;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
@@ -335,6 +336,8 @@ partial class GameData
                 }
             }
 
+            File.WriteAllBytes(@"D:\Projects\Ambermoon.net\PyrdacorGameDataTests\monster_atlas.bin", atlas.Atlas!.Graphic.ToPixelData(gameData.GraphicInfoProvider.Palettes[gameData.GraphicInfoProvider.PrimaryUIPaletteIndex]));
+
             PADF.Write(dataWriter, atlas);
         });
 
@@ -545,6 +548,10 @@ partial class GameData
             combatGraphics.RemoveAt(combatGraphics.Count - 1);
 
             WriteGraphics(dataWriter, combatGraphics, tiles: false, alpha: true, usePalette: true);
+
+            var graphicAtlas = GraphicAtlasData.FromGraphics(GraphicAtlasData.MultiplePalettes, combatGraphics, true, 0);
+
+            File.WriteAllBytes(@"D:\Projects\Ambermoon.net\PyrdacorGameDataTests\battle_atlas.bin", graphicAtlas.Atlas!.Graphic.ToPixelData(gameData.GraphicInfoProvider.Palettes[gameData.GraphicInfoProvider.PrimaryUIPaletteIndex]));
         });
         WriteDefaultSection(MagicBattleFieldSprites, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.BattleFieldIcons), tiles: true, alpha: true, usePalette: true));
         WriteDefaultSection(MagicPortraits, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Portrait), tiles: true, alpha: true, usePalette: true));
