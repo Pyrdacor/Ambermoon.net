@@ -17,11 +17,13 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
     readonly Dictionary<TravelType, TravelGraphicInfo[]> travelGraphicInfos = new(20);
     Character2DAnimationInfo playerAnimationInfo = new();
     readonly List<Position> cursorHotspots = [];
+    readonly Dictionary<MonsterGraphicIndex, Size> monsterGraphicSizes = new(100);
 
 
     public IReadOnlyDictionary<int, int> NPCGraphicOffsets => npcGraphicOffsets.AsReadOnly();
     public IReadOnlyDictionary<int, List<int>> NPCGraphicFrameCounts => npcGraphicFrameCounts.AsReadOnly();
     public IReadOnlyDictionary<CombatGraphicIndex, CombatGraphicInfo> CombatGraphicInfos => combatGraphicInfos.AsReadOnly();
+    public IReadOnlyDictionary<MonsterGraphicIndex, Size> MonsterGraphicSizes => monsterGraphicSizes.AsReadOnly();
     public IReadOnlyDictionary<TravelType, GraphicInfo> StationaryImageInfos => stationaryImageInfos.AsReadOnly();
     public IReadOnlyDictionary<TravelType, TravelGraphicInfo[]> TravelGraphicInfos => travelGraphicInfos.AsReadOnly();
     public Character2DAnimationInfo PlayerAnimationInfo => playerAnimationInfo;
@@ -40,7 +42,8 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
         IReadOnlyDictionary<TravelType, GraphicInfo> stationaryImageInfos,
         IReadOnlyDictionary<TravelType, TravelGraphicInfo[]> travelGraphicInfos,
         Character2DAnimationInfo playerAnimationInfo,
-        IReadOnlyList<Position> cursorHotspots
+        IReadOnlyList<Position> cursorHotspots,
+        IReadOnlyDictionary<MonsterGraphicIndex, Size> monsterGraphicSizes
     )
     {
         this.npcGraphicOffsets = new(npcGraphicOffsets);
@@ -50,6 +53,7 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
         this.travelGraphicInfos = new(travelGraphicInfos);
         this.playerAnimationInfo = playerAnimationInfo;
         this.cursorHotspots = new(cursorHotspots);
+        this.monsterGraphicSizes = new(monsterGraphicSizes);
     }
 
     public void Read(IDataReader dataReader, uint _, GameData __, byte ___)
@@ -62,6 +66,7 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
         stationaryImageInfos.Clear();
         travelGraphicInfos.Clear();
         cursorHotspots.Clear();
+        monsterGraphicSizes.Clear();
 
         for (int i = 0; i < npcGraphicFileCount; i++)
         {
@@ -92,6 +97,16 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
             uint palette = dataReader.ReadByte();
 
             combatGraphicInfos.Add((CombatGraphicIndex)i, new(frames, width, height, palette, i == (int)CombatGraphicIndex.UISwordAndMace));
+        }
+
+        int numMonsterGraphicInfos = dataReader.ReadWord();
+
+        for (int i = 0; i < numMonsterGraphicInfos; i++)
+        {
+            int width = dataReader.ReadWord();
+            int height = dataReader.ReadWord();
+
+            monsterGraphicSizes.Add((MonsterGraphicIndex)(1 + i), new(width, height));
         }
 
         int numStationaryImageInfos = dataReader.ReadByte();
@@ -183,6 +198,16 @@ internal class GraphicsInfoData : IFileSpec<GraphicsInfoData>, IFileSpec
             dataWriter.Write((ushort)info.GraphicInfo.Width);
             dataWriter.Write((ushort)info.GraphicInfo.Height);
             dataWriter.Write((byte)info.Palette);
+        }
+
+        dataWriter.Write((ushort)monsterGraphicSizes.Count);
+
+        foreach (var monsterGraphicSize in monsterGraphicSizes.OrderBy(i => i.Key))
+        {
+            var size = monsterGraphicSize.Value;
+
+            dataWriter.Write((ushort)size.Width);
+            dataWriter.Write((ushort)size.Height);
         }
 
         dataWriter.Write((byte)stationaryImageInfos.Count);

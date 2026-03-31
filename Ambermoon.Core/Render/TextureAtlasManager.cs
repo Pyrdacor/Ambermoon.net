@@ -101,6 +101,11 @@ namespace Ambermoon.Render
             this.atlas.Add(layer, converter!.Convert(atlas, offset));
         }
 
+        public void SetAtlas(Layer layer, IGraphicAtlas atlas, uint offset = 0)
+        {
+            this.atlas[layer] = converter!.Convert(atlas, offset);
+        }
+
         public void AddAtlases(Layer layer, params (uint Offset, IGraphicAtlas Atlas)[] atlases)
         {
             AddAtlases(layer, atlases.ToDictionary(a => a.Offset, a => a.Atlas));

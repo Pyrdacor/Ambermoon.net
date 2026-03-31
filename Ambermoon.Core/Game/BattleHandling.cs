@@ -859,8 +859,18 @@ partial class GameCore
             ShowBattleWindow(nextEvent, out byte paletteIndex, x, y, combatBackgroundIndex);
             // Note: Create clones so we can change the values in battle for each monster.
             var monsterGroup = CloneMonsterGroup(CharacterManager.GetMonsterGroup(currentBattleInfo!.MonsterGroupIndex));
+
             foreach (var monster in monsterGroup.Monsters)
                 InitializeMonster(this, monster);
+
+            if (CharacterManager.MonsterGraphicAtlasProvider != null)
+            {
+                var atlas = CharacterManager.MonsterGraphicAtlasProvider(monsterGroup);
+                TextureAtlasManager.Instance.SetAtlas(Layer.BattleMonsterRow, atlas);
+                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleMonsterRow)!;
+                renderView.GetLayer(Layer.BattleMonsterRow).Texture = textureAtlas.Texture;
+            }
+
             var monsterBattleAnimations = new Dictionary<int, BattleAnimation>(24);
             // Add animated monster combat graphics and battle field sprites
             for (int row = 0; row < 3; ++row)

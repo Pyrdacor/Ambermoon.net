@@ -392,7 +392,13 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
             () => npcLoader!.LoadAll(),
             () => monsterLoader!.LoadAll(),
             () => monsterGroupLoader!.LoadAll(),
-            () => monsterGraphicLoader!.Load()
+            () =>
+            {
+                var atlas = monsterGraphicLoader!.Load();
+                var sizes = graphicsInfoLoader.Load().MonsterGraphicSizes;
+
+                return (atlas, sizes);
+            }
         ));
 
         itemManager = new Lazy<IItemManager>(() => new ItemManager

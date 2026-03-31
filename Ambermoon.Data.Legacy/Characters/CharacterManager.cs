@@ -59,6 +59,6 @@ namespace Ambermoon.Data.Legacy.Characters
         public IReadOnlyList<NPC> NPCs => npcs.Values.ToList().AsReadOnly();
         public IReadOnlyList<Monster> Monsters => monsters.Values.ToList().AsReadOnly();
         public IReadOnlyDictionary<uint, MonsterGroup> MonsterGroups => monsterGroups.AsReadOnly();
-        public IGraphicAtlas MonsterGraphicAtlas => null; // If not given, the CombatGraphic of the Monster is used to create the texture atlas.
+        public System.Func<MonsterGroup, IGraphicAtlas> MonsterGraphicAtlasProvider => null; // If not given, the CombatGraphic of the Monster is used to create the texture atlas.
     }
 }

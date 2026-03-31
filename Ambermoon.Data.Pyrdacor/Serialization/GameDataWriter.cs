@@ -1,7 +1,6 @@
 ﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Characters;
-using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Pyrdacor.Compressions;
 using Ambermoon.Data.Pyrdacor.FileSpecs;
@@ -311,34 +310,39 @@ partial class GameData
 
         WriteDefaultSection(MagicMonsterGraphics, () =>
         {
-            var monsterGraphics = gameData.CharacterManager.Monsters.ToDictionary(monster => (int)monster.Index, monster => monster.CombatGraphic);
+            var monsterGraphicFiles = gameData.Files["Monster_gfx.amb"].Files;
+            var graphicReader = new GraphicReader();
 
-            static string CreateHash(Graphic graphic)
+            Graphic LoadGraphic(int index, int frameWidth, int frameHeight)
             {
-                var hashBytes = System.Security.Cryptography.MD5.HashData(graphic.Data);
-                return $"{graphic.Width},{graphic.Height}," + Convert.ToBase64String(hashBytes);
-            }
-
-            var monsterGraphicsByHash = monsterGraphics.GroupBy(mg => CreateHash(mg.Value)).ToDictionary(g => g.Key, g => new { Graphic = g.First().Value, Indices = g.Select(g => g.Key) });
-            var graphics = monsterGraphicsByHash.Values.ToDictionary(g => g.Indices.Min(), g => g.Graphic);
-            var atlas = GraphicAtlasData.FromIndexedGraphics(GraphicAtlasData.MultiplePalettes, graphics, alpha: true);
-
-            foreach (var hashGroup in monsterGraphicsByHash)
-            {
-                var firstIndex = hashGroup.Value.Indices.Min();
-
-                foreach (var index in hashGroup.Value.Indices)
+                var file = monsterGraphicFiles[index];
+                var info = new GraphicInfo
                 {
-                    if (index != firstIndex)
-                    {
-                        atlas.ReuseTextureArea(index, firstIndex);
-                    }
+                    Width = frameWidth,
+                    Height = frameHeight,
+                    GraphicFormat = GraphicFormat.Palette5Bit,
+                    Alpha = true,
+                };
+
+                file.Position = 0;
+                int frameCount = file.Size / (5 * frameWidth * frameHeight / 8);
+                var graphic = new Graphic(frameCount * frameWidth, frameHeight, 0);
+
+                for (int i = 0; i < frameCount; i++)
+                {
+                    var subGraphic = new Graphic();
+                    graphicReader.ReadGraphic(subGraphic, file, info);
+                    graphic.AddOverlay(i * frameWidth, 0, subGraphic, false);
                 }
+
+                return graphic;
             }
 
-            File.WriteAllBytes(@"D:\Projects\Ambermoon.net\PyrdacorGameDataTests\monster_atlas.bin", atlas.Atlas!.Graphic.ToPixelData(gameData.GraphicInfoProvider.Palettes[gameData.GraphicInfoProvider.PrimaryUIPaletteIndex]));
+            var graphics = gameData.CharacterManager.Monsters
+                .GroupBy(monster => (int)monster.CombatGraphicIndex)
+                .ToDictionary(monsterGroup => monsterGroup.Key, monsterGroup => LoadGraphic(monsterGroup.Key, (int)monsterGroup.Max(m => m.FrameWidth), (int)monsterGroup.Max(m => m.FrameHeight)));
 
-            PADF.Write(dataWriter, atlas);
+            WriteIndexedGraphics(dataWriter, graphics, alpha: true, usePalette: true);
         });
 
         WriteDefaultSection(MagicNPCs, () =>
@@ -360,9 +364,21 @@ partial class GameData
         }
 
         var travelGraphicInfos = EnumHelper.GetValues<TravelType>().ToDictionary(t => t, t => CreateTravelGraphicInfos(t).ToArray());
+        var monsterGraphicFiles = gameData.Files["Monster_gfx.amb"].Files;
+        var monsterGraphicSizes = gameData.CharacterManager.Monsters
+            .GroupBy(monster => monster.CombatGraphicIndex)
+            .ToDictionary(m => m.Key, m =>
+            {
+                var first = m.First();
+                int frameWidth = (int)first.FrameWidth;
+                int frameHeight = (int)first.FrameHeight;
+                int frameCount = monsterGraphicFiles[(int)m.Key].Size / (5 * frameWidth * frameHeight / 8);
+
+                return new Size(frameCount * frameWidth, frameHeight);
+            });
         var graphicInfos = new GraphicsInfoData(graphicProvider.NPCGraphicOffsets, graphicProvider.NPCGraphicFrameCounts,
             CombatGraphics.Info, gameData.StationaryImageInfos, travelGraphicInfos, gameData.PlayerAnimationInfo,
-            gameData.CursorHotspots);
+            gameData.CursorHotspots, monsterGraphicSizes);
         WriteDefaultSection(MagicGraphicsInfo, () => PADF.Write(dataWriter, graphicInfos));
 
         WriteDefaultSection(MagicPartyTexts, () => WriteTexts(dataWriter, gameData.Files["Party_texts.amb"].Files));
@@ -548,10 +564,6 @@ partial class GameData
             combatGraphics.RemoveAt(combatGraphics.Count - 1);
 
             WriteGraphics(dataWriter, combatGraphics, tiles: false, alpha: true, usePalette: true);
-
-            var graphicAtlas = GraphicAtlasData.FromGraphics(GraphicAtlasData.MultiplePalettes, combatGraphics, true, 0);
-
-            File.WriteAllBytes(@"D:\Projects\Ambermoon.net\PyrdacorGameDataTests\battle_atlas.bin", graphicAtlas.Atlas!.Graphic.ToPixelData(gameData.GraphicInfoProvider.Palettes[gameData.GraphicInfoProvider.PrimaryUIPaletteIndex]));
         });
         WriteDefaultSection(MagicBattleFieldSprites, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.BattleFieldIcons), tiles: true, alpha: true, usePalette: true));
         WriteDefaultSection(MagicPortraits, () => WriteGraphics(dataWriter, graphicProvider.GetGraphics(GraphicType.Portrait), tiles: true, alpha: true, usePalette: true));
