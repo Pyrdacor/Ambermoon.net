@@ -168,7 +168,7 @@ partial class GameCore
 
         for (; y < endY; y++)
         {
-            int rowBaseBit = (int)(y * (uint)map.Width + x);
+            int rowBaseBit = (int)(y * (uint)map.Width + startX);
 
             for (x = startX; x < endX; x++)
             {
