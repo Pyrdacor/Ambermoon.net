@@ -1,7 +1,7 @@
 ﻿/*
  * RenderMap3D.cs - Handles 3D map rendering
  *
- * Copyright (C) 2020-2023  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2026  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -235,7 +235,7 @@ namespace Ambermoon.Render
                     new Position((int)(frame * surface.TextureWidth), 0);
             }
 
-            float GetDistance(float x1, float y1, float x2, float y2)
+            static float GetDistance(float x1, float y1, float x2, float y2)
             {
                 float diffX = x2 - x1;
                 float diffY = y2 - y1;

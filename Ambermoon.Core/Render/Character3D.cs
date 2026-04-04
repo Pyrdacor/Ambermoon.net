@@ -88,6 +88,14 @@ namespace Ambermoon.Render
                     // New position and last position is given (fixed route).
                     // In this case we ensure that the character is synced with
                     // its path and place him at the last position.
+
+                    if (Math.Max(Math.Abs(lastPosition.X - x), Math.Abs(lastPosition.Y - y)) > 1)
+                    {
+                        // If the distance between two consecutive positions is greater than
+                        // 1 in any direction, the character jumps to the new position instead.
+                        lastPosition = new((int)x, (int)y);
+                    }
+
                     Place((uint)lastPosition.X, (uint)lastPosition.Y, false);
                     lastTilePosition = new Position(lastPosition);
                     InitMovement();
