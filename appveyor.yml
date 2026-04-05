@@ -26,6 +26,14 @@ for:
     build:
         project: AmbermoonAndroid/AmbermoonAndroid.csproj
 
+-
+    branches:
+        only:
+            - game-refactoring
+
+    image:
+        - Visual Studio 2022
+
 platform: Any CPU
 configuration: Release
 
