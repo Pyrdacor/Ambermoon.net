@@ -153,7 +153,7 @@ public class AdvancedLogo
                 if (commandActivated)
                 {
                     var area = renderView.RenderScreenArea;
-                    var textureAtlas = textureAtlasManager!.GetOrCreate(Layer.Images);
+                    var textureAtlas = textureAtlasManager!.GetOrCreate(Layer.Images)!;
                     float ratio = (float)logoWidth / logoHeight;
                     int height = area.Height;
                     int width = Util.Round(ratio * height);

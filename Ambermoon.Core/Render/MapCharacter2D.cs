@@ -59,7 +59,7 @@ namespace Ambermoon.Render
 
         private MapCharacter2D(GameCore game, IGameRenderView renderView, Layer layer, IMapManager mapManager,
             RenderMap2D map, uint characterIndex, Map.CharacterReference characterReference)
-            : base(game, renderView.GetLayer(layer), TextureAtlasManager.Instance.GetOrCreate(layer),
+            : base(game, renderView.GetLayer(layer), TextureAtlasManager.Instance.GetOrCreate(layer)!,
                 renderView.SpriteFactory, direction => AnimationProvider(game, map.Map!, mapManager,
                     characterReference, renderView.GraphicInfoProvider, direction), map,
                 GetStartPosition(characterReference), () => Math.Max(1, map.Map!.PaletteIndex) - 1, _ => NullOffset)

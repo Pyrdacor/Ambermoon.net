@@ -15,7 +15,7 @@ using SavegameData = FileSpecs.SavegameData;
 public partial class GameData : IGameData, IGraphicAtlasProvider
 {
     ISavegameManager? savegameManager;
-    readonly Lazy<Savegame> initialSavegame;
+    readonly Lazy<Savegame>? initialSavegame;
     LazyFileLoader<GameDataInfo, GameDataInfo> gameDataInfoLoader = null!;
     LazyContainerLoader<Palette, Palette> paletteLoader = null!;
     LazyFileLoader<SavegameData, Savegame> savegameLoader = null!;
@@ -147,7 +147,7 @@ public partial class GameData : IGameData, IGraphicAtlasProvider
 
     public IOutroData OutroData => outroData.Value;
 
-    public Savegame InitialSavegame => initialSavegame.Value;
+    public Savegame InitialSavegame => initialSavegame!.Value;
 
     public TextDictionary Dictionary => dictionary.Value;
 

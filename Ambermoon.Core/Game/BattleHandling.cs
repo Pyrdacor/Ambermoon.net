@@ -125,7 +125,7 @@ partial class GameCore
         if (partyAdvances)
         {
             foreach (var monster in currentBattle!.Monsters)
-                layout.GetMonsterBattleAnimation(monster).Update(CurrentBattleTicks);
+                layout.GetMonsterBattleAnimation(monster)!.Update(CurrentBattleTicks);
         }
         else
         {
@@ -794,7 +794,7 @@ partial class GameCore
             }
 
             var newDisplayPosition = layout.GetMonsterCombatCenterPosition(currentColumn, newRow, monster);
-            animation.AnimationFinished += MoveAnimationFinished;
+            animation!.AnimationFinished += MoveAnimationFinished;
             animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Move).Take(1).ToArray(),
                 timePerMonster, CurrentBattleTicks, newDisplayPosition,
                 layout.RenderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));

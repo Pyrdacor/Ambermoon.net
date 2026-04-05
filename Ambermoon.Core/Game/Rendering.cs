@@ -324,7 +324,7 @@ partial class GameCore
     Player? player;
     Player2D? player2D = null;
     Player3D? player3D = null;
-    readonly ICamera3D camera3D = null;
+    readonly ICamera3D? camera3D = null;
     Position? lastPlayerPosition = null;
 
     internal IRenderPlayer RenderPlayer => Is3D ? player3D! : player2D!;

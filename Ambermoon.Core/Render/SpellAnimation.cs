@@ -1477,7 +1477,7 @@ namespace Ambermoon.Render
                                 }
                                 else
                                 {
-                                    var monsterAnimation = layout.GetMonsterBattleAnimation(monster);
+                                    var monsterAnimation = layout.GetMonsterBattleAnimation(monster)!;
                                     monsterAnimation.SetStartFrame(basePosition, baseScale);
                                     monsterAnimation.Reset();
                                 }

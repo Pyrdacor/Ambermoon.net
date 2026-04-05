@@ -35,7 +35,6 @@ public class Context
     Rotation rotation = Rotation.None;
     Matrix4 modelViewMatrix = Matrix4.Identity;
     static readonly float FovY3D = (float)Math.PI * 0.26f;
-    static readonly float DefaultAspectRatio = (float)Global.VirtualScreenWidth / Global.VirtualScreenHeight;
     State State { get; }
 
     public Context(State state, int width, int height, float aspect)

@@ -246,7 +246,7 @@ namespace Ambermoon.Render
             }
         }
 
-        public Event GetEvent(uint x, uint y, Savegame savegame)
+        public Event? GetEvent(uint x, uint y, Savegame savegame)
         {
             if (x >= Map!.Width)
             {

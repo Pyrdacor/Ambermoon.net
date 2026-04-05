@@ -200,7 +200,7 @@ partial class GameCore
 
         if (is3D)
         {
-            camera3D.GetForwardPosition(Global.DistancePerBlock, out float px, out float pz, false, false);
+            camera3D!.GetForwardPosition(Global.DistancePerBlock, out float px, out float pz, false, false);
             var position = Geometry.Geometry.CameraToBlockPosition(Map, px, pz);
 
             if (position != player.Position &&
@@ -285,7 +285,7 @@ partial class GameCore
             // In 3D we might trigger adjacent tile events.
             if (trigger != EventTrigger.Move)
             {
-                camera3D.GetForwardPosition(Global.DistancePerBlock, out float x, out float z, false, false);
+                camera3D!.GetForwardPosition(Global.DistancePerBlock, out float x, out float z, false, false);
                 var position = Geometry.Geometry.CameraToBlockPosition(Map!, x, z);
 
                 if (position != player.Position &&

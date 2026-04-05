@@ -655,7 +655,7 @@ namespace Ambermoon
             
             tooltip += monster.Name;
 
-            layout.GetMonsterBattleFieldTooltip(monster).Text = tooltip;
+            layout.GetMonsterBattleFieldTooltip(monster)!.Text = tooltip;
         }
 
         public void ResetClick()
@@ -672,9 +672,9 @@ namespace Ambermoon
                 foreach (var monster in Monsters.Where(m => m.Animations[(int)MonsterAnimationType.Start].UsedAmount != 0))
                 {
                     if (monster != currentlyAnimatedMonster)
-                        layout.GetMonsterBattleAnimation(monster).Reset();
+                        layout.GetMonsterBattleAnimation(monster)!.Reset();
                 }
-                layout.GetMonsterBattleAnimation(currentlyAnimatedMonster).Reset(); // this finishes the animation
+                layout.GetMonsterBattleAnimation(currentlyAnimatedMonster)!.Reset(); // this finishes the animation
                 return;
             }
 
@@ -702,7 +702,7 @@ namespace Ambermoon
 
         void PoisonDamageMonster(Monster monster, Action followAction)
         {
-            var animation = layout.GetMonsterBattleAnimation(monster);
+            var animation = layout.GetMonsterBattleAnimation(monster)!;
             uint damage = (uint)game.RandomInt(1, 5);
 
             void EndHurt()
@@ -1570,7 +1570,7 @@ namespace Ambermoon
                     }
                     if (battleAction.Character is Monster monster)
                     {
-                        var animation = layout.GetMonsterBattleAnimation(monster);
+                        var animation = layout.GetMonsterBattleAnimation(monster)!;
 
                         void AttackAnimationFinished()
                         {
@@ -1761,7 +1761,7 @@ namespace Ambermoon
 
                             if (playHurt && target is Monster monster) // This is only for the hurt monster animation
                             {
-                                var animation = layout.GetMonsterBattleAnimation(monster);
+                                var animation = layout.GetMonsterBattleAnimation(monster)!;
 
                                 void HurtAnimationFinished()
                                 {
@@ -1843,7 +1843,7 @@ namespace Ambermoon
 
                     if (battleAction.Character is Monster monster)
                     {
-                        var animation = layout.GetMonsterBattleAnimation(monster);
+                        var animation = layout.GetMonsterBattleAnimation(monster)!;
 
                         void CastAnimationFinished()
                         {
@@ -1968,7 +1968,7 @@ namespace Ambermoon
                     }
                     if (battleAction.Character is Monster monster)
                     {
-                        var animation = layout.GetMonsterBattleAnimation(monster);
+                        var animation = layout.GetMonsterBattleAnimation(monster)!;
 
                         void MoveAnimationFinished()
                         {
@@ -2123,7 +2123,7 @@ namespace Ambermoon
                     }
                     else if (target is Monster monster)
                     {
-                        var animation = layout.GetMonsterBattleAnimation(monster);
+                        var animation = layout.GetMonsterBattleAnimation(monster)!;
 
                         void HurtAnimationFinished()
                         {
@@ -3243,7 +3243,7 @@ namespace Ambermoon
             if (setupAction == null)
                 return;
 
-            var animation = layout.GetMonsterBattleAnimation(monster);
+            var animation = layout.GetMonsterBattleAnimation(monster)!;
 
             void AnimationFinished()
             {

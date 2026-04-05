@@ -1049,7 +1049,7 @@ public class GameRenderView : RenderView, IGameRenderView, IDisposable
         //(GetLayer(Layer.Map3DBackground) as RenderLayer).RenderBuffer.SkyShader.SetFade(fade);
     }
 
-    public void SetSkyColorReplacement(uint? skyColor, Color? replaceColor)
+    public void SetSkyColorReplacement(uint? skyColor, Color replaceColor)
     {
         (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetSkyColorReplacement(skyColor, replaceColor);
         (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetSkyColorReplacement(skyColor, replaceColor);

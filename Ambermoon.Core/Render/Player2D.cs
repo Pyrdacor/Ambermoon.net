@@ -35,7 +35,7 @@ namespace Ambermoon.Render
         public Player2D(GameCore game, IRenderLayer layer, Player player, RenderMap2D map,
             ISpriteFactory spriteFactory, Position startPosition,
             IMapManager mapManager)
-            : base(game, layer, TextureAtlasManager.Instance.GetOrCreate(Layer.Characters),
+            : base(game, layer, TextureAtlasManager.Instance.GetOrCreate(Layer.Characters)!,
                   spriteFactory, game.GetPlayerAnimationInfo, map, startPosition,
                   game.GetPlayerPaletteIndex, game.GetPlayerDrawOffset)
         {

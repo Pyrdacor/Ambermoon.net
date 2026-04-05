@@ -165,7 +165,7 @@ partial class GameCore
 
                 if (availablePositions.Count != 0)
                 {
-                    float tileX = (-camera3D.X - 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock;
+                    float tileX = (-camera3D!.X - 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock;
                     float tileY = Map!.Height - (camera3D.Z + 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock;
                     var basePosition = new FloatPosition(tileX, tileY);
                     var savegamePosition = availablePositions.Count == 1 ? availablePositions[0] :

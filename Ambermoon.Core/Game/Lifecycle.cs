@@ -386,7 +386,7 @@ partial class GameCore
         bool is3D = map.Type == MapType.Map3D;
         renderMap2D = new RenderMap2D(this, null, MapManager, renderView);
         renderMap3D = new RenderMap3D(this, null, MapManager, renderView, 0, 0, CharacterDirection.Up);
-        player3D = new Player3D(this, player, MapManager, camera3D, renderMap3D);
+        player3D = new Player3D(this, player, MapManager, camera3D!, renderMap3D);
         player.MovementAbility = PlayerMovementAbility.Walking;
         renderMap2D.MapChanged += RenderMap2D_MapChanged;
         renderMap3D.MapChanged += RenderMap3D_MapChanged;

@@ -54,7 +54,7 @@ public class LoadingBar
         renderView.ShowImageLayerOnly = true;
 
         var area = new Rect(renderView.RenderScreenArea);
-        var textureAtlas = textureAtlasManager!.GetOrCreate(Layer.Images);
+        var textureAtlas = textureAtlasManager!.GetOrCreate(Layer.Images)!;
         var layer = renderView.GetLayer(Layer.Images);
 
         ILayerSprite CreateSprite(Size texSize, Size size, byte displayLayer, uint textureIndex)

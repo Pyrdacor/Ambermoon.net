@@ -1020,7 +1020,7 @@ partial class GameCore
             var positionMarker = popup.AddImage(new Rect(baseX + player!.Position.X * 2 - 7, baseY + player.Position.Y * 2 - 4, 16, 10),
                 positionMarkerGraphicIndex, Layer.UI, 120, UIPaletteIndex);
             positionMarker.ClipArea = contentArea;
-            var positionMarkerBaseTextureOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(positionMarkerGraphicIndex);
+            var positionMarkerBaseTextureOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!.GetOffset(positionMarkerGraphicIndex);
             int positionMarkerFrame = 0;
             void AnimatePosition()
             {
@@ -1163,7 +1163,7 @@ partial class GameCore
                 int legendPage = 0;
                 ILayerSprite[] legendSprites = new ILayerSprite[8];
                 UIText[] legendTexts = new UIText[8];
-                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!;
                 int scrollOffsetX = 0; // in 16 pixel chunks
                 int scrollOffsetY = 0; // in 16 pixel chunks
 

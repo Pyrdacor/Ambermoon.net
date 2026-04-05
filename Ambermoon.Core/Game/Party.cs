@@ -519,7 +519,7 @@ partial class GameCore
         if (!HasClimbEvent((uint)player.Position.X, (uint)player.Position.Y))
         {
             // Also try forward position
-            camera3D.GetForwardPosition(Global.DistancePerBlock, out float x, out float z, false, false);
+            camera3D!.GetForwardPosition(Global.DistancePerBlock, out float x, out float z, false, false);
             var position = Geometry.Geometry.CameraToBlockPosition(Map!, x, z);
 
             if (position == player.Position ||
@@ -538,7 +538,7 @@ partial class GameCore
         if (climbEvent != null)
         {
             // Attach player to ladder or hole
-            float angle = camera3D.Angle;
+            float angle = camera3D!.Angle;
             Geometry.Geometry.BlockToCameraPosition(Map!, levitatePosition, out float x, out float z);
             camera3D.SetPosition(-x, z);
             camera3D.TurnTowards(angle);
@@ -594,7 +594,7 @@ partial class GameCore
     void Fall(uint tileX, uint tileY, Action? finishAction = null)
     {
         // Attach player to ladder or hole
-        float angle = camera3D.Angle;
+        float angle = camera3D!.Angle;
         Geometry.Geometry.BlockToCameraPosition(Map!, new Position((int)tileX, (int)tileY), out float x, out float z);
         camera3D.SetPosition(-x, z);
         camera3D.TurnTowards(angle);
@@ -613,11 +613,11 @@ partial class GameCore
             return;
         }
 
-        var sourceY = !mapChange ? camera3D.Y : (up ? RenderMap3D.GetFloorY() : RenderMap3D.GetLevitatingY());
+        var sourceY = !mapChange ? camera3D!.Y : (up ? RenderMap3D.GetFloorY() : RenderMap3D.GetLevitatingY());
         player3D!.SetY(sourceY);
-        var targetY = mapChange ? camera3D.GroundY : (up ? RenderMap3D.GetLevitatingY() : RenderMap3D.GetFloorY());
+        var targetY = mapChange ? camera3D!.GroundY : (up ? RenderMap3D.GetLevitatingY() : RenderMap3D.GetFloorY());
         float stepSize = RenderMap3D.GetLevitatingStepSize();
-        float dist = Math.Abs(targetY - camera3D.Y);
+        float dist = Math.Abs(targetY - camera3D!.Y);
         int steps = Math.Max(1, Util.Round(dist / stepSize));
 
         PlayTimedSequence(steps, () =>
@@ -712,7 +712,7 @@ partial class GameCore
 
         player3D.SetPosition(targetPosition.X, targetPosition.Y, CurrentTicks, true);
         player3D.TurnTowards((float)player3D.Direction * 90.0f);
-        camera3D.MoveBackward(0.35f * Global.DistancePerBlock, false, false);
+        camera3D!.MoveBackward(0.35f * Global.DistancePerBlock, false, false);
     }
 
     internal void PlayerMoved(bool mapChange, Position? lastPlayerPosition = null, bool updateSavegame = true, Map? lastMap = null)
