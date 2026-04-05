@@ -821,7 +821,21 @@ namespace Ambermoon
                             }
                             break;
                         }
-					}
+                        case ConditionEvent.ConditionType.HourTime:
+                        {
+                            uint minute = conditionEvent.ObjectIndex;
+                            uint currentMinute = game.GameTime?.Minute ?? 0;
+
+                            if ((minute == currentMinute) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        }
+
+                    }
 
                     // For some follow-up events we won't proceed by using Eye, Hand or Mouth.
                     if (conversationPartner == null && conditionEvent.Next != null &&

@@ -858,7 +858,8 @@ namespace Ambermoon.Data
             SpellEmpowered = 0x1a,
             IsNight = 0x1b,
             Attribute = 0x1c,
-            Skill = 0x1d
+            Skill = 0x1d,
+            HourTime = 0x1e, // minute in an hour (ObjectValue = 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 or 55)
         }
 
         public ConditionType TypeOfCondition { get; set; }
@@ -950,7 +951,8 @@ namespace Ambermoon.Data
                 ConditionType.IsNight => $"{Type}: Is {(Value == 0 ? "not " : "")}night, {falseHandling}",
                 ConditionType.Attribute => $"{Type}: Active player {(Attribute)ObjectIndex} {(Value == 0 ? "<" : ">=")} {Count}, {falseHandling}",
                 ConditionType.Skill => $"{Type}: Active player {(Skill)ObjectIndex} {(Value == 0 ? "<" : ">=")} {Count}, {falseHandling}",
-				_ => $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, {falseHandling}",
+                ConditionType.HourTime => $"{Type}: Minute of hour {(Value == 0 ? "<>" : "==")} {ObjectIndex}, {falseHandling}",
+                _ => $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, {falseHandling}",
             };
         }
     }
