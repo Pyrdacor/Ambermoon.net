@@ -5,6 +5,7 @@ using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using Ambermoon.UI;
+using static Ambermoon.Data.Map.CharacterReference;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon;
@@ -2108,6 +2109,37 @@ partial class GameCore
     internal bool IsNight()
     {
         return CurrentSavegame!.Hour >= 22 || CurrentSavegame.Hour < 5;
+    }
+
+    internal (Tileset.TileFlags Flags, uint CombatBackgroundIndex) GetTileFlags(int x, int y)
+    {
+        if (is3D)
+        {
+            var block = Map!.Blocks[x, y];
+
+            if (block.ObjectIndex != 0)
+                return ((Tileset.TileFlags)0x007fff00, MapManager.GetLabdataForMap(Map).CombatBackground);
+            else if (block.WallIndex != 0)
+            {
+                var flags = MapManager.GetLabdataForMap(Map).Walls[(int)block.WallIndex - 1].Flags;
+                return (flags, (uint)flags >> 28);
+            }
+            else
+                return (Tileset.TileFlags.None, 0);
+        }
+        else // 2D
+        {
+            var tile = renderMap2D![(uint)x, (uint)y];
+            var map = renderMap2D.GetMapFromTile((uint)x, (uint)y);
+            var tileset = MapManager.GetTilesetForMap(map);
+            var backTileFlags = tile.BackTileIndex == 0 ? Tileset.TileFlags.None : tileset.Tiles[(int)tile.BackTileIndex - 1].Flags;
+            var frontTileFlags = tile.FrontTileIndex == 0 ? Tileset.TileFlags.None : tileset.Tiles[(int)tile.FrontTileIndex - 1].Flags;
+
+            if (frontTileFlags == Tileset.TileFlags.None || frontTileFlags.HasFlag(Tileset.TileFlags.UseBackgroundTileFlags))
+                return (backTileFlags, (uint)backTileFlags >> 28);
+            else
+                return (frontTileFlags, (uint)frontTileFlags >> 28);
+        }
     }
 
     internal struct AutomapOptions

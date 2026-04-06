@@ -88,7 +88,14 @@ partial class GameCore
                 var tileset = MapManager.GetTilesetForMap(Map);
 
                 if (tile.FrontTileIndex != 0)
-                    combatBackgroundIndex = tileset.Tiles[tile.FrontTileIndex - 1].CombatBackgroundIndex;
+                {
+                    var frontTile = tileset.Tiles[tile.FrontTileIndex - 1];
+
+                    if (frontTile.UseBackgroundTileFlags)
+                        combatBackgroundIndex = tileset.Tiles[tile.BackTileIndex - 1].CombatBackgroundIndex;
+                    else
+                        combatBackgroundIndex = frontTile.CombatBackgroundIndex;
+                }
                 else if (tile.BackTileIndex != 0)
                     combatBackgroundIndex = tileset.Tiles[tile.BackTileIndex - 1].CombatBackgroundIndex;
             }
