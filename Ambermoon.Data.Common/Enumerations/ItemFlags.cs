@@ -36,6 +36,11 @@ namespace Ambermoon.Data
         /// <summary>
         /// Item can be duplicated.
         /// </summary>
-        Cloneable = 0x40
+        Cloneable = 0x40,
+        /// <summary>
+        /// If given, the graphic index is 256 higher than the given one.
+        /// This allows more than 256 graphics for items.
+        /// </summary>
+        ExtendedGraphicIndex = 0x80,
     }
 }

@@ -66,6 +66,9 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             if (dataReader.ReadByte() != 0) // end of item
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid item data.");
+
+            if (item.Flags.HasFlag(ItemFlags.ExtendedGraphicIndex))
+                item.GraphicIndex += 256;
         }
     }
 }

@@ -398,6 +398,9 @@ partial class GameCore
             case Spell.SelfReviving:
                 ApplySpellEffect(spell, caster, caster, finishAction, checkFail);
                 break;
+            case Spell.MagicSwordAttack:
+                // TODO
+                break;
             default:
                 throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no spell without target.");
         }

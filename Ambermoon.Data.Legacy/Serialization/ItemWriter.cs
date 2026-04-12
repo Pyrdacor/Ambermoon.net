@@ -14,7 +14,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         {
             void WriteSignedByte(int value) => dataWriter.Write(unchecked((byte)(sbyte)value));
 
-            dataWriter.Write((byte)item.GraphicIndex);
+            dataWriter.Write((byte)(item.GraphicIndex % 256));
             dataWriter.WriteEnumAsByte(item.Type);
             dataWriter.WriteEnumAsByte(item.EquipmentSlot);
             dataWriter.Write(item.BreakChance);
@@ -62,7 +62,10 @@ namespace Ambermoon.Data.Legacy.Serialization
             dataWriter.Write(item.RechargePrice);
             WriteSignedByte(item.MagicArmorLevel);
             WriteSignedByte(item.MagicAttackLevel);
-            dataWriter.WriteEnumAsByte(item.Flags);
+            var flags = item.Flags;
+            if (item.GraphicIndex >= 256)
+                flags |= ItemFlags.ExtendedGraphicIndex;
+            dataWriter.WriteEnumAsByte(flags);
             dataWriter.WriteEnumAsByte(item.DefaultSlotFlags);
             dataWriter.WriteEnumAsWord(item.Classes);
             dataWriter.Write((word)item.Price);
