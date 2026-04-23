@@ -51,6 +51,8 @@ internal class CharacterManager(
         var (baseAtlas, sizes) = monsterGraphics.Value;
         var monsters = monsterGroup.Monsters.OfType<Monster>().DistinctBy(monster => monster.Index).ToList();
         var graphics = new Dictionary<uint, Graphic>(monsters.Count);
+        var unchangedGraphics = new Dictionary<MonsterGraphicIndex, uint>(); // Value is the monster index which used it first
+        var reusedGraphics = new Dictionary<uint, List<uint>>(); // Key is the monster index which used the graphic first, value is a list of monster indices which reuse it
 
         foreach (var monster in monsters)
         {
@@ -59,7 +61,57 @@ internal class CharacterManager(
             var graphic = baseAtlas.Graphic.GetArea(offset.X, offset.Y, size.Width, size.Height);
             int numFrames = size.Width / (int)monster.FrameWidth;
 
-            graphics.Add(monster.Index, graphic.CreateScaled(numFrames * (int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight));
+            void ReplacePaletteIndices((byte oldIndex, byte newIndex)[] indices)
+            {
+                for (int i = 0; i < graphic.Data.Length; ++i)
+                {
+                    for (int j = 0; j < indices.Length; ++j)
+                    {
+                        if (graphic.Data[i] == indices[j].oldIndex)
+                        {
+                            graphic.Data[i] = indices[j].newIndex;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            var changedPaletteIndices = new List<(byte oldIndex, byte newIndex)>();
+
+            for (int i = 0; i < 32; ++i)
+            {
+                if (monster.MonsterPalette[i] != i)
+                {
+                    changedPaletteIndices.Add(((byte)i, monster.MonsterPalette[i]));
+                }
+            }
+
+            if (changedPaletteIndices.Count == 0)
+            {
+                if (unchangedGraphics.TryGetValue(monster.CombatGraphicIndex, out var firstMonsterIndex))
+                {
+                    if (!reusedGraphics.TryGetValue(firstMonsterIndex, out List<uint>? value))
+                    {
+                        value = [];
+                        reusedGraphics[firstMonsterIndex] = value;
+                    }
+
+                    value.Add(monster.Index);
+                    continue;
+                }
+                else
+                {
+                    unchangedGraphics.Add(monster.CombatGraphicIndex, monster.Index);
+                }
+
+            }
+            else
+            {
+                graphic = graphic.Clone();
+                ReplacePaletteIndices(changedPaletteIndices.ToArray());
+            }
+
+            graphics.Add(monster.Index, graphic);
         }
 
         int x = 0;
@@ -72,15 +124,30 @@ internal class CharacterManager(
         sortedGraphics.Sort((a, b) => a.Value.Width.CompareTo(b.Value.Width));
 
         var textureAreas = new List<(uint Index, Position Position, Graphic Graphic)>(sortedGraphics.Count);
+        var realTextureAreas = new List<(uint Index, Position Position, Graphic Graphic)>(sortedGraphics.Count);
 
         while (sortedGraphics.Count != 0)
         {
             var (index, graphic) = sortedGraphics[^1];
             sortedGraphics.RemoveAt(sortedGraphics.Count - 1);
 
+            void AddTextureArea(uint index, int x, int y)
+            {
+                textureAreas.Add((index, new Position(x, y), graphic));
+                realTextureAreas.Add((index, new Position(x, y), graphic));
+
+                if (reusedGraphics.TryGetValue(index, out List<uint>? reusedMonsterIndices))
+                {
+                    foreach (var reusedMonsterIndex in reusedMonsterIndices)
+                    {
+                        textureAreas.Add((reusedMonsterIndex, new Position(x, y), graphic));
+                    }
+                }
+            }
+
             if (y == 0)
             {
-                textureAreas.Add((index, new Position(0, 0), graphic));
+                AddTextureArea(index, 0, 0);
                 y = graphic.Height;
                 width = graphic.Width;
                 nextY = y;
@@ -89,14 +156,14 @@ internal class CharacterManager(
             {
                 if (x + graphic.Width == width)
                 {
-                    textureAreas.Add((index, new Position(x, y), graphic));
+                    AddTextureArea(index, x, y);
                     y = Math.Max(nextY, y + graphic.Height);
                     nextY = y;
                     x = 0;
                 }
                 else if (x + graphic.Width < width)
                 {
-                    textureAreas.Add((index, new Position(x, y), graphic));
+                    AddTextureArea(index, x, y);
                     nextY = Math.Max(nextY, y + graphic.Height);
                     x += graphic.Width;
                 }
@@ -113,7 +180,7 @@ internal class CharacterManager(
 
                             if (x + g.Width <= width)
                             {
-                                textureAreas.Add((id, new Position(x, y), g));
+                                AddTextureArea(id, x, y);
                                 nextY = Math.Max(nextY, y + g.Height);
 
                                 if (x + g.Width == width)
@@ -138,7 +205,7 @@ internal class CharacterManager(
 
                     y = nextY;
                     x = graphic.Width;
-                    textureAreas.Add((index, new Position(0, y), graphic));
+                    AddTextureArea(index, 0, y);
                     nextY = y + graphic.Height;
                 }
             }
@@ -146,7 +213,7 @@ internal class CharacterManager(
 
         var atlasGraphic = new Graphic(width, nextY, 0);
         
-        foreach (var textureArea in textureAreas)
+        foreach (var textureArea in realTextureAreas)
         {
             atlasGraphic.AddOverlay(textureArea.Position.X, textureArea.Position.Y, textureArea.Graphic, false);
         }

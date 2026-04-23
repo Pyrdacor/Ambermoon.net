@@ -59,12 +59,12 @@ namespace Ambermoon.Data.Legacy.Characters
                 Alpha = true,
                 PaletteOffset = 0
             };
-            int numFrames = file.Size / ((graphicInfo.Width * graphicInfo.Height * 5 + 7) / 8); // TODO: is this inside monster data?
-            var compoundGraphic = new Graphic(numFrames * (int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight, 0);
+            int numFrames = file.Size / ((graphicInfo.Width * graphicInfo.Height * 5 + 7) / 8);
+            var compoundGraphic = new Graphic(numFrames * (int)monster.FrameWidth, (int)monster.FrameHeight, 0);
             for (int i = 0; i < numFrames; ++i)
             {
                 graphicReader.ReadGraphic(graphic, file, graphicInfo);
-                compoundGraphic.AddOverlay((uint)i * monster.MappedFrameWidth, 0, graphic.CreateScaled((int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight), false);
+                compoundGraphic.AddOverlay((uint)i * monster.FrameWidth, 0, graphic.CreateScaled((int)monster.FrameWidth, (int)monster.FrameHeight), false);
             }
             for (int i = 0; i < compoundGraphic.Data.Length; ++i)
                 compoundGraphic.Data[i] = monster.MonsterPalette[compoundGraphic.Data[i] & 0x1f];

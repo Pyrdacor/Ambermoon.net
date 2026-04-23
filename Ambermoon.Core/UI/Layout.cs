@@ -5904,6 +5904,7 @@ namespace Ambermoon.UI
             float sizeMultiplier = RenderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);            
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleMonsterRow)!;
             var sprite = (RenderView.SpriteFactory.Create((int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight, true) as ILayerSprite)!;
+            sprite.TextureSize = new Size((int)monster.FrameWidth, (int)monster.FrameHeight);
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(monster.Index);
             sprite.DisplayLayer = displayLayer;
             sprite.PaletteIndex = paletteIndex;
