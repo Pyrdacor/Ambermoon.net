@@ -2206,9 +2206,9 @@ namespace Ambermoon
             int colorIndex = -1;
             const int numColorCycles = 3;
 
-            if (battleFieldDamageTexts.ContainsKey(tile))
+            if (battleFieldDamageTexts.TryGetValue(tile, out IRenderText? value))
             {
-                battleFieldDamageTexts[tile].Delete();
+                value.Delete();
                 battleFieldDamageTexts[tile] = damageText;
             }
             else
