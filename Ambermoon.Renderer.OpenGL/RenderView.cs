@@ -971,7 +971,7 @@ public class GameRenderView : RenderView, IGameRenderView, IDisposable
         DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
         OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
         : base(contextProvider, graphicInfoProvider, textureAtlasManagerProvider, framebufferWidth, framebufferHeight, windowSize,
-            ref useEffectFrameBuffer, ref useEffectFrameBuffer, screenBufferModeProvider, effectProvider, additionalPalettes,
+            ref useFrameBuffer, ref useEffectFrameBuffer, screenBufferModeProvider, effectProvider, additionalPalettes,
             state => new Camera3D(state), deviceType, sizingPolicy, orientationPolicy)
     {
         AspectProcessor = UpdateAspect;

@@ -1421,7 +1421,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => digitTextureAtlas.GetOffset((uint)x));
     }
 
-    GameRenderView CreateRenderView(IGameData gameData, ICoreConfiguration configuration, IGraphicInfoProvider graphicInfoProvider,
+    GameRenderView CreateRenderView(IGameData gameData, Configuration configuration, IGraphicInfoProvider graphicInfoProvider,
         IFontProvider fontProvider, Graphic[] additionalPalettes, Func<TextureAtlasManager> textureAtlasManagerProvider)
     {
         bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;
