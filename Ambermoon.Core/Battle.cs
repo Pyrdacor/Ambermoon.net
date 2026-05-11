@@ -1707,10 +1707,18 @@ namespace Ambermoon
                             return;
                         }
 
-                        if (target is PartyMember targetPlayer &&
-                            (spell == Spell.Hurry || spell == Spell.MassHurry) &&
-                            !hurriedPlayers.Contains(targetPlayer))
-                            hurriedPlayers.Add(targetPlayer);
+                        if (target is PartyMember targetPlayer)
+                        {
+                            if ((spell == Spell.Hurry || spell == Spell.MassHurry) && !hurriedPlayers.Contains(targetPlayer))
+                                hurriedPlayers.Add(targetPlayer);
+                            else if (spell.IsPhysicallyBlocked() && IsParryingSuccessfully(targetPlayer, battleAction.Character))
+                            {
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackWasParried,
+                                    battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
+                                finishAction?.Invoke();
+                                return;
+                            }
+                        }
 
                         game.CurrentSpellTarget = target;
                         int position = GetCharacterPosition(target);
@@ -1749,7 +1757,7 @@ namespace Ambermoon
                                         finishAction?.Invoke();
                                     else if (blocked)
                                         spellBlocked = true;
-                                }, finish))
+                                }, finish, true, !spell.IsPhysicallyBlocked()))
                                 {
                                     failed = true;
                                     // Note: The finishAction is called automatically if CheckSpell returns false.
@@ -1873,7 +1881,7 @@ namespace Ambermoon
                                 case SpellTarget.None:
                                     if (spell == Spell.SelfHealing || spell == Spell.SelfReviving)
                                         CastSpellOn(battleAction.Character, () => EndCast());
-                                    else
+                                     else
                                         ApplySpellEffect(battleAction.Character, null, spell, game.CurrentBattleTicks, () => EndCast());
                                     break;
                                 case SpellTarget.SingleEnemy:
@@ -1888,6 +1896,7 @@ namespace Ambermoon
                                     CastSpellOnAll(battleAction.Character.Type, () => EndCast());
                                     break;
                                 case SpellTarget.EnemyRow:
+                                case SpellTarget.EnemyRowInWeaponRange:
                                 {
                                     var enemyType = battleAction.Character.Type == CharacterType.Monster ?
                                         CharacterType.PartyMember : CharacterType.Monster;
@@ -1901,7 +1910,7 @@ namespace Ambermoon
                                     CastSpellOnRow(enemyType, (int)targetRowOrTile, () => EndCast());
                                     break;
                                 }
-                                case SpellTarget.FriendRow:
+                                /*case SpellTarget.FriendRow:
                                 {
                                     if (!Enumerable.Range((int)targetRowOrTile * 6, 6).Any(p => GetCharacterAt(p)?.Type == battleAction.Character.Type))
                                     {
@@ -1912,7 +1921,7 @@ namespace Ambermoon
                                     }
                                     CastSpellOnRow(battleAction.Character.Type, (int)targetRowOrTile, () => EndCast());
                                     break;
-                                }
+                                }*/
                                 case SpellTarget.BattleField:
                                 {
                                     var character = GetCharacterAt((int)GetBlinkCharacterPosition(battleAction.ActionParameter));
@@ -3104,6 +3113,22 @@ namespace Ambermoon
                         SetMonsterTooltip(monsterTarget);
                     }
                     break;
+                case Spell.MagicSwordAttack:
+                {
+                    // Deals 100% to 125% of the total attack damage to an enemy row in range.
+                    // The damage is increased by 10% per additional APR (1 APR is 100% damage, 2 APR is 110% damage, etc).
+                    // The caster is healed by 10% of the damage dealt.
+                    uint damageAmount = (uint)Math.Max(caster.BaseAttackDamage + caster.BonusAttackDamage, 1);
+                    uint aprBonus = caster.AttacksPerRound > 1 ? ((uint)caster.AttacksPerRound - 1) * 10u : 0u;
+                    damageAmount += damageAmount * aprBonus / 100;
+                    uint minDamage = Math.Max(damageAmount, 1);
+                    uint maxDamage = Math.Max((125 * damageAmount) / 100, 1);
+                    uint dealtDamage = DealDamage(minDamage, maxDamage - minDamage);
+                    caster.HitPoints.CurrentValue += Math.Min(dealtDamage / 10, caster.HitPoints.TotalMaxValue - caster.HitPoints.CurrentValue);
+                    if (caster is PartyMember castingMember)
+                        layout.FillCharacterBars(castingMember);
+                    return;
+                }
                 default:
                     game.ApplySpellEffect(spell, caster, target!, finishAction, false);
                     return;
@@ -3111,7 +3136,7 @@ namespace Ambermoon
 
             finishAction?.Invoke();
 
-            void DealDamage(uint baseDamage, uint variableDamage, bool useSpellBonusDamage = true)
+            uint DealDamage(uint baseDamage, uint variableDamage, bool useSpellBonusDamage = true)
             {
 				if (!game.Features.HasFlag(Features.SpellDamageBonus))
                     useSpellBonusDamage = false;
@@ -3210,6 +3235,8 @@ namespace Ambermoon
                 );
 
                 ShowBattleFieldDamage(GetSlotFromCharacter(target), damage);
+
+                return damage;
             }
         }
 
@@ -3416,22 +3443,25 @@ namespace Ambermoon
         BattleActionType PickMonsterAction(Monster monster, bool wantsToFlee, List<int> forbiddenMonsterMoveSpots, bool canCast)
         {
             var position = GetCharacterPosition(monster);
-            List<BattleActionType> possibleActions = new List<BattleActionType>();
 
             if (position < 6 && wantsToFlee && monster.CanFlee())
             {
                 return BattleActionType.Flee;
             }
+
             if (wantsToFlee && monster.CanMove())
             {
                 // In this case always retreat if possible
                 if (MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
                     return BattleActionType.Move;
             }
+
             if (monster.Conditions.HasFlag(Condition.Crazy))
             {
                 return AttackOrMove(true);
             }
+
+            List<BattleActionType> possibleActions = [];
             bool canAttackRanged = true;
             bool canAttackMelee = true;
 
@@ -3442,7 +3472,33 @@ namespace Ambermoon
                 if (rand < 8)
                 {
                     if (canCast && monster.HasAnySpell() && monster.Conditions.CanCastSpell(game.Features) && CanCastAnySpell(monster))
+                    {
+                        if (HasRangeDependentSpell(monster))
+                        {
+                            if (!monster.HasLongRangedWeapon(game.ItemManager))
+                            {
+                                int monsterRow = GetCharacterPosition(monster) / 6;
+                                var partyMemberRowDistances = partyMembers
+                                    .OfType<PartyMember>()
+                                    .Where(p => p.Alive && !fledCharacters.Contains(p))
+                                    .Select(GetCharacterPosition)
+                                    .Select(pos => pos / 6)
+                                    .Distinct()
+                                    .Select(row => Math.Abs(row - monsterRow));
+
+                                if (!partyMemberRowDistances.Any(dist => dist <= 1))
+                                {
+                                    if (monster.Conditions.CanMove())
+                                        return BattleActionType.Move;
+
+                                    canCast = false;
+                                    continue;
+                                }
+                            }
+                        }
+
                         return BattleActionType.CastSpell;
+                    }
 
                     canCast = false;
                 }
@@ -3495,6 +3551,7 @@ namespace Ambermoon
                     }
                 }
             }
+
             BattleActionType AttackOrMove(bool mad = false)
             {
                 if (mad)
@@ -3538,7 +3595,7 @@ namespace Ambermoon
             var sp = caster.SpellPoints.CurrentValue;
 
             if (sp == 0)
-                return new List<Spell>();
+                return [];
 
             return caster.LearnedSpells.Where(spell =>
             {
@@ -3564,7 +3621,12 @@ namespace Ambermoon
             return GetAvailableMonsterSpells(monster).Count != 0;
         }
 
-        int GetMoveRange(Character character)
+        bool HasRangeDependentSpell(Monster monster)
+        {
+            return GetAvailableMonsterSpells(monster).Any(spell => SpellInfos.Entries[spell].Target == SpellTarget.EnemyRowInWeaponRange);
+        }
+
+        static int GetMoveRange(Character character)
         {
             return Util.Limit(1, (int)character.Attributes[Attribute.Speed].TotalCurrentValue / 40, 3);
         }
@@ -4069,30 +4131,6 @@ namespace Ambermoon
             return possiblePositions[game.RandomInt(0, possiblePositions.Count - 1)];
         }
 
-        // TODO: not used? why?
-        uint GetBestSpellSpotOrRow(Monster monster, Spell spell)
-        {
-            var spellInfo = game.SpellInfos[spell];
-
-            if (spellInfo.Target == SpellTarget.EnemyRow)
-            {
-                // TODO: maybe pick the row with most players for some clever monsters?
-                bool RowEmpty(int row) => !battleField.Skip(row * 6).Take(6).Any(c => c?.Type == CharacterType.PartyMember);
-                if (RowEmpty(3))
-                    return 4;
-                else if (RowEmpty(4))
-                    return 3;
-                else
-                    return (uint)game.RandomInt(3, 4);
-            }
-            else
-            {
-                var positions = partyMembers.Where(p => p?.Alive == true)
-                    .Select(p => GetCharacterPosition(p!)).ToArray();
-                return (uint)positions[game.RandomInt(0, positions.Length - 1)];
-            }
-        }
-
         uint PickActionParameter(BattleActionType battleAction, Monster monster, bool wantsToFlee, List<int> forbiddenMonsterMoveSpots)
         {
             switch (battleAction)
@@ -4121,58 +4159,115 @@ namespace Ambermoon
                     var averagePrio = maxDamagePlayers.Average(x => x.Prio);
                     var spells = GetAvailableMonsterSpells(monster);
                     uint targetTileOrRow = 0;
+
                     void PickBestTargetTile()
                     {
                         var players = maxDamagePlayers.ToList();
                         targetTileOrRow = (uint)GetCharacterPosition(players[game.RandomInt(0, players.Count - 1)].Player!);
                     }
-                    void PickBestTargetRow()
+
+                    void PickBestTargetRow(bool reachableOnly)
                     {
                         var rows = maxDamagePlayers.GroupBy(x => x.Row).Select(g => new { Row = g.Key, Prio = g.Average(x => x.Prio) });
-                        var maxRowPrio = rows.Max(r => r.Prio);
-                        targetTileOrRow = (uint)rows.First(row => row.Prio == maxRowPrio).Row;
-                    }
-                    if (partyMembers.Count(p => p != null && p.Alive && !fledCharacters.Contains(p)) == 1)
-                    {
-                        // Only 1 player in battle
-                        // Prefer single target spells
-                        var singleTargetSpells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.SingleEnemy).ToList();
+                        int monsterRow = GetCharacterPosition(monster) / 6;
 
-                        if (singleTargetSpells.Count != 0)
+                        if (reachableOnly && !monster.HasLongRangedWeapon(game.ItemManager))
+                        {
+                            rows = rows.Where(r => Math.Abs(r.Row - monsterRow) <= 1);
+
+                            if (rows.Count() == 0)
+                            {
+                                rows = partyMembers
+                                    .OfType<PartyMember>()
+                                    .Select(p => GetCharacterPosition(p) / 6)
+                                    .Distinct()
+                                    .Where(row => Math.Abs(row - monsterRow) <= 1)
+                                    .Order()
+                                    .Select(row => new { Row = row, Prio = 1.0 });
+                            }
+                        }
+
+                        var maxRowPrio = rows.Max(r => r.Prio);
+                        targetTileOrRow = (uint)(rows.FirstOrDefault(row => row.Prio == maxRowPrio)?.Row ?? Math.Min(4, monsterRow + 1));
+                    }
+
+                    if (spells.Count == 1)
+                    {
+                        var spellTargetType = SpellInfos.Entries[spells[0]].Target;
+
+                        switch (spellTargetType)
+                        {
+                            case SpellTarget.SingleEnemy:
+                                PickBestTargetTile();
+                                break;
+                            case SpellTarget.EnemyRow:
+                                PickBestTargetRow(false);
+                                break;
+                            case SpellTarget.EnemyRowInWeaponRange:
+                                PickBestTargetRow(true);
+                                break;
+                            case SpellTarget.AllEnemies:
+                                targetTileOrRow = 0;
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        if (partyMembers.Count(p => p != null && p.Alive && !fledCharacters.Contains(p)) == 1)
+                        {
+                            // Only 1 player in battle
+                            // Prefer single target spells
+                            var singleTargetSpells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.SingleEnemy).ToList();
+
+                            if (singleTargetSpells.Count != 0)
+                            {
+                                PickBestTargetTile();
+                                spells = singleTargetSpells;
+                            }
+                            else
+                            {
+                                var rowTargetSpells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow || game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange).ToList();
+
+                                if (rowTargetSpells.Count != 0)
+                                {
+                                    if (rowTargetSpells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange))
+                                    {
+                                        PickBestTargetRow(true);
+                                        spells = rowTargetSpells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange).ToList();
+                                    }
+                                    else
+                                    {
+                                        PickBestTargetRow(false);
+                                        spells = rowTargetSpells;
+                                    }
+                                }
+
+                                // Otherwise pick from all spells
+                            }
+                        }
+                        else if (averagePrio >= 75 && spells.Any(s => game.SpellInfos[s].Target == SpellTarget.AllEnemies))
+                        {
+                            spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.AllEnemies).ToList();
+                        }
+                        else if (averagePrio >= 50 && spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange))
+                        {
+                            PickBestTargetRow(true);
+                            spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange).ToList();
+                        }
+                        else if (averagePrio >= 50 && spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow))
+                        {
+                            PickBestTargetRow(false);
+                            spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow).ToList();
+                        }
+                        else // single target spell
                         {
                             PickBestTargetTile();
-                            spells = singleTargetSpells;
+                            spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.SingleEnemy).ToList();
                         }
-                        else
-                        {
-                            var rowTargetSpells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow).ToList();
-
-                            if (rowTargetSpells.Count != 0)
-                            {
-                                PickBestTargetRow();
-                                spells = rowTargetSpells;
-                            }
-
-                            // Otherwise pick from all spells
-                        }
+                        // This might happen if the monster only has All or Row spells and the prio forces to use a Single or Row spell.
+                        if (spells.Count == 0)
+                            return 0; // This will abort casting and disallow casting in this round.
                     }
-                    else if (averagePrio >= 75 && spells.Any(s => game.SpellInfos[s].Target == SpellTarget.AllEnemies))
-                    {
-                        spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.AllEnemies).ToList();
-                    }
-                    else if (averagePrio >= 50 && spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow))
-                    {
-                        PickBestTargetRow();
-                        spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow).ToList();
-                    }
-                    else // single target spell
-                    {
-                        PickBestTargetTile();
-                        spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.SingleEnemy).ToList();
-                    }
-                    // This might happen if the monster only has All or Row spells and the prio forces to use a Single or Row spell.
-                    if (spells.Count == 0)
-                        return 0; // This will abort casting and disallow casting in this round.
                     var spell = spells[game.RandomInt(0, spells.Count - 1)];
                     return CreateCastSpellParameter(targetTileOrRow, spell);
                 }
@@ -4181,12 +4276,12 @@ namespace Ambermoon
             }
         }
 
-        void PlayBattleEffectAnimation(BattleEffect battleEffect, uint tile, uint ticks, Action? finishedAction, float scale = 1.0f, Character[]? battleField = null)
+        internal void PlayBattleEffectAnimation(BattleEffect battleEffect, uint tile, uint ticks, Action? finishedAction, float scale = 1.0f, Character[]? battleField = null)
         {
             PlayBattleEffectAnimation(battleEffect, tile, tile, ticks, finishedAction, scale, battleField);
         }
 
-        void PlayBattleEffectAnimation(BattleEffect battleEffect, uint sourceTile, uint targetTile, uint ticks, Action? finishedAction, float scale = 1.0f, Character?[]? battleField = null)
+        internal void PlayBattleEffectAnimation(BattleEffect battleEffect, uint sourceTile, uint targetTile, uint ticks, Action? finishedAction, float scale = 1.0f, Character?[]? battleField = null)
         {
             battleField ??= this.battleField;
             var effects = BattleEffects.GetEffectInfo(layout.RenderView, battleEffect, sourceTile, targetTile, battleField, scale);
@@ -4461,7 +4556,17 @@ namespace Ambermoon
             }
 
             // Note: Monsters can't parry.
-            if (target is PartyMember partyMember && parryingPlayers.Contains(partyMember))
+            if (target is PartyMember partyMember && IsParryingSuccessfully(partyMember, attacker))
+            {
+                return AttackResult.Blocked;
+            }
+
+            return AttackResult.Damage;
+        }
+
+        bool IsParryingSuccessfully(PartyMember partyMember, Character attacker)
+        {
+            if (parryingPlayers.Contains(partyMember))
             {
                 long parryChance = partyMember.Skills[Skill.Parry].TotalCurrentValue;
 
@@ -4474,17 +4579,17 @@ namespace Ambermoon
                     else if (attacker.Conditions.HasFlag(Condition.Aging) && agingValues.TryGetValue(attacker, out uint agingValue))
                         parryMalus = agingValue;
 
-                    if (target.BattleFlags.HasFlag(BattleFlags.Boss))
+                    if (partyMember.BattleFlags.HasFlag(BattleFlags.Boss))
                         parryMalus >>= 1;
 
                     parryChance -= parryMalus;
                 }
 
                 if (game.RollDice100() < parryChance)
-                    return AttackResult.Blocked;
+                    return true;
             }
 
-            return AttackResult.Damage;
+            return false;
         }
 
         int CalculatePhysicalDamage(Character attacker, Character target)

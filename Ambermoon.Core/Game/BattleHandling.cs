@@ -22,6 +22,7 @@ partial class GameCore
         PickPlayerAction,
         PickEnemySpellTarget,
         PickEnemySpellTargetRow,
+        PickEnemySpellTargetRowInRange,
         PickFriendSpellTarget,
         PickMoveSpot,
         PickAttackSpot,
@@ -749,6 +750,9 @@ partial class GameCore
                     break;
                 case SpellTarget.EnemyRow:
                     SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTargetRow);
+                    break;
+                case SpellTarget.EnemyRowInWeaponRange:
+                    SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTargetRowInRange);
                     break;
                 case SpellTarget.BattleField:
                     if (spell == Spell.Blink)
@@ -1589,18 +1593,38 @@ partial class GameCore
                 break;
             }
             case PlayerBattleAction.PickEnemySpellTargetRow:
+            case PlayerBattleAction.PickEnemySpellTargetRowInRange:
             {
-                if (row > 3)
+                int minRow = 0;
+                int maxRow = 3;
+
+                if (currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRow)
+                {
+                    var caster = currentPickingActionMember!;
+
+                    if (!caster.HasLongRangedWeapon(ItemManager))
+                    {
+                        int casterRow = currentBattle.GetSlotFromCharacter(caster!) / 6;
+
+                        minRow = Math.Max(casterRow - 1, 0);
+                        maxRow = Math.Min(casterRow + 1, 3);
+                    }
+                }
+
+                if (row < minRow || row > maxRow)
                 {
                     return;
                 }
+
                 SetPlayerBattleAction(Battle.BattleActionType.CastSpell, Battle.CreateCastSpellParameter((uint)row,
                     pickedSpell, spellItemSlotIndex, spellItemIsEquipped));
+
                 if (currentPickingActionMember == CurrentPartyMember)
                 {
                     layout.ClearBattleFieldSlotColorsExcept(currentBattle.GetSlotFromCharacter(currentPickingActionMember!));
                     SetBattleRowSlotColors(row, (c, r) => currentBattle.GetCharacterAt(c, r)?.Type != CharacterType.PartyMember, BattleFieldSlotColor.Orange);
                 }
+
                 CancelSpecificPlayerAction();
                 break;
             }
@@ -1728,6 +1752,7 @@ partial class GameCore
                 break;
             }
             case PlayerBattleAction.PickEnemySpellTargetRow:
+            case PlayerBattleAction.PickEnemySpellTargetRowInRange:
             {
                 RemoveCurrentPlayerActionVisuals();
                 TrapMouse(Global.BattleFieldArea);

@@ -171,7 +171,8 @@ namespace Ambermoon.Data
             LearnedHealingSpells != 0 ||
             LearnedAlchemisticSpells != 0 ||
             LearnedMysticSpells != 0 ||
-            LearnedDestructionSpells != 0;
+            LearnedDestructionSpells != 0 ||
+            (this is Monster && LearnedSpellsType7 != 0);
 
         public bool HasSpell(Spell spell)
         {
@@ -259,6 +260,14 @@ namespace Ambermoon.Data
                     {
                         if ((LearnedDestructionSpells & (1 << i)) != 0)
                             learnedSpells.Add((Spell)(i + 90));
+                    }
+                }
+                if (this is Monster && LearnedSpellsType7 != 0)
+                {
+                    for (int i = 1; i < 31; ++i)
+                    {
+                        if ((LearnedSpellsType7 & (1 << i)) != 0)
+                            learnedSpells.Add((Spell)(i + 180));
                     }
                 }
                 return learnedSpells;

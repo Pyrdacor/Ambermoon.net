@@ -306,6 +306,7 @@
 					spell == Spell.MysticDecay ||
 					spell == Spell.MagicalProjectile ||
                     spell == Spell.MagicalArrows ||
+                    spell == Spell.MagicSwordAttack ||
                     (spell >= Spell.Mudsling && spell <= Spell.Iceshower);
         }
 
@@ -319,6 +320,7 @@
 				   spell == Spell.MysticDecay ||
 				   spell == Spell.MagicalProjectile ||
                    spell == Spell.MagicalArrows ||
+                   spell == Spell.MagicSwordAttack ||
                    (spell >= Spell.Mudsling && spell <= Spell.Iceshower);
         }
 
@@ -327,7 +329,13 @@
             return spell == Spell.LPStealer ||
                    spell == Spell.SPStealer ||
                    spell == Spell.GhostWeapon ||
+                   spell == Spell.MagicSwordAttack ||
                    SpellInfos.Entries[spell].SpellSchool == SpellSchool.Destruction;
+        }
+
+        public static bool IsPhysicallyBlocked(this Spell spell)
+        {
+            return spell == Spell.MagicSwordAttack;
         }
     }
 }

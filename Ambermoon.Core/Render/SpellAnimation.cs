@@ -351,22 +351,9 @@ namespace Ambermoon.Render
                 case Spell.Firebeam:
                 case Spell.Fireball:
                 case Spell.Iceball:
-                {
-                    Position position;
-                    if (fromMonster)
-                    {
-                        position = layout.GetMonsterCombatCenterPosition(startPosition, (battle!.GetCharacterAt(startPosition) as Monster)!);
-                    }
-                    else
-                    {
-                        position = Layout.GetPlayerSlotTargetPosition(startPosition % 6);
-                    }
-                    if (position.Y > Global.CombatBackgroundArea.Bottom - 20)
-                        position.Y = Global.CombatBackgroundArea.Bottom - 20;
-                    return position;
-                }
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
+                case Spell.MagicSwordAttack:
                 {
                     Position position;
                     if (fromMonster)
@@ -450,9 +437,9 @@ namespace Ambermoon.Render
                 case Spell.SelfReviving:
                 case Spell.ExpExchange:
 				case Spell.ProtectionSphere:
-					// Those spells have no target position. They are just visible on portraits or not at all.
-					// GetTargetPosition should never be called for those spells so we throw here.
-					throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
+                    // Those spells have no target position. They are just visible on portraits or not at all.
+                    // GetTargetPosition should never be called for those spells so we throw here.
+                    throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
                 case Spell.GhostWeapon:
                 case Spell.GhostInferno:
                 case Spell.LPStealer:
@@ -487,6 +474,7 @@ namespace Ambermoon.Render
                 case Spell.Iceball:
                 case Spell.Icestorm:
                 case Spell.Iceshower:
+                case Spell.MagicSwordAttack:
                 {
                     Position targetPosition;
                     if (fromMonster) // target is party member
@@ -784,6 +772,16 @@ namespace Ambermoon.Render
 				case Spell.MysticDecay:
 					// Those spells use only the MoveTo method.
 					this.finishAction?.Invoke();
+                    break;
+                case Spell.MagicSwordAttack:
+                    if (fromMonster)
+                    {
+                        this.finishAction?.Invoke();
+                    }
+                    else
+                    {
+                        battle!.PlayBattleEffectAnimation(BattleEffect.PlayerAttack, (uint)startPosition, game.CurrentAnimationTicks, this.finishAction);
+                    }
                     break;
                 case Spell.ShowMonsterLP:
 				case Spell.ShowElements:
@@ -1651,7 +1649,8 @@ namespace Ambermoon.Render
                 case Spell.LPStealer:
                 case Spell.SPStealer:
 				case Spell.MysticDecay:
-				{
+                case Spell.MagicSwordAttack:
+                {
                     // Note: The hurt animation comes first so we immediately call the passed finish action
                     // which will display the hurt animation.
                     finishAction?.Invoke(game.CurrentBattleTicks, true, false); // Play hurt animation but do not finish.

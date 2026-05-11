@@ -175,13 +175,32 @@ partial class GameCore
                     UpdateBattle(1.0 / timeFactor);
 
                     // Note: The null check for currentBattle is important here even if checking above.
-                    if (currentBattle != null && !currentBattle.RoundActive && currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRow)
+                    if (currentBattle != null && !currentBattle.RoundActive &&
+                        (currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRow ||
+                        currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRowInRange))
                     {
                         var y = renderView.ScreenToGame(GetMousePosition(lastMousePosition)).Y - Global.BattleFieldArea.Top;
                         int hoveredRow = y / Global.BattleFieldSlotHeight;
                         highlightBattleFieldSprites.ForEach(s => s?.Delete());
                         highlightBattleFieldSprites.Clear();
-                        for (int row = 0; row < 4; ++row)
+
+                        int minRow = 0;
+                        int maxRow = 3;
+                        
+                        if (currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRow)
+                        {
+                            var caster = currentPickingActionMember!;
+
+                            if (!caster.HasLongRangedWeapon(ItemManager))
+                            {
+                                int casterRow = currentBattle.GetSlotFromCharacter(caster!) / 6;
+
+                                minRow = Math.Max(casterRow - 1, 0);
+                                maxRow = Math.Min(casterRow + 1, 3);
+                            }
+                        }
+
+                        for (int row = minRow; row <= maxRow; ++row)
                         {
                             for (int column = 0; column < 6; ++column)
                             {
