@@ -418,7 +418,7 @@ internal class RenderText : RenderNode, IRenderText
                 PaletteIndex = PaletteIndex,
                 Visible = Visible,
                 ClipArea = ClipArea,
-                TextureSize = new Size(CharacterWidth, CharacterHeight),
+                TextureSize = new Size(characterWidth, characterHeight),
             };
 
             characterSprites.Add(sprite);
@@ -438,7 +438,7 @@ internal class RenderText : RenderNode, IRenderText
                     Layer = Layer,
                     PaletteIndex = PaletteIndex,                        
                     Visible = Visible,
-                    TextureSize = new Size(CharacterWidth, CharacterHeight),
+                    TextureSize = new Size(characterWidth, characterHeight),
                 };
                 shadowSprite.ClipArea = ClipArea;
 
@@ -551,7 +551,7 @@ public class RenderTextFactory(Rect virtualScreen) : IRenderTextFactory
 
         public DigitText(byte defaultTextPaletteIndex, Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
             IRenderLayer layer, IText digits, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign)
-            : base(defaultTextPaletteIndex, virtualScreen, glyphTextureMapping, layer, digits, textColor, shadow, bounds, textAlign, DigitWidth, DigitHeight)
+            : base(defaultTextPaletteIndex, virtualScreen, glyphTextureMapping, layer, digits, textColor, shadow, bounds, textAlign, DigitWidth, DigitHeight, DigitHeight)
         {
 
         }
