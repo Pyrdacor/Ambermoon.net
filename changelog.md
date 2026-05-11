@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.13.0 - Thirteenth patch (May 2026)
+
+- Version [1.13.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.0): Performance improvements, some visual approvements, bugfixes
+
 ## 1.12.0 - Twelfth patch (November 2025)
 
 - Version [1.12.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.12.0): Integrates original 1.20, improved custom outro and credits, bugfixes
