@@ -34,8 +34,22 @@ for:
     image:
         - Visual Studio 2022
 
+-
+    matrix:
+        only:
+            - image: macos-monterey
+    install:
+        - |
+          if ! dotnet --list-sdks 2>/dev/null | grep -q '^9\.0'; then
+            curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 9.0
+          fi
+        - export DOTNET_ROOT="$HOME/.dotnet"
+        - export PATH="$DOTNET_ROOT:$PATH"
+        - dotnet --version
+
 platform: Any CPU
 configuration: Release
+
 
 before_build:
   - ps: |
