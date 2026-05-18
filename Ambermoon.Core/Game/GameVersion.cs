@@ -35,6 +35,6 @@ public class GameVersion
     public bool ExternalData;
     public required Func<IGameData> DataProvider;
 
-    internal const string RemakeReleaseDate = "11-05-2026";
+    internal const string RemakeReleaseDate = "18-05-2026";
 }
 
