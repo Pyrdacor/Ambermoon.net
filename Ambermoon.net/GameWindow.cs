@@ -1105,7 +1105,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             return false;
         }
 
-        IGameData LoadBuiltinVersionData(BuiltinVersion builtinVersion, Func<ILegacyGameData> fallbackGameDataProvider,
+        IGameData LoadBuiltinVersionData(BuiltinVersion builtinVersion, Func<IGameData> fallbackGameDataProvider,
             Action<float> progressTracker = null)
         {
             builtinVersion.SourceStream.Position = builtinVersion.Offset;
@@ -1234,7 +1234,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                 else
                 {
                     var lastBaseVersion = baseVersionIndices.Last(idx => idx < index);
-                    builtinVersionDataProviders[i] = () => configuration.GameVersionIndex == index ? gameData : LoadBuiltinVersionData(versions[index], (Func<ILegacyGameData>)builtinVersionDataProviders[lastBaseVersion]);
+                    builtinVersionDataProviders[i] = () => configuration.GameVersionIndex == index ? gameData : LoadBuiltinVersionData(versions[index], (Func<IGameData>)builtinVersionDataProviders[lastBaseVersion]);
                 }
             }
 

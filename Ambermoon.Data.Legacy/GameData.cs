@@ -140,7 +140,7 @@ namespace Ambermoon.Data.Legacy
             Load(LoadFile, null, CheckFileExists);
         }
 
-        public void LoadFromMemoryZip(Stream stream, Func<ILegacyGameData> fallbackGameDataProvider = null,
+        public void LoadFromMemoryZip(Stream stream, Func<IGameData> fallbackGameDataProvider = null,
             Dictionary<string, char> optionalAdditionalFiles = null, Action<float> progressTracker = null,
             bool ignoreMusic = false)
         {
@@ -148,19 +148,23 @@ namespace Ambermoon.Data.Legacy
             GameDataSource = GameDataSource.Memory;
             using var archive = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Read, true);
             var fileReader = new FileReader();
-            ILegacyGameData fallbackGameData = null;
-            ILegacyGameData EnsureFallbackData()
+            IGameData fallbackGameData = null;
+            Dictionary<string, IFileContainer> EnsureFallbackDataFiles()
             {
                 if (fallbackGameDataProvider == null)
-                    return null;
+                    return [];
                 if (fallbackGameData == null)
                     fallbackGameData = fallbackGameDataProvider?.Invoke();
-                return fallbackGameData;
+
+                if (fallbackGameData is ILegacyGameData legacyGameData)
+                    return legacyGameData.Files;
+
+                return [];
             }
             IFileContainer LoadFile(string name)
             {
                 if (archive.GetEntry(name) == null)
-                    return EnsureFallbackData().Files[name];
+                    return EnsureFallbackDataFiles()[name];
 
                 using var uncompressedStream = new MemoryStream();
                 archive.GetEntry(name).Open().CopyTo(uncompressedStream);
@@ -170,7 +174,7 @@ namespace Ambermoon.Data.Legacy
             bool CheckFileExists(string name)
             {
                 return archive.GetEntry(name) != null ||
-                    EnsureFallbackData()?.Files?.ContainsKey(name) == true;
+                    EnsureFallbackDataFiles().ContainsKey(name) == true;
             }
             Load(LoadFile, null, CheckFileExists, false, optionalAdditionalFiles, progressTracker, ignoreMusic);
         }
