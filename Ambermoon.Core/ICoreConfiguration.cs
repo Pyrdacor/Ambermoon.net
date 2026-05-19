@@ -1,5 +1,5 @@
 ﻿/*
- * IConfiguration.cs - Configuration interface
+ * ICoreConfiguration.cs - Configuration interface
  *
  * Copyright (C) 2020-2026  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
@@ -143,6 +143,7 @@ public interface ICoreConfiguration
     bool ShowFantasyIntro { get; set; }
     bool ShowIntro { get; set; }
     bool ExternalMusic { get; set; }
+    string ExternalMusicPath { get; set; }
 
     event Action SaveRequested;
     void RequestSave();    

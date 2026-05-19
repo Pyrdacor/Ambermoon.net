@@ -67,6 +67,7 @@ internal class Configuration : IConfiguration
     public bool Music { get; set; } = true;
     public int Volume { get; set; } = 100;
     public bool ExternalMusic { get; set; } = false;
+    public string ExternalMusicPath { get; set; } = "music";
     [Obsolete("Use BattleSpeed instead.")]
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public bool? FastBattleMode { get; set; } = null;

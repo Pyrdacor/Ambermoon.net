@@ -63,13 +63,19 @@ namespace Ambermoon
 
             try
             {
-                string musicPath = Path.Combine(Configuration.ReadonlyBundleDirectory, "music");
+                string musicPath = configuration.ExternalMusicPath;
 
-                if (OperatingSystem.IsMacOS() &&
-                    Configuration.ReadonlyBundleDirectory != Configuration.ExecutableDirectoryPath &&
-                    !Directory.Exists(musicPath))
+                if (!Path.IsPathRooted(musicPath))
                 {
-                    musicPath = Path.Combine(Configuration.ExecutableDirectoryPath, "music");
+                    string musicFolder = musicPath;
+                    musicPath = Path.Combine(Configuration.ReadonlyBundleDirectory, musicFolder);
+
+                    if (OperatingSystem.IsMacOS() &&
+                        Configuration.ReadonlyBundleDirectory != Configuration.ExecutableDirectoryPath &&
+                        !Directory.Exists(musicPath))
+                    {
+                        musicPath = Path.Combine(Configuration.ExecutableDirectoryPath, musicFolder);
+                    }
                 }
 
                 if (!Directory.Exists(musicPath))
