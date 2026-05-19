@@ -101,7 +101,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
 #pragma warning restore 0067
 
     public FullscreenRequestHandler FullscreenRequestHandler { get; set; }
-    public Rect RenderScreenArea => new(useFrameBuffer ? renderDisplayArea : renderScreenArea);
+    public Rect RenderScreenArea => new(renderScreenArea);
     public bool IsLandscapeRatio { get; } = true;
     public bool ShowImageLayerOnly { get; set; } = false;
     public ISpriteFactory SpriteFactory => spriteFactory;
