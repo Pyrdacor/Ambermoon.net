@@ -6,6 +6,8 @@ Version 1.13
 - Fixed some issue if monsters only had a single row or all enemy spell
 - Fixed an issue where the graphic filter setting was not applied correctly but only after entering the options
 - Fixed/improved texture packer for better performance and less memory usage
+- Fixed loading bar and advanced logo on retina displays (Mac)
+- Path for external music can now be adjusted in the config (ExternalMusicPath) but still defaults to "music"
 - Preparations for Ambermoon Advanced episode 4 (not released yet) and Mod support (not active yet)
 
 
