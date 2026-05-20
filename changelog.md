@@ -2,6 +2,7 @@
 
 ## 1.13.0 - Thirteenth patch (May 2026)
 
+- Version [1.13.2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.2): Fixed loading bar and advanced logo on Mac, external music path in config
 - Version [1.13.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.1): Crash fix for non-german game versions
 - Version [1.13.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.0): Performance improvements, some visual approvements, bugfixes
 

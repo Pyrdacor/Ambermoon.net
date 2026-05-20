@@ -4,6 +4,8 @@ From version 1.5 onwards you can use external MP3 files for the music in Ambermo
 
 To do so, create a folder called "music" next to your Ambermoon.net executable. Then copy your MP3 files to this folder and rename the files 01.mp3, 02.mp3 and so on.
 
+Since version 1.13.2 you can also specify a path for the music inside the config via the key "ExternalMusicPath". It still defaults to "music". Absolute paths are possible as well.
+
 Each file number maps to a specific ingame song. The following list gives an overview.
 
 ID | Song name | File name | Ingame usage (example)

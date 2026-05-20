@@ -51,7 +51,8 @@ There are also some technical or more advanced settings which should only be cha
 Setting | Description | Possible values | Default value
 --- | --- | --- | ---
 EnableCheats | Enables the cheat console | true or false | false
-ExternalMusic | Enables external music (provided as mp3s in a folder called "music" next to the game, see [Custom Music](CustomMusic.md)) | true or false | false
+ExternalMusic | Enables external music (provided as mp3s in the folder specified by `ExternalMusicPath`, see [Custom Music](CustomMusic.md)) | true or false | false
+ExternalMusicPath | Specifies the path to search for external music | any valid relative or absolute path | "music"
 LegacyMode | If active movement is slower (in the future this might be used for other stuff as well) | true or false | false
 GameVersionIndex | Remembers the last chosen game data version (of the version selector) | 0 to 4 (4 is external data, see 'External data' below) | 0 (the first one)
 SaveOption | See below 'External data' | ProgramFolder or DataFolder | ProgramFolder
