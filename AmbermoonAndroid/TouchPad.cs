@@ -21,7 +21,7 @@ internal class TouchPad
     const int ShowTappedArrowDuration = 200;
     bool enabled = false;
     int iconPage = -1;
-    readonly HashSet<Game.MobileIconAction> iconsActive = [];
+    readonly HashSet<GameCore.MobileIconAction> iconsActive = [];
 
     readonly ILayerSprite background;
     readonly ILayerSprite[] arrows = new ILayerSprite[4];
@@ -283,29 +283,29 @@ internal class TouchPad
 
             if (iconPage == 0)
             {
-                iconsActive.Add(Game.MobileIconAction.Eye);
-                iconsActive.Add(Game.MobileIconAction.Hand);
-                iconsActive.Add(Game.MobileIconAction.Mouth);
+                iconsActive.Add(GameCore.MobileIconAction.Eye);
+                iconsActive.Add(GameCore.MobileIconAction.Hand);
+                iconsActive.Add(GameCore.MobileIconAction.Mouth);
             }
             else if (iconPage == 1)
             {
-                iconsActive.Add(Game.MobileIconAction.Transport);
-                iconsActive.Add(Game.MobileIconAction.Map);
-                iconsActive.Add(Game.MobileIconAction.SpellBook);
-                iconsActive.Add(Game.MobileIconAction.Camp);
+                iconsActive.Add(GameCore.MobileIconAction.Transport);
+                iconsActive.Add(GameCore.MobileIconAction.Map);
+                iconsActive.Add(GameCore.MobileIconAction.SpellBook);
+                iconsActive.Add(GameCore.MobileIconAction.Camp);
             }
             else if (iconPage == 2)
             {
-                iconsActive.Add(Game.MobileIconAction.BattlePositions);
-                iconsActive.Add(Game.MobileIconAction.Wait);
-                iconsActive.Add(Game.MobileIconAction.Options);
+                iconsActive.Add(GameCore.MobileIconAction.BattlePositions);
+                iconsActive.Add(GameCore.MobileIconAction.Wait);
+                iconsActive.Add(GameCore.MobileIconAction.Options);
             }
 
             if (background?.Visible == true)
             {
                 for (int i = 0; i < icons.Length; i++)
                 {
-                    icons[i].Visible = iconsActive.Contains((Game.MobileIconAction)i);
+                    icons[i].Visible = iconsActive.Contains((GameCore.MobileIconAction)i);
                 }
 
                 icons[^1].Visible = true; // Always show switch icon
@@ -318,7 +318,7 @@ internal class TouchPad
         background.Visible = show;
 
         for (int i = 0; i < icons.Length; i++)
-            icons[i].Visible = show && iconsActive.Contains((Game.MobileIconAction)i);
+            icons[i].Visible = show && iconsActive.Contains((GameCore.MobileIconAction)i);
 
         icons[^1].Visible = show; // Always show switch icon
 
@@ -364,7 +364,7 @@ internal class TouchPad
         destroyed = true;
     }
 
-    public bool OnTap(Game game, Position position)
+    public bool OnTap(GameCore game, Position position)
     {
         if (!enabled)
             return false;
@@ -425,32 +425,32 @@ internal class TouchPad
         return false;
     }
 
-    Game.MobileIconAction? GetIconActionBySlot(Game game, int slot)
+    GameCore.MobileIconAction? GetIconActionBySlot(GameCore game, int slot)
     {
         switch (IconPage)
         {
             case 0:
                 return slot switch
                 {
-                    0 => Game.MobileIconAction.Eye,
-                    1 => Game.MobileIconAction.Hand,
-                    2 => Game.MobileIconAction.Mouth,
+                    0 => GameCore.MobileIconAction.Eye,
+                    1 => GameCore.MobileIconAction.Hand,
+                    2 => GameCore.MobileIconAction.Mouth,
                     _ => null
                 };
             case 1:
                 return slot switch
                 {
-                    0 => game.Is3D ? Game.MobileIconAction.Map : Game.MobileIconAction.Transport,
-                    1 => Game.MobileIconAction.SpellBook,
-                    2 => Game.MobileIconAction.Camp,
+                    0 => game.Is3D ? GameCore.MobileIconAction.Map : GameCore.MobileIconAction.Transport,
+                    1 => GameCore.MobileIconAction.SpellBook,
+                    2 => GameCore.MobileIconAction.Camp,
                     _ => null
                 };
             case 2:
                 return slot switch
                 {
-                    0 => Game.MobileIconAction.Wait,
-                    1 => Game.MobileIconAction.BattlePositions,
-                    2 => Game.MobileIconAction.Options,
+                    0 => GameCore.MobileIconAction.Wait,
+                    1 => GameCore.MobileIconAction.BattlePositions,
+                    2 => GameCore.MobileIconAction.Options,
                     _ => null
                 };
         }
@@ -458,7 +458,7 @@ internal class TouchPad
         return null;
     }
 
-    public bool OnLongPress(Game game, Position position)
+    public bool OnLongPress(GameCore game, Position position)
     {
         if (!enabled)
         {
@@ -487,7 +487,7 @@ internal class TouchPad
         return false;
     }
 
-    public void OnFingerUp(Game game, Position position)
+    public void OnFingerUp(GameCore game, Position position)
     {
         active = false;
         activeMarker.Visible = false;
@@ -501,7 +501,7 @@ internal class TouchPad
         Direction = null;
     }
 
-    public bool OnFingerMoveTo(Game game, Position position)
+    public bool OnFingerMoveTo(GameCore game, Position position)
     {
         if (!enabled)
         {
@@ -581,7 +581,7 @@ internal class TouchPad
         }
     }
 
-    public void Update(Game game)
+    public void Update(GameCore game)
     {
         enabled = background != null && background.Visible && game.InputEnable;
 
@@ -594,26 +594,26 @@ internal class TouchPad
         {
             if (game.Is3D)
             {
-                icons[(int)Game.MobileIconAction.Transport].Visible = false;
-                icons[(int)Game.MobileIconAction.Map].Visible = true;
+                icons[(int)GameCore.MobileIconAction.Transport].Visible = false;
+                icons[(int)GameCore.MobileIconAction.Map].Visible = true;
             }
             else
             {
-                icons[(int)Game.MobileIconAction.Map].Visible = false;
-                icons[(int)Game.MobileIconAction.Transport].Visible = true;
+                icons[(int)GameCore.MobileIconAction.Map].Visible = false;
+                icons[(int)GameCore.MobileIconAction.Transport].Visible = true;
             }
 
             if (!disableOverlay.Visible)
             {
                 if (!game.Is3D && !game.TransportEnabled)
                 {
-                    var location = IconLocations[(int)Game.MobileIconAction.Transport];
+                    var location = IconLocations[(int)GameCore.MobileIconAction.Transport];
                     iconsDisabled[location.Y + location.X * 2] = true;
                 }
 
                 if (!game.CampEnabled)
                 {
-                    var location = IconLocations[(int)Game.MobileIconAction.Camp];
+                    var location = IconLocations[(int)GameCore.MobileIconAction.Camp];
                     iconsDisabled[location.Y + location.X * 2] = true;
                 }
             }
@@ -621,7 +621,7 @@ internal class TouchPad
 
         if (background?.Visible == true && IconPage == 2 && !disableOverlay.Visible && !game.SpellBookEnabled)
         {
-            var location = IconLocations[(int)Game.MobileIconAction.SpellBook];
+            var location = IconLocations[(int)GameCore.MobileIconAction.SpellBook];
             iconsDisabled[location.Y + location.X * 2] = true;
         }
 

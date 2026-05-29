@@ -19,10 +19,11 @@ using Render = Ambermoon.Render;
 using Silk.NET.Windowing.Sdl;
 using Silk.NET.Input.Sdl;
 using System.Globalization;
+using Ambermoon.Game;
 
 namespace AmbermoonAndroid;
 
-class GameWindow : IContextProvider
+class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, string> keyboardRequest, string id = "MainWindow") : IContextProvider
 {
     public enum ActivityState
     {
@@ -31,7 +32,6 @@ class GameWindow : IContextProvider
         Stopped // invisible and not active
     }
 
-    readonly string gameVersion = "Ambermoon";
     Configuration configuration;
     GameRenderView renderView;
     IView window;
@@ -39,7 +39,7 @@ class GameWindow : IContextProvider
     IMouse mouse = null;
     ICursor cursor = null;
     MainMenu mainMenu = null;
-    Func<Game> gameCreator = null;
+    Func<GameCore> gameCreator = null;
     Func<MusicManager> musicManagerFactory = null;
     MusicManager musicManager = null;
     bool musicInitialized = false;
@@ -59,12 +59,10 @@ class GameWindow : IContextProvider
     Graphic[] additionalPalettes;
     bool initialIntroEndedByClick = false;
     readonly List<Action> touchActions = new();
-    readonly Action<bool, string> keyboardRequest;
     TutorialFinger tutorialFinger;
     TouchPad touchPad;
     ISprite donateButton;
     ActivityState state = ActivityState.Active;
-    readonly Action<Action> runOnUiThread;
     Rect touchPadArea;
 
     public ActivityState State
@@ -79,23 +77,15 @@ class GameWindow : IContextProvider
             OnStateChanged();
         }
     }
-    public string Identifier { get; }
+    public string Identifier { get; } = id;
     public IGLContext GLContext => window?.GLContext;
     public int Width { get; private set; }
     public int Height { get; private set; }
     VersionSelector versionSelector = null;
     Intro intro = null;
-    public Game Game { get; private set; }
+    public GameCore Game { get; private set; }
     public event Action OpenDonationLink;
     public event Action Closed;
-
-    public GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, string> keyboardRequest, string id = "MainWindow")
-    {
-        this.runOnUiThread = runOnUiThread;
-        this.gameVersion = gameVersion;
-        this.keyboardRequest = keyboardRequest;
-        Identifier = id;
-    }
 
     void DetermineTouchPadArea()
     {
@@ -816,7 +806,7 @@ class GameWindow : IContextProvider
 
         var text = renderView.TextProcessor.CreateText("");
         infoText = renderView.RenderTextFactory.Create(
-            (byte)(renderView.GraphicProvider.DefaultTextPaletteIndex - 1),
+            (byte)(renderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1),
             renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
             Global.GetTextRect(renderView, new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6)), TextAlign.Center);
         infoText.DisplayLayer = 254;
@@ -847,7 +837,7 @@ class GameWindow : IContextProvider
             try
             {
                 var savegameManager = new RemakeSavegameManager(savePath, configuration);
-                savegameManager.GetSavegameNames(gameData, out int currentSavegame, Game.NumBaseSavegameSlots);
+                savegameManager.GetSavegameNames(gameData, out int currentSavegame, GameCore.NumBaseSavegameSlots);
                 if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
                     currentSavegame = savegameManager.ContinueSavegameSlot;
                 bool canContinue = currentSavegame != 0;
@@ -1265,13 +1255,13 @@ class GameWindow : IContextProvider
         renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => digitTextureAtlas.GetOffset((uint)x));
     }
 
-    GameRenderView CreateRenderView(IGameData gameData, ICoreConfiguration configuration, IGraphicProvider graphicProvider,
+    GameRenderView CreateRenderView(IGameData gameData, ICoreConfiguration configuration, IGraphicInfoProvider graphicInfoProvider,
         IFontProvider fontProvider, Graphic[] additionalPalettes, Func<TextureAtlasManager> textureAtlasManagerProvider)
     {
         bool AnyIntroActive() => fantasyIntro != null || logoPyrdacor != null || advancedLogo != null;
         var useFrameBuffer = true;
         var useEffects = configuration.Effects != Effects.None;
-        var renderView = new GameRenderView(this, gameData, graphicProvider, fontProvider,
+        var renderView = new GameRenderView(this, gameData, graphicInfoProvider, fontProvider,
             new TextProcessor(fontProvider.GetFont().GlyphCount), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
             new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
             () => KeyValuePair.Create(AnyIntroActive() ? 0 : (int)configuration.GraphicFilter, AnyIntroActive() ? 0 : (int)configuration.GraphicFilterOverlay),

@@ -1,4 +1,6 @@
 ﻿using Ambermoon;
+using Ambermoon.Data;
+using Ambermoon.Game;
 using Ambermoon.Render;
 using Newtonsoft.Json;
 using System.Globalization;
@@ -114,8 +116,9 @@ namespace AmbermoonAndroid
 			string l when l.StartsWith("cz") => GameLanguage.Czech,
 			_ => GameLanguage.English
 		};
+		public string ExternalMusicPath { get; set; } = "music";
 
-		public void RequestSave() => SaveRequested?.Invoke();
+        public void RequestSave() => SaveRequested?.Invoke();
 
 		public static string GetSavePath(string version, bool createIfMissing = true)
 		{
