@@ -24,7 +24,7 @@
 		<DebugType>embedded</DebugType>
 		<DebugSymbols>True</DebugSymbols>
 	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU' Or '$(Configuration)|$(Platform)'=='ReleaseAndroid|AnyCPU'">
 		<DefineConstants>$(DefineConstants);GLES</DefineConstants>
 		<EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 		<RunAOTCompilation>False</RunAOTCompilation>
