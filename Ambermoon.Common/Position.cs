@@ -5,7 +5,7 @@ namespace Ambermoon
 {
     public class Position : IEquatable<Position>, IEqualityComparer<Position>
     {
-        public static Position Zero => new Position(0, 0);
+        public static Position Zero => new(0, 0);
 
         public int X { get; set; } = 0;
         public int Y { get; set; } = 0;
@@ -65,6 +65,12 @@ namespace Ambermoon
             float dx = other.X - X;
             float dy = other.Y - Y;
             return (float)Math.Sqrt(dx * dx + dy * dy);
+        }
+
+        public void Deconstruct(out int x, out int y)
+        {
+            x = X;
+            y = Y;
         }
 
         public static Position operator +(Position position1, Position position2)

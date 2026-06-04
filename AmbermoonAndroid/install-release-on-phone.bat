@@ -1,0 +1,5 @@
+cd "D:\Projects\Ambermoon.net\AmbermoonAndroid\bin\Release\net9.0-android35.0\publish"
+if exist "com.pyrdacor.AmbermoonAndroid-Signed.apks" del "com.pyrdacor.AmbermoonAndroid-Signed.apks"
+java -jar "D:\Projects\Ambermoon.net\BundleTool\bundletool.jar" build-apks --bundle=com.pyrdacor.AmbermoonAndroid-Signed.aab --output=com.pyrdacor.AmbermoonAndroid-Signed.apks --ks="D:\Projects\Ambermoon.net\AmbermoonAndroid\ambermoon.keystore" --ks-key-alias=ambermoon --ks-pass="file:D:\Projects\Ambermoon.net\AmbermoonAndroid\ambermoon.keystore.pass.txt" --key-pass="file:D:\Projects\Ambermoon.net\AmbermoonAndroid\ambermoon.keystore.pass.txt" --mode=universal
+java -jar "D:\Projects\Ambermoon.net\BundleTool\bundletool.jar" install-apks --apks=com.pyrdacor.AmbermoonAndroid-Signed.apks --adb="C:\Users\Robert\AppData\Local\Android\Sdk\platform-tools\adb.exe"
+cd "D:\Projects\Ambermoon.net\AmbermoonAndroid"

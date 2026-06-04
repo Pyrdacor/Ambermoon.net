@@ -32,6 +32,7 @@ public class Context
 {
     int width = -1;
     int height = -1;
+    float aspect = 1.0f;
     Rotation rotation = Rotation.None;
     Matrix4 modelViewMatrix = Matrix4.Identity;
     static readonly float FovY3D = (float)Math.PI * 0.26f;
@@ -40,6 +41,7 @@ public class Context
     public Context(State state, int width, int height, float aspect)
     {
         State = state;
+        this.aspect = aspect;
 
 #if GLES
         // We need at least OpenGLES 3.0 for instancing and shaders
@@ -67,9 +69,11 @@ public class Context
         Resize(width, height, aspect);
     }
 
-    public void Resize(int width, int height, float aspect)
+    public void Resize(int width, int height, float? aspect)
     {
-        State.ProjectionMatrix3D = Matrix4.CreatePerspective(FovY3D, aspect, 0.1f, 40.0f * Global.DistancePerBlock); // Max 3D map dimension is 41
+        aspect ??= this.aspect;
+
+        State.ProjectionMatrix3D = Matrix4.CreatePerspective(FovY3D, aspect.Value, 0.1f, 40.0f * Global.DistancePerBlock); // Max 3D map dimension is 41
 
         State.ClearMatrices();
         State.PushModelViewMatrix(Matrix4.Identity);
@@ -83,6 +87,7 @@ public class Context
 
     public void UpdateAspect(float aspect)
     {
+        this.aspect = aspect;
         Resize(width, height, aspect);
     }
 
@@ -152,6 +157,6 @@ public class Context
         }
 
         State.PushModelViewMatrix(modelViewMatrix);
-            UpdateFullScreenMatrix();
+        UpdateFullScreenMatrix();
     }
 }

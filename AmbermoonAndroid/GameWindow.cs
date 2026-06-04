@@ -87,57 +87,25 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
     public event Action OpenDonationLink;
     public event Action Closed;
 
-    void DetermineTouchPadArea()
+    void UpdateTouchPadArea()
     {
         // Game uses 320x200 (16:10 resolution).
-
-        int width = window.FramebufferSize.X;
-        int height = window.FramebufferSize.Y;
-
-        int deviceWidth = Math.Max(width, height);
-        int deviceHeight = Math.Min(width, height);        
-
-        double factor = deviceHeight / 200.0;
-        int usedWidth = (int)Math.Ceiling(320.0 * factor);
-
-        if (usedWidth >= deviceWidth)
-        {
-            touchPadArea = GetTouchPadArea(deviceWidth, deviceHeight, false, usedWidth);
-        }
-        else
-        {
-            touchPadArea = GetTouchPadArea(deviceWidth, deviceHeight, true, usedWidth);
-        }
+        touchPadArea = GetTouchPadArea();
     }
 
-    Rect GetTouchPadArea(int deviceWidth, int deviceHeight, bool hasHorizontalFreeSpace, int gameWidth)
+    Rect GetTouchPadArea()
     {
-        int gameX = 0;
-        int gameY = 0;
-        int gameHeight = deviceHeight;
+        var size = renderView.RenderScreenArea.Size;
 
-        // Game is centered
-        if (hasHorizontalFreeSpace)
-        {
-            gameX = (deviceWidth - gameWidth) / 2;
-        }
-        else
-        {
-            double factor = deviceWidth / 320.0;
-            gameHeight = (int)Math.Ceiling(200.0 * factor);
-            gameY = Math.Max(0, (deviceHeight - gameHeight) / 2);
-            gameWidth = deviceWidth;
-        }
+        float relX = 202.0f / Global.VirtualScreenWidth;
+        float relY = (37.0f + 92.0f) / Global.VirtualScreenHeight;
+        float relWidth = 108.5f / Global.VirtualScreenWidth;
+        float relHeight = 71.5f / Global.VirtualScreenHeight;
 
-        float relX = 202.0f / Global.VirtualScreenWidth;// (float)Global.ButtonGridX / Global.VirtualScreenWidth;
-        float relY = (37.0f + 92.0f) / Global.VirtualScreenHeight;// (float)Global.ButtonGridY / Global.VirtualScreenHeight;
-        float relWidth = 108.5f / Global.VirtualScreenWidth;//3.0f * Ambermoon.UI.Button.Width / Global.VirtualScreenWidth;
-        float relHeight = 71.5f / Global.VirtualScreenHeight;// 3.0f * Ambermoon.UI.Button.Height / Global.VirtualScreenHeight;
-
-        int x = gameX + Util.Ceiling(relX * gameWidth);
-        int y = gameY + Util.Ceiling(relY * gameHeight);
-        int width = Util.Ceiling(relWidth * gameWidth);
-        int height = Util.Ceiling(relHeight * gameHeight);
+        int x = Util.Ceiling(relX * size.Width);
+        int y = Util.Ceiling(relY * size.Height);
+        int width = Util.Ceiling(relWidth * size.Width);
+        int height = Util.Ceiling(relHeight * size.Height);
 
         return new(x, y, width, height);
     }
@@ -497,30 +465,6 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
             Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
     }*/
 
-    internal void OnLongPress(Position position)
-    {
-        if (Game == null)
-        {
-            OnMouseDown(position, MouseButtons.Right);
-            OnMouseUp(position, MouseButtons.Right);
-        }
-        else
-        {
-            lock (touchActions)
-            {
-                touchActions.Add(() =>
-                {
-                    if (Game != null && touchPad?.OnLongPress(Game, position) == true)
-                        return;
-
-                    Game?.OnLongPress(position);
-                });
-            }
-        }
-    }
-
-    private Position ConvertPositionToGame(Position position) => renderView?.ScreenToGame(position) ?? position;
-
     internal void OnMouseDown(Position position, MouseButtons buttons)
     {
         lock (touchActions)
@@ -596,12 +540,36 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
 
     internal bool OnTap(Position position)
     {
-        return touchPad?.OnTap(Game, position) ?? false;
+        return touchPad?.OnTap(Game, renderView.ScreenToView(position)) ?? false;
+    }
+
+    internal void OnLongPress(Position position)
+    {
+        position = renderView.ScreenToView(position);
+
+        if (Game == null)
+        {
+            OnMouseDown(position, MouseButtons.Right);
+            OnMouseUp(position, MouseButtons.Right);
+        }
+        else
+        {
+            lock (touchActions)
+            {
+                touchActions.Add(() =>
+                {
+                    if (Game != null && touchPad?.OnLongPress(Game, position) == true)
+                        return;
+
+                    Game?.OnLongPress(position);
+                });
+            }
+        }
     }
 
     internal void OnFingerDown(Position position)
     {
-        Game?.OnFingerDown(position);
+        Game?.OnFingerDown(renderView.ScreenToView(position));
     }
 
     internal void OnFingerUp(Position position)
@@ -609,12 +577,16 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
         if (Game == null)
             return;
 
+        position = renderView.ScreenToView(position);
+
         touchPad?.OnFingerUp(Game, position);
         Game.OnFingerUp(position);
     }
 
     internal void OnFingerMoveTo(Position position)
     {
+        position = renderView.ScreenToView(position);
+
         if (Game != null && touchPad?.OnFingerMoveTo(Game, position) == true)
             return;
 
@@ -727,6 +699,8 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
 
     void StartGame(IGameData gameData, string savePath, GameLanguage gameLanguage, Features features, BinaryReader advancedDiffsReader)
     {
+        UpdateTouchPadArea();
+
         // Load fantasy intro data
         var fantasyIntroData = gameData.FantasyIntroData;
 
@@ -1316,8 +1290,6 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
         configuration.Width = Width = fullscreenSize.X;
         configuration.Height = Height = fullscreenSize.Y;
 
-        DetermineTouchPadArea();
-
         // Create light weight render view for preloading data.
         // It is basically used to show the loading bar.
         {
@@ -1499,7 +1471,7 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
         try
         {
             renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, size.X, size.Y);
-            DetermineTouchPadArea();
+            UpdateTouchPadArea();
         }
         catch
         {

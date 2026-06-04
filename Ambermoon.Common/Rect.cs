@@ -5,8 +5,8 @@ namespace Ambermoon
 {
     public class Rect : IEquatable<Rect>, IEqualityComparer<Rect>
     {
-        private Position position = new Position();
-        private Size size = new Size();
+        private Position position = new();
+        private Size size = new();
 
         public Position Position
         {

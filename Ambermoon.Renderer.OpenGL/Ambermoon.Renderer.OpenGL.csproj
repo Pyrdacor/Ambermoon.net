@@ -57,7 +57,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug'">
-	<PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
+	<PackageReference Include="Silk.NET.OpenGL" Version="2.23.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='ReleaseNative'">

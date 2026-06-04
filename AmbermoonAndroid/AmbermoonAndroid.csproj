@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net10.0-android36.0</TargetFramework>
+		<TargetFramework>net9.0-android35.0</TargetFramework>
 		<SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
 		<RuntimeIdentifiers>android-arm;android-arm64;android-x86;android-x64</RuntimeIdentifiers>
 		<OutputType>Exe</OutputType>
@@ -54,18 +54,18 @@
 		<None Remove="google-services.json" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="Silk.NET.Input" Version="2.22.0" />
-		<PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
-		<PackageReference Include="Silk.NET.OpenGLES" Version="2.22.0" />
-		<PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.22.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="Silk.NET.Input" Version="2.23.0" />
+		<PackageReference Include="Silk.NET.OpenGL" Version="2.23.0" />
+		<PackageReference Include="Silk.NET.OpenGLES" Version="2.23.0" />
+		<PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.23.0" />
 		<PackageReference Include="SonicArranger" Version="1.0.12" />
-		<PackageReference Include="Xamarin.AndroidX.Core" Version="1.16.0.2" />
-		<PackageReference Include="System.Resources.Extensions" Version="9.0.8" />
-		<PackageReference Include="Xamarin.Firebase.Analytics" Version="123.0.0" />
-		<PackageReference Include="Xamarin.Firebase.Crashlytics" Version="120.0.0" />
-		<PackageReference Include="Xamarin.GooglePlayServices.Base" Version="118.7.2" />
-		<PackageReference Include="Xamarin.GooglePlayServices.Tasks" Version="118.3.2" />
+		<PackageReference Include="Xamarin.AndroidX.Core" Version="1.18.0" />
+		<PackageReference Include="System.Resources.Extensions" Version="10.0.8" />
+		<PackageReference Include="Xamarin.Firebase.Analytics" Version="123.2.0" />
+		<PackageReference Include="Xamarin.Firebase.Crashlytics" Version="120.0.6" />
+		<PackageReference Include="Xamarin.GooglePlayServices.Base" Version="118.10.0.1" />
+		<PackageReference Include="Xamarin.GooglePlayServices.Tasks" Version="118.4.1.1" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Ambermoon.Audio.Android\Ambermoon.Audio.Android.csproj" />
@@ -88,5 +88,28 @@
 		<None Update="proguard-rules.pro">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<!-- Ignore Silk.NET SDL native libs -->
+		<!--<AndroidNativeLibrary Remove="@(AndroidNativeLibrary)"
+		  Condition="'%(Filename)' == 'libSDL2' Or '%(Filename)' == 'libSDL2-2.0' Or '%(Filename)' == 'libmain'" />-->
+		<AndroidNativeLibrary Remove="**\libSDL2.so" />
+		<AndroidNativeLibrary Remove="**\libSDL2-2.0.so" />
+		<AndroidNativeLibrary Remove="**\libmain.so" />
+
+
+		<!-- Replace Silk.NET .so files -->
+		<AndroidNativeLibrary Include="libs\arm64-v8a\libSDL2.so">
+			<Abi>arm64-v8a</Abi>
+		</AndroidNativeLibrary>
+		<AndroidNativeLibrary Include="libs\arm64-v8a\libmain.so">
+			<Abi>arm64-v8a</Abi>
+		</AndroidNativeLibrary>
+		<AndroidNativeLibrary Include="libs\x86_64\libSDL2.so">
+			<Abi>x86_64</Abi>
+		</AndroidNativeLibrary>
+		<AndroidNativeLibrary Include="libs\x86_64\libmain.so">
+			<Abi>x86_64</Abi>
+		</AndroidNativeLibrary>
 	</ItemGroup>
 </Project>

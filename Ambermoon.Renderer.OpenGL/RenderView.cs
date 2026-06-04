@@ -53,24 +53,20 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     readonly EffectShader effectShader;
     readonly ScreenRenderBuffer effectBuffer;
     private protected readonly ICamera3D camera3D = null;
+    float frameBufferWindowPixelRatio = 1.0f;
     // Area inside the window where the rendering happens.
     // Note that this area is in screen coordinates and not
     // necessarily in pixels!
     Rect renderDisplayArea;
     // The content size of the window in screen coordinates (not pixels!)
-    Size windowSize;
+    readonly Size windowSize;
     // The size of the framebuffer in pixels
-    Size frameBufferSize;
+    readonly Size frameBufferSize;
     // This is the total size of the framebuffer in pixels.
     // It includes black areas if the aspect ratio of the
     // framebuffer does not match the aspect ratio of the
     // virtual screen.
     Rect renderScreenArea;
-    // The rendering area in pixels
-    Rect frameBufferWindowArea => new
-    (
-        renderDisplayArea.Position, frameBufferSize
-    );
     readonly SizingPolicy sizingPolicy;
     readonly OrientationPolicy orientationPolicy;
     readonly DeviceType deviceType;
@@ -101,6 +97,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
 #pragma warning restore 0067
 
     public FullscreenRequestHandler FullscreenRequestHandler { get; set; }
+    // The rendering area in pixels
     public Rect RenderScreenArea => new(renderScreenArea);
     public bool IsLandscapeRatio { get; } = true;
     public bool ShowImageLayerOnly { get; set; } = false;
@@ -132,8 +129,8 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     {
         paletteProvider ??= new DummyPaletteProvider();
         frameBufferSize = new Size(framebufferWidth, framebufferHeight);
-        renderScreenArea = new(Position.Zero, frameBufferSize);
         renderDisplayArea = new Rect(new Position(0, 0), windowSize);
+        renderScreenArea = new((frameBufferWindowPixelRatio * renderDisplayArea.Position).Round(), frameBufferSize);
         this.windowSize = new Size(windowSize);
         this.sizingPolicy = sizingPolicy;
         this.orientationPolicy = orientationPolicy;
@@ -141,9 +138,8 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         this.camera3D = cameraProvider?.Invoke(State);
         IsLandscapeRatio = framebufferWidth > framebufferHeight;
 
-        Resize(framebufferWidth, framebufferHeight);
-
         context = new Context(State, framebufferWidth, framebufferHeight, 1.0f);
+        Resize(framebufferWidth, framebufferHeight);
 
         // factories
         var visibleArea = new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
@@ -392,14 +388,15 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                 Resize(width, height, Orientation.PortraitTopDown);
                 break;
         }
+
+        context.Resize(frameBufferSize.Width, frameBufferSize.Height, null);
     }
 
     public void Resize(int width, int height, Orientation orientation)
     {
         frameBufferSize.Width = width;
         frameBufferSize.Height = height;
-
-        renderScreenArea = new(Position.Zero, frameBufferSize);
+        frameBufferWindowPixelRatio = (float)frameBufferSize.Width / windowSize.Width;
 
         SetRotation(orientation);
 
@@ -429,6 +426,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
             {
                 int newHeight = Misc.Round(windowSize.Width / virtualRatio);
                 renderDisplayArea = new(0, (windowSize.Height - newHeight) / 2, windowSize.Width, newHeight);
+
                 int newFrameBufferHeight = Misc.Round(frameBufferSize.Width / virtualRatio);
                 frameBufferSize.Height = newFrameBufferHeight;
             }
@@ -453,8 +451,9 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
             }
         }
 
-        var viewport = frameBufferWindowArea;
-        State.Gl.Viewport(viewport.X, viewport.Y, (uint)viewport.Width, (uint)viewport.Height);
+        renderScreenArea = new((frameBufferWindowPixelRatio * renderDisplayArea.Position).Round(), frameBufferSize);
+
+        State.Gl.Viewport(renderScreenArea.X, renderScreenArea.Y, (uint)renderScreenArea.Width, (uint)renderScreenArea.Height);
     }
 
     public void TakeScreenshot(Action<int, int, byte[]> dataHandler)
@@ -486,7 +485,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     void BindEffectBuffer(Position viewOffset)
     {
         effectFrameBuffer.Bind(frameBufferSize.Width, frameBufferSize.Height);
-        var viewport = frameBufferWindowArea;
+        var viewport = RenderScreenArea;
         State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y - viewOffset.Y,
             (uint)viewport.Width, (uint)viewport.Height);
     }
@@ -500,7 +499,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         {
             try
             {
-                var area = frameBufferWindowArea;
+                var area = RenderScreenArea;
                 byte[] buffer = new byte[area.Width * area.Height * 3];
                 State.Gl.ReadBuffer(GLEnum.Back);
                 State.Gl.PixelStore(PixelStoreParameter.PackAlignment, 1);
@@ -552,7 +551,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                 {
                     if (layer.Key == Layer.Map3DBackground)
                     {
-                        var viewport = frameBufferWindowArea;
+                        var viewport = RenderScreenArea;
 
                         if (useEffectFrameBuffer)
                             State.Gl.Viewport(0, 0, (uint)viewport.Width, (uint)viewport.Height);
@@ -570,7 +569,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                         var mapViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY, Global.Map3DViewWidth + 1, Global.Map3DViewHeight + 1);
                         mapViewArea.Position = PositionTransformation(mapViewArea.Position).Round();
                         mapViewArea.Size = SizeTransformation(mapViewArea.Size).ToSize();
-                        var viewport = frameBufferWindowArea;
+                        var viewport = RenderScreenArea;
                         if (useEffectFrameBuffer)
                         {
                             State.Gl.Viewport(mapViewArea.X, viewport.Height - (mapViewArea.Y + mapViewArea.Height),
@@ -603,7 +602,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                         State.RestoreModelViewMatrix(Matrix4.Identity);
                         State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
 
-                        var viewport = frameBufferWindowArea;
+                        var viewport = RenderScreenArea;
 
                         if (!useFrameBuffer)
                         {
@@ -626,7 +625,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                 }
                 else if (!set2DViewport)
                 {
-                    var viewport = frameBufferWindowArea;
+                    var viewport = RenderScreenArea;
 
                     if (!useFrameBuffer)
                     {
@@ -649,7 +648,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                 if (useEffectFrameBuffer && layer.Key == Global.LastLayer)
                 {
                     State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
-                    var viewport = frameBufferWindowArea;
+                    var viewport = RenderScreenArea;
                     State.Gl.Viewport(viewport.X, viewport.Y, (uint)viewport.Width, (uint)viewport.Height);
                     State.Gl.Clear((uint)ClearBufferMask.DepthBufferBit);
                 }
@@ -683,12 +682,20 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                 {
                     State.PushProjectionMatrix(State.FullScreenProjectionMatrix2D);
 
-                    if (useFrameBuffer)
-                        State.PushModelViewMatrix(Matrix4.CreateTranslationMatrix(-renderDisplayArea.X, -renderDisplayArea.Y));
+                    var viewport = RenderScreenArea;
 
                     int[] currentViewport = new int[4];
                     State.Gl.GetInteger(GLEnum.Viewport, currentViewport);
-                    State.Gl.Viewport(0, 0, (uint)renderScreenArea.Width, (uint)renderScreenArea.Height);
+
+                    var (x, y) = viewport.Position;
+
+                    if (!ShowImageLayerOnly && (useFrameBuffer || useEffectFrameBuffer))
+                    {
+                        x = 0;
+                        y = 0;
+                    }
+
+                    State.Gl.Viewport(x, y, (uint)viewport.Width, (uint)viewport.Height);
 
                     try
                     {
@@ -697,8 +704,6 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                     finally
                     {
                         State.Gl.Viewport(currentViewport[0], currentViewport[1], (uint)currentViewport[2], (uint)currentViewport[3]);
-                        if (useFrameBuffer)
-                            State.PopModelViewMatrix();
                         State.PopProjectionMatrix();
                     }
                 }
@@ -736,7 +741,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         State.Gl.Enable(EnableCap.Blend);
         State.Gl.Disable(EnableCap.DepthTest);
-        var viewport = frameBufferWindowArea;
+        var viewport = RenderScreenArea;
         if (useEffects)
         {
             State.Gl.Viewport(0, 0, (uint)viewport.Width, (uint)viewport.Height);
@@ -765,7 +770,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         effectFrameBuffer.BindAsTexture();
         State.Gl.Disable(EnableCap.Blend);
         State.Gl.Disable(EnableCap.DepthTest);
-        var viewport = frameBufferWindowArea;
+        var viewport = RenderScreenArea;
         State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y - viewOffset.Y,
             (uint)viewport.Width, (uint)viewport.Height);
         effectBuffer.Render();
@@ -856,9 +861,10 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         {
             position = ScreenToView(position);
 
-            float WindowFactorX = renderDisplayArea.Width / 409.6f;
+            float WindowFactorX = renderDisplayArea.Width / 409.6f; // = 409.6 = 320 * (float)(256 / 200)
             float WindowFactorY = renderDisplayArea.Height / 256.0f;
 
+            // 44.8 = (409.6 - 320) / 2
             return new Position(Misc.Round(position.X / WindowFactorX - 44.8f), Misc.Round(position.Y / WindowFactorY));
         }
         else

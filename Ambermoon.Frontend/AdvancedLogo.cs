@@ -161,8 +161,8 @@ public class AdvancedLogo
                     sprite.Layer = renderView.GetLayer(Layer.Images);
                     // Important for visibility check, otherwise the virtual screen is used!
                     sprite.ClipArea = new Rect(area);
-                    sprite.X = area.X + (area.X * 2 + area.Width - width) / 2;
-                    sprite.Y = area.Y + (area.Y * 2 + area.Height - height) / 2;
+                    sprite.X = (area.Width - width) / 2;
+                    sprite.Y = (area.Height - height) / 2;
                     sprite.TextureAtlasOffset = textureAtlas.GetOffset(0);
                     sprite.TextureSize = new Size(logoWidth, logoHeight);
                     sprite.Alpha = 0;
