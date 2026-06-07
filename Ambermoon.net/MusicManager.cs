@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Ambermoon
 {
@@ -24,7 +25,7 @@ namespace Ambermoon
         IAudioStream currentStream = null;
         protected static readonly Song[] Songs = EnumHelper.GetValues<Song>().Skip(1).ToArray();
         readonly ISongManager songManager = null;
-        readonly object startMutex = new();
+        readonly Lock startMutex = new();
 
         public MusicManager(ICoreConfiguration configuration, IGameData gameData)
         {

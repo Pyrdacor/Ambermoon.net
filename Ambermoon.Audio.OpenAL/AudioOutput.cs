@@ -17,9 +17,10 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
     bool disposed = false;
     float volume = 1.0f;
     bool enabled = true;
+    volatile bool streaming = false;
     readonly Dictionary<IAudioStream, AudioBuffers> audioBuffers = [];
     AudioBuffers currentBuffer = null;
-    CancellationTokenSource cancellationTokenSource;
+    volatile CancellationTokenSource cancellationTokenSource;
 
     public AudioOutput()
     {
@@ -105,7 +106,7 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
     /// <summary>
     /// <inheritdoc/>
     /// </summary>
-    public bool Streaming { get; private set; } = false;
+    public bool Streaming => streaming;
 
     /// <summary>
     /// <inheritdoc/>
@@ -132,7 +133,11 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
         if (disposed)
             return;
 
-        cancellationTokenSource?.Dispose();
+        if (Streaming)
+            Stop();
+
+        var cts = Interlocked.Exchange(ref cancellationTokenSource, null);
+        cts?.Dispose();
 
         if (Available)
         {
@@ -145,7 +150,7 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
             alContext.Dispose();
         }
 
-        Streaming = false;
+        streaming = false;
         Enabled = false;
         Available = false;
         disposed = true;
@@ -168,12 +173,13 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
         if (currentBuffer == null)
             return;
 
-        Streaming = true;
+        streaming = true;
 
-        cancellationTokenSource?.Dispose();
-        cancellationTokenSource = new CancellationTokenSource();
+        var cts = new CancellationTokenSource();
+        var old = Interlocked.Exchange(ref cancellationTokenSource, cts);
 
-        currentBuffer?.Play(cancellationTokenSource.Token);
+        old?.Dispose();
+        currentBuffer?.Play(cts.Token);
     }
 
     /// <summary>
@@ -190,15 +196,16 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
         if (source == 0)
             throw new NotSupportedException("Stop was called without a valid source.");
 
-        Streaming = false;
-        cancellationTokenSource?.Cancel();
+        streaming = false;
+        var cts = Interlocked.Exchange(ref cancellationTokenSource, null);
+        cts?.Cancel();
 
         if (currentBuffer != null)
             currentBuffer.Stop();
         else
             al.SourceStop(source);
 
-        cancellationTokenSource?.Dispose();
+        cts?.Dispose();
     }
 
     /// <summary>
