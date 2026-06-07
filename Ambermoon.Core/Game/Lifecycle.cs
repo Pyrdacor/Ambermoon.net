@@ -543,6 +543,7 @@ partial class GameCore
     void Quit(Action? abortAction)
     {
         bool wasPaused = paused;
+        bool wasInputEnabled = InputEnable;
         ShowDecisionPopup(DataNameProvider.ReallyQuit, response =>
         {
             if (response == PopupTextEvent.Response.Yes)
@@ -553,6 +554,7 @@ partial class GameCore
             {
                 if (wasPaused)
                     Pause();
+                InputEnable = wasInputEnabled;
                 abortAction?.Invoke();
             }
         }, 1, 50, TextAlign.Center);
