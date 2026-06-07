@@ -1568,7 +1568,7 @@ namespace Ambermoon.UI
             AddOption((index, _) => ToggleAdvancedLogo());
             // Page 4
             AddOption((index, _) => ToggleSaveLoadInfo());
-            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleCheats());
+            AddOption((index, _) => ToggleCheats());
 
             void UpdateFullscreenOption()
             {

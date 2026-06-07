@@ -18,13 +18,16 @@ public class ConsoleOverlayManager : IConsole
 
     private readonly Activity activity;
     private FrameLayout? overlay;
-    private TextView? _outputView;
+    private TextView? outputView;
     private EditText? inputField;
     private ScrollView? scrollView;
+    private Button? toggleButton;
     private readonly StringBuilder logLineBuilder = new();
     private readonly LinkedList<string> logLines = new();
     private const int MaxLines = 200;
     private bool initialized;
+    private int cursorPosition = 0;
+    private string inputText = "";
 
     private ConsoleOverlayManager(Activity activity)
     {
@@ -113,8 +116,8 @@ public class ConsoleOverlayManager : IConsole
     public void Clear() => activity.RunOnUiThread(() =>
     {
         logLines.Clear();
-        if (_outputView != null)
-            _outputView.Text = string.Empty;
+        if (outputView != null)
+            outputView.Text = string.Empty;
     });
 
     public void RemoveLastInput() => activity.RunOnUiThread(() =>
@@ -128,11 +131,14 @@ public class ConsoleOverlayManager : IConsole
 
     private void BuildOverlay()
     {
+        var displayMetrics = activity.Resources?.DisplayMetrics;
+        int screenHeight = displayMetrics?.HeightPixels ?? 600;
+
         overlay = new FrameLayout(activity)
         {
             LayoutParameters = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MatchParent,
-                ViewGroup.LayoutParams.WrapContent,
+                screenHeight,
                 GravityFlags.Bottom)
         };
         overlay.SetBackgroundColor(Color.Argb(210, 0, 0, 0));
@@ -145,7 +151,7 @@ public class ConsoleOverlayManager : IConsole
         container.SetPadding(12, 12, 12, 12);
 
         var title = new TextView(activity);
-        title.Text = "▶ CHEAT CONSOLE";
+        title.Text = "  ▶ CHEAT CONSOLE";
         title.SetTextColor(Color.ParseColor("#00FF88"));
         title.SetTypeface(Typeface.Monospace, TypefaceStyle.Bold);
         title.TextSize = 10f;
@@ -158,17 +164,17 @@ public class ConsoleOverlayManager : IConsole
         divider.SetBackgroundColor(Color.ParseColor("#00FF88"));
         container.AddView(divider);
 
-        _outputView = new TextView(activity);
-        _outputView.SetTextColor(Color.ParseColor("#CCFFCC"));
-        _outputView.SetTypeface(Typeface.Monospace, TypefaceStyle.Normal);
-        _outputView.TextSize = 10.5f;
-        _outputView.SetPadding(4, 6, 4, 6);
+        outputView = new TextView(activity);
+        outputView.SetTextColor(Color.ParseColor("#CCFFCC"));
+        outputView.SetTypeface(Typeface.Monospace, TypefaceStyle.Normal);
+        outputView.TextSize = 10.5f;
+        outputView.SetPadding(4, 6, 4, 6);
 
         scrollView = new ScrollView(activity);
         scrollView.LayoutParameters = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MatchParent,
-            DpToPx(180));
-        scrollView.AddView(_outputView);
+            0, 1f);
+        scrollView.AddView(outputView);
         container.AddView(scrollView);
 
         var inputRow = new LinearLayout(activity)
@@ -196,10 +202,12 @@ public class ConsoleOverlayManager : IConsole
         inputField.SetTypeface(Typeface.Monospace, TypefaceStyle.Normal);
         inputField.SetBackgroundColor(Color.Argb(255, 20, 20, 20));
         inputField.TextSize = 12f;
-        inputField.SetPadding(8, 4, 8, 4);
+        inputField.SetPadding(16, 4, 16, 0);
         inputField.LayoutParameters = new LinearLayout.LayoutParams(
             0, ViewGroup.LayoutParams.WrapContent, 1f);
         inputField.ImeOptions = ImeAction.Done;
+        inputField.Focusable = false;
+        inputField.ShowSoftInputOnFocus = false;
         inputField.SetSingleLine(true);
 
         // Enter → Absenden
@@ -214,17 +222,8 @@ public class ConsoleOverlayManager : IConsole
             }
         };
 
-        var sendButton = new Button(activity);
-        sendButton.Text = "OK";
-        sendButton.SetTextColor(Color.Black);
-        sendButton.SetBackgroundColor(Color.ParseColor("#00FF88"));
-        sendButton.TextSize = 11f;
-        sendButton.SetPadding(16, 0, 16, 0);
-        sendButton.Click += (_, _) => SubmitInput();
-
         inputRow.AddView(prompt);
         inputRow.AddView(inputField);
-        inputRow.AddView(sendButton);
         container.AddView(inputRow);
 
         overlay.AddView(container);
@@ -232,6 +231,9 @@ public class ConsoleOverlayManager : IConsole
         var rootView = (ViewGroup?)activity.Window?
             .DecorView.FindViewById(Android.Resource.Id.Content);
         rootView?.AddView(overlay);
+
+        BuildToggleButton();
+        BuildMiniKeyboard(container);
     }
 
     private void SubmitInput()
@@ -241,6 +243,7 @@ public class ConsoleOverlayManager : IConsole
 
         AppendLine($"> {text}");
         inputField!.Text = string.Empty;
+        cursorPosition = 0;
 
         OnCommand?.Invoke(text);
     }
@@ -254,8 +257,8 @@ public class ConsoleOverlayManager : IConsole
             while (logLines.Count > MaxLines)
                 logLines.RemoveFirst();
 
-            if (_outputView is null) return;
-            _outputView.Text = string.Join("\n", logLines);
+            if (outputView is null) return;
+            outputView.Text = string.Join("\n", logLines);
 
             // Auto-Scroll
             scrollView?.Post(() =>
@@ -266,8 +269,8 @@ public class ConsoleOverlayManager : IConsole
             logLineBuilder.Append(text);
             logLines.Last!.Value = text.ToString();
 
-            if (_outputView is null) return;
-            _outputView.Text = string.Join("\n", logLines);
+            if (outputView is null) return;
+            outputView.Text = string.Join("\n", logLines);
         }        
     }
 
@@ -280,8 +283,8 @@ public class ConsoleOverlayManager : IConsole
 
             logLines.Last!.Value = line;
 
-            if (_outputView is null) return;
-            _outputView.Text = string.Join("\n", logLines);
+            if (outputView is null) return;
+            outputView.Text = string.Join("\n", logLines);
         }
         else
         {
@@ -289,8 +292,8 @@ public class ConsoleOverlayManager : IConsole
             while (logLines.Count > MaxLines)
                 logLines.RemoveFirst();
 
-            if (_outputView is null) return;
-            _outputView.Text = string.Join("\n", logLines);
+            if (outputView is null) return;
+            outputView.Text = string.Join("\n", logLines);
 
             // Auto-Scroll
             scrollView?.Post(() =>
@@ -317,5 +320,197 @@ public class ConsoleOverlayManager : IConsole
     {
         var density = activity.Resources?.DisplayMetrics?.Density ?? 1f;
         return (int)(dp * density);
+    }
+
+    private void BuildToggleButton()
+    {
+        toggleButton = new Button(activity);
+        toggleButton.Text = "⌨";
+        toggleButton.SetTextColor(Color.ParseColor("#00FF88"));
+        toggleButton.SetBackgroundColor(Color.Argb(180, 0, 0, 0));
+        toggleButton.TextSize = 16f;
+        toggleButton.SetPadding(4, 4, 4, 4);
+        toggleButton.Click += (_, _) => Toggle();
+        toggleButton.Visibility = ViewStates.Gone;
+
+        var parameters = new FrameLayout.LayoutParams(
+            DpToPx(44),
+            DpToPx(44),
+            GravityFlags.Top | GravityFlags.Right);
+        parameters.SetMargins(0, DpToPx(8), DpToPx(8), 0);
+        toggleButton.LayoutParameters = parameters;
+
+        var rootView = (ViewGroup?)activity.Window?
+            .DecorView.FindViewById(global::Android.Resource.Id.Content);
+        rootView?.AddView(toggleButton);
+    }
+
+    public void SetToggleButtonVisible(bool visible)
+    {
+        activity.RunOnUiThread(() =>
+        {
+            if (toggleButton is null) return;
+            toggleButton.Visibility = visible ? ViewStates.Visible : ViewStates.Gone;
+        });
+    }
+
+    private void BuildMiniKeyboard(LinearLayout container)
+    {
+        string[] rows =
+        [
+            "1234567890",
+            "qwertyuiop",
+            "asdfghjkl",
+            "zxcvbnm"
+        ];
+
+        var keyboardWrapper = new LinearLayout(activity)
+        {
+            Orientation = Orientation.Vertical
+        };
+        keyboardWrapper.LayoutParameters = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MatchParent,
+            ViewGroup.LayoutParams.WrapContent);
+        keyboardWrapper.SetPadding(0, 6, 0, 0);
+
+        foreach (var row in rows)
+        {
+            var rowLayout = new LinearLayout(activity) { Orientation = Orientation.Horizontal };
+            rowLayout.LayoutParameters = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MatchParent,
+                ViewGroup.LayoutParams.WrapContent);
+            rowLayout.SetPadding(0, 2, 0, 2);
+
+            foreach (var ch in row)
+            {
+                var key = BuildKey(
+                    label: ch.ToString(),
+                    weight: 1f,
+                    bgColor: Color.Argb(255, 45, 45, 45),
+                    onClick: () => { inputText = inputText.Insert(cursorPosition, ch.ToString()); cursorPosition++; UpdateInputDisplay(); }
+                );
+                rowLayout.AddView(key);
+            }
+
+            keyboardWrapper.AddView(rowLayout);
+        }
+
+        // Sonderzeichen-Zeile
+        keyboardWrapper.AddView(BuildSpecialKeyRow());
+
+        container.AddView(keyboardWrapper);
+    }
+
+    private LinearLayout BuildSpecialKeyRow()
+    {
+        var row = new LinearLayout(activity) { Orientation = Orientation.Horizontal };
+        row.LayoutParameters = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MatchParent,
+            ViewGroup.LayoutParams.WrapContent);
+        row.SetPadding(0, 2, 0, 2);
+
+        // Left arrow
+        row.AddView(BuildKey(
+            label: "←",
+            weight: 1.5f,
+            bgColor: Color.Argb(255, 60, 60, 60),
+            onClick: () =>
+            {
+                if (cursorPosition > 0)
+                {
+                    cursorPosition--;
+                    UpdateInputDisplay();
+                }
+            }
+        ));
+
+        // Right arrow
+        row.AddView(BuildKey(
+            label: "→",
+            weight: 1.5f,
+            bgColor: Color.Argb(255, 60, 60, 60),
+            onClick: () =>
+            {
+                if (cursorPosition < inputText.Length)
+                {
+                    cursorPosition++;
+                    UpdateInputDisplay();
+                }
+            }
+        ));
+
+        // Space
+        row.AddView(BuildKey(
+            label: "SPACE",
+            weight: 3f,
+            bgColor: Color.Argb(255, 60, 60, 60),
+            onClick: () => { inputText = inputText.Insert(cursorPosition, " "); cursorPosition++; UpdateInputDisplay(); }
+        ));
+
+        // Delete
+        row.AddView(BuildKey(
+            label: "DEL",
+            weight: 1.5f,
+            bgColor: Color.Argb(255, 100, 30, 30),
+            onClick: () =>
+            {
+                if (inputText.Length > 0 && cursorPosition < inputText.Length - 1)
+                {
+                    inputText = inputText.Remove(cursorPosition, 1);
+                    UpdateInputDisplay();
+                }
+            }
+        ));
+
+        // Backspace
+        row.AddView(BuildKey(
+            label: "⌫",
+            weight: 1.5f,
+            bgColor: Color.Argb(255, 80, 50, 30),
+            onClick: () =>
+            {
+                if (inputText.Length > 0 && cursorPosition > 0)
+                {
+                    inputText = inputText.Remove(--cursorPosition, 1);
+                    UpdateInputDisplay();
+                }
+            }
+        ));
+
+        // Enter
+        row.AddView(BuildKey(
+            label: "↵",
+            weight: 1.5f,
+            bgColor: Color.ParseColor("#00AA55"),
+            onClick: SubmitInput
+        ));
+
+        return row;
+    }
+
+    private Button BuildKey(string label, float weight, Color bgColor, Action onClick)
+    {
+        var key = new Button(activity);
+        key.Text = label;
+        key.SetTextColor(Color.White);
+        key.SetBackgroundColor(bgColor);
+        key.TextSize = 10f;
+        key.SetPadding(0, 0, 0, 0);
+
+        var lp = new LinearLayout.LayoutParams(0, DpToPx(32), weight);
+        lp.SetMargins(1, 1, 1, 1);
+        key.LayoutParameters = lp;
+
+        key.Click += (_, _) => onClick();
+        return key;
+    }
+
+    private void UpdateInputDisplay()
+    {
+        if (inputField != null)
+        {
+            inputField.Text = inputText;
+            inputField.SetSelection(Math.Clamp(cursorPosition, 0, inputText.Length));
+        }
     }
 }

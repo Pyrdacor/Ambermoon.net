@@ -118,6 +118,10 @@ public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
                     console?.Show();
                 else
                     console?.Hide();
+            },
+            (cheatsEnabled) =>
+            {
+                console?.SetToggleButtonVisible(cheatsEnabled);
             }
         );
 
@@ -226,14 +230,6 @@ public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
     {
         if (hiddenEditText is null || e is null || hiddenEditText.Visibility != ViewStates.Visible || e.Action != KeyEventActions.Down)
         {
-            if (e?.KeyCode == Keycode.VolumeDown)
-            {
-                if (e.Action == KeyEventActions.Down)
-                    ToggleConsole();
-
-                return true;
-            }
-
             return base.DispatchKeyEvent(e);
         }
 
@@ -262,17 +258,6 @@ public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
     private void HandleCheatCode(string command)
     {
         Cheats.ProcessInput(command, gameWindow.Game);
-    }
-
-    public override bool OnKeyDown([GeneratedEnum] Keycode keyCode, KeyEvent e)
-    {
-        if (keyCode == Keycode.VolumeDown)
-        {
-            ToggleConsole();
-            return true;
-        }
-
-        return base.OnKeyDown(keyCode, e);
     }
 
     private void OnAfterInit()

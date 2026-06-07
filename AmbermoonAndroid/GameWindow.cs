@@ -29,6 +29,7 @@ class GameWindow
     string gameVersion,
     Action<bool, string> keyboardRequest,
     Action<bool> showCheatsConsoleRequest,
+    Action<bool> enableCheatsRequest,
     string id = "MainWindow"
 ) : IContextProvider
 {
@@ -880,6 +881,7 @@ class GameWindow
                                 {
                                     cheatsEnabled = configuration.EnableCheats;
                                     showCheatsConsoleRequest?.Invoke(cheatsEnabled);
+                                    enableCheatsRequest?.Invoke(cheatsEnabled);
                                 }
                             };
                             game.DrugTicked += Drug_Ticked;
@@ -904,6 +906,8 @@ class GameWindow
                             tutorialFinger = new TutorialFinger(renderView);
                             touchPad = new TouchPad(renderView, touchPadArea);
                             touchPad.Show(false);
+
+                            enableCheatsRequest?.Invoke(configuration.EnableCheats);
 
                             game.Run(continueGame, ConvertMousePosition(mouse.Position));
 
