@@ -23,7 +23,14 @@ using Ambermoon.Game;
 
 namespace AmbermoonAndroid;
 
-class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, string> keyboardRequest, string id = "MainWindow") : IContextProvider
+class GameWindow
+(
+    Action<Action> runOnUiThread,
+    string gameVersion,
+    Action<bool, string> keyboardRequest,
+    Action<bool> showCheatsConsoleRequest,
+    string id = "MainWindow"
+) : IContextProvider
 {
     public enum ActivityState
     {
@@ -64,6 +71,7 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
     ISprite donateButton;
     ActivityState state = ActivityState.Active;
     Rect touchPadArea;
+    bool cheatsEnabled = false;
 
     public ActivityState State
     {
@@ -545,8 +553,6 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
 
     internal void OnLongPress(Position position)
     {
-        position = renderView.ScreenToView(position);
-
         if (Game == null)
         {
             OnMouseDown(position, MouseButtons.Right);
@@ -558,7 +564,7 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
             {
                 touchActions.Add(() =>
                 {
-                    if (Game != null && touchPad?.OnLongPress(Game, position) == true)
+                    if (Game != null && touchPad?.OnLongPress(Game, renderView.ScreenToView(position)) == true)
                         return;
 
                     Game?.OnLongPress(position);
@@ -569,7 +575,7 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
 
     internal void OnFingerDown(Position position)
     {
-        Game?.OnFingerDown(renderView.ScreenToView(position));
+        Game?.OnFingerDown(position);
     }
 
     internal void OnFingerUp(Position position)
@@ -577,17 +583,13 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
         if (Game == null)
             return;
 
-        position = renderView.ScreenToView(position);
-
-        touchPad?.OnFingerUp(Game, position);
+        touchPad?.OnFingerUp(Game, renderView.ScreenToView(position));
         Game.OnFingerUp(position);
     }
 
     internal void OnFingerMoveTo(Position position)
     {
-        position = renderView.ScreenToView(position);
-
-        if (Game != null && touchPad?.OnFingerMoveTo(Game, position) == true)
+        if (Game != null && touchPad?.OnFingerMoveTo(Game, renderView.ScreenToView(position)) == true)
             return;
 
         Game?.OnFingerMoveTo(position);
@@ -873,6 +875,12 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
 
                                 if (configuration.Effects != Effects.None && !renderView.TryUseEffects())
                                     configuration.Effects = Effects.None;
+
+                                if (configuration.EnableCheats != cheatsEnabled)
+                                {
+                                    cheatsEnabled = configuration.EnableCheats;
+                                    showCheatsConsoleRequest?.Invoke(cheatsEnabled);
+                                }
                             };
                             game.DrugTicked += Drug_Ticked;
                             mainMenu.GameDataLoaded = true;
@@ -1363,6 +1371,7 @@ class GameWindow(Action<Action> runOnUiThread, string gameVersion, Action<bool, 
 
                     try
                     {
+                        cheatsEnabled = configuration.EnableCheats;
                         var advancedDiffsReader = gameData.Advanced ? new BinaryReader(FileProvider.GetAdvancedDiffsData()) : null;
                         StartGame(gameData as GameData, savePath, gameLanguage, features, advancedDiffsReader);
                     }

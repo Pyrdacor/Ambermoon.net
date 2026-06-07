@@ -1107,7 +1107,7 @@ partial class GameCore
             CurrentSavegame!.ActivateSpell(buff, duration, value);
     }
 
-    public void Revive(Character caster, List<PartyMember> affectedMembers, Action? finishAction = null)
+    public void Revive(Character? caster, List<PartyMember> affectedMembers, Action? finishAction = null)
     {
         void Revive(PartyMember target, Action finishAction) =>
             ApplySpellEffect(Spell.Resurrection, caster, target, finishAction, false);

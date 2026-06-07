@@ -134,7 +134,7 @@ partial class GameCore
 
                 var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
 
-                if (moveTicks >= movement.MovementTicks(is3D, Map!.UseTravelTypes, TravelType))
+                if (moveTicks >= movement.MovementTicks(is3D, Map?.UseTravelTypes ?? false, TravelType))
                 {
                     lastMoveTicksReset = CurrentTicks;
 

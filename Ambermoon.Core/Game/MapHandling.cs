@@ -114,7 +114,7 @@ partial class GameCore
             MapCharacter2D.Reset();
     }
 
-    void Set3DLight(float fade)
+    void Set3DFade(float fade)
     {
         renderView.Set3DFade(fade);
         // TODO: ceiling/floor color
@@ -127,8 +127,7 @@ partial class GameCore
         for (int i = 0; i <= totalSteps; i++)
         {
             float light = FadeAlphaToLight(1.0f - i / div);
-            AddTimedEvent(TimeSpan.FromMilliseconds(i * timePerStep), () =>
-            Set3DLight(light));
+            AddTimedEvent(TimeSpan.FromMilliseconds(i * timePerStep), () => Set3DFade(light));
         }
     }
 
@@ -139,8 +138,7 @@ partial class GameCore
         for (int i = 0; i <= totalSteps; i++)
         {
             float light = FadeAlphaToLight(i / div);
-            AddTimedEvent(TimeSpan.FromMilliseconds(i * timePerStep), () =>
-            Set3DLight(light));
+            AddTimedEvent(TimeSpan.FromMilliseconds(i * timePerStep), () => Set3DFade(light));
         }
     }
 
@@ -645,8 +643,7 @@ partial class GameCore
 
         UpdateLight(false, false, false, null, lightBuffBurningOut ? lightIntensity : (uint?)null);
 
-        if (lightOff)
-            renderMap3D?.SetFog(Map!, MapManager.GetLabdataForMap(Map), lightOff);
+        renderMap3D?.SetFog(Map!, MapManager.GetLabdataForMap(Map), lightOff);
     }
 
     void RenderMap3D_MapChanged(Map map)

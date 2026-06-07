@@ -35,6 +35,40 @@ file class Logger : GameData.ILogger
     public void AppendLine(string text) => Console.WriteLine(text);
 }
 
+file class CheatConsole : IConsole
+{
+    public int CursorPosition
+    {
+        get => Console.CursorLeft;
+        set => Console.CursorLeft = value;
+    }
+
+    public void Clear()
+    {
+        Console.Clear();
+    }
+
+    public void RemoveLastInput()
+    {
+        Console.Write("\b \b");
+    }
+
+    public void Write(string text)
+    {
+        Console.Write(text);
+    }
+
+    public void WriteLine(string text)
+    {
+        Console.WriteLine(text);
+    }
+
+    public void WriteToInput(string text)
+    {
+        Console.Write(text);
+    }
+}
+
 class GameWindow(string id = "MainWindow") : IContextProvider
 {
     string gameVersion = "Ambermoon.net";
@@ -1462,6 +1496,8 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
     void Window_Load()
     {
+        Cheats.Initialize(new CheatConsole());
+
         if (window.Native.Glfw is null)
         {
             Console.WriteLine("WARNING: The current window is not a GLFW window." + Environment.NewLine +

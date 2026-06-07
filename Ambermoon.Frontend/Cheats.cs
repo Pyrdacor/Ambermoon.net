@@ -1,11 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Ambermoon;
 using Ambermoon.Data;
 
-namespace Ambermoon;
+namespace Ambermoon.Frontend;
 
-class Cheats
+public interface IConsole
+{
+    void WriteLine(string text);
+    void Write(string text);
+    void WriteToInput(string text);
+    void Clear();
+    void RemoveLastInput();
+
+    int CursorPosition { get; set; }
+}
+
+public class Cheats
 {
     static readonly System.Random random = new(DateTime.Now.Millisecond);
 
@@ -17,6 +26,14 @@ class Cheats
                 "Shows general help or cheat help." + Environment.NewLine +
                 "Usage: help [cheat]",
                 Help
+            )
+        },
+        { "clear",
+            Create
+            (
+                "Clears the console." + Environment.NewLine +
+                "Usage: clear",
+                Clear
             )
         },
         { "godmode",
@@ -232,14 +249,34 @@ class Cheats
     static KeyValuePair<string, Action<GameCore, string[]>> Create(string help, Action<GameCore, string[]> action)
         => KeyValuePair.Create(help, action);
 
-    static string currentAutoFillInput = null;
+    public static void Initialize(IConsole console)
+    {
+        Cheats.console = console;
+    }
+
+    static string? currentAutoFillInput = null;
     static string currentInput = "";
     static int autoFillIndex = -1;
     static int cursorPosition = 0;
     static int historyIndex = -1;
-    static readonly List<string> history = new();
-    static List<ConsoleKeyInfo> trackedKeys = new();
+    static readonly List<string> history = [];
+    static readonly List<ConsoleKeyInfo> trackedKeys = [];
     static bool inputDisabled = false;
+    private static IConsole? console;
+    private static void WriteLine(string text = "") => console?.WriteLine(text);
+    private static void Write(string text) => console?.Write(text);
+    private static void WriteToInput(string text) => console?.WriteToInput(text);
+    private static void Clear() => console?.Clear();
+    private static void ConsoleRemoveLastInput() => console?.RemoveLastInput();
+    private static int CursorPosition
+    {
+        get => console?.CursorPosition ?? 0;
+        set
+        {
+            if (console != null)
+                console.CursorPosition = value;
+        }
+    }
 
     public static void ProcessInput(string input, GameCore game)
     {
@@ -272,11 +309,11 @@ class Cheats
             {
                 int lengthDiff = currentAutoFillInput.Length - currentInput.Length;
                 currentAutoFillInput = null;
-                Console.CursorLeft = 0;
-                Console.Write(currentInput);
+                CursorPosition = 0;
+                WriteToInput(currentInput);
                 if (lengthDiff > 0)
-                    Console.Write(new string(' ', lengthDiff));
-                Console.CursorLeft = cursorPosition;
+                    WriteToInput(new string(' ', lengthDiff));
+                CursorPosition = cursorPosition;
             }
         }
 
@@ -291,7 +328,7 @@ class Cheats
                     ProcessCurrentInput(game, false);
                 return;
             case ConsoleKey.Backspace:
-                if (Console.CursorLeft > 0)
+                if (CursorPosition > 0)
                     RemoveLastInput();
                 return;
             case ConsoleKey.Escape:
@@ -303,18 +340,18 @@ class Cheats
                     AutoFill();
                 return;
             case ConsoleKey.LeftArrow:
-                if (Console.CursorLeft > 0)
-                    --Console.CursorLeft;
+                if (CursorPosition > 0)
+                    CursorPosition--;
                 return;
             case ConsoleKey.RightArrow:
-                if (Console.CursorLeft < currentInput.Length)
-                    ++Console.CursorLeft;
+                if (CursorPosition < currentInput.Length)
+                    CursorPosition++;
                 return;
             case ConsoleKey.Home:
-                Console.CursorLeft = 0;
+                CursorPosition = 0;
                 return;
             case ConsoleKey.End:
-                Console.CursorLeft = currentInput.Length;
+                CursorPosition = currentInput.Length;
                 return;
             case ConsoleKey.UpArrow:
                 if (history.Count != 0)
@@ -342,37 +379,37 @@ class Cheats
         string entry = historyIndex == -1 ? "" : history[history.Count - historyIndex - 1];
         int lengthDiff = Math.Max(0, currentInput.Length - entry.Length);
         currentInput = entry;
-        Console.CursorLeft = 0;
-        Console.Write(entry);
+        CursorPosition = 0;
+        WriteToInput(entry);
         if (lengthDiff != 0)
-            Console.Write(new string(' ', lengthDiff));
-        Console.CursorLeft = entry.Length;
+            WriteToInput(new string(' ', lengthDiff));
+        CursorPosition = entry.Length;
     }
 
     static void RemoveLastInput()
     {
-        if (Console.CursorLeft == currentInput.Length)
+        if (CursorPosition == currentInput.Length)
         {
             currentInput = currentInput.Remove(currentInput.Length - 1);
-            Console.Write("\b \b");
+            ConsoleRemoveLastInput();
         }
         else
         {
-            int newCursorPosition = Console.CursorLeft - 1;
+            int newCursorPosition = CursorPosition - 1;
             currentInput = currentInput.Remove(newCursorPosition, 1);
-            Console.CursorLeft = 0;
-            Console.Write(currentInput + " ");
-            Console.CursorLeft = newCursorPosition;
+            CursorPosition = 0;
+            WriteToInput(currentInput + " ");
+            CursorPosition = newCursorPosition;
         }
     }
 
     static void AddInput(char input)
     {
-        int newCursorPosition = Console.CursorLeft + 1;
+        int newCursorPosition = CursorPosition + 1;
         currentInput += input;
-        Console.CursorLeft = 0;
-        Console.Write(currentInput);
-        Console.CursorLeft = newCursorPosition;
+        CursorPosition = 0;
+        WriteToInput(currentInput);
+        CursorPosition = newCursorPosition;
     }
 
     static void AutoFill()
@@ -391,17 +428,17 @@ class Cheats
         string newCheat = possibleCheats[(++autoFillIndex) % possibleCheats.Length].Key;
 
         if (currentAutoFillInput == null)
-            cursorPosition = Console.CursorLeft;
+            cursorPosition = CursorPosition;
         else
             lengthDiff = currentAutoFillInput.Length - newCheat.Length;
 
         currentAutoFillInput = newCheat;
-        Console.CursorLeft = 0;
-        Console.Write(currentAutoFillInput);
+        CursorPosition = 0;
+        WriteToInput(currentAutoFillInput);
         if (lengthDiff > 0)
         {
-            Console.Write(new string(' ', lengthDiff));
-            Console.CursorLeft = currentAutoFillInput.Length;
+            WriteToInput(new string(' ', lengthDiff));
+            CursorPosition = currentAutoFillInput.Length;
         }
     }
 
@@ -437,12 +474,12 @@ class Cheats
                         cursorPosition = 0;
                         if (!redirectedInput)
                         {
-                            Console.CursorLeft = currentInput.Length;
-                            Console.WriteLine();
+                            CursorPosition = currentInput.Length;
+                            WriteLine();
                         }
-                        Console.WriteLine();
+                        WriteLine();
                         cheat.Value.Value?.Invoke(game, parts.Skip(1).ToArray());
-                        Console.WriteLine();
+                        WriteLine();
                         return;
                     }
                 }
@@ -454,12 +491,12 @@ class Cheats
                 cursorPosition = 0;
                 if (!redirectedInput)
                 {
-                    Console.CursorLeft = currentInput.Length;
-                    Console.WriteLine();
+                    CursorPosition = currentInput.Length;
+                    WriteLine();
                 }
-                Console.WriteLine();
-                Console.WriteLine("Invalid cheat command. Type 'help' for a list of commands.");
-                Console.WriteLine();
+                WriteLine();
+                WriteLine("Invalid cheat command. Type 'help' for a list of commands.");
+                WriteLine();
             }
         }
     }
@@ -472,46 +509,48 @@ class Cheats
 
             if (cheats.TryGetValue(cheatName, out var cheat))
             {
-                Console.WriteLine();
-                Console.WriteLine(cheat.Key);
-                Console.WriteLine();
+                WriteLine();
+                WriteLine(cheat.Key);
+                WriteLine();
 
                 return;
             }
         }
 
-        Console.WriteLine();
-        Console.WriteLine("The following cheat commands are available:");
+        WriteLine();
+        WriteLine("The following cheat commands are available:");
 
         foreach (var cheat in cheats)
-            Console.WriteLine(cheat.Key);
+            WriteLine(cheat.Key);
 
-        Console.WriteLine();
-        Console.WriteLine("Type 'help <cheatname>' for more details.");
-        Console.WriteLine("Example: help godmode");
-        Console.WriteLine();
+        WriteLine();
+        WriteLine("Type 'help <cheatname>' for more details.");
+        WriteLine("Example: help godmode");
+        WriteLine();
     }
+
+    static void Clear(GameCore game, string[] args) => Clear();
 
     static void Godmode(GameCore game, string[] args)
     {
         bool activate = args.Length == 0 ? !game.Godmode : !int.TryParse(args[0], out int active) || active != 0;
 
-        Console.WriteLine();
+        WriteLine();
 
         if (activate && !game.Godmode)
         {
-            Console.WriteLine("All party members are now immune to damage and kill instantly.");
-            Console.WriteLine();
-            Console.WriteLine("Robert was here I guess. :)");
+            WriteLine("All party members are now immune to damage and kill instantly.");
+            WriteLine();
+            WriteLine("Robert was here I guess. :)");
         }
         else if (!activate && game.Godmode)
         {
-            Console.WriteLine("All party members are no longer immune to damage and deal normal damage.");
-            Console.WriteLine();
-            Console.WriteLine("Robert has gone I guess. :)");
+            WriteLine("All party members are no longer immune to damage and deal normal damage.");
+            WriteLine();
+            WriteLine("Robert has gone I guess. :)");
         }
 
-        Console.WriteLine();
+        WriteLine();
 
         game.Godmode = activate;
     }
@@ -520,25 +559,25 @@ class Cheats
     {
         bool activate = args.Length == 0 ? !game.NoClip : !int.TryParse(args[0], out int active) || active != 0;
 
-        Console.WriteLine();
+        WriteLine();
 
         if (activate && !game.NoClip)
         {
-            Console.WriteLine("You can now move through walls in 3D.");
+            WriteLine("You can now move through walls in 3D.");
         }
         else if (!activate && game.NoClip)
         {
-            Console.WriteLine("You can no longer move through walls in 3D.");
+            WriteLine("You can no longer move through walls in 3D.");
         }
 
-        Console.WriteLine();
+        WriteLine();
 
         game.NoClip = activate;
     }
 
     static void Netsrak(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         foreach (var partyMember in game.PartyMembers)
         {
@@ -583,34 +622,34 @@ class Cheats
             }
         }
 
-        Console.WriteLine("All party members' LP and SP were filled.");
-        Console.WriteLine("All their attributes and skills are maxed.");
-        Console.WriteLine("They all speak all languages now.");
-        Console.WriteLine("And they learned all spells of their school.");
-        Console.WriteLine();
-        Console.WriteLine("Karsten was here I guess. :)");
-        Console.WriteLine();
+        WriteLine("All party members' LP and SP were filled.");
+        WriteLine("All their attributes and skills are maxed.");
+        WriteLine("They all speak all languages now.");
+        WriteLine("And they learned all spells of their school.");
+        WriteLine();
+        WriteLine("Karsten was here I guess. :)");
+        WriteLine();
     }
 
     static List<T> Filter<T>(string[] args, IEnumerable<T> list, Func<T, string> nameProvider)
     {
-        string pattern = args.Length == 0 || string.IsNullOrWhiteSpace(args[0])
+        string? pattern = args.Length == 0 || string.IsNullOrWhiteSpace(args[0])
             ? null : args[0].ToLower();
         return pattern == null
-            ? new List<T>(list)
-            : list.Where(item => nameProvider(item).ToLower().Contains(pattern)).ToList();
+            ? [.. list]
+            : [.. list.Where(item => nameProvider(item).Contains(pattern, global::System.StringComparison.CurrentCultureIgnoreCase))];
     }
 
     static void ShowList<T>(string[] args, IEnumerable<T> list, Func<T, string> nameProvider,
         Func<T, uint> indexProvider, bool twoRows = true)
     {
-        Console.WriteLine();
+        WriteLine();
 
         var items = Filter(args, list, nameProvider);
 
         if (items.Count == 0)
         {
-            Console.WriteLine("No items found.");
+            WriteLine("No items found.");
             return;
         }
 
@@ -619,7 +658,7 @@ class Cheats
         if (!twoRows || items.Count <= 12)
         {
             for (int i = 0; i < items.Count; ++i)
-                Console.WriteLine($"{indexProvider(items[i]):000}: {nameProvider(items[i])}");
+                WriteLine($"{indexProvider(items[i]):000}: {nameProvider(items[i])}");
         }
         else
         {
@@ -631,12 +670,12 @@ class Cheats
 
             for (int i = 0; i < halfCount; ++i)
             {
-                Console.Write($"{indexProvider(items[i]):000}: {nameProvider(items[i])}".PadRight(28));
-                Console.WriteLine($"{indexProvider(items[secondRowOffset + i]):000}: {nameProvider(items[secondRowOffset + i])}");
+                Write($"{indexProvider(items[i]):000}: {nameProvider(items[i])}".PadRight(28));
+                WriteLine($"{indexProvider(items[secondRowOffset + i]):000}: {nameProvider(items[secondRowOffset + i])}");
             }
 
             if (secondRowOffset > halfCount)
-                Console.WriteLine($"{indexProvider(items[secondRowOffset - 1]):000}: {nameProvider(items[secondRowOffset - 1])}");
+                WriteLine($"{indexProvider(items[secondRowOffset - 1]):000}: {nameProvider(items[secondRowOffset - 1])}");
         }
     }
 
@@ -647,7 +686,7 @@ class Cheats
 
     static void Teleport(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         if (args.Length >= 3)
         {
@@ -662,8 +701,8 @@ class Cheats
 
                 if (worldX == null || worldY == null || worldX == 0 || worldY == 0)
                 {
-                    Console.WriteLine("Invalid x or y coordinate.");
-                    Console.WriteLine();
+                    WriteLine("Invalid x or y coordinate.");
+                    WriteLine();
                     return;
                 }
 
@@ -690,23 +729,23 @@ class Cheats
                 uint worldMapIndex = worldMapOffset + mapColumn + mapRow * worldSize;
                 uint mapAmount = worldSize * worldSize;
 
-                if (!game.Teleport(worldMapIndex, mapX, mapY, worldDirection, out bool blocked))
+                if (!game.Teleport(worldMapIndex, mapX, mapY, worldDirection, out bool blocked, false, true))
                 {
                     if (blocked)
                     {
-                        Console.WriteLine($"Teleport to position ({worldX}, {worldY}) on world {world} is not possible.");
+                        WriteLine($"Teleport to position ({worldX}, {worldY}) on world {world} is not possible.");
                     }
                     else
                     {
-                        Console.WriteLine("Unable to teleport in current game state.");
-                        Console.WriteLine("Try to use the command when no ingame window is open and you are on foot.");
+                        WriteLine("Unable to teleport in current game state.");
+                        WriteLine("Try to use the command when no ingame window is open and you are on foot.");
                     }
-                    Console.WriteLine();
+                    WriteLine();
                     return;
                 }
 
-                Console.WriteLine($"Teleported to world {world} ({worldX}, {worldY}) -> map {worldMapIndex} ({mapX}, {mapY})");
-                Console.WriteLine();
+                WriteLine($"Teleported to world {world} ({worldX}, {worldY}) -> map {worldMapIndex} ({mapX}, {mapY})");
+                WriteLine();
                 return;
             }
         }
@@ -714,9 +753,9 @@ class Cheats
         if (args.Length == 0 || !uint.TryParse(args[0], out uint mapIndex) ||
             !game.MapManager.Maps.Any(m => m.Index == mapIndex))
         {
-            Console.WriteLine("Invalid map index.");
-            Console.WriteLine("Type 'maps' to see a list of maps.");
-            Console.WriteLine();
+            WriteLine("Invalid map index.");
+            WriteLine("Type 'maps' to see a list of maps.");
+            WriteLine();
             return;
         }
 
@@ -755,39 +794,39 @@ class Cheats
             {
                 if (!randomPosition)
                 {
-                    Console.WriteLine($"Teleport to position ({x}, {y}) on map {mapIndex} is not possible.");
-                    Console.WriteLine();
+                    WriteLine($"Teleport to position ({x}, {y}) on map {mapIndex} is not possible.");
+                    WriteLine();
                     return;
                 }
             }
-            else if (!game.Teleport(mapIndex, x.Value, y.Value, direction, out bool blocked))
+            else if (!game.Teleport(mapIndex, x.Value, y.Value, direction, out bool blocked, false, true))
             {
                 if (!randomPosition)
                 {
                     if (blocked)
                     {
-                        Console.WriteLine($"Teleport to position ({x}, {y}) on map {mapIndex} is not possible.");
+                        WriteLine($"Teleport to position ({x}, {y}) on map {mapIndex} is not possible.");
                     }
                     else
                     {
-                        Console.WriteLine("Unable to teleport in current game state.");
-                        Console.WriteLine("Try to use the command when no ingame window is open and you are on foot.");
+                        WriteLine("Unable to teleport in current game state.");
+                        WriteLine("Try to use the command when no ingame window is open and you are on foot.");
                     }
-                    Console.WriteLine();
+                    WriteLine();
                     return;
                 }
                 else if (!blocked)
                 {
-                    Console.WriteLine("Unable to teleport in current game state.");
-                    Console.WriteLine("Try to use the command when no ingame window is open and you are on foot.");
-                    Console.WriteLine();
+                    WriteLine("Unable to teleport in current game state.");
+                    WriteLine("Try to use the command when no ingame window is open and you are on foot.");
+                    WriteLine();
                     return;
                 }
             }
             else
             {
-                Console.WriteLine($"Teleported to map {mapIndex} ({x}, {y})");
-                Console.WriteLine();
+                WriteLine($"Teleported to map {mapIndex} ({x}, {y})");
+                WriteLine();
                 return;
             }
 
@@ -795,8 +834,8 @@ class Cheats
             y = 1u + (uint)random.Next() % (uint)map.Height;
         }
 
-        Console.WriteLine($"Teleport failed after testing {MaxTries} random positions.");
-        Console.WriteLine();
+        WriteLine($"Teleport failed after testing {MaxTries} random positions.");
+        WriteLine();
     }
 
     static void ShowMonsters(GameCore game, string[] args)
@@ -833,22 +872,22 @@ class Cheats
 
     static void StartBattle(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         if (args.Length == 0 || !uint.TryParse(args[0], out uint monsterGroupIndex) ||
             !game.CharacterManager.MonsterGroups.ContainsKey(monsterGroupIndex))
         {
-            Console.WriteLine("Invalid monster group index.");
-            Console.WriteLine("Type 'monsters' to see a list of monster groups.");
-            Console.WriteLine();
+            WriteLine("Invalid monster group index.");
+            WriteLine("Type 'monsters' to see a list of monster groups.");
+            WriteLine();
             return;
         }
 
         if (!game.StartBattle(monsterGroupIndex))
         {
-            Console.WriteLine("Unable to start a fight in current game state.");
-            Console.WriteLine("Try to use the command when no ingame window is open.");
-            Console.WriteLine();
+            WriteLine("Unable to start a fight in current game state.");
+            WriteLine("Try to use the command when no ingame window is open.");
+            WriteLine();
             return;
         }
     }
@@ -862,7 +901,7 @@ class Cheats
     {
         // TODO: If the char has no items and the inventory is open,
         //       the buttons are still disabled after give.
-        Console.WriteLine();
+        WriteLine();
 
         PartyMember GetPartyMember(int argIndex)
         {
@@ -870,8 +909,8 @@ class Cheats
 
             if (partyMemberIndex != null && (partyMemberIndex < 1 || partyMemberIndex > GameCore.MaxPartyMembers))
             {
-                Console.WriteLine("Party member index was invalid or outside the range 1~6.");
-                Console.WriteLine();
+                WriteLine("Party member index was invalid or outside the range 1~6.");
+                WriteLine();
                 return null;
             }
 
@@ -879,8 +918,8 @@ class Cheats
 
             if (partyMember == null)
             {
-                Console.WriteLine($"Party member with index {partyMemberIndex} does not exist.");
-                Console.WriteLine();
+                WriteLine($"Party member with index {partyMemberIndex} does not exist.");
+                WriteLine();
                 return null;
             }
 
@@ -899,13 +938,13 @@ class Cheats
                     if (int.TryParse(args[1], out int gold) || gold < 1)
                     {
                         partyMember.AddGold((uint)gold);
-                        Console.WriteLine($"{gold} gold was added.");
+                        WriteLine($"{gold} gold was added.");
                     }
                     else
                     {
-                        Console.WriteLine("Invalid gold amount.");
+                        WriteLine("Invalid gold amount.");
                     }
-                    Console.WriteLine();
+                    WriteLine();
                     return;
                 case "food":
                     if ((partyMember = GetPartyMember(2)) == null)
@@ -913,13 +952,13 @@ class Cheats
                     if (int.TryParse(args[1], out int food) || food < 1)
                     {
                         partyMember.AddFood((uint)food);
-                        Console.WriteLine($"{food} food was added.");
+                        WriteLine($"{food} food was added.");
                     }
                     else
                     {
-                        Console.WriteLine("Invalid food amount.");
+                        WriteLine("Invalid food amount.");
                     }
-                    Console.WriteLine();
+                    WriteLine();
                     return;
             }
         }
@@ -935,9 +974,9 @@ class Cheats
 
             if (items.Count == 0)
             {
-                Console.WriteLine("No item was found with that name.");
-                Console.WriteLine("Type 'items' to see a list of items.");
-                Console.WriteLine();
+                WriteLine("No item was found with that name.");
+                WriteLine("Type 'items' to see a list of items.");
+                WriteLine();
                 return;
             }
             else if (items.Count > 1)
@@ -954,9 +993,9 @@ class Cheats
                 }
                 else
                 {
-                    Console.WriteLine("The following items match your search.");
-                    Console.WriteLine("Use the index or be more precise with the name.");
-                    Console.WriteLine();
+                    WriteLine("The following items match your search.");
+                    WriteLine("Use the index or be more precise with the name.");
+                    WriteLine();
                     ShowList(Array.Empty<string>(), items, item => item.Name, item => item.Index);
                     return;
                 }
@@ -975,9 +1014,9 @@ class Cheats
             if (args.Length == 0 || !uint.TryParse(args[0], out itemIndex) ||
                 !game.ItemManager.Items.Any(item => item.Index == itemIndex))
             {
-                Console.WriteLine("Invalid item index.");
-                Console.WriteLine("Type 'items' to see a list of items.");
-                Console.WriteLine();
+                WriteLine("Invalid item index.");
+                WriteLine("Type 'items' to see a list of items.");
+                WriteLine();
                 return;
             }
 
@@ -989,15 +1028,15 @@ class Cheats
 
         if (amount < 1)
         {
-            Console.WriteLine("Item amount was invalid or below 1.");
-            Console.WriteLine();
+            WriteLine("Item amount was invalid or below 1.");
+            WriteLine();
             return;
         }
 
         if (amount > 99)
         {
-            Console.WriteLine("Item amount must not be greater than 99.");
-            Console.WriteLine();
+            WriteLine("Item amount must not be greater than 99.");
+            WriteLine();
             return;
         }
 
@@ -1038,56 +1077,56 @@ class Cheats
 
         if (remainingAmount == amount)
         {
-            Console.WriteLine("There was no space to add the items.");
-            Console.WriteLine();
+            WriteLine("There was no space to add the items.");
+            WriteLine();
         }
         else if (remainingAmount != 0)
         {
             game.UpdateInventory();
-            Console.WriteLine($"Only {amount - remainingAmount}/{amount} items could be added.");
-            Console.WriteLine();
+            WriteLine($"Only {amount - remainingAmount}/{amount} items could be added.");
+            WriteLine();
         }
         else
         {
             game.UpdateInventory();
             if (amount == 1)
-                Console.WriteLine("The item was added successfully.");
+                WriteLine("The item was added successfully.");
             else
-                Console.WriteLine($"All {amount} items were added successfully.");
-            Console.WriteLine();
+                WriteLine($"All {amount} items were added successfully.");
+            WriteLine();
         }
     }
 
     static void Fly(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         if (game.ActivateTransport(Data.Enumerations.TravelType.Fly))
         {
-            Console.WriteLine("You are now flying! Awesome!");
+            WriteLine("You are now flying! Awesome!");
         }
         else
         {
-            Console.WriteLine("You can't fly now.");
+            WriteLine("You can't fly now.");
         }
 
-        Console.WriteLine();
+        WriteLine();
     }
 
     static void Explore(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         if (game.ExploreMap())
         {
-            Console.WriteLine("The map has been explored!");
+            WriteLine("The map has been explored!");
         }
         else
         {
-            Console.WriteLine("You can't explore the map now.");
+            WriteLine("You can't explore the map now.");
         }
 
-        Console.WriteLine();
+        WriteLine();
     }
 
     static PartyMember GetPartyMemberByIdOrSlotOrName(GameCore game, string partyMemberIdOrName,
@@ -1102,8 +1141,8 @@ class Cheats
             {
                 if (partyMemberId < 1 || partyMemberId > GameCore.MaxPartyMembers)
                 {
-                    Console.WriteLine("Party member slot was outside the range 1~6.");
-                    Console.WriteLine();
+                    WriteLine("Party member slot was outside the range 1~6.");
+                    WriteLine();
                     return null;
                 }
 
@@ -1115,8 +1154,8 @@ class Cheats
 
                 if (!entries.TryGetValue(partyMemberId, out partyMember))
                 {
-                    Console.WriteLine($"The given party member id does not exist. Use a value from {entries.Keys.Min()} to {entries.Keys.Max()}.");
-                    Console.WriteLine();
+                    WriteLine($"The given party member id does not exist. Use a value from {entries.Keys.Min()} to {entries.Keys.Max()}.");
+                    WriteLine();
                     return null;
                 }
             }
@@ -1134,8 +1173,8 @@ class Cheats
 
             if (partyMembers.Length == 0)
 			{
-                Console.WriteLine("No party member matches the given name.");
-				Console.WriteLine();
+                WriteLine("No party member matches the given name.");
+				WriteLine();
 				return null;
 			}
 
@@ -1160,11 +1199,11 @@ class Cheats
                 if (partyMember != null)
                     return partyMember;
 
-				Console.WriteLine("More than one party member matches the given name.");
-				Console.WriteLine("Please specify more precise. Here are the matches:");
+				WriteLine("More than one party member matches the given name.");
+				WriteLine("Please specify more precise. Here are the matches:");
 				foreach (var p in partyMembers.Where(x => x.Index != 1))
-					Console.WriteLine("  - " + p.Name);
-				Console.WriteLine();
+					WriteLine("  - " + p.Name);
+				WriteLine();
 				return null;
 			}
 			else
@@ -1178,27 +1217,27 @@ class Cheats
 
     static void Kill(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         if ((!game.BattleActive && !game.CampActive && game.WindowActive) || game.PopupActive)
         {
-            Console.WriteLine("Killing a party member is only possible on the map screen, in battle or in camp.");
-            Console.WriteLine("Moreover all popups should be closed.");
-            Console.WriteLine();
+            WriteLine("Killing a party member is only possible on the map screen, in battle or in camp.");
+            WriteLine("Moreover all popups should be closed.");
+            WriteLine();
             return;
         }
 
         if (game.BattleRoundActive)
         {
-            Console.WriteLine("Killing party members in battle is only possible between rounds.");
-            Console.WriteLine();
+            WriteLine("Killing party members in battle is only possible between rounds.");
+            WriteLine();
             return;
         }
 
         if (game.PlayerIsPickingABattleAction)
         {
-            Console.WriteLine("Please finish the current battle action picking first.");
-            Console.WriteLine();
+            WriteLine("Please finish the current battle action picking first.");
+            WriteLine();
             return;
         }
 
@@ -1206,11 +1245,11 @@ class Cheats
             () =>
             {
                 if (long.TryParse(args[0], out var index))
-					    Console.WriteLine($"There is no party member in slot {index}.");
+					    WriteLine($"There is no party member in slot {index}.");
                 else
-						Console.WriteLine($"There is no party member with a matching name in the party.");
+						WriteLine($"There is no party member with a matching name in the party.");
 
-					Console.WriteLine();
+					WriteLine();
 					return null;
 				},
             (_) => null, true);
@@ -1228,22 +1267,22 @@ class Cheats
 
         if (!partyMember.Alive)
         {
-            Console.WriteLine($"{partyMember.Name} is already dead.");
-            Console.WriteLine();
+            WriteLine($"{partyMember.Name} is already dead.");
+            WriteLine();
 
             if (!partyMember.Conditions.HasFlag(deathCondition))
             {
                 if (deathCondition == Condition.DeadDust)
                 {
                     partyMember.Conditions = Condition.DeadDust;
-                    Console.WriteLine("But his death type was changed to dust.");
-                    Console.WriteLine();
+                    WriteLine("But his death type was changed to dust.");
+                    WriteLine();
                 }
                 else if (deathCondition == Condition.DeadAshes && !partyMember.Conditions.HasFlag(Condition.DeadDust))
                 {
                     partyMember.Conditions = Condition.DeadAshes;
-                    Console.WriteLine("But his death type was changed to ashes.");
-                    Console.WriteLine();
+                    WriteLine("But his death type was changed to ashes.");
+                    WriteLine();
                 }
             }
 
@@ -1252,8 +1291,8 @@ class Cheats
 
         if (game.HasPartyMemberFled(partyMember))
         {
-            Console.WriteLine($"{partyMember.Name} has fled the fight. Please try again after the fight has ended.");
-            Console.WriteLine();
+            WriteLine($"{partyMember.Name} has fled the fight. Please try again after the fight has ended.");
+            WriteLine();
             return;
         }
 
@@ -1262,8 +1301,8 @@ class Cheats
         void Died(Character _)
         {
             partyMember.Died -= Died;
-            Console.WriteLine($"{partyMember.Name} was killed!");
-            Console.WriteLine();
+            WriteLine($"{partyMember.Name} was killed!");
+            WriteLine();
 
             if (wasActive)
                 game.RecheckActivePlayer();
@@ -1276,12 +1315,12 @@ class Cheats
 
     static void Revive(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         if (!game.CanRevive())
         {
-            Console.WriteLine("Can't revive outside the camp.");
-            Console.WriteLine();
+            WriteLine("Can't revive outside the camp.");
+            WriteLine();
             return;
         }
 
@@ -1291,11 +1330,11 @@ class Cheats
                 () =>
                 {
                     if (long.TryParse(args[0], out var index))
-                        Console.WriteLine($"There is no party member in slot {index}.");
+                        WriteLine($"There is no party member in slot {index}.");
                     else
-                        Console.WriteLine($"There is no party member with a matching name in the party.");
+                        WriteLine($"There is no party member with a matching name in the party.");
 
-                    Console.WriteLine();
+                    WriteLine();
                     return null;
                 },
                 (_) => null, true)
@@ -1310,29 +1349,29 @@ class Cheats
 
             if (partyMembers.Count == 0)
             {
-                Console.WriteLine("All party members are already alive.");
-                Console.WriteLine();
+                WriteLine("All party members are already alive.");
+                WriteLine();
                 return;
             }
         }
 
         if (partyMembers.Count == 1 && partyMembers[0].Alive)
         {
-            Console.WriteLine($"{partyMembers[0].Name} is not dead.");
-            Console.WriteLine();
+            WriteLine($"{partyMembers[0].Name} is not dead.");
+            WriteLine();
             return;
         }
 
         inputDisabled = true;
-        Console.WriteLine("Reviving party members ... ");
+        WriteLine("Reviving party members ... ");
 
         game.Revive(null, partyMembers, () =>
         {
             if (partyMembers.Count == 1)
-                Console.WriteLine($"{partyMembers[0].Name} was revived.");
+                WriteLine($"{partyMembers[0].Name} was revived.");
             else
-                Console.WriteLine($"{string.Join(", ", partyMembers.Select(p => p.Name))} were revived");
-            Console.WriteLine();
+                WriteLine($"{string.Join(", ", partyMembers.Select(p => p.Name))} were revived");
+            WriteLine();
 
             lock (trackedKeys)
             {
@@ -1344,22 +1383,22 @@ class Cheats
 
     static void Berserk(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         game.KillAllMapMonsters();
 
-        Console.WriteLine("The map was cleared from all monsters.");
-        Console.WriteLine();
+        WriteLine("The map was cleared from all monsters.");
+        WriteLine();
     }
 
     static void EndFight(GameCore game, bool flee)
     {
-        Console.WriteLine();
+        WriteLine();
 
         if (!game.EndBattle(flee))
         {
-            Console.WriteLine("There is no active fight, or the fight round is still active or another window is opened.");
-            Console.WriteLine();
+            WriteLine("There is no active fight, or the fight round is still active or another window is opened.");
+            WriteLine();
         }
     }
 
@@ -1369,35 +1408,35 @@ class Cheats
 
     static void Light(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         uint lightLevel = args.Length < 1 ? 3 : uint.TryParse(args[0], out uint i) ? i : 3;
         lightLevel = Util.Limit(1, lightLevel, 3);
         game.ActivateLight(lightLevel);
 
-        Console.WriteLine($"Light level {lightLevel} was granted.");
-        Console.WriteLine();
+        WriteLine($"Light level {lightLevel} was granted.");
+        WriteLine();
     }
 
     static void Where(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         var savegame = game.GetCurrentSavegame();
 
-        Console.WriteLine($"Map {savegame.CurrentMapIndex}, X {savegame.CurrentMapX}, Y {savegame.CurrentMapY}, Looking {savegame.CharacterDirection}");
-        Console.WriteLine();
+        WriteLine($"Map {savegame.CurrentMapIndex}, X {savegame.CurrentMapX}, Y {savegame.CurrentMapY}, Looking {savegame.CharacterDirection}");
+        WriteLine();
     }
 
     static void Level(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         if (game.WindowOrPopupActive)
         {
-            Console.WriteLine("Please close all popups and ensure you are on the map screen.");
-            Console.WriteLine("Otherwise the level cheat won't work.");
-            Console.WriteLine();
+            WriteLine("Please close all popups and ensure you are on the map screen.");
+            WriteLine("Otherwise the level cheat won't work.");
+            WriteLine();
             return;
         }
 
@@ -1407,8 +1446,8 @@ class Cheats
 
             if (partyMemberIndex != null && partyMemberIndex > GameCore.MaxPartyMembers)
             {
-                Console.WriteLine("Party member index was invalid or outside the range 0~6.");
-                Console.WriteLine();
+                WriteLine("Party member index was invalid or outside the range 0~6.");
+                WriteLine();
                 return null;
             }
 
@@ -1421,8 +1460,8 @@ class Cheats
 
             if (partyMember == null)
             {
-                Console.WriteLine($"Party member with index {partyMemberIndex} does not exist.");
-                Console.WriteLine();
+                WriteLine($"Party member with index {partyMemberIndex} does not exist.");
+                WriteLine();
                 return null;
             }
 
@@ -1433,8 +1472,8 @@ class Cheats
 
         if (amount < 1)
         {
-            Console.WriteLine("Amount was invalid or below 1.");
-            Console.WriteLine();
+            WriteLine("Amount was invalid or below 1.");
+            WriteLine();
             return;
         }
 
@@ -1442,8 +1481,8 @@ class Cheats
 
         if (partyMembers.Count == 0)
         {
-            Console.WriteLine("There is no alive target party member.");
-            Console.WriteLine();
+            WriteLine("There is no alive target party member.");
+            WriteLine();
             return;
         }
 
@@ -1451,15 +1490,15 @@ class Cheats
 
         if (partyMembers.Count == 0)
         {
-            Console.WriteLine("There is no target party member below max level.");
-            Console.WriteLine();
+            WriteLine("There is no target party member below max level.");
+            WriteLine();
             return;
         }
 
         void Finish()
         {
-            Console.WriteLine("Levels were increased.");
-            Console.WriteLine();
+            WriteLine("Levels were increased.");
+            WriteLine();
 
             game.UpdateInventory();
         }
@@ -1491,20 +1530,20 @@ class Cheats
 
     static void Invite(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         if (args.Length < 1)
         {
-            Console.WriteLine("No party member id or name was given.");
-            Console.WriteLine();
+            WriteLine("No party member id or name was given.");
+            WriteLine();
             return;
         }
 
         var partyMember = GetPartyMemberByIdOrSlotOrName(game, args[0], p => !game.PartyMembers.Contains(p),
             () =>
             {
-					Console.WriteLine("All party members matching the given name are already in the party.");
-					Console.WriteLine();
+					WriteLine("All party members matching the given name are already in the party.");
+					WriteLine();
                 return null;
 				},
             (partyMembers) =>
@@ -1524,8 +1563,8 @@ class Cheats
 
         if (game.PartyMembers.Contains(partyMember))
         {
-            Console.WriteLine($"{partyMember.Name} is already in the party.");
-            Console.WriteLine();
+            WriteLine($"{partyMember.Name} is already in the party.");
+            WriteLine();
             return;
         }
 
@@ -1533,18 +1572,18 @@ class Cheats
 
         if (result == -1)
         {
-            Console.WriteLine($"Wrong window. Please invite party members on the map screen.");
-            Console.WriteLine();
+            WriteLine($"Wrong window. Please invite party members on the map screen.");
+            WriteLine();
         }
         else if (result == -2)
         {
-            Console.WriteLine($"There are no free party slots.");
-            Console.WriteLine();
+            WriteLine($"There are no free party slots.");
+            WriteLine();
         }
         else
         {
-            Console.WriteLine($"{partyMember.Name} joined the party.");
-            Console.WriteLine();
+            WriteLine($"{partyMember.Name} joined the party.");
+            WriteLine();
         }
     }
 
@@ -1554,8 +1593,8 @@ class Cheats
 
         if (partyMemberIndex != null && partyMemberIndex > GameCore.MaxPartyMembers)
         {
-            Console.WriteLine("Party member index was invalid or outside the range 0~6.");
-            Console.WriteLine();
+            WriteLine("Party member index was invalid or outside the range 0~6.");
+            WriteLine();
             return null;
         }
 
@@ -1572,8 +1611,8 @@ class Cheats
 
             if (partyMembers.Length == 0)
             {
-                Console.WriteLine("No party member matches the given name.");
-                Console.WriteLine();
+                WriteLine("No party member matches the given name.");
+                WriteLine();
                 return null;
             }
 
@@ -1584,8 +1623,8 @@ class Cheats
 
         if (partyMember == null)
         {
-            Console.WriteLine($"Party member with index {partyMemberIndex} does not exist.");
-            Console.WriteLine();
+            WriteLine($"Party member with index {partyMemberIndex} does not exist.");
+            WriteLine();
             return null;
         }
 
@@ -1647,12 +1686,12 @@ class Cheats
 
     static void Curse(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         if (args.Length < 1)
         {
-            Console.WriteLine("No condition given.");
-            Console.WriteLine();
+            WriteLine("No condition given.");
+            WriteLine();
             return;
         }
 
@@ -1660,17 +1699,17 @@ class Cheats
 
         if (condition is null)
         {
-            Console.WriteLine("Invalid condition given.");
-            Console.WriteLine("Possible values are:");
-            GetCurseConditionNames().ToList().ForEach(c => Console.WriteLine($"  - {c}"));
-            Console.WriteLine();
+            WriteLine("Invalid condition given.");
+            WriteLine("Possible values are:");
+            GetCurseConditionNames().ToList().ForEach(c => WriteLine($"  - {c}"));
+            WriteLine();
             return;
         }
 
         if (condition.Value.IsBattleOnly() && !game.BattleActive)
         {
-            Console.WriteLine($"Condition {GetConditionName(condition)} can only be applied in battle.");
-            Console.WriteLine();
+            WriteLine($"Condition {GetConditionName(condition)} can only be applied in battle.");
+            WriteLine();
             return;
         }
 
@@ -1691,7 +1730,7 @@ class Cheats
 
             if (partyMember.Conditions.HasFlag(condition.Value))
             {
-                Console.WriteLine($"{partyMember.Name} is already cursed with {GetConditionName(condition)}.");
+                WriteLine($"{partyMember.Name} is already cursed with {GetConditionName(condition)}.");
                 CurseNext();
                 return;
             }
@@ -1711,7 +1750,7 @@ class Cheats
             {
                 if (!partyMember.Alive)
                 {
-                    Console.WriteLine($"{partyMember.Name} is dead and can't be cursed with {GetConditionName(condition)}.");
+                    WriteLine($"{partyMember.Name} is dead and can't be cursed with {GetConditionName(condition)}.");
                     CurseNext();
                     return;
                 }
@@ -1719,7 +1758,7 @@ class Cheats
                 partyMember.Conditions |= condition.Value;
             }
 
-            Console.WriteLine($"{partyMember.Name} was cursed with {GetConditionName(condition)}.");
+            WriteLine($"{partyMember.Name} was cursed with {GetConditionName(condition)}.");
 
             CurseNext();
         }
@@ -1732,16 +1771,16 @@ class Cheats
         {
             if ((!game.BattleActive && !game.CampActive && game.WindowActive) || game.PopupActive)
             {
-                Console.WriteLine("Killing a party member is only possible on the map screen, in battle or in camp.");
-                Console.WriteLine("Moreover all popups should be closed.");
-                Console.WriteLine();
+                WriteLine("Killing a party member is only possible on the map screen, in battle or in camp.");
+                WriteLine("Moreover all popups should be closed.");
+                WriteLine();
                 return;
             }
 
             if (game.BattleRoundActive)
             {
-                Console.WriteLine("Killing party members in battle is only possible between rounds.");
-                Console.WriteLine();
+                WriteLine("Killing party members in battle is only possible between rounds.");
+                WriteLine();
                 return;
             }
 
@@ -1758,8 +1797,8 @@ class Cheats
                 void Died(Character _)
                 {
                     partyMember.Died -= Died;
-                    Console.WriteLine($"{partyMember.Name} was killed!");
-                    Console.WriteLine();
+                    WriteLine($"{partyMember.Name} was killed!");
+                    WriteLine();
 
                     if (wasActive)
                         activeDied = true;
@@ -1791,7 +1830,7 @@ class Cheats
 
     static void Cleanse(GameCore game, string[] args)
     {
-        Console.WriteLine();
+        WriteLine();
 
         // We use mask 0xff7f for all. This excludes condition "Fleeing" which basically states if someone is about to flee.
         // We not really use it in the remake but still if we do at some point, this should not be cleansable.
@@ -1800,10 +1839,10 @@ class Cheats
 
         if (condition is null)
         {
-            Console.WriteLine("Invalid condition given.");
-            Console.WriteLine("Possible values are:");
-            GetCurseConditionNames().Prepend("All").ToList().ForEach(c => Console.WriteLine($"  - {c}"));
-            Console.WriteLine();
+            WriteLine("Invalid condition given.");
+            WriteLine("Possible values are:");
+            GetCurseConditionNames().Prepend("All").ToList().ForEach(c => WriteLine($"  - {c}"));
+            WriteLine();
             return;
         }
 
@@ -1827,7 +1866,7 @@ class Cheats
             {
                 if (partyMember.Alive || condition.Value != Condition.DeadCorpse)
                 {
-                    Console.WriteLine($"{partyMember.Name} is not {GetConditionName(condition)}.");
+                    WriteLine($"{partyMember.Name} is not {GetConditionName(condition)}.");
                     CleanseNext();
                     return;
                 }
@@ -1839,7 +1878,7 @@ class Cheats
                 {
                     if (condition.Value != allConditions)
                     {
-                        Console.WriteLine($"{partyMember.Name} is not dead.");
+                        WriteLine($"{partyMember.Name} is not dead.");
                         CleanseNext();
                         return;
                     }
@@ -1850,7 +1889,7 @@ class Cheats
 
                     if (newCondition >= (int)Condition.DeadAshes) // still ashes or dust?
                     {
-                        Console.WriteLine($"{partyMember.Name} is ashes or dust and can't be revived. First remove dust and/or ashes.");
+                        WriteLine($"{partyMember.Name} is ashes or dust and can't be revived. First remove dust and/or ashes.");
                         CleanseNext();
                         return;
                     }
@@ -1878,9 +1917,9 @@ class Cheats
             }
 
             if (condition.Value == allConditions)
-                Console.WriteLine($"{partyMember.Name} was cleansed from all conditions.");
+                WriteLine($"{partyMember.Name} was cleansed from all conditions.");
             else
-                Console.WriteLine($"{partyMember.Name} was cleansed from {GetConditionName(condition)}.");
+                WriteLine($"{partyMember.Name} was cleansed from {GetConditionName(condition)}.");
 
             CleanseNext();
         }
@@ -1893,9 +1932,9 @@ class Cheats
         {
             if (!canRevive)
             {
-                Console.WriteLine("Reviving a party member is only possible in camp.");
-                Console.WriteLine("Moreover all popups should be closed.");
-                Console.WriteLine();
+                WriteLine("Reviving a party member is only possible in camp.");
+                WriteLine("Moreover all popups should be closed.");
+                WriteLine();
                 return;
             }
 

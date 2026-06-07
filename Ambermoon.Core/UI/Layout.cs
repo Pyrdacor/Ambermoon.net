@@ -1527,7 +1527,7 @@ namespace Ambermoon.UI
             var on = game.DataNameProvider.On;
             var off = game.DataNameProvider.Off;
             int width = game.CoreConfiguration.Width ?? 1280;
-            bool cheatsEnabled = !game.CoreConfiguration.IsMobile && game.CoreConfiguration.EnableCheats;            
+            bool cheatsEnabled = game.CoreConfiguration.EnableCheats;            
             Action<int, string>? nullOptionAction = null;
             List<KeyValuePair<string, Action<int, string>?>> options = new(OptionCount);
 

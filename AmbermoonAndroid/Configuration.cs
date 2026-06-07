@@ -77,7 +77,6 @@ namespace AmbermoonAndroid
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? CacheMusic { get; set; } = null;
         public bool AutoDerune { get; set; } = true;
-		[JsonIgnore] // not needed/supported on Android
 		public bool EnableCheats { get; set; } = false;
 		public bool ShowButtonTooltips { get; set; } = false;
 		public bool ShowFantasyIntro { get; set; } = true;

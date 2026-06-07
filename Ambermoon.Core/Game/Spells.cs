@@ -673,7 +673,7 @@ partial class GameCore
         });
     }
 
-    void ApplySpellEffect(Spell spell, Character caster, Character target, Action? finishAction, bool checkFail)
+    void ApplySpellEffect(Spell spell, Character? caster, Character target, Action? finishAction, bool checkFail)
     {
         CurrentSpellTarget = target;
 

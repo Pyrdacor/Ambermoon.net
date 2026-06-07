@@ -336,7 +336,7 @@ partial class GameCore
 
     #region Teleport
 
-    public bool Teleport(uint mapIndex, uint x, uint y, CharacterDirection direction, out bool blocked, bool force = false)
+    public bool Teleport(uint mapIndex, uint x, uint y, CharacterDirection direction, out bool blocked, bool force = false, bool fadeIfMapChange = false)
     {
         blocked = false;
 
@@ -397,40 +397,52 @@ partial class GameCore
         if (direction == CharacterDirection.Keep)
             direction = PlayerDirection;
 
-        player!.MoveTo(newMap, newX, newY, CurrentTicks, true, direction, UpdateMapNameAndLight);
-        this.player!.Position.X = RenderPlayer.Position.X;
-        this.player.Position.Y = RenderPlayer.Position.Y;
-        // This will update the appearance.
-        TravelType = travelType;
-
-        void UpdateMapNameAndLight(Map map)
+        if (mapChange && fadeIfMapChange)
         {
+            Fade(MoveToMap);
+        }
+        else
+        {
+            MoveToMap();
+        }
+
+        void MoveToMap()
+        {
+            player!.MoveTo(newMap, newX, newY, CurrentTicks, true, direction, UpdateMapNameAndLight);
+            this.player!.Position.X = RenderPlayer.Position.X;
+            this.player.Position.Y = RenderPlayer.Position.Y;
+            // This will update the appearance.
+            TravelType = travelType;
+
+            void UpdateMapNameAndLight(Map map)
+            {
+                if (mapChange && !WindowActive)
+                {
+                    UpdateMapName(map);
+                    UpdateLight(true, false, false, map);
+                }
+            }
+
+            if (!mapTypeChanged)
+            {
+                PlayerMoved(mapChange);
+            }
+
             if (mapChange && !WindowActive)
             {
-                UpdateMapName(map);
-                UpdateLight(true, false, false, map);
+                // Color of the filled upper right area may need update cause of palette change.
+                mapViewRightFillArea!.Color = GetUIColor(28);
             }
-        }
 
-        if (!mapTypeChanged)
-        {
-            PlayerMoved(mapChange);
-        }
+            if (!mapChange) // Otherwise the map change handler takes care of this
+                ResetMoveKeys();
 
-        if (mapChange && !WindowActive)
-        {
-            // Color of the filled upper right area may need update cause of palette change.
-            mapViewRightFillArea!.Color = GetUIColor(28);
-        }
-
-        if (!mapChange) // Otherwise the map change handler takes care of this
-            ResetMoveKeys();
-
-        if (!WindowActive && !layout.PopupActive && !TravelType.IgnoreEvents())
-        {
-            // Trigger events after map transition
-            TriggerMapEvents(EventTrigger.Move, (uint)this.player.Position.X,
-                (uint)this.player.Position.Y);
+            if (!WindowActive && !layout.PopupActive && !TravelType.IgnoreEvents())
+            {
+                // Trigger events after map transition
+                TriggerMapEvents(EventTrigger.Move, (uint)this.player.Position.X,
+                    (uint)this.player.Position.Y);
+            }
         }
 
         return true;
