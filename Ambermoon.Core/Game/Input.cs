@@ -534,7 +534,8 @@ partial class GameCore
         else if (trapMouseArea != null && (currentWindow.Window == Window.Merchant ||
             currentWindow.Window == Window.Healer || currentWindow.Window == Window.Sage ||
             currentWindow.Window == Window.Blacksmith || currentWindow.Window == Window.Enchanter ||
-            currentWindow.Window == Window.Door || (currentWindow.Window == Window.Chest && OpenStorage == null)))
+            currentWindow.Window == Window.Door || (currentWindow.Window == Window.Chest && OpenStorage == null))
+            && key!=Key.Up && key!=Key.Down && key!=Key.PageUp && key!=Key.PageDown && key!=Key.Escape) 
             return;
         if (!WindowActive && !PopupActive && key >= Key.Number0 && key <= Key.Number9 && modifiers.HasFlag(KeyModifiers.Control))
         {
@@ -756,7 +757,13 @@ partial class GameCore
         {
             int slot = keyChar - '1';
 
-            if (!keys[(int)Key.Num1 + slot])
+            if (layout.IsDragging) {
+                var cursorType = CursorType.Sword;
+                if (layout.Click(Global.ExtendedPartyMemberPortraitAreas[slot].Position, MouseButtons.Left, ref cursorType, CurrentTicks, pickingNewLeader, pickingTargetPlayer, pickingTargetInventory))
+                    CursorType = cursorType;
+            }
+
+            else if (!keys[(int)Key.Num1 + slot])
                 SetActivePartyMember(slot);
         }
 
