@@ -7,6 +7,15 @@ init:
         Set-AppveyorBuildVariable 'VERSION_TAG' $tag
       }
 
+branches:
+  only:
+    - /^v\d+\.\d+\.\d+$/
+    - /^windows-v\d+\.\d+\.\d+$/
+    - /^linux-v\d+\.\d+\.\d+$/
+    - /^macos-v\d+\.\d+\.\d+$/
+    - /^android-v\d+\.\d+\.\d+$/
+    - game-refactoring
+
 for:
 -
     branches:

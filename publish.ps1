@@ -40,7 +40,7 @@ if ($isWindows) {
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/net8.0/linux-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList 'versions','"./Ambermoon.net/versions.dat"','diffs','./Ambermoon.net/diffs.dat','"./Ambermoon.net/bin/Any CPU/Release/net9.0/linux-x64/publish/Ambermoon.net"'
   mkdir ./icons
   cp ./Icons/linux/* ./icons/
-  7z a Ambermoon.net-Linux.tar "./Ambermoon.net/bin/Any CPU/Release/net9.0/linux-x64/publish/Ambermoon.net" "./AmbermoonPatcher/bin/Any CPU/Release/net9.0/linux-x64/publish/AmbermoonPatcher" "./Package/*" "./icons/" "./Ambermoon.net/Linux/install.sh"
+  7z a Ambermoon.net-Linux.tar "./Ambermoon.net/bin/Any CPU/Release/net9.0/linux-x64/publish/Ambermoon.net" "./AmbermoonPatcher/bin/Any CPU/Release/net8.0/linux-x64/publish/AmbermoonPatcher" "./Package/*" "./icons/" "./Ambermoon.net/Linux/install.sh"
   7z a Ambermoon.net-Linux.tar.gz Ambermoon.net-Linux.tar -mx9
   rm Ambermoon.net-Linux.tar
   rm -rf ./icons
