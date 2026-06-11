@@ -1,12 +1,11 @@
 init:
   - ps: |
       $tag = $env:APPVEYOR_REPO_TAG_NAME
-      if ($tag -match '(v\d+\.\d+\.\d+)') {
-        $env:VERSION_TAG = $matches[1]
-      } else {
-        $env:VERSION_TAG = $tag
+      if ($tag -and $tag -match '(v\d+\.\d+\.\d+)') {
+        Set-AppveyorBuildVariable 'VERSION_TAG' $matches[1]
+      } elseif ($tag) {
+        Set-AppveyorBuildVariable 'VERSION_TAG' $tag
       }
-      Set-AppveyorBuildVariable 'VERSION_TAG' $env:VERSION_TAG
 
 for:
 -
