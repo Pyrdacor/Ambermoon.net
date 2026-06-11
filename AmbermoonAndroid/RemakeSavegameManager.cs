@@ -55,14 +55,14 @@ internal class RemakeSavegameManager(string path, Configuration configuration) :
         var additionalSavegameSlots = AdditionalSavegameSlots;
         DateTime? lastLegacyFileUpdate = File.Exists(savesPath) ? new FileInfo(savesPath).LastWriteTimeUtc : null;
         var lastSavesSync = additionalSavegameSlots.LastSavesSync;
-        string[] savegameNames = new string[Game.NumBaseSavegameSlots];
+        string[] savegameNames = new string[GameCore.NumBaseSavegameSlots];
 
         if (lastLegacyFileUpdate != null && (lastSavesSync == null || lastSavesSync.Value < lastLegacyFileUpdate.Value))
         {
             // Legacy savegame names are newer, use them.
             var legacyNames = base.GetSavegameNames(gameData, out current, totalSavegames);
 
-            for (int i = 0; i < Game.NumBaseSavegameSlots; i++)
+            for (int i = 0; i < GameCore.NumBaseSavegameSlots; i++)
             {
                 if (string.IsNullOrWhiteSpace(legacyNames[i]))
                 {
@@ -81,12 +81,11 @@ internal class RemakeSavegameManager(string path, Configuration configuration) :
         {
             current = additionalSavegameSlots.ContinueSavegameSlot;
 
-            if (current == 0)
-                base.GetSavegameNames(gameData, out current, totalSavegames);
+            var legacyNames = base.GetSavegameNames(gameData, out current, totalSavegames);
 
-            for (int i = 0; i < Game.NumBaseSavegameSlots; i++)
+            for (int i = 0; i < GameCore.NumBaseSavegameSlots; i++)
             {
-                savegameNames[i] = additionalSavegameSlots.BaseNames[i] ?? string.Empty;
+                savegameNames[i] = additionalSavegameSlots.BaseNames[i] ?? legacyNames[i];
             }
         }
 
@@ -95,7 +94,7 @@ internal class RemakeSavegameManager(string path, Configuration configuration) :
         else if (current > 10)
             current = 10;
 
-        if (current != 0 && string.IsNullOrWhiteSpace(savegameNames[current]))
+        if (current != 0 && string.IsNullOrWhiteSpace(savegameNames[current - 1]))
             current = 0;
 
         return savegameNames;
@@ -110,9 +109,9 @@ internal class RemakeSavegameManager(string path, Configuration configuration) :
                 if (additionalSavegameSlots.BaseNames.All(name => string.IsNullOrWhiteSpace(name)))
                 {
                     // Never saved a base savegame?
-                    var baseNames = savegameManager.GetSavegameNames(gameData, out _, Game.NumBaseSavegameSlots);
+                    var baseNames = savegameManager.GetSavegameNames(gameData, out _, GameCore.NumBaseSavegameSlots);
 
-                    for (int i = 0; i < Game.NumBaseSavegameSlots; i++)
+                    for (int i = 0; i < GameCore.NumBaseSavegameSlots; i++)
                     {
                         additionalSavegameSlots.BaseNames[i] = baseNames[i];
                     }
@@ -150,7 +149,7 @@ internal class RemakeSavegameManager(string path, Configuration configuration) :
 
             if (additionalSavegameSlots.BaseNames.Length == 0 || !additionalSavegameSlots.BaseNames.Any(name => !string.IsNullOrWhiteSpace(name)))
             {
-                additionalSavegameSlots.BaseNames = base.GetSavegameNames(gameData, out _, Game.NumBaseSavegameSlots);
+                additionalSavegameSlots.BaseNames = base.GetSavegameNames(gameData, out _, GameCore.NumBaseSavegameSlots);
             }
 
             additionalSavegameSlots.BaseNames[slot - 1] = name;
