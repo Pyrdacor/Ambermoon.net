@@ -73,6 +73,7 @@ class GameWindow
     ActivityState state = ActivityState.Active;
     Rect touchPadArea;
     bool cheatsEnabled = false;
+    bool mouseDown = false;
 
     public ActivityState State
     {
@@ -480,6 +481,11 @@ class GameWindow
         {
             touchActions.Add(() =>
             {
+                if (mouseDown)
+                    return; // avoid double taps/long holds
+
+                mouseDown = true;
+
                 if (loadingBar != null)
                     return;
                 else if (logoPyrdacor != null)
@@ -506,8 +512,8 @@ class GameWindow
                     mainMenu.OnMouseDown(position, buttons);
                 else if (intro != null)
                     intro.Click();
-                else if (Game != null)
-                    Game.OnMouseDown(position, buttons);
+                else
+                    Game?.OnMouseDown(position, buttons);
             });
         }
     }
@@ -524,8 +530,8 @@ class GameWindow
                     versionSelector.OnMouseUp(position, buttons);
                 else if (mainMenu != null)
                     mainMenu.OnMouseUp(position, buttons);
-                else if (Game != null)
-                    Game.OnMouseUp(position, buttons);
+                else
+                    Game?.OnMouseUp(position, buttons);
             });
         }
     }
@@ -541,8 +547,8 @@ class GameWindow
                     return;
                 else if (versionSelector != null)
                     versionSelector.OnMouseWheel(deltaY, deltaX, position);
-                else if (Game != null)
-                    Game.OnMouseWheel(deltaY, deltaX, position);
+                else
+                    Game?.OnMouseWheel(deltaY, deltaX, position);
             });
         }
     }
@@ -1518,6 +1524,7 @@ class GameWindow
         {
             foreach (var touchAction in touchActions)
                 touchAction();
+            mouseDown = false;
             touchActions.Clear();
         }
         window.DoEvents();

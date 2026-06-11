@@ -162,7 +162,7 @@ public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
         console = ConsoleOverlayManager.GetInstance(this);
         console.Initialize();
 
-        console.OnCommand += HandleCheatCode;
+        console.OnKeyPress += HandleCheatKeyPress;
 
         Cheats.Initialize(console);
     }
@@ -255,9 +255,9 @@ public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
     public void ToggleConsole() => console?.Toggle();
     public void LogToConsole(string line) => console?.WriteLine(line);
 
-    private void HandleCheatCode(string command)
+    private void HandleCheatKeyPress(ConsoleKeyInfo keyInfo)
     {
-        Cheats.ProcessInput(command, gameWindow.Game);
+        Cheats.ProcessInput(keyInfo, gameWindow.Game);
     }
 
     private void OnAfterInit()
