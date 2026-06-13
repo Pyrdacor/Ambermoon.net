@@ -328,6 +328,9 @@ namespace Ambermoon.Data.Legacy.Serialization
             if (slot == 0)
                 throw new AmbermoonException(ExceptionScope.Application, "Savegame slots must be 1-based");
 
+            if (slot > 10)
+                return;
+
             var legacyGameData = gameData as ILegacyGameData;
 
             if (name.Length > 38)
