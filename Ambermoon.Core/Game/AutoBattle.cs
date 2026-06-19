@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using static System.Collections.Specialized.BitVector32;
 
 namespace Ambermoon;
@@ -45,14 +46,10 @@ partial class Battle
     {
         physicalThreat = (monster.BaseAttackDamage + monster.BonusAttackDamage) * monster.AttacksPerRound;
         magicThreat = 0;
-        SpellTarget magicTarget = SpellTarget.None;
         foreach (var spell in GetAvailableMonsterSpells(monster))
         {
             var spellInfo = game.SpellInfos[spell];
-            if (spellInfo.Target < magicTarget)
-                continue;   // only intested in most damaging 
-
-            uint spellThread = 0;
+            uint spellThread;
             if (spell >= Spell.Mudsling && spell <= Spell.Iceshower)
             {
                 var damage = game.Features.HasFlag(Features.AdjustedSpellDamage)
@@ -96,24 +93,17 @@ partial class Battle
                         spellThread = 5;
                         break;
                     default:
+                        spellThread = 0;
                         break;
                 }
-
-            if (spellInfo.Target > magicTarget)
-            {
-                magicTarget = spellInfo.Target;
-                magicThreat = (int)spellThread;
-            }
-            else
-                magicThreat = Math.Max(magicThreat, (int)spellThread);
+            if (spellInfo.Target == SpellTarget.AllEnemies)
+                spellThread *= 3;
+            else if (spellInfo.Target == SpellTarget.EnemyRow)
+                spellThread *= 2;
+            else if (spellInfo.Target == SpellTarget.EnemyRowInWeaponRange)
+                spellThread = spellThread * 3 / 2;
+            magicThreat = Math.Max(magicThreat, (int)spellThread);
         }
-
-        if (magicTarget == SpellTarget.EnemyRowInWeaponRange)
-            magicThreat = magicThreat * 3 / 2;
-        else if (magicTarget == SpellTarget.EnemyRow)
-            magicThreat *= 2;
-        else if (magicTarget == SpellTarget.AllEnemies)
-            magicThreat *= 3;
 
         // handle conditions except sleep
         if (monster.Conditions.HasFlag(Condition.Panic)
@@ -251,6 +241,8 @@ partial class GameCore
                             default:
                                 continue;
                         }
+                        break;
+                    case Battle.BattleActionType.Parry:
                         break;
                     default:
                         continue;
@@ -435,8 +427,12 @@ partial class GameCore
                             newPosition = 18 + threatCol - 1;
                         else if (threatCol < 5 && currentBattle.IsBattleFieldEmpty(18 + threatCol + 1) && !AnyPlayerMovesTo(18 + threatCol + 1))
                             newPosition = 18 + threatCol + 1;
+                        else if (position >= 24 && currentBattle.IsBattleFieldEmpty(18 + threatCol))
+                            newPosition = 18 + threatCol;
                     }
-                    else
+                    else if (threatRow == 3 || currentBattle.IsBattleFieldEmpty(18 + threatCol) 
+                        || (threatCol != 0 && currentBattle.IsBattleFieldEmpty(18 + threatCol - 1))
+                        || (threatCol != 5 && currentBattle.IsBattleFieldEmpty(18 + threatCol + 1)))
                         for (int newCol = delta < 0 ? Math.Max(0, partyCol + maxDist * delta) : Math.Min(5, partyCol + maxDist * delta); newCol != partyCol; newCol -= delta)
                             if (currentBattle.IsBattleFieldEmpty(18 + newCol) && !AnyPlayerMovesTo(18 + newCol))
                             {
