@@ -2524,7 +2524,7 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(2, ButtonType.Ok, false, null, false, GetTooltip(Button.TooltipType.StartBattleRound)); // this is set later manually
                     buttonGrid.SetButton(3, ButtonType.BattlePositions, true, null, false, GetTooltip(Button.TooltipType.BattleMove)); // this is set later manually
                     buttonGrid.SetButton(4, ButtonType.MoveForward, true, null, false, GetTooltip(Button.TooltipType.BattleAdvance)); // this is set later manually
-                    buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(5, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.BattleAuto)); // this is set later manually
                     buttonGrid.SetButton(6, ButtonType.Attack, true, null, false, GetTooltip(Button.TooltipType.BattleAttack)); // this is set later manually
                     buttonGrid.SetButton(7, ButtonType.Defend, true, null, false, GetTooltip(Button.TooltipType.BattleDefend)); // this is set later manually
                     buttonGrid.SetButton(8, ButtonType.Spells, true, null, false, GetTooltip(Button.TooltipType.BattleCast)); // this is set later manually
