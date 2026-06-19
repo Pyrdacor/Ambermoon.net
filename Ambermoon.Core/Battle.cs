@@ -92,7 +92,7 @@ namespace Ambermoon
         }
     }
 
-    internal class Battle
+    internal partial class Battle
     {
         internal enum BattleActionType
         {
@@ -4444,7 +4444,7 @@ namespace Ambermoon
             Immune, // New in AA
         }
 
-        bool ImmuneToAttack(Monster target, PartyMember attacker)
+        internal bool ImmuneToAttack(Monster target, PartyMember attacker)
         {
             if (!game.Features.HasFlag(Features.AdvancedMonsterFlags))
                 return false;
