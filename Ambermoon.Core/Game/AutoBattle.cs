@@ -173,7 +173,7 @@ partial class GameCore
                 break;
             }
 
-        // party healing data
+        // collect party healing data
         var partyToHeal = PartyMembers.Where(a => a.Alive && a.HitPoints.CurrentValue <= a.HitPoints.TotalMaxValue * 4 / 10).OrderBy(a => a.HitPoints.CurrentValue).ToList();
         Condition partyConditions = Condition.None;
         int partyDefense = 0, partyMaxHealth = 0;
@@ -267,11 +267,11 @@ partial class GameCore
                     {
                         if (threat.Health < threat.Monster.HitPoints.TotalMaxValue / 2)
                             continue;
-                        bool isPhysicalThread = threat.PhysicalThreat >= partyMaxHealth / 10;
-                        bool isMagicThread = threat.MagicThreat >= partyMaxHealth / 10;
+                        bool isPhysicalThread = threat.PhysicalThreat >= partyMaxHealth / 12;
+                        bool isMagicThread = threat.MagicThreat >= partyMaxHealth / 12;
                         if (!isPhysicalThread && !isMagicThread)
-                            break;
-                        // cast sleep only at back rows
+                            continue;  // do not waste magic on too weak enemies
+                        // cast sleep only at back rows as front is attacked
                         if (isPhysicalThread && isMagicThread && threat.Possition < 12
                             && canSleep && !threat.Monster.IsImmuneToSpell(Spell.Sleep, out var _, Features.HasFlag(Features.Elements)))
                         {
@@ -379,7 +379,6 @@ partial class GameCore
                                                 if (!Cure(Condition.Irritated, Spell.RemoveIrritation, Spell.None))
                                                     if (!Cure(Condition.Poisoned, Spell.RemovePoison, Spell.NeutralizePoison))
                                                         Cure(Condition.Diseased, Spell.RemovePain, Spell.RemoveDisease);
-
                     }
                 }
 
