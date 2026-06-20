@@ -555,7 +555,23 @@ class GameWindow
 
     internal bool OnTap(Position position)
     {
-        return touchPad?.OnTap(Game, renderView.ScreenToView(position)) ?? false;
+        if (touchPad == null || Game == null)
+            return false;
+
+        var viewPosition = renderView.ScreenToView(position);
+
+        if (!touchPad.ContainsPosition(viewPosition))
+            return false;
+
+        lock (touchActions)
+        {
+            touchActions.Add(() =>
+            {
+                touchPad?.OnTap(Game, viewPosition);
+            });
+        }
+
+        return true;
     }
 
     internal void OnLongPress(Position position)
@@ -582,7 +598,16 @@ class GameWindow
 
     internal void OnFingerDown(Position position)
     {
-        Game?.OnFingerDown(position);
+        if (Game == null)
+            return;
+
+        lock (touchActions)
+        {
+            touchActions.Add(() =>
+            {
+                Game?.OnFingerDown(position);
+            });
+        }
     }
 
     internal void OnFingerUp(Position position)
@@ -590,16 +615,33 @@ class GameWindow
         if (Game == null)
             return;
 
-        touchPad?.OnFingerUp(Game, renderView.ScreenToView(position));
-        Game.OnFingerUp(position);
+        var viewPosition = renderView.ScreenToView(position);
+
+        lock (touchActions)
+        {
+            touchActions.Add(() =>
+            {
+                touchPad?.OnFingerUp(Game, viewPosition);
+                Game?.OnFingerUp(position);
+            });
+        }
     }
 
     internal void OnFingerMoveTo(Position position)
     {
-        if (Game != null && touchPad?.OnFingerMoveTo(Game, renderView.ScreenToView(position)) == true)
+        if (Game == null)
             return;
 
-        Game?.OnFingerMoveTo(position);
+        var viewPosition = renderView.ScreenToView(position);
+
+        lock (touchActions)
+        {
+            touchActions.Add(() =>
+            {
+                if (touchPad?.OnFingerMoveTo(Game, viewPosition) != true)
+                    Game?.OnFingerMoveTo(position);
+            });
+        }
     }
 
     internal void OnKeyChar(char ch)
