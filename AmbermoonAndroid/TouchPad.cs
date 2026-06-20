@@ -629,7 +629,7 @@ internal class TouchPad
             }
         }
 
-        if (background?.Visible == true && IconPage == 2 && !disableOverlay.Visible && !game.SpellBookEnabled)
+        if (background?.Visible == true && IconPage == 1 && !disableOverlay.Visible && !game.SpellBookEnabled)
         {
             var location = IconLocations[(int)GameCore.MobileIconAction.SpellBook];
             iconsDisabled[location.Y + location.X * 2] = true;
