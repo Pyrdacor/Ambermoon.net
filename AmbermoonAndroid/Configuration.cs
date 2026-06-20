@@ -181,7 +181,7 @@ namespace AmbermoonAndroid
 				Names = new string[Game.NumAdditionalSavegameSlots]
 			}).ToArray();
 
-			var savegameSlots = AdditionalSavegameSlots.FirstOrDefault(s => s.GameVersionName.ToLower() == gameVersionName);
+			var savegameSlots = AdditionalSavegameSlots.FirstOrDefault(s => s.GameVersionName?.ToLower() == gameVersionName);
 
 			if (savegameSlots == null)
 			{

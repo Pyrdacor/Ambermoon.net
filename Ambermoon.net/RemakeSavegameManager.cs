@@ -41,7 +41,8 @@ internal class RemakeSavegameManager(string path, Configuration configuration) :
             }
             else
             {
-                additionalSavegameSlots = AdditionalSavegameSlots.Load(savegameNamesPath);
+                additionalSavegameSlots = AdditionalSavegameSlots.Load(savegameNamesPath)
+                    ?? configuration.GetOrCreateCurrentAdditionalSavegameSlots(gameVersionName);
             }
         }
         catch
