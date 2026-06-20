@@ -73,6 +73,8 @@ namespace Ambermoon.UI
         /// </summary>
         public event Action<bool>? Scrolled;
 
+        public Rect Area => new(renderText.X, renderText.Y, renderText.Width, renderText.Height);
+
         public UIText(IRenderText renderText)
         {
             allowScrolling = false;

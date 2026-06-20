@@ -5,7 +5,6 @@ using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using Ambermoon.UI;
-using static Ambermoon.Data.Map.CharacterReference;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon;
@@ -1715,6 +1714,21 @@ partial class GameCore
                 AddGraphic(x, y, AutomapGraphic.MapLowerRight, 32, 32);
                 #endregion
 
+                #region Mobile goto point reveal
+                var gotoPointInfoArea = new Rect();
+                bool gotoPointInfoActive = false;
+                FilledArea? eyeHighlight = null;
+                if (CoreConfiguration.IsMobile && gotoPoints.Count > 0)
+                {
+                    var text = layout.AddText(new(20, 200 - 16 + 3, 300, 7), DataNameProvider.GetAutomapName(AutomapType.GotoPoint), TextColor.White, TextAlign.Left, 25);
+                    gotoPointInfoArea = new(0, 178, 20 + text.Area.Width + 2, 22);
+                    layout.AddPanel(gotoPointInfoArea, 15);
+                    layout.AddSprite(new Rect(2, 200 - 16 - 2, 16, 16), (uint)CursorType.Eye, 0, 30, null, null, Layer.Cursor, true);
+                    eyeHighlight = layout.FillArea(gotoPointInfoArea.CreateModified(1, 1, -2, -2), new(99, 44, 44), 18);
+                    eyeHighlight.Visible = false;
+                }
+                #endregion
+
                 void Scroll(int x, int y)
                 {
                     // The automap screen is 208x163 but we use 208x160 so they are both dividable by 16.
@@ -1769,6 +1783,19 @@ partial class GameCore
                         else if (buttons == MouseButtons.Left && gotoPoints.Count != 0)
                         {
                             var mousePosition = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
+
+                            if (gotoPointInfoArea.Contains(mousePosition))
+                            {
+                                gotoPointInfoActive = !gotoPointInfoActive;
+                                eyeHighlight!.Visible = gotoPointInfoActive;
+                                ExecuteNextUpdateCycle(SetupClickHandlers);
+                                return true;
+                            }
+                            else if (gotoPointInfoActive)
+                            {
+                                ExecuteNextUpdateCycle(SetupClickHandlers);
+                                return false;
+                            }
 
                             var clickedGotoPoint = gotoPoints.FirstOrDefault(gotoPoint => gotoPoint.Value.Area!.Contains(mousePosition));
 

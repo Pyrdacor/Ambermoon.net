@@ -524,6 +524,7 @@ namespace Ambermoon.UI
         readonly List<ISprite> additionalSprites = [];
         readonly List<UIText> texts = [];
         readonly List<Tooltip> tooltips = [];
+        internal IReadOnlyList<Tooltip> Tooltips => tooltips;
         readonly Dictionary<int, BattleFieldSlotMarker> battleFieldSlotMarkers = [];
         public const uint TicksPerBlink = GameCore.TicksPerSecond / 4;
         IColoredRect? activeTooltipBackground = null;
@@ -1554,8 +1555,8 @@ namespace Ambermoon.UI
             AddOption((index, _) => ToggleBattleSpeed());
             AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => Toggle3DMovement());
             AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleTurnWithArrowKeys());
-            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleTooltips());
-            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => TogglePlayerStatsTooltips());
+            AddOption((index, _) => ToggleTooltips());
+            AddOption((index, _) => TogglePlayerStatsTooltips());
             AddOption((index, _) => ToggleFloorAndCeiling());
             AddOption(game.CoreConfiguration.ShowFloor && game.CoreConfiguration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
             // Page 3

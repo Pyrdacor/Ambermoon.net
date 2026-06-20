@@ -536,11 +536,12 @@ public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
             e.GetPointerCoords(0, coords);
             var position = new Position(Util.Round(coords.X), Util.Round(coords.Y));
 
-            if (gameWindow.OnTap(position))
-                return true;
+            if (!gameWindow.OnTap(position))
+            {
+                gameWindow.OnMouseDown(position, MouseButtons.Left);
+                gameWindow.OnMouseUp(position, MouseButtons.Left);
+            }
 
-            gameWindow.OnMouseDown(position, MouseButtons.Left);
-            gameWindow.OnMouseUp(position, MouseButtons.Left);
             return true;
         }
 

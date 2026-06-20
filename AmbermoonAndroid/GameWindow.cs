@@ -1,25 +1,26 @@
-﻿using Ambermoon;
+﻿using System.Globalization;
+using Ambermoon;
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Frontend;
+using Ambermoon.Game;
 using Ambermoon.Render;
 using Ambermoon.Renderer.OpenGL;
 using Ambermoon.UI;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Input;
-using Silk.NET.Windowing;
-using MousePosition = System.Numerics.Vector2;
-using WindowDimension = Silk.NET.Maths.Vector2D<int>;
-using Key = Ambermoon.Key;
-using Data = Ambermoon.Data;
-using Render = Ambermoon.Render;
-using Silk.NET.Windowing.Sdl;
 using Silk.NET.Input.Sdl;
-using System.Globalization;
-using Ambermoon.Game;
+using Silk.NET.Windowing;
+using Silk.NET.Windowing.Sdl;
+using Xamarin.Google.Android.DataTransport.Runtime.Firebase.Transport;
+using Data = Ambermoon.Data;
+using Key = Ambermoon.Key;
+using MousePosition = System.Numerics.Vector2;
+using Render = Ambermoon.Render;
+using WindowDimension = Silk.NET.Maths.Vector2D<int>;
 
 namespace AmbermoonAndroid;
 
@@ -475,65 +476,93 @@ class GameWindow
             Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
     }*/
 
+    private void OnMouseDown(Position position, MouseButtons buttons, bool executeDirectly)
+    {
+        if (executeDirectly)
+        {
+            Do();
+        }
+        else
+        {
+            lock (touchActions)
+            {
+                touchActions.Add(Do);
+            }
+        }
+
+        void Do()
+        {
+            if (mouseDown)
+                return; // avoid double taps/long holds
+
+            mouseDown = true;
+
+            if (loadingBar != null)
+                return;
+            else if (logoPyrdacor != null)
+            {
+                logoPyrdacor?.Cleanup();
+                logoPyrdacor = null;
+            }
+            else if (fantasyIntro != null)
+            {
+                fantasyIntro.Abort();
+            }
+            else if (advancedLogo != null)
+            {
+                advancedLogo?.Cleanup();
+                advancedLogo = null;
+                renderView.ShowImageLayerOnly = false;
+            }
+            else if (versionSelector != null)
+            {
+                if (!TestDonateButtonClick(position))
+                    versionSelector.OnMouseDown(position, buttons);
+            }
+            else if (mainMenu != null)
+                mainMenu.OnMouseDown(position, buttons);
+            else if (intro != null)
+                intro.Click();
+            else
+                Game?.OnMouseDown(position, buttons);
+        }
+    }
+
+    private void OnMouseUp(Position position, MouseButtons buttons, bool executeDirectly)
+    {
+        if (executeDirectly)
+        {
+            Do();
+        }
+        else
+        {
+            lock (touchActions)
+            {
+                touchActions.Add(Do);
+            }
+        }
+
+        void Do()
+        {
+            if (loadingBar != null)
+                return;
+            else if (versionSelector != null)
+                versionSelector.OnMouseUp(position, buttons);
+            else if (mainMenu != null)
+                mainMenu.OnMouseUp(position, buttons);
+            else
+                Game?.OnMouseUp(position, buttons);
+        }
+    }
+
     internal void OnMouseDown(Position position, MouseButtons buttons)
     {
-        lock (touchActions)
-        {
-            touchActions.Add(() =>
-            {
-                if (mouseDown)
-                    return; // avoid double taps/long holds
-
-                mouseDown = true;
-
-                if (loadingBar != null)
-                    return;
-                else if (logoPyrdacor != null)
-                {
-                    logoPyrdacor?.Cleanup();
-                    logoPyrdacor = null;
-                }
-                else if (fantasyIntro != null)
-                {
-                    fantasyIntro.Abort();
-                }
-                else if (advancedLogo != null)
-                {
-                    advancedLogo?.Cleanup();
-                    advancedLogo = null;
-                    renderView.ShowImageLayerOnly = false;
-                }
-                else if (versionSelector != null)
-                {
-                    if (!TestDonateButtonClick(position))
-                        versionSelector.OnMouseDown(position, buttons);
-                }
-                else if (mainMenu != null)
-                    mainMenu.OnMouseDown(position, buttons);
-                else if (intro != null)
-                    intro.Click();
-                else
-                    Game?.OnMouseDown(position, buttons);
-            });
-        }
+        OnMouseDown(position, buttons, false);
     }
 
     internal void OnMouseUp(Position position, MouseButtons buttons)
     {
-        lock (touchActions)
-        {
-            touchActions.Add(() =>
-            {
-                if (loadingBar != null)
-                    return;
-                else if (versionSelector != null)
-                    versionSelector.OnMouseUp(position, buttons);
-                else if (mainMenu != null)
-                    mainMenu.OnMouseUp(position, buttons);
-                else
-                    Game?.OnMouseUp(position, buttons);
-            });
-        }
+        OnMouseUp(position, buttons, false);
     }
 
     internal void OnMouseScroll(Position position, int deltaX, int deltaY)
@@ -567,7 +596,11 @@ class GameWindow
         {
             touchActions.Add(() =>
             {
-                touchPad?.OnTap(Game, viewPosition);
+                if (touchPad?.OnTap(Game, viewPosition) != true)
+                {
+                    OnMouseDown(position, MouseButtons.Left, true);
+                    OnMouseUp(position, MouseButtons.Left, true);
+                }
             });
         }
 
