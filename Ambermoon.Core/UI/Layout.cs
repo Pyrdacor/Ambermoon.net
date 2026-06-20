@@ -4864,7 +4864,8 @@ namespace Ambermoon.UI
                 ChestText?.Destroy();
                 ChestText = null;
             }
-            else if (game.OpenStorage is not GameCore.ConversationItems)
+
+            if (game.OpenStorage is not GameCore.ConversationItems)
             {
                 SetInventoryMessage(null);
             }
@@ -5679,9 +5680,14 @@ namespace Ambermoon.UI
             }
 
             if (game.CurrentWindow.Window != Window.Inventory && (game.OpenStorage is Chest || game.OpenStorage is Merchant))
+            {
+                SetInventoryMessage(null);
                 ShowChestMessage(game.DataNameProvider.WhereToMoveIt);
+            }
             else if (game.OpenStorage is not GameCore.ConversationItems)
+            {
                 SetInventoryMessage(game.DataNameProvider.WhereToMoveIt);
+            }
         }
 
         public void SaveListScrollDrag(Position position, ref CursorType cursorType)
