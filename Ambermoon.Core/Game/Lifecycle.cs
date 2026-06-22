@@ -187,7 +187,7 @@ partial class GameCore
                         int minRow = 0;
                         int maxRow = 3;
                         
-                        if (currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRow)
+                        if (currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRowInRange)
                         {
                             var caster = currentPickingActionMember!;
 
