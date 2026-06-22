@@ -23,6 +23,9 @@ using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 
 namespace Ambermoon.Render
@@ -197,7 +200,47 @@ namespace Ambermoon.Render
                 var uiElementGraphics = graphicProvider.GetGraphics(GraphicType.UIElements);
 
                 for (int i = 0; i < uiElementGraphics.Count; ++i)
+                {
                     AddTexture(Layer.UI, Graphics.UICustomGraphicOffset + (uint)i, uiElementGraphics[i]);
+                    //var g = uiElementGraphics[i];
+                    //using (var bw = new BinaryWriter(File.Open(@"C:\Spiele\Ambermoon\UI\" + i + "_" + g.Width + "x" + g.Height, FileMode.Create)))
+                    //{
+                    //    bw.Write(g.Data);
+                    //}
+                    //using (var bw = new StreamWriter( File.Open(@"C:\Spiele\Ambermoon\UI\" + i + "_" + g.Width + "x" + g.Height + ".txt", FileMode.Create), System.Text.Encoding.UTF8))
+                    //{
+                    //    for (int j = 0; j < g.Data.Length; j++)
+                    //    {
+                    //        bw.Write(g.Data[j]);
+                    //        bw.Write(",");
+                    //        if (j % g.Width == g.Width - 1)
+                    //            bw.WriteLine();
+                    //    }
+                    //}
+                    //using (Bitmap bmp = new Bitmap(g.Width, g.Height, PixelFormat.Format8bppIndexed))
+                    //{
+                    //    // 3. Standard-Graustufenpalette zuweisen
+                    //    ColorPalette palette = bmp.Palette;
+                    //    for (int j = 0; j < 256; j++)
+                    //        palette.Entries[j] = System.Drawing.Color.FromArgb(j, j, j);
+                    //    palette.Entries[0x1a] = System.Drawing.Color.FromArgb(43, 43, 41);
+                    //    palette.Entries[0x1b] = System.Drawing.Color.FromArgb(74, 74, 57);
+                    //    palette.Entries[0x1c] = System.Drawing.Color.FromArgb(103, 103, 86);
+                    //    palette.Entries[0x1d] = System.Drawing.Color.FromArgb(130, 130, 113);
+                    //    palette.Entries[0x1e] = System.Drawing.Color.FromArgb(168, 168, 151);
+                    //    palette.Entries[0x1f] = System.Drawing.Color.FromArgb(197, 197, 180);
+                    //    bmp.Palette = palette;
+                    //    BitmapData bmpData = bmp.LockBits(
+                    //        new Rectangle(0, 0, g.Width, g.Height),
+                    //        ImageLockMode.WriteOnly,
+                    //        bmp.PixelFormat
+                    //    );
+                    //    System.Runtime.InteropServices.Marshal.Copy(g.Data, 0, bmpData.Scan0, g.Data.Length);
+                    //    bmp.UnlockBits(bmpData);
+                    //    bmp.Save(@"C:\Spiele\Ambermoon\UI\" + i + "_" + g.Width + "x" + g.Height + ".bmp", ImageFormat.Bmp);
+                    //}
+                }
+                AddTexture(Layer.UI, Graphics.UICustomGraphicOffset + (uint)uiElementGraphics.Count, GameCore.AutoBattleButton);
             }
             else if (graphicInfoProvider is IGraphicAtlasProvider graphicAtlasProvider)
             {
