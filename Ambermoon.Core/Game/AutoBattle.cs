@@ -3,10 +3,12 @@ using Ambermoon.Data.Enumerations;
 using Ambermoon.UI;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
+using System.Threading;
 using static System.Collections.Specialized.BitVector32;
 
 namespace Ambermoon;
@@ -19,11 +21,15 @@ namespace Ambermoon;
 // - use black magic only to disable enemy
 // - use healing if required
 //   - prefere healer over paladin
+// - don't use imitate
+//   - can be used/planed by player before activating AutoBattle
+//   - use spells of imitated monster
 // - don't use MagicAttack, MagicProtection, ForeseeMagic, ForeseeAttack, RecognizeWeakPoint, SeeWeaknesses, KnowledgeOfTheWeakness
-//   - can be used or commanded by player before activating AutoBattle
+//   - can be used/planed by player before activating AutoBattle
 // 
-// assumptions
+// assumptions for planing actions
 // - enemy abilities are known (real players learn)
+//   - assign threading
 // - enemies don't move
 // - cast magic is sucessfull
 // - attacks damage enemies
@@ -31,7 +37,7 @@ namespace Ambermoon;
 // algorithm
 // - analyze enemies threading level
 //   - enemies use 50% magic
-//   - enemies prefere group spells
+//   - group spells are more dangerous
 // - give orders in turn order
 //   - delay paladin magic
 
@@ -42,7 +48,7 @@ namespace Ambermoon;
 //   foreseeAttack for defense
 partial class Battle
 {
-    internal void CalculateThreat(Monster monster, out int physicalThreat, out int magicThreat, bool ignoreSleep = false)
+    internal void CalculateAutoBattleInfo(Monster monster, out int physicalThreat, out int magicThreat, bool ignoreSleep = false)
     {
         physicalThreat = (monster.BaseAttackDamage + monster.BonusAttackDamage) * monster.AttacksPerRound;
         magicThreat = 0;
@@ -130,7 +136,26 @@ partial class Battle
 
 partial class GameCore
 {
-    class AutoBattleThreat 
+    static internal Data.Graphic AutoBattleButton => new Data.Graphic(32, 13, 0)
+    {
+        Data = new byte[] {
+0,0,30,28,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,28,27,27,27,27,27,28,28,29,30,0,0,
+0,0,28,27,28,28,28,28,28,28,28,26,28,28,28,28,28,26,28,28,29,31,30,29,28,28,28,28,28,29,0,0,
+0,0,27,28,28,28,28,28,28,28,28,26,26,28,28,28,28,26,26,28,31,28,28,30,26,28,28,28,28,29,0,0,
+0,0,27,28,28,28,28,28,28,28,28,26,27,26,28,28,28,26,27,26,29,31,30,29,26,28,28,28,28,29,0,0,
+0,0,27,28,28,28,28,28,28,28,28,26,27,27,26,28,29,26,27,27,26,29,30,26,26,28,28,28,31,29,0,0,
+0,0,27,29,30,31,31,31,31,31,31,26,27,27,27,26,31,26,27,27,27,26,30,27,30,27,30,27,31,31,0,0,
+0,0,29,31,30,29,28,28,28,28,28,26,27,27,27,27,26,26,27,27,27,27,26,26,29,26,29,26,30,31,0,0,
+0,0,27,29,29,30,31,31,31,30,31,26,27,27,27,27,27,27,27,27,27,27,27,29,28,27,28,27,29,30,0,0,
+0,0,27,27,26,26,26,26,26,26,26,26,27,27,27,27,30,26,27,27,27,27,30,26,26,26,26,26,30,29,0,0,
+0,0,27,28,28,28,28,28,28,28,28,26,27,27,27,30,27,26,27,27,27,30,30,29,27,28,28,28,28,27,0,0,
+0,0,27,28,28,28,28,28,28,28,28,26,27,27,30,28,28,26,27,27,30,28,28,30,26,28,28,28,27,26,0,0,
+0,0,28,28,28,28,28,28,28,28,28,26,27,30,28,28,28,26,27,30,29,31,30,29,26,28,28,28,28,28,0,0,
+0,0,29,28,29,29,29,29,29,29,29,27,29,29,29,29,29,27,29,29,29,26,26,26,26,28,29,29,28,27,0,0,
+        }
+    };
+
+    class AutoBattleInfo 
     {
         required public Monster Monster;
         public int Possition;
@@ -174,7 +199,7 @@ partial class GameCore
             }
 
         // collect party healing data
-        var partyToHeal = PartyMembers.Where(a => a.Alive && a.HitPoints.CurrentValue <= a.HitPoints.TotalMaxValue * 4 / 10).OrderBy(a => a.HitPoints.CurrentValue).ToList();
+        var partyToHeal = PartyMembers.Where(a => a.Alive && a.HitPoints.CurrentValue <= a.HitPoints.TotalMaxValue / 2).OrderBy(a => a.HitPoints.CurrentValue).ToList();
         Condition partyConditions = Condition.None;
         int partyDefense = 0, partyMaxHealth = 0;
         foreach (var partyMember in partyOrder)
@@ -187,13 +212,13 @@ partial class GameCore
         partyMaxHealth /= partyOrder.Count();
 
         // list of monsters for attack prio
-        var threats = new List<AutoBattleThreat>(currentBattle!.Monsters.Count());
+        var threats = new List<AutoBattleInfo>(currentBattle!.Monsters.Count());
         foreach (var monster in currentBattle!.Monsters)
         {
             if (!monster.Alive)
                 continue;
-            currentBattle!.CalculateThreat(monster, out int physicalThreat, out int magicThreat);
-            threats.Add(new AutoBattleThreat()
+            currentBattle!.CalculateAutoBattleInfo(monster, out int physicalThreat, out int magicThreat);
+            threats.Add(new AutoBattleInfo()
             {
                 Monster = monster,
                 PhysicalThreat = physicalThreat > 1 ? Math.Max(0, physicalThreat - partyDefense * monster.AttacksPerRound) : physicalThreat,
@@ -205,11 +230,9 @@ partial class GameCore
 
         // command party members
         foreach (var partyMember in partyOrder)
-        {
-            // partyMember out of control?
-            if (partyMember.Conditions.HasFlag(Condition.Panic)
-                || partyMember.Conditions.HasFlag(Condition.Crazy))
-                continue;
+        {            
+            if (!partyMember.Conditions.CanSelect())
+                continue;   // out of control
             currentPickingActionMember = partyMember;
 
             // check stored action and override if outdated 
@@ -219,7 +242,8 @@ partial class GameCore
                 switch (action.BattleAction)
                 {
                     case Battle.BattleActionType.Attack:
-                        if (currentBattle!.GetCharacterAt((int)Battle.GetTargetTileOrRowFromParameter(action.Parameter)) is Monster)
+                        if (currentBattle!.GetCharacterAt((int)Battle.GetTargetTileOrRowFromParameter(action.Parameter)) is Monster
+                            && (partyToHeal.Count == 0 || (partyMember.Class != Class.Healer && partyMember.Class != Class.Paladin)))
                             continue;
                         break;
                     case Battle.BattleActionType.Move:
@@ -251,11 +275,55 @@ partial class GameCore
             }
 
             // check magic
+            bool hasAction = false;
             if (partyMember.Conditions.CanCastSpell(Features))
             {
                 Spell spell = Spell.None;
                 Data.Character spellTarget = null;
                 bool CanCast(Spell spell) => partyMember.HasSpell(spell) && partyMember.SpellPoints.CurrentValue >= spellInfos[spell].SP;
+
+                if (partyMember.Class == Class.Mystic || partyMember.Class == Class.Ranger)
+                {
+                    if (partyMember.InventoryInaccessible)
+                        // imitated monster -> use all we have starting with most powerfull
+                        foreach (Spell myspell in partyMember.LearnedSpells.OrderByDescending(a => SpellInfos[a].SP))
+                        {
+                            var spellInfo = SpellInfos[myspell];
+                            if (!spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Battle)
+                                || partyMember.SpellPoints.CurrentValue < spellInfo.SP)
+                                continue;
+
+                            if (spellInfo.Target == SpellTarget.AllEnemies && threats.Count > 1)
+                            {
+                                spell = myspell;
+                                break;
+                            }
+                            else if (spellInfo.Target == SpellTarget.EnemyRow && threats.Count > 1)
+                            {
+                                int[] rows = new int[4];    // count enemies in rows
+                                foreach (var threat in threats)
+                                    rows[threat.Possition / 6]++;
+                                int best = 0;
+                                for (int i = 1; i < 4; i++)
+                                    if (rows[i] > rows[best])
+                                        best = i;
+                                if (rows[best] > 1)
+                                {
+                                    spell = myspell;
+                                    SetPlayerBattleAction(Battle.BattleActionType.CastSpell,
+                                        Battle.CreateCastSpellParameter((uint)best, spell));
+                                    hasAction = true;
+                                    break;
+                                }
+                            }
+                            else if (spellInfo.Target == SpellTarget.SingleEnemy)
+                            {
+                                spell = myspell;
+                                spellTarget = threats.OrderByDescending(a => a.PhysicalThreat + a.MagicThreat).ThenBy(a => a.Health).First().Monster;
+                                break;
+                            }
+                        }
+                }
 
                 if (partyMember.Class == Class.Mage)
                 {
@@ -263,7 +331,7 @@ partial class GameCore
                     bool canLame = CanCast(Spell.Lame);
                     bool canBlind = Features.HasFlag(Features.ExtendedCurseEffects) && CanCast(Spell.Blind);
                     bool canIrritate = CanCast(Spell.Irritate);
-                    foreach (var threat in threats.OrderByDescending(a => a.PhysicalThreat + a.MagicThreat).ThenByDescending(a => a.Health).ThenByDescending(a => a.Possition))
+                    foreach (var threat in threats.OrderByDescending(a => a.PhysicalThreat + a.MagicThreat).ThenByDescending(a => a.Health).ThenBy(a => a.Possition))
                     {
                         if (threat.Health < threat.Monster.HitPoints.TotalMaxValue / 2)
                             continue;
@@ -320,7 +388,7 @@ partial class GameCore
                     {
                         // check healing first
                         var lowFrac = partyToHeal[0].HitPoints.CurrentValue * 100 / partyToHeal[0].HitPoints.TotalMaxValue;
-                        if (lowFrac < 25 && CanCast(Spell.MassHealing) && PartyMembers.All((pm2) => pm2.HitPoints.CurrentValue < pm2.HitPoints.TotalMaxValue * 3 / 4))
+                        if (lowFrac < 30 && CanCast(Spell.MassHealing) && PartyMembers.All((pm2) => pm2.HitPoints.CurrentValue < pm2.HitPoints.TotalMaxValue * 3 / 4))
                         {
                             spell = Spell.MassHealing;
                             partyToHeal.Clear();
@@ -331,13 +399,13 @@ partial class GameCore
                             bool mediumHeal = CanCast(Spell.MediumHealing);
                             bool smallHeal = CanCast(Spell.SmallHealing);
                             bool handHeal = CanCast(Spell.HealingHand);
-                            if (lowFrac < 10 && greatHeal)
+                            if (lowFrac < 15 && greatHeal)
                                 spell = Spell.GreatHealing;
-                            else if (lowFrac < 20 && (mediumHeal || greatHeal))
+                            else if (lowFrac < 25 && (mediumHeal || greatHeal))
                                 spell = mediumHeal ? Spell.MediumHealing : Spell.GreatHealing;
-                            else if (lowFrac < 30 && (smallHeal || mediumHeal))
+                            else if (lowFrac < 40 && (smallHeal || mediumHeal))
                                 spell = smallHeal ? Spell.SmallHealing : Spell.MediumHealing;
-                            else if (lowFrac < 40 && (handHeal || smallHeal))
+                            else if (lowFrac < 50 && (handHeal || smallHeal))
                                 spell = handHeal ? Spell.HealingHand : Spell.SmallHealing;
                             if (spell != Spell.None)
                             {
@@ -384,32 +452,31 @@ partial class GameCore
 
                 if (spell != Spell.None)
                 {
-                    SetPlayerBattleAction(Battle.BattleActionType.CastSpell,
-                        Battle.CreateCastSpellParameter(spellTarget != null ? (uint)currentBattle.GetSlotFromCharacter(spellTarget) : 0, spell));
+                    if (!hasAction)
+                        SetPlayerBattleAction(Battle.BattleActionType.CastSpell,
+                            Battle.CreateCastSpellParameter(spellTarget != null ? (uint)currentBattle.GetSlotFromCharacter(spellTarget) : 0, spell));
                     continue;
                 }
             }
 
             // attack
             int position = currentBattle.GetSlotFromCharacter(partyMember!);
-            bool hasAction = false;
-            threats = threats.OrderByDescending(a => a.PhysicalThreat + a.MagicThreat).ThenBy(a => a.Health).ThenBy(a => a.Possition).ToList();
             if (CheckAbilityToAttack(out bool ranged, true))
-                foreach (var threat in threats)
+                foreach (var threat in threats.OrderByDescending(a => a.PhysicalThreat + a.MagicThreat).ThenBy(a => a.Health).ThenByDescending(a => a.Possition))
                     if ((ranged || (Math.Abs(threat.Possition % 6 - position % 6) <= 1 && Math.Abs(threat.Possition / 6 - position / 6) <= 1))
                         && !currentBattle.ImmuneToAttack(threat.Monster, partyMember))
                     {
                         hasAction = true;
                         SetPlayerBattleAction(Battle.BattleActionType.Attack, Battle.CreateAttackParameter((uint)threat.Possition));
                         if (threat.Sleeping)    // wake up
-                            currentBattle.CalculateThreat(threat.Monster, out threat.PhysicalThreat, out threat.MagicThreat, true);
+                            currentBattle.CalculateAutoBattleInfo(threat.Monster, out threat.PhysicalThreat, out threat.MagicThreat, true);
                         threat.Health -= (uint)Math.Max(0, partyMember!.BaseAttackDamage + partyMember!.BonusAttackDamage - threat.Monster!.BaseDefense - threat.Monster!.BonusDefense);
                         break;
                     }
 
-            // move to enemy
+            // move to next enemy
             if (!hasAction && !ranged && partyMember.Conditions.CanMove())
-                foreach (var threat in threats)
+                foreach (var threat in threats.OrderByDescending(a => a.PhysicalThreat + a.MagicThreat).ThenBy(a => Math.Abs(a.Possition % 6 - position % 6)).ThenByDescending(a => a.Health))
                 {
                     if (threat.Possition < 12)
                         continue;
@@ -426,12 +493,12 @@ partial class GameCore
                             newPosition = 18 + threatCol - 1;
                         else if (threatCol < 5 && currentBattle.IsBattleFieldEmpty(18 + threatCol + 1) && !AnyPlayerMovesTo(18 + threatCol + 1))
                             newPosition = 18 + threatCol + 1;
-                        else if (position >= 24 && currentBattle.IsBattleFieldEmpty(18 + threatCol))
+                        else if (position >= 24 && currentBattle.IsBattleFieldEmpty(18 + threatCol) && !AnyPlayerMovesTo(18 + threatCol))
                             newPosition = 18 + threatCol;
                     }
-                    else if (threatRow == 3 || currentBattle.IsBattleFieldEmpty(18 + threatCol) 
-                        || (threatCol != 0 && currentBattle.IsBattleFieldEmpty(18 + threatCol - 1))
-                        || (threatCol != 5 && currentBattle.IsBattleFieldEmpty(18 + threatCol + 1)))
+                    else if (threatRow == 3 || (currentBattle.IsBattleFieldEmpty(18 + threatCol) && !AnyPlayerMovesTo(18 + threatCol))
+                        || (threatCol != 0 && currentBattle.IsBattleFieldEmpty(18 + threatCol - 1) && !AnyPlayerMovesTo(18 + threatCol - 1))
+                        || (threatCol != 5 && currentBattle.IsBattleFieldEmpty(18 + threatCol + 1) && !AnyPlayerMovesTo(18 + threatCol + 1)))
                         for (int newCol = delta < 0 ? Math.Max(0, partyCol + maxDist * delta) : Math.Min(5, partyCol + maxDist * delta); newCol != partyCol; newCol -= delta)
                             if (currentBattle.IsBattleFieldEmpty(18 + newCol) && !AnyPlayerMovesTo(18 + newCol))
                             {
@@ -449,7 +516,7 @@ partial class GameCore
                         hasAction = true;
                         SetPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)newPosition));
                         if (partyToHeal.Contains(partyMember))
-                            partyToHeal.Remove(partyMember);
+                            partyToHeal.Remove(partyMember);    // can not heal moved party member
                         break;
                     }
                 }
