@@ -1,22 +1,28 @@
-﻿using Ambermoon.Data;
-using Ambermoon.Data.Enumerations;
-using Ambermoon.UI;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Data.Common;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Runtime.InteropServices;
-using System.Threading;
-using static System.Collections.Specialized.BitVector32;
+﻿/*
+ * AutoBattle.cs - Automatic Battle Planing
+ *
+ * Copyright (C) 2026  Marcel Hesselbarth <spam@mayavoyage.de>
+ *
+ * This file is part of Ambermoon.net.
+ *
+ * Ambermoon.net is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ambermoon.net is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-namespace Ambermoon;
-
-// rules
+// battle rules - see feature request #417 
 // - attack strongest enemy in range
-//   - prefere nearby enemies
 //   - prefere damaged enemies
+//   - prefere nearby enemies
 // - don't use items
 // - use black magic only to disable enemy
 // - use healing if required
@@ -24,8 +30,9 @@ namespace Ambermoon;
 // - don't use imitate
 //   - can be used/planed by player before activating AutoBattle
 //   - use spells of imitated monster
-// - don't use MagicAttack, MagicProtection, ForeseeMagic, ForeseeAttack, RecognizeWeakPoint, SeeWeaknesses, KnowledgeOfTheWeakness
+// - don't use MagicAttack, MagicProtection, RecognizeWeakPoint, SeeWeaknesses, KnowledgeOfTheWeakness
 //   - can be used/planed by player before activating AutoBattle
+// - abort auto-battle if party member died
 // 
 // assumptions for planing actions
 // - enemy abilities are known (real players learn)
@@ -34,18 +41,29 @@ namespace Ambermoon;
 // - cast magic is sucessfull
 // - attacks damage enemies
 //
-// algorithm
+// algorithm, uses a lot of internal data unknown to the player just to calculate what the player knows: the most dangerous enemy  
 // - analyze enemies threading level
 //   - enemies use 50% magic
 //   - group spells are more dangerous
 // - give orders in turn order
-//   - delay paladin magic
+//   - delay paladin magic after healer magic
 
+using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
+using Ambermoon.UI;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.Design;
+using System.Data.Common;
+using System.Linq;
+using System.Reflection.Emit;
+using System.Reflection.Metadata.Ecma335;
+using System.Runtime.InteropServices;
+using System.Threading;
+using static System.Collections.Specialized.BitVector32;
 
-// ways to improve party power
-//   if (game.Features.HasFlag(Features.ExtendedCurseEffects)) => blind, aging(level)
-//   weakenedMonsters.contains(target)
-//   foreseeAttack for defense
+namespace Ambermoon;
+
 partial class Battle
 {
     internal void CalculateAutoBattleInfo(Monster monster, out int physicalThreat, out int magicThreat, bool ignoreSleep = false)
@@ -168,10 +186,23 @@ partial class GameCore
     {
         if (firstRound)
         {
-            var oldBattleSpeed = currentBattle!.Speed;
+            var orgBattleSpeed = currentBattle!.Speed;
+            int orgPartyCount = PartyMembers.Where(a => a.Alive).Count();
             SetBattleSpeed(300);
-            currentBattle.BattleEnded += (x) => SetBattleSpeed(oldBattleSpeed);
-            currentBattle.RoundFinished += () => AddAutoBattleActions(false);
+            Action<BattleEndInfo> battleEnded = (x) => SetBattleSpeed(orgBattleSpeed);
+            currentBattle.BattleEnded += battleEnded;
+            Action roundFinish = null;
+            currentBattle.RoundFinished += roundFinish = () =>
+            {
+                if (orgPartyCount == PartyMembers.Where(a => a.Alive).Count())
+                    AddAutoBattleActions(false);
+                else
+                {
+                    currentBattle.BattleEnded -= battleEnded;
+                    currentBattle.RoundFinished -= roundFinish;
+                    SetBattleSpeed(orgBattleSpeed);
+                }
+            };
         }
 
         if (currentBattle!.CanPartyMoveForward)
@@ -214,21 +245,22 @@ partial class GameCore
         // list of monsters for attack prio
         var threats = new List<AutoBattleInfo>(currentBattle!.Monsters.Count());
         foreach (var monster in currentBattle!.Monsters)
-        {
-            if (!monster.Alive)
-                continue;
-            currentBattle!.CalculateAutoBattleInfo(monster, out int physicalThreat, out int magicThreat);
-            threats.Add(new AutoBattleInfo()
+            if (monster.Alive)
             {
-                Monster = monster,
-                PhysicalThreat = physicalThreat > 1 ? Math.Max(0, physicalThreat - partyDefense * monster.AttacksPerRound) : physicalThreat,
-                MagicThreat = magicThreat,
-                Possition = currentBattle!.GetSlotFromCharacter(monster),
-                Health = monster.HitPoints.CurrentValue
-            });
-        }
+                currentBattle!.CalculateAutoBattleInfo(monster, out int physicalThreat, out int magicThreat);
+                threats.Add(new AutoBattleInfo()
+                {
+                    Monster = monster,
+                    PhysicalThreat = physicalThreat > 1 ? Math.Max(0, physicalThreat - partyDefense * monster.AttacksPerRound) : physicalThreat,
+                    MagicThreat = magicThreat,
+                    Possition = currentBattle!.GetSlotFromCharacter(monster),
+                    Health = monster.HitPoints.CurrentValue
+                });
+            }
 
         // command party members
+        var dontMove = new List<PartyMember>();
+        var hasMoved = new List<PartyMember>();
         foreach (var partyMember in partyOrder)
         {            
             if (!partyMember.Conditions.CanSelect())
@@ -281,6 +313,9 @@ partial class GameCore
                 Spell spell = Spell.None;
                 Data.Character spellTarget = null;
                 bool CanCast(Spell spell) => partyMember.HasSpell(spell) && partyMember.SpellPoints.CurrentValue >= spellInfos[spell].SP;
+                bool IsImmuneTo(AutoBattleInfo target, Spell spell) =>
+                    (target.Monster.SpellTypeImmunity & (SpellTypeImmunity)spellInfos[spell].SpellType) != 0
+                    || target.Monster.IsImmuneToSpell(spell, out var _, Features.HasFlag(Features.Elements));
 
                 if (partyMember.Class == Class.Mystic || partyMember.Class == Class.Ranger)
                 {
@@ -301,7 +336,7 @@ partial class GameCore
                             else if (spellInfo.Target == SpellTarget.EnemyRow && threats.Count > 1)
                             {
                                 int[] rows = new int[4];    // count enemies in rows
-                                foreach (var threat in threats)
+                                foreach (var threat in threats.Where(a => !IsImmuneTo(a, myspell)))
                                     rows[threat.Possition / 6]++;
                                 int best = 0;
                                 for (int i = 1; i < 4; i++)
@@ -318,9 +353,14 @@ partial class GameCore
                             }
                             else if (spellInfo.Target == SpellTarget.SingleEnemy)
                             {
-                                spell = myspell;
-                                spellTarget = threats.OrderByDescending(a => a.PhysicalThreat + a.MagicThreat).ThenBy(a => a.Health).First().Monster;
-                                break;
+                                var target = threats.OrderByDescending(a => a.PhysicalThreat + a.MagicThreat).ThenBy(a => a.Health).Where(a => !IsImmuneTo(a, myspell)).FirstOrDefault();
+                                if (target != null)
+                                {
+                                    spell = myspell;
+                                    spellTarget = target.Monster;
+                                    break;
+
+                                }
                             }
                         }
                 }
@@ -333,15 +373,16 @@ partial class GameCore
                     bool canIrritate = CanCast(Spell.Irritate);
                     foreach (var threat in threats.OrderByDescending(a => a.PhysicalThreat + a.MagicThreat).ThenByDescending(a => a.Health).ThenBy(a => a.Possition))
                     {
-                        if (threat.Health < threat.Monster.HitPoints.TotalMaxValue / 2)
+                        if (threat.Health < threat.Monster.HitPoints.TotalMaxValue / 2
+                            || threat.Monster.Attributes[Data.Attribute.AntiMagic].TotalCurrentValue >= 75)
                             continue;
                         bool isPhysicalThread = threat.PhysicalThreat >= partyMaxHealth / 12;
                         bool isMagicThread = threat.MagicThreat >= partyMaxHealth / 12;
                         if (!isPhysicalThread && !isMagicThread)
                             continue;  // do not waste magic on too weak enemies
-                        // cast sleep only at back rows as front is attacked
-                        if (isPhysicalThread && isMagicThread && threat.Possition < 12
-                            && canSleep && !threat.Monster.IsImmuneToSpell(Spell.Sleep, out var _, Features.HasFlag(Features.Elements)))
+
+                        if (isPhysicalThread && isMagicThread && threat.Possition < 12  // cast sleep only at back rows as front is attacked
+                            && canSleep && !IsImmuneTo(threat, Spell.Sleep))
                         {
                             spell = Spell.Sleep;
                             threat.MagicThreat = threat.PhysicalThreat = 1;
@@ -349,30 +390,30 @@ partial class GameCore
                             break;
                         }
                         else if (threat.MagicThreat >= threat.PhysicalThreat
-                            && canIrritate && !threat.Monster.IsImmuneToSpell(Spell.Irritate, out var _, Features.HasFlag(Features.Elements)))
+                            && canIrritate && !IsImmuneTo(threat, Spell.Irritate))
                         {
                             spell = Spell.Irritate;
                             threat.MagicThreat = 0;
                             spellTarget = threat.Monster;
                             break;
                         }
-                        else if (isPhysicalThread && canLame && !threat.Monster.IsImmuneToSpell(Spell.Lame, out var _, Features.HasFlag(Features.Elements)))
+                        else if (isPhysicalThread && canLame && !IsImmuneTo(threat, Spell.Lame))
                         {
                             spell = Spell.Lame;
                             threat.PhysicalThreat = 0;
                             spellTarget = threat.Monster;
                             break;
                         }
-                        else if (isPhysicalThread && canBlind && !threat.Monster.IsImmuneToSpell(Spell.Blind, out var _, Features.HasFlag(Features.Elements)))
+                        else if (isPhysicalThread && canBlind && !IsImmuneTo(threat, Spell.Blind) && !threat.Monster.Conditions.HasFlag(Condition.Blind))
                         {
                             spell = Spell.Blind;
                             threat.PhysicalThreat /= 2;
                             spellTarget = threat.Monster;
                             break;
                         }
-                        // retry sleep if no irritate, lame or blind
-                        else if (threat.Possition < 12
-                            && canSleep && !threat.Monster.IsImmuneToSpell(Spell.Sleep, out var _, Features.HasFlag(Features.Elements)))
+                        // retry sleep if no irritate, lame or blind and threat is healthy
+                        else if ((threat.Possition < 12 || (threat.Possition < 18 && threat.Monster.HitPoints.CurrentValue > threat.Monster.HitPoints.MaxValue * 9 / 10))
+                            && canSleep && !IsImmuneTo(threat, Spell.Sleep))
                         {
                             spell = Spell.Sleep;
                             threat.MagicThreat = threat.PhysicalThreat = 1;
@@ -403,19 +444,20 @@ partial class GameCore
                                 spell = Spell.GreatHealing;
                             else if (lowFrac < 25 && (mediumHeal || greatHeal))
                                 spell = mediumHeal ? Spell.MediumHealing : Spell.GreatHealing;
-                            else if (lowFrac < 40 && (smallHeal || mediumHeal))
+                            else if (lowFrac < 35 && (smallHeal || mediumHeal))
                                 spell = smallHeal ? Spell.SmallHealing : Spell.MediumHealing;
                             else if (lowFrac < 50 && (handHeal || smallHeal))
                                 spell = handHeal ? Spell.HealingHand : Spell.SmallHealing;
                             if (spell != Spell.None)
                             {
                                 spellTarget = partyToHeal[0];
+                                dontMove.Add(partyToHeal[0]);
                                 partyToHeal.RemoveAt(0);
                             }
                         }
                     }
 
-                    if (spell == Spell.None)
+                    if (spell == Spell.None && partyConditions != Condition.None)
                     {
                         bool Cure(Condition cond, Spell spellOne, Spell spellAll)
                         {
@@ -427,26 +469,31 @@ partial class GameCore
                             if (!canOne && !canAll)
                                 return false;
 
-                            var toCure = PartyMembers.Where((pm2) => pm2.Conditions.HasFlag(cond)).ToArray();
+                            var toCure = PartyMembers.Where(a => a.Conditions.HasFlag(cond)).ToArray();
                             if (toCure.Length == 1 || !canAll)
                             {
-                                spell = spellOne;
-                                spellTarget = toCure[0];
+                                foreach (var target in toCure)
+                                    if (!hasMoved.Contains(target))
+                                    {
+                                        spell = spellOne;
+                                        spellTarget = target;
+                                        dontMove.Add(target);
+                                        break;
+                                    }
                             }
                             else
                                 spell = spellAll;
                             partyConditions &= ~cond;
                             return true;
                         }
-                        if (partyConditions != Condition.None)
-                            if (!Cure(Condition.Panic, Spell.RemoveFear, Spell.RemovePanic))
-                                if (!Cure(Condition.Lamed, Spell.RemoveRigidness, Spell.RemoveLamedness))
-                                    if (!Cure(Condition.Blind, Spell.RemoveShadows, Spell.RemoveBlindness))
-                                        if (partyMember.Class != Class.Paladin)  // prefere paladin to attack
-                                            if (!Cure(Condition.Sleep, Spell.WakeUp, Spell.None))
-                                                if (!Cure(Condition.Irritated, Spell.RemoveIrritation, Spell.None))
-                                                    if (!Cure(Condition.Poisoned, Spell.RemovePoison, Spell.NeutralizePoison))
-                                                        Cure(Condition.Diseased, Spell.RemovePain, Spell.RemoveDisease);
+                        if (!Cure(Condition.Panic, Spell.RemoveFear, Spell.RemovePanic))
+                            if (!Cure(Condition.Lamed, Spell.RemoveRigidness, Spell.RemoveLamedness))
+                                if (!Cure(Condition.Blind, Spell.RemoveShadows, Spell.RemoveBlindness))
+                                    if (partyMember.Class != Class.Paladin)  // prefere paladin to attack
+                                        if (!Cure(Condition.Sleep, Spell.WakeUp, Spell.None))
+                                            if (!Cure(Condition.Irritated, Spell.RemoveIrritation, Spell.None))
+                                                if (!Cure(Condition.Poisoned, Spell.RemovePoison, Spell.NeutralizePoison))
+                                                    Cure(Condition.Diseased, Spell.RemovePain, Spell.RemoveDisease);
                     }
                 }
 
@@ -475,48 +522,52 @@ partial class GameCore
                     }
 
             // move to next enemy
-            if (!hasAction && !ranged && partyMember.Conditions.CanMove())
+            if (!hasAction && !ranged && partyMember.Conditions.CanMove() && !dontMove.Contains(partyMember))
                 foreach (var threat in threats.OrderByDescending(a => a.PhysicalThreat + a.MagicThreat).ThenBy(a => Math.Abs(a.Possition % 6 - position % 6)).ThenByDescending(a => a.Health))
                 {
                     if (threat.Possition < 12)
                         continue;
 
+                    bool IsFree(int pos) => currentBattle!.IsBattleFieldEmpty(pos) && !AnyPlayerMovesTo(pos);
                     int threatCol = threat.Possition % 6;
                     int threatRow = threat.Possition / 6;
-                    int partyCol = position % 6;
+                    int fromCol = position % 6;
                     int maxDist = 1 + (int)partyMember!.Attributes[Data.Attribute.Speed].TotalCurrentValue / 80;
-                    int delta = threatCol < position % 6 ? -1 : 1;
+                    int step = threatCol < fromCol ? -1 : 1;
                     int newPosition = -1;
-                    if (threatCol == partyCol)
+                    if (fromCol == threatCol)
                     {
-                        if (threatCol > 0 && currentBattle.IsBattleFieldEmpty(18 + threatCol - 1) && !AnyPlayerMovesTo(18 + threatCol - 1))
+                        if (IsFree(18 + threatCol))
+                            newPosition = 18 + threatCol; 
+                        else if (threatCol > 0 && threatCol <= 2 && IsFree(18 + threatCol - 1))
                             newPosition = 18 + threatCol - 1;
-                        else if (threatCol < 5 && currentBattle.IsBattleFieldEmpty(18 + threatCol + 1) && !AnyPlayerMovesTo(18 + threatCol + 1))
+                        else if (threatCol < 5 && IsFree(18 + threatCol + 1))
                             newPosition = 18 + threatCol + 1;
-                        else if (position >= 24 && currentBattle.IsBattleFieldEmpty(18 + threatCol) && !AnyPlayerMovesTo(18 + threatCol))
-                            newPosition = 18 + threatCol;
+                        else if (threatCol > 2 && IsFree(18 + threatCol - 1))
+                            newPosition = 18 + threatCol - 1;
                     }
-                    else if (threatRow == 3 || (currentBattle.IsBattleFieldEmpty(18 + threatCol) && !AnyPlayerMovesTo(18 + threatCol))
-                        || (threatCol != 0 && currentBattle.IsBattleFieldEmpty(18 + threatCol - 1) && !AnyPlayerMovesTo(18 + threatCol - 1))
-                        || (threatCol != 5 && currentBattle.IsBattleFieldEmpty(18 + threatCol + 1) && !AnyPlayerMovesTo(18 + threatCol + 1)))
-                        for (int newCol = delta < 0 ? Math.Max(0, partyCol + maxDist * delta) : Math.Min(5, partyCol + maxDist * delta); newCol != partyCol; newCol -= delta)
-                            if (currentBattle.IsBattleFieldEmpty(18 + newCol) && !AnyPlayerMovesTo(18 + newCol))
+                    else if (fromCol + step == threatCol && IsFree(18 + fromCol))
+                        newPosition = 18 + fromCol;
+                    else if (threatRow == 3 || IsFree(18 + threatCol)
+                        || (threatCol != 0 && IsFree(18 + threatCol - 1))
+                        || (threatCol != 5 && IsFree(18 + threatCol + 1)))
+                        for (int toCol = step < 0 ? Math.Max(Math.Max(0, threatCol - 1), fromCol - maxDist) : Math.Min(Math.Min(5, threatCol + 1), fromCol + maxDist); toCol != fromCol; toCol -= step)
+                            if (IsFree(18 + toCol))
                             {
-                                newPosition = 18 + newCol;
+                                newPosition = 18 + toCol;
                                 break;
                             }
-                            else if (currentBattle.IsBattleFieldEmpty(24 + newCol) && !AnyPlayerMovesTo(24 + newCol)
-                                && (threatRow == 3 || threatCol != newCol || (newCol != 0 && newCol != 5 && currentBattle.IsBattleFieldEmpty(18 + threatCol + delta))))
+                            else if (IsFree(24 + toCol) && (threatRow == 3 || (!(toCol == threatCol && IsFree(18 + toCol - step)) && !(toCol - step == threatCol))))
                             {
-                                newPosition = 24 + newCol;
+                                newPosition = 24 + toCol;
                                 break;
                             }
                     if (newPosition != -1)
                     {
                         hasAction = true;
                         SetPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)newPosition));
-                        if (partyToHeal.Contains(partyMember))
-                            partyToHeal.Remove(partyMember);    // can not heal moved party member
+                        hasMoved.Add(partyMember);
+                        partyToHeal.Remove(partyMember);    // can not heal moved party member
                         break;
                     }
                 }
@@ -524,7 +575,7 @@ partial class GameCore
             // nothing -> parry
             if (!hasAction && partyMember.Conditions.CanParry())
             {
-                SetCurrentPlayerBattleAction(Battle.BattleActionType.Parry);
+                SetPlayerBattleAction(Battle.BattleActionType.Parry);
             }
         }
 
