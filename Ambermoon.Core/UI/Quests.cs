@@ -90,6 +90,8 @@ public enum SubQuestType
     GoldenHorseshoes_FindHorseshoes,
     GoldenHorseshoes_ReturnHorseshoes,
     // Orcs
+    OrcPlague_DefeatTheOrcLeader, // Freiherr Georg teaches keyword "Probleme"; defeat the hill-giant orc leader in the Orc Cave (map 280)
+    OrcPlague_ReturnToGeorg,
     // Sandra's Daughter
     SandrasDaughter_GoToBurnvilleAndFindSabine, // after talking to sandra
     SandrasDaughter_RescueSabine, // after finding sabine's note
@@ -253,6 +255,34 @@ file class GlobalVariableTrigger(Game game, TriggerType triggerType, uint index,
             return true;
         }
         else if (game.CurrentSavegame.GetGlobalVariable(index) == expectedValue)
+        {
+            subQuest.State = NewState;
+            return true;
+        }
+
+        return false;
+    }
+}
+
+// Fires when the party hands a specific item to an NPC during a conversation (a "GiveItem" interaction).
+// Used for "return the proof to the quest giver" steps that the original game does NOT track with a global variable.
+file class ItemGivenToNpcTrigger(TriggerType triggerType, uint itemIndex) : IQuestTrigger
+{
+    public QuestState OldState => triggerType.GetOldState();
+    public QuestState NewState => triggerType.GetNewState();
+
+    bool IQuestTrigger.CheckEvent(Event @event, SubQuest subQuest)
+    {
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
+            return false;
+
+        // A one-shot "give item" conversation event has no persistent state to re-check, so (unlike
+        // GlobalVariable/Item triggers) it must only complete the step that is currently active --
+        // otherwise handing the item over could complete a step that hasn't been reached yet.
+        if (subQuest.State != QuestState.Active)
+            return false;
+
+        if (@event is ConversationEvent e && e.Interaction == ConversationEvent.InteractionType.GiveItem && e.ItemIndex == itemIndex)
         {
             subQuest.State = NewState;
             return true;
@@ -1125,6 +1155,37 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 17, // Sariel
+                }
+            ),
+            #endregion
+            #region Orcs
+            QuestFactory.CreateMainQuest(this, MainQuestType.OrcPlague,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.OrcPlague_DefeatTheOrcLeader,
+                    Triggers =
+                    [
+                        // Activate: Freiherr Georg (head of Spannenberg) tells about the two problems and teaches the keyword "Probleme"
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 23), // PROBLEME
+                        // Complete: obtained the hill giant's head (item 268), proof the orc leader is dead
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 268), // KOPF HÜGELRIESEN
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 8, // Freiherr Georg von Spannenberg
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.OrcPlague_ReturnToGeorg,
+                    Triggers =
+                    [
+                        // Activate: once the leader is defeated (head obtained)
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: hand the giant's head to Georg. The original game tracks this with no global variable,
+                        // so we observe the GiveItem conversation event. TODO: confirm in a playtest that this event reaches the quest log.
+                        new ItemGivenToNpcTrigger(TriggerType.Completion, 268), // KOPF HÜGELRIESEN
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 8, // Freiherr Georg von Spannenberg
                 }
             ),
             #endregion
