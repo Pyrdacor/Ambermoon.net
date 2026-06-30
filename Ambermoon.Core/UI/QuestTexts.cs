@@ -149,6 +149,9 @@ internal static class QuestTexts
             { SubQuestType.Sylphs_FindTheHiddenItemInTheTree, "Finde den Gegenstand im Baum" },
             { SubQuestType.Sylphs_FindTheSylphs, "Finde die Feen" },
             { SubQuestType.Sylphs_RescueSelena, "Rette Selena" },
+            // Orcs
+            { SubQuestType.OrcPlague_DefeatTheOrcLeader, "Besiege den Anführer der Orks" },
+            { SubQuestType.OrcPlague_ReturnToGeorg, "Bring den Beweis zu Freiherr Georg" },
             // TODO ...
         } },
         { GameLanguage.English, new()
@@ -197,6 +200,9 @@ internal static class QuestTexts
             { SubQuestType.Sylphs_FindTheHiddenItemInTheTree, "Find the item in the tree" },
             { SubQuestType.Sylphs_FindTheSylphs, "Find the fairies" },
             { SubQuestType.Sylphs_RescueSelena, "Rescue Selena" },
+            // Orcs
+            { SubQuestType.OrcPlague_DefeatTheOrcLeader, "Defeat the orc leader" },
+            { SubQuestType.OrcPlague_ReturnToGeorg, "Bring the proof to Baron George" },
             // TODO ...
         } }
         // TODO ...

@@ -90,6 +90,8 @@ public enum SubQuestType
     GoldenHorseshoes_FindHorseshoes,
     GoldenHorseshoes_ReturnHorseshoes,
     // Orcs
+    OrcPlague_DefeatTheOrcLeader, // Freiherr Georg teaches keyword "Probleme"; defeat the hill-giant orc leader in the Orc Cave (map 280)
+    OrcPlague_ReturnToGeorg,
     // Sandra's Daughter
     SandrasDaughter_GoToBurnvilleAndFindSabine, // after talking to sandra
     SandrasDaughter_RescueSabine, // after finding sabine's note
@@ -1125,6 +1127,43 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 17, // Sariel
+                }
+            ),
+            #endregion
+            #region Orcs
+            QuestFactory.CreateMainQuest(this, MainQuestType.OrcPlague,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.OrcPlague_DefeatTheOrcLeader,
+                    Triggers =
+                    [
+                        // Activate: Freiherr Georg (head of Spannenberg) tells about the two problems and teaches the keyword "Probleme"
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 23), // PROBLEME
+                        // Complete: obtained the hill giant's head (item 268, proof the orc leader is dead),
+                        // OR the head was already handed to Baron George (the custom global variable below).
+                        // The latter is needed so this step stays completed after a save/reload, when the head
+                        // is no longer in the inventory (ItemObtainedTrigger only checks items you currently own).
+                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 268), // KOPF HÜGELRIESEN
+                            (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_GaveOrcLeaderHeadToBaronGeorge)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 8, // Freiherr Georg von Spannenberg
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.OrcPlague_ReturnToGeorg,
+                    Triggers =
+                    [
+                        // Activate: once the leader is defeated (head obtained)
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: hand the giant's head to Baron George. The original game changes nothing in the
+                        // savegame here, so a custom global variable is set on that GiveItem event (see
+                        // QuestCustomVariables) and checked here -- this persists the progress across a save/reload.
+                        new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_GaveOrcLeaderHeadToBaronGeorge),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 8, // Freiherr Georg von Spannenberg
                 }
             ),
             #endregion
