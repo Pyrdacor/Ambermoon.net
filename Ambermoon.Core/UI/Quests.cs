@@ -264,34 +264,6 @@ file class GlobalVariableTrigger(Game game, TriggerType triggerType, uint index,
     }
 }
 
-// Fires when the party hands a specific item to an NPC during a conversation (a "GiveItem" interaction).
-// Used for "return the proof to the quest giver" steps that the original game does NOT track with a global variable.
-file class ItemGivenToNpcTrigger(TriggerType triggerType, uint itemIndex) : IQuestTrigger
-{
-    public QuestState OldState => triggerType.GetOldState();
-    public QuestState NewState => triggerType.GetNewState();
-
-    bool IQuestTrigger.CheckEvent(Event @event, SubQuest subQuest)
-    {
-        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
-            return false;
-
-        // A one-shot "give item" conversation event has no persistent state to re-check, so (unlike
-        // GlobalVariable/Item triggers) it must only complete the step that is currently active --
-        // otherwise handing the item over could complete a step that hasn't been reached yet.
-        if (subQuest.State != QuestState.Active)
-            return false;
-
-        if (@event is ConversationEvent e && e.Interaction == ConversationEvent.InteractionType.GiveItem && e.ItemIndex == itemIndex)
-        {
-            subQuest.State = NewState;
-            return true;
-        }
-
-        return false;
-    }
-}
-
 file class TileChangeTrigger(Game game, TriggerType triggerType, uint mapIndex, uint x, uint y, uint expectedTile) : IQuestTrigger
 {
     public QuestState OldState => triggerType.GetOldState();
@@ -1167,8 +1139,13 @@ partial class QuestLog
                     [
                         // Activate: Freiherr Georg (head of Spannenberg) tells about the two problems and teaches the keyword "Probleme"
                         new KeywordLearnedTrigger(game, TriggerType.Activation, 23), // PROBLEME
-                        // Complete: obtained the hill giant's head (item 268), proof the orc leader is dead
-                        new ItemObtainedTrigger(game, TriggerType.Completion, 268), // KOPF HÜGELRIESEN
+                        // Complete: obtained the hill giant's head (item 268, proof the orc leader is dead),
+                        // OR the head was already handed to Baron George (the custom global variable below).
+                        // The latter is needed so this step stays completed after a save/reload, when the head
+                        // is no longer in the inventory (ItemObtainedTrigger only checks items you currently own).
+                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 268), // KOPF HÜGELRIESEN
+                            (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_GaveOrcLeaderHeadToBaronGeorge)),
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 8, // Freiherr Georg von Spannenberg
@@ -1180,9 +1157,10 @@ partial class QuestLog
                     [
                         // Activate: once the leader is defeated (head obtained)
                         new PreviousSubQuestCompletedTrigger(),
-                        // Complete: hand the giant's head to Georg. The original game tracks this with no global variable,
-                        // so we observe the GiveItem conversation event. TODO: confirm in a playtest that this event reaches the quest log.
-                        new ItemGivenToNpcTrigger(TriggerType.Completion, 268), // KOPF HÜGELRIESEN
+                        // Complete: hand the giant's head to Baron George. The original game changes nothing in the
+                        // savegame here, so a custom global variable is set on that GiveItem event (see
+                        // QuestCustomVariables) and checked here -- this persists the progress across a save/reload.
+                        new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_GaveOrcLeaderHeadToBaronGeorge),
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 8, // Freiherr Georg von Spannenberg
