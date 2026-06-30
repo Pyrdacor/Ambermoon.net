@@ -202,7 +202,7 @@ internal static class QuestTexts
             { SubQuestType.Sylphs_RescueSelena, "Rescue Selena" },
             // Orcs
             { SubQuestType.OrcPlague_DefeatTheOrcLeader, "Defeat the orc leader" },
-            { SubQuestType.OrcPlague_ReturnToGeorg, "Bring the proof to Freiherr Georg" },
+            { SubQuestType.OrcPlague_ReturnToGeorg, "Bring the proof to Baron George" },
             // TODO ...
         } }
         // TODO ...
