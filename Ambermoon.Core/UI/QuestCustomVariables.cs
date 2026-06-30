@@ -89,6 +89,7 @@ partial class QuestLog
     const uint GlobalVar_TolimarQuestStarted = 8191u;
     const uint GlobalVar_SylphQuestStarted = 8190u;
     const uint GlobalVar_ShowedAmberToGrandfather = 8189u;
+    const uint GlobalVar_GaveOrcLeaderHeadToBaronGeorge = 8188u;
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 
@@ -108,5 +109,10 @@ partial class QuestLog
         customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
             (npc, @event) => npc.Index == 1 && @event is ConversationEvent c && (c.Interaction == ConversationEvent.InteractionType.ShowItem || c.Interaction == ConversationEvent.InteractionType.GiveItem) && c.ItemIndex == 209,
             GlobalVar_ShowedAmberToGrandfather));
+
+        // Give the orc leader's head to Baron George (Freiherr Georg, NPC 8) -- completes the Orc Plague quest.
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 8 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.GiveItem && c.ItemIndex == 268,
+            GlobalVar_GaveOrcLeaderHeadToBaronGeorge));
     }
 }
