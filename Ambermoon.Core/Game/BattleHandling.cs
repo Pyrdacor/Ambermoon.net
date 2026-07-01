@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Ambermoon.Data;
@@ -669,6 +669,11 @@ partial class GameCore
                     CursorType = CursorType.Sword;
                 });
             });
+        });
+        // Auto Battle button
+        layout.AttachEventToButton(5, () =>
+        {
+            AddAutoBattleActions(true);
         });
         // Attack button
         layout.AttachEventToButton(6, () =>

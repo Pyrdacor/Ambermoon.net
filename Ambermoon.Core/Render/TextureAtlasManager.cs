@@ -23,6 +23,9 @@ using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 
 namespace Ambermoon.Render
@@ -197,7 +200,10 @@ namespace Ambermoon.Render
                 var uiElementGraphics = graphicProvider.GetGraphics(GraphicType.UIElements);
 
                 for (int i = 0; i < uiElementGraphics.Count; ++i)
+                {
                     AddTexture(Layer.UI, Graphics.UICustomGraphicOffset + (uint)i, uiElementGraphics[i]);
+                }
+                AddTexture(Layer.UI, Graphics.UICustomGraphicOffset + (uint)uiElementGraphics.Count, GameCore.AutoBattleButton);
             }
             else if (graphicInfoProvider is IGraphicAtlasProvider graphicAtlasProvider)
             {
