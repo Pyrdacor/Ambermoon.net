@@ -90,6 +90,7 @@ partial class QuestLog
     const uint GlobalVar_SylphQuestStarted = 8190u;
     const uint GlobalVar_ShowedAmberToGrandfather = 8189u;
     const uint GlobalVar_GaveOrcLeaderHeadToBaronGeorge = 8188u;
+    const uint GlobalVar_GaveThiefProofToBaronGeorge = 8187u;
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 
@@ -114,5 +115,11 @@ partial class QuestLog
         customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
             (npc, @event) => npc.Index == 8 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.GiveItem && c.ItemIndex == 268,
             GlobalVar_GaveOrcLeaderHeadToBaronGeorge));
+
+        // Give the thief-plague proof to Baron George (NPC 8): the silver hand (266, Nagier killed)
+        // or Nagier's letter (267, peace made) -- completes the Thief Plague quest.
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 8 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.GiveItem && (c.ItemIndex == 266 || c.ItemIndex == 267),
+            GlobalVar_GaveThiefProofToBaronGeorge));
     }
 }
