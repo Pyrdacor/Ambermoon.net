@@ -142,6 +142,11 @@ partial class Battle
             physicalThreat = 0;
         if (monster.Conditions.HasFlag(Condition.Blind))
             physicalThreat /= 2;
+        if (monster.Conditions.HasFlag(Condition.Aging))
+        {
+            agingValues.TryGetValue(monster, out var aging);
+            physicalThreat = physicalThreat * (100 - (int)aging) / 100;
+        }
         if (monster.Conditions.HasFlag(Condition.Crazy))
         {
             physicalThreat /= 2;
@@ -477,6 +482,7 @@ partial class GameCore
                     bool canSleep = CanCast(Spell.Sleep);
                     bool canLame = CanCast(Spell.Lame);
                     bool canBlind = Features.HasFlag(Features.ExtendedCurseEffects) && CanCast(Spell.Blind);
+                    bool canAging = Features.HasFlag(Features.ExtendedCurseEffects) && CanCast(Spell.CauseAging);
                     bool canIrritate = CanCast(Spell.Irritate);
                     foreach (var threat in threats.OrderByDescending(a => a.PhysicalThreat + a.MagicThreat).ThenByDescending(a => a.Health).ThenBy(a => a.Position))
                     {
@@ -518,7 +524,14 @@ partial class GameCore
                             spellTarget = threat.Monster;
                             break;
                         }
-                        // retry sleep if no irritate, lame or blind and threat is healthy
+                        else if (isPhysicalThread && canAging && !IsImmuneTo(threat, Spell.CauseAging) && !threat.Monster.Conditions.HasFlag(Condition.Aging))
+                        {
+                            spell = Spell.CauseAging;
+                            threat.PhysicalThreat = threat.PhysicalThreat * 9 / 10;
+                            spellTarget = threat.Monster;
+                            break;
+                        }
+                        // retry sleep if no irritate, lame, blind or aging and threat is healthy
                         else if ((threat.Position < 12 || (threat.Position < 18 && threat.Monster.HitPoints.CurrentValue > threat.Monster.HitPoints.MaxValue * 9 / 10))
                             && canSleep && !IsImmuneTo(threat, Spell.Sleep))
                         {
