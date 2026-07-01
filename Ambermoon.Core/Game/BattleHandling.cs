@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Ambermoon.Data;
@@ -1225,7 +1225,6 @@ partial class GameCore
         layout.EnableButton(0, battleFieldSlot >= 24 && CurrentPartyMember!.CanFlee()); // flee button, only enable in last row
         layout.EnableButton(3, CurrentPartyMember!.CanMove()); // Note: If no slot is available the button still is enabled but after clicking you get "You can't move anywhere".
         layout.EnableButton(4, currentBattle.CanPartyMoveForward);
-        layout.EnableButton(5, true);
         layout.EnableButton(6, CurrentPartyMember.BaseAttackDamage + CurrentPartyMember.BonusAttackDamage > 0 && CurrentPartyMember.Conditions.CanAttack());
         layout.EnableButton(7, CurrentPartyMember.Conditions.CanParry());
         layout.EnableButton(8, CurrentPartyMember.Conditions.CanCastSpell(Features) && CurrentPartyMember.HasAnySpell());
@@ -1604,7 +1603,7 @@ partial class GameCore
                 int minRow = 0;
                 int maxRow = 3;
 
-                if (currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRow)
+                if (currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRowInRange)
                 {
                     var caster = currentPickingActionMember!;
 

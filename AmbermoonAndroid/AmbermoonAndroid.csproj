@@ -1,4 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net9.0-android35.0</TargetFramework>
 		<SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
@@ -8,7 +9,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ApplicationId>com.pyrdacor.AmbermoonAndroid</ApplicationId>
 		<ApplicationVersion>1</ApplicationVersion>
-		<ApplicationDisplayVersion>1.13.3</ApplicationDisplayVersion>
+		<ApplicationDisplayVersion>1.13.6</ApplicationDisplayVersion>
 		<Configurations>Debug;Release</Configurations>
 		<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
 		<SignAssembly>False</SignAssembly>

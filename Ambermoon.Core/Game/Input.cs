@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Ambermoon.Data;
 using Ambermoon.Render;
 using Ambermoon.UI;
@@ -1005,6 +1006,8 @@ partial class GameCore
 
         if (allInputDisabled)
             return;
+
+        
 
         if (nextClickHandler != null)
         {

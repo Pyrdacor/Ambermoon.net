@@ -94,13 +94,15 @@ public class Game : GameCore
 
             if (additionalSavegameSlots != null)
             {
-                if (additionalSavegameSlots.Names == null)
-                    additionalSavegameSlots.Names = new string[NumAdditionalSavegameSlots];
+                if (additionalSavegameSlots.Names == null || additionalSavegameSlots.Names.Length < NumAdditionalSavegameSlots)
+                    additionalSavegameSlots.Names = Enumerable.Concat(additionalSavegameSlots.Names ?? [],
+                        Enumerable.Repeat("", NumAdditionalSavegameSlots - (additionalSavegameSlots.Names?.Length ?? 0))).ToArray();
                 else if (additionalSavegameSlots.Names.Length > NumAdditionalSavegameSlots)
                     additionalSavegameSlots.Names = additionalSavegameSlots.Names.Take(NumAdditionalSavegameSlots).ToArray();
-                else if (additionalSavegameSlots.Names.Length < NumAdditionalSavegameSlots)
-                    additionalSavegameSlots.Names = Enumerable.Concat(additionalSavegameSlots.Names,
-                        Enumerable.Repeat("", NumAdditionalSavegameSlots - additionalSavegameSlots.Names.Length)).ToArray();
+
+                if (additionalSavegameSlots.BaseNames == null || additionalSavegameSlots.BaseNames.Length < NumBaseSavegameSlots)
+                    additionalSavegameSlots.BaseNames = Enumerable.Concat(additionalSavegameSlots.BaseNames ?? [],
+                        Enumerable.Repeat("", NumBaseSavegameSlots - (additionalSavegameSlots.BaseNames?.Length ?? 0))).ToArray();
 
                 if (slot > NumBaseSavegameSlots) // 1-based slot
                     additionalSavegameSlots.Names[slot - Game.NumBaseSavegameSlots - 1] = name;

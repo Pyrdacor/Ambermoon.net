@@ -278,7 +278,7 @@ internal class Configuration : IConfiguration
 
         gameVersionName = gameVersionName.ToLower();
 
-        var savegameSlots = AdditionalSavegameSlots.FirstOrDefault(s => s.GameVersionName.ToLower() == gameVersionName);
+        var savegameSlots = AdditionalSavegameSlots.FirstOrDefault(s => s.GameVersionName?.ToLower() == gameVersionName);
 
         if (savegameSlots == null)
         {

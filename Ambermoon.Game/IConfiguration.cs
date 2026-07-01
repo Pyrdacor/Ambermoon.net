@@ -17,9 +17,30 @@ public class AdditionalSavegameSlots
     public int ContinueSavegameSlot { get; set; } = 0;
     public DateTime? LastSavesSync { get; set; } = null;
 
-    public static AdditionalSavegameSlots Load(string path)
+    public static AdditionalSavegameSlots? Load(string path)
     {
-        return JsonConvert.DeserializeObject<AdditionalSavegameSlots>(File.ReadAllText(path))!;
+        var result = JsonConvert.DeserializeObject<AdditionalSavegameSlots>(File.ReadAllText(path));
+
+        if (result == null)
+            return null;
+
+        result.BaseNames = EnsureArraySize(result.BaseNames, Game.NumBaseSavegameSlots);
+        result.Names = EnsureArraySize(result.Names, Game.NumAdditionalSavegameSlots);
+
+        return result;
+    }
+
+    static string[] EnsureArraySize(string[]? array, int requiredSize)
+    {
+        if (array == null || array.Length == 0)
+            return new string[requiredSize];
+
+        if (array.Length >= requiredSize)
+            return array;
+
+        var resized = new string[requiredSize];
+        Array.Copy(array, resized, array.Length);
+        return resized;
     }
 
     public void Save(string path)

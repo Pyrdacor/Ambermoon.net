@@ -9,6 +9,11 @@ Version 1.13
 - Fixed loading bar and advanced logo on retina displays (Mac)
 - Path for external music can now be adjusted in the config (ExternalMusicPath) but still defaults to "music"
 - Preparations for Ambermoon Advanced episode 4 (not released yet) and Mod support (not active yet)
+- Added cheat console to Android
+- Fixed save crash on Android
+- Fixed non-working save slots 11 to 30
+- Cheat fixes
+- Some minor fixes
 
 
 Version 1.12

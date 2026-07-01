@@ -1,7 +1,7 @@
 ﻿using Ambermoon;
 using Ambermoon.Data;
 using Ambermoon.Render;
-using Android.OS;
+using System.Diagnostics;
 
 namespace AmbermoonAndroid;
 
@@ -17,7 +17,8 @@ internal class TouchPad
     const int IconDisableOverlayWidth = 19;
     const int IconDisableOverlayHeight = 19;
     bool arrowClicked = false;
-    readonly Handler hideTappedArrowHandler = new(Looper.MainLooper);
+    int tappedArrowIndex = -1;
+    long tappedArrowTimestamp = 0;
     const int ShowTappedArrowDuration = 200;
     bool enabled = false;
     int iconPage = -1;
@@ -79,6 +80,8 @@ internal class TouchPad
     ];
 
     public Direction? Direction { get; private set; } = null;
+
+    public bool ContainsPosition(Position position) => area.Contains(position);
 
     public static Dictionary<uint, Graphic> GetGraphics(uint offset)
     {
@@ -386,12 +389,8 @@ internal class TouchPad
                     activeMarker.Visible = false;
                     active = false;
                     arrowClicked = true;
-
-                    hideTappedArrowHandler.PostDelayed(() =>
-                    {
-                        if (arrowClicked)
-                            arrow.Visible = false;
-                    }, ShowTappedArrowDuration);
+                    tappedArrowIndex = i;
+                    tappedArrowTimestamp = Stopwatch.GetTimestamp();
 
                     return true;
                 }
@@ -475,10 +474,10 @@ internal class TouchPad
         {
             active = true;
             arrowClicked = false;
-            hideTappedArrowHandler.RemoveCallbacksAndMessages(null);
+            tappedArrowIndex = -1;
 
             foreach (var arrow in arrows)
-                arrow.Visible = false;            
+                arrow.Visible = false;
 
             activeMarker.Visible = true;
             return true;
@@ -583,6 +582,17 @@ internal class TouchPad
 
     public void Update(GameCore game)
     {
+        if (tappedArrowIndex >= 0 && arrowClicked)
+        {
+            double elapsedMs = Stopwatch.GetElapsedTime(tappedArrowTimestamp).TotalMilliseconds;
+
+            if (elapsedMs >= ShowTappedArrowDuration)
+            {
+                arrows[tappedArrowIndex].Visible = false;
+                tappedArrowIndex = -1;
+            }
+        }
+
         enabled = background != null && background.Visible && game.InputEnable;
 
         if (background != null)
@@ -619,7 +629,7 @@ internal class TouchPad
             }
         }
 
-        if (background?.Visible == true && IconPage == 2 && !disableOverlay.Visible && !game.SpellBookEnabled)
+        if (background?.Visible == true && IconPage == 1 && !disableOverlay.Visible && !game.SpellBookEnabled)
         {
             var location = IconLocations[(int)GameCore.MobileIconAction.SpellBook];
             iconsDisabled[location.Y + location.X * 2] = true;

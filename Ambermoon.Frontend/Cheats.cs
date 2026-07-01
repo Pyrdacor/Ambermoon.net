@@ -284,7 +284,7 @@ public class Cheats
             return;
 
         currentAutoFillInput = null;
-        currentInput = input;
+        currentInput = input.Trim();
         ProcessCurrentInput(game, true);
     }
 
@@ -330,6 +330,10 @@ public class Cheats
             case ConsoleKey.Backspace:
                 if (CursorPosition > 0)
                     RemoveLastInput();
+                return;
+            case ConsoleKey.Delete:
+                if (CursorPosition < currentInput.Length)
+                    RemoveNextInput();
                 return;
             case ConsoleKey.Escape:
                 while (currentInput.Length != 0)
@@ -403,10 +407,19 @@ public class Cheats
         }
     }
 
+    static void RemoveNextInput()
+    {
+        int newCursorPosition = CursorPosition;
+        currentInput = currentInput.Remove(newCursorPosition, 1);
+        CursorPosition = 0;
+        WriteToInput(currentInput + " ");
+        CursorPosition = newCursorPosition;
+    }
+
     static void AddInput(char input)
     {
         int newCursorPosition = CursorPosition + 1;
-        currentInput += input;
+        currentInput = currentInput.Insert(CursorPosition, input.ToString());
         CursorPosition = 0;
         WriteToInput(currentInput);
         CursorPosition = newCursorPosition;

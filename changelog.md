@@ -1,7 +1,10 @@
 # Changelog
 
-## 1.13.0 - Thirteenth patch (May 2026)
+## 1.13.0 - Thirteenth patch (May 2026 - June 2026)
 
+- Version [1.13.5](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.5): Fixed savegame slots 11 to 30
+- Version [1.13.4](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.4): Cheat console for Android, cheat fixes, Android save crash fix
+- Version [1.13.3](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.3): Czech intro text fixes
 - Version [1.13.2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.2): Fixed loading bar and advanced logo on Mac, external music path in config
 - Version [1.13.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.1): Crash fix for non-german game versions
 - Version [1.13.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.0): Performance improvements, some visual approvements, bugfixes

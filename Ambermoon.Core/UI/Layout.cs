@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Layout.cs - Handles most of the UI interactions
  *
  * Copyright (C) 2020-2026  Robert Schneckenhaus <robert.schneckenhaus@web.de>
@@ -524,6 +524,7 @@ namespace Ambermoon.UI
         readonly List<ISprite> additionalSprites = [];
         readonly List<UIText> texts = [];
         readonly List<Tooltip> tooltips = [];
+        internal IReadOnlyList<Tooltip> Tooltips => tooltips;
         readonly Dictionary<int, BattleFieldSlotMarker> battleFieldSlotMarkers = [];
         public const uint TicksPerBlink = GameCore.TicksPerSecond / 4;
         IColoredRect? activeTooltipBackground = null;
@@ -1554,8 +1555,8 @@ namespace Ambermoon.UI
             AddOption((index, _) => ToggleBattleSpeed());
             AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => Toggle3DMovement());
             AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleTurnWithArrowKeys());
-            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleTooltips());
-            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => TogglePlayerStatsTooltips());
+            AddOption((index, _) => ToggleTooltips());
+            AddOption((index, _) => TogglePlayerStatsTooltips());
             AddOption((index, _) => ToggleFloorAndCeiling());
             AddOption(game.CoreConfiguration.ShowFloor && game.CoreConfiguration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
             // Page 3
@@ -4864,7 +4865,8 @@ namespace Ambermoon.UI
                 ChestText?.Destroy();
                 ChestText = null;
             }
-            else if (game.OpenStorage is not GameCore.ConversationItems)
+
+            if (game.OpenStorage is not GameCore.ConversationItems)
             {
                 SetInventoryMessage(null);
             }
@@ -5679,9 +5681,14 @@ namespace Ambermoon.UI
             }
 
             if (game.CurrentWindow.Window != Window.Inventory && (game.OpenStorage is Chest || game.OpenStorage is Merchant))
+            {
+                SetInventoryMessage(null);
                 ShowChestMessage(game.DataNameProvider.WhereToMoveIt);
+            }
             else if (game.OpenStorage is not GameCore.ConversationItems)
+            {
                 SetInventoryMessage(game.DataNameProvider.WhereToMoveIt);
+            }
         }
 
         public void SaveListScrollDrag(Position position, ref CursorType cursorType)

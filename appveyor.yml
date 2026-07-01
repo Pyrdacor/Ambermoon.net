@@ -1,8 +1,25 @@
+init:
+  - ps: |
+      $tag = $env:APPVEYOR_REPO_TAG_NAME
+      if ($tag -and $tag -match '(v\d+\.\d+\.\d+)') {
+        Set-AppveyorBuildVariable 'VERSION_TAG' $matches[1]
+      } elseif ($tag) {
+        Set-AppveyorBuildVariable 'VERSION_TAG' $tag
+      }
+
+branches:
+  only:
+    - /^v\d+\.\d+\.\d+$/
+    - /^windows-v\d+\.\d+\.\d+$/
+    - /^linux-v\d+\.\d+\.\d+$/
+    - /^macos-v\d+\.\d+\.\d+$/
+    - /^android-v\d+\.\d+\.\d+$/
+    - game-refactoring
+
 for:
 -
     branches:
         only:
-            - master
             - /^v\d+\.\d+\.\d+$/
 
     image:
@@ -12,7 +29,21 @@ for:
 -
     branches:
         only:
-            - test-macos
+            - /^windows-v\d+\.\d+\.\d+$/
+
+    image:
+        - Visual Studio 2022
+-
+    branches:
+        only:
+            - /^linux-v\d+\.\d+\.\d+$/
+
+    image:
+        - Ubuntu2204
+-
+    branches:
+        only:
+            - /^macos-v\d+\.\d+\.\d+$/
 
     image:
         - macos-monterey
@@ -49,7 +80,6 @@ for:
 
 platform: Any CPU
 configuration: Release
-
 
 before_build:
   - ps: |
@@ -91,7 +121,7 @@ after_build:
           Copy-Item "./AmbermoonAndroid/bin/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid.apk" "com.pyrdacor.AmbermoonAndroid.apk"
           Copy-Item "./AmbermoonAndroid/bin/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid-Signed.apk" "com.pyrdacor.AmbermoonAndroid-Signed.apk"
         } else {
-          if (($env:APPVEYOR_REPO_TAG -eq $true) -or ($env:APPVEYOR_REPO_BRANCH -eq 'test-macos')) {
+          if ($env:APPVEYOR_REPO_TAG -eq $true) {
             ./publish.ps1
           }
           ./nuget.ps1
@@ -103,9 +133,9 @@ deploy:
   - provider: GitHub
     name: Ambermoon.net-Windows
     artifact: Ambermoon.net-Windows
-    tag: $(APPVEYOR_REPO_TAG_NAME)
-    release: $(APPVEYOR_REPO_TAG_NAME)
-    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    tag: $(VERSION_TAG)
+    release: $(VERSION_TAG)
+    description: 'Release $(VERSION_TAG)'
     auth_token:
       secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
     draft: true
@@ -113,13 +143,13 @@ deploy:
     force_update: true
     on:
       APPVEYOR_REPO_TAG: true
-      APPVEYOR_REPO_TAG_NAME: /^v\d+\.\d+\.\d+$/
+      VERSION_TAG: /^v\d+\.\d+\.\d+$/
   - provider: GitHub
     name: Ambermoon.net-Windows32Bit
     artifact: Ambermoon.net-Windows32Bit
-    tag: $(APPVEYOR_REPO_TAG_NAME)
-    release: $(APPVEYOR_REPO_TAG_NAME)
-    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    tag: $(VERSION_TAG)
+    release: $(VERSION_TAG)
+    description: 'Release $(VERSION_TAG)'
     auth_token:
       secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
     draft: true
@@ -127,13 +157,13 @@ deploy:
     force_update: true
     on:
       APPVEYOR_REPO_TAG: true
-      APPVEYOR_REPO_TAG_NAME: /^v\d+\.\d+\.\d+$/
+      VERSION_TAG: /^v\d+\.\d+\.\d+$/
   - provider: GitHub
     name: Ambermoon.net-Linux
     artifact: Ambermoon.net-Linux
-    tag: $(APPVEYOR_REPO_TAG_NAME)
-    release: $(APPVEYOR_REPO_TAG_NAME)
-    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    tag: $(VERSION_TAG)
+    release: $(VERSION_TAG)
+    description: 'Release $(VERSION_TAG)'
     auth_token:
       secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
     draft: true
@@ -141,13 +171,13 @@ deploy:
     force_update: true
     on:
       APPVEYOR_REPO_TAG: true
-      APPVEYOR_REPO_TAG_NAME: /^v\d+\.\d+\.\d+$/
+      VERSION_TAG: /^v\d+\.\d+\.\d+$/
   - provider: GitHub
     name: Ambermoon.net-Mac
     artifact: Ambermoon.net-Mac
-    tag: $(APPVEYOR_REPO_TAG_NAME)
-    release: $(APPVEYOR_REPO_TAG_NAME)
-    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    tag: $(VERSION_TAG)
+    release: $(VERSION_TAG)
+    description: 'Release $(VERSION_TAG)'
     auth_token:
       secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
     draft: true
@@ -155,13 +185,13 @@ deploy:
     force_update: true
     on:
       APPVEYOR_REPO_TAG: true
-      APPVEYOR_REPO_TAG_NAME: /^v\d+\.\d+\.\d+$/
+      VERSION_TAG: /^v\d+\.\d+\.\d+$/
   - provider: GitHub
     name: Ambermoon.net-Mac-ARM
     artifact: Ambermoon.net-Mac-ARM
-    tag: $(APPVEYOR_REPO_TAG_NAME)
-    release: $(APPVEYOR_REPO_TAG_NAME)
-    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    tag: $(VERSION_TAG)
+    release: $(VERSION_TAG)
+    description: 'Release $(VERSION_TAG)'
     auth_token:
       secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
     draft: true
@@ -169,13 +199,13 @@ deploy:
     force_update: true
     on:
       APPVEYOR_REPO_TAG: true
-      APPVEYOR_REPO_TAG_NAME: /^v\d+\.\d+\.\d+$/
+      VERSION_TAG: /^v\d+\.\d+\.\d+$/
   - provider: GitHub
     name: AmbermoonInstaller
     artifact: AmbermoonInstaller
-    tag: $(APPVEYOR_REPO_TAG_NAME)
-    release: $(APPVEYOR_REPO_TAG_NAME)
-    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    tag: $(VERSION_TAG)
+    release: $(VERSION_TAG)
+    description: 'Release $(VERSION_TAG)'
     auth_token:
       secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
     draft: true
@@ -183,25 +213,13 @@ deploy:
     force_update: true
     on:
       APPVEYOR_REPO_TAG: true
-      APPVEYOR_REPO_TAG_NAME: /^v\d+\.\d+\.\d+$/
-  - provider: GitHub
-    name: Ambermoon.net-Mac-ARM Test
-    artifact: Ambermoon.net-Mac-ARM
-    release: 'Mac Test Release'
-    description: 'Mac Test Release'
-    auth_token:
-      secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
-    draft: true
-    prerelease: true
-    force_update: true
-    on:
-      branch: 'test-macos'
+      VERSION_TAG: /^v\d+\.\d+\.\d+$/
   - provider: GitHub
     name: AmbermoonAndroid
     artifact: AmbermoonAndroid
-    tag: $(APPVEYOR_REPO_TAG_NAME)
-    release: $(APPVEYOR_REPO_TAG_NAME)
-    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    tag: $(VERSION_TAG)
+    release: $(VERSION_TAG)
+    description: 'Release $(VERSION_TAG)'
     auth_token:
       secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
     draft: true
@@ -213,9 +231,9 @@ deploy:
   - provider: GitHub
     name: AmbermoonAndroidSigned
     artifact: AmbermoonAndroidSigned
-    tag: $(APPVEYOR_REPO_TAG_NAME)
-    release: $(APPVEYOR_REPO_TAG_NAME)
-    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    tag: $(VERSION_TAG)
+    release: $(VERSION_TAG)
+    description: 'Release $(VERSION_TAG)'
     auth_token:
       secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
     draft: true

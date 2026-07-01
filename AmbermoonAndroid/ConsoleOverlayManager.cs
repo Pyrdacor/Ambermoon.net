@@ -14,7 +14,7 @@ public class ConsoleOverlayManager : IConsole
     public static ConsoleOverlayManager GetInstance(Activity activity)
         => instance ??= new ConsoleOverlayManager(activity);
 
-    public event Action<string>? OnCommand;
+    public event Action<ConsoleKeyInfo>? OnKeyPress;
 
     private readonly Activity activity;
     private FrameLayout? overlay;
@@ -83,8 +83,29 @@ public class ConsoleOverlayManager : IConsole
         activity.RunOnUiThread(() =>
         {
             if (inputField is null) return;
-            inputField.Text = text;
-            SetCursorPosition(text.Length);
+
+            var builder = new StringBuilder();
+
+            if (cursorPosition > 0)
+            {
+                int max = Math.Min(cursorPosition, inputText.Length);
+
+                if (max > 0)
+                    builder.Append(inputText[..max]);
+            }
+
+            builder.Append(text);
+
+            cursorPosition += text.Length;
+
+            if (cursorPosition < inputText.Length)
+            {
+                builder.Append(inputText[cursorPosition..]);
+            }
+
+            inputText = builder.ToString();
+            cursorPosition += text.Length;
+            UpdateInputDisplay();
         });
     }
 
@@ -102,6 +123,7 @@ public class ConsoleOverlayManager : IConsole
             var length = inputField.Text?.Length ?? 0;
             var pos = Math.Clamp(position, 0, length);
             inputField.SetSelection(pos);
+            cursorPosition = pos;
         });
     }
 
@@ -192,7 +214,7 @@ public class ConsoleOverlayManager : IConsole
         prompt.SetTextColor(Color.ParseColor("#00FF88"));
         prompt.SetTypeface(Typeface.Monospace, TypefaceStyle.Bold);
         prompt.TextSize = 13f;
-        prompt.SetPadding(0, 0, 8, 0);
+        prompt.SetPadding(80, 0, 8, 0);
         prompt.Gravity = GravityFlags.CenterVertical;
 
         inputField = new EditText(activity);
@@ -202,7 +224,8 @@ public class ConsoleOverlayManager : IConsole
         inputField.SetTypeface(Typeface.Monospace, TypefaceStyle.Normal);
         inputField.SetBackgroundColor(Color.Argb(255, 20, 20, 20));
         inputField.TextSize = 12f;
-        inputField.SetPadding(16, 4, 16, 0);
+        inputField.SetPadding(8, 4, 8, 0);
+        inputField.Right = 80;
         inputField.LayoutParameters = new LinearLayout.LayoutParams(
             0, ViewGroup.LayoutParams.WrapContent, 1f);
         inputField.ImeOptions = ImeAction.Done;
@@ -242,10 +265,11 @@ public class ConsoleOverlayManager : IConsole
         if (string.IsNullOrEmpty(text)) return;
 
         AppendLine($"> {text}");
+        inputText = string.Empty;
         inputField!.Text = string.Empty;
         cursorPosition = 0;
 
-        OnCommand?.Invoke(text);
+        //OnKeyPress?.Invoke(text);
     }
 
     private void AppendText(string text)
@@ -387,7 +411,15 @@ public class ConsoleOverlayManager : IConsole
                     label: ch.ToString(),
                     weight: 1f,
                     bgColor: Color.Argb(255, 45, 45, 45),
-                    onClick: () => { inputText = inputText.Insert(cursorPosition, ch.ToString()); cursorPosition++; UpdateInputDisplay(); }
+                    onClick: () =>
+                    {
+                        ConsoleKey key = char.IsDigit(ch) ? (ConsoleKey)(ch - '0' + (int)ConsoleKey.D0)
+                            : (ConsoleKey)(char.ToUpper(ch) - 'A' + (int)ConsoleKey.A);
+                        OnKeyPress?.Invoke(new ConsoleKeyInfo(ch, key, false, false, false));
+                        //inputText = inputText.Insert(cursorPosition, ch.ToString());
+                        //cursorPosition++;
+                        //UpdateInputDisplay();
+                    }
                 );
                 rowLayout.AddView(key);
             }
@@ -416,11 +448,12 @@ public class ConsoleOverlayManager : IConsole
             bgColor: Color.Argb(255, 60, 60, 60),
             onClick: () =>
             {
-                if (cursorPosition > 0)
+                /*if (cursorPosition > 0)
                 {
                     cursorPosition--;
                     UpdateInputDisplay();
-                }
+                }*/
+                OnKeyPress?.Invoke(new ConsoleKeyInfo('\0', ConsoleKey.LeftArrow, false, false, false));
             }
         ));
 
@@ -431,11 +464,12 @@ public class ConsoleOverlayManager : IConsole
             bgColor: Color.Argb(255, 60, 60, 60),
             onClick: () =>
             {
-                if (cursorPosition < inputText.Length)
+                /*if (cursorPosition < inputText.Length)
                 {
                     cursorPosition++;
                     UpdateInputDisplay();
-                }
+                }*/
+                OnKeyPress?.Invoke(new ConsoleKeyInfo('\0', ConsoleKey.RightArrow, false, false, false));
             }
         ));
 
@@ -444,7 +478,13 @@ public class ConsoleOverlayManager : IConsole
             label: "SPACE",
             weight: 3f,
             bgColor: Color.Argb(255, 60, 60, 60),
-            onClick: () => { inputText = inputText.Insert(cursorPosition, " "); cursorPosition++; UpdateInputDisplay(); }
+            onClick: () =>
+            {
+                /*inputText = inputText.Insert(cursorPosition, " ");
+                cursorPosition++;
+                UpdateInputDisplay();*/
+                OnKeyPress?.Invoke(new ConsoleKeyInfo(' ', ConsoleKey.Spacebar, false, false, false));
+            }
         ));
 
         // Delete
@@ -454,11 +494,12 @@ public class ConsoleOverlayManager : IConsole
             bgColor: Color.Argb(255, 100, 30, 30),
             onClick: () =>
             {
-                if (inputText.Length > 0 && cursorPosition < inputText.Length - 1)
+                /*if (inputText.Length > 0 && cursorPosition < inputText.Length - 1)
                 {
                     inputText = inputText.Remove(cursorPosition, 1);
                     UpdateInputDisplay();
-                }
+                }*/
+                OnKeyPress?.Invoke(new ConsoleKeyInfo('\0', ConsoleKey.Delete, false, false, false));
             }
         ));
 
@@ -469,11 +510,12 @@ public class ConsoleOverlayManager : IConsole
             bgColor: Color.Argb(255, 80, 50, 30),
             onClick: () =>
             {
-                if (inputText.Length > 0 && cursorPosition > 0)
+                /*if (inputText.Length > 0 && cursorPosition > 0)
                 {
                     inputText = inputText.Remove(--cursorPosition, 1);
                     UpdateInputDisplay();
-                }
+                }*/
+                OnKeyPress?.Invoke(new ConsoleKeyInfo('\b', ConsoleKey.Backspace, false, false, false));
             }
         ));
 
@@ -482,7 +524,11 @@ public class ConsoleOverlayManager : IConsole
             label: "↵",
             weight: 1.5f,
             bgColor: Color.ParseColor("#00AA55"),
-            onClick: SubmitInput
+            onClick: () =>
+            {
+                SubmitInput();
+                OnKeyPress?.Invoke(new ConsoleKeyInfo('\n', ConsoleKey.Enter, false, false, false));
+            }
         ));
 
         return row;

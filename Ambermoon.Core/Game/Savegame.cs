@@ -214,8 +214,7 @@ partial class GameCore
         PrepareSaving(() =>
         {
             SavegameManager.Save(renderView.GameData, savegameSerializer, slot, name, CurrentSavegame);
-
-            
+            Hook_GameSaved(slot, name);            
         });
     }
 }

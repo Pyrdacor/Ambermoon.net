@@ -1,8 +1,8 @@
-﻿#!/bin/bash
+#!/bin/bash
 INSTALL_DIR="$HOME/.local/share/ambermoon-net"
 
 # Icons
-for size in 16 32 48 128 256; do
+for size in 16 32 48 128 256 512; do
     mkdir -p "$HOME/.local/share/icons/hicolor/${size}x${size}/apps"
     cp "icons/ambermoon-icon_${size}x${size}.png" \
        "$HOME/.local/share/icons/hicolor/${size}x${size}/apps/ambermoon-net.png"
@@ -13,7 +13,7 @@ mkdir -p "$INSTALL_DIR"
 cp -r . "$INSTALL_DIR"
 
 # Cleanup
-for size in 16 32 48 128 256; do
+for size in 16 32 48 128 256 512; do
     rm "$INSTALL_DIR/icons/ambermoon-icon_${size}x${size}.png"
 done
 rmdir "$INSTALL_DIR/icons/"
