@@ -67,7 +67,8 @@ public enum SubQuestType
     AlkemsRing_FindTheRing,
     AlkemsRing_ReturnTheRing,
     // Thief Plague
-    ThiefPlague_SilverHand, // get it after talking to baron
+    ThiefPlague_DealWithNagier, // Baron George teaches keyword "Probleme"; deal with the bandit leader Nagier (kill him for the silver hand, or make peace for his letter)
+    ThiefPlague_ReturnToGeorg,
     // Sylphs
     Sylphs_TalkToLadyHeidi, // get it when talking to the cook
     Sylphs_FindTheHiddenItemInTheTree, // after talking to lady heidi
@@ -1161,6 +1162,41 @@ partial class QuestLog
                         // savegame here, so a custom global variable is set on that GiveItem event (see
                         // QuestCustomVariables) and checked here -- this persists the progress across a save/reload.
                         new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_GaveOrcLeaderHeadToBaronGeorge),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 8, // Freiherr Georg von Spannenberg
+                }
+            ),
+            #endregion
+            #region Thieves
+            QuestFactory.CreateMainQuest(this, MainQuestType.ThiefPlague,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.ThiefPlague_DealWithNagier,
+                    Triggers =
+                    [
+                        // Activate: Freiherr Georg tells about the two problems and teaches the keyword "Probleme"
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 23), // PROBLEME
+                        // Complete: got proof that Nagier was dealt with -- the silver hand (266, if killed) or his
+                        // letter (267, if you made peace) -- OR you already handed it to Baron George (custom variable).
+                        // The variable keeps the step completed after a save/reload, when the proof is no longer owned.
+                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 266, 267), // SILBERHAND or NAGIERS BRIEF
+                            (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_GaveThiefProofToBaronGeorge)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 8, // Freiherr Georg von Spannenberg
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.ThiefPlague_ReturnToGeorg,
+                    Triggers =
+                    [
+                        // Activate: once Nagier has been dealt with (proof obtained)
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: hand the proof (silver hand or letter) to Baron George. He changes nothing in the
+                        // savegame, so a custom global variable is set on that GiveItem event (see QuestCustomVariables).
+                        new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_GaveThiefProofToBaronGeorge),
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 8, // Freiherr Georg von Spannenberg
