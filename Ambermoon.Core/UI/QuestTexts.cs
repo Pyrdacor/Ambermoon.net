@@ -153,7 +153,7 @@ internal static class QuestTexts
             { SubQuestType.OrcPlague_DefeatTheOrcLeader, "Besiege den Anführer der Orks" },
             { SubQuestType.OrcPlague_ReturnToGeorg, "Bring den Beweis zu Freiherr Georg" },
             // Thieves
-            { SubQuestType.ThiefPlague_DealWithNagier, "Besiege Nagier oder schließe Frieden" },
+            { SubQuestType.ThiefPlague_DealWithNagier, "Finde den Banditenführer Silberhand" },
             { SubQuestType.ThiefPlague_ReturnToGeorg, "Bring den Beweis zu Freiherr Georg" },
             // TODO ...
         } },
@@ -207,7 +207,7 @@ internal static class QuestTexts
             { SubQuestType.OrcPlague_DefeatTheOrcLeader, "Defeat the orc leader" },
             { SubQuestType.OrcPlague_ReturnToGeorg, "Bring the proof to Baron George" },
             // Thieves
-            { SubQuestType.ThiefPlague_DealWithNagier, "Defeat Nagier or make peace with him" },
+            { SubQuestType.ThiefPlague_DealWithNagier, "Find the bandit leader Silverhand" },
             { SubQuestType.ThiefPlague_ReturnToGeorg, "Bring the proof to Baron George" },
             // TODO ...
         } }
