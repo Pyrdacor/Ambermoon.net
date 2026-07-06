@@ -1,4 +1,4 @@
-﻿/*
+/*
  * AutoBattle.cs - Automatic Battle Planing
  *
  * Copyright (C) 2026  Marcel Hesselbarth <spam@mayavoyage.de>
@@ -51,19 +51,11 @@
 // - give orders in turn order
 //   - delay paladin magic after healer magic
 
-using Ambermoon.Data;
-using Ambermoon.Data.Enumerations;
-using Ambermoon.UI;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Data.Common;
 using System.Linq;
-using System.Reflection.Emit;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.InteropServices;
-using System.Threading;
-using static System.Collections.Specialized.BitVector32;
+using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 
 namespace Ambermoon;
 
@@ -104,14 +96,16 @@ partial class Battle
                         spellThread = 200;
                         break;
                     case Spell.CauseMadness:
-                        spellThread = 50;
+                        spellThread = 100;
                         break;
                     case Spell.Lame:
-                        spellThread = 25;
+                        spellThread = 50;
                         break;
-                    case Spell.Irritate:
                     case Spell.CauseAging:
                     case Spell.CauseDisease:
+                        spellThread = 20;
+                        break;
+                    case Spell.Irritate:
                         spellThread = 10;
                         break;
                     case Spell.Poison:
@@ -132,7 +126,6 @@ partial class Battle
             magicThreat = Math.Max(magicThreat, (int)spellThread);
         }
 
-        // handle conditions except sleep
         if (monster.Conditions.HasFlag(Condition.Panic)
             || monster.Conditions.HasFlag(Condition.Petrified))
             physicalThreat = magicThreat = 0;
@@ -140,17 +133,22 @@ partial class Battle
             magicThreat = 0;
         if (monster.Conditions.HasFlag(Condition.Lamed))
             physicalThreat = 0;
-        if (monster.Conditions.HasFlag(Condition.Blind))
-            physicalThreat /= 2;
-        if (monster.Conditions.HasFlag(Condition.Aging))
-        {
-            agingValues.TryGetValue(monster, out var aging);
-            physicalThreat = physicalThreat * (100 - (int)aging) / 100;
-        }
         if (monster.Conditions.HasFlag(Condition.Crazy))
         {
             physicalThreat /= 2;
             magicThreat = 0;
+        }
+        if (game.Features.HasFlag(Features.ExtendedCurseEffects))
+        {
+            if (monster.Conditions.HasFlag(Condition.Blind))
+                physicalThreat /= 2;
+            if (monster.Conditions.HasFlag(Condition.Diseased))
+                physicalThreat /= 2;
+            if (monster.Conditions.HasFlag(Condition.Aging))
+            {
+                agingValues.TryGetValue(monster, out var aging);
+                physicalThreat = physicalThreat * (100 - (int)aging) / 100;
+            }
         }
         if (!ignoreSleep && monster.Conditions.HasFlag(Condition.Sleep))
         {
@@ -199,7 +197,7 @@ partial class GameCore
             SetBattleSpeed(400);
             Action<BattleEndInfo> battleEnded = (x) => SetBattleSpeed(orgBattleSpeed);
             currentBattle.BattleEnded += battleEnded;
-            Action roundFinish = null;
+            Action roundFinish = null!;
             currentBattle.RoundFinished += roundFinish = () =>
             {
                 if (orgPartyCount == PartyMembers.Where(a => a.Conditions.CanFight()).Count())
@@ -228,7 +226,7 @@ partial class GameCore
         }
 
         // PartyMembers sorted by moving order
-        var partyOrder = PartyMembers.Where(a => a.Alive && a.Conditions.CanSelect()).OrderByDescending(c => c!.Attributes[Data.Attribute.Speed].TotalCurrentValue).ThenBy(c => c!.Type).ToList();
+        var partyOrder = PartyMembers.Where(a => a.Conditions.CanSelect()).OrderByDescending(c => c!.Attributes[Data.Attribute.Speed].TotalCurrentValue).ThenBy(c => c!.Type).ToList();
         bool partyHasHealer = false;
         bool partyEmptyHealer = false;
         // command paladin after healer
@@ -423,7 +421,7 @@ partial class GameCore
             if (partyMember.Conditions.CanCastSpell(Features))
             {
                 Spell spell = Spell.None;
-                Data.Character spellTarget = null;
+                Data.Character? spellTarget = null;
                 bool CanCast(Spell spell) => partyMember.HasSpell(spell) && partyMember.SpellPoints.CurrentValue >= spellInfos[spell].SP;
                 bool IsImmuneTo(AutoBattleInfo target, Spell spell) =>
                     (target.Monster.SpellTypeImmunity & (SpellTypeImmunity)spellInfos[spell].SpellType) != 0
@@ -479,11 +477,9 @@ partial class GameCore
 
                 if (partyMember.Class == Class.Mage)
                 {
-                    bool canSleep = CanCast(Spell.Sleep);
-                    bool canLame = CanCast(Spell.Lame);
-                    bool canBlind = Features.HasFlag(Features.ExtendedCurseEffects) && CanCast(Spell.Blind);
-                    bool canAging = Features.HasFlag(Features.ExtendedCurseEffects) && CanCast(Spell.CauseAging);
-                    bool canIrritate = CanCast(Spell.Irritate);
+                    bool CanCause(AutoBattleInfo target, Spell spell, Condition effect) =>
+                        CanCast(spell) && !IsImmuneTo(target, spell) && !target.Monster.Conditions.HasFlag(effect);
+                    bool ece = Features.HasFlag(Features.ExtendedCurseEffects);
                     foreach (var threat in threats.OrderByDescending(a => a.PhysicalThreat + a.MagicThreat).ThenByDescending(a => a.Health).ThenBy(a => a.Position))
                     {
                         if (threat.Health < threat.Monster.HitPoints.TotalMaxValue / 2
@@ -494,8 +490,9 @@ partial class GameCore
                         if (!isPhysicalThread && !isMagicThread)
                             continue;  // do not waste magic on too weak enemies
 
-                        if (isPhysicalThread && isMagicThread && threat.Position < 12  // cast sleep only at back rows as front is attacked
-                            && canSleep && !IsImmuneTo(threat, Spell.Sleep))
+                        if (threats.Count > 1 && threat.Position < 12 // cast sleep only at back rows as front is attacked
+                            && isPhysicalThread && (isMagicThread || threat.Monster.Skills[Skill.CriticalHit].TotalCurrentValue > 0)
+                            && CanCause(threat, Spell.Sleep, Condition.Sleep))  // no action
                         {
                             spell = Spell.Sleep;
                             threat.MagicThreat = threat.PhysicalThreat = 1;
@@ -503,37 +500,54 @@ partial class GameCore
                             break;
                         }
                         else if (threat.MagicThreat >= threat.PhysicalThreat
-                            && canIrritate && !IsImmuneTo(threat, Spell.Irritate))
+                            && CanCause(threat, Spell.Irritate, Condition.Irritated)) // no magic
                         {
                             spell = Spell.Irritate;
                             threat.MagicThreat = 0;
                             spellTarget = threat.Monster;
                             break;
                         }
-                        else if (isPhysicalThread && canLame && !IsImmuneTo(threat, Spell.Lame))
+                        else if (threat.MagicThreat >= threat.PhysicalThreat
+                            && CanCause(threat, Spell.CauseMadness, Condition.Crazy)) // no magic, random move/attack
+                        {
+                            spell = Spell.CauseMadness;
+                            threat.MagicThreat = 0;
+                            threat.PhysicalThreat /= 2;
+                            break;
+                        }
+                        else if (isPhysicalThread && CanCause(threat, Spell.Lame, Condition.Lamed)) // no attack
                         {
                             spell = Spell.Lame;
                             threat.PhysicalThreat = 0;
                             spellTarget = threat.Monster;
                             break;
                         }
-                        else if (isPhysicalThread && canBlind && !IsImmuneTo(threat, Spell.Blind) && !threat.Monster.Conditions.HasFlag(Condition.Blind))
+                        else if (isPhysicalThread && ece && CanCause(threat, Spell.Blind, Condition.Blind)) // attack fails
                         {
                             spell = Spell.Blind;
                             threat.PhysicalThreat /= 2;
                             spellTarget = threat.Monster;
                             break;
                         }
-                        else if (isPhysicalThread && canAging && !IsImmuneTo(threat, Spell.CauseAging) && !threat.Monster.Conditions.HasFlag(Condition.Aging))
+                        else if (isPhysicalThread && ece && CanCause(threat, Spell.CauseAging, Condition.Aging) // -10..-50% attacks & damage
+                            && !threat.Monster.Conditions.HasFlag(Condition.Blind) && threat.Monster.HitPoints.CurrentValue > threat.Monster.HitPoints.MaxValue * 9 / 10)
                         {
                             spell = Spell.CauseAging;
                             threat.PhysicalThreat = threat.PhysicalThreat * 9 / 10;
                             spellTarget = threat.Monster;
                             break;
                         }
-                        // retry sleep if no irritate, lame, blind or aging and threat is healthy
-                        else if ((threat.Position < 12 || (threat.Position < 18 && threat.Monster.HitPoints.CurrentValue > threat.Monster.HitPoints.MaxValue * 9 / 10))
-                            && canSleep && !IsImmuneTo(threat, Spell.Sleep))
+                        else if (isPhysicalThread && ece && CanCause(threat, Spell.CauseDisease, Condition.Diseased) // -50% damage
+                            && !threat.Monster.Conditions.HasFlag(Condition.Aging)) 
+                        {
+                            spell = Spell.CauseDisease;
+                            threat.PhysicalThreat /= 2;
+                            spellTarget = threat.Monster;
+                            break;
+                        }
+                        // retry sleep if no irritate, mad, lame, blind, disease or aging and threat is healthy
+                        else if (threats.Count > 1 && (threat.Position < 12 || (threat.Position < 18 && threat.Monster.HitPoints.CurrentValue > threat.Monster.HitPoints.MaxValue * 9 / 10))
+                            && CanCause(threat, Spell.Sleep, Condition.Sleep) && threats.Count > 1)
                         {
                             spell = Spell.Sleep;
                             threat.MagicThreat = threat.PhysicalThreat = 1;
