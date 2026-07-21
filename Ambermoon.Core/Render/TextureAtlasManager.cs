@@ -23,9 +23,6 @@ using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
 
 namespace Ambermoon.Render
