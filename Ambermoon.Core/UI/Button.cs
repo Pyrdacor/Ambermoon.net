@@ -93,7 +93,8 @@ namespace Ambermoon.UI
             BattleAttack,
             BattleDefend,
             BattleCast,
-            IdentifyScroll
+            IdentifyScroll,
+            BattleAuto
         }
 
         static readonly ImmutableDictionary<GameLanguage, string[]> tooltips = new Dictionary<GameLanguage, string[]>
@@ -161,7 +162,8 @@ namespace Ambermoon.UI
                     "Angreifen",
                     "Verteidigen",
                     "Zaubern",
-                    "Nötige Spruchlernpunkte ermitteln"
+                    "Nötige Spruchlernpunkte ermitteln",
+                    "Automatischer Kampf"
                 }
             },
             { GameLanguage.English, new string[]
@@ -227,7 +229,8 @@ namespace Ambermoon.UI
                     "Attack",
                     "Defend",
                     "Cast spell",
-                    "Determine required spell learning points"
+                    "Determine required spell learning points",
+                    "Auto-Battle"
                 }
             },
             { GameLanguage.French, new string[]
@@ -293,7 +296,8 @@ namespace Ambermoon.UI
                     "Attaquer",
                     "Défendre",
                     "Lancer un sort",
-                    "Déterminer les points d'apprentissage des sorts"
+                    "Déterminer les points d'apprentissage des sorts",
+                    "Combat automatique"
                 }
             },
             { GameLanguage.Polish, new string[]
@@ -359,7 +363,8 @@ namespace Ambermoon.UI
                     "Atak",
                     "Obrona",
                     "Żuć zaklęcie",
-                    "Określ wymagane punkty nauki zaklęć"
+                    "Określ wymagane punkty nauki zaklęć",
+                    "Automatyczna walka"
                 }
             },
             { GameLanguage.Czech, new string[]
@@ -425,7 +430,8 @@ namespace Ambermoon.UI
                     "Útok",
                     "Parírování",
                     "Seslat kouzlo",
-                    "Určit body kouzel"
+                    "Určit body kouzel",
+                    "Automatický boj"
                 }
             }
         }.ToImmutableDictionary();
