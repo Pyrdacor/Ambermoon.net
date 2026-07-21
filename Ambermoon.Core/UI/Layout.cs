@@ -4822,7 +4822,8 @@ namespace Ambermoon.UI
                 9 => 50, // Meeting Sheera
                 10 => 51, // Sheera portal merge
                 11 => 55, // Moranian rebels
-                _ => throw new AmbermoonException(ExceptionScope.Data, $"Invalid event picture index: {index}. Valid indices are 0 to 11.")
+                12 => 56, // Ancient desert city
+                _ => throw new AmbermoonException(ExceptionScope.Data, $"Invalid event picture index: {index}. Valid indices are 0 to 12.")
             };
             sprite.Layer = renderLayer;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.EventPictureOffset + index);
