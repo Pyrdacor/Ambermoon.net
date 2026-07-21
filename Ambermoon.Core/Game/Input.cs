@@ -535,8 +535,8 @@ partial class GameCore
         else if (trapMouseArea != null && (currentWindow.Window == Window.Merchant ||
             currentWindow.Window == Window.Healer || currentWindow.Window == Window.Sage ||
             currentWindow.Window == Window.Blacksmith || currentWindow.Window == Window.Enchanter ||
-            currentWindow.Window == Window.Door || (currentWindow.Window == Window.Chest && OpenStorage == null))
-            && key!=Key.Up && key!=Key.Down && key!=Key.PageUp && key!=Key.PageDown && key!=Key.Escape) 
+            currentWindow.Window == Window.Door || (currentWindow.Window == Window.Chest && OpenStorage == null)) &&
+            key != Key.Up && key != Key.Down && key != Key.PageUp && key != Key.PageDown && key != Key.Escape) 
             return;
         if (!WindowActive && !PopupActive && key >= Key.Number0 && key <= Key.Number9 && modifiers.HasFlag(KeyModifiers.Control))
         {
