@@ -779,6 +779,9 @@ namespace Ambermoon.UI
             buttonGrid.SetButton(6, ButtonType.Save, game.BattleActive, OpenSaveMenu, false, Button.GetTooltip(game.GameLanguage, Button.TooltipType.Save));
             buttonGrid.SetButton(7, ButtonType.Load, false, () => OpenLoadMenu(), false, Button.GetTooltip(game.GameLanguage, Button.TooltipType.Load));
             buttonGrid.SetButton(8, ButtonType.Stats, false, NewGame, false, Button.GetTooltip(game.GameLanguage, Button.TooltipType.New));
+
+            if (game.BattleActive)
+                game.HideAutoBattleRounds();
         }
 
         void CloseOptionMenu()
@@ -1051,8 +1054,8 @@ namespace Ambermoon.UI
             if (activePopup is null)
                 return new();
 
-			return new Position(activePopup.ContentArea.Center.X - 8, activePopup.ContentArea.Bottom);
-		}
+            return new Position(activePopup.ContentArea.Center.X - 8, activePopup.ContentArea.Bottom);
+        }
 
         internal void ClosePopup(bool raiseEvent = true, bool force = false)
         {
@@ -1202,7 +1205,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 23;
+        const int OptionCount = 24;
         const int OptionsPerPage = 7;
 
         static readonly ImmutableDictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
@@ -1238,6 +1241,7 @@ namespace Ambermoon.UI
                     // Page 4
                     "Info beim Speichern/Laden",
                     "Cheats aktivieren",
+                    "Auto-Kampf"
                 }
             },
             {
@@ -1259,7 +1263,7 @@ namespace Ambermoon.UI
                     "Show button tooltips",
                     "Show stats tooltips",
                     "3D floor and ceiling",
-					"3D distance fog",
+                    "3D distance fog",
                     // Page 3
                     "Show runes as text",
                     "Additional saveslots",
@@ -1271,6 +1275,7 @@ namespace Ambermoon.UI
                     // Page 4
                     "Show save/load info",
                     "Enable cheats",
+                    "Auto-Battle"
                 }
             },
             {
@@ -1304,6 +1309,7 @@ namespace Ambermoon.UI
                     // Page 4
                     "Messages de sauvegarde",
                     "Activer les cheats",
+                    "Combat automatique"
                 }
             },
             {
@@ -1337,42 +1343,44 @@ namespace Ambermoon.UI
                     // Page 4
                     "Pokaż inf. zapis/odczyt",
                     "Włącz cheaty",
+                    "Automatyczna walka"
                 }
             },
             {
-	            GameLanguage.Czech,
-	            new string[OptionCount]
-	            {
-		            // Page 1
-		            "Hudba",
-		            "Hlasitost",
-		            "Rozlišení",
-		            "Celá obrazovka",
-		            "Grafický filtr",
-		            "Grafické překrytí",
-		            "Efekty",
-		            // Page 2
-		            "Rychlost boje",
-		            "3D pohyb",
-		            "Otáčení pomocí šipek",
-					"Zobrazit popisky tlačítek",
-		            "Zobrazit popisky statistik",
-					"3D podlaha a strop",
-					"Vzdálenost 3D mlhy",
-		            // Page 3
-		            "Zobrazit runy jako text",
-					"Další pozice pro uložení",
-		            "Externí hudba",
-		            "Zobrazit logo Pyrdacor",
-		            "Zobrazit fantasy intro",
-		            "Zobrazit intro",
+                GameLanguage.Czech,
+                new string[OptionCount]
+                {
+                    // Page 1
+                    "Hudba",
+                    "Hlasitost",
+                    "Rozlišení",
+                    "Celá obrazovka",
+                    "Grafický filtr",
+                    "Grafické překrytí",
+                    "Efekty",
+                    // Page 2
+                    "Rychlost boje",
+                    "3D pohyb",
+                    "Otáčení pomocí šipek",
+                    "Zobrazit popisky tlačítek",
+                    "Zobrazit popisky statistik",
+                    "3D podlaha a strop",
+                    "Vzdálenost 3D mlhy",
+                    // Page 3
+                    "Zobrazit runy jako text",
+                    "Další pozice pro uložení",
+                    "Externí hudba",
+                    "Zobrazit logo Pyrdacor",
+                    "Zobrazit fantasy intro",
+                    "Zobrazit intro",
                     "Zobrazit advanced logo",                    
-		            // Page 4
+                    // Page 4
                     "Info o uložení/nahrání",
                     "Povolit cheaty",
-				}
+                    "Automatický boj"
+                }
             }
-		}.ToImmutableDictionary();
+        }.ToImmutableDictionary();
 
         static readonly ImmutableDictionary<GameLanguage, string[]> FloorAndCeilingValues = new Dictionary<GameLanguage, string[]>
         {
@@ -1417,16 +1425,16 @@ namespace Ambermoon.UI
                 }
             },
             {
-	            GameLanguage.Czech,
-	            new string[4]
-	            {
-					"Žádné",
-					"Podlaha",
-					"Strop",
-					"Obojí"
-				}
+                GameLanguage.Czech,
+                new string[4]
+                {
+                    "Žádné",
+                    "Podlaha",
+                    "Strop",
+                    "Obojí"
+                }
             }
-		}.ToImmutableDictionary();
+        }.ToImmutableDictionary();
 
         static readonly ImmutableDictionary<GameLanguage, string> DefaultBattleSpeedName = new Dictionary<GameLanguage, string>
         {
@@ -1443,9 +1451,9 @@ namespace Ambermoon.UI
                 GameLanguage.Polish, "Domyślna"
             },
             {
-	            GameLanguage.Czech, "Výchozí"
-			}
-		}.ToImmutableDictionary();
+                GameLanguage.Czech, "Výchozí"
+            }
+        }.ToImmutableDictionary();
 
         static readonly ImmutableDictionary<GameLanguage, string> FullsizedWindowName = new Dictionary<GameLanguage, string>
         {
@@ -1501,14 +1509,68 @@ namespace Ambermoon.UI
                 }
             },
             {
-	            GameLanguage.Czech,
-	            new string[2]
-	            {
-		            "WASD",
-		            "QWEASD"
-	            }
+                GameLanguage.Czech,
+                new string[2]
+                {
+                    "WASD",
+                    "QWEASD"
+                }
             }
-		}.ToImmutableDictionary();
+        }.ToImmutableDictionary();
+
+        static readonly ImmutableDictionary<GameLanguage, string[]> AutoBattleOptions = new Dictionary<GameLanguage, string[]>
+        {
+            {
+                GameLanguage.German,
+                new string[4]
+                {
+                    "Aus",
+                    "5 Runden",
+                    "10 Runden",
+                    "15 Runden"
+                }
+            },
+            {
+                GameLanguage.English,
+                new string[4]
+                {
+                    "Off",
+                    "5 rounds",
+                    "10 rounds",
+                    "15 rounds"
+                }
+            },
+            {
+                GameLanguage.French,
+                new string[4]
+                {
+                    "Désactivé",
+                    "5 tours",
+                    "10 tours",
+                    "15 tours"
+                }
+            },
+            {
+                GameLanguage.Polish,
+                new string[4]
+                {
+                    "Wyłączone",
+                    "5 rund",
+                    "10 rund",
+                    "15 rund"
+                }
+            },
+            {
+                GameLanguage.Czech,
+                new string[4]
+                {
+                    "Vypnuto",
+                    "5 kol",
+                    "10 kol",
+                    "15 kol"
+                }
+            }
+        }.ToImmutableDictionary();
 
         internal void UpdateFullscreenOption()
         {
@@ -1571,6 +1633,7 @@ namespace Ambermoon.UI
             // Page 4
             AddOption((index, _) => ToggleSaveLoadInfo());
             AddOption((index, _) => ToggleCheats());
+            AddOption((index, _) => ToggleAutoBattle());
 
             void UpdateFullscreenOption()
             {
@@ -1654,6 +1717,7 @@ namespace Ambermoon.UI
             // Page 4
             void SetSaveLoadInfo() => SetOptionString(21, game.CoreConfiguration.ShowSaveLoadMessage ? on : off);
             void SetCheats() => SetOptionString(22, cheatsEnabled ? on : off);
+            void SetAutoBattle() => SetOptionString(23, AutoBattleOptions[game.GameLanguage][Util.Limit(0, game.CoreConfiguration.AutoBattleRounds / 5, 3)]);
 
             void UpdateShowFogOption() => SetOptionAction(13, game.CoreConfiguration.ShowFloor && game.CoreConfiguration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
 
@@ -1692,6 +1756,7 @@ namespace Ambermoon.UI
                     case 3:
                         SetSaveLoadInfo();
                         SetCheats();
+                        SetAutoBattle();
                         break;
                 }
             }
@@ -1845,6 +1910,16 @@ namespace Ambermoon.UI
             {
                 cheatsEnabled = !cheatsEnabled;
                 SetCheats();
+                changedConfiguration = true;
+            }
+            void ToggleAutoBattle()
+            {
+                game.CoreConfiguration.AutoBattleRounds += 5;
+
+                if (game.CoreConfiguration.AutoBattleRounds > 15 || game.CoreConfiguration.AutoBattleRounds < 0)
+                    game.CoreConfiguration.AutoBattleRounds = 0;
+
+                SetAutoBattle();
                 changedConfiguration = true;
             }
             void ToggleAutoDerune()
@@ -2047,7 +2122,7 @@ namespace Ambermoon.UI
             CursorType.ArrowDown,
             CursorType.ArrowDownRight
         };
-		internal static readonly CursorType[] MoveButtonCursorMapping3D = new CursorType[9]
+        internal static readonly CursorType[] MoveButtonCursorMapping3D = new CursorType[9]
         {
             CursorType.ArrowTurnLeft,
             CursorType.ArrowForward,
@@ -2149,9 +2224,9 @@ namespace Ambermoon.UI
 
             void HandleButtonMove(CursorType cursorType)
             {
-				var pressedCursors = new List<CursorType>();
+                var pressedCursors = new List<CursorType>();
 
-				if (Type == LayoutType.Map2D)
+                if (Type == LayoutType.Map2D)
                 {
                     if (game.CurrentTicks - lastButtonMoveTicks < moveDelay)
                         return;
@@ -2205,7 +2280,7 @@ namespace Ambermoon.UI
                 }
             }
 
-			switch (Type)
+            switch (Type)
             {
                 case LayoutType.Map2D:
                     if (game.CoreConfiguration.IsMobile)
@@ -2526,7 +2601,10 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(2, ButtonType.Ok, false, null, false, GetTooltip(Button.TooltipType.StartBattleRound)); // this is set later manually
                     buttonGrid.SetButton(3, ButtonType.BattlePositions, true, null, false, GetTooltip(Button.TooltipType.BattleMove)); // this is set later manually
                     buttonGrid.SetButton(4, ButtonType.MoveForward, true, null, false, GetTooltip(Button.TooltipType.BattleAdvance)); // this is set later manually
-                    buttonGrid.SetButton(5, AutoBattleButtonType, false, null, false, GetTooltip(Button.TooltipType.BattleAuto)); // this is set later manually
+                    if (game.CoreConfiguration.AutoBattleRounds == 0)
+                        buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                    else
+                        buttonGrid.SetButton(5, AutoBattleButtonType, false, null, false, GetTooltip(Button.TooltipType.BattleAuto)); // this is set later manually
                     buttonGrid.SetButton(6, ButtonType.Attack, true, null, false, GetTooltip(Button.TooltipType.BattleAttack)); // this is set later manually
                     buttonGrid.SetButton(7, ButtonType.Defend, true, null, false, GetTooltip(Button.TooltipType.BattleDefend)); // this is set later manually
                     buttonGrid.SetButton(8, ButtonType.Spells, true, null, false, GetTooltip(Button.TooltipType.BattleCast)); // this is set later manually
@@ -3264,9 +3342,9 @@ namespace Ambermoon.UI
                 else
                     SetInventoryMessage(game.DataNameProvider.GiveToWhom);
 
-				ButtonsDisabled = true;
+                ButtonsDisabled = true;
 
-				for (int i = 0; i < GameCore.MaxPartyMembers; ++i)
+                for (int i = 0; i < GameCore.MaxPartyMembers; ++i)
                 {
                     var partyMember = game.GetPartyMember(i);
 
@@ -3289,15 +3367,15 @@ namespace Ambermoon.UI
                         UpdateLayoutButtons();
                         game.UntrapMouse();
                         SetInventoryMessage(null);
-						ButtonsDisabled = false;
-					})
+                        ButtonsDisabled = false;
+                    })
                     : food => {
                         chest.Food -= food;
                         game.ChestFoodChanged();
                         UpdateLayoutButtons();
                         game.UntrapMouse();
-						ButtonsDisabled = false;
-					},
+                        ButtonsDisabled = false;
+                    },
                 chest == null
                     ? () => SetInventoryMessage(game.DataNameProvider.GiveToWhom)
                     : () => ShowChestMessage(game.DataNameProvider.GiveToWhom),
@@ -3686,8 +3764,8 @@ namespace Ambermoon.UI
 
         void PickChestItemForAction(Action<ItemGrid, int, ItemSlot> itemAction, string message)
         {
-			ButtonsDisabled = true;
-			ShowChestMessage(message);
+            ButtonsDisabled = true;
+            ShowChestMessage(message);
             var itemArea = new Rect(16, 139, 151, 53);
             game.TrapMouse(itemArea);
 
@@ -3698,9 +3776,9 @@ namespace Ambermoon.UI
                 itemGrids[0].ItemClicked -= ItemChosen;
                 itemGrids[0].RightClicked -= Aborted;
                 game.UntrapMouse();
-				ButtonsDisabled = false;
+                ButtonsDisabled = false;
 
-				if (itemGrid != null && itemSlot != null)
+                if (itemGrid != null && itemSlot != null)
                     itemAction?.Invoke(itemGrid, slot, itemSlot);
             }
 
@@ -3733,9 +3811,9 @@ namespace Ambermoon.UI
                 itemGrids[0].RightClicked -= Aborted;
                 itemGrids[1].RightClicked -= Aborted;
                 game.UntrapMouse();
-				ButtonsDisabled = false;
+                ButtonsDisabled = false;
 
-				if (itemGrid != null && itemSlot != null)
+                if (itemGrid != null && itemSlot != null)
                 {
                     // Catch two-handed weapon left hand slot click
                     if (itemSlot.ItemIndex == 0 &&
@@ -5380,13 +5458,13 @@ namespace Ambermoon.UI
                         return true;
                     }
                     else if (game.CoreConfiguration.IsMobile && activePopup.CanAbort &&
-						!OptionMenuOpen && !activePopup.HasTextInput() && !activePopup.HasButtons &&
+                        !OptionMenuOpen && !activePopup.HasTextInput() && !activePopup.HasButtons &&
                         !activePopup.HasList)
                     {
                         // Close popups with tap on mobile but not save/load or popups with buttons or text input.
-						ClosePopup();
-						return true;
-					}
+                        ClosePopup();
+                        return true;
+                    }
                     else
                     {
                         if (activePopup.Click(position, buttons, out ignoreNextMouseUp))

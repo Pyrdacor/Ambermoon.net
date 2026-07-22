@@ -1044,6 +1044,8 @@ namespace Ambermoon
 
         internal void EndBattleCleanup()
         {
+            autoBattleRoundText?.Delete();
+            autoBattleRoundText = null;
             foreach (var battleFieldDamageText in battleFieldDamageTexts)
                 battleFieldDamageText.Value?.Delete();
             battleFieldDamageTexts.Clear();

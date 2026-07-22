@@ -56,73 +56,71 @@ using System.Collections.Generic;
 using System.Linq;
 using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
+using Ambermoon.Render;
+using Ambermoon.UI;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon;
 
 partial class Battle
 {
+    IRenderText? autoBattleRoundText = null;
+
+    internal void ShowAutoBattleRoundText(bool show, int rounds)
+    {
+        autoBattleRoundText?.Delete();
+
+        if (show)
+        {
+            autoBattleRoundText = layout.RenderView.RenderTextFactory.Create((byte)(layout.RenderView.GraphicInfoProvider.DefaultTextPaletteIndex - 1));
+            autoBattleRoundText.Layer = layout.RenderView.GetLayer(Layer.Text);
+            autoBattleRoundText.DisplayLayer = 201;
+            autoBattleRoundText.Shadow = true;
+            autoBattleRoundText.TextColor = TextColor.BrightGray;
+            autoBattleRoundText.Text = layout.RenderView.TextProcessor.CreateText(rounds.ToString());
+            autoBattleRoundText.Place(new Rect(Global.ButtonGridX + Button.Width * 2 + 17, Global.ButtonGridY + Button.Height + 5, 12, 7), TextAlign.Center);
+            autoBattleRoundText.Visible = true;
+        }
+    }
+
     internal void CalculateAutoBattleInfo(Monster monster, out int physicalThreat, out int magicThreat, bool ignoreSleep = false)
     {
         physicalThreat = (monster.BaseAttackDamage + monster.BonusAttackDamage) * monster.AttacksPerRound;
         magicThreat = 0;
+
         foreach (var spell in GetAvailableMonsterSpells(monster))
         {
             var spellInfo = game.SpellInfos[spell];
             uint spellThread;
+
             if (spell >= Spell.Mudsling && spell <= Spell.Iceshower)
             {
                 var damage = game.Features.HasFlag(Features.AdjustedSpellDamage)
-                                ? Battle.AdjustedDestructionSpellDamageValues
-                                : Battle.DestructionSpellDamageValues;
+                    ? Battle.AdjustedDestructionSpellDamageValues
+                    : Battle.DestructionSpellDamageValues;
                 spellThread = (damage[spell - Spell.Mudsling].Key + damage[spell - Spell.Mudsling].Value) / 2;
             }
-            else switch (spell)
-                {
-                    case Spell.LPStealer:
-                    case Spell.SPStealer:
-                        spellThread = (uint)monster.Level * 3 / 2;
-                        break;
-                    case Spell.GhostWeapon:
-                    case Spell.GhostInferno:
-                    case Spell.MagicSwordAttack:
-                        spellThread = (uint)(monster.BaseAttackDamage + monster.BonusAttackDamage);
-                        break;
-                    case Spell.MagicalProjectile:
-                    case Spell.MagicalArrows:
-                        spellThread = monster.Level;
-                        break;
-                    case Spell.Petrify:
-                    case Spell.DissolveVictim:
-                        spellThread = 200;
-                        break;
-                    case Spell.CauseMadness:
-                        spellThread = 100;
-                        break;
-                    case Spell.Lame:
-                        spellThread = 50;
-                        break;
-                    case Spell.CauseAging:
-                    case Spell.CauseDisease:
-                        spellThread = 20;
-                        break;
-                    case Spell.Irritate:
-                        spellThread = 10;
-                        break;
-                    case Spell.Poison:
-                    case Spell.Sleep:
-                    case Spell.Drug:
-                        spellThread = 5;
-                        break;
-                    default:
-                        spellThread = 0;
-                        break;
-                }
+            else spellThread = spell switch
+            {
+                Spell.LPStealer or Spell.SPStealer => (uint)monster.Level * 3 / 2,
+                Spell.GhostWeapon or Spell.GhostInferno or Spell.MagicSwordAttack => (uint)(monster.BaseAttackDamage + monster.BonusAttackDamage),
+                Spell.MagicalProjectile or Spell.MagicalArrows => monster.Level,
+                Spell.Petrify or Spell.DissolveVictim => 200,
+                Spell.CauseMadness => 100,
+                Spell.Lame => 50,
+                Spell.CauseAging or Spell.CauseDisease => 20,
+                Spell.Irritate => 10,
+                Spell.Poison or Spell.Sleep or Spell.Drug => 5,
+                _ => 0,
+            };
+
             if (spellInfo.Target == SpellTarget.AllEnemies)
                 spellThread *= 3;
             else if (spellInfo.Target == SpellTarget.EnemyRow)
                 spellThread *= 2;
             else if (spellInfo.Target == SpellTarget.EnemyRowInWeaponRange)
                 spellThread = spellThread * 3 / 2;
+
             magicThreat = Math.Max(magicThreat, (int)spellThread);
         }
 
@@ -164,19 +162,19 @@ partial class GameCore
     {
         Data =
         [
-            0,0,30,28,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,28,27,27,27,27,27,28,28,29,30,0,0,
-            0,0,28,27,28,28,28,28,28,28,28,26,28,28,28,28,28,26,28,28,29,31,30,29,28,28,28,28,28,29,0,0,
-            0,0,27,28,28,28,28,28,28,28,28,26,26,28,28,28,28,26,26,28,31,28,28,30,26,28,28,28,28,29,0,0,
-            0,0,27,28,28,28,28,28,28,28,28,26,27,26,28,28,28,26,27,26,29,31,30,29,26,28,28,28,28,29,0,0,
-            0,0,27,28,28,28,28,28,28,28,28,26,27,27,26,28,29,26,27,27,26,29,30,26,26,28,28,28,31,29,0,0,
-            0,0,27,29,30,31,31,31,31,31,31,26,27,27,27,26,31,26,27,27,27,26,30,27,30,27,30,27,31,31,0,0,
-            0,0,29,31,30,29,28,28,28,28,28,26,27,27,27,27,26,26,27,27,27,27,26,26,29,26,29,26,30,31,0,0,
-            0,0,27,29,29,30,31,31,31,30,31,26,27,27,27,27,27,27,27,27,27,27,27,29,28,27,28,27,29,30,0,0,
-            0,0,27,27,26,26,26,26,26,26,26,26,27,27,27,27,30,26,27,27,27,27,30,26,26,26,26,26,30,29,0,0,
-            0,0,27,28,28,28,28,28,28,28,28,26,27,27,27,30,27,26,27,27,27,30,30,29,27,28,28,28,28,27,0,0,
-            0,0,27,28,28,28,28,28,28,28,28,26,27,27,30,28,28,26,27,27,30,28,28,30,26,28,28,28,27,26,0,0,
-            0,0,28,28,28,28,28,28,28,28,28,26,27,30,28,28,28,26,27,30,29,31,30,29,26,28,28,28,28,28,0,0,
-            0,0,29,28,29,29,29,29,29,29,29,27,29,29,29,29,29,27,29,29,29,26,26,26,26,28,29,29,28,27,0,0,
+            0,0,30,28,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,28,27,27,27,27,27,27,28,28,29,30,0,0,
+            0,0,28,27,26,28,28,28,28,28,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,29,0,0,
+            0,0,27,28,26,26,28,28,28,28,26,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,29,0,0,
+            0,0,27,28,26,27,26,28,28,28,26,27,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,29,0,0,
+            0,0,27,28,26,27,27,26,28,28,26,27,27,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,29,0,0,
+            0,0,27,28,26,27,27,27,26,28,26,27,27,27,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,29,0,0,
+            0,0,27,28,26,27,27,27,27,26,26,27,27,27,27,26,28,28,28,28,28,28,28,28,28,28,28,28,28,29,0,0,
+            0,0,27,28,26,27,27,27,27,27,27,27,27,27,27,27,29,28,28,28,28,28,28,28,28,28,28,28,28,29,0,0,
+            0,0,27,28,26,27,27,27,27,28,26,27,27,27,27,30,28,28,28,28,28,28,28,28,28,28,28,28,28,29,0,0,
+            0,0,27,28,26,27,27,27,30,28,26,27,27,27,30,28,28,28,28,28,28,28,28,28,28,28,28,28,28,27,0,0,
+            0,0,27,28,26,27,27,30,28,28,26,27,27,30,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,29,0,0,
+            0,0,28,28,26,27,30,28,28,28,26,27,30,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,0,0,
+            0,0,29,28,27,29,29,29,29,29,27,29,29,29,29,29,29,29,29,29,28,29,29,29,28,29,29,29,28,27,0,0,
         ]
     };
 
@@ -193,83 +191,108 @@ partial class GameCore
     {
         if (firstRound)
         {
+            var battle = currentBattle!;
+            int remainingRounds = CoreConfiguration.AutoBattleRounds;
             var orgBattleSpeed = currentBattle!.Speed;
-            int orgPartyCount = PartyMembers.Where(a => a.Conditions.CanFight()).Count();
-            SetBattleSpeed(400);
-            Action<BattleEndInfo> battleEnded = (x) => SetBattleSpeed(orgBattleSpeed);
-            currentBattle.BattleEnded += battleEnded;
+            int orgPartyCount = PartyMembers.Count(a => a.Conditions.CanFight());
             Action roundFinish = null!;
-            currentBattle.RoundFinished += roundFinish = () =>
+            SetBattleSpeed(400);
+            StartSequence();
+            battle.ShowAutoBattleRoundText(false, 0);
+
+            void EndAutoBattle(bool ended = false)
             {
-                if (orgPartyCount == PartyMembers.Where(a => a.Conditions.CanFight()).Count())
+                battle.BattleEnded -= BattleEnded;
+                battle.RoundFinished -= roundFinish;
+                EndSequence();
+                SetBattleSpeed(orgBattleSpeed);
+
+                if (!ended)
+                    battle.ShowAutoBattleRoundText(true, CoreConfiguration.AutoBattleRounds);
+            }
+
+            void BattleEnded(BattleEndInfo _) => EndAutoBattle(ended: true);
+            battle.BattleEnded += BattleEnded;
+            battle.RoundFinished += roundFinish = () =>
+            {
+                if (orgPartyCount == PartyMembers.Count(a => a.Conditions.CanFight()))
                 {
-                    if (currentBattle != null)
-                        AddAutoBattleActions(false);
+                    if (currentBattle != null && remainingRounds-- > 0)
+                        AddAutoBattleActions(firstRound: false);
                     else
-                        SetBattleSpeed(orgBattleSpeed);
+                        EndAutoBattle();
                 }
                 else
                 {
-                    if (currentBattle != null)
-                    {
-                        currentBattle.BattleEnded -= battleEnded;
-                        currentBattle.RoundFinished -= roundFinish;
-                    }
-                    SetBattleSpeed(orgBattleSpeed);
+                    EndAutoBattle();
                 }
             };
         }
 
         if (currentBattle!.CanPartyMoveForward)
         {
-            AdvanceParty(() => AddAutoBattleActions(false));
+            AdvanceParty(() => AddAutoBattleActions(firstRound: false));
             return;
         }
 
         // PartyMembers sorted by moving order
-        var partyOrder = PartyMembers.Where(a => a.Conditions.CanSelect()).OrderByDescending(c => c!.Attributes[Data.Attribute.Speed].TotalCurrentValue).ThenBy(c => c!.Type).ToList();
+        var partyOrder = PartyMembers.Where(a => a.Conditions.CanSelect()).OrderByDescending(c => c.Attributes[Data.Attribute.Speed].TotalCurrentValue).ThenBy(c => c.Type).ToList();
         bool partyHasHealer = false;
         bool partyEmptyHealer = false;
+
         // command paladin after healer
         for (int i = 0, paladinIndex = -1; i < partyOrder.Count; i++)
+        {
             if (partyOrder[i].Class == Class.Paladin || partyOrder[i].Class == Class.Healer)
             {
                 partyHasHealer = true;
                 partyEmptyHealer = partyOrder[i].SpellPoints.CurrentValue < SpellInfos[Spell.SmallHealing].SP;
+
                 if (partyOrder[i].Class == Class.Paladin)
+                {
                     paladinIndex = i;
-                else
+                }
+                else // Healer
                 {
                     if (paladinIndex >= 0)
                     {
                         var paladin = partyOrder[paladinIndex];
+
                         for (; paladinIndex < i; paladinIndex++)
                             partyOrder[paladinIndex] = partyOrder[paladinIndex + 1];
+
                         partyOrder[i] = paladin;
                     }
+
                     break;
                 }
             }
+        }
 
         // collect party healing data
         var partyToHeal = PartyMembers.Where(a => a.Alive && a.HitPoints.CurrentValue <= a.HitPoints.TotalMaxValue / 2).OrderBy(a => a.HitPoints.CurrentValue).ToList();
         Condition partyConditions = Condition.None;
         int partyDefense = 0, partyMaxHealth = 0;
+
         foreach (var partyMember in partyOrder)
         {
             partyConditions |= partyMember.Conditions;
             partyDefense += partyMember.BaseDefense + partyMember.BonusDefense + (int)partyMember.Attributes[Data.Attribute.Stamina].TotalCurrentValue / 25;
             partyMaxHealth += (int)partyMember.HitPoints.TotalMaxValue;
         }
+
         partyDefense /= partyOrder.Count;
         partyMaxHealth /= partyOrder.Count;
 
         // list of monsters for attack prio
         var threats = new List<AutoBattleInfo>(currentBattle!.Monsters.Count());
+
         foreach (var monster in currentBattle!.Monsters)
+        {
             if (monster.Alive)
             {
                 currentBattle!.CalculateAutoBattleInfo(monster, out int physicalThreat, out int magicThreat);
+
                 threats.Add(new AutoBattleInfo()
                 {
                     Monster = monster,
@@ -279,16 +302,19 @@ partial class GameCore
                     Health = monster.HitPoints.CurrentValue
                 });
             }
+        }
 
         // command party members
         var dontMove = new List<PartyMember>();
         var hasMoved = new List<PartyMember>();
+
         foreach (var partyMember in partyOrder)
         {            
             currentPickingActionMember = partyMember;
 
             // check stored action and override if outdated 
             int slot = SlotFromPartyMember(partyMember)!.Value;
+
             if (roundPlayerBattleActions.TryGetValue(slot, out var action))
             {
                 switch (action.BattleAction)
@@ -718,6 +744,6 @@ partial class GameCore
             }
         }
 
-        ExecuteNextUpdateCycle(() => StartBattleRound(false));
+        ExecuteNextUpdateCycle(() => StartBattleRound(withoutPlayerActions: false));
     }
 }

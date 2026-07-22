@@ -72,6 +72,7 @@ internal class Configuration : IConfiguration
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public bool? FastBattleMode { get; set; } = null;
     public int BattleSpeed { get; set; } = 0;
+    public int AutoBattleRounds { get; set; } = 10;
     [Obsolete("Music is no longer cached but streamed.")]
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public bool? CacheMusic { get; set; } = null;

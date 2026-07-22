@@ -579,12 +579,14 @@ partial class GameCore
         if (currentBattle != null)
         {
             var monsterBattleAnimations = new Dictionary<int, BattleAnimation>(24);
+
             foreach (var monster in currentBattle.Monsters)
             {
                 int slot = currentBattle.GetSlotFromCharacter(monster);
                 monsterBattleAnimations.Add(slot, layout.AddMonsterCombatSprite(slot % 6, slot / 6, monster,
                     currentBattle.GetMonsterDisplayLayer(monster, slot), paletteIndex));
             }
+
             currentBattle.SetMonsterAnimations(monsterBattleAnimations);
         }
 
@@ -635,6 +637,11 @@ partial class GameCore
         }
     }
 
+    internal void HideAutoBattleRounds()
+    {
+        currentBattle?.ShowAutoBattleRoundText(false, 0);
+    }
+
     internal void SetupBattleButtons()
     {
         // Flee button
@@ -671,10 +678,13 @@ partial class GameCore
             });
         });
         // Auto Battle button
-        layout.AttachEventToButton(5, () =>
+        if (CoreConfiguration.AutoBattleRounds != 0)
         {
-            AddAutoBattleActions(true);
-        });
+            layout.AttachEventToButton(5, () =>
+            {
+                AddAutoBattleActions(firstRound: true);
+            });
+        }
         // Attack button
         layout.AttachEventToButton(6, () =>
         {
@@ -722,8 +732,11 @@ partial class GameCore
                 EndSequence();
             }
         });
+
         if (currentBattle != null)
             BattlePlayerSwitched();
+
+        currentBattle?.ShowAutoBattleRoundText(CoreConfiguration.AutoBattleRounds != 0, CoreConfiguration.AutoBattleRounds);
     }
 
     internal void PickBattleSpell(Spell spell, uint? itemSlotIndex = null, bool? itemIsEquipped = null,
@@ -868,6 +881,7 @@ partial class GameCore
     void ShowBattleWindow(Event? nextEvent, bool failedFlight, uint x, uint y, uint? combatBackgroundIndex = null)
     {
         allInputDisabled = true;
+
         Fade(() =>
         {
             lastPlayedSong = PlayMusic(Song.SapphireFireballsOfPureLove);
@@ -910,6 +924,9 @@ partial class GameCore
 
             currentBattle.RoundFinished += () =>
             {
+                if (!allInputDisabled) // This is set in auto battle mode, otherwise a normal round was played, so re-show the text
+                    currentBattle.ShowAutoBattleRoundText(CoreConfiguration.AutoBattleRounds != 0, CoreConfiguration.AutoBattleRounds);
+
                 InputEnable = true;
                 CursorType = CursorType.Sword;
                 layout.ShowButtons(true);
@@ -1083,6 +1100,7 @@ partial class GameCore
                 layout.UpdateCharacterStatus(slot, null);
             };
             BattlePlayerSwitched();
+            currentBattle.ShowAutoBattleRoundText(CoreConfiguration.AutoBattleRounds != 0, CoreConfiguration.AutoBattleRounds);
 
             if (failedFlight)
             {
@@ -1111,7 +1129,8 @@ partial class GameCore
         buttonGridBackground = layout.FillArea(new Rect(Global.ButtonGridX, Global.ButtonGridY, 3 * Button.Width, 3 * Button.Height),
             GetUIColor(28), 1);
         battleRoundActiveSprite.Visible = true;
-        currentBattle!.StartRound
+        currentBattle!.ShowAutoBattleRoundText(false, 0);
+        currentBattle.StartRound
         (
             withoutPlayerActions ? Enumerable.Repeat(new Battle.PlayerBattleAction(), 6).ToArray() :
                 Enumerable.Range(0, MaxPartyMembers)
@@ -1225,6 +1244,7 @@ partial class GameCore
         layout.EnableButton(0, battleFieldSlot >= 24 && CurrentPartyMember!.CanFlee()); // flee button, only enable in last row
         layout.EnableButton(3, CurrentPartyMember!.CanMove()); // Note: If no slot is available the button still is enabled but after clicking you get "You can't move anywhere".
         layout.EnableButton(4, currentBattle.CanPartyMoveForward);
+        layout.EnableButton(5, CoreConfiguration.AutoBattleRounds != 0);
         layout.EnableButton(6, CurrentPartyMember.BaseAttackDamage + CurrentPartyMember.BonusAttackDamage > 0 && CurrentPartyMember.Conditions.CanAttack());
         layout.EnableButton(7, CurrentPartyMember.Conditions.CanParry());
         layout.EnableButton(8, CurrentPartyMember.Conditions.CanCastSpell(Features) && CurrentPartyMember.HasAnySpell());
@@ -1401,7 +1421,7 @@ partial class GameCore
 
             if (followAction != null)
             {
-                bool Follow(MouseButtons _)
+                bool FollowUp(MouseButtons _)
                 {
                     layout.SetBattleMessage(null);
                     InputEnable = true;
@@ -1411,7 +1431,7 @@ partial class GameCore
                     return true;
                 }
 
-                nextClickHandler = Follow;
+                nextClickHandler = FollowUp;
             }
         }
     }
