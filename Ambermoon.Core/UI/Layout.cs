@@ -4102,6 +4102,17 @@ namespace Ambermoon.UI
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(newGraphicIndex);
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1 + yOffset;
 
+                if (portraitAnimation != null)
+                {
+                    if (portraitAnimation.PrimarySprite != null)
+                    {
+                        portraitAnimation.PrimarySprite.Y = 1;
+                        portraitAnimation.PrimarySprite.DisplayLayer = portraitAnimation.InitialDisplayLayer;
+                    }
+
+                    portraitAnimation.SecondarySprite?.Delete();
+                }
+
                 portraitAnimation = new PortraitAnimation
                 {
                     StartTicks = game.BattleActive ? game.CurrentNormalizedBattleTicks : game.CurrentAnimationTicks,
@@ -5090,7 +5101,7 @@ namespace Ambermoon.UI
                 const int animationTime = (int)GameCore.TicksPerSecond;
                 uint elapsed = (game.BattleActive ? game.CurrentNormalizedBattleTicks : game.CurrentAnimationTicks) - portraitAnimation.StartTicks;
 
-                if (elapsed > animationTime)
+                if (elapsed >= animationTime)
                 {
                     portraitAnimation.PrimarySprite!.Y = 1;
                     portraitAnimation.PrimarySprite.DisplayLayer = portraitAnimation.InitialDisplayLayer;
