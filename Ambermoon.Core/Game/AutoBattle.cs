@@ -581,7 +581,7 @@ partial class GameCore
                                 if (hasThreatsInRow)
                                 {
                                     SetPlayerBattleAction(Battle.BattleActionType.CastSpell,
-                                        Battle.CreateCastSpellParameter(lastSpellTargetRow, spell));
+                                        Battle.CreateCastSpellParameter(lastSpellTargetRow, lastSpell));
                                     hasAction = true;
                                     return true;
                                 }

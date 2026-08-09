@@ -1410,7 +1410,7 @@ public class Cheats
 
         if (!game.EndBattle(flee))
         {
-            WriteLine("There is no active fight, or the fight round is still active or another window is opened.");
+            WriteLine("There is no active fight, or the fight round is still active or another window or popup is opened.");
             WriteLine();
         }
     }

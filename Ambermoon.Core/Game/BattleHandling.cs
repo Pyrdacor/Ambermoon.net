@@ -853,11 +853,8 @@ partial class GameCore
 
     public bool EndBattle(bool flee)
     {
-        if (currentBattle == null || currentBattle.RoundActive)
+        if (currentBattle == null || currentBattle.RoundActive || pickingNewLeader || CurrentWindow.Window != Window.Battle || PopupActive)
             return false;
-
-        if (PopupActive)
-            ClosePopup();
 
         currentBattle.EndBattle(flee);
         return true;
@@ -1231,9 +1228,8 @@ partial class GameCore
         layout.SetBattleFieldSlotColor(battleFieldSlot, BattleFieldSlotColor.Yellow);
         AddCurrentPlayerActionVisuals();
 
-        if (roundPlayerBattleActions.ContainsKey(partyMemberSlot))
+        if (roundPlayerBattleActions.TryGetValue(partyMemberSlot, out Battle.PlayerBattleAction? action))
         {
-            var action = roundPlayerBattleActions[partyMemberSlot];
             layout.UpdateCharacterStatus(partyMemberSlot, action.BattleAction.ToStatusGraphic(action.Parameter, ItemManager));
         }
         else
@@ -1253,11 +1249,15 @@ partial class GameCore
     /// <summary>
     /// This adds the target slots' coloring.
     /// </summary>
-    void AddCurrentPlayerActionVisuals()
+    void AddCurrentPlayerActionVisuals(Battle.PlayerBattleAction? action = null)
     {
-        int slot = SlotFromPartyMember(CurrentPartyMember!)!.Value;
+        if (action == null)
+        {
+            int slot = SlotFromPartyMember(CurrentPartyMember!)!.Value;
+            action = roundPlayerBattleActions.GetValueOrDefault(slot);
+        }
 
-        if (roundPlayerBattleActions.TryGetValue(slot, out Battle.PlayerBattleAction? action))
+        if (action != null)
         {
             switch (action.BattleAction)
             {
@@ -1372,7 +1372,7 @@ partial class GameCore
         var action = GetOrCreateBattleAction();
         action.BattleAction = actionType;
         action.Parameter = parameter;
-        AddCurrentPlayerActionVisuals();
+        AddCurrentPlayerActionVisuals(action);
 
         int slot = SlotFromPartyMember(CurrentPartyMember!)!.Value;
         layout.UpdateCharacterStatus(slot, actionType.ToStatusGraphic(parameter, ItemManager));
@@ -1389,6 +1389,7 @@ partial class GameCore
             action.Parameter = parameter;
             int slot = SlotFromPartyMember(currentPickingActionMember!)!.Value;
             layout.UpdateCharacterStatus(slot, actionType.ToStatusGraphic(parameter, ItemManager));
+            AddCurrentPlayerActionVisuals(action);
         }
     }
 
