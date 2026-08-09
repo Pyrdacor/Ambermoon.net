@@ -1,7 +1,9 @@
 # Changelog
 
-## 1.13.0 - Thirteenth patch (May 2026 - June 2026)
+## 1.13.0 - Thirteenth patch (May 2026 - August 2026)
 
+- Version [1.13.7](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.7): Added auto battle option (Thanks to Hessi9b)
+- Version [1.13.6](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.6): Bugfixes
 - Version [1.13.5](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.5): Fixed savegame slots 11 to 30
 - Version [1.13.4](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.4): Cheat console for Android, cheat fixes, Android save crash fix
 - Version [1.13.3](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.3): Czech intro text fixes
