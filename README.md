@@ -6,11 +6,11 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.13.5 is the most recent version from June 13th, 2026. It includes [original version 1.20](https://github.com/Pyrdacor/Ambermoon) and also [Ambermoon Advanced 1.33](https://github.com/Pyrdacor/Ambermoon-Advanced).
+Version 1.13.7 is the most recent version from August 11th, 2026. It includes [original version 1.20](https://github.com/Pyrdacor/Ambermoon) and also [Ambermoon Advanced 1.33](https://github.com/Pyrdacor/Ambermoon-Advanced).
 
 You can also download the game on my website at www.pyrdacor.net!
 
-Platform | Download 1.13.5
+Platform | Download 1.13.7
 --- | :-:
 **Windows 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Windows.zip)
 **Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/recent/Ambermoon.net-Linux.tar.gz)
@@ -190,43 +190,44 @@ I also provide the Atari tracks [here](https://ambermoon-net.pyrdacor.net/downlo
 Special thanks to my top patreons and github sponsors:
 
 - Philip Breitsprecher
-- Mike Valtix
 - Sebberick
 - Thomas Ritschel
 - Tschorle
+- Mike Valtix
+- timbo t
+- Anton Huber
+- Lars Haugseth
+- giom
+- MD
 - Daniel Egger
 - Kaspar
-- NeXuS-Arts
-- timbo t
+- Wolfgang Dobmeier
+- NLS
+- [Stay Forever](https://www.stayforever.de/)
 - Other Retro Matt
-- Anton Huber
-- Lars
-- Robin Mattheussen
-- giom
-- Levidega
-- Lorenz P.
+- meok meok
 - LoneRaider
-- MD
+- Lorenz P.
 - Unreality
 - Milan
+- NeXuS-Arts
 - Peter Holtgrewe
 - frostworx
-- meok meok
 - Martin Tramm
-- [Stay Forever](https://www.stayforever.de/)
+- André Wösten
 - Alexander Holland
 - Stephan Mankie
-- André Wösten
 - Benno
-- orgi
 - JR_Riketz
-- Wolfgang
 - Sprudel
-- NLS
+- Carl-Eric Menzel
 - Benjamin Ziebert
 - David Geiger
-- skobry
 - crediar
+- Robin Mattheussen
+- Levidega
+- orgi
+- skobry
 - AMike
 - soulsuckingjerk
 - Mahen            
@@ -246,6 +247,8 @@ Special thanks to some special contributors and testers as well:
 - dlfrsilver and CFOU! (French translation)
 - galon3 (Polish translation)
 - Czudak (App icon, suggestion for a patreon page)
+- Hessi9b (adding auto battle option)
+- Raphaël Huchet (adding more quests to the quest log)
 
 
 ## Other projects
