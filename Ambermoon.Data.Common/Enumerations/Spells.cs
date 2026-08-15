@@ -251,11 +251,11 @@
 		ForeseeAttack, // Advanced only
 		MysticDecay, // Advanced only
 		ProtectionSphere, // Advanced only
-		UnusedMystic26,
-		UnusedMystic27,
-		UnusedMystic28,
-		UnusedMystic29,
-		MysticImitation, // Advanced only
+        ElementToEarth, // Advanced only
+        ElementToWind, // Advanced only
+        ElementToFire, // Advanced only
+        ElementToWater, // Advanced only
+        MysticImitation, // Advanced only
 	}
 
     public enum DestructionSpell : byte
