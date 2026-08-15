@@ -1417,7 +1417,7 @@ partial class GameCore
                     }
                     if (automapType != AutomapType.None && automapType != AutomapType.Monster && automapType != AutomapType.Person)
                         AddAutomapType(tx, ty, x, y, automapType);
-                    if (block.WallIndex != 0)
+                    if (block.WallIndex != 0 && block.WallIndex <= labdata.Walls.Count)
                     {
                         var wall = labdata.Walls[(int)block.WallIndex - 1];
                         bool blockingWall = block.BlocksPlayer(labdata);
