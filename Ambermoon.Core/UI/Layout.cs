@@ -4913,6 +4913,7 @@ namespace Ambermoon.UI
                 10 => 51, // Sheera portal merge
                 11 => 55, // Moranian rebels
                 12 => 56, // Ancient desert city
+                13 => 57, // Exiting airship mission
                 _ => throw new AmbermoonException(ExceptionScope.Data, $"Invalid event picture index: {index}. Valid indices are 0 to 12.")
             };
             sprite.Layer = renderLayer;
