@@ -69,7 +69,7 @@ file class CheatConsole : IConsole
     }
 }
 
-class GameWindow(string id = "MainWindow") : IContextProvider
+class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHost
 {
     string gameVersion = "Ambermoon.net";
     Configuration configuration;
@@ -104,6 +104,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
     readonly List<Action> mainThreadActions = [];
     List<int> pendingScreenshots = [];
     List<(int Seconds, string Command)> pendingCheats = [];
+    ScenarioScript scenarioScript = null;
     DateTime? gameStartTime = null;
 
     bool PyrdacorLogoEnabled => configuration.ShowPyrdacorLogo && !commandLineOptions.SkipIntro;
@@ -638,8 +639,21 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         });
     }
 
+    Position IScenarioScriptHost.WindowCenter => new(window.Size.X / 2, window.Size.Y / 2);
+
+    void IScenarioScriptHost.Click(Position position, bool right)
+    {
+        var button = right ? MouseButtons.Right : MouseButtons.Left;
+        Game?.OnMouseDown(position, button);
+        Game?.OnMouseUp(position, button);
+    }
+
+    void IScenarioScriptHost.Screenshot(string name) => TakeScreenshot(name);
+
+    void IScenarioScriptHost.Exit() => window.Close();
+
     /// <summary>
-    /// Handles the timed command line actions (screenshots, exit) once the game runs.
+    /// Handles the timed command line actions (screenshots, exit, scripts) once the game runs.
     /// </summary>
     void UpdateCommandLineTimers()
     {
@@ -660,6 +674,17 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         {
             TakeScreenshot($"cli_{pendingScreenshots[0]}s");
             pendingScreenshots.RemoveAt(0);
+        }
+
+        if (scenarioScript != null)
+        {
+            scenarioScript.Update(Game, this);
+
+            if (scenarioScript.Finished)
+            {
+                Console.WriteLine(scenarioScript.Summary);
+                scenarioScript = null;
+            }
         }
 
         if (commandLineOptions.ExitAfter != null && seconds >= commandLineOptions.ExitAfter)
@@ -2122,6 +2147,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         this.commandLineOptions = commandLineOptions ?? CommandLineOptions.Parse([]);
         pendingScreenshots = [.. this.commandLineOptions.Screenshots.Order()];
         pendingCheats = [.. this.commandLineOptions.Cheats.OrderBy(c => c.Seconds)];
+        scenarioScript = this.commandLineOptions.ScriptPath == null ? null : new ScenarioScript(this.commandLineOptions.ScriptPath);
         var screenSize = (configuration as ICoreConfiguration).GetScreenSize();
         Width = screenSize.Width;
         Height = screenSize.Height;

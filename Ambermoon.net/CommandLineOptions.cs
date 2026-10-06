@@ -43,6 +43,10 @@ sealed class CommandLineOptions
     /// Cheat console commands executed the given seconds after the game started.
     /// </summary>
     public List<(int Seconds, string Command)> Cheats { get; } = [];
+    /// <summary>
+    /// Scenario script which is executed once the game runs. See <see cref="ScenarioScript"/>.
+    /// </summary>
+    public string? ScriptPath { get; private set; }
 
     /// <summary>
     /// The patcher (and its question popup) is skipped when the game is started by command line options.
@@ -64,6 +68,7 @@ sealed class CommandLineOptions
         Console.WriteLine(" --load <slot>      Skip the main menu and load the given savegame slot (0 = initial savegame)");
         Console.WriteLine(" --cheat <s> <cmd>  Execute a cheat console command s seconds after the game started (can be repeated)");
         Console.WriteLine(" --screenshot <s>   Save a screenshot s seconds after the game started (can be repeated)");
+        Console.WriteLine(" --script <file>    Run a scenario script once the game started (see ScenarioScript.cs)");
         Console.WriteLine(" --exit-after <s>   Close the application s seconds after the game started");
         Console.WriteLine();
         Console.WriteLine("Example: Ambermoon.net --data C:\\Ambermoon-Advanced\\german\\Amberfiles --load 0 --cheat 3 \"teleport 483 20 13\" --screenshot 6 --exit-after 8");
@@ -125,6 +130,9 @@ sealed class CommandLineOptions
                     break;
                 case "--cheat":
                     options.Cheats.Add((ParseSeconds(NextValue(arg)), NextValue(arg)));
+                    break;
+                case "--script":
+                    options.ScriptPath = NextValue(arg);
                     break;
                 case "--exit-after":
                     options.ExitAfter = ParseSeconds(NextValue(arg));
