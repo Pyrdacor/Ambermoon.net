@@ -180,8 +180,12 @@ public abstract partial class GameCore
         TextInput.FocusChanged += InputFocusChanged;
     }
 
+    bool skipNextStartEvents = false;
+
     /// <summary>
     /// This is called when the game starts.
+    /// If a load slot is given (automated test start), the map events at the
+    /// start position are not triggered.
     /// </summary>
     public void Run(bool continueGame, Position startCursorPosition, int? loadSlot = null)
     {
@@ -193,6 +197,7 @@ public abstract partial class GameCore
 
         if (loadSlot != null)
         {
+            skipNextStartEvents = true;
             LoadGame(loadSlot.Value, true, true);
         }
         else if (continueGame)

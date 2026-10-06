@@ -440,7 +440,12 @@ partial class GameCore
         if (!is3D)
             player2D!.Visible = true;
 
-        if (!TravelType.IgnoreEvents())
+        if (skipNextStartEvents)
+        {
+            // used for automated test starts
+            skipNextStartEvents = false;
+        }
+        else if (!TravelType.IgnoreEvents())
         {
             // Trigger events after game load
             TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,

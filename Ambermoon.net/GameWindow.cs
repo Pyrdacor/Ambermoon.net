@@ -103,6 +103,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
     CommandLineOptions commandLineOptions = null;
     readonly List<Action> mainThreadActions = [];
     List<int> pendingScreenshots = [];
+    List<(int Seconds, string Command)> pendingCheats = [];
     DateTime? gameStartTime = null;
 
     bool PyrdacorLogoEnabled => configuration.ShowPyrdacorLogo && !commandLineOptions.SkipIntro;
@@ -647,6 +648,13 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
         gameStartTime ??= DateTime.Now;
         double seconds = (DateTime.Now - gameStartTime.Value).TotalSeconds;
+
+        while (pendingCheats.Count != 0 && seconds >= pendingCheats[0].Seconds)
+        {
+            Console.WriteLine($"> {pendingCheats[0].Command}");
+            Cheats.ProcessInput(pendingCheats[0].Command, Game);
+            pendingCheats.RemoveAt(0);
+        }
 
         while (pendingScreenshots.Count != 0 && seconds >= pendingScreenshots[0])
         {
@@ -1310,8 +1318,10 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                     gameData = LoadGameDataFromDataPath();
                     loadingBar.SetProgress(1.0f);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"Failed to load game data from '{dataPath}': {ex.Message}");
+
                     // Try to select a version by the OS system language
                     configuration.GameVersionIndex = GetGameVersionIndexBySystemLanguage();
 
@@ -1946,7 +1956,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Error creating game: " + ex.Message);
+                        Console.WriteLine("Error creating game: " + ex.ToString());
                         window.Close();
                         return;
                     }
@@ -2111,6 +2121,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         this.configuration = configuration;
         this.commandLineOptions = commandLineOptions ?? CommandLineOptions.Parse([]);
         pendingScreenshots = [.. this.commandLineOptions.Screenshots.Order()];
+        pendingCheats = [.. this.commandLineOptions.Cheats.OrderBy(c => c.Seconds)];
         var screenSize = (configuration as ICoreConfiguration).GetScreenSize();
         Width = screenSize.Width;
         Height = screenSize.Height;

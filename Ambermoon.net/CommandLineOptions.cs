@@ -39,6 +39,10 @@ sealed class CommandLineOptions
     /// Seconds after the game started when the application is closed.
     /// </summary>
     public int? ExitAfter { get; set; }
+    /// <summary>
+    /// Cheat console commands executed the given seconds after the game started.
+    /// </summary>
+    public List<(int Seconds, string Command)> Cheats { get; } = [];
 
     /// <summary>
     /// The patcher (and its question popup) is skipped when the game is started by command line options.
@@ -57,11 +61,12 @@ sealed class CommandLineOptions
         Console.WriteLine(" --skip-intro       Skip logos and intros");
         Console.WriteLine(" --no-patcher       Don't check for patches (implied by any option)");
         Console.WriteLine(" --continue         Skip the main menu and continue the game");
-        Console.WriteLine(" --load <slot>      Skip the main menu and load the given savegame slot");
+        Console.WriteLine(" --load <slot>      Skip the main menu and load the given savegame slot (0 = initial savegame)");
+        Console.WriteLine(" --cheat <s> <cmd>  Execute a cheat console command s seconds after the game started (can be repeated)");
         Console.WriteLine(" --screenshot <s>   Save a screenshot s seconds after the game started (can be repeated)");
         Console.WriteLine(" --exit-after <s>   Close the application s seconds after the game started");
         Console.WriteLine();
-        Console.WriteLine("Example: Ambermoon.net --data C:\\Ambermoon-Advanced\\german\\Amberfiles --skip-intro --load 1");
+        Console.WriteLine("Example: Ambermoon.net --data C:\\Ambermoon-Advanced\\german\\Amberfiles --load 0 --cheat 3 \"teleport 483 20 13\" --screenshot 6 --exit-after 8");
     }
 
     public static CommandLineOptions Parse(string[] args)
@@ -111,12 +116,15 @@ sealed class CommandLineOptions
                     options.Continue = true;
                     break;
                 case "--load":
-                    if (!int.TryParse(NextValue(arg), out int slot) || slot < 1)
-                        throw new ArgumentException("The savegame slot must be a number greater than 0.");
+                    if (!int.TryParse(NextValue(arg), out int slot) || slot < 0)
+                        throw new ArgumentException("The savegame slot must be a number (0 is the initial savegame).");
                     options.LoadSlot = slot;
                     break;
                 case "--screenshot":
                     options.Screenshots.Add(ParseSeconds(NextValue(arg)));
+                    break;
+                case "--cheat":
+                    options.Cheats.Add((ParseSeconds(NextValue(arg)), NextValue(arg)));
                     break;
                 case "--exit-after":
                     options.ExitAfter = ParseSeconds(NextValue(arg));
