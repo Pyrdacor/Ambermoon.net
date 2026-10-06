@@ -100,6 +100,22 @@ class GameWindow(string id = "MainWindow") : IContextProvider
     Patcher patcher = null;
     bool checkPatcher = true;
     bool initialIntroEndedByClick = false;
+    CommandLineOptions commandLineOptions = null;
+    readonly List<Action> mainThreadActions = [];
+    List<int> pendingScreenshots = [];
+    DateTime? gameStartTime = null;
+
+    bool PyrdacorLogoEnabled => configuration.ShowPyrdacorLogo && !commandLineOptions.SkipIntro;
+    bool AdvancedLogoEnabled => configuration.ShowAdvancedLogo && !commandLineOptions.SkipIntro;
+    bool FantasyIntroEnabled => configuration.ShowFantasyIntro && !commandLineOptions.SkipIntro && !commandLineOptions.SkipsMainMenu;
+    bool IntroEnabled => configuration.ShowIntro && !commandLineOptions.SkipIntro && !commandLineOptions.SkipsMainMenu;
+    string DataPath => commandLineOptions.DataPath ?? (configuration.UseDataPath ? configuration.DataPath : Configuration.BundleDirectory);
+
+    void RunOnMainThread(Action action)
+    {
+        lock (mainThreadActions)
+            mainThreadActions.Add(action);
+    }
 
     public string Identifier { get; } = id;
     public IGLContext GLContext => window?.GLContext;
@@ -428,39 +444,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             (key == Silk.NET.Input.Key.P && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
              keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))))
         {
-            renderView.TakeScreenshot((width, height, imageData) =>
-            {
-                string directory = Path.Combine(Configuration.BundleDirectory, "Screenshots");
-                string path;
-                static string GetFileName() => "Screenshot_" + DateTime.Now.ToString("dd-MM-yyyy.HH-mm-ss");
-                try
-                {
-                    Directory.CreateDirectory(directory);
-                    path = Path.Combine(directory, GetFileName());
-                }
-                catch
-                {
-                    directory = Path.Combine(Configuration.FallbackConfigDirectory, "Screenshots");
-
-                    try
-                    {
-                        Directory.CreateDirectory(directory);
-                        path = Path.Combine(directory, GetFileName());
-                    }
-                    catch
-                    {
-                        path = Path.Combine(Path.GetTempPath(), GetFileName());
-                    }
-                }
-                try
-                {
-                    WritePNG(path, imageData, new(width, height), false, true);
-                }
-                catch
-                {
-                    Console.WriteLine($"Failed to create screenshot at '{path}'.");
-                }
-            });
+            TakeScreenshot();
         }
         else
         {
@@ -613,6 +597,68 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             versionSelector.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
         else if (Game != null)
             Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
+    }
+
+    void TakeScreenshot(string fileName = null)
+    {
+        renderView.TakeScreenshot((width, height, imageData) =>
+        {
+            string directory = Path.Combine(Configuration.BundleDirectory, "Screenshots");
+            string path;
+            string GetFileName() => fileName ?? "Screenshot_" + DateTime.Now.ToString("dd-MM-yyyy.HH-mm-ss");
+            try
+            {
+                Directory.CreateDirectory(directory);
+                path = Path.Combine(directory, GetFileName());
+            }
+            catch
+            {
+                directory = Path.Combine(Configuration.FallbackConfigDirectory, "Screenshots");
+
+                try
+                {
+                    Directory.CreateDirectory(directory);
+                    path = Path.Combine(directory, GetFileName());
+                }
+                catch
+                {
+                    path = Path.Combine(Path.GetTempPath(), GetFileName());
+                }
+            }
+            try
+            {
+                WritePNG(path, imageData, new(width, height), false, true);
+                Console.WriteLine($"Screenshot saved to '{path}.png'.");
+            }
+            catch
+            {
+                Console.WriteLine($"Failed to create screenshot at '{path}'.");
+            }
+        });
+    }
+
+    /// <summary>
+    /// Handles the timed command line actions (screenshots, exit) once the game runs.
+    /// </summary>
+    void UpdateCommandLineTimers()
+    {
+        if (Game == null)
+            return;
+
+        gameStartTime ??= DateTime.Now;
+        double seconds = (DateTime.Now - gameStartTime.Value).TotalSeconds;
+
+        while (pendingScreenshots.Count != 0 && seconds >= pendingScreenshots[0])
+        {
+            TakeScreenshot($"cli_{pendingScreenshots[0]}s");
+            pendingScreenshots.RemoveAt(0);
+        }
+
+        if (commandLineOptions.ExitAfter != null && seconds >= commandLineOptions.ExitAfter)
+        {
+            commandLineOptions.ExitAfter = null;
+            window.Close();
+        }
     }
 
     static void WritePNG(string filename, byte[] rgbData, Size imageSize, bool alpha, bool upsideDown)
@@ -819,7 +865,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             audioOutput = new AudioOutput();
             audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
             audioOutput.Enabled = audioOutput.Available && configuration.Music;
-            if (configuration.ShowPyrdacorLogo)
+            if (PyrdacorLogoEnabled)
             {
                 logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(DataReader.FromData(Resources.Song), 0, false, false));
                 additionalPalettes = logoPyrdacor.Palettes;
@@ -830,7 +876,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             }
         }
 
-        if (gameData.Advanced && configuration.ShowAdvancedLogo)
+        if (gameData.Advanced && AdvancedLogoEnabled)
             advancedLogo = new AdvancedLogo();
 
         musicManager = new MusicManager(configuration, gameData);
@@ -857,17 +903,17 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         renderView.SetTextureFactor(Layer.Text, 2);
         renderView.SetTextureFactor(Layer.SubPixelText, 2);
 
-        if (configuration.ShowFantasyIntro)
+        if (FantasyIntroEnabled)
         {
             fantasyIntro = new FantasyIntro(renderView, fantasyIntroData, () =>
             {
                 fantasyIntro = null;
 
-                if (configuration.ShowIntro)
+                if (IntroEnabled)
                     ShowIntro(byClick => initialIntroEndedByClick = byClick, introData, introFont, introFontLarge);
             });
         }
-        else if (configuration.ShowIntro)
+        else if (IntroEnabled)
         {
             ShowIntro(byClick => initialIntroEndedByClick = byClick, introData, introFont, introFontLarge);
         }
@@ -908,6 +954,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                 }
 
                 bool canContinue = currentSavegame != 0;
+                int? pendingLoadSlot = commandLineOptions.LoadSlot;
                 var cursor = new Render.Cursor(renderView, gameData.CursorHotspots);
                 cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
                 cursor.Type = Data.CursorType.None;
@@ -1009,7 +1056,8 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                                 return advancedSavegamePatcher.PatchSavegame(gameData, saveSlot, sourceEpisode, targetEpisode, savegame, savegameSerializer);
                             };
 
-                            game.Run(continueGame, ConvertMousePosition(mouse.Position));
+                            game.Run(continueGame, ConvertMousePosition(mouse.Position), pendingLoadSlot);
+                            pendingLoadSlot = null; // only for the first start
 
                             return game;
                         };
@@ -1056,7 +1104,18 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                         });
                 }
 
-                ShowMainMenu(configuration.ShowIntro && !initialIntroEndedByClick);
+                ShowMainMenu(IntroEnabled && !initialIntroEndedByClick);
+
+                if (commandLineOptions.SkipsMainMenu)
+                {
+                    bool continueGame = canContinue || pendingLoadSlot != null;
+
+                    RunOnMainThread(() =>
+                    {
+                        cursor.Type = Data.CursorType.None;
+                        mainMenu.FadeOutAndDestroy(continueGame, () => RunTask(() => SetupGameCreator(continueGame)));
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -1125,7 +1184,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         createdTextureAtlasManager = textureAtlasManager;
 
         IGameData gameData = new GameData();
-        var dataPath = configuration.UseDataPath ? configuration.DataPath : Configuration.BundleDirectory;
+        var dataPath = DataPath;
 
         if (versions == null || versions.Count == 0)
         {
@@ -1177,6 +1236,13 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             var gameData = new GameData();
             gameData.Load(dataPath);
             return gameData;
+        }
+
+        if (commandLineOptions.SkipsVersionSelector)
+        {
+            configuration.GameVersionIndex = commandLineOptions.Version == CommandLineOptions.ExternalVersion
+                ? versions.Count
+                : int.Parse(commandLineOptions.Version);
         }
 
         if (configuration.GameVersionIndex > versions.Count) // == versions.Count is ok as it could be external data
@@ -1294,7 +1360,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             };
             audioOutput.Enabled = audioOutput.Available && configuration.Music;
 
-            if (configuration.ShowPyrdacorLogo)
+            if (PyrdacorLogoEnabled)
             {
                 logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(DataReader.FromData(Resources.Song), 0, false, false));
                 additionalPalettes = [logoPyrdacor.Palettes[0], flagsPalette];
@@ -1347,7 +1413,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                         Version = additionalVersionInfo.Value.Version,
                         Language = additionalVersionInfo.Value.Language.ToGameLanguage(),
                         Info = "From external data",
-                        DataProvider = configuration.GameVersionIndex == 4 ? (() => gameData) : LoadGameDataFromDataPath,
+                        DataProvider = configuration.GameVersionIndex == versions.Count ? (() => gameData) : LoadGameDataFromDataPath,
                         Features = additionalVersionInfo.Value.Advanced ? Features.AmbermoonAdvanced | Features.AdvancedMonsterFlags | Features.ItemElements | Features.ExtendedLanguages | Features.LevelShards : Features.None, // TODO
                         MergeWithPrevious = false,
                         ExternalData = true
@@ -1368,7 +1434,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider
 
                 bool hasPatcher = File.Exists(patcherPath);
 
-                if (hasPatcher && configuration.UsePatcher != false)
+                if (hasPatcher && configuration.UsePatcher != false && !commandLineOptions.NoPatcher)
                 {
                     bool firstTime = configuration.UsePatcher == null;
                     patcher = new Patcher(renderView, patcherPath, textureAtlasManager ?? TextureAtlasManager.Instance);
@@ -1425,6 +1491,25 @@ class GameWindow(string id = "MainWindow") : IContextProvider
                 {
                     while (checkPatcher || patcher != null || logoPyrdacor != null)
                         Thread.Sleep(100);
+
+                    if (commandLineOptions.SkipsVersionSelector)
+                    {
+                        if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex >= gameVersions.Count)
+                        {
+                            Console.WriteLine($"Version '{commandLineOptions.Version}' is not available. Showing the version selector.");
+                        }
+                        else
+                        {
+                            RunOnMainThread(() =>
+                            {
+                                var selectedVersion = gameVersions[configuration.GameVersionIndex];
+                                bool saveInDataPath = selectedVersion.ExternalData && configuration.SaveOption == SaveOption.DataFolder;
+                                selectHandler?.Invoke(selectedVersion.DataProvider(), saveInDataPath ? dataPath : Configuration.GetSavePath(Configuration.GetVersionSavegameFolder(selectedVersion)),
+                                    selectedVersion.Language, selectedVersion.Features);
+                            });
+                            return;
+                        }
+                    }
 
                     versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager,
                         gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption, configuration);
@@ -1813,6 +1898,19 @@ class GameWindow(string id = "MainWindow") : IContextProvider
             switchRenderViewAction = null;
         }
 
+        Action[] pendingMainThreadActions;
+
+        lock (mainThreadActions)
+        {
+            pendingMainThreadActions = [.. mainThreadActions];
+            mainThreadActions.Clear();
+        }
+
+        foreach (var action in pendingMainThreadActions)
+            action();
+
+        UpdateCommandLineTimers();
+
         if (initializeErrorTime != null)
         {
             if ((DateTime.Now - initializeErrorTime.Value).TotalSeconds > 5)
@@ -2008,9 +2106,11 @@ class GameWindow(string id = "MainWindow") : IContextProvider
         }
     }
 
-    public void Run(Configuration configuration)
+    public void Run(Configuration configuration, CommandLineOptions commandLineOptions = null)
     {
         this.configuration = configuration;
+        this.commandLineOptions = commandLineOptions ?? CommandLineOptions.Parse([]);
+        pendingScreenshots = [.. this.commandLineOptions.Screenshots.Order()];
         var screenSize = (configuration as ICoreConfiguration).GetScreenSize();
         Width = screenSize.Width;
         Height = screenSize.Height;

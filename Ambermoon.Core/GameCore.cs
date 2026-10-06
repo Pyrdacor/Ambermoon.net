@@ -183,7 +183,7 @@ public abstract partial class GameCore
     /// <summary>
     /// This is called when the game starts.
     /// </summary>
-    public void Run(bool continueGame, Position startCursorPosition)
+    public void Run(bool continueGame, Position startCursorPosition, int? loadSlot = null)
     {
         layout.ShowPortraitArea(false);
 
@@ -191,7 +191,11 @@ public abstract partial class GameCore
         cursor.Type = CursorType.Sword;
         UpdateCursor(lastMousePosition, MouseButtons.None);
 
-        if (continueGame)
+        if (loadSlot != null)
+        {
+            LoadGame(loadSlot.Value, true, true);
+        }
+        else if (continueGame)
         {
             ContinueGame();
         }
