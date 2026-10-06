@@ -52,7 +52,8 @@ namespace Ambermoon.Data.Legacy
 		public static readonly Dictionary<uint, CombatBackgroundInfo> AdvancedReplacements3D = new()
         {
             { 5, new CombatBackgroundInfo { GraphicIndex = 17, Palettes = new uint[3] { 39, 48, 49 } } },
-			{ 10, new CombatBackgroundInfo { GraphicIndex = 18, Palettes = new uint[3] { 41, 44, 45 } } }
+			{ 10, new CombatBackgroundInfo { GraphicIndex = 18, Palettes = new uint[3] { 41, 44, 45 } } },
+			{ 13, new CombatBackgroundInfo { GraphicIndex = 13, Palettes = new uint[3] { 35, 46, 47 } } } // desert (ancient city on Morag)
 		};
 	}
 }

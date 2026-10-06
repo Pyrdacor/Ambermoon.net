@@ -27,6 +27,11 @@ namespace Ambermoon;
 ///   state                     print map, position, window and popup state
 ///   var &lt;index&gt; [0|1]        print a global variable, optionally check it
 ///   count &lt;item&gt; [amount]     print the amount of an item in the party, optionally check it
+///   waitbattle [timeout ms]   wait until a battle starts, pressing Return on popups meanwhile
+///                             (answers "Do you want to fight?" with yes, default timeout 20000)
+///   yes                       answer a decision popup with yes (Return key)
+///   closewindow               close the current window like the exit button (e.g. battle loot)
+///   battlebg [index]          print the combat background of the active battle, optionally check it
 ///   log &lt;text&gt;                print text
 ///   exit                      close the application
 /// </summary>
@@ -36,12 +41,13 @@ sealed class ScenarioScript
     DateTime continueTime = DateTime.MinValue;
     DateTime? idleTimeout = null;
     DateTime? dismissTimeout = null;
+    DateTime? battleTimeout = null;
     DateTime lastPopupTime = DateTime.MinValue;
     int dismissQuietTime = 1500;
     int failures = 0;
     int checks = 0;
 
-    public bool Finished => commands.Count == 0 && idleTimeout == null && dismissTimeout == null && DateTime.Now >= continueTime;
+    public bool Finished => commands.Count == 0 && idleTimeout == null && dismissTimeout == null && battleTimeout == null && DateTime.Now >= continueTime;
 
     public ScenarioScript(string path)
     {
@@ -62,7 +68,7 @@ sealed class ScenarioScript
     /// </summary>
     public void Update(Game.Game game, IScenarioScriptHost host)
     {
-        while (commands.Count != 0 || dismissTimeout != null || idleTimeout != null)
+        while (commands.Count != 0 || dismissTimeout != null || idleTimeout != null || battleTimeout != null)
         {
             if (DateTime.Now < continueTime)
                 return;
@@ -94,6 +100,30 @@ sealed class ScenarioScript
                 else
                 {
                     dismissTimeout = null;
+                }
+            }
+
+            if (battleTimeout != null)
+            {
+                if (game.BattleActive)
+                {
+                    battleTimeout = null;
+                }
+                else if (DateTime.Now > battleTimeout)
+                {
+                    Report(false, "waitbattle timed out: " + game.ScriptState());
+                    battleTimeout = null;
+                }
+                else
+                {
+                    if (game.PopupActive)
+                    {
+                        // Return closes text popups and answers "yes" (e.g. "Do you want to fight?")
+                        game.OnKeyDown(Key.Return, KeyModifiers.None);
+                        game.OnKeyUp(Key.Return, KeyModifiers.None);
+                    }
+                    continueTime = DateTime.Now.AddMilliseconds(300);
+                    return;
                 }
             }
 
@@ -147,6 +177,15 @@ sealed class ScenarioScript
                         host.Click(new Position(int.Parse(parts[1]), int.Parse(parts[2])),
                             parts.Length > 3 && parts[3].Equals("right", StringComparison.OrdinalIgnoreCase));
                         break;
+                    case "closewindow":
+                        if (!game.ScriptCloseWindow())
+                            Report(false, $"no window to close ({game.ScriptState()})");
+                        break;
+                    case "yes":
+                        // Return presses the "yes" button of decision popups
+                        game.OnKeyDown(Key.Return, KeyModifiers.None);
+                        game.OnKeyUp(Key.Return, KeyModifiers.None);
+                        break;
                     case "dismiss":
                         if (game.PopupActive)
                             host.Click(host.WindowCenter, false);
@@ -179,6 +218,18 @@ sealed class ScenarioScript
                         Console.WriteLine($"  item {item}: {amount}");
                         if (parts.Length > 2)
                             Report(amount == int.Parse(parts[2]), $"item {item} amount is {amount}, expected {parts[2]}");
+                        break;
+                    }
+                    case "waitbattle":
+                        battleTimeout = DateTime.Now.AddMilliseconds(parts.Length > 1 ? int.Parse(parts[1]) : 20000);
+                        continueTime = DateTime.Now.AddMilliseconds(100);
+                        return;
+                    case "battlebg":
+                    {
+                        var background = game.ScriptBattleBackground();
+                        Console.WriteLine($"  battle background: {(background?.ToString() ?? "no battle")}");
+                        if (parts.Length > 1)
+                            Report(background == uint.Parse(parts[1]), $"battle background is {(background?.ToString() ?? "no battle")}, expected {parts[1]}");
                         break;
                     }
                     case "log":

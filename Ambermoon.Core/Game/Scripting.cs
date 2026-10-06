@@ -39,6 +39,18 @@ partial class GameCore
     public bool ScriptGetGlobalVariable(uint index) => CurrentSavegame!.GetGlobalVariable(index);
 
     /// <summary>
+    /// Closes the current window (like the exit button). Returns false if only the map is shown.
+    /// </summary>
+    public bool ScriptCloseWindow()
+    {
+        if (!WindowActive || PopupActive)
+            return false;
+
+        CloseWindow();
+        return true;
+    }
+
+    /// <summary>
     /// Amount of the given item in the inventories and equipment of all party members.
     /// </summary>
     public int ScriptCountItem(uint itemIndex)
@@ -46,6 +58,17 @@ partial class GameCore
         return PartyMembers.Sum(p =>
             p.Inventory.Slots.Where(s => !s.Empty && s.ItemIndex == itemIndex).Sum(s => s.Amount) +
             p.Equipment.Slots.Values.Where(s => !s.Empty && s.ItemIndex == itemIndex).Sum(s => s.Amount));
+    }
+
+    /// <summary>
+    /// Combat background index of the active battle or null if no battle window is open.
+    /// </summary>
+    public uint? ScriptBattleBackground()
+    {
+        if (CurrentWindow.Window != UI.Window.Battle || CurrentWindow.WindowParameters.Length < 4)
+            return null;
+
+        return CurrentWindow.WindowParameters[3] as uint?;
     }
 
     public string ScriptState()
