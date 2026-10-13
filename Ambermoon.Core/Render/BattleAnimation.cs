@@ -202,7 +202,8 @@ namespace Ambermoon.Render
 
         public void Reset(int frame = 0)
         {
-            sprite.TextureAtlasOffset = baseTextureCoords + new Position(frame * baseSpriteSize.Width * textureFactor, 0);
+            // the texture size is the frame size in the atlas, the base sprite size might be scaled
+            sprite.TextureAtlasOffset = baseTextureCoords + new Position(frame * sprite.TextureSize.Width * textureFactor, 0);
             Finished = true;
         }
 
