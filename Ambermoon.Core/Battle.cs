@@ -3490,7 +3490,7 @@ namespace Ambermoon
 
                                 if (!partyMemberRowDistances.Any(dist => dist <= 1))
                                 {
-                                    if (monster.Conditions.CanMove())
+                                    if (monster.CanMove() && MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
                                         return BattleActionType.Move;
 
                                     canCast = false;
@@ -4014,7 +4014,7 @@ namespace Ambermoon
             else
             {
                 // Prefer moving straight back when fleeing
-                for (int row = minY; row <= maxX; ++row)
+                for (int row = minY; row <= maxY; ++row)
                 {
                     if (battleField[currentColumn + row * 6] == null)
                     {
@@ -4022,6 +4022,10 @@ namespace Ambermoon
                     }
                 }
             }
+
+            // no free spot: moving to the own position just fails with "way was blocked"
+            if (possiblePositions.Count == 0)
+                return (uint)characterPosition;
 
             return (uint)possiblePositions[game.RandomInt(0, possiblePositions.Count - 1)];
         }

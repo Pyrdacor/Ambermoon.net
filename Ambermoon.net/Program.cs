@@ -44,8 +44,29 @@ namespace Ambermoon
         }
 
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
+            CommandLineOptions commandLineOptions;
+
+            try
+            {
+                if (args.Length == 1 && (args[0] == "--help" || args[0] == "-h" || args[0] == "/?"))
+                {
+                    CommandLineOptions.PrintUsage();
+                    return;
+                }
+
+                commandLineOptions = CommandLineOptions.Parse(args);
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine();
+                CommandLineOptions.PrintUsage();
+                Environment.Exit(1);
+                return;
+            }
+
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
             try
@@ -66,7 +87,7 @@ namespace Ambermoon
 
             try
             {
-                gameWindow.Run(configuration);
+                gameWindow.Run(configuration, commandLineOptions);
             }
             catch (Exception ex)
             {
