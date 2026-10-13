@@ -36,12 +36,15 @@ namespace Ambermoon;
 ///   say &lt;keyword&gt;             say a keyword (dictionary index or word) in the conversation
 ///   showitem &lt;item index&gt;     show an item of the active party member in the conversation
 ///   giveitem &lt;item index&gt;     give an item of the active party member in the conversation
+///   takeitems                 take the items created in the conversation (active party member)
 ///   leave                     leave the conversation (like the exit button)
 ///   talkwait [timeout ms] [quiet ms]
 ///                             click through conversation texts and popups (Return) until nothing
 ///                             happened for 'quiet ms' (default 1000, timeout default 15000)
 ///   trigger &lt;x&gt; &lt;y&gt; [trigger]  trigger the map events at a 1-based map position
 ///                             (Move, Eye, Hand, Mouth, ..., default Move)
+///   interact &lt;char&gt; [trigger]  interact with a map character (1-based index, default Mouth),
+///                             e.g. for text popup characters
 ///   setvar &lt;index&gt; &lt;0|1&gt;      set a global variable
 ///   eventbit &lt;map&gt; &lt;event&gt; [0|1]
 ///                             print if a map event chain (1-based) is disabled (1), optionally check it
@@ -297,6 +300,9 @@ sealed class ScenarioScript
                     case "giveitem":
                         ReportError(game.ScriptConversationItem(uint.Parse(parts[1]), name == "giveitem"));
                         break;
+                    case "takeitems":
+                        ReportError(game.ScriptTakeConversationItems());
+                        break;
                     case "leave":
                         ReportError(game.ScriptLeaveConversation());
                         break;
@@ -311,6 +317,13 @@ sealed class ScenarioScript
                         var trigger = parts.Length > 3 ? Enum.Parse<EventTrigger>(parts[3], true) : EventTrigger.Move;
                         if (!game.ScriptTriggerMapEvent(trigger, uint.Parse(parts[1]), uint.Parse(parts[2])))
                             Console.WriteLine($"  no event was triggered at {parts[1]},{parts[2]}");
+                        break;
+                    }
+                    case "interact":
+                    {
+                        var trigger = parts.Length > 2 ? Enum.Parse<EventTrigger>(parts[2], true) : EventTrigger.Mouth;
+                        if (!game.ScriptInteractWithCharacter(uint.Parse(parts[1]), trigger))
+                            Report(false, $"no interaction with map character {parts[1]} ({game.ScriptState()})");
                         break;
                     }
                     case "eventbit":

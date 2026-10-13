@@ -92,7 +92,7 @@ internal static class QuestTexts
             { MainQuestType.Monstereye, "Monster's Eye" },
             { MainQuestType.ThiefGuild, "The Thieves' Guild" },
             { MainQuestType.SandrasDaughter, "Sandra's Daughter" },
-            { MainQuestType.TowerOfBlackMagic, "The Tower of blac magic" },
+            { MainQuestType.TowerOfBlackMagic, "The Tower of Black Magic" },
             { MainQuestType.ValdynsReturn, "Valdyn's Return" },
             { MainQuestType.AmbermoonPicture, "Ambermoon Picture" },
             // TODO ...
@@ -156,6 +156,14 @@ internal static class QuestTexts
             // Thieves
             { SubQuestType.ThiefPlague_DealWithNagier, "Finde den Banditenführer Silberhand" },
             { SubQuestType.ThiefPlague_ReturnToGeorg, "Bring den Beweis zu Freiherr Georg" },
+            // Wine Trophies
+            { SubQuestType.WineTrophies_FindThem, "Finde die gestohlenen Weinpokale" },
+            { SubQuestType.WineTrophies_ReturnThem, "Bring sie zu Canth und Norlael zurück" },
+            // Chain of Office
+            { SubQuestType.ChainOfOffice_FindIt, "Finde die gestohlene Amtskette" },
+            { SubQuestType.ChainOfOffice_ReturnIt, "Bring sie zu Freiherr Georg zurück" },
+            // Monstereye
+            { SubQuestType.Monstereye_BuyIt, "Kaufe Sandire das Monsterauge ab" },
             // TODO ...
         } },
         { GameLanguage.English, new()
@@ -210,6 +218,14 @@ internal static class QuestTexts
             // Thieves
             { SubQuestType.ThiefPlague_DealWithNagier, "Find the bandit leader Silverhand" },
             { SubQuestType.ThiefPlague_ReturnToGeorg, "Bring the proof to Baron George" },
+            // Wine Trophies
+            { SubQuestType.WineTrophies_FindThem, "Find the stolen wine goblets" },
+            { SubQuestType.WineTrophies_ReturnThem, "Return them to Canth and Norlael" },
+            // Chain of Office
+            { SubQuestType.ChainOfOffice_FindIt, "Find the stolen chain of office" },
+            { SubQuestType.ChainOfOffice_ReturnIt, "Return it to Baron George" },
+            // Monstereye
+            { SubQuestType.Monstereye_BuyIt, "Buy the monster eye from Sandire" },
             // TODO ...
         } }
         // TODO ...

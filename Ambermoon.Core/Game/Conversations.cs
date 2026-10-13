@@ -70,7 +70,7 @@ partial class GameCore
         UIText? moveItemMessage = null;
         layout.DraggedItemDropped += DraggedItemDropped;
         closeWindowHandler = _ => CleanUp();
-        scriptConversation = new(SayWord, ShowItem, GiveItem, () => Exit(true));
+        scriptConversation = new(SayWord, ShowItem, GiveItem, () => Exit(true), TakeCreatedItems);
 
         void SetText(string text, Action? followAction = null)
         {
@@ -503,6 +503,16 @@ partial class GameCore
             {
                 itemGrid!.Disabled = true;
             }
+        }
+
+        void TakeCreatedItems()
+        {
+            int partyMemberSlot = SlotFromPartyMember(CurrentPartyMember!)!.Value;
+
+            foreach (var itemSlot in createdItemSlots.Where(s => !s.Empty))
+                DropItem(partyMemberSlot, null, itemSlot);
+
+            ShowCreatedItems();
         }
 
         void CreateItem(uint itemIndex, uint amount)

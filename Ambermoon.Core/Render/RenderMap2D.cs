@@ -294,6 +294,11 @@ namespace Ambermoon.Render
             return new Position((int)ScrollX + NUM_VISIBLE_TILES_X / 2, (int)ScrollY + NUM_VISIBLE_TILES_Y / 2);
         }
 
+        internal bool InteractWithCharacter(uint characterIndex, EventTrigger trigger)
+        {
+            return mapCharacters.TryGetValue(characterIndex, out var character) && character.Active && character.Interact(trigger, false);
+        }
+
         public MapCharacter2D? GetCharacterFromTile(uint x, uint y)
         {
             return mapCharacters.Values.FirstOrDefault(mapCharacter => mapCharacter.Active && mapCharacter.Position.X == x && mapCharacter.Position.Y == y);

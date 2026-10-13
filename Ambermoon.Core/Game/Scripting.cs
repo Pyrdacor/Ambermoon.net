@@ -11,7 +11,7 @@ namespace Ambermoon;
 /// </summary>
 partial class GameCore
 {
-    sealed record ScriptConversationActions(Action<string> SayWord, Action ShowItem, Action GiveItem, Action Leave);
+    sealed record ScriptConversationActions(Action<string> SayWord, Action ShowItem, Action GiveItem, Action Leave, Action TakeItems);
 
     ScriptConversationActions? scriptConversation;
     Action<int>? scriptConversationItemSelector;
@@ -87,6 +87,19 @@ partial class GameCore
     }
 
     /// <summary>
+    /// Puts the items created in the active conversation into the active party member's inventory.
+    /// </summary>
+    public string? ScriptTakeConversationItems()
+    {
+        if (scriptConversation == null)
+            return "no conversation is active";
+
+        scriptConversation.TakeItems();
+
+        return null;
+    }
+
+    /// <summary>
     /// Leaves the active conversation like the exit button.
     /// </summary>
     public string? ScriptLeaveConversation()
@@ -108,6 +121,19 @@ partial class GameCore
             return false;
 
         return TriggerMapEvents(trigger, x - 1, y - 1);
+    }
+
+    /// <summary>
+    /// Interacts with a map character (1-based index) like clicking it with the given cursor.
+    /// </summary>
+    public bool ScriptInteractWithCharacter(uint characterIndex, EventTrigger trigger)
+    {
+        if (WindowOrPopupActive || characterIndex == 0)
+            return false;
+
+        return is3D
+            ? renderMap3D!.InteractWithCharacter(characterIndex - 1, trigger)
+            : renderMap2D!.InteractWithCharacter(characterIndex - 1, trigger);
     }
 
     public void ScriptSetGlobalVariable(uint index, bool value) => CurrentSavegame!.SetGlobalVariable(index, value);

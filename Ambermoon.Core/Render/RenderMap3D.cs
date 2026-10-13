@@ -862,6 +862,11 @@ namespace Ambermoon.Render
 
         public static void Reset() => MapCharacter.Reset();
 
+        internal bool InteractWithCharacter(uint characterIndex, EventTrigger trigger)
+        {
+            return mapCharacters.TryGetValue(characterIndex, out var character) && character.Active && character.Interact(trigger, false);
+        }
+
         public CharacterType? CharacterTypeFromBlock(uint x, uint y, out AutomapType automapType)
         {
             automapType = AutomapType.None;

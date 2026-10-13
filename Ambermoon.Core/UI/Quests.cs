@@ -539,6 +539,61 @@ file class DoorUnlockedTrigger(GameCore game, TriggerType triggerType, uint door
     }
 }
 
+/// <summary>
+/// Counts the set global variables and the owned items. The sub quest's
+/// current amount is updated and the state changes once the count reaches
+/// the sub quest's min amount (or 1 if there is none).
+/// </summary>
+file class CountTrigger(GameCore game, TriggerType triggerType, uint[] globalVariables, uint[]? itemIndices = null) : IQuestTrigger
+{
+    public QuestState OldState => triggerType.GetOldState();
+    public QuestState NewState => triggerType.GetNewState();
+
+    private bool Check(SubQuest subQuest, uint? globalVariableBeingSet)
+    {
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
+            return false;
+
+        var savegame = game.CurrentSavegame!;
+        uint count = (uint)globalVariables.Count(index => index == globalVariableBeingSet || savegame.GetGlobalVariable(index));
+
+        if (itemIndices != null)
+        {
+            foreach (var itemIndex in itemIndices)
+                count += game.GetTotalItemCount(itemIndex);
+        }
+
+        uint minAmount = NewState == QuestState.Completed ? subQuest.MinAmount ?? 1 : 1;
+
+        if (NewState == QuestState.Completed && subQuest.MinAmount != null)
+            subQuest.CurrentAmount = Math.Max(subQuest.CurrentAmount, Math.Min(count, minAmount));
+
+        if (count >= minAmount)
+        {
+            subQuest.State = NewState;
+            return true;
+        }
+
+        return false;
+    }
+
+    bool IQuestTrigger.CheckEvent(Event? @event, SubQuest subQuest)
+    {
+        // the event is checked before it is executed, so the variable is not set yet
+        uint? globalVariableBeingSet = @event is ActionEvent e && e.TypeOfAction == ActionEvent.ActionType.SetGlobalVariable && e.Value == 1 ? e.ObjectIndex : null;
+
+        return Check(subQuest, globalVariableBeingSet);
+    }
+
+    bool IQuestTrigger.CheckItem(Item? item, uint itemCount, SubQuest subQuest)
+    {
+        if (itemIndices == null || (item != null && !itemIndices.Contains(item.Index)))
+            return false;
+
+        return Check(subQuest, null);
+    }
+}
+
 #endregion
 
 
@@ -1202,6 +1257,89 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 8, // Freiherr Georg von Spannenberg
+                }
+            ),
+            #endregion
+            #region Wine Trophies
+            QuestFactory.CreateMainQuest(this, MainQuestType.WineTrophies,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.WineTrophies_FindThem,
+                    Triggers =
+                    [
+                        // Activate: Canth tells about the goblets in her greeting and adds the keyword "Wine goblets"
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 28),
+                        // Complete: owned goblets plus the ones already returned to Canth (37) and Norlael (38)
+                        new CountTrigger(game, TriggerType.Completion, [37, 38], [272]),
+                    ],
+                    MinAmount = 2,
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 14, // Canth
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.WineTrophies_ReturnThem,
+                    Triggers =
+                    [
+                        // Activate: found a goblet or returned one already
+                        new CountTrigger(game, TriggerType.Activation, [37, 38], [272]),
+                        // Complete: each of them accepts one goblet
+                        new CountTrigger(game, TriggerType.Completion, [37, 38]),
+                    ],
+                    MinAmount = 2,
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 14, // Canth
+                }
+            ),
+            #endregion
+            #region Chain of Office
+            QuestFactory.CreateMainQuest(this, MainQuestType.ChainOfOffice,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.ChainOfOffice_FindIt,
+                    Triggers =
+                    [
+                        // Activate: Lady Heidi or Baron George told about the fairies and the stolen chain
+                        new GlobalVariableTrigger(game, TriggerType.Activation, GlobalVar_ChainOfOfficeQuestStarted),
+                        // Complete: found the chain (Sylph cave) or already returned it (31)
+                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 269), // Chain of office
+                            (g, t) => new GlobalVariableTrigger(g, t, 31)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 9, // Lady Heidi
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.ChainOfOffice_ReturnIt,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: gave the chain to Baron George
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 31),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 8, // Baron George
+                }
+            ),
+            #endregion
+            #region Monstereye
+            QuestFactory.CreateMainQuest(this, MainQuestType.Monstereye,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Monstereye_BuyIt,
+                    Triggers =
+                    [
+                        // Activate: Sandire offered the monster eye (or it was bought right away)
+                        new OrTrigger<GlobalVariableTrigger, GlobalVariableTrigger>(game, TriggerType.Activation,
+                            (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_TalkedToSandire),
+                            (g, t) => new GlobalVariableTrigger(g, t, 221)),
+                        // Complete: gave 5000 gold to Sandire
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 221),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 35, // Sandire
                 }
             ),
             #endregion

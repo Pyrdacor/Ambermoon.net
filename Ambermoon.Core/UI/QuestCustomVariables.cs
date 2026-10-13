@@ -92,6 +92,8 @@ partial class QuestLog
     const uint GlobalVar_GaveOrcLeaderHeadToBaronGeorge = 8188u;
     const uint GlobalVar_GaveThiefProofToBaronGeorge = 8187u;
     const uint GlobalVar_ReturnedHorseshoesToTolimar = 8186u;
+    const uint GlobalVar_ChainOfOfficeQuestStarted = 8185u;
+    const uint GlobalVar_TalkedToSandire = 8184u;
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 
@@ -123,6 +125,17 @@ partial class QuestLog
             (npc, @event) => npc.Index == 10 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.GiveItem && c.ItemIndex == 270 &&
                 game.GetTotalItemCount(270) >= 4,
             GlobalVar_ReturnedHorseshoesToTolimar));
+
+        // Lady Heidi (9) or Baron George (8) tell about the fairies and the stolen chain of office (keywords "Fairies" and "Fairy")
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => (npc.Index == 8 || npc.Index == 9) && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Keyword &&
+                (c.KeywordIndex == 24 || c.KeywordIndex == 25),
+            GlobalVar_ChainOfOfficeQuestStarted));
+
+        // Sandire (35) offers the monster eye when you talk to her
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 35 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Talk,
+            GlobalVar_TalkedToSandire));
 
         // Give the thief-plague proof to Baron George (NPC 8): the silver hand (266, Nagier killed)
         // or Nagier's letter (267, peace made) -- completes the Thief Plague quest.
