@@ -40,6 +40,11 @@ partial class GameCore
     /// Must be set by derived classes right before <see cref="Start"/> is called for a new game.
     /// </summary>
     protected bool StartingNewGame { get; set; } = false;
+    /// <summary>
+    /// True if the player sees the map and can act (no window, popup, battle, fade or teleport).
+    /// </summary>
+    internal bool IdleOnMap => Ingame && !paused && !allInputDisabled && InputEnable && !WindowOrPopupActive &&
+        !BattleActive && !Teleporting && !Fading && Map != null;
 
     internal bool Ingame { get; private set; } = false;
     internal uint CurrentTicks { get; private set; } = 0;

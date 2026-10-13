@@ -1,0 +1,351 @@
+﻿using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
+using Ambermoon.Mod.Assets;
+using static Ambermoon.Data.Tileset;
+
+namespace Ambermoon.Mod.AmbermoonDC;
+
+/// <summary>
+/// Creates the map of a floor from its layout and prepares everything else
+/// which is needed for it (monster groups, chest contents, the recruit).
+/// </summary>
+internal class FloorBuilder(ModApi api, DCLabdata labdata)
+{
+    /// <summary>
+    /// Two map indices are used alternately so that every descent is a real map change.
+    /// The original game uses map indices 1 to 528.
+    /// </summary>
+    public const uint FirstMapIndex = 600;
+    /// <summary>
+    /// First monster group index for the monsters of the current floor
+    /// (the original game uses up to 120 or so).
+    /// </summary>
+    public const uint FirstMonsterGroupIndex = 200;
+    /// <summary>
+    /// Chests 1 to 30 are used for the dungeon. They belong to original maps
+    /// which are never visited in this mod.
+    /// </summary>
+    const uint FirstChestIndex = 1;
+    /// <summary>
+    /// Map whose character bits are used to remember recruits (never visited).
+    /// </summary>
+    public const uint RecruitBitsMap = 1000;
+
+    readonly ModApi api = api;
+    readonly DCLabdata labdata = labdata;
+
+    public static uint MapIndexForFloor(int floor) => FirstMapIndex + (uint)(floor % 2);
+
+    public static bool IsDungeonMap(uint mapIndex) => mapIndex == FirstMapIndex || mapIndex == FirstMapIndex + 1;
+
+    DCTexts Texts => DCTexts.Get(api.Language);
+
+    /// <summary>
+    /// Creates the map of the floor and registers it together with its monster groups.
+    /// This is done for new floors and also when a savegame is loaded.
+    /// </summary>
+    public Map Build(FloorLayout layout, DCState state)
+    {
+        int floor = layout.Floor;
+        uint mapIndex = MapIndexForFloor(floor);
+        var random = FloorGenerator.CreateRandom(state.Seed, floor, 2);
+        var texts = Texts;
+        var map = new Map
+        {
+            Index = mapIndex,
+            Type = MapType.Map3D,
+            Width = layout.Width,
+            Height = layout.Height,
+            TilesetOrLabdataIndex = DCLabdata.LabdataIndex,
+            Flags = (floor >= 4 ? MapFlags.Dungeon : MapFlags.Indoor) | MapFlags.Automapper | MapFlags.CanRest |
+                MapFlags.NoSleepUntilDawn | MapFlags.CanUseMagic,
+            MusicIndex = layout.IsBossFloor ? DCContent.BossMusic : DCContent.FloorMusic[(floor - 1) / 3 % DCContent.FloorMusic.Length],
+            PaletteIndex = 6,
+            World = World.Lyramion, // Note: Party members can only be dismissed on Lyramion.
+            Blocks = new Map.Block[layout.Width, layout.Height],
+            InitialBlocks = new Map.Block[layout.Width, layout.Height],
+            Texts =
+            [
+                string.Format(texts.FloorName, floor),
+                string.Format(texts.DescendQuestion, floor + 1),
+                texts.WayBackBlocked,
+                texts.SecretFound
+            ]
+        };
+        const uint DescendText = 1;
+        const uint WayBackText = 2;
+        const uint SecretText = 3;
+        var events = new MapEventBuilder(map);
+
+        // Walls and floor
+        for (int y = 0; y < layout.Height; y++)
+        {
+            for (int x = 0; x < layout.Width; x++)
+            {
+                var pos = new Pos(x, y);
+                var block = new Map.Block();
+
+                switch (layout[pos])
+                {
+                    case CellType.Wall:
+                    case CellType.SecretWall:
+                        block.WallIndex = DCContent.PlainWalls[random.Next(DCContent.PlainWalls.Length)];
+                        break;
+                    case CellType.IllusoryWall:
+                        block.WallIndex = DCContent.IllusoryWall;
+                        break;
+                    case CellType.Door:
+                        block.WallIndex = DCContent.DoorWall;
+                        break;
+                    default:
+                        if (layout.Decorations.TryGetValue(pos, out var decoration))
+                            block.ObjectIndex = decoration;
+                        break;
+                }
+
+                map.Blocks[x, y] = block;
+            }
+        }
+
+        static uint X(Pos pos) => (uint)pos.X + 1;
+        static uint Y(Pos pos) => (uint)pos.Y + 1;
+
+        // Start: a ladder which leads nowhere
+        var start = map.Blocks[layout.Start.X, layout.Start.Y];
+        start.ObjectIndex = DCContent.LadderObject;
+        start.MapEventId = events.AddEntry(AutomapType.Exit,
+            EventFactory.MapText(WayBackText, Data.EventTrigger.EyeCursor));
+
+        // Stairs: a hole which leads to the next floor
+        var stairs = map.Blocks[layout.Stairs.X, layout.Stairs.Y];
+        stairs.ObjectIndex = DCContent.HoleObject;
+        stairs.MapEventId = events.AddEntry(AutomapType.Exit,
+            EventFactory.Create<DecisionEvent>(e => e.TextIndex = DescendText),
+            EventFactory.Teleport(MapIndexForFloor(floor + 1), 1, 1, CharacterDirection.Up, TeleportEvent.TransitionType.Falling));
+
+        // Doors
+        for (int i = 0; i < layout.Doors.Count; i++)
+        {
+            var door = layout.Doors[i];
+            map.Blocks[door.Position.X, door.Position.Y].MapEventId = events.AddEntry(AutomapType.Door,
+                EventFactory.Door((byte)i, door.Locked ? (uint)Math.Min(60, 10 + floor) : 0),
+                EventFactory.ChangeBlock(X(door.Position), Y(door.Position), DCContent.OpenDoorWall));
+        }
+
+        // Secret walls which disappear when touched
+        foreach (var secretWall in layout.SecretWalls)
+        {
+            uint entryIndex = (uint)map.EventList.Count; // index of the next entry
+            map.Blocks[secretWall.X, secretWall.Y].MapEventId = events.AddEntry(AutomapType.None,
+                EventFactory.Create<ConditionEvent>(e =>
+                {
+                    e.TypeOfCondition = ConditionEvent.ConditionType.Hand;
+                    e.Value = 1;
+                }),
+                EventFactory.ChangeBlock(X(secretWall), Y(secretWall)),
+                // Deactivate this event afterwards
+                EventFactory.Create<ActionEvent>(e =>
+                {
+                    e.TypeOfAction = ActionEvent.ActionType.SetEventBit;
+                    e.ObjectIndex = ((mapIndex - 1) << 6) | entryIndex;
+                    e.Value = 1;
+                }),
+                EventFactory.MapText(SecretText, Data.EventTrigger.Always));
+        }
+
+        // Chests
+        for (int i = 0; i < layout.Chests.Count; i++)
+        {
+            var chest = layout.Chests[i];
+            var block = map.Blocks[chest.Position.X, chest.Position.Y];
+            block.ObjectIndex = DCContent.ChestObject;
+            block.MapEventId = events.AddEntry(AutomapType.Chest,
+                EventFactory.Chest(FirstChestIndex + (uint)i, chest.Locked ? (uint)Math.Min(60, 10 + floor) : 0));
+        }
+
+        for (int y = 0; y < layout.Height; y++)
+            for (int x = 0; x < layout.Width; x++)
+                map.InitialBlocks[x, y] = map.Blocks[x, y].Clone();
+
+        // Characters
+        int characterIndex = 0;
+        var tileFlags = (TileFlags)((labdata.CombatBackground << 28) | 0x110);
+
+        void AddCharacter(Map.CharacterReference character, Pos position)
+        {
+            character.Positions.Add(new Position(position.X + 1, position.Y + 1));
+            character.CollisionClass = 1;
+            character.CombatBackgroundIndex = labdata.CombatBackground;
+            character.TileFlags = tileFlags;
+            map.CharacterReferences[characterIndex++] = character;
+        }
+
+        var groupBuilder = new MonsterGroupBuilder(api, state.Seed, floor);
+
+        if (layout.Boss != null)
+        {
+            var (group, sprite) = groupBuilder.CreateBossGroup(layout.IsBossWithMinionsFloor, state.BossItem);
+            uint groupIndex = FirstMonsterGroupIndex + (uint)characterIndex;
+            api.SetMonsterGroup(groupIndex, group);
+            AddCharacter(new Map.CharacterReference
+            {
+                Type = CharacterType.Monster,
+                Index = groupIndex,
+                GraphicIndex = labdata.GetSpriteObject(sprite),
+                CharacterFlags = Map.CharacterReference.Flags.None // bosses don't move
+            }, layout.Boss.Value);
+        }
+
+        if (layout.Recruit != null && state.Recruit != 0)
+        {
+            AddCharacter(new Map.CharacterReference
+            {
+                Type = CharacterType.PartyMember,
+                Index = state.Recruit,
+                GraphicIndex = labdata.GetSpriteObject("person"),
+                CharacterFlags = Map.CharacterReference.Flags.RandomMovement
+            }, layout.Recruit.Value);
+        }
+
+        foreach (var monster in layout.Monsters)
+        {
+            var (group, sprite) = groupBuilder.CreateGroup();
+            uint groupIndex = FirstMonsterGroupIndex + (uint)characterIndex;
+            api.SetMonsterGroup(groupIndex, group);
+            var flags = Map.CharacterReference.Flags.RandomMovement;
+
+            if (monster.OnlyMoveWhenSeeingPlayer)
+                flags |= Map.CharacterReference.Flags.MoveOnlyWhenSeePlayer;
+
+            AddCharacter(new Map.CharacterReference
+            {
+                Type = CharacterType.Monster,
+                Index = groupIndex,
+                GraphicIndex = labdata.GetSpriteObject(sprite),
+                CharacterFlags = flags
+            }, monster.Position);
+        }
+
+        api.SetMap(map);
+
+        return map;
+    }
+
+    /// <summary>
+    /// Prepares the savegame for a floor which is entered for the first time:
+    /// clears the map state, fills the chests, sets the door locks and prepares the recruit.
+    /// </summary>
+    public void InitializeNewFloor(Savegame savegame, FloorLayout layout, DCState state)
+    {
+        uint mapIndex = MapIndexForFloor(layout.Floor);
+        api.ResetMapState(savegame, mapIndex);
+
+        var loot = new LootGenerator(api, FloorGenerator.CreateRandom(state.Seed, layout.Floor, 3), layout.Floor);
+
+        for (int i = 0; i < layout.Chests.Count; i++)
+        {
+            var spot = layout.Chests[i];
+            uint chestIndex = FirstChestIndex + (uint)i;
+            savegame.Chests[chestIndex] = loot.CreateChest(spot.Kind);
+
+            if (spot.Locked)
+                savegame.LockChest(chestIndex - 1);
+            else
+                savegame.UnlockChest(chestIndex - 1);
+        }
+
+        for (int i = 0; i < layout.Doors.Count; i++)
+        {
+            if (layout.Doors[i].Locked)
+                savegame.LockDoor((uint)i);
+            else
+                savegame.UnlockDoor((uint)i);
+        }
+
+        state.BossItem = layout.IsBossFloor ? loot.SelectBossItem(PartyOf(savegame)) : 0;
+        state.Recruit = 0;
+
+        if (layout.IsRecruitFloor)
+            state.Recruit = PrepareRecruit(savegame, layout.Floor, state);
+    }
+
+    static List<PartyMember> PartyOf(Savegame savegame)
+        => [.. Enumerable.Range(0, 6).Select(savegame.GetPartyMember).Where(p => p != null).Cast<PartyMember>()];
+
+    uint PrepareRecruit(Savegame savegame, int floor, DCState state)
+    {
+        var random = FloorGenerator.CreateRandom(state.Seed, floor, 4);
+        var party = PartyOf(savegame);
+
+        if (party.Count >= 6)
+            return 0;
+
+        var available = DCContent.Recruits
+            .Where(index => savegame.PartyMembers.ContainsKey(index) && !savegame.CurrentPartyMemberIndices.Contains(index))
+            .ToList();
+
+        if (available.Count == 0)
+            return 0;
+
+        // Prefer characters which were never offered so far and which are not too strong.
+        uint averageLevel = (uint)Math.Round(party.Average(p => (double)p.Level));
+        uint targetLevel = Math.Max(averageLevel, (uint)(floor * 3 / 4));
+        var candidates = available.Where(index => !state.OfferedRecruits.Contains(index)).ToList();
+
+        if (candidates.Count == 0)
+            candidates = available;
+
+        var fitting = candidates.Where(index => savegame.PartyMembers[index].Level <= targetLevel).ToList();
+
+        if (fitting.Count != 0)
+            candidates = fitting;
+
+        uint recruitIndex = candidates[random.Next(candidates.Count)];
+        var recruit = savegame.PartyMembers[recruitIndex];
+
+        CharacterHelper.RaiseLevel(recruit, targetLevel, (min, max) => random.Next(min, max + 1));
+
+        // The recruit must be able to talk with the party.
+        recruit.SpokenLanguages |= Language.Human;
+        // When the recruit leaves the party again, this character bit is cleared.
+        // It belongs to an unused map so it won't affect the dungeon.
+        recruit.CharacterBitIndex = (ushort)(((RecruitBitsMap - 1) << 5) | (recruitIndex & 0x1f));
+
+        var loot = new LootGenerator(api, random, floor);
+        loot.EquipRecruit(recruit);
+
+        if (!state.OfferedRecruits.Contains(recruitIndex))
+            state.OfferedRecruits.Add(recruitIndex);
+
+        return recruitIndex;
+    }
+
+    /// <summary>
+    /// Builds the event lists of a map. Each entry is a chain of events.
+    /// </summary>
+    class MapEventBuilder(Map map)
+    {
+        readonly Map map = map;
+
+        /// <summary>
+        /// Adds an event chain and returns the map event id (1-based) for the block.
+        /// </summary>
+        public uint AddEntry(AutomapType automapType, params Event[] chain)
+        {
+            if (map.EventList.Count >= 64)
+                throw new InvalidOperationException("Too many map events.");
+
+            for (int i = 0; i < chain.Length; i++)
+            {
+                chain[i].Index = (uint)map.Events.Count + 1;
+                chain[i].Next = i < chain.Length - 1 ? chain[i + 1] : null;
+                map.Events.Add(chain[i]);
+            }
+
+            map.EventList.Add(chain[0]);
+            map.EventAutomapTypes.Add(automapType);
+
+            return (uint)map.EventList.Count;
+        }
+    }
+}

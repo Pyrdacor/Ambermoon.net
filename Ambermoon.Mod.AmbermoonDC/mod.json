@@ -1,0 +1,14 @@
+{
+  "Id": "ambermoon-dc",
+  "Name": "Ambermoon DC",
+  "Description": "Dungeon crawler with endless procedurally generated floors, roaming monsters, bosses, secrets and companions.",
+  "Version": "1.0",
+  "Authors": [ "Pyrdacor" ],
+  "ReleaseDate": "2026-10-13",
+  "ApiVersion": 1,
+  "Base": {
+    "Game": "Original",
+    "MinVersion": "1.19"
+  },
+  "Assembly": "Ambermoon.Mod.AmbermoonDC.dll"
+}

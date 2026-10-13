@@ -100,31 +100,42 @@ public sealed class ModRuntime
         return new ModRuntime(package, api, mod, assetApplier.Warnings);
     }
 
+    /// <summary>
+    /// Each mod gets its own load context. Assemblies of the game (like Ambermoon.Mod)
+    /// are taken from the default context so the mod uses the same types as the game.
+    /// Further assemblies the mod depends on can be placed next to the mod assembly.
+    /// </summary>
+    sealed class ModLoadContext(IModSource source, string assemblyDirectory, string modId)
+        : AssemblyLoadContext($"Mod:{modId}")
+    {
+        protected override Assembly? Load(AssemblyName assemblyName)
+        {
+            // Prefer the assemblies of the game.
+            if (Default.Assemblies.FirstOrDefault(a => a.GetName().Name == assemblyName.Name) is Assembly loaded)
+                return loaded;
+
+            var dependencyPath = (assemblyDirectory.Length == 0 ? "" : assemblyDirectory + "/") + assemblyName.Name + ".dll";
+
+            if (!source.Exists(dependencyPath))
+                return null; // fallback to the default context
+
+            using var stream = new MemoryStream(source.ReadAllBytes(dependencyPath));
+            return LoadFromStream(stream);
+        }
+    }
+
     static Assembly LoadAssembly(ModPackage package)
     {
         var source = package.Source;
         var assemblyPath = package.Manifest.Assembly!;
         var assemblyDirectory = Path.GetDirectoryName(assemblyPath)?.Replace('\\', '/') ?? "";
-
-        // Further assemblies the mod depends on can be placed next to the mod assembly.
-        Assembly? ResolveDependency(AssemblyLoadContext context, AssemblyName name)
-        {
-            var dependencyPath = (assemblyDirectory.Length == 0 ? "" : assemblyDirectory + "/") + name.Name + ".dll";
-
-            if (!source.Exists(dependencyPath))
-                return null;
-
-            using var stream = new MemoryStream(source.ReadAllBytes(dependencyPath));
-            return context.LoadFromStream(stream);
-        }
-
-        AssemblyLoadContext.Default.Resolving += ResolveDependency;
+        var context = new ModLoadContext(source, assemblyDirectory, package.Manifest.Id);
 
         using var assemblyStream = new MemoryStream(source.ReadAllBytes(assemblyPath));
         var symbolsPath = Path.ChangeExtension(assemblyPath, ".pdb");
         using var symbolStream = source.Exists(symbolsPath) ? new MemoryStream(source.ReadAllBytes(symbolsPath)) : null;
 
-        return AssemblyLoadContext.Default.LoadFromStream(assemblyStream, symbolStream);
+        return context.LoadFromStream(assemblyStream, symbolStream);
     }
 
     /// <summary>

@@ -26,17 +26,16 @@ internal class ModSavegameManager(ISavegameManager baseManager, string saveDirec
 
     void LoadModData(int slot)
     {
-        var path = slot <= 0 ? null : ModDataPath(slot);
-        var data = path != null && File.Exists(path) ? ModSaveData.FromJson(File.ReadAllText(path)) : new ModSaveData();
+        var path = ModDataPath(slot);
+        var data = File.Exists(path) ? ModSaveData.FromJson(File.ReadAllText(path)) : new ModSaveData();
         dispatcher.Loading(data);
     }
 
+    // Note: The initial savegame is also loaded internally by the game (e.g. to get
+    // the initial chest contents), so the mod data is not touched here. For new games
+    // mods are notified by ModBase.OnGameStarting with newGame = true.
     public Savegame LoadInitial(IGameData gameData, ISavegameSerializer savegameSerializer)
-    {
-        var savegame = baseManager.LoadInitial(gameData, savegameSerializer);
-        LoadModData(0);
-        return savegame;
-    }
+        => baseManager.LoadInitial(gameData, savegameSerializer);
 
     public Savegame Load(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot, int totalSavegames)
     {

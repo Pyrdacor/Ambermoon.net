@@ -87,6 +87,12 @@ public class ModApi
     public bool IsIngame => game?.Ingame == true;
 
     /// <summary>
+    /// True if the player currently sees the map and can act, so a message can be shown
+    /// without interfering with windows, battles, fades or teleports.
+    /// </summary>
+    public bool CanShowMessage => game?.IdleOnMap == true;
+
+    /// <summary>
     /// The game instance. Only use it if the API does not provide what you need.
     /// </summary>
     public GameCore? Game => game;
@@ -132,9 +138,17 @@ public class ModApi
 
     public Map? GetMap(uint index) => GameData.MapManager.GetMap(index);
 
-    public Labdata GetLabdata(uint index) => GameData.MapManager.Labdata.Count >= index && index > 0
-        ? GameData.MapManager.GetLabdataForMap(new Map { Type = MapType.Map3D, TilesetOrLabdataIndex = index })
-        : throw new ArgumentOutOfRangeException(nameof(index));
+    public Labdata GetLabdata(uint index)
+    {
+        try
+        {
+            return GameData.MapManager.GetLabdataForMap(new Map { Type = MapType.Map3D, TilesetOrLabdataIndex = index });
+        }
+        catch (KeyNotFoundException)
+        {
+            throw new ArgumentOutOfRangeException(nameof(index), $"There is no labdata {index}.");
+        }
+    }
 
     /// <summary>
     /// Adds or replaces a monster group. The monsters of the group are used as

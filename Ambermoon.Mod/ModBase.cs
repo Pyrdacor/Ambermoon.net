@@ -75,7 +75,8 @@ public abstract class ModBase
 
     /// <summary>
     /// Called when a savegame is loaded (before <see cref="OnGameStarting"/>).
-    /// For new games the data is empty.
+    /// It is not called for new games. Reset your state in <see cref="OnGameStarting"/>
+    /// if its parameter newGame is true.
     /// </summary>
     public virtual void OnLoading(ModSaveData data) { }
 }
