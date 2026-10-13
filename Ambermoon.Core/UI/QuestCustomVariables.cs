@@ -94,6 +94,11 @@ partial class QuestLog
     const uint GlobalVar_ReturnedHorseshoesToTolimar = 8186u;
     const uint GlobalVar_ChainOfOfficeQuestStarted = 8185u;
     const uint GlobalVar_TalkedToSandire = 8184u;
+    const uint GlobalVar_AmanAskedForBrooch = 8183u;
+    const uint GlobalVar_ClementineToldAboutMadman = 8182u;
+    const uint GlobalVar_ToldSandraAboutRescue = 8181u;
+    const uint GlobalVar_UsedYellowSphere = 8180u;
+    const uint GlobalVar_HeidiToldAboutFairies = 8179u;
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 
@@ -136,6 +141,35 @@ partial class QuestLog
         customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
             (npc, @event) => npc.Index == 35 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Talk,
             GlobalVar_TalkedToSandire));
+
+        // Lady Heidi (9) tells the fairy story (keywords "Fairies" and "Fairy")
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 9 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Keyword &&
+                (c.KeywordIndex == 24 || c.KeywordIndex == 25),
+            GlobalVar_HeidiToldAboutFairies));
+
+        // Aman (3) asks for the gardener's brooch (keyword "Thing") as long as he didn't get it (12)
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 3 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Keyword && c.KeywordIndex == 6 &&
+                !game.CurrentSavegame!.GetGlobalVariable(12),
+            GlobalVar_AmanAskedForBrooch));
+
+        // Clementine (6) tells about the madman (keyword "Madman") as long as he is not healed (29)
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 6 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Keyword && c.KeywordIndex == 21 &&
+                !game.CurrentSavegame!.GetGlobalVariable(29),
+            GlobalVar_ClementineToldAboutMadman));
+
+        // Talk to Sandra (5) after Sabine was rescued (27). The event is checked before her conversation runs.
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 5 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Talk &&
+                game.CurrentSavegame!.GetGlobalVariable(27),
+            GlobalVar_ToldSandraAboutRescue));
+
+        // Use the yellow sphere at the teleporter machine (map 369). Only text 16 is shown then.
+        customGlobalVariableEvents.Add(new CustomGlobalVariableMapEvent(this, game,
+            (map, @event) => map.Index == 369 && @event is PopupTextEvent p && p.TextIndex == 16,
+            GlobalVar_UsedYellowSphere));
 
         // Give the thief-plague proof to Baron George (NPC 8): the silver hand (266, Nagier killed)
         // or Nagier's letter (267, peace made) -- completes the Thief Plague quest.

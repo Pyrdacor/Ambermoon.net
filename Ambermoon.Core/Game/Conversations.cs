@@ -287,7 +287,13 @@ partial class GameCore
                 itemGrid.PlayMoveAnimation(itemSlot, new Position(215, 75), () => CheckItem(itemSlot), 650);
             }
             itemGrid.ItemClicked += ItemClicked;
-            scriptConversationItemSelector = slotIndex => ItemClicked(itemGrid, slotIndex, CurrentPartyMember.Inventory.Slots[slotIndex]);
+            scriptConversationItemSelector = slotIndex =>
+            {
+                // the item animation needs a visible slot
+                while (!itemGrid.SlotVisible(slotIndex) && itemGrid.Scroll(true))
+                    ;
+                ItemClicked(itemGrid, slotIndex, CurrentPartyMember.Inventory.Slots[slotIndex]);
+            };
         }
 
         void ShowItem()

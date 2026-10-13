@@ -189,6 +189,27 @@ partial class GameCore
     public bool ScriptGetGlobalVariable(uint index) => CurrentSavegame!.GetGlobalVariable(index);
 
     /// <summary>
+    /// Puts all items of the open chest or battle loot into the active party member's inventory.
+    /// Returns the number of item slots which could not be taken or null if no chest is open.
+    /// </summary>
+    public int? ScriptTakeLoot()
+    {
+        if (OpenStorage is not ITreasureStorage storage || CurrentWindow.Window == UI.Window.Conversation)
+            return null;
+
+        int partyMemberSlot = SlotFromPartyMember(CurrentPartyMember!)!.Value;
+        int remaining = 0;
+
+        foreach (var itemSlot in storage.Slots)
+        {
+            if (!itemSlot.Empty && DropItem(partyMemberSlot, null, itemSlot) != 0)
+                ++remaining;
+        }
+
+        return remaining;
+    }
+
+    /// <summary>
     /// Closes the current window (like the exit button). Returns false if only the map is shown.
     /// </summary>
     public bool ScriptCloseWindow()
@@ -271,7 +292,7 @@ partial class GameCore
     {
         var builder = new StringBuilder();
         builder.Append($"Map {Map?.Index}, position {player?.Position.X + 1},{player?.Position.Y + 1}, direction {player?.Direction}");
-        builder.Append($", window {CurrentWindow.Window}, popup {PopupActive}, battle {BattleActive}");
+        builder.Append($", window {CurrentWindow.Window}, popup {PopupActive}, battle {BattleActive}, input {InputEnable}, all input disabled {allInputDisabled}, paused {paused}");
         return builder.ToString();
     }
 }

@@ -74,6 +74,8 @@ internal static class QuestTexts
             { MainQuestType.TowerOfBlackMagic, "Turm der Schwarzmagier" },
             { MainQuestType.ValdynsReturn, "Valdyns Rückkehr" },
             { MainQuestType.AmbermoonPicture, "Ambermoon Gemälde" },
+            { MainQuestType.Madman, "Der Verrückte" },
+            { MainQuestType.BrotherhoodOfTarbos, "Die Bruderschaft von Tarbos" },
             // TODO ...
         } },
         { GameLanguage.English, new()
@@ -95,6 +97,8 @@ internal static class QuestTexts
             { MainQuestType.TowerOfBlackMagic, "The Tower of Black Magic" },
             { MainQuestType.ValdynsReturn, "Valdyn's Return" },
             { MainQuestType.AmbermoonPicture, "Ambermoon Picture" },
+            { MainQuestType.Madman, "The Madman" },
+            { MainQuestType.BrotherhoodOfTarbos, "The Brotherhood of Tarbos" },
             // TODO ...
         } }
         // TODO ...
@@ -164,6 +168,36 @@ internal static class QuestTexts
             { SubQuestType.ChainOfOffice_ReturnIt, "Bring sie zu Freiherr Georg zurück" },
             // Monstereye
             { SubQuestType.Monstereye_BuyIt, "Kaufe Sandire das Monsterauge ab" },
+            // Graveyard
+            { SubQuestType.Graveyard_FindTheGardener, "Finde den Friedhofsgärtner" },
+            { SubQuestType.Graveyard_GetBroochFromGravedigger, "Besorge die Brosche des Gärtners" },
+            { SubQuestType.Graveyard_ReturnBroochToAman, "Bring Aman die Brosche" },
+            // Thief Guild
+            { SubQuestType.ThiefGuild_Enter, "Betritt die Diebesgilde" },
+            { SubQuestType.ThiefGuild_PassTheTest, "Bestehe die Diebesprüfung" },
+            // Madman
+            { SubQuestType.Madman_VisitTheMadman, "Besuche den Verrückten im Keller" },
+            { SubQuestType.Madman_FindTheSecondPartOfTheAmulet, "Finde den zweiten Teil des Amuletts" },
+            { SubQuestType.Madman_UniteTheAmulet, "Lass das Amulett zusammenfügen" },
+            { SubQuestType.Madman_GiveTheAmuletToTheMadman, "Gib dem Verrückten das Amulett" },
+            { SubQuestType.Madman_KillTheMadman, "Töte den Verrückten" },
+            // Sandra's Daughter
+            { SubQuestType.SandrasDaughter_GoToBurnvilleAndFindSabine, "Suche Sabine in Burnville" },
+            { SubQuestType.SandrasDaughter_RescueSabine, "Befreie Sabine aus Luminors Gewalt" },
+            { SubQuestType.SandrasDaughter_ReturnToSandra, "Kehre zu Sandra zurück" },
+            // Tower of Black Magic
+            { SubQuestType.TowerOfBlackMagic_OpenTheTower, "Öffne den Turm mit der Sphäre" },
+            { SubQuestType.TowerOfBlackMagic_FreeThePeopleOfBurnville, "Befreie die Einwohner von Burnville" },
+            { SubQuestType.TowerOfBlackMagic_WeakenLuminor, "Schwäche Luminor mit Eiswasser" },
+            { SubQuestType.TowerOfBlackMagic_DefeatLuminor, "Besiege Luminor" },
+            // Valdyn's Return
+            { SubQuestType.ValdynsReturn_FindAWayHome, "Finde einen Weg, Valdyn heimzubringen" },
+            { SubQuestType.ValdynsReturn_UseTheYellowSphere, "Benutze die gelbe Kugel am Teleporter" },
+            // Ambermoon Picture
+            { SubQuestType.AmbermoonPicture_DeliverThePicture, "Bring das Gemälde zu Baron Karsten" },
+            // Brotherhood of Tarbos
+            { SubQuestType.BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, "Bring den Amberstar zum Tempel" },
+            { SubQuestType.BrotherhoodOfTarbos_DefeatThornahuun, "Besiege Thornahuun" },
             // TODO ...
         } },
         { GameLanguage.English, new()
@@ -226,6 +260,36 @@ internal static class QuestTexts
             { SubQuestType.ChainOfOffice_ReturnIt, "Return it to Baron George" },
             // Monstereye
             { SubQuestType.Monstereye_BuyIt, "Buy the monster eye from Sandire" },
+            // Graveyard
+            { SubQuestType.Graveyard_FindTheGardener, "Find the gardener of the graveyard" },
+            { SubQuestType.Graveyard_GetBroochFromGravedigger, "Get the gardener's brooch" },
+            { SubQuestType.Graveyard_ReturnBroochToAman, "Bring the brooch to Aman" },
+            // Thief Guild
+            { SubQuestType.ThiefGuild_Enter, "Enter the thieves' guild" },
+            { SubQuestType.ThiefGuild_PassTheTest, "Pass the test of thieves" },
+            // Madman
+            { SubQuestType.Madman_VisitTheMadman, "Visit the madman in the cellar" },
+            { SubQuestType.Madman_FindTheSecondPartOfTheAmulet, "Find the second part of the amulet" },
+            { SubQuestType.Madman_UniteTheAmulet, "Have the amulet united" },
+            { SubQuestType.Madman_GiveTheAmuletToTheMadman, "Give the amulet to the madman" },
+            { SubQuestType.Madman_KillTheMadman, "Kill the madman" },
+            // Sandra's Daughter
+            { SubQuestType.SandrasDaughter_GoToBurnvilleAndFindSabine, "Look for Sabine in Burnville" },
+            { SubQuestType.SandrasDaughter_RescueSabine, "Rescue Sabine from Luminor" },
+            { SubQuestType.SandrasDaughter_ReturnToSandra, "Return to Sandra" },
+            // Tower of Black Magic
+            { SubQuestType.TowerOfBlackMagic_OpenTheTower, "Open the tower with the sphere" },
+            { SubQuestType.TowerOfBlackMagic_FreeThePeopleOfBurnville, "Free the people of Burnville" },
+            { SubQuestType.TowerOfBlackMagic_WeakenLuminor, "Weaken Luminor with icewater" },
+            { SubQuestType.TowerOfBlackMagic_DefeatLuminor, "Defeat Luminor" },
+            // Valdyn's Return
+            { SubQuestType.ValdynsReturn_FindAWayHome, "Find a way to bring Valdyn home" },
+            { SubQuestType.ValdynsReturn_UseTheYellowSphere, "Use the yellow sphere at the teleporter" },
+            // Ambermoon Picture
+            { SubQuestType.AmbermoonPicture_DeliverThePicture, "Deliver the picture to Baron Karsten" },
+            // Brotherhood of Tarbos
+            { SubQuestType.BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, "Take the Amberstar to the temple" },
+            { SubQuestType.BrotherhoodOfTarbos_DefeatThornahuun, "Defeat Thornahuun" },
             // TODO ...
         } }
         // TODO ...

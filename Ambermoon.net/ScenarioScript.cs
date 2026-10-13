@@ -31,6 +31,7 @@ namespace Ambermoon;
 ///                             (answers "Do you want to fight?" with yes, default timeout 20000)
 ///   yes                       answer a decision popup with yes (Return key)
 ///   closewindow               close the current window like the exit button (e.g. battle loot)
+///   takeloot                  take all items of the open chest or battle loot (active party member)
 ///   battlebg [index]          print the combat background of the active battle, optionally check it
 ///   talk &lt;npc index&gt;          start a conversation with an NPC (like talking to it on the map)
 ///   say &lt;keyword&gt;             say a keyword (dictionary index or word) in the conversation
@@ -39,8 +40,8 @@ namespace Ambermoon;
 ///   takeitems                 take the items created in the conversation (active party member)
 ///   leave                     leave the conversation (like the exit button)
 ///   talkwait [timeout ms] [quiet ms]
-///                             click through conversation texts and popups (Return) until nothing
-///                             happened for 'quiet ms' (default 1000, timeout default 15000)
+///                             click through conversation texts, window messages and popups (Return)
+///                             until nothing happened for 'quiet ms' (default 1000, timeout default 15000)
 ///   trigger &lt;x&gt; &lt;y&gt; [trigger]  trigger the map events at a 1-based map position
 ///                             (Move, Eye, Hand, Mouth, ..., default Move)
 ///   interact &lt;char&gt; [trigger]  interact with a map character (1-based index, default Mouth),
@@ -65,6 +66,7 @@ sealed class ScenarioScript
     DateTime? battleTimeout = null;
     DateTime? talkTimeout = null;
     int talkQuietTime = 1000;
+    int talkPopupTries = 0;
     DateTime lastPopupTime = DateTime.MinValue;
     int dismissQuietTime = 1500;
     int failures = 0;
@@ -105,9 +107,17 @@ sealed class ScenarioScript
                 }
                 else if (game.PopupActive)
                 {
-                    // Return closes text popups and answers decisions with "yes"
-                    game.OnKeyDown(Key.Return, KeyModifiers.None);
-                    game.OnKeyUp(Key.Return, KeyModifiers.None);
+                    // Return closes most text popups and answers decisions with "yes".
+                    // Some popups (e.g. scrolling map texts) need a click, so both are tried.
+                    if (talkPopupTries++ % 2 == 0)
+                    {
+                        game.OnKeyDown(Key.Return, KeyModifiers.None);
+                        game.OnKeyUp(Key.Return, KeyModifiers.None);
+                    }
+                    else
+                    {
+                        host.Click(host.WindowCenter, false);
+                    }
                     lastPopupTime = DateTime.Now;
                     continueTime = DateTime.Now.AddMilliseconds(300);
                     return;
@@ -117,6 +127,14 @@ sealed class ScenarioScript
                     host.Click(host.WindowCenter, false);
                     lastPopupTime = DateTime.Now;
                     continueTime = DateTime.Now.AddMilliseconds(300);
+                    return;
+                }
+                else if (!game.InputEnable && game.WindowActive)
+                {
+                    // e.g. messages in the chest or battle loot window ("everyone gets x experience")
+                    host.Click(host.WindowCenter, false);
+                    lastPopupTime = DateTime.Now;
+                    continueTime = DateTime.Now.AddMilliseconds(500);
                     return;
                 }
                 else if (!game.InputEnable || (DateTime.Now - lastPopupTime).TotalMilliseconds < talkQuietTime)
@@ -239,6 +257,15 @@ sealed class ScenarioScript
                         if (!game.ScriptCloseWindow())
                             Report(false, $"no window to close ({game.ScriptState()})");
                         break;
+                    case "takeloot":
+                    {
+                        int? remaining = game.ScriptTakeLoot();
+                        if (remaining == null)
+                            Report(false, $"no chest or loot is open ({game.ScriptState()})");
+                        else if (remaining != 0)
+                            Console.WriteLine($"  {remaining} item slots could not be taken");
+                        break;
+                    }
                     case "yes":
                         // Return presses the "yes" button of decision popups
                         game.OnKeyDown(Key.Return, KeyModifiers.None);
