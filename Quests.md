@@ -378,6 +378,56 @@ Tests: `Pets.txt`
 
 Tests: `GoldenArmour.txt`
 
+### The Mystic Creatures (Die mystischen Wesen) — from episode 2
+
+The largest Advanced quest line. The creatures' quests below provide the essences.
+
+1. **Find the wine cellar of Crystal**: the book "Towns of Lyramion" (466, library of Newlake) hints at a sign west
+   of the sighing desert. Done when the entrance is dug up with a shovel (variable 260).
+2. **Find the book of mystic creatures**: in the old paladin guild behind the wine cellar (variable 268).
+3. **Collect the mystic creatures' essences** (x/6): the essences of Isdir, Pyrdacor, Marla, Lugthir, Fargon and
+   Gunbar (438-443) owned or transferred into Kasimir by Sandra (variables 262-267).
+
+Tests: `MysticCreatures.txt`
+
+### Sandra's Brooch (Sandras Brosche) — from episode 2
+
+1. **Return the brooch to Sandra**: the brooch (434) lies in the wine cellar of Crystal (variable 54).
+2. **Transfer the essences into Kasimir** (x/6): Sandra transfers each essence while Kasimir is in the party
+   (variables 262-267). She returns the empowered brooch afterwards.
+
+Tests: `SandrasBrooch.txt`
+
+### The Eyrie (Der Adlerhorst) — from episode 2
+
+1. **Get the eagle key from Pelanis**: after the book of mystic creatures (268) and Sansri's curse (180), keyword
+   "Lugthir" or the book (variable 304).
+2. **Open the eyrie** (door 48).
+3. **Take Lugthir's essence** (event 468:2).
+
+Tests: `Eyrie.txt`
+
+### The Black Mountains (Die Schwarzberge) — from episode 2
+
+1. **Ask Baron Karsten about Pyrdacor** (variable 301).
+2. **Get the key crystal**: after telling him about the paladin guild or showing the book (variable 302).
+3. **Have Lebab charge the crystal**: the fire crystal (426) is owned or used.
+4. **Open the black mountains** with the fire crystal (event 118:3).
+5. **Defeat Pyrdacor**: for the third time, inside the mountains (variable 270).
+
+Tests: `BlackMountains.txt`
+
+### The Desert Temple (Der Wüstentempel) — from episode 2
+
+The sighing desert swallows the party now and then once the book of mystic creatures is read. Advanced checks
+variable 272 ("Marla defeated") there, but no event sets it, so the desert keeps swallowing the party.
+
+1. **Solve the puzzle of the face**: the eyes closed and the mouth open (levers in maps 469 and 474, variable 286).
+2. **Answer the three riddlemouths** (sand, magma or lava, swamp or marsh; events 474:2-4).
+3. **Defeat Marla** (event 474:32).
+
+Tests: `DesertTemple.txt`
+
 ### The Gral Temple (Der Graltempel) — from episode 3
 
 1. **Ask Melvin about his family**: Melvin in Snakesign (keyword "Family"). Done with the legend (variable 310).

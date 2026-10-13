@@ -1,0 +1,86 @@
+# The black mountains (Ambermoon Advanced episode 2, any language): with the book of mystic creatures (268) Baron
+# Karsten (NPC 30) tells about Pyrdacor (keyword 128) and gives the inactive crystal (427) after hearing about the
+# paladin guild. Lebab (NPC 23) turns it into a fire crystal (426) which opens the black mountains (map 118, 38,22).
+# Inside, Pyrdacor is defeated for the third time (variable 270, map 464).
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest BlackMountains_AskBaronKarstenAboutPyrdacor Inactive
+# the book of mystic creatures is from another quest
+setvar 268 1
+# --- Baron Karsten
+goto 427 13 6
+dismissall
+talk 30
+talkwait
+quest BlackMountains_AskBaronKarstenAboutPyrdacor Active
+say 128
+talkwait
+var 301 1
+quest BlackMountains_AskBaronKarstenAboutPyrdacor Completed
+quest BlackMountains_GetTheKeyCrystal Active
+say 138
+talkwait
+takeitems
+talkwait
+var 302 1
+count 427 1
+quest BlackMountains_GetTheKeyCrystal Completed
+quest BlackMountains_HaveLebabChargeTheCrystal Active
+leave
+talkwait
+waitidle 5000
+# --- Lebab
+goto 405 4 9
+dismissall
+talk 23
+talkwait
+giveitem 427
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+count 426 1
+quest BlackMountains_HaveLebabChargeTheCrystal Completed
+quest BlackMountains_OpenTheBlackMountains Active
+# --- the fire crystal opens the mountains
+goto 118 38 23
+dismissall
+trigger 38 22 item:426
+talkwait
+eventbit 118 3 1
+quest BlackMountains_OpenTheBlackMountains Completed
+quest BlackMountains_DefeatPyrdacor Active
+reloadquests
+quest BlackMountains_OpenTheBlackMountains Completed
+quest BlackMountains_DefeatPyrdacor Active
+# --- Pyrdacor waits in the black mountains
+goto 464 20 25
+dismissall
+cheat berserk
+dismissall
+goto 464 17 13
+trigger 17 12 Move
+talkwait 30000
+waitbattle 15000
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
+trigger 17 11 Move
+talkwait
+var 270 1
+quest BlackMountains_DefeatPyrdacor Completed
+mainquest BlackMountains Completed
+reloadquests
+quest BlackMountains_AskBaronKarstenAboutPyrdacor Completed
+quest BlackMountains_GetTheKeyCrystal Completed
+quest BlackMountains_HaveLebabChargeTheCrystal Completed
+quest BlackMountains_OpenTheBlackMountains Completed
+quest BlackMountains_DefeatPyrdacor Completed
+mainquest BlackMountains Completed
+exit

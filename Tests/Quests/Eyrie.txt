@@ -1,0 +1,54 @@
+# The eyrie (Ambermoon Advanced episode 2, any language): with the book of mystic creatures (268) and the curse of
+# Sansri lifted (180) Pelanis (NPC 28) gives the eagle key (463, keyword "Lugthir"). The eyrie (map 71, door 48)
+# holds Lugthir's essence (441, treasure 187 at map 468).
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest Eyrie_GetTheEagleKeyFromPelanis Inactive
+# the book of mystic creatures and Sansri's curse are from other quests
+setvar 180 1
+setvar 268 1
+goto 417 4 10
+dismissall
+talk 28
+talkwait
+quest Eyrie_GetTheEagleKeyFromPelanis Active
+say 141
+talkwait
+takeitems
+talkwait
+var 304 1
+count 463 1
+quest Eyrie_GetTheEagleKeyFromPelanis Completed
+quest Eyrie_OpenTheEyrie Active
+leave
+talkwait
+waitidle 5000
+# --- the door of the eyrie
+goto 71 11 42
+trigger 11 41 Eye
+talkwait
+usekey 463
+talkwait
+# the door leads into the eyrie (map 468)
+dismissall
+quest Eyrie_OpenTheEyrie Completed
+quest Eyrie_TakeLugthirsEssence Active
+# --- Lugthir's essence in the nest
+goto 468 14 4
+trigger 14 3 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 441 1
+eventbit 468 2 1
+quest Eyrie_TakeLugthirsEssence Completed
+mainquest Eyrie Completed
+reloadquests
+quest Eyrie_GetTheEagleKeyFromPelanis Completed
+quest Eyrie_OpenTheEyrie Completed
+quest Eyrie_TakeLugthirsEssence Completed
+mainquest Eyrie Completed
+exit

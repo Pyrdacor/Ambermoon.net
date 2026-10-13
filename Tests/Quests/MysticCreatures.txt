@@ -1,0 +1,56 @@
+# The mystic creatures (Ambermoon Advanced episode 2, any language): the book "Towns of Lyramion" (466, library of
+# Newlake) leads to the wine cellar of Crystal (dug up with a shovel at map 57, 42,47). Behind it lies the old paladin
+# guild with the book "Mystic Creatures" (444, treasure 177 at map 473), which names the six mystic creatures.
+# Their essences (438-443) come from the other Advanced quests.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest MysticCreatures_FindTheWineCellarOfCrystal Inactive
+# --- the book in the library of Newlake
+goto 429 13 5
+trigger 13 4 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 466 1
+quest MysticCreatures_FindTheWineCellarOfCrystal Active
+# --- digging at the sign west of the sighing desert
+cheat give 143 1
+goto 57 42 46
+dismissall
+trigger 42 47 item:143
+talkwait
+var 260 1
+quest MysticCreatures_FindTheWineCellarOfCrystal Completed
+quest MysticCreatures_FindTheBookOfMysticCreatures Active
+# --- the book in the paladin guild
+goto 473 7 21
+cheat berserk
+dismissall
+trigger 7 22 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 444 1
+var 268 1
+quest MysticCreatures_FindTheBookOfMysticCreatures Completed
+quest MysticCreatures_CollectTheEssences Active
+reloadquests
+quest MysticCreatures_CollectTheEssences Active
+# --- the essences (from the quests of the creatures), one already given to Sandra
+cheat give 438 1
+cheat give 439 1
+cheat give 440 1
+cheat give 441 1
+cheat give 442 1
+quest MysticCreatures_CollectTheEssences Active
+setvar 267 1
+cheat give 443 1
+count 443 1
+reloadquests
+quest MysticCreatures_CollectTheEssences Completed
+mainquest MysticCreatures Completed
+exit

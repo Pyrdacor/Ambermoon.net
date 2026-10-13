@@ -41,6 +41,11 @@ public enum MainQuestType
     Pets,
     MysticTower,
     MasterThief,
+    MysticCreatures,
+    SandrasBrooch,
+    Eyrie,
+    BlackMountains,
+    DesertTemple,
 }
 
 public enum SubQuestType
@@ -211,6 +216,27 @@ public enum SubQuestType
     MasterThief_ShowTheCloakToAman, // after solving the barrel riddle
     MasterThief_PassTheTestOfStealth, // after Aman gave his key
     MasterThief_TalkToAman, // after the final switch
+    // The Mystic Creatures (Advanced)
+    MysticCreatures_FindTheWineCellarOfCrystal, // after finding the book "Towns of Lyramion"
+    MysticCreatures_FindTheBookOfMysticCreatures, // after finding the wine cellar
+    MysticCreatures_CollectTheEssences, // after finding the book "Mystic Creatures"
+    // Sandra's Brooch (Advanced)
+    SandrasBrooch_ReturnTheBroochToSandra, // after finding the brooch
+    SandrasBrooch_TransferTheEssencesIntoKasimir, // after Sandra got her brooch
+    // The Eyrie (Advanced)
+    Eyrie_GetTheEagleKeyFromPelanis, // after reading about Lugthir with the curse of Sansri lifted
+    Eyrie_OpenTheEyrie, // after getting the eagle key
+    Eyrie_TakeLugthirsEssence, // after opening the eyrie
+    // The Black Mountains (Advanced)
+    BlackMountains_AskBaronKarstenAboutPyrdacor, // after reading about Pyrdacor
+    BlackMountains_GetTheKeyCrystal, // after Karsten told about Pyrdacor
+    BlackMountains_HaveLebabChargeTheCrystal, // after getting the crystal
+    BlackMountains_OpenTheBlackMountains, // after getting the fire crystal
+    BlackMountains_DefeatPyrdacor, // after opening the mountains
+    // The Desert Temple (Advanced)
+    DesertTemple_SolveTheFacePuzzle, // after reading about Marla
+    DesertTemple_AnswerTheRiddlemouths, // after solving the face puzzle
+    DesertTemple_DefeatMarla, // after answering the riddlemouths
     // Brotherhood of Tarbos
     BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, // after finding the Amberstar
     BrotherhoodOfTarbos_DefeatThornahuun, // after meeting Thornahuun in the coffin hall
@@ -1057,6 +1083,243 @@ partial class QuestLog
                         ],
                         SourceType = QuestSourceType.NPC,
                         SourceIndex = 46, // Morgat
+                    }
+                ));
+                #endregion
+                #region The Mystic Creatures
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.MysticCreatures,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MysticCreatures_FindTheWineCellarOfCrystal,
+                        Triggers =
+                        [
+                            // Activate: the book "Towns of Lyramion" (library of Newlake) tells about Crystal
+                            new ItemObtainedTrigger(game, TriggerType.Activation, 466),
+                            // Complete: dug up the entrance to the wine cellar of Crystal with a shovel
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 260),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 466, // Towns of Lyramion
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MysticCreatures_FindTheBookOfMysticCreatures,
+                        Triggers =
+                        [
+                            // Activate: found the wine cellar (it leads to the old paladin guild)
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 260),
+                            // Complete: found the book "Mystic Creatures" in the paladin guild
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 268),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 466, // Towns of Lyramion
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MysticCreatures_CollectTheEssences,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate: the book names the six mystic creatures
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 268),
+                            // Complete: the essences of Isdir, Pyrdacor, Marla, Lugthir, Fargon and Gunbar are owned or
+                            // were transferred into Kasimir by Sandra
+                            new CountTrigger(game, TriggerType.Completion, [262, 263, 264, 265, 266, 267], [438, 439, 440, 441, 442, 443]),
+                        ],
+                        MinAmount = 6,
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 444, // Mystic Creatures
+                    }
+                ));
+                #endregion
+                #region Sandra's Brooch
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.SandrasBrooch,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.SandrasBrooch_ReturnTheBroochToSandra,
+                        Triggers =
+                        [
+                            // Activate: found Sandra's brooch in the wine cellar of Crystal
+                            new ItemObtainedTrigger(game, TriggerType.Activation, 434),
+                            // Complete: Sandra got her brooch back
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 54),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 5, // Sandra
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.SandrasBrooch_TransferTheEssencesIntoKasimir,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate: Sandra can transfer the essences of the mystic creatures into Kasimir
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 54),
+                            // Complete: all six essences were given to Sandra while Kasimir was in the party
+                            new CountTrigger(game, TriggerType.Completion, [262, 263, 264, 265, 266, 267]),
+                        ],
+                        MinAmount = 6,
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 5, // Sandra
+                    }
+                ));
+                #endregion
+                #region The Eyrie
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.Eyrie,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.Eyrie_GetTheEagleKeyFromPelanis,
+                        Triggers =
+                        [
+                            // Activate: the book of mystic creatures names Lugthir in the eyrie and the curse of Sansri is lifted
+                            new PredicateTrigger(game, TriggerType.Activation, (g, e) => IsGlobalVariableSet(g, e, 268) && IsGlobalVariableSet(g, e, 180)),
+                            // Complete: Pelanis gave the eagle key
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 304),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 28, // Pelanis
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.Eyrie_OpenTheEyrie,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the door of the eyrie was opened with the eagle key
+                            new DoorUnlockedTrigger(game, TriggerType.Completion, 48),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 28, // Pelanis
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.Eyrie_TakeLugthirsEssence,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: took Lugthir's essence from the nest
+                            new EventDisabledTrigger(game, TriggerType.Completion, 468, 2),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 28, // Pelanis
+                    }
+                ));
+                #endregion
+                #region The Black Mountains
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.BlackMountains,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.BlackMountains_AskBaronKarstenAboutPyrdacor,
+                        Triggers =
+                        [
+                            // Activate: the book of mystic creatures names Pyrdacor
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 268),
+                            // Complete: Baron Karsten told about Pyrdacor and the black mountains (or gave the crystal already)
+                            new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 301) || IsGlobalVariableSet(g, e, 302)),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 30, // Baron Karsten
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.BlackMountains_GetTheKeyCrystal,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Karsten gave the inactive crystal (after hearing about the paladin guild or seeing the book)
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 302),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 30, // Baron Karsten
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.BlackMountains_HaveLebabChargeTheCrystal,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Lebab turned it into a fire crystal (owned or used at the mountains)
+                            new PredicateTrigger(game, TriggerType.Completion, (g, e) => g.GetTotalItemCount(426) != 0 || IsEventBitSet(g, e, 118, 3)),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 30, // Baron Karsten
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.BlackMountains_OpenTheBlackMountains,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the fire crystal opened the black mountains
+                            new EventDisabledTrigger(game, TriggerType.Completion, 118, 3),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 30, // Baron Karsten
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.BlackMountains_DefeatPyrdacor,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate: the mountains are open
+                            new EventDisabledTrigger(game, TriggerType.Activation, 118, 3),
+                            // Complete: Pyrdacor was defeated for the third time
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 270),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 30, // Baron Karsten
+                    }
+                ));
+                #endregion
+                #region The Desert Temple
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.DesertTemple,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.DesertTemple_SolveTheFacePuzzle,
+                        Triggers =
+                        [
+                            // Activate: the book of mystic creatures names Marla in the sighing desert (which swallows the party)
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 268),
+                            // Complete: the eyes of the face are closed and its mouth is open
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 286),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 444, // Mystic Creatures
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.DesertTemple_AnswerTheRiddlemouths,
+                        Triggers =
+                        [
+                            // Activate: the passages of peace are reachable
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: all three riddlemouths are answered (sand, magma or lava, swamp or marsh)
+                            new PredicateTrigger(game, TriggerType.Completion, (g, e) =>
+                                IsEventBitSet(g, e, 474, 2) && IsEventBitSet(g, e, 474, 3) && IsEventBitSet(g, e, 474, 4)),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 444, // Mystic Creatures
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.DesertTemple_DefeatMarla,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Marla was defeated
+                            new EventDisabledTrigger(game, TriggerType.Completion, 474, 32),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 444, // Mystic Creatures
                     }
                 ));
                 #endregion
