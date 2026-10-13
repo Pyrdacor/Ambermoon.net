@@ -1018,6 +1018,7 @@ partial class GameCore
 
         void Exit()
         {
+            scriptLockItemUser = null;
             CloseWindow(abortAction);
         }
 
@@ -1062,10 +1063,30 @@ partial class GameCore
 
         itemGrid.ItemClicked += (ItemGrid _, int _, ItemSlot itemSlot) =>
         {
+            scriptLockItemUser = null;
             UntrapMouse();
             nextClickHandler = null;
             layout.ShowChestMessage(null);
             CheckKey(itemSlot, true, true);
+        };
+
+        scriptLockItemUser = itemIndex =>
+        {
+            int slot = Array.FindIndex(CurrentPartyMember.Inventory.Slots, s => !s.Empty && s.ItemIndex == itemIndex);
+
+            if (slot == -1)
+                return false;
+
+            scriptLockItemUser = null;
+            StartUseItems();
+            // the item animation needs a visible slot
+            while (!itemGrid.SlotVisible(slot) && itemGrid.Scroll(true))
+                ;
+            UntrapMouse();
+            nextClickHandler = null;
+            layout.ShowChestMessage(null);
+            CheckKey(CurrentPartyMember.Inventory.Slots[slot], true, true);
+            return true;
         };
 
         void CheckKey(ItemSlot itemSlot, bool showItemsAfterwards, bool removeItemFromCharacter)

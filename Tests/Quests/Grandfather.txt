@@ -1,8 +1,10 @@
-# Grandfather's quest and the golden horseshoes (original game, German or English)
-# Run: Ambermoon.net --version 0 --skip-intro --load 0 --script Tests/Quests/Grandfather.txt --exit-after 180
+# Grandfather's quest and the golden horseshoes, played the normal way (original game and Advanced, any language)
 # Keywords are given by dictionary index so the script works for every language.
 waitidle 20000
 dismissall
+cheat light 3
+cheat give 138 10
+# --- talk to grandfather (map 258)
 talk 1
 talkwait
 say 0
@@ -10,21 +12,27 @@ talkwait
 leave
 talkwait
 waitidle 5000
+quest Grandfather_TalkToGrandfather Completed
 quest Grandfather_GoToWineCellar Active
-cheat light 3
-cheat teleport 260 24 12
-wait 1500
-dismissall
-cheat teleport 260 25 9
-wait 2000
-dismissall
-state
-eventbit 260 13 1
+quest Grandfather_FindHisEquipment Inactive
+# --- the riddlemouth in the wine cellar (map 259), answer "Wine"
+goto 259 10 16
+trigger 10 17 Eye
+# answer waits until the riddle was shown
+answer 1
 talkwait
 dismissall
-state
-quests
+eventbit 259 11 1
+quest Grandfather_GoToWineCellar Completed
+quest Grandfather_FindHisEquipment Active
+# --- the cave-in in the old cave (map 260)
+goto 260 25 8
+talkwait
+dismissall
+eventbit 260 13 1
 quest Grandfather_TellGrandfatherAboutCaveIn Active
+quest Grandfather_FindHisEquipment Blocked
+# --- tell grandfather about the cave-in, he adds the keyword "Tools"
 cheat teleport 258 3 15
 wait 2000
 dismissall
@@ -35,36 +43,124 @@ talkwait
 leave
 talkwait
 waitidle 5000
-quests
 quest Grandfather_TellGrandfatherAboutCaveIn Completed
 quest Grandfather_FindTolimar Active
+# --- Tolimar (map 270) wants his golden horseshoes
 cheat teleport 270 3 22
 wait 2000
 dismissall
-state
 talk 10
 talkwait
 say 3
 talkwait
-quest GoldenHorseshoes_FindHorseshoes Active
-quest Grandfather_FindTolimar Completed
-cheat give 270 4
-talkwait
-quests
-giveitem 270
-talkwait 20000
 leave
 talkwait
 waitidle 5000
+quest Grandfather_FindTolimar Completed
+quest GoldenHorseshoes_FindHorseshoes Active
+quest Grandfather_RemoveCaveIn Blocked
+# --- the four horseshoes from the bandits' chests (maps 274, 275 and 276)
+goto 274 19 5
+trigger 19 5 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+count 270 1
+closewindow
+talkwait
+goto 275 2 9
+trigger 2 9 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+goto 275 9 2
+# the open treasure is shown when arriving on it
+talkwait
+takeloot
+closewindow
+talkwait
+count 270 3
 quests
-count 270
-var 8186 1
+quest GoldenHorseshoes_FindHorseshoes Active
+# Nagier's chest needs his key
+cheat give 279 1
+goto 276 11 23
+trigger 11 23 Eye
+talkwait
+usekey 279
+talkwait
+takeloot
+closewindow
+talkwait
+count 270 4
+quest GoldenHorseshoes_FindHorseshoes Completed
+quest GoldenHorseshoes_ReturnHorseshoes Active
+# --- give them to Tolimar, he gives shovel, pick-axe and crowbar
+cheat teleport 270 3 22
+wait 2000
+dismissall
+talk 10
+talkwait
+giveitem 270
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+count 270 0
+count 142 1
 quest GoldenHorseshoes_ReturnHorseshoes Completed
 quest Grandfather_RemoveCaveIn Active
+# --- remove the cave-in with the pick-axe
+goto 260 26 10
+useitem 142
+talkwait
+dismissall
+var 11 1
+quest Grandfather_RemoveCaveIn Completed
+quest Grandfather_FindHisEquipment Active
+# --- grandfather's old chest (map 261)
+goto 261 11 11
+trigger 11 11 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+quest Grandfather_FindHisEquipment Completed
+quest Grandfather_ReturnToGrandfather Active
+# --- grandfather died, Father Anthony waits in his house
+cheat teleport 258 3 15
+wait 2000
+dismissall
+# Anthony leaves the conversation himself and goes back to the house of healers
+talk 2
+talkwait
+waitidle 5000
+quest Grandfather_ReturnToGrandfather Completed
+quest Grandfather_VisitGrave Active
+# --- grandfather's grave in Spannenberg (map 263)
+goto 263 3 3
+trigger 3 3
+talkwait
+dismissall
+eventbit 263 9 1
+quest Grandfather_VisitGrave Completed
 reloadquests
 log after reload
 quests
+quest Grandfather_GoToWineCellar Completed
+quest Grandfather_FindHisEquipment Completed
+quest Grandfather_TellGrandfatherAboutCaveIn Completed
+quest Grandfather_FindTolimar Completed
+quest Grandfather_RemoveCaveIn Completed
+quest Grandfather_ReturnToGrandfather Completed
+quest Grandfather_VisitGrave Completed
 quest GoldenHorseshoes_FindHorseshoes Completed
 quest GoldenHorseshoes_ReturnHorseshoes Completed
-quest Grandfather_RemoveCaveIn Active
 exit

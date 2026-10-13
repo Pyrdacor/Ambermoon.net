@@ -32,6 +32,10 @@ namespace Ambermoon;
 ///   yes                       answer a decision popup with yes (Return key)
 ///   closewindow               close the current window like the exit button (e.g. battle loot)
 ///   takeloot                  take all items of the open chest or battle loot (active party member)
+///   usekey &lt;item index&gt;       use a key or lockpick (138) on the shown lock of a chest or door
+///   goto &lt;map&gt; &lt;x&gt; &lt;y&gt;        teleport to a 1-based map position or the nearest free position around it
+///                             (facing the target), e.g. to stand next to a chest or monster
+///   answer &lt;word&gt;             answer the shown riddlemouth (dictionary index or word)
 ///   battlebg [index]          print the combat background of the active battle, optionally check it
 ///   talk &lt;npc index&gt;          start a conversation with an NPC (like talking to it on the map)
 ///   say &lt;keyword&gt;             say a keyword (dictionary index or word) in the conversation
@@ -67,12 +71,14 @@ sealed class ScenarioScript
     DateTime? talkTimeout = null;
     int talkQuietTime = 1000;
     int talkPopupTries = 0;
+    (int Line, string Command)? retryCommand = null;
+    DateTime retryTimeout = DateTime.MinValue;
     DateTime lastPopupTime = DateTime.MinValue;
     int dismissQuietTime = 1500;
     int failures = 0;
     int checks = 0;
 
-    public bool Finished => commands.Count == 0 && idleTimeout == null && dismissTimeout == null && battleTimeout == null && talkTimeout == null && DateTime.Now >= continueTime;
+    public bool Finished => commands.Count == 0 && retryCommand == null && idleTimeout == null && dismissTimeout == null && battleTimeout == null && talkTimeout == null && DateTime.Now >= continueTime;
 
     public ScenarioScript(string path)
     {
@@ -93,7 +99,7 @@ sealed class ScenarioScript
     /// </summary>
     public void Update(Game.Game game, IScenarioScriptHost host)
     {
-        while (commands.Count != 0 || dismissTimeout != null || idleTimeout != null || battleTimeout != null || talkTimeout != null)
+        while (commands.Count != 0 || retryCommand != null || dismissTimeout != null || idleTimeout != null || battleTimeout != null || talkTimeout != null)
         {
             if (DateTime.Now < continueTime)
                 return;
@@ -132,7 +138,7 @@ sealed class ScenarioScript
                 else if (!game.InputEnable && game.WindowActive)
                 {
                     // e.g. messages in the chest or battle loot window ("everyone gets x experience")
-                    host.Click(host.WindowCenter, false);
+                    host.Click(host.GameToWindow(new Position(208, 70)), false);
                     lastPopupTime = DateTime.Now;
                     continueTime = DateTime.Now.AddMilliseconds(500);
                     return;
@@ -216,15 +222,18 @@ sealed class ScenarioScript
                 idleTimeout = null;
             }
 
-            if (commands.Count == 0)
+            if (commands.Count == 0 && retryCommand == null)
                 return;
 
-            var (lineNumber, command) = commands.Dequeue();
+            var (lineNumber, command) = retryCommand ?? commands.Dequeue();
+            bool retry = retryCommand != null;
+            retryCommand = null;
             string[] parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             string name = parts[0].ToLowerInvariant();
             string argument = command.Length > parts[0].Length ? command[parts[0].Length..].Trim() : "";
 
-            Console.WriteLine($"[script {lineNumber}] {command}");
+            if (!retry)
+                Console.WriteLine($"[script {lineNumber}] {command}");
 
             try
             {
@@ -255,13 +264,72 @@ sealed class ScenarioScript
                         break;
                     case "closewindow":
                         if (!game.ScriptCloseWindow())
+                        {
+                            // the window might be busy (animations or messages which wait for a click)
+                            if (!retry)
+                                retryTimeout = DateTime.Now.AddMilliseconds(8000);
+                            if (game.WindowActive && DateTime.Now < retryTimeout)
+                            {
+                                if (!game.InputEnable)
+                                    host.Click(host.GameToWindow(new Position(208, 70)), false);
+                                retryCommand = (lineNumber, command);
+                                continueTime = DateTime.Now.AddMilliseconds(300);
+                                return;
+                            }
                             Report(false, $"no window to close ({game.ScriptState()})");
+                        }
+                        break;
+                    case "goto":
+                    {
+                        var position = game.ScriptGoto(uint.Parse(parts[1]), uint.Parse(parts[2]), uint.Parse(parts[3]));
+                        if (position == null)
+                            Report(false, $"goto {parts[1]} {parts[2]} {parts[3]} is not possible");
+                        else
+                            continueTime = DateTime.Now.AddMilliseconds(1500); // map change fade
+                        return;
+                    }
+                    case "answer":
+                    {
+                        string? error = game.ScriptAnswerRiddlemouth(argument);
+                        if (error != null)
+                        {
+                            // the riddle might not be shown yet
+                            if (!retry)
+                                retryTimeout = DateTime.Now.AddMilliseconds(10000);
+                            if (DateTime.Now < retryTimeout)
+                            {
+                                if (game.PopupActive)
+                                    host.Click(host.WindowCenter, false);
+                                retryCommand = (lineNumber, command);
+                                continueTime = DateTime.Now.AddMilliseconds(300);
+                                return;
+                            }
+                        }
+                        ReportError(error);
+                        break;
+                    }
+                    case "usekey":
+                        ReportError(game.ScriptUseKey(uint.Parse(parts[1])));
                         break;
                     case "takeloot":
                     {
                         int? remaining = game.ScriptTakeLoot();
                         if (remaining == null)
+                        {
+                            // the chest might still be opening (e.g. after unlocking it)
+                            if (!retry)
+                                retryTimeout = DateTime.Now.AddMilliseconds(8000);
+                            if (DateTime.Now < retryTimeout)
+                            {
+                                // e.g. "x opened the chest" messages wait for a click
+                                if (!game.InputEnable && game.WindowActive)
+                                    host.Click(host.GameToWindow(new Position(208, 70)), false);
+                                retryCommand = (lineNumber, command);
+                                continueTime = DateTime.Now.AddMilliseconds(200);
+                                return;
+                            }
                             Report(false, $"no chest or loot is open ({game.ScriptState()})");
+                        }
                         else if (remaining != 0)
                             Console.WriteLine($"  {remaining} item slots could not be taken");
                         break;
@@ -426,6 +494,7 @@ sealed class ScenarioScript
 interface IScenarioScriptHost
 {
     Position WindowCenter { get; }
+    Position GameToWindow(Position position);
     void Click(Position position, bool right);
     void Screenshot(string name);
     void Exit();

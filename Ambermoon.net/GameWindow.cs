@@ -645,6 +645,8 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
 
     Position IScenarioScriptHost.WindowCenter => new(window.Size.X / 2, window.Size.Y / 2);
 
+    Position IScenarioScriptHost.GameToWindow(Position position) => renderView.GameToScreen(position);
+
     void IScenarioScriptHost.Click(Position position, bool right)
     {
         var button = right ? MouseButtons.Right : MouseButtons.Left;

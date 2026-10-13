@@ -1,0 +1,66 @@
+# Grandfather's quest: shortcuts (original game and Advanced, any language)
+# A) The horseshoes are found and given to Tolimar before anybody asked for them.
+# B) The cave-in is removed with a pick-axe from somewhere else (e.g. the thieves' guild).
+waitidle 20000
+dismissall
+cheat light 3
+cheat give 138 10
+talk 1
+talkwait
+say 0
+talkwait
+leave
+talkwait
+waitidle 5000
+# --- A) collect the horseshoes first
+goto 274 19 5
+trigger 19 5 Eye
+talkwait
+usekey 138
+takeloot
+closewindow
+talkwait
+quest GoldenHorseshoes_FindHorseshoes Inactive
+goto 275 2 9
+trigger 2 9 Eye
+talkwait
+usekey 138
+takeloot
+closewindow
+talkwait
+goto 275 9 2
+takeloot
+closewindow
+talkwait
+cheat give 279 1
+goto 276 11 23
+trigger 11 23 Eye
+talkwait
+usekey 279
+takeloot
+closewindow
+talkwait
+count 270 4
+# completed although nobody asked for them yet
+quest GoldenHorseshoes_FindHorseshoes Completed
+quest GoldenHorseshoes_ReturnHorseshoes Active
+# give them to Tolimar without asking about tools
+cheat teleport 270 3 22
+wait 2000
+dismissall
+talk 10
+talkwait
+giveitem 270
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+quest GoldenHorseshoes_ReturnHorseshoes Completed
+quest Grandfather_FindTolimar Completed
+quest Grandfather_TellGrandfatherAboutCaveIn Inactive
+reloadquests
+quest GoldenHorseshoes_FindHorseshoes Completed
+quest GoldenHorseshoes_ReturnHorseshoes Completed
+quest Grandfather_FindTolimar Completed
+exit

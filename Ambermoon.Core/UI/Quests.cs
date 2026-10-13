@@ -705,6 +705,13 @@ partial class QuestLog
             return (_) => Quests.First(q => q.Type == mainQuest).SubQuests.First(q => q.Type == otherQuest).State = QuestState.Completed;
         }
 
+        // Only completes quests which are already active (or blocked), inactive ones stay hidden.
+        Action<SubQuest> CompleteOtherActiveQuests(MainQuestType mainQuest, params SubQuestType[] otherQuests)
+        {
+            var lookup = new HashSet<SubQuestType>(otherQuests);
+            return (_) => Quests.First(q => q.Type == mainQuest).SubQuests.Where(q => lookup.Contains(q.Type) && q.State != QuestState.Inactive).ToList().ForEach(q => q.State = QuestState.Completed);
+        }
+
         Action<SubQuest> CompleteOtherQuests(MainQuestType mainQuest, params SubQuestType[] otherQuests)
         {
             var lookup = new HashSet<SubQuestType>(otherQuests);
@@ -985,7 +992,9 @@ partial class QuestLog
                     [
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
-                        // No completion, SubQuestType.GoldenHorseshoes_FindHorseshoes will manually complete this
+                        // Complete: Tolimar told about the horseshoes or got them already (without asking for tools)
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) =>
+                            IsGlobalVariableSet(g, e, GlobalVar_TolimarQuestStarted) || IsGlobalVariableSet(g, e, GlobalVar_ReturnedHorseshoesToTolimar)),
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 1, // Grandfather
@@ -1130,7 +1139,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.GoldenHorseshoes_FindHorseshoes,
-                    PostActivationAction = CompleteOtherQuests(MainQuestType.Grandfather, SubQuestType.Grandfather_TellGrandfatherAboutCaveIn, SubQuestType.Grandfather_FindTolimar),
+                    PostActivationAction = CompleteOtherActiveQuests(MainQuestType.Grandfather, SubQuestType.Grandfather_TellGrandfatherAboutCaveIn, SubQuestType.Grandfather_FindTolimar),
                     Triggers =
                     [
                         // Activate
@@ -1147,7 +1156,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.GoldenHorseshoes_ReturnHorseshoes,
-                    PostActivationAction = CompleteOtherQuests(MainQuestType.Grandfather, SubQuestType.Grandfather_TellGrandfatherAboutCaveIn, SubQuestType.Grandfather_FindTolimar),
+                    PostActivationAction = CompleteOtherActiveQuests(MainQuestType.Grandfather, SubQuestType.Grandfather_TellGrandfatherAboutCaveIn, SubQuestType.Grandfather_FindTolimar),
                     Triggers =
                     [
                         // Activate

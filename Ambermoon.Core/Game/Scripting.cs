@@ -14,6 +14,8 @@ partial class GameCore
     sealed record ScriptConversationActions(Action<string> SayWord, Action ShowItem, Action GiveItem, Action Leave, Action TakeItems);
 
     ScriptConversationActions? scriptConversation;
+    Func<uint, bool>? scriptLockItemUser;
+    Action<string>? scriptRiddlemouthAnswer;
     Action<int>? scriptConversationItemSelector;
 
     public bool ScriptConversationActive => scriptConversation != null && CurrentWindow.Window == UI.Window.Conversation;
@@ -189,6 +191,80 @@ partial class GameCore
     public bool ScriptGetGlobalVariable(uint index) => CurrentSavegame!.GetGlobalVariable(index);
 
     /// <summary>
+    /// Teleports to the given 1-based map position or the nearest free position around it
+    /// (e.g. next to a chest). The party faces the target position. Returns the reached
+    /// position or null if no position was possible.
+    /// </summary>
+    public Position? ScriptGoto(uint mapIndex, uint x, uint y)
+    {
+        var map = MapManager.GetMap(mapIndex);
+
+        if (map == null)
+            return null;
+
+        for (int radius = 0; radius <= 3; ++radius)
+        {
+            for (int dy = -radius; dy <= radius; ++dy)
+            {
+                for (int dx = -radius; dx <= radius; ++dx)
+                {
+                    if (Math.Max(Math.Abs(dx), Math.Abs(dy)) != radius)
+                        continue;
+
+                    int tx = (int)x + dx;
+                    int ty = (int)y + dy;
+
+                    if (tx < 1 || ty < 1 || tx > map.Width || ty > map.Height)
+                        continue;
+
+                    // face the target
+                    var direction = Math.Abs(dx) >= Math.Abs(dy)
+                        ? (dx > 0 ? CharacterDirection.Left : CharacterDirection.Right)
+                        : (dy > 0 ? CharacterDirection.Up : CharacterDirection.Down);
+
+                    if (radius == 0)
+                        direction = CharacterDirection.Up;
+
+                    if (Teleport(mapIndex, (uint)tx, (uint)ty, direction, out _, false, true))
+                        return new Position(tx, ty);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Says a word (dictionary index or word) to the shown riddlemouth.
+    /// </summary>
+    public string? ScriptAnswerRiddlemouth(string answer)
+    {
+        if (scriptRiddlemouthAnswer == null || CurrentWindow.Window != UI.Window.Riddlemouth || PopupActive)
+            return "no riddlemouth is waiting for an answer";
+
+        if (uint.TryParse(answer, out uint index))
+            answer = textDictionary.Entries[(int)index];
+
+        scriptRiddlemouthAnswer(answer);
+
+        return null;
+    }
+
+    /// <summary>
+    /// Uses an item (key or lockpick) of the active party member on the shown lock of a chest or door.
+    /// </summary>
+    public string? ScriptUseKey(uint itemIndex)
+    {
+        if (scriptLockItemUser == null || (CurrentWindow.Window != UI.Window.Chest && CurrentWindow.Window != UI.Window.Door))
+            return "no lock is shown";
+
+        if (!scriptLockItemUser(itemIndex))
+            return $"the active party member has no item {itemIndex}";
+
+        return null;
+    }
+
+    /// <summary>
     /// Puts all items of the open chest or battle loot into the active party member's inventory.
     /// Returns the number of item slots which could not be taken or null if no chest is open.
     /// </summary>
@@ -214,7 +290,8 @@ partial class GameCore
     /// </summary>
     public bool ScriptCloseWindow()
     {
-        if (!WindowActive || PopupActive)
+        // closing a window while it is still busy (animations, messages) breaks the input state
+        if (!WindowActive || PopupActive || !InputEnable)
             return false;
 
         CloseWindow();
