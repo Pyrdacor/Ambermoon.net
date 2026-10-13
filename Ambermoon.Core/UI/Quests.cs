@@ -47,6 +47,9 @@ public enum MainQuestType
     BlackMountains,
     DesertTemple,
     PaladinGuild,
+    SeaCreatures,
+    ManyeyesCastle,
+    Gatekeepers,
 }
 
 public enum SubQuestType
@@ -246,6 +249,21 @@ public enum SubQuestType
     PaladinGuild_OpenTheExitOfTheGuild, // after defeating the paladin master
     PaladinGuild_TakeGunbarsEssence, // after finding the book of mystic creatures
     PaladinGuild_FindFargonsEssence, // after finding the book of mystic creatures
+    // The Sea Creatures (Advanced)
+    SeaCreatures_AskCaptainTorle, // after Michael told about Torle
+    SeaCreatures_FindTheSeaCreatures, // after getting Torle's logbook
+    SeaCreatures_VisitTheMermaid, // after finding the creatures
+    SeaCreatures_EnterTheEyeOfTheVortex, // after the mermaid opened the vortex
+    // Manyeyes' Castle (Advanced)
+    ManyeyesCastle_OpenTristansOffice, // after Tristan gave his office key
+    ManyeyesCastle_OpenTheCastle, // after opening the office
+    ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor, // after opening the castle
+    ManyeyesCastle_BanishManyeyesCurse, // after defeating the guardian or falling into the cellar
+    // The Gatekeepers of Cavetown (Advanced)
+    Gatekeepers_BringJeffABlindBrandy, // after meeting Jeff
+    Gatekeepers_FindLukesTreasureMap, // after meeting Luke
+    Gatekeepers_GiveTheTreasureMapToLuke, // after finding the treasure map
+    Gatekeepers_OpenThePassageForShips, // after getting both keys
     // Brotherhood of Tarbos
     BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, // after finding the Amberstar
     BrotherhoodOfTarbos_DefeatThornahuun, // after meeting Thornahuun in the coffin hall
@@ -1053,6 +1071,184 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 40, // Ferdinand
+                }
+            ));
+            #endregion
+
+            #region The Sea Creatures
+            quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.SeaCreatures,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SeaCreatures_AskCaptainTorle,
+                    Triggers =
+                    [
+                        // Activate: Michael told that captain Torle knows about creatures of the sea (keyword)
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 121),
+                        // Complete: Torle gave his logbook with the places of the creatures
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 238),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 19, // Michael
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SeaCreatures_FindTheSeaCreatures,
+                    Triggers =
+                    [
+                        // Activate
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 238),
+                        // Complete: the five creatures from the logbook were seen at their coordinates
+                        new CountTrigger(game, TriggerType.Completion, [239, 240, 242, 243, 244]),
+                    ],
+                    MinAmount = 5,
+                    SourceType = QuestSourceType.Item,
+                    SourceIndex = 408, // Torle's logbook
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SeaCreatures_VisitTheMermaid,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: the mermaid took the party into her grotto
+                        new EventDisabledTrigger(game, TriggerType.Completion, 163, 1),
+                    ],
+                    SourceType = QuestSourceType.Item,
+                    SourceIndex = 408, // Torle's logbook
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SeaCreatures_EnterTheEyeOfTheVortex,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: sailed into the eye of the vortex which the mermaid opened
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 241),
+                    ],
+                    SourceType = QuestSourceType.Item,
+                    SourceIndex = 408, // Torle's logbook
+                }
+            ));
+            #endregion
+
+            #region Manyeyes' Castle
+            quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.ManyeyesCastle,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.ManyeyesCastle_OpenTristansOffice,
+                    Triggers =
+                    [
+                        // Activate: Tristan in Cavetown gave the key of his office in Manyeyes' castle
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 245),
+                        // Complete: the office door was unlocked
+                        new DoorUnlockedTrigger(game, TriggerType.Completion, 39),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 41, // Tristan
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.ManyeyesCastle_OpenTheCastle,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: the switch in the office unlocked the door to the castle
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 246),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 41, // Tristan
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: the boss on the upper floor was defeated
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 247),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 41, // Tristan
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.ManyeyesCastle_BanishManyeyesCurse,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate: fell through the roof into the cellar or defeated the upper boss
+                        new PredicateTrigger(game, TriggerType.Activation, (g, e) => IsGlobalVariableSet(g, e, 247) || IsGlobalVariableSet(g, e, 248)),
+                        // Complete: the monsters of the cellar are defeated and the curse is banished
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 249),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 41, // Tristan
+                }
+            ));
+            #endregion
+            #region The Gatekeepers of Cavetown
+            quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.Gatekeepers,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Gatekeepers_BringJeffABlindBrandy,
+                    Triggers =
+                    [
+                        // Activate: Jeff, a gatekeeper of Cavetown, told about the passage for ships (or found the brandy)
+                        new OrTrigger<GlobalVariableTrigger, ItemObtainedTrigger>(game, TriggerType.Activation,
+                            (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_TalkedToJeff),
+                            (g, t) => new ItemObtainedTrigger(g, t, 409)),
+                        // Complete: Jeff got the blind brandy and gave his gatekeeper key
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 250),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 43, // Jeff
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Gatekeepers_FindLukesTreasureMap,
+                    Triggers =
+                    [
+                        // Activate: Luke, the deputy gatekeeper, told about the treasure (or the map was found)
+                        new OrTrigger<GlobalVariableTrigger, ItemObtainedTrigger>(game, TriggerType.Activation,
+                            (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_TalkedToLuke),
+                            (g, t) => new ItemObtainedTrigger(g, t, 410)),
+                        // Complete: dug up the old treasure map in the eye of the vortex (or Luke got it already)
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => g.GetTotalItemCount(410) != 0 || IsGlobalVariableSet(g, e, 251)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 44, // Luke
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Gatekeepers_GiveTheTreasureMapToLuke,
+                    Triggers =
+                    [
+                        // Activate: found the treasure map
+                        new ItemObtainedTrigger(game, TriggerType.Activation, 410),
+                        // Complete: Luke got the map and dropped his gatekeeper key
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 251),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 44, // Luke
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Gatekeepers_OpenThePassageForShips,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate: both gatekeeper keys were given
+                        new PredicateTrigger(game, TriggerType.Activation, (g, e) => IsGlobalVariableSet(g, e, 250) && IsGlobalVariableSet(g, e, 251)),
+                        // Complete: the pressure plate in the gatekeepers' house opened the passage through the rocks
+                        new EventDisabledTrigger(game, TriggerType.Completion, 376, 11),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 43, // Jeff
                 }
             ));
             #endregion

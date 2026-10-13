@@ -103,6 +103,8 @@ partial class QuestLog
     const uint GlobalVar_LeftForestMoon = 8177u;
     const uint GlobalVar_PelanisToldAboutSansri = 8176u;
     const uint GlobalVar_MorgatMadeGoldenArmour = 8175u;
+    const uint GlobalVar_TalkedToJeff = 8174u;
+    const uint GlobalVar_TalkedToLuke = 8173u;
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 
@@ -177,6 +179,16 @@ partial class QuestLog
                 c.Interaction == ConversationEvent.InteractionType.GiveItem && (c.ItemIndex == 430 || c.ItemIndex == 170) &&
                 game.GetTotalItemCount(430) >= 7 && game.GetTotalItemCount(170) != 0,
             GlobalVar_MorgatMadeGoldenArmour));
+
+        // Jeff (43, Advanced), a gatekeeper of Cavetown, tells about the passage for ships when you talk to him
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 43 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Talk,
+            GlobalVar_TalkedToJeff));
+
+        // Luke (44, Advanced), the deputy gatekeeper of Cavetown, tells about a treasure when you talk to him
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 44 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Talk,
+            GlobalVar_TalkedToLuke));
 
         // Aman (3) asks for the gardener's brooch (keyword "Thing") as long as he didn't get it (12)
         customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,

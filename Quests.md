@@ -45,6 +45,8 @@ variable). For those the quest log sets otherwise unused global variables itself
 | 8177 | The airship on the forest moon flies away with a navstone |
 | 8176 | Pelanis tells about Sansri (keywords "Curse" and "Concerns") |
 | 8175 | Morgat makes the golden armour (Advanced) |
+| 8174 | Jeff, a gatekeeper of Cavetown, is talked to (Advanced) |
+| 8173 | Luke, the deputy gatekeeper of Cavetown, is talked to (Advanced) |
 
 Old savegames which already passed such an event can't know about it. The affected steps then wait for the
 next persistent change (e.g. a later step).
@@ -369,6 +371,34 @@ Tests: `YourHouse.txt`
 6. **Return to Ferdinand**: his finest silver (variable 234).
 
 Tests: `Pets.txt`
+
+### The Sea Creatures (Die Kreaturen der See) — from episode 1
+
+1. **Ask captain Torle about the creatures**: Michael (keyword "Map", then "Creatures of the sea") sends the party to
+   Torle, who gives his logbook (variable 238).
+2. **Find the creatures from Torle's logbook** (x/5): variables 239, 240, 242, 243 and 244 at sea.
+3. **Visit the mermaid**: she takes the party into her grotto (event 163:1) and opens the vortex.
+4. **Sail into the eye of the vortex** (variable 241).
+
+Tests: `SeaCreatures.txt`
+
+### Manyeyes' Castle (Vielauges Schloss) — from episode 1
+
+1. **Open Tristan's office**: Tristan in the inn of Cavetown gives the office key (variable 245), door 39.
+2. **Open the door to the castle**: the switch in the office (variable 246).
+3. **Defeat the guardian of the upper floor** (variable 247).
+4. **Banish Manyeyes' curse**: the monsters of the cellar are defeated, then the wall is touched (variable 249).
+
+Tests: `ManyeyesCastle.txt`
+
+### The Gatekeepers of Cavetown (Die Pförtner von Cavetown) — from episode 1
+
+1. **Bring Jeff a blind brandy**: after talking to Jeff (8174) or buying the brandy (409). Done with his key (250).
+2. **Find Luke's treasure map**: after talking to Luke (8173), dug up in the eye of the vortex (410).
+3. **Give the treasure map to Luke**: he drops the second key (variable 251).
+4. **Open the passage for ships**: the pressure plate behind both doors of the gatekeepers' house (event 376:11).
+
+Tests: `Gatekeepers.txt`
 
 ### The Golden Armour (Die goldene Rüstung) — from episode 2
 

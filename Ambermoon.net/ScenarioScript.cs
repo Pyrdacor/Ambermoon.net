@@ -37,7 +37,8 @@ namespace Ambermoon;
 ///                             party member), with "optional" it is no failure if nothing is open
 ///   usekey &lt;item index&gt;       use a key or lockpick (138) on the shown lock of a chest or door
 ///   goto &lt;map&gt; &lt;x&gt; &lt;y&gt;        teleport to a 1-based map position or the nearest free position around it
-///                             (facing the target), e.g. to stand next to a chest or monster
+///                             (facing the target), e.g. to stand next to a chest or monster. Without a free
+///                             position around it (e.g. on the sea) the party is placed onto the target.
 ///   answer &lt;word&gt;             answer the shown riddlemouth or say a word in the shown dictionary
 ///                             (dictionary index or word), e.g. after "trigger x y Mouth"
 ///   battlebg [index]          print the combat background of the active battle, optionally check it

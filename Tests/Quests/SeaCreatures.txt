@@ -1,0 +1,104 @@
+# The sea creatures (Ambermoon Advanced episode 1, any language): Michael (NPC 19) sends the party to captain Torle
+# (NPC 11, keyword "Creatures of the sea") who gives his logbook (408). The five creatures are met at sea (maps 139,
+# 112, 244, 77, 135), then the mermaid (map 163, 26,30) opens the way into the eye of the vortex (map 370).
+waitidle 20000
+dismissall
+cheat netsrak
+quest SeaCreatures_AskCaptainTorle Inactive
+# --- Michael
+goto 287 6 13
+dismissall
+talk 19
+talkwait
+# first Michael gives a map, then he tells about captain Torle
+say 120
+talkwait
+takeitems
+talkwait
+say 120
+talkwait
+leave
+talkwait
+waitidle 5000
+quest SeaCreatures_AskCaptainTorle Active
+# --- captain Torle
+goto 271 20 19
+dismissall
+talk 11
+talkwait
+say 121
+talkwait
+takeitems
+talkwait
+var 238 1
+count 408 1
+quest SeaCreatures_AskCaptainTorle Completed
+quest SeaCreatures_FindTheSeaCreatures Active
+leave
+talkwait
+waitidle 5000
+# --- the creatures at the coordinates of the logbook (sailing there)
+goto 139 50 2
+dismissall
+trigger 50 2 Move
+talkwait 20000
+dismissall
+var 239 1
+goto 112 23 13
+dismissall
+trigger 23 13 Move
+talkwait 20000
+dismissall
+var 240 1
+goto 244 23 23
+dismissall
+trigger 23 23 Move
+talkwait 20000
+dismissall
+var 242 1
+goto 77 21 5
+dismissall
+trigger 21 5 Move
+talkwait 20000
+dismissall
+var 243 1
+quest SeaCreatures_FindTheSeaCreatures Active
+goto 135 11 46
+dismissall
+trigger 11 46 Move
+talkwait 20000
+dismissall
+var 244 1
+quest SeaCreatures_FindTheSeaCreatures Completed
+quest SeaCreatures_VisitTheMermaid Active
+reloadquests
+quest SeaCreatures_FindTheSeaCreatures Completed
+quest SeaCreatures_VisitTheMermaid Active
+# --- the mermaid takes the party into her grotto and opens the vortex
+goto 163 26 30
+dismissall
+trigger 26 30 Move
+talkwait
+dismissall
+eventbit 163 1 1
+quest SeaCreatures_VisitTheMermaid Completed
+quest SeaCreatures_EnterTheEyeOfTheVortex Active
+goto 371 6 5
+trigger 6 4 Eye
+talkwait
+dismissall
+eventbit 22 6 0
+# --- the eye of the vortex
+goto 370 9 2
+talkwait
+dismissall
+var 241 1
+quest SeaCreatures_EnterTheEyeOfTheVortex Completed
+mainquest SeaCreatures Completed
+reloadquests
+quest SeaCreatures_AskCaptainTorle Completed
+quest SeaCreatures_FindTheSeaCreatures Completed
+quest SeaCreatures_VisitTheMermaid Completed
+quest SeaCreatures_EnterTheEyeOfTheVortex Completed
+mainquest SeaCreatures Completed
+exit

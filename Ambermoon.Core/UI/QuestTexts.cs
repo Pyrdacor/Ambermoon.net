@@ -132,6 +132,9 @@ internal static class QuestTexts
             { MainQuestType.BlackMountains, "Die Schwarzberge" },
             { MainQuestType.DesertTemple, "Der Wüstentempel" },
             { MainQuestType.PaladinGuild, "Die Paladingilde von Crystal" },
+            { MainQuestType.SeaCreatures, "Die Kreaturen der See" },
+            { MainQuestType.ManyeyesCastle, "Vielauges Schloss" },
+            { MainQuestType.Gatekeepers, "Die Pförtner von Cavetown" },
         } },
         { GameLanguage.English, new()
         {
@@ -174,6 +177,9 @@ internal static class QuestTexts
             { MainQuestType.BlackMountains, "The Black Mountains" },
             { MainQuestType.DesertTemple, "The Desert Temple" },
             { MainQuestType.PaladinGuild, "The Paladin Guild of Crystal" },
+            { MainQuestType.SeaCreatures, "The Sea Creatures" },
+            { MainQuestType.ManyeyesCastle, "Manyeyes' Castle" },
+            { MainQuestType.Gatekeepers, "The Gatekeepers of Cavetown" },
         } },
         { GameLanguage.French, new()
         {
@@ -216,6 +222,9 @@ internal static class QuestTexts
             { MainQuestType.BlackMountains, "Les montagnes noires" },
             { MainQuestType.DesertTemple, "Le temple du désert" },
             { MainQuestType.PaladinGuild, "La guilde des paladins de Crystal" },
+            { MainQuestType.SeaCreatures, "Les créatures marines" },
+            { MainQuestType.ManyeyesCastle, "Le château de Mille-Yeux" },
+            { MainQuestType.Gatekeepers, "Les portiers de Cavetown" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -258,6 +267,9 @@ internal static class QuestTexts
             { MainQuestType.BlackMountains, "Czarne góry" },
             { MainQuestType.DesertTemple, "Pustynna świątynia" },
             { MainQuestType.PaladinGuild, "Gildia paladynów z Crystal" },
+            { MainQuestType.SeaCreatures, "Morskie stworzenia" },
+            { MainQuestType.ManyeyesCastle, "Zamek Wielookiego" },
+            { MainQuestType.Gatekeepers, "Odźwierni z Cavetown" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -300,6 +312,9 @@ internal static class QuestTexts
             { MainQuestType.BlackMountains, "Černé hory" },
             { MainQuestType.DesertTemple, "Pouštní chrám" },
             { MainQuestType.PaladinGuild, "Cech paladinů z Crystalu" },
+            { MainQuestType.SeaCreatures, "Mořští tvorové" },
+            { MainQuestType.ManyeyesCastle, "Hrad Mnohookého" },
+            { MainQuestType.Gatekeepers, "Vrátní z Cavetownu" },
         } },
     };
 
@@ -489,6 +504,18 @@ internal static class QuestTexts
             { SubQuestType.PaladinGuild_OpenTheExitOfTheGuild, "Öffne den Ausgang der Gilde" },
             { SubQuestType.PaladinGuild_TakeGunbarsEssence, "Nimm Gunbars Essenz an dich" },
             { SubQuestType.PaladinGuild_FindFargonsEssence, "Finde Fargons Essenz" },
+            { SubQuestType.SeaCreatures_AskCaptainTorle, "Frag Kapitän Torle nach den Kreaturen" },
+            { SubQuestType.SeaCreatures_FindTheSeaCreatures, "Finde die Kreaturen aus Torles Logbuch" },
+            { SubQuestType.SeaCreatures_VisitTheMermaid, "Besuche die Meerjungfrau" },
+            { SubQuestType.SeaCreatures_EnterTheEyeOfTheVortex, "Segle in das Auge des Strudels" },
+            { SubQuestType.ManyeyesCastle_OpenTristansOffice, "Öffne Tristans Büro" },
+            { SubQuestType.ManyeyesCastle_OpenTheCastle, "Öffne die Tür zum Schloss" },
+            { SubQuestType.ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor, "Besiege den Wächter im Obergeschoss" },
+            { SubQuestType.ManyeyesCastle_BanishManyeyesCurse, "Banne Vielauges Fluch" },
+            { SubQuestType.Gatekeepers_BringJeffABlindBrandy, "Bring Jeff einen Blind-Branntwein" },
+            { SubQuestType.Gatekeepers_FindLukesTreasureMap, "Finde Lukes Schatzkarte" },
+            { SubQuestType.Gatekeepers_GiveTheTreasureMapToLuke, "Gib Luke die Schatzkarte" },
+            { SubQuestType.Gatekeepers_OpenThePassageForShips, "Öffne die Passage für Schiffe" },
         } },
         { GameLanguage.English, new()
         {
@@ -672,6 +699,18 @@ internal static class QuestTexts
             { SubQuestType.PaladinGuild_OpenTheExitOfTheGuild, "Open the exit of the guild" },
             { SubQuestType.PaladinGuild_TakeGunbarsEssence, "Take Gunbar's essence" },
             { SubQuestType.PaladinGuild_FindFargonsEssence, "Find Fargon's essence" },
+            { SubQuestType.SeaCreatures_AskCaptainTorle, "Ask captain Torle about the creatures" },
+            { SubQuestType.SeaCreatures_FindTheSeaCreatures, "Find the creatures from Torle's logbook" },
+            { SubQuestType.SeaCreatures_VisitTheMermaid, "Visit the mermaid" },
+            { SubQuestType.SeaCreatures_EnterTheEyeOfTheVortex, "Sail into the eye of the vortex" },
+            { SubQuestType.ManyeyesCastle_OpenTristansOffice, "Open Tristan's office" },
+            { SubQuestType.ManyeyesCastle_OpenTheCastle, "Open the door to the castle" },
+            { SubQuestType.ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor, "Defeat the guardian of the upper floor" },
+            { SubQuestType.ManyeyesCastle_BanishManyeyesCurse, "Banish Manyeyes' curse" },
+            { SubQuestType.Gatekeepers_BringJeffABlindBrandy, "Bring Jeff a blind brandy" },
+            { SubQuestType.Gatekeepers_FindLukesTreasureMap, "Find Luke's treasure map" },
+            { SubQuestType.Gatekeepers_GiveTheTreasureMapToLuke, "Give the treasure map to Luke" },
+            { SubQuestType.Gatekeepers_OpenThePassageForShips, "Open the passage for ships" },
         } },
         { GameLanguage.French, new()
         {
@@ -836,6 +875,18 @@ internal static class QuestTexts
             { SubQuestType.PaladinGuild_OpenTheExitOfTheGuild, "Ouvre la sortie de la guilde" },
             { SubQuestType.PaladinGuild_TakeGunbarsEssence, "Prends l'essence de Gunbar" },
             { SubQuestType.PaladinGuild_FindFargonsEssence, "Trouve l'essence de Fargon" },
+            { SubQuestType.SeaCreatures_AskCaptainTorle, "Interroge le capitaine Torle" },
+            { SubQuestType.SeaCreatures_FindTheSeaCreatures, "Trouve les créatures du journal de Torle" },
+            { SubQuestType.SeaCreatures_VisitTheMermaid, "Rends visite à la sirène" },
+            { SubQuestType.SeaCreatures_EnterTheEyeOfTheVortex, "Navigue dans l'œil du tourbillon" },
+            { SubQuestType.ManyeyesCastle_OpenTristansOffice, "Ouvre le bureau de Tristan" },
+            { SubQuestType.ManyeyesCastle_OpenTheCastle, "Ouvre la porte du château" },
+            { SubQuestType.ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor, "Vaincs le gardien de l'étage" },
+            { SubQuestType.ManyeyesCastle_BanishManyeyesCurse, "Bannis la malédiction de Mille-Yeux" },
+            { SubQuestType.Gatekeepers_BringJeffABlindBrandy, "Apporte une eau-de-vie à Jeff" },
+            { SubQuestType.Gatekeepers_FindLukesTreasureMap, "Trouve la carte au trésor de Luke" },
+            { SubQuestType.Gatekeepers_GiveTheTreasureMapToLuke, "Donne la carte au trésor à Luke" },
+            { SubQuestType.Gatekeepers_OpenThePassageForShips, "Ouvre le passage pour les navires" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -1000,6 +1051,18 @@ internal static class QuestTexts
             { SubQuestType.PaladinGuild_OpenTheExitOfTheGuild, "Otwórz wyjście z gildii" },
             { SubQuestType.PaladinGuild_TakeGunbarsEssence, "Zabierz esencję Gunbara" },
             { SubQuestType.PaladinGuild_FindFargonsEssence, "Znajdź esencję Fargona" },
+            { SubQuestType.SeaCreatures_AskCaptainTorle, "Zapytaj kapitana Torle o stworzenia" },
+            { SubQuestType.SeaCreatures_FindTheSeaCreatures, "Znajdź stworzenia z dziennika Torle" },
+            { SubQuestType.SeaCreatures_VisitTheMermaid, "Odwiedź syrenę" },
+            { SubQuestType.SeaCreatures_EnterTheEyeOfTheVortex, "Wpłyń w oko wiru" },
+            { SubQuestType.ManyeyesCastle_OpenTristansOffice, "Otwórz biuro Tristana" },
+            { SubQuestType.ManyeyesCastle_OpenTheCastle, "Otwórz drzwi do zamku" },
+            { SubQuestType.ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor, "Pokonaj strażnika górnego piętra" },
+            { SubQuestType.ManyeyesCastle_BanishManyeyesCurse, "Zdejmij klątwę Wielookiego" },
+            { SubQuestType.Gatekeepers_BringJeffABlindBrandy, "Przynieś Jeffowi ślepą wódkę" },
+            { SubQuestType.Gatekeepers_FindLukesTreasureMap, "Znajdź mapę skarbów Luke'a" },
+            { SubQuestType.Gatekeepers_GiveTheTreasureMapToLuke, "Daj Luke'owi mapę skarbów" },
+            { SubQuestType.Gatekeepers_OpenThePassageForShips, "Otwórz przejście dla statków" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -1164,6 +1227,18 @@ internal static class QuestTexts
             { SubQuestType.PaladinGuild_OpenTheExitOfTheGuild, "Otevři východ z cechu" },
             { SubQuestType.PaladinGuild_TakeGunbarsEssence, "Vezmi si Gunbarovu esenci" },
             { SubQuestType.PaladinGuild_FindFargonsEssence, "Najdi Fargonovu esenci" },
+            { SubQuestType.SeaCreatures_AskCaptainTorle, "Zeptej se kapitána Torleho na tvory" },
+            { SubQuestType.SeaCreatures_FindTheSeaCreatures, "Najdi tvory z Torleho lodního deníku" },
+            { SubQuestType.SeaCreatures_VisitTheMermaid, "Navštiv mořskou pannu" },
+            { SubQuestType.SeaCreatures_EnterTheEyeOfTheVortex, "Vpluj do oka víru" },
+            { SubQuestType.ManyeyesCastle_OpenTristansOffice, "Otevři Tristanovu kancelář" },
+            { SubQuestType.ManyeyesCastle_OpenTheCastle, "Otevři dveře do hradu" },
+            { SubQuestType.ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor, "Poraz strážce horního patra" },
+            { SubQuestType.ManyeyesCastle_BanishManyeyesCurse, "Zažeň kletbu Mnohookého" },
+            { SubQuestType.Gatekeepers_BringJeffABlindBrandy, "Přines Jeffovi slepou pálenku" },
+            { SubQuestType.Gatekeepers_FindLukesTreasureMap, "Najdi Lukovu mapu pokladu" },
+            { SubQuestType.Gatekeepers_GiveTheTreasureMapToLuke, "Dej Lukovi mapu pokladu" },
+            { SubQuestType.Gatekeepers_OpenThePassageForShips, "Otevři průjezd pro lodě" },
         } },
     };
 }

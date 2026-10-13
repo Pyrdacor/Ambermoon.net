@@ -136,7 +136,7 @@ partial class GameCore
     /// </summary>
     public bool ScriptTriggerMapEvent(EventTrigger trigger, uint x, uint y)
     {
-        if (WindowOrPopupActive || x == 0 || y == 0)
+        if (WindowOrPopupActive || x == 0 || y == 0 || x > Map!.Width || y > Map.Height)
             return false;
 
         if (trigger < EventTrigger.Item0)
@@ -299,6 +299,10 @@ partial class GameCore
             if (Teleport(mapIndex, (uint)tx, (uint)ty, direction, out _, false, true))
                 return new Position(tx, ty);
         }
+
+        // e.g. on the sea of a world map without a ship
+        if (Teleport(mapIndex, x, y, CharacterDirection.Up, out _, true, true))
+            return new Position((int)x, (int)y);
 
         return null;
     }
