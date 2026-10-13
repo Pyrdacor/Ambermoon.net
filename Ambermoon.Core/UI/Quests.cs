@@ -50,6 +50,7 @@ public enum MainQuestType
     SeaCreatures,
     ManyeyesCastle,
     Gatekeepers,
+    IsdirsTrials,
 }
 
 public enum SubQuestType
@@ -264,6 +265,14 @@ public enum SubQuestType
     Gatekeepers_FindLukesTreasureMap, // after meeting Luke
     Gatekeepers_GiveTheTreasureMapToLuke, // after finding the treasure map
     Gatekeepers_OpenThePassageForShips, // after getting both keys
+    // Isdir's Trials (Advanced)
+    IsdirsTrials_AskJeffAboutIsdir, // after reading about Isdir
+    IsdirsTrials_MeetIsdirAtNight, // after Jeff told about the northern beach
+    IsdirsTrials_BringGoldenWater, // after touching the first crystal
+    IsdirsTrials_BringARestlessSoul, // after touching the second crystal
+    IsdirsTrials_BringAPoisonousSnake, // after touching the third crystal
+    IsdirsTrials_BringTheBlueCrystal, // after touching the fourth crystal
+    IsdirsTrials_ReceiveIsdirsEssence, // after all four crystals are satisfied
     // Brotherhood of Tarbos
     BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, // after finding the Amberstar
     BrotherhoodOfTarbos_DefeatThornahuun, // after meeting Thornahuun in the coffin hall
@@ -1623,6 +1632,103 @@ partial class QuestLog
                         ],
                         SourceType = QuestSourceType.Item,
                         SourceIndex = 444, // Mystic Creatures
+                    }
+                ));
+                #endregion
+                #region Isdir's Trials
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.IsdirsTrials,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.IsdirsTrials_AskJeffAboutIsdir,
+                        Triggers =
+                        [
+                            // Activate: the book of mystic creatures names Isdir near Cavetown
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 268),
+                            // Complete: Jeff (after his blind brandy) remembered the strange event at the northern beach
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 305),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 43, // Jeff
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.IsdirsTrials_MeetIsdirAtNight,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the way to Isdir's cave appeared at the northern beach at night
+                            new EventDisabledTrigger(game, TriggerType.Completion, 370, 14),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 43, // Jeff
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.IsdirsTrials_BringGoldenWater,
+                        Triggers =
+                        [
+                            // Activate: the crystal asked for it
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 291),
+                            // Complete: the golden water from Lebab was poured onto the crystal
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 287),
+                        ],
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(377, 7, 4), // Isdir
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.IsdirsTrials_BringARestlessSoul,
+                        Triggers =
+                        [
+                            // Activate: the crystal asked for it
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 292),
+                            // Complete: the ghost soul from the graveyard was given to the crystal
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 288),
+                        ],
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(377, 7, 4), // Isdir
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.IsdirsTrials_BringAPoisonousSnake,
+                        Triggers =
+                        [
+                            // Activate: the crystal asked for it
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 293),
+                            // Complete: the poisonous snake from the island was frozen by the crystal
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 289),
+                        ],
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(377, 7, 4), // Isdir
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.IsdirsTrials_BringTheBlueCrystal,
+                        Triggers =
+                        [
+                            // Activate: the crystal asked for it
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 294),
+                            // Complete: the small blue crystal merged with the ice crystal
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 290),
+                        ],
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(377, 7, 4), // Isdir
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.IsdirsTrials_ReceiveIsdirsEssence,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate: all four ice crystals are satisfied
+                            new PredicateTrigger(game, TriggerType.Activation, (g, e) =>
+                                IsGlobalVariableSet(g, e, 287) && IsGlobalVariableSet(g, e, 288) && IsGlobalVariableSet(g, e, 289) && IsGlobalVariableSet(g, e, 290)),
+                            // Complete: Isdir handed over his essence
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 298),
+                        ],
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(377, 7, 4), // Isdir
                     }
                 ));
                 #endregion

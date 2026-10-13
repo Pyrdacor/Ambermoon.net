@@ -27,6 +27,11 @@ partial class GameCore
     public bool ScriptConversationTextActive => ConversationTextActive;
 
     /// <summary>
+    /// True while an event picture with its text is shown (closed by a click).
+    /// </summary>
+    public bool ScriptEventPictureActive => CurrentWindow.Window == UI.Window.Event;
+
+    /// <summary>
     /// Starts a conversation with the given NPC like talking to it on the map.
     /// Returns an error message or null on success.
     /// </summary>

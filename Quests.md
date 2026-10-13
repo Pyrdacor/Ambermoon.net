@@ -470,6 +470,21 @@ Tests: `DesertTemple.txt`
 
 Tests: `PaladinGuild.txt`
 
+### Isdir's Trials (Isdirs Prüfungen) — from episode 2
+
+Needs the sea creatures (eye of the vortex) and Jeff's blind brandy (Gatekeepers of Cavetown).
+
+1. **Ask Jeff about Isdir**: after the book of mystic creatures (268), Jeff remembers the northern beach (305).
+2. **Meet Isdir at the northern beach at night**: the way to Isdir's cave appears (event 370:14).
+3. **Bring golden water to the crystal**: Lebab makes it from a golden scale, water of life and a fire thistle
+   (touching the crystal 291, done 287).
+4. **Bring a restless soul to the crystal**: the ghost at the graveyard of Spannenberg at night (292, 288).
+5. **Bring a poisonous snake to the crystal**: dug up on an island (map 249, 293, 289).
+6. **Bring the blue crystal to the ice crystal**: the beast at night and digging on map 117 (294, 290).
+7. **Receive Isdir's essence** (variable 298).
+
+Tests: `IsdirsTrials.txt`
+
 ### The Gral Temple (Der Graltempel) — from episode 3
 
 1. **Ask Melvin about his family**: Melvin in Snakesign (keyword "Family"). Done with the legend (variable 310).

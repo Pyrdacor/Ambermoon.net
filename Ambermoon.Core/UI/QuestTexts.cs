@@ -135,6 +135,7 @@ internal static class QuestTexts
             { MainQuestType.SeaCreatures, "Die Kreaturen der See" },
             { MainQuestType.ManyeyesCastle, "Vielauges Schloss" },
             { MainQuestType.Gatekeepers, "Die Pförtner von Cavetown" },
+            { MainQuestType.IsdirsTrials, "Isdirs Prüfungen" },
         } },
         { GameLanguage.English, new()
         {
@@ -180,6 +181,7 @@ internal static class QuestTexts
             { MainQuestType.SeaCreatures, "The Sea Creatures" },
             { MainQuestType.ManyeyesCastle, "Manyeyes' Castle" },
             { MainQuestType.Gatekeepers, "The Gatekeepers of Cavetown" },
+            { MainQuestType.IsdirsTrials, "Isdir's Trials" },
         } },
         { GameLanguage.French, new()
         {
@@ -225,6 +227,7 @@ internal static class QuestTexts
             { MainQuestType.SeaCreatures, "Les créatures marines" },
             { MainQuestType.ManyeyesCastle, "Le château de Mille-Yeux" },
             { MainQuestType.Gatekeepers, "Les portiers de Cavetown" },
+            { MainQuestType.IsdirsTrials, "Les épreuves d'Isdir" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -270,6 +273,7 @@ internal static class QuestTexts
             { MainQuestType.SeaCreatures, "Morskie stworzenia" },
             { MainQuestType.ManyeyesCastle, "Zamek Wielookiego" },
             { MainQuestType.Gatekeepers, "Odźwierni z Cavetown" },
+            { MainQuestType.IsdirsTrials, "Próby Isdira" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -315,6 +319,7 @@ internal static class QuestTexts
             { MainQuestType.SeaCreatures, "Mořští tvorové" },
             { MainQuestType.ManyeyesCastle, "Hrad Mnohookého" },
             { MainQuestType.Gatekeepers, "Vrátní z Cavetownu" },
+            { MainQuestType.IsdirsTrials, "Isdirovy zkoušky" },
         } },
     };
 
@@ -516,6 +521,13 @@ internal static class QuestTexts
             { SubQuestType.Gatekeepers_FindLukesTreasureMap, "Finde Lukes Schatzkarte" },
             { SubQuestType.Gatekeepers_GiveTheTreasureMapToLuke, "Gib Luke die Schatzkarte" },
             { SubQuestType.Gatekeepers_OpenThePassageForShips, "Öffne die Passage für Schiffe" },
+            { SubQuestType.IsdirsTrials_AskJeffAboutIsdir, "Frag Jeff nach Isdir" },
+            { SubQuestType.IsdirsTrials_MeetIsdirAtNight, "Triff Isdir nachts am nördlichen Strand" },
+            { SubQuestType.IsdirsTrials_BringGoldenWater, "Bring dem Kristall goldenes Wasser" },
+            { SubQuestType.IsdirsTrials_BringARestlessSoul, "Bring dem Kristall eine ruhelose Seele" },
+            { SubQuestType.IsdirsTrials_BringAPoisonousSnake, "Bring dem Kristall eine Giftschlange" },
+            { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Bring dem Kristall den blauen Kristall" },
+            { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Nimm Isdirs Essenz entgegen" },
         } },
         { GameLanguage.English, new()
         {
@@ -711,6 +723,13 @@ internal static class QuestTexts
             { SubQuestType.Gatekeepers_FindLukesTreasureMap, "Find Luke's treasure map" },
             { SubQuestType.Gatekeepers_GiveTheTreasureMapToLuke, "Give the treasure map to Luke" },
             { SubQuestType.Gatekeepers_OpenThePassageForShips, "Open the passage for ships" },
+            { SubQuestType.IsdirsTrials_AskJeffAboutIsdir, "Ask Jeff about Isdir" },
+            { SubQuestType.IsdirsTrials_MeetIsdirAtNight, "Meet Isdir at the northern beach at night" },
+            { SubQuestType.IsdirsTrials_BringGoldenWater, "Bring golden water to the crystal" },
+            { SubQuestType.IsdirsTrials_BringARestlessSoul, "Bring a restless soul to the crystal" },
+            { SubQuestType.IsdirsTrials_BringAPoisonousSnake, "Bring a poisonous snake to the crystal" },
+            { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Bring the blue crystal to the ice crystal" },
+            { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Receive Isdir's essence" },
         } },
         { GameLanguage.French, new()
         {
@@ -887,6 +906,13 @@ internal static class QuestTexts
             { SubQuestType.Gatekeepers_FindLukesTreasureMap, "Trouve la carte au trésor de Luke" },
             { SubQuestType.Gatekeepers_GiveTheTreasureMapToLuke, "Donne la carte au trésor à Luke" },
             { SubQuestType.Gatekeepers_OpenThePassageForShips, "Ouvre le passage pour les navires" },
+            { SubQuestType.IsdirsTrials_AskJeffAboutIsdir, "Interroge Jeff sur Isdir" },
+            { SubQuestType.IsdirsTrials_MeetIsdirAtNight, "Rencontre Isdir la nuit sur la plage nord" },
+            { SubQuestType.IsdirsTrials_BringGoldenWater, "Apporte de l'eau dorée au cristal" },
+            { SubQuestType.IsdirsTrials_BringARestlessSoul, "Apporte une âme errante au cristal" },
+            { SubQuestType.IsdirsTrials_BringAPoisonousSnake, "Apporte un serpent venimeux au cristal" },
+            { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Apporte le cristal bleu au cristal de glace" },
+            { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Reçois l'essence d'Isdir" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -1063,6 +1089,13 @@ internal static class QuestTexts
             { SubQuestType.Gatekeepers_FindLukesTreasureMap, "Znajdź mapę skarbów Luke'a" },
             { SubQuestType.Gatekeepers_GiveTheTreasureMapToLuke, "Daj Luke'owi mapę skarbów" },
             { SubQuestType.Gatekeepers_OpenThePassageForShips, "Otwórz przejście dla statków" },
+            { SubQuestType.IsdirsTrials_AskJeffAboutIsdir, "Zapytaj Jeffa o Isdira" },
+            { SubQuestType.IsdirsTrials_MeetIsdirAtNight, "Spotkaj Isdira nocą na północnej plaży" },
+            { SubQuestType.IsdirsTrials_BringGoldenWater, "Przynieś kryształowi złotą wodę" },
+            { SubQuestType.IsdirsTrials_BringARestlessSoul, "Przynieś kryształowi niespokojną duszę" },
+            { SubQuestType.IsdirsTrials_BringAPoisonousSnake, "Przynieś kryształowi jadowitego węża" },
+            { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Przynieś lodowemu kryształowi niebieski" },
+            { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Odbierz esencję Isdira" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -1239,6 +1272,13 @@ internal static class QuestTexts
             { SubQuestType.Gatekeepers_FindLukesTreasureMap, "Najdi Lukovu mapu pokladu" },
             { SubQuestType.Gatekeepers_GiveTheTreasureMapToLuke, "Dej Lukovi mapu pokladu" },
             { SubQuestType.Gatekeepers_OpenThePassageForShips, "Otevři průjezd pro lodě" },
+            { SubQuestType.IsdirsTrials_AskJeffAboutIsdir, "Zeptej se Jeffa na Isdira" },
+            { SubQuestType.IsdirsTrials_MeetIsdirAtNight, "Setkej se v noci s Isdirem na pláži" },
+            { SubQuestType.IsdirsTrials_BringGoldenWater, "Přines krystalu zlatou vodu" },
+            { SubQuestType.IsdirsTrials_BringARestlessSoul, "Přines krystalu neklidnou duši" },
+            { SubQuestType.IsdirsTrials_BringAPoisonousSnake, "Přines krystalu jedovatého hada" },
+            { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Přines ledovému krystalu modrý krystal" },
+            { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Převezmi Isdirovu esenci" },
         } },
     };
 }

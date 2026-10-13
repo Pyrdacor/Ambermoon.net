@@ -142,7 +142,7 @@ sealed class ScenarioScript
                     continueTime = DateTime.Now.AddMilliseconds(300);
                     return;
                 }
-                else if (game.ScriptConversationTextActive)
+                else if (game.ScriptConversationTextActive || game.ScriptEventPictureActive)
                 {
                     host.Click(host.WindowCenter, false);
                     lastPopupTime = DateTime.Now;
@@ -176,7 +176,7 @@ sealed class ScenarioScript
                     Report(false, "dismissall timed out: " + game.ScriptState());
                     dismissTimeout = null;
                 }
-                else if (game.PopupActive)
+                else if (game.PopupActive || game.ScriptEventPictureActive)
                 {
                     host.Click(host.WindowCenter, false);
                     lastPopupTime = DateTime.Now;
