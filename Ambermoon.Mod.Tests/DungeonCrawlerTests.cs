@@ -81,7 +81,28 @@ static partial class Tests
             }
 
             Check(party.Count(p => p != 0) > 1, "Recruits were offered");
-            SavegameRoundTrip(gameData, savegame);
+            var loaded = SavegameRoundTrip(gameData, savegame);
+
+            if (loaded != null)
+            {
+                // Recruit texts are not part of the savegame. The mod restores them.
+                var data = new ModSaveData();
+                mod.OnSaving(data);
+                var loadedMod = new AmbermoonDCMod { Api = api };
+                loadedMod.OnInitialize();
+                loadedMod.OnLoading(ModSaveData.FromJson(data.ToJson()));
+                loadedMod.OnGameStarting(loaded, false);
+
+                foreach (var index in loaded.CurrentPartyMemberIndices.Where(i => i > 1))
+                {
+                    var recruit = loaded.PartyMembers[index];
+                    Check(recruit.Texts?.Count == 5, $"Texts of recruit {index} are restored");
+                    Check(recruit.EventList.Any(e => e is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.LeaveParty),
+                        $"Events of recruit {index} are stored");
+                }
+
+                Check(loadedMod.State!.Floor == mod.State!.Floor && loadedMod.CurrentLayout != null, "Floor is restored");
+            }
         }
     }
 
@@ -184,7 +205,13 @@ static partial class Tests
                 Check(recruit.SpokenLanguages.HasFlag(Language.Human), $"{prefix} recruit speaks the common language");
                 Check(recruit.EventList.Any(e => e is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.JoinParty),
                     $"{prefix} recruit can join");
-                Check(recruit.Level >= 1 && recruit.HitPoints.CurrentValue > 0, $"{prefix} recruit is alive");
+                Check(recruit.Level >= Math.Min(50, floor * 3 / 4) && recruit.HitPoints.CurrentValue > 0, $"{prefix} recruit has a fitting level and is alive");
+                Check(character.Index >= 2 && character.Index <= 15, $"{prefix} recruit uses a party member slot");
+                Check(recruit.Texts?.Count == 5 && recruit.Texts.All(t => !string.IsNullOrWhiteSpace(t)), $"{prefix} recruit has dialogues");
+                Check(!string.IsNullOrWhiteSpace(recruit.Name) && recruit.PortraitIndex > 0, $"{prefix} recruit has a name and portrait");
+                Check(!recruit.Class.IsMagic() || recruit.LearnedHealingSpells + recruit.LearnedAlchemisticSpells + recruit.LearnedMysticSpells + recruit.LearnedDestructionSpells != 0,
+                    $"{prefix} magic recruits know spells");
+                Console.WriteLine($"  Floor {floor}: recruit {recruit.Name}, {recruit.Gender} {recruit.Race} {recruit.Class} L{recruit.Level}, portrait {recruit.PortraitIndex}: {recruit.Texts![1]}");
             }
         }
 
@@ -217,7 +244,7 @@ static partial class Tests
             Check(condition, message);
     }
 
-    static void SavegameRoundTrip(GameData gameData, Savegame savegame)
+    static Savegame? SavegameRoundTrip(GameData gameData, Savegame savegame)
     {
         var directory = Path.Combine(Path.GetTempPath(), "ambermoon-dc-save-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
@@ -242,6 +269,8 @@ static partial class Tests
                 foreach (var index in savegame.CurrentPartyMemberIndices.Where(i => i != 0))
                     Check(loaded.PartyMembers[index].Level == savegame.PartyMembers[index].Level, $"Level of party member {index} is stored");
             }
+
+            return loaded;
         }
         finally
         {

@@ -55,7 +55,13 @@ public class AmbermoonDCMod : ModBase
             return;
         }
 
-        // Loaded game: recreate the current floor exactly like it was.
+        // Loaded game: restore the texts of the recruits and recreate the current floor exactly like it was.
+        foreach (var recruitTexts in state.RecruitTexts)
+        {
+            if (savegame.PartyMembers.TryGetValue(recruitTexts.Key, out var recruit))
+                recruit.Texts = recruitTexts.Value;
+        }
+
         currentLayout = FloorGenerator.Generate(state.Seed, state.Floor);
         floorBuilder.Build(currentLayout, state);
 
@@ -68,9 +74,13 @@ public class AmbermoonDCMod : ModBase
     /// </summary>
     internal void StartNewRun(Savegame savegame, int? seed = null)
     {
-        // For testing: The environment variables AMBERMOON_DC_SEED and
-        // AMBERMOON_DC_START_FLOOR set the seed and the first floor.
+        // For testing (debug builds only): The environment variables AMBERMOON_DC_SEED
+        // and AMBERMOON_DC_START_FLOOR set the seed and the first floor.
+#if DEBUG
         static int? FromEnvironment(string name) => int.TryParse(Environment.GetEnvironmentVariable(name), out int value) ? value : null;
+#else
+        static int? FromEnvironment(string name) => null;
+#endif
 
         state = new DCState
         {

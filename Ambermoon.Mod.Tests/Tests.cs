@@ -72,11 +72,19 @@ static partial class Tests
         foreach (var pm in savegame.PartyMembers.OrderBy(p => p.Key))
         {
             var p = pm.Value;
+            Console.WriteLine($"STATS P{pm.Key} {p.Class} {p.Race} {p.Gender} L{p.Level} hp/l={p.HitPointsPerLevel} sp/l={p.SpellPointsPerLevel} slp/l={p.SpellLearningPointsPerLevel} tp/l={p.TrainingPointsPerLevel} apr={p.AttacksPerRound} aprInc={p.AttacksPerRoundIncreaseLevels} mastery={p.SpellMastery} hp={p.HitPoints.MaxValue} sp={p.SpellPoints.MaxValue} atk={p.BaseAttackDamage} def={p.BaseDefense} age={p.Attributes[Ambermoon.Data.Attribute.Age].CurrentValue}/{p.Attributes[Ambermoon.Data.Attribute.Age].MaxValue}");
+            Console.WriteLine("  attr " + string.Join(" ", Enumerable.Range(0, 10).Select(i => $"{(Ambermoon.Data.Attribute)i}={p.Attributes[(Ambermoon.Data.Attribute)i].CurrentValue}/{p.Attributes[(Ambermoon.Data.Attribute)i].MaxValue}")));
+            Console.WriteLine("  skill " + string.Join(" ", Enumerable.Range(0, 10).Select(i => $"{(Ambermoon.Data.Skill)i}={p.Skills[(Ambermoon.Data.Skill)i].CurrentValue}/{p.Skills[(Ambermoon.Data.Skill)i].MaxValue}")));
+            Console.WriteLine($"  spells H={p.LearnedHealingSpells:x} A={p.LearnedAlchemisticSpells:x} M={p.LearnedMysticSpells:x} D={p.LearnedDestructionSpells:x} texts: {string.Join(" | ", p.Texts ?? [])}");
             Console.WriteLine($"P{pm.Key} {p.Name} {p.Race} {p.Class} L{p.Level} lang={p.SpokenLanguages} bit=0x{p.CharacterBitIndex:x4} events={p.Events.Count} list={p.EventList.Count}");
 
             foreach (var e in p.Events)
                 Console.WriteLine($"    {e}");
         }
+
+        foreach (var g in gameData.CharacterManager.NPCs.Concat<Character>(savegame.PartyMembers.Values).GroupBy(n => (n.Race, n.Gender)).OrderBy(g => g.Key.Race))
+            Console.WriteLine($"PORTRAITS {g.Key.Race} {g.Key.Gender}: {string.Join(",", g.Select(n => n.PortraitIndex).Distinct().OrderBy(x => x))}");
+        Console.WriteLine($"Portrait count {((IGraphicProvider)gameData.GraphicInfoProvider).GetGraphics(GraphicType.Portrait).Count}");
     }
 
     static void ManifestTests()

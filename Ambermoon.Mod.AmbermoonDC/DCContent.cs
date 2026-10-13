@@ -98,11 +98,6 @@ internal static class DCContent
     /// </summary>
     public static readonly uint[] BossGroups = [30, 34, 47, 52, 69];
 
-    /// <summary>
-    /// Characters which can join the party (in the order of their base level).
-    /// </summary>
-    public static readonly uint[] Recruits = [8, 9, 10, 11, 12, 13, 14, 15];
-
     // Items
     public const uint Torch = 130;
     public const uint Lantern = 243;

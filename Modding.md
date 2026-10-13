@@ -18,7 +18,7 @@ Each mod is shown in the version selector. It is offered in every language of th
 
 Each mod uses its own savegames, which are stored in the folder `Saves/mod_<id>_<language>`.
 
-You can also start a mod directly with the command line option `--mod <id>`. The game then starts in the configured language, and the version selector and the trust question are skipped.
+You can also start a mod directly with the command line option `--mod <id>`. The game then starts in the configured language. The version selector and the trust question are skipped, because you chose the mod explicitly.
 
 
 ## Creating a mod
@@ -209,11 +209,11 @@ Ambermoon DC (`Ambermoon.Mod.AmbermoonDC`) is a dungeon crawler built as a code 
 - The party starts on floor 1 of an endless dungeon. Each floor is generated from a seed when it is entered and has a hole which leads down.
 - Monsters roam the floors. Some wander and chase the party, others only move when they see it. Deeper floors have stronger monsters.
 - Every 5th floor a boss guards the way down, every 10th floor a boss with minions. Boss floors have extra treasure, and the boss drops an item which is an upgrade for one of the party members.
-- Every 12th floor one of the original companions wanders around and can be asked to join. Level and equipment fit the depth. Party members can be dismissed as usual.
+- Every 12th floor a random companion wanders around and can be asked to join. Name, race, gender, portrait, class, attributes, skills, spells and the (short) dialogues are random. Level and equipment fit the depth. Party members can be dismissed as usual. Dismissed companions are gone, their party member slot is reused for later companions.
 - Secret rooms are hidden behind illusory walls or behind walls which open when touched.
 - From floor 4 on the floors are dark, so you need torches or light spells.
 
-For testing, the environment variables `AMBERMOON_DC_SEED` and `AMBERMOON_DC_START_FLOOR` set the seed and the first floor of a new game.
+For testing, the environment variables `AMBERMOON_DC_SEED` and `AMBERMOON_DC_START_FLOOR` set the seed and the first floor of a new game. They only work in debug builds of the mod.
 
 
 ## Tests
@@ -226,3 +226,39 @@ dotnet run --project Ambermoon.Mod.Tests -- render 10 # prints floor 10 of Amber
 ```
 
 Scenario scripts (`--script`) support the commands `save <slot>` and `load <slot>` to test savegames of mods.
+
+
+## Known limitations
+
+These things are not supported (yet):
+
+**Mod system**
+- Only one mod can be active at a time. Mods can't depend on or be combined with other mods.
+- Mods only work with the original Amiga game data (builtin versions or extracted data). The newer Pyrdacor game data format is not supported as a base.
+- Mods are not available on Android. The Android frontend does not list or load mods, and it was not built or tested with the mod changes.
+- Mod code is not sandboxed. The trust question is the only protection.
+- The version selector shows only the first 20 characters of a mod name and has no scroll bar (use the mouse wheel or the arrow keys).
+
+**Asset mods**
+- Graphics can only be replaced for the graphic types listed above. Battle graphics of monsters, 3D textures (walls, objects, floors and ceilings), tilesets, fonts and intro/outro graphics can't be replaced.
+- Replaced graphics must have the same size as the original ones.
+- General texts (UI texts, the dictionary, places, intro and outro texts) can't be changed. Only texts of maps, items, monsters and characters can be changed with patches.
+- Merchants, places, initial chest contents and the initial savegame can't be changed with asset files (code mods can change the savegame in `OnGameStarting`).
+- Only MP3 files are supported for music, no Sonic Arranger songs.
+- New map definitions were only tested with 3D maps. 2D maps (especially world maps) may need properties which are not covered by the JSON format.
+- New monsters need an existing monster as template. Their battle graphic is the one of the template.
+
+**Code mods**
+- New monsters (with new indices) must be added in `OnInitialize`. Monsters added later have no battle graphic.
+- Party members can only use the existing party member slots (1 to 15), as the texts of party members are not stored in savegames. Mods which change party member texts must restore them after loading (see Ambermoon DC).
+- Maps with indices of 768 and above lose tile changes when a game is loaded. Use 529 to 767 for new maps.
+- Dismissing party members only works on maps of the world Lyramion.
+- The battle loot can only be changed through the inventory and gold of the monsters. There is no hook to add extra loot after a battle.
+
+**Ambermoon DC**
+- Only the original game is supported as base, not Ambermoon Advanced.
+- All texts of the mod exist in English and German. Other languages use the English texts.
+- All floors use the same cave look. There is only one dungeon theme.
+- A few monsters have no fitting sprite on the map and use the undead sprite.
+- Random companions can only use the portraits the original game has for their race and gender, so some combinations don't exist (e.g. there are no female gnomes).
+- The balancing was not tested beyond a few floors. The hero is alone until floor 12 and the floors are dark from floor 4 on.

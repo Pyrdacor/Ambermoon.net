@@ -30,6 +30,10 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
     /// Map whose character bits are used to remember recruits (never visited).
     /// </summary>
     public const uint RecruitBitsMap = 1000;
+    /// <summary>
+    /// Party member slots 2 to 15 are used for random recruits (slot 1 is the hero).
+    /// </summary>
+    const uint LastRecruitSlot = 15;
 
     readonly ModApi api = api;
     readonly DCLabdata labdata = labdata;
@@ -280,42 +284,31 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
         if (party.Count >= 6)
             return 0;
 
-        var available = DCContent.Recruits
-            .Where(index => savegame.PartyMembers.ContainsKey(index) && !savegame.CurrentPartyMemberIndices.Contains(index))
+        // The party member slots of the original characters (except the hero) are used for the
+        // random recruits. Unused slots are preferred, otherwise the oldest recruit which is not
+        // part of the party is replaced.
+        var freeSlots = Enumerable.Range(2, (int)LastRecruitSlot - 1).Select(i => (uint)i)
+            .Where(index => !savegame.CurrentPartyMemberIndices.Contains(index))
             .ToList();
 
-        if (available.Count == 0)
+        if (freeSlots.Count == 0)
             return 0;
 
-        // Prefer characters which were never offered so far and which are not too strong.
+        uint recruitIndex = freeSlots.FirstOrDefault(index => !state.UsedRecruitSlots.Contains(index));
+
+        if (recruitIndex == 0)
+            recruitIndex = state.UsedRecruitSlots.First(freeSlots.Contains);
+
+        state.UsedRecruitSlots.Remove(recruitIndex);
+        state.UsedRecruitSlots.Add(recruitIndex);
+
         uint averageLevel = (uint)Math.Round(party.Average(p => (double)p.Level));
-        uint targetLevel = Math.Max(averageLevel, (uint)(floor * 3 / 4));
-        var candidates = available.Where(index => !state.OfferedRecruits.Contains(index)).ToList();
+        uint targetLevel = Math.Clamp(Math.Max(averageLevel, (uint)(floor * 3 / 4)), 1, 50);
 
-        if (candidates.Count == 0)
-            candidates = available;
+        var recruit = new RecruitGenerator(api, random).Create(savegame, recruitIndex, targetLevel);
+        state.RecruitTexts[recruitIndex] = recruit.Texts;
 
-        var fitting = candidates.Where(index => savegame.PartyMembers[index].Level <= targetLevel).ToList();
-
-        if (fitting.Count != 0)
-            candidates = fitting;
-
-        uint recruitIndex = candidates[random.Next(candidates.Count)];
-        var recruit = savegame.PartyMembers[recruitIndex];
-
-        CharacterHelper.RaiseLevel(recruit, targetLevel, (min, max) => random.Next(min, max + 1));
-
-        // The recruit must be able to talk with the party.
-        recruit.SpokenLanguages |= Language.Human;
-        // When the recruit leaves the party again, this character bit is cleared.
-        // It belongs to an unused map so it won't affect the dungeon.
-        recruit.CharacterBitIndex = (ushort)(((RecruitBitsMap - 1) << 5) | (recruitIndex & 0x1f));
-
-        var loot = new LootGenerator(api, random, floor);
-        loot.EquipRecruit(recruit);
-
-        if (!state.OfferedRecruits.Contains(recruitIndex))
-            state.OfferedRecruits.Add(recruitIndex);
+        new LootGenerator(api, random, floor).EquipRecruit(recruit);
 
         return recruitIndex;
     }

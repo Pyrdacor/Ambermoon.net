@@ -18,7 +18,12 @@ internal class DCState
     /// </summary>
     public uint Recruit { get; set; }
     /// <summary>
-    /// All party members which were offered to join so far.
+    /// Party member slots used for recruits so far (oldest first).
     /// </summary>
-    public List<uint> OfferedRecruits { get; set; } = [];
+    public List<uint> UsedRecruitSlots { get; set; } = [];
+    /// <summary>
+    /// The texts of the recruits by party member index. Texts of party members
+    /// are not stored in savegames, so they are restored when a game is loaded.
+    /// </summary>
+    public Dictionary<uint, List<string>> RecruitTexts { get; set; } = [];
 }
