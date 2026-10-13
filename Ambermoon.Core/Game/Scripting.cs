@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using Ambermoon.Data;
 using Ambermoon.UI;
 
 namespace Ambermoon;
@@ -10,6 +11,107 @@ namespace Ambermoon;
 /// </summary>
 partial class GameCore
 {
+    sealed record ScriptConversationActions(Action<string> SayWord, Action ShowItem, Action GiveItem, Action Leave);
+
+    ScriptConversationActions? scriptConversation;
+    Action<int>? scriptConversationItemSelector;
+
+    public bool ScriptConversationActive => scriptConversation != null && CurrentWindow.Window == UI.Window.Conversation;
+
+    /// <summary>
+    /// True if a conversation text waits for a click.
+    /// </summary>
+    public bool ScriptConversationTextActive => ConversationTextActive;
+
+    /// <summary>
+    /// Starts a conversation with the given NPC like talking to it on the map.
+    /// Returns an error message or null on success.
+    /// </summary>
+    public string? ScriptTalk(uint npcIndex)
+    {
+        if (WindowOrPopupActive || !InputEnable)
+            return "a window or popup is open";
+
+        var npc = CharacterManager.GetNPC(npcIndex);
+
+        if (npc == null)
+            return $"there is no NPC {npcIndex}";
+
+        // the map character index is used if the NPC is removed from the map afterwards
+        int characterIndex = Array.FindIndex(Map!.CharacterReferences, c => c?.Type == CharacterType.NPC && c.Index == npcIndex);
+        npc.ExecuteEvents(this, EventTrigger.Mouth, characterIndex == -1 ? 0u : (uint)characterIndex);
+
+        return null;
+    }
+
+    /// <summary>
+    /// Says a keyword (dictionary index or word) in the active conversation.
+    /// </summary>
+    public string? ScriptSay(string keyword)
+    {
+        if (scriptConversation == null)
+            return "no conversation is active";
+
+        if (uint.TryParse(keyword, out uint index))
+            keyword = textDictionary.Entries[(int)index];
+
+        scriptConversation.SayWord(keyword);
+
+        return null;
+    }
+
+    /// <summary>
+    /// Shows or gives an item of the active party member in the active conversation.
+    /// </summary>
+    public string? ScriptConversationItem(uint itemIndex, bool give)
+    {
+        if (scriptConversation == null)
+            return "no conversation is active";
+
+        int slot = Array.FindIndex(CurrentPartyMember!.Inventory.Slots, s => !s.Empty && s.ItemIndex == itemIndex);
+
+        if (slot == -1)
+            return $"the active party member has no item {itemIndex}";
+
+        if (give)
+            scriptConversation.GiveItem();
+        else
+            scriptConversation.ShowItem();
+
+        if (scriptConversationItemSelector == null)
+            return "the item selection could not be opened";
+
+        scriptConversationItemSelector(slot);
+
+        return null;
+    }
+
+    /// <summary>
+    /// Leaves the active conversation like the exit button.
+    /// </summary>
+    public string? ScriptLeaveConversation()
+    {
+        if (scriptConversation == null)
+            return "no conversation is active";
+
+        scriptConversation.Leave();
+
+        return null;
+    }
+
+    /// <summary>
+    /// Triggers the map events at the given 1-based map position.
+    /// </summary>
+    public bool ScriptTriggerMapEvent(EventTrigger trigger, uint x, uint y)
+    {
+        if (WindowOrPopupActive || x == 0 || y == 0)
+            return false;
+
+        return TriggerMapEvents(trigger, x - 1, y - 1);
+    }
+
+    public void ScriptSetGlobalVariable(uint index, bool value) => CurrentSavegame!.SetGlobalVariable(index, value);
+
     /// <summary>
     /// Uses an item from the active party member's inventory exactly like a
     /// player would do it via the inventory (including item consumption and

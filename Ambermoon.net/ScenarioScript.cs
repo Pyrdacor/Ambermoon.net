@@ -32,6 +32,17 @@ namespace Ambermoon;
 ///   yes                       answer a decision popup with yes (Return key)
 ///   closewindow               close the current window like the exit button (e.g. battle loot)
 ///   battlebg [index]          print the combat background of the active battle, optionally check it
+///   talk &lt;npc index&gt;          start a conversation with an NPC (like talking to it on the map)
+///   say &lt;keyword&gt;             say a keyword (dictionary index or word) in the conversation
+///   showitem &lt;item index&gt;     show an item of the active party member in the conversation
+///   giveitem &lt;item index&gt;     give an item of the active party member in the conversation
+///   leave                     leave the conversation (like the exit button)
+///   talkwait [timeout ms] [quiet ms]
+///                             click through conversation texts and popups (Return) until nothing
+///                             happened for 'quiet ms' (default 1000, timeout default 15000)
+///   trigger &lt;x&gt; &lt;y&gt; [trigger]  trigger the map events at a 1-based map position
+///                             (Move, Eye, Hand, Mouth, ..., default Move)
+///   setvar &lt;index&gt; &lt;0|1&gt;      set a global variable
 ///   questlog                  open or close the quest log
 ///   quests                    print all sub quests which are not inactive
 ///   quest &lt;type&gt; [state]      print the state of a sub quest (UI.SubQuestType name), optionally check it
@@ -46,12 +57,14 @@ sealed class ScenarioScript
     DateTime? idleTimeout = null;
     DateTime? dismissTimeout = null;
     DateTime? battleTimeout = null;
+    DateTime? talkTimeout = null;
+    int talkQuietTime = 1000;
     DateTime lastPopupTime = DateTime.MinValue;
     int dismissQuietTime = 1500;
     int failures = 0;
     int checks = 0;
 
-    public bool Finished => commands.Count == 0 && idleTimeout == null && dismissTimeout == null && battleTimeout == null && DateTime.Now >= continueTime;
+    public bool Finished => commands.Count == 0 && idleTimeout == null && dismissTimeout == null && battleTimeout == null && talkTimeout == null && DateTime.Now >= continueTime;
 
     public ScenarioScript(string path)
     {
@@ -72,10 +85,45 @@ sealed class ScenarioScript
     /// </summary>
     public void Update(Game.Game game, IScenarioScriptHost host)
     {
-        while (commands.Count != 0 || dismissTimeout != null || idleTimeout != null || battleTimeout != null)
+        while (commands.Count != 0 || dismissTimeout != null || idleTimeout != null || battleTimeout != null || talkTimeout != null)
         {
             if (DateTime.Now < continueTime)
                 return;
+
+            if (talkTimeout != null)
+            {
+                if (DateTime.Now > talkTimeout)
+                {
+                    Report(false, "talkwait timed out: " + game.ScriptState());
+                    talkTimeout = null;
+                }
+                else if (game.PopupActive)
+                {
+                    // Return closes text popups and answers decisions with "yes"
+                    game.OnKeyDown(Key.Return, KeyModifiers.None);
+                    game.OnKeyUp(Key.Return, KeyModifiers.None);
+                    lastPopupTime = DateTime.Now;
+                    continueTime = DateTime.Now.AddMilliseconds(300);
+                    return;
+                }
+                else if (game.ScriptConversationTextActive)
+                {
+                    host.Click(host.WindowCenter, false);
+                    lastPopupTime = DateTime.Now;
+                    continueTime = DateTime.Now.AddMilliseconds(300);
+                    return;
+                }
+                else if (!game.InputEnable || (DateTime.Now - lastPopupTime).TotalMilliseconds < talkQuietTime)
+                {
+                    if (!game.InputEnable)
+                        lastPopupTime = DateTime.Now;
+                    return;
+                }
+                else
+                {
+                    talkTimeout = null;
+                }
+            }
 
             if (dismissTimeout != null)
             {
@@ -236,6 +284,35 @@ sealed class ScenarioScript
                             Report(background == uint.Parse(parts[1]), $"battle background is {(background?.ToString() ?? "no battle")}, expected {parts[1]}");
                         break;
                     }
+                    case "talk":
+                        ReportError(game.ScriptTalk(uint.Parse(parts[1])));
+                        break;
+                    case "say":
+                        ReportError(game.ScriptSay(argument));
+                        break;
+                    case "showitem":
+                    case "giveitem":
+                        ReportError(game.ScriptConversationItem(uint.Parse(parts[1]), name == "giveitem"));
+                        break;
+                    case "leave":
+                        ReportError(game.ScriptLeaveConversation());
+                        break;
+                    case "talkwait":
+                        talkTimeout = DateTime.Now.AddMilliseconds(parts.Length > 1 ? int.Parse(parts[1]) : 15000);
+                        talkQuietTime = parts.Length > 2 ? int.Parse(parts[2]) : 1000;
+                        lastPopupTime = DateTime.Now;
+                        continueTime = DateTime.Now.AddMilliseconds(200);
+                        return;
+                    case "trigger":
+                    {
+                        var trigger = parts.Length > 3 ? Enum.Parse<EventTrigger>(parts[3], true) : EventTrigger.Move;
+                        if (!game.ScriptTriggerMapEvent(trigger, uint.Parse(parts[1]), uint.Parse(parts[2])))
+                            Console.WriteLine($"  no event was triggered at {parts[1]},{parts[2]}");
+                        break;
+                    }
+                    case "setvar":
+                        game.ScriptSetGlobalVariable(uint.Parse(parts[1]), parts[2] == "1");
+                        break;
                     case "questlog":
                         Console.WriteLine($"  quest log open: {game.ScriptToggleQuestLog()}");
                         break;
@@ -268,6 +345,12 @@ sealed class ScenarioScript
                 Report(false, $"line {lineNumber} failed: {ex.Message}");
             }
         }
+    }
+
+    void ReportError(string? error)
+    {
+        if (error != null)
+            Report(false, error);
     }
 
     void Report(bool ok, string message)

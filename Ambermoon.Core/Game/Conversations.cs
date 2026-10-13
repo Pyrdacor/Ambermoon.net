@@ -70,6 +70,7 @@ partial class GameCore
         UIText? moveItemMessage = null;
         layout.DraggedItemDropped += DraggedItemDropped;
         closeWindowHandler = _ => CleanUp();
+        scriptConversation = new(SayWord, ShowItem, GiveItem, () => Exit(true));
 
         void SetText(string text, Action? followAction = null)
         {
@@ -139,6 +140,7 @@ partial class GameCore
 
             void Abort()
             {
+                scriptConversationItemSelector = null;
                 itemGrid.HideTooltip();
                 itemGrid.ItemClicked -= ItemClicked;
                 message?.Destroy();
@@ -275,6 +277,7 @@ partial class GameCore
             }
             void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
             {
+                scriptConversationItemSelector = null;
                 itemGrid.ItemClicked -= ItemClicked;
                 nextClickHandler = null;
                 UntrapMouse();
@@ -284,6 +287,7 @@ partial class GameCore
                 itemGrid.PlayMoveAnimation(itemSlot, new Position(215, 75), () => CheckItem(itemSlot), 650);
             }
             itemGrid.ItemClicked += ItemClicked;
+            scriptConversationItemSelector = slotIndex => ItemClicked(itemGrid, slotIndex, CurrentPartyMember.Inventory.Slots[slotIndex]);
         }
 
         void ShowItem()
@@ -580,6 +584,8 @@ partial class GameCore
 
         void CleanUp()
         {
+            scriptConversation = null;
+            scriptConversationItemSelector = null;
             layout.DraggedItemDropped -= DraggedItemDropped;
             ActivePlayerChanged -= SwitchPlayer;
             ConversationTextActive = false;
