@@ -649,6 +649,7 @@ partial class GameCore
     {
         ResetMoveKeys();
         RunSavegameTileChangeEvents(map.Index);
+        ModHooks?.MapChanged(map);
     }
 
     void RenderMap2D_MapChanged(Map? lastMap, Map[] maps)
@@ -659,6 +660,9 @@ partial class GameCore
 
         foreach (var map in maps)
             RunSavegameTileChangeEvents(map.Index);
+
+        if (lastMap == null || lastMap.Index != maps[0].Index)
+            ModHooks?.MapChanged(maps[0]);
     }
 
     float Get3DLight()

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Characters
 {
-    public class CharacterManager : ICharacterManager
+    public class CharacterManager : IModifiableCharacterManager
     {
         readonly Dictionary<uint, PartyMember> initialPartyMembers = [];
         readonly Dictionary<uint, NPC> npcs = [];
@@ -54,6 +54,11 @@ namespace Ambermoon.Data.Legacy.Characters
         public NPC GetNPC(uint index) => index == 0 || !npcs.TryGetValue(index, out NPC value) ? null : value;
 
         public MonsterGroup GetMonsterGroup(uint index) => index == 0 || !monsterGroups.TryGetValue(index, out MonsterGroup value) ? null : value;
+
+        public void SetMonster(Monster monster) => monsters[monster.Index] = monster;
+        public void SetMonsterGroup(uint index, MonsterGroup monsterGroup) => monsterGroups[index] = monsterGroup;
+        public void SetInitialPartyMember(PartyMember partyMember) => initialPartyMembers[partyMember.Index] = partyMember;
+        public void SetNPC(NPC npc) => npcs[npc.Index] = npc;
 
         public IReadOnlyList<PartyMember> InitialPartyMembers => initialPartyMembers.Values.ToList().AsReadOnly();
         public IReadOnlyList<NPC> NPCs => npcs.Values.ToList().AsReadOnly();
