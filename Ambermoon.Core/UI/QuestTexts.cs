@@ -131,6 +131,7 @@ internal static class QuestTexts
             { MainQuestType.Eyrie, "Der Adlerhorst" },
             { MainQuestType.BlackMountains, "Die Schwarzberge" },
             { MainQuestType.DesertTemple, "Der Wüstentempel" },
+            { MainQuestType.PaladinGuild, "Die Paladingilde von Crystal" },
         } },
         { GameLanguage.English, new()
         {
@@ -172,6 +173,7 @@ internal static class QuestTexts
             { MainQuestType.Eyrie, "The Eyrie" },
             { MainQuestType.BlackMountains, "The Black Mountains" },
             { MainQuestType.DesertTemple, "The Desert Temple" },
+            { MainQuestType.PaladinGuild, "The Paladin Guild of Crystal" },
         } },
         { GameLanguage.French, new()
         {
@@ -213,6 +215,7 @@ internal static class QuestTexts
             { MainQuestType.Eyrie, "L'aire des aigles" },
             { MainQuestType.BlackMountains, "Les montagnes noires" },
             { MainQuestType.DesertTemple, "Le temple du désert" },
+            { MainQuestType.PaladinGuild, "La guilde des paladins de Crystal" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -254,6 +257,7 @@ internal static class QuestTexts
             { MainQuestType.Eyrie, "Orle gniazdo" },
             { MainQuestType.BlackMountains, "Czarne góry" },
             { MainQuestType.DesertTemple, "Pustynna świątynia" },
+            { MainQuestType.PaladinGuild, "Gildia paladynów z Crystal" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -295,6 +299,7 @@ internal static class QuestTexts
             { MainQuestType.Eyrie, "Orlí hnízdo" },
             { MainQuestType.BlackMountains, "Černé hory" },
             { MainQuestType.DesertTemple, "Pouštní chrám" },
+            { MainQuestType.PaladinGuild, "Cech paladinů z Crystalu" },
         } },
     };
 
@@ -477,6 +482,13 @@ internal static class QuestTexts
             { SubQuestType.DesertTemple_SolveTheFacePuzzle, "Löse das Rätsel des Gesichts" },
             { SubQuestType.DesertTemple_AnswerTheRiddlemouths, "Beantworte die drei Rätselmünder" },
             { SubQuestType.DesertTemple_DefeatMarla, "Besiege Marla" },
+            { SubQuestType.PaladinGuild_BreakThroughTheCrackedWall, "Durchbrich die rissige Wand" },
+            { SubQuestType.PaladinGuild_LightTheCandles, "Entzünde die vier Kerzen" },
+            { SubQuestType.PaladinGuild_SummonThePaladinMaster, "Beschwöre den Paladinmeister" },
+            { SubQuestType.PaladinGuild_DefeatThePaladinMaster, "Besiege den Paladinmeister" },
+            { SubQuestType.PaladinGuild_OpenTheExitOfTheGuild, "Öffne den Ausgang der Gilde" },
+            { SubQuestType.PaladinGuild_TakeGunbarsEssence, "Nimm Gunbars Essenz an dich" },
+            { SubQuestType.PaladinGuild_FindFargonsEssence, "Finde Fargons Essenz" },
         } },
         { GameLanguage.English, new()
         {
@@ -653,6 +665,13 @@ internal static class QuestTexts
             { SubQuestType.DesertTemple_SolveTheFacePuzzle, "Solve the puzzle of the face" },
             { SubQuestType.DesertTemple_AnswerTheRiddlemouths, "Answer the three riddlemouths" },
             { SubQuestType.DesertTemple_DefeatMarla, "Defeat Marla" },
+            { SubQuestType.PaladinGuild_BreakThroughTheCrackedWall, "Break through the cracked wall" },
+            { SubQuestType.PaladinGuild_LightTheCandles, "Light the four candles" },
+            { SubQuestType.PaladinGuild_SummonThePaladinMaster, "Summon the paladin master" },
+            { SubQuestType.PaladinGuild_DefeatThePaladinMaster, "Defeat the paladin master" },
+            { SubQuestType.PaladinGuild_OpenTheExitOfTheGuild, "Open the exit of the guild" },
+            { SubQuestType.PaladinGuild_TakeGunbarsEssence, "Take Gunbar's essence" },
+            { SubQuestType.PaladinGuild_FindFargonsEssence, "Find Fargon's essence" },
         } },
         { GameLanguage.French, new()
         {
@@ -810,6 +829,13 @@ internal static class QuestTexts
             { SubQuestType.DesertTemple_SolveTheFacePuzzle, "Résous l'énigme du visage" },
             { SubQuestType.DesertTemple_AnswerTheRiddlemouths, "Réponds aux trois bouches à énigmes" },
             { SubQuestType.DesertTemple_DefeatMarla, "Vaincs Marla" },
+            { SubQuestType.PaladinGuild_BreakThroughTheCrackedWall, "Perce le mur fissuré" },
+            { SubQuestType.PaladinGuild_LightTheCandles, "Allume les quatre bougies" },
+            { SubQuestType.PaladinGuild_SummonThePaladinMaster, "Invoque le maître paladin" },
+            { SubQuestType.PaladinGuild_DefeatThePaladinMaster, "Vaincs le maître paladin" },
+            { SubQuestType.PaladinGuild_OpenTheExitOfTheGuild, "Ouvre la sortie de la guilde" },
+            { SubQuestType.PaladinGuild_TakeGunbarsEssence, "Prends l'essence de Gunbar" },
+            { SubQuestType.PaladinGuild_FindFargonsEssence, "Trouve l'essence de Fargon" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -967,6 +993,13 @@ internal static class QuestTexts
             { SubQuestType.DesertTemple_SolveTheFacePuzzle, "Rozwiąż zagadkę twarzy" },
             { SubQuestType.DesertTemple_AnswerTheRiddlemouths, "Odpowiedz trzem ustom zagadek" },
             { SubQuestType.DesertTemple_DefeatMarla, "Pokonaj Marlę" },
+            { SubQuestType.PaladinGuild_BreakThroughTheCrackedWall, "Przebij się przez pękniętą ścianę" },
+            { SubQuestType.PaladinGuild_LightTheCandles, "Zapal cztery świece" },
+            { SubQuestType.PaladinGuild_SummonThePaladinMaster, "Przywołaj mistrza paladynów" },
+            { SubQuestType.PaladinGuild_DefeatThePaladinMaster, "Pokonaj mistrza paladynów" },
+            { SubQuestType.PaladinGuild_OpenTheExitOfTheGuild, "Otwórz wyjście z gildii" },
+            { SubQuestType.PaladinGuild_TakeGunbarsEssence, "Zabierz esencję Gunbara" },
+            { SubQuestType.PaladinGuild_FindFargonsEssence, "Znajdź esencję Fargona" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -1124,6 +1157,13 @@ internal static class QuestTexts
             { SubQuestType.DesertTemple_SolveTheFacePuzzle, "Vyřeš hádanku tváře" },
             { SubQuestType.DesertTemple_AnswerTheRiddlemouths, "Odpověz třem hádankovým ústům" },
             { SubQuestType.DesertTemple_DefeatMarla, "Poraz Marlu" },
+            { SubQuestType.PaladinGuild_BreakThroughTheCrackedWall, "Proraž popraskanou zeď" },
+            { SubQuestType.PaladinGuild_LightTheCandles, "Zapal čtyři svíčky" },
+            { SubQuestType.PaladinGuild_SummonThePaladinMaster, "Vyvolej mistra paladinů" },
+            { SubQuestType.PaladinGuild_DefeatThePaladinMaster, "Poraz mistra paladinů" },
+            { SubQuestType.PaladinGuild_OpenTheExitOfTheGuild, "Otevři východ z cechu" },
+            { SubQuestType.PaladinGuild_TakeGunbarsEssence, "Vezmi si Gunbarovu esenci" },
+            { SubQuestType.PaladinGuild_FindFargonsEssence, "Najdi Fargonovu esenci" },
         } },
     };
 }

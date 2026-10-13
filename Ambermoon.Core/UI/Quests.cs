@@ -46,6 +46,7 @@ public enum MainQuestType
     Eyrie,
     BlackMountains,
     DesertTemple,
+    PaladinGuild,
 }
 
 public enum SubQuestType
@@ -237,6 +238,14 @@ public enum SubQuestType
     DesertTemple_SolveTheFacePuzzle, // after reading about Marla
     DesertTemple_AnswerTheRiddlemouths, // after solving the face puzzle
     DesertTemple_DefeatMarla, // after answering the riddlemouths
+    // The Paladin Guild of Crystal (Advanced)
+    PaladinGuild_BreakThroughTheCrackedWall, // after finding the wine cellar
+    PaladinGuild_LightTheCandles, // after breaking through the wall
+    PaladinGuild_SummonThePaladinMaster, // after lighting the candles
+    PaladinGuild_DefeatThePaladinMaster, // after summoning him
+    PaladinGuild_OpenTheExitOfTheGuild, // after defeating the paladin master
+    PaladinGuild_TakeGunbarsEssence, // after finding the book of mystic creatures
+    PaladinGuild_FindFargonsEssence, // after finding the book of mystic creatures
     // Brotherhood of Tarbos
     BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, // after finding the Amberstar
     BrotherhoodOfTarbos_DefeatThornahuun, // after meeting Thornahuun in the coffin hall
@@ -1317,6 +1326,104 @@ partial class QuestLog
                             new PreviousSubQuestCompletedTrigger(),
                             // Complete: Marla was defeated
                             new EventDisabledTrigger(game, TriggerType.Completion, 474, 32),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 444, // Mystic Creatures
+                    }
+                ));
+                #endregion
+                #region The Paladin Guild of Crystal
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.PaladinGuild,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.PaladinGuild_BreakThroughTheCrackedWall,
+                        Triggers =
+                        [
+                            // Activate: found the wine cellar of Crystal
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 260),
+                            // Complete: the cracked wall in the wine cellar was smashed with the giant mallet
+                            new EventDisabledTrigger(game, TriggerType.Completion, 470, 31),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 466, // Towns of Lyramion
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.PaladinGuild_LightTheCandles,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the four candles in the first hall of the guild burn
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 259),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 466, // Towns of Lyramion
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.PaladinGuild_SummonThePaladinMaster,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: ten paladin emblems summoned the paladin master (only with Gryban in the party)
+                            new EventDisabledTrigger(game, TriggerType.Completion, 472, 4),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 466, // Towns of Lyramion
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.PaladinGuild_DefeatThePaladinMaster,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the paladin master is hidden again after he was summoned
+                            new PredicateTrigger(game, TriggerType.Completion, (g, e) =>
+                                g.CurrentSavegame!.GetEventBit(472, 3) && g.CurrentSavegame.GetCharacterBit(472, 19)),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 466, // Towns of Lyramion
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.PaladinGuild_OpenTheExitOfTheGuild,
+                        Triggers =
+                        [
+                            // Activate: reached the second part of the guild
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the switch opened the exit to the surface
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 261),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 466, // Towns of Lyramion
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.PaladinGuild_TakeGunbarsEssence,
+                        Triggers =
+                        [
+                            // Activate: the book of mystic creatures was found in the guild
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 268),
+                            // Complete: Gunbar's statue released his essence
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 400),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 444, // Mystic Creatures
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.PaladinGuild_FindFargonsEssence,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate: the book of mystic creatures was found in the guild
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 268),
+                            // Complete: Fargon's essence is owned, its chest (181) was unlocked or it was transferred into Kasimir
+                            new PredicateTrigger(game, TriggerType.Completion, (g, e) =>
+                                g.GetTotalItemCount(442) != 0 || !g.CurrentSavegame!.IsChestLocked(180) || IsGlobalVariableSet(g, e, 266)),
                         ],
                         SourceType = QuestSourceType.Item,
                         SourceIndex = 444, // Mystic Creatures

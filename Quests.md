@@ -428,6 +428,18 @@ variable 272 ("Marla defeated") there, but no event sets it, so the desert keeps
 
 Tests: `DesertTemple.txt`
 
+### The Paladin Guild of Crystal (Die Paladingilde von Crystal) — from episode 2
+
+1. **Break through the cracked wall** in the wine cellar of Crystal with the giant mallet (event 470:31).
+2. **Light the four candles** with flint and iron (variable 259).
+3. **Summon the paladin master** with ten paladin emblems, Gryban has to be in the party (event 472:4).
+4. **Defeat the paladin master**: he is hidden again after he was summoned.
+5. **Open the exit of the guild** (variable 261).
+6. **Take Gunbar's essence** from his statue (variable 400).
+7. **Find Fargon's essence**: owned, its chest (181) unlocked or transferred into Kasimir (266).
+
+Tests: `PaladinGuild.txt`
+
 ### The Gral Temple (Der Graltempel) — from episode 3
 
 1. **Ask Melvin about his family**: Melvin in Snakesign (keyword "Family"). Done with the legend (variable 310).

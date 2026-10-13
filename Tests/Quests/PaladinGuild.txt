@@ -1,0 +1,128 @@
+# The paladin guild of Crystal (Ambermoon Advanced episode 2, any language): behind the wine cellar of Crystal
+# (map 470, cracked wall at 5,29 smashed with the giant mallet from chest 173) lies the old paladin guild. Four
+# candles (map 471, flint and iron 281), ten paladin emblems (447) summon the paladin master (map 472, Gryban has to
+# be in the party). The switch in map 473 opens the exit, Gunbar's statue and chest 181 hold two essences.
+waitidle 20000
+dismissall
+cheat invite 15
+talkwait
+dismissall
+cheat netsrak
+cheat light 3
+cheat give 138 10
+quest PaladinGuild_BreakThroughTheCrackedWall Inactive
+# the wine cellar was found in the quest "The Mystic Creatures"
+setvar 260 1
+goto 470 18 18
+dismissall
+cheat berserk
+dismissall
+quest PaladinGuild_BreakThroughTheCrackedWall Active
+# --- the giant mallet and the cracked wall
+goto 470 27 30
+trigger 27 29 Eye
+talkwait
+usekey 138
+takeloot
+closewindow
+talkwait
+count 433 1
+goto 470 6 29
+trigger 5 29 item:433
+talkwait
+eventbit 470 31 1
+quest PaladinGuild_BreakThroughTheCrackedWall Completed
+quest PaladinGuild_LightTheCandles Active
+# --- the four candles (Gryban comments on some places)
+cheat give 281 1
+goto 471 5 5
+dismissall
+cheat berserk
+dismissall
+trigger 4 4 item:281
+talkwait
+goto 471 13 5
+dismissall
+trigger 14 4 item:281
+talkwait
+goto 471 5 13
+dismissall
+trigger 4 14 item:281
+talkwait
+goto 471 13 13
+dismissall
+trigger 14 14 item:281
+talkwait
+var 259 1
+quest PaladinGuild_LightTheCandles Completed
+quest PaladinGuild_SummonThePaladinMaster Active
+# --- the paladin emblems (one from its chest, the others from the other chests of the guild)
+goto 472 13 22
+dismissall
+cheat berserk
+dismissall
+goto 472 16 16
+dismissall
+cheat give 447 10
+trigger 16 15 item:447
+talkwait 30000
+eventbit 472 4 1
+quest PaladinGuild_SummonThePaladinMaster Completed
+quest PaladinGuild_DefeatThePaladinMaster Active
+waitbattle 15000 optional
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
+cheat berserk
+dismissall
+reloadquests
+quest PaladinGuild_DefeatThePaladinMaster Completed
+quest PaladinGuild_OpenTheExitOfTheGuild Active
+# --- the second part of the guild: the exit, the book, Gunbar and Fargon
+goto 473 17 3
+dismissall
+cheat berserk
+dismissall
+trigger 18 3 Hand
+talkwait
+var 261 1
+quest PaladinGuild_OpenTheExitOfTheGuild Completed
+setvar 268 1
+# Gryban carries the essences (the hero's inventory is full)
+activate 2
+cheat give 138 5
+goto 473 10 4
+dismissall
+# touching the statue with the book shows the essence
+trigger 10 3 Eye
+talkwait
+var 269 1
+takeloot
+closewindow
+talkwait
+var 400 1
+count 443 1
+quest PaladinGuild_TakeGunbarsEssence Completed
+quest PaladinGuild_FindFargonsEssence Active
+goto 473 3 8
+trigger 3 7 Eye
+talkwait
+usekey 138
+# the chest is full of equipment, the step is completed once it is unlocked
+takeloot optional
+closewindow
+talkwait
+quest PaladinGuild_FindFargonsEssence Completed
+mainquest PaladinGuild Completed
+reloadquests
+quest PaladinGuild_BreakThroughTheCrackedWall Completed
+quest PaladinGuild_LightTheCandles Completed
+quest PaladinGuild_SummonThePaladinMaster Completed
+quest PaladinGuild_DefeatThePaladinMaster Completed
+quest PaladinGuild_OpenTheExitOfTheGuild Completed
+quest PaladinGuild_TakeGunbarsEssence Completed
+quest PaladinGuild_FindFargonsEssence Completed
+mainquest PaladinGuild Completed
+exit
