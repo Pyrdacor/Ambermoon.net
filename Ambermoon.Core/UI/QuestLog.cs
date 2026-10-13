@@ -265,7 +265,7 @@ public record SubQuest(QuestLog QuestLog, MainQuestType MainQuestType, QuestStat
                 return $"{mapName} ({position.X}, {position.Y})";
             }
             case QuestSourceType.Custom:
-                return QuestTexts.CustomSourceNames[game.GameLanguage][SourceIndex];
+                return QuestTexts.CustomSourceNames.Get(game.GameLanguage)[SourceIndex];
             default:
                 return "";
         }
@@ -598,18 +598,18 @@ public partial class QuestLog
             legendAreaX += text.Length * Global.GlyphWidth + 4;
         }
         AddColorRect(QuestState.Active.ToColor());
-        AddLegendText(QuestTexts.LegendActive[game.GameLanguage]);
+        AddLegendText(QuestTexts.LegendActive.Get(game.GameLanguage));
         AddColorRect(QuestState.Blocked.ToColor());
-        AddLegendText(QuestTexts.LegendBlocked[game.GameLanguage]);
+        AddLegendText(QuestTexts.LegendBlocked.Get(game.GameLanguage));
         AddColorRect(QuestState.Completed.ToColor());
-        AddLegendText(QuestTexts.LegendCompleted[game.GameLanguage]);
+        AddLegendText(QuestTexts.LegendCompleted.Get(game.GameLanguage));
 
         var eyeButton = popup.AddButton(new Position(closeButton.Area.X - Button.Width - 1, closeButton.Area.Y));
         eyeButton.ButtonType = Data.Enumerations.ButtonType.Eye;
         eyeButton.ToggleButton = true;
         eyeButton.Pressed = game.CoreConfiguration.ShowCompletedQuests;
         eyeButton.LeftClickAction = ToggleCompletedQuests;
-        eyeButton.Tooltip = game.CoreConfiguration.ShowButtonTooltips ? QuestTexts.ShowCompletedQuestsTooltip[game.GameLanguage] : null;
+        eyeButton.Tooltip = game.CoreConfiguration.ShowButtonTooltips ? QuestTexts.ShowCompletedQuestsTooltip.Get(game.GameLanguage) : null;
         eyeButton.TooltipColor = TextColor.Yellow;
         eyeButton.Visible = true;
 
@@ -626,12 +626,12 @@ public partial class QuestLog
 
     private string GetMainQuestText(MainQuestType mainQuestType)
     {
-        return TruncateText(QuestTexts.MainQuests[game.GameLanguage][mainQuestType], true);
+        return TruncateText(QuestTexts.GetMainQuestText(game.GameLanguage, mainQuestType), true);
     }
 
     private string GetSubQuestText(SubQuestType subQuestType, uint currentAmount, uint? minAmount)
     {
-        string text = QuestTexts.SubQuests[game.GameLanguage][subQuestType];
+        string text = QuestTexts.GetSubQuestText(game.GameLanguage, subQuestType);
 
         if (minAmount != null)
         {
@@ -832,7 +832,7 @@ public partial class QuestLog
                 if (iterationIndex >= scrollOffset)
                 {
                     var tooptip = tooltips[textIndex];
-                    tooptip.Text = QuestTexts.Source[game.GameLanguage] + subQuest.GetSourceInfo(game);
+                    tooptip.Text = QuestTexts.Source.Get(game.GameLanguage) + subQuest.GetSourceInfo(game);
                     tooptip.Enabled = true;
 
                     var text = texts[textIndex++];

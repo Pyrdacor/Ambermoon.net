@@ -5,6 +5,30 @@ namespace Ambermoon.UI;
 
 internal static class QuestTexts
 {
+    /// <summary>
+    /// Returns the text for the given language. Falls back to English if there is no translation yet.
+    /// </summary>
+    public static T Get<T>(this Dictionary<GameLanguage, T> texts, GameLanguage language)
+    {
+        return texts.TryGetValue(language, out var text) ? text : texts[GameLanguage.English];
+    }
+
+    public static string GetMainQuestText(GameLanguage language, MainQuestType mainQuestType)
+    {
+        if (MainQuests.Get(language).TryGetValue(mainQuestType, out var text) || MainQuests[GameLanguage.English].TryGetValue(mainQuestType, out text))
+            return text;
+
+        return mainQuestType.ToString();
+    }
+
+    public static string GetSubQuestText(GameLanguage language, SubQuestType subQuestType)
+    {
+        if (SubQuests.Get(language).TryGetValue(subQuestType, out var text) || SubQuests[GameLanguage.English].TryGetValue(subQuestType, out text))
+            return text;
+
+        return subQuestType.ToString();
+    }
+
     public static readonly Dictionary<GameLanguage, string> ShowCompletedQuestsTooltip = new()
     {
         { GameLanguage.German, "Abgeschlossene Quests ein- oder ausblenden" },
