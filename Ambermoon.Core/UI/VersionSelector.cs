@@ -32,6 +32,7 @@ namespace Ambermoon.UI
     public class VersionSelector
     {
         const int FlagWidth = 16;
+        const int VisibleVersionRows = 5;
         const int FlagHeight = 16;
         const TextColor NormalTooltipColor = TextColor.White;
         readonly IGameRenderView renderView;
@@ -60,10 +61,16 @@ namespace Ambermoon.UI
         readonly List<ILayerSprite> languageChangeButtons = [];
         IText? currentSaveTooltipText = null;
         readonly Button? okButton = null;
-        readonly List<Rect> versionAreas = new(5);
+        readonly List<Rect> versionAreas = new(VisibleVersionRows);
         int selectedSaveOption = 0;
-        int selectedVersion = 0;
+        int selectedVersion = -1;
+        int scrollOffset = 0;
         readonly int versionCount;
+        // Confirmation mode (e.g. to trust the code of a mod)
+        readonly IRenderText? confirmationText = null;
+        readonly Button? cancelButton = null;
+        Action? confirmAction = null;
+        bool ConfirmationActive => confirmAction != null;
         int SelectedVersion
         {
             get => selectedVersion;
@@ -73,11 +80,23 @@ namespace Ambermoon.UI
                 {
                     selectedVersion = value;
 
+                    if (selectedVersion < scrollOffset)
+                    {
+                        scrollOffset = selectedVersion;
+                        UpdateVersionTexts(configuration.Language);
+                    }
+                    else if (selectedVersion >= scrollOffset + VisibleVersionRows)
+                    {
+                        scrollOffset = selectedVersion - VisibleVersionRows + 1;
+                        UpdateVersionTexts(configuration.Language);
+                    }
+
                     bool externalVersion = IsSelectedVersionFromExternalData();
                     ShowSaveOptionButton(externalVersion);
                     saveOptionText!.Visible = externalVersion;
-                    selectedVersionMarker!.X = versionAreas[value].X;
-                    selectedVersionMarker.Y = versionAreas[value].Y;
+                    int row = value - scrollOffset;
+                    selectedVersionMarker!.X = versionAreas[row].X;
+                    selectedVersionMarker.Y = versionAreas[row].Y;
                 }
             }
         }
@@ -167,31 +186,31 @@ namespace Ambermoon.UI
                 var gameVersion = gameVersions[i];
 
                 if (gameVersion.MergeWithPrevious && mergedGameVersions.Count != 0)
-                {
                     mergedGameVersions[^1].Add(gameVersion);
-                }
                 else
-                {
-                    int index = mergedGameVersions.Count;
-                    string text = BuildVersionEntryText(gameVersion);
-                    var versionArea = new Rect(versionListArea.X, versionListArea.Y + index * 10, versionListArea.Width, 10);
-                    var markerArea = versionArea.CreateModified(0, 0, 0, -1);
-                    var highlight = versionHighlights[index] = FillArea(markerArea, Color.White, 6);
-                    highlight.Visible = false;
-                    versionTexts[index] = AddText(new Position(versionArea.X + 1, versionArea.Y + 2), text, TextColor.White, true, 14);
-                    versionTextHighlightShadows[index] = AddText(new Position(versionArea.X + 2, versionArea.Y + 3), text, TextColor.LightGray, false, 10);
-                    versionTextHighlightShadows[index].Visible = false;
-                    if (SelectedVersion == index)
-                        selectedVersionMarker = FillArea(markerArea, Color.Green, 2);
-                    versionAreas.Add(versionArea);
-
-                    mergedGameVersions.Add(new List<GameVersion>() { gameVersion });
-                }
+                    mergedGameVersions.Add([gameVersion]);
 
                 if (selectedVersion == i)
                     versionToSelect = mergedGameVersions.Count - 1;
             }
             versionCount = mergedGameVersions.Count;
+            // Only a few rows are visible. If there are more versions (e.g. mods), the list is scrolled.
+            for (int row = 0; row < Math.Min(VisibleVersionRows, versionCount); ++row)
+            {
+                string text = BuildVersionEntryText(mergedGameVersions[row][0]);
+                var versionArea = new Rect(versionListArea.X, versionListArea.Y + row * 10, versionListArea.Width, 10);
+                var markerArea = versionArea.CreateModified(0, 0, 0, -1);
+                var highlight = versionHighlights[row] = FillArea(markerArea, Color.White, 6);
+                highlight.Visible = false;
+                versionTexts[row] = AddText(new Position(versionArea.X + 1, versionArea.Y + 2), text, TextColor.White, true, 14);
+                versionTextHighlightShadows[row] = AddText(new Position(versionArea.X + 2, versionArea.Y + 3), text, TextColor.LightGray, false, 10);
+                versionTextHighlightShadows[row].Visible = false;
+                if (row == 0)
+                    selectedVersionMarker = FillArea(markerArea, Color.Green, 2);
+                versionAreas.Add(versionArea);
+            }
+            confirmationText = AddText(new Position(versionListArea.X + 2, versionListArea.Y + 2), "", TextColor.BrightGray, true, 14);
+            confirmationText.Visible = false;
             foreach (var mergedGameVersion in mergedGameVersions)
             {
                 if (mergedGameVersion.Any(v => v.Language == configuration.Language))
@@ -219,6 +238,28 @@ namespace Ambermoon.UI
             okButton.Visible = true;
             okButton.LeftClickAction = () =>
             {
+                if (ConfirmationActive)
+                {
+                    var action = confirmAction;
+                    HideConfirmation();
+                    action!();
+                    return;
+                }
+
+                var selected = mergedGameVersions[this.selectedVersion].First(v => v.Language == selectedVersionLanguages[this.selectedVersion]);
+                var confirmation = selected.ConfirmationProvider?.Invoke(configuration.Language);
+
+                if (confirmation != null)
+                {
+                    ShowConfirmation(confirmation, Close);
+                    okButton.Disabled = false;
+                    return;
+                }
+
+                Close();
+            };
+            void Close()
+            {
                 int totalSelectedIndex = 0;
 
                 for (int i = 0; i < this.selectedVersion; ++i)
@@ -231,7 +272,11 @@ namespace Ambermoon.UI
                 Closed?.Invoke(totalSelectedIndex,
                     mergedGameVersions[this.selectedVersion].First(v => v.Language == selectedVersionLanguages[this.selectedVersion]).DataProvider,
                     IsSelectedVersionFromExternalData() && selectedSaveOption == 1);
-            };
+            }
+            cancelButton = CreateButton(new Position(okButton.Area.Left - Button.Width - 4, okButton.Area.Top), textureAtlasManager);
+            cancelButton.ButtonType = Data.Enumerations.ButtonType.No;
+            cancelButton.LeftClickAction = HideConfirmation;
+            ShowButton(cancelButton, false);
             saveOptionTooltip.Area = Global.GetTextRect(renderView, new Rect(saveOptionPosition, new Size(savegameOptionText.Length * Global.GlyphWidth, Global.GlyphLineHeight)));
             UpdateSaveOptionTooltip();
             #endregion
@@ -280,7 +325,56 @@ namespace Ambermoon.UI
 
             selectedVersionLanguages[index] = gameVersion.Language;
 
-            versionTexts[index].Text = versionTextHighlightShadows[index].Text = renderView.TextProcessor.CreateText(BuildVersionEntryText(gameVersion));
+            int row = index - scrollOffset;
+
+            if (row >= 0 && row < versionTexts.Length && versionTexts[row] != null)
+                versionTexts[row].Text = versionTextHighlightShadows[row].Text = renderView.TextProcessor.CreateText(BuildVersionEntryText(gameVersion));
+        }
+
+        void ShowButton(Button button, bool show)
+        {
+            button.Visible = show;
+
+            foreach (var background in buttonBackgrounds[button])
+                background.Visible = show;
+        }
+
+        void ShowVersionRows(bool show)
+        {
+            for (int row = 0; row < versionAreas.Count; ++row)
+            {
+                versionTexts[row].Visible = show;
+                versionTextHighlightShadows[row].Visible = false;
+                versionHighlights[row].Visible = false;
+                versionTexts[row].TextColor = TextColor.White;
+                versionTexts[row].Shadow = true;
+            }
+
+            selectedVersionMarker!.Visible = show;
+        }
+
+        void ShowConfirmation(string text, Action confirmAction)
+        {
+            this.confirmAction = confirmAction;
+            ShowVersionRows(false);
+            var wrappedText = renderView.TextProcessor.WrapText(renderView.TextProcessor.CreateText(text),
+                new Rect(0, 0, versionAreas[0].Width - 4, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+            confirmationText!.Text = wrappedText;
+            confirmationText.Visible = true;
+            ShowButton(cancelButton!, true);
+            ShowSaveOptionButton(false);
+            saveOptionText!.Visible = false;
+        }
+
+        void HideConfirmation()
+        {
+            confirmAction = null;
+            confirmationText!.Visible = false;
+            ShowButton(cancelButton!, false);
+            ShowVersionRows(true);
+            bool externalVersion = IsSelectedVersionFromExternalData();
+            ShowSaveOptionButton(externalVersion);
+            saveOptionText!.Visible = externalVersion;
         }
 
         void UpdateVersionTexts(GameLanguage language)
@@ -576,6 +670,7 @@ namespace Ambermoon.UI
             ticks = GameCore.UpdateTicks(ticks, deltaTime);
             okButton!.Update(ticks);
             changeSaveOptionButton!.Update(ticks);
+            cancelButton!.Update(ticks);
         }
 
         public void Render()
@@ -585,6 +680,15 @@ namespace Ambermoon.UI
 
         public void OnKeyDown(Key key, KeyModifiers modifiers)
         {
+            if (ConfirmationActive && key == Key.Escape)
+            {
+                HideConfirmation();
+                return;
+            }
+
+            if (ConfirmationActive && key != Key.Return && key != Key.Space)
+                return;
+
             switch (key)
             {
                 case Key.Up:
@@ -641,6 +745,7 @@ namespace Ambermoon.UI
 
                 okButton!.LeftMouseUp(position, 0u);
                 changeSaveOptionButton!.LeftMouseUp(position, 0u);
+                cancelButton!.LeftMouseUp(position, 0u);
             }
         }
 
@@ -650,11 +755,18 @@ namespace Ambermoon.UI
             {
                 position = renderView.ScreenToGame(position);
 
+                if (ConfirmationActive)
+                {
+                    okButton!.LeftMouseDown(position, 0u);
+                    cancelButton!.LeftMouseDown(position, 0u);
+                    return;
+                }
+
                 for (int i = 0; i < versionAreas.Count; ++i)
                 {
                     if (versionAreas[i].Contains(position))
                     {
-                        SelectedVersion = i;
+                        SelectedVersion = scrollOffset + i;
                         return;
                     }
                 }
@@ -747,6 +859,9 @@ namespace Ambermoon.UI
 
             position = renderView.ScreenToGame(position);
 
+            if (ConfirmationActive)
+                return;
+
             for (int i = 0; i < versionAreas.Count; ++i)
             {
                 if (versionAreas[i].Contains(position))
@@ -774,6 +889,9 @@ namespace Ambermoon.UI
 
         public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
         {
+            if (ConfirmationActive)
+                return;
+
 			if (yScroll != 0)
             {
                 if (yScroll > 0) // up

@@ -99,6 +99,8 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
     bool initialized = false;
     Patcher patcher = null;
     bool checkPatcher = true;
+    List<Mod.Packaging.ModPackage> mods = [];
+    Mod.ModRuntime activeMod = null;
     bool initialIntroEndedByClick = false;
     CommandLineOptions commandLineOptions = null;
     readonly List<Action> mainThreadActions = [];
@@ -870,9 +872,120 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
 
     string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
 
-    void StartMod(IGameData gameData, string savePath, GameLanguage gameLanguage)
+    static readonly Dictionary<GameLanguage, string> ModTrustQuestions = new()
     {
+        { GameLanguage.German, "Die Mod '{0}' enthält Programmcode. Starte sie nur, wenn du dem Autor vertraust. Fortfahren?" },
+        { GameLanguage.French, "Le mod '{0}' contient du code. Ne le lancez que si vous faites confiance à l'auteur. Continuer?" },
+        { GameLanguage.Polish, "Mod '{0}' zawiera kod programu. Uruchom go tylko, jeśli ufasz autorowi. Kontynuować?" },
+        { GameLanguage.Czech, "Mod '{0}' obsahuje programový kód. Spusť ho, jen pokud autorovi důvěřuješ. Pokračovat?" },
+        { GameLanguage.English, "The mod '{0}' contains program code. Only start it if you trust its author. Continue?" },
+    };
 
+    Mod.ModTrustStore modTrustStore = null;
+
+    /// <summary>
+    /// Returns the music files of the active mod as file paths.
+    /// Files of packed mods are extracted to a cache folder first.
+    /// </summary>
+    Dictionary<int, string> GetModMusicFiles()
+    {
+        var result = new Dictionary<int, string>();
+
+        if (activeMod == null)
+            return result;
+
+        var source = activeMod.Package.Source;
+        string cachePath = null;
+
+        foreach (var musicFile in activeMod.MusicFiles)
+        {
+            try
+            {
+                if (source is Mod.Packaging.FolderModSource)
+                {
+                    result[musicFile.Key] = Path.Combine(source.Location, musicFile.Value);
+                }
+                else
+                {
+                    cachePath ??= Path.Combine(Configuration.GetSavePath("mods"), "cache", activeMod.Manifest.Id);
+                    var target = Path.Combine(cachePath, Path.GetFileName(musicFile.Value));
+                    var data = source.ReadAllBytes(musicFile.Value);
+
+                    if (!File.Exists(target) || new FileInfo(target).Length != data.Length)
+                    {
+                        Directory.CreateDirectory(cachePath);
+                        File.WriteAllBytes(target, data);
+                    }
+
+                    result[musicFile.Key] = target;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unable to load mod music '{musicFile.Value}': {ex.Message}");
+            }
+        }
+
+        return result;
+    }
+
+    Mod.ModTrustStore ModTrustStore => modTrustStore ??= new(Path.Combine(Configuration.GetSavePath("mods"), "trusted_mods.json"));
+
+    /// <summary>
+    /// Adds an entry to the version selector for each mod. A mod is offered in every
+    /// language of the base game it needs, so the language flags work as usual.
+    /// </summary>
+    void AddModVersions(List<GameVersion> gameVersions, List<BuiltinVersion> versions, Func<IGameData>[] builtinVersionDataProviders)
+    {
+        foreach (var mod in mods)
+        {
+            bool first = true;
+
+            for (int i = 0; i < versions.Count; i++)
+            {
+                var baseVersion = versions[i];
+                bool advanced = baseVersion.Info.Contains("advanced", StringComparison.InvariantCultureIgnoreCase);
+
+                if (!mod.Manifest.SupportsBaseGame(advanced, baseVersion.Version, out _))
+                    continue;
+
+                var language = baseVersion.Language.ToGameLanguage();
+                int baseIndex = i;
+
+                gameVersions.Add(new GameVersion
+                {
+                    Version = mod.Manifest.ParsedVersion.ToString(),
+                    Language = language,
+                    Info = mod.Manifest.Name,
+                    Features = baseVersion.Features | Features.Mod,
+                    MergeWithPrevious = !first,
+                    ExternalData = false,
+                    SavegameFolder = $"mod_{mod.Manifest.Id}_{language.ToString().ToLower()}",
+                    DataProvider = () =>
+                    {
+                        var gameData = builtinVersionDataProviders[baseIndex]();
+
+                        if (mod.Manifest.HasCode)
+                            Mod.ModRuntime.Trust(mod, ModTrustStore);
+
+                        activeMod = Mod.ModRuntime.Load(mod, gameData, baseVersion.Version);
+
+                        foreach (var warning in activeMod.Warnings)
+                            Console.WriteLine($"Mod '{mod.Manifest.Id}': {warning}");
+
+                        return gameData;
+                    },
+                    ConfirmationProvider = uiLanguage => Mod.ModRuntime.IsTrusted(mod, ModTrustStore)
+                        ? null
+                        : string.Format(ModTrustQuestions[uiLanguage], mod.Manifest.Name)
+                });
+
+                first = false;
+            }
+
+            if (first)
+                Console.WriteLine($"Mod '{mod.Manifest.Id}' was skipped as no matching base game version is available.");
+        }
     }
 
     void StartGame(IGameData gameData, string savePath, GameLanguage gameLanguage, Features features, BinaryReader advancedDiffsReader)
@@ -912,7 +1025,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
         if (gameData.Advanced && AdvancedLogoEnabled)
             advancedLogo = new AdvancedLogo();
 
-        musicManager = new MusicManager(configuration, gameData);
+        musicManager = new MusicManager(configuration, gameData, features.HasFlag(Features.Mod) ? GetModMusicFiles() : null);
         fontProvider ??= new IngameFontProvider(DataReader.FromData(Resources.IngameFont), gameData.FontProvider.GetFont());
 
         // Create render view
@@ -969,12 +1082,6 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
                 IAdditionalSaveSlotProvider additionalSaveSlotProvider = null;
                 int currentSavegame = 0;
 
-                if (gameData is Mod.ModGameData modGameData)
-                {
-                    savegameManager = modGameData.SavegameManager;
-                    savegameManager.GetSavegameNames(gameData, out currentSavegame, GameCore.NumBaseSavegameSlots);
-                }
-                else
                 {
                     var remakeSavegameManager = new RemakeSavegameManager(savePath, configuration);
                     remakeSavegameManager.GetSavegameNames(gameData, out currentSavegame, GameCore.NumBaseSavegameSlots);
@@ -984,6 +1091,10 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
 
                     savegameManager = remakeSavegameManager;
                     additionalSaveSlotProvider = remakeSavegameManager;
+
+                    // Mods can store their own data alongside each savegame.
+                    if (features.HasFlag(Features.Mod) && activeMod != null)
+                        savegameManager = activeMod.WrapSavegameManager(savegameManager, Path.Combine(savePath, "ModData"));
                 }
 
                 bool canContinue = currentSavegame != 0;
@@ -1007,6 +1118,9 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
                                 musicManager, FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
                                 new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,
                                 Path.GetFileName(savePath), versionString, null, additionalSaveSlotProvider);
+
+                            if (features.HasFlag(Features.Mod))
+                                activeMod?.AttachGame(game);
 
                             game.QuitRequested += window.Close;
                             game.MousePositionChanged += position =>
@@ -1238,11 +1352,6 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
             var buffer = new byte[(int)builtinVersion.Size];
             builtinVersion.SourceStream.ReadExactly(buffer, 0, buffer.Length);
 
-            if (buffer.Length >= 4 && buffer[0] == 'P' && buffer[1] == 'Y' && buffer[2] == 'G' && buffer[3] == 'D')
-            {
-                return new Mod.ModGameData(new DataReader(buffer), builtinVersion.ModPath ?? configuration.ModPath, configuration);
-            }
-            else
             {
                 var gameData = new GameData(GameData.LoadPreference.PreferExtracted
 #if DEBUG
@@ -1273,9 +1382,12 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
 
         if (commandLineOptions.SkipsVersionSelector)
         {
-            configuration.GameVersionIndex = commandLineOptions.Version == CommandLineOptions.ExternalVersion
-                ? versions.Count
-                : int.Parse(commandLineOptions.Version);
+            configuration.GameVersionIndex = commandLineOptions.Version switch
+            {
+                CommandLineOptions.ExternalVersion => versions.Count,
+                CommandLineOptions.ModVersion => 0, // the mod version index is determined later
+                _ => int.Parse(commandLineOptions.Version)
+            };
         }
 
         if (configuration.GameVersionIndex > versions.Count) // == versions.Count is ok as it could be external data
@@ -1454,6 +1566,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
                         ExternalData = true
                     });
                 }
+                AddModVersions(gameVersions, versions, builtinVersionDataProviders);
                 if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex >= gameVersions.Count)
 #if DEBUG
                     configuration.GameVersionIndex = additionalVersionInfo != null ? gameVersions.Count - 1 : 0;
@@ -1526,6 +1639,17 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
                 {
                     while (checkPatcher || patcher != null || logoPyrdacor != null)
                         Thread.Sleep(100);
+
+                    if (commandLineOptions.Mod != null)
+                    {
+                        string modFolderPrefix = $"mod_{commandLineOptions.Mod}_";
+                        int modVersionIndex = gameVersions.FindIndex(v => v.SavegameFolder == modFolderPrefix + configuration.Language.ToString().ToLower());
+
+                        if (modVersionIndex == -1)
+                            modVersionIndex = gameVersions.FindIndex(v => v.SavegameFolder?.StartsWith(modFolderPrefix, StringComparison.OrdinalIgnoreCase) == true);
+
+                        configuration.GameVersionIndex = modVersionIndex;
+                    }
 
                     if (commandLineOptions.SkipsVersionSelector)
                     {
@@ -1801,43 +1925,11 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
                             if (!Path.IsPathRooted(modPath))
                                 modPath = Path.Combine(Configuration.ExecutableDirectoryPath, modPath);
 
-                            if (Directory.Exists(modPath))
-                            {
-                                var modDirectories = Directory.GetDirectories(modPath);
-
-                                foreach (var modDirectory in modDirectories)
-                                {
-                                    var modFiles = Directory.GetFiles(modPath, "*.mod", SearchOption.AllDirectories);
-                                    string modName = Path.GetFileName(modDirectory);
-
-                                    // Prefer mod files which have the same name as the mod directory but otherwise pick any.
-                                    var modFile = modFiles.FirstOrDefault(file => string.Equals(Path.GetFileNameWithoutExtension(file), modName, StringComparison.InvariantCultureIgnoreCase))
-                                        ?? modFiles.FirstOrDefault();
-
-                                    if (modFile != null)
-                                    {
-                                        var stream = File.OpenRead(modFile);
-                                        var gameInfo = Data.Pyrdacor.GameData.ReadGameDataInfo(new DataReader(stream));
-
-                                        (versions ?? []).Add(new BuiltinVersion
-                                        {
-                                            Version = gameInfo.Version,
-                                            Language = gameInfo.Language.ToString(),
-                                            Info = gameInfo.Name,
-                                            Features = Features.None, // TODO
-                                            MergeWithPrevious = false, // TODO
-                                            Offset = 0,
-                                            Size = (uint)stream.Length,
-                                            SourceStream = stream,
-                                            ModPath = modDirectory
-                                        });
-                                    }
-                                }
-                            }
+                            mods = Mod.Packaging.ModPackage.Discover(modPath, (path, ex) => Console.WriteLine($"Unable to load mod '{path}': {ex.Message}"));
                         }
-                        catch
+                        catch (Exception ex)
                         {
-                            // ignore
+                            Console.WriteLine($"Unable to load mods: {ex.Message}");
                         }
 
                         return versions;
@@ -1867,17 +1959,14 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
 
                             try
                             {
-                                if (features.HasFlag(Features.Mod))
-                                {
-                                    StartMod(gameData, savePath, gameLanguage);
-                                }
-                                else
-                                {
-                                    var advancedDiffsReader = gameData.Advanced ? (additionalData == null
-                                        ? LoadAdvancedDiffs()
-                                        : additionalData.TryGetValue("diffs", out var reader) ? reader : LoadAdvancedDiffs()) : null;
-                                    StartGame(gameData, savePath, gameLanguage, features, advancedDiffsReader);
-                                }
+                                // Note: Mods are applied to the base game data by the version's data provider.
+                                if (!features.HasFlag(Features.Mod))
+                                    activeMod = null;
+
+                                var advancedDiffsReader = gameData.Advanced ? (additionalData == null
+                                    ? LoadAdvancedDiffs()
+                                    : additionalData.TryGetValue("diffs", out var reader) ? reader : LoadAdvancedDiffs()) : null;
+                                StartGame(gameData, savePath, gameLanguage, features, advancedDiffsReader);
                             }
                             catch (Exception ex)
                             {

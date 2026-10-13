@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 #nullable enable
@@ -12,6 +12,7 @@ namespace Ambermoon;
 sealed class CommandLineOptions
 {
     public const string ExternalVersion = "external";
+    public const string ModVersion = "mod";
 
     /// <summary>
     /// Game data folder (like the DataPath option with UseDataPath enabled).
@@ -22,6 +23,11 @@ sealed class CommandLineOptions
     /// If given, the version selector is skipped.
     /// </summary>
     public string? Version { get; private set; }
+    /// <summary>
+    /// Id of a mod to start (in the configured language if available).
+    /// If given, the version selector is skipped.
+    /// </summary>
+    public string? Mod { get; private set; }
     public bool SkipIntro { get; private set; }
     /// <summary>
     /// Skips the main menu and continues the game.
@@ -62,6 +68,7 @@ sealed class CommandLineOptions
         Console.WriteLine(" --data <path>      Use game data from the given folder (e.g. an Amberfiles folder)");
         Console.WriteLine(" --version <n>      Start version n of the version selector (0-based) without showing it");
         Console.WriteLine(" --version external Start the version from the data folder (implied by --data)");
+        Console.WriteLine(" --mod <id>         Start the mod with the given id without showing the version selector");
         Console.WriteLine(" --skip-intro       Skip logos and intros");
         Console.WriteLine(" --no-patcher       Don't check for patches (implied by any option)");
         Console.WriteLine(" --continue         Skip the main menu and continue the game");
@@ -111,6 +118,10 @@ sealed class CommandLineOptions
                     options.Version = NextValue(arg).ToLowerInvariant();
                     if (options.Version != ExternalVersion && !int.TryParse(options.Version, out _))
                         throw new ArgumentException($"Invalid version '{options.Version}'.");
+                    break;
+                case "--mod":
+                    options.Mod = NextValue(arg);
+                    options.Version = ModVersion;
                     break;
                 case "--no-patcher":
                     break; // implied by any option
