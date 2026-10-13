@@ -53,6 +53,9 @@ public enum MainQuestType
     Gatekeepers,
     IsdirsTrials,
     MagicWord,
+    WaspsNest,
+    DorinasRing,
+    SapphireThistles,
 }
 
 public enum SubQuestType
@@ -282,6 +285,17 @@ public enum SubQuestType
     IsdirsTrials_ReceiveIsdirsEssence, // after all four crystals are satisfied
     // The Magic Word (Advanced)
     MagicWord_TellMilzorTheMagicWord, // after Necros told the magic word
+    // The Wasps' Nest (Advanced)
+    WaspsNest_TalkToKetnarInDorGrestin, // after Ketnar asked to visit him
+    WaspsNest_AskFeldrarAboutWasps, // after Ketnar told about the cave
+    WaspsNest_DefeatTheWaspQueen, // after getting the wasp riding tack
+    WaspsNest_ReportToKetnar, // after defeating the wasp queen
+    // Dorina's Wedding Ring (Advanced)
+    DorinasRing_FindDorinasWeddingRing, // after Dorina told about her ring
+    DorinasRing_ReturnTheRingToDorina, // after finding the ring
+    // Sapphire Thistles (Advanced)
+    SapphireThistles_PickSapphireThistles, // after Brogat told about the thistles
+    SapphireThistles_BringTheThistlesToBrogat, // after picking five thistles
     // Brotherhood of Tarbos
     BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, // after finding the Amberstar
     BrotherhoodOfTarbos_DefeatThornahuun, // after meeting Thornahuun in the coffin hall
@@ -1764,6 +1778,127 @@ partial class QuestLog
 
             if (episode >= 3)
             {
+                #region The Wasps' Nest
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.WaspsNest,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.WaspsNest_TalkToKetnarInDorGrestin,
+                        Triggers =
+                        [
+                            // Activate: Ketnar asked the party to visit him in Dor Grestin before leaving the forest moon
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 320),
+                            // Complete: Ketnar told about the strange cave which can only be reached flying
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 321),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 58, // Ketnar
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.WaspsNest_AskFeldrarAboutWasps,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Feldrar in the tavern "The nest" gave the wasp riding tack
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 350),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 58, // Ketnar
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.WaspsNest_DefeatTheWaspQueen,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the giant wasp in the sinking room below the wasps' nest is defeated
+                            new CharacterVisibilityTrigger(game, TriggerType.Completion, 379, 1, false),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 58, // Ketnar
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.WaspsNest_ReportToKetnar,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Ketnar heard about Hudyn's fate and gave the ranger robe
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 395),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 58, // Ketnar
+                    }
+                ));
+                #endregion
+                #region Dorina's Wedding Ring
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.DorinasRing,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.DorinasRing_FindDorinasWeddingRing,
+                        Triggers =
+                        [
+                            // Activate: Dorina told about the wedding ring she lost in a lake
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 397),
+                            // Complete: the ring is owned or was returned
+                            new PredicateTrigger(game, TriggerType.Completion, (g, e) => g.GetTotalItemCount(522) != 0 || IsGlobalVariableSet(g, e, 398)),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 61, // Dorina
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.DorinasRing_ReturnTheRingToDorina,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate: found the wedding ring
+                            new ItemObtainedTrigger(game, TriggerType.Activation, 522),
+                            // Complete: Dorina got her ring back and gave the alchemist crown
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 398),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 61, // Dorina
+                    }
+                ));
+                #endregion
+                #region Sapphire Thistles
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.SapphireThistles,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.SapphireThistles_PickSapphireThistles,
+                        Triggers =
+                        [
+                            // Activate: Brogat in the tavern "The nest" told about the thistles on the river island
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 352),
+                            // Complete: five sapphire thistles are owned or Brogat brewed his potion already
+                            new CountTrigger(game, TriggerType.Completion, [], [490]),
+                            new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_BrogatBrewedBluePotion),
+                        ],
+                        MinAmount = 5,
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 75, // Brogat
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.SapphireThistles_BringTheThistlesToBrogat,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Brogat brewed his blue potion from five thistles
+                            new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_BrogatBrewedBluePotion),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 75, // Brogat
+                    }
+                ));
+                #endregion
                 #region The Gral Temple
                 quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.GralTemple,
                     mainQuest => new SubQuest(this, mainQuest)

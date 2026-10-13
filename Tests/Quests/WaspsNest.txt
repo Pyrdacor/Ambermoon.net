@@ -1,0 +1,120 @@
+# The wasps' nest and Dorina's wedding ring (Ambermoon Advanced episode 3, any language): when leaving the forest
+# moon Ketnar (NPC 58) asks the party to visit him in Dor Grestin (variable 320). He tells about a cave which can
+# only be reached flying. Feldrar (NPC 74, tavern "The nest", only in the morning) gives the wasp riding tack. Below
+# the wasps' nest the wasp queen waits in the sinking room (map 379). Afterwards Ketnar sends the party to Dorina
+# (NPC 61) who lost her wedding ring (522) in a lake (treasure 285 at map 300).
+waitidle 20000
+dismissall
+cheat level 30
+talkwait
+dismissall
+cheat netsrak
+cheat light 3
+quest WaspsNest_TalkToKetnarInDorGrestin Inactive
+# Ketnar appears when the airship is entered with a navstone (main story)
+setvar 320 1
+reloadquests
+quest WaspsNest_TalkToKetnarInDorGrestin Active
+# --- Ketnar in the council hall of Dor Grestin
+goto 341 34 26
+dismissall
+talk 58
+talkwait
+var 321 1
+quest WaspsNest_TalkToKetnarInDorGrestin Completed
+quest WaspsNest_AskFeldrarAboutWasps Active
+leave
+talkwait
+waitidle 5000
+# --- Feldrar in the tavern in the morning
+hour 7
+goto 381 2 2
+dismissall
+talk 74
+talkwait
+say 149
+talkwait
+say 149
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 350 1
+count 486 1
+quest WaspsNest_AskFeldrarAboutWasps Completed
+quest WaspsNest_DefeatTheWaspQueen Active
+# --- the wasp queen in the sinking room
+goto 379 5 9
+talkwait 30000
+waitbattle 15000 optional
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
+# the defeated wasp queen is noticed with the next event (or when loading)
+reloadquests
+quest WaspsNest_DefeatTheWaspQueen Completed
+quest WaspsNest_ReportToKetnar Active
+# --- Ketnar hears about Hudyn and sends the party to his mother
+goto 341 34 26
+dismissall
+talk 58
+talkwait
+takeitems
+talkwait
+var 395 1
+quest WaspsNest_ReportToKetnar Completed
+mainquest WaspsNest Completed
+leave
+talkwait
+waitidle 5000
+var 396 1
+# --- Dorina lost her wedding ring
+goto 353 13 16
+dismissall
+talk 61
+talkwait
+# Dorina's thanks for the letter (her brooch) come first
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+talk 61
+talkwait
+var 397 1
+quest DorinasRing_FindDorinasWeddingRing Active
+leave
+talkwait
+waitidle 5000
+goto 300 46 12
+dismissall
+trigger 46 11 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 522 1
+quest DorinasRing_FindDorinasWeddingRing Completed
+quest DorinasRing_ReturnTheRingToDorina Active
+goto 353 13 16
+dismissall
+talk 61
+talkwait
+giveitem 522
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 398 1
+quest DorinasRing_ReturnTheRingToDorina Completed
+mainquest DorinasRing Completed
+reloadquests
+mainquest WaspsNest Completed
+mainquest DorinasRing Completed
+exit

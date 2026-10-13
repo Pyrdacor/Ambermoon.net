@@ -105,6 +105,7 @@ partial class QuestLog
     const uint GlobalVar_MorgatMadeGoldenArmour = 8175u;
     const uint GlobalVar_TalkedToJeff = 8174u;
     const uint GlobalVar_TalkedToLuke = 8173u;
+    const uint GlobalVar_BrogatBrewedBluePotion = 8172u;
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 
@@ -189,6 +190,13 @@ partial class QuestLog
         customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
             (npc, @event) => npc.Index == 44 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Talk,
             GlobalVar_TalkedToLuke));
+
+        // Brogat (75, Advanced) brews his blue potion from five sapphire thistles. Nothing is stored.
+        // The event is checked before the thistles are removed, so they are still owned here.
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 75 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.GiveItem &&
+                c.ItemIndex == 490 && game.GetTotalItemCount(490) >= 5,
+            GlobalVar_BrogatBrewedBluePotion));
 
         // Aman (3) asks for the gardener's brooch (keyword "Thing") as long as he didn't get it (12)
         customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,

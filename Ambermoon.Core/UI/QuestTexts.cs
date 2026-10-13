@@ -138,6 +138,9 @@ internal static class QuestTexts
             { MainQuestType.Gatekeepers, "Die Pförtner von Cavetown" },
             { MainQuestType.IsdirsTrials, "Isdirs Prüfungen" },
             { MainQuestType.MagicWord, "Das Zauberwort" },
+            { MainQuestType.WaspsNest, "Das Wespennest" },
+            { MainQuestType.DorinasRing, "Dorinas Ehering" },
+            { MainQuestType.SapphireThistles, "Saphir-Disteln" },
         } },
         { GameLanguage.English, new()
         {
@@ -186,6 +189,9 @@ internal static class QuestTexts
             { MainQuestType.Gatekeepers, "The Gatekeepers of Cavetown" },
             { MainQuestType.IsdirsTrials, "Isdir's Trials" },
             { MainQuestType.MagicWord, "The Magic Word" },
+            { MainQuestType.WaspsNest, "The Wasps' Nest" },
+            { MainQuestType.DorinasRing, "Dorina's Wedding Ring" },
+            { MainQuestType.SapphireThistles, "Sapphire Thistles" },
         } },
         { GameLanguage.French, new()
         {
@@ -234,6 +240,9 @@ internal static class QuestTexts
             { MainQuestType.Gatekeepers, "Les portiers de Cavetown" },
             { MainQuestType.IsdirsTrials, "Les épreuves d'Isdir" },
             { MainQuestType.MagicWord, "Le mot magique" },
+            { MainQuestType.WaspsNest, "Le nid de guêpes" },
+            { MainQuestType.DorinasRing, "L'alliance de Dorina" },
+            { MainQuestType.SapphireThistles, "Les chardons saphir" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -282,6 +291,9 @@ internal static class QuestTexts
             { MainQuestType.Gatekeepers, "Odźwierni z Cavetown" },
             { MainQuestType.IsdirsTrials, "Próby Isdira" },
             { MainQuestType.MagicWord, "Magiczne słowo" },
+            { MainQuestType.WaspsNest, "Gniazdo os" },
+            { MainQuestType.DorinasRing, "Obrączka Doriny" },
+            { MainQuestType.SapphireThistles, "Szafirowe osty" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -330,6 +342,9 @@ internal static class QuestTexts
             { MainQuestType.Gatekeepers, "Vrátní z Cavetownu" },
             { MainQuestType.IsdirsTrials, "Isdirovy zkoušky" },
             { MainQuestType.MagicWord, "Kouzelné slovo" },
+            { MainQuestType.WaspsNest, "Vosí hnízdo" },
+            { MainQuestType.DorinasRing, "Dorinin snubní prsten" },
+            { MainQuestType.SapphireThistles, "Safírové bodláky" },
         } },
     };
 
@@ -543,6 +558,14 @@ internal static class QuestTexts
             { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Bring dem Kristall den blauen Kristall" },
             { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Nimm Isdirs Essenz entgegen" },
             { SubQuestType.MagicWord_TellMilzorTheMagicWord, "Verrate Milzor das Zauberwort" },
+            { SubQuestType.WaspsNest_TalkToKetnarInDorGrestin, "Sprich mit Ketnar in Dor Grestin" },
+            { SubQuestType.WaspsNest_AskFeldrarAboutWasps, "Frag Feldrar nach Wespen" },
+            { SubQuestType.WaspsNest_DefeatTheWaspQueen, "Besiege die Wespenkönigin" },
+            { SubQuestType.WaspsNest_ReportToKetnar, "Erstatte Ketnar Bericht" },
+            { SubQuestType.DorinasRing_FindDorinasWeddingRing, "Finde Dorinas Ehering" },
+            { SubQuestType.DorinasRing_ReturnTheRingToDorina, "Gib Dorina ihren Ring zurück" },
+            { SubQuestType.SapphireThistles_PickSapphireThistles, "Pflücke Saphir-Disteln" },
+            { SubQuestType.SapphireThistles_BringTheThistlesToBrogat, "Bring Brogat fünf Saphir-Disteln" },
         } },
         { GameLanguage.English, new()
         {
@@ -750,6 +773,14 @@ internal static class QuestTexts
             { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Bring the blue crystal to the ice crystal" },
             { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Receive Isdir's essence" },
             { SubQuestType.MagicWord_TellMilzorTheMagicWord, "Tell Milzor the magic word" },
+            { SubQuestType.WaspsNest_TalkToKetnarInDorGrestin, "Talk to Ketnar in Dor Grestin" },
+            { SubQuestType.WaspsNest_AskFeldrarAboutWasps, "Ask Feldrar about wasps" },
+            { SubQuestType.WaspsNest_DefeatTheWaspQueen, "Defeat the wasp queen" },
+            { SubQuestType.WaspsNest_ReportToKetnar, "Report to Ketnar" },
+            { SubQuestType.DorinasRing_FindDorinasWeddingRing, "Find Dorina's wedding ring" },
+            { SubQuestType.DorinasRing_ReturnTheRingToDorina, "Return the ring to Dorina" },
+            { SubQuestType.SapphireThistles_PickSapphireThistles, "Pick sapphire thistles" },
+            { SubQuestType.SapphireThistles_BringTheThistlesToBrogat, "Bring five sapphire thistles to Brogat" },
         } },
         { GameLanguage.French, new()
         {
@@ -938,6 +969,14 @@ internal static class QuestTexts
             { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Apporte le cristal bleu au cristal de glace" },
             { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Reçois l'essence d'Isdir" },
             { SubQuestType.MagicWord_TellMilzorTheMagicWord, "Dis le mot magique à Milzor" },
+            { SubQuestType.WaspsNest_TalkToKetnarInDorGrestin, "Parle à Ketnar à Dor Grestin" },
+            { SubQuestType.WaspsNest_AskFeldrarAboutWasps, "Interroge Feldrar sur les guêpes" },
+            { SubQuestType.WaspsNest_DefeatTheWaspQueen, "Vaincs la reine des guêpes" },
+            { SubQuestType.WaspsNest_ReportToKetnar, "Fais ton rapport à Ketnar" },
+            { SubQuestType.DorinasRing_FindDorinasWeddingRing, "Trouve l'alliance de Dorina" },
+            { SubQuestType.DorinasRing_ReturnTheRingToDorina, "Rends son alliance à Dorina" },
+            { SubQuestType.SapphireThistles_PickSapphireThistles, "Cueille des chardons saphir" },
+            { SubQuestType.SapphireThistles_BringTheThistlesToBrogat, "Apporte cinq chardons saphir à Brogat" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -1126,6 +1165,14 @@ internal static class QuestTexts
             { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Przynieś lodowemu kryształowi niebieski" },
             { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Odbierz esencję Isdira" },
             { SubQuestType.MagicWord_TellMilzorTheMagicWord, "Zdradź Milzorowi magiczne słowo" },
+            { SubQuestType.WaspsNest_TalkToKetnarInDorGrestin, "Porozmawiaj z Ketnarem w Dor Grestin" },
+            { SubQuestType.WaspsNest_AskFeldrarAboutWasps, "Zapytaj Feldrara o osy" },
+            { SubQuestType.WaspsNest_DefeatTheWaspQueen, "Pokonaj królową os" },
+            { SubQuestType.WaspsNest_ReportToKetnar, "Zdaj raport Ketnarowi" },
+            { SubQuestType.DorinasRing_FindDorinasWeddingRing, "Znajdź obrączkę Doriny" },
+            { SubQuestType.DorinasRing_ReturnTheRingToDorina, "Oddaj Dorinie jej obrączkę" },
+            { SubQuestType.SapphireThistles_PickSapphireThistles, "Zerwij szafirowe osty" },
+            { SubQuestType.SapphireThistles_BringTheThistlesToBrogat, "Zanieś Brogatowi pięć szafirowych ostów" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -1314,6 +1361,14 @@ internal static class QuestTexts
             { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Přines ledovému krystalu modrý krystal" },
             { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Převezmi Isdirovu esenci" },
             { SubQuestType.MagicWord_TellMilzorTheMagicWord, "Prozraď Milzorovi kouzelné slovo" },
+            { SubQuestType.WaspsNest_TalkToKetnarInDorGrestin, "Promluv s Ketnarem v Dor Grestinu" },
+            { SubQuestType.WaspsNest_AskFeldrarAboutWasps, "Zeptej se Feldrara na vosy" },
+            { SubQuestType.WaspsNest_DefeatTheWaspQueen, "Poraz vosí královnu" },
+            { SubQuestType.WaspsNest_ReportToKetnar, "Podej Ketnarovi hlášení" },
+            { SubQuestType.DorinasRing_FindDorinasWeddingRing, "Najdi Dorinin snubní prsten" },
+            { SubQuestType.DorinasRing_ReturnTheRingToDorina, "Vrať Dorině její prsten" },
+            { SubQuestType.SapphireThistles_PickSapphireThistles, "Natrhej safírové bodláky" },
+            { SubQuestType.SapphireThistles_BringTheThistlesToBrogat, "Přines Brogatovi pět safírových bodláků" },
         } },
     };
 }

@@ -47,6 +47,7 @@ variable). For those the quest log sets otherwise unused global variables itself
 | 8175 | Morgat makes the golden armour (Advanced) |
 | 8174 | Jeff, a gatekeeper of Cavetown, is talked to (Advanced) |
 | 8173 | Luke, the deputy gatekeeper of Cavetown, is talked to (Advanced) |
+| 8172 | Brogat brews his blue potion from five sapphire thistles (Advanced) |
 
 Old savegames which already passed such an event can't know about it. The affected steps then wait for the
 next persistent change (e.g. a later step).
@@ -500,6 +501,32 @@ Tests: `IsdirsTrials.txt`
    when Kasimir is in the party. Milzor tries it and raises the luck of the party (variable 307).
 
 Tests: `MagicWord.txt`
+
+### The Wasps' Nest (Das Wespennest) — from episode 3
+
+1. **Talk to Ketnar in Dor Grestin**: Ketnar asks for it when the airship is entered with a navstone (variable 320).
+   Done when he told about the cave which can only be reached flying (321).
+2. **Ask Feldrar about wasps**: Feldrar is in the tavern "The nest" in the morning only (wasp riding tack, 350).
+3. **Defeat the wasp queen** in the sinking room below the wasps' nest (character 379:1).
+4. **Report to Ketnar**: he hears about Hudyn's fate (variable 395).
+
+Tests: `WaspsNest.txt`
+
+### Dorina's Wedding Ring (Dorinas Ehering) — from episode 3
+
+1. **Find Dorina's wedding ring**: after Ketnar sent the party to her (396), Dorina tells about the ring (397).
+   It lies in a lake (522).
+2. **Return the ring to Dorina**: the alchemist crown (variable 398).
+
+Tests: `WaspsNest.txt`
+
+### Sapphire Thistles (Saphir-Disteln) — from episode 3
+
+1. **Pick sapphire thistles** (x/5): Brogat in the tavern "The nest" tells about them (352). They grow randomly
+   on the river island east of Dor Grestin.
+2. **Bring five sapphire thistles to Brogat**: he brews his blue potion (8172, nothing is stored by the game).
+
+Tests: `SapphireThistles.txt`
 
 ### The Gral Temple (Der Graltempel) — from episode 3
 

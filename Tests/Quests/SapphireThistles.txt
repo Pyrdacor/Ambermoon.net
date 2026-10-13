@@ -1,0 +1,38 @@
+# Sapphire thistles (Ambermoon Advanced episode 3, any language): Brogat (NPC 75) in the tavern "The nest" of
+# Dor Grestin brews a blue potion from five sapphire thistles (490). They grow randomly on the river island east of
+# the town and need a high searching skill, so the test gets them from the cheat console.
+waitidle 20000
+dismissall
+cheat netsrak
+quest SapphireThistles_PickSapphireThistles Inactive
+goto 381 17 17
+dismissall
+talk 75
+talkwait
+say 152
+talkwait
+var 352 1
+quest SapphireThistles_PickSapphireThistles Active
+# not enough thistles
+cheat give 490 4
+giveitem 490
+talkwait
+var 8172 0
+quest SapphireThistles_PickSapphireThistles Active
+cheat give 490 1
+quest SapphireThistles_PickSapphireThistles Completed
+quest SapphireThistles_BringTheThistlesToBrogat Active
+giveitem 490
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 8172 1
+count 491 1
+quest SapphireThistles_BringTheThistlesToBrogat Completed
+mainquest SapphireThistles Completed
+reloadquests
+mainquest SapphireThistles Completed
+exit
