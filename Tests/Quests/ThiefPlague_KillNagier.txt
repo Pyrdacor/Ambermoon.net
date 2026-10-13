@@ -1,0 +1,75 @@
+# Thief plague edge case: KILL path, and Nagier's bandits are fought BEFORE the Baron was talked to
+# (original game and Advanced, any language)
+# - Map 276, chain 28 at 7,18: text 6, then decision text 7 "Do you want to make peace?". "No" (Escape = Close,
+#   handled like No by the decision event) -> text 9 and map character 5 (monster group 20) appears at 9,19.
+# - Monster group 20 = MASTER THIEF (monster 13) + monsters 10, 9, 9, 9, 9. The master thief carries the
+#   SILVER HAND (266) and NAGIERS'S KEY (279). Nagier (NPC 16) never appears on this path, so there is no letter.
+# Expected log:
+# - after the fight: "Deal with Nagier" completed (Inactive -> Completed) and "Return to Baron George" active
+#   although the Baron never asked (by design, like the horseshoes).
+# - talking to the Baron (keyword 23) must not reactivate the completed step; giving the silver hand sets 8187.
+# Not scriptable: selling the silver hand (a gem!) before giving it reverts DealWithNagier to Active after loading.
+waitidle 20000
+dismissall
+# carry the heavy loot (no quest relevance)
+cheat netsrak
+cheat light 3
+goto 276 7 18
+# text 6 is shown on arrival: close it with Escape, then answer the decision with Escape (= No)
+wait 2500
+state
+key Escape
+wait 1000
+state
+key Escape
+wait 1500
+# text 9 "Well, you wanted it that way!"
+talkwait
+eventbit 276 28 1
+var 60 0
+# the bandits (map character 5, monster group 20) appear at 9,19; teleporting onto them starts the fight.
+# If they already attacked during the texts, the goto fails and waitbattle returns at once.
+# the bandits attack after the answer
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 266 1
+count 279 1
+count 267 0
+quest ThiefPlague_DealWithNagier Completed
+quest ThiefPlague_ReturnToGeorg Active
+# the orc plague (same keyword) is not known yet
+quest OrcPlague_DefeatTheOrcLeader Inactive
+reloadquests
+quest ThiefPlague_DealWithNagier Completed
+quest ThiefPlague_ReturnToGeorg Active
+# --- now the Baron
+talk 8
+talkwait
+quest ThiefPlague_DealWithNagier Completed
+quest ThiefPlague_ReturnToGeorg Active
+quest OrcPlague_DefeatTheOrcLeader Active
+showitem 266
+talkwait
+var 8187 0
+quest ThiefPlague_ReturnToGeorg Active
+giveitem 266
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+count 266 0
+count 401 1
+var 8187 1
+quest ThiefPlague_ReturnToGeorg Completed
+reloadquests
+log after reload
+quests
+quest ThiefPlague_DealWithNagier Completed
+quest ThiefPlague_ReturnToGeorg Completed
+exit

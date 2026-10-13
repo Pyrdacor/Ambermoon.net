@@ -1,18 +1,29 @@
 # Quest log test scenarios
 
-Scenario scripts for the quest log (see `Ambermoon.net/ScenarioScript.cs` for all commands).
-They start from the initial savegame and work with the original game and Ambermoon Advanced
-in every language, as keywords are given by dictionary index.
+Scenario scripts for the quest log (see `Ambermoon.net/ScenarioScript.cs` for all commands and
+`Quests.md` in the repository root for the quests). They start from the initial savegame and play
+the quests: items are taken from chests, NPCs and defeated monsters, conversations are held, keys,
+riddles and map events are used. After each step the quest states are checked, at the end the quest
+log is rebuilt from the savegame (`reloadquests`, like loading a game) to check that the progress persists.
+
+Besides the normal playthrough (`<Quest>.txt`) there are scripts for shortcuts and edge cases
+(`<Quest>_<Case>.txt`), e.g. items found before the quest is known, steps done out of order,
+alternative solutions or old savegames.
+
+Keywords and riddle answers are given by dictionary index, so the scripts work in every language.
+All scripts work with the original game and Ambermoon Advanced, except `ThievesGuild.txt`
+(Aman's conversation differs in Advanced).
 
 Run them from the build output folder, e.g.:
 
 ```
-Ambermoon.net --version 0 --skip-intro --load 0 --script <repo>/Tests/Quests/Grandfather.txt --exit-after 400
+Ambermoon.net --version 0 --skip-intro --load 0 --script <repo>/Tests/Quests/Grandfather.txt --exit-after 600
 ```
 
 `--version 0` is the original game (German), `--version 5` is Ambermoon Advanced.
 Each script prints `PASS`/`FAIL` lines and a summary at the end.
 
-Steps which need a riddle answer, a door interaction or gold in a conversation are
-simulated by setting the savegame state (`setvar`, `cheat give`) followed by `reloadquests`,
-which rebuilds the quest log from the savegame like loading a game does.
+Cheats are only used for things which are not part of the tested quest, e.g. keys or items from other
+quests (`cheat give`), light in dark dungeons, winning fights (`cheat win`) or teleporting to a place
+(`goto`, `cheat teleport`). Some scripts use `cheat netsrak` (max stats and all languages) so the lone hero
+can carry heavy loot or talk to NPCs of other languages.

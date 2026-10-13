@@ -1,0 +1,132 @@
+# Lyramion's Faith edge case: go to the temple of the brotherhood before visiting Shandra's coffin and get the
+# hangar key from S'Orel's chest (original game and Advanced, any language). Start: --load 0
+# The head priest's chambers (431 3,16 -> 432) are south of the guard demon, so S'Orel and the hangar key can be
+# reached with the crystal harp only. The hangar door (11,8) is behind the demon, so the quest stops there.
+# Expected: "Explore the temple" is completed (although it was never active) and "Explore the hangar" becomes
+#   active while "Talk to Shandra" is still active. Later the coffin activates "Enter the temple" as blocked.
+waitidle 20000
+dismissall
+cheat light 3
+cheat godmode 1
+cheat give 138 10
+quest LyramionsFaith_TalkToShandraInNewlake Inactive
+# --- grandfather (NPC 1) tells the story and teaches "Wine"
+talk 1
+talkwait
+say 0
+talkwait
+leave
+talkwait
+waitidle 5000
+quest LyramionsFaith_TalkToShandraInNewlake Active
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Inactive
+quest LyramionsFaith_BringShandrasStoneToGrandfather Inactive
+quest LyramionsFaith_UseShandrasStone Inactive
+# --- temple right away (crystal harp from Matthias, other quest)
+cheat give 159 1
+goto 431 11 24
+trigger 11 24 item:159
+talkwait
+dismissall
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Inactive
+# --- head priest's chambers (map 432): S'Orel shows himself (text + 100 damage trap, godmode) and attacks
+goto 432 6 4
+# waitbattle confirms the text. If S'Orel does not come, use: goto 432 4 7
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+count 371 1
+closewindow
+talkwait
+# still hidden
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Inactive
+# chest 111 at 11,3 with S'Orel's key
+goto 432 11 4
+# another guard might attack near the chest
+waitbattle 4000 optional
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
+trigger 11 3 Eye
+talkwait
+usekey 371
+talkwait
+takeloot
+count 370 1
+closewindow
+talkwait
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Completed
+quest LyramionsFaith_ExploreTheHangar Active
+quest LyramionsFaith_FindTheNavStone Inactive
+quest LyramionsFaith_TalkToShandraInNewlake Active
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Inactive
+reloadquests
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Completed
+quest LyramionsFaith_ExploreTheHangar Active
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Inactive
+# --- Shandra's amber in the old cave (map 260, treasure 24 at 26,7). Stand east of it (26,8 is the cave-in text).
+goto 260 27 7
+trigger 26 7 Eye
+talkwait
+takeloot
+count 209 1
+closewindow
+talkwait
+quest LyramionsFaith_BringShandrasStoneToGrandfather Active
+quest LyramionsFaith_UseShandrasStone Inactive
+quest LyramionsFaith_TalkToShandraInNewlake Active
+# --- show the amber to grandfather (custom global var 8189)
+cheat teleport 258 3 15
+wait 2000
+dismissall
+talk 1
+talkwait
+showitem 209
+talkwait
+leave
+talkwait
+waitidle 5000
+var 8189 1
+count 209 1
+quest LyramionsFaith_BringShandrasStoneToGrandfather Completed
+quest LyramionsFaith_UseShandrasStone Active
+quest LyramionsFaith_EnterSecretRoomInLibrary Inactive
+# --- Newlake crypt door (door 28, vault key 400 from Baron Karsten for the picture -> other quest)
+cheat give 400 1
+goto 425 29 6
+trigger 29 5 Eye
+talkwait
+usekey 400
+talkwait
+dismissall
+# the stairs at 29,4 lead into the crypt (map 428, 15,14)
+goto 425 29 4
+wait 2000
+dismissall
+cheat light 3
+# --- Shandra's coffin: use the amber on 3..5,3..5 (chain 7) -> var 193, treasure 101 (book key), event bit 428:7
+goto 428 4 5
+trigger 4 5 item:209
+talkwait
+takeloot
+count 366 1
+closewindow
+talkwait
+dismissall
+var 193 1
+eventbit 428 7 1
+quest LyramionsFaith_TalkToShandraInNewlake Completed
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Blocked
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Completed
+quest LyramionsFaith_ExploreTheHangar Active
+quest LyramionsFaith_UseShandrasStone Completed
+quest LyramionsFaith_EnterSecretRoomInLibrary Active
+quest LyramionsFaith_FindRecipe Inactive
+reloadquests
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Blocked
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Completed
+quest LyramionsFaith_ExploreTheHangar Active
+exit

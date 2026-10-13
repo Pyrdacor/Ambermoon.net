@@ -1,0 +1,41 @@
+# Brotherhood of Tarbos edge case: flee from Thornahuun, reload, then win the next fight
+# (original game and Advanced, any language). Start: --load 0
+# After fleeing, Thornahuun stays visible (character bit 433:1 cleared), so DefeatThornahuun must stay active,
+# also after reloading. Defeating him later completes it.
+waitidle 20000
+dismissall
+cheat light 3
+cheat godmode 1
+cheat give 159 1
+goto 431 11 24
+trigger 11 24 item:159
+talkwait
+dismissall
+goto 431 19 16
+wait 2000
+dismissall
+goto 433 5 6
+waitbattle 20000
+quest BrotherhoodOfTarbos_DefeatThornahuun Active
+cheat flee
+# Thornahuun stays next to the party and attacks again right away
+talkwait
+quest BrotherhoodOfTarbos_DefeatThornahuun Active
+reloadquests
+quest BrotherhoodOfTarbos_DefeatThornahuun Active
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Inactive
+# --- the next fight is won
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+# the victory is noticed with the next event (leaving the coffin hall)
+goto 433 9 3
+wait 2000
+dismissall
+quest BrotherhoodOfTarbos_DefeatThornahuun Completed
+reloadquests
+quest BrotherhoodOfTarbos_DefeatThornahuun Completed
+exit

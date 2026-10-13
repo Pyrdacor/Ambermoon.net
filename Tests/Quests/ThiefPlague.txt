@@ -1,0 +1,67 @@
+# Thief plague, normal playthrough with the PEACE path (original game and Advanced, any language)
+# - Baron George (NPC 8) adds keyword PROBLEMS (23) on talking -> ThiefPlague_DealWithNagier active.
+# - Nagier's cellar (map 276, 3D): stepping on 7,18 (chain 28) shows Nagier's offer (text 6) and the decision
+#   "Do you want to make peace?" (text 7). Yes -> text 8, Nagier (NPC 16, map character 6) appears.
+# - Talking to Nagier (global variable 60 = 0) creates NAGIER'S LETTER (267) and NAGIERS'S KEY (279) and sets variable 60.
+# - Showing the letter to the Baron only prints text 5. Giving it creates key 401 (+300 exp) and changes nothing
+#   in the savegame -> custom variable 8187 (GlobalVar_GaveThiefProofToBaronGeorge).
+waitidle 20000
+dismissall
+quest ThiefPlague_DealWithNagier Inactive
+quest ThiefPlague_ReturnToGeorg Inactive
+talk 8
+talkwait
+quest ThiefPlague_DealWithNagier Active
+quest ThiefPlague_ReturnToGeorg Inactive
+say 23
+talkwait
+leave
+talkwait
+waitidle 5000
+# --- Nagier's cellar: the decision is answered with yes by talkwait (Return)
+cheat light 3
+goto 276 7 18
+talkwait
+waitidle 5000
+eventbit 276 28 1
+var 60 0
+# making peace alone is no proof yet
+quest ThiefPlague_DealWithNagier Active
+# --- Nagier gives his letter and his key
+talk 16
+talkwait
+takeitems
+leave
+talkwait
+waitidle 5000
+var 60 1
+count 267 1
+count 279 1
+quest ThiefPlague_DealWithNagier Completed
+quest ThiefPlague_ReturnToGeorg Active
+# --- show the letter: no completion
+talk 8
+talkwait
+showitem 267
+talkwait
+var 8187 0
+quest ThiefPlague_ReturnToGeorg Active
+# --- give the letter: Baron creates key 401
+giveitem 267
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+count 267 0
+count 401 1
+var 8187 1
+quest ThiefPlague_DealWithNagier Completed
+quest ThiefPlague_ReturnToGeorg Completed
+# --- persistence: the letter is gone, DealWithNagier must stay completed via variable 8187
+reloadquests
+log after reload
+quests
+quest ThiefPlague_DealWithNagier Completed
+quest ThiefPlague_ReturnToGeorg Completed
+exit

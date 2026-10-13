@@ -4,6 +4,8 @@ waitidle 20000
 dismissall
 cheat light 3
 cheat give 138 10
+# carry the gold of the chests and the tools (no quest relevance)
+cheat netsrak
 # --- talk to grandfather (map 258)
 talk 1
 talkwait

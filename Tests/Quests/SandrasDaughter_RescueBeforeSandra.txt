@@ -35,9 +35,8 @@ quest TowerOfBlackMagic_DefeatLuminor Completed
 quest SandrasDaughter_RescueSabine Active
 # --- the cell door (293, 8,17)
 goto 293 8 18
-trigger 8 17 Eye
-talkwait
-usekey 315
+# use Luminor's key from the inventory (Sabine might stand right behind the door)
+useitem 315
 talkwait 20000
 dismissall
 var 27 1

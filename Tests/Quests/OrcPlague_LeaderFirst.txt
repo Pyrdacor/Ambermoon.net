@@ -1,0 +1,55 @@
+# Orc plague edge case: Reg the hill giant is killed BEFORE the Baron was ever talked to (original game and Advanced, any language)
+# Expected log:
+# - after the fight: "Defeat the orc leader" completed (Inactive -> Completed, completion triggers ignore the state),
+#   "Return to Baron George" active, although nobody asked for it yet (same behaviour as the golden horseshoes).
+# - talking to the Baron afterwards (keyword PROBLEMS 23 learned) must not reactivate the completed step.
+# - giving the head completes the quest, reload keeps it completed.
+# Not scriptable (no command to drop/sell items): if the head is dropped/sold BEFORE it is given to the Baron,
+# DefeatTheOrcLeader falls back to Active after loading (ItemObtainedTrigger is not persisted), although Reg is dead.
+waitidle 20000
+dismissall
+# carry the heavy loot (no quest relevance)
+cheat netsrak
+quest OrcPlague_DefeatTheOrcLeader Inactive
+quest OrcPlague_ReturnToGeorg Inactive
+# --- orc cave first
+cheat light 3
+goto 280 15 10
+talkwait
+# Reg walks up to the party and attacks
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 268 1
+quest OrcPlague_DefeatTheOrcLeader Completed
+quest OrcPlague_ReturnToGeorg Active
+# the thief plague (same keyword) is still unknown
+quest ThiefPlague_DealWithNagier Inactive
+# persistence while the head is still owned
+reloadquests
+quest OrcPlague_DefeatTheOrcLeader Completed
+quest OrcPlague_ReturnToGeorg Active
+# --- now the Baron: keyword 23 is added, the completed step must stay completed
+talk 8
+talkwait
+quest OrcPlague_DefeatTheOrcLeader Completed
+quest OrcPlague_ReturnToGeorg Active
+quest ThiefPlague_DealWithNagier Active
+giveitem 268
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+var 8188 1
+quest OrcPlague_ReturnToGeorg Completed
+reloadquests
+log after reload
+quest OrcPlague_DefeatTheOrcLeader Completed
+quest OrcPlague_ReturnToGeorg Completed
+quests
+exit

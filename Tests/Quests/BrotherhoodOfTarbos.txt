@@ -1,0 +1,89 @@
+# Brotherhood of Tarbos, played the normal way (original game and Advanced, any language)
+# Start: --load 0
+#
+# Sources (dump_en, identical events in dump_v5):
+# - Castle Godsbane (map 430, entrance from world map 25 at 7,27 -> 430 10,23):
+#   riddlemouth chain 2 at 7,7 "What is the name of the sleeper?" answer = dictionary 111 "Gryban"
+#   (sets event bit 430:2 and shows Gryban, party member 15). Chest 110 at 13,3 (open) = Amberstar (375).
+# - Temple of the brotherhood (map 431, entrance from world map 121 -> 431 11,25): the crystal wall at 11,23
+#   opens when the crystal harp (159) is used at 11,24 (chain 3). The crystal harp comes from NPC 29 (Matthias)
+#   in another quest, so it is given by cheat here. The coffin hall entrance (19,16 -> map 433 9,4) is south of
+#   the guard demon, so the demon does not matter for this quest.
+# - Tarbos coffin hall (map 433): door 31 at 8,9 needs the Amberstar (no lockpicking, the Amberstar has
+#   DestroyAfterUsage and melts into the door). Chain 3 at 3..7,6 shows Thornahuun (char 1, monster group 70)
+#   and sets event bit 433:3. Thornahuun drops the "T A R amulet" (264, also a Madman quest item!).
+waitidle 20000
+dismissall
+cheat light 3
+cheat godmode 1
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Inactive
+quest BrotherhoodOfTarbos_DefeatThornahuun Inactive
+# --- Godsbane riddlemouth
+goto 430 7 8
+trigger 7 7 Eye
+answer 111
+talkwait
+dismissall
+eventbit 430 2 1
+# the riddlemouth itself is no quest step
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Inactive
+# --- the Amberstar chest (chest 110)
+goto 430 13 4
+trigger 13 3 Eye
+talkwait
+takeloot
+count 375 1
+closewindow
+talkwait
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Active
+quest BrotherhoodOfTarbos_DefeatThornahuun Inactive
+# --- open the crystal wall of the temple (crystal harp from Matthias, NPC 29, other quest)
+cheat give 159 1
+goto 431 11 24
+trigger 11 24 item:159
+talkwait
+dismissall
+eventbit 431 2 1
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Active
+# --- the coffin hall (map 433) via the teleporter at 19,16
+goto 431 19 16
+wait 2000
+dismissall
+state
+# door 31 with the 12-pointed recess
+goto 433 8 8
+trigger 8 9 Eye
+talkwait
+usekey 375
+talkwait
+dismissall
+count 375 0
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Completed
+quest BrotherhoodOfTarbos_DefeatThornahuun Inactive
+# --- Thornahuun rises from his coffin (chain 3) and attacks
+goto 433 5 6
+# waitbattle confirms the long text with Return. If he does not come, use: goto 433 7 5
+waitbattle 20000
+eventbit 433 3 1
+quest BrotherhoodOfTarbos_DefeatThornahuun Active
+cheat win
+talkwait
+takeloot
+count 264 1
+closewindow
+talkwait
+# Completion is a predicate (event bit 433:3 and Thornahuun hidden again), checked with the next event or item.
+# Taking the T A R amulet is such an item check. If he dropped nothing, the next event (teleport) checks it.
+goto 433 9 3
+wait 2000
+dismissall
+quest BrotherhoodOfTarbos_DefeatThornahuun Completed
+# note: the T A R amulet also activates the Madman amulet steps (side effect, see quests output)
+quests
+# --- persistence (the Amberstar is gone, door 31 is unlocked, Thornahuun is hidden)
+reloadquests
+log after reload
+quests
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Completed
+quest BrotherhoodOfTarbos_DefeatThornahuun Completed
+exit

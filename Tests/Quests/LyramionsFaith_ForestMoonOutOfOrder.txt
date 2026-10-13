@@ -1,0 +1,300 @@
+# Lyramion's Faith edge case: on the forest moon, skip the crowd in Dor Kiredon (343 chain 16), talk to Kire and
+# get the blue navstone first, visit the crowd last (original game, Advanced has the same events).
+# Start: --load 0. The quest is played normally up to the flight to the forest moon first.
+# Kire speaks Dwarfish, which is normally taught by 343 chain 16 -> "cheat netsrak" grants all languages here.
+# Expected: talking to Kire completes "Meet the dwarf leader" and also "Fly to the forest moon" (the party is
+#   obviously there), "Find a way to leave the forest moon" becomes active.
+waitidle 20000
+dismissall
+cheat light 3
+cheat godmode 1
+cheat give 138 10
+quest LyramionsFaith_TalkToShandraInNewlake Inactive
+# --- grandfather (NPC 1) tells the story and teaches "Wine"
+talk 1
+talkwait
+say 0
+talkwait
+leave
+talkwait
+waitidle 5000
+quest LyramionsFaith_TalkToShandraInNewlake Active
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Inactive
+quest LyramionsFaith_BringShandrasStoneToGrandfather Inactive
+quest LyramionsFaith_UseShandrasStone Inactive
+# --- Shandra's amber in the old cave (map 260, treasure 24 at 26,7). Stand east of it (26,8 is the cave-in text).
+goto 260 27 7
+trigger 26 7 Eye
+talkwait
+takeloot
+count 209 1
+closewindow
+talkwait
+quest LyramionsFaith_BringShandrasStoneToGrandfather Active
+quest LyramionsFaith_UseShandrasStone Inactive
+quest LyramionsFaith_TalkToShandraInNewlake Active
+# --- show the amber to grandfather (custom global var 8189)
+cheat teleport 258 3 15
+wait 2000
+dismissall
+talk 1
+talkwait
+showitem 209
+talkwait
+leave
+talkwait
+waitidle 5000
+var 8189 1
+count 209 1
+quest LyramionsFaith_BringShandrasStoneToGrandfather Completed
+quest LyramionsFaith_UseShandrasStone Active
+quest LyramionsFaith_EnterSecretRoomInLibrary Inactive
+# --- Newlake crypt door (door 28, vault key 400 from Baron Karsten for the picture -> other quest)
+cheat give 400 1
+goto 425 29 6
+trigger 29 5 Eye
+talkwait
+usekey 400
+talkwait
+dismissall
+# the stairs at 29,4 lead into the crypt (map 428, 15,14)
+goto 425 29 4
+wait 2000
+dismissall
+cheat light 3
+# --- Shandra's coffin: use the amber on 3..5,3..5 (chain 7) -> var 193, treasure 101 (book key), event bit 428:7
+goto 428 4 5
+trigger 4 5 item:209
+talkwait
+takeloot
+count 366 1
+closewindow
+talkwait
+dismissall
+var 193 1
+eventbit 428 7 1
+quest LyramionsFaith_TalkToShandraInNewlake Completed
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Blocked
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Inactive
+quest LyramionsFaith_UseShandrasStone Completed
+quest LyramionsFaith_EnterSecretRoomInLibrary Active
+quest LyramionsFaith_FindRecipe Inactive
+# --- library (map 429): secret door 29 at 8,6 with the book key
+goto 429 8 7
+trigger 8 6 Eye
+talkwait
+usekey 366
+talkwait
+dismissall
+count 366 0
+quest LyramionsFaith_EnterSecretRoomInLibrary Completed
+quest LyramionsFaith_FindRecipe Active
+quest LyramionsFaith_BrewDemonSleep Inactive
+# recipe behind the books (treasure 107 at 5,5)
+goto 429 5 6
+trigger 5 5 Eye
+talkwait
+takeloot
+count 345 1
+closewindow
+talkwait
+quest LyramionsFaith_FindRecipe Completed
+quest LyramionsFaith_BrewDemonSleep Active
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Blocked
+# --- reagents: fire-thistle on world map 149 (48,25), the rest from merchants / other quests
+goto 149 48 25
+talkwait
+takeloot
+count 344 1
+closewindow
+talkwait
+cheat give 156 1
+cheat give 157 1
+cheat give 255 1
+cheat give 281 1
+cheat give 317 1
+cheat give 218 1
+# --- the cauldron in the witch's cellar (map 412). Use the recipe on the cauldron area (12,10 is part of it;
+# monster char 5 starts at 10,12, so stay away from it).
+goto 412 12 10
+trigger 12 10 item:345
+talkwait
+takeloot
+count 343 1
+closewindow
+talkwait
+count 344 0
+quest LyramionsFaith_BrewDemonSleep Completed
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Active
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Inactive
+# --- temple of the brotherhood (map 431): crystal wall (crystal harp from Matthias, other quest)
+cheat give 159 1
+goto 431 11 24
+trigger 11 24 item:159
+talkwait
+dismissall
+eventbit 431 2 1
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Active
+# the guard demon (text 3) and the food bowl (text 4)
+goto 431 11 17
+talkwait
+dismissall
+goto 431 10 16
+talkwait
+dismissall
+# demon sleep into the food bowl at 9,16 (chain 6) -> event bits 431:5, 431:6, 431:4
+goto 431 9 16
+trigger 9 16 item:343
+talkwait
+dismissall
+count 343 0
+eventbit 431 6 1
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Completed
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Active
+quest LyramionsFaith_ExploreTheHangar Inactive
+# --- head priest's chambers (map 432): S'Orel shows himself (text + 100 damage trap, godmode) and attacks
+goto 432 6 4
+# waitbattle confirms the text. If S'Orel does not come, use: goto 432 4 7
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+count 371 1
+closewindow
+talkwait
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Active
+# chest 111 at 11,3 with S'Orel's key
+goto 432 11 4
+# another guard might attack near the chest
+waitbattle 4000 optional
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
+trigger 11 3 Eye
+talkwait
+usekey 371
+talkwait
+takeloot
+count 370 1
+closewindow
+talkwait
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Completed
+quest LyramionsFaith_ExploreTheHangar Active
+quest LyramionsFaith_FindTheNavStone Inactive
+# --- hangar door 30 at 431 11,8 (north of the removed demon)
+goto 431 11 9
+trigger 11 8 Eye
+talkwait
+usekey 370
+talkwait
+dismissall
+count 370 0
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Completed
+# hangar (map 434) and the airship (map 435)
+goto 431 11 3
+wait 2000
+dismissall
+talkwait
+goto 434 11 12
+wait 2000
+dismissall
+# the dwarf skeleton with Kire's note (treasure 112 at 3,13)
+goto 435 3 12
+trigger 3 13 Eye
+talkwait
+takeloot
+count 381 1
+count 384 1
+closewindow
+talkwait
+quest LyramionsFaith_ExploreTheHangar Completed
+quest LyramionsFaith_FindTheNavStone Active
+quest LyramionsFaith_FlyToTheForestMoon Inactive
+# --- old dwarf labyrinth (map 438, entrance world map 139): chest 116 at 7,5 with the chest key
+goto 438 7 6
+trigger 7 5 Eye
+talkwait
+usekey 384
+talkwait
+takeloot
+count 378 1
+closewindow
+talkwait
+quest LyramionsFaith_FindTheNavStone Completed
+quest LyramionsFaith_FlyToTheForestMoon Active
+quest LyramionsFaith_MeetTheDwarfLeader Inactive
+# --- fly: green navstone into the machine at 435 8,5 -> airship on the forest moon (map 436)
+goto 435 8 5
+trigger 8 5 item:378
+talkwait
+wait 2000
+dismissall
+state
+count 378 0
+quest LyramionsFaith_FlyToTheForestMoon Active
+# --- Kire first (languages by cheat, normally taught by the Dor Kiredon crowd)
+cheat netsrak
+eventbit 343 16 0
+talk 55
+talkwait
+leave
+talkwait
+waitidle 5000
+var 51 1
+quest LyramionsFaith_MeetTheDwarfLeader Completed
+quest LyramionsFaith_FindAWayToLeaveForestMoon Active
+quest LyramionsFaith_FlyToTheForestMoon Completed
+# --- the navstone machine: piece of amber from the mine (map 348, treasure 252 at 13,3)
+cheat light 3
+goto 348 13 4
+trigger 13 3 Eye
+talkwait
+takeloot
+count 240 1
+closewindow
+talkwait
+# blue carved discs from the cupboard (chest 213 at 369 18,19, -15% lockpick chance; failing calls guards)
+goto 369 18 18
+trigger 18 19 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+count 369 20
+closewindow
+talkwait
+# insert a blue disc at 13,12 (var 208, var 205), the amber at 15,12 (var 209)
+goto 369 13 12
+trigger 13 12 item:369
+talkwait
+var 208 1
+goto 369 15 12
+trigger 15 12 item:240
+talkwait
+var 209 1
+# step in front of the unit (chain 13) -> it opens, then take the navstone (chain 14, treasure 210)
+goto 369 17 11
+talkwait
+trigger 17 10 Eye
+talkwait
+takeloot
+count 377 1
+closewindow
+talkwait
+quest LyramionsFaith_FindAWayToLeaveForestMoon Completed
+# stays completed (Kire was met)
+quest LyramionsFaith_FlyToTheForestMoon Completed
+# --- the crowd last
+goto 343 16 20
+talkwait
+dismissall
+eventbit 343 16 1
+quest LyramionsFaith_FlyToTheForestMoon Completed
+quest LyramionsFaith_MeetTheDwarfLeader Completed
+quest LyramionsFaith_FindAWayToLeaveForestMoon Completed
+reloadquests
+quest LyramionsFaith_FlyToTheForestMoon Completed
+quest LyramionsFaith_MeetTheDwarfLeader Completed
+exit

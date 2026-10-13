@@ -1,0 +1,101 @@
+# Wine trophies, normal playthrough (original game and Advanced, any language)
+# - Canth (NPC 14) and Norlael (NPC 15) live in the town house (map 273). Canth's Talk adds WINE GOBLETS (28).
+# - GOLD GOBLET (272) #1: chest 46 in Nagier's bedroom (map 276, 11,23, key 279 NAGIERS'S KEY, no lockpicking).
+#   The key comes from Nagier (peace path) or the master thief (kill path), see ThiefPlague*.txt. It is not part of
+#   this quest, so it is given by cheat here.
+# - GOLD GOBLET #2: chest 52 in the sylph cave (map 279, 20,13, open, behind the door opened with the weird stone).
+#   It also contains the chain of office (269), so the chain of office quest shows up as a side effect.
+# - Each of them accepts exactly one goblet: Canth -> brooch 273, variable 37; Norlael -> 500 gold, variable 38.
+waitidle 20000
+dismissall
+cheat light 3
+quest WineTrophies_FindThem Inactive
+quest WineTrophies_ReturnThem Inactive
+# --- Canth tells about the stolen goblets
+talk 14
+talkwait
+quest WineTrophies_FindThem Active
+quest WineTrophies_ReturnThem Inactive
+say 28
+talkwait
+leave
+talkwait
+waitidle 5000
+# --- goblet 1 from Nagier's chest
+cheat give 279 1
+goto 276 11 23
+trigger 11 23 Eye
+talkwait
+usekey 279
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 272 1
+# FindThem 1/2
+quests
+quest WineTrophies_FindThem Active
+quest WineTrophies_ReturnThem Active
+# --- goblet 2 from the sylph cave
+cheat light 3
+goto 279 20 13
+trigger 20 13 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 272 2
+quest WineTrophies_FindThem Completed
+quest WineTrophies_ReturnThem Active
+# side effect: the chain of office was found
+quest ChainOfOffice_FindIt Completed
+quest ChainOfOffice_ReturnIt Active
+# --- show one to Norlael first (only a text)
+talk 15
+talkwait
+showitem 272
+talkwait
+var 38 0
+leave
+talkwait
+waitidle 5000
+# --- give one to Canth
+talk 14
+talkwait
+giveitem 272
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+var 37 1
+count 272 1
+count 273 1
+# ReturnThem 1/2
+quests
+quest WineTrophies_FindThem Completed
+quest WineTrophies_ReturnThem Active
+reloadquests
+quest WineTrophies_FindThem Completed
+quest WineTrophies_ReturnThem Active
+# --- give the other one to Norlael (creates 500 gold)
+talk 15
+talkwait
+giveitem 272
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+var 38 1
+count 272 0
+quest WineTrophies_ReturnThem Completed
+# --- persistence: no goblet is owned any more, both are counted by variables 37 and 38
+reloadquests
+log after reload
+quests
+quest WineTrophies_FindThem Completed
+quest WineTrophies_ReturnThem Completed
+exit

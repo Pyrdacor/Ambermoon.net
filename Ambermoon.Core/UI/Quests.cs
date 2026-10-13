@@ -700,6 +700,14 @@ partial class QuestLog
             return (_) => Quests.First(q => q.Type == mainQuest).SubQuests.First(q => q.Type == otherQuest).State = QuestState.Completed;
         }
 
+        // Sets active or blocked quests back to inactive (hidden) if they became pointless.
+        Action<SubQuest> HideOtherOpenQuests(MainQuestType mainQuest, params SubQuestType[] otherQuests)
+        {
+            var lookup = new HashSet<SubQuestType>(otherQuests);
+            return (_) => Quests.First(q => q.Type == mainQuest).SubQuests.Where(q => lookup.Contains(q.Type) && (q.State == QuestState.Active || q.State == QuestState.Blocked))
+                .ToList().ForEach(q => q.State = QuestState.Inactive);
+        }
+
         // Only completes quests which are already active (or blocked), inactive ones stay hidden.
         Action<SubQuest> CompleteOtherActiveQuests(MainQuestType mainQuest, params SubQuestType[] otherQuests)
         {
@@ -735,9 +743,11 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.LyramionsFaith_EnterTheTempleOfBrotherhood,
-                    PostActivationAction = subQuest => subQuest.State = QuestState.Blocked,
-                    // the guard demon might be killed instead of using the demon sleep
-                    PostCompletionAction = CompleteOtherActiveQuests(MainQuestType.LyramionsFaith, SubQuestType.LyramionsFaith_EnterSecretRoomInLibrary,
+                    // blocked until the demon sleep is brewed (but the guard demon can also be killed)
+                    RequiredCompletedQuests = [SubQuestType.LyramionsFaith_BrewDemonSleep],
+                    // The guard demon might be killed instead of using the demon sleep. The open
+                    // library steps are hidden then (they show up again when done anyway).
+                    PostCompletionAction = HideOtherOpenQuests(MainQuestType.LyramionsFaith, SubQuestType.LyramionsFaith_EnterSecretRoomInLibrary,
                         SubQuestType.LyramionsFaith_FindRecipe, SubQuestType.LyramionsFaith_BrewDemonSleep),
                     Triggers =
                     [
@@ -801,7 +811,10 @@ partial class QuestLog
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
                         // Completion
-                        new EventDisabledTrigger(game, TriggerType.Completion, 343, 16), // Long text triggered in Dor Kiredon
+                        // Complete: long text triggered in Dor Kiredon or met Kire already (51)
+                        new OrTrigger<EventDisabledTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new EventDisabledTrigger(g, t, 343, 16),
+                            (g, t) => new GlobalVariableTrigger(g, t, 51)),
                     ],
                     SourceType = QuestSourceType.Item,
                     SourceIndex = 381, // Kire's note
@@ -827,7 +840,10 @@ partial class QuestLog
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
                         // Completion
-                        new ItemObtainedTrigger(game, TriggerType.Completion, 377, 379), // Blue or yellow navstone
+                        // Complete: own the blue or yellow navstone or already flew away with it (it is used up)
+                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 377, 379), // Blue or yellow navstone
+                            (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_LeftForestMoon)),
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 55, // Kire
@@ -889,21 +905,14 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.LyramionsFaith_BrewDemonSleep,
-                    PostCompletionAction = subQuest =>
-                    {
-                        var templeQuest = Quests.First(q => q.Type == MainQuestType.LyramionsFaith).SubQuests.First(q => q.Type == SubQuestType.LyramionsFaith_EnterTheTempleOfBrotherhood);
-
-                        if (templeQuest.State == QuestState.Blocked)
-                            templeQuest.State = QuestState.Active;
-                    },
                     Triggers =
                     [
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
-                        // Completion: own the demon sleep or already used it at the temple (431:6)
-                        new OrTrigger<ItemObtainedTrigger, EventDisabledTrigger>(game, TriggerType.Completion,
+                        // Completion: own the demon sleep or brewed it already (it is used up at the temple)
+                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
                             (g, t) => new ItemObtainedTrigger(g, t, 343), // Demon Sleep
-                            (g, t) => new EventDisabledTrigger(g, t, 431, 6)),
+                            (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_BrewedDemonSleep)),
                     ],
                     SourceType = QuestSourceType.Item,
                     SourceIndex = 345, // Recipe

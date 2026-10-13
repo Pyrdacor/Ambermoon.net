@@ -1,0 +1,108 @@
+# Swamp fever edge case: flask, lily and water of life are collected before anybody mentioned the swamp fever,
+# then Wat is talked to, and the items are given to Anthony WITHOUT asking him about the ANTIDOTE (original game and
+# Advanced, any language). Anthony's GiveItem chains do not need variable 26, so this works in the game.
+# a) Only the empty flask owned: nothing is shown (flasks are common items, the quest is not started yet).
+# b) Lily and water of life owned: "Return to Anthony" becomes active and completes the obtain steps.
+# c) Wat (DAUGHTER) adds ANTIDOTE -> "Talk to Father Anthony" becomes active.
+# d) The antidote is brewed without ever saying ANTIDOTE to Anthony: "Talk to Father Anthony" is completed anyway
+#    (the antidote was made), so the main quest can be completed. Everything stays completed after loading.
+waitidle 20000
+dismissall
+# --- a) the empty flask alone
+goto 337 21 63
+trigger 21 63 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 218 1
+log expected Inactive here (likely actual Completed)
+quest SwampFever_ObtainEmptyBottle Inactive
+quest SwampFever_TalkToFatherAnthony Inactive
+quests
+# --- b) lily and water of life
+goto 110 7 7
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 255 1
+goto 126 20 34
+useitem 218
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 254 1
+quest SwampFever_ObtainSwampLilly Completed
+quest SwampFever_ObtainEmptyBottle Completed
+quest SwampFever_ObtainWaterOfLife Completed
+quest SwampFever_ReturnToAnthony Active
+quest SwampFever_TalkToFatherAnthony Inactive
+reloadquests
+quest SwampFever_ObtainSwampLilly Completed
+quest SwampFever_ObtainWaterOfLife Completed
+quest SwampFever_ReturnToAnthony Active
+# --- c) Wat
+talk 12
+talkwait
+say 14
+talkwait
+leave
+talkwait
+waitidle 5000
+quest SwampFever_TalkToFatherAnthony Active
+quest SwampFever_ReturnToAnthony Active
+# --- d) give the WATER first (chain 6, needs the lily), no ANTIDOTE keyword
+talk 2
+talkwait
+giveitem 254
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+var 26 0
+count 253 1
+count 254 0
+count 255 0
+quest SwampFever_ReturnToAnthony Completed
+quest SwampFever_HealSally Active
+log expected Completed (likely actual Active)
+quest SwampFever_TalkToFatherAnthony Completed
+goto 272 13 12
+useitem 253
+talkwait
+dismissall
+var 34 1
+talk 13
+talkwait
+takeitems
+leave
+talkwait
+waitidle 5000
+talk 12
+talkwait
+takeitems
+leave
+talkwait
+waitidle 5000
+quest SwampFever_HealSally Completed
+quest SwampFever_TalkToSally Completed
+quest SwampFever_TalkToWat Completed
+reloadquests
+log after reload
+quests
+quest SwampFever_ObtainSwampLilly Completed
+quest SwampFever_ObtainEmptyBottle Completed
+quest SwampFever_ObtainWaterOfLife Completed
+quest SwampFever_ReturnToAnthony Completed
+quest SwampFever_HealSally Completed
+quest SwampFever_TalkToSally Completed
+quest SwampFever_TalkToWat Completed
+log expected Completed (likely actual Active)
+quest SwampFever_TalkToFatherAnthony Completed
+exit

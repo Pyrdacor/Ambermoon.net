@@ -1,0 +1,74 @@
+# Orc plague, normal playthrough (original game and Advanced, any language)
+# - Baron George (NPC 8, house of the baron, map 269) adds the keyword PROBLEMS (23) as soon as you talk
+#   to him (his Talk chain), which activates the orc plague AND the thief plague. "say 23" prints the story.
+# - The orc leader is Reg the hill giant: map character 6 (monster group 30 = Reg (monster 18), orc chief (17),
+#   two orcs (16)) at 15,12 in the orc cave (map 280). He only appears after the text at 15,9 / 15,10 / 15,11
+#   (chain 9, "Set character bit 280:6 to show", event bit 280:9).
+# - Reg carries the HILL-GIANT'S HEAD (268) and the PRISON KEY (284) (Monster_char.amb, same in AA 1.33).
+# - Showing the head to the Baron only prints a text. Giving it creates key 402 and sets nothing in the
+#   savegame, so the quest log sets custom variable 8188 (GlobalVar_GaveOrcLeaderHeadToBaronGeorge).
+waitidle 20000
+dismissall
+# carry the heavy loot (no quest relevance)
+cheat netsrak
+quest OrcPlague_DefeatTheOrcLeader Inactive
+quest OrcPlague_ReturnToGeorg Inactive
+# --- the Baron (talk works from anywhere)
+talk 8
+talkwait
+# the Talk chain already added keyword 23
+quest OrcPlague_DefeatTheOrcLeader Active
+quest OrcPlague_ReturnToGeorg Inactive
+quest ThiefPlague_DealWithNagier Active
+say 23
+talkwait
+leave
+talkwait
+waitidle 5000
+quest OrcPlague_DefeatTheOrcLeader Active
+quest OrcPlague_ReturnToGeorg Inactive
+# --- orc cave (map 280, dark 3D dungeon). Arriving at 15,10 shows Reg's text and makes him appear.
+cheat light 3
+goto 280 15 10
+talkwait
+eventbit 280 9 1
+# Reg stands at 15,12 (random movement). Teleporting onto him starts the fight.
+# If he already walked towards the party the goto may land next to him; waitbattle then waits for his attack.
+# Reg walks up to the party and attacks
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 268 1
+count 284 1
+quest OrcPlague_DefeatTheOrcLeader Completed
+quest OrcPlague_ReturnToGeorg Active
+# --- show the head first: only a text, the quest must not complete
+talk 8
+talkwait
+showitem 268
+talkwait
+var 8188 0
+quest OrcPlague_ReturnToGeorg Active
+# --- give the head: key 402 for the reward chest in his house (chest 131 at 11,3)
+giveitem 268
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+count 268 0
+count 402 1
+var 8188 1
+quest OrcPlague_DefeatTheOrcLeader Completed
+quest OrcPlague_ReturnToGeorg Completed
+# --- persistence: the head is gone now, DefeatTheOrcLeader must stay completed via variable 8188
+reloadquests
+log after reload
+quests
+quest OrcPlague_DefeatTheOrcLeader Completed
+quest OrcPlague_ReturnToGeorg Completed
+exit

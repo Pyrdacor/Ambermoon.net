@@ -210,9 +210,17 @@ sealed class ScenarioScript
                 {
                     if (game.PopupActive)
                     {
-                        // Return closes text popups and answers "yes" (e.g. "Do you want to fight?")
-                        game.OnKeyDown(Key.Return, KeyModifiers.None);
-                        game.OnKeyUp(Key.Return, KeyModifiers.None);
+                        // Return closes most text popups and answers "yes" (e.g. "Do you want to fight?").
+                        // Some popups (e.g. scrolling map texts) need a click, so both are tried.
+                        if (talkPopupTries++ % 2 == 0)
+                        {
+                            game.OnKeyDown(Key.Return, KeyModifiers.None);
+                            game.OnKeyUp(Key.Return, KeyModifiers.None);
+                        }
+                        else
+                        {
+                            host.Click(host.WindowCenter, false);
+                        }
                     }
                     continueTime = DateTime.Now.AddMilliseconds(300);
                     return;
@@ -324,6 +332,12 @@ sealed class ScenarioScript
                     case "usekey":
                     {
                         string? error = game.ScriptUseKey(uint.Parse(parts[1]));
+                        // the remake uses owned keys automatically, then no lock is shown at all
+                        if (error != null && !game.WindowActive)
+                        {
+                            Console.WriteLine("  no lock is shown (opened directly with an owned key?)");
+                            break;
+                        }
                         ReportError(error);
                         if (error == null)
                         {
@@ -526,6 +540,10 @@ sealed class ScenarioScript
             catch (Exception ex)
             {
                 Report(false, $"line {lineNumber} failed: {ex.Message}");
+
+                // the location helps to find the cause
+                foreach (var frame in (ex.StackTrace ?? "").Split('\n').Take(4))
+                    Console.WriteLine("    " + frame.Trim());
             }
         }
     }

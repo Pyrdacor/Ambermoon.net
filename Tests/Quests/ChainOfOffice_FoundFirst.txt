@@ -1,0 +1,64 @@
+# Chain of office edge case: the chain is found before anybody told about it, the Baron is asked about the FAIRY
+# instead of Lady Heidi, and Heidi is asked after the chain was returned (original game and Advanced, any language)
+# Expected log:
+# - chain found: "Find the chain of office" Inactive -> Completed, "Return it" active (like the horseshoes).
+# - Baron + FAIRY (25, typed): variable 8185, nothing changes in the chain quest (already completed). The sylph quest
+#   must NOT start (variable 8179 is only set by Heidi).
+# - giving the chain: variable 31, completed; reload keeps both steps completed.
+# - Heidi + FAIRIES after the return (she prints text 4 "I am pleased that I did not dream it all"): the quest log
+#   still sets 8179 -> "Talk to Lady Heidi" Inactive -> Completed and "Find the hidden item in the tree" becomes Active
+#   (the sylph quest starts although the chain was already returned; acceptable, the stone is still needed).
+waitidle 20000
+dismissall
+cheat light 3
+goto 279 20 13
+trigger 20 13 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 269 1
+quest ChainOfOffice_FindIt Completed
+quest ChainOfOffice_ReturnIt Active
+# --- the Baron about the fairy
+talk 8
+talkwait
+say 25
+talkwait
+var 8185 1
+var 8179 0
+quest Sylphs_TalkToLadyHeidi Inactive
+quest ChainOfOffice_FindIt Completed
+quest ChainOfOffice_ReturnIt Active
+giveitem 269
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+var 31 1
+quest ChainOfOffice_ReturnIt Completed
+reloadquests
+quest ChainOfOffice_FindIt Completed
+quest ChainOfOffice_ReturnIt Completed
+quest Sylphs_TalkToLadyHeidi Inactive
+# --- Heidi after the return
+talk 9
+talkwait
+say 24
+talkwait
+leave
+talkwait
+waitidle 5000
+var 8179 1
+quest Sylphs_TalkToLadyHeidi Completed
+quest Sylphs_FindTheHiddenItemInTheTree Active
+quest ChainOfOffice_FindIt Completed
+quest ChainOfOffice_ReturnIt Completed
+reloadquests
+log after reload
+quests
+quest ChainOfOffice_FindIt Completed
+quest ChainOfOffice_ReturnIt Completed
+exit

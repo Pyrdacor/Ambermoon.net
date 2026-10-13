@@ -1,0 +1,115 @@
+# Swamp fever edge case: Wat is skipped, the player types ANTIDOTE (12) to Father Anthony directly; the lily is
+# given without the water first (refused), the water of life is given instead; Wat is thanked before Sally
+# (original game and Advanced, any language).
+# Expected log:
+# - Anthony + ANTIDOTE: variable 26 -> "Talk to Father Anthony" completed (completion works from Inactive, or the
+#   typed keyword activates it first), the three obtain steps active.
+# - Giving the lily without water: text 10, the lily is NOT consumed (no Interact reached), nothing changes.
+# - Giving the water while owning the lily: antidote, "Return to Anthony" completed, "Heal Sally" active.
+# - After healing, "Talk to Wat" and "Talk to Sally" can be completed in any order.
+waitidle 20000
+dismissall
+talk 2
+talkwait
+say 12
+talkwait
+takeitems
+leave
+talkwait
+waitidle 5000
+var 26 1
+quest SwampFever_TalkToFatherAnthony Completed
+quest SwampFever_ObtainSwampLilly Active
+quest SwampFever_ObtainEmptyBottle Active
+quest SwampFever_ObtainWaterOfLife Active
+# --- lily first and give it without the water
+goto 110 7 7
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+quest SwampFever_ObtainSwampLilly Completed
+quest SwampFever_ReturnToAnthony Inactive
+talk 2
+talkwait
+giveitem 255
+talkwait 20000
+leave
+talkwait
+waitidle 5000
+count 255 1
+count 253 0
+quest SwampFever_ReturnToAnthony Inactive
+quest SwampFever_HealSally Inactive
+# --- flask and water
+goto 337 21 63
+trigger 21 63 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+quest SwampFever_ObtainEmptyBottle Completed
+goto 126 20 34
+useitem 218
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+quest SwampFever_ObtainWaterOfLife Completed
+quest SwampFever_ReturnToAnthony Active
+# --- give the water (chain 6)
+talk 2
+talkwait
+giveitem 254
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+count 253 1
+quest SwampFever_ReturnToAnthony Completed
+quest SwampFever_HealSally Active
+# --- heal Sally, then Wat first, then Sally
+goto 272 13 12
+useitem 253
+talkwait
+dismissall
+var 34 1
+quest SwampFever_HealSally Completed
+quest SwampFever_TalkToWat Active
+quest SwampFever_TalkToSally Active
+talk 12
+talkwait
+takeitems
+leave
+talkwait
+waitidle 5000
+var 35 1
+quest SwampFever_TalkToWat Completed
+quest SwampFever_TalkToSally Active
+reloadquests
+quest SwampFever_TalkToWat Completed
+quest SwampFever_TalkToSally Active
+talk 13
+talkwait
+takeitems
+leave
+talkwait
+waitidle 5000
+var 36 1
+quest SwampFever_TalkToSally Completed
+reloadquests
+log after reload
+quests
+quest SwampFever_TalkToFatherAnthony Completed
+quest SwampFever_ObtainSwampLilly Completed
+quest SwampFever_ObtainEmptyBottle Completed
+quest SwampFever_ObtainWaterOfLife Completed
+quest SwampFever_ReturnToAnthony Completed
+quest SwampFever_HealSally Completed
+quest SwampFever_TalkToSally Completed
+quest SwampFever_TalkToWat Completed
+exit

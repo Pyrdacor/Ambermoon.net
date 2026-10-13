@@ -1,0 +1,160 @@
+# Lyramion's Faith edge case: kill the guard demon in the temple instead of using demon sleep
+# (original game and Advanced, any language). Start: --load 0
+# Map 431 chain 5 (11,13 / 11,14) starts a fight against monster group 66 (guard demon). Winning sets the same
+# event bits as demon sleep (431:5, 431:6, 431:4), so EnterTheTempleOfBrotherhood is completed although it is
+# blocked. The open library step becomes pointless and is hidden.
+# Second part: library, recipe and demon sleep are done afterwards anyway. They show up again and are completed,
+#   the temple step stays completed.
+waitidle 20000
+dismissall
+cheat light 3
+cheat godmode 1
+cheat give 138 10
+quest LyramionsFaith_TalkToShandraInNewlake Inactive
+# --- grandfather (NPC 1) tells the story and teaches "Wine"
+talk 1
+talkwait
+say 0
+talkwait
+leave
+talkwait
+waitidle 5000
+quest LyramionsFaith_TalkToShandraInNewlake Active
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Inactive
+quest LyramionsFaith_BringShandrasStoneToGrandfather Inactive
+quest LyramionsFaith_UseShandrasStone Inactive
+# --- Shandra's amber in the old cave (map 260, treasure 24 at 26,7). Stand east of it (26,8 is the cave-in text).
+goto 260 27 7
+trigger 26 7 Eye
+talkwait
+takeloot
+count 209 1
+closewindow
+talkwait
+quest LyramionsFaith_BringShandrasStoneToGrandfather Active
+quest LyramionsFaith_UseShandrasStone Inactive
+quest LyramionsFaith_TalkToShandraInNewlake Active
+# --- show the amber to grandfather (custom global var 8189)
+cheat teleport 258 3 15
+wait 2000
+dismissall
+talk 1
+talkwait
+showitem 209
+talkwait
+leave
+talkwait
+waitidle 5000
+var 8189 1
+count 209 1
+quest LyramionsFaith_BringShandrasStoneToGrandfather Completed
+quest LyramionsFaith_UseShandrasStone Active
+quest LyramionsFaith_EnterSecretRoomInLibrary Inactive
+# --- Newlake crypt door (door 28, vault key 400 from Baron Karsten for the picture -> other quest)
+cheat give 400 1
+goto 425 29 6
+trigger 29 5 Eye
+talkwait
+usekey 400
+talkwait
+dismissall
+# the stairs at 29,4 lead into the crypt (map 428, 15,14)
+goto 425 29 4
+wait 2000
+dismissall
+cheat light 3
+# --- Shandra's coffin: use the amber on 3..5,3..5 (chain 7) -> var 193, treasure 101 (book key), event bit 428:7
+goto 428 4 5
+trigger 4 5 item:209
+talkwait
+takeloot
+count 366 1
+closewindow
+talkwait
+dismissall
+var 193 1
+eventbit 428 7 1
+quest LyramionsFaith_TalkToShandraInNewlake Completed
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Blocked
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Inactive
+quest LyramionsFaith_UseShandrasStone Completed
+quest LyramionsFaith_EnterSecretRoomInLibrary Active
+quest LyramionsFaith_FindRecipe Inactive
+# --- temple without demon sleep (crystal harp from Matthias, other quest)
+cheat give 159 1
+goto 431 11 24
+trigger 11 24 item:159
+talkwait
+dismissall
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Blocked
+# fight the guard demon (chain 5, Move trigger)
+goto 431 11 14
+waitbattle 20000
+cheat win
+talkwait
+waitidle 10000
+eventbit 431 6 1
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Completed
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Active
+# the open library step is pointless now and hidden
+quest LyramionsFaith_EnterSecretRoomInLibrary Inactive
+quest LyramionsFaith_FindRecipe Inactive
+quest LyramionsFaith_BrewDemonSleep Inactive
+# --- library (map 429): secret door 29 at 8,6 with the book key
+goto 429 8 7
+trigger 8 6 Eye
+talkwait
+usekey 366
+talkwait
+dismissall
+count 366 0
+quest LyramionsFaith_EnterSecretRoomInLibrary Completed
+quest LyramionsFaith_FindRecipe Active
+quest LyramionsFaith_BrewDemonSleep Inactive
+# recipe behind the books (treasure 107 at 5,5)
+goto 429 5 6
+trigger 5 5 Eye
+talkwait
+takeloot
+count 345 1
+closewindow
+talkwait
+quest LyramionsFaith_FindRecipe Completed
+quest LyramionsFaith_BrewDemonSleep Active
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Completed
+# --- reagents: fire-thistle on world map 149 (48,25), the rest from merchants / other quests
+goto 149 48 25
+talkwait
+takeloot
+count 344 1
+closewindow
+talkwait
+cheat give 156 1
+cheat give 157 1
+cheat give 255 1
+cheat give 281 1
+cheat give 317 1
+cheat give 218 1
+# --- the cauldron in the witch's cellar (map 412). Use the recipe on the cauldron area (12,10 is part of it;
+# monster char 5 starts at 10,12, so stay away from it).
+goto 412 12 10
+trigger 12 10 item:345
+talkwait
+takeloot
+count 343 1
+closewindow
+talkwait
+count 344 0
+quest LyramionsFaith_BrewDemonSleep Completed
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Completed
+quest LyramionsFaith_ExploreTheTempleOfBrotherhood Active
+# any event re-checks event bit 431:6 -> Completed again (cellar ladder teleport at 412 3,3)
+goto 412 3 3
+wait 2000
+dismissall
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Completed
+reloadquests
+quest LyramionsFaith_EnterTheTempleOfBrotherhood Completed
+quest LyramionsFaith_EnterSecretRoomInLibrary Completed
+quest LyramionsFaith_FindRecipe Completed
+exit

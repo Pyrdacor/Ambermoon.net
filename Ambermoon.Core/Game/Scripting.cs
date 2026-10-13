@@ -138,7 +138,25 @@ partial class GameCore
         if (WindowOrPopupActive || x == 0 || y == 0)
             return false;
 
-        return TriggerMapEvents(trigger, x - 1, y - 1);
+        if (trigger < EventTrigger.Item0)
+            return TriggerMapEvents(trigger, x - 1, y - 1);
+
+        // Using an item on a tile. Like using it via the inventory, the item is consumed
+        // if it is destroyed after usage.
+        uint itemIndex = (uint)(trigger - EventTrigger.Item0);
+        var partyMember = CurrentPartyMember!;
+        var itemSlot = partyMember.Inventory.Slots.FirstOrDefault(s => !s.Empty && s.ItemIndex == itemIndex);
+
+        if (itemSlot == null || !TriggerMapEvents(trigger, x - 1, y - 1))
+            return false;
+
+        if (ItemManager.GetItem(itemIndex).Flags.HasFlag(ItemFlags.DestroyAfterUsage))
+        {
+            itemSlot.Remove(1);
+            InventoryItemRemoved(itemIndex, 1, partyMember);
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -291,7 +309,9 @@ partial class GameCore
     /// </summary>
     public int? ScriptTakeLoot()
     {
-        if (OpenStorage is not ITreasureStorage storage || CurrentWindow.Window == UI.Window.Conversation)
+        // the chest window must be shown completely (the storage is set before the window opens)
+        if (OpenStorage is not ITreasureStorage storage || !InputEnable ||
+            (CurrentWindow.Window != UI.Window.Chest && CurrentWindow.Window != UI.Window.BattleLoot))
             return null;
 
         int partyMemberSlot = SlotFromPartyMember(CurrentPartyMember!)!.Value;
@@ -303,15 +323,18 @@ partial class GameCore
                 ++remaining;
         }
 
-        // a chest only counts as emptied if the gold and food were taken as well
-        bool isChest = storage is Chest;
+        // A chest only counts as emptied if the gold and food were taken as well.
+        // Like taking things via the UI, the chest logic is informed (e.g. emptied
+        // treasure piles close their window). Once the window is closed, nothing else
+        // must be done with it.
+        bool ChestWindowOpen() => storage is Chest && CurrentWindow.Window == UI.Window.Chest;
 
         if (storage.Gold != 0)
         {
             CurrentPartyMember!.AddGold(storage.Gold);
             storage.Gold = 0;
 
-            if (isChest)
+            if (ChestWindowOpen())
                 ChestGoldChanged();
         }
 
@@ -320,12 +343,13 @@ partial class GameCore
             CurrentPartyMember!.AddFood(storage.Food);
             storage.Food = 0;
 
-            if (isChest)
+            if (ChestWindowOpen())
                 ChestFoodChanged();
         }
 
-        // like taking the items via the UI (e.g. removes treasure piles when empty)
-        ItemRemovedFromStorage();
+        if (ChestWindowOpen())
+            ItemRemovedFromStorage();
+
         UpdateCharacterInfo();
 
         return remaining;
@@ -415,7 +439,7 @@ partial class GameCore
     {
         var builder = new StringBuilder();
         builder.Append($"Map {Map?.Index}, position {player?.Position.X + 1},{player?.Position.Y + 1}, direction {player?.Direction}");
-        builder.Append($", window {CurrentWindow.Window}, popup {PopupActive}, battle {BattleActive}, input {InputEnable}, all input disabled {allInputDisabled}, paused {paused}");
+        builder.Append($", window {CurrentWindow.Window} ({CurrentWindow.WindowParameters?.Length ?? 0} parameters), popup {PopupActive}, battle {BattleActive}, input {InputEnable}, all input disabled {allInputDisabled}, paused {paused}");
         return builder.ToString();
     }
 }

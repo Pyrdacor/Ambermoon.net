@@ -99,6 +99,8 @@ partial class QuestLog
     const uint GlobalVar_ToldSandraAboutRescue = 8181u;
     const uint GlobalVar_UsedYellowSphere = 8180u;
     const uint GlobalVar_HeidiToldAboutFairies = 8179u;
+    const uint GlobalVar_BrewedDemonSleep = 8178u;
+    const uint GlobalVar_LeftForestMoon = 8177u;
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 
@@ -147,6 +149,18 @@ partial class QuestLog
             (npc, @event) => npc.Index == 9 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Keyword &&
                 (c.KeywordIndex == 24 || c.KeywordIndex == 25),
             GlobalVar_HeidiToldAboutFairies));
+
+        // The demon sleep was brewed in the witch's cellar (map 412): the treasure with the potion is shown.
+        // The potion is used up at the temple, so this keeps the step completed.
+        customGlobalVariableEvents.Add(new CustomGlobalVariableMapEvent(this, game,
+            (map, @event) => map.Index == 412 && @event is ChestEvent c && c.RealChestIndex == 86,
+            GlobalVar_BrewedDemonSleep));
+
+        // The airship on the forest moon (map 436) flies to Lyramion (blue navstone, map 435) or Morag
+        // (yellow navstone, map 437). The navstones are used up and the machine does not store anything.
+        customGlobalVariableEvents.Add(new CustomGlobalVariableMapEvent(this, game,
+            (map, @event) => map.Index == 436 && @event is TeleportEvent t && (t.MapIndex == 435 || t.MapIndex == 437),
+            GlobalVar_LeftForestMoon));
 
         // Aman (3) asks for the gardener's brooch (keyword "Thing") as long as he didn't get it (12)
         customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,

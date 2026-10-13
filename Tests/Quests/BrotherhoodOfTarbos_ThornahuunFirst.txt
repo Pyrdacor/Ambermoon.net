@@ -1,0 +1,63 @@
+# Brotherhood of Tarbos edge case: meet and defeat Thornahuun BEFORE finding the Amberstar
+# (original game and Advanced, any language). Start: --load 0
+# The coffin hall (map 433) is reachable without the Amberstar: the encounter (chain 3 at 3..7,6) is between the
+# entrance (9,4) and does not need door 31. Both sub quests are independent:
+# - DefeatThornahuun becomes active/completed on its own, BringTheAmberstar stays inactive (hidden) until the
+#   Amberstar is found, then it is active until door 31 is opened.
+waitidle 20000
+dismissall
+cheat light 3
+cheat godmode 1
+# crystal harp from Matthias (NPC 29, other quest)
+cheat give 159 1
+goto 431 11 24
+trigger 11 24 item:159
+talkwait
+dismissall
+goto 431 19 16
+wait 2000
+dismissall
+# --- Thornahuun first
+goto 433 5 6
+waitbattle 20000
+quest BrotherhoodOfTarbos_DefeatThornahuun Active
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Inactive
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+goto 433 9 3
+wait 2000
+dismissall
+quest BrotherhoodOfTarbos_DefeatThornahuun Completed
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Inactive
+reloadquests
+quest BrotherhoodOfTarbos_DefeatThornahuun Completed
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Inactive
+# --- now Godsbane and the Amberstar
+goto 430 7 8
+trigger 7 7 Eye
+answer 111
+talkwait
+dismissall
+goto 430 13 4
+trigger 13 3 Eye
+talkwait
+takeloot
+count 375 1
+closewindow
+talkwait
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Active
+# --- door 31
+goto 433 8 8
+trigger 8 9 Eye
+talkwait
+usekey 375
+talkwait
+dismissall
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Completed
+reloadquests
+quest BrotherhoodOfTarbos_BringTheAmberstarToTheTemple Completed
+quest BrotherhoodOfTarbos_DefeatThornahuun Completed
+exit

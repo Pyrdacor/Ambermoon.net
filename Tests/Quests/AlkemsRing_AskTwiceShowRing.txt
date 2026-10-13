@@ -1,0 +1,83 @@
+# Alkem's ring edge cases (original game and Advanced, any language)
+# - asking Alkem about the magic ring twice must not give a second key (global var 82, text 9)
+# - reloading while the key / the ring is still owned keeps the states (items are owned)
+# - only SHOWING the ring (text 10) must not complete "Return the ring", only giving it does (var 81)
+# - talking to him afterwards shows text 2, nothing changes
+# Start: --load 0
+waitidle 20000
+dismissall
+cheat light 3
+cheat godmode 1
+cheat teleport 282 12 14
+wait 2000
+dismissall
+talk 18
+talkwait
+say 54
+talkwait
+takeitems
+count 289 1
+# ask again: "I gave you the key to the crypt" (text 9), no new key
+say 54
+talkwait
+takeitems
+count 289 1
+leave
+talkwait
+waitidle 5000
+quest AlkemsRing_EnterTheCrypt Active
+# reload while the key is owned: still active
+reloadquests
+quest AlkemsRing_EnterTheCrypt Active
+quest AlkemsRing_FindTheRing Inactive
+# --- door and ring
+goto 107 42 28
+trigger 42 27
+talkwait
+usekey 289
+talkwait
+wait 2000
+dismissall
+quest AlkemsRing_EnterTheCrypt Completed
+cheat light 3
+goto 283 11 4
+talkwait
+takeloot
+count 288 1
+closewindow
+talkwait
+goto 107 42 28
+wait 2000
+dismissall
+quest AlkemsRing_FindTheRing Completed
+quest AlkemsRing_ReturnTheRing Active
+# reload while the ring is owned and the key is gone: door 15 is unlocked, ring is owned -> all fine
+reloadquests
+quest AlkemsRing_EnterTheCrypt Completed
+quest AlkemsRing_FindTheRing Completed
+quest AlkemsRing_ReturnTheRing Active
+# --- only show the ring: "You have found my ring! Please give it back to me." -> still active
+talk 18
+talkwait
+showitem 288
+talkwait
+quest AlkemsRing_ReturnTheRing Active
+var 81 0
+count 288 1
+# now give it
+giveitem 288
+talkwait 20000
+leave
+talkwait
+waitidle 5000
+var 81 1
+quest AlkemsRing_ReturnTheRing Completed
+# talking again: text 2 (thanks), nothing changes
+talk 18
+talkwait
+leave
+talkwait
+waitidle 5000
+quest AlkemsRing_ReturnTheRing Completed
+quests
+exit

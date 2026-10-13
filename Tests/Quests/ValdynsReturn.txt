@@ -61,7 +61,13 @@ goto 369 10 7
 talkwait
 trigger 10 6
 talkwait
-dismissall
+# monsters of the antique area might attack
+waitbattle 5000 optional
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
 eventbit 369 11 1
 quest ValdynsReturn_UseTheYellowSphere Completed
 reloadquests
