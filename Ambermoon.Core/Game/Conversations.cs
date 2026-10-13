@@ -201,6 +201,10 @@ partial class GameCore
                 {
                     QuestLog?.CheckEvent(conversationPartner, conversationEvent);
 
+                    // The create event already advanced to the next event (e.g. setting a global
+                    // variable after the reward), so it must not be skipped.
+                    void ContinueAfterCreate() => HandleEvent(null);
+
                     void HandleInteraction()
                     {
                         HandleNextEvent(eventType =>
@@ -250,14 +254,14 @@ partial class GameCore
                                         }, new Position(215, 75), false);
                                     }
                                     else
-                                        ExecuteNextUpdateCycle(() => HandleNextEvent(null));
+                                        ExecuteNextUpdateCycle(ContinueAfterCreate);
                                 }
                                 else // Show item
                                 {
                                     if (eventType == EventType.Interact)
                                         MoveBack(() => HandleNextEvent(null));
                                     else
-                                        ExecuteNextUpdateCycle(() => HandleNextEvent(null));
+                                        ExecuteNextUpdateCycle(ContinueAfterCreate);
                                 }
                             }
                             else if (eventType == EventType.Invalid) // End of event chain
