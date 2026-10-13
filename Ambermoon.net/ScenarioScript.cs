@@ -59,6 +59,8 @@ namespace Ambermoon;
 ///   activate &lt;slot&gt;           make the party member in slot 1-6 the active one
 ///   setvar &lt;index&gt; &lt;0|1&gt;      set a global variable
 ///   setskill &lt;skill&gt; &lt;value&gt;  set a skill (Ambermoon.Data.Skill name) of the active party member
+///   setattr &lt;attribute&gt; &lt;value&gt;
+///                             set an attribute (Ambermoon.Data.Attribute name) of the active party member
 ///   hour &lt;0-23&gt;               set the time of day (e.g. 23 for events which only happen at night)
 ///   eventbit &lt;map&gt; &lt;event&gt; [0|1]
 ///                             print if a map event chain (1-based) is disabled (1), optionally check it
@@ -516,6 +518,9 @@ sealed class ScenarioScript
                         break;
                     case "setskill":
                         game.ScriptSetSkill(Enum.Parse<Data.Skill>(parts[1], true), uint.Parse(parts[2]));
+                        break;
+                    case "setattr":
+                        game.ScriptSetAttribute(Enum.Parse<Data.Attribute>(parts[1], true), uint.Parse(parts[2]));
                         break;
                     case "reloadquests":
                         game.ScriptReloadQuestLog();

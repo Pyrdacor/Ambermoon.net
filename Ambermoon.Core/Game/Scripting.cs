@@ -207,6 +207,16 @@ partial class GameCore
     }
 
     /// <summary>
+    /// Sets an attribute of the active party member (e.g. dexterity for a test).
+    /// </summary>
+    public void ScriptSetAttribute(Data.Attribute attribute, uint value)
+    {
+        var attributeValue = CurrentPartyMember!.Attributes[attribute];
+        attributeValue.MaxValue = Math.Max(attributeValue.MaxValue, value);
+        attributeValue.CurrentValue = value;
+    }
+
+    /// <summary>
     /// Informs the quest log about items which were added without the usual item handling (e.g. by cheats).
     /// </summary>
     public void ItemsAddedExternally(uint itemIndex, uint amount) => QuestLog?.CheckItem(ItemManager.GetItem(itemIndex), amount);

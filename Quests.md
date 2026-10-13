@@ -390,6 +390,33 @@ Tests: `GoldenArmour.txt`
 
 Tests: `GralTemple.txt`
 
+### The Mystic Tower (Der Mystikerturm) — from episode 3
+
+Targor (party member 13) brings his notes (507). The places need Targor in the party and able to act.
+
+1. **Visit the pond west of Illien** (event 85:1).
+2. **Visit the lonely tree** (event 102:1).
+3. **Visit the mountain pass**: the third symbol makes the mystic tower rise (event 134:1).
+4. **Enter the mystic tower**: the stone head lets Targor in (event 478:2).
+5. **Pass the test of high mysticism**: the friends die, Targor learns the mystic imitation at the glass orbs and
+   defeats the demon (variable 371 or event 478:18). Variable 374 (spell learned) is reset if the test is aborted.
+
+Tests: `MysticTower.txt`
+
+### The Highest Thieves' Test (Die höchste Diebesprüfung) — from episode 3
+
+Starts after the thieves' guild (the riddlemouth shows Aman in the weapons chamber of Gemstone).
+
+1. **Help Aman against the knights**: Aman asks for help (variable 376), done when the knights are gone (375).
+2. **Meet Aman in the thieves' guild**: he gives the silver lockpick in the cellar (variable 377).
+3. **Solve the riddle of the barrels**: after the trap, lock and dexterity doors the old items are put into the right
+   barrels (variable 391, the stealth cloak is unlocked). The barrel variables 381-390 are reset on failure.
+4. **Show the stealth cloak to Aman**: he gives his key (variable 380).
+5. **Pass the test of stealth**: the final switch behind the torches shows Aman in the small room (character 265:20).
+6. **Talk to Aman**: he reveals himself as the head of the guild (variable 378).
+
+Tests: `MasterThief.txt`
+
 ### Drelb's Search (Drelbs Suche) — from episode 3
 
 1. **Defeat the monsters in the gnome mine**: after meeting Drelb (variable 362), the four monsters in the labyrinth

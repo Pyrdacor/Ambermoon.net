@@ -39,6 +39,8 @@ public enum MainQuestType
     GralTemple,
     YourHouse,
     Pets,
+    MysticTower,
+    MasterThief,
 }
 
 public enum SubQuestType
@@ -196,6 +198,19 @@ public enum SubQuestType
     Pets_AdoptADog, // after befriending the cat
     Pets_BefriendTheDog, // after adopting the dog
     Pets_ReturnToFerdinand, // after befriending the dog
+    // The Mystic Tower (Advanced)
+    MysticTower_VisitThePond, // after getting Targor's notes
+    MysticTower_VisitTheLonelyTree, // after the pond
+    MysticTower_VisitTheMountains, // after the tree
+    MysticTower_EnterTheMysticTower, // after the tower rose
+    MysticTower_PassTheTestOfHighMysticism, // after entering the tower
+    // The Master Thief (Advanced)
+    MasterThief_HelpAmanAgainstTheKnights, // after Aman asked for help
+    MasterThief_MeetAmanInTheThievesGuild, // after the knights are gone
+    MasterThief_SolveTheBarrelRiddle, // after getting the silver lockpick
+    MasterThief_ShowTheCloakToAman, // after solving the barrel riddle
+    MasterThief_PassTheTestOfStealth, // after Aman gave his key
+    MasterThief_TalkToAman, // after the final switch
     // Brotherhood of Tarbos
     BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, // after finding the Amberstar
     BrotherhoodOfTarbos_DefeatThornahuun, // after meeting Thornahuun in the coffin hall
@@ -1145,6 +1160,161 @@ partial class QuestLog
                         ],
                         SourceType = QuestSourceType.NPC,
                         SourceIndex = 47, // Melvin
+                    }
+                ));
+                #endregion
+                #region The Mystic Tower
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.MysticTower,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MysticTower_VisitThePond,
+                        Triggers =
+                        [
+                            // Activate: Targor's notes (Targor brings them when he joins, so no item is added)
+                            new PredicateTrigger(game, TriggerType.Activation, (g, e) => g.GetTotalItemCount(507) != 0),
+                            // Complete: Targor felt the energy of the small pond west of Illien
+                            new EventDisabledTrigger(game, TriggerType.Completion, 85, 1),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 507, // Targor's notes
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MysticTower_VisitTheLonelyTree,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Targor felt the energy of the lonely tree
+                            new EventDisabledTrigger(game, TriggerType.Completion, 102, 1),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 507, // Targor's notes
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MysticTower_VisitTheMountains,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the third symbol made the mystic tower rise
+                            new EventDisabledTrigger(game, TriggerType.Completion, 134, 1),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 507, // Targor's notes
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MysticTower_EnterTheMysticTower,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the stone head let Targor in
+                            new EventDisabledTrigger(game, TriggerType.Completion, 478, 2),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 507, // Targor's notes
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MysticTower_PassTheTestOfHighMysticism,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Targor defeated the demon with the mystic imitation
+                            new OrTrigger<GlobalVariableTrigger, EventDisabledTrigger>(game, TriggerType.Completion,
+                                (g, t) => new GlobalVariableTrigger(g, t, 371),
+                                (g, t) => new EventDisabledTrigger(g, t, 478, 18)),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 507, // Targor's notes
+                    }
+                ));
+                #endregion
+                #region The Master Thief
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.MasterThief,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MasterThief_HelpAmanAgainstTheKnights,
+                        Triggers =
+                        [
+                            // Activate: Aman asked for help against the knights in the weapons chamber of Gemstone
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 376),
+                            // Complete: the knights are gone and Aman offers the highest thieves' test
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 375),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 3, // Aman
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MasterThief_MeetAmanInTheThievesGuild,
+                        Triggers =
+                        [
+                            // Activate
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 375),
+                            // Complete: Aman gave the silver lockpick in the cellar of the thieves' guild
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 377),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 3, // Aman
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MasterThief_SolveTheBarrelRiddle,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the old items were put into the right barrels (the stealth cloak is unlocked)
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 391),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 3, // Aman
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MasterThief_ShowTheCloakToAman,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Aman saw the stealth cloak and gave his key
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 380),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 3, // Aman
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MasterThief_PassTheTestOfStealth,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the final switch behind the torches was used, Aman waits in the small room
+                            new CharacterVisibilityTrigger(game, TriggerType.Completion, 265, 20, true),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 3, // Aman
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MasterThief_TalkToAman,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Aman revealed himself as the head of the guild
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 378),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 3, // Aman
                     }
                 ));
                 #endregion

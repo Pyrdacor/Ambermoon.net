@@ -13,7 +13,8 @@ alternative solutions or old savegames.
 Keywords and riddle answers are given by dictionary index, so the scripts work in every language.
 All scripts work with the original game and Ambermoon Advanced, except `ThievesGuild.txt`
 (Aman's conversation differs in Advanced) and the scripts of the Advanced-only quests (`YourHouse.txt`, `Pets.txt`,
-`GoldenArmour.txt`, `GralTemple.txt`, `DrelbsSearch.txt`), which need `--version 5`.
+`GoldenArmour.txt`, `GralTemple.txt`, `MysticTower.txt`, `MasterThief.txt`, `DrelbsSearch.txt`), which need
+`--version 5`.
 
 Run them from the build output folder, e.g.:
 
@@ -26,5 +27,6 @@ Each script prints `PASS`/`FAIL` lines and a summary at the end.
 
 Cheats are only used for things which are not part of the tested quest, e.g. keys or items from other
 quests (`cheat give`), light in dark dungeons, winning or avoiding fights (`cheat win`, `cheat berserk`) or teleporting to a place
-(`goto`, `cheat teleport`). Some scripts use `cheat netsrak` (max stats and all languages) so the lone hero
+(`goto`, `cheat teleport`). Skills, attributes and the time of day can be set for tests which need them
+(`setskill`, `setattr`, `hour`). Some scripts use `cheat netsrak` (max stats and all languages) so the lone hero
 can carry heavy loot or talk to NPCs of other languages.

@@ -124,6 +124,8 @@ internal static class QuestTexts
             { MainQuestType.GralTemple, "Der Graltempel" },
             { MainQuestType.YourHouse, "Dein Haus" },
             { MainQuestType.Pets, "Haustiere" },
+            { MainQuestType.MysticTower, "Der Mystikerturm" },
+            { MainQuestType.MasterThief, "Die höchste Diebesprüfung" },
         } },
         { GameLanguage.English, new()
         {
@@ -158,6 +160,8 @@ internal static class QuestTexts
             { MainQuestType.GralTemple, "The Gral Temple" },
             { MainQuestType.YourHouse, "Your House" },
             { MainQuestType.Pets, "Pets" },
+            { MainQuestType.MysticTower, "The Mystic Tower" },
+            { MainQuestType.MasterThief, "The Highest Thieves' Test" },
         } },
         { GameLanguage.French, new()
         {
@@ -192,6 +196,8 @@ internal static class QuestTexts
             { MainQuestType.GralTemple, "Le temple du Graal" },
             { MainQuestType.YourHouse, "Ta maison" },
             { MainQuestType.Pets, "Animaux de compagnie" },
+            { MainQuestType.MysticTower, "La tour des mystiques" },
+            { MainQuestType.MasterThief, "L'épreuve suprême des voleurs" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -226,6 +232,8 @@ internal static class QuestTexts
             { MainQuestType.GralTemple, "Świątynia Graala" },
             { MainQuestType.YourHouse, "Twój dom" },
             { MainQuestType.Pets, "Zwierzęta domowe" },
+            { MainQuestType.MysticTower, "Wieża mistyków" },
+            { MainQuestType.MasterThief, "Najwyższa próba złodziei" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -260,6 +268,8 @@ internal static class QuestTexts
             { MainQuestType.GralTemple, "Grálový chrám" },
             { MainQuestType.YourHouse, "Tvůj dům" },
             { MainQuestType.Pets, "Domácí mazlíčci" },
+            { MainQuestType.MysticTower, "Věž mystiků" },
+            { MainQuestType.MasterThief, "Nejvyšší zkouška zlodějů" },
         } },
     };
 
@@ -415,6 +425,17 @@ internal static class QuestTexts
             { SubQuestType.Pets_AdoptADog, "Nimm einen Hund von Ferdinand auf" },
             { SubQuestType.Pets_BefriendTheDog, "Freunde dich mit dem Hund an" },
             { SubQuestType.Pets_ReturnToFerdinand, "Kehre zu Ferdinand zurück" },
+            { SubQuestType.MysticTower_VisitThePond, "Besuche den Teich westlich von Illien" },
+            { SubQuestType.MysticTower_VisitTheLonelyTree, "Besuche den einsamen Baum" },
+            { SubQuestType.MysticTower_VisitTheMountains, "Besuche den Bergpass" },
+            { SubQuestType.MysticTower_EnterTheMysticTower, "Betritt den Mystikerturm" },
+            { SubQuestType.MysticTower_PassTheTestOfHighMysticism, "Besteh die Prüfung der hohen Mystik" },
+            { SubQuestType.MasterThief_HelpAmanAgainstTheKnights, "Hilf Aman gegen die Ritter" },
+            { SubQuestType.MasterThief_MeetAmanInTheThievesGuild, "Triff Aman in der Diebesgilde" },
+            { SubQuestType.MasterThief_SolveTheBarrelRiddle, "Löse das Rätsel der Fässer" },
+            { SubQuestType.MasterThief_ShowTheCloakToAman, "Zeig Aman den Schleichumhang" },
+            { SubQuestType.MasterThief_PassTheTestOfStealth, "Besteh die Prüfung der Unauffälligkeit" },
+            { SubQuestType.MasterThief_TalkToAman, "Sprich mit Aman" },
         } },
         { GameLanguage.English, new()
         {
@@ -564,6 +585,17 @@ internal static class QuestTexts
             { SubQuestType.Pets_AdoptADog, "Adopt a dog from Ferdinand" },
             { SubQuestType.Pets_BefriendTheDog, "Make friends with the dog" },
             { SubQuestType.Pets_ReturnToFerdinand, "Return to Ferdinand" },
+            { SubQuestType.MysticTower_VisitThePond, "Visit the pond west of Illien" },
+            { SubQuestType.MysticTower_VisitTheLonelyTree, "Visit the lonely tree" },
+            { SubQuestType.MysticTower_VisitTheMountains, "Visit the mountain pass" },
+            { SubQuestType.MysticTower_EnterTheMysticTower, "Enter the mystic tower" },
+            { SubQuestType.MysticTower_PassTheTestOfHighMysticism, "Pass the test of high mysticism" },
+            { SubQuestType.MasterThief_HelpAmanAgainstTheKnights, "Help Aman against the knights" },
+            { SubQuestType.MasterThief_MeetAmanInTheThievesGuild, "Meet Aman in the thieves' guild" },
+            { SubQuestType.MasterThief_SolveTheBarrelRiddle, "Solve the riddle of the barrels" },
+            { SubQuestType.MasterThief_ShowTheCloakToAman, "Show the stealth cloak to Aman" },
+            { SubQuestType.MasterThief_PassTheTestOfStealth, "Pass the test of stealth" },
+            { SubQuestType.MasterThief_TalkToAman, "Talk to Aman" },
         } },
         { GameLanguage.French, new()
         {
@@ -694,6 +726,17 @@ internal static class QuestTexts
             { SubQuestType.Pets_AdoptADog, "Adopte un chien chez Ferdinand" },
             { SubQuestType.Pets_BefriendTheDog, "Lie-toi d'amitié avec le chien" },
             { SubQuestType.Pets_ReturnToFerdinand, "Retourne voir Ferdinand" },
+            { SubQuestType.MysticTower_VisitThePond, "Visite l'étang à l'ouest d'Illien" },
+            { SubQuestType.MysticTower_VisitTheLonelyTree, "Visite l'arbre solitaire" },
+            { SubQuestType.MysticTower_VisitTheMountains, "Visite le col de montagne" },
+            { SubQuestType.MysticTower_EnterTheMysticTower, "Entre dans la tour des mystiques" },
+            { SubQuestType.MysticTower_PassTheTestOfHighMysticism, "Réussis l'épreuve de haute mystique" },
+            { SubQuestType.MasterThief_HelpAmanAgainstTheKnights, "Aide Aman contre les chevaliers" },
+            { SubQuestType.MasterThief_MeetAmanInTheThievesGuild, "Retrouve Aman à la guilde des voleurs" },
+            { SubQuestType.MasterThief_SolveTheBarrelRiddle, "Résous l'énigme des tonneaux" },
+            { SubQuestType.MasterThief_ShowTheCloakToAman, "Montre la cape furtive à Aman" },
+            { SubQuestType.MasterThief_PassTheTestOfStealth, "Réussis l'épreuve de discrétion" },
+            { SubQuestType.MasterThief_TalkToAman, "Parle à Aman" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -824,6 +867,17 @@ internal static class QuestTexts
             { SubQuestType.Pets_AdoptADog, "Przygarnij psa od Ferdinanda" },
             { SubQuestType.Pets_BefriendTheDog, "Zaprzyjaźnij się z psem" },
             { SubQuestType.Pets_ReturnToFerdinand, "Wróć do Ferdinanda" },
+            { SubQuestType.MysticTower_VisitThePond, "Odwiedź staw na zachód od Illien" },
+            { SubQuestType.MysticTower_VisitTheLonelyTree, "Odwiedź samotne drzewo" },
+            { SubQuestType.MysticTower_VisitTheMountains, "Odwiedź przełęcz górską" },
+            { SubQuestType.MysticTower_EnterTheMysticTower, "Wejdź do wieży mistyków" },
+            { SubQuestType.MysticTower_PassTheTestOfHighMysticism, "Zdaj próbę wysokiej mistyki" },
+            { SubQuestType.MasterThief_HelpAmanAgainstTheKnights, "Pomóż Amanowi przeciw rycerzom" },
+            { SubQuestType.MasterThief_MeetAmanInTheThievesGuild, "Spotkaj Amana w gildii złodziei" },
+            { SubQuestType.MasterThief_SolveTheBarrelRiddle, "Rozwiąż zagadkę beczek" },
+            { SubQuestType.MasterThief_ShowTheCloakToAman, "Pokaż Amanowi płaszcz skradania" },
+            { SubQuestType.MasterThief_PassTheTestOfStealth, "Zdaj próbę skradania się" },
+            { SubQuestType.MasterThief_TalkToAman, "Porozmawiaj z Amanem" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -954,6 +1008,17 @@ internal static class QuestTexts
             { SubQuestType.Pets_AdoptADog, "Adoptuj psa od Ferdinanda" },
             { SubQuestType.Pets_BefriendTheDog, "Spřátel se se psem" },
             { SubQuestType.Pets_ReturnToFerdinand, "Vrať se k Ferdinandovi" },
+            { SubQuestType.MysticTower_VisitThePond, "Navštiv rybník západně od Illienu" },
+            { SubQuestType.MysticTower_VisitTheLonelyTree, "Navštiv osamělý strom" },
+            { SubQuestType.MysticTower_VisitTheMountains, "Navštiv horský průsmyk" },
+            { SubQuestType.MysticTower_EnterTheMysticTower, "Vstup do věže mystiků" },
+            { SubQuestType.MysticTower_PassTheTestOfHighMysticism, "Projdi zkouškou vysoké mystiky" },
+            { SubQuestType.MasterThief_HelpAmanAgainstTheKnights, "Pomoz Amanovi proti rytířům" },
+            { SubQuestType.MasterThief_MeetAmanInTheThievesGuild, "Setkej se s Amanem v cechu zlodějů" },
+            { SubQuestType.MasterThief_SolveTheBarrelRiddle, "Vyřeš hádanku sudů" },
+            { SubQuestType.MasterThief_ShowTheCloakToAman, "Ukaž Amanovi plášť plížení" },
+            { SubQuestType.MasterThief_PassTheTestOfStealth, "Projdi zkouškou plížení" },
+            { SubQuestType.MasterThief_TalkToAman, "Promluv s Amanem" },
         } },
     };
 }
