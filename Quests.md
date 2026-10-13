@@ -528,6 +528,28 @@ Tests: `WaspsNest.txt`
 
 Tests: `SapphireThistles.txt`
 
+### The Ancient Vault (Das antike Gewölbe) — from episode 3
+
+Below the wasps' nest.
+
+1. **Place the ancient book on the pedestal**: after the wasp queen or with the ancient book (362, antique area).
+   Done when the book lies on the pedestal (variable 328).
+2. **Pass the trials of the vault** (x/3): intelligence, dexterity and strength end at green lights (344-346).
+3. **Receive the reward of the guardian**: the green carved sphere (488, variable 347).
+
+Tests: `AncientVault.txt`
+
+### The Unknown World (Die unbekannte Welt) — from episode 3
+
+1. **Activate the teleporter with the sphere**: the green sphere in the machine of the teleporter room (variable
+   355, reset when the teleporter is used, so meeting Sheera counts as well).
+2. **Meet Sheera**, the feline explorer in the krondir cave (variable 356).
+3. **Collect ten triis** (x/10): the crystals of the krondirs (493, charged 494).
+4. **Charge the triis**: Sheera charges one (358), the krondirs' liquid the others, the portal works (360).
+5. **Return to Lyramion** through the exit (variable 354).
+
+Tests: `AncientVault.txt`
+
 ### The Gral Temple (Der Graltempel) — from episode 3
 
 1. **Ask Melvin about his family**: Melvin in Snakesign (keyword "Family"). Done with the legend (variable 310).

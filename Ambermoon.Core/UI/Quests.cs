@@ -56,6 +56,8 @@ public enum MainQuestType
     WaspsNest,
     DorinasRing,
     SapphireThistles,
+    AncientVault,
+    UnknownWorld,
 }
 
 public enum SubQuestType
@@ -296,6 +298,16 @@ public enum SubQuestType
     // Sapphire Thistles (Advanced)
     SapphireThistles_PickSapphireThistles, // after Brogat told about the thistles
     SapphireThistles_BringTheThistlesToBrogat, // after picking five thistles
+    // The Ancient Vault (Advanced)
+    AncientVault_PlaceTheAncientBook, // after defeating the wasp queen or finding the book
+    AncientVault_PassTheTrials, // after placing the book
+    AncientVault_ReceiveTheGuardiansReward, // after passing the trials
+    // The Unknown World (Advanced)
+    UnknownWorld_ActivateTheTeleporter, // after getting the green sphere
+    UnknownWorld_MeetSheera, // after activating the teleporter
+    UnknownWorld_CollectTriis, // after meeting Sheera
+    UnknownWorld_ChargeTheTriis, // after collecting ten triis
+    UnknownWorld_ReturnToLyramion, // after charging the triis
     // Brotherhood of Tarbos
     BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, // after finding the Amberstar
     BrotherhoodOfTarbos_DefeatThornahuun, // after meeting Thornahuun in the coffin hall
@@ -1896,6 +1908,125 @@ partial class QuestLog
                         ],
                         SourceType = QuestSourceType.NPC,
                         SourceIndex = 75, // Brogat
+                    }
+                ));
+                #endregion
+                #region The Ancient Vault
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.AncientVault,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.AncientVault_PlaceTheAncientBook,
+                        Triggers =
+                        [
+                            // Activate: the wasp queen above the vault is defeated or the ancient book was found
+                            new OrTrigger<CharacterVisibilityTrigger, ItemObtainedTrigger>(game, TriggerType.Activation,
+                                (g, t) => new CharacterVisibilityTrigger(g, t, 379, 1, false),
+                                (g, t) => new ItemObtainedTrigger(g, t, 362)),
+                            // Complete: the ancient book was placed on the pedestal in the center of the vault
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 328),
+                        ],
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(380, 11, 14), // Pedestal
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.AncientVault_PassTheTrials,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the trials of intelligence, dexterity and strength were passed (the green lights)
+                            new CountTrigger(game, TriggerType.Completion, [344, 345, 346]),
+                        ],
+                        MinAmount = 3,
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(380, 11, 14), // Pedestal
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.AncientVault_ReceiveTheGuardiansReward,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the guardian gave the green carved sphere
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 347),
+                        ],
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(380, 11, 14), // Pedestal
+                    }
+                ));
+                #endregion
+                #region The Unknown World
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.UnknownWorld,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.UnknownWorld_ActivateTheTeleporter,
+                        Triggers =
+                        [
+                            // Activate: got the green carved sphere from the guardian of the ancient vault
+                            new ItemObtainedTrigger(game, TriggerType.Activation, 488),
+                            // Complete: the machine in the teleporter room took the sphere (355 is reset when the
+                            // teleporter is used) or the party met Sheera in the other world
+                            new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 355) || IsGlobalVariableSet(g, e, 356)),
+                        ],
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(380, 17, 4), // Guardian of the vault
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.UnknownWorld_MeetSheera,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: talked to Sheera, the feline explorer, in the krondir cave
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 356),
+                        ],
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(380, 17, 4), // Guardian of the vault
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.UnknownWorld_CollectTriis,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: ten triis (the crystals of the krondirs, charged or not) or the portal works again
+                            new CountTrigger(game, TriggerType.Completion, [360], [493, 494]),
+                        ],
+                        MinAmount = 10,
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 72, // Sheera
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.UnknownWorld_ChargeTheTriis,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Sheera charged a trii and the krondirs' liquid charged the others, the portal works
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 360),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 72, // Sheera
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.UnknownWorld_ReturnToLyramion,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: left the unknown world through the exit
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 354),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 72, // Sheera
                     }
                 ));
                 #endregion

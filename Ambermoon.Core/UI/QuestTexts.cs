@@ -141,6 +141,8 @@ internal static class QuestTexts
             { MainQuestType.WaspsNest, "Das Wespennest" },
             { MainQuestType.DorinasRing, "Dorinas Ehering" },
             { MainQuestType.SapphireThistles, "Saphir-Disteln" },
+            { MainQuestType.AncientVault, "Das antike Gewölbe" },
+            { MainQuestType.UnknownWorld, "Die unbekannte Welt" },
         } },
         { GameLanguage.English, new()
         {
@@ -192,6 +194,8 @@ internal static class QuestTexts
             { MainQuestType.WaspsNest, "The Wasps' Nest" },
             { MainQuestType.DorinasRing, "Dorina's Wedding Ring" },
             { MainQuestType.SapphireThistles, "Sapphire Thistles" },
+            { MainQuestType.AncientVault, "The Ancient Vault" },
+            { MainQuestType.UnknownWorld, "The Unknown World" },
         } },
         { GameLanguage.French, new()
         {
@@ -243,6 +247,8 @@ internal static class QuestTexts
             { MainQuestType.WaspsNest, "Le nid de guêpes" },
             { MainQuestType.DorinasRing, "L'alliance de Dorina" },
             { MainQuestType.SapphireThistles, "Les chardons saphir" },
+            { MainQuestType.AncientVault, "La voûte antique" },
+            { MainQuestType.UnknownWorld, "Le monde inconnu" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -294,6 +300,8 @@ internal static class QuestTexts
             { MainQuestType.WaspsNest, "Gniazdo os" },
             { MainQuestType.DorinasRing, "Obrączka Doriny" },
             { MainQuestType.SapphireThistles, "Szafirowe osty" },
+            { MainQuestType.AncientVault, "Starożytne sklepienie" },
+            { MainQuestType.UnknownWorld, "Nieznany świat" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -345,6 +353,8 @@ internal static class QuestTexts
             { MainQuestType.WaspsNest, "Vosí hnízdo" },
             { MainQuestType.DorinasRing, "Dorinin snubní prsten" },
             { MainQuestType.SapphireThistles, "Safírové bodláky" },
+            { MainQuestType.AncientVault, "Starobylá klenba" },
+            { MainQuestType.UnknownWorld, "Neznámý svět" },
         } },
     };
 
@@ -566,6 +576,14 @@ internal static class QuestTexts
             { SubQuestType.DorinasRing_ReturnTheRingToDorina, "Gib Dorina ihren Ring zurück" },
             { SubQuestType.SapphireThistles_PickSapphireThistles, "Pflücke Saphir-Disteln" },
             { SubQuestType.SapphireThistles_BringTheThistlesToBrogat, "Bring Brogat fünf Saphir-Disteln" },
+            { SubQuestType.AncientVault_PlaceTheAncientBook, "Leg das antike Buch auf das Podest" },
+            { SubQuestType.AncientVault_PassTheTrials, "Besteh die Prüfungen des Gewölbes" },
+            { SubQuestType.AncientVault_ReceiveTheGuardiansReward, "Nimm den Lohn des Wächters entgegen" },
+            { SubQuestType.UnknownWorld_ActivateTheTeleporter, "Aktiviere den Teleporter mit der Kugel" },
+            { SubQuestType.UnknownWorld_MeetSheera, "Triff Sheera" },
+            { SubQuestType.UnknownWorld_CollectTriis, "Sammle zehn Triis" },
+            { SubQuestType.UnknownWorld_ChargeTheTriis, "Lade die Triis auf" },
+            { SubQuestType.UnknownWorld_ReturnToLyramion, "Kehre nach Lyramion zurück" },
         } },
         { GameLanguage.English, new()
         {
@@ -781,6 +799,14 @@ internal static class QuestTexts
             { SubQuestType.DorinasRing_ReturnTheRingToDorina, "Return the ring to Dorina" },
             { SubQuestType.SapphireThistles_PickSapphireThistles, "Pick sapphire thistles" },
             { SubQuestType.SapphireThistles_BringTheThistlesToBrogat, "Bring five sapphire thistles to Brogat" },
+            { SubQuestType.AncientVault_PlaceTheAncientBook, "Place the ancient book on the pedestal" },
+            { SubQuestType.AncientVault_PassTheTrials, "Pass the trials of the vault" },
+            { SubQuestType.AncientVault_ReceiveTheGuardiansReward, "Receive the reward of the guardian" },
+            { SubQuestType.UnknownWorld_ActivateTheTeleporter, "Activate the teleporter with the sphere" },
+            { SubQuestType.UnknownWorld_MeetSheera, "Meet Sheera" },
+            { SubQuestType.UnknownWorld_CollectTriis, "Collect ten triis" },
+            { SubQuestType.UnknownWorld_ChargeTheTriis, "Charge the triis" },
+            { SubQuestType.UnknownWorld_ReturnToLyramion, "Return to Lyramion" },
         } },
         { GameLanguage.French, new()
         {
@@ -977,6 +1003,14 @@ internal static class QuestTexts
             { SubQuestType.DorinasRing_ReturnTheRingToDorina, "Rends son alliance à Dorina" },
             { SubQuestType.SapphireThistles_PickSapphireThistles, "Cueille des chardons saphir" },
             { SubQuestType.SapphireThistles_BringTheThistlesToBrogat, "Apporte cinq chardons saphir à Brogat" },
+            { SubQuestType.AncientVault_PlaceTheAncientBook, "Pose le livre antique sur le socle" },
+            { SubQuestType.AncientVault_PassTheTrials, "Réussis les épreuves de la voûte" },
+            { SubQuestType.AncientVault_ReceiveTheGuardiansReward, "Reçois la récompense du gardien" },
+            { SubQuestType.UnknownWorld_ActivateTheTeleporter, "Active le téléporteur avec la sphère" },
+            { SubQuestType.UnknownWorld_MeetSheera, "Rencontre Sheera" },
+            { SubQuestType.UnknownWorld_CollectTriis, "Récolte dix triis" },
+            { SubQuestType.UnknownWorld_ChargeTheTriis, "Charge les triis" },
+            { SubQuestType.UnknownWorld_ReturnToLyramion, "Retourne à Lyramion" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -1173,6 +1207,14 @@ internal static class QuestTexts
             { SubQuestType.DorinasRing_ReturnTheRingToDorina, "Oddaj Dorinie jej obrączkę" },
             { SubQuestType.SapphireThistles_PickSapphireThistles, "Zerwij szafirowe osty" },
             { SubQuestType.SapphireThistles_BringTheThistlesToBrogat, "Zanieś Brogatowi pięć szafirowych ostów" },
+            { SubQuestType.AncientVault_PlaceTheAncientBook, "Połóż starożytną księgę na postumencie" },
+            { SubQuestType.AncientVault_PassTheTrials, "Zdaj próby sklepienia" },
+            { SubQuestType.AncientVault_ReceiveTheGuardiansReward, "Odbierz nagrodę strażnika" },
+            { SubQuestType.UnknownWorld_ActivateTheTeleporter, "Uruchom teleporter za pomocą kuli" },
+            { SubQuestType.UnknownWorld_MeetSheera, "Spotkaj Sheerę" },
+            { SubQuestType.UnknownWorld_CollectTriis, "Zbierz dziesięć triis" },
+            { SubQuestType.UnknownWorld_ChargeTheTriis, "Naładuj triis" },
+            { SubQuestType.UnknownWorld_ReturnToLyramion, "Wróć na Lyramion" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -1369,6 +1411,14 @@ internal static class QuestTexts
             { SubQuestType.DorinasRing_ReturnTheRingToDorina, "Vrať Dorině její prsten" },
             { SubQuestType.SapphireThistles_PickSapphireThistles, "Natrhej safírové bodláky" },
             { SubQuestType.SapphireThistles_BringTheThistlesToBrogat, "Přines Brogatovi pět safírových bodláků" },
+            { SubQuestType.AncientVault_PlaceTheAncientBook, "Polož starobylou knihu na podstavec" },
+            { SubQuestType.AncientVault_PassTheTrials, "Projdi zkouškami klenby" },
+            { SubQuestType.AncientVault_ReceiveTheGuardiansReward, "Převezmi odměnu strážce" },
+            { SubQuestType.UnknownWorld_ActivateTheTeleporter, "Aktivuj teleport pomocí koule" },
+            { SubQuestType.UnknownWorld_MeetSheera, "Setkej se se Sheerou" },
+            { SubQuestType.UnknownWorld_CollectTriis, "Sesbírej deset triisů" },
+            { SubQuestType.UnknownWorld_ChargeTheTriis, "Nabij triisy" },
+            { SubQuestType.UnknownWorld_ReturnToLyramion, "Vrať se na Lyramion" },
         } },
     };
 }
