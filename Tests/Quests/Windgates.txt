@@ -1,0 +1,120 @@
+# The windgates: the windgate book and the key to the wind shrine are in the library of Newlake (treasure 109).
+# In the wind shrine (map 408) the xenobil wood (from Norel, see TheBeast.txt) and a gem become the construction
+# staff, twelve windpearls and the pearl chain the windchain. The staff repairs the eleven destroyed windgates.
+# (original game and Advanced, any language)
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest Windgates_EnterTheWindShrine Inactive
+# --- the library of Newlake
+goto 429 12 12
+trigger 12 11 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 339 1
+count 340 1
+quest Windgates_EnterTheWindShrine Active
+# --- the door of the wind shrine (world map 198)
+goto 198 16 35
+trigger 16 34 Eye
+talkwait
+usekey 340
+talkwait
+waitidle 5000
+state
+quest Windgates_EnterTheWindShrine Completed
+quest Windgates_CreateTheConstructionStaff Active
+quest Windgates_CreateTheWindChain Active
+quest Windgates_RepairTheWindgates Inactive
+# --- the construction staff: xenobil wood (other quest) and a gem on the left altar
+cheat give 320 1
+cheat give 146 1
+goto 408 7 6
+trigger 7 5 item:320
+talkwait
+trigger 7 4 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 321 1
+quest Windgates_CreateTheConstructionStaff Completed
+quest Windgates_RepairTheWindgates Active
+# --- the windchain: twelve windpearls and the pearl chain on the right altar (collected all over Lyramion)
+cheat give 135 12
+cheat give 234 1
+goto 408 15 6
+trigger 15 5 item:234
+talkwait
+trigger 15 4 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 134 1
+quest Windgates_CreateTheWindChain Completed
+reloadquests
+quest Windgates_CreateTheConstructionStaff Completed
+quest Windgates_CreateTheWindChain Completed
+quest Windgates_RepairTheWindgates Active
+# --- the destroyed windgates
+# the windgate to map 234 is intact from the start
+var 119 1
+goto 8 47 23
+trigger 47 23 item:321
+talkwait
+var 126 1
+goto 59 13 16
+trigger 13 16 item:321
+talkwait
+var 125 1
+goto 86 32 8
+trigger 32 3 item:321
+talkwait
+var 124 1
+goto 116 47 15
+trigger 47 15 item:321
+talkwait
+var 122 1
+goto 118 27 13
+trigger 27 13 item:321
+talkwait
+var 123 1
+goto 125 12 36
+trigger 12 36 item:321
+talkwait
+var 117 1
+goto 182 21 11
+trigger 21 11 item:321
+talkwait
+var 121 1
+goto 185 27 13
+trigger 27 13 item:321
+talkwait
+var 115 1
+goto 213 25 38
+trigger 25 38 item:321
+talkwait
+var 120 1
+goto 220 13 10
+trigger 13 10 item:321
+talkwait
+var 116 1
+quest Windgates_RepairTheWindgates Active
+mainquest Windgates Active
+goto 231 10 33
+trigger 10 33 item:321
+talkwait
+var 118 1
+quest Windgates_RepairTheWindgates Completed
+mainquest Windgates Completed
+reloadquests
+quest Windgates_EnterTheWindShrine Completed
+quest Windgates_CreateTheConstructionStaff Completed
+quest Windgates_CreateTheWindChain Completed
+quest Windgates_RepairTheWindgates Completed
+mainquest Windgates Completed
+exit

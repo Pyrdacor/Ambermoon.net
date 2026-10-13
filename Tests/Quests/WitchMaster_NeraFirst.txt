@@ -1,0 +1,36 @@
+# Nera is defeated before Bralum told about him (original game and Advanced, any language).
+# The quest starts with the ring, the skipped steps stay hidden.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+# the other monsters in the cellar are removed first (Nera is not shown yet)
+goto 412 8 7
+cheat berserk
+goto 412 7 12
+talkwait 30000
+waitbattle 15000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+quest WitchMaster_ShowTheRingToBralum Active
+quest WitchMaster_DefeatNera Completed
+quest WitchMaster_HearBralumsProblem Inactive
+goto 409 8 6
+dismissall
+talk 25
+talkwait
+giveitem 342
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+quest WitchMaster_ShowTheRingToBralum Completed
+mainquest WitchMaster Completed
+reloadquests
+mainquest WitchMaster Completed
+exit

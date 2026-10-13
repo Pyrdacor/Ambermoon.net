@@ -28,6 +28,17 @@ public enum MainQuestType
     Madman,
     KiresLetter,
     FerrinsDaughter,
+    TheBeast,
+    WitchMaster,
+    SansrisCurse,
+    Windgates,
+    TripToGadlon,
+    // Advanced only
+    DrelbsSearch,
+    GoldenArmour,
+    GralTemple,
+    YourHouse,
+    Pets,
 }
 
 public enum SubQuestType
@@ -132,6 +143,59 @@ public enum SubQuestType
     FerrinsDaughter_SearchTheStorageCellar, // after Ferrin gave his key
     FerrinsDaughter_FindFerrinsDaughter, // after entering the cellar
     FerrinsDaughter_ReturnToFerrin, // after finding his daughter
+    // The Beast
+    TheBeast_AskNorelAboutKay, // after Norel asked for Kay
+    TheBeast_KillTheBeast, // after Norel told about the beast or meeting it
+    TheBeast_BringTheAmuletToNorel, // after killing the beast
+    // The Witch Master
+    WitchMaster_HearBralumsProblem, // after Bralum mentioned the problem
+    WitchMaster_FindNerasLair, // after Bralum told about Nera
+    WitchMaster_DefeatNera, // after opening the door to his lair
+    WitchMaster_ShowTheRingToBralum, // after finding Nera's ring
+    // Sansri's Curse
+    SansrisCurse_AskPelanisAboutHisConcerns, // after Pelanis mentioned the curse
+    SansrisCurse_DefeatSansri, // after Pelanis told about Sansri
+    SansrisCurse_GiveSansrisBloodToPelanis, // after defeating Sansri
+    // Windgates
+    Windgates_EnterTheWindShrine, // after finding the windgate book or the key to the shrine
+    Windgates_CreateTheConstructionStaff, // after entering the wind shrine
+    Windgates_CreateTheWindChain, // after entering the wind shrine
+    Windgates_RepairTheWindgates, // after creating the construction staff
+    // Trip to Gadlon
+    TripToGadlon_ActivateTheTeleporter, // after finding the red carved sphere
+    TripToGadlon_FindRinakles, // after activating the teleporter
+    TripToGadlon_AskRinaklesForTheWayHome, // after meeting Rinakles
+    // Drelb's Search (Advanced)
+    DrelbsSearch_DefeatTheMonstersInTheMine, // after meeting Drelb
+    DrelbsSearch_AskDrelbAboutHisSearch, // after defeating the monsters
+    DrelbsSearch_FindTheHidingPlaces, // after Drelb hid the things
+    DrelbsSearch_GiveTheCertificateToDrelb, // after finding the certificate
+    // The Golden Armour (Advanced)
+    GoldenArmour_CollectGoldenScales, // after meeting Morgat or finding a golden scale
+    GoldenArmour_BringTheScalesToMorgat, // after collecting seven scales
+    // The Gral Temple (Advanced)
+    GralTemple_AskMelvinAboutHisFamily, // after meeting Melvin
+    GralTemple_SayGralAtNight, // after Melvin told the legend
+    GralTemple_OpenTheInnerDoor, // after the gate in the mountains opened
+    GralTemple_PlaceTheHeavyStoneOnTheAltar, // after opening the inner door
+    GralTemple_DefeatDiokhar, // after placing the stone or meeting Diokhar
+    GralTemple_FindMelvinsRemains, // after the gate in the mountains opened
+    GralTemple_BringTheNecklaceToMelvin, // after finding the emerald necklace
+    // Your House (Advanced)
+    YourHouse_ShowTheTestamentToTheodorus, // after finding the testament or meeting Theodorus
+    YourHouse_HaveTheHouseRefurbished, // after Theodorus saw the testament
+    YourHouse_AskGustavAboutTheodorus, // after meeting Gustav
+    YourHouse_HaveAWindgateBuilt, // after the refurbishment and Gustav's story
+    YourHouse_HaveAStorageCaveDug, // after the windgate was built
+    YourHouse_ExploreTheStorageCave, // after the storage cave was dug
+    YourHouse_DefeatTheGiantSpider, // after meeting the spider
+    // Pets (Advanced)
+    Pets_FeedTheHungryTomcat, // after talking to Kasimir
+    Pets_AdoptACat, // after Ferdinand offered his pets
+    Pets_BefriendTheCat, // after adopting the cat
+    Pets_AdoptADog, // after befriending the cat
+    Pets_BefriendTheDog, // after adopting the dog
+    Pets_ReturnToFerdinand, // after befriending the dog
     // Brotherhood of Tarbos
     BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, // after finding the Amberstar
     BrotherhoodOfTarbos_DefeatThornahuun, // after meeting Thornahuun in the coffin hall
@@ -666,6 +730,10 @@ file class CountTrigger(GameCore game, TriggerType triggerType, uint[] globalVar
 
 partial class QuestLog
 {
+    // Global variables of the destroyed windgates which are repaired with the construction staff.
+    // The windgate to map 234 (global variable 119) is intact from the start.
+    static readonly uint[] WindgateVariables = [115, 116, 117, 118, 120, 121, 122, 123, 124, 125, 126];
+
     private MainQuest[] CreateQuests(bool advanced, int episode)
     {
         static uint CreateMapEventSourceIndex(uint mapIndex, uint x, uint y)
@@ -698,6 +766,14 @@ partial class QuestLog
         {
             return (@event is ActionEvent e && e.TypeOfAction == ActionEvent.ActionType.SetGlobalVariable && e.ObjectIndex == index && e.Value != 0) ||
                 game.CurrentSavegame!.GetGlobalVariable(index);
+        }
+
+        static bool WindgateRepaired(GameCore game, Event? @event) => WindgateVariables.Any(index => IsGlobalVariableSet(game, @event, index));
+
+        static bool IsKeywordLearned(GameCore game, Event? @event, uint index)
+        {
+            return (@event is ActionEvent e && e.TypeOfAction == ActionEvent.ActionType.AddKeyword && e.ObjectIndex == index && e.Value != 0) ||
+                game.CurrentSavegame!.IsDictionaryWordKnown(index);
         }
 
         // Anthony made the antidote from the swamp lilly and the water of life
@@ -737,6 +813,405 @@ partial class QuestLog
         {
             var lookup = new HashSet<SubQuestType>(otherQuests);
             return (_) => Quests.First(q => q.Type == mainQuest).SubQuests.Where(q => lookup.Contains(q.Type)).ToList().ForEach(q => q.State = QuestState.Completed);
+        }
+
+        // Advanced only quests, some of them only exist since a specific episode.
+        List<MainQuest> CreateAdvancedQuests()
+        {
+            var quests = new List<MainQuest>();
+
+            #region Your House
+            quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.YourHouse,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.YourHouse_ShowTheTestamentToTheodorus,
+                    Triggers =
+                    [
+                        // Activate: found grandfather's testament or met Theodorus, the carpenter of Spannenberg
+                        // (keyword "Building projects")
+                        new OrTrigger<ItemObtainedTrigger, KeywordLearnedTrigger>(game, TriggerType.Activation,
+                            (g, t) => new ItemObtainedTrigger(g, t, 206),
+                            (g, t) => new KeywordLearnedTrigger(g, t, 115)),
+                        // Complete: Theodorus saw the testament
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 224),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 37, // Theodorus
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.YourHouse_HaveTheHouseRefurbished,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: Theodorus refurbished grandfather's house (keyword "Refurbishment")
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 225),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 37, // Theodorus
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.YourHouse_AskGustavAboutTheodorus,
+                    Triggers =
+                    [
+                        // Activate: met Gustav, Theodorus' former apprentice, in the inn of Snakesign (keyword "Apprentice")
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 127),
+                        // Complete: Gustav told about Theodorus and the spider bite
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 226),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 45, // Gustav
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.YourHouse_HaveAWindgateBuilt,
+                    Triggers =
+                    [
+                        // Activate: the house is refurbished and Gustav told that Theodorus can build windgates
+                        new PredicateTrigger(game, TriggerType.Activation, (g, e) => IsGlobalVariableSet(g, e, 225) && IsGlobalVariableSet(g, e, 226)),
+                        // Complete: Theodorus built a windgate next to the house
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 227),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 37, // Theodorus
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.YourHouse_HaveAStorageCaveDug,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: Theodorus dug a storage cave next to the house
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 228),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 37, // Theodorus
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.YourHouse_ExploreTheStorageCave,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: a giant spider attacked in the lower level of the cave
+                        new EventDisabledTrigger(game, TriggerType.Completion, 460, 19),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 37, // Theodorus
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.YourHouse_DefeatTheGiantSpider,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: the spider (Theodorus himself) is hidden again after it was shown, or Gustav's
+                        // ring from the remains next to it is owned
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) =>
+                            (g.CurrentSavegame!.GetEventBit(460, 18) && g.CurrentSavegame.GetCharacterBit(460, 0)) || g.GetTotalItemCount(407) != 0),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 37, // Theodorus
+                }
+            ));
+            #endregion
+
+            #region Pets
+            quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.Pets,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Pets_FeedTheHungryTomcat,
+                    Triggers =
+                    [
+                        // Activate: talked to the tomcat Kasimir in Spannenberg (needs the language of animals)
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 53),
+                        // Complete: Kasimir got some food (he moves to another place) or joined the party
+                        new CharacterVisibilityTrigger(game, TriggerType.Completion, 273, 4, true),
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => g.PartyMembers.Any(p => p.Index == 16)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 36, // Kasimir
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Pets_AdoptACat,
+                    Triggers =
+                    [
+                        // Activate: Ferdinand, the gardener of Spannenberg, offers his pets (keyword "Cat")
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 17),
+                        // Complete: paid Ferdinand for the cat, it lives in your house now
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 230),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 40, // Ferdinand
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Pets_BefriendTheCat,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: played with the cat toy in the house
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 232),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 40, // Ferdinand
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Pets_AdoptADog,
+                    Triggers =
+                    [
+                        // Activate: Ferdinand only gives his dog to friends of the cat
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: Ferdinand brought the dog to your house
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 231),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 40, // Ferdinand
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Pets_BefriendTheDog,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: played with the dog toy in the house
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 233),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 40, // Ferdinand
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Pets_ReturnToFerdinand,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: Ferdinand gave his finest silver
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 234),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 40, // Ferdinand
+                }
+            ));
+            #endregion
+
+            if (episode >= 2)
+            {
+                #region The Golden Armour
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.GoldenArmour,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.GoldenArmour_CollectGoldenScales,
+                        Triggers =
+                        [
+                            // Activate: met Morgat in Nalven's magic school (he tells about the golden lizards) or
+                            // found a golden scale
+                            new OrTrigger<GlobalVariableTrigger, ItemObtainedTrigger>(game, TriggerType.Activation,
+                                (g, t) => new GlobalVariableTrigger(g, t, 285),
+                                (g, t) => new ItemObtainedTrigger(g, t, 430)),
+                            // Complete: own seven golden scales or Morgat made the armour already
+                            new CountTrigger(game, TriggerType.Completion, [], [430]),
+                            new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_MorgatMadeGoldenArmour),
+                        ],
+                        MinAmount = 7,
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 46, // Morgat
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.GoldenArmour_BringTheScalesToMorgat,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Morgat fused the scales with a chain mail
+                            new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_MorgatMadeGoldenArmour),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 46, // Morgat
+                    }
+                ));
+                #endregion
+            }
+
+            if (episode >= 3)
+            {
+                #region The Gral Temple
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.GralTemple,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.GralTemple_AskMelvinAboutHisFamily,
+                        Triggers =
+                        [
+                            // Activate: met Melvin in Snakesign (keyword "Family")
+                            new KeywordLearnedTrigger(game, TriggerType.Activation, 146),
+                            // Complete: he told the legend of his ancestor Melvin (keywords "Gral swamps" or "Melvin")
+                            // or the gate in the mountains is open already
+                            new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 310) || IsEventBitSet(g, e, 183, 1)),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 47, // Melvin
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.GralTemple_SayGralAtNight,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: "Gral" was said at night in front of the mountains north of the swamps
+                            new EventDisabledTrigger(game, TriggerType.Completion, 183, 1),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 47, // Melvin
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.GralTemple_OpenTheInnerDoor,
+                        Triggers =
+                        [
+                            // Activate: the gate in the mountains is open
+                            new EventDisabledTrigger(game, TriggerType.Activation, 183, 1),
+                            // Complete: the inner door was opened with the gral key
+                            new OrTrigger<DoorUnlockedTrigger, EventDisabledTrigger>(game, TriggerType.Completion,
+                                (g, t) => new DoorUnlockedTrigger(g, t, 52),
+                                (g, t) => new EventDisabledTrigger(g, t, 475, 25)),
+                        ],
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(183, 36, 20), // Gate in the mountains
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.GralTemple_PlaceTheHeavyStoneOnTheAltar,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: the heavy stone lies on the altar
+                            new EventDisabledTrigger(game, TriggerType.Completion, 475, 29),
+                        ],
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(183, 36, 20), // Gate in the mountains
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.GralTemple_DefeatDiokhar,
+                        Triggers =
+                        [
+                            // Activate: the altar opened the way or Diokhar was met
+                            new PredicateTrigger(game, TriggerType.Activation, (g, e) => IsEventBitSet(g, e, 475, 29) || IsGlobalVariableSet(g, e, 315)),
+                            // Complete: Diokhar was defeated
+                            new EventDisabledTrigger(game, TriggerType.Completion, 475, 36),
+                        ],
+                        SourceType = QuestSourceType.MapEvent,
+                        SourceIndex = CreateMapEventSourceIndex(183, 36, 20), // Gate in the mountains
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.GralTemple_FindMelvinsRemains,
+                        Triggers =
+                        [
+                            // Activate: the gate in the mountains is open
+                            new EventDisabledTrigger(game, TriggerType.Activation, 183, 1),
+                            // Complete: found the emerald necklace in the old sewers or Melvin got it already
+                            new PredicateTrigger(game, TriggerType.Completion, (g, e) => g.GetTotalItemCount(483) != 0 || IsGlobalVariableSet(g, e, 322)),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 47, // Melvin
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.GralTemple_BringTheNecklaceToMelvin,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate: found the emerald necklace
+                            new ItemObtainedTrigger(game, TriggerType.Activation, 483),
+                            // Complete: Melvin saw the necklace of his ancestor
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 322),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 47, // Melvin
+                    }
+                ));
+                #endregion
+                #region Drelb's Search
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.DrelbsSearch,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.DrelbsSearch_DefeatTheMonstersInTheMine,
+                        Triggers =
+                        [
+                            // Activate: met Drelb, the search trainer of the gnomes
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 362),
+                            // Complete: the four monsters in the labyrinth of the gnomes (map 409) are defeated
+                            // or the search already started
+                            new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 369) ||
+                                Enumerable.Range(1, 4).All(index => g.CurrentSavegame!.GetCharacterBit(409, (uint)index))),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 73, // Drelb
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.DrelbsSearch_AskDrelbAboutHisSearch,
+                        Triggers =
+                        [
+                            // Activate
+                            new PreviousSubQuestCompletedTrigger(),
+                            // Complete: Drelb prepared the mine and hid six things
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 369),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 73, // Drelb
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.DrelbsSearch_FindTheHidingPlaces,
+                        Triggers =
+                        [
+                            // Activate: Drelb hid the things
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 369),
+                            // Complete: the five hiding places (364-368) and Drelb's certificate in the last one
+                            // (owned or given to Drelb)
+                            new CountTrigger(game, TriggerType.Completion, [364, 365, 366, 367, 368, 363], [496]),
+                        ],
+                        MinAmount = 6,
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 73, // Drelb
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.DrelbsSearch_GiveTheCertificateToDrelb,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate: found Drelb's certificate
+                            new ItemObtainedTrigger(game, TriggerType.Activation, 496),
+                            // Complete: Drelb got the certificate and gave his brooch
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 363),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 73, // Drelb
+                    }
+                ));
+                #endregion
+            }
+
+            return quests;
         }
 
         // TODO ...
@@ -2025,6 +2500,262 @@ partial class QuestLog
                 }
             ),
             #endregion
+            #region The Beast
+            QuestFactory.CreateMainQuest(this, MainQuestType.TheBeast,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.TheBeast_AskNorelAboutKay,
+                    Triggers =
+                    [
+                        // Activate: Norel asked whether you met his apprentice Kay (keyword "Kay")
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 82),
+                        // Complete: he told about the beast and gave the key of his weapons cupboard (169)
+                        // or got Kay's amulet already
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 169) || IsGlobalVariableSet(g, e, 168)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 27, // Norel
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.TheBeast_KillTheBeast,
+                    Triggers =
+                    [
+                        // Activate: Norel told about the beast or it attacked in its cave
+                        new OrTrigger<GlobalVariableTrigger, EventDisabledTrigger>(game, TriggerType.Activation,
+                            (g, t) => new GlobalVariableTrigger(g, t, 169),
+                            (g, t) => new EventDisabledTrigger(g, t, 415, 4)),
+                        // Complete: the beast turned into Kay when it died (event 415:5) or its amulet is owned or delivered
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsEventBitSet(g, e, 415, 5) || g.GetTotalItemCount(348) != 0 || IsGlobalVariableSet(g, e, 168)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 27, // Norel
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.TheBeast_BringTheAmuletToNorel,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate: the beast is dead or Kay's amulet was found
+                        new PredicateTrigger(game, TriggerType.Activation, (g, e) => IsEventBitSet(g, e, 415, 5) || g.GetTotalItemCount(348) != 0),
+                        // Complete: Norel saw the amulet and gave the xenobil wood
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 168),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 27, // Norel
+                }
+            ),
+            #endregion
+            #region The Witch Master
+            QuestFactory.CreateMainQuest(this, MainQuestType.WitchMaster,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.WitchMaster_HearBralumsProblem,
+                    Triggers =
+                    [
+                        // Activate: Bralum mentioned the problem of the gnomes (keyword "Problem")
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 80),
+                        // Complete: he told about Nera (keyword "Nera") or got the ring already
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsKeywordLearned(g, e, 81) || IsGlobalVariableSet(g, e, 129)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 25, // Bralum
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.WitchMaster_FindNerasLair,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: the riddlemouth in the cellar of the witch's house opened (answer "Nera")
+                        // or Nera was defeated already
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsEventBitSet(g, e, 412, 2) || g.GetTotalItemCount(342) != 0 || IsGlobalVariableSet(g, e, 129)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 25, // Bralum
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.WitchMaster_DefeatNera,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: Nera's ring is owned or was shown to Bralum
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => g.GetTotalItemCount(342) != 0 || IsGlobalVariableSet(g, e, 129)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 25, // Bralum
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.WitchMaster_ShowTheRingToBralum,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate: Nera's ring was found
+                        new ItemObtainedTrigger(game, TriggerType.Activation, 342),
+                        // Complete: Bralum saw the ring and gave his reward
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 129),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 25, // Bralum
+                }
+            ),
+            #endregion
+            #region Sansri's Curse
+            QuestFactory.CreateMainQuest(this, MainQuestType.SansrisCurse,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SansrisCurse_AskPelanisAboutHisConcerns,
+                    Triggers =
+                    [
+                        // Activate: Pelanis mentioned the curse when you left (keyword "Curse")
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 69),
+                        // Complete: he told about Sansri and the petrified eagles or Sansri was defeated already
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, GlobalVar_PelanisToldAboutSansri) ||
+                            IsEventBitSet(g, e, 423, 5) || IsGlobalVariableSet(g, e, 180)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 28, // Pelanis
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SansrisCurse_DefeatSansri,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: Sansri was defeated in her temple (event 423:5)
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsEventBitSet(g, e, 423, 5) || IsGlobalVariableSet(g, e, 180)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 28, // Pelanis
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SansrisCurse_GiveSansrisBloodToPelanis,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate: Sansri was defeated or her blood was found
+                        new PredicateTrigger(game, TriggerType.Activation, (g, e) => IsEventBitSet(g, e, 423, 5) || g.GetTotalItemCount(352) != 0),
+                        // Complete: Pelanis lifted the curse and gave the key of the treasure chamber and the eagle flute
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 180),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 28, // Pelanis
+                }
+            ),
+            #endregion
+            #region Windgates
+            QuestFactory.CreateMainQuest(this, MainQuestType.Windgates,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Windgates_EnterTheWindShrine,
+                    Triggers =
+                    [
+                        // Activate: found the windgate book or the key to the shrine (library of Newlake)
+                        new PredicateTrigger(game, TriggerType.Activation, (g, e) => g.GetTotalItemCount(339) != 0 || g.GetTotalItemCount(340) != 0),
+                        // Complete: the door of the wind shrine was opened
+                        new DoorUnlockedTrigger(game, TriggerType.Completion, 23),
+                    ],
+                    SourceType = QuestSourceType.Item,
+                    SourceIndex = 339, // Windgate book
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Windgates_CreateTheConstructionStaff,
+                    Triggers =
+                    [
+                        // Activate: entered the wind shrine
+                        new DoorUnlockedTrigger(game, TriggerType.Activation, 23),
+                        // Complete: the xenobil wood and a gem were melted on the altar. Global variable 127
+                        // is reset when the staff is taken, so the staff itself or a repaired windgate is checked.
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => g.GetTotalItemCount(321) != 0 || WindgateRepaired(g, e)),
+                    ],
+                    SourceType = QuestSourceType.Item,
+                    SourceIndex = 339, // Windgate book
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Windgates_CreateTheWindChain,
+                    Triggers =
+                    [
+                        // Activate: entered the wind shrine
+                        new DoorUnlockedTrigger(game, TriggerType.Activation, 23),
+                        // Complete: twelve windpearls and the pearl chain formed the windchain. Global variable 128
+                        // is reset when the chain is taken. Advanced also sets global variable 229 but Theodorus
+                        // sets it as well, so only the windchain itself is checked.
+                        new ItemObtainedTrigger(game, TriggerType.Completion, 134),
+                    ],
+                    SourceType = QuestSourceType.Item,
+                    SourceIndex = 339, // Windgate book
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.Windgates_RepairTheWindgates,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate: own the construction staff or repaired a windgate
+                        new PredicateTrigger(game, TriggerType.Activation, (g, e) => g.GetTotalItemCount(321) != 0 || WindgateRepaired(g, e)),
+                        // Complete: all destroyed windgates were repaired with the construction staff
+                        new CountTrigger(game, TriggerType.Completion, WindgateVariables),
+                    ],
+                    MinAmount = (uint)WindgateVariables.Length,
+                    SourceType = QuestSourceType.Item,
+                    SourceIndex = 339, // Windgate book
+                }
+            ),
+            #endregion
+            #region Trip to Gadlon
+            QuestFactory.CreateMainQuest(this, MainQuestType.TripToGadlon,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.TripToGadlon_ActivateTheTeleporter,
+                    Triggers =
+                    [
+                        // Activate: found the red carved sphere in the teleporter room (map 369)
+                        new ItemObtainedTrigger(game, TriggerType.Activation, 365),
+                        // Complete: the machine took the sphere (210). Advanced resets the variable when the
+                        // teleporter is used, so meeting Aderin in Gadlon (170) also counts.
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 210) || IsGlobalVariableSet(g, e, 170)),
+                    ],
+                    SourceType = QuestSourceType.MapEvent,
+                    SourceIndex = CreateMapEventSourceIndex(369, 13, 4), // Skeleton with the red sphere
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.TripToGadlon_FindRinakles,
+                    Triggers =
+                    [
+                        // Activate: the teleporter is active or the party is in Gadlon
+                        new PredicateTrigger(game, TriggerType.Activation, (g, e) => IsGlobalVariableSet(g, e, 210) || IsGlobalVariableSet(g, e, 170)),
+                        // Complete: talked to Rinakles, the head of the school of magic
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 176),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 68, // Aderin
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.TripToGadlon_AskRinaklesForTheWayHome,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: Rinakles set his teleporter to Lyramion (177)
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 177),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 70, // Rinakles
+                }
+            ),
+            #endregion
             #region Brotherhood of Tarbos
             QuestFactory.CreateMainQuest(this, MainQuestType.BrotherhoodOfTarbos,
                 mainQuest => new SubQuest(this, mainQuest)
@@ -2062,8 +2793,7 @@ partial class QuestLog
             ),
             #endregion
             #endregion
-            #region Advanced quests
-            #endregion
+            .. (advanced ? CreateAdvancedQuests() : []),
         ];
     }
 }

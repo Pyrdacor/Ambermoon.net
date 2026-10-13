@@ -38,7 +38,8 @@ namespace Ambermoon;
 ///   usekey &lt;item index&gt;       use a key or lockpick (138) on the shown lock of a chest or door
 ///   goto &lt;map&gt; &lt;x&gt; &lt;y&gt;        teleport to a 1-based map position or the nearest free position around it
 ///                             (facing the target), e.g. to stand next to a chest or monster
-///   answer &lt;word&gt;             answer the shown riddlemouth (dictionary index or word)
+///   answer &lt;word&gt;             answer the shown riddlemouth or say a word in the shown dictionary
+///                             (dictionary index or word), e.g. after "trigger x y Mouth"
 ///   battlebg [index]          print the combat background of the active battle, optionally check it
 ///   talk &lt;npc index&gt;          start a conversation with an NPC (like talking to it on the map)
 ///   say &lt;keyword&gt;             say a keyword (dictionary index or word) in the conversation
@@ -57,6 +58,8 @@ namespace Ambermoon;
 ///                             e.g. for text popup characters
 ///   activate &lt;slot&gt;           make the party member in slot 1-6 the active one
 ///   setvar &lt;index&gt; &lt;0|1&gt;      set a global variable
+///   setskill &lt;skill&gt; &lt;value&gt;  set a skill (Ambermoon.Data.Skill name) of the active party member
+///   hour &lt;0-23&gt;               set the time of day (e.g. 23 for events which only happen at night)
 ///   eventbit &lt;map&gt; &lt;event&gt; [0|1]
 ///                             print if a map event chain (1-based) is disabled (1), optionally check it
 ///   reloadquests              recreate the quest log from the savegame (like loading the game)
@@ -507,6 +510,12 @@ sealed class ScenarioScript
                         break;
                     case "setvar":
                         game.ScriptSetGlobalVariable(uint.Parse(parts[1]), parts[2] == "1");
+                        break;
+                    case "hour":
+                        game.ScriptSetHour(uint.Parse(parts[1]));
+                        break;
+                    case "setskill":
+                        game.ScriptSetSkill(Enum.Parse<Data.Skill>(parts[1], true), uint.Parse(parts[2]));
                         break;
                     case "reloadquests":
                         game.ScriptReloadQuestLog();

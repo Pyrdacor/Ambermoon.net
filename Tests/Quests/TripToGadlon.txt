@@ -1,0 +1,67 @@
+# A trip to Gadlon (easter egg, "Dragonflight"): the red carved sphere from the skeleton in the teleporter room
+# (map 369) activates the teleporter to Gadlon. Aderin gives a fruit to understand the language, Rinakles sets his
+# teleporter back to Lyramion. (original game and Advanced, any language)
+waitidle 20000
+dismissall
+cheat light 3
+quest TripToGadlon_ActivateTheTeleporter Inactive
+# --- the skeleton with the red sphere
+goto 369 13 5
+trigger 13 4 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 365 1
+quest TripToGadlon_ActivateTheTeleporter Active
+# --- the machine takes the sphere
+trigger 16 7 item:365
+talkwait
+var 210 1
+quest TripToGadlon_ActivateTheTeleporter Completed
+quest TripToGadlon_FindRinakles Active
+# --- the teleporter brings the party into the cellar of Gadlon
+goto 369 16 4
+talkwait
+waitidle 5000
+state
+cheat berserk
+# --- Aderin on the ground floor
+goto 363 14 9
+dismissall
+talk 68
+talkwait
+leave
+talkwait
+waitidle 5000
+var 170 1
+reloadquests
+quest TripToGadlon_ActivateTheTeleporter Completed
+quest TripToGadlon_FindRinakles Active
+# --- Rinakles on the second floor
+goto 365 5 13
+dismissall
+talk 70
+talkwait
+var 176 1
+quest TripToGadlon_FindRinakles Completed
+quest TripToGadlon_AskRinaklesForTheWayHome Active
+say 29
+talkwait
+var 177 1
+quest TripToGadlon_AskRinaklesForTheWayHome Completed
+mainquest TripToGadlon Completed
+leave
+talkwait
+waitidle 5000
+# --- back home through Rinakles' teleporter
+goto 365 3 12
+talkwait
+waitidle 5000
+state
+reloadquests
+quest TripToGadlon_ActivateTheTeleporter Completed
+quest TripToGadlon_FindRinakles Completed
+quest TripToGadlon_AskRinaklesForTheWayHome Completed
+mainquest TripToGadlon Completed
+exit

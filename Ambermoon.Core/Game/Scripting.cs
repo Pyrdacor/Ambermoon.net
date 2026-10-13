@@ -16,6 +16,7 @@ partial class GameCore
     ScriptConversationActions? scriptConversation;
     Func<uint, bool>? scriptLockItemUser;
     Action<string>? scriptRiddlemouthAnswer;
+    Action<string>? scriptDictionaryChoice;
     Action<int>? scriptConversationItemSelector;
 
     public bool ScriptConversationActive => scriptConversation != null && CurrentWindow.Window == UI.Window.Conversation;
@@ -187,6 +188,25 @@ partial class GameCore
     public void ScriptSetGlobalVariable(uint index, bool value) => CurrentSavegame!.SetGlobalVariable(index, value);
 
     /// <summary>
+    /// Sets the time of day (full hour).
+    /// </summary>
+    public void ScriptSetHour(uint hour)
+    {
+        CurrentSavegame!.Hour = hour % 24;
+        CurrentSavegame.Minute = 0;
+    }
+
+    /// <summary>
+    /// Sets a skill of the active party member (e.g. searching for hidden things).
+    /// </summary>
+    public void ScriptSetSkill(Skill skill, uint value)
+    {
+        var skillValue = CurrentPartyMember!.Skills[skill];
+        skillValue.MaxValue = Math.Max(skillValue.MaxValue, value);
+        skillValue.CurrentValue = value;
+    }
+
+    /// <summary>
     /// Informs the quest log about items which were added without the usual item handling (e.g. by cheats).
     /// </summary>
     public void ItemsAddedExternally(uint itemIndex, uint amount) => QuestLog?.CheckItem(ItemManager.GetItem(itemIndex), amount);
@@ -274,15 +294,22 @@ partial class GameCore
     }
 
     /// <summary>
-    /// Says a word (dictionary index or word) to the shown riddlemouth.
+    /// Says a word (dictionary index or word) to the shown riddlemouth or the shown dictionary
+    /// (e.g. when a word is said on a map tile).
     /// </summary>
     public string? ScriptAnswerRiddlemouth(string answer)
     {
-        if (scriptRiddlemouthAnswer == null || CurrentWindow.Window != UI.Window.Riddlemouth || PopupActive)
-            return "no riddlemouth is waiting for an answer";
-
         if (uint.TryParse(answer, out uint index))
             answer = textDictionary.Entries[(int)index];
+
+        if (scriptDictionaryChoice != null && PopupActive)
+        {
+            scriptDictionaryChoice(answer);
+            return null;
+        }
+
+        if (scriptRiddlemouthAnswer == null || CurrentWindow.Window != UI.Window.Riddlemouth || PopupActive)
+            return "no riddlemouth is waiting for an answer";
 
         scriptRiddlemouthAnswer(answer);
 

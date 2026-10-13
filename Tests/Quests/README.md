@@ -12,7 +12,8 @@ alternative solutions or old savegames.
 
 Keywords and riddle answers are given by dictionary index, so the scripts work in every language.
 All scripts work with the original game and Ambermoon Advanced, except `ThievesGuild.txt`
-(Aman's conversation differs in Advanced).
+(Aman's conversation differs in Advanced) and the scripts of the Advanced-only quests (`YourHouse.txt`, `Pets.txt`,
+`GoldenArmour.txt`, `GralTemple.txt`, `DrelbsSearch.txt`), which need `--version 5`.
 
 Run them from the build output folder, e.g.:
 

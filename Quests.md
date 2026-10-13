@@ -43,6 +43,8 @@ variable). For those the quest log sets otherwise unused global variables itself
 | 8179 | Lady Heidi tells the fairy story |
 | 8178 | The demon sleep is brewed (treasure with the potion in the witch's cellar) |
 | 8177 | The airship on the forest moon flies away with a navstone |
+| 8176 | Pelanis tells about Sansri (keywords "Curse" and "Concerns") |
+| 8175 | Morgat makes the golden armour (Advanced) |
 
 Old savegames which already passed such an event can't know about it. The affected steps then wait for the
 next persistent change (e.g. a later step).
@@ -279,9 +281,125 @@ Tests: `KiresLetter.txt`, `KiresLetter_SkipKetnar.txt`
 If the daughter is found before Ferrin was asked, the first step stays hidden.
 Tests: `FerrinsDaughter.txt`, `FerrinsDaughter_FoundFirst.txt`
 
+### The Beast (Die Bestie)
+
+1. **Ask Norel about his apprentice Kay**: Norel in his hut on Darlogna asks for Kay (keyword "Kay"). Done when
+   he told about the beast and gave the key of his weapons cupboard (variable 169).
+2. **Kill the beast in the cave in the north**: after Norel's story or when the beast attacks in its cave
+   (event 415:4). Done when the dead beast turns into Kay (event 415:5) or with Kay's amulet (348).
+3. **Bring Kay's amulet to Norel**: Norel gives the xenobil wood for the construction staff (variable 168).
+
+Tests: `TheBeast.txt`, `TheBeast_KillFirst.txt`
+
+### The Witch Master (Der Hexenmeister)
+
+1. **Ask Bralum about the gnomes' problem**: Bralum in the labyrinth of the gnomes mentions a problem (keyword
+   "Problem"). Done when he told about Nera (keyword "Nera").
+2. **Find Nera's lair below the witch's house**: the riddlemouth in the cellar of the witch's house is answered
+   with "Nera" (event 412:2).
+3. **Defeat Nera, the witch master**: Nera's ring (342) is owned or was shown to Bralum.
+4. **Show Nera's ring to Bralum**: the reward (variable 129).
+
+If Nera is defeated before Bralum told about him, the quest starts with the ring and the skipped steps stay hidden.
+Tests: `WitchMaster.txt`, `WitchMaster_NeraFirst.txt`
+
+### Sansri's Curse (Sansris Fluch)
+
+1. **Ask Pelanis about his concerns**: Pelanis mentions the curse when the party leaves (keyword "Curse"). Done
+   when he told about Sansri and the petrified eagles (8176).
+2. **Defeat Sansri in her temple** (event 423:5).
+3. **Give Sansri's blood to Pelanis**: he lifts the curse and gives the key of the treasure chamber and the eagle
+   flute (variable 180).
+
+Advanced: Pelanis has additional keywords (mystical beings), the quest is the same.
+Tests: `SansrisCurse.txt`, `SansrisCurse_SansriFirst.txt`
+
+### The Windgates (Die Windtore)
+
+1. **Enter the wind shrine**: the windgate book or the key to the shrine is found (library of Newlake). Done when
+   the shrine door is opened (door 23).
+2. **Create the construction staff**: the xenobil wood (The Beast) and a gem on the left altar. Done with the
+   staff (321) or a repaired windgate, because the shrine resets variable 127 when the staff is taken.
+3. **Create the windchain**: twelve windpearls and the pearl chain on the right altar (windchain 134 owned).
+4. **Repair the destroyed windgates** (x/11): variables 115-118 and 120-126. The windgate to map 234 (119) is
+   intact from the start.
+
+Tests: `Windgates.txt`
+
+### A Trip to Gadlon (Ausflug nach Gadlon)
+
+An easter egg leading into the world of *Dragonflight*.
+
+1. **Activate the teleporter with the sphere**: the red carved sphere is found at the skeleton in the teleporter
+   room (map 369). Done when the machine takes it (variable 210) or the party met Aderin in Gadlon (170).
+2. **Find Rinakles, the head of the school**: Rinakles is talked to (variable 176).
+3. **Ask Rinakles for the way home**: he sets his teleporter to Lyramion (variable 177).
+
+Advanced: the teleporter resets variable 210 when it is used, so Aderin is checked as well.
+Tests: `TripToGadlon.txt`
+
 ## Ambermoon Advanced quests
 
-No Advanced-only quests are in the quest log yet.
+These quests only exist in Ambermoon Advanced. They are only created for Advanced savegames of the given episode or
+later (the episode is detected from the savegame, see `GetAdvancedEpisode`).
+
+### Your House (Dein Haus) — from episode 1
+
+1. **Show the testament to Theodorus**: grandfather's testament (206, chest 2 in his cupboard) or Theodorus, the new
+   carpenter of Spannenberg (keyword "Building projects"). Done when he saw it (variable 224).
+2. **Have the house refurbished**: 2500 gold (variable 225).
+3. **Ask Gustav about Theodorus**: his former apprentice in the inn of Snakesign (keyword "Apprentice", variable 226).
+4. **Have a windgate built**: after the refurbishment and Gustav's story, 8000 gold (variable 227).
+5. **Have a storage cave dug**: 10000 gold (variable 228).
+6. **Explore the storage cave**: a giant spider attacks in the lower level (event 460:19).
+7. **Defeat the giant spider**: it is Theodorus himself. Done when it is hidden again after it was shown or with
+   Gustav's ring (407) from the remains next to it.
+
+Tests: `YourHouse.txt`
+
+### Pets (Haustiere) — from episode 1
+
+1. **Feed the hungry tomcat**: Kasimir in Spannenberg (language of animals, variable 53). Done when he got food
+   (character 273:4 shown) or joined the party.
+2. **Adopt a cat from Ferdinand**: the gardener of Spannenberg (keyword "Cat"), 1000 gold, needs the refurbished
+   house (variable 230).
+3. **Make friends with the cat**: the cat toy in the house (variable 232).
+4. **Adopt a dog from Ferdinand** (variable 231).
+5. **Make friends with the dog**: the dog toy (variable 233).
+6. **Return to Ferdinand**: his finest silver (variable 234).
+
+Tests: `Pets.txt`
+
+### The Golden Armour (Die goldene Rüstung) — from episode 2
+
+1. **Collect golden scales** (x/7): after meeting Morgat in Nalven's magic school (variable 285, he appears after
+   the prisoners were freed) or finding a scale. The golden lizards south-west of Burnville drop them.
+2. **Bring the scales and a chain mail to Morgat**: he makes the golden armour (8175, nothing is stored by the game).
+
+Tests: `GoldenArmour.txt`
+
+### The Gral Temple (Der Graltempel) — from episode 3
+
+1. **Ask Melvin about his family**: Melvin in Snakesign (keyword "Family"). Done with the legend (variable 310).
+2. **Say GRAL in front of the mountains at night** (map 183, event 183:1).
+3. **Open the inner door of the temple** with the gral key (door 52).
+4. **Place the heavy stone on the altar** (event 475:29).
+5. **Defeat Diokhar** (event 475:36).
+6. **Find the remains of Melvin's ancestor**: the emerald necklace (483) in the old sewers.
+7. **Bring the emerald necklace to Melvin** (variable 322).
+
+Tests: `GralTemple.txt`
+
+### Drelb's Search (Drelbs Suche) — from episode 3
+
+1. **Defeat the monsters in the gnome mine**: after meeting Drelb (variable 362), the four monsters in the labyrinth
+   of the gnomes (characters 409:2-5).
+2. **Ask Drelb about his search**: he hides six things (variable 369).
+3. **Find Drelb's hiding places** (x/6): variables 364-368 (searching 20 to 100) and his certificate (496, searching
+   120) in the last one.
+4. **Give the certificate to Drelb**: his brooch (variable 363).
+
+Tests: `DrelbsSearch.txt`
 
 ## Tests
 

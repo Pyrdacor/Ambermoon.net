@@ -1,0 +1,72 @@
+# The golden armour (Ambermoon Advanced episode 2, any language): Morgat (NPC 46) in Nalven's magic school (map 290)
+# tells about the golden lizards. He fuses seven golden scales (430) with a chain mail (170) to the golden armour.
+# Morgat only appears after the prisoners in Luminor's torture chamber were freed.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest GoldenArmour_CollectGoldenScales Inactive
+# --- free the prisoners (Luminor's key from another quest)
+cheat give 315 1
+goto 293 8 18
+useitem 315
+talkwait 20000
+dismissall
+var 32 1
+# --- Morgat
+goto 290 7 15
+dismissall
+talk 46
+talkwait
+var 285 1
+quest GoldenArmour_CollectGoldenScales Active
+say 134
+talkwait
+say 135
+talkwait
+leave
+talkwait
+waitidle 5000
+# --- the golden lizards drop scales (two in this group)
+cheat fight 127
+waitbattle 15000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+count 430 2
+quest GoldenArmour_CollectGoldenScales Active
+# the other scales come from more lizards
+cheat give 430 5
+count 430 7
+quest GoldenArmour_CollectGoldenScales Completed
+quest GoldenArmour_BringTheScalesToMorgat Active
+reloadquests
+quest GoldenArmour_CollectGoldenScales Completed
+quest GoldenArmour_BringTheScalesToMorgat Active
+# --- Morgat needs a chain mail as well
+goto 290 7 15
+dismissall
+talk 46
+talkwait
+giveitem 430
+talkwait
+quest GoldenArmour_BringTheScalesToMorgat Active
+cheat give 170 1
+giveitem 430
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+count 451 1
+var 8175 1
+quest GoldenArmour_BringTheScalesToMorgat Completed
+mainquest GoldenArmour Completed
+reloadquests
+quest GoldenArmour_CollectGoldenScales Completed
+quest GoldenArmour_BringTheScalesToMorgat Completed
+mainquest GoldenArmour Completed
+exit

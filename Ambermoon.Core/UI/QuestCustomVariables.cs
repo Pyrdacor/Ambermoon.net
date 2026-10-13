@@ -101,6 +101,8 @@ partial class QuestLog
     const uint GlobalVar_HeidiToldAboutFairies = 8179u;
     const uint GlobalVar_BrewedDemonSleep = 8178u;
     const uint GlobalVar_LeftForestMoon = 8177u;
+    const uint GlobalVar_PelanisToldAboutSansri = 8176u;
+    const uint GlobalVar_MorgatMadeGoldenArmour = 8175u;
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 
@@ -161,6 +163,20 @@ partial class QuestLog
         customGlobalVariableEvents.Add(new CustomGlobalVariableMapEvent(this, game,
             (map, @event) => map.Index == 436 && @event is TeleportEvent t && (t.MapIndex == 435 || t.MapIndex == 437),
             GlobalVar_LeftForestMoon));
+
+        // Pelanis (28) tells about Sansri and the petrified eagles (keywords "Curse" and "Concerns") as long as the curse is not lifted (180)
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 28 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Keyword &&
+                (c.KeywordIndex == 69 || c.KeywordIndex == 102) && !game.CurrentSavegame!.GetGlobalVariable(180),
+            GlobalVar_PelanisToldAboutSansri));
+
+        // Morgat (46, Advanced) makes the golden armour from seven golden scales and a chain mail. Nothing is stored.
+        // The event is checked before the items are removed, so they are still owned here.
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 46 && @event is ConversationEvent c &&
+                c.Interaction == ConversationEvent.InteractionType.GiveItem && (c.ItemIndex == 430 || c.ItemIndex == 170) &&
+                game.GetTotalItemCount(430) >= 7 && game.GetTotalItemCount(170) != 0,
+            GlobalVar_MorgatMadeGoldenArmour));
 
         // Aman (3) asks for the gardener's brooch (keyword "Thing") as long as he didn't get it (12)
         customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,

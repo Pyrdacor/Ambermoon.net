@@ -1,0 +1,109 @@
+# Your house (Ambermoon Advanced episode 1, any language): Theodorus (NPC 37), the new carpenter of Spannenberg,
+# rebuilds grandfather's house after seeing the testament (206, chest 2 in grandfather's house). His former apprentice
+# Gustav (NPC 45, inn of Snakesign) tells that Theodorus can build windgates. Theodorus builds a windgate and digs a
+# storage cave, in its lower level a giant spider attacks: Theodorus himself, bitten by a magical spider.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest YourHouse_ShowTheTestamentToTheodorus Inactive
+# --- the testament in grandfather's cupboard (key from the cellar)
+cheat give 205 1
+goto 258 10 15
+trigger 10 16 Eye
+talkwait
+usekey 205
+takeloot
+closewindow
+talkwait
+count 206 1
+quest YourHouse_ShowTheTestamentToTheodorus Active
+# --- Theodorus
+cheat give gold 25000
+goto 456 15 6
+dismissall
+talk 37
+talkwait
+showitem 206
+talkwait
+var 224 1
+quest YourHouse_ShowTheTestamentToTheodorus Completed
+quest YourHouse_HaveTheHouseRefurbished Active
+say 116
+talkwait
+waitidle 5000
+var 225 1
+quest YourHouse_HaveTheHouseRefurbished Completed
+quest YourHouse_HaveAWindgateBuilt Inactive
+# --- Gustav in the inn of Snakesign
+goto 421 10 7
+dismissall
+talk 45
+talkwait
+quest YourHouse_AskGustavAboutTheodorus Active
+say 127
+talkwait
+var 226 1
+quest YourHouse_AskGustavAboutTheodorus Completed
+quest YourHouse_HaveAWindgateBuilt Active
+leave
+talkwait
+waitidle 5000
+# --- Theodorus builds a windgate and digs the storage cave
+goto 456 15 6
+dismissall
+talk 37
+talkwait
+say 115
+talkwait
+say 117
+talkwait
+waitidle 5000
+var 227 1
+quest YourHouse_HaveAWindgateBuilt Completed
+quest YourHouse_HaveAStorageCaveDug Active
+goto 456 15 6
+dismissall
+talk 37
+talkwait
+say 118
+talkwait
+waitidle 5000
+var 228 1
+quest YourHouse_HaveAStorageCaveDug Completed
+quest YourHouse_ExploreTheStorageCave Active
+reloadquests
+quest YourHouse_HaveAStorageCaveDug Completed
+quest YourHouse_ExploreTheStorageCave Active
+# --- the giant spider in the lower level of the cave
+goto 460 7 6
+talkwait 30000
+eventbit 460 19 1
+quest YourHouse_ExploreTheStorageCave Completed
+quest YourHouse_DefeatTheGiantSpider Active
+waitbattle 15000
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
+# Gustav's remains next to it
+goto 460 8 6
+trigger 8 5 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 407 1
+quest YourHouse_DefeatTheGiantSpider Completed
+mainquest YourHouse Completed
+reloadquests
+quest YourHouse_ShowTheTestamentToTheodorus Completed
+quest YourHouse_HaveTheHouseRefurbished Completed
+quest YourHouse_AskGustavAboutTheodorus Completed
+quest YourHouse_HaveAWindgateBuilt Completed
+quest YourHouse_HaveAStorageCaveDug Completed
+quest YourHouse_ExploreTheStorageCave Completed
+quest YourHouse_DefeatTheGiantSpider Completed
+mainquest YourHouse Completed
+exit

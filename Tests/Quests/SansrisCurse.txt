@@ -1,0 +1,62 @@
+# Sansri's curse: Pelanis (NPC 28) in Illien tells how the snake goddess Sansri petrified the eagles. Only her blood
+# lifts the curse. Sansri waits in her temple (map 423). (original game and Advanced, any language)
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest SansrisCurse_AskPelanisAboutHisConcerns Inactive
+# --- Pelanis mentions the curse when the party leaves
+goto 417 4 10
+dismissall
+talk 28
+talkwait
+leave
+talkwait
+waitidle 5000
+quest SansrisCurse_AskPelanisAboutHisConcerns Active
+talk 28
+talkwait
+say 69
+talkwait
+var 8176 1
+quest SansrisCurse_AskPelanisAboutHisConcerns Completed
+quest SansrisCurse_DefeatSansri Active
+leave
+talkwait
+waitidle 5000
+# --- Sansri in her temple
+goto 423 15 14
+trigger 15 15 Move
+talkwait 30000
+waitbattle 15000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+count 352 1
+eventbit 423 5 1
+quest SansrisCurse_DefeatSansri Completed
+quest SansrisCurse_GiveSansrisBloodToPelanis Active
+# --- Pelanis gets the blood
+goto 417 4 10
+dismissall
+talk 28
+talkwait
+giveitem 352
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 180 1
+count 155 1
+quest SansrisCurse_GiveSansrisBloodToPelanis Completed
+mainquest SansrisCurse Completed
+reloadquests
+quest SansrisCurse_AskPelanisAboutHisConcerns Completed
+quest SansrisCurse_DefeatSansri Completed
+quest SansrisCurse_GiveSansrisBloodToPelanis Completed
+mainquest SansrisCurse Completed
+exit

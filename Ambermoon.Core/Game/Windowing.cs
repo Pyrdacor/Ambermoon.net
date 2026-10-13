@@ -679,7 +679,16 @@ partial class GameCore
         {
             dictionaryList.ScrollTo(offset);
         };
-        popup.Closed += UntrapMouse;
+        popup.Closed += () =>
+        {
+            scriptDictionaryChoice = null;
+            UntrapMouse();
+        };
+        scriptDictionaryChoice = word =>
+        {
+            layout.ClosePopup(false);
+            WordEntered(word);
+        };
     }
 
     /// <summary>
