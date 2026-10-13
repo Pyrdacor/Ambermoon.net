@@ -229,6 +229,9 @@ partial class GameCore
         lastMousePosition = new Position(position);
         position = GetMousePosition(position);
         UpdateCursor(position, buttons);
+
+        if (QuestLog?.Open == true)
+            QuestLog.Hover(renderView.ScreenToGame(position));
     }
 
     public virtual void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
@@ -1159,6 +1162,20 @@ partial class GameCore
                     {
                         currentBattle.ResetClick();
                     }
+                }
+
+                if (InputEnable && !allInputDisabled && QuestLogIconArea.Contains(relativePosition))
+                {
+                    CursorType = CursorType.Sword;
+                    ToggleQuestLog();
+                    return;
+                }
+
+                if (QuestLog?.Open == true)
+                {
+                    CursorType = CursorType.Sword;
+                    QuestLog.Click(relativePosition, buttons);
+                    return;
                 }
 
                 var cursorType = CursorType.Sword;

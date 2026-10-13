@@ -860,6 +860,9 @@ partial class GameCore
 
             if (CanSee())
             {
+                // TODO: Only the tile the player walks on or the whole revealed area (the loop below)?
+                QuestLog?.CheckExploration(Map.Index, (uint)player3D!.Position.X + 1, (uint)player3D.Position.Y + 1);
+
                 var labdata = MapManager.GetLabdataForMap(Map);
 
                 for (int y = -1; y <= 1; ++y)

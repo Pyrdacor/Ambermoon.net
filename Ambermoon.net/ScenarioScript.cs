@@ -32,6 +32,10 @@ namespace Ambermoon;
 ///   yes                       answer a decision popup with yes (Return key)
 ///   closewindow               close the current window like the exit button (e.g. battle loot)
 ///   battlebg [index]          print the combat background of the active battle, optionally check it
+///   questlog                  open or close the quest log
+///   quests                    print all sub quests which are not inactive
+///   quest &lt;type&gt; [state]      print the state of a sub quest (UI.SubQuestType name), optionally check it
+///                             (Inactive, Active, Blocked or Completed)
 ///   log &lt;text&gt;                print text
 ///   exit                      close the application
 /// </summary>
@@ -230,6 +234,21 @@ sealed class ScenarioScript
                         Console.WriteLine($"  battle background: {(background?.ToString() ?? "no battle")}");
                         if (parts.Length > 1)
                             Report(background == uint.Parse(parts[1]), $"battle background is {(background?.ToString() ?? "no battle")}, expected {parts[1]}");
+                        break;
+                    }
+                    case "questlog":
+                        Console.WriteLine($"  quest log open: {game.ScriptToggleQuestLog()}");
+                        break;
+                    case "quests":
+                        Console.WriteLine(game.ScriptQuests());
+                        break;
+                    case "quest":
+                    {
+                        var subQuestType = Enum.Parse<UI.SubQuestType>(parts[1], true);
+                        var state = game.ScriptQuestState(subQuestType);
+                        Console.WriteLine($"  {subQuestType}: {state?.ToString() ?? "no quest log"}");
+                        if (parts.Length > 2)
+                            Report(state == Enum.Parse<UI.QuestState>(parts[2], true), $"{subQuestType} is {state?.ToString() ?? "no quest log"}, expected {parts[2]}");
                         break;
                     }
                     case "log":

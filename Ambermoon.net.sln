@@ -17,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LICENSE = LICENSE
 		nuget.ps1 = nuget.ps1
 		publish.ps1 = publish.ps1
+		Quests.md = Quests.md
 		README.md = README.md
 		ToDo.md = ToDo.md
 		versions.dat = versions.dat
@@ -83,6 +84,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ambermoon.Game", "Ambermoon.Game\Ambermoon.Game.csproj", "{3C016E23-052F-40B5-9F04-ED43E2BE21CB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ambermoon.Mod.AmbermoonDC", "Ambermoon.Mod.AmbermoonDC\Ambermoon.Mod.AmbermoonDC.csproj", "{B660C3FF-4C19-4C11-B76E-DB976E524D93}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuestHelper", "QuestHelper\QuestHelper.csproj", "{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -724,6 +727,48 @@ Global
 		{B660C3FF-4C19-4C11-B76E-DB976E524D93}.ReleaseNative|x64.Build.0 = Release|Any CPU
 		{B660C3FF-4C19-4C11-B76E-DB976E524D93}.ReleaseNative|x86.ActiveCfg = Release|Any CPU
 		{B660C3FF-4C19-4C11-B76E-DB976E524D93}.ReleaseNative|x86.Build.0 = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.Debug|x64.Build.0 = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.Debug|x86.Build.0 = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.DebugAndroid|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.DebugAndroid|Any CPU.Build.0 = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.DebugAndroid|x64.ActiveCfg = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.DebugAndroid|x64.Build.0 = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.DebugAndroid|x86.ActiveCfg = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.DebugAndroid|x86.Build.0 = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.DebugES|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.DebugES|Any CPU.Build.0 = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.DebugES|x64.ActiveCfg = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.DebugES|x64.Build.0 = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.DebugES|x86.ActiveCfg = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.DebugES|x86.Build.0 = Debug|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.Release|x64.ActiveCfg = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.Release|x64.Build.0 = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.Release|x86.ActiveCfg = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.Release|x86.Build.0 = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseAndroid|Any CPU.ActiveCfg = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseAndroid|Any CPU.Build.0 = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseAndroid|x64.ActiveCfg = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseAndroid|x64.Build.0 = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseAndroid|x86.ActiveCfg = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseAndroid|x86.Build.0 = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseES|Any CPU.ActiveCfg = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseES|Any CPU.Build.0 = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseES|x64.ActiveCfg = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseES|x64.Build.0 = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseES|x86.ActiveCfg = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseES|x86.Build.0 = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseNative|Any CPU.ActiveCfg = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseNative|Any CPU.Build.0 = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseNative|x64.ActiveCfg = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseNative|x64.Build.0 = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseNative|x86.ActiveCfg = Release|Any CPU
+		{9B1C016E-FE9D-472F-8369-8AEB8BC96A39}.ReleaseNative|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

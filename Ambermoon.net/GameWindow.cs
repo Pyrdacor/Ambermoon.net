@@ -353,6 +353,10 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
 
             Game?.PostFullscreenChanged();
         }
+        else if (key == Silk.NET.Input.Key.F6)
+        {
+            Game?.ToggleQuestLog();
+        }
         else if (key == Silk.NET.Input.Key.F7)
         {
             if (Game != null && !Game.BattleRoundActive)
@@ -918,6 +922,15 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
         // Create render view
         renderView = CreateRenderView(gameData, configuration, graphicInfoProvider, fontProvider, additionalPalettes, () =>
         {
+            var questLogIconData = new DataReader(Resources.QuestLog);
+            var questLogIcon = new Graphic();
+            new GraphicReader().ReadGraphic(questLogIcon, questLogIconData, new GraphicInfo
+            {
+                GraphicFormat = GraphicFormat.Palette5Bit,
+                Width = 16,
+                Height = 16,
+                Alpha = true,
+            });
             var textureAtlasManager = TextureAtlasManager.Instance;
             var introGraphics = introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value);
             uint twinlakeFrameOffset = (uint)introData.Graphics.Keys.Max();
@@ -930,7 +943,10 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
 
             logoPyrdacor?.Initialize(textureAtlasManager);
             AdvancedLogo.Initialize(textureAtlasManager, () => Resources.Advanced);
-
+            textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
+            {
+                { QuestLog.IconGraphicIndex, questLogIcon }
+            });
             return textureAtlasManager;
         });
         renderView.SetTextureFactor(Layer.Text, 2);

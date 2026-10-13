@@ -115,6 +115,8 @@ partial class GameCore
 
                 if (string.Compare(keyword, expectedKeyword, true) == 0)
                 {
+                    QuestLog?.CheckEvent(conversationPartner, e);
+
                     currentInteractionType = InteractionType.Keyword;
                     conversationEvent = e;
                     layout.ButtonsDisabled = true;
@@ -195,6 +197,8 @@ partial class GameCore
                 }
                 else
                 {
+                    QuestLog?.CheckEvent(conversationPartner, conversationEvent);
+
                     void HandleInteraction()
                     {
                         HandleNextEvent(eventType =>
@@ -372,6 +376,8 @@ partial class GameCore
             if (character is PartyMember &&
                 (conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.JoinParty)) != null)
             {
+                QuestLog?.CheckEvent(conversationPartner, conversationEvent);
+
                 layout.ButtonsDisabled = true;
                 currentInteractionType = InteractionType.JoinParty;
                 aborted = false;
@@ -421,6 +427,8 @@ partial class GameCore
 
                 if ((conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.LeaveParty)) != null)
                 {
+                    QuestLog?.CheckEvent(conversationPartner, conversationEvent);
+
                     currentInteractionType = InteractionType.LeaveParty;
                     layout.ButtonsDisabled = true;
                     aborted = false;
@@ -550,6 +558,8 @@ partial class GameCore
 
                     if (conversationEvent != null)
                     {
+                        QuestLog?.CheckEvent(conversationPartner, conversationEvent);
+
                         currentInteractionType = InteractionType.Leave;
                         layout.ButtonsDisabled = true;
                         aborted = false;

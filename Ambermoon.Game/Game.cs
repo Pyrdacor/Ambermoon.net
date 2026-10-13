@@ -39,11 +39,14 @@ public class Game : GameCore
 
     protected override void Hook_NewGame()
     {
+        QuestLogIconVisible = false;
+
         characterCreator = new CharacterCreator(renderView, this, (name, female, portraitIndex) =>
         {
             LoadInitialCustom(name, female, (uint)portraitIndex, FixSavegameValues);
             showMobileTouchPadHandler?.Invoke(false); // This avoids showing it briefly and then immediately enter the grandfather event window
             characterCreator = null;
+            QuestLogIconVisible = true;
         });
     }
 
@@ -66,19 +69,12 @@ public class Game : GameCore
         // Upgrade old Ambermoon Advanced save games
         if (renderView.GameData.Advanced && slot > 0)
         {
-            // TODO: will only work for legacy data for now!
-            int sourceEpisode;
-            int targetEpisode = 3; // TODO: increase when there is a new one
-
-            if (!savegame.PartyMembers.ContainsKey(16)) // If Kasimir is not there, it is episode 1
-                sourceEpisode = 1;
-            else if (!savegame.Chests.ContainsKey(280)) // If chest 280 is not there it is episode 2
-                sourceEpisode = 2;
-            else // If both are there, it is episode 3
-                sourceEpisode = 3;
+            int sourceEpisode = GetAdvancedEpisode(savegame);
+            int targetEpisode = GetAdvancedEpisode(null);
 
             if (sourceEpisode < targetEpisode)
             {
+                // TODO: will only work for legacy game data for now!
                 savegame = RequestAdvancedSavegamePatching!((ILegacyGameData)renderView.GameData, slot, sourceEpisode, targetEpisode, savegame);
             }
         }

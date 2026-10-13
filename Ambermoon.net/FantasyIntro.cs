@@ -76,7 +76,7 @@ namespace Ambermoon
 
             var extendedScreenArea = new Rect(-45, 0, 410, 256);
 
-            backgroundLeftBorder = renderView.SpriteFactory.Create(45, 256, true, 1) as ILayerSprite;
+            backgroundLeftBorder = renderView.SpriteFactory.CreateLayered(45, 256, 1);
             backgroundLeftBorder.Layer = renderLayer;
             backgroundLeftBorder.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Background);
             backgroundLeftBorder.TextureAtlasOffset = textureAtlas.GetOffset(borderTextureIndexOffset);
@@ -85,7 +85,7 @@ namespace Ambermoon
             backgroundLeftBorder.ClipArea = extendedScreenArea;
             backgroundLeftBorder.Visible = false;
 
-            backgroundRightBorder = renderView.SpriteFactory.Create(45, 256, true, 1) as ILayerSprite;
+            backgroundRightBorder = renderView.SpriteFactory.CreateLayered(45, 256, 1);
             backgroundRightBorder.Layer = renderLayer;
             backgroundRightBorder.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Background);
             backgroundRightBorder.TextureAtlasOffset = textureAtlas.GetOffset(borderTextureIndexOffset + 1);
@@ -94,7 +94,7 @@ namespace Ambermoon
             backgroundRightBorder.ClipArea = extendedScreenArea;
             backgroundRightBorder.Visible = false;
 
-            background = renderView.SpriteFactory.Create(320, 256, true, 1) as ILayerSprite;
+            background = renderView.SpriteFactory.CreateLayered(320, 256, 1);
             background.Layer = renderLayer;
             background.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Background);
             background.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Background);
@@ -102,14 +102,14 @@ namespace Ambermoon
             background.Y = 0;
             background.Visible = false;
 
-            fairy = renderView.SpriteFactory.Create(64, 71, true, 50) as ILayerSprite;
+            fairy = renderView.SpriteFactory.CreateLayered(64, 71, 50);
             fairy.Layer = renderLayer;
             fairy.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Fairy);
             fairy.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Fairy);
             fairy.ClipArea = extendedScreenArea;
             fairy.Visible = false;
 
-            writing = renderView.SpriteFactory.Create(0, 83, true, 10) as ILayerSprite; // width will be increased later up to 208
+            writing = renderView.SpriteFactory.CreateLayered(0, 83, 10); // width will be increased later up to 208
             writing.Layer = renderLayer;
             writing.PaletteIndex = GetPaletteIndex(FantasyIntroGraphic.Writing);
             writing.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.Writing);
@@ -218,7 +218,7 @@ namespace Ambermoon
         {
             if (!writingSparks.TryGetValue(index, out var spark))
             {
-                spark = renderView.SpriteFactory.Create(16, 9, true, 30) as ILayerSprite;
+                spark = renderView.SpriteFactory.CreateLayered(16, 9, 30);
                 spark.Layer = renderLayer;
                 spark.ClipArea = new Rect(0, 0, 320, 256);
                 spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.WritingSparks);
@@ -234,7 +234,7 @@ namespace Ambermoon
         {
             if (!sparks.TryGetValue(index, out var spark))
             {
-                spark = renderView.SpriteFactory.Create(16, 5, true, 30) as ILayerSprite;
+                spark = renderView.SpriteFactory.CreateLayered(16, 5, 30);
                 spark.Layer = renderLayer;
                 spark.ClipArea = new Rect(0, 0, 320, 256);
                 spark.TextureAtlasOffset = textureAtlas.GetOffset((uint)FantasyIntroGraphic.FairySparks);

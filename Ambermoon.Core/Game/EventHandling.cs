@@ -863,7 +863,11 @@ partial class GameCore
                 {
                     CurrentSavegame.UnlockChest(chestEvent.RealChestIndex - 1);
                     currentWindow.Window = Window.Chest; // This avoids returning to locked screen when closing chest window.
-                    ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true, true));
+                    ExecuteNextUpdateCycle(() =>
+                    {
+                        QuestLog?.CheckChestUnlock(chestEvent.ChestIndex + 1);
+                        ShowChest(chestEvent, false, false, map, position, true, true);
+                    });
                 }, null, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                 chestEvent.UnlockFailedEventIndex == 0xffff ? null : () => (map ?? Map!).TriggerEventChain(this, EventTrigger.Always,
                 (uint)position.X, (uint)position.Y, (map ?? Map!).Events[(int)chestEvent.UnlockFailedEventIndex], true),
@@ -915,6 +919,7 @@ partial class GameCore
                 }
 
                 CurrentSavegame.UnlockDoor(doorEvent.DoorIndex);
+                QuestLog?.CheckDoorUnlock(doorEvent.DoorIndex);
 
                 if (unlockText != null)
                 {

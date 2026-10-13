@@ -434,6 +434,9 @@ partial class GameCore
         InputEnable = true;
         paused = false;
 
+        QuestLog = new(this, renderView, renderView.GameData.Advanced,
+            renderView.GameData.Advanced ? GetCurrentAdvancedEpisode() : 0);
+
         if (layout.ButtonGridPage == 1)
             ToggleButtonGridPage();
 
@@ -512,8 +515,11 @@ partial class GameCore
         if (SavegameManager.HasCrashSavegame())
         {
             Ingame = true;
+            QuestLogIconVisible = false;
             ShowDecisionPopup(GetCustomText(CustomTexts.Index.LoadCrashedGame), response =>
             {
+                QuestLogIconVisible = true;
+
                 if (response == PopupTextEvent.Response.Yes)
                 {
                     LoadGame(99, false, true);
@@ -721,6 +727,7 @@ partial class GameCore
     {
         drugOverlay?.Delete();
         ouchSprite?.Delete();
+        questLogIcon?.Delete();
         mobileClickIndicator?.Delete();
 
         Util.SafeCall(UntrapMouse);

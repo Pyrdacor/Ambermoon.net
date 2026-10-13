@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using Ambermoon.UI;
 
 namespace Ambermoon;
 
@@ -69,6 +70,52 @@ partial class GameCore
             return null;
 
         return CurrentWindow.WindowParameters[3] as uint?;
+    }
+
+    /// <summary>
+    /// Opens or closes the quest log. Returns true if it is open afterwards.
+    /// </summary>
+    public bool ScriptToggleQuestLog()
+    {
+        ToggleQuestLog();
+        return QuestLog?.Open == true;
+    }
+
+    /// <summary>
+    /// State of the given sub quest or null if there is no quest log or no such quest.
+    /// </summary>
+    public QuestState? ScriptQuestState(SubQuestType subQuestType)
+    {
+        return QuestLog?.Quests.SelectMany(q => q.SubQuests).FirstOrDefault(q => q.Type == subQuestType)?.State;
+    }
+
+    /// <summary>
+    /// All sub quests which are not inactive, grouped by main quest.
+    /// </summary>
+    public string ScriptQuests()
+    {
+        if (QuestLog == null)
+            return "no quest log";
+
+        var builder = new StringBuilder();
+
+        foreach (var quest in QuestLog.Quests)
+        {
+            var subQuests = quest.SubQuests.Where(q => q.State != QuestState.Inactive).ToArray();
+
+            if (subQuests.Length == 0)
+                continue;
+
+            builder.AppendLine($"  {quest.Type}");
+
+            foreach (var subQuest in subQuests)
+            {
+                string amount = subQuest.MinAmount == null ? "" : $" ({subQuest.CurrentAmount}/{subQuest.MinAmount})";
+                builder.AppendLine($"    {subQuest.Type}: {subQuest.State}{amount}");
+            }
+        }
+
+        return builder.Length == 0 ? "  no active quests" : builder.ToString().TrimEnd();
     }
 
     public string ScriptState()
