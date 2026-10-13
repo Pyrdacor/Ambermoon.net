@@ -113,6 +113,27 @@ partial class GameCore
     public void ScriptSetGlobalVariable(uint index, bool value) => CurrentSavegame!.SetGlobalVariable(index, value);
 
     /// <summary>
+    /// Informs the quest log about items which were added without the usual item handling (e.g. by cheats).
+    /// </summary>
+    public void ItemsAddedExternally(uint itemIndex, uint amount) => QuestLog?.CheckItem(ItemManager.GetItem(itemIndex), amount);
+
+    /// <summary>
+    /// True if the given map event chain (1-based) is disabled.
+    /// </summary>
+    public bool ScriptGetEventBit(uint mapIndex, uint eventIndex) => CurrentSavegame!.GetEventBit(mapIndex, eventIndex - 1);
+
+    /// <summary>
+    /// Recreates the quest log from the current savegame like loading a game does.
+    /// </summary>
+    public void ScriptReloadQuestLog()
+    {
+        if (QuestLog?.Open == true)
+            ClosePopup();
+
+        CreateQuestLog();
+    }
+
+    /// <summary>
     /// Uses an item from the active party member's inventory exactly like a
     /// player would do it via the inventory (including item consumption and
     /// map event triggering). Returns false if the item is not in the inventory.

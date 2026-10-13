@@ -189,6 +189,10 @@ public record SubQuest(QuestLog QuestLog, MainQuestType MainQuestType, QuestStat
                 {
                     PostActivationAction?.Invoke(this);
                     Quest.SubQuestActivated(this);
+
+                    // a quest might be activated while some required quest is not completed yet
+                    if (state == QuestState.Active)
+                        Update(QuestLog.Quests);
                 }
             }
         }
@@ -198,7 +202,7 @@ public record SubQuest(QuestLog QuestLog, MainQuestType MainQuestType, QuestStat
     {
         if (State == QuestState.Active)
         {
-            var blocked = allQuests.SelectMany(q => q.SubQuests).Where(sq => RequiredCompletedQuests.Contains(Type)).Any(sq => sq.State != QuestState.Completed);
+            var blocked = allQuests.SelectMany(q => q.SubQuests).Where(sq => RequiredCompletedQuests.Contains(sq.Type)).Any(sq => sq.State != QuestState.Completed);
 
             if (!blocked && AnyCompletedQuests.Length > 0 && allQuests.SelectMany(q => q.SubQuests).Where(sq => AnyCompletedQuests.Contains(sq.Type) && sq.State == QuestState.Completed).Count() == 0)
                 blocked = true;
@@ -208,7 +212,7 @@ public record SubQuest(QuestLog QuestLog, MainQuestType MainQuestType, QuestStat
         }
         else if (State == QuestState.Blocked)
         {
-            var unblocked = allQuests.SelectMany(q => q.SubQuests).Where(sq => RequiredCompletedQuests.Contains(Type)).All(sq => sq.State == QuestState.Completed);
+            var unblocked = allQuests.SelectMany(q => q.SubQuests).Where(sq => RequiredCompletedQuests.Contains(sq.Type)).All(sq => sq.State == QuestState.Completed);
 
             if (unblocked && AnyCompletedQuests.Length > 0 && allQuests.SelectMany(q => q.SubQuests).Where(sq => AnyCompletedQuests.Contains(sq.Type) && sq.State == QuestState.Completed).Count() == 0)
                 unblocked = false;
@@ -270,7 +274,10 @@ public record SubQuest(QuestLog QuestLog, MainQuestType MainQuestType, QuestStat
     public void AddRequiredQuest(SubQuestType subQuestType)
     {
         requiredCompletedQuests = [.. RequiredCompletedQuests, subQuestType];
-        State = QuestState.Blocked;
+
+        // inactive quests are blocked when they are activated
+        if (State == QuestState.Active)
+            Update(QuestLog.Quests);
     }
 }
 

@@ -91,6 +91,7 @@ partial class QuestLog
     const uint GlobalVar_ShowedAmberToGrandfather = 8189u;
     const uint GlobalVar_GaveOrcLeaderHeadToBaronGeorge = 8188u;
     const uint GlobalVar_GaveThiefProofToBaronGeorge = 8187u;
+    const uint GlobalVar_ReturnedHorseshoesToTolimar = 8186u;
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 
@@ -115,6 +116,13 @@ partial class QuestLog
         customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
             (npc, @event) => npc.Index == 8 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.GiveItem && c.ItemIndex == 268,
             GlobalVar_GaveOrcLeaderHeadToBaronGeorge));
+
+        // Give all four golden horseshoes to Tolimar. He only creates the tools, so nothing is stored.
+        // The event is checked before the item is consumed, so all four horseshoes are still owned here.
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 10 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.GiveItem && c.ItemIndex == 270 &&
+                game.GetTotalItemCount(270) >= 4,
+            GlobalVar_ReturnedHorseshoesToTolimar));
 
         // Give the thief-plague proof to Baron George (NPC 8): the silver hand (266, Nagier killed)
         // or Nagier's letter (267, peace made) -- completes the Thief Plague quest.

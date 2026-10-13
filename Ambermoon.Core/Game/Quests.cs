@@ -89,4 +89,10 @@ partial class GameCore
     }
 
     int GetCurrentAdvancedEpisode() => GetAdvancedEpisode(CurrentSavegame);
+
+    void CreateQuestLog()
+    {
+        QuestLog = new(this, renderView, renderView.GameData.Advanced,
+            renderView.GameData.Advanced ? GetCurrentAdvancedEpisode() : 0);
+    }
 }

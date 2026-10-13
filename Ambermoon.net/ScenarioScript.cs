@@ -43,6 +43,9 @@ namespace Ambermoon;
 ///   trigger &lt;x&gt; &lt;y&gt; [trigger]  trigger the map events at a 1-based map position
 ///                             (Move, Eye, Hand, Mouth, ..., default Move)
 ///   setvar &lt;index&gt; &lt;0|1&gt;      set a global variable
+///   eventbit &lt;map&gt; &lt;event&gt; [0|1]
+///                             print if a map event chain (1-based) is disabled (1), optionally check it
+///   reloadquests              recreate the quest log from the savegame (like loading the game)
 ///   questlog                  open or close the quest log
 ///   quests                    print all sub quests which are not inactive
 ///   quest &lt;type&gt; [state]      print the state of a sub quest (UI.SubQuestType name), optionally check it
@@ -310,8 +313,19 @@ sealed class ScenarioScript
                             Console.WriteLine($"  no event was triggered at {parts[1]},{parts[2]}");
                         break;
                     }
+                    case "eventbit":
+                    {
+                        bool bit = game.ScriptGetEventBit(uint.Parse(parts[1]), uint.Parse(parts[2]));
+                        Console.WriteLine($"  event bit {parts[1]}:{parts[2]} = {(bit ? 1 : 0)}");
+                        if (parts.Length > 3)
+                            Report(bit == (parts[3] == "1"), $"event bit {parts[1]}:{parts[2]} is {(bit ? 1 : 0)}, expected {parts[3]}");
+                        break;
+                    }
                     case "setvar":
                         game.ScriptSetGlobalVariable(uint.Parse(parts[1]), parts[2] == "1");
+                        break;
+                    case "reloadquests":
+                        game.ScriptReloadQuestLog();
                         break;
                     case "questlog":
                         Console.WriteLine($"  quest log open: {game.ScriptToggleQuestLog()}");

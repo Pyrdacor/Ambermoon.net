@@ -1009,8 +1009,10 @@ partial class QuestLog
                     [
                         // Activate
                         new GlobalVariableTrigger(game, TriggerType.Activation, GlobalVar_TolimarQuestStarted),
-                        // Complete
-                        new ItemObtainedTrigger(game, TriggerType.Completion, 270), // Golden horseshoe
+                        // Complete: own all four horseshoes or already returned them to Tolimar
+                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 270), // Golden horseshoe
+                            (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_ReturnedHorseshoesToTolimar)),
                     ],
                     MinAmount = 4,
                     SourceType = QuestSourceType.NPC,
@@ -1025,7 +1027,7 @@ partial class QuestLog
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
                         // Complete
-                        new ItemObtainedTrigger(game, TriggerType.Completion, 255), // Returned golden horseshoes
+                        new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_ReturnedHorseshoesToTolimar), // Returned golden horseshoes
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 10, // Tolimar

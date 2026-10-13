@@ -1,0 +1,70 @@
+# Grandfather's quest and the golden horseshoes (original game, German or English)
+# Run: Ambermoon.net --version 0 --skip-intro --load 0 --script Tests/Quests/Grandfather.txt --exit-after 180
+# Keywords are given by dictionary index so the script works for every language.
+waitidle 20000
+dismissall
+talk 1
+talkwait
+say 0
+talkwait
+leave
+talkwait
+waitidle 5000
+quest Grandfather_GoToWineCellar Active
+cheat light 3
+cheat teleport 260 24 12
+wait 1500
+dismissall
+cheat teleport 260 25 9
+wait 2000
+dismissall
+state
+eventbit 260 13 1
+talkwait
+dismissall
+state
+quests
+quest Grandfather_TellGrandfatherAboutCaveIn Active
+cheat teleport 258 3 15
+wait 2000
+dismissall
+talk 1
+talkwait
+say 2
+talkwait
+leave
+talkwait
+waitidle 5000
+quests
+quest Grandfather_TellGrandfatherAboutCaveIn Completed
+quest Grandfather_FindTolimar Active
+cheat teleport 270 3 22
+wait 2000
+dismissall
+state
+talk 10
+talkwait
+say 3
+talkwait
+quest GoldenHorseshoes_FindHorseshoes Active
+quest Grandfather_FindTolimar Completed
+cheat give 270 4
+talkwait
+quests
+giveitem 270
+talkwait 20000
+leave
+talkwait
+waitidle 5000
+quests
+count 270
+var 8186 1
+quest GoldenHorseshoes_ReturnHorseshoes Completed
+quest Grandfather_RemoveCaveIn Active
+reloadquests
+log after reload
+quests
+quest GoldenHorseshoes_FindHorseshoes Completed
+quest GoldenHorseshoes_ReturnHorseshoes Completed
+quest Grandfather_RemoveCaveIn Active
+exit

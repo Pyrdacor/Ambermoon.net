@@ -434,8 +434,7 @@ partial class GameCore
         InputEnable = true;
         paused = false;
 
-        QuestLog = new(this, renderView, renderView.GameData.Advanced,
-            renderView.GameData.Advanced ? GetCurrentAdvancedEpisode() : 0);
+        CreateQuestLog();
 
         if (layout.ButtonGridPage == 1)
             ToggleButtonGridPage();
