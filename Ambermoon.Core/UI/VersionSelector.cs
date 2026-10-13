@@ -353,6 +353,14 @@ namespace Ambermoon.UI
             selectedVersionMarker!.Visible = show;
         }
 
+        void ShowLanguageButtons(bool show)
+        {
+            languageChangeButtons.ForEach(button => button.Visible = show);
+
+            foreach (var box in flagSunkenBox!)
+                box.Visible = show;
+        }
+
         void ShowConfirmation(string text, Action confirmAction)
         {
             this.confirmAction = confirmAction;
@@ -361,6 +369,7 @@ namespace Ambermoon.UI
                 new Rect(0, 0, versionAreas[0].Width - 4, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             confirmationText!.Text = wrappedText;
             confirmationText.Visible = true;
+            ShowLanguageButtons(false);
             ShowButton(cancelButton!, true);
             ShowSaveOptionButton(false);
             saveOptionText!.Visible = false;
@@ -372,6 +381,7 @@ namespace Ambermoon.UI
             confirmationText!.Visible = false;
             ShowButton(cancelButton!, false);
             ShowVersionRows(true);
+            ShowLanguageButtons(true);
             bool externalVersion = IsSelectedVersionFromExternalData();
             ShowSaveOptionButton(externalVersion);
             saveOptionText!.Visible = externalVersion;
