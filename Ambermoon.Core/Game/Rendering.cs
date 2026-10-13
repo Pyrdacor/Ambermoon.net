@@ -391,7 +391,7 @@ partial class GameCore
 
     #region Cursor
 
-    readonly Cursor cursor = null;
+    readonly Cursor cursor;
 
     internal CursorType CursorType
     {

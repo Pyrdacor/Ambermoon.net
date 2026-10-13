@@ -703,8 +703,8 @@ public class Cheats
 
         if (args.Length >= 3)
         {
-            var world = EnumHelper.GetValues<World>().Cast<World?>().FirstOrDefault(w =>
-                string.Compare(args[0].Replace(" ", ""), w.ToString().Replace(" ", ""), true) == 0);
+            var world = EnumHelper.GetValues<World>().Where(w =>
+                string.Compare(args[0].Replace(" ", ""), w.ToString().Replace(" ", ""), true) == 0).Cast<World?>().FirstOrDefault();
 
             if (world != null)
             {
@@ -876,11 +876,27 @@ public class Cheats
         }
     }
 
+    static Savegame? GetSavegame(GameCore game)
+    {
+        var savegame = game.GetCurrentSavegame();
+
+        if (savegame == null)
+        {
+            WriteLine("No game is loaded.");
+            WriteLine();
+        }
+
+        return savegame;
+    }
+
     static void ShowPartyMembers(GameCore game, string[] args)
     {
-        var partyMembers = game.GetCurrentSavegame().PartyMembers;
+        var savegame = GetSavegame(game);
 
-        ShowList(args, partyMembers, p => p.Value.Name, p => p.Key, false);
+        if (savegame == null)
+            return;
+
+        ShowList(args, savegame.PartyMembers, p => p.Value.Name, p => p.Key, false);
     }
 
     static void StartBattle(GameCore game, string[] args)
@@ -916,7 +932,7 @@ public class Cheats
         //       the buttons are still disabled after give.
         WriteLine();
 
-        PartyMember GetPartyMember(int argIndex)
+        PartyMember? GetPartyMember(int argIndex)
         {
             int? partyMemberIndex = args.Length < argIndex + 1 ? (int?)null : int.TryParse(args[argIndex], out int i) ? i : -1;
 
@@ -939,7 +955,7 @@ public class Cheats
             return partyMember;
         }
 
-        PartyMember partyMember = null;
+        PartyMember? partyMember = null;
 
         if (args.Length >= 2)
         {
@@ -1142,11 +1158,16 @@ public class Cheats
         WriteLine();
     }
 
-    static PartyMember GetPartyMemberByIdOrSlotOrName(GameCore game, string partyMemberIdOrName,
-        Func<PartyMember, bool> filter, Func<PartyMember> afterFilterEmptyHandler,
-        Func<PartyMember[], PartyMember> afterFilterMoreThanOnceHandler, bool numberIsSlot)
+    static PartyMember? GetPartyMemberByIdOrSlotOrName(GameCore game, string partyMemberIdOrName,
+        Func<PartyMember, bool> filter, Func<PartyMember?> afterFilterEmptyHandler,
+        Func<PartyMember[], PartyMember?> afterFilterMoreThanOnceHandler, bool numberIsSlot)
     {
-		PartyMember partyMember = null;
+		var savegame = GetSavegame(game);
+
+		if (savegame == null)
+			return null;
+
+		PartyMember? partyMember = null;
 
 		if (uint.TryParse(partyMemberIdOrName, out uint partyMemberId))
 		{
@@ -1163,7 +1184,7 @@ public class Cheats
             }
             else
             {
-                var entries = game.GetCurrentSavegame().PartyMembers;
+                var entries = savegame.PartyMembers;
 
                 if (!entries.TryGetValue(partyMemberId, out partyMember))
                 {
@@ -1173,7 +1194,7 @@ public class Cheats
                 }
             }
 
-			if (!filter(partyMember))
+			if (partyMember == null || !filter(partyMember))
 			{
                 return afterFilterEmptyHandler();
 			}
@@ -1182,7 +1203,7 @@ public class Cheats
 		{
 			string name = partyMemberIdOrName.ToLower();
 
-			var partyMembers = game.GetCurrentSavegame().PartyMembers.Values.Where(p => p.Name.ToLower().StartsWith(name)).ToArray();
+			var partyMembers = savegame.PartyMembers.Values.Where(p => p.Name.ToLower().StartsWith(name)).ToArray();
 
             if (partyMembers.Length == 0)
 			{
@@ -1337,9 +1358,15 @@ public class Cheats
             return;
         }
 
-        var partyMembers = args.Length == 0 ? game.PartyMembers.ToList() : new List<PartyMember>
+        List<PartyMember> partyMembers;
+
+        if (args.Length == 0)
         {
-            GetPartyMemberByIdOrSlotOrName(game, args[0], p => game.PartyMembers.Contains(p),
+            partyMembers = game.PartyMembers.ToList();
+        }
+        else
+        {
+            var partyMember = GetPartyMemberByIdOrSlotOrName(game, args[0], p => game.PartyMembers.Contains(p),
                 () =>
                 {
                     if (long.TryParse(args[0], out var index))
@@ -1350,10 +1377,15 @@ public class Cheats
                     WriteLine();
                     return null;
                 },
-                (_) => null, true)
-        };
+                (_) => null, true);
 
-        if (partyMembers.Count == 0 || partyMembers.First() == null)
+            if (partyMember == null)
+                return;
+
+            partyMembers = [partyMember];
+        }
+
+        if (partyMembers.Count == 0)
             return;
 
         if (partyMembers.Count > 1)
@@ -1435,7 +1467,10 @@ public class Cheats
     {
         WriteLine();
 
-        var savegame = game.GetCurrentSavegame();
+        var savegame = GetSavegame(game);
+
+        if (savegame == null)
+            return;
 
         WriteLine($"Map {savegame.CurrentMapIndex}, X {savegame.CurrentMapX}, Y {savegame.CurrentMapY}, Looking {savegame.CharacterDirection}");
         WriteLine();
@@ -1461,7 +1496,7 @@ public class Cheats
             {
                 WriteLine("Party member index was invalid or outside the range 0~6.");
                 WriteLine();
-                return null;
+                return [];
             }
 
             if (partyMemberIndex == 0)
@@ -1475,7 +1510,7 @@ public class Cheats
             {
                 WriteLine($"Party member with index {partyMemberIndex} does not exist.");
                 WriteLine();
-                return null;
+                return [];
             }
 
             return new PartyMember[1] { partyMember };
@@ -1517,7 +1552,7 @@ public class Cheats
         }
 
         int partyMemberCount = partyMembers.Count;
-        Action[] actions = null;
+        Action[] actions = [];
         actions = partyMembers.Select((partyMember, index) => new Action
         (
             () => {
@@ -1608,7 +1643,7 @@ public class Cheats
         {
             WriteLine("Party member index was invalid or outside the range 0~6.");
             WriteLine();
-            return null;
+            return [];
         }
 
         if (partyMemberIndex == 0)
@@ -1626,7 +1661,7 @@ public class Cheats
             {
                 WriteLine("No party member matches the given name.");
                 WriteLine();
-                return null;
+                return [];
             }
 
             return partyMembers;
@@ -1638,7 +1673,7 @@ public class Cheats
         {
             WriteLine($"Party member with index {partyMemberIndex} does not exist.");
             WriteLine();
-            return null;
+            return [];
         }
 
         return new PartyMember[1] { partyMember };
@@ -1655,7 +1690,7 @@ public class Cheats
             else if (condition == Condition.DeadDust)
                 yield return "Dust";
             else if (condition.CanBeAppliedManually())
-                yield return Enum.GetName(condition);
+                yield return condition.ToString();
         }
     }
 
@@ -1667,7 +1702,7 @@ public class Cheats
             Condition.DeadCorpse => "Dead",
             Condition.DeadAshes => "Ashes",
             Condition.DeadDust => "Dust",
-            _ => condition.ToString()
+            _ => condition.Value.ToString()
         };
     }
 
