@@ -33,6 +33,7 @@ public enum MainQuestType
     SansrisCurse,
     Windgates,
     TripToGadlon,
+    DonnersMine,
     // Advanced only
     DrelbsSearch,
     GoldenArmour,
@@ -51,6 +52,7 @@ public enum MainQuestType
     ManyeyesCastle,
     Gatekeepers,
     IsdirsTrials,
+    MagicWord,
 }
 
 public enum SubQuestType
@@ -177,6 +179,11 @@ public enum SubQuestType
     TripToGadlon_ActivateTheTeleporter, // after finding the red carved sphere
     TripToGadlon_FindRinakles, // after activating the teleporter
     TripToGadlon_AskRinaklesForTheWayHome, // after meeting Rinakles
+    // Donner's Old Mine
+    DonnersMine_AskBoreAboutDonner, // after meeting Bore
+    DonnersMine_OpenTheEntrance, // after getting the staff of opening
+    DonnersMine_FindDonnersKey, // after opening the entrance
+    DonnersMine_OpenDonnersDoor, // after finding Donner's key
     // Drelb's Search (Advanced)
     DrelbsSearch_DefeatTheMonstersInTheMine, // after meeting Drelb
     DrelbsSearch_AskDrelbAboutHisSearch, // after defeating the monsters
@@ -273,6 +280,8 @@ public enum SubQuestType
     IsdirsTrials_BringAPoisonousSnake, // after touching the third crystal
     IsdirsTrials_BringTheBlueCrystal, // after touching the fourth crystal
     IsdirsTrials_ReceiveIsdirsEssence, // after all four crystals are satisfied
+    // The Magic Word (Advanced)
+    MagicWord_TellMilzorTheMagicWord, // after Necros told the magic word
     // Brotherhood of Tarbos
     BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, // after finding the Amberstar
     BrotherhoodOfTarbos_DefeatThornahuun, // after meeting Thornahuun in the coffin hall
@@ -1264,6 +1273,25 @@ partial class QuestLog
 
             if (episode >= 2)
             {
+                #region The Magic Word
+                quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.MagicWord,
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
+                        Type = SubQuestType.MagicWord_TellMilzorTheMagicWord,
+                        Final = true,
+                        Triggers =
+                        [
+                            // Activate: Necros, the talking chair in the witch's house, told the old magic word "Talis"
+                            // (only with Kasimir in the party)
+                            new KeywordLearnedTrigger(game, TriggerType.Activation, 144),
+                            // Complete: Milzor, who collects magic words, tried it and gave the party more luck
+                            new GlobalVariableTrigger(game, TriggerType.Completion, 307),
+                        ],
+                        SourceType = QuestSourceType.NPC,
+                        SourceIndex = 26, // Necros
+                    }
+                ));
+                #endregion
                 #region The Golden Armour
                 quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.GoldenArmour,
                     mainQuest => new SubQuest(this, mainQuest)
@@ -3595,6 +3623,65 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 70, // Rinakles
+                }
+            ),
+            #endregion
+            #region Donner's Old Mine
+            QuestFactory.CreateMainQuest(this, MainQuestType.DonnersMine,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.DonnersMine_AskBoreAboutDonner,
+                    Triggers =
+                    [
+                        // Activate: met Bore, the dwarf who stayed in Gemstone (keyword "Donner")
+                        new KeywordLearnedTrigger(game, TriggerType.Activation, 78),
+                        // Complete: Bore told about the mine and dropped the staff of opening
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 114),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 24, // Bore
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.DonnersMine_OpenTheEntrance,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: the staff of opening was put into the ground on the island in front of the mine
+                        new EventDisabledTrigger(game, TriggerType.Completion, 230, 3),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 24, // Bore
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.DonnersMine_FindDonnersKey,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: Donner's key is owned or his door was opened
+                        new OrTrigger<ItemObtainedTrigger, DoorUnlockedTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 346),
+                            (g, t) => new DoorUnlockedTrigger(g, t, 25)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 24, // Bore
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.DonnersMine_OpenDonnersDoor,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: the door in the old mine was opened with Donner's key
+                        new DoorUnlockedTrigger(game, TriggerType.Completion, 25),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 24, // Bore
                 }
             ),
             #endregion

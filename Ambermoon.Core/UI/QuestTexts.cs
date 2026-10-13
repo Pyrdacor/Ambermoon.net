@@ -119,6 +119,7 @@ internal static class QuestTexts
             { MainQuestType.SansrisCurse, "Sansris Fluch" },
             { MainQuestType.Windgates, "Die Windtore" },
             { MainQuestType.TripToGadlon, "Ausflug nach Gadlon" },
+            { MainQuestType.DonnersMine, "Dönners alte Mine" },
             { MainQuestType.DrelbsSearch, "Drelbs Suche" },
             { MainQuestType.GoldenArmour, "Die goldene Rüstung" },
             { MainQuestType.GralTemple, "Der Graltempel" },
@@ -136,6 +137,7 @@ internal static class QuestTexts
             { MainQuestType.ManyeyesCastle, "Vielauges Schloss" },
             { MainQuestType.Gatekeepers, "Die Pförtner von Cavetown" },
             { MainQuestType.IsdirsTrials, "Isdirs Prüfungen" },
+            { MainQuestType.MagicWord, "Das Zauberwort" },
         } },
         { GameLanguage.English, new()
         {
@@ -165,6 +167,7 @@ internal static class QuestTexts
             { MainQuestType.SansrisCurse, "Sansri's Curse" },
             { MainQuestType.Windgates, "The Windgates" },
             { MainQuestType.TripToGadlon, "A Trip to Gadlon" },
+            { MainQuestType.DonnersMine, "Donner's Old Mine" },
             { MainQuestType.DrelbsSearch, "Drelb's Search" },
             { MainQuestType.GoldenArmour, "The Golden Armour" },
             { MainQuestType.GralTemple, "The Gral Temple" },
@@ -182,6 +185,7 @@ internal static class QuestTexts
             { MainQuestType.ManyeyesCastle, "Manyeyes' Castle" },
             { MainQuestType.Gatekeepers, "The Gatekeepers of Cavetown" },
             { MainQuestType.IsdirsTrials, "Isdir's Trials" },
+            { MainQuestType.MagicWord, "The Magic Word" },
         } },
         { GameLanguage.French, new()
         {
@@ -211,6 +215,7 @@ internal static class QuestTexts
             { MainQuestType.SansrisCurse, "La malédiction de Sansrie" },
             { MainQuestType.Windgates, "Les portes du vent" },
             { MainQuestType.TripToGadlon, "Excursion à Gadlon" },
+            { MainQuestType.DonnersMine, "La vieille mine de Donner" },
             { MainQuestType.DrelbsSearch, "La quête de Drelb" },
             { MainQuestType.GoldenArmour, "L'armure dorée" },
             { MainQuestType.GralTemple, "Le temple du Graal" },
@@ -228,6 +233,7 @@ internal static class QuestTexts
             { MainQuestType.ManyeyesCastle, "Le château de Mille-Yeux" },
             { MainQuestType.Gatekeepers, "Les portiers de Cavetown" },
             { MainQuestType.IsdirsTrials, "Les épreuves d'Isdir" },
+            { MainQuestType.MagicWord, "Le mot magique" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -257,6 +263,7 @@ internal static class QuestTexts
             { MainQuestType.SansrisCurse, "Klątwa Sansri" },
             { MainQuestType.Windgates, "Wrota wiatru" },
             { MainQuestType.TripToGadlon, "Wycieczka do Gadlonu" },
+            { MainQuestType.DonnersMine, "Stara kopalnia Donnera" },
             { MainQuestType.DrelbsSearch, "Poszukiwania Drelba" },
             { MainQuestType.GoldenArmour, "Złota zbroja" },
             { MainQuestType.GralTemple, "Świątynia Graala" },
@@ -274,6 +281,7 @@ internal static class QuestTexts
             { MainQuestType.ManyeyesCastle, "Zamek Wielookiego" },
             { MainQuestType.Gatekeepers, "Odźwierni z Cavetown" },
             { MainQuestType.IsdirsTrials, "Próby Isdira" },
+            { MainQuestType.MagicWord, "Magiczne słowo" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -303,6 +311,7 @@ internal static class QuestTexts
             { MainQuestType.SansrisCurse, "Sansriino prokletí" },
             { MainQuestType.Windgates, "Větrné brány" },
             { MainQuestType.TripToGadlon, "Výlet do Gadlonu" },
+            { MainQuestType.DonnersMine, "Donnerův starý důl" },
             { MainQuestType.DrelbsSearch, "Drelbovo hledání" },
             { MainQuestType.GoldenArmour, "Zlatá zbroj" },
             { MainQuestType.GralTemple, "Grálový chrám" },
@@ -320,6 +329,7 @@ internal static class QuestTexts
             { MainQuestType.ManyeyesCastle, "Hrad Mnohookého" },
             { MainQuestType.Gatekeepers, "Vrátní z Cavetownu" },
             { MainQuestType.IsdirsTrials, "Isdirovy zkoušky" },
+            { MainQuestType.MagicWord, "Kouzelné slovo" },
         } },
     };
 
@@ -449,6 +459,10 @@ internal static class QuestTexts
             { SubQuestType.TripToGadlon_ActivateTheTeleporter, "Aktiviere den Teleporter mit der Kugel" },
             { SubQuestType.TripToGadlon_FindRinakles, "Finde Rinakles, den Leiter der Schule" },
             { SubQuestType.TripToGadlon_AskRinaklesForTheWayHome, "Frag Rinakles nach dem Heimweg" },
+            { SubQuestType.DonnersMine_AskBoreAboutDonner, "Frag Bore nach Dönner" },
+            { SubQuestType.DonnersMine_OpenTheEntrance, "Öffne den Eingang auf der Insel" },
+            { SubQuestType.DonnersMine_FindDonnersKey, "Finde Dönners Schlüssel" },
+            { SubQuestType.DonnersMine_OpenDonnersDoor, "Öffne Dönners Tür" },
             { SubQuestType.DrelbsSearch_DefeatTheMonstersInTheMine, "Besiege die Monster in der Gnommine" },
             { SubQuestType.DrelbsSearch_AskDrelbAboutHisSearch, "Frag Drelb nach seiner Suche" },
             { SubQuestType.DrelbsSearch_FindTheHidingPlaces, "Finde Drelbs Verstecke" },
@@ -528,6 +542,7 @@ internal static class QuestTexts
             { SubQuestType.IsdirsTrials_BringAPoisonousSnake, "Bring dem Kristall eine Giftschlange" },
             { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Bring dem Kristall den blauen Kristall" },
             { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Nimm Isdirs Essenz entgegen" },
+            { SubQuestType.MagicWord_TellMilzorTheMagicWord, "Verrate Milzor das Zauberwort" },
         } },
         { GameLanguage.English, new()
         {
@@ -651,6 +666,10 @@ internal static class QuestTexts
             { SubQuestType.TripToGadlon_ActivateTheTeleporter, "Activate the teleporter with the sphere" },
             { SubQuestType.TripToGadlon_FindRinakles, "Find Rinakles, the head of the school" },
             { SubQuestType.TripToGadlon_AskRinaklesForTheWayHome, "Ask Rinakles for the way home" },
+            { SubQuestType.DonnersMine_AskBoreAboutDonner, "Ask Bore about Donner" },
+            { SubQuestType.DonnersMine_OpenTheEntrance, "Open the entrance on the island" },
+            { SubQuestType.DonnersMine_FindDonnersKey, "Find Donner's key" },
+            { SubQuestType.DonnersMine_OpenDonnersDoor, "Open Donner's door" },
             { SubQuestType.DrelbsSearch_DefeatTheMonstersInTheMine, "Defeat the monsters in the gnome mine" },
             { SubQuestType.DrelbsSearch_AskDrelbAboutHisSearch, "Ask Drelb about his search" },
             { SubQuestType.DrelbsSearch_FindTheHidingPlaces, "Find Drelb's hiding places" },
@@ -730,6 +749,7 @@ internal static class QuestTexts
             { SubQuestType.IsdirsTrials_BringAPoisonousSnake, "Bring a poisonous snake to the crystal" },
             { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Bring the blue crystal to the ice crystal" },
             { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Receive Isdir's essence" },
+            { SubQuestType.MagicWord_TellMilzorTheMagicWord, "Tell Milzor the magic word" },
         } },
         { GameLanguage.French, new()
         {
@@ -834,6 +854,10 @@ internal static class QuestTexts
             { SubQuestType.TripToGadlon_ActivateTheTeleporter, "Active le téléporteur avec la sphère" },
             { SubQuestType.TripToGadlon_FindRinakles, "Trouve Rinakles, le directeur de l'école" },
             { SubQuestType.TripToGadlon_AskRinaklesForTheWayHome, "Demande à Rinakles le chemin du retour" },
+            { SubQuestType.DonnersMine_AskBoreAboutDonner, "Interroge Bore sur Donner" },
+            { SubQuestType.DonnersMine_OpenTheEntrance, "Ouvre l'entrée sur l'île" },
+            { SubQuestType.DonnersMine_FindDonnersKey, "Trouve la clé de Donner" },
+            { SubQuestType.DonnersMine_OpenDonnersDoor, "Ouvre la porte de Donner" },
             { SubQuestType.DrelbsSearch_DefeatTheMonstersInTheMine, "Vaincs les monstres de la mine des gnomes" },
             { SubQuestType.DrelbsSearch_AskDrelbAboutHisSearch, "Demande à Drelb sa quête" },
             { SubQuestType.DrelbsSearch_FindTheHidingPlaces, "Trouve les cachettes de Drelb" },
@@ -913,6 +937,7 @@ internal static class QuestTexts
             { SubQuestType.IsdirsTrials_BringAPoisonousSnake, "Apporte un serpent venimeux au cristal" },
             { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Apporte le cristal bleu au cristal de glace" },
             { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Reçois l'essence d'Isdir" },
+            { SubQuestType.MagicWord_TellMilzorTheMagicWord, "Dis le mot magique à Milzor" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -1017,6 +1042,10 @@ internal static class QuestTexts
             { SubQuestType.TripToGadlon_ActivateTheTeleporter, "Uruchom teleporter za pomocą kuli" },
             { SubQuestType.TripToGadlon_FindRinakles, "Znajdź Rinaklesa, dyrektora szkoły" },
             { SubQuestType.TripToGadlon_AskRinaklesForTheWayHome, "Zapytaj Rinaklesa o drogę do domu" },
+            { SubQuestType.DonnersMine_AskBoreAboutDonner, "Zapytaj Bore'a o Donnera" },
+            { SubQuestType.DonnersMine_OpenTheEntrance, "Otwórz wejście na wyspie" },
+            { SubQuestType.DonnersMine_FindDonnersKey, "Znajdź klucz Donnera" },
+            { SubQuestType.DonnersMine_OpenDonnersDoor, "Otwórz drzwi Donnera" },
             { SubQuestType.DrelbsSearch_DefeatTheMonstersInTheMine, "Pokonaj potwory w kopalni gnomów" },
             { SubQuestType.DrelbsSearch_AskDrelbAboutHisSearch, "Zapytaj Drelba o jego poszukiwania" },
             { SubQuestType.DrelbsSearch_FindTheHidingPlaces, "Znajdź kryjówki Drelba" },
@@ -1096,6 +1125,7 @@ internal static class QuestTexts
             { SubQuestType.IsdirsTrials_BringAPoisonousSnake, "Przynieś kryształowi jadowitego węża" },
             { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Przynieś lodowemu kryształowi niebieski" },
             { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Odbierz esencję Isdira" },
+            { SubQuestType.MagicWord_TellMilzorTheMagicWord, "Zdradź Milzorowi magiczne słowo" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -1200,6 +1230,10 @@ internal static class QuestTexts
             { SubQuestType.TripToGadlon_ActivateTheTeleporter, "Aktivuj teleport pomocí koule" },
             { SubQuestType.TripToGadlon_FindRinakles, "Najdi Rinaklese, ředitele školy" },
             { SubQuestType.TripToGadlon_AskRinaklesForTheWayHome, "Zeptej se Rinaklese na cestu domů" },
+            { SubQuestType.DonnersMine_AskBoreAboutDonner, "Zeptej se Boreho na Donnera" },
+            { SubQuestType.DonnersMine_OpenTheEntrance, "Otevři vchod na ostrově" },
+            { SubQuestType.DonnersMine_FindDonnersKey, "Najdi Donnerův klíč" },
+            { SubQuestType.DonnersMine_OpenDonnersDoor, "Otevři Donnerovy dveře" },
             { SubQuestType.DrelbsSearch_DefeatTheMonstersInTheMine, "Poraz netvory v gnómím dole" },
             { SubQuestType.DrelbsSearch_AskDrelbAboutHisSearch, "Zeptej se Drelba na jeho hledání" },
             { SubQuestType.DrelbsSearch_FindTheHidingPlaces, "Najdi Drelbovy úkryty" },
@@ -1279,6 +1313,7 @@ internal static class QuestTexts
             { SubQuestType.IsdirsTrials_BringAPoisonousSnake, "Přines krystalu jedovatého hada" },
             { SubQuestType.IsdirsTrials_BringTheBlueCrystal, "Přines ledovému krystalu modrý krystal" },
             { SubQuestType.IsdirsTrials_ReceiveIsdirsEssence, "Převezmi Isdirovu esenci" },
+            { SubQuestType.MagicWord_TellMilzorTheMagicWord, "Prozraď Milzorovi kouzelné slovo" },
         } },
     };
 }

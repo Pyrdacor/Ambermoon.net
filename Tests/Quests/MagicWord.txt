@@ -1,0 +1,35 @@
+# The magic word (Ambermoon Advanced episode 2, any language): Necros (NPC 26), the talking chair in the witch's
+# house (map 411), tells the old magic word "Talis" (keyword 144) when Kasimir is in the party. Milzor (NPC 21),
+# who collects magic words, tries it and raises the luck of the party (variable 307).
+waitidle 20000
+dismissall
+cheat invite 16
+talkwait
+dismissall
+cheat netsrak
+quest MagicWord_TellMilzorTheMagicWord Inactive
+# --- Necros in the witch's house
+goto 411 10 12
+dismissall
+talk 26
+talkwait
+leave
+talkwait
+waitidle 5000
+quest MagicWord_TellMilzorTheMagicWord Active
+# --- Milzor
+goto 287 27 9
+dismissall
+talk 21
+talkwait
+say 144
+talkwait
+var 307 1
+quest MagicWord_TellMilzorTheMagicWord Completed
+mainquest MagicWord Completed
+leave
+talkwait
+waitidle 5000
+reloadquests
+mainquest MagicWord Completed
+exit

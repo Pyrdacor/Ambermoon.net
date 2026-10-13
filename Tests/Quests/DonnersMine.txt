@@ -1,0 +1,65 @@
+# Donner's old mine (original game and Advanced, any language): Bore (NPC 24), the dwarf left behind in Gemstone,
+# drops the staff of opening (334, keyword "Donner"). Put into the ground on the island in front of the mine
+# (map 230) it opens the entrance to Donner's old labyrinth (map 413), where Donner's key (346, chest 88) opens door 25.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest DonnersMine_AskBoreAboutDonner Inactive
+# --- Bore in the ruins of Gemstone
+goto 406 8 7
+dismissall
+talk 24
+talkwait
+quest DonnersMine_AskBoreAboutDonner Active
+say 78
+talkwait
+takeitems
+talkwait
+var 114 1
+count 334 1
+quest DonnersMine_AskBoreAboutDonner Completed
+quest DonnersMine_OpenTheEntrance Active
+leave
+talkwait
+waitidle 5000
+# --- the island in front of the mine
+# (standing a bit away from the edge of the world map)
+goto 230 12 14
+dismissall
+trigger 5 13 item:334
+talkwait
+eventbit 230 3 1
+quest DonnersMine_OpenTheEntrance Completed
+quest DonnersMine_FindDonnersKey Active
+# --- Donner's key in the old labyrinth
+goto 413 12 13
+dismissall
+cheat berserk
+dismissall
+trigger 12 12 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 346 1
+quest DonnersMine_FindDonnersKey Completed
+quest DonnersMine_OpenDonnersDoor Active
+reloadquests
+quest DonnersMine_FindDonnersKey Completed
+quest DonnersMine_OpenDonnersDoor Active
+goto 413 4 19
+dismissall
+trigger 4 18 Eye
+talkwait
+usekey 346
+talkwait
+quest DonnersMine_OpenDonnersDoor Completed
+mainquest DonnersMine Completed
+reloadquests
+quest DonnersMine_AskBoreAboutDonner Completed
+quest DonnersMine_OpenTheEntrance Completed
+quest DonnersMine_FindDonnersKey Completed
+quest DonnersMine_OpenDonnersDoor Completed
+mainquest DonnersMine Completed
+exit

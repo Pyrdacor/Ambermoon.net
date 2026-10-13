@@ -14,7 +14,7 @@ Keywords and riddle answers are given by dictionary index, so the scripts work i
 All scripts work with the original game and Ambermoon Advanced, except `ThievesGuild.txt`
 (Aman's conversation differs in Advanced) and the scripts of the Advanced-only quests (`YourHouse.txt`, `Pets.txt`, `SeaCreatures.txt`, `ManyeyesCastle.txt`, `Gatekeepers.txt`,
 `GoldenArmour.txt`, `MysticCreatures.txt`, `SandrasBrooch.txt`, `Eyrie.txt`, `BlackMountains.txt`,
-`DesertTemple.txt`, `PaladinGuild.txt`, `IsdirsTrials.txt`, `GralTemple.txt`, `MysticTower.txt`, `MasterThief.txt`, `DrelbsSearch.txt`), which need
+`DesertTemple.txt`, `PaladinGuild.txt`, `IsdirsTrials.txt`, `MagicWord.txt`, `GralTemple.txt`, `MysticTower.txt`, `MasterThief.txt`, `DrelbsSearch.txt`), which need
 `--version 5`.
 
 Run them from the build output folder, e.g.:

@@ -340,6 +340,15 @@ An easter egg leading into the world of *Dragonflight*.
 Advanced: the teleporter resets variable 210 when it is used, so Aderin is checked as well.
 Tests: `TripToGadlon.txt`
 
+### Donner's Old Mine (Dönners alte Mine)
+
+1. **Ask Bore about Donner**: Bore, the dwarf left behind in Gemstone, drops the staff of opening (variable 114).
+2. **Open the entrance on the island** in front of the mine with the staff (event 230:3).
+3. **Find Donner's key** in his old labyrinth (346, chest 88) or open his door.
+4. **Open Donner's door** (door 25).
+
+Tests: `DonnersMine.txt`
+
 ## Ambermoon Advanced quests
 
 These quests only exist in Ambermoon Advanced. They are only created for Advanced savegames of the given episode or
@@ -484,6 +493,13 @@ Needs the sea creatures (eye of the vortex) and Jeff's blind brandy (Gatekeepers
 7. **Receive Isdir's essence** (variable 298).
 
 Tests: `IsdirsTrials.txt`
+
+### The Magic Word (Das Zauberwort) — from episode 2
+
+1. **Tell Milzor the magic word**: Necros, the talking chair in the witch's house, tells the old magic word "Talis"
+   when Kasimir is in the party. Milzor tries it and raises the luck of the party (variable 307).
+
+Tests: `MagicWord.txt`
 
 ### The Gral Temple (Der Graltempel) — from episode 3
 
