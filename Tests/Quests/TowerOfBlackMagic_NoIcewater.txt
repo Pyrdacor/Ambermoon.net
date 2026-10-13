@@ -1,0 +1,48 @@
+# Tower of black magic: Luminor is defeated without visiting the flame of life and without any
+# icewater (original game and Advanced, any language).
+# Expected: "Weaken Luminor" stays hidden. Defeating Luminor only completes it if it is active.
+# The button in Luminor's hall disables the flame event (295:3) after his death, this must not
+# show the step either.
+waitidle 20000
+dismissall
+cheat level 50
+talkwait
+dismissall
+cheat teleport 293 11 4
+wait 2000
+dismissall
+trigger 11 3
+talkwait
+dismissall
+quest TowerOfBlackMagic_DefeatLuminor Active
+quest TowerOfBlackMagic_WeakenLuminor Inactive
+cheat light 3
+goto 298 10 10
+talkwait
+trigger 10 10
+talkwait
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+count 315 1
+closewindow
+talkwait
+var 99 0
+quest TowerOfBlackMagic_DefeatLuminor Completed
+# shown as completed (4/4) although it was never active
+quest TowerOfBlackMagic_WeakenLuminor Inactive
+quests
+# --- the button at 298 5,9 (only works after Luminor is gone) also disables 295:3, 295:5, 295:7
+goto 298 5 10
+talkwait
+trigger 5 9 Hand
+talkwait
+dismissall
+eventbit 295 3 1
+reloadquests
+log after reload
+quests
+quest TowerOfBlackMagic_DefeatLuminor Completed
+quest TowerOfBlackMagic_WeakenLuminor Inactive
+exit

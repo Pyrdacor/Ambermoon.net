@@ -27,11 +27,14 @@ namespace Ambermoon;
 ///   state                     print map, position, window and popup state
 ///   var &lt;index&gt; [0|1]        print a global variable, optionally check it
 ///   count &lt;item&gt; [amount]     print the amount of an item in the party, optionally check it
-///   waitbattle [timeout ms]   wait until a battle starts, pressing Return on popups meanwhile
-///                             (answers "Do you want to fight?" with yes, default timeout 20000)
+///   waitbattle [timeout ms] [optional]
+///                             wait until a battle starts, pressing Return on popups meanwhile
+///                             (answers "Do you want to fight?" with yes, default timeout 20000).
+///                             With "optional" it is no failure if no battle starts (random monsters).
 ///   yes                       answer a decision popup with yes (Return key)
 ///   closewindow               close the current window like the exit button (e.g. battle loot)
-///   takeloot                  take all items of the open chest or battle loot (active party member)
+///   takeloot [optional]       take all items, gold and food of the open chest or battle loot (active
+///                             party member), with "optional" it is no failure if nothing is open
 ///   usekey &lt;item index&gt;       use a key or lockpick (138) on the shown lock of a chest or door
 ///   goto &lt;map&gt; &lt;x&gt; &lt;y&gt;        teleport to a 1-based map position or the nearest free position around it
 ///                             (facing the target), e.g. to stand next to a chest or monster
@@ -42,14 +45,17 @@ namespace Ambermoon;
 ///   showitem &lt;item index&gt;     show an item of the active party member in the conversation
 ///   giveitem &lt;item index&gt;     give an item of the active party member in the conversation
 ///   takeitems                 take the items created in the conversation (active party member)
+///   givegold &lt;amount&gt;         give gold in the conversation (active party member)
 ///   leave                     leave the conversation (like the exit button)
 ///   talkwait [timeout ms] [quiet ms]
 ///                             click through conversation texts, window messages and popups (Return)
-///                             until nothing happened for 'quiet ms' (default 1000, timeout default 15000)
+///                             until nothing happened for 'quiet ms' (default 2000, timeout default 15000)
 ///   trigger &lt;x&gt; &lt;y&gt; [trigger]  trigger the map events at a 1-based map position
-///                             (Move, Eye, Hand, Mouth, ..., default Move)
+///                             (Move, Eye, Hand, Mouth, ..., default Move, or item:&lt;index&gt; to use an item
+///                             on that tile, e.g. if the tile can't be entered)
 ///   interact &lt;char&gt; [trigger]  interact with a map character (1-based index, default Mouth),
 ///                             e.g. for text popup characters
+///   activate &lt;slot&gt;           make the party member in slot 1-6 the active one
 ///   setvar &lt;index&gt; &lt;0|1&gt;      set a global variable
 ///   eventbit &lt;map&gt; &lt;event&gt; [0|1]
 ///                             print if a map event chain (1-based) is disabled (1), optionally check it
@@ -68,8 +74,9 @@ sealed class ScenarioScript
     DateTime? idleTimeout = null;
     DateTime? dismissTimeout = null;
     DateTime? battleTimeout = null;
+    bool battleOptional = false;
     DateTime? talkTimeout = null;
-    int talkQuietTime = 1000;
+    int talkQuietTime = 2000;
     int talkPopupTries = 0;
     (int Line, string Command)? retryCommand = null;
     DateTime retryTimeout = DateTime.MinValue;
@@ -193,7 +200,10 @@ sealed class ScenarioScript
                 }
                 else if (DateTime.Now > battleTimeout)
                 {
-                    Report(false, "waitbattle timed out: " + game.ScriptState());
+                    if (battleOptional)
+                        Console.WriteLine("  no battle started");
+                    else
+                        Report(false, "waitbattle timed out: " + game.ScriptState());
                     battleTimeout = null;
                 }
                 else
@@ -276,7 +286,10 @@ sealed class ScenarioScript
                                 continueTime = DateTime.Now.AddMilliseconds(300);
                                 return;
                             }
-                            Report(false, $"no window to close ({game.ScriptState()})");
+                            if (game.WindowActive)
+                                Report(false, $"the window could not be closed ({game.ScriptState()})");
+                            else
+                                Console.WriteLine("  no window is open (e.g. an emptied treasure closes itself)");
                         }
                         break;
                     case "goto":
@@ -309,8 +322,17 @@ sealed class ScenarioScript
                         break;
                     }
                     case "usekey":
-                        ReportError(game.ScriptUseKey(uint.Parse(parts[1])));
+                    {
+                        string? error = game.ScriptUseKey(uint.Parse(parts[1]));
+                        ReportError(error);
+                        if (error == null)
+                        {
+                            // the key animation takes a while before the result message is shown
+                            continueTime = DateTime.Now.AddMilliseconds(2500);
+                            return;
+                        }
                         break;
+                    }
                     case "takeloot":
                     {
                         int? remaining = game.ScriptTakeLoot();
@@ -328,7 +350,10 @@ sealed class ScenarioScript
                                 continueTime = DateTime.Now.AddMilliseconds(200);
                                 return;
                             }
-                            Report(false, $"no chest or loot is open ({game.ScriptState()})");
+                            if (parts.Length > 1 && parts[1].Equals("optional", StringComparison.OrdinalIgnoreCase))
+                                Console.WriteLine("  no chest or loot is open");
+                            else
+                                Report(false, $"no chest or loot is open ({game.ScriptState()})");
                         }
                         else if (remaining != 0)
                             Console.WriteLine($"  {remaining} item slots could not be taken");
@@ -375,6 +400,7 @@ sealed class ScenarioScript
                     }
                     case "waitbattle":
                         battleTimeout = DateTime.Now.AddMilliseconds(parts.Length > 1 ? int.Parse(parts[1]) : 20000);
+                        battleOptional = parts.Length > 2 && parts[2].Equals("optional", StringComparison.OrdinalIgnoreCase);
                         continueTime = DateTime.Now.AddMilliseconds(100);
                         return;
                     case "battlebg":
@@ -395,21 +421,52 @@ sealed class ScenarioScript
                     case "giveitem":
                         ReportError(game.ScriptConversationItem(uint.Parse(parts[1]), name == "giveitem"));
                         break;
-                    case "takeitems":
-                        ReportError(game.ScriptTakeConversationItems());
+                    case "givegold":
+                        ReportError(game.ScriptGiveGold(uint.Parse(parts[1])));
                         break;
+                    case "takeitems":
+                    {
+                        int? taken = game.ScriptTakeConversationItems();
+                        if (taken == null)
+                        {
+                            Report(false, "no conversation is active");
+                        }
+                        else if (taken == -1)
+                        {
+                            Console.WriteLine("  the created items could not be taken (too heavy or no free slot)");
+                        }
+                        else if (taken == 0)
+                        {
+                            // items might be created after some animation
+                            if (!retry)
+                                retryTimeout = DateTime.Now.AddMilliseconds(4000);
+                            if (DateTime.Now < retryTimeout)
+                            {
+                                if (game.ScriptConversationTextActive)
+                                    host.Click(host.WindowCenter, false);
+                                retryCommand = (lineNumber, command);
+                                continueTime = DateTime.Now.AddMilliseconds(300);
+                                return;
+                            }
+                            Console.WriteLine("  no items were created");
+                        }
+                        break;
+                    }
                     case "leave":
                         ReportError(game.ScriptLeaveConversation());
                         break;
                     case "talkwait":
                         talkTimeout = DateTime.Now.AddMilliseconds(parts.Length > 1 ? int.Parse(parts[1]) : 15000);
-                        talkQuietTime = parts.Length > 2 ? int.Parse(parts[2]) : 1000;
+                        talkQuietTime = parts.Length > 2 ? int.Parse(parts[2]) : 2000;
                         lastPopupTime = DateTime.Now;
                         continueTime = DateTime.Now.AddMilliseconds(200);
                         return;
                     case "trigger":
                     {
-                        var trigger = parts.Length > 3 ? Enum.Parse<EventTrigger>(parts[3], true) : EventTrigger.Move;
+                        var trigger = parts.Length < 4 ? EventTrigger.Move
+                            : parts[3].StartsWith("item:", StringComparison.OrdinalIgnoreCase)
+                                ? EventTrigger.Item0 + int.Parse(parts[3][5..]) // using an item on that tile
+                                : Enum.Parse<EventTrigger>(parts[3], true);
                         if (!game.ScriptTriggerMapEvent(trigger, uint.Parse(parts[1]), uint.Parse(parts[2])))
                             Console.WriteLine($"  no event was triggered at {parts[1]},{parts[2]}");
                         break;
@@ -429,6 +486,10 @@ sealed class ScenarioScript
                             Report(bit == (parts[3] == "1"), $"event bit {parts[1]}:{parts[2]} is {(bit ? 1 : 0)}, expected {parts[3]}");
                         break;
                     }
+                    case "activate":
+                        if (!game.ScriptSetActivePartyMember(int.Parse(parts[1])))
+                            Report(false, $"there is no party member in slot {parts[1]}");
+                        break;
                     case "setvar":
                         game.ScriptSetGlobalVariable(uint.Parse(parts[1]), parts[2] == "1");
                         break;

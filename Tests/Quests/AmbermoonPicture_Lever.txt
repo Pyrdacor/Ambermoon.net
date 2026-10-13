@@ -1,0 +1,72 @@
+# Ambermoon picture: the lever in antique area 2 (367, 7,6, hand) toggles global variable 184, the
+# variable Baron Karsten sets when he gets the picture (original game and Advanced, any language).
+# Expected: setting 184 with the lever before the delivery must not complete the step, and resetting
+# 184 with the lever after the delivery must not undo it (the step uses the tile change 427 11,14
+# -> 117 instead of 184). Both are checked live and after loading.
+waitidle 20000
+dismissall
+# Netsrak carries the vault key, the hero is overloaded by the 10000 gold reward
+cheat invite 2
+talkwait
+waitidle 5000
+cheat level 50
+talkwait
+dismissall
+goto 287 26 14
+wait 2000
+dismissall
+talk 20
+talkwait
+say 63
+talkwait
+takeitems
+activate 1
+leave
+talkwait
+waitidle 5000
+quest AmbermoonPicture_DeliverThePicture Active
+# --- the lever sets 184 before the delivery
+cheat light 3
+goto 367 7 7
+talkwait
+trigger 7 6 Hand
+talkwait
+dismissall
+var 184 1
+quest AmbermoonPicture_DeliverThePicture Active
+reloadquests
+quest AmbermoonPicture_DeliverThePicture Active
+# --- the lever resets 184
+trigger 7 6 Hand
+talkwait
+dismissall
+var 184 0
+# --- deliver the picture
+goto 427 13 6
+wait 2000
+dismissall
+talk 30
+talkwait
+giveitem 301
+talkwait 20000
+activate 2
+takeitems
+activate 1
+leave
+talkwait
+waitidle 5000
+var 184 1
+quest AmbermoonPicture_DeliverThePicture Completed
+# --- the lever resets 184 after the delivery
+cheat light 3
+goto 367 7 7
+talkwait
+trigger 7 6 Hand
+talkwait
+dismissall
+var 184 0
+quest AmbermoonPicture_DeliverThePicture Completed
+reloadquests
+log after reload
+quest AmbermoonPicture_DeliverThePicture Completed
+exit

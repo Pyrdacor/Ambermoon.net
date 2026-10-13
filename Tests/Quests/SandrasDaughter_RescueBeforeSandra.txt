@@ -1,0 +1,65 @@
+# Sandra's daughter: Sabine is rescued before ever talking to Sandra (original game and Advanced,
+# any language). Sandra's key/chest and the diary are skipped.
+# Expected: torture chamber -> "Go to Burnville" completed and "Rescue Sabine" active, Luminor's key
+# from the fight -> cell door (27/32) -> "Rescue Sabine" completed, "Return to Sandra" active.
+# The first talk to Sandra (she only thanks, text 2) completes "Return to Sandra" right away.
+waitidle 20000
+dismissall
+cheat light 3
+cheat level 50
+talkwait
+dismissall
+cheat teleport 293 11 4
+wait 2000
+dismissall
+trigger 11 3
+talkwait
+dismissall
+eventbit 293 2 1
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Completed
+quest SandrasDaughter_RescueSabine Active
+# --- Luminor (map 298) and his key
+cheat light 3
+goto 298 10 10
+talkwait
+trigger 10 10
+talkwait
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+count 315 1
+closewindow
+talkwait
+quest TowerOfBlackMagic_DefeatLuminor Completed
+quest SandrasDaughter_RescueSabine Active
+# --- the cell door (293, 8,17)
+goto 293 8 18
+trigger 8 17 Eye
+talkwait
+usekey 315
+talkwait 20000
+dismissall
+var 27 1
+var 28 0
+quest SandrasDaughter_RescueSabine Completed
+quest SandrasDaughter_ReturnToSandra Active
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Completed
+# --- the very first talk to Sandra
+goto 266 40 6
+wait 2000
+dismissall
+talk 5
+talkwait
+var 8181 1
+quest SandrasDaughter_ReturnToSandra Completed
+leave
+talkwait
+waitidle 5000
+reloadquests
+log after reload
+quests
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Completed
+quest SandrasDaughter_RescueSabine Completed
+quest SandrasDaughter_ReturnToSandra Completed
+exit

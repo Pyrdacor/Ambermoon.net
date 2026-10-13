@@ -11,7 +11,7 @@ namespace Ambermoon;
 /// </summary>
 partial class GameCore
 {
-    sealed record ScriptConversationActions(Action<string> SayWord, Action ShowItem, Action GiveItem, Action Leave, Action TakeItems);
+    sealed record ScriptConversationActions(Action<string> SayWord, Action ShowItem, Action GiveItem, Action Leave, Func<int> TakeItems, Action<uint> GiveGold);
 
     ScriptConversationActions? scriptConversation;
     Func<uint, bool>? scriptLockItemUser;
@@ -90,13 +90,29 @@ partial class GameCore
 
     /// <summary>
     /// Puts the items created in the active conversation into the active party member's inventory.
+    /// Returns the number of taken item slots, -1 if the items could not be taken (weight
+    /// or no free slot) or null if no conversation is active.
     /// </summary>
-    public string? ScriptTakeConversationItems()
+    public int? ScriptTakeConversationItems()
+    {
+        if (scriptConversation == null)
+            return null;
+
+        return scriptConversation.TakeItems();
+    }
+
+    /// <summary>
+    /// Gives gold of the active party member in the active conversation.
+    /// </summary>
+    public string? ScriptGiveGold(uint amount)
     {
         if (scriptConversation == null)
             return "no conversation is active";
 
-        scriptConversation.TakeItems();
+        if (CurrentPartyMember!.Gold < amount)
+            return $"the active party member has only {CurrentPartyMember.Gold} gold";
+
+        scriptConversation.GiveGold(amount);
 
         return null;
     }
@@ -136,6 +152,18 @@ partial class GameCore
         return is3D
             ? renderMap3D!.InteractWithCharacter(characterIndex - 1, trigger)
             : renderMap2D!.InteractWithCharacter(characterIndex - 1, trigger);
+    }
+
+    /// <summary>
+    /// Makes the party member in the given slot (1-6) the active one (like clicking the portrait).
+    /// </summary>
+    public bool ScriptSetActivePartyMember(int slot)
+    {
+        if (slot < 1 || slot > MaxPartyMembers || GetPartyMember(slot - 1) == null)
+            return false;
+
+        SetActivePartyMember(slot - 1);
+        return true;
     }
 
     public void ScriptSetGlobalVariable(uint index, bool value) => CurrentSavegame!.SetGlobalVariable(index, value);
@@ -202,33 +230,26 @@ partial class GameCore
         if (map == null)
             return null;
 
-        for (int radius = 0; radius <= 3; ++radius)
+        // nearest positions first and orthogonal neighbors before diagonal ones (to face the target)
+        var offsets = Enumerable.Range(-3, 7).SelectMany(dy => Enumerable.Range(-3, 7).Select(dx => (dx, dy)))
+            .OrderBy(o => Math.Max(Math.Abs(o.dx), Math.Abs(o.dy))).ThenBy(o => Math.Abs(o.dx) + Math.Abs(o.dy));
+
+        foreach (var (dx, dy) in offsets)
         {
-            for (int dy = -radius; dy <= radius; ++dy)
-            {
-                for (int dx = -radius; dx <= radius; ++dx)
-                {
-                    if (Math.Max(Math.Abs(dx), Math.Abs(dy)) != radius)
-                        continue;
+            int tx = (int)x + dx;
+            int ty = (int)y + dy;
 
-                    int tx = (int)x + dx;
-                    int ty = (int)y + dy;
+            if (tx < 1 || ty < 1 || tx > map.Width || ty > map.Height)
+                continue;
 
-                    if (tx < 1 || ty < 1 || tx > map.Width || ty > map.Height)
-                        continue;
+            // face the target
+            var direction = dx == 0 && dy == 0 ? CharacterDirection.Up
+                : Math.Abs(dx) >= Math.Abs(dy)
+                    ? (dx > 0 ? CharacterDirection.Left : CharacterDirection.Right)
+                    : (dy > 0 ? CharacterDirection.Up : CharacterDirection.Down);
 
-                    // face the target
-                    var direction = Math.Abs(dx) >= Math.Abs(dy)
-                        ? (dx > 0 ? CharacterDirection.Left : CharacterDirection.Right)
-                        : (dy > 0 ? CharacterDirection.Up : CharacterDirection.Down);
-
-                    if (radius == 0)
-                        direction = CharacterDirection.Up;
-
-                    if (Teleport(mapIndex, (uint)tx, (uint)ty, direction, out _, false, true))
-                        return new Position(tx, ty);
-                }
-            }
+            if (Teleport(mapIndex, (uint)tx, (uint)ty, direction, out _, false, true))
+                return new Position(tx, ty);
         }
 
         return null;
@@ -281,6 +302,31 @@ partial class GameCore
             if (!itemSlot.Empty && DropItem(partyMemberSlot, null, itemSlot) != 0)
                 ++remaining;
         }
+
+        // a chest only counts as emptied if the gold and food were taken as well
+        bool isChest = storage is Chest;
+
+        if (storage.Gold != 0)
+        {
+            CurrentPartyMember!.AddGold(storage.Gold);
+            storage.Gold = 0;
+
+            if (isChest)
+                ChestGoldChanged();
+        }
+
+        if (storage.Food != 0)
+        {
+            CurrentPartyMember!.AddFood(storage.Food);
+            storage.Food = 0;
+
+            if (isChest)
+                ChestFoodChanged();
+        }
+
+        // like taking the items via the UI (e.g. removes treasure piles when empty)
+        ItemRemovedFromStorage();
+        UpdateCharacterInfo();
 
         return remaining;
     }

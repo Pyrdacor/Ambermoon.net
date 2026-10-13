@@ -1,0 +1,98 @@
+# Tower of black magic: icewater is found before the flame of life was seen and only two flasks
+# are poured, then the game is loaded (original game and Advanced, any language).
+# After pouring both flasks no icewater is owned and the flame event (295:3) is not set, so the
+# poured icewater (global variables 99-102) has to keep the step active.
+# Expected: "Weaken Luminor 2/4" stays active after loading.
+waitidle 20000
+dismissall
+cheat give 138 10
+cheat level 50
+talkwait
+dismissall
+cheat light 3
+quest TowerOfBlackMagic_WeakenLuminor Inactive
+# --- chest 62 (296, 4,10) and chest 63 (297, 13,5)
+goto 296 4 10
+talkwait
+trigger 4 10 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+count 316 1
+# found before the flame was seen
+quest TowerOfBlackMagic_WeakenLuminor Active
+# a monster walks around the chests of this floor, fight it first
+goto 297 11 5
+waitbattle 15000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+goto 297 13 5
+talkwait
+trigger 13 5 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+count 316 2
+# --- pour both into the stone face (295, 8,3) without touching the flame area
+goto 295 8 3
+talkwait
+useitem 316
+talkwait
+dismissall
+useitem 316
+talkwait
+dismissall
+var 99 1
+var 100 1
+var 101 0
+count 316 0
+eventbit 295 3 0
+quest TowerOfBlackMagic_WeakenLuminor Active
+quests
+reloadquests
+log after reload
+quests
+# expected Active (2/4), see header
+quest TowerOfBlackMagic_WeakenLuminor Active
+# --- the remaining flasks complete it (chest 64: 297 11,3, chest 65: 298 3,8)
+goto 297 11 3
+talkwait
+trigger 11 3 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+goto 298 3 8
+talkwait
+trigger 3 8 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+quest TowerOfBlackMagic_WeakenLuminor Active
+goto 295 8 3
+talkwait
+useitem 316
+talkwait
+dismissall
+useitem 316
+talkwait
+dismissall
+var 102 1
+quest TowerOfBlackMagic_WeakenLuminor Completed
+reloadquests
+quest TowerOfBlackMagic_WeakenLuminor Completed
+exit

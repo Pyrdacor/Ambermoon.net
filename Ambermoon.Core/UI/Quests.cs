@@ -695,11 +695,6 @@ partial class QuestLog
             return (subQuest) => Quests.First(q => q.Type == mainQuest).SubQuests.First(q => q.Type == targetQuest).AddRequiredQuest(subQuest.Type);
         }
 
-        Action<SubQuest> ActivateOtherQuest(MainQuestType mainQuest, SubQuestType otherQuest)
-        {
-            return (_) => Quests.First(q => q.Type == mainQuest).SubQuests.First(q => q.Type == otherQuest).State = QuestState.Active;
-        }
-
         Action<SubQuest> CompleteOtherQuest(MainQuestType mainQuest, SubQuestType otherQuest)
         {
             return (_) => Quests.First(q => q.Type == mainQuest).SubQuests.First(q => q.Type == otherQuest).State = QuestState.Completed;
@@ -741,6 +736,9 @@ partial class QuestLog
                 {
                     Type = SubQuestType.LyramionsFaith_EnterTheTempleOfBrotherhood,
                     PostActivationAction = subQuest => subQuest.State = QuestState.Blocked,
+                    // the guard demon might be killed instead of using the demon sleep
+                    PostCompletionAction = CompleteOtherActiveQuests(MainQuestType.LyramionsFaith, SubQuestType.LyramionsFaith_EnterSecretRoomInLibrary,
+                        SubQuestType.LyramionsFaith_FindRecipe, SubQuestType.LyramionsFaith_BrewDemonSleep),
                     Triggers =
                     [
                         // Activate
@@ -758,8 +756,11 @@ partial class QuestLog
                     [
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
-                        // Completion
-                        new ItemObtainedTrigger(game, TriggerType.Completion, 370), // Picked up the hangar key (needs defeat of S'Orel beforehand)
+                        // Completion: picked up the hangar key (S'Orel's chest) or used it at the hangar door
+                        new OrTrigger<ItemObtainedTrigger, ChestUnlockedTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 370), // Hangar key
+                            (g, t) => new ChestUnlockedTrigger(g, t, 111)), // S'Orel's chest
+                        new DoorUnlockedTrigger(game, TriggerType.Completion, 30), // Hangar door
                     ],
                     SourceType = QuestSourceType.Custom,
                     SourceIndex = (uint)QuestTexts.CustomSourceName.Shandra,
@@ -784,8 +785,10 @@ partial class QuestLog
                     [
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
-                        // Completion
-                        new ItemObtainedTrigger(game, TriggerType.Completion, 378), // Green navstone
+                        // Completion: own the green navstone or opened its chest (the navstone is used up when flying)
+                        new OrTrigger<ItemObtainedTrigger, ChestUnlockedTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 378), // Green navstone
+                            (g, t) => new ChestUnlockedTrigger(g, t, 116)),
                     ],
                     SourceType = QuestSourceType.Item,
                     SourceIndex = 381, // Kire's note
@@ -836,8 +839,10 @@ partial class QuestLog
                     [
                         // Activate
                         new ItemObtainedTrigger(game, TriggerType.Activation, 209), // Shandra's Amber
-                        // Completion
-                        new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_ShowedAmberToGrandfather), // Showed Amber to Grandfather
+                        // Completion: showed the amber to grandfather, used it at Shandra's coffin (193)
+                        // or grandfather died (11 = cave-in removed) before it was shown to him
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, GlobalVar_ShowedAmberToGrandfather) ||
+                            IsGlobalVariableSet(g, e, 193) || (IsGlobalVariableSet(g, e, 11) && g.GetTotalItemCount(209) != 0)),
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 1, // Grandfather
@@ -886,14 +891,19 @@ partial class QuestLog
                     Type = SubQuestType.LyramionsFaith_BrewDemonSleep,
                     PostCompletionAction = subQuest =>
                     {
-                        ActivateOtherQuest(MainQuestType.LyramionsFaith, SubQuestType.LyramionsFaith_EnterTheTempleOfBrotherhood)(subQuest);
+                        var templeQuest = Quests.First(q => q.Type == MainQuestType.LyramionsFaith).SubQuests.First(q => q.Type == SubQuestType.LyramionsFaith_EnterTheTempleOfBrotherhood);
+
+                        if (templeQuest.State == QuestState.Blocked)
+                            templeQuest.State = QuestState.Active;
                     },
                     Triggers =
                     [
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
-                        // Completion
-                        new ItemObtainedTrigger(game, TriggerType.Completion, 343), // Demon Sleep
+                        // Completion: own the demon sleep or already used it at the temple (431:6)
+                        new OrTrigger<ItemObtainedTrigger, EventDisabledTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 343), // Demon Sleep
+                            (g, t) => new EventDisabledTrigger(g, t, 431, 6)),
                     ],
                     SourceType = QuestSourceType.Item,
                     SourceIndex = 345, // Recipe
@@ -956,6 +966,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.Grandfather_VisitGrave,
+                    Final = true,
                     Triggers =
                     [
                         // Activate
@@ -1028,7 +1039,7 @@ partial class QuestLog
                         new KeywordLearnedTrigger(game, TriggerType.Activation, 12), // "ANTIDOTE", not ideal, but there is nothing else to trigger on
                         // Complete
                         new NextSubQuestActivatedTrigger(),
-                        new GlobalVariableTrigger(game, TriggerType.Completion, 26), // talked to Antonius about Antidote
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 26) || AntidoteMade(g, e)), // talked to Antonius about Antidote
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 12, // Wat the fisherman
@@ -1041,7 +1052,7 @@ partial class QuestLog
                         // Activate
                         new GlobalVariableTrigger(game, TriggerType.Activation, 26), // talked to Antonius about Antidote
                         // Complete: own the swamp lilly or Anthony already made the antidote
-                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => g.GetTotalItemCount(255) != 0 || AntidoteMade(g, e)),
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => (IsGlobalVariableSet(g, e, 26) && g.GetTotalItemCount(255) != 0) || AntidoteMade(g, e)),
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 2, // Father Anthony
@@ -1054,7 +1065,7 @@ partial class QuestLog
                         // Activate
                         new GlobalVariableTrigger(game, TriggerType.Activation, 26), // talked to Antonius about Antidote
                         // Complete: empty bottle, but also water of life will work, or Anthony already made the antidote
-                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => g.GetTotalItemCount(218) != 0 || g.GetTotalItemCount(254) != 0 || AntidoteMade(g, e)),
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => (IsGlobalVariableSet(g, e, 26) && (g.GetTotalItemCount(218) != 0 || g.GetTotalItemCount(254) != 0)) || AntidoteMade(g, e)),
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 2, // Father Anthony
@@ -1067,7 +1078,7 @@ partial class QuestLog
                         // Activate
                         new GlobalVariableTrigger(game, TriggerType.Activation, 26), // talked to Antonius about Antidote
                         // Complete: own the water of life or Anthony already made the antidote
-                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => g.GetTotalItemCount(254) != 0 || AntidoteMade(g, e)),
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => (IsGlobalVariableSet(g, e, 26) && g.GetTotalItemCount(254) != 0) || AntidoteMade(g, e)),
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 2, // Father Anthony
@@ -1109,6 +1120,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.SwampFever_TalkToSally,
+                    Final = true,
                     Triggers =
                     [
                         // Activate
@@ -1122,6 +1134,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.SwampFever_TalkToWat,
+                    Final = true,
                     Triggers =
                     [
                         // Activate
@@ -1156,6 +1169,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.GoldenHorseshoes_ReturnHorseshoes,
+                    Final = true,
                     PostActivationAction = CompleteOtherActiveQuests(MainQuestType.Grandfather, SubQuestType.Grandfather_TellGrandfatherAboutCaveIn, SubQuestType.Grandfather_FindTolimar),
                     Triggers =
                     [
@@ -1191,8 +1205,10 @@ partial class QuestLog
                     [
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
-                        // Complete
-                        new ItemObtainedTrigger(game, TriggerType.Completion, 288), // Alkem's ring
+                        // Complete: own Alkem's ring or already returned it (81)
+                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 288), // Alkem's ring
+                            (g, t) => new GlobalVariableTrigger(g, t, 81)),
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 18, // Alkem
@@ -1200,6 +1216,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.AlkemsRing_ReturnTheRing,
+                    Final = true,
                     Triggers =
                     [
                         // Activate
@@ -1222,7 +1239,9 @@ partial class QuestLog
                         // Activate
                         new GlobalVariableTrigger(game, TriggerType.Activation, GlobalVar_SylphQuestStarted), // Talked to cook
                         // Complete: Lady Heidi told about the fairies (keywords "Fairies" and "Fairy" are only typed by the player)
-                        new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_HeidiToldAboutFairies),
+                        // or the quest went on without her (sylph cave door opened, Sariel told about her sister, Selena rescued)
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, GlobalVar_HeidiToldAboutFairies) ||
+                            g.CurrentSavegame!.IsDoorLocked(10) == false || IsGlobalVariableSet(g, e, 78) || IsGlobalVariableSet(g, e, 79)),
                     ],
                     SourceType = QuestSourceType.TextPopupNPC,
                     SourceIndex = CreateTextPopupNPCSourceIndex(269, 0), // Cook
@@ -1258,6 +1277,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.Sylphs_RescueSelena,
+                    Final = true,
                     Triggers =
                     [
                         // Activate
@@ -1293,6 +1313,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.OrcPlague_ReturnToGeorg,
+                    Final = true,
                     Triggers =
                     [
                         // Activate: once the leader is defeated (head obtained)
@@ -1322,6 +1343,7 @@ partial class QuestLog
                         new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
                             (g, t) => new ItemObtainedTrigger(g, t, 266, 267), // SILBERHAND or NAGIERS BRIEF
                             (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_GaveThiefProofToBaronGeorge)),
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 60), // made peace with Nagier
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 8, // Freiherr Georg von Spannenberg
@@ -1329,6 +1351,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.ThiefPlague_ReturnToGeorg,
+                    Final = true,
                     Triggers =
                     [
                         // Activate: once Nagier has been dealt with (proof obtained)
@@ -1361,6 +1384,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.WineTrophies_ReturnThem,
+                    Final = true,
                     Triggers =
                     [
                         // Activate: found a goblet or returned one already
@@ -1394,6 +1418,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.ChainOfOffice_ReturnIt,
+                    Final = true,
                     Triggers =
                     [
                         // Activate
@@ -1411,6 +1436,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.Monstereye_BuyIt,
+                    Final = true,
                     Triggers =
                     [
                         // Activate: Sandire offered the monster eye (or it was bought right away)
@@ -1458,6 +1484,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.Graveyard_ReturnBroochToAman,
+                    Final = true,
                     Triggers =
                     [
                         // Activate
@@ -1488,6 +1515,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.ThiefGuild_PassTheTest,
+                    Final = true,
                     Triggers =
                     [
                         // Activate
@@ -1523,9 +1551,10 @@ partial class QuestLog
                         // Activate: found a part of the amulet (B O S in the cellar, T A R from Thornahuun)
                         new PredicateTrigger(game, TriggerType.Activation, (g, e) => !MadmanKilled(g, e) &&
                             (g.GetTotalItemCount(263) + g.GetTotalItemCount(264) != 0 || g.GetTotalItemCount(265) != 0 || IsGlobalVariableSet(g, e, 29))),
-                        // Complete: own both parts, the united amulet or the madman already got it (29)
-                        new PredicateTrigger(game, TriggerType.Completion, (g, e) =>
-                            (g.GetTotalItemCount(263) != 0 && g.GetTotalItemCount(264) != 0) || g.GetTotalItemCount(265) != 0 || IsGlobalVariableSet(g, e, 29)),
+                        // Complete: own both parts, the united amulet or the madman already got it (29).
+                        // If the madman was killed, the amulet is useless and the step stays hidden.
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 29) || (!MadmanKilled(g, e) &&
+                            ((g.GetTotalItemCount(263) != 0 && g.GetTotalItemCount(264) != 0) || g.GetTotalItemCount(265) != 0))),
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 6, // Clementine
@@ -1538,9 +1567,8 @@ partial class QuestLog
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
                         // Complete: Theresa in Burnville united the parts (or the madman already got the amulet)
-                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
-                            (g, t) => new ItemObtainedTrigger(g, t, 265), // T A R B O S amulet
-                            (g, t) => new GlobalVariableTrigger(g, t, 29)),
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 29) ||
+                            (!MadmanKilled(g, e) && g.GetTotalItemCount(265) != 0)), // T A R B O S amulet
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 22, // Theresa
@@ -1548,6 +1576,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.Madman_GiveTheAmuletToTheMadman,
+                    Final = true,
                     Triggers =
                     [
                         // Activate
@@ -1561,6 +1590,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.Madman_KillTheMadman,
+                    Final = true,
                     // The amulet is useless then
                     PostCompletionAction = subQuest =>
                     {
@@ -1610,6 +1640,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.SandrasDaughter_ReturnToSandra,
+                    Final = true,
                     Triggers =
                     [
                         // Activate
@@ -1642,6 +1673,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.TowerOfBlackMagic_FreeThePeopleOfBurnville,
+                    Final = true,
                     Triggers =
                     [
                         // Activate: found the prisoners in Luminor's torture chamber
@@ -1658,9 +1690,11 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate: learned about the flame of life or found icewater
-                        new OrTrigger<EventDisabledTrigger, ItemObtainedTrigger>(game, TriggerType.Activation,
-                            (g, t) => new EventDisabledTrigger(g, t, 295, 3),
-                            (g, t) => new ItemObtainedTrigger(g, t, 316)), // Icewater
+                        // The button in Luminor's hall also disables the flame event (295:3) after his death.
+                        new PredicateTrigger(game, TriggerType.Activation, (g, e) => g.GetTotalItemCount(316) != 0 || // Icewater
+                            (IsEventBitSet(g, e, 295, 3) && g.GetTotalItemCount(315) == 0 && !IsGlobalVariableSet(g, e, 27))),
+                        // Activate: icewater was poured already (persists when no icewater is left)
+                        new CountTrigger(game, TriggerType.Activation, [99, 100, 101, 102]),
                         // Complete: poured icewater into the flame (99 to 102 = 1st to 4th icewater)
                         new CountTrigger(game, TriggerType.Completion, [99, 100, 101, 102]),
                     ],
@@ -1671,8 +1705,9 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.TowerOfBlackMagic_DefeatLuminor,
+                    Final = true,
                     // Weakening Luminor is optional
-                    PostCompletionAction = CompleteOtherQuest(MainQuestType.TowerOfBlackMagic, SubQuestType.TowerOfBlackMagic_WeakenLuminor),
+                    PostCompletionAction = CompleteOtherActiveQuests(MainQuestType.TowerOfBlackMagic, SubQuestType.TowerOfBlackMagic_WeakenLuminor),
                     Triggers =
                     [
                         // Activate: Sabine told that Luminor holds the key to the cells
@@ -1696,8 +1731,8 @@ partial class QuestLog
                     [
                         // Activate: Valdyn came through the light gate in Luminor's tower
                         new EventDisabledTrigger(game, TriggerType.Activation, 296, 9),
-                        // Complete: got the yellow sphere from S'Krel
-                        new GlobalVariableTrigger(game, TriggerType.Completion, 218),
+                        // Complete: got the yellow sphere from S'Krel (after Valdyn came through the light gate)
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 218) && IsEventBitSet(g, e, 296, 9)),
                     ],
                     SourceType = QuestSourceType.PartyMember,
                     SourceIndex = 12, // Valdyn
@@ -1705,10 +1740,11 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.ValdynsReturn_UseTheYellowSphere,
+                    Final = true,
                     Triggers =
                     [
-                        // Activate
-                        new GlobalVariableTrigger(game, TriggerType.Activation, 218),
+                        // Activate: got the yellow sphere and Valdyn came through the light gate
+                        new PredicateTrigger(game, TriggerType.Activation, (g, e) => IsGlobalVariableSet(g, e, 218) && IsEventBitSet(g, e, 296, 9)),
                         // Complete: entered the teleporter room with the sphere and Valdyn or used the sphere at the machine
                         new OrTrigger<EventDisabledTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
                             (g, t) => new EventDisabledTrigger(g, t, 369, 11),
@@ -1724,6 +1760,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.AmbermoonPicture_DeliverThePicture,
+                    Final = true,
                     Triggers =
                     [
                         // Activate: Dieter Rottermund gave the picture
@@ -1757,6 +1794,7 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.BrotherhoodOfTarbos_DefeatThornahuun,
+                    Final = true,
                     Triggers =
                     [
                         // Activate: met Thornahuun in the coffin hall

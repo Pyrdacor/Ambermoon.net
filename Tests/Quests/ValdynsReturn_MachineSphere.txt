@@ -1,0 +1,63 @@
+# Valdyn's return: the teleporter room is entered without Valdyn (nothing happens), then the yellow
+# sphere is used at the teleporter machine (369, 16,7) instead. Original game and Advanced.
+# Expected: 369 10,6 without Valdyn in the party does not complete the step (chain stops at the party
+# member condition). Using the sphere at the machine shows text 16 (Valdyn's speech), which sets the
+# custom global variable 8180 and completes "Use the yellow sphere".
+# Note: the machine text has no party member condition, so this also works when Valdyn is not in
+# the party (the original shows Valdyn's speech anyway).
+waitidle 20000
+dismissall
+# S'Krel speaks Moranian only (also maxes the stats)
+cheat netsrak
+cheat level 50
+talkwait
+dismissall
+cheat light 3
+goto 296 8 5
+talkwait
+trigger 8 4
+talkwait 20000
+dismissall
+quest ValdynsReturn_FindAWayHome Active
+cheat give 398 1
+goto 452 14 8
+wait 2000
+dismissall
+talk 34
+talkwait
+giveitem 398
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+quest ValdynsReturn_UseTheYellowSphere Active
+# --- teleporter room without Valdyn
+cheat light 3
+goto 369 10 7
+talkwait
+trigger 10 6
+talkwait
+eventbit 369 11 0
+quest ValdynsReturn_UseTheYellowSphere Active
+# --- use the sphere at the machine (stand on 16,7)
+# monsters of the antique area might attack
+waitbattle 5000 optional
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
+goto 369 16 7
+talkwait
+# the machine tile can't be entered, use the sphere on it
+trigger 16 7 item:367
+talkwait
+dismissall
+var 8180 1
+quest ValdynsReturn_UseTheYellowSphere Completed
+reloadquests
+log after reload
+quest ValdynsReturn_FindAWayHome Completed
+quest ValdynsReturn_UseTheYellowSphere Completed
+exit

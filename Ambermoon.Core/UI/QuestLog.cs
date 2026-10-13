@@ -55,6 +55,12 @@ file static class QuestStateExtensions
         if (states.Length == 1 && states[0] == QuestState.Completed)
             return QuestState.Completed;
 
+        // Some steps might have been skipped (they stay inactive). If nothing is open
+        // anymore and a final step is completed, the quest is completed as well.
+        if (!states.Contains(QuestState.Active) && !states.Contains(QuestState.Blocked) &&
+            quest.SubQuests.Any(q => q.Final && q.State == QuestState.Completed))
+            return QuestState.Completed;
+
         if (states.Contains(QuestState.Active))
             return QuestState.Active;
 
@@ -91,6 +97,13 @@ public record SubQuest(QuestLog QuestLog, MainQuestType MainQuestType, QuestStat
     public required IQuestTrigger[] Triggers { get; init; } = [];
 
     public required SubQuestType Type { get; init; }
+
+    /// <summary>
+    /// If a final sub quest is completed and no other sub quest is active
+    /// or blocked, the main quest is completed even if some sub quests were
+    /// skipped (they stay inactive then).
+    /// </summary>
+    public bool Final { get; init; } = false;
 
     /// <summary>
     /// Note: This is only used if there are other quests which have to be

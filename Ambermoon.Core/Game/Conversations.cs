@@ -70,7 +70,7 @@ partial class GameCore
         UIText? moveItemMessage = null;
         layout.DraggedItemDropped += DraggedItemDropped;
         closeWindowHandler = _ => CleanUp();
-        scriptConversation = new(SayWord, ShowItem, GiveItem, () => Exit(true), TakeCreatedItems);
+        scriptConversation = new(SayWord, ShowItem, GiveItem, () => Exit(true), TakeCreatedItems, GiveGoldAmount);
 
         void SetText(string text, Action? followAction = null)
         {
@@ -315,29 +315,37 @@ partial class GameCore
                 CurrentPartyMember.Gold, gold =>
                 {
                     ClosePopup();
-                    var @event = GetFirstMatchingEvent(e => e.Interaction == InteractionType.GiveGold);
-                    if (@event != null)
-                    {
-                        if (gold < @event.Value)
-                        {
-                            SetText(DataNameProvider.MoreGoldNeeded);
-                        }
-                        else
-                        {
-                            conversationEvent = @event;
-                            layout.ButtonsDisabled = true;
-                            currentInteractionType = InteractionType.GiveGold;
-                            amount = @event.Value;
-                            aborted = false;
-                            lastEventStatus = true;
-                            HandleNextEvent();
-                        }
-                    }
-                    else
-                    {
-                        SetText(DataNameProvider.NotInterestedInGold);
-                    }
+                    GiveGoldAmount(gold);
                 });
+        }
+
+        void GiveGoldAmount(uint gold)
+        {
+            aborted = false;
+            var @event = GetFirstMatchingEvent(e => e.Interaction == InteractionType.GiveGold);
+            if (@event != null)
+            {
+                if (gold < @event.Value)
+                {
+                    SetText(DataNameProvider.MoreGoldNeeded);
+                }
+                else
+                {
+                    QuestLog?.CheckEvent(conversationPartner, @event);
+
+                    conversationEvent = @event;
+                    layout.ButtonsDisabled = true;
+                    currentInteractionType = InteractionType.GiveGold;
+                    amount = @event.Value;
+                    aborted = false;
+                    lastEventStatus = true;
+                    HandleNextEvent();
+                }
+            }
+            else
+            {
+                SetText(DataNameProvider.NotInterestedInGold);
+            }
         }
 
         void GiveFood()
@@ -511,14 +519,25 @@ partial class GameCore
             }
         }
 
-        void TakeCreatedItems()
+        int TakeCreatedItems()
         {
             int partyMemberSlot = SlotFromPartyMember(CurrentPartyMember!)!.Value;
+            int taken = 0;
+
+            bool anyItem = false;
 
             foreach (var itemSlot in createdItemSlots.Where(s => !s.Empty))
-                DropItem(partyMemberSlot, null, itemSlot);
+            {
+                anyItem = true;
+
+                if (DropItem(partyMemberSlot, null, itemSlot) == 0)
+                    ++taken;
+            }
 
             ShowCreatedItems();
+
+            // -1: there are items but they could not be taken (weight or no free slot)
+            return anyItem && taken == 0 ? -1 : taken;
         }
 
         void CreateItem(uint itemIndex, uint amount)

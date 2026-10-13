@@ -1,0 +1,71 @@
+# Sandra's daughter: Burnville is reached by ship and the torture chamber is found before
+# Sandra asked for Sabine (original game and Advanced, any language).
+# Expected: entering the torture chamber (293:2) completes "Go to Burnville and find Sabine" even
+# though Sandra never asked (completion triggers also fire for inactive steps), "Rescue Sabine"
+# becomes active. Talking to Sandra afterwards with the other keyword 15 "Sabine" (also sets 28
+# and gives the key) must not change anything, and the diary found later must not either.
+waitidle 20000
+dismissall
+cheat light 3
+cheat level 50
+talkwait
+dismissall
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Inactive
+# --- Luminor's torture chamber (map 293)
+cheat teleport 293 11 4
+wait 2000
+dismissall
+trigger 11 3
+talkwait
+dismissall
+eventbit 293 2 1
+var 28 0
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Completed
+quest SandrasDaughter_RescueSabine Active
+quest SandrasDaughter_ReturnToSandra Inactive
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Active
+quest TowerOfBlackMagic_DefeatLuminor Active
+# talking to Sabine (map character 6) in the torture chamber changes nothing
+interact 6
+talkwait
+leave
+talkwait
+waitidle 5000
+quest SandrasDaughter_RescueSabine Active
+# --- now Sandra (5) asks for her daughter (keyword 15 "Sabine" instead of 14 "Daughter")
+goto 266 40 6
+wait 2000
+dismissall
+talk 5
+talkwait
+say 15
+talkwait
+var 28 1
+takeitems
+leave
+talkwait
+waitidle 5000
+count 257 1
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Completed
+quest SandrasDaughter_RescueSabine Active
+quest SandrasDaughter_ReturnToSandra Inactive
+# --- the diary found afterwards (286, bookcase 2-4,19)
+goto 286 3 20
+talkwait
+trigger 3 19 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+eventbit 286 7 1
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Completed
+quest SandrasDaughter_RescueSabine Active
+reloadquests
+log after reload
+quests
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Completed
+quest SandrasDaughter_RescueSabine Active
+quest SandrasDaughter_ReturnToSandra Inactive
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Active
+quest TowerOfBlackMagic_DefeatLuminor Active
+exit

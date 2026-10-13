@@ -1,0 +1,72 @@
+# Tower of black magic: the sphere is used without Nelvin telling about it, and Luminor is defeated
+# before the torture chamber was entered (the tower floors 294-298 do not require the torture
+# chamber). Original game and Advanced, any language.
+# Expected:
+# - using the sphere in the gate house completes "Open the tower" directly (step shown completed)
+# - Luminor's key completes "Defeat Luminor" (and "Weaken Luminor") while they are still inactive
+# - entering the torture chamber afterwards only activates "Free the people of Burnville",
+#   "Defeat Luminor" stays completed, Sandra's "Go to Burnville" completes, "Rescue Sabine" active
+# - the cell door completes "Free the people" and "Rescue Sabine"
+waitidle 20000
+dismissall
+cheat level 50
+talkwait
+dismissall
+# the sphere of opening (normally carried by Nelvin, who was never met here)
+cheat give 287 1
+goto 292 6 5
+talkwait
+useitem 287
+talkwait
+dismissall
+eventbit 292 3 1
+quest TowerOfBlackMagic_OpenTheTower Completed
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Inactive
+# --- Luminor (map 298)
+cheat light 3
+goto 298 10 10
+talkwait
+trigger 10 10
+talkwait
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+count 315 1
+closewindow
+talkwait
+eventbit 293 2 0
+quest TowerOfBlackMagic_DefeatLuminor Completed
+quest TowerOfBlackMagic_WeakenLuminor Inactive
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Inactive
+quest SandrasDaughter_RescueSabine Inactive
+# --- now the torture chamber
+cheat teleport 293 11 4
+wait 2000
+dismissall
+trigger 11 3
+talkwait
+dismissall
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Active
+quest TowerOfBlackMagic_DefeatLuminor Completed
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Completed
+quest SandrasDaughter_RescueSabine Active
+goto 293 8 18
+trigger 8 17 Eye
+talkwait
+usekey 315
+talkwait 20000
+dismissall
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Completed
+quest SandrasDaughter_RescueSabine Completed
+quest SandrasDaughter_ReturnToSandra Active
+reloadquests
+log after reload
+quests
+quest TowerOfBlackMagic_OpenTheTower Completed
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Completed
+quest TowerOfBlackMagic_WeakenLuminor Inactive
+quest TowerOfBlackMagic_DefeatLuminor Completed
+quest SandrasDaughter_RescueSabine Completed
+quest SandrasDaughter_ReturnToSandra Active
+exit

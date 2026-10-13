@@ -1,0 +1,46 @@
+# Monster eye: Sandire is left without buying, then offered too little gold, then the game is loaded
+# before buying it (original game and Advanced, any language).
+# Expected: talking alone activates the step (custom global variable 8184, persisted), leaving and
+# giving less than 5000 gold ("more gold needed") keep it active, also after loading. Buying it later
+# completes it.
+waitidle 20000
+dismissall
+cheat give gold 5100
+goto 263 13 18
+wait 2000
+dismissall
+talk 35
+talkwait
+leave
+talkwait
+waitidle 5000
+quest Monstereye_BuyIt Active
+reloadquests
+quest Monstereye_BuyIt Active
+talk 35
+talkwait
+givegold 100
+talkwait
+var 221 0
+count 386 0
+quest Monstereye_BuyIt Active
+leave
+talkwait
+waitidle 5000
+reloadquests
+log after reload
+quest Monstereye_BuyIt Active
+talk 35
+talkwait
+givegold 5000
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+var 221 1
+count 386 1
+quest Monstereye_BuyIt Completed
+reloadquests
+quest Monstereye_BuyIt Completed
+exit
