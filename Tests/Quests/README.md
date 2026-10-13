@@ -24,6 +24,6 @@ Ambermoon.net --version 0 --skip-intro --load 0 --script <repo>/Tests/Quests/Gra
 Each script prints `PASS`/`FAIL` lines and a summary at the end.
 
 Cheats are only used for things which are not part of the tested quest, e.g. keys or items from other
-quests (`cheat give`), light in dark dungeons, winning fights (`cheat win`) or teleporting to a place
+quests (`cheat give`), light in dark dungeons, winning or avoiding fights (`cheat win`, `cheat berserk`) or teleporting to a place
 (`goto`, `cheat teleport`). Some scripts use `cheat netsrak` (max stats and all languages) so the lone hero
 can carry heavy loot or talk to NPCs of other languages.

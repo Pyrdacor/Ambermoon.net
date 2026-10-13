@@ -407,6 +407,11 @@ partial class GameCore
     }
 
     /// <summary>
+    /// State of the given main quest (derived from its sub quests) or null if there is no quest log.
+    /// </summary>
+    public QuestState? ScriptMainQuestState(MainQuestType mainQuestType) => QuestLog?.GetMainQuestState(mainQuestType);
+
+    /// <summary>
     /// All sub quests which are not inactive, grouped by main quest.
     /// </summary>
     public string ScriptQuests()

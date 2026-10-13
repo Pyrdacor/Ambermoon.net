@@ -27,7 +27,6 @@
 #   (all removed) -> treasure 86 (NoSave). Fire-thistle: world map 149 at 48,25 (treasure 87, NoSave).
 #   The other reagents come from merchants / other quests (mushroom: merchant 10, toadstool: merchant 3,
 #   flint and iron: merchant 1, empty flask: merchants 6/15, swamp lily: swamp fever quest, kalmir herb: ?) -> cheat.
-# - Crystal harp 159 (temple crystal wall, use at 431 11,24): NPC 29 Matthias, other quest -> cheat.
 # - S'Orel key 371: loot of S'Orel (monster group 69) in the head priest's chambers (map 432, chain 3 at 6,3..6,5).
 # - Hangar key 370 (+ S'Orel news 372): map 432 chest 111 at 11,3, key 371. Hangar door 30 at 431 11,8.
 # - Kire's note 381 (+ amber gem 151, chest key 384): airship (map 435) treasure 112 at 3,13 (skeleton).
@@ -159,13 +158,10 @@ count 344 0
 quest LyramionsFaith_BrewDemonSleep Completed
 quest LyramionsFaith_EnterTheTempleOfBrotherhood Active
 quest LyramionsFaith_ExploreTheTempleOfBrotherhood Inactive
-# --- temple of the brotherhood (map 431): crystal wall (crystal harp from Matthias, other quest)
-cheat give 159 1
+# --- temple of the brotherhood (map 431), the crystal wall in the entry hall is walked around
 goto 431 11 24
-trigger 11 24 item:159
 talkwait
 dismissall
-eventbit 431 2 1
 quest LyramionsFaith_EnterTheTempleOfBrotherhood Active
 # the guard demon (text 3) and the food bowl (text 4)
 goto 431 11 17

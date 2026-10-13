@@ -1,0 +1,66 @@
+# Kire's letter: Kire (NPC 55) writes a letter to his wife Dorina (NPC 57), his son Ketnar (NPC 58) knows where
+# she lives (original game and Advanced, any language)
+waitidle 20000
+dismissall
+# Kire and his family speak Dwarfish (taught in Dor Kiredon), carry the rewards (no quest relevance)
+cheat netsrak
+quest KiresLetter_FindDorina Inactive
+# --- Kire in his residence (map 337)
+goto 337 37 15
+dismissall
+talk 55
+talkwait
+say 32
+talkwait
+var 52 1
+takeitems
+count 280 1
+quest KiresLetter_FindDorina Active
+quest KiresLetter_ShowTheLetterToKetnar Active
+quest KiresLetter_GiveTheLetterToDorina Inactive
+leave
+talkwait
+waitidle 5000
+# --- Ketnar reads the letter and tells the password of Dorina's tree
+talk 58
+talkwait
+showitem 280
+talkwait
+var 66 1
+quest KiresLetter_ShowTheLetterToKetnar Completed
+quest KiresLetter_FindDorina Active
+leave
+talkwait
+waitidle 5000
+# --- Dorina in her cave (map 347)
+goto 347 13 24
+dismissall
+talk 57
+talkwait
+var 61 1
+quest KiresLetter_FindDorina Completed
+quest KiresLetter_GiveTheLetterToDorina Active
+giveitem 280
+talkwait 20000
+waitidle 5000
+var 45 1
+quest KiresLetter_GiveTheLetterToDorina Completed
+quest KiresLetter_ReturnToKire Active
+# --- back to Kire (Dorina brings the party to his residence, map 353)
+talk 55
+talkwait
+takeitems
+var 55 1
+count 292 1
+quest KiresLetter_ReturnToKire Completed
+mainquest KiresLetter Completed
+leave
+talkwait
+waitidle 5000
+reloadquests
+quest KiresLetter_FindDorina Completed
+quest KiresLetter_ShowTheLetterToKetnar Completed
+quest KiresLetter_GiveTheLetterToDorina Completed
+quest KiresLetter_ReturnToKire Completed
+mainquest KiresLetter Completed
+exit

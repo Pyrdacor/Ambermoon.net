@@ -1,7 +1,7 @@
 # Lyramion's Faith edge case: go to the temple of the brotherhood before visiting Shandra's coffin and get the
 # hangar key from S'Orel's chest (original game and Advanced, any language). Start: --load 0
 # The head priest's chambers (431 3,16 -> 432) are south of the guard demon, so S'Orel and the hangar key can be
-# reached with the crystal harp only. The hangar door (11,8) is behind the demon, so the quest stops there.
+# reached without the demon. The hangar door (11,8) is behind the demon, so the quest stops there.
 # Expected: "Explore the temple" is completed (although it was never active) and "Explore the hangar" becomes
 #   active while "Talk to Shandra" is still active. Later the coffin activates "Enter the temple" as blocked.
 waitidle 20000
@@ -22,10 +22,8 @@ quest LyramionsFaith_TalkToShandraInNewlake Active
 quest LyramionsFaith_EnterTheTempleOfBrotherhood Inactive
 quest LyramionsFaith_BringShandrasStoneToGrandfather Inactive
 quest LyramionsFaith_UseShandrasStone Inactive
-# --- temple right away (crystal harp from Matthias, other quest)
-cheat give 159 1
+# --- temple right away
 goto 431 11 24
-trigger 11 24 item:159
 talkwait
 dismissall
 quest LyramionsFaith_EnterTheTempleOfBrotherhood Inactive

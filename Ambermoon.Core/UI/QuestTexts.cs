@@ -112,6 +112,8 @@ internal static class QuestTexts
             { MainQuestType.AmbermoonPicture, "Ambermoon Gemälde" },
             { MainQuestType.Madman, "Der Verrückte" },
             { MainQuestType.BrotherhoodOfTarbos, "Die Bruderschaft von Tarbos" },
+            { MainQuestType.KiresLetter, "Kires Brief" },
+            { MainQuestType.FerrinsDaughter, "Ferrins Tochter" },
         } },
         { GameLanguage.English, new()
         {
@@ -134,6 +136,8 @@ internal static class QuestTexts
             { MainQuestType.AmbermoonPicture, "Ambermoon Picture" },
             { MainQuestType.Madman, "The Madman" },
             { MainQuestType.BrotherhoodOfTarbos, "The Brotherhood of Tarbos" },
+            { MainQuestType.KiresLetter, "Kire's Letter" },
+            { MainQuestType.FerrinsDaughter, "Ferrin's Daughter" },
         } },
         { GameLanguage.French, new()
         {
@@ -156,6 +160,8 @@ internal static class QuestTexts
             { MainQuestType.AmbermoonPicture, "La peinture Ambermoon" },
             { MainQuestType.Madman, "Le fou" },
             { MainQuestType.BrotherhoodOfTarbos, "La confrérie de Tarbos" },
+            { MainQuestType.KiresLetter, "La lettre de Kire" },
+            { MainQuestType.FerrinsDaughter, "La fille de Ferrin" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -178,6 +184,8 @@ internal static class QuestTexts
             { MainQuestType.AmbermoonPicture, "Obraz Ambermoon" },
             { MainQuestType.Madman, "Szaleniec" },
             { MainQuestType.BrotherhoodOfTarbos, "Bractwo Tarbos" },
+            { MainQuestType.KiresLetter, "List Kirego" },
+            { MainQuestType.FerrinsDaughter, "Córka Ferrina" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -200,6 +208,8 @@ internal static class QuestTexts
             { MainQuestType.AmbermoonPicture, "Obraz Jantarového měsíce" },
             { MainQuestType.Madman, "Šílenec" },
             { MainQuestType.BrotherhoodOfTarbos, "Bratrstvo Tarbos" },
+            { MainQuestType.KiresLetter, "Kireův dopis" },
+            { MainQuestType.FerrinsDaughter, "Ferrinova dcera" },
         } },
     };
 
@@ -297,6 +307,21 @@ internal static class QuestTexts
             // Brotherhood of Tarbos
             { SubQuestType.BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, "Bring den Amberstar zum Tempel" },
             { SubQuestType.BrotherhoodOfTarbos_DefeatThornahuun, "Besiege Thornahuun" },
+            { SubQuestType.LyramionsFaith_FlyToMorag, "Fliege nach Morag" },
+            { SubQuestType.LyramionsFaith_TalkToSriel, "Sprich mit dem Moraner im Gefängnis" },
+            { SubQuestType.LyramionsFaith_SearchSrielsPalace, "Durchsuche S'riels Palast" },
+            { SubQuestType.LyramionsFaith_CollectTheCrystalStrings, "Sammle die Kristallsaiten" },
+            { SubQuestType.LyramionsFaith_HaveTheHarpStrung, "Lass Matthias die Harfe bespannen" },
+            { SubQuestType.LyramionsFaith_ShatterTheCrystalWall, "Zerstöre die Kristallwand im Tempel" },
+            { SubQuestType.LyramionsFaith_DestroyTheMoranianMachine, "Zerstöre die moranische Maschine" },
+            { SubQuestType.KiresLetter_FindDorina, "Finde Kires Frau Dorina" },
+            { SubQuestType.KiresLetter_ShowTheLetterToKetnar, "Zeige Ketnar Kires Brief" },
+            { SubQuestType.KiresLetter_GiveTheLetterToDorina, "Gib Dorina Kires Brief" },
+            { SubQuestType.KiresLetter_ReturnToKire, "Kehre zu Kire zurück" },
+            { SubQuestType.FerrinsDaughter_AskFerrinAboutHisMourning, "Frag Ferrin nach seiner Trauer" },
+            { SubQuestType.FerrinsDaughter_SearchTheStorageCellar, "Durchsuche Ferrins Lagerkeller" },
+            { SubQuestType.FerrinsDaughter_FindFerrinsDaughter, "Finde Ferrins Tochter" },
+            { SubQuestType.FerrinsDaughter_ReturnToFerrin, "Kehre zu Ferrin zurück" },
         } },
         { GameLanguage.English, new()
         {
@@ -388,6 +413,21 @@ internal static class QuestTexts
             // Brotherhood of Tarbos
             { SubQuestType.BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, "Take the Amberstar to the temple" },
             { SubQuestType.BrotherhoodOfTarbos_DefeatThornahuun, "Defeat Thornahuun" },
+            { SubQuestType.LyramionsFaith_FlyToMorag, "Fly to Morag" },
+            { SubQuestType.LyramionsFaith_TalkToSriel, "Talk to the Moranian in the prison" },
+            { SubQuestType.LyramionsFaith_SearchSrielsPalace, "Search S'riel's palace" },
+            { SubQuestType.LyramionsFaith_CollectTheCrystalStrings, "Collect the crystal strings" },
+            { SubQuestType.LyramionsFaith_HaveTheHarpStrung, "Have Matthias string the harp" },
+            { SubQuestType.LyramionsFaith_ShatterTheCrystalWall, "Shatter the crystal wall in the temple" },
+            { SubQuestType.LyramionsFaith_DestroyTheMoranianMachine, "Destroy the Moranian machine" },
+            { SubQuestType.KiresLetter_FindDorina, "Find Kire's wife Dorina" },
+            { SubQuestType.KiresLetter_ShowTheLetterToKetnar, "Show Kire's letter to Ketnar" },
+            { SubQuestType.KiresLetter_GiveTheLetterToDorina, "Give Kire's letter to Dorina" },
+            { SubQuestType.KiresLetter_ReturnToKire, "Return to Kire" },
+            { SubQuestType.FerrinsDaughter_AskFerrinAboutHisMourning, "Ask Ferrin about his mourning" },
+            { SubQuestType.FerrinsDaughter_SearchTheStorageCellar, "Search Ferrin's storage cellar" },
+            { SubQuestType.FerrinsDaughter_FindFerrinsDaughter, "Find Ferrin's daughter" },
+            { SubQuestType.FerrinsDaughter_ReturnToFerrin, "Return to Ferrin" },
         } },
         { GameLanguage.French, new()
         {
@@ -460,6 +500,21 @@ internal static class QuestTexts
             { SubQuestType.AmbermoonPicture_DeliverThePicture, "Apporte la peinture au Baron Karsten" },
             { SubQuestType.BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, "Apporte l'Amberstar au temple" },
             { SubQuestType.BrotherhoodOfTarbos_DefeatThornahuun, "Vaincs Thornahuun" },
+            { SubQuestType.LyramionsFaith_FlyToMorag, "Vole vers Morag" },
+            { SubQuestType.LyramionsFaith_TalkToSriel, "Parle au Moranien dans la prison" },
+            { SubQuestType.LyramionsFaith_SearchSrielsPalace, "Fouille le palais de S'riel" },
+            { SubQuestType.LyramionsFaith_CollectTheCrystalStrings, "Rassemble les cordes de cristal" },
+            { SubQuestType.LyramionsFaith_HaveTheHarpStrung, "Fais monter les cordes par Matthias" },
+            { SubQuestType.LyramionsFaith_ShatterTheCrystalWall, "Brise le mur de cristal du temple" },
+            { SubQuestType.LyramionsFaith_DestroyTheMoranianMachine, "Détruis la machine moranienne" },
+            { SubQuestType.KiresLetter_FindDorina, "Trouve Dorina, la femme de Kire" },
+            { SubQuestType.KiresLetter_ShowTheLetterToKetnar, "Montre la lettre de Kire à Ketnar" },
+            { SubQuestType.KiresLetter_GiveTheLetterToDorina, "Donne la lettre de Kire à Dorina" },
+            { SubQuestType.KiresLetter_ReturnToKire, "Retourne voir Kire" },
+            { SubQuestType.FerrinsDaughter_AskFerrinAboutHisMourning, "Demande à Ferrin pourquoi il est en deuil" },
+            { SubQuestType.FerrinsDaughter_SearchTheStorageCellar, "Fouille la cave de Ferrin" },
+            { SubQuestType.FerrinsDaughter_FindFerrinsDaughter, "Trouve la fille de Ferrin" },
+            { SubQuestType.FerrinsDaughter_ReturnToFerrin, "Retourne voir Ferrin" },
         } },
         { GameLanguage.Polish, new()
         {
@@ -532,6 +587,21 @@ internal static class QuestTexts
             { SubQuestType.AmbermoonPicture_DeliverThePicture, "Zanieś obraz baronowi Karstenowi" },
             { SubQuestType.BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, "Zanieś Amberstar do świątyni" },
             { SubQuestType.BrotherhoodOfTarbos_DefeatThornahuun, "Pokonaj Thornahuuna" },
+            { SubQuestType.LyramionsFaith_FlyToMorag, "Leć na Morag" },
+            { SubQuestType.LyramionsFaith_TalkToSriel, "Porozmawiaj z Moraninem w więzieniu" },
+            { SubQuestType.LyramionsFaith_SearchSrielsPalace, "Przeszukaj pałac S'riela" },
+            { SubQuestType.LyramionsFaith_CollectTheCrystalStrings, "Zbierz kryształowe struny" },
+            { SubQuestType.LyramionsFaith_HaveTheHarpStrung, "Niech Matthias naciągnie struny na harfę" },
+            { SubQuestType.LyramionsFaith_ShatterTheCrystalWall, "Zniszcz kryształową ścianę w świątyni" },
+            { SubQuestType.LyramionsFaith_DestroyTheMoranianMachine, "Zniszcz morańską maszynę" },
+            { SubQuestType.KiresLetter_FindDorina, "Znajdź Dorinę, żonę Kirego" },
+            { SubQuestType.KiresLetter_ShowTheLetterToKetnar, "Pokaż Ketnarowi list Kirego" },
+            { SubQuestType.KiresLetter_GiveTheLetterToDorina, "Oddaj Dorinie list Kirego" },
+            { SubQuestType.KiresLetter_ReturnToKire, "Wróć do Kirego" },
+            { SubQuestType.FerrinsDaughter_AskFerrinAboutHisMourning, "Zapytaj Ferrina o jego żałobę" },
+            { SubQuestType.FerrinsDaughter_SearchTheStorageCellar, "Przeszukaj piwnicę Ferrina" },
+            { SubQuestType.FerrinsDaughter_FindFerrinsDaughter, "Znajdź córkę Ferrina" },
+            { SubQuestType.FerrinsDaughter_ReturnToFerrin, "Wróć do Ferrina" },
         } },
         { GameLanguage.Czech, new()
         {
@@ -604,6 +674,21 @@ internal static class QuestTexts
             { SubQuestType.AmbermoonPicture_DeliverThePicture, "Přines obraz baronu Karstenovi" },
             { SubQuestType.BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, "Přines Jantarovou hvězdu do chrámu" },
             { SubQuestType.BrotherhoodOfTarbos_DefeatThornahuun, "Poraz Thornahuuna" },
+            { SubQuestType.LyramionsFaith_FlyToMorag, "Leť na Morag" },
+            { SubQuestType.LyramionsFaith_TalkToSriel, "Promluv si s Moraňanem ve vězení" },
+            { SubQuestType.LyramionsFaith_SearchSrielsPalace, "Prohledej S'rielův palác" },
+            { SubQuestType.LyramionsFaith_CollectTheCrystalStrings, "Posbírej křišťálové struny" },
+            { SubQuestType.LyramionsFaith_HaveTheHarpStrung, "Nech Matthiase natáhnout struny na harfu" },
+            { SubQuestType.LyramionsFaith_ShatterTheCrystalWall, "Rozbij křišťálovou zeď v chrámu" },
+            { SubQuestType.LyramionsFaith_DestroyTheMoranianMachine, "Znič moraňský stroj" },
+            { SubQuestType.KiresLetter_FindDorina, "Najdi Kireovu ženu Dorinu" },
+            { SubQuestType.KiresLetter_ShowTheLetterToKetnar, "Ukaž Ketnarovi Kireův dopis" },
+            { SubQuestType.KiresLetter_GiveTheLetterToDorina, "Dej Dorině Kireův dopis" },
+            { SubQuestType.KiresLetter_ReturnToKire, "Vrať se ke Kireovi" },
+            { SubQuestType.FerrinsDaughter_AskFerrinAboutHisMourning, "Zeptej se Ferrina, proč truchlí" },
+            { SubQuestType.FerrinsDaughter_SearchTheStorageCellar, "Prohledej Ferrinův sklep" },
+            { SubQuestType.FerrinsDaughter_FindFerrinsDaughter, "Najdi Ferrinovu dceru" },
+            { SubQuestType.FerrinsDaughter_ReturnToFerrin, "Vrať se k Ferrinovi" },
         } },
     };
 }

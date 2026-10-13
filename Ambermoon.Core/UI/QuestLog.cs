@@ -432,6 +432,8 @@ public partial class QuestLog
         CheckDoorUnlock(uint.MaxValue);
     }
 
+    internal QuestState GetMainQuestState(MainQuestType questType) => Quests.First(q => q.Type == questType).ToCompoundState();
+
     internal void CompleteMainQuest(MainQuestType questType)
     {
         questGroups[questType] = false; // collapse completed quests

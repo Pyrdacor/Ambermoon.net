@@ -231,7 +231,7 @@ Tests: `BrotherhoodOfTarbos.txt`, `BrotherhoodOfTarbos_ThornahuunFirst.txt`, `Br
 
 ### Lyramion's Faith (Lyramions Schicksal)
 
-The main story. Not finished yet, the steps so far:
+The main story:
 
 1. **Talk to Shandra in Newlake**: grandfather tells about the wine (same dialogue). Done when Shandra's amber
    is used at her coffin (variable 193).
@@ -245,9 +245,39 @@ The main story. Not finished yet, the steps so far:
 7. **Explore the hangar**: Kire's note. **Find the navstone**: the green navstone (owned or its chest 116).
 8. **Fly to the forest moon** (event 343:16), **Meet the dwarf leader Kire** (51),
    **Find a way to leave the forest moon** (blue or yellow navstone, or flown away with it, 8177).
+9. **Fly to Morag**: arriving in the prison of S'angrila (event 439:2) or S'riel freed (222).
+10. **Talk to S'riel**: in his cell (variable 222, he teaches Morag and brings the party to his palace).
+11. **Search S'riel's palace**: chest 117 (or the crystal string 354 / S'orel's palace key 388 owned).
+12. **Collect the crystal strings** (x/7): owned strings, done with seven or the strung harp / the opened
+    crystal wall.
+13. **Have the harp strung**: Matthias in Illien sells the elven harp and strings it (crystal harp 159 owned or
+    the wall opened).
+14. **Shatter the crystal wall** in the entry hall of the temple with the harp (event 431:3). The party walks
+    around the wall on the first temple visit, so it is not part of step 5.
+15. **Destroy the Moranian machine** (event 453:4). Final step, the outro follows.
 
 Advanced: the library has an additional treasure, on the forest moon Ketnar offers another way (variable 320).
-Tests: `LyramionsFaith.txt` and `LyramionsFaith_*.txt`
+Tests: `LyramionsFaith.txt` and `LyramionsFaith_*.txt` (`LyramionsFaith_Morag.txt` for steps 9-15)
+
+### Kire's Letter (Kires Brief)
+
+1. **Find Dorina**: Kire gives a letter for his wife (keyword, variable 52). Done when Dorina is talked to (61)
+   or the letter is given (45).
+2. **Show the letter to Ketnar**: optional, Ketnar tells where Dorina lives (66). Completed with step 1.
+3. **Give the letter to Dorina** (variable 45, she brings the party back to Kire).
+4. **Return to Kire**: the reward (variable 55).
+
+Tests: `KiresLetter.txt`, `KiresLetter_SkipKetnar.txt`
+
+### Ferrin's Daughter (Ferrins Tochter)
+
+1. **Ask Ferrin about his mourning**: Ferrin is talked to (86), done with the keyword and the cellar key (87).
+2. **Search the storage cellar**: the cellar door (door 13) is unlocked or the daughter found.
+3. **Find Ferrin's daughter**: in the small cave behind the tornak caves (variable 94).
+4. **Return to Ferrin**: his wife gives the reward (95).
+
+If the daughter is found before Ferrin was asked, the first step stays hidden.
+Tests: `FerrinsDaughter.txt`, `FerrinsDaughter_FoundFirst.txt`
 
 ## Ambermoon Advanced quests
 

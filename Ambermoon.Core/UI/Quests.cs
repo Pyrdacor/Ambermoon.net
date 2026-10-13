@@ -26,6 +26,8 @@ public enum MainQuestType
     AmbermoonPicture,
     BrotherhoodOfTarbos,
     Madman,
+    KiresLetter,
+    FerrinsDaughter,
 }
 
 public enum SubQuestType
@@ -41,7 +43,13 @@ public enum SubQuestType
     LyramionsFaith_FlyToTheForestMoon,
     LyramionsFaith_MeetTheDwarfLeader,
     LyramionsFaith_FindAWayToLeaveForestMoon,
-    // TODO ...
+    LyramionsFaith_FlyToMorag,
+    LyramionsFaith_TalkToSriel,
+    LyramionsFaith_SearchSrielsPalace,
+    LyramionsFaith_CollectTheCrystalStrings,
+    LyramionsFaith_HaveTheHarpStrung,
+    LyramionsFaith_ShatterTheCrystalWall,
+    LyramionsFaith_DestroyTheMoranianMachine,
     LyramionsFaith_EnterSecretRoomInLibrary,
     LyramionsFaith_FindRecipe,
     LyramionsFaith_BrewDemonSleep,
@@ -114,6 +122,16 @@ public enum SubQuestType
     Madman_UniteTheAmulet, // after finding both parts
     Madman_GiveTheAmuletToTheMadman, // after uniting the amulet
     Madman_KillTheMadman, // only if you kill him
+    // Kire's Letter
+    KiresLetter_FindDorina, // after Kire gave his letter
+    KiresLetter_ShowTheLetterToKetnar, // optional, after Kire gave his letter
+    KiresLetter_GiveTheLetterToDorina, // after finding Dorina
+    KiresLetter_ReturnToKire, // after Dorina got the letter
+    // Ferrin's Daughter
+    FerrinsDaughter_AskFerrinAboutHisMourning, // after meeting Ferrin
+    FerrinsDaughter_SearchTheStorageCellar, // after Ferrin gave his key
+    FerrinsDaughter_FindFerrinsDaughter, // after entering the cellar
+    FerrinsDaughter_ReturnToFerrin, // after finding his daughter
     // Brotherhood of Tarbos
     BrotherhoodOfTarbos_BringTheAmberstarToTheTemple, // after finding the Amberstar
     BrotherhoodOfTarbos_DefeatThornahuun, // after meeting Thornahuun in the coffin hall
@@ -835,6 +853,14 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.LyramionsFaith_FindAWayToLeaveForestMoon,
+                    // the story continues on Morag (the steps are defined after the library steps)
+                    PostCompletionAction = subQuest =>
+                    {
+                        var moragQuest = subQuest.Quest.SubQuests.First(q => q.Type == SubQuestType.LyramionsFaith_FlyToMorag);
+
+                        if (moragQuest.State == QuestState.Inactive)
+                            moragQuest.State = QuestState.Active;
+                    },
                     Triggers =
                     [
                         // Activate
@@ -916,8 +942,105 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.Item,
                     SourceIndex = 345, // Recipe
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_FlyToMorag,
+                    Triggers =
+                    [
+                        // Activated when the way to leave the forest moon was found
+                        // Complete: arrived on Morag (prison of S'angrila) or talked to S'riel (222)
+                        new OrTrigger<EventDisabledTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new EventDisabledTrigger(g, t, 439, 2),
+                            (g, t) => new GlobalVariableTrigger(g, t, 222)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 55, // Kire
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_TalkToSriel,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: the dying Moranian in the prison told about Morag and the crystal strings
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 222),
+                    ],
+                    SourceType = QuestSourceType.MapEvent,
+                    SourceIndex = CreateMapEventSourceIndex(439, 8, 13), // Prison of S'angrila
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_SearchSrielsPalace,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: opened the chest with the Morag map, the key to S'orel's palace and the first crystal string
+                        new OrTrigger<ChestUnlockedTrigger, ItemObtainedTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ChestUnlockedTrigger(g, t, 117),
+                            (g, t) => new ItemObtainedTrigger(g, t, 387, 388)), // Morag map, S'orel's palace key
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 32, // S'riel
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_CollectTheCrystalStrings,
+                    Triggers =
+                    [
+                        // Activate: S'riel told about the harp with crystal strings
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 222),
+                        // Complete: own the seven crystal strings (S'riel's palace and the councillors of Morag)
+                        new CountTrigger(game, TriggerType.Completion, [], [354]),
+                        // or the harp was strung already (the strings are used then)
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => g.GetTotalItemCount(159) != 0 || IsEventBitSet(g, e, 431, 3)),
+                    ],
+                    MinAmount = 7,
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 32, // S'riel
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_HaveTheHarpStrung,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: Matthias in Illien fitted the strings to an elven harp (crystal harp)
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) => g.GetTotalItemCount(159) != 0 || IsEventBitSet(g, e, 431, 3)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 29, // Matthias
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_ShatterTheCrystalWall,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: played the crystal harp in front of the crystal wall in the temple
+                        new EventDisabledTrigger(game, TriggerType.Completion, 431, 3),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 32, // S'riel
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.LyramionsFaith_DestroyTheMoranianMachine,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: the Moranian machine behind the crystal wall was destroyed
+                        new EventDisabledTrigger(game, TriggerType.Completion, 453, 4),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 32, // S'riel
                 }
-                // TODO ...
             ),
             #endregion
             #region Grandfather's Quest
@@ -1780,6 +1903,125 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 20, // Dieter Rottermund
+                }
+            ),
+            #endregion
+            #region Kire's Letter
+            QuestFactory.CreateMainQuest(this, MainQuestType.KiresLetter,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.KiresLetter_FindDorina,
+                    Triggers =
+                    [
+                        // Activate: Kire told about his wife Dorina and gave a letter for her
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 52),
+                        // Complete: talked to Dorina in her cave (or she got the letter already)
+                        new OrTrigger<GlobalVariableTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new GlobalVariableTrigger(g, t, 61),
+                            (g, t) => new GlobalVariableTrigger(g, t, 45)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 55, // Kire
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.KiresLetter_ShowTheLetterToKetnar,
+                    Triggers =
+                    [
+                        // Activate: optional, Kire's son knows where Dorina lives
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 52),
+                        // Complete: Ketnar saw the letter (66) or Dorina was found without him
+                        new PredicateTrigger(game, TriggerType.Completion, (g, e) =>
+                            IsGlobalVariableSet(g, e, 66) || IsGlobalVariableSet(g, e, 61) || IsGlobalVariableSet(g, e, 45)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 55, // Kire
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.KiresLetter_GiveTheLetterToDorina,
+                    Triggers =
+                    [
+                        // Activate: found Dorina
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 61),
+                        // Complete: Dorina got the letter
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 45),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 55, // Kire
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.KiresLetter_ReturnToKire,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate: Dorina got the letter
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 45),
+                        // Complete: Kire gave his reward (including the key of the test mine)
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 55),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 57, // Dorina
+                }
+            ),
+            #endregion
+            #region Ferrin's Daughter
+            QuestFactory.CreateMainQuest(this, MainQuestType.FerrinsDaughter,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.FerrinsDaughter_AskFerrinAboutHisMourning,
+                    Triggers =
+                    [
+                        // Activate: met Ferrin the smith
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 86),
+                        // Complete: he told about his daughter and gave the key of his storage cellar
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 87),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 63, // Ferrin
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.FerrinsDaughter_SearchTheStorageCellar,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: opened the cellar door (it is locked again later) or found his daughter already
+                        new OrTrigger<DoorUnlockedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new DoorUnlockedTrigger(g, t, 13),
+                            (g, t) => new GlobalVariableTrigger(g, t, 94)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 63, // Ferrin
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.FerrinsDaughter_FindFerrinsDaughter,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: found her behind the tornak caves
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 94),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 63, // Ferrin
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.FerrinsDaughter_ReturnToFerrin,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: the happy Ferrin gave his reward
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 95),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 63, // Ferrin
                 }
             ),
             #endregion

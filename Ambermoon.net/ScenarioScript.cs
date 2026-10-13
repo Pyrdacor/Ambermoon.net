@@ -63,6 +63,7 @@ namespace Ambermoon;
 ///   questlog                  open or close the quest log
 ///   quests                    print all sub quests which are not inactive
 ///   quest &lt;type&gt; [state]      print the state of a sub quest (UI.SubQuestType name), optionally check it
+///   mainquest &lt;type&gt; [state]  print the state of a main quest (UI.MainQuestType name), optionally check it
 ///                             (Inactive, Active, Blocked or Completed)
 ///   log &lt;text&gt;                print text
 ///   exit                      close the application
@@ -523,6 +524,15 @@ sealed class ScenarioScript
                         Console.WriteLine($"  {subQuestType}: {state?.ToString() ?? "no quest log"}");
                         if (parts.Length > 2)
                             Report(state == Enum.Parse<UI.QuestState>(parts[2], true), $"{subQuestType} is {state?.ToString() ?? "no quest log"}, expected {parts[2]}");
+                        break;
+                    }
+                    case "mainquest":
+                    {
+                        var mainQuestType = Enum.Parse<UI.MainQuestType>(parts[1], true);
+                        var state = game.ScriptMainQuestState(mainQuestType);
+                        Console.WriteLine($"  {mainQuestType}: {state?.ToString() ?? "no quest log"}");
+                        if (parts.Length > 2)
+                            Report(state == Enum.Parse<UI.QuestState>(parts[2], true), $"{mainQuestType} is {state?.ToString() ?? "no quest log"}, expected {parts[2]}");
                         break;
                     }
                     case "log":

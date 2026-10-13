@@ -80,10 +80,8 @@ quest LyramionsFaith_ExploreTheTempleOfBrotherhood Inactive
 quest LyramionsFaith_UseShandrasStone Completed
 quest LyramionsFaith_EnterSecretRoomInLibrary Active
 quest LyramionsFaith_FindRecipe Inactive
-# --- temple without demon sleep (crystal harp from Matthias, other quest)
-cheat give 159 1
+# --- temple without demon sleep
 goto 431 11 24
-trigger 11 24 item:159
 talkwait
 dismissall
 quest LyramionsFaith_EnterTheTempleOfBrotherhood Blocked

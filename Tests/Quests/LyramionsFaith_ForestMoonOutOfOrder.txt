@@ -127,13 +127,10 @@ count 344 0
 quest LyramionsFaith_BrewDemonSleep Completed
 quest LyramionsFaith_EnterTheTempleOfBrotherhood Active
 quest LyramionsFaith_ExploreTheTempleOfBrotherhood Inactive
-# --- temple of the brotherhood (map 431): crystal wall (crystal harp from Matthias, other quest)
-cheat give 159 1
+# --- temple of the brotherhood (map 431), the crystal wall in the entry hall is walked around
 goto 431 11 24
-trigger 11 24 item:159
 talkwait
 dismissall
-eventbit 431 2 1
 quest LyramionsFaith_EnterTheTempleOfBrotherhood Active
 # the guard demon (text 3) and the food bowl (text 4)
 goto 431 11 17

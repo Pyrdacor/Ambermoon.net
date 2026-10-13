@@ -1,0 +1,27 @@
+# Ferrin's daughter is found before Ferrin was asked about his mourning (e.g. exploring the tornak caves)
+# (original game and Advanced, any language). The quest is completed when Ferrin is talked to afterwards,
+# the skipped first step stays hidden.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+goto 358 5 8
+trigger 5 8 Move
+talkwait
+dismissall
+var 94 1
+quest FerrinsDaughter_AskFerrinAboutHisMourning Inactive
+quest FerrinsDaughter_FindFerrinsDaughter Completed
+quest FerrinsDaughter_SearchTheStorageCellar Completed
+talk 65
+talkwait
+takeitems
+leave
+talkwait
+waitidle 5000
+quest FerrinsDaughter_ReturnToFerrin Completed
+quest FerrinsDaughter_AskFerrinAboutHisMourning Inactive
+mainquest FerrinsDaughter Completed
+reloadquests
+mainquest FerrinsDaughter Completed
+exit

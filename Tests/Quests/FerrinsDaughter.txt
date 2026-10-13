@@ -1,0 +1,57 @@
+# Ferrin's daughter: Ferrin the smith (NPC 63) mourns his daughter who disappeared in his storage cellar
+# (original game and Advanced, any language)
+waitidle 20000
+dismissall
+# Ferrin speaks Dwarfish, carry the reward (no quest relevance)
+cheat netsrak
+cheat light 3
+# --- Ferrin's smithy (map 344)
+goto 344 11 10
+dismissall
+talk 63
+talkwait
+var 86 1
+quest FerrinsDaughter_AskFerrinAboutHisMourning Active
+say 59
+talkwait
+var 87 1
+takeitems
+count 294 1
+quest FerrinsDaughter_AskFerrinAboutHisMourning Completed
+quest FerrinsDaughter_SearchTheStorageCellar Active
+leave
+talkwait
+waitidle 5000
+# --- the cellar door (door 13) opens with Ferrin's key
+goto 344 38 22
+trigger 38 22 Eye
+talkwait
+usekey 294
+talkwait
+waitidle 5000
+state
+quest FerrinsDaughter_SearchTheStorageCellar Completed
+quest FerrinsDaughter_FindFerrinsDaughter Active
+# --- behind the tornak caves (map 358) the daughter is found, the party is brought back to the smithy (359)
+goto 358 5 8
+trigger 5 8 Move
+talkwait
+dismissall
+var 94 1
+quest FerrinsDaughter_FindFerrinsDaughter Completed
+quest FerrinsDaughter_ReturnToFerrin Active
+talk 65
+talkwait
+takeitems
+var 95 1
+quest FerrinsDaughter_ReturnToFerrin Completed
+mainquest FerrinsDaughter Completed
+leave
+talkwait
+waitidle 5000
+reloadquests
+quest FerrinsDaughter_SearchTheStorageCellar Completed
+quest FerrinsDaughter_FindFerrinsDaughter Completed
+quest FerrinsDaughter_ReturnToFerrin Completed
+mainquest FerrinsDaughter Completed
+exit
