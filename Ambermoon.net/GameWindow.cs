@@ -101,6 +101,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
     bool checkPatcher = true;
     List<Mod.Packaging.ModPackage> mods = [];
     Mod.ModRuntime activeMod = null;
+    Exception modLoadError = null;
     bool initialIntroEndedByClick = false;
     CommandLineOptions commandLineOptions = null;
     readonly List<Action> mainThreadActions = [];
@@ -964,14 +965,24 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
                     DataProvider = () =>
                     {
                         var gameData = builtinVersionDataProviders[baseIndex]();
+                        modLoadError = null;
 
-                        if (mod.Manifest.HasCode)
-                            Mod.ModRuntime.Trust(mod, ModTrustStore);
+                        try
+                        {
+                            if (mod.Manifest.HasCode)
+                                Mod.ModRuntime.Trust(mod, ModTrustStore);
 
-                        activeMod = Mod.ModRuntime.Load(mod, gameData, baseVersion.Version);
+                            activeMod = Mod.ModRuntime.Load(mod, gameData, baseVersion.Version);
 
-                        foreach (var warning in activeMod.Warnings)
-                            Console.WriteLine($"Mod '{mod.Manifest.Id}': {warning}");
+                            foreach (var warning in activeMod.Warnings)
+                                Console.WriteLine($"Mod '{mod.Manifest.Id}': {warning}");
+                        }
+                        catch (Exception ex)
+                        {
+                            // Reported when the game is started (see StartGame).
+                            activeMod = null;
+                            modLoadError = new AmbermoonException(ExceptionScope.Data, $"Unable to load mod '{mod.Manifest.Id}': {ex.Message}");
+                        }
 
                         return gameData;
                     },
@@ -1078,6 +1089,9 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
         {
             try
             {
+                if (features.HasFlag(Features.Mod) && modLoadError != null)
+                    throw modLoadError;
+
                 ISavegameManager savegameManager;
                 IAdditionalSaveSlotProvider additionalSaveSlotProvider = null;
                 int currentSavegame = 0;

@@ -185,6 +185,11 @@ You can use your own music with Ambermoon (e.g. the Atari music or the remixes f
 I also provide the Atari tracks [here](https://ambermoon-net.pyrdacor.net/download/music_atari.zip). Just extract the mp3 to a folder called "music" next to the main executable to enjoy the music. Note that not all tracks were converted to Atari so only 13 out of 32 tracks are available.
 
 
+## Mods
+
+Ambermoon.net can be extended with mods: new graphics, music, maps, monsters and items, or C# code which hooks into the game. Ambermoon DC, a dungeon crawler with endless generated floors, is included as an example. See [Modding](Modding.md) for details.
+
+
 ## Special thanks
 
 Special thanks to my top patreons and github sponsors:
