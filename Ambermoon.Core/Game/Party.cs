@@ -1344,14 +1344,18 @@ partial class GameCore
     /// </summary>
     internal uint GetBattlePoisonDamage(Character character)
     {
+        return (uint)RandomInt(1, (int)GetMaxBattlePoisonDamage(character));
+    }
+
+    internal uint GetMaxBattlePoisonDamage(Character character)
+    {
         if (!Features.HasFlag(Features.ExtendedCurseEffects))
-            return (uint)RandomInt(1, 5);
+            return 5;
 
         uint limit = character is Monster && !character.BattleFlags.HasFlag(BattleFlags.Boss) ? 35u : 20u;
-        // the limit is applied before the random so high max hit points won't always deal the max damage
-        uint maxDamage = Util.Limit(1u, character.HitPoints.TotalMaxValue * 5 / 100, limit);
 
-        return (uint)RandomInt(1, (int)maxDamage);
+        // the limit is applied before the random so high max hit points won't always deal the max damage
+        return Util.Limit(1u, character.HitPoints.TotalMaxValue * 5 / 100, limit);
     }
 
     void Sleep(bool inn, int healing)
@@ -1460,6 +1464,41 @@ partial class GameCore
         else // sleep 8 hours
         {
             layout.ShowClickChestMessage(DataNameProvider.Sleep8Hours, () => Start(false));
+        }
+    }
+
+    /// <summary>
+    /// Diseased party members lose one point of a random attribute each day.
+    /// </summary>
+    void ProcessDisease()
+    {
+        Attribute[] attributes = [Attribute.Strength, Attribute.Intelligence, Attribute.Dexterity, Attribute.Speed,
+            Attribute.Stamina, Attribute.Charisma, Attribute.Luck, Attribute.AntiMagic];
+
+        foreach (var partyMember in PartyMembers)
+        {
+            if (!partyMember.Alive || !partyMember.Conditions.HasFlag(Condition.Diseased) ||
+                partyMember.Conditions.HasFlag(Condition.Petrified))
+                continue;
+
+            // while exhausted the real value is stored and the current value is halved
+            bool exhausted = partyMember.Conditions.HasFlag(Condition.Exhausted);
+            var reducibleAttributes = attributes.Where(a => (exhausted ? partyMember.Attributes[a].StoredValue : partyMember.Attributes[a].CurrentValue) != 0).ToArray();
+
+            if (reducibleAttributes.Length == 0)
+                continue;
+
+            var attribute = partyMember.Attributes[reducibleAttributes[RandomInt(0, reducibleAttributes.Length - 1)]];
+
+            if (exhausted)
+            {
+                --attribute.StoredValue;
+                attribute.CurrentValue = Math.Min(attribute.CurrentValue, attribute.StoredValue);
+            }
+            else
+            {
+                --attribute.CurrentValue;
+            }
         }
     }
 
