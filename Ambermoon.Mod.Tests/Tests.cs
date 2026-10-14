@@ -29,6 +29,9 @@ static partial class Tests
         {
             switch (command)
             {
+                case "palettes":
+                    PrintThemePalettes(args.Contains("details"));
+                    return 0;
                 case "probe":
                     Probe();
                     return 0;
@@ -40,12 +43,14 @@ static partial class Tests
                     break;
                 case "dc":
                     ThemeTests();
+                    ThemePaletteTests();
                     DungeonCrawlerTests(args.Length > 0 ? int.Parse(args[0]) : 60);
                     break;
                 case "all":
                     ManifestTests();
                     AssetModTests();
                     ThemeTests();
+                    ThemePaletteTests();
                     DungeonCrawlerTests(60);
                     break;
                 default:

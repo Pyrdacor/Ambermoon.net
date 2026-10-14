@@ -1,7 +1,7 @@
 {
   "Id": "crypt",
   "Name": { "en": "Forgotten Crypt", "de": "Vergessene Gruft" },
-  "Palette": 6,
+  "Palettes": [ 6, 21, 23, 25 ],
   "CombatBackground": 2,
   "WallHeight": 380,
   "FloorTexture": 14,

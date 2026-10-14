@@ -68,7 +68,8 @@ static partial class Tests
                 var labdata = gameData.MapManager.GetLabdataForMap(map);
                 var theme = mod.CurrentTheme!;
                 Check(map.TilesetOrLabdataIndex == theme.LabdataIndex && labdata == theme.Labdata, $"Floor {floor}: uses the labdata of the theme");
-                Check(map.PaletteIndex == theme.Definition.Palette, $"Floor {floor}: uses the palette of the theme");
+                Check(map.PaletteIndex == theme.PaletteForFloor(mod.State!.Seed, floor) && theme.Definition.Palettes.Contains(map.PaletteIndex),
+                    $"Floor {floor}: uses a palette of the theme");
 
                 if (floor % 5 == 1)
                 {

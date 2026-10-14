@@ -1,7 +1,7 @@
 {
   "Id": "firetower",
   "Name": { "en": "Burning Halls", "de": "Brennende Hallen" },
-  "Palette": 6,
+  "Palettes": [ 6, 16, 18, 24 ],
   "CombatBackground": 0,
   "WallHeight": 300,
   "FloorTexture": 5,

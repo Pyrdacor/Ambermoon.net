@@ -67,7 +67,7 @@ internal class FloorBuilder(ModApi api, IReadOnlyList<DungeonTheme> themes)
             Flags = (floor >= 4 ? MapFlags.Dungeon : MapFlags.Indoor) | MapFlags.Automapper | MapFlags.CanRest |
                 MapFlags.NoSleepUntilDawn | MapFlags.CanUseMagic,
             MusicIndex = layout.IsBossFloor ? theme.Definition.BossMusic : theme.MusicForFloor(floor),
-            PaletteIndex = theme.Definition.Palette,
+            PaletteIndex = theme.PaletteForFloor(state.Seed, floor),
             World = World.Lyramion, // Note: Party members can only be dismissed on Lyramion.
             Blocks = new Map.Block[layout.Width, layout.Height],
             InitialBlocks = new Map.Block[layout.Width, layout.Height],
@@ -223,7 +223,7 @@ internal class FloorBuilder(ModApi api, IReadOnlyList<DungeonTheme> themes)
             {
                 Type = CharacterType.PartyMember,
                 Index = state.Recruit,
-                GraphicIndex = theme.GetSpriteObject("person"),
+                GraphicIndex = theme.RecruitObject,
                 CharacterFlags = Map.CharacterReference.Flags.RandomMovement
             }, layout.Recruit.Value);
         }

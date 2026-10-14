@@ -19,7 +19,11 @@ internal class ThemeDefinition
     /// Name per language ("en", "de", ...).
     /// </summary>
     public Dictionary<string, string> Name { get; set; } = [];
-    public uint Palette { get; set; } = 6;
+    /// <summary>
+    /// Map palettes. Each floor uses one of them. They should fit the textures of the theme
+    /// (run the palettes command of Ambermoon.Mod.Tests to find fitting palettes).
+    /// </summary>
+    public List<uint> Palettes { get; set; } = [6];
     /// <summary>
     /// Combat background set (0 to 15).
     /// </summary>
@@ -49,6 +53,10 @@ internal class ThemeDefinition
     /// </summary>
     public ThemeObject Entrance { get; set; } = null!;
     public ThemeObject? Teleporter { get; set; }
+    /// <summary>
+    /// Sprite of the companions who can be recruited. Default is the person of labdata 6.
+    /// </summary>
+    public ThemeObject? RecruitSprite { get; set; }
     /// <summary>
     /// Walkable decoration (bones, stones, junk, ...).
     /// </summary>
@@ -106,10 +114,11 @@ internal class ThemeDefinition
 
         Require(Walls.Count is >= 1 and <= 3, "1 to 3 walls are needed.");
         Require(Music.Count != 0, "At least one music index is needed.");
+        Require(Palettes.Count != 0 && Palettes.All(p => p != 0), "At least one palette (1-based) is needed.");
         Require(CombatBackground < 16, "The combat background must be 0 to 15.");
         Require(Chest != null && Exit != null && Entrance != null, "The objects chest, exit and entrance are needed.");
 
-        foreach (var obj in new[] { Chest, Exit, Entrance, Teleporter }.Concat(Decorations).Concat(Obstacles).Concat(Monsters.Select(m => m.Sprite)))
+        foreach (var obj in new[] { Chest, Exit, Entrance, Teleporter, RecruitSprite }.Concat(Decorations).Concat(Obstacles).Concat(Monsters.Select(m => m.Sprite)))
             obj?.Validate(message => Require(false, message));
 
         var monsterIds = new HashSet<string>();

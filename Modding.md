@@ -224,7 +224,7 @@ The themes are JSON files in the folder `themes` of the mod (`Ambermoon.Mod.Ambe
 {
   "Id": "crypt",
   "Name": { "en": "Forgotten Crypt", "de": "Vergessene Gruft" },
-  "Palette": 6,
+  "Palettes": [ 6, 21, 23, 25 ],
   "CombatBackground": 2,
   "WallHeight": 380,
   "FloorTexture": 14, "FloorColor": 13,
@@ -260,8 +260,9 @@ The themes are JSON files in the folder `themes` of the mod (`Ambermoon.Mod.Ambe
 }
 ```
 
+- **Palettes:** All 3D textures use the palette of the map, so each floor uses one of the `Palettes` of its theme. The palette also colors the frame around the 3D view. Run `dotnet run --project Ambermoon.Mod.Tests -- palettes [details]` to see which palettes fit a theme: *original* palettes are used with all textures of the theme in the original game, *similar* palettes have nearly the same 16 colors the textures use (see `ThemePalettes`). The tests fail if a theme uses a palette which doesn't fit. Textures of original maps with other palettes (e.g. the mine of the forest moon with palette 12) only fit to themes which use them together with textures of the same palettes.
 - **Look:** `FloorTexture`/`CeilingTexture` are indices into `Floors.amb` (0 = only use the color). `Walls` are 1 to 3 variations (texture index into `Wall3D.amb` plus optional overlays from `Overlay3D.amb`), each is also used as illusory wall for the secret passages. The open door texture should be transparent. If it is 0, the door disappears when it is opened.
-- **Objects:** Either a copy of an object of an original labdata (`Labdata` and `Object`, 1-based) or a single texture of `Object3D.amb` (`Texture`, `Width`, `Height` and optionally `MappedWidth`, `MappedHeight`, `Frames` and `Z`). `Exit` is the way down (hole, stairs, ladder), `Entrance` the blocked way up at the start. `Decorations` are walkable (bones, stones, junk), `Obstacles` block movement (barrels, coffins, statues). They are only placed where they block nothing. `Teleporter` is optional.
+- **Objects:** Either a copy of an object of an original labdata (`Labdata` and `Object`, 1-based) or a single texture of `Object3D.amb` (`Texture`, `Width`, `Height` and optionally `MappedWidth`, `MappedHeight`, `Frames` and `Z`). `Exit` is the way down (hole, stairs, ladder), `Entrance` the blocked way up at the start. `Decorations` are walkable (bones, stones, junk), `Obstacles` block movement (barrels, coffins, statues). They are only placed where they block nothing. `Teleporter` is optional. `RecruitSprite` is the sprite of the companions (default: the person of labdata 6). The sprites of the original monsters are only added if the theme has no monsters or no bosses.
 - **Monsters:** Each monster uses an original monster as `Template` for its battle graphic, animations and palette. Name (up to 15 characters), `Sprite` on the map, `Class`, `Element`, `Flags` (battle flags like `Undead`), `Spells`, `SpellChance`, `AttacksPerRound` and `Morale` come from the theme. `Weight` sets how often a monster appears, `MaxCount` how many of it can be in a group, `MinFloor` (1 to 5) on which floor of the theme it appears first and `BossOnly` limits it to the bosses.
 - **Combat values** are calculated from the level (the floor number plus `LevelOffset`): hit points, spell points, attack, defense, magic attack and defense, attributes, skills, experience and gold. The optional `Factors` scale each of these values. Bosses are 1 level higher and get extra factors (e.g. 2.5 times the hit points).
 - **Bosses:** `Boss` is the boss of the 5th floor of the theme, `BossGroup` the boss with minions of the 10th floor. Without them, the global boss lists of the mod are used. Themes without monsters use the original monster groups.
@@ -312,7 +313,7 @@ These things are not supported (yet):
 - Only the original game is supported as base, not Ambermoon Advanced.
 - All texts of the mod exist in English and German. Other languages use the English texts.
 - There are 4 themes so far (caves, crypt, dwarven mines, burning halls). Some theme monsters share map sprites, as there are only a few monster sprites in the original game.
-- The themes use palette 6. Textures which were made for other palettes (e.g. the mine of the forest moon) may look wrong.
+- All 4 themes are made of textures of maps with palette 6. Their other palettes are only similar variants, which also give the frame around the 3D view another color.
 - The combat value formula of the theme monsters was only tested roughly against the original monsters.
 - Random companions can only use the portraits the original game has for their race and gender, so some combinations don't exist (e.g. there are no female gnomes).
 - The balancing was not tested beyond a few floors. The hero is alone until floor 12 and the floors are dark from floor 4 on.

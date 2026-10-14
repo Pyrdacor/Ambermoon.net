@@ -1,7 +1,7 @@
 {
   "Id": "caves",
   "Name": { "en": "Old Caves", "de": "Alte Höhlen" },
-  "Palette": 6,
+  "Palettes": [ 6, 19, 22, 25 ],
   "CombatBackground": 7,
   "WallHeight": 300,
   "FloorTexture": 6,

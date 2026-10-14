@@ -126,9 +126,27 @@ internal class DungeonTheme
 
     public uint MusicForFloor(int floor) => Definition.Music[(floor - 1) % Definition.Music.Count];
 
+    public uint PaletteForFloor(int seed, int floor) =>
+        Definition.Palettes[FloorGenerator.CreateRandom(seed, floor, 8).Next(Definition.Palettes.Count)];
+
     public string Name(GameLanguage language) => Definition.GetName(language);
 
     public uint GetSpriteObject(string sprite) => spriteObjects.TryGetValue(sprite, out var obj) ? obj : spriteObjects["undead"];
+
+    public uint RecruitObject => spriteObjects[RecruitKey];
+
+    const string RecruitKey = "recruit";
+
+    public static ThemeDoor DefaultDoor => new() { Closed = 117, Open = 118 };
+
+    public static ThemeObject DefaultRecruitSprite => new() { Labdata = DCContent.Sprites["person"].Labdata, Object = DCContent.Sprites["person"].Object };
+
+    /// <summary>
+    /// The sprites of the original monsters are only needed if the theme has no monsters
+    /// or no bosses (then the original monster groups and global bosses are used).
+    /// </summary>
+    public static bool NeedsGlobalSprites(ThemeDefinition definition) =>
+        definition.Monsters.Count == 0 || definition.Boss == null || definition.BossGroup == null;
 
     public static string SpriteKey(ThemeMonster monster) => "theme:" + monster.Id;
 
@@ -150,7 +168,7 @@ internal class DungeonTheme
             walls.Add((normal, illusory, Math.Max(1, wall.Weight)));
         }
 
-        var door = definition.Door ?? new ThemeDoor { Closed = 117, Open = 118 };
+        var door = definition.Door ?? DefaultDoor;
         DoorWall = builder.AddWall(door.Closed, WallFlags, AutomapType.Door, door.Color);
         OpenDoorWall = door.Open == 0 ? 0 : builder.AddWall(door.Open, OpenDoorFlags, AutomapType.DoorOpen, door.Color);
 
@@ -180,8 +198,14 @@ internal class DungeonTheme
         }
 
         // Sprites of the original monsters (for the global boss lists and if a theme has no monsters) and the recruits.
-        foreach (var sprite in DCContent.Sprites)
-            spriteObjects[sprite.Key] = builder.CopyObject(sprite.Value.Labdata, sprite.Value.Object);
+        spriteObjects[RecruitKey] = AddObject(definition.RecruitSprite ?? DefaultRecruitSprite, AutomapType.Person,
+            TileFlags.RandomAnimationStart | TileFlags.AllowMovementWalk, true);
+
+        if (NeedsGlobalSprites(definition))
+        {
+            foreach (var sprite in DCContent.Sprites)
+                spriteObjects[sprite.Key] = builder.CopyObject(sprite.Value.Labdata, sprite.Value.Object);
+        }
 
         if (builder.Labdata.Objects.Count > 100)
             throw new InvalidDataException($"Theme '{definition.Id}' has too many objects.");

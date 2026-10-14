@@ -1,7 +1,7 @@
 {
   "Id": "dwarfmines",
   "Name": { "en": "Dwarven Mines", "de": "Zwergenminen" },
-  "Palette": 6,
+  "Palettes": [ 6, 19, 22, 26 ],
   "CombatBackground": 3,
   "WallHeight": 300,
   "FloorTexture": 1,
