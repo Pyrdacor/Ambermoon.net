@@ -275,6 +275,11 @@ partial class GameCore
     public bool ScriptGetEventBit(uint mapIndex, uint eventIndex) => CurrentSavegame!.GetEventBit(mapIndex, eventIndex - 1);
 
     /// <summary>
+    /// Disables (true) or enables (false) a map event chain (1-based), e.g. for steps of other quests.
+    /// </summary>
+    public void ScriptSetEventBit(uint mapIndex, uint eventIndex, bool bit) => CurrentSavegame!.SetEventBit(mapIndex, eventIndex - 1, bit);
+
+    /// <summary>
     /// Recreates the quest log from the current savegame like loading a game does.
     /// </summary>
     public void ScriptReloadQuestLog()

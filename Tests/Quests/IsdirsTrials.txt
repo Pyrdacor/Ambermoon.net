@@ -10,12 +10,16 @@ talkwait
 dismissall
 cheat netsrak
 cheat light 3
-quest IsdirsTrials_AskJeffAboutIsdir Inactive
+quest IsdirsTrials_SearchForIsdirInTheVortex Inactive
 # the book of mystic creatures and Jeff's brandy are from other quests
 setvar 268 1
 setvar 250 1
 reloadquests
-quest IsdirsTrials_AskJeffAboutIsdir Active
+# blocked until the mermaid opened the vortex (event 163:1, sea creatures quest)
+quest IsdirsTrials_SearchForIsdirInTheVortex Blocked
+seteventbit 163 1 1
+reloadquests
+quest IsdirsTrials_SearchForIsdirInTheVortex Active
 # --- Jeff
 goto 376 36 10
 dismissall
@@ -27,7 +31,7 @@ leave
 talkwait
 waitidle 5000
 var 305 1
-quest IsdirsTrials_AskJeffAboutIsdir Completed
+quest IsdirsTrials_SearchForIsdirInTheVortex Completed
 quest IsdirsTrials_MeetIsdirAtNight Active
 # --- the northern beach at night
 hour 23
@@ -155,7 +159,7 @@ var 298 1
 quest IsdirsTrials_ReceiveIsdirsEssence Completed
 mainquest IsdirsTrials Completed
 reloadquests
-quest IsdirsTrials_AskJeffAboutIsdir Completed
+quest IsdirsTrials_SearchForIsdirInTheVortex Completed
 quest IsdirsTrials_MeetIsdirAtNight Completed
 quest IsdirsTrials_BringGoldenWater Completed
 quest IsdirsTrials_BringARestlessSoul Completed

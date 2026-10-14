@@ -78,6 +78,8 @@ namespace Ambermoon;
 ///                             print the name and savegame bit of a goto point (1-based), optionally check the bit
 ///   walkable &lt;map&gt; &lt;x&gt; &lt;y&gt; [0|1]
 ///                             print if the party can walk onto a 1-based position of a 2D map, optionally check it
+///   seteventbit &lt;map&gt; &lt;event&gt; &lt;0|1&gt;
+///                             disable (1) or enable (0) a map event chain (1-based), e.g. for steps of other quests
 ///   reloadquests              recreate the quest log from the savegame (like loading the game)
 ///   questlog                  open or close the quest log
 ///   quests                    print all sub quests which are not inactive
@@ -521,6 +523,9 @@ sealed class ScenarioScript
                             Report(bit == (parts[3] == "1"), $"event bit {parts[1]}:{parts[2]} is {(bit ? 1 : 0)}, expected {parts[3]}");
                         break;
                     }
+                    case "seteventbit":
+                        game.ScriptSetEventBit(uint.Parse(parts[1]), uint.Parse(parts[2]), parts[3] == "1");
+                        break;
                     case "activate":
                         if (!game.ScriptSetActivePartyMember(int.Parse(parts[1])))
                             Report(false, $"there is no party member in slot {parts[1]}");

@@ -1,0 +1,1340 @@
+# Quest log overview
+
+All main quests and sub quests with the texts as they appear in the quest log of the remake.
+Sub quests with a counter show it like the quest log does at the start, e.g. `(0/6)`.
+Languages without a translation of a text show the English text in the game.
+
+The order is the definition order in `Ambermoon.Core/UI/Quests.cs`, the texts are from
+`Ambermoon.Core/UI/QuestTexts.cs`. The quest log itself lists the quests in the order they were activated.
+
+- [English](#english) | [Deutsch](#deutsch) | [Français](#français) | [Polski](#polski) | [Čeština](#čeština)
+
+## English
+
+### Original and Ambermoon Advanced
+
+- **Lyramion's Faith**
+  - Talk to Shandra in Newlake
+  - Enter the temple of brotherhood
+  - Explore the temple of brotherhood
+  - Explore the hangar in the temple
+  - Find the navstone
+  - Fly to the forest moon
+  - Meet the dwarf leader Kire
+  - Find a way to leave the forest moon
+  - Deliver Shandra's Amber to grandfather
+  - Use Shandra's Amber
+  - Enter the secret room in the library
+  - Find the recipe
+  - LyramionsFaith_BrewDemonSleep
+  - Fly to Morag
+  - Talk to the Moranian in the prison
+  - Search S'riel's palace
+  - Collect the crystal strings (0/7)
+  - Have Matthias string the harp
+  - Shatter the crystal wall in the temple
+  - Destroy the Moranian machine
+- **Grandfather's Quest**
+  - Talk to your grandfather
+  - Go to the wine cellar
+  - Find grandfather's equipment
+  - Return to grandfather
+  - Visit grandfather's grave
+  - Inform grandfather about the cave-in
+  - Find Tolimar, the farrier, in Spannenberg
+  - Remove the cave-in
+- **Swamp Fever**
+  - Talk to Father Anthony
+  - Obtain a swamp lilly
+  - Obtain an empty bottle
+  - Obtain water of life
+  - Return to Father Anthony
+  - Heal Sally, the fisherman's daughter
+  - Talk to Sally, the fisherman's daughter
+  - Talk to Wat the fisherman
+- **Golden Horseshoes**
+  - Find the golden horseshoes (0/4)
+  - Return the golden horseshoes to Tolimar
+- **Alkem's Ring**
+  - Enter the old crypt
+  - Find the ring inside the crypt
+  - Return the ring to Alkem
+- **Sylphs**
+  - Talk to Lady Heidi about fairies
+  - Find the item in the tree
+  - Find the fairies
+  - Rescue Selena
+- **Orcish Onslaught**
+  - Defeat the orc leader
+  - Bring the proof to Baron George
+- **The Thieves' Menace**
+  - Find the bandit leader Silverhand
+  - Bring the proof to Baron George
+- **Wine Trophies**
+  - Find the stolen wine goblets (0/2)
+  - Return them to Canth and Norlael (0/2)
+- **Chain of Office**
+  - Find the stolen chain of office
+  - Return it to Baron George
+- **Monster's Eye**
+  - Buy the monster eye from Sandire
+- **The Graveyard**
+  - Find the gardener of the graveyard
+  - Get the gardener's brooch
+  - Bring the brooch to Aman
+- **The Thieves' Guild**
+  - Enter the thieves' guild
+  - Pass the test of thieves
+- **The Madman**
+  - Visit the madman in the cellar
+  - Find the second part of the amulet
+  - Have the amulet united
+  - Give the amulet to the madman
+  - Kill the madman
+- **Sandra's Daughter**
+  - Look for Sabine in Burnville
+  - Rescue Sabine from Luminor
+  - Return to Sandra
+- **The Tower of Black Magic**
+  - Open the tower with the sphere
+  - Free the people of Burnville
+  - Weaken Luminor with icewater (0/4)
+  - Defeat Luminor
+- **Valdyn's Return**
+  - Find a way to bring Valdyn home
+  - Use the yellow sphere at the teleporter
+- **Ambermoon Picture**
+  - Deliver the picture to Baron Karsten
+- **Kire's Letter**
+  - Find Kire's wife Dorina
+  - Show Kire's letter to Ketnar
+  - Give Kire's letter to Dorina
+  - Return to Kire
+- **Ferrin's Daughter**
+  - Ask Ferrin about his mourning
+  - Search Ferrin's storage cellar
+  - Find Ferrin's daughter
+  - Return to Ferrin
+- **The Beast**
+  - Ask Norel about his apprentice Kay
+  - Kill the beast in the cave in the north
+  - Bring Kay's amulet to Norel
+- **The Witch Master**
+  - Ask Bralum about the gnomes' problem
+  - Find Nera's lair below the witch's house
+  - Defeat Nera, the witch master
+  - Show Nera's ring to Bralum
+- **Sansri's Curse**
+  - Ask Pelanis about his concerns
+  - Defeat Sansri in her temple
+  - Give Sansri's blood to Pelanis
+- **The Windgates**
+  - Enter the wind shrine
+  - Create the construction staff
+  - Create the windchain
+  - Repair the destroyed windgates
+- **A Trip to Gadlon**
+  - Activate the teleporter with the sphere
+  - Find Rinakles, the head of the school
+  - Ask Rinakles for the way home
+- **Donner's Old Mine**
+  - Ask Bore about Donner
+  - Open the entrance on the island
+  - Find Donner's key
+  - Open Donner's door
+- **The Brotherhood of Tarbos**
+  - Take the Amberstar to the temple
+  - Defeat Thornahuun
+
+### Ambermoon Advanced only
+
+- **Your House**
+  - Show the testament to Theodorus
+  - Have the house refurbished
+  - Ask Gustav about Theodorus
+  - Have a windgate built
+  - Have a storage cave dug
+  - Explore the storage cave
+  - Defeat the giant spider
+- **Pets**
+  - Feed the hungry tomcat
+  - Adopt a cat from Ferdinand
+  - Make friends with the cat
+  - Adopt a dog from Ferdinand
+  - Make friends with the dog
+  - Return to Ferdinand
+- **The Sea Creatures**
+  - Ask captain Torle about the creatures
+  - Find the creatures in Torle's logbook (0/5)
+  - Visit the mermaid
+  - Sail into the eye of the vortex
+- **Manyeyes' Castle**
+  - Open Tristan's office
+  - Open the door to the castle
+  - Defeat the guardian of the upper floor
+  - Banish Manyeyes' curse
+- **The Gatekeepers of Cavetown**
+  - Bring Jeff a blind brandy
+  - Find Luke's treasure map
+  - Give the treasure map to Luke
+  - Open the passage for ships
+
+### Ambermoon Advanced only (since episode 2)
+
+- **The Magic Word**
+  - Tell Milzor the magic word
+- **The Golden Armour**
+  - Collect golden scales (0/7)
+  - Bring the scales and a chain mail to Morgat
+- **The Mystic Creatures**
+  - Find the wine cellar of Crystal
+  - Find the book of mystic creatures
+  - Collect mystic creatures' essences (0/6)
+- **Sandra's Brooch**
+  - Return the brooch to Sandra
+  - Transfer the essences into Kasimir (0/6)
+- **The Eyrie**
+  - Get the eagle key from Pelanis
+  - Open the eyrie
+  - Take Lugthir's essence
+- **The Black Mountains**
+  - Find information about Pyrdacor
+  - Get the key crystal
+  - Have Lebab charge the crystal
+  - Open the black mountains
+  - Defeat Pyrdacor
+- **The Desert Temple**
+  - Find Marla in the desert
+  - Solve the puzzle of the face
+  - Answer the three riddlemouths
+  - Defeat Marla
+- **The Paladin Guild of Crystal**
+  - Break through the cracked wall
+  - Explore the guild
+  - Summon the paladin master
+  - Defeat the paladin master
+  - Open the exit of the guild
+  - Take Gunbar's essence
+  - Find Fargon's essence
+- **Isdir, the Water Elemental**
+  - Search for Isdir in the vortex
+  - Meet Isdir at the northern beach at night
+  - Bring golden water to the crystal
+  - Bring a restless soul to the crystal
+  - Bring a poisonous snake to the crystal
+  - Bring the blue crystal to the ice crystal
+  - Receive Isdir's essence
+
+### Ambermoon Advanced only (since episode 3)
+
+- **The Wasps' Nest**
+  - Talk to Ketnar in Dor Grestin
+  - Ask Feldrar about wasps
+  - Defeat the wasp queen
+  - Report to Ketnar
+- **Dorina's Wedding Ring**
+  - Find Dorina's wedding ring
+  - Return the ring to Dorina
+- **Sapphire Thistles**
+  - Pick sapphire thistles (0/5)
+  - Bring five sapphire thistles to Brogat
+- **The Ancient Vault**
+  - Place the ancient book on the pedestal
+  - Pass the trials of the vault (0/3)
+  - Receive the reward of the guardian
+- **The Unknown World**
+  - Activate the teleporter with the sphere
+  - Meet Sheera
+  - Collect ten triis (0/10)
+  - Charge the triis
+  - Return to Lyramion
+- **The Gral Temple**
+  - Ask Melvin about his family
+  - Say GRAL in front of the mountains at night
+  - Open the inner door of the temple
+  - Place the heavy stone on the altar
+  - Defeat Diokhar
+  - Find the remains of Melvin's ancestor
+  - Bring the emerald necklace to Melvin
+- **The Mystic Tower**
+  - Visit the pond west of Illien
+  - Visit the lonely tree
+  - Visit the mountain pass
+  - Enter the mystic tower
+  - Pass the test of high mysticism
+- **The Highest Thieves' Test**
+  - Help Aman against the knights
+  - Meet Aman in the thieves' guild
+  - Solve the riddle of the barrels
+  - Show the stealth cloak to Aman
+  - Pass the test of stealth
+  - Talk to Aman
+- **Drelb's Search**
+  - Defeat the monsters in the gnome mine
+  - Ask Drelb about his search
+  - Find Drelb's hiding places (0/6)
+  - Give the certificate to Drelb
+
+## Deutsch
+
+### Original and Ambermoon Advanced
+
+- **Lyramions Schicksal**
+  - Rede mit Shandra in Newlake
+  - Betrete den Tempel der Bruderschaft
+  - Erkunde den Tempel der Bruderschaft
+  - Erkunde Hangar im Tempel
+  - Finde den Navstein
+  - Fliege zum Waldmond
+  - Triff das Zwergenoberhaupt Kire
+  - Finde einen Weg, den Waldmond zu verlassen
+  - Bring Shandras Bernstein zu Großvater
+  - Verwende Shandras Bernstein
+  - Betrete den Geheimraum in der Bibliothek
+  - Finde das Rezept
+  - LyramionsFaith_BrewDemonSleep
+  - Fliege nach Morag
+  - Sprich mit dem Moraner im Gefängnis
+  - Durchsuche S'riels Palast
+  - Sammle die Kristallsaiten (0/7)
+  - Lass Matthias die Harfe bespannen
+  - Zerstöre die Kristallwand im Tempel
+  - Zerstöre die moranische Maschine
+- **Großvaters Queste**
+  - Rede mit deinem Großvater
+  - Gehe in den Weinkeller
+  - Finde Großvaters Ausrüstung
+  - Kehre zu Großvater zurück
+  - Besuche Großvaters Grab
+  - Erzähle Großvater vom Einsturz
+  - Finde Tolimar den Hufschmied in Spannenberg
+  - Beseitige den Einsturz
+- **Sumpffieber**
+  - Sprich mit Vater Antonius
+  - Besorge eine Sumpflilie
+  - Besorge eine leere Phiole
+  - Besorge Wasser des Lebens
+  - Kehre zu Vater Antonius zurück
+  - Heile Sally, die Tochter des Fischers
+  - Rede mit Sally, der Tochter des Fischers
+  - Rede mit Wat dem Fischer
+- **Goldene Hufeisen**
+  - Finde die goldenen Hufeisen (0/4)
+  - Bring die goldenen Hufeisen zu Tolimar
+- **Alkems Ring**
+  - Betritt die alte Krypta
+  - Finde den Ring in der Krypta
+  - Bring den Ring zu Alkem
+- **Sylphen**
+  - Sprich mit Lady Heidi über Feen
+  - Finde den Gegenstand im Baum
+  - Finde die Feen
+  - Rette Selena
+- **Die Orkplage**
+  - Besiege den Anführer der Orks
+  - Bring den Beweis zu Freiherr Georg
+- **Die Diebesplage**
+  - Finde den Banditenführer Silberhand
+  - Bring den Beweis zu Freiherr Georg
+- **Weinpokale**
+  - Finde die gestohlenen Weinpokale (0/2)
+  - Bring sie zu Canth und Norlael zurück (0/2)
+- **Amtskette**
+  - Finde die gestohlene Amtskette
+  - Bring sie zu Freiherr Georg zurück
+- **Monsterauge**
+  - Kaufe Sandire das Monsterauge ab
+- **Der Friedhofsgärtner**
+  - Finde den Friedhofsgärtner
+  - Besorge die Brosche des Gärtners
+  - Bring Aman die Brosche
+- **Die Diebesgilde**
+  - Betritt die Diebesgilde
+  - Bestehe die Diebesprüfung
+- **Der Verrückte**
+  - Besuche den Verrückten im Keller
+  - Finde den zweiten Teil des Amuletts
+  - Lass das Amulett zusammenfügen
+  - Gib dem Verrückten das Amulett
+  - Töte den Verrückten
+- **Sandras Tochter**
+  - Suche Sabine in Burnville
+  - Befreie Sabine aus Luminors Gewalt
+  - Kehre zu Sandra zurück
+- **Turm der Schwarzmagier**
+  - Öffne den Turm mit der Sphäre
+  - Befreie die Einwohner von Burnville
+  - Schwäche Luminor mit Eiswasser (0/4)
+  - Besiege Luminor
+- **Valdyns Rückkehr**
+  - Finde einen Weg, Valdyn heimzubringen
+  - Benutze die gelbe Kugel am Teleporter
+- **Ambermoon Gemälde**
+  - Bring das Gemälde zu Baron Karsten
+- **Kires Brief**
+  - Finde Kires Frau Dorina
+  - Zeige Ketnar Kires Brief
+  - Gib Dorina Kires Brief
+  - Kehre zu Kire zurück
+- **Ferrins Tochter**
+  - Frag Ferrin nach seiner Trauer
+  - Durchsuche Ferrins Lagerkeller
+  - Finde Ferrins Tochter
+  - Kehre zu Ferrin zurück
+- **Die Bestie**
+  - Frag Norel nach seinem Lehrling Kay
+  - Töte die Bestie in der Höhle im Norden
+  - Bring Norel Kays Amulett
+- **Der Hexenmeister**
+  - Frag Bralum nach dem Problem der Gnome
+  - Finde Neras Versteck unter dem Hexenhaus
+  - Besiege Nera, den Hexenmeister
+  - Zeig Bralum Neras Ring
+- **Sansris Fluch**
+  - Frag Pelanis nach seinen Sorgen
+  - Besiege Sansri in ihrem Tempel
+  - Gib Pelanis Sansris Blut
+- **Die Windtore**
+  - Betritt den Windschrein
+  - Erschaffe den Stab des Aufbaus
+  - Erschaffe die Windkette
+  - Repariere die zerstörten Windtore
+- **Ausflug nach Gadlon**
+  - Aktiviere den Teleporter mit der Kugel
+  - Finde Rinakles, den Leiter der Schule
+  - Frag Rinakles nach dem Heimweg
+- **Dönners alte Mine**
+  - Frag Bore nach Dönner
+  - Öffne den Eingang auf der Insel
+  - Finde Dönners Schlüssel
+  - Öffne Dönners Tür
+- **Die Bruderschaft von Tarbos**
+  - Bring den Amberstar zum Tempel
+  - Besiege Thornahuun
+
+### Ambermoon Advanced only
+
+- **Dein Haus**
+  - Zeig Theodorus das Testament
+  - Lass das Haus ausbauen
+  - Frag Gustav nach Theodorus
+  - Lass ein Windtor errichten
+  - Lass eine Lagerhöhle graben
+  - Erkunde die Lagerhöhle
+  - Besiege die Riesenspinne
+- **Haustiere**
+  - Füttere den hungrigen Kater
+  - Nimm eine Katze von Ferdinand auf
+  - Freunde dich mit der Katze an
+  - Nimm einen Hund von Ferdinand auf
+  - Freunde dich mit dem Hund an
+  - Kehre zu Ferdinand zurück
+- **Die Kreaturen der See**
+  - Frag Kapitän Torle nach den Kreaturen
+  - Finde die Wesen aus Torles Logbuch (0/5)
+  - Besuche die Meerjungfrau
+  - Segle in das Auge des Strudels
+- **Vielauges Schloss**
+  - Öffne Tristans Büro
+  - Öffne die Tür zum Schloss
+  - Besiege den Wächter im Obergeschoss
+  - Banne Vielauges Fluch
+- **Die Pförtner von Cavetown**
+  - Bring Jeff einen Blind-Branntwein
+  - Finde Lukes Schatzkarte
+  - Gib Luke die Schatzkarte
+  - Öffne die Passage für Schiffe
+
+### Ambermoon Advanced only (since episode 2)
+
+- **Das Zauberwort**
+  - Verrate Milzor das Zauberwort
+- **Die goldene Rüstung**
+  - Sammle goldene Schuppen (0/7)
+  - Bring Morgat Schuppen und ein Kettenhemd
+- **Die mystischen Wesen**
+  - Finde den Weinkeller von Crystal
+  - Finde das Buch der mystischen Wesen
+  - Sammle die Essenzen mystischer Wesen (0/6)
+- **Sandras Brosche**
+  - Bring Sandra ihre Brosche zurück
+  - Übertrage die Essenzen auf Kasimir (0/6)
+- **Der Adlerhorst**
+  - Hol dir den Adlerschlüssel von Pelanis
+  - Öffne den Adlerhorst
+  - Nimm Lugthirs Essenz an dich
+- **Die Schwarzberge**
+  - Finde Informationen über Pyrdacor
+  - Hol dir den Schlüsselkristall
+  - Lass Lebab den Kristall aufladen
+  - Öffne die Schwarzberge
+  - Besiege Pyrdacor
+- **Der Wüstentempel**
+  - Finde Marla in der Wüste
+  - Löse das Rätsel des Gesichts
+  - Beantworte die drei Rätselmünder
+  - Besiege Marla
+- **Die Paladingilde von Crystal**
+  - Durchbrich die rissige Wand
+  - Erkunde die Gilde
+  - Beschwöre den Paladinmeister
+  - Besiege den Paladinmeister
+  - Öffne den Ausgang der Gilde
+  - Nimm Gunbars Essenz an dich
+  - Finde Fargons Essenz
+- **Isdir, der Wasserelementar**
+  - Suche Isdir im Strudel
+  - Triff Isdir nachts am nördlichen Strand
+  - Bring dem Kristall goldenes Wasser
+  - Bring dem Kristall eine ruhelose Seele
+  - Bring dem Kristall eine Giftschlange
+  - Bring dem Kristall den blauen Kristall
+  - Nimm Isdirs Essenz entgegen
+
+### Ambermoon Advanced only (since episode 3)
+
+- **Das Wespennest**
+  - Sprich mit Ketnar in Dor Grestin
+  - Frag Feldrar nach Wespen
+  - Besiege die Wespenkönigin
+  - Erstatte Ketnar Bericht
+- **Dorinas Ehering**
+  - Finde Dorinas Ehering
+  - Gib Dorina ihren Ring zurück
+- **Saphir-Disteln**
+  - Pflücke Saphir-Disteln (0/5)
+  - Bring Brogat fünf Saphir-Disteln
+- **Das antike Gewölbe**
+  - Leg das antike Buch auf das Podest
+  - Besteh die Prüfungen des Gewölbes (0/3)
+  - Nimm den Lohn des Wächters entgegen
+- **Die unbekannte Welt**
+  - Aktiviere den Teleporter mit der Kugel
+  - Triff Sheera
+  - Sammle zehn Triis (0/10)
+  - Lade die Triis auf
+  - Kehre nach Lyramion zurück
+- **Der Graltempel**
+  - Frag Melvin nach seiner Familie
+  - Sag nachts GRAL vor den Bergen
+  - Öffne die innere Tür des Tempels
+  - Leg den schweren Stein auf den Altar
+  - Besiege Diokhar
+  - Finde die Überreste von Melvins Vorfahren
+  - Bring Melvin die Smaragdkette
+- **Der Mystikerturm**
+  - Besuche den Teich westlich von Illien
+  - Besuche den einsamen Baum
+  - Besuche den Bergpass
+  - Betritt den Mystikerturm
+  - Besteh die Prüfung der hohen Mystik
+- **Die höchste Diebesprüfung**
+  - Hilf Aman gegen die Ritter
+  - Triff Aman in der Diebesgilde
+  - Löse das Rätsel der Fässer
+  - Zeig Aman den Schleichumhang
+  - Besteh die Prüfung der Unauffälligkeit
+  - Sprich mit Aman
+- **Drelbs Suche**
+  - Besiege die Monster in der Gnommine
+  - Frag Drelb nach seiner Suche
+  - Finde Drelbs Verstecke (0/6)
+  - Gib Drelb sein Zertifikat
+
+## Français
+
+### Original and Ambermoon Advanced
+
+- **Le destin de Lyramion**
+  - Parle à Shandra à Newlake
+  - Entre dans le temple de la confrérie
+  - Explore le temple de la confrérie
+  - Explore le hangar du temple
+  - Trouve la navpierre
+  - Vole vers la lune forestière
+  - Rencontre Kire, le chef des nains
+  - Trouve un moyen de quitter la lune
+  - Apporte l'ambre de Shandra à Grand-père
+  - Utilise l'ambre de Shandra
+  - Entre dans la salle secrète
+  - Trouve la recette
+  - LyramionsFaith_BrewDemonSleep
+  - Vole vers Morag
+  - Parle au Moranien dans la prison
+  - Fouille le palais de S'riel
+  - Rassemble les cordes de cristal (0/7)
+  - Fais monter les cordes par Matthias
+  - Brise le mur de cristal du temple
+  - Détruis la machine moranienne
+- **La quête de Grand-père**
+  - Parle à ton grand-père
+  - Va dans la cave à vin
+  - Trouve l'équipement de Grand-père
+  - Retourne voir Grand-père
+  - Visite la tombe de Grand-père
+  - Parle de l'éboulement à Grand-père
+  - Trouve Tolimar le maréchal-ferrant
+  - Dégage l'éboulement
+- **La fièvre des marais**
+  - Parle au Père Antoine
+  - Procure-toi un lys des marais
+  - Procure-toi une fiole vide
+  - Procure-toi de l'eau de vie
+  - Retourne voir le Père Antoine
+  - Soigne Sally, la fille du pêcheur
+  - Parle à Sally, la fille du pêcheur
+  - Parle à Wat le pêcheur
+- **Les fers à cheval en or**
+  - Trouve les fers à cheval en or (0/4)
+  - Rapporte les fers à cheval à Tolimar
+- **L'anneau d'Alkem**
+  - Entre dans la vieille crypte
+  - Trouve l'anneau dans la crypte
+  - Rapporte l'anneau à Alkem
+- **Les sylphes**
+  - Parle des fées à Dame Heidi
+  - Trouve l'objet dans l'arbre
+  - Trouve les fées
+  - Sauve Selena
+- **L'assaut des orcs**
+  - Vaincs le chef des orcs
+  - Apporte la preuve au Baron George
+- **La menace des voleurs**
+  - Trouve Main d'Argent, chef des bandits
+  - Apporte la preuve au Baron George
+- **Les coupes à vin**
+  - Trouve les coupes à vin volées (0/2)
+  - Rapporte-les à Canth et Norlael (0/2)
+- **L'écharpe de maire**
+  - Trouve l'écharpe de maire volée
+  - Rapporte-la au Baron George
+- **L'oeil du monstre**
+  - Achète l'oeil du monstre à Sandire
+- **Le jardinier du cimetière**
+  - Trouve le jardinier du cimetière
+  - Récupère la broche du jardinier
+  - Apporte la broche à Aman
+- **La guilde des voleurs**
+  - Entre dans la guilde des voleurs
+  - Réussis l'épreuve des voleurs
+- **Le fou**
+  - Rends visite au fou dans la cave
+  - Trouve la seconde moitié de l'amulette
+  - Fais réunir les deux moitiés
+  - Donne l'amulette au fou
+  - Tue le fou
+- **La fille de Sandra**
+  - Cherche Sabine à Burnville
+  - Libère Sabine de Luminor
+  - Retourne voir Sandra
+- **La tour de la magie noire**
+  - Ouvre la tour avec la sphère-clé
+  - Libère les habitants de Burnville
+  - Affaiblis Luminor à l'eau glacée (0/4)
+  - Vaincs Luminor
+- **Le retour de Valdyn**
+  - Trouve un moyen de ramener Valdyn
+  - Utilise la sphère jaune au téléporteur
+- **La peinture Ambermoon**
+  - Apporte la peinture au Baron Karsten
+- **La lettre de Kire**
+  - Trouve Dorina, la femme de Kire
+  - Montre la lettre de Kire à Ketnar
+  - Donne la lettre de Kire à Dorina
+  - Retourne voir Kire
+- **La fille de Ferrin**
+  - Demande à Ferrin pourquoi il est en deuil
+  - Fouille la cave de Ferrin
+  - Trouve la fille de Ferrin
+  - Retourne voir Ferrin
+- **La bête**
+  - Demande à Norel des nouvelles de Kay
+  - Tue la bête dans la grotte au nord
+  - Apporte l'amulette de Kay à Norel
+- **Le maître sorcier**
+  - Demande à Bralum le problème des gnomes
+  - Trouve le repaire de Nera
+  - Vaincs Nera, le maître sorcier
+  - Montre l'anneau de Nera à Bralum
+- **La malédiction de Sansrie**
+  - Demande à Pelanis ce qui l'inquiète
+  - Vaincs Sansrie dans son temple
+  - Donne le sang de Sansrie à Pelanis
+- **Les portes du vent**
+  - Entre dans le sanctuaire du vent
+  - Crée la baguette à bâtir
+  - Crée le collier du vent
+  - Répare les portes du vent détruites
+- **Excursion à Gadlon**
+  - Active le téléporteur avec la sphère
+  - Trouve Rinakles, le directeur de l'école
+  - Demande à Rinakles le chemin du retour
+- **La vieille mine de Donner**
+  - Interroge Bore sur Donner
+  - Ouvre l'entrée sur l'île
+  - Trouve la clé de Donner
+  - Ouvre la porte de Donner
+- **La confrérie de Tarbos**
+  - Apporte l'Amberstar au temple
+  - Vaincs Thornahuun
+
+### Ambermoon Advanced only
+
+- **Ta maison**
+  - Montre le testament à Theodorus
+  - Fais rénover la maison
+  - Interroge Gustav sur Theodorus
+  - Fais construire une porte du vent
+  - Fais creuser une grotte de stockage
+  - Explore la grotte de stockage
+  - Vaincs l'araignée géante
+- **Animaux de compagnie**
+  - Nourris le matou affamé
+  - Adopte un chat chez Ferdinand
+  - Lie-toi d'amitié avec le chat
+  - Adopte un chien chez Ferdinand
+  - Lie-toi d'amitié avec le chien
+  - Retourne voir Ferdinand
+- **Les créatures marines**
+  - Interroge le capitaine Torle
+  - Trouve les bêtes du journal de Torle (0/5)
+  - Rends visite à la sirène
+  - Navigue dans l'œil du tourbillon
+- **Le château de Mille-Yeux**
+  - Ouvre le bureau de Tristan
+  - Ouvre la porte du château
+  - Vaincs le gardien de l'étage
+  - Bannis la malédiction de Mille-Yeux
+- **Les portiers de Cavetown**
+  - Apporte une eau-de-vie à Jeff
+  - Trouve la carte au trésor de Luke
+  - Donne la carte au trésor à Luke
+  - Ouvre le passage pour les navires
+
+### Ambermoon Advanced only (since episode 2)
+
+- **Le mot magique**
+  - Dis le mot magique à Milzor
+- **L'armure dorée**
+  - Récolte des écailles dorées (0/7)
+  - Donne écailles et cotte de mailles à Morgat
+- **Les créatures mystiques**
+  - Trouve la cave à vin de Crystal
+  - Trouve le livre des créatures mystiques
+  - Récolte les essences des créatures (0/6)
+- **La broche de Sandra**
+  - Rends sa broche à Sandra
+  - Transfère les essences dans Kasimir (0/6)
+- **L'aire des aigles**
+  - Obtiens la clé de l'aigle de Pelanis
+  - Ouvre l'aire des aigles
+  - Prends l'essence de Lugthir
+- **Les montagnes noires**
+  - Trouve des informations sur Pyrdacor
+  - Obtiens le cristal-clé
+  - Fais charger le cristal par Lebab
+  - Ouvre les montagnes noires
+  - Vaincs Pyrdacor
+- **Le temple du désert**
+  - Trouve Marla dans le désert
+  - Résous l'énigme du visage
+  - Réponds aux trois bouches à énigmes
+  - Vaincs Marla
+- **La guilde des paladins de Crystal**
+  - Perce le mur fissuré
+  - Explore la guilde
+  - Invoque le maître paladin
+  - Vaincs le maître paladin
+  - Ouvre la sortie de la guilde
+  - Prends l'essence de Gunbar
+  - Trouve l'essence de Fargon
+- **Isdir, l'élémentaire de l'eau**
+  - Cherche Isdir dans le tourbillon
+  - Rencontre Isdir la nuit sur la plage nord
+  - Apporte de l'eau dorée au cristal
+  - Apporte une âme errante au cristal
+  - Apporte un serpent venimeux au cristal
+  - Apporte le cristal bleu au cristal de glace
+  - Reçois l'essence d'Isdir
+
+### Ambermoon Advanced only (since episode 3)
+
+- **Le nid de guêpes**
+  - Parle à Ketnar à Dor Grestin
+  - Interroge Feldrar sur les guêpes
+  - Vaincs la reine des guêpes
+  - Fais ton rapport à Ketnar
+- **L'alliance de Dorina**
+  - Trouve l'alliance de Dorina
+  - Rends son alliance à Dorina
+- **Les chardons saphir**
+  - Cueille des chardons saphir (0/5)
+  - Apporte cinq chardons saphir à Brogat
+- **La voûte antique**
+  - Pose le livre antique sur le socle
+  - Réussis les épreuves de la voûte (0/3)
+  - Reçois la récompense du gardien
+- **Le monde inconnu**
+  - Active le téléporteur avec la sphère
+  - Rencontre Sheera
+  - Récolte dix triis (0/10)
+  - Charge les triis
+  - Retourne à Lyramion
+- **Le temple du Graal**
+  - Interroge Melvin sur sa famille
+  - Dis GRAAL devant les montagnes la nuit
+  - Ouvre la porte intérieure du temple
+  - Pose la lourde pierre sur l'autel
+  - Vaincs Diokhar
+  - Trouve les restes de l'ancêtre de Melvin
+  - Apporte le collier d'émeraudes à Melvin
+- **La tour des mystiques**
+  - Visite l'étang à l'ouest d'Illien
+  - Visite l'arbre solitaire
+  - Visite le col de montagne
+  - Entre dans la tour des mystiques
+  - Réussis l'épreuve de haute mystique
+- **L'épreuve suprême des voleurs**
+  - Aide Aman contre les chevaliers
+  - Retrouve Aman à la guilde des voleurs
+  - Résous l'énigme des tonneaux
+  - Montre la cape furtive à Aman
+  - Réussis l'épreuve de discrétion
+  - Parle à Aman
+- **La quête de Drelb**
+  - Vaincs les monstres de la mine des gnomes
+  - Demande à Drelb sa quête
+  - Trouve les cachettes de Drelb (0/6)
+  - Donne le certificat à Drelb
+
+## Polski
+
+### Original and Ambermoon Advanced
+
+- **Los Lyramionu**
+  - Porozmawiaj z Shandrą w Newlake
+  - Wejdź do świątyni Bractwa
+  - Zbadaj świątynię Bractwa
+  - Zbadaj hangar w świątyni
+  - Znajdź nawkamień
+  - Leć na leśny księżyc
+  - Spotkaj Kire, przywódcę krasnoludów
+  - Znajdź sposób, by opuścić leśny księżyc
+  - Zanieś bursztyn Shandry dziadkowi
+  - Użyj bursztynu Shandry
+  - Wejdź do tajnej komnaty w bibliotece
+  - Znajdź przepis
+  - LyramionsFaith_BrewDemonSleep
+  - Leć na Morag
+  - Porozmawiaj z Moraninem w więzieniu
+  - Przeszukaj pałac S'riela
+  - Zbierz kryształowe struny (0/7)
+  - Niech Matthias naciągnie struny na harfę
+  - Zniszcz kryształową ścianę w świątyni
+  - Zniszcz morańską maszynę
+- **Zadanie dziadka**
+  - Porozmawiaj z dziadkiem
+  - Idź do piwnicy z winem
+  - Znajdź ekwipunek dziadka
+  - Wróć do dziadka
+  - Odwiedź grób dziadka
+  - Powiedz dziadkowi o zawalisku
+  - Znajdź kowala Tolimara w Spannenbergu
+  - Usuń zawalisko
+- **Bagienna gorączka**
+  - Porozmawiaj z ojcem Anthonym
+  - Zdobądź bagienną lilię
+  - Zdobądź pustą butelkę
+  - Zdobądź wodę życia
+  - Wróć do ojca Anthony'ego
+  - Ulecz Sally, córkę rybaka
+  - Porozmawiaj z Sally, córką rybaka
+  - Porozmawiaj z rybakiem Watem
+- **Złote podkowy**
+  - Znajdź złote podkowy (0/4)
+  - Oddaj złote podkowy Tolimarowi
+- **Pierścień Alkema**
+  - Wejdź do starej krypty
+  - Znajdź pierścień w krypcie
+  - Oddaj pierścień Alkemowi
+- **Sylfy**
+  - Zapytaj Lady Heidi o wróżki
+  - Znajdź przedmiot w drzewie
+  - Znajdź wróżki
+  - Uratuj Selenę
+- **Najazd orków**
+  - Pokonaj przywódcę orków
+  - Zanieś dowód baronowi George'owi
+- **Plaga złodziei**
+  - Znajdź Srebrną Rękę, herszta bandytów
+  - Zanieś dowód baronowi George'owi
+- **Kielichy na wino**
+  - Znajdź skradzione kielichy na wino (0/2)
+  - Oddaj je Canth i Norlaelowi (0/2)
+- **Urzędowy łańcuch**
+  - Znajdź skradziony urzędowy łańcuch
+  - Oddaj go baronowi George'owi
+- **Oko potwora**
+  - Kup oko potwora od Sandire
+- **Ogrodnik cmentarny**
+  - Znajdź ogrodnika cmentarnego
+  - Zdobądź broszę ogrodnika
+  - Zanieś broszę Amanowi
+- **Gildia złodziei**
+  - Wejdź do gildii złodziei
+  - Przejdź próbę złodziei
+- **Szaleniec**
+  - Odwiedź szaleńca w piwnicy
+  - Znajdź drugą część amuletu
+  - Każ połączyć amulet
+  - Daj amulet szaleńcowi
+  - Zabij szaleńca
+- **Córka Sandry**
+  - Szukaj Sabine w Burnville
+  - Uwolnij Sabine z rąk Luminora
+  - Wróć do Sandry
+- **Wieża czarnej magii**
+  - Otwórz wieżę kulą otwarcia
+  - Uwolnij mieszkańców Burnville
+  - Osłab Luminora lodową wodą (0/4)
+  - Pokonaj Luminora
+- **Powrót Valdyna**
+  - Znajdź sposób, by odesłać Valdyna
+  - Użyj żółtej kuli przy teleporterze
+- **Obraz Ambermoon**
+  - Zanieś obraz baronowi Karstenowi
+- **List Kirego**
+  - Znajdź Dorinę, żonę Kirego
+  - Pokaż Ketnarowi list Kirego
+  - Oddaj Dorinie list Kirego
+  - Wróć do Kirego
+- **Córka Ferrina**
+  - Zapytaj Ferrina o jego żałobę
+  - Przeszukaj piwnicę Ferrina
+  - Znajdź córkę Ferrina
+  - Wróć do Ferrina
+- **Bestia**
+  - Zapytaj Norela o jego ucznia Kaya
+  - Zabij bestię w jaskini na północy
+  - Zanieś Norelowi amulet Kaya
+- **Czarownik Nera**
+  - Zapytaj Braluma o problem gnomów
+  - Znajdź kryjówkę Nery pod domem wiedźmy
+  - Pokonaj czarownika Nerę
+  - Pokaż Bralumowi pierścień Nery
+- **Klątwa Sansri**
+  - Zapytaj Pelanisa o jego obawy
+  - Pokonaj Sansri w jej świątyni
+  - Daj Pelanisowi krew Sansri
+- **Wrota wiatru**
+  - Wejdź do świątyni wiatru
+  - Stwórz laskę budowy
+  - Stwórz łańcuch wiatru
+  - Napraw zniszczone wrota wiatru
+- **Wycieczka do Gadlonu**
+  - Uruchom teleporter za pomocą kuli
+  - Znajdź Rinaklesa, dyrektora szkoły
+  - Zapytaj Rinaklesa o drogę do domu
+- **Stara kopalnia Donnera**
+  - Zapytaj Bore'a o Donnera
+  - Otwórz wejście na wyspie
+  - Znajdź klucz Donnera
+  - Otwórz drzwi Donnera
+- **Bractwo Tarbos**
+  - Zanieś Amberstar do świątyni
+  - Pokonaj Thornahuuna
+
+### Ambermoon Advanced only
+
+- **Twój dom**
+  - Pokaż Theodorusowi testament
+  - Zleć przebudowę domu
+  - Zapytaj Gustava o Theodorusa
+  - Zleć budowę wrót wiatru
+  - Zleć wykopanie jaskini magazynowej
+  - Zbadaj jaskinię magazynową
+  - Pokonaj olbrzymiego pająka
+- **Zwierzęta domowe**
+  - Nakarm głodnego kocura
+  - Przygarnij kota od Ferdinanda
+  - Zaprzyjaźnij się z kotem
+  - Przygarnij psa od Ferdinanda
+  - Zaprzyjaźnij się z psem
+  - Wróć do Ferdinanda
+- **Morskie stworzenia**
+  - Zapytaj kapitana Torle o stworzenia
+  - Znajdź stworzenia z dziennika Torle (0/5)
+  - Odwiedź syrenę
+  - Wpłyń w oko wiru
+- **Zamek Wielookiego**
+  - Otwórz biuro Tristana
+  - Otwórz drzwi do zamku
+  - Pokonaj strażnika górnego piętra
+  - Zdejmij klątwę Wielookiego
+- **Odźwierni z Cavetown**
+  - Przynieś Jeffowi ślepą wódkę
+  - Znajdź mapę skarbów Luke'a
+  - Daj Luke'owi mapę skarbów
+  - Otwórz przejście dla statków
+
+### Ambermoon Advanced only (since episode 2)
+
+- **Magiczne słowo**
+  - Zdradź Milzorowi magiczne słowo
+- **Złota zbroja**
+  - Zbierz złote łuski (0/7)
+  - Zanieś Morgatowi łuski i kolczugę
+- **Mistyczne istoty**
+  - Znajdź piwnicę z winem w Crystal
+  - Znajdź księgę mistycznych istot
+  - Zbierz esencje mistycznych istot (0/6)
+- **Broszka Sandry**
+  - Oddaj Sandrze jej broszkę
+  - Przenieś esencje na Kasimira (0/6)
+- **Orle gniazdo**
+  - Zdobądź orli klucz od Pelanisa
+  - Otwórz orle gniazdo
+  - Zabierz esencję Lugthira
+- **Czarne góry**
+  - Znajdź informacje o Pyrdacorze
+  - Zdobądź kryształ-klucz
+  - Niech Lebab naładuje kryształ
+  - Otwórz Czarne góry
+  - Pokonaj Pyrdacora
+- **Pustynna świątynia**
+  - Znajdź Marlę na pustyni
+  - Rozwiąż zagadkę twarzy
+  - Odpowiedz trzem ustom zagadek
+  - Pokonaj Marlę
+- **Gildia paladynów z Crystal**
+  - Przebij się przez pękniętą ścianę
+  - Zbadaj gildię
+  - Przywołaj mistrza paladynów
+  - Pokonaj mistrza paladynów
+  - Otwórz wyjście z gildii
+  - Zabierz esencję Gunbara
+  - Znajdź esencję Fargona
+- **Isdir, żywiołak wody**
+  - Szukaj Isdira w wirze
+  - Spotkaj Isdira nocą na północnej plaży
+  - Przynieś kryształowi złotą wodę
+  - Przynieś kryształowi niespokojną duszę
+  - Przynieś kryształowi jadowitego węża
+  - Przynieś lodowemu kryształowi niebieski
+  - Odbierz esencję Isdira
+
+### Ambermoon Advanced only (since episode 3)
+
+- **Gniazdo os**
+  - Porozmawiaj z Ketnarem w Dor Grestin
+  - Zapytaj Feldrara o osy
+  - Pokonaj królową os
+  - Zdaj raport Ketnarowi
+- **Obrączka Doriny**
+  - Znajdź obrączkę Doriny
+  - Oddaj Dorinie jej obrączkę
+- **Szafirowe osty**
+  - Zerwij szafirowe osty (0/5)
+  - Zanieś Brogatowi pięć szafirowych ostów
+- **Starożytne sklepienie**
+  - Połóż starożytną księgę na postumencie
+  - Zdaj próby sklepienia (0/3)
+  - Odbierz nagrodę strażnika
+- **Nieznany świat**
+  - Uruchom teleporter za pomocą kuli
+  - Spotkaj Sheerę
+  - Zbierz dziesięć triis (0/10)
+  - Naładuj triis
+  - Wróć na Lyramion
+- **Świątynia Graala**
+  - Zapytaj Melvina o jego rodzinę
+  - Powiedz w nocy GRAL przed górami
+  - Otwórz wewnętrzne drzwi świątyni
+  - Połóż ciężki kamień na ołtarzu
+  - Pokonaj Diokhara
+  - Znajdź szczątki przodka Melvina
+  - Zanieś Melvinowi szmaragdowy naszyjnik
+- **Wieża mistyków**
+  - Odwiedź staw na zachód od Illien
+  - Odwiedź samotne drzewo
+  - Odwiedź przełęcz górską
+  - Wejdź do wieży mistyków
+  - Zdaj próbę wysokiej mistyki
+- **Najwyższa próba złodziei**
+  - Pomóż Amanowi przeciw rycerzom
+  - Spotkaj Amana w gildii złodziei
+  - Rozwiąż zagadkę beczek
+  - Pokaż Amanowi płaszcz skradania
+  - Zdaj próbę skradania się
+  - Porozmawiaj z Amanem
+- **Poszukiwania Drelba**
+  - Pokonaj potwory w kopalni gnomów
+  - Zapytaj Drelba o jego poszukiwania
+  - Znajdź kryjówki Drelba (0/6)
+  - Daj Drelbowi certyfikat
+
+## Čeština
+
+### Original and Ambermoon Advanced
+
+- **Osud Lyramionu**
+  - Promluv si se Shandrou v Newlake
+  - Vstup do chrámu Bratrstva
+  - Prozkoumej chrám Bratrstva
+  - Prozkoumej hangár v chrámu
+  - Najdi navigační kámen
+  - Leť na lesní měsíc
+  - Setkej se s Kirem, vůdcem trpaslíků
+  - Najdi cestu z lesního měsíce
+  - Přines dědečkovi jantar Shandry
+  - Použij jantar Shandry
+  - Vstup do tajné místnosti v knihovně
+  - Najdi recept
+  - LyramionsFaith_BrewDemonSleep
+  - Leť na Morag
+  - Promluv si s Moraňanem ve vězení
+  - Prohledej S'rielův palác
+  - Posbírej křišťálové struny (0/7)
+  - Nech Matthiase natáhnout struny na harfu
+  - Rozbij křišťálovou zeď v chrámu
+  - Znič moraňský stroj
+- **Dědečkův úkol**
+  - Promluv si s dědečkem
+  - Jdi do vinného sklepa
+  - Najdi dědečkovo vybavení
+  - Vrať se k dědečkovi
+  - Navštiv dědečkův hrob
+  - Řekni dědečkovi o závalu
+  - Najdi podkováře Tolimara ve Spannenbergu
+  - Odstraň zával
+- **Bažinná horečka**
+  - Promluv si s otcem Anthonym
+  - Opatři si bažinnou lilii
+  - Opatři si prázdnou lahvičku
+  - Opatři si vodu života
+  - Vrať se k otci Anthonymu
+  - Vyleč Sally, rybářovu dceru
+  - Promluv si se Sally, rybářovou dcerou
+  - Promluv si s rybářem Watem
+- **Zlaté podkovy**
+  - Najdi zlaté podkovy (0/4)
+  - Vrať zlaté podkovy Tolimarovi
+- **Alkemův prsten**
+  - Vstup do staré krypty
+  - Najdi prsten v kryptě
+  - Vrať prsten Alkemovi
+- **Sylfy**
+  - Zeptej se paní Heidi na víly
+  - Najdi předmět ve stromě
+  - Najdi víly
+  - Zachraň Selenu
+- **Nájezd skřetů**
+  - Poraz vůdce skřetů
+  - Přines důkaz baronu Georgovi
+- **Zlodějská pohroma**
+  - Najdi Stříbrnou ruku, vůdce banditů
+  - Přines důkaz baronu Georgovi
+- **Poháry na víno**
+  - Najdi ukradené poháry na víno (0/2)
+  - Vrať je Canth a Norlaelovi (0/2)
+- **Úřední náhrdelník**
+  - Najdi ukradený úřední náhrdelník
+  - Vrať ho baronu Georgovi
+- **Oko monstra**
+  - Kup od Sandire oko monstra
+- **Hřbitovní zahradník**
+  - Najdi hřbitovního zahradníka
+  - Získej zahradníkovu brož
+  - Přines brož Amanovi
+- **Zlodějský cech**
+  - Vstup do zlodějského cechu
+  - Projdi zlodějskou zkouškou
+- **Šílenec**
+  - Navštiv šílence ve sklepě
+  - Najdi druhou část amuletu
+  - Nech amulet spojit
+  - Dej amulet šílenci
+  - Zabij šílence
+- **Sandřina dcera**
+  - Hledej Sabine v Burnville
+  - Osvoboď Sabine z Luminorovy moci
+  - Vrať se k Sandře
+- **Věž černé magie**
+  - Otevři věž sférou otevření
+  - Osvoboď obyvatele Burnville
+  - Oslab Luminora ledovou vodou (0/4)
+  - Poraz Luminora
+- **Valdynův návrat**
+  - Najdi cestu, jak poslat Valdyna domů
+  - Použij žlutou sféru u teleportu
+- **Obraz Jantarového měsíce**
+  - Přines obraz baronu Karstenovi
+- **Kireův dopis**
+  - Najdi Kireovu ženu Dorinu
+  - Ukaž Ketnarovi Kireův dopis
+  - Dej Dorině Kireův dopis
+  - Vrať se ke Kireovi
+- **Ferrinova dcera**
+  - Zeptej se Ferrina, proč truchlí
+  - Prohledej Ferrinův sklep
+  - Najdi Ferrinovu dceru
+  - Vrať se k Ferrinovi
+- **Šelma**
+  - Zeptej se Norela na jeho učně Kaye
+  - Zabij šelmu v jeskyni na severu
+  - Přines Norelovi Kayův amulet
+- **Čaroděj Nera**
+  - Zeptej se Braluma na problém gnómů
+  - Najdi Nerův úkryt pod domem čarodějnice
+  - Poraz čaroděje Neru
+  - Ukaž Bralumovi Nerův prsten
+- **Sansriino prokletí**
+  - Zeptej se Pelanise na jeho obavy
+  - Poraz Sansri v její svatyni
+  - Dej Pelanisovi Sansriinu krev
+- **Větrné brány**
+  - Vstup do svatyně větru
+  - Vytvoř konstrukční hůl
+  - Vytvoř větrný náhrdelník
+  - Oprav zničené větrné brány
+- **Výlet do Gadlonu**
+  - Aktivuj teleport pomocí koule
+  - Najdi Rinaklese, ředitele školy
+  - Zeptej se Rinaklese na cestu domů
+- **Donnerův starý důl**
+  - Zeptej se Boreho na Donnera
+  - Otevři vchod na ostrově
+  - Najdi Donnerův klíč
+  - Otevři Donnerovy dveře
+- **Bratrstvo Tarbos**
+  - Přines Jantarovou hvězdu do chrámu
+  - Poraz Thornahuuna
+
+### Ambermoon Advanced only
+
+- **Tvůj dům**
+  - Ukaž Theodorovi závěť
+  - Nech přestavět dům
+  - Zeptej se Gustava na Theodora
+  - Nech postavit větrnou bránu
+  - Nech vykopat skladovací jeskyni
+  - Prozkoumej skladovací jeskyni
+  - Poraz obřího pavouka
+- **Domácí mazlíčci**
+  - Nakrm hladového kocoura
+  - Adoptuj kočku od Ferdinanda
+  - Spřátel se s kočkou
+  - Adoptuj psa od Ferdinanda
+  - Spřátel se se psem
+  - Vrať se k Ferdinandovi
+- **Mořští tvorové**
+  - Zeptej se kapitána Torleho na tvory
+  - Najdi tvory z Torleho lodního deníku (0/5)
+  - Navštiv mořskou pannu
+  - Vpluj do oka víru
+- **Hrad Mnohookého**
+  - Otevři Tristanovu kancelář
+  - Otevři dveře do hradu
+  - Poraz strážce horního patra
+  - Zažeň kletbu Mnohookého
+- **Vrátní z Cavetownu**
+  - Přines Jeffovi slepou pálenku
+  - Najdi Lukovu mapu pokladu
+  - Dej Lukovi mapu pokladu
+  - Otevři průjezd pro lodě
+
+### Ambermoon Advanced only (since episode 2)
+
+- **Kouzelné slovo**
+  - Prozraď Milzorovi kouzelné slovo
+- **Zlatá zbroj**
+  - Sesbírej zlaté šupiny (0/7)
+  - Přines Morgatovi šupiny a kroužkovou košili
+- **Mystické bytosti**
+  - Najdi vinný sklep v Crystalu
+  - Najdi knihu mystických bytostí
+  - Sesbírej esence mystických bytostí (0/6)
+- **Sandřina brož**
+  - Vrať Sandře její brož
+  - Přenes esence na Kasimira (0/6)
+- **Orlí hnízdo**
+  - Získej orlí klíč od Pelanise
+  - Otevři orlí hnízdo
+  - Vezmi si Lugthirovu esenci
+- **Černé hory**
+  - Najdi informace o Pyrdacorovi
+  - Získej klíčový krystal
+  - Nech Lebaba nabít krystal
+  - Otevři Černé hory
+  - Poraz Pyrdacora
+- **Pouštní chrám**
+  - Najdi Marlu v poušti
+  - Vyřeš hádanku tváře
+  - Odpověz třem hádankovým ústům
+  - Poraz Marlu
+- **Cech paladinů z Crystalu**
+  - Proraž popraskanou zeď
+  - Prozkoumej cech
+  - Vyvolej mistra paladinů
+  - Poraz mistra paladinů
+  - Otevři východ z cechu
+  - Vezmi si Gunbarovu esenci
+  - Najdi Fargonovu esenci
+- **Isdir, vodní elementál**
+  - Hledej Isdira ve víru
+  - Setkej se v noci s Isdirem na pláži
+  - Přines krystalu zlatou vodu
+  - Přines krystalu neklidnou duši
+  - Přines krystalu jedovatého hada
+  - Přines ledovému krystalu modrý krystal
+  - Převezmi Isdirovu esenci
+
+### Ambermoon Advanced only (since episode 3)
+
+- **Vosí hnízdo**
+  - Promluv s Ketnarem v Dor Grestinu
+  - Zeptej se Feldrara na vosy
+  - Poraz vosí královnu
+  - Podej Ketnarovi hlášení
+- **Dorinin snubní prsten**
+  - Najdi Dorinin snubní prsten
+  - Vrať Dorině její prsten
+- **Safírové bodláky**
+  - Natrhej safírové bodláky (0/5)
+  - Přines Brogatovi pět safírových bodláků
+- **Starobylá klenba**
+  - Polož starobylou knihu na podstavec
+  - Projdi zkouškami klenby (0/3)
+  - Převezmi odměnu strážce
+- **Neznámý svět**
+  - Aktivuj teleport pomocí koule
+  - Setkej se se Sheerou
+  - Sesbírej deset triisů (0/10)
+  - Nabij triisy
+  - Vrať se na Lyramion
+- **Grálový chrám**
+  - Zeptej se Melvina na jeho rodinu
+  - Řekni v noci před horami GRÁL
+  - Otevři vnitřní dveře chrámu
+  - Polož těžký kámen na oltář
+  - Poraz Diokhara
+  - Najdi ostatky Melvinova předka
+  - Přines Melvinovi smaragdový náhrdelník
+- **Věž mystiků**
+  - Navštiv rybník západně od Illienu
+  - Navštiv osamělý strom
+  - Navštiv horský průsmyk
+  - Vstup do věže mystiků
+  - Projdi zkouškou vysoké mystiky
+- **Nejvyšší zkouška zlodějů**
+  - Pomoz Amanovi proti rytířům
+  - Setkej se s Amanem v cechu zlodějů
+  - Vyřeš hádanku sudů
+  - Ukaž Amanovi plášť plížení
+  - Projdi zkouškou plížení
+  - Promluv s Amanem
+- **Drelbovo hledání**
+  - Poraz netvory v gnómím dole
+  - Zeptej se Drelba na jeho hledání
+  - Najdi Drelbovy úkryty (0/6)
+  - Dej Drelbovi certifikát

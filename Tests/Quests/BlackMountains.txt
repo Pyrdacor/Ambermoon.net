@@ -6,7 +6,7 @@ waitidle 20000
 dismissall
 cheat netsrak
 cheat light 3
-quest BlackMountains_AskBaronKarstenAboutPyrdacor Inactive
+quest BlackMountains_FindInformationAboutPyrdacor Inactive
 # the book of mystic creatures is from another quest
 setvar 268 1
 # --- Baron Karsten
@@ -14,11 +14,11 @@ goto 427 13 6
 dismissall
 talk 30
 talkwait
-quest BlackMountains_AskBaronKarstenAboutPyrdacor Active
+quest BlackMountains_FindInformationAboutPyrdacor Active
 say 128
 talkwait
 var 301 1
-quest BlackMountains_AskBaronKarstenAboutPyrdacor Completed
+quest BlackMountains_FindInformationAboutPyrdacor Completed
 quest BlackMountains_GetTheKeyCrystal Active
 say 138
 talkwait
@@ -77,7 +77,7 @@ var 270 1
 quest BlackMountains_DefeatPyrdacor Completed
 mainquest BlackMountains Completed
 reloadquests
-quest BlackMountains_AskBaronKarstenAboutPyrdacor Completed
+quest BlackMountains_FindInformationAboutPyrdacor Completed
 quest BlackMountains_GetTheKeyCrystal Completed
 quest BlackMountains_HaveLebabChargeTheCrystal Completed
 quest BlackMountains_OpenTheBlackMountains Completed

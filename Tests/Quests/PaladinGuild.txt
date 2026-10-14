@@ -32,7 +32,7 @@ trigger 5 29 item:433
 talkwait
 eventbit 470 31 1
 quest PaladinGuild_BreakThroughTheCrackedWall Completed
-quest PaladinGuild_LightTheCandles Active
+quest PaladinGuild_ExploreTheGuild Active
 # --- the four candles (Gryban comments on some places)
 cheat give 281 1
 goto 471 5 5
@@ -54,7 +54,7 @@ dismissall
 trigger 14 14 item:281
 talkwait
 var 259 1
-quest PaladinGuild_LightTheCandles Completed
+quest PaladinGuild_ExploreTheGuild Completed
 quest PaladinGuild_SummonThePaladinMaster Active
 # --- the paladin emblems (one from its chest, the others from the other chests of the guild)
 goto 472 13 22
@@ -118,7 +118,7 @@ quest PaladinGuild_FindFargonsEssence Completed
 mainquest PaladinGuild Completed
 reloadquests
 quest PaladinGuild_BreakThroughTheCrackedWall Completed
-quest PaladinGuild_LightTheCandles Completed
+quest PaladinGuild_ExploreTheGuild Completed
 quest PaladinGuild_SummonThePaladinMaster Completed
 quest PaladinGuild_DefeatThePaladinMaster Completed
 quest PaladinGuild_OpenTheExitOfTheGuild Completed

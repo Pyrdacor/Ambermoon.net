@@ -386,7 +386,7 @@ Tests: `Pets.txt`
 
 1. **Ask captain Torle about the creatures**: Michael (keyword "Map", then "Creatures of the sea") sends the party to
    Torle, who gives his logbook (variable 238).
-2. **Find the creatures from Torle's logbook** (x/5): variables 239, 240, 242, 243 and 244 at sea.
+2. **Find the creatures in Torle's logbook** (x/5): variables 239, 240, 242, 243 and 244 at sea.
 3. **Visit the mermaid**: she takes the party into her grotto (event 163:1) and opens the vortex.
 4. **Sail into the eye of the vortex** (variable 241).
 
@@ -425,7 +425,7 @@ The largest Advanced quest line. The creatures' quests below provide the essence
 1. **Find the wine cellar of Crystal**: the book "Towns of Lyramion" (466, library of Newlake) hints at a sign west
    of the sighing desert. Done when the entrance is dug up with a shovel (variable 260).
 2. **Find the book of mystic creatures**: in the old paladin guild behind the wine cellar (variable 268).
-3. **Collect the mystic creatures' essences** (x/6): the essences of Isdir, Pyrdacor, Marla, Lugthir, Fargon and
+3. **Collect mystic creatures' essences** (x/6): the essences of Isdir, Pyrdacor, Marla, Lugthir, Fargon and
    Gunbar (438-443) owned or transferred into Kasimir by Sandra (variables 262-267).
 
 Tests: `MysticCreatures.txt`
@@ -449,7 +449,8 @@ Tests: `Eyrie.txt`
 
 ### The Black Mountains (Die Schwarzberge) — from episode 2
 
-1. **Ask Baron Karsten about Pyrdacor** (variable 301).
+1. **Find information about Pyrdacor**: source is the book of mystic creatures, Baron Karsten tells about him
+   (variable 301).
 2. **Get the key crystal**: after telling him about the paladin guild or showing the book (variable 302).
 3. **Have Lebab charge the crystal**: the fire crystal (426) is owned or used.
 4. **Open the black mountains** with the fire crystal (event 118:3).
@@ -459,19 +460,22 @@ Tests: `BlackMountains.txt`
 
 ### The Desert Temple (Der Wüstentempel) — from episode 2
 
-The sighing desert swallows the party now and then once the book of mystic creatures is read. Advanced checks
-variable 272 ("Marla defeated") there, but no event sets it, so the desert keeps swallowing the party.
+The sighing desert swallows the party now and then once the book of mystic creatures is read, until Marla is
+defeated (variable 272). Advanced 1.33 never set this variable, the version data of the remake contains the fix
+from episode 4.
 
-1. **Solve the puzzle of the face**: the eyes closed and the mouth open (levers in maps 469 and 474, variable 286).
-2. **Answer the three riddlemouths** (sand, magma or lava, swamp or marsh; events 474:2-4).
-3. **Defeat Marla** (event 474:32).
+1. **Find Marla in the desert**: the desert swallowed the party into the desert temple (event 45:2 drops the party
+   at map 469 10,9, the explored position is checked).
+2. **Solve the puzzle of the face**: the eyes closed and the mouth open (levers in maps 469 and 474, variable 286).
+3. **Answer the three riddlemouths** (sand, magma or lava, swamp or marsh; events 474:2-4).
+4. **Defeat Marla** (event 474:32).
 
 Tests: `DesertTemple.txt`
 
 ### The Paladin Guild of Crystal (Die Paladingilde von Crystal) — from episode 2
 
 1. **Break through the cracked wall** in the wine cellar of Crystal with the giant mallet (event 470:31).
-2. **Light the four candles** with flint and iron (variable 259).
+2. **Explore the guild**: done when the four candles are lit with flint and iron (variable 259).
 3. **Summon the paladin master** with ten paladin emblems, Gryban has to be in the party (event 472:4).
 4. **Defeat the paladin master**: he is hidden again after he was summoned.
 5. **Open the exit of the guild** (variable 261).
@@ -480,11 +484,12 @@ Tests: `DesertTemple.txt`
 
 Tests: `PaladinGuild.txt`
 
-### Isdir's Trials (Isdirs Prüfungen) — from episode 2
+### Isdir, the Water Elemental (Isdir, der Wasserelementar) — from episode 2
 
 Needs the sea creatures (eye of the vortex) and Jeff's blind brandy (Gatekeepers of Cavetown).
 
-1. **Ask Jeff about Isdir**: after the book of mystic creatures (268), Jeff remembers the northern beach (305).
+1. **Search for Isdir in the vortex**: after the book of mystic creatures (268), Jeff remembers the northern beach
+   (305). Blocked until the mermaid opened the vortex (sea creatures, event 163:1).
 2. **Meet Isdir at the northern beach at night**: the way to Isdir's cave appears (event 370:14).
 3. **Bring golden water to the crystal**: Lebab makes it from a golden scale, water of life and a fire thistle
    (touching the crystal 291, done 287).

@@ -5,16 +5,24 @@ waitidle 20000
 dismissall
 cheat netsrak
 cheat light 3
+quest DesertTemple_FindMarlaInTheDesert Inactive
 quest DesertTemple_SolveTheFacePuzzle Inactive
 # the book of mystic creatures is from another quest
 setvar 268 1
 reloadquests
-quest DesertTemple_SolveTheFacePuzzle Active
-# --- where the sand drops the party into the desert temple
+quest DesertTemple_FindMarlaInTheDesert Active
+quest DesertTemple_SolveTheFacePuzzle Inactive
+# --- where the sand drops the party into the desert temple (event 45:2 teleports to 469 10,9)
 goto 469 10 9
 dismissall
 cheat berserk
 dismissall
+quest DesertTemple_FindMarlaInTheDesert Completed
+quest DesertTemple_SolveTheFacePuzzle Active
+# the exploration of the drop position persists
+reloadquests
+quest DesertTemple_FindMarlaInTheDesert Completed
+quest DesertTemple_SolveTheFacePuzzle Active
 # the other levers of the face (maps 469 and 474) are already set: one eye is still open, the mouth still closed
 setvar 273 0
 setvar 277 1
@@ -70,6 +78,7 @@ var 272 1
 quest DesertTemple_DefeatMarla Completed
 mainquest DesertTemple Completed
 reloadquests
+quest DesertTemple_FindMarlaInTheDesert Completed
 quest DesertTemple_SolveTheFacePuzzle Completed
 quest DesertTemple_AnswerTheRiddlemouths Completed
 quest DesertTemple_DefeatMarla Completed

@@ -245,19 +245,20 @@ public enum SubQuestType
     Eyrie_OpenTheEyrie, // after getting the eagle key
     Eyrie_TakeLugthirsEssence, // after opening the eyrie
     // The Black Mountains (Advanced)
-    BlackMountains_AskBaronKarstenAboutPyrdacor, // after reading about Pyrdacor
+    BlackMountains_FindInformationAboutPyrdacor, // after reading about Pyrdacor
     BlackMountains_GetTheKeyCrystal, // after Karsten told about Pyrdacor
     BlackMountains_HaveLebabChargeTheCrystal, // after getting the crystal
     BlackMountains_OpenTheBlackMountains, // after getting the fire crystal
     BlackMountains_DefeatPyrdacor, // after opening the mountains
     // The Desert Temple (Advanced)
-    DesertTemple_SolveTheFacePuzzle, // after reading about Marla
+    DesertTemple_FindMarlaInTheDesert, // after reading about Marla
+    DesertTemple_SolveTheFacePuzzle, // after the desert swallowed the party
     DesertTemple_AnswerTheRiddlemouths, // after solving the face puzzle
     DesertTemple_DefeatMarla, // after answering the riddlemouths
     // The Paladin Guild of Crystal (Advanced)
     PaladinGuild_BreakThroughTheCrackedWall, // after finding the wine cellar
-    PaladinGuild_LightTheCandles, // after breaking through the wall
-    PaladinGuild_SummonThePaladinMaster, // after lighting the candles
+    PaladinGuild_ExploreTheGuild, // after breaking through the wall
+    PaladinGuild_SummonThePaladinMaster, // after exploring the guild (lighting the candles)
     PaladinGuild_DefeatThePaladinMaster, // after summoning him
     PaladinGuild_OpenTheExitOfTheGuild, // after defeating the paladin master
     PaladinGuild_TakeGunbarsEssence, // after finding the book of mystic creatures
@@ -278,7 +279,7 @@ public enum SubQuestType
     Gatekeepers_GiveTheTreasureMapToLuke, // after finding the treasure map
     Gatekeepers_OpenThePassageForShips, // after getting both keys
     // Isdir's Trials (Advanced)
-    IsdirsTrials_AskJeffAboutIsdir, // after reading about Isdir
+    IsdirsTrials_SearchForIsdirInTheVortex, // after reading about Isdir
     IsdirsTrials_MeetIsdirAtNight, // after Jeff told about the northern beach
     IsdirsTrials_BringGoldenWater, // after touching the first crystal
     IsdirsTrials_BringARestlessSoul, // after touching the second crystal
@@ -1480,7 +1481,7 @@ partial class QuestLog
                 quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.BlackMountains,
                     mainQuest => new SubQuest(this, mainQuest)
                     {
-                        Type = SubQuestType.BlackMountains_AskBaronKarstenAboutPyrdacor,
+                        Type = SubQuestType.BlackMountains_FindInformationAboutPyrdacor,
                         Triggers =
                         [
                             // Activate: the book of mystic creatures names Pyrdacor
@@ -1488,8 +1489,8 @@ partial class QuestLog
                             // Complete: Baron Karsten told about Pyrdacor and the black mountains (or gave the crystal already)
                             new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 301) || IsGlobalVariableSet(g, e, 302)),
                         ],
-                        SourceType = QuestSourceType.NPC,
-                        SourceIndex = 30, // Baron Karsten
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 444, // Mystic Creatures
                     },
                     mainQuest => new SubQuest(this, mainQuest)
                     {
@@ -1550,11 +1551,24 @@ partial class QuestLog
                 quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.DesertTemple,
                     mainQuest => new SubQuest(this, mainQuest)
                     {
+                        Type = SubQuestType.DesertTemple_FindMarlaInTheDesert,
+                        Triggers =
+                        [
+                            // Activate: the book of mystic creatures names Marla in the sighing desert
+                            new GlobalVariableTrigger(game, TriggerType.Activation, 268),
+                            // Complete: the sighing desert (map 45) swallowed the party into the desert temple (map 469, 10,9)
+                            new ExplorationTrigger(game, TriggerType.Completion, 469, 10, 9),
+                        ],
+                        SourceType = QuestSourceType.Item,
+                        SourceIndex = 444, // Mystic Creatures
+                    },
+                    mainQuest => new SubQuest(this, mainQuest)
+                    {
                         Type = SubQuestType.DesertTemple_SolveTheFacePuzzle,
                         Triggers =
                         [
-                            // Activate: the book of mystic creatures names Marla in the sighing desert (which swallows the party)
-                            new GlobalVariableTrigger(game, TriggerType.Activation, 268),
+                            // Activate: in the desert temple
+                            new PreviousSubQuestCompletedTrigger(),
                             // Complete: the eyes of the face are closed and its mouth is open
                             new GlobalVariableTrigger(game, TriggerType.Completion, 286),
                         ],
@@ -1608,7 +1622,7 @@ partial class QuestLog
                     },
                     mainQuest => new SubQuest(this, mainQuest)
                     {
-                        Type = SubQuestType.PaladinGuild_LightTheCandles,
+                        Type = SubQuestType.PaladinGuild_ExploreTheGuild,
                         Triggers =
                         [
                             // Activate
@@ -1693,7 +1707,7 @@ partial class QuestLog
                 quests.Add(QuestFactory.CreateMainQuest(this, MainQuestType.IsdirsTrials,
                     mainQuest => new SubQuest(this, mainQuest)
                     {
-                        Type = SubQuestType.IsdirsTrials_AskJeffAboutIsdir,
+                        Type = SubQuestType.IsdirsTrials_SearchForIsdirInTheVortex,
                         Triggers =
                         [
                             // Activate: the book of mystic creatures names Isdir near Cavetown
@@ -1701,6 +1715,8 @@ partial class QuestLog
                             // Complete: Jeff (after his blind brandy) remembered the strange event at the northern beach
                             new GlobalVariableTrigger(game, TriggerType.Completion, 305),
                         ],
+                        // blocked until the mermaid opened the vortex (Cavetown is inside of it)
+                        RequiredCompletedQuests = [SubQuestType.SeaCreatures_VisitTheMermaid],
                         SourceType = QuestSourceType.NPC,
                         SourceIndex = 43, // Jeff
                     },
