@@ -85,6 +85,9 @@ before_build:
   - ps: |
       if ($env:APPVEYOR_REPO_BRANCH -match '^android-v\d+\.\d+\.\d+$') {
         dotnet workload install android
+        # the image has no Android SDK platform for API level 36 which the project targets
+        dotnet build AmbermoonAndroid/AmbermoonAndroid.csproj -t:InstallAndroidDependencies -f net9.0-android36.0 "-p:AndroidSdkDirectory=C:\Program Files (x86)\Android\android-sdk" -p:AcceptAndroidSDKLicenses=True
+        if ($LASTEXITCODE -ne 0) { throw "Installing the Android dependencies failed with exit code $LASTEXITCODE" }
         dotnet restore AmbermoonAndroid/AmbermoonAndroid.csproj
       } else {
         dotnet restore Ambermoon.net.sln --verbosity normal
