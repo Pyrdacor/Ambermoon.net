@@ -1339,16 +1339,19 @@ partial class GameCore
 
     /// <summary>
     /// Poison damage per battle round. With the extended curse effects (Advanced) it is
-    /// 1-5% of the max hit points (1 to 35), otherwise 1-5 hit points.
+    /// a random value between 1 and 5% of the total max hit points, but at most 20
+    /// for party members and bosses and 35 for other monsters. Otherwise 1-5 hit points.
     /// </summary>
     internal uint GetBattlePoisonDamage(Character character)
     {
         if (!Features.HasFlag(Features.ExtendedCurseEffects))
             return (uint)RandomInt(1, 5);
 
-        uint percent = (uint)RandomInt(1, 5);
+        uint limit = character is Monster && !character.BattleFlags.HasFlag(BattleFlags.Boss) ? 35u : 20u;
+        // the limit is applied before the random so high max hit points won't always deal the max damage
+        uint maxDamage = Util.Limit(1u, character.HitPoints.TotalMaxValue * 5 / 100, limit);
 
-        return Util.Limit(1u, character.HitPoints.TotalMaxValue * percent / 100, 35u);
+        return (uint)RandomInt(1, (int)maxDamage);
     }
 
     void Sleep(bool inn, int healing)
