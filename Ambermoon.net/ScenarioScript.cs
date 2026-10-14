@@ -65,6 +65,19 @@ namespace Ambermoon;
 ///   hour &lt;0-23&gt;               set the time of day (e.g. 23 for events which only happen at night)
 ///   eventbit &lt;map&gt; &lt;event&gt; [0|1]
 ///                             print if a map event chain (1-based) is disabled (1), optionally check it
+///   attr &lt;attribute&gt; [value]  print an attribute of the active party member, optionally check it
+///                             (value, +n for "increased by n since the last print" or + for "increased")
+///   slp [value]               print the spell learning points of the active party member (check like attr)
+///   text &lt;property&gt; [text]    print a text of the data name provider (IDataNameProvider property name),
+///                             optionally check that it contains the given text
+///   spellname &lt;spell&gt; [name]  print the name of a spell (Ambermoon.Data.Spell name), optionally check it
+///   monstername &lt;index&gt; [name]
+///                             print the name of a monster, optionally check it
+///   mapflags &lt;map&gt; [hex]      print the flags of a map, optionally check them (e.g. 085a)
+///   gotopoint &lt;map&gt; &lt;index&gt; [bit]
+///                             print the name and savegame bit of a goto point (1-based), optionally check the bit
+///   walkable &lt;map&gt; &lt;x&gt; &lt;y&gt; [0|1]
+///                             print if the party can walk onto a 1-based position of a 2D map, optionally check it
 ///   reloadquests              recreate the quest log from the savegame (like loading the game)
 ///   questlog                  open or close the quest log
 ///   quests                    print all sub quests which are not inactive
@@ -91,6 +104,7 @@ sealed class ScenarioScript
     int dismissQuietTime = 1500;
     int failures = 0;
     int checks = 0;
+    readonly Dictionary<string, uint> lastValues = [];
 
     public bool Finished => commands.Count == 0 && retryCommand == null && idleTimeout == null && dismissTimeout == null && battleTimeout == null && talkTimeout == null && DateTime.Now >= continueTime;
 
@@ -523,6 +537,76 @@ sealed class ScenarioScript
                     case "setattr":
                         game.ScriptSetAttribute(Enum.Parse<Data.Attribute>(parts[1], true), uint.Parse(parts[2]));
                         break;
+                    case "attr":
+                    {
+                        var attribute = Enum.Parse<Data.Attribute>(parts[1], true);
+                        CheckValue(attribute.ToString(), game.ScriptGetAttribute(attribute), parts.Length > 2 ? parts[2] : null);
+                        break;
+                    }
+                    case "slp":
+                        CheckValue("SLP", game.ScriptGetSpellLearningPoints(), parts.Length > 1 ? parts[1] : null);
+                        break;
+                    case "text":
+                    {
+                        string? text = game.ScriptGetText(parts[1]);
+                        Console.WriteLine($"  {parts[1]}: {text ?? "unknown text"}");
+                        if (parts.Length > 2)
+                        {
+                            string expected = command[(command.IndexOf(parts[1]) + parts[1].Length)..].Trim();
+                            Report(text?.Contains(expected) == true, $"{parts[1]} is '{text}', expected to contain '{expected}'");
+                        }
+                        break;
+                    }
+                    case "spellname":
+                    {
+                        var spell = Enum.Parse<Data.Spell>(parts[1], true);
+                        string spellName = game.ScriptGetSpellName(spell);
+                        Console.WriteLine($"  spell {spell}: {spellName}");
+                        if (parts.Length > 2)
+                        {
+                            string expected = command[(command.IndexOf(parts[1]) + parts[1].Length)..].Trim();
+                            Report(spellName == expected, $"spell name of {spell} is '{spellName}', expected '{expected}'");
+                        }
+                        break;
+                    }
+                    case "monstername":
+                    {
+                        string? monsterName = game.ScriptGetMonsterName(uint.Parse(parts[1]));
+                        Console.WriteLine($"  monster {parts[1]}: {monsterName ?? "unknown"}");
+                        if (parts.Length > 2)
+                        {
+                            string expected = command[(command.IndexOf(parts[1]) + parts[1].Length)..].Trim();
+                            Report(monsterName == expected, $"monster {parts[1]} is '{monsterName}', expected '{expected}'");
+                        }
+                        break;
+                    }
+                    case "mapflags":
+                    {
+                        var flags = game.ScriptGetMapFlags(uint.Parse(parts[1]));
+                        string flagsText = flags == null ? "unknown map" : $"0x{(uint)flags.Value:x4}";
+                        Console.WriteLine($"  map {parts[1]} flags: {flagsText}");
+                        if (parts.Length > 2)
+                            Report(flags != null && (uint)flags.Value == Convert.ToUInt32(parts[2], 16), $"map {parts[1]} flags are {flagsText}, expected {parts[2]}");
+                        break;
+                    }
+                    case "gotopoint":
+                    {
+                        var gotoPoint = game.ScriptGetGotoPoint(uint.Parse(parts[1]), int.Parse(parts[2]));
+                        string gotoText = gotoPoint == null ? "unknown goto point" : $"{gotoPoint.Value.Name} (bit {gotoPoint.Value.Bit})";
+                        Console.WriteLine($"  goto point {parts[1]}:{parts[2]}: {gotoText}");
+                        if (parts.Length > 3)
+                            Report(gotoPoint?.Bit == uint.Parse(parts[3]), $"goto point {parts[1]}:{parts[2]} is {gotoText}, expected bit {parts[3]}");
+                        break;
+                    }
+                    case "walkable":
+                    {
+                        bool? walkable = game.ScriptIsWalkable(uint.Parse(parts[1]), uint.Parse(parts[2]), uint.Parse(parts[3]));
+                        string walkableText = walkable == null ? "no 2D map position" : walkable.Value ? "1" : "0";
+                        Console.WriteLine($"  walkable {parts[1]}:{parts[2]},{parts[3]} = {walkableText}");
+                        if (parts.Length > 4)
+                            Report(walkable == (parts[4] == "1"), $"walkable {parts[1]}:{parts[2]},{parts[3]} is {walkableText}, expected {parts[4]}");
+                        break;
+                    }
                     case "reloadquests":
                         game.ScriptReloadQuestLog();
                         break;
@@ -571,6 +655,29 @@ sealed class ScenarioScript
                     Console.WriteLine("    " + frame.Trim());
             }
         }
+    }
+
+    /// <summary>
+    /// Prints a value and optionally checks it. The expected value can be absolute, "+n" (increased by
+    /// n since the last time this value was printed) or "+" (increased at all).
+    /// </summary>
+    void CheckValue(string name, uint value, string? expected)
+    {
+        Console.WriteLine($"  {name} = {value}");
+
+        if (expected != null)
+        {
+            bool known = lastValues.TryGetValue(name, out uint lastValue);
+
+            if (expected == "+")
+                Report(known && value > lastValue, $"{name} is {value}, expected more than {(known ? lastValue.ToString() : "?")}");
+            else if (expected.StartsWith('+'))
+                Report(known && value == lastValue + uint.Parse(expected[1..]), $"{name} is {value}, expected {(known ? lastValue.ToString() : "?")}{expected}");
+            else
+                Report(value == uint.Parse(expected), $"{name} is {value}, expected {expected}");
+        }
+
+        lastValues[name] = value;
     }
 
     void ReportError(string? error)

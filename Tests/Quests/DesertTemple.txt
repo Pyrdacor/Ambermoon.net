@@ -65,6 +65,8 @@ takeloot optional
 closewindow
 talkwait
 eventbit 474 32 1
+# the victory sets global var 272, otherwise the Desert of Sighs swallows the party again (fixed in the AA 1.33 data of the remake)
+var 272 1
 quest DesertTemple_DefeatMarla Completed
 mainquest DesertTemple Completed
 reloadquests

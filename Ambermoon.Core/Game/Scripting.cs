@@ -221,6 +221,49 @@ partial class GameCore
         attributeValue.CurrentValue = value;
     }
 
+    public uint ScriptGetAttribute(Data.Attribute attribute) => CurrentPartyMember!.Attributes[attribute].CurrentValue;
+
+    public uint ScriptGetSpellLearningPoints() => CurrentPartyMember!.SpellLearningPoints;
+
+    /// <summary>
+    /// Returns a text of the data name provider by its property name (e.g. DropHowMuchFoodMessage).
+    /// </summary>
+    public string? ScriptGetText(string propertyName) => typeof(IDataNameProvider).GetProperty(propertyName)?.GetValue(DataNameProvider) as string;
+
+    public string ScriptGetSpellName(Spell spell) => DataNameProvider.GetSpellName(spell);
+
+    public string? ScriptGetMonsterName(uint index) => CharacterManager.GetMonster(index)?.Name;
+
+    public MapFlags? ScriptGetMapFlags(uint mapIndex) => MapManager.GetMap(mapIndex)?.Flags;
+
+    /// <summary>
+    /// Returns the name and the savegame bit index of a goto point (1-based) of a map.
+    /// </summary>
+    public (string Name, uint Bit)? ScriptGetGotoPoint(uint mapIndex, int index)
+    {
+        var gotoPoints = MapManager.GetMap(mapIndex)?.GotoPoints;
+
+        if (gotoPoints == null || index < 1 || index > gotoPoints.Count)
+            return null;
+
+        var gotoPoint = gotoPoints[index - 1];
+
+        return (gotoPoint.Name, gotoPoint.Index);
+    }
+
+    /// <summary>
+    /// True if the party can walk onto the given 1-based position of a 2D map (initial tiles).
+    /// </summary>
+    public bool? ScriptIsWalkable(uint mapIndex, uint x, uint y)
+    {
+        var map = MapManager.GetMap(mapIndex);
+
+        if (map == null || map.Type != MapType.Map2D || x < 1 || y < 1 || x > map.Width || y > map.Height)
+            return null;
+
+        return map.InitialTiles[x - 1, y - 1].AllowMovement(MapManager.GetTilesetForMap(map), Data.Enumerations.TravelType.Walk);
+    }
+
     /// <summary>
     /// Informs the quest log about items which were added without the usual item handling (e.g. by cheats).
     /// </summary>

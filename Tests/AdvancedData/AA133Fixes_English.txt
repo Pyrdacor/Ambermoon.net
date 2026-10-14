@@ -1,0 +1,61 @@
+# Fixes from Ambermoon Advanced episode 4 which were added to the Advanced 1.33 version data (english)
+# Start: --version 6 --load 0
+waitidle 20000
+dismissall
+# --- messages which repeated the previous message (e.g. "Load which saved game?" when a weapon was dropped)
+text BattleMessageHasDroppedWeapon has dropped a weapon.
+text LoadWhichSavegame Load which saved game?
+text DisarmTrap manages to disarm the trap.
+text WhichItemToGive Which item do you want to give?
+text BattleMessageCannotReachAnyone cannot reach anyone!
+text BattleMessageSomeoneAlreadyGoingThere Someone is already going there.
+text WrongPlaceToUseItem You are in the wrong place to use this item!
+text BattleMessageWhereToBlinkTo Where do you want to blink to?
+# --- food messages which said gold
+text DropHowMuchFoodMessage Drop how much food?
+text DropFoodQuestion Do you really want to drop the food?
+text GiveHowMuchFoodMessage Give how much food?
+text StoreHowMuchFoodMessage Store how much food?
+text GiveHowMuchFoodToNPC Give how much food?
+text NotInterestedInFood I am not interested in your food.
+# --- names
+spellname ExpExchange Exchange Experience
+spellname MountWasp Mount Wasp
+spellname MagicSwordAttack Sword Attack
+monstername 76 DESERT GOLEM
+# --- goto points with unique bits (Ambermoon #99)
+gotopoint 339 1 103
+gotopoint 339 2 104
+gotopoint 339 3 105
+gotopoint 339 4 106
+gotopoint 265 1 67
+gotopoint 265 2 68
+gotopoint 265 3 69
+gotopoint 263 16 16
+gotopoint 263 18 17
+# --- Ship's End map flags
+mapflags 372 085a
+# --- walkable wall decorations (the english version uses the german tilesets)
+walkable 458 4 2 0
+walkable 457 6 2 0
+walkable 268 16 1 0
+walkable 419 9 2 0
+# --- Alkem rewards spell learning points for his ring instead of max strength
+cheat give 288
+count 288 1
+cheat teleport 282 12 14
+wait 2000
+dismissall
+slp
+attr Strength
+talk 18
+talkwait
+giveitem 288
+talkwait 20000
+leave
+talkwait
+waitidle 5000
+count 288 0
+slp +
+attr Strength +0
+exit

@@ -1,0 +1,49 @@
+# Fixes from Ambermoon Advanced episode 4 which were added to the Advanced 1.33 version data (german)
+# Start: --version 5 --load 0
+waitidle 20000
+dismissall
+# --- texts: spell names of the advanced spells (1.33 had no names for exchange experience and mount wasp)
+spellname ExpExchange Erfahrungstausch
+spellname MountWasp Wespe reiten
+spellname MagicSwordAttack Schwertattacke
+monstername 76 WÜSTENGOLEM
+# --- goto points with unique bits (Ambermoon #99): Dor Grestin used the bits 67-70 of the Rogue's wine cellar
+gotopoint 339 1 103
+gotopoint 339 2 104
+gotopoint 339 3 105
+gotopoint 339 4 106
+gotopoint 265 1 67
+gotopoint 265 2 68
+gotopoint 265 3 69
+# the gardening shed in Spannenberg used bit 16 like CITY PARK E
+gotopoint 263 16 16
+gotopoint 263 18 17
+# --- Ship's End: magic was disabled and the shared map data flag was set
+mapflags 372 085a
+# --- walkable wall decorations (Ambermoon #123, #146): gardener's hut, your house, eagle's nest and more
+walkable 458 4 2 0
+walkable 458 5 2 0
+walkable 457 6 2 0
+walkable 268 16 1 0
+walkable 264 13 2 0
+walkable 419 9 2 0
+walkable 270 2 16 0
+# --- Alkem rewards spell learning points for his ring instead of max strength
+cheat give 288
+count 288 1
+cheat teleport 282 12 14
+wait 2000
+dismissall
+slp
+attr Strength
+talk 18
+talkwait
+giveitem 288
+talkwait 20000
+leave
+talkwait
+waitidle 5000
+count 288 0
+slp +
+attr Strength +0
+exit
