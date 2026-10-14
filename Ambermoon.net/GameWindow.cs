@@ -654,6 +654,8 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
         Game?.OnMouseUp(position, button);
     }
 
+    void IScenarioScriptHost.Hover(Position position) => Game?.OnMouseMove(position, MouseButtons.None);
+
     void IScenarioScriptHost.Screenshot(string name) => TakeScreenshot(name);
 
     void IScenarioScriptHost.Exit() => window.Close();

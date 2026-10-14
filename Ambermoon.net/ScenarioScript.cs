@@ -82,6 +82,8 @@ namespace Ambermoon;
 ///                             disable (1) or enable (0) a map event chain (1-based), e.g. for steps of other quests
 ///   reloadquests              recreate the quest log from the savegame (like loading the game)
 ///   questlog                  open or close the quest log
+///   hover &lt;x&gt; &lt;y&gt;             move the mouse to a game position (320x200), e.g. to show a tooltip
+///   stats &lt;slot&gt;              open the character stats of the party member in slot 1-6
 ///   questlogclick &lt;line&gt;      click a text line (1-based) of the open quest log, e.g. a main quest to collapse it
 ///   questexpanded &lt;type&gt; [0|1]
 ///                             print if a main quest (UI.MainQuestType name) is expanded, optionally check it
@@ -623,6 +625,16 @@ sealed class ScenarioScript
                     case "questlog":
                         Console.WriteLine($"  quest log open: {game.ScriptToggleQuestLog()}");
                         break;
+                    case "hover":
+                        // moves the mouse to a game position (320x200), e.g. to show a tooltip
+                        host.Hover(host.GameToWindow(new Position(int.Parse(parts[1]), int.Parse(parts[2]))));
+                        break;
+                    case "stats":
+                        if (!game.ScriptOpenStats(int.Parse(parts[1])))
+                            Report(false, $"the stats of party member {parts[1]} could not be opened ({game.ScriptState()})");
+                        else
+                            continueTime = DateTime.Now.AddMilliseconds(1000); // window fade
+                        return;
                     case "questlogclick":
                         // clicks a text line (1-based) of the open quest log like the mouse does
                         host.Click(host.GameToWindow(Game.Game.ScriptQuestLogLinePosition(int.Parse(parts[1]))), false);
@@ -736,6 +748,7 @@ interface IScenarioScriptHost
     Position WindowCenter { get; }
     Position GameToWindow(Position position);
     void Click(Position position, bool right);
+    void Hover(Position position);
     void Screenshot(string name);
     void Exit();
 }

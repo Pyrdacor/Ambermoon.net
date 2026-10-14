@@ -498,6 +498,11 @@ partial class GameCore
     public bool? ScriptQuestExpanded(MainQuestType mainQuestType) => QuestLog?.IsExpanded(mainQuestType);
 
     /// <summary>
+    /// Opens the character stats of the party member in slot 1-6 (like clicking the portrait).
+    /// </summary>
+    public bool ScriptOpenStats(int slot) => !WindowOrPopupActive && GetPartyMember(slot - 1) != null && OpenPartyMember(slot - 1, false);
+
+    /// <summary>
     /// Game position inside a text line (1-based) of the quest log, e.g. to click a main quest.
     /// </summary>
     public static Position ScriptQuestLogLinePosition(int line) => QuestLog.GetTextLinePosition(line - 1);
