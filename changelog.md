@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.14.0 - Fourteenth patch (October 2026)
+
+- Version [1.14.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.14.0): Quest log, integrates original 1.22, extended curse tooltips, bugfixes
+
 ## 1.13.0 - Thirteenth patch (May 2026 - August 2026)
 
 - Version [1.13.7](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.13.7): Added auto battle option (Thanks to Hessi9b)

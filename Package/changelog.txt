@@ -1,3 +1,22 @@
+Version 1.14
+============
+
+- Added a quest log for the original game and Ambermoon Advanced
+- Added original versions 1.22
+- Disease now permanently reduces a random attribute by 1 each day
+- More detailed curse tooltips in the character stats (if stats tooltips are enabled), with own texts for Ambermoon Advanced
+- Advanced: Poison deals 1-5% of the max hit points per battle round (at most 20 for party members and bosses, 35 for other monsters)
+- Advanced: Spell learning point costs now match Ambermoon Advanced episode 4
+- Advanced: Fixed the aging malus for parrying
+- Auto battle now restores the correct battle speed and no longer leaves the round text on screen
+- Fixed the 3D map position if the screen has black bars at the top and bottom (e.g. on some tablets)
+- Fixed possible crashes when monsters move in battle
+- Fixed wrong idle frame of scaled monsters in battle
+- Fixed a skipped event after items were created when showing or giving an item
+- Fixed corrupt maps (e.g. the airship in Morag) after using the explore cheat
+- Command line options for automated testing
+
+
 Version 1.13
 ============
 
