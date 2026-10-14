@@ -22,8 +22,8 @@ takeloot
 closewindow
 talkwait
 count 316 1
-# found before the flame was seen
-quest TowerOfBlackMagic_WeakenLuminor Active
+# found before the flame was seen, the sub quest only appears when the first icewater is poured
+quest TowerOfBlackMagic_WeakenLuminor Inactive
 # a monster walks around the chests of this floor, fight it first
 goto 297 11 5
 waitbattle 15000

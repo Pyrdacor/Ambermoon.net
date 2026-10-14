@@ -141,7 +141,7 @@ public enum SubQuestType
     // Tower of Black Magic
     TowerOfBlackMagic_OpenTheTower, // after Nelvin told about the sphere of opening
     TowerOfBlackMagic_FreeThePeopleOfBurnville, // after entering the torture chamber
-    TowerOfBlackMagic_WeakenLuminor, // after learning about the flame of life or finding icewater
+    TowerOfBlackMagic_WeakenLuminor, // after pouring the first icewater into the stone face
     TowerOfBlackMagic_DefeatLuminor, // after entering the torture chamber
     // Valdyn's Return
     ValdynsReturn_FindAWayHome, // after Valdyn came through the light gate
@@ -187,8 +187,7 @@ public enum SubQuestType
     // Donner's Old Mine
     DonnersMine_AskBoreAboutDonner, // after meeting Bore
     DonnersMine_OpenTheEntrance, // after getting the staff of opening
-    DonnersMine_FindDonnersKey, // after opening the entrance
-    DonnersMine_OpenDonnersDoor, // after finding Donner's key
+    DonnersMine_FindDonnersTreasures, // after opening the entrance
     // Drelb's Search (Advanced)
     DrelbsSearch_DefeatTheMonstersInTheMine, // after meeting Drelb
     DrelbsSearch_AskDrelbAboutHisSearch, // after defeating the monsters
@@ -719,6 +718,37 @@ file class ChestUnlockedTrigger(GameCore game, TriggerType triggerType, uint che
             return true;
         }
         else if (!game.CurrentSavegame!.IsChestLocked(this.chestIndex - 1))
+        {
+            subQuest.State = NewState;
+            return true;
+        }
+
+        return false;
+    }
+}
+
+/// <summary>
+/// Counts the unlocked chests (1-based indices). The sub quest's current amount is updated
+/// and the state changes once the count reaches the sub quest's min amount (or all chests).
+/// </summary>
+file class ChestsUnlockedTrigger(GameCore game, TriggerType triggerType, params uint[] chestIndices) : IQuestTrigger
+{
+    public QuestState OldState => triggerType.GetOldState();
+    public QuestState NewState => triggerType.GetNewState();
+
+    bool IQuestTrigger.CheckChestUnlock(uint chestIndex, SubQuest subQuest)
+    {
+        if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
+            return false;
+
+        // the chest which is unlocked right now is not stored as unlocked yet
+        uint count = (uint)chestIndices.Count(index => index == chestIndex || !game.CurrentSavegame!.IsChestLocked(index - 1));
+        uint minAmount = NewState == QuestState.Completed ? subQuest.MinAmount ?? (uint)chestIndices.Length : 1;
+
+        if (NewState == QuestState.Completed && subQuest.MinAmount != null)
+            subQuest.CurrentAmount = Math.Max(subQuest.CurrentAmount, Math.Min(count, minAmount));
+
+        if (count >= minAmount)
         {
             subQuest.State = NewState;
             return true;
@@ -3448,11 +3478,9 @@ partial class QuestLog
                     Type = SubQuestType.TowerOfBlackMagic_WeakenLuminor,
                     Triggers =
                     [
-                        // Activate: learned about the flame of life or found icewater
-                        // The button in Luminor's hall also disables the flame event (295:3) after his death.
-                        new PredicateTrigger(game, TriggerType.Activation, (g, e) => g.GetTotalItemCount(316) != 0 || // Icewater
-                            (IsEventBitSet(g, e, 295, 3) && g.GetTotalItemCount(315) == 0 && !IsGlobalVariableSet(g, e, 27))),
-                        // Activate: icewater was poured already (persists when no icewater is left)
+                        // Activate: the first icewater was poured into the stone face. Not earlier (finding icewater or
+                        // hearing about the flame of life) to not spoil it. If Luminor is defeated without it, the
+                        // sub quest never appears.
                         new CountTrigger(game, TriggerType.Activation, [99, 100, 101, 102]),
                         // Complete: poured icewater into the flame (99 to 102 = 1st to 4th icewater)
                         new CountTrigger(game, TriggerType.Completion, [99, 100, 101, 102]),
@@ -3938,30 +3966,17 @@ partial class QuestLog
                 },
                 mainQuest => new SubQuest(this, mainQuest)
                 {
-                    Type = SubQuestType.DonnersMine_FindDonnersKey,
-                    Triggers =
-                    [
-                        // Activate
-                        new PreviousSubQuestCompletedTrigger(),
-                        // Complete: Donner's key is owned or his door was opened
-                        new OrTrigger<ItemObtainedTrigger, DoorUnlockedTrigger>(game, TriggerType.Completion,
-                            (g, t) => new ItemObtainedTrigger(g, t, 346),
-                            (g, t) => new DoorUnlockedTrigger(g, t, 25)),
-                    ],
-                    SourceType = QuestSourceType.NPC,
-                    SourceIndex = 24, // Bore
-                },
-                mainQuest => new SubQuest(this, mainQuest)
-                {
-                    Type = SubQuestType.DonnersMine_OpenDonnersDoor,
+                    Type = SubQuestType.DonnersMine_FindDonnersTreasures,
                     Final = true,
                     Triggers =
                     [
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
-                        // Complete: the door in the old mine was opened with Donner's key
-                        new DoorUnlockedTrigger(game, TriggerType.Completion, 25),
+                        // Complete: the two locked treasure chests in Donner's old labyrinth (map 413, chest 89 at 14,5
+                        // and chest 90 at 9,3) are unlocked. Chest 88 only contains Donner's key (346) for door 25.
+                        new ChestsUnlockedTrigger(game, TriggerType.Completion, 89, 90),
                     ],
+                    MinAmount = 2,
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 24, // Bore
                 }

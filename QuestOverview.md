@@ -6,6 +6,7 @@ Languages without a translation of a text show the English text in the game.
 
 The order is the definition order in `Ambermoon.Core/UI/Quests.cs`, the texts are from
 `Ambermoon.Core/UI/QuestTexts.cs`. The quest log itself lists the quests in the order they were activated.
+Created with `python tools/quest_overview.py`.
 
 - [English](#english) | [Deutsch](#deutsch) | [Français](#français) | [Polski](#polski) | [Čeština](#čeština)
 
@@ -140,8 +141,7 @@ The order is the definition order in `Ambermoon.Core/UI/Quests.cs`, the texts ar
 - **Donner's Old Mine**
   - Ask Bore about Donner
   - Open the entrance on the island
-  - Find Donner's key
-  - Open Donner's door
+  - Find Donner's treasures (0/2)
 - **The Brotherhood of Tarbos**
   - Take the Amberstar to the temple
   - Defeat Thornahuun
@@ -406,8 +406,7 @@ The order is the definition order in `Ambermoon.Core/UI/Quests.cs`, the texts ar
 - **Dönners alte Mine**
   - Frag Bore nach Dönner
   - Öffne den Eingang auf der Insel
-  - Finde Dönners Schlüssel
-  - Öffne Dönners Tür
+  - Finde Dönners Schätze (0/2)
 - **Die Bruderschaft von Tarbos**
   - Bring den Amberstar zum Tempel
   - Besiege Thornahuun
@@ -672,8 +671,7 @@ The order is the definition order in `Ambermoon.Core/UI/Quests.cs`, the texts ar
 - **La vieille mine de Donner**
   - Interroge Bore sur Donner
   - Ouvre l'entrée sur l'île
-  - Trouve la clé de Donner
-  - Ouvre la porte de Donner
+  - Trouve les trésors de Donner (0/2)
 - **La confrérie de Tarbos**
   - Apporte l'Amberstar au temple
   - Vaincs Thornahuun
@@ -938,8 +936,7 @@ The order is the definition order in `Ambermoon.Core/UI/Quests.cs`, the texts ar
 - **Stara kopalnia Donnera**
   - Zapytaj Bore'a o Donnera
   - Otwórz wejście na wyspie
-  - Znajdź klucz Donnera
-  - Otwórz drzwi Donnera
+  - Znajdź skarby Donnera (0/2)
 - **Bractwo Tarbos**
   - Zanieś Amberstar do świątyni
   - Pokonaj Thornahuuna
@@ -1204,8 +1201,7 @@ The order is the definition order in `Ambermoon.Core/UI/Quests.cs`, the texts ar
 - **Donnerův starý důl**
   - Zeptej se Boreho na Donnera
   - Otevři vchod na ostrově
-  - Najdi Donnerův klíč
-  - Otevři Donnerovy dveře
+  - Najdi Donnerovy poklady (0/2)
 - **Bratrstvo Tarbos**
   - Přines Jantarovou hvězdu do chrámu
   - Poraz Thornahuuna

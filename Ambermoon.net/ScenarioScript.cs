@@ -83,7 +83,9 @@ namespace Ambermoon;
 ///   reloadquests              recreate the quest log from the savegame (like loading the game)
 ///   questlog                  open or close the quest log
 ///   quests                    print all sub quests which are not inactive
-///   quest &lt;type&gt; [state]      print the state of a sub quest (UI.SubQuestType name), optionally check it
+///   quest &lt;type&gt; [state] [amount]
+///                             print the state of a sub quest (UI.SubQuestType name), optionally check it and
+///                             the current amount of its counter
 ///   mainquest &lt;type&gt; [state]  print the state of a main quest (UI.MainQuestType name), optionally check it
 ///                             (Inactive, Active, Blocked or Completed)
 ///   log &lt;text&gt;                print text
@@ -628,6 +630,11 @@ sealed class ScenarioScript
                         Console.WriteLine($"  {subQuestType}: {state?.ToString() ?? "no quest log"}");
                         if (parts.Length > 2)
                             Report(state == Enum.Parse<UI.QuestState>(parts[2], true), $"{subQuestType} is {state?.ToString() ?? "no quest log"}, expected {parts[2]}");
+                        if (parts.Length > 3)
+                        {
+                            var amount = game.ScriptQuestAmount(subQuestType);
+                            Report(amount == uint.Parse(parts[3]), $"{subQuestType} amount is {amount?.ToString() ?? "none"}, expected {parts[3]}");
+                        }
                         break;
                     }
                     case "mainquest":

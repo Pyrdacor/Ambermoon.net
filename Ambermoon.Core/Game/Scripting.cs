@@ -501,6 +501,16 @@ partial class GameCore
     }
 
     /// <summary>
+    /// Current amount of a sub quest with a counter (shown as "(amount/min amount)") or null.
+    /// </summary>
+    public uint? ScriptQuestAmount(SubQuestType subQuestType)
+    {
+        var subQuest = QuestLog?.Quests.SelectMany(q => q.SubQuests).FirstOrDefault(q => q.Type == subQuestType);
+
+        return subQuest?.MinAmount == null ? null : subQuest.CurrentAmount;
+    }
+
+    /// <summary>
     /// State of the given main quest (derived from its sub quests) or null if there is no quest log.
     /// </summary>
     public QuestState? ScriptMainQuestState(MainQuestType mainQuestType) => QuestLog?.GetMainQuestState(mainQuestType);

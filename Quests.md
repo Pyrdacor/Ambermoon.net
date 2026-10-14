@@ -196,8 +196,9 @@ Tests: `SandrasDaughter.txt`, `SandrasDaughter_TortureChamberFirst.txt`, `Sandra
 1. **Open the tower with the sphere**: Nelvin tells about the sphere of opening (keyword) or joins.
    Done when the sphere is used in the gate house (event 292:3).
 2. **Free the people of Burnville**: after entering the torture chamber (293:2), done when the cells are opened (32).
-3. **Weaken Luminor with icewater** (x/4): after learning about the flame of life, finding icewater or pouring
-   it (variables 99-102). Optional, completed when Luminor is defeated.
+3. **Weaken Luminor with icewater** (x/4): only appears when the first icewater is poured into the stone face
+   (variables 99-102), not when icewater is found or the flame of life was seen. Optional, completed when Luminor
+   is defeated. If he is defeated without icewater, the sub quest never appears.
 4. **Defeat Luminor**: after the torture chamber, done with Luminor's key (owned or the cells opened, 27).
 
 Advanced: the torture chamber rescue also shows Morgat in Nalven's magic school.
@@ -345,8 +346,8 @@ Tests: `TripToGadlon.txt`
 
 1. **Ask Bore about Donner**: Bore, the dwarf left behind in Gemstone, drops the staff of opening (variable 114).
 2. **Open the entrance on the island** in front of the mine with the staff (event 230:3).
-3. **Find Donner's key** in his old labyrinth (346, chest 88) or open his door.
-4. **Open Donner's door** (door 25).
+3. **Find Donner's treasures** (x/2): the two locked chests 89 (14,5) and 90 (9,3) in his old labyrinth (map 413)
+   are unlocked. Donner's key (346, chest 88) and his door (25) are not part of the quest.
 
 Tests: `DonnersMine.txt`
 

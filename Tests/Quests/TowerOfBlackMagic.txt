@@ -65,7 +65,8 @@ trigger 7 6
 talkwait
 dismissall
 eventbit 295 3 1
-quest TowerOfBlackMagic_WeakenLuminor Active
+# hearing about the flame of life does not show the sub quest (spoiler)
+quest TowerOfBlackMagic_WeakenLuminor Inactive
 # --- the four icewater flasks
 goto 296 4 10
 talkwait
@@ -113,8 +114,8 @@ takeloot
 closewindow
 talkwait
 count 316 4
-# owning icewater does not complete anything
-quest TowerOfBlackMagic_WeakenLuminor Active
+# owning icewater does not show the sub quest either, only pouring the first one
+quest TowerOfBlackMagic_WeakenLuminor Inactive
 # --- pour them into the stone face (295, stand on 8,3 in front of the face at 8,2)
 goto 295 8 3
 talkwait
