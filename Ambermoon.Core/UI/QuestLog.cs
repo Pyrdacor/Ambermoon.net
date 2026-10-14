@@ -367,12 +367,13 @@ public partial class QuestLog
         private readonly Position position;
         private readonly IColoredRect[] rects = new IColoredRect[6];
 
-        public int QuestIndex { get; }
+        // the main quest itself, the index of the displayed quests differs from the index in Quests
+        public MainQuestType QuestType { get; }
 
-        public CollapseIndicator(Position position, Popup popup, bool expanded, int questIndex)
+        public CollapseIndicator(Position position, Popup popup, bool expanded, MainQuestType questType)
         {
             this.position = position;
-            QuestIndex = questIndex;
+            QuestType = questType;
 
             if (expanded)
             {
@@ -433,6 +434,17 @@ public partial class QuestLog
     }
 
     internal QuestState GetMainQuestState(MainQuestType questType) => Quests.First(q => q.Type == questType).ToCompoundState();
+
+    /// <summary>
+    /// True if the main quest is expanded in the quest log (used by test scripts).
+    /// </summary>
+    internal bool IsExpanded(MainQuestType questType) => questGroups[questType];
+
+    /// <summary>
+    /// Game position inside the given text line (0-based) of the quest log, e.g. on the collapse
+    /// indicator of a main quest (used by test scripts).
+    /// </summary>
+    internal static Position GetTextLinePosition(int line) => new(Area.Left + 16 + 3 + 2, Area.Top + 16 - 2 + 1 + line * Global.GlyphLineHeight + 3);
 
     internal void CompleteMainQuest(MainQuestType questType)
     {
@@ -511,7 +523,7 @@ public partial class QuestLog
                 }
                 else
                 {
-                    questGroups[Quests[collapseIndicator.QuestIndex].Type] = !questGroups[Quests[collapseIndicator.QuestIndex].Type];
+                    questGroups[collapseIndicator.QuestType] = !questGroups[collapseIndicator.QuestType];
                 }
 
                 Redraw();
@@ -808,7 +820,7 @@ public partial class QuestLog
 
                 if (iterationIndex >= scrollOffset)
                 {
-                    collapseIndicators.Add(new(new Position(textArea.Left, y + 1), popup!, expanded, questIndex));
+                    collapseIndicators.Add(new(new Position(textArea.Left, y + 1), popup!, expanded, quest.Type));
 
                     tooltips[textIndex].Enabled = false;
 

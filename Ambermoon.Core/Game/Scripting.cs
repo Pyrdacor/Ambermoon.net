@@ -493,6 +493,16 @@ partial class GameCore
     }
 
     /// <summary>
+    /// True if the main quest is expanded in the quest log, null if there is no quest log.
+    /// </summary>
+    public bool? ScriptQuestExpanded(MainQuestType mainQuestType) => QuestLog?.IsExpanded(mainQuestType);
+
+    /// <summary>
+    /// Game position inside a text line (1-based) of the quest log, e.g. to click a main quest.
+    /// </summary>
+    public static Position ScriptQuestLogLinePosition(int line) => QuestLog.GetTextLinePosition(line - 1);
+
+    /// <summary>
     /// State of the given sub quest or null if there is no quest log or no such quest.
     /// </summary>
     public QuestState? ScriptQuestState(SubQuestType subQuestType)

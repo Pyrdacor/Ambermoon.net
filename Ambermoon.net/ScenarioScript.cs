@@ -82,6 +82,9 @@ namespace Ambermoon;
 ///                             disable (1) or enable (0) a map event chain (1-based), e.g. for steps of other quests
 ///   reloadquests              recreate the quest log from the savegame (like loading the game)
 ///   questlog                  open or close the quest log
+///   questlogclick &lt;line&gt;      click a text line (1-based) of the open quest log, e.g. a main quest to collapse it
+///   questexpanded &lt;type&gt; [0|1]
+///                             print if a main quest (UI.MainQuestType name) is expanded, optionally check it
 ///   quests                    print all sub quests which are not inactive
 ///   quest &lt;type&gt; [state] [amount]
 ///                             print the state of a sub quest (UI.SubQuestType name), optionally check it and
@@ -620,6 +623,20 @@ sealed class ScenarioScript
                     case "questlog":
                         Console.WriteLine($"  quest log open: {game.ScriptToggleQuestLog()}");
                         break;
+                    case "questlogclick":
+                        // clicks a text line (1-based) of the open quest log like the mouse does
+                        host.Click(host.GameToWindow(Game.Game.ScriptQuestLogLinePosition(int.Parse(parts[1]))), false);
+                        break;
+                    case "questexpanded":
+                    {
+                        var mainQuestType = Enum.Parse<UI.MainQuestType>(parts[1], true);
+                        var expanded = game.ScriptQuestExpanded(mainQuestType);
+                        string expandedText = expanded == null ? "no quest log" : expanded.Value ? "1" : "0";
+                        Console.WriteLine($"  {mainQuestType} expanded: {expandedText}");
+                        if (parts.Length > 2)
+                            Report(expanded == (parts[2] == "1"), $"{mainQuestType} expanded is {expandedText}, expected {parts[2]}");
+                        break;
+                    }
                     case "quests":
                         Console.WriteLine(game.ScriptQuests());
                         break;
