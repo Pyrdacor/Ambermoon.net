@@ -4582,7 +4582,7 @@ namespace Ambermoon
 
                     if (partyMember.Conditions.HasFlag(Condition.Blind))
                         parryMalus = 50;
-                    else if (attacker.Conditions.HasFlag(Condition.Aging) && agingValues.TryGetValue(attacker, out uint agingValue))
+                    else if (partyMember.Conditions.HasFlag(Condition.Aging) && agingValues.TryGetValue(partyMember, out uint agingValue))
                         parryMalus = agingValue;
 
                     if (partyMember.BattleFlags.HasFlag(BattleFlags.Boss))
