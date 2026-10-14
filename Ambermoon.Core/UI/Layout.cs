@@ -1567,9 +1567,9 @@ namespace Ambermoon.UI
                 new string[4]
                 {
                     "Vypnuto",
-                    "5 kol",
-                    "10 kol",
-                    "15 kol"
+                    "5 tahů",
+                    "10 tahů",
+                    "15 tahů"
                 }
             }
         }.ToImmutableDictionary();
