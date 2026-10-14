@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Ambermoon.Data.Legacy
 {
-    public class ItemManager : IItemManager
+    public class ItemManager : IModifiableItemManager
     {
         readonly Dictionary<uint, Item> items;
         readonly Dictionary<uint, List<string>> itemTexts = new Dictionary<uint, List<string>>();
@@ -19,6 +19,10 @@ namespace Ambermoon.Data.Legacy
         }
 
         public Item GetItem(uint index) => items[index];
+
+        public void SetItem(Item item) => items[item.Index] = item;
+
+        public void SetTexts(uint index, List<string> texts) => AddTexts(index, texts);
 
         public string GetText(uint index, uint subIndex) =>
             itemTexts.TryGetValue(index, out var texts) ? subIndex < texts.Count ? texts[(int)subIndex] : null : null;

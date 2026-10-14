@@ -23,6 +23,9 @@ internal class Configuration : IConfiguration
         if (gameVersion.ExternalData)
             return ExternalSavegameFolder;
 
+        if (gameVersion.SavegameFolder != null)
+            return gameVersion.SavegameFolder;
+
         if (gameVersion.Info.ToLower().Contains("advanced"))
             return $"advanced_{gameVersion.Language.ToString().ToLower()}";
 

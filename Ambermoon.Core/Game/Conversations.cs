@@ -461,6 +461,7 @@ partial class GameCore
                     SetMapCharacterBit(Map!.Index, characterIndex!.Value, true);
                     if (partyMember.CharacterBitIndex == 0xffff || partyMember.CharacterBitIndex == 0x0000)
                         partyMember.CharacterBitIndex = (ushort)(((Map.Index - 1) << 5) | characterIndex.Value);
+                    ModHooks?.PartyMemberJoined(partyMember);
                     break;
                 }
             }
@@ -477,6 +478,7 @@ partial class GameCore
             this.RemovePartyMember(SlotFromPartyMember(partyMember)!.Value, false, followAction);
             CurrentSavegame!.CurrentPartyMemberIndices[SlotFromPartyMember(partyMember)!.Value] = 0;
             SetMapCharacterBit(mapIndex, characterIndex, false);
+            ModHooks?.PartyMemberLeft(partyMember);
         }
 
         void ShowCreatedItems()

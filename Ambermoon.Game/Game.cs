@@ -299,6 +299,7 @@ public class Game : GameCore
 
         setup?.Invoke(initialSavegame);
 
+        StartingNewGame = true;
         Start(initialSavegame, postStartAction);
     }
 

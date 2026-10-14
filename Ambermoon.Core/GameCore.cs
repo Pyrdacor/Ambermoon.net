@@ -32,6 +32,7 @@ using Ambermoon.UI;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
 [assembly: InternalsVisibleTo("Ambermoon.Game")]
+[assembly: InternalsVisibleTo("Ambermoon.Mod")]
 
 namespace Ambermoon;
 

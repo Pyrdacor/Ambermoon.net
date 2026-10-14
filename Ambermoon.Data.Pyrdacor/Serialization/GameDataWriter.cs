@@ -363,7 +363,7 @@ partial class GameData
             }
         }
 
-        var travelGraphicInfos = EnumHelper.GetValues<TravelType>().ToDictionary(t => t, t => CreateTravelGraphicInfos(t).ToArray());
+        var travelGraphicInfos = EnumHelper.GetValues<TravelType>().Where(t => gameData.Advanced || t != TravelType.Wasp).ToDictionary(t => t, t => CreateTravelGraphicInfos(t).ToArray());
         var monsterGraphicFiles = gameData.Files["Monster_gfx.amb"].Files;
         var monsterGraphicSizes = gameData.CharacterManager.Monsters
             .GroupBy(monster => monster.CombatGraphicIndex)

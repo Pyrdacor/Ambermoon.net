@@ -879,6 +879,8 @@ partial class GameCore
     {
         allInputDisabled = true;
 
+        ModHooks?.BattleStarting(currentBattleInfo!.MonsterGroupIndex);
+
         Fade(() =>
         {
             lastPlayedSong = PlayMusic(Song.SapphireFireballsOfPureLove);
@@ -979,6 +981,7 @@ partial class GameCore
             };
             currentBattle.BattleEnded += battleEndInfo =>
             {
+                uint endedMonsterGroupIndex = currentBattleInfo!.MonsterGroupIndex;
                 battleRoundActiveSprite.Visible = false;
                 for (int i = 0; i < MaxPartyMembers; ++i)
                 {
@@ -1009,6 +1012,8 @@ partial class GameCore
                     currentBattleInfo.EndBattle(battleEndInfo);
                     currentBattleInfo = null;
                 }
+                bool partyDefeated = !battleEndInfo.MonstersDefeated && !PartyMembers.Any(p => p.Alive && p.Conditions.CanFight());
+                ModHooks?.BattleEnded(endedMonsterGroupIndex, battleEndInfo.MonstersDefeated, partyDefeated);
                 if (battleEndInfo.MonstersDefeated)
                 {
                     currentBattle = null;
