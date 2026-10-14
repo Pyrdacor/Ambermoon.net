@@ -39,11 +39,13 @@ static partial class Tests
                     AssetModTests();
                     break;
                 case "dc":
+                    ThemeTests();
                     DungeonCrawlerTests(args.Length > 0 ? int.Parse(args[0]) : 60);
                     break;
                 case "all":
                     ManifestTests();
                     AssetModTests();
+                    ThemeTests();
                     DungeonCrawlerTests(60);
                     break;
                 default:

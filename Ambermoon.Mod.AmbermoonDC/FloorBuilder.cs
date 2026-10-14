@@ -9,7 +9,7 @@ namespace Ambermoon.Mod.AmbermoonDC;
 /// Creates the map of a floor from its layout and prepares everything else
 /// which is needed for it (monster groups, chest contents, the recruit).
 /// </summary>
-internal class FloorBuilder(ModApi api, DCLabdata labdata)
+internal class FloorBuilder(ModApi api, IReadOnlyList<DungeonTheme> themes)
 {
     /// <summary>
     /// Two map indices are used alternately so that every descent is a real map change.
@@ -36,13 +36,15 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
     const uint LastRecruitSlot = 15;
 
     readonly ModApi api = api;
-    readonly DCLabdata labdata = labdata;
+    readonly IReadOnlyList<DungeonTheme> themes = themes;
 
     public static uint MapIndexForFloor(int floor) => FirstMapIndex + (uint)(floor % 2);
 
     public static bool IsDungeonMap(uint mapIndex) => mapIndex == FirstMapIndex || mapIndex == FirstMapIndex + 1;
 
     DCTexts Texts => DCTexts.Get(api.Language);
+
+    public DungeonTheme ThemeForFloor(int seed, int floor) => themes[DungeonTheme.ThemeIndexForFloor(seed, floor, themes.Count)];
 
     /// <summary>
     /// Creates the map of the floor and registers it together with its monster groups.
@@ -53,6 +55,7 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
         int floor = layout.Floor;
         uint mapIndex = MapIndexForFloor(floor);
         var random = FloorGenerator.CreateRandom(state.Seed, floor, 2);
+        var theme = ThemeForFloor(state.Seed, floor);
         var texts = Texts;
         var map = new Map
         {
@@ -60,17 +63,17 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
             Type = MapType.Map3D,
             Width = layout.Width,
             Height = layout.Height,
-            TilesetOrLabdataIndex = DCLabdata.LabdataIndex,
+            TilesetOrLabdataIndex = theme.LabdataIndex,
             Flags = (floor >= 4 ? MapFlags.Dungeon : MapFlags.Indoor) | MapFlags.Automapper | MapFlags.CanRest |
                 MapFlags.NoSleepUntilDawn | MapFlags.CanUseMagic,
-            MusicIndex = layout.IsBossFloor ? DCContent.BossMusic : DCContent.FloorMusic[(floor - 1) / 3 % DCContent.FloorMusic.Length],
-            PaletteIndex = 6,
+            MusicIndex = layout.IsBossFloor ? theme.Definition.BossMusic : theme.MusicForFloor(floor),
+            PaletteIndex = theme.Definition.Palette,
             World = World.Lyramion, // Note: Party members can only be dismissed on Lyramion.
             Blocks = new Map.Block[layout.Width, layout.Height],
             InitialBlocks = new Map.Block[layout.Width, layout.Height],
             Texts =
             [
-                string.Format(texts.FloorName, floor),
+                string.Format(texts.FloorName, floor, theme.Name(api.Language).ToUpper()),
                 string.Format(texts.DescendQuestion, floor + 1),
                 texts.WayBackBlocked,
                 texts.SecretFound
@@ -93,17 +96,19 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
                 {
                     case CellType.Wall:
                     case CellType.SecretWall:
-                        block.WallIndex = DCContent.PlainWalls[random.Next(DCContent.PlainWalls.Length)];
+                        block.WallIndex = theme.RandomWall(random);
                         break;
                     case CellType.IllusoryWall:
-                        block.WallIndex = DCContent.IllusoryWall;
+                        block.WallIndex = theme.RandomIllusoryWall(random);
                         break;
                     case CellType.Door:
-                        block.WallIndex = DCContent.DoorWall;
+                        block.WallIndex = theme.DoorWall;
                         break;
                     default:
-                        if (layout.Decorations.TryGetValue(pos, out var decoration))
-                            block.ObjectIndex = decoration;
+                        if (layout.Decorations.TryGetValue(pos, out var decoration) && theme.DecorationObjects.Count != 0)
+                            block.ObjectIndex = theme.DecorationObjects[decoration % theme.DecorationObjects.Count];
+                        else if (layout.Obstacles.TryGetValue(pos, out var obstacle) && theme.ObstacleObjects.Count != 0)
+                            block.ObjectIndex = theme.ObstacleObjects[obstacle % theme.ObstacleObjects.Count];
                         break;
                 }
 
@@ -116,13 +121,13 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
 
         // Start: a ladder which leads nowhere
         var start = map.Blocks[layout.Start.X, layout.Start.Y];
-        start.ObjectIndex = DCContent.LadderObject;
+        start.ObjectIndex = theme.EntranceObject;
         start.MapEventId = events.AddEntry(AutomapType.Exit,
             EventFactory.MapText(WayBackText, Data.EventTrigger.EyeCursor));
 
         // Stairs: a hole which leads to the next floor
         var stairs = map.Blocks[layout.Stairs.X, layout.Stairs.Y];
-        stairs.ObjectIndex = DCContent.HoleObject;
+        stairs.ObjectIndex = theme.ExitObject;
         stairs.MapEventId = events.AddEntry(AutomapType.Exit,
             EventFactory.Create<DecisionEvent>(e => e.TextIndex = DescendText),
             EventFactory.Teleport(MapIndexForFloor(floor + 1), 1, 1, CharacterDirection.Up, TeleportEvent.TransitionType.Falling));
@@ -133,7 +138,7 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
             var door = layout.Doors[i];
             map.Blocks[door.Position.X, door.Position.Y].MapEventId = events.AddEntry(AutomapType.Door,
                 EventFactory.Door((byte)i, door.Locked ? (uint)Math.Min(60, 10 + floor) : 0),
-                EventFactory.ChangeBlock(X(door.Position), Y(door.Position), DCContent.OpenDoorWall));
+                EventFactory.ChangeBlock(X(door.Position), Y(door.Position), theme.OpenDoorWall));
         }
 
         // Secret walls which disappear when touched
@@ -162,9 +167,21 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
         {
             var chest = layout.Chests[i];
             var block = map.Blocks[chest.Position.X, chest.Position.Y];
-            block.ObjectIndex = DCContent.ChestObject;
+            block.ObjectIndex = theme.ChestObject;
             block.MapEventId = events.AddEntry(AutomapType.Chest,
                 EventFactory.Chest(FirstChestIndex + (uint)i, chest.Locked ? (uint)Math.Min(60, 10 + floor) : 0));
+        }
+
+        // Teleporters
+        if (theme.TeleporterObject != 0)
+        {
+            foreach (var teleporter in layout.Teleporters)
+            {
+                var block = map.Blocks[teleporter.Position.X, teleporter.Position.Y];
+                block.ObjectIndex = theme.TeleporterObject;
+                block.MapEventId = events.AddEntry(AutomapType.Teleporter,
+                    EventFactory.Teleport(mapIndex, X(teleporter.Target), Y(teleporter.Target), teleporter.Direction));
+            }
         }
 
         for (int y = 0; y < layout.Height; y++)
@@ -173,18 +190,18 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
 
         // Characters
         int characterIndex = 0;
-        var tileFlags = (TileFlags)((labdata.CombatBackground << 28) | 0x110);
+        var tileFlags = (TileFlags)((theme.Labdata.CombatBackground << 28) | 0x110);
 
         void AddCharacter(Map.CharacterReference character, Pos position)
         {
             character.Positions.Add(new Position(position.X + 1, position.Y + 1));
             character.CollisionClass = 1;
-            character.CombatBackgroundIndex = labdata.CombatBackground;
+            character.CombatBackgroundIndex = theme.Labdata.CombatBackground;
             character.TileFlags = tileFlags;
             map.CharacterReferences[characterIndex++] = character;
         }
 
-        var groupBuilder = new MonsterGroupBuilder(api, state.Seed, floor);
+        var groupBuilder = new MonsterGroupBuilder(api, theme, state.Seed, floor);
 
         if (layout.Boss != null)
         {
@@ -195,7 +212,7 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
             {
                 Type = CharacterType.Monster,
                 Index = groupIndex,
-                GraphicIndex = labdata.GetSpriteObject(sprite),
+                GraphicIndex = theme.GetSpriteObject(sprite),
                 CharacterFlags = Map.CharacterReference.Flags.None // bosses don't move
             }, layout.Boss.Value);
         }
@@ -206,7 +223,7 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
             {
                 Type = CharacterType.PartyMember,
                 Index = state.Recruit,
-                GraphicIndex = labdata.GetSpriteObject("person"),
+                GraphicIndex = theme.GetSpriteObject("person"),
                 CharacterFlags = Map.CharacterReference.Flags.RandomMovement
             }, layout.Recruit.Value);
         }
@@ -225,7 +242,7 @@ internal class FloorBuilder(ModApi api, DCLabdata labdata)
             {
                 Type = CharacterType.Monster,
                 Index = groupIndex,
-                GraphicIndex = labdata.GetSpriteObject(sprite),
+                GraphicIndex = theme.GetSpriteObject(sprite),
                 CharacterFlags = flags
             }, monster.Position);
         }

@@ -192,6 +192,35 @@ internal static class FloorGenerator
             freeCells.Remove(layout.Recruit.Value);
         }
 
+        // A pair of teleporters which connects two rooms (only used if the theme has a teleporter)
+        if (floor >= 3 && random.Next(100) < 50)
+            TryAddTeleporters(layout, random, freeCells, distances, startRoom);
+
+        // Obstacles (decoration which blocks movement, only used if the theme has some)
+        int obstacleCount = 2 + random.Next(4);
+        var chestPositions = layout.Chests.Select(c => c.Position).ToHashSet();
+        var obstacleCandidates = layout.Rooms
+            .SelectMany(r => r.Cells())
+            .Where(p => freeCells.Contains(p) && distances[p.X, p.Y] >= 2 && Pos.Directions.Count(d => layout.InBounds(p + d) && layout[p + d] == CellType.Wall) == 1)
+            .OrderBy(_ => random.Next())
+            .ToList();
+
+        foreach (var candidate in obstacleCandidates)
+        {
+            if (layout.Obstacles.Count >= obstacleCount)
+                break;
+
+            var blocked = new HashSet<Pos>(chestPositions.Concat(layout.Obstacles.Keys)) { candidate };
+
+            // Obstacles must not block anything and must not stand in front of doors.
+            if (Pos.Directions.Any(d => layout.InBounds(candidate + d) && layout[candidate + d] is CellType.Door or CellType.IllusoryWall or CellType.SecretWall) ||
+                !AllReachable(layout, blocked))
+                continue;
+
+            layout.Obstacles[candidate] = random.Next(1000);
+            freeCells.Remove(candidate);
+        }
+
         // Monsters
         int monsterCount = Math.Min(24, 3 + floor / 2 + layout.Rooms.Count / 2);
         var monsterCells = freeCells.Where(p => distances[p.X, p.Y] >= 6).OrderBy(_ => random.Next()).Take(monsterCount).ToList();
@@ -206,10 +235,62 @@ internal static class FloorGenerator
         foreach (var cell in freeCells)
         {
             if (random.Next(100) < 8)
-                layout.Decorations[cell] = DCContent.WalkableDecorations[random.Next(DCContent.WalkableDecorations.Length)];
+                layout.Decorations[cell] = random.Next(1000);
         }
 
         return layout;
+    }
+
+    static void TryAddTeleporters(FloorLayout layout, System.Random random, List<Pos> freeCells, int[,] distances, Room startRoom)
+    {
+        // The party arrives next to the other teleporter (looking away from it).
+        (Pos Arrival, CharacterDirection Direction)? FindArrival(Pos teleporter)
+        {
+            for (int d = 0; d < 4; d++)
+            {
+                var arrival = teleporter + Pos.Directions[d];
+
+                if (freeCells.Contains(arrival))
+                    return (arrival, (CharacterDirection)d);
+            }
+
+            return null;
+        }
+
+        var rooms = layout.Rooms.Where(r => r != startRoom).OrderBy(_ => random.Next()).ToList();
+
+        for (int i = 0; i < rooms.Count; i++)
+        {
+            for (int j = i + 1; j < rooms.Count; j++)
+            {
+                if (rooms[i].Center.DistanceTo(rooms[j].Center) < 12)
+                    continue;
+
+                var a = rooms[i].Cells().Where(p => freeCells.Contains(p) && distances[p.X, p.Y] >= 4).OrderBy(_ => random.Next()).Cast<Pos?>().FirstOrDefault();
+                var b = rooms[j].Cells().Where(p => freeCells.Contains(p) && distances[p.X, p.Y] >= 4).OrderBy(_ => random.Next()).Cast<Pos?>().FirstOrDefault();
+
+                if (a == null || b == null)
+                    continue;
+
+                freeCells.Remove(a.Value);
+                freeCells.Remove(b.Value);
+                var arrivalA = FindArrival(a.Value);
+                var arrivalB = FindArrival(b.Value);
+
+                if (arrivalA == null || arrivalB == null)
+                {
+                    freeCells.Add(a.Value);
+                    freeCells.Add(b.Value);
+                    continue;
+                }
+
+                freeCells.Remove(arrivalA.Value.Arrival);
+                freeCells.Remove(arrivalB.Value.Arrival);
+                layout.Teleporters.Add(new TeleporterSpot(a.Value, arrivalB.Value.Arrival, arrivalB.Value.Direction));
+                layout.Teleporters.Add(new TeleporterSpot(b.Value, arrivalA.Value.Arrival, arrivalA.Value.Direction));
+                return;
+            }
+        }
     }
 
     static void CarveCorridor(FloorLayout layout, Pos from, Pos to, System.Random random)

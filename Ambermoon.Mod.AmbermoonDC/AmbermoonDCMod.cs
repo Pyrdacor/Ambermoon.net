@@ -16,7 +16,7 @@ public class AmbermoonDCMod : ModBase
 {
     const string StateKey = "state";
 
-    DCLabdata labdata = null!;
+    List<DungeonTheme> themes = null!;
     FloorBuilder floorBuilder = null!;
     DCState? state;
     FloorLayout? currentLayout;
@@ -28,10 +28,15 @@ public class AmbermoonDCMod : ModBase
 
     internal FloorLayout? CurrentLayout => currentLayout;
 
+    internal IReadOnlyList<DungeonTheme> Themes => themes;
+
+    internal DungeonTheme? CurrentTheme => state == null ? null : floorBuilder.ThemeForFloor(state.Seed, state.Floor);
+
     public override void OnInitialize()
     {
-        labdata = DCLabdata.Create(Api);
-        floorBuilder = new FloorBuilder(Api, labdata);
+        // Note: The themes create new monsters. This has to be done before the game is created.
+        themes = DungeonTheme.LoadAll(Api);
+        floorBuilder = new FloorBuilder(Api, themes);
     }
 
     public override void OnLoading(ModSaveData data)
@@ -138,6 +143,9 @@ public class AmbermoonDCMod : ModBase
 
         if (currentLayout.IsRecruitFloor && state.Recruit != 0)
             message += " " + texts.RecruitFloor;
+
+        if (floor % 5 == 1)
+            message = string.Format(texts.ThemeEntered, CurrentTheme!.Name(Api.Language)) + " " + message;
 
         if (floor > 1)
             pendingMessages.Enqueue(message);

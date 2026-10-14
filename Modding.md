@@ -198,6 +198,7 @@ Override the virtual methods of `ModBase` or subscribe to the events of the same
 - **Helpers:** `Source` gives access to the files of the mod and `Log` writes to the console.
 - `CharacterHelper` equips items, adds items to inventories and raises the level of party members with the same stat changes as the game.
 - `EventFactory` creates map events with all their raw data initialized.
+- `LabdataBuilder` creates new 3D labdata from the global 3D textures of the base game (walls with overlays from `Wall3D.amb`/`Overlay3D.amb`, objects from `Object3D.amb`, floors and ceilings from `Floors.amb`) or copies objects of the original labdata. Register the result with `Maps.SetLabdata`.
 
 Mod assemblies are loaded into their own load context. Further assemblies the mod needs can be put next to the mod assembly.
 
@@ -206,12 +207,64 @@ Mod assemblies are loaded into their own load context. Further assemblies the mo
 
 Ambermoon DC (`Ambermoon.Mod.AmbermoonDC`) is a dungeon crawler built as a code mod for the original Ambermoon:
 
-- The party starts on floor 1 of an endless dungeon. Each floor is generated from a seed when it is entered and has a hole which leads down.
+- The party starts on floor 1 of an endless dungeon. Each floor is generated from a seed when it is entered and has a way down to the next floor.
+- Every 5 floors a random dungeon theme is chosen (never the same one twice in a row). A theme defines the look, the music and the monsters of its floors (see below).
 - Monsters roam the floors. Some wander and chase the party, others only move when they see it. Deeper floors have stronger monsters.
+- Some floors have a pair of teleporters which connects two distant rooms.
 - Every 5th floor a boss guards the way down, every 10th floor a boss with minions. Boss floors have extra treasure, and the boss drops an item which is an upgrade for one of the party members.
 - Every 12th floor a random companion wanders around and can be asked to join. Name, race, gender, portrait, class, attributes, skills, spells and the (short) dialogues are random. Level and equipment fit the depth. Party members can be dismissed as usual. Dismissed companions are gone, their party member slot is reused for later companions.
 - Secret rooms are hidden behind illusory walls or behind walls which open when touched.
 - From floor 4 on the floors are dark, so you need torches or light spells.
+
+### Dungeon themes
+
+The themes are JSON files in the folder `themes` of the mod (`Ambermoon.Mod.AmbermoonDC/themes`). Every file is one theme, they are used in the order of their file names. To add a theme, add a file there. All texture indices refer to the global 3D textures of the original game, so walls, objects and sprites of different original labdata can be combined freely.
+
+```json
+{
+  "Id": "crypt",
+  "Name": { "en": "Forgotten Crypt", "de": "Vergessene Gruft" },
+  "Palette": 6,
+  "CombatBackground": 2,
+  "WallHeight": 380,
+  "FloorTexture": 14, "FloorColor": 13,
+  "CeilingTexture": 13, "CeilingColor": 5,
+  "Music": [ 24 ],
+  "BossMusic": 26,
+  "Walls": [
+    { "Texture": 89, "Weight": 3 },
+    { "Texture": 89, "Overlays": [ { "Texture": 37, "X": 80, "Y": 12, "Width": 32, "Height": 32, "Blend": true } ] }
+  ],
+  "Door": { "Closed": 85, "Open": 0 },
+  "Chest": { "Labdata": 2, "Object": 25 },
+  "Exit": { "Labdata": 2, "Object": 20 },
+  "Entrance": { "Labdata": 2, "Object": 21 },
+  "Teleporter": { "Labdata": 5, "Object": 2 },
+  "Decorations": [ { "Labdata": 7, "Object": 7 } ],
+  "Obstacles": [ { "Texture": 33, "Width": 48, "Height": 39 } ],
+  "Monsters": [
+    {
+      "Id": "skeleton",
+      "Template": 6,
+      "Name": { "en": "Skeleton", "de": "Skelett" },
+      "Sprite": { "Labdata": 7, "Object": 8 },
+      "Element": "Undead",
+      "Flags": "Undead",
+      "Spells": [ "Lame" ],
+      "SpellChance": 25,
+      "Factors": { "HitPoints": 1.2, "Attack": 0.9 }
+    }
+  ],
+  "Boss": { "Monster": "skeleton", "Factors": { "HitPoints": 1.5 } },
+  "BossGroup": { "Boss": "skeleton", "Minions": [ "skeleton" ] }
+}
+```
+
+- **Look:** `FloorTexture`/`CeilingTexture` are indices into `Floors.amb` (0 = only use the color). `Walls` are 1 to 3 variations (texture index into `Wall3D.amb` plus optional overlays from `Overlay3D.amb`), each is also used as illusory wall for the secret passages. The open door texture should be transparent. If it is 0, the door disappears when it is opened.
+- **Objects:** Either a copy of an object of an original labdata (`Labdata` and `Object`, 1-based) or a single texture of `Object3D.amb` (`Texture`, `Width`, `Height` and optionally `MappedWidth`, `MappedHeight`, `Frames` and `Z`). `Exit` is the way down (hole, stairs, ladder), `Entrance` the blocked way up at the start. `Decorations` are walkable (bones, stones, junk), `Obstacles` block movement (barrels, coffins, statues). They are only placed where they block nothing. `Teleporter` is optional.
+- **Monsters:** Each monster uses an original monster as `Template` for its battle graphic, animations and palette. Name (up to 15 characters), `Sprite` on the map, `Class`, `Element`, `Flags` (battle flags like `Undead`), `Spells`, `SpellChance`, `AttacksPerRound` and `Morale` come from the theme. `Weight` sets how often a monster appears, `MaxCount` how many of it can be in a group, `MinFloor` (1 to 5) on which floor of the theme it appears first and `BossOnly` limits it to the bosses.
+- **Combat values** are calculated from the level (the floor number plus `LevelOffset`): hit points, spell points, attack, defense, magic attack and defense, attributes, skills, experience and gold. The optional `Factors` scale each of these values. Bosses are 1 level higher and get extra factors (e.g. 2.5 times the hit points).
+- **Bosses:** `Boss` is the boss of the 5th floor of the theme, `BossGroup` the boss with minions of the 10th floor. Without them, the global boss lists of the mod are used. Themes without monsters use the original monster groups.
 
 For testing, the environment variables `AMBERMOON_DC_SEED` and `AMBERMOON_DC_START_FLOOR` set the seed and the first floor of a new game. They only work in debug builds of the mod.
 
@@ -258,7 +311,8 @@ These things are not supported (yet):
 **Ambermoon DC**
 - Only the original game is supported as base, not Ambermoon Advanced.
 - All texts of the mod exist in English and German. Other languages use the English texts.
-- All floors use the same cave look. There is only one dungeon theme.
-- A few monsters have no fitting sprite on the map and use the undead sprite.
+- There are 4 themes so far (caves, crypt, dwarven mines, burning halls). Some theme monsters share map sprites, as there are only a few monster sprites in the original game.
+- The themes use palette 6. Textures which were made for other palettes (e.g. the mine of the forest moon) may look wrong.
+- The combat value formula of the theme monsters was only tested roughly against the original monsters.
 - Random companions can only use the portraits the original game has for their race and gender, so some combinations don't exist (e.g. there are no female gnomes).
 - The balancing was not tested beyond a few floors. The hero is alone until floor 12 and the floors are dark from floor 4 on.

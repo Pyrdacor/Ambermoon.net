@@ -6,22 +6,7 @@
 internal static class DCContent
 {
     /// <summary>
-    /// Labdata (cave of "Alte Höhle") which is used as the base for the dungeon.
-    /// </summary>
-    public const uint BaseLabdata = 2;
-
-    // Walls and objects of the base labdata (1-based)
-    public static readonly uint[] PlainWalls = [1, 1, 1, 1, 2, 3, 4, 5];
-    public const uint IllusoryWall = 7; // looks like a wall but can be walked through
-    public const uint DoorWall = 13;
-    public const uint OpenDoorWall = 14;
-    public const uint ChestObject = 25;
-    public const uint HoleObject = 20;
-    public const uint LadderObject = 21;
-    public static readonly uint[] WalkableDecorations = [2, 3, 4, 5, 9, 10, 12, 19];
-
-    /// <summary>
-    /// Sprites of monsters and persons which are copied into the dungeon labdata:
+    /// Sprites of the original monsters and persons which are copied into the labdata of each theme:
     /// key = name, value = (labdata index, object index).
     /// </summary>
     public static readonly Dictionary<string, (uint Labdata, uint Object)> Sprites = new()
@@ -75,7 +60,7 @@ internal static class DCContent
     };
 
     /// <summary>
-    /// Monster groups by tier. The first tier is used for floors 1-3 etc.
+    /// Monster groups by tier (used for themes without monsters). The first tier is used for floors 1-3 etc.
     /// </summary>
     public static readonly (int FirstFloor, uint[] Groups)[] Tiers =
     [
@@ -136,8 +121,7 @@ internal static class DCContent
     public static uint EquipmentBudget(int floor) => (uint)(150 + floor * floor * 12);
 
     /// <summary>
-    /// Map music for normal floors.
+    /// Default map music of boss floors.
     /// </summary>
-    public static readonly uint[] FloorMusic = [18, 17, 19, 24];
     public const uint BossMusic = 26;
 }

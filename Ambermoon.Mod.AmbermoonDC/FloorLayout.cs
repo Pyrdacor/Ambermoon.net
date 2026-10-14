@@ -57,6 +57,11 @@ internal record ChestSpot(Pos Position, ChestKind Kind, bool Locked);
 
 internal record DoorSpot(Pos Position, bool Locked);
 
+/// <summary>
+/// A teleporter which moves the party to the target position.
+/// </summary>
+internal record TeleporterSpot(Pos Position, Pos Target, CharacterDirection Direction);
+
 internal record MonsterSpawn(Pos Position, bool OnlyMoveWhenSeeingPlayer);
 
 /// <summary>
@@ -78,7 +83,15 @@ internal class FloorLayout
     public List<MonsterSpawn> Monsters { get; } = [];
     public Pos? Boss { get; set; }
     public Pos? Recruit { get; set; }
-    public Dictionary<Pos, uint> Decorations { get; } = [];
+    /// <summary>
+    /// Walkable decoration. The value is a random number which selects one of the decorations of the theme.
+    /// </summary>
+    public Dictionary<Pos, int> Decorations { get; } = [];
+    /// <summary>
+    /// Decoration which blocks movement. The value is a random number which selects one of the obstacles of the theme.
+    /// </summary>
+    public Dictionary<Pos, int> Obstacles { get; } = [];
+    public List<TeleporterSpot> Teleporters { get; } = [];
 
     public bool IsBossFloor => Floor % 5 == 0;
     public bool IsBossWithMinionsFloor => Floor % 10 == 0;

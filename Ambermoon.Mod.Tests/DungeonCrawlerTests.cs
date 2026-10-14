@@ -50,12 +50,13 @@ static partial class Tests
             mod.OnInitialize();
             mod.StartNewRun(savegame, 12345);
 
-            var labdata = gameData.MapManager.GetLabdataForMap(gameData.MapManager.GetMap(savegame.CurrentMapIndex)!);
+            Check(mod.Themes.Count >= 4, "Themes are loaded");
             Check(savegame.CurrentMapIndex == 601, "Floor 1 uses map 601");
             Check(savegame.GetPartyMember(0)!.Equipment.Slots[EquipmentSlot.RightHand].ItemIndex != 0, "Hero has a weapon");
             Check(savegame.GetPartyMember(0)!.Inventory.Slots.Any(s => s.ItemIndex == DCContent.Torch), "Hero has torches");
 
             var party = savegame.CurrentPartyMemberIndices;
+            DungeonTheme? previousTheme = null;
 
             for (int floor = 1; floor <= floors; floor++)
             {
@@ -64,7 +65,26 @@ static partial class Tests
 
                 var layout = mod.CurrentLayout!;
                 var map = gameData.MapManager.GetMap(FloorBuilderTestAccess.MapIndex(floor))!;
+                var labdata = gameData.MapManager.GetLabdataForMap(map);
+                var theme = mod.CurrentTheme!;
+                Check(map.TilesetOrLabdataIndex == theme.LabdataIndex && labdata == theme.Labdata, $"Floor {floor}: uses the labdata of the theme");
+                Check(map.PaletteIndex == theme.Definition.Palette, $"Floor {floor}: uses the palette of the theme");
+
+                if (floor % 5 == 1)
+                {
+                    Check(theme != previousTheme, $"Floor {floor}: a new theme is chosen");
+
+                    if (floor == 1 || floor == 26)
+                        Console.WriteLine($"  Floor {floor}: theme {theme.Definition.Id}");
+                }
+                else
+                {
+                    Check(theme == previousTheme, $"Floor {floor}: the theme stays the same for 5 floors");
+                }
+
+                previousTheme = theme;
                 ValidateFloor(floor, layout, map, labdata, gameData, savegame, mod.State!);
+                ValidateThemeFloor(floor, layout, map, theme, gameData);
 
                 // Simulate recruiting: the recruit joins the party (if there is room).
                 if (mod.State!.Recruit != 0)
@@ -162,8 +182,8 @@ static partial class Tests
             Check(map.Blocks[0, i].WallIndex != 0 && map.Blocks[map.Width - 1, i].WallIndex != 0, $"{prefix} closed border");
         }
 
-        // Reachability (chests block movement)
-        var blocked = new HashSet<Pos>(layout.Chests.Select(c => c.Position));
+        // Reachability (chests and obstacles block movement)
+        var blocked = new HashSet<Pos>(layout.Chests.Select(c => c.Position).Concat(layout.Obstacles.Keys));
         var distances = layout.Distances(layout.Start, blocked);
         Check(distances[layout.Stairs.X, layout.Stairs.Y] > 0, $"{prefix} stairs are reachable");
 
@@ -234,6 +254,110 @@ static partial class Tests
             Check(layout.Recruit != null, $"{prefix} a recruit is placed");
 
         Check(layout.Chests.Any(c => c.Kind == ChestKind.Secret), $"{prefix} has a secret room", warnOnly: true);
+    }
+
+    static void ValidateThemeFloor(int floor, FloorLayout layout, Map map, DungeonTheme theme, IGameData gameData)
+    {
+        string prefix = $"Floor {floor}:";
+        var blocked = new HashSet<Pos>(layout.Chests.Select(c => c.Position).Concat(layout.Obstacles.Keys));
+        var distances = layout.Distances(layout.Start, blocked);
+
+        Check(map.Blocks[layout.Stairs.X, layout.Stairs.Y].ObjectIndex == theme.ExitObject, $"{prefix} the exit object of the theme is used");
+        Check(map.MusicIndex == (layout.IsBossFloor ? theme.Definition.BossMusic : theme.MusicForFloor(floor)), $"{prefix} the music of the theme is used");
+
+        foreach (var obstacle in layout.Obstacles.Keys)
+        {
+            Check(layout[obstacle] == CellType.Floor && map.Blocks[obstacle.X, obstacle.Y].MapEventId == 0, $"{prefix} obstacle at {obstacle} is on a free cell");
+            Check(theme.ObstacleObjects.Count == 0 || theme.ObstacleObjects.Contains(map.Blocks[obstacle.X, obstacle.Y].ObjectIndex), $"{prefix} obstacle of the theme is used");
+        }
+
+        if (theme.TeleporterObject != 0)
+        {
+            foreach (var teleporter in layout.Teleporters)
+            {
+                var block = map.Blocks[teleporter.Position.X, teleporter.Position.Y];
+                Check(block.ObjectIndex == theme.TeleporterObject && block.MapEventId != 0, $"{prefix} teleporter at {teleporter.Position}");
+                var teleport = block.MapEventId == 0 ? null : map.EventList[(int)block.MapEventId - 1] as TeleportEvent;
+                Check(teleport != null && teleport.MapIndex == map.Index && teleport.X == teleporter.Target.X + 1 && teleport.Y == teleporter.Target.Y + 1,
+                    $"{prefix} teleporter at {teleporter.Position} leads to its target");
+                Check(distances[teleporter.Target.X, teleporter.Target.Y] > 0 && !layout.Teleporters.Any(t => t.Position == teleporter.Target),
+                    $"{prefix} teleporter target {teleporter.Target} is reachable and no teleporter");
+            }
+        }
+
+        var themeMonsterIndices = theme.Monsters.Select(m => m.Index).ToHashSet();
+
+        foreach (var character in map.CharacterReferences.Where(c => c?.Type == CharacterType.Monster))
+        {
+            var group = gameData.CharacterManager.GetMonsterGroup(character!.Index)!;
+            var monsters = group.Monsters.Cast<Monster?>().Where(m => m != null).Cast<Monster>().ToList();
+
+            if (theme.Definition.Monsters.Count != 0)
+            {
+                Check(monsters.All(m => themeMonsterIndices.Contains(m.Index)), $"{prefix} only monsters of the theme");
+                Check(monsters.All(m => m.Level >= floor - 1 && m.HitPoints.CurrentValue > 0 && m.BaseAttackDamage > 0),
+                    $"{prefix} monster stats depend on the floor");
+                Check(monsters.Count <= 6, $"{prefix} at most 6 monsters in a group");
+            }
+        }
+
+        if (layout.IsBossFloor && (layout.IsBossWithMinionsFloor ? theme.Definition.BossGroup : (object?)theme.Definition.Boss) != null)
+        {
+            var bossGroup = gameData.CharacterManager.GetMonsterGroup(map.CharacterReferences[0]!.Index)!;
+            var boss = bossGroup.Monsters.Cast<Monster?>().Where(m => m != null).MaxBy(m => m!.HitPoints.CurrentValue)!;
+            string bossId = layout.IsBossWithMinionsFloor ? theme.Definition.BossGroup!.Boss : theme.Definition.Boss!.Monster;
+            Check(boss.Index == theme.GetMonster(bossId).Index && boss.BattleFlags.HasFlag(BattleFlags.Boss), $"{prefix} the boss of the theme is used");
+
+            if (floor == 5 || floor == 50)
+                Console.WriteLine($"  Floor {floor}: boss {boss.Name} L{boss.Level} HP {boss.HitPoints.CurrentValue} ATK {boss.BaseAttackDamage} DEF {boss.BaseDefense} XP {boss.DefeatExperience}");
+        }
+    }
+
+    static void ThemeTests()
+    {
+        Console.WriteLine("Ambermoon DC: theme definitions");
+
+        static bool Fails(string json)
+        {
+            try
+            {
+                ThemeDefinition.Parse(json, "test");
+                return false;
+            }
+            catch (Exception ex) when (ex is InvalidDataException or Newtonsoft.Json.JsonException)
+            {
+                return true;
+            }
+        }
+
+        const string Objects = "\"Chest\": { \"Labdata\": 2, \"Object\": 25 }, \"Exit\": { \"Labdata\": 2, \"Object\": 20 }, \"Entrance\": { \"Texture\": 136, \"Width\": 32, \"Height\": 88 }";
+        string valid = "{ \"Music\": [ 18 ], \"Walls\": [ { \"Texture\": 116 } ], " + Objects + " }";
+        Check(!Fails(valid), "Minimal theme is valid");
+        Check(ThemeDefinition.Parse(valid, "test").Id == "test", "Theme id defaults to the file name");
+        Check(Fails("{ \"Music\": [ 18 ], \"Walls\": [], " + Objects + " }"), "Theme without walls is invalid");
+        Check(Fails("{ \"Music\": [ 18 ], \"Walls\": [ { \"Texture\": 116 } ], " + Objects + ", \"Unknown\": 1 }"), "Unknown properties are invalid");
+        Check(Fails("{ \"Music\": [ 18 ], \"Walls\": [ { \"Texture\": 116 } ], " + Objects + ", \"Boss\": { \"Monster\": \"x\" } }"), "Unknown boss is invalid");
+        Check(Fails("{ \"Music\": [ 18 ], \"Walls\": [ { \"Texture\": 116 } ], " + Objects +
+            ", \"Monsters\": [ { \"Id\": \"a\", \"Template\": 1, \"Name\": { \"en\": \"A\" }, \"Sprite\": { \"Labdata\": 2, \"Object\": 13 }, \"Spells\": [ \"Nope\" ] } ] }"),
+            "Unknown spells are invalid");
+
+        // Theme selection is deterministic and changes every 5 floors.
+        for (int seed = 1; seed < 50; seed++)
+        {
+            for (int floor = 1; floor <= 60; floor++)
+            {
+                int theme = DungeonTheme.ThemeIndexForFloor(seed, floor, 4);
+                Check(theme == DungeonTheme.ThemeIndexForFloor(seed, floor, 4), "Theme selection is deterministic");
+                Check(theme is >= 0 and < 4, "Theme index is valid");
+
+                if (floor % 5 != 1)
+                    Check(theme == DungeonTheme.ThemeIndexForFloor(seed, floor - 1, 4), "Theme stays for 5 floors");
+                else if (floor > 1)
+                    Check(theme != DungeonTheme.ThemeIndexForFloor(seed, floor - 1, 4), "Theme changes after 5 floors");
+            }
+        }
+
+        Check(Enumerable.Range(1, 200).Select(seed => DungeonTheme.ThemeIndexForFloor(seed, 1, 4)).Distinct().Count() == 4, "All themes are used");
     }
 
     static void Check(bool condition, string message, bool warnOnly)
