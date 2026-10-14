@@ -269,9 +269,9 @@ public enum SubQuestType
     SeaCreatures_EnterTheEyeOfTheVortex, // after the mermaid opened the vortex
     // Manyeyes' Castle (Advanced)
     ManyeyesCastle_OpenTristansOffice, // after Tristan gave his office key
-    ManyeyesCastle_OpenTheCastle, // after opening the office
-    ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor, // after opening the castle
+    ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor, // after opening the office
     ManyeyesCastle_BanishManyeyesCurse, // after defeating the guardian or falling into the cellar
+    ManyeyesCastle_OpenTheCastle, // after opening the office, blocked until the curse is banished
     // The Gatekeepers of Cavetown (Advanced)
     Gatekeepers_BringJeffABlindBrandy, // after meeting Jeff
     Gatekeepers_FindLukesTreasureMap, // after meeting Luke
@@ -1226,25 +1226,12 @@ partial class QuestLog
                 },
                 mainQuest => new SubQuest(this, mainQuest)
                 {
-                    Type = SubQuestType.ManyeyesCastle_OpenTheCastle,
-                    Triggers =
-                    [
-                        // Activate
-                        new PreviousSubQuestCompletedTrigger(),
-                        // Complete: the switch in the office unlocked the door to the castle
-                        new GlobalVariableTrigger(game, TriggerType.Completion, 246),
-                    ],
-                    SourceType = QuestSourceType.NPC,
-                    SourceIndex = 41, // Tristan
-                },
-                mainQuest => new SubQuest(this, mainQuest)
-                {
                     Type = SubQuestType.ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor,
                     Triggers =
                     [
-                        // Activate
+                        // Activate: the office leads into the castle
                         new PreviousSubQuestCompletedTrigger(),
-                        // Complete: the boss on the upper floor was defeated
+                        // Complete: the boss on the upper floor (map 462) was defeated
                         new GlobalVariableTrigger(game, TriggerType.Completion, 247),
                     ],
                     SourceType = QuestSourceType.NPC,
@@ -1253,7 +1240,6 @@ partial class QuestLog
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.ManyeyesCastle_BanishManyeyesCurse,
-                    Final = true,
                     Triggers =
                     [
                         // Activate: fell through the roof into the cellar or defeated the upper boss
@@ -1261,6 +1247,21 @@ partial class QuestLog
                         // Complete: the monsters of the cellar are defeated and the curse is banished
                         new GlobalVariableTrigger(game, TriggerType.Completion, 249),
                     ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 41, // Tristan
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.ManyeyesCastle_OpenTheCastle,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate: inside the castle the main door is locked (it is shown early, but blocked)
+                        new DoorUnlockedTrigger(game, TriggerType.Activation, 39),
+                        // Complete: the switch (map 461, 3,17) unlocked the main door. It is only reachable at the end.
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 246),
+                    ],
+                    RequiredCompletedQuests = [SubQuestType.ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor, SubQuestType.ManyeyesCastle_BanishManyeyesCurse],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 41, // Tristan
                 }

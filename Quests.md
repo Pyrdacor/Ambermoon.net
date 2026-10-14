@@ -396,9 +396,11 @@ Tests: `SeaCreatures.txt`
 ### Manyeyes' Castle (Vielauges Schloss) — from episode 1
 
 1. **Open Tristan's office**: Tristan in the inn of Cavetown gives the office key (variable 245), door 39.
-2. **Open the door to the castle**: the switch in the office (variable 246).
-3. **Defeat the guardian of the upper floor** (variable 247).
-4. **Banish Manyeyes' curse**: the monsters of the cellar are defeated, then the wall is touched (variable 249).
+2. **Defeat the guardian of the upper floor** (map 462, variable 247).
+3. **Banish Manyeyes' curse**: after the guardian or falling into the cellar (248), the monsters of the cellar are
+   defeated, then the wall is touched (variable 249).
+4. **Open the door to the castle**: the switch for the main door (map 461, 3,17, variable 246) is only reachable
+   at the end. Shown after the office is opened, but blocked until the guardian and the curse are done.
 
 Tests: `ManyeyesCastle.txt`
 

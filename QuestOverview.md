@@ -170,9 +170,9 @@ Created with `python tools/quest_overview.py`.
   - Sail into the eye of the vortex
 - **Manyeyes' Castle**
   - Open Tristan's office
-  - Open the door to the castle
   - Defeat the guardian of the upper floor
   - Banish Manyeyes' curse
+  - Open the door to the castle
 - **The Gatekeepers of Cavetown**
   - Bring Jeff a blind brandy
   - Find Luke's treasure map
@@ -435,9 +435,9 @@ Created with `python tools/quest_overview.py`.
   - Segle in das Auge des Strudels
 - **Vielauges Schloss**
   - Öffne Tristans Büro
-  - Öffne die Tür zum Schloss
   - Besiege den Wächter im Obergeschoss
   - Banne Vielauges Fluch
+  - Öffne die Tür zum Schloss
 - **Die Pförtner von Cavetown**
   - Bring Jeff einen Blind-Branntwein
   - Finde Lukes Schatzkarte
@@ -700,9 +700,9 @@ Created with `python tools/quest_overview.py`.
   - Navigue dans l'œil du tourbillon
 - **Le château de Mille-Yeux**
   - Ouvre le bureau de Tristan
-  - Ouvre la porte du château
   - Vaincs le gardien de l'étage
   - Bannis la malédiction de Mille-Yeux
+  - Ouvre la porte du château
 - **Les portiers de Cavetown**
   - Apporte une eau-de-vie à Jeff
   - Trouve la carte au trésor de Luke
@@ -965,9 +965,9 @@ Created with `python tools/quest_overview.py`.
   - Wpłyń w oko wiru
 - **Zamek Wielookiego**
   - Otwórz biuro Tristana
-  - Otwórz drzwi do zamku
   - Pokonaj strażnika górnego piętra
   - Zdejmij klątwę Wielookiego
+  - Otwórz drzwi do zamku
 - **Odźwierni z Cavetown**
   - Przynieś Jeffowi ślepą wódkę
   - Znajdź mapę skarbów Luke'a
@@ -1230,9 +1230,9 @@ Created with `python tools/quest_overview.py`.
   - Vpluj do oka víru
 - **Hrad Mnohookého**
   - Otevři Tristanovu kancelář
-  - Otevři dveře do hradu
   - Poraz strážce horního patra
   - Zažeň kletbu Mnohookého
+  - Otevři dveře do hradu
 - **Vrátní z Cavetownu**
   - Přines Jeffovi slepou pálenku
   - Najdi Lukovu mapu pokladu
