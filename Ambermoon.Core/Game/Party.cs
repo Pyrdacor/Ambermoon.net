@@ -1318,10 +1318,13 @@ partial class GameCore
         return null;
     }
 
-    internal void ProcessPoisonDamage(uint times, Action<bool>? followAction = null)
+    internal void ProcessPoisonDamage(uint times, Action<bool>? followAction = null, bool battle = false)
     {
-        uint GetDamage()
+        uint GetDamage(PartyMember partyMember)
         {
+            if (battle)
+                return GetBattlePoisonDamage(partyMember);
+
             uint damage = 0;
 
             for (uint i = 0; i < times; ++i)
@@ -1330,8 +1333,22 @@ partial class GameCore
             return damage;
         }
 
-        DamageAllPartyMembers(_ => GetDamage(),
+        DamageAllPartyMembers(GetDamage,
             p => p.Alive && p.Conditions.HasFlag(Condition.Poisoned), null, followAction);
+    }
+
+    /// <summary>
+    /// Poison damage per battle round. With the extended curse effects (Advanced) it is
+    /// 1-5% of the max hit points (1 to 35), otherwise 1-5 hit points.
+    /// </summary>
+    internal uint GetBattlePoisonDamage(Character character)
+    {
+        if (!Features.HasFlag(Features.ExtendedCurseEffects))
+            return (uint)RandomInt(1, 5);
+
+        uint percent = (uint)RandomInt(1, 5);
+
+        return Util.Limit(1u, character.HitPoints.TotalMaxValue * percent / 100, 35u);
     }
 
     void Sleep(bool inn, int healing)
