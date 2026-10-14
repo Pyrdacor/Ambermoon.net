@@ -370,7 +370,7 @@ partial class GameCore
             }
         };
         GameTime.HourChanged += hours => GameTime_HoursPassed(hours, true);
-        currentBattle = null;
+        ResetCurrentBattle();
 
         ClearPartyMembers();
 

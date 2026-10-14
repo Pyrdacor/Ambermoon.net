@@ -642,6 +642,16 @@ partial class GameCore
         currentBattle?.ShowAutoBattleRoundText(false, 0);
     }
 
+    /// <summary>
+    /// Forgets the current battle when it is left without the battle end handling
+    /// (e.g. game over or loading a game), so its auto battle round text is removed as well.
+    /// </summary>
+    void ResetCurrentBattle()
+    {
+        HideAutoBattleRounds();
+        currentBattle = null;
+    }
+
     internal void SetupBattleButtons()
     {
         // Flee button
@@ -914,7 +924,11 @@ partial class GameCore
                 }
             }
             currentBattle = new Battle(this, layout, Enumerable.Range(0, MaxPartyMembers).Select(GetPartyMember).ToArray(),
-                monsterGroup, monsterBattleAnimations, CoreConfiguration.BattleSpeed == 0);
+                monsterGroup, monsterBattleAnimations, CoreConfiguration.BattleSpeed == 0)
+            {
+                // The auto battle restores this speed afterwards, so it must match the configuration.
+                Speed = CoreConfiguration.BattleSpeed
+            };
 
             foreach (var monsterBattleAnimation in monsterBattleAnimations)
                 currentBattle.SetMonsterDisplayLayer(monsterBattleAnimation.Value, (currentBattle!.GetCharacterAt(monsterBattleAnimation.Key) as Monster)!);

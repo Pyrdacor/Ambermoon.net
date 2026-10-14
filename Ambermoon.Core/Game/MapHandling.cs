@@ -32,7 +32,7 @@ partial class GameCore
         if (show)
         {
             UpdateUIPalette(true);
-            currentBattle = null;
+            ResetCurrentBattle();
             layout.CancelDrag();
             ResetCursor();
             OpenStorage = null;

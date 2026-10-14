@@ -193,7 +193,7 @@ partial class GameCore
                 if (battleRoundActiveSprite != null)
                     battleRoundActiveSprite.Visible = false;
                 currentBattleInfo = null;
-                currentBattle = null;
+                ResetCurrentBattle();
                 CloseWindow(() =>
                 {
                     InputEnable = true;
