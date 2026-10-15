@@ -33,8 +33,9 @@ namespace Ambermoon;
 ///                             With "optional" it is no failure if no battle starts (random monsters).
 ///   yes                       answer a decision popup with yes (Return key)
 ///   closewindow               close the current window like the exit button (e.g. battle loot)
-///   takeloot [optional]       take all items, gold and food of the open chest or battle loot (active
-///                             party member), with "optional" it is no failure if nothing is open
+///   takeloot [optional] [item] take all items, gold and food of the open chest or battle loot (active
+///                             party member), with "optional" it is no failure if nothing is open, with an item
+///                             index only this item is taken (e.g. a heavy quest item)
 ///   usekey &lt;item index&gt;       use a key or lockpick (138) on the shown lock of a chest or door
 ///   goto &lt;map&gt; &lt;x&gt; &lt;y&gt;        teleport to a 1-based map position or the nearest free position around it
 ///                             (facing the target), e.g. to stand next to a chest or monster. Without a free
@@ -48,6 +49,7 @@ namespace Ambermoon;
 ///   giveitem &lt;item index&gt;     give an item of the active party member in the conversation
 ///   takeitems                 take the items created in the conversation (active party member)
 ///   givegold &lt;amount&gt;         give gold in the conversation (active party member)
+///   join                      ask the conversation partner to join the party (like the button in the conversation)
 ///   leave                     leave the conversation (like the exit button)
 ///   talkwait [timeout ms] [quiet ms]
 ///                             click through conversation texts, window messages and popups (Return)
@@ -84,6 +86,23 @@ namespace Ambermoon;
 ///   questlog                  open or close the quest log
 ///   hover &lt;x&gt; &lt;y&gt;             move the mouse to a game position (320x200), e.g. to show a tooltip
 ///   stats &lt;slot&gt;              open the character stats of the party member in slot 1-6
+///   dropitems &lt;slot&gt;          drop all items of the party member in slot 1-6 except the body armor and the weapon
+///                             in the right hand (e.g. so he can carry something heavy)
+///   walkto &lt;x&gt; &lt;y&gt;            walk to a 1-based position of the current (non-world) map like the player does,
+///                             tile by tile, so all map events on the way are triggered. It ends when the target
+///                             is reached or when something interrupts the walk (text, battle, map change, ...),
+///                             which is no failure. Then e.g. dismissall and walkto again continue the walk.
+///                             The target may be blocked (e.g. a door), then the last step walks against it.
+///                             With "walkto x y fight" battles on the way are won with the win cheat, their loot is
+///                             left, popups are confirmed (questions with yes) and the walk goes on.
+///                             An additional number is the expected map: if the party is on another map (e.g. the
+///                             walk was already completed by a teleport), the walk is skipped ("walkto 16 30 258").
+///   flyto &lt;map&gt; &lt;x&gt; &lt;y&gt;      move on the world map tile by tile to a 1-based position of a world map part
+///                             (e.g. after "cheat fly"), interrupted like walkto
+///   settle [timeout ms]       wait until no popup, window or battle is open anymore (1.5 seconds), battles are won
+///                             with the win cheat, their loot is left and popups are confirmed (questions with yes)
+///   land                      leave the transport like the transport button (e.g. to land after flying), which
+///                             triggers the events at that position (e.g. entering a town)
 ///   questlogclick &lt;line&gt;      click a text line (1-based) of the open quest log, e.g. a main quest to collapse it
 ///   questloghover &lt;line&gt;      move the mouse onto a text line (1-based) of the open quest log (source tooltip)
 ///   questexpanded &lt;type&gt; [0|1]
@@ -115,6 +134,20 @@ sealed class ScenarioScript
     int failures = 0;
     int checks = 0;
     readonly Dictionary<string, uint> lastValues = [];
+    List<Position>? walkPath = null;
+    int walkIndex = 0;
+    int walkSubStep = 0;
+    int walkFailures = 0;
+    Position? walkStartPosition = null;
+    string? walkMapIndex = null;
+    bool walkFight = false;
+    bool walkResumePath = false;
+    DateTime walkDeadline = DateTime.MaxValue;
+    DateTime walkInputWait = DateTime.MaxValue;
+    DateTime walkAfterBattle = DateTime.MinValue;
+    bool walkBattleWon = false;
+    DateTime settleQuietSince = DateTime.MaxValue;
+    int walkBlockedRetries = 0;
 
     public bool Finished => commands.Count == 0 && retryCommand == null && idleTimeout == null && dismissTimeout == null && battleTimeout == null && talkTimeout == null && DateTime.Now >= continueTime;
 
@@ -380,7 +413,8 @@ sealed class ScenarioScript
                     }
                     case "takeloot":
                     {
-                        int? remaining = game.ScriptTakeLoot();
+                        uint? onlyItem = parts.Skip(1).Select(p => uint.TryParse(p, out uint i) ? (uint?)i : null).FirstOrDefault(i => i != null);
+                        int? remaining = game.ScriptTakeLoot(onlyItem);
                         if (remaining == null)
                         {
                             // the chest might still be opening (e.g. after unlocking it)
@@ -497,6 +531,9 @@ sealed class ScenarioScript
                         }
                         break;
                     }
+                    case "join":
+                        ReportError(game.ScriptAskToJoin());
+                        break;
                     case "leave":
                         ReportError(game.ScriptLeaveConversation());
                         break;
@@ -630,6 +667,15 @@ sealed class ScenarioScript
                         // moves the mouse to a game position (320x200), e.g. to show a tooltip
                         host.Hover(host.GameToWindow(new Position(int.Parse(parts[1]), int.Parse(parts[2]))));
                         break;
+                    case "dropitems":
+                    {
+                        int? dropped = game.ScriptDropItems(int.Parse(parts[1]));
+                        if (dropped == null)
+                            Report(false, $"there is no party member in slot {parts[1]}");
+                        else
+                            Console.WriteLine($"  {dropped} item slots dropped");
+                        break;
+                    }
                     case "stats":
                         if (!game.ScriptOpenStats(int.Parse(parts[1])))
                             Report(false, $"the stats of party member {parts[1]} could not be opened ({game.ScriptState()})");
@@ -640,6 +686,96 @@ sealed class ScenarioScript
                         // clicks a text line (1-based) of the open quest log like the mouse does
                         host.Click(host.GameToWindow(Game.Game.ScriptQuestLogLinePosition(int.Parse(parts[1]))), false);
                         break;
+                    case "walkto":
+                    case "flyto":
+                    {
+                        if (!retry)
+                        {
+                            walkPath = null;
+                            walkIndex = 0;
+                            walkSubStep = 0;
+                            walkFailures = 0;
+                            walkStartPosition = game.ScriptPartyPosition;
+                            walkMapIndex = game.ScriptState();
+                            walkFight = parts.Contains("fight", StringComparer.OrdinalIgnoreCase);
+                            walkBlockedRetries = 0;
+                            var expectedMap = name != "walkto" ? null : parts.Skip(3).Select(p => uint.TryParse(p, out uint m) ? (uint?)m : null).FirstOrDefault(m => m != null);
+
+                            // a repeated walk (e.g. after an interruption) is skipped if the map changed meanwhile
+                            if (expectedMap != null && game.ScriptMapIndex != expectedMap)
+                            {
+                                Console.WriteLine($"  skipped, the party is on map {game.ScriptMapIndex} instead of {expectedMap}");
+                                break;
+                            }
+
+                            walkDeadline = DateTime.Now.AddMinutes(3);
+
+                            if (name == "walkto")
+                            {
+                                walkPath = game.ScriptFindPath(uint.Parse(parts[1]), uint.Parse(parts[2]));
+
+                                if (walkPath == null)
+                                {
+                                    Report(false, $"no path to {parts[1]},{parts[2]} ({game.ScriptState()})");
+                                    break;
+                                }
+
+                                Console.WriteLine($"  path with {walkPath.Count} steps");
+
+                                if (walkPath.Count == 0)
+                                {
+                                    Console.WriteLine("  already there");
+                                    walkPath = null;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!ContinueWalking(game, host, name, parts))
+                            break;
+
+                        retryCommand = (lineNumber, command);
+                        return;
+                    }
+                    case "settle":
+                    {
+                        // waits until nothing is open anymore, battles are won and popups are confirmed
+                        if (!retry)
+                        {
+                            walkDeadline = DateTime.Now.AddMilliseconds(parts.Length > 1 ? int.Parse(parts[1]) : 60000);
+                            settleQuietSince = DateTime.MaxValue;
+                        }
+
+                        if (DateTime.Now > walkDeadline)
+                        {
+                            Report(false, "settle timed out: " + game.ScriptState());
+                            break;
+                        }
+
+                        if (game.ScriptCanWalk)
+                        {
+                            if (settleQuietSince == DateTime.MaxValue)
+                                settleQuietSince = DateTime.Now;
+                            else if ((DateTime.Now - settleQuietSince).TotalMilliseconds >= 1500)
+                                break;
+
+                            continueTime = DateTime.Now.AddMilliseconds(100);
+                        }
+                        else
+                        {
+                            settleQuietSince = DateTime.MaxValue;
+                            HandleBattleAndPopups(game, host);
+                        }
+
+                        retryCommand = (lineNumber, command);
+                        return;
+                    }
+                    case "land":
+                        if (!game.ScriptLand())
+                            Report(false, $"the party could not land ({game.ScriptState()})");
+                        else
+                            continueTime = DateTime.Now.AddMilliseconds(1500); // events at the landing position (e.g. entering a town)
+                        return;
                     case "questloghover":
                         // moves the mouse onto a text line (1-based) of the open quest log, e.g. to show the source tooltip
                         host.Hover(host.GameToWindow(Game.Game.ScriptQuestLogLinePosition(int.Parse(parts[1])) + new Position(110, 0)));
@@ -701,6 +837,261 @@ sealed class ScenarioScript
                     Console.WriteLine("    " + frame.Trim());
             }
         }
+    }
+
+    /// <summary>
+    /// Makes one step of walkto/flyto. Returns true if walking goes on (the command is repeated),
+    /// false if the target was reached, the walk was interrupted (e.g. by a text, a battle or a map
+    /// change, which is no failure) or the movement failed.
+    /// </summary>
+    bool ContinueWalking(Game.Game game, IScenarioScriptHost host, string name, string[] parts)
+    {
+        var position = game.ScriptPartyPosition;
+
+        if (DateTime.Now > walkDeadline)
+        {
+            Report(false, $"walking took too long ({game.ScriptState()})");
+            walkPath = null;
+            return false;
+        }
+
+        // with "fight" battles on the way are won with the win cheat and the walk goes on. Popups are confirmed
+        // (Return answers "Do you want to fight?" and other questions with yes). Windows (e.g. event pictures,
+        // conversations) still end the walk unless they belong to the battle.
+        if (walkFight && name == "walkto" && !game.ScriptCanWalk && (game.BattleActive || game.PopupActive || DateTime.Now < walkAfterBattle))
+        {
+            HandleBattleAndPopups(game, host);
+            walkResumePath = true;
+            return true;
+        }
+
+        if (walkResumePath && name == "walkto")
+        {
+            // after a battle the party might stand elsewhere (e.g. pushed back), so search the path again
+            walkResumePath = false;
+            walkPath = game.ScriptFindPath(uint.Parse(parts[1]), uint.Parse(parts[2]));
+            walkIndex = 0;
+            walkSubStep = 0;
+
+            if (walkPath == null)
+            {
+                Report(false, $"no path to {parts[1]},{parts[2]} after the battle ({game.ScriptState()})");
+                return false;
+            }
+
+            if (walkPath.Count == 0)
+            {
+                Console.WriteLine($"  reached {parts[1]},{parts[2]}");
+                walkPath = null;
+                return false;
+            }
+        }
+
+        bool Interrupted(string reason)
+        {
+            Console.WriteLine($"  walk interrupted at {position?.X},{position?.Y}: {reason}");
+            walkPath = null;
+            return false;
+        }
+
+        if (!game.ScriptCanWalk)
+        {
+            // input is disabled for a moment after some steps or while the screen fades on a map change
+            if (!game.PopupActive && !game.WindowActive && !game.BattleActive && DateTime.Now < walkInputWait)
+            {
+                continueTime = DateTime.Now.AddMilliseconds(100);
+                return true;
+            }
+
+            if (!game.PopupActive && !game.WindowActive && !game.BattleActive && walkInputWait == DateTime.MaxValue)
+            {
+                walkInputWait = DateTime.Now.AddMilliseconds(2500);
+                continueTime = DateTime.Now.AddMilliseconds(100);
+                return true;
+            }
+
+            walkInputWait = DateTime.MaxValue;
+            return Interrupted(game.ScriptState());
+        }
+
+        walkInputWait = DateTime.MaxValue;
+
+        if (name == "flyto")
+        {
+            var remaining = game.ScriptFlyStep(uint.Parse(parts[1]), uint.Parse(parts[2]), uint.Parse(parts[3]));
+
+            if (remaining == null)
+            {
+                if (!game.ScriptCanWalk)
+                    return Interrupted(game.ScriptState());
+
+                // the move might be refused right after the previous one
+                if (++walkFailures <= 10)
+                {
+                    continueTime = DateTime.Now.AddMilliseconds(100);
+                    return true;
+                }
+
+                Report(false, $"flying to {parts[2]},{parts[3]} of map {parts[1]} is not possible ({game.ScriptState()})");
+                return false;
+            }
+
+            walkFailures = 0;
+
+            if (remaining == 0)
+            {
+                Console.WriteLine($"  reached {parts[2]},{parts[3]} of map {parts[1]}");
+                return false;
+            }
+
+            continueTime = DateTime.Now.AddMilliseconds(60);
+            return true;
+        }
+
+        if (walkPath == null)
+            return false;
+
+        // a teleport or a map change by an event ends the walk
+        if (!game.ScriptState().StartsWith(walkMapIndex!.Split(',')[0]))
+            return Interrupted("map changed");
+
+        var next = walkPath[walkIndex];
+
+        // the positions of the path are 0-based
+        if (position != null && position.X - 1 == next.X && position.Y - 1 == next.Y && (game.Is3D ? walkSubStep >= 4 : true))
+        {
+            walkIndex++;
+            walkSubStep = 0;
+            walkFailures = 0;
+
+            if (walkIndex == walkPath.Count)
+            {
+                Console.WriteLine($"  reached {position.X},{position.Y}");
+                walkPath = null;
+                return false;
+            }
+
+            next = walkPath[walkIndex];
+        }
+
+        // in 3D a blocked move (e.g. against an object or a closed wall) does not fail, so check the progress
+        if (game.Is3D && walkSubStep >= 8)
+        {
+            if (walkIndex == walkPath.Count - 1)
+            {
+                Console.WriteLine($"  the target {next.X + 1},{next.Y + 1} is blocked, walked against it from {position?.X},{position?.Y}");
+                walkPath = null;
+                return false;
+            }
+
+            // e.g. a map character is in the way: wait a moment and search the path again
+            if (++walkBlockedRetries <= 5)
+            {
+                Console.WriteLine($"  blocked at {next.X + 1},{next.Y + 1}, searching the path again");
+                game.ScriptCenterOnBlock();
+                walkResumePath = true;
+                walkSubStep = 0;
+                continueTime = DateTime.Now.AddMilliseconds(800);
+                return true;
+            }
+
+            Report(false, $"walking to {next.X + 1},{next.Y + 1} is blocked ({game.ScriptState()})");
+            walkPath = null;
+            return false;
+        }
+
+        if (!game.ScriptStep(next, walkSubStep))
+        {
+            if (!game.ScriptCanWalk)
+                return Interrupted(game.ScriptState());
+
+            // e.g. a map character is in the way or the move came too early
+            if (++walkFailures <= 20)
+            {
+                continueTime = DateTime.Now.AddMilliseconds(150);
+                return true;
+            }
+
+            Report(false, $"walking to {next.X + 1},{next.Y + 1} is not possible ({game.ScriptState()})");
+            walkPath = null;
+            return false;
+        }
+
+        walkFailures = 0;
+
+        if (game.Is3D)
+        {
+            walkSubStep++;
+            continueTime = DateTime.Now.AddMilliseconds(40);
+        }
+        else
+        {
+            continueTime = DateTime.Now.AddMilliseconds(120);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// One step of handling a battle (won with the win cheat, only once per battle), its loot and the
+    /// popups during and after it. Sets the time for the next step.
+    /// </summary>
+    void HandleBattleAndPopups(Game.Game game, IScenarioScriptHost host)
+    {
+        var position = game.ScriptPartyPosition;
+        continueTime = DateTime.Now.AddMilliseconds(300);
+
+        if (game.BattleActive)
+            walkAfterBattle = DateTime.Now.AddSeconds(4);
+        else
+            walkBattleWon = false;
+
+        if (game.BattleActive)
+        {
+            // only once per battle, ending a battle twice leaves the game paused
+            if (!walkBattleWon && game.InputEnable && !game.PopupActive)
+            {
+                Console.WriteLine($"  battle at {position?.X},{position?.Y}, won with the win cheat");
+                Cheats.ProcessInput("win", game);
+                walkBattleWon = true;
+            }
+            else if (game.PopupActive)
+            {
+                host.Click(host.WindowCenter, false);
+            }
+        }
+        else if (game.PopupActive)
+        {
+            // like talkwait: Return closes most popups and answers questions with yes, some need a click
+            if (talkPopupTries++ % 2 == 0)
+            {
+                game.OnKeyDown(Key.Return, KeyModifiers.None);
+                game.OnKeyUp(Key.Return, KeyModifiers.None);
+            }
+            else
+            {
+                host.Click(host.WindowCenter, false);
+            }
+        }
+        else if (!game.InputEnable && game.WindowActive)
+        {
+            // e.g. the experience message in the battle loot window
+            host.Click(host.GameToWindow(new Position(208, 70)), false);
+        }
+        else if (game.InputEnable && !game.ScriptAllInputDisabled && game.ScriptIsLootWindow)
+        {
+            // the loot of battles on the way is left (it would fill the inventory)
+            Console.WriteLine("  the loot is left");
+            game.ScriptCloseWindow();
+            // closing twice while the window fades out leaves the game paused
+            walkAfterBattle = DateTime.Now.AddSeconds(4);
+            continueTime = DateTime.Now.AddMilliseconds(2000);
+        }
+        else if (game.ScriptConversationTextActive || game.ScriptEventPictureActive)
+        {
+            host.Click(host.WindowCenter, false);
+        }
+        // other windows (e.g. the battle window while the battle ends) are left alone
     }
 
     /// <summary>

@@ -3608,6 +3608,11 @@ namespace Ambermoon.UI
             {
                 void DropIt()
                 {
+                    // The question might be confirmed twice (e.g. Return and a click right after each other),
+                    // then the item was already dropped.
+                    if (itemSlot.Empty || itemSlot.ItemIndex != item.Index || itemSlot.Amount < amount)
+                        return;
+
                     // TODO: animation where the item falls down the screen
                     uint itemIndex = itemSlot.ItemIndex;
                     itemSlot.Remove((int)amount);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Ambermoon.Data;
@@ -11,7 +12,7 @@ namespace Ambermoon;
 /// </summary>
 partial class GameCore
 {
-    sealed record ScriptConversationActions(Action<string> SayWord, Action ShowItem, Action GiveItem, Action Leave, Func<int> TakeItems, Action<uint> GiveGold);
+    sealed record ScriptConversationActions(Action<string> SayWord, Action ShowItem, Action GiveItem, Action Leave, Func<int> TakeItems, Action<uint> GiveGold, Action AskToJoin);
 
     ScriptConversationActions? scriptConversation;
     Func<uint, bool>? scriptLockItemUser;
@@ -126,6 +127,18 @@ partial class GameCore
     /// <summary>
     /// Leaves the active conversation like the exit button.
     /// </summary>
+    /// <summary>
+    /// Asks the conversation partner to join the party (like the button in the conversation).
+    /// </summary>
+    public string? ScriptAskToJoin()
+    {
+        if (!ScriptConversationActive || scriptConversation == null)
+            return "no conversation is active";
+
+        scriptConversation.AskToJoin();
+        return null;
+    }
+
     public string? ScriptLeaveConversation()
     {
         if (scriptConversation == null)
@@ -398,10 +411,11 @@ partial class GameCore
     }
 
     /// <summary>
-    /// Puts all items of the open chest or battle loot into the active party member's inventory.
+    /// Puts all items of the open chest or battle loot into the active party member's inventory
+    /// (or only the given item, then gold and food are left as well).
     /// Returns the number of item slots which could not be taken or null if no chest is open.
     /// </summary>
-    public int? ScriptTakeLoot()
+    public int? ScriptTakeLoot(uint? onlyItemIndex = null)
     {
         // the chest window must be shown completely (the storage is set before the window opens)
         if (OpenStorage is not ITreasureStorage storage || !InputEnable ||
@@ -413,8 +427,20 @@ partial class GameCore
 
         foreach (var itemSlot in storage.Slots)
         {
+            if (onlyItemIndex != null && itemSlot.ItemIndex != onlyItemIndex)
+                continue;
+
             if (!itemSlot.Empty && DropItem(partyMemberSlot, null, itemSlot) != 0)
                 ++remaining;
+        }
+
+        if (onlyItemIndex != null)
+        {
+            if (storage is Chest && CurrentWindow.Window == UI.Window.Chest)
+                ItemRemovedFromStorage();
+
+            UpdateCharacterInfo();
+            return remaining;
         }
 
         // A chest only counts as emptied if the gold and food were taken as well.
@@ -496,6 +522,226 @@ partial class GameCore
     /// True if the main quest is expanded in the quest log, null if there is no quest log.
     /// </summary>
     public bool? ScriptQuestExpanded(MainQuestType mainQuestType) => QuestLog?.IsExpanded(mainQuestType);
+
+    /// <summary>
+    /// Current 1-based position of the party on the current map.
+    /// </summary>
+    public Position? ScriptPartyPosition => player == null || Map == null ? null : new Position(player.Position.X + 1, player.Position.Y + 1);
+
+    public bool ScriptAllInputDisabled => allInputDisabled;
+
+    public uint? ScriptMapIndex => Map?.Index;
+
+    public bool ScriptIsLootWindow => CurrentWindow.Window == UI.Window.BattleLoot;
+
+    /// <summary>
+    /// True if the party could walk now (no window, popup, battle or disabled input).
+    /// </summary>
+    public bool ScriptCanWalk => Map != null && !DisallowMoving() && !PopupActive && !BattleActive && CanPartyMove();
+
+    bool ScriptIsFree(int x, int y, bool allowEventWalls = false)
+    {
+        if (x < 0 || y < 0 || x >= Map!.Width || y >= Map.Height)
+            return false;
+
+        if (is3D)
+        {
+            var block = Map.Blocks[x, y];
+
+            // walls with events are e.g. doors or cracked walls which are triggered by walking against them
+            return !block.BlocksPlayer(MapManager.GetLabdataForMap(Map)) || (allowEventWalls && block.MapEventId != 0);
+        }
+
+        return Map.Tiles[x, y].AllowMovement(MapManager.GetTilesetForMap(Map), TravelType);
+    }
+
+    /// <summary>
+    /// Shortest walkable path (0-based positions, without the start) to the given 1-based position
+    /// of the current map or null if there is none. 2D maps use 8 directions (diagonal only if both
+    /// orthogonal neighbors are free), 3D maps 4 directions. The target itself may be blocked
+    /// (e.g. a door or a riddlemouth which is triggered by walking against it).
+    /// </summary>
+    public List<Position>? ScriptFindPath(uint targetX, uint targetY)
+    {
+        // walls with events (doors, ...) are only used if there is no other way
+        return ScriptFindPath(targetX, targetY, false) ?? ScriptFindPath(targetX, targetY, true);
+    }
+
+    List<Position>? ScriptFindPath(uint targetX, uint targetY, bool allowEventWalls)
+    {
+        if (Map == null || player == null || Map.IsWorldMap)
+            return null;
+
+        var start = new Position(player.Position.X, player.Position.Y);
+        var target = new Position((int)targetX - 1, (int)targetY - 1);
+        var previous = new Dictionary<Position, Position> { { start, start } };
+        var queue = new Queue<Position>();
+        queue.Enqueue(start);
+        (int X, int Y)[] directions = is3D
+            ? [(0, -1), (1, 0), (0, 1), (-1, 0)]
+            : [(0, -1), (1, 0), (0, 1), (-1, 0), (-1, -1), (1, -1), (1, 1), (-1, 1)];
+
+        while (queue.Count != 0)
+        {
+            var position = queue.Dequeue();
+
+            if (position == target)
+            {
+                var path = new List<Position>();
+
+                for (var p = target; p != start; p = previous[p])
+                    path.Add(p);
+
+                path.Reverse();
+                return path;
+            }
+
+            foreach (var (dx, dy) in directions)
+            {
+                var next = new Position(position.X + dx, position.Y + dy);
+
+                if (previous.ContainsKey(next))
+                    continue;
+
+                bool free = next == target ? next.X >= 0 && next.Y >= 0 && next.X < Map.Width && next.Y < Map.Height : ScriptIsFree(next.X, next.Y, allowEventWalls);
+
+                if (!free || (dx != 0 && dy != 0 && (!ScriptIsFree(position.X + dx, position.Y) || !ScriptIsFree(position.X, position.Y + dy))))
+                    continue;
+
+                previous[next] = position;
+                queue.Enqueue(next);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Walks one step towards the given 0-based neighbor position like the player does. On 2D maps
+    /// this is one tile, on 3D maps a quarter of a block (call it again until the block is reached,
+    /// <paramref name="subStep"/> 0 to 3). Returns false if the movement was not possible.
+    /// </summary>
+    public bool ScriptStep(Position next, int subStep)
+    {
+        if (player == null)
+            return false;
+
+        int dx = Math.Sign(next.X - player.Position.X);
+        int dy = Math.Sign(next.Y - player.Position.Y);
+
+        if (!is3D)
+            return Move2D(dx, dy);
+
+        if (subStep == 0)
+        {
+            // face the next block (up = 0, right = 90, down = 180, left = 270 degrees)
+            var direction = dy < 0 ? CharacterDirection.Up : dx > 0 ? CharacterDirection.Right : dy > 0 ? CharacterDirection.Down : CharacterDirection.Left;
+            player3D!.TurnTowards((float)direction * 90.0f);
+            CurrentSavegame!.CharacterDirection = player.Direction = direction;
+        }
+
+        return player3D!.MoveForward(Global.DistancePerBlock * 0.25f, CurrentTicks);
+    }
+
+    /// <summary>
+    /// Puts the party back into the center of its current 3D block (e.g. after a blocked move).
+    /// </summary>
+    public void ScriptCenterOnBlock()
+    {
+        if (is3D && player3D != null)
+            player3D.SetPosition(player3D.Position.X, player3D.Position.Y, CurrentTicks, false);
+    }
+
+    /// <summary>
+    /// Absolute world map position of the party (0-based) or null if not on a world map.
+    /// </summary>
+    Position? ScriptWorldPosition()
+    {
+        if (Map?.IsWorldMap != true || renderMap2D == null || player == null)
+            return null;
+
+        var map = renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y);
+
+        return new Position(map.MapOffset.X + player.Position.X % 50, map.MapOffset.Y + player.Position.Y % 50);
+    }
+
+    /// <summary>
+    /// Moves one tile on the world map towards the given 1-based position of a world map part
+    /// (e.g. while flying). Returns the remaining distance (0 = reached) or null if not possible.
+    /// </summary>
+    public int? ScriptFlyStep(uint mapIndex, uint x, uint y)
+    {
+        var position = ScriptWorldPosition();
+        var targetMap = MapManager.GetMap(mapIndex);
+
+        if (position == null || targetMap == null || !targetMap.IsWorldMap)
+            return null;
+
+        int targetX = targetMap.MapOffset.X + (int)x - 1;
+        int targetY = targetMap.MapOffset.Y + (int)y - 1;
+        int distance = Math.Max(Math.Abs(targetX - position.X), Math.Abs(targetY - position.Y));
+
+        if (distance == 0)
+            return 0;
+
+        if (!Move2D(Math.Sign(targetX - position.X), Math.Sign(targetY - position.Y)))
+            return null;
+
+        return distance - 1;
+    }
+
+    /// <summary>
+    /// Leaves the transport (e.g. lands while flying) like the transport button does.
+    /// </summary>
+    public bool ScriptLand()
+    {
+        if (Map?.UseTravelTypes != true || TravelType == Data.Enumerations.TravelType.Walk || !ScriptCanWalk)
+            return false;
+
+        ToggleTransport();
+        return true;
+    }
+
+    /// <summary>
+    /// Drops all inventory items and all equipment except the body armor and the weapon in the right hand
+    /// of the party member in slot 1-6 (e.g. so a strong party member can carry something heavy).
+    /// Returns the number of dropped item slots or null if there is no such party member.
+    /// </summary>
+    public int? ScriptDropItems(int slot)
+    {
+        var partyMember = GetPartyMember(slot - 1);
+
+        if (partyMember == null)
+            return null;
+
+        int dropped = 0;
+
+        foreach (var itemSlot in partyMember.Inventory.Slots.Where(s => !s.Empty))
+        {
+            InventoryItemRemoved(itemSlot.ItemIndex, itemSlot.Amount, partyMember);
+            itemSlot.Clear();
+            dropped++;
+        }
+
+        foreach (var equipmentSlot in EnumHelper.GetValues<EquipmentSlot>())
+        {
+            if (equipmentSlot == EquipmentSlot.None || equipmentSlot == EquipmentSlot.Body || equipmentSlot == EquipmentSlot.RightHand)
+                continue;
+
+            var itemSlot = partyMember.Equipment.Slots[equipmentSlot];
+
+            if (itemSlot.Empty)
+                continue;
+
+            var item = ItemManager.GetItem(itemSlot.ItemIndex);
+            EquipmentRemoved(partyMember, item, itemSlot.Amount, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
+            itemSlot.Clear();
+            dropped++;
+        }
+
+        layout.UpdateCharacterStatus(partyMember);
+        return dropped;
+    }
 
     /// <summary>
     /// Opens the character stats of the party member in slot 1-6 (like clicking the portrait).

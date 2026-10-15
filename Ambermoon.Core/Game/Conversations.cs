@@ -70,7 +70,7 @@ partial class GameCore
         UIText? moveItemMessage = null;
         layout.DraggedItemDropped += DraggedItemDropped;
         closeWindowHandler = _ => CleanUp();
-        scriptConversation = new(SayWord, ShowItem, GiveItem, () => Exit(true), TakeCreatedItems, GiveGoldAmount);
+        scriptConversation = new(SayWord, ShowItem, GiveItem, () => Exit(true), TakeCreatedItems, GiveGoldAmount, AskToJoin);
 
         void SetText(string text, Action? followAction = null)
         {

@@ -26,6 +26,12 @@ Ambermoon.net --version 0 --skip-intro --load 0 --script <repo>/Tests/Quests/Gra
 `--version 0` is the original game (German), `--version 5` is Ambermoon Advanced.
 Each script prints `PASS`/`FAIL` lines and a summary at the end.
 
+Most scripts teleport between the steps of a quest (`goto`). The `*_OnFoot.txt` scripts play a quest completely
+like a player: the party walks through the maps (`walkto`, battles on the way are won with the win cheat), flies
+on the world map (`cheat fly`, `flyto`, `land`) and solves the puzzles on the way, e.g. the lever puzzle of the
+orc cave (`OrcPlague_OnFoot.txt`, original game) or the way through the mystic tower (`MysticTower_OnFoot.txt`,
+Advanced, `--version 5`). They take about 10 minutes each.
+
 Cheats are only used for things which are not part of the tested quest, e.g. keys or items from other
 quests (`cheat give`), light in dark dungeons, winning or avoiding fights (`cheat win`, `cheat berserk`) or teleporting to a place
 (`goto`, `cheat teleport`). Skills, attributes and the time of day can be set for tests which need them
