@@ -142,10 +142,15 @@ after_build:
           $publishExitCode = $LASTEXITCODE
           Remove-Item "AmbermoonAndroid/ambermoon.keystore" -ErrorAction SilentlyContinue
           if ($publishExitCode -ne 0) { throw "dotnet publish failed with exit code $publishExitCode" }
-          Copy-Item "$publishDir/com.pyrdacor.AmbermoonAndroid-Signed.apk" "com.pyrdacor.AmbermoonAndroid-Signed.apk"
-          Copy-Item "$publishDir/com.pyrdacor.AmbermoonAndroid-Signed.aab" "com.pyrdacor.AmbermoonAndroid-Signed.aab"
-          if (Test-Path "$publishDir/com.pyrdacor.AmbermoonAndroid.apk") {
-            Copy-Item "$publishDir/com.pyrdacor.AmbermoonAndroid.apk" "com.pyrdacor.AmbermoonAndroid.apk"
+          # publish only copies the app bundle into the publish folder, the APK stays in the output folder
+          $outputDir = "./AmbermoonAndroid/bin/Release/$tfm"
+          foreach ($package in @('com.pyrdacor.AmbermoonAndroid-Signed.aab', 'com.pyrdacor.AmbermoonAndroid-Signed.apk')) {
+            $file = Get-ChildItem $outputDir -Recurse -Filter $package | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            if ($file -eq $null) {
+              Get-ChildItem $outputDir -Recurse -Include *.apk, *.aab | ForEach-Object { Write-Host $_.FullName }
+              throw "$package was not created"
+            }
+            Copy-Item $file.FullName $package
           }
         } else {
           if ($env:APPVEYOR_REPO_TAG -eq $true) {
