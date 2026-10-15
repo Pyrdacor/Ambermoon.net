@@ -593,7 +593,8 @@ internal class TouchPad
             }
         }
 
-        enabled = background != null && background.Visible && game.InputEnable;
+        // popups like the quest log may overlap the touchpad, their buttons must receive the taps
+        enabled = background != null && background.Visible && game.InputEnable && !game.PopupActive;
 
         if (background != null)
             disableOverlay.Visible = background.Visible && !game.InputEnable && !game.HideMobileTouchpadDisableOverlay;
