@@ -4087,6 +4087,10 @@ namespace Ambermoon.UI
 
             if (animation)
             {
+                // There is only one portrait animation. A running one (e.g. of a party member who joined
+                // right before) is finished first, otherwise its finish handler which adds the name is lost.
+                FinishPortraitAnimation();
+
                 // If dismissed, the mask moves down from the top in front of the portrait.
                 // If died, the background stays static, the portrait drops down and the skull comes from top.
                 // If added to party, the mask moves down, revealing the portrait.
@@ -4103,17 +4107,6 @@ namespace Ambermoon.UI
                 overlaySprite.Visible = true;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(newGraphicIndex);
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1 + yOffset;
-
-                if (portraitAnimation != null)
-                {
-                    if (portraitAnimation.PrimarySprite != null)
-                    {
-                        portraitAnimation.PrimarySprite.Y = 1;
-                        portraitAnimation.PrimarySprite.DisplayLayer = portraitAnimation.InitialDisplayLayer;
-                    }
-
-                    portraitAnimation.SecondarySprite?.Delete();
-                }
 
                 portraitAnimation = new PortraitAnimation
                 {
@@ -4148,6 +4141,24 @@ namespace Ambermoon.UI
                 finishAction?.Invoke();
                 return false;
             }
+        }
+
+        void FinishPortraitAnimation()
+        {
+            if (portraitAnimation == null)
+                return;
+
+            var finishedAnimation = portraitAnimation;
+            portraitAnimation = null;
+
+            if (finishedAnimation.PrimarySprite != null)
+            {
+                finishedAnimation.PrimarySprite.Y = 1;
+                finishedAnimation.PrimarySprite.DisplayLayer = finishedAnimation.InitialDisplayLayer;
+            }
+
+            finishedAnimation.SecondarySprite?.Delete();
+            finishedAnimation.OnFinished();
         }
 
         /// <summary>
@@ -5108,12 +5119,7 @@ namespace Ambermoon.UI
 
                 if (elapsed >= animationTime)
                 {
-                    portraitAnimation.PrimarySprite!.Y = 1;
-                    portraitAnimation.PrimarySprite.DisplayLayer = portraitAnimation.InitialDisplayLayer;
-                    portraitAnimation.SecondarySprite!.Delete();
-                    var tempAnimation = portraitAnimation;
-                    portraitAnimation = null;
-                    tempAnimation.OnFinished();
+                    FinishPortraitAnimation();
                 }
                 else
                 {
