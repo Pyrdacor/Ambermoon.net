@@ -144,11 +144,15 @@ internal static class FloorGenerator
             if (!AllReachable(layout, blocked))
                 continue;
 
-            var kind = layout.IsBossFloor && chestIndex >= chestCount - 3 ? ChestKind.Treasure : ChestKind.Normal;
+            var kind = layout.IsBossFloor && chestIndex >= chestCount - 3 ? ChestKind.Treasure
+                : layout.IsGearFloor && chestIndex == 0 ? ChestKind.Gear : ChestKind.Normal;
             layout.Chests.Add(new ChestSpot(candidate, kind, floor >= 6 && random.Next(100) < 20));
             reserved.Add(candidate);
             chestIndex++;
         }
+
+        if (layout.IsGearFloor && layout.Chests.Count == 0)
+            return null;
 
         // Boss (stands next to the stairs and does not move)
         if (layout.IsBossFloor)

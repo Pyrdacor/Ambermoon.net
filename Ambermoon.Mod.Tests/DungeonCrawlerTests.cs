@@ -50,7 +50,7 @@ static partial class Tests
             mod.OnInitialize();
             mod.StartNewRun(savegame, 12345);
 
-            Check(mod.Themes.Count >= 4, "Themes are loaded");
+            Check(mod.Themes.Count >= 5, "Themes are loaded");
             Check(savegame.CurrentMapIndex == 601, "Floor 1 uses map 601");
             Check(savegame.GetPartyMember(0)!.Equipment.Slots[EquipmentSlot.RightHand].ItemIndex != 0, "Hero has a weapon");
             Check(savegame.GetPartyMember(0)!.Inventory.Slots.Any(s => s.ItemIndex == DCContent.Torch), "Hero has torches");
@@ -75,7 +75,7 @@ static partial class Tests
                 {
                     Check(theme != previousTheme, $"Floor {floor}: a new theme is chosen");
 
-                    if (floor == 1 || floor == 26)
+                    if (floor % 5 == 1)
                         Console.WriteLine($"  Floor {floor}: theme {theme.Definition.Id}");
                 }
                 else
@@ -253,6 +253,35 @@ static partial class Tests
 
         if (layout.IsRecruitFloor)
             Check(layout.Recruit != null, $"{prefix} a recruit is placed");
+
+        // No curses on the first floors
+        if (floor <= DCContent.LastFloorWithoutCurses)
+        {
+            foreach (var character in characters.Where(c => c!.Type == CharacterType.Monster))
+            {
+                var group = gameData.CharacterManager.GetMonsterGroup(character!.Index)!;
+                Check(group.Monsters.Cast<Monster?>().All(m => m == null || (m.LearnedDestructionSpells & DCContent.CurseSpellBits) == 0),
+                    $"{prefix} monsters can't cast curses");
+            }
+        }
+
+        // Good equipment every 2 or 3 floors
+        var gearChests = layout.Chests.Where(c => c.Kind == ChestKind.Gear).ToList();
+        Check(gearChests.Count == (layout.IsGearFloor ? 1 : 0), $"{prefix} {(layout.IsGearFloor ? "one gear chest" : "no gear chest")}");
+
+        foreach (var gearChest in gearChests)
+        {
+            var chest = savegame.Chests[(uint)layout.Chests.IndexOf(gearChest) + 1];
+            var gear = chest.Slots.Cast<ItemSlot>().Where(s => !s.Empty && s.ItemIndex != 0)
+                .Select(s => gameData.ItemManager.GetItem(s.ItemIndex)).FirstOrDefault(i => i.EquipmentSlot != EquipmentSlot.None);
+            Check(gear != null, $"{prefix} the gear chest contains equipment");
+
+            if (floor == 2)
+            {
+                Check(gear?.EquipmentSlot == EquipmentSlot.RightHand, $"{prefix} the first gear is a weapon");
+                Console.WriteLine($"  Floor {floor}: gear {gear?.Name} (damage {gear?.Damage}, price {gear?.Price})");
+            }
+        }
 
         Check(layout.Chests.Any(c => c.Kind == ChestKind.Secret), $"{prefix} has a secret room", warnOnly: true);
     }

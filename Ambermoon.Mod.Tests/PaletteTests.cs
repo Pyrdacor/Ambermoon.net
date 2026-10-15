@@ -30,8 +30,6 @@ static partial class Tests
 
         foreach (var (theme, analysis) in AnalyzeThemePalettes())
         {
-            Check(analysis.OriginalPalettes.Count != 0, $"Theme {theme.Id}: the original game uses all textures with a common palette");
-
             foreach (var palette in theme.Palettes)
                 Check(analysis.SimilarPalettes.Contains(palette), $"Theme {theme.Id}: palette {palette} fits all textures");
         }

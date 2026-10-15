@@ -17,12 +17,13 @@ internal class LootGenerator(ModApi api, System.Random random, int floor)
 
     /// <summary>
     /// All items which can be equipped and are useful as loot.
-    /// Ranged weapons are excluded as they need ammunition.
+    /// Ranged weapons are excluded as they need ammunition. Story items (which are not
+    /// marked as "not important", e.g. the sword of Mando with a price of 1) and tools are excluded too.
     /// </summary>
     List<Item> Equipment => equipment ??= [.. ItemManager.Items.Where(item =>
         item.EquipmentSlot != EquipmentSlot.None && item.Price > 0 && item.Classes != ClassFlag.None &&
-        !item.Flags.HasFlag(ItemFlags.Accursed) && item.UsedAmmunitionType == AmmunitionType.None &&
-        item.Type != ItemType.Ammunition)];
+        item.Flags.HasFlag(ItemFlags.NotImportant) && !item.Flags.HasFlag(ItemFlags.Accursed) &&
+        item.UsedAmmunitionType == AmmunitionType.None && item.Type is not (ItemType.Ammunition or ItemType.Tool))];
 
     static int Value(Item item) => item.Damage * 2 + item.Defense * 2 + item.MagicAttackLevel + item.MagicArmorLevel +
         Math.Abs(item.AttributeValue) / 2 + Math.Abs(item.SkillValue) / 2 + item.HitPoints / 4 + item.SpellPoints / 4;
@@ -46,7 +47,8 @@ internal class LootGenerator(ModApi api, System.Random random, int floor)
         return candidates.Count == 0 ? null : candidates[random.Next(candidates.Count)].Index;
     }
 
-    public Chest CreateChest(ChestKind kind)
+    /// <param name="gearItem">Equipment item of a gear chest.</param>
+    public Chest CreateChest(ChestKind kind, uint gearItem = 0)
     {
         var chest = new Chest { Type = ChestType.Chest, AllowsItemDrop = true };
 
@@ -94,6 +96,14 @@ internal class LootGenerator(ModApi api, System.Random random, int floor)
                 if (floor >= 15 && random.Next(100) < 20)
                     items.Add((Pick(DCContent.Rings), 1));
                 break;
+            case ChestKind.Gear:
+                chest.Gold = (uint)(random.Next(3, 8) * floor);
+
+                if (gearItem != 0)
+                    items.Add((gearItem, 1));
+
+                items.Add((HealPotion, 1));
+                break;
             case ChestKind.Treasure:
                 chest.Gold = (uint)(random.Next(5, 16) * floor);
                 items.Add((HealPotion, random.Next(2, 4)));
@@ -132,15 +142,24 @@ internal class LootGenerator(ModApi api, System.Random random, int floor)
     /// <summary>
     /// Selects a strong item for the boss which is an upgrade for one of the party members.
     /// </summary>
-    public uint SelectBossItem(List<PartyMember> party)
+    public uint SelectBossItem(List<PartyMember> party) => SelectUpgrade(party, DCContent.EquipmentBudget(floor) * 4, null);
+
+    /// <summary>
+    /// Selects a good piece of equipment for a gear chest which is an upgrade for one of the party members.
+    /// The first one is a weapon.
+    /// </summary>
+    public uint SelectGearItem(List<PartyMember> party) =>
+        SelectUpgrade(party, DCContent.EquipmentBudget(floor) * 3, floor <= 5 ? EquipmentSlot.RightHand : null);
+
+    uint SelectUpgrade(List<PartyMember> party, uint budget, EquipmentSlot? slot)
     {
-        uint budget = DCContent.EquipmentBudget(floor) * 4;
         Item? best = null;
         int bestImprovement = 0;
 
         foreach (var partyMember in party)
         {
-            foreach (var item in Equipment.Where(item => item.Price <= budget && CharacterHelper.CanEquip(partyMember, item)))
+            foreach (var item in Equipment.Where(item => item.Price <= budget && (slot == null || item.EquipmentSlot == slot) &&
+                CharacterHelper.CanEquip(partyMember, item)))
             {
                 var equipped = partyMember.Equipment.Slots[item.EquipmentSlot];
                 int currentValue = equipped.Empty || equipped.ItemIndex == 0 ? 0 : Value(ItemManager.GetItem(equipped.ItemIndex));
@@ -156,6 +175,9 @@ internal class LootGenerator(ModApi api, System.Random random, int floor)
                 }
             }
         }
+
+        if (best == null && slot != null)
+            return SelectUpgrade(party, budget, null);
 
         return best?.Index ?? (floor >= 15 ? Pick(DCContent.Rings) : DCContent.HealPotions[Math.Min(4, floor / 8)]);
     }

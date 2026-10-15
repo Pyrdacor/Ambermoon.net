@@ -21,7 +21,8 @@ internal enum ChestKind
 {
     Normal,
     Secret,
-    Treasure // extra chests on boss floors
+    Treasure, // extra chests on boss floors
+    Gear // a good piece of equipment for the party
 }
 
 internal record struct Pos(int X, int Y)
@@ -96,6 +97,11 @@ internal class FloorLayout
     public bool IsBossFloor => Floor % 5 == 0;
     public bool IsBossWithMinionsFloor => Floor % 10 == 0;
     public bool IsRecruitFloor => Floor % 12 == 0;
+    /// <summary>
+    /// Floors with a chest with good equipment. Together with the boss loot
+    /// (every 5th floor) the party finds good equipment every 2 or 3 floors.
+    /// </summary>
+    public bool IsGearFloor => Floor % 5 == 2;
 
     public bool InBounds(Pos pos) => pos.X >= 0 && pos.Y >= 0 && pos.X < Width && pos.Y < Height;
 

@@ -212,6 +212,8 @@ Ambermoon DC (`Ambermoon.Mod.AmbermoonDC`) is a dungeon crawler built as a code 
 - Monsters roam the floors. Some wander and chase the party, others only move when they see it. Deeper floors have stronger monsters.
 - Some floors have a pair of teleporters which connects two distant rooms.
 - Every 5th floor a boss guards the way down, every 10th floor a boss with minions. Boss floors have extra treasure, and the boss drops an item which is an upgrade for one of the party members.
+- Floors 2, 7, 12, 17, ... have a chest with a good piece of equipment which is an upgrade for one of the party members (the one on floor 2 is a weapon). Together with the boss loot the party finds good equipment every 2 or 3 floors. Story items (like the sword of Mando) are never part of the loot.
+- Up to floor 15 monsters can't cast curses (lame, poison, petrify, disease, aging, irritation, madness, sleep, fear, blindness, drugs and dissolve victim). Damage spells are allowed.
 - Every 12th floor a random companion wanders around and can be asked to join. Name, race, gender, portrait, class, attributes, skills, spells and the (short) dialogues are random. Level and equipment fit the depth. Party members can be dismissed as usual. Dismissed companions are gone, their party member slot is reused for later companions.
 - Secret rooms are hidden behind illusory walls or behind walls which open when touched.
 - From floor 4 on the floors are dark, so you need torches or light spells.
@@ -233,7 +235,7 @@ The themes are JSON files in the folder `themes` of the mod (`Ambermoon.Mod.Ambe
   "BossMusic": 26,
   "Walls": [
     { "Texture": 89, "Weight": 3 },
-    { "Texture": 89, "Overlays": [ { "Texture": 37, "X": 80, "Y": 12, "Width": 32, "Height": 32, "Blend": true } ] }
+    { "Texture": 88 }
   ],
   "Door": { "Closed": 85, "Open": 0 },
   "Chest": { "Labdata": 2, "Object": 25 },
@@ -312,8 +314,8 @@ These things are not supported (yet):
 **Ambermoon DC**
 - Only the original game is supported as base, not Ambermoon Advanced.
 - All texts of the mod exist in English and German. Other languages use the English texts.
-- There are 4 themes so far (caves, crypt, dwarven mines, burning halls). Some theme monsters share map sprites, as there are only a few monster sprites in the original game.
-- All 4 themes are made of textures of maps with palette 6. Their other palettes are only similar variants, which also give the frame around the 3D view another color.
+- There are 5 themes so far (caves, crypt, dwarven mines, burning halls, forest moon mine). Some theme monsters share map sprites, as there are only a few monster sprites in the original game.
+- The first 4 themes are made of textures of maps with palette 6. Their other palettes are only similar variants, which also give the frame around the 3D view another color. The forest moon mine uses the palettes of the forest moon (12 and 11), only the map sprite of the Gizzek comes from a map with palette 11.
 - The combat value formula of the theme monsters was only tested roughly against the original monsters.
 - Random companions can only use the portraits the original game has for their race and gender, so some combinations don't exist (e.g. there are no female gnomes).
 - The balancing was not tested beyond a few floors. The hero is alone until floor 12 and the floors are dark from floor 4 on.

@@ -11,8 +11,7 @@
   "Music": [ 24 ],
   "Walls": [
     { "Texture": 89, "Weight": 3, "Color": 13 },
-    { "Texture": 88, "Weight": 2, "Color": 13 },
-    { "Texture": 89, "Color": 13, "Overlays": [ { "Texture": 37, "X": 80, "Y": 12, "Width": 32, "Height": 32, "Blend": true } ] }
+    { "Texture": 88, "Weight": 2, "Color": 13 }
   ],
   "Door": { "Closed": 85, "Open": 0 },
   "Chest": { "Labdata": 2, "Object": 25 },

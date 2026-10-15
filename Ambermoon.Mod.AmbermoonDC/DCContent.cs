@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.Mod.AmbermoonDC;
+﻿using Ambermoon.Data;
+
+namespace Ambermoon.Mod.AmbermoonDC;
 
 /// <summary>
 /// Data tables of the dungeon crawler. All indices refer to the original Ambermoon 1.20 data.
@@ -72,6 +74,17 @@ internal static class DCContent
         (26, [60, 37, 62, 67, 68, 73, 74]),
         (36, [76, 68, 74, 60, 62, 53]),
     ];
+
+    /// <summary>
+    /// Up to this floor monsters can't cast curses (see <see cref="CurseSpellBits"/>).
+    /// </summary>
+    public const int LastFloorWithoutCurses = 15;
+
+    /// <summary>
+    /// Destruction spells which cause conditions instead of damage (Lame to DissolveVictim).
+    /// </summary>
+    public static readonly uint CurseSpellBits = Enumerable.Range((int)Spell.Lame, Spell.DissolveVictim - Spell.Lame + 1)
+        .Aggregate(0u, (bits, spell) => bits | 1u << (spell - (int)Spell.MagicalProjectile + 1));
 
     /// <summary>
     /// Bosses without minions (every 5th floor). Index = (floor / 10).

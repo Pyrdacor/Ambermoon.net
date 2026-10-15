@@ -14,7 +14,7 @@ static partial class Tests
         Console.WriteLine($"Floor {floor} ({layout.Width}x{layout.Height}), rooms {layout.Rooms.Count}, monsters {layout.Monsters.Count}, " +
             $"chests {layout.Chests.Count}, doors {layout.Doors.Count}, secret walls {layout.SecretWalls.Count}");
         Console.WriteLine("Legend: # wall, . floor, D door, d locked door, I illusory wall, S secret wall, @ start, > stairs, " +
-            "C chest, $ secret chest, T treasure chest, m monster, w monster which waits, B boss, R recruit, o decoration");
+            "C chest, $ secret chest, T treasure chest, G gear chest, m monster, w monster which waits, B boss, R recruit, o decoration");
 
         for (int y = 0; y < layout.Height; y++)
         {
@@ -33,7 +33,7 @@ static partial class Tests
                 };
 
                 if (layout.Chests.FirstOrDefault(ch => ch.Position == pos) is ChestSpot chest)
-                    c = chest.Kind switch { ChestKind.Secret => '$', ChestKind.Treasure => 'T', _ => 'C' };
+                    c = chest.Kind switch { ChestKind.Secret => '$', ChestKind.Treasure => 'T', ChestKind.Gear => 'G', _ => 'C' };
                 if (layout.Monsters.FirstOrDefault(m => m.Position == pos) is MonsterSpawn monster)
                     c = monster.OnlyMoveWhenSeeingPlayer ? 'w' : 'm';
                 if (layout.Boss == pos)

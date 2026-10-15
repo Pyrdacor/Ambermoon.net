@@ -262,12 +262,13 @@ internal class FloorBuilder(ModApi api, IReadOnlyList<DungeonTheme> themes)
         api.ResetMapState(savegame, mapIndex);
 
         var loot = new LootGenerator(api, FloorGenerator.CreateRandom(state.Seed, layout.Floor, 3), layout.Floor);
+        uint gearItem = layout.IsGearFloor ? loot.SelectGearItem(PartyOf(savegame)) : 0;
 
         for (int i = 0; i < layout.Chests.Count; i++)
         {
             var spot = layout.Chests[i];
             uint chestIndex = FirstChestIndex + (uint)i;
-            savegame.Chests[chestIndex] = loot.CreateChest(spot.Kind);
+            savegame.Chests[chestIndex] = loot.CreateChest(spot.Kind, gearItem);
 
             if (spot.Locked)
                 savegame.LockChest(chestIndex - 1);

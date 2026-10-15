@@ -40,7 +40,36 @@ internal class MonsterGroupBuilder(ModApi api, DungeonTheme theme, int seed, int
     /// </summary>
     double Scale => floor > 36 ? 1.0 + (floor - 36) * 0.05 : 1.0;
 
-    public (MonsterGroup Group, string Sprite) CreateGroup()
+    public (MonsterGroup Group, string Sprite) CreateGroup() => RemoveCurses(CreateNormalGroup());
+
+    /// <summary>
+    /// Creates the boss group of the floor. Bosses on every 10th floor have minions.
+    /// The boss carries the given item as loot.
+    /// </summary>
+    public (MonsterGroup Group, string Sprite) CreateBossGroup(bool withMinions, uint lootItem) => RemoveCurses(CreateBoss(withMinions, lootItem));
+
+    /// <summary>
+    /// On the first floors monsters can't cast curses like lame, sleep or fear. They would be
+    /// deadly for a single hero. Damage spells are still allowed.
+    /// Note: All monsters of the groups are clones, so the original monsters stay unchanged.
+    /// </summary>
+    (MonsterGroup Group, string Sprite) RemoveCurses((MonsterGroup Group, string Sprite) result)
+    {
+        if (floor > DCContent.LastFloorWithoutCurses)
+            return result;
+
+        foreach (var monster in Monsters(result.Group))
+        {
+            monster.LearnedDestructionSpells &= ~DCContent.CurseSpellBits;
+
+            if (!monster.HasAnySpell())
+                monster.SpellChancePercentage = 0;
+        }
+
+        return result;
+    }
+
+    (MonsterGroup Group, string Sprite) CreateNormalGroup()
     {
         if (theme.Definition.Monsters.Count != 0)
             return CreateThemeGroup();
@@ -54,17 +83,13 @@ internal class MonsterGroupBuilder(ModApi api, DungeonTheme theme, int seed, int
         var groups = DCContent.Tiers[tierIndex].Groups;
         var group = api.GetMonsterGroup(groups[random.Next(groups.Length)])!;
 
-        if (Scale > 1.0)
+        if (Scale > 1.0 || floor <= DCContent.LastFloorWithoutCurses)
             group = CloneGroup(group, Scale);
 
         return (group, GetSprite(group));
     }
 
-    /// <summary>
-    /// Creates the boss group of the floor. Bosses on every 10th floor have minions.
-    /// The boss carries the given item as loot.
-    /// </summary>
-    public (MonsterGroup Group, string Sprite) CreateBossGroup(bool withMinions, uint lootItem)
+    (MonsterGroup Group, string Sprite) CreateBoss(bool withMinions, uint lootItem)
     {
         if (withMinions ? theme.Definition.BossGroup != null : theme.Definition.Boss != null)
             return CreateThemeBossGroup(withMinions, lootItem);
