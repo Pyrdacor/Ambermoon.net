@@ -124,7 +124,6 @@ after_build:
     - ps: |
         if ($env:APPVEYOR_REPO_BRANCH -match '^android-v\d+\.\d+\.\d+$') {
           $tfm = 'net9.0-android36.0'
-          $publishDir = "./AmbermoonAndroid/bin/Release/$tfm/publish"
           $signing = @()
           # Release signing for the Play Store (see docs/AndroidSigning.md). The secrets are secure
           # environment variables of the AppVeyor project and are never written to the log.
