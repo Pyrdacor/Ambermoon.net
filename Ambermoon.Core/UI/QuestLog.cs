@@ -603,7 +603,10 @@ public partial class QuestLog
             text.PaletteIndex = game.PrimaryUIPaletteIndex;
             text.Visible = false;
 
-            var tooltip = tooltips[i] = game.Layout.AddTooltip(textLineArea, "", TextColor.Yellow);
+            // with a background like the stats tooltips, otherwise it is hard to read on top of the quest texts
+            // (nearly opaque as there are texts in all lines below it)
+            var tooltip = tooltips[i] = game.Layout.AddTooltip(textLineArea, "", TextColor.White, TextAlign.Center,
+                new Render.Color(game.GetPrimaryUIColor(15), 0xf0));
             tooltip.Enabled = false;
             tooltip.ShowBelow = true;
         }

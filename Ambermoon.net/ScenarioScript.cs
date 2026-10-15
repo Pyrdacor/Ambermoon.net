@@ -85,6 +85,7 @@ namespace Ambermoon;
 ///   hover &lt;x&gt; &lt;y&gt;             move the mouse to a game position (320x200), e.g. to show a tooltip
 ///   stats &lt;slot&gt;              open the character stats of the party member in slot 1-6
 ///   questlogclick &lt;line&gt;      click a text line (1-based) of the open quest log, e.g. a main quest to collapse it
+///   questloghover &lt;line&gt;      move the mouse onto a text line (1-based) of the open quest log (source tooltip)
 ///   questexpanded &lt;type&gt; [0|1]
 ///                             print if a main quest (UI.MainQuestType name) is expanded, optionally check it
 ///   quests                    print all sub quests which are not inactive
@@ -638,6 +639,10 @@ sealed class ScenarioScript
                     case "questlogclick":
                         // clicks a text line (1-based) of the open quest log like the mouse does
                         host.Click(host.GameToWindow(Game.Game.ScriptQuestLogLinePosition(int.Parse(parts[1]))), false);
+                        break;
+                    case "questloghover":
+                        // moves the mouse onto a text line (1-based) of the open quest log, e.g. to show the source tooltip
+                        host.Hover(host.GameToWindow(Game.Game.ScriptQuestLogLinePosition(int.Parse(parts[1])) + new Position(110, 0)));
                         break;
                     case "questexpanded":
                     {
