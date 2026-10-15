@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 
 namespace Ambermoon.Mod;
 
@@ -83,6 +84,12 @@ public class ModManifest
     /// </summary>
     public string? Assembly { get; set; }
 
+    /// <summary>
+    /// Default values for game options (see <see cref="ModOptions"/>), e.g. { "ShowFloor": true }.
+    /// The player can still change them.
+    /// </summary>
+    public Dictionary<string, JToken>? Options { get; set; }
+
     [JsonIgnore]
     public bool HasCode => !string.IsNullOrWhiteSpace(Assembly);
 
@@ -117,6 +124,9 @@ public class ModManifest
 
         if (Assembly != null && (Path.IsPathRooted(Assembly) || Assembly.Contains("..")))
             throw new InvalidDataException("The mod assembly must be a relative path inside the mod.");
+
+        if (Options != null)
+            ModOptions.Validate(Options);
     }
 
     /// <summary>

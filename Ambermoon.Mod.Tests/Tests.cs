@@ -48,6 +48,7 @@ static partial class Tests
                     break;
                 case "all":
                     ManifestTests();
+                    ModOptionsTests();
                     AssetModTests();
                     ThemeTests();
                     ThemePaletteTests();

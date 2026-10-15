@@ -51,7 +51,11 @@ Every mod needs a `mod.json` at its root:
     "Game": "Original",
     "MinVersion": "1.19"
   },
-  "Assembly": "MyMod.dll"
+  "Assembly": "MyMod.dll",
+  "Options": {
+    "AutoBattleRounds": 5,
+    "ShowFog": true
+  }
 }
 ```
 
@@ -64,6 +68,18 @@ Every mod needs a `mod.json` at its root:
 | Base.Game | `Original`, `Advanced` or `Any`. |
 | Base.MinVersion | Optional minimum version of the base game, e.g. `1.20`. |
 | Assembly | Optional path of the mod assembly. Leave it out for asset-only mods. |
+| Options | Optional default values for game options (see below). |
+
+### Option defaults
+
+A mod can provide default values for some game options with `Options`. They are only defaults, the player can still change everything:
+
+- The first time the mod is used, its defaults are stored in a mod config file (`Saves/mods/options/<id>.json`).
+- While the mod is active, an option is read from this file and only if it isn't there from the normal configuration.
+- When the player changes an option (in the options menu or with F7 for the battle speed), the new value is written to the normal configuration and the option is removed from the mod config file. From then on the choice of the player is used, also in later sessions.
+- Defaults which a newer version of the mod adds are added once. Defaults the player already changed are never added again.
+
+Only these options can have mod defaults: `BattleSpeed` (0 to 100 in steps of 10), `AutoBattleRounds` (0 = off, 5, 10 or 15), `AutoDerune`, `ShowButtonTooltips`, `ShowPlayerStatsTooltips`, `ShowFloor`, `ShowCeiling`, `ShowFog`, `ShowSaveLoadMessage`, `Movement3D` (`WASD` or `WASDQE`) and `TurnWithArrowKeys`. Options like the resolution, window mode, music, volume, language or graphic filters stay under the control of the player. Other options or values of the wrong type make the manifest invalid.
 
 
 ## Asset mods
@@ -213,6 +229,7 @@ Ambermoon DC (`Ambermoon.Mod.AmbermoonDC`) is a dungeon crawler built as a code 
 - Some floors have a pair of teleporters which connects two distant rooms.
 - Every 5th floor a boss guards the way down, every 10th floor a boss with minions. Boss floors have extra treasure, and the boss drops an item which is an upgrade for one of the party members.
 - Floors 2, 7, 12, 17, ... have a chest with a good piece of equipment which is an upgrade for one of the party members (the one on floor 2 is a weapon). Together with the boss loot the party finds good equipment every 2 or 3 floors. Story items (like the sword of Mando) are never part of the loot.
+- The mod provides these option defaults: auto battle with 5 rounds, floor, ceiling and distance fog are shown. The player can change them as usual.
 - Up to floor 15 monsters can't cast curses (lame, poison, petrify, disease, aging, irritation, madness, sleep, fear, blindness, drugs and dissolve victim). Damage spells are allowed.
 - Every 12th floor a random companion wanders around and can be asked to join. Name, race, gender, portrait, class, attributes, skills, spells and the (short) dialogues are random. Level and equipment fit the depth. Party members can be dismissed as usual. Dismissed companions are gone, their party member slot is reused for later companions.
 - Secret rooms are hidden behind illusory walls or behind walls which open when touched.

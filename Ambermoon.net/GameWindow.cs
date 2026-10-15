@@ -101,6 +101,12 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
     bool checkPatcher = true;
     List<Mod.Packaging.ModPackage> mods = [];
     Mod.ModRuntime activeMod = null;
+    /// <summary>
+    /// The configuration of the running game. While a mod with option defaults is active,
+    /// this provides the mod defaults (see <see cref="ModConfiguration"/>).
+    /// </summary>
+    IConfiguration gameConfiguration = null;
+    IConfiguration GameConfiguration => gameConfiguration ?? configuration;
     Exception modLoadError = null;
     bool initialIntroEndedByClick = false;
     CommandLineOptions commandLineOptions = null;
@@ -360,10 +366,12 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
         {
             if (Game != null && !Game.BattleRoundActive)
             {
+                var gameConfiguration = GameConfiguration;
+
                 if (GetModifiers(keyboard) == KeyModifiers.None)
-                    configuration.BattleSpeed = configuration.BattleSpeed >= 100 ? 0 : configuration.BattleSpeed + 10;
+                    gameConfiguration.BattleSpeed = gameConfiguration.BattleSpeed >= 100 ? 0 : gameConfiguration.BattleSpeed + 10;
                 else
-                    configuration.BattleSpeed = configuration.BattleSpeed <= 0 ? 100 : configuration.BattleSpeed - 10;
+                    gameConfiguration.BattleSpeed = gameConfiguration.BattleSpeed <= 0 ? 100 : gameConfiguration.BattleSpeed - 10;
 
                 Game?.ExternalBattleSpeedChanged();
             }
@@ -1127,7 +1135,12 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
                         {
                             var version = Assembly.GetEntryAssembly().GetName().Version;
                             string versionString = $"Ambermoon.net V{version.Major}.{version.Minor}.{version.Build:00}";
-                            var game = new Game.Game(configuration, gameLanguage, renderView, graphicInfoProvider,
+                            // Mods can provide defaults for some options. They are stored in an own config file per mod.
+                            gameConfiguration = features.HasFlag(Features.Mod) && activeMod?.Manifest.Options?.Count > 0
+                                ? new ModConfiguration(configuration, Mod.ModOptions.Load(activeMod.Manifest,
+                                    Path.Combine(Configuration.GetSavePath("mods"), "options", activeMod.Manifest.Id + ".json")))
+                                : configuration;
+                            var game = new Game.Game(gameConfiguration, gameLanguage, renderView, graphicInfoProvider,
                                 savegameManager, savegameSerializer, gameData.Dictionary, cursor, audioOutput,
                                 musicManager, FullscreenChangeRequest, ChangeResolution, QueryPressedKeys,
                                 new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features,

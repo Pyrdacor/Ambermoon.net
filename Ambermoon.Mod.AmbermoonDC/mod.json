@@ -1,4 +1,4 @@
-{
+﻿{
   "Id": "ambermoon-dc",
   "Name": "Ambermoon DC",
   "Description": "Dungeon crawler with endless procedurally generated floors, roaming monsters, bosses, secrets and companions.",
@@ -10,5 +10,11 @@
     "Game": "Original",
     "MinVersion": "1.19"
   },
-  "Assembly": "Ambermoon.Mod.AmbermoonDC.dll"
+  "Assembly": "Ambermoon.Mod.AmbermoonDC.dll",
+  "Options": {
+    "AutoBattleRounds": 5,
+    "ShowFloor": true,
+    "ShowCeiling": true,
+    "ShowFog": true
+  }
 }
