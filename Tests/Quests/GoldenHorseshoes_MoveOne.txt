@@ -1,0 +1,58 @@
+# Golden horseshoes: a single horseshoe is moved around (out of the chest onto a portrait, inside the inventory and
+# to another party member). Each move reports the item as obtained, but the counter must stay at 1/4, also after
+# reloading. (original game and Advanced, any language)
+waitidle 20000
+dismissall
+cheat light 3
+cheat netsrak
+cheat invite 2
+wait 1000
+dismissall
+# empty inventory: the lockpicks are in slot 1, the horseshoe will be in slot 2
+dropitems 1
+cheat give 138 10
+# --- Tolimar (map 270) wants his golden horseshoes
+cheat teleport 270 3 22
+wait 2000
+dismissall
+talk 10
+talkwait
+say 3
+talkwait
+leave
+talkwait
+waitidle 5000
+quest GoldenHorseshoes_FindHorseshoes Active 0
+# --- one horseshoe from the first bandit chest (map 274)
+goto 274 19 5
+trigger 19 5 Eye
+talkwait
+usekey 138
+talkwait
+# take it out of the chest by dropping it onto the portrait of the hero
+itemclick chest 1
+itemclick portrait 1
+count 270 1
+quest GoldenHorseshoes_FindHorseshoes Active 1
+closewindow
+talkwait
+waitidle 5000
+# --- inside the inventory and to the other party member
+inventory 1
+wait 1000
+itemclick inv 2
+itemclick inv 9
+count 270 1
+quest GoldenHorseshoes_FindHorseshoes Active 1
+itemclick inv 9
+itemclick inv 4
+quest GoldenHorseshoes_FindHorseshoes Active 1
+itemclick inv 4
+itemclick portrait 2
+count 270 1
+quest GoldenHorseshoes_FindHorseshoes Active 1
+closewindow
+waitidle 5000
+reloadquests
+quest GoldenHorseshoes_FindHorseshoes Active 1
+exit

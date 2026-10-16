@@ -573,56 +573,28 @@ file class ItemObtainedTrigger(GameCore game, TriggerType triggerType, params ui
         if (itemIndices == null || itemIndices.Length == 0)
             return false;
 
-        if (item == null) // only check items you already have
-        {
-            uint totalAmount = 0;
-            uint minAmount = subQuest.MinAmount ?? 1;
-
-            if (NewState != QuestState.Completed)
-                minAmount = 1;
-
-            foreach (var itemIndex in itemIndices)
-            {
-                totalAmount += game.GetTotalItemCount(itemIndex);
-
-                if (NewState == QuestState.Completed && minAmount > 1)
-                    subQuest.CurrentAmount = Math.Min(minAmount, subQuest.CurrentAmount + totalAmount);
-
-                if (totalAmount >= minAmount)
-                {
-                    subQuest.State = NewState;
-                    return true;
-                }
-            }
-
+        if (item != null && !itemIndices.Contains(item.Index))
             return false;
+
+        uint minAmount = NewState == QuestState.Completed ? subQuest.MinAmount ?? 1 : 1;
+
+        if (item != null && minAmount <= 1)
+        {
+            subQuest.State = NewState;
+            return true;
         }
 
-        foreach (var itemIndex in itemIndices)
+        // Count the owned items. Items are also reported as obtained when they are only moved
+        // around (inside the party or out of a chest), so the reported amount can't be added up.
+        uint totalAmount = (uint)itemIndices.Sum(itemIndex => (long)game.GetTotalItemCount(itemIndex));
+
+        if (NewState == QuestState.Completed && minAmount > 1)
+            subQuest.CurrentAmount = Math.Max(subQuest.CurrentAmount, Math.Min(minAmount, totalAmount));
+
+        if (totalAmount >= minAmount)
         {
-            if (item.Index == itemIndex)
-            {
-                if (NewState == QuestState.Completed)
-                {
-                    uint minAmount = subQuest.MinAmount ?? 1;
-
-                    if (minAmount == 0 || minAmount <= subQuest.CurrentAmount + itemCount)
-                    {
-                        if (minAmount > 1)
-                            subQuest.CurrentAmount = minAmount;
-
-                        subQuest.State = NewState;
-                        return true;
-                    }
-
-                    subQuest.CurrentAmount += itemCount;
-                }
-                else
-                {
-                    subQuest.State = NewState;
-                    return true;
-                }
-            }
+            subQuest.State = NewState;
+            return true;
         }
 
         return false;
@@ -659,9 +631,13 @@ file class ExplorationTrigger(GameCore game, TriggerType triggerType, uint mapIn
     }
 }
 
-// TODO: Careful with this, as you can also add keywords by typing them in conversation which might activate the quest.
-// Always add a required quest when using this.
-file class KeywordLearnedTrigger(GameCore game, TriggerType triggerType, uint keywordIndex) : IQuestTrigger
+// A keyword is only counted if the given conversation partner adds it. Keywords are shared by
+// several characters (e.g. "Problem" by Bralum and Kasimir) and typed words are added as well.
+// As the savegame doesn't know who taught a keyword, the given global variable persists it.
+// Savegames from before only have the keyword itself. They are migrated once when loaded,
+// the optional legacy check can rule out other sources then.
+file class KeywordLearnedTrigger(GameCore game, QuestLog questLog, TriggerType triggerType, uint keywordIndex,
+    uint globalVariable, Func<IConversationPartner, bool> isSource, Func<GameCore, bool>? legacyCheck = null) : IQuestTrigger
 {
     public QuestState OldState => triggerType.GetOldState();
     public QuestState NewState => triggerType.GetNewState();
@@ -671,12 +647,24 @@ file class KeywordLearnedTrigger(GameCore game, TriggerType triggerType, uint ke
         if (OldState != QuestState.Any && NewState != QuestState.Completed && subQuest.State != OldState)
             return false;
 
+        var savegame = game.CurrentSavegame!;
+
         if (@event is ActionEvent e && e.TypeOfAction == ActionEvent.ActionType.AddKeyword && e.ObjectIndex == keywordIndex && e.Value == 1)
         {
+            var conversationPartner = questLog.CurrentConversationPartner;
+
+            if (conversationPartner == null || !isSource(conversationPartner))
+                return false;
+
+            savegame.SetGlobalVariable(globalVariable, true);
             subQuest.State = NewState;
             return true;
         }
-        else if (game.CurrentSavegame!.IsDictionaryWordKnown(keywordIndex))
+
+        if (@event == null && questLog.MigrateKeywordSources && savegame.IsDictionaryWordKnown(keywordIndex) && legacyCheck?.Invoke(game) != false)
+            savegame.SetGlobalVariable(globalVariable, true);
+
+        if (savegame.GetGlobalVariable(globalVariable))
         {
             if (triggerType == TriggerType.Completion)
             {
@@ -974,7 +962,7 @@ partial class QuestLog
                         // (keyword "Building projects")
                         new OrTrigger<ItemObtainedTrigger, KeywordLearnedTrigger>(game, TriggerType.Activation,
                             (g, t) => new ItemObtainedTrigger(g, t, 206),
-                            (g, t) => new KeywordLearnedTrigger(g, t, 115)),
+                            (g, t) => new KeywordLearnedTrigger(g, this, t, 115, GlobalVar_KeywordBuildingProjects, FromNPC(37, 45))),
                         // Complete: Theodorus saw the testament
                         new GlobalVariableTrigger(game, TriggerType.Completion, 224),
                     ],
@@ -1000,7 +988,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate: met Gustav, Theodorus' former apprentice, in the inn of Snakesign (keyword "Apprentice")
-                        new KeywordLearnedTrigger(game, TriggerType.Activation, 127),
+                        new KeywordLearnedTrigger(game, this, TriggerType.Activation, 127, GlobalVar_KeywordApprentice, FromNPC(45)),
                         // Complete: Gustav told about Theodorus and the spider bite
                         new GlobalVariableTrigger(game, TriggerType.Completion, 226),
                     ],
@@ -1087,7 +1075,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate: Ferdinand, the gardener of Spannenberg, offers his pets (keyword "Cat")
-                        new KeywordLearnedTrigger(game, TriggerType.Activation, 17),
+                        new KeywordLearnedTrigger(game, this, TriggerType.Activation, 17, GlobalVar_KeywordCat, FromNPC(40)),
                         // Complete: paid Ferdinand for the cat, it lives in your house now
                         new GlobalVariableTrigger(game, TriggerType.Completion, 230),
                     ],
@@ -1158,7 +1146,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate: Michael told that captain Torle knows about creatures of the sea (keyword)
-                        new KeywordLearnedTrigger(game, TriggerType.Activation, 121),
+                        new KeywordLearnedTrigger(game, this, TriggerType.Activation, 121, GlobalVar_KeywordSeaCreatures, FromNPC(19)),
                         // Complete: Torle gave his logbook with the places of the creatures
                         new GlobalVariableTrigger(game, TriggerType.Completion, 238),
                     ],
@@ -1341,7 +1329,7 @@ partial class QuestLog
                         [
                             // Activate: Necros, the talking chair in the witch's house, told the old magic word "Talis"
                             // (only with Kasimir in the party)
-                            new KeywordLearnedTrigger(game, TriggerType.Activation, 144),
+                            new KeywordLearnedTrigger(game, this, TriggerType.Activation, 144, GlobalVar_KeywordTalis, FromNPC(26)),
                             // Complete: Milzor, who collects magic words, tried it and gave the party more luck
                             new GlobalVariableTrigger(game, TriggerType.Completion, 307),
                         ],
@@ -2085,7 +2073,7 @@ partial class QuestLog
                         Triggers =
                         [
                             // Activate: met Melvin in Snakesign (keyword "Family")
-                            new KeywordLearnedTrigger(game, TriggerType.Activation, 146),
+                            new KeywordLearnedTrigger(game, this, TriggerType.Activation, 146, GlobalVar_KeywordFamily, FromNPC(47)),
                             // Complete: he told the legend of his ancestor Melvin (keywords "Gral swamps" or "Melvin")
                             // or the gate in the mountains is open already
                             new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 310) || IsEventBitSet(g, e, 183, 1)),
@@ -2409,7 +2397,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate
-                        new KeywordLearnedTrigger(game, TriggerType.Activation, 1), // "Wine" (same dialogue as for grandfather)
+                        new KeywordLearnedTrigger(game, this, TriggerType.Activation, 1, GlobalVar_KeywordWine, FromNPC(1)), // "Wine" (same dialogue as for grandfather)
                         // Completion
                         new GlobalVariableTrigger(game, TriggerType.Completion, 193), // Talked to Shandra in Newlake
                     ],
@@ -2709,7 +2697,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Completion
-                        new KeywordLearnedTrigger(game, TriggerType.Completion, 1), // "Wine"
+                        new KeywordLearnedTrigger(game, this, TriggerType.Completion, 1, GlobalVar_KeywordWine, FromNPC(1)), // "Wine"
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 1, // Grandfather
@@ -2776,7 +2764,7 @@ partial class QuestLog
                         // Activate
                         new EventDisabledTrigger(game, TriggerType.Activation, 260, 13), // encounter cave-in (text popup)
                         // Complete
-                        new KeywordLearnedTrigger(game, TriggerType.Completion, 3), // "Tools", not ideal, but there is nothing else to trigger on
+                        new KeywordLearnedTrigger(game, this, TriggerType.Completion, 3, GlobalVar_KeywordTools, FromNPC(1)), // "Tools", not ideal, but there is nothing else to trigger on
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 1, // Grandfather
@@ -2826,7 +2814,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate
-                        new KeywordLearnedTrigger(game, TriggerType.Activation, 12), // "ANTIDOTE", not ideal, but there is nothing else to trigger on
+                        new KeywordLearnedTrigger(game, this, TriggerType.Activation, 12, GlobalVar_KeywordAntidote, FromNPC(12)), // "ANTIDOTE", not ideal, but there is nothing else to trigger on
                         // Complete
                         new NextSubQuestActivatedTrigger(),
                         new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 26) || AntidoteMade(g, e)), // talked to Antonius about Antidote
@@ -2947,9 +2935,10 @@ partial class QuestLog
                     [
                         // Activate
                         new GlobalVariableTrigger(game, TriggerType.Activation, GlobalVar_TolimarQuestStarted),
-                        // Complete: own all four horseshoes or already returned them to Tolimar
-                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
-                            (g, t) => new ItemObtainedTrigger(g, t, 270), // Golden horseshoe
+                        // Complete: own all four horseshoes or already returned them to Tolimar.
+                        // The owned horseshoes are counted, moving one around must not count it again.
+                        new OrTrigger<CountTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new CountTrigger(g, t, [], [270]), // Golden horseshoe
                             (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_ReturnedHorseshoesToTolimar)),
                     ],
                     MinAmount = 4,
@@ -3088,7 +3077,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate: Freiherr Georg (head of Spannenberg) tells about the two problems and teaches the keyword "Probleme"
-                        new KeywordLearnedTrigger(game, TriggerType.Activation, 23), // PROBLEME
+                        new KeywordLearnedTrigger(game, this, TriggerType.Activation, 23, GlobalVar_KeywordProblems, FromNPC(8)), // PROBLEME
                         // Complete: obtained the hill giant's head (item 268, proof the orc leader is dead),
                         // OR the head was already handed to Baron George (the custom global variable below).
                         // The latter is needed so this step stays completed after a save/reload, when the head
@@ -3126,7 +3115,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate: Freiherr Georg tells about the two problems and teaches the keyword "Probleme"
-                        new KeywordLearnedTrigger(game, TriggerType.Activation, 23), // PROBLEME
+                        new KeywordLearnedTrigger(game, this, TriggerType.Activation, 23, GlobalVar_KeywordProblems, FromNPC(8)), // PROBLEME
                         // Complete: got proof that Nagier was dealt with -- the silver hand (266, if killed) or his
                         // letter (267, if you made peace) -- OR you already handed it to Baron George (custom variable).
                         // The variable keeps the step completed after a save/reload, when the proof is no longer owned.
@@ -3163,7 +3152,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate: Canth tells about the goblets in her greeting and adds the keyword "Wine goblets"
-                        new KeywordLearnedTrigger(game, TriggerType.Activation, 28),
+                        new KeywordLearnedTrigger(game, this, TriggerType.Activation, 28, GlobalVar_KeywordWineGoblets, FromNPC(14)),
                         // Complete: owned goblets plus the ones already returned to Canth (37) and Norlael (38)
                         new CountTrigger(game, TriggerType.Completion, [37, 38], [272]),
                     ],
@@ -3452,7 +3441,7 @@ partial class QuestLog
                     [
                         // Activate: Nelvin told about the sphere of opening or joined with it
                         new OrTrigger<KeywordLearnedTrigger, GlobalVariableTrigger>(game, TriggerType.Activation,
-                            (g, t) => new KeywordLearnedTrigger(g, t, 53), // "Sphere of opening"
+                            (g, t) => new KeywordLearnedTrigger(g, this, t, 53, GlobalVar_KeywordSphereOfOpening, FromPartyMember(10)), // "Sphere of opening"
                             (g, t) => new GlobalVariableTrigger(g, t, 80)), // Nelvin joined
                         // Complete: used the sphere of opening in the gate house
                         new EventDisabledTrigger(game, TriggerType.Completion, 292, 3),
@@ -3689,7 +3678,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate: Norel asked whether you met his apprentice Kay (keyword "Kay")
-                        new KeywordLearnedTrigger(game, TriggerType.Activation, 82),
+                        new KeywordLearnedTrigger(game, this, TriggerType.Activation, 82, GlobalVar_KeywordKay, FromNPC(27)),
                         // Complete: he told about the beast and gave the key of his weapons cupboard (169)
                         // or got Kay's amulet already
                         new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, 169) || IsGlobalVariableSet(g, e, 168)),
@@ -3736,7 +3725,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate: Bralum mentioned the problem of the gnomes (keyword "Problem")
-                        new KeywordLearnedTrigger(game, TriggerType.Activation, 80),
+                        new KeywordLearnedTrigger(game, this, TriggerType.Activation, 80, GlobalVar_KeywordProblem, FromNPC(25), g => !g.CurrentSavegame!.GetGlobalVariable(53) || g.CurrentSavegame.IsDictionaryWordKnown(81) || g.CurrentSavegame.GetGlobalVariable(129)),
                         // Complete: he told about Nera (keyword "Nera") or got the ring already
                         new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsKeywordLearned(g, e, 81) || IsGlobalVariableSet(g, e, 129)),
                     ],
@@ -3794,7 +3783,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate: Pelanis mentioned the curse when you left (keyword "Curse")
-                        new KeywordLearnedTrigger(game, TriggerType.Activation, 69),
+                        new KeywordLearnedTrigger(game, this, TriggerType.Activation, 69, GlobalVar_KeywordCurse, FromNPC(28)),
                         // Complete: he told about Sansri and the petrified eagles or Sansri was defeated already
                         new PredicateTrigger(game, TriggerType.Completion, (g, e) => IsGlobalVariableSet(g, e, GlobalVar_PelanisToldAboutSansri) ||
                             IsEventBitSet(g, e, 423, 5) || IsGlobalVariableSet(g, e, 180)),
@@ -3945,7 +3934,7 @@ partial class QuestLog
                     Triggers =
                     [
                         // Activate: met Bore, the dwarf who stayed in Gemstone (keyword "Donner")
-                        new KeywordLearnedTrigger(game, TriggerType.Activation, 78),
+                        new KeywordLearnedTrigger(game, this, TriggerType.Activation, 78, GlobalVar_KeywordDonner, FromNPC(24)),
                         // Complete: Bore told about the mine and dropped the staff of opening
                         new GlobalVariableTrigger(game, TriggerType.Completion, 114),
                     ],

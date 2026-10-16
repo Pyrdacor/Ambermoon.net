@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Ambermoon.Data;
 using static Ambermoon.EventExtensions;
 
@@ -106,6 +107,28 @@ partial class QuestLog
     const uint GlobalVar_TalkedToJeff = 8174u;
     const uint GlobalVar_TalkedToLuke = 8173u;
     const uint GlobalVar_BrogatBrewedBluePotion = 8172u;
+    // Set once the keyword sources below are tracked (older savegames are migrated when loaded)
+    const uint GlobalVar_KeywordSourcesTracked = 8171u;
+    // Keywords learned from the conversation partner of the quest (see KeywordLearnedTrigger)
+    const uint GlobalVar_KeywordBuildingProjects = 8170u;
+    const uint GlobalVar_KeywordApprentice = 8169u;
+    const uint GlobalVar_KeywordCat = 8168u;
+    const uint GlobalVar_KeywordSeaCreatures = 8167u;
+    const uint GlobalVar_KeywordTalis = 8166u;
+    const uint GlobalVar_KeywordFamily = 8165u;
+    const uint GlobalVar_KeywordWine = 8164u;
+    const uint GlobalVar_KeywordTools = 8163u;
+    const uint GlobalVar_KeywordAntidote = 8162u;
+    const uint GlobalVar_KeywordProblems = 8161u;
+    const uint GlobalVar_KeywordWineGoblets = 8160u;
+    const uint GlobalVar_KeywordSphereOfOpening = 8159u;
+    const uint GlobalVar_KeywordKay = 8158u;
+    const uint GlobalVar_KeywordProblem = 8157u;
+    const uint GlobalVar_KeywordCurse = 8156u;
+    const uint GlobalVar_KeywordDonner = 8155u;
+
+    static Func<IConversationPartner, bool> FromNPC(params uint[] npcIndices) => partner => partner is NPC npc && npcIndices.Contains(npc.Index);
+    static Func<IConversationPartner, bool> FromPartyMember(uint partyMemberIndex) => partner => partner is PartyMember partyMember && partyMember.Index == partyMemberIndex;
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 

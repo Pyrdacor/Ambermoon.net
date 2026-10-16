@@ -357,6 +357,14 @@ public partial class QuestLog
     private readonly List<CollapseIndicator> collapseIndicators = [];
     internal MainQuest[] Quests { get; }
     internal bool Open { get; private set; } = false;
+    /// <summary>
+    /// The conversation partner (NPC or party member) whose event is checked right now.
+    /// </summary>
+    internal IConversationPartner? CurrentConversationPartner { get; private set; }
+    /// <summary>
+    /// True while a savegame from before the keyword sources were tracked is checked the first time.
+    /// </summary>
+    internal bool MigrateKeywordSources { get; private set; } = false;
     private int scrollOffset = 0;
     private Popup? popup;
     private Scrollbar? scrollbar;
@@ -426,7 +434,11 @@ public partial class QuestLog
         }
 
         // Directly check for quest states
+        var savegame = game.CurrentSavegame!;
+        MigrateKeywordSources = !savegame.GetGlobalVariable(GlobalVar_KeywordSourcesTracked);
         CheckEvent(null, null);
+        MigrateKeywordSources = false;
+        savegame.SetGlobalVariable(GlobalVar_KeywordSourcesTracked, true);
         CheckItem(null, 0);
         CheckExploration(0, 0, 0);
         CheckChestUnlock(uint.MaxValue);
@@ -451,7 +463,7 @@ public partial class QuestLog
         questGroups[questType] = false; // collapse completed quests
     }
 
-    public void CheckEvent(IEventProvider? eventProvider, Event? @event)
+    public void CheckEvent(IEventProvider? eventProvider, Event? @event, IConversationPartner? conversationPartner = null)
     {
         if (eventProvider != null && @event != null)
         {
@@ -459,10 +471,21 @@ public partial class QuestLog
                 customGlobalVariableEvent.Check(eventProvider, @event);
         }
 
-        foreach (var quest in Quests.SelectMany(q => q.SubQuests).Where(q => q.State != QuestState.Completed))
+        // custom global variable events check recursively
+        var previousConversationPartner = CurrentConversationPartner;
+        CurrentConversationPartner = conversationPartner;
+
+        try
         {
-            foreach (var trigger in quest.Triggers)
-                trigger.CheckEvent(@event, quest);
+            foreach (var quest in Quests.SelectMany(q => q.SubQuests).Where(q => q.State != QuestState.Completed))
+            {
+                foreach (var trigger in quest.Triggers)
+                    trigger.CheckEvent(@event, quest);
+            }
+        }
+        finally
+        {
+            CurrentConversationPartner = previousConversationPartner;
         }
     }
 

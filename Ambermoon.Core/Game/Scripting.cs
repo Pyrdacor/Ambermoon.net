@@ -64,6 +64,12 @@ partial class GameCore
         if (uint.TryParse(keyword, out uint index))
             keyword = textDictionary.Entries[(int)index];
 
+        // An unknown word can only be typed in the dictionary, which adds it to the known words.
+        int wordIndex = textDictionary.Entries.FindIndex(entry => string.Compare(entry, keyword, true) == 0);
+
+        if (wordIndex != -1)
+            CurrentSavegame!.AddDictionaryWord((uint)wordIndex);
+
         scriptConversation.SayWord(keyword);
 
         return null;
@@ -747,6 +753,28 @@ partial class GameCore
     /// Opens the character stats of the party member in slot 1-6 (like clicking the portrait).
     /// </summary>
     public bool ScriptOpenStats(int slot) => !WindowOrPopupActive && GetPartyMember(slot - 1) != null && OpenPartyMember(slot - 1, false);
+
+    /// <summary>
+    /// Opens the inventory of the party member in slot 1-6 (like clicking the portrait with the right mouse button).
+    /// </summary>
+    public bool ScriptOpenInventory(int slot) => !WindowOrPopupActive && GetPartyMember(slot - 1) != null && OpenPartyMember(slot - 1, true);
+
+    /// <summary>
+    /// Game position in the center of an item slot (1-based) of the inventory, of a chest or of a party member portrait.
+    /// </summary>
+    public static Position? ScriptItemSlotPosition(string target, int slot)
+    {
+        int index = slot - 1;
+
+        return target switch
+        {
+            "inv" => new Position(Global.InventoryX + (index % Inventory.Width) * Global.InventorySlotWidth + 8,
+                Global.InventoryY + (index / Inventory.Width) * Global.InventorySlotHeight + 12),
+            "chest" => new Position((index % 6 + 1) * 22 + 8, (index < 6 ? 139 : 168) + 12),
+            "portrait" => Global.PartyMemberPortraitAreas[index].Center,
+            _ => null
+        };
+    }
 
     /// <summary>
     /// Game position inside a text line (1-based) of the quest log, e.g. to click a main quest.

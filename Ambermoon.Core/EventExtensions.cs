@@ -49,7 +49,7 @@ namespace Ambermoon
         {
             eventProvider = null;
 
-            game.QuestLog?.CheckEvent(conversationPartner is NPC npc ? npc : map, @event);
+            game.QuestLog?.CheckEvent(conversationPartner is NPC npc ? npc : map, @event, conversationPartner);
 
             // Note: Aborted means that an event is not even executed. It does not mean that a decision
             // box is answered with No for example. It is used when:

@@ -86,6 +86,10 @@ namespace Ambermoon;
 ///   questlog                  open or close the quest log
 ///   hover &lt;x&gt; &lt;y&gt;             move the mouse to a game position (320x200), e.g. to show a tooltip
 ///   stats &lt;slot&gt;              open the character stats of the party member in slot 1-6
+///   inventory &lt;slot&gt;          open the inventory of the party member in slot 1-6
+///   itemclick &lt;target&gt; &lt;slot&gt; click an item slot (1-based) like the mouse: inv (inventory), chest (open chest)
+///                             or portrait (party member slot 1-6). The first click takes the item, the next
+///                             one drops it, e.g. to move an item to another slot, party member or chest.
 ///   dropitems &lt;slot&gt;          drop all items of the party member in slot 1-6 except the body armor and the weapon
 ///                             in the right hand (e.g. so he can carry something heavy)
 ///   walkto &lt;x&gt; &lt;y&gt;            walk to a 1-based position of the current (non-world) map like the player does,
@@ -682,6 +686,23 @@ sealed class ScenarioScript
                         else
                             continueTime = DateTime.Now.AddMilliseconds(1000); // window fade
                         return;
+                    case "inventory":
+                        if (!game.ScriptOpenInventory(int.Parse(parts[1])))
+                            Report(false, $"the inventory of party member {parts[1]} could not be opened ({game.ScriptState()})");
+                        else
+                            continueTime = DateTime.Now.AddMilliseconds(1000); // window fade
+                        return;
+                    case "itemclick":
+                    {
+                        // clicks an item slot like the mouse does: the first click takes the item, the next one drops it
+                        var position = Game.Game.ScriptItemSlotPosition(parts[1], int.Parse(parts[2]));
+                        if (position == null)
+                            Report(false, $"unknown item slot target {parts[1]} (inv, chest or portrait)");
+                        else
+                            host.Click(host.GameToWindow(position), false);
+                        continueTime = DateTime.Now.AddMilliseconds(500);
+                        return;
+                    }
                     case "questlogclick":
                         // clicks a text line (1-based) of the open quest log like the mouse does
                         host.Click(host.GameToWindow(Game.Game.ScriptQuestLogLinePosition(int.Parse(parts[1]))), false);

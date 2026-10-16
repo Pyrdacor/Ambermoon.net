@@ -116,7 +116,7 @@ partial class GameCore
 
                 if (string.Compare(keyword, expectedKeyword, true) == 0)
                 {
-                    QuestLog?.CheckEvent(conversationPartner, e);
+                    QuestLog?.CheckEvent(conversationPartner, e, conversationPartner);
 
                     currentInteractionType = InteractionType.Keyword;
                     conversationEvent = e;
@@ -199,7 +199,7 @@ partial class GameCore
                 }
                 else
                 {
-                    QuestLog?.CheckEvent(conversationPartner, conversationEvent);
+                    QuestLog?.CheckEvent(conversationPartner, conversationEvent, conversationPartner);
 
                     // The create event already advanced to the next event (e.g. setting a global
                     // variable after the reward), so it must not be skipped.
@@ -335,7 +335,7 @@ partial class GameCore
                 }
                 else
                 {
-                    QuestLog?.CheckEvent(conversationPartner, @event);
+                    QuestLog?.CheckEvent(conversationPartner, @event, conversationPartner);
 
                     conversationEvent = @event;
                     layout.ButtonsDisabled = true;
@@ -398,7 +398,7 @@ partial class GameCore
             if (character is PartyMember &&
                 (conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.JoinParty)) != null)
             {
-                QuestLog?.CheckEvent(conversationPartner, conversationEvent);
+                QuestLog?.CheckEvent(conversationPartner, conversationEvent, conversationPartner);
 
                 layout.ButtonsDisabled = true;
                 currentInteractionType = InteractionType.JoinParty;
@@ -449,7 +449,7 @@ partial class GameCore
 
                 if ((conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.LeaveParty)) != null)
                 {
-                    QuestLog?.CheckEvent(conversationPartner, conversationEvent);
+                    QuestLog?.CheckEvent(conversationPartner, conversationEvent, conversationPartner);
 
                     currentInteractionType = InteractionType.LeaveParty;
                     layout.ButtonsDisabled = true;
@@ -601,7 +601,7 @@ partial class GameCore
 
                     if (conversationEvent != null)
                     {
-                        QuestLog?.CheckEvent(conversationPartner, conversationEvent);
+                        QuestLog?.CheckEvent(conversationPartner, conversationEvent, conversationPartner);
 
                         currentInteractionType = InteractionType.Leave;
                         layout.ButtonsDisabled = true;
