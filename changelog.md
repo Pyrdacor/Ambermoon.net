@@ -2,6 +2,7 @@
 
 ## 1.14.0 - Fourteenth patch (October 2026)
 
+- Version [1.14.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.14.1): Quest log fixes (keyword quests, golden horseshoe counter), Android touchpad no longer blocks the quest log buttons
 - Version [1.14.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.14.0): Quest log, integrates original 1.22, fixes from Advanced episode 4 for Advanced 1.33, extended curse tooltips, bugfixes
 
 ## 1.13.0 - Thirteenth patch (May 2026 - August 2026)
