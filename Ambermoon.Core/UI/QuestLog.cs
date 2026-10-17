@@ -435,6 +435,7 @@ public partial class QuestLog
 
         // Directly check for quest states
         var savegame = game.CurrentSavegame!;
+        DeriveCustomGlobalVariables();
         MigrateKeywordSources = !savegame.GetGlobalVariable(GlobalVar_KeywordSourcesTracked);
         CheckEvent(null, null);
         MigrateKeywordSources = false;

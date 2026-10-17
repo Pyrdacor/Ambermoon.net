@@ -132,6 +132,24 @@ partial class QuestLog
 
     private readonly List<CustomGlobalVariableEvent> customGlobalVariableEvents = [];
 
+    // Savegames from before the quest log (1.14.0) don't have the custom global variables. Some of
+    // them can be derived from other savegame data, which is done when the quest log is created.
+    private void DeriveCustomGlobalVariables()
+    {
+        var savegame = game.CurrentSavegame!;
+
+        void Derive(uint globalVariable, bool condition)
+        {
+            if (condition)
+                savegame.SetGlobalVariable(globalVariable, true);
+        }
+
+        // Baron George gives the treasure key II (402) for the hill giant's head. It opens his chest 131.
+        Derive(GlobalVar_GaveOrcLeaderHeadToBaronGeorge, game.GetTotalItemCount(402) != 0 || !savegame.IsChestLocked(131 - 1));
+        // He gives the treasure key I (401) for Nagier's letter or the silver hand. It opens his chest 130.
+        Derive(GlobalVar_GaveThiefProofToBaronGeorge, game.GetTotalItemCount(401) != 0 || !savegame.IsChestLocked(130 - 1));
+    }
+
     private void InitCustomGlobalVariableEvents()
     {
         // Tell Tolimar about tools

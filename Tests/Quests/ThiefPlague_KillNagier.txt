@@ -72,4 +72,11 @@ log after reload
 quests
 quest ThiefPlague_DealWithNagier Completed
 quest ThiefPlague_ReturnToGeorg Completed
+# --- like a savegame from before the quest log (1.14.0) without variable 8187: the handover is derived from
+# the treasure key (401) George gave for it
+setvar 8187 0
+reloadquests
+var 8187 1
+quest ThiefPlague_DealWithNagier Completed
+quest ThiefPlague_ReturnToGeorg Completed
 exit

@@ -71,4 +71,27 @@ log after reload
 quests
 quest OrcPlague_DefeatTheOrcLeader Completed
 quest OrcPlague_ReturnToGeorg Completed
+# --- like a savegame from before the quest log (1.14.0) without variable 8188: the handover is derived from
+# the treasure key (402) George gave for it
+setvar 8188 0
+reloadquests
+var 8188 1
+quest OrcPlague_DefeatTheOrcLeader Completed
+quest OrcPlague_ReturnToGeorg Completed
+# --- or from his reward chest 131 (at 11,3) which the key opens, even if the key is gone then
+goto 269 11 4
+trigger 11 3 Eye
+talkwait
+usekey 402
+talkwait
+closewindow
+talkwait
+waitidle 5000
+dropitems 1
+count 402 0
+setvar 8188 0
+reloadquests
+var 8188 1
+quest OrcPlague_DefeatTheOrcLeader Completed
+quest OrcPlague_ReturnToGeorg Completed
 exit

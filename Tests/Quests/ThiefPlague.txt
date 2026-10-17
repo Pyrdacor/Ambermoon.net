@@ -64,4 +64,27 @@ log after reload
 quests
 quest ThiefPlague_DealWithNagier Completed
 quest ThiefPlague_ReturnToGeorg Completed
+# --- like a savegame from before the quest log (1.14.0) without variable 8187: the handover is derived from
+# the treasure key (401) George gave for it
+setvar 8187 0
+reloadquests
+var 8187 1
+quest ThiefPlague_DealWithNagier Completed
+quest ThiefPlague_ReturnToGeorg Completed
+# --- or from his reward chest 130 (at 8,3) which the key opens, even if the key is gone then
+goto 269 8 4
+trigger 8 3 Eye
+talkwait
+usekey 401
+talkwait
+closewindow
+talkwait
+waitidle 5000
+dropitems 1
+count 401 0
+setvar 8187 0
+reloadquests
+var 8187 1
+quest ThiefPlague_DealWithNagier Completed
+quest ThiefPlague_ReturnToGeorg Completed
 exit
