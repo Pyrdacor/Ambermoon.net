@@ -28,6 +28,8 @@ Version 1.14
 - Quest log: Fixed the counter of the golden horseshoes which increased when a horseshoe was moved
 - Android: The movement touchpad no longer blocks the buttons of the quest log
 - Quest log: Better progress for savegames from before the quest log (orc plague, thief plague, golden horseshoes, leaving the forest moon)
+- Quest log: The tower of black magic now leads to captain Torle after the people of Burnville were freed
+- Linux/Mac: The patcher can be started again to install new versions
 - Command line options for automated testing
 
 
