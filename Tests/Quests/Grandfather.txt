@@ -165,4 +165,14 @@ quest Grandfather_ReturnToGrandfather Completed
 quest Grandfather_VisitGrave Completed
 quest GoldenHorseshoes_FindHorseshoes Completed
 quest GoldenHorseshoes_ReturnHorseshoes Completed
+# --- like a savegame from before the quest log (1.14.0) without the variables of Tolimar: the removed cave-in (11)
+# means that he got the horseshoes
+setvar 8186 0
+setvar 8191 0
+reloadquests
+var 8186 1
+var 8191 1
+quest Grandfather_FindTolimar Completed
+quest GoldenHorseshoes_FindHorseshoes Completed
+quest GoldenHorseshoes_ReturnHorseshoes Completed
 exit

@@ -148,6 +148,13 @@ partial class QuestLog
         Derive(GlobalVar_GaveOrcLeaderHeadToBaronGeorge, game.GetTotalItemCount(402) != 0 || !savegame.IsChestLocked(131 - 1));
         // He gives the treasure key I (401) for Nagier's letter or the silver hand. It opens his chest 130.
         Derive(GlobalVar_GaveThiefProofToBaronGeorge, game.GetTotalItemCount(401) != 0 || !savegame.IsChestLocked(130 - 1));
+        // The cave-in was removed (11) with Tolimar's tools, which is the purpose of the horseshoes. In Advanced
+        // Tolimar also sets variable 255 when he gets the horseshoes (it is not used in the original game).
+        bool horseshoesReturned = savegame.GetGlobalVariable(11) || savegame.GetGlobalVariable(255);
+        Derive(GlobalVar_TolimarQuestStarted, horseshoesReturned);
+        Derive(GlobalVar_ReturnedHorseshoesToTolimar, horseshoesReturned);
+        // The airship of Morag (map 437) can only be entered by flying there from the forest moon.
+        Derive(GlobalVar_LeftForestMoon, savegame.Automaps.TryGetValue(437, out var moragAirship) && moragAirship.ExplorationBits.Any(bits => bits != 0));
     }
 
     private void InitCustomGlobalVariableEvents()

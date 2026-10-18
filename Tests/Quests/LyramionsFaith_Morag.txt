@@ -28,6 +28,13 @@ state
 eventbit 439 2 1
 quest LyramionsFaith_FlyToMorag Completed
 quest LyramionsFaith_TalkToSriel Active
+# like a savegame from before the quest log (1.14.0) without variable 8177: the explored Morag airship (437)
+# means that the party left the forest moon
+setvar 8177 0
+reloadquests
+var 8177 1
+quest LyramionsFaith_FindAWayToLeaveForestMoon Completed
+quest LyramionsFaith_FlyToMorag Completed
 # --- S'riel in his cell teaches Morag and brings the party into his palace where a guard attacks at once,
 # the other monsters there are removed
 talk 32
