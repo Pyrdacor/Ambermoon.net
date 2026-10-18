@@ -27,6 +27,7 @@ Version 1.14
 - Quest log: Quests which start with a keyword only start in the conversation with the right character (e.g. Kasimir no longer starts the quest of Bralum)
 - Quest log: Fixed the counter of the golden horseshoes which increased when a horseshoe was moved
 - Android: The movement touchpad no longer blocks the buttons of the quest log
+- Quest log: Better progress for savegames from before the quest log (orc plague, thief plague, golden horseshoes, leaving the forest moon)
 - Command line options for automated testing
 
 

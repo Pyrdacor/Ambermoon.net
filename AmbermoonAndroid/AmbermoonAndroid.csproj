@@ -8,8 +8,8 @@
 		<Nullable>disable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ApplicationId>com.pyrdacor.AmbermoonAndroid</ApplicationId>
-		<ApplicationVersion>117</ApplicationVersion>
-		<ApplicationDisplayVersion>1.14.1</ApplicationDisplayVersion>
+		<ApplicationVersion>118</ApplicationVersion>
+		<ApplicationDisplayVersion>1.14.2</ApplicationDisplayVersion>
 		<Configurations>Debug;Release</Configurations>
 		<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
 		<SignAssembly>False</SignAssembly>
