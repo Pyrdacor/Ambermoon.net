@@ -853,12 +853,13 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
         try
         {
             var installDirectory = Configuration.ExecutableDirectoryPath;
-            ExecuteAsAdmin(patcherPath, $"\"{downloadPath}\" \"{installDirectory}\"");
+            StartPatcher(patcherPath, $"\"{downloadPath}\" \"{installDirectory}\"");
             resultHandler?.Invoke(true);
         }
-        catch
+        catch (Exception ex)
         {
             Console.WriteLine("Unable to write or start the patcher script. Please update the game manually.");
+            Console.WriteLine(ex.Message);
             CleanUpTextsAndButtons(true);
             AddText(GetText(TextId.FailedToPatch),
                 new Rect(clientArea.X + 4, clientArea.Y + 18, clientArea.Width - 8, 42), Data.Enumerations.Color.LightRed, TextAlign.Left, 50, true);
@@ -867,13 +868,26 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
             clickHandler = () => resultHandler?.Invoke(false);
         }
 
-        static void ExecuteAsAdmin(string fileName, string args)
+        static void StartPatcher(string fileName, string args)
         {
             var proc = new Process();
             proc.StartInfo.FileName = fileName;
             proc.StartInfo.Arguments = args;
-            proc.StartInfo.UseShellExecute = true;
-            proc.StartInfo.Verb = "runas";
+
+            if (OperatingSystem.IsWindows())
+            {
+                // run as admin, the game might be installed in a protected folder
+                proc.StartInfo.UseShellExecute = true;
+                proc.StartInfo.Verb = "runas";
+            }
+            else
+            {
+                // The packages are created on Windows, so the patcher might not be executable. With shell
+                // execute it would then be opened with xdg-open (or open) instead of being executed.
+                File.SetUnixFileMode(fileName, File.GetUnixFileMode(fileName) | UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute);
+                proc.StartInfo.UseShellExecute = false;
+            }
+
             proc.Start();
         }
     }

@@ -58,6 +58,15 @@ try
     {
         Tar.ExtractTarGz(args[0], args[1], file => file.StartsWith("Ambermoon.net"));
     }
+
+    if (!OperatingSystem.IsWindows())
+    {
+        // The packages are created on Windows, so the extracted game might not be executable.
+        var gameFile = Path.Combine(args[1], "Ambermoon.net");
+
+        if (File.Exists(gameFile))
+            File.SetUnixFileMode(gameFile, File.GetUnixFileMode(gameFile) | UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute);
+    }
 }
 catch (Exception ex)
 {
