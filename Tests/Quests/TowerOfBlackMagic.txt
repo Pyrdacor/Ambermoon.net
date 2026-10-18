@@ -162,6 +162,23 @@ talkwait 20000
 dismissall
 var 32 1
 quest TowerOfBlackMagic_FreeThePeopleOfBurnville Completed
+# captain Torle was among the prisoners, he gives his new boat as a reward
+quest TowerOfBlackMagic_TalkToCaptainTorle Active
+mainquest TowerOfBlackMagic Active
+reloadquests
+quest TowerOfBlackMagic_TalkToCaptainTorle Active
+# --- captain Torle in his boatyard (map 271)
+hour 12
+goto 271 5 5
+dismissall
+talk 11
+talkwait
+leave
+talkwait
+waitidle 5000
+var 33 1
+quest TowerOfBlackMagic_TalkToCaptainTorle Completed
+mainquest TowerOfBlackMagic Completed
 reloadquests
 log after reload
 quests
@@ -169,4 +186,6 @@ quest TowerOfBlackMagic_OpenTheTower Completed
 quest TowerOfBlackMagic_FreeThePeopleOfBurnville Completed
 quest TowerOfBlackMagic_WeakenLuminor Completed
 quest TowerOfBlackMagic_DefeatLuminor Completed
+quest TowerOfBlackMagic_TalkToCaptainTorle Completed
+mainquest TowerOfBlackMagic Completed
 exit

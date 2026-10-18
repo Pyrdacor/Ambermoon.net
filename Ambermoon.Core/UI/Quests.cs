@@ -143,6 +143,7 @@ public enum SubQuestType
     TowerOfBlackMagic_FreeThePeopleOfBurnville, // after entering the torture chamber
     TowerOfBlackMagic_WeakenLuminor, // after pouring the first icewater into the stone face
     TowerOfBlackMagic_DefeatLuminor, // after entering the torture chamber
+    TowerOfBlackMagic_TalkToCaptainTorle, // after freeing the people of Burnville
     // Valdyn's Return
     ValdynsReturn_FindAWayHome, // after Valdyn came through the light gate
     ValdynsReturn_UseTheYellowSphere, // after getting the yellow sphere
@@ -3451,20 +3452,6 @@ partial class QuestLog
                 },
                 mainQuest => new SubQuest(this, mainQuest)
                 {
-                    Type = SubQuestType.TowerOfBlackMagic_FreeThePeopleOfBurnville,
-                    Final = true,
-                    Triggers =
-                    [
-                        // Activate: found the prisoners in Luminor's torture chamber
-                        new EventDisabledTrigger(game, TriggerType.Activation, 293, 2),
-                        // Complete: opened the cells
-                        new GlobalVariableTrigger(game, TriggerType.Completion, 32),
-                    ],
-                    SourceType = QuestSourceType.PartyMember,
-                    SourceIndex = 11, // Sabine
-                },
-                mainQuest => new SubQuest(this, mainQuest)
-                {
                     Type = SubQuestType.TowerOfBlackMagic_WeakenLuminor,
                     Triggers =
                     [
@@ -3496,6 +3483,34 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.PartyMember,
                     SourceIndex = 11, // Sabine
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.TowerOfBlackMagic_FreeThePeopleOfBurnville,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate: found the prisoners in Luminor's torture chamber
+                        new EventDisabledTrigger(game, TriggerType.Activation, 293, 2),
+                        // Complete: opened the cells
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 32),
+                    ],
+                    SourceType = QuestSourceType.PartyMember,
+                    SourceIndex = 11, // Sabine
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.TowerOfBlackMagic_TalkToCaptainTorle,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate: the freed prisoners told that captain Torle was among them
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 32),
+                        // Complete: Torle gave his new boat as a reward
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 33),
+                    ],
+                    SourceType = QuestSourceType.MapEvent,
+                    SourceIndex = CreateMapEventSourceIndex(293, 8, 17), // Cells in the torture chamber
                 }
             ),
             #endregion

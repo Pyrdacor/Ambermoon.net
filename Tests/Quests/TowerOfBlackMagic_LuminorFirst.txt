@@ -57,6 +57,7 @@ useitem 315
 talkwait 20000
 dismissall
 quest TowerOfBlackMagic_FreeThePeopleOfBurnville Completed
+quest TowerOfBlackMagic_TalkToCaptainTorle Active
 quest SandrasDaughter_RescueSabine Completed
 quest SandrasDaughter_ReturnToSandra Active
 reloadquests
@@ -66,6 +67,7 @@ quest TowerOfBlackMagic_OpenTheTower Completed
 quest TowerOfBlackMagic_FreeThePeopleOfBurnville Completed
 quest TowerOfBlackMagic_WeakenLuminor Inactive
 quest TowerOfBlackMagic_DefeatLuminor Completed
+quest TowerOfBlackMagic_TalkToCaptainTorle Active
 quest SandrasDaughter_RescueSabine Completed
 quest SandrasDaughter_ReturnToSandra Active
 exit

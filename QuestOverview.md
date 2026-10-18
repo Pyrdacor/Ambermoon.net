@@ -98,9 +98,10 @@ Created with `python tools/quest_overview.py`.
   - Return to Sandra
 - **The Tower of Black Magic**
   - Open the tower with the sphere
-  - Free the people of Burnville
   - Weaken Luminor with icewater (0/4)
   - Defeat Luminor
+  - Free the people of Burnville
+  - Talk to captain Torle
 - **Valdyn's Return**
   - Find a way to bring Valdyn home
   - Use the yellow sphere at the teleporter
@@ -363,9 +364,10 @@ Created with `python tools/quest_overview.py`.
   - Kehre zu Sandra zurück
 - **Turm der Schwarzmagier**
   - Öffne den Turm mit der Sphäre
-  - Befreie die Einwohner von Burnville
   - Schwäche Luminor mit Eiswasser (0/4)
   - Besiege Luminor
+  - Befreie die Einwohner von Burnville
+  - Sprich mit Kapitän Torle
 - **Valdyns Rückkehr**
   - Finde einen Weg, Valdyn heimzubringen
   - Benutze die gelbe Kugel am Teleporter
@@ -628,9 +630,10 @@ Created with `python tools/quest_overview.py`.
   - Retourne voir Sandra
 - **La tour de la magie noire**
   - Ouvre la tour avec la sphère-clé
-  - Libère les habitants de Burnville
   - Affaiblis Luminor à l'eau glacée (0/4)
   - Vaincs Luminor
+  - Libère les habitants de Burnville
+  - Parle au capitaine Torle
 - **Le retour de Valdyn**
   - Trouve un moyen de ramener Valdyn
   - Utilise la sphère jaune au téléporteur
@@ -893,9 +896,10 @@ Created with `python tools/quest_overview.py`.
   - Wróć do Sandry
 - **Wieża czarnej magii**
   - Otwórz wieżę kulą otwarcia
-  - Uwolnij mieszkańców Burnville
   - Osłab Luminora lodową wodą (0/4)
   - Pokonaj Luminora
+  - Uwolnij mieszkańców Burnville
+  - Porozmawiaj z kapitanem Torle
 - **Powrót Valdyna**
   - Znajdź sposób, by odesłać Valdyna
   - Użyj żółtej kuli przy teleporterze
@@ -1158,9 +1162,10 @@ Created with `python tools/quest_overview.py`.
   - Vrať se k Sandře
 - **Věž černé magie**
   - Otevři věž sférou otevření
-  - Osvoboď obyvatele Burnville
   - Oslab Luminora ledovou vodou (0/4)
   - Poraz Luminora
+  - Osvoboď obyvatele Burnville
+  - Promluv si s kapitánem Torlem
 - **Valdynův návrat**
   - Najdi cestu, jak poslat Valdyna domů
   - Použij žlutou sféru u teleportu
