@@ -882,8 +882,8 @@ internal class Patcher(IGameRenderView renderView, string patcherPath, TextureAt
             }
             else
             {
-                // The packages are created on Windows, so the patcher might not be executable. With shell
-                // execute it would then be opened with xdg-open (or open) instead of being executed.
+                // Shell execute only supports the verb "open" here (others throw), and it would hand a file
+                // without the executable flag to xdg-open (or open), so the patcher is executed directly.
                 File.SetUnixFileMode(fileName, File.GetUnixFileMode(fileName) | UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute);
                 proc.StartInfo.UseShellExecute = false;
             }
