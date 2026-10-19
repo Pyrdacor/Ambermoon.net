@@ -1795,9 +1795,14 @@ partial class GameCore
                     case RewardEvent.RewardOperation.Increase:
                         if (partyMember.Level >= 50 && Features.HasFlag(Features.LevelShards))
                         {
+                            uint levelBefore = partyMember.Level;
                             for (int i = 0; i < rewardEvent.Value; i++)
                                 partyMember.AddLevelShardEffects(RandomInt, Features);
-                            followAction?.Invoke();
+                            // show the level up window like the original does
+                            if (partyMember.Level != levelBefore)
+                                ShowLevelUpWindow(partyMember, followAction);
+                            else
+                                followAction?.Invoke();
                             return;
                         }
                         long levelUps = Util.Limit(0, rewardEvent.Value, 50 - partyMember.Level);
