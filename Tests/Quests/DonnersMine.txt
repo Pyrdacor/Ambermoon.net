@@ -1,0 +1,87 @@
+# Donner's old mine (original game and Advanced, any language): Bore (NPC 24), the dwarf left behind in Gemstone,
+# drops the staff of opening (334, keyword "Donner"). Put into the ground on the island in front of the mine
+# (map 230) it opens the entrance to Donner's old labyrinth (map 413), where Donner's key (346, chest 88) opens door 25.
+# Donner's treasures are the two locked chests 89 (14,5) and 90 (9,3).
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest DonnersMine_AskBoreAboutDonner Inactive
+# --- Bore in the ruins of Gemstone
+goto 406 8 7
+dismissall
+talk 24
+talkwait
+quest DonnersMine_AskBoreAboutDonner Active
+say 78
+talkwait
+takeitems
+talkwait
+var 114 1
+count 334 1
+quest DonnersMine_AskBoreAboutDonner Completed
+quest DonnersMine_OpenTheEntrance Active
+leave
+talkwait
+waitidle 5000
+# --- the island in front of the mine
+# (standing a bit away from the edge of the world map)
+goto 230 12 14
+dismissall
+trigger 5 13 item:334
+talkwait
+eventbit 230 3 1
+quest DonnersMine_OpenTheEntrance Completed
+quest DonnersMine_FindDonnersTreasures Active
+# --- Donner's key in the old labyrinth
+goto 413 12 13
+dismissall
+cheat berserk
+dismissall
+trigger 12 12 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 346 1
+# the key and the door are not part of the quest anymore
+quest DonnersMine_FindDonnersTreasures Active
+goto 413 4 19
+dismissall
+trigger 4 18 Eye
+talkwait
+usekey 346
+talkwait
+quest DonnersMine_FindDonnersTreasures Active 0
+# --- the two treasure chests (locked, opened with lockpicks)
+cheat give 138 2
+goto 413 14 6
+dismissall
+trigger 14 5 Eye
+talkwait
+usekey 138
+talkwait
+takeloot optional
+closewindow
+talkwait
+quest DonnersMine_FindDonnersTreasures Active 1
+# one of two chests persists
+reloadquests
+quest DonnersMine_FindDonnersTreasures Active 1
+goto 413 9 4
+dismissall
+trigger 9 3 Eye
+talkwait
+usekey 138
+talkwait
+takeloot optional
+closewindow
+talkwait
+quest DonnersMine_FindDonnersTreasures Completed 2
+mainquest DonnersMine Completed
+reloadquests
+quest DonnersMine_AskBoreAboutDonner Completed
+quest DonnersMine_OpenTheEntrance Completed
+quest DonnersMine_FindDonnersTreasures Completed
+mainquest DonnersMine Completed
+exit

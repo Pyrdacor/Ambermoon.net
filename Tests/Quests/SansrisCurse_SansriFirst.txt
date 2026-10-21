@@ -1,0 +1,34 @@
+# Sansri is defeated before Pelanis was asked (original game and Advanced, any language).
+# Pelanis gets the blood without telling the story, the skipped steps are completed.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+goto 423 15 14
+trigger 15 15 Move
+talkwait 30000
+waitbattle 15000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+quest SansrisCurse_GiveSansrisBloodToPelanis Active
+quest SansrisCurse_DefeatSansri Completed
+quest SansrisCurse_AskPelanisAboutHisConcerns Completed
+goto 417 4 10
+dismissall
+talk 28
+talkwait
+giveitem 352
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+quest SansrisCurse_GiveSansrisBloodToPelanis Completed
+mainquest SansrisCurse Completed
+reloadquests
+mainquest SansrisCurse Completed
+exit

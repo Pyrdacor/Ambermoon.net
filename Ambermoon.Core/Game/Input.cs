@@ -229,6 +229,9 @@ partial class GameCore
         lastMousePosition = new Position(position);
         position = GetMousePosition(position);
         UpdateCursor(position, buttons);
+
+        if (QuestLog?.Open == true)
+            QuestLog.Hover(renderView.ScreenToGame(position));
     }
 
     public virtual void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
@@ -1005,9 +1008,7 @@ partial class GameCore
         }
 
         if (allInputDisabled)
-            return;
-
-        
+            return;        
 
         if (nextClickHandler != null)
         {
@@ -1161,16 +1162,34 @@ partial class GameCore
                     }
                 }
 
+                if (InputEnable && !allInputDisabled && QuestLogIconArea.Contains(relativePosition))
+                {
+                    CursorType = CursorType.Sword;
+                    ToggleQuestLog();
+                    return;
+                }
+
+                if (QuestLog?.Open == true)
+                {
+                    CursorType = CursorType.Sword;
+                    QuestLog.Click(relativePosition, buttons);
+                    return;
+                }
+
                 var cursorType = CursorType.Sword;
                 layout.Click(relativePosition, buttons, ref cursorType, CurrentTicks, pickingNewLeader, pickingTargetPlayer, pickingTargetInventory, keyModifiers);
                 disableUntrapping = true;
-                CursorType = cursorType;
 
-                if (!allInputDisabled && InputEnable && !pickingNewLeader && !pickingTargetPlayer && !pickingTargetInventory)
+                if (CursorType != CursorType.VideoWait)
                 {
-                    layout.Hover(relativePosition, ref cursorType); // Update cursor
-                    if (cursor.Type != CursorType.None)
-                        CursorType = cursorType;
+                    CursorType = cursorType;
+
+                    if (!allInputDisabled && InputEnable && !pickingNewLeader && !pickingTargetPlayer && !pickingTargetInventory)
+                    {
+                        layout.Hover(relativePosition, ref cursorType); // Update cursor
+                        if (cursor.Type != CursorType.None)
+                            CursorType = cursorType;
+                    }
                 }
 
                 disableUntrapping = false;

@@ -162,6 +162,8 @@ partial class GameCore
         if (partyMember != null)
             partyMember.TotalWeight += (uint)amount * item.Weight;
 
+        QuestLog?.CheckItem(item, (uint)amount);
+
         if (CurrentWindow.Window == Window.Inventory)
             layout.UpdateLayoutButtons();
     }

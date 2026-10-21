@@ -1,0 +1,66 @@
+# Ambermoon picture played the normal way (original game and Advanced, any language)
+# Dieter Rottermund (NPC 20, house of art 287, visible from the start) adds keyword 63 "Artist" when
+# talked to; asking about it gives the picture (301) and sets global variable 97 -> Baron Karsten
+# (NPC 30, baron's palace 427) gets the picture: global variable 184, vault key (400), 10000 gold
+# and the picture is hung in the hall (ChangeTile 427 11,14 -> 117, the completion trigger).
+waitidle 20000
+dismissall
+# Netsrak carries the vault key, the hero is overloaded by the 10000 gold reward
+cheat invite 2
+talkwait
+waitidle 5000
+quest AmbermoonPicture_DeliverThePicture Inactive
+# --- Dieter (20)
+goto 287 26 14
+wait 2000
+dismissall
+talk 20
+talkwait
+quest AmbermoonPicture_DeliverThePicture Inactive
+# "Artist"
+say 63
+talkwait
+var 97 1
+quest AmbermoonPicture_DeliverThePicture Active
+takeitems
+activate 1
+leave
+talkwait
+waitidle 5000
+count 301 1
+# asking again does not create a second picture
+talk 20
+talkwait
+say 63
+talkwait
+leave
+talkwait
+waitidle 5000
+count 301 1
+# --- Baron Karsten (30) in Newlake
+goto 427 13 6
+wait 2000
+dismissall
+talk 30
+talkwait
+# showing the picture only asks for it
+showitem 301
+talkwait
+quest AmbermoonPicture_DeliverThePicture Active
+giveitem 301
+talkwait 20000
+activate 2
+var 184 1
+quest AmbermoonPicture_DeliverThePicture Completed
+takeitems
+activate 1
+leave
+talkwait
+waitidle 5000
+count 301 0
+count 400 1
+reloadquests
+log after reload
+quests
+quest AmbermoonPicture_DeliverThePicture Completed
+exit

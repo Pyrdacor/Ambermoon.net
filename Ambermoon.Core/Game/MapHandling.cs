@@ -32,7 +32,7 @@ partial class GameCore
         if (show)
         {
             UpdateUIPalette(true);
-            currentBattle = null;
+            ResetCurrentBattle();
             layout.CancelDrag();
             ResetCursor();
             OpenStorage = null;
@@ -1980,6 +1980,7 @@ partial class GameCore
                 layout.OpenTextPopup(riddleText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White).Closed += () =>
                 {
                     InputEnable = true;
+                    scriptRiddlemouthAnswer = TestSolution;
                 };
             }
             void TestSolution(string solution)
@@ -2033,11 +2034,15 @@ partial class GameCore
             }
 
             layout.AttachEventToButton(6, () => OpenDictionary(TestSolution));
+
+            if (!showRiddle)
+                scriptRiddlemouthAnswer = TestSolution;
             layout.AttachEventToButton(8, ShowRiddle);
             layout.AttachEventToButton(2, () => Exit(null));
 
             void Exit(Action? followAction)
             {
+                scriptRiddlemouthAnswer = null;
                 HeadChangeEyes(false, () => CloseWindow(followAction));
             }
 

@@ -605,7 +605,7 @@ partial class GameCore
                         else if (partyMember.Conditions.HasFlag(Condition.DeadAshes))
                             tooltipCondition = Condition.DeadAshes;
                     }
-                    AddTooltip(new Rect(x, y, 16, 16), conditionName + "^^" + GetConditionTooltip(GameLanguage, tooltipCondition, partyMember));
+                    AddTooltip(new Rect(x, y, 16, 16), conditionName + "^^" + GetConditionTooltip(GameLanguage, tooltipCondition, partyMember, Features, GetMaxBattlePoisonDamage(partyMember)));
                 }
             }
             #endregion
@@ -679,7 +679,16 @@ partial class GameCore
         {
             dictionaryList.ScrollTo(offset);
         };
-        popup.Closed += UntrapMouse;
+        popup.Closed += () =>
+        {
+            scriptDictionaryChoice = null;
+            UntrapMouse();
+        };
+        scriptDictionaryChoice = word =>
+        {
+            layout.ClosePopup(false);
+            WordEntered(word);
+        };
     }
 
     /// <summary>

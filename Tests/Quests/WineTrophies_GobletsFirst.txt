@@ -1,0 +1,85 @@
+# Wine trophies edge case: a goblet is found before Canth told about them, and both goblets are offered to Canth
+# (original game and Advanced, any language)
+# Expected vs. likely actual:
+# a) One goblet found, Canth unknown: "Find them" stays Inactive (activation only by keyword 28, its count is 1/2),
+#    but "Return them" (activation: count >= 1) becomes Active and shows 0/2. QUESTIONABLE: the log shows a
+#    "return the goblets" step without the "find them" step and without knowing whom to return them to.
+#    Expected (consistent with other quests): either nothing, or "Find them 1/2" active as well.
+# b) Second goblet found: "Find them" Inactive -> Completed (2/2, completion ignores the state).
+# c) Canth: keyword 28 is added, the completed step stays completed.
+# d) Giving the first goblet to Canth: variable 37. Giving the second one to Canth: she refuses (text 6, no Interact,
+#    the goblet is NOT consumed) -> "Return them" stays 1/2 Active.
+# e) Norlael accepts the second one: completed.
+waitidle 20000
+dismissall
+cheat light 3
+# --- a) goblet in the sylph cave (also the chain of office)
+goto 279 20 13
+trigger 20 13 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 272 1
+log expected: FindThem Inactive (1/2), ReturnThem Active (0/2) - see header
+quests
+quest WineTrophies_FindThem Inactive
+quest WineTrophies_ReturnThem Active
+reloadquests
+quest WineTrophies_FindThem Inactive
+quest WineTrophies_ReturnThem Active
+# --- b) goblet in Nagier's chest (key from Nagier/the master thief, not part of this quest)
+cheat give 279 1
+cheat light 3
+goto 276 11 23
+trigger 11 23 Eye
+talkwait
+usekey 279
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 272 2
+quest WineTrophies_FindThem Completed
+quest WineTrophies_ReturnThem Active
+# --- c) Canth
+talk 14
+talkwait
+quest WineTrophies_FindThem Completed
+quest WineTrophies_ReturnThem Active
+# --- d) both goblets to Canth
+giveitem 272
+talkwait 20000
+takeitems
+var 37 1
+count 272 1
+giveitem 272
+talkwait 20000
+leave
+talkwait
+waitidle 5000
+# refused, still owned
+count 272 1
+var 38 0
+quest WineTrophies_ReturnThem Active
+quests
+# --- e) Norlael
+talk 15
+talkwait
+giveitem 272
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+var 38 1
+count 272 0
+quest WineTrophies_ReturnThem Completed
+reloadquests
+log after reload
+quests
+quest WineTrophies_FindThem Completed
+quest WineTrophies_ReturnThem Completed
+exit

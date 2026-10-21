@@ -115,6 +115,7 @@ public abstract partial class GameCore
         ouchSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Ouch));
         ouchSprite.Visible = false;
         ouchEvent.Action = () => ouchSprite.Visible = false;
+        questLogIcon = CreateQuestLogIcon();
 
         if (CoreConfiguration.IsMobile)
         {

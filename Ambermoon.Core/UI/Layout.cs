@@ -264,6 +264,8 @@ namespace Ambermoon.UI
         public TextAlign TextAlign = TextAlign.Center;
         public Render.Color? BackgroundColor = null;
         public bool CenterOnScreen = false;
+        public bool Enabled = true;
+        public bool ShowBelow = false;
     }
 
     internal enum BattleFieldSlotColor
@@ -1565,9 +1567,9 @@ namespace Ambermoon.UI
                 new string[4]
                 {
                     "Vypnuto",
-                    "5 kol",
-                    "10 kol",
-                    "15 kol"
+                    "5 tahů",
+                    "10 tahů",
+                    "15 tahů"
                 }
             }
         }.ToImmutableDictionary();
@@ -2110,8 +2112,8 @@ namespace Ambermoon.UI
         }
 
         uint lastButtonMoveTicks = 0;
-        internal static readonly CursorType[] MoveButtonCursorMapping2D = new CursorType[9]
-        {
+        internal static readonly CursorType[] MoveButtonCursorMapping2D =
+        [
             CursorType.ArrowUpLeft,
             CursorType.ArrowUp,
             CursorType.ArrowUpRight,
@@ -2121,9 +2123,9 @@ namespace Ambermoon.UI
             CursorType.ArrowDownLeft,
             CursorType.ArrowDown,
             CursorType.ArrowDownRight
-        };
-        internal static readonly CursorType[] MoveButtonCursorMapping3D = new CursorType[9]
-        {
+        ];
+        internal static readonly CursorType[] MoveButtonCursorMapping3D =
+        [
             CursorType.ArrowTurnLeft,
             CursorType.ArrowForward,
             CursorType.ArrowTurnRight,
@@ -2133,8 +2135,7 @@ namespace Ambermoon.UI
             CursorType.ArrowRotateLeft,
             CursorType.ArrowBackward,
             CursorType.ArrowRotateRight
-        };
-        internal CursorType[] GetMoveButtonCursorMapping() => Type == LayoutType.Map2D ? MoveButtonCursorMapping2D : MoveButtonCursorMapping3D;
+        ];
         static CursorType CombineMoveCursorTypes2D(List<CursorType> cursorTypes)
         {
             bool left = cursorTypes.Contains(CursorType.ArrowUpLeft) ||
@@ -2213,7 +2214,7 @@ namespace Ambermoon.UI
             }
 
             // All other combinations won't work.
-            return new CursorType[0];
+            return [];
         }
 
         string GetTooltip(Button.TooltipType tooltipType) => Button.GetTooltip(game.GameLanguage, tooltipType);
@@ -3606,6 +3607,11 @@ namespace Ambermoon.UI
             {
                 void DropIt()
                 {
+                    // The question might be confirmed twice (e.g. Return and a click right after each other),
+                    // then the item was already dropped.
+                    if (itemSlot.Empty || itemSlot.ItemIndex != item.Index || itemSlot.Amount < amount)
+                        return;
+
                     // TODO: animation where the item falls down the screen
                     uint itemIndex = itemSlot.ItemIndex;
                     itemSlot.Remove((int)amount);
@@ -4085,6 +4091,10 @@ namespace Ambermoon.UI
 
             if (animation)
             {
+                // There is only one portrait animation. A running one (e.g. of a party member who joined
+                // right before) is finished first, otherwise its finish handler which adds the name is lost.
+                FinishPortraitAnimation();
+
                 // If dismissed, the mask moves down from the top in front of the portrait.
                 // If died, the background stays static, the portrait drops down and the skull comes from top.
                 // If added to party, the mask moves down, revealing the portrait.
@@ -4101,17 +4111,6 @@ namespace Ambermoon.UI
                 overlaySprite.Visible = true;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(newGraphicIndex);
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1 + yOffset;
-
-                if (portraitAnimation != null)
-                {
-                    if (portraitAnimation.PrimarySprite != null)
-                    {
-                        portraitAnimation.PrimarySprite.Y = 1;
-                        portraitAnimation.PrimarySprite.DisplayLayer = portraitAnimation.InitialDisplayLayer;
-                    }
-
-                    portraitAnimation.SecondarySprite?.Delete();
-                }
 
                 portraitAnimation = new PortraitAnimation
                 {
@@ -4146,6 +4145,24 @@ namespace Ambermoon.UI
                 finishAction?.Invoke();
                 return false;
             }
+        }
+
+        void FinishPortraitAnimation()
+        {
+            if (portraitAnimation == null)
+                return;
+
+            var finishedAnimation = portraitAnimation;
+            portraitAnimation = null;
+
+            if (finishedAnimation.PrimarySprite != null)
+            {
+                finishedAnimation.PrimarySprite.Y = 1;
+                finishedAnimation.PrimarySprite.DisplayLayer = finishedAnimation.InitialDisplayLayer;
+            }
+
+            finishedAnimation.SecondarySprite?.Delete();
+            finishedAnimation.OnFinished();
         }
 
         /// <summary>
@@ -4704,7 +4721,7 @@ namespace Ambermoon.UI
             buttonGrid?.HideTooltips();
         }
 
-        void SetActiveTooltip(Position? cursorPosition, Tooltip? tooltip)
+        internal void SetActiveTooltip(Position? cursorPosition, Tooltip? tooltip)
         {
             if (tooltip == null) // remove
             {
@@ -4744,7 +4761,9 @@ namespace Ambermoon.UI
                 activeTooltipText.TextColor = tooltip.TextColor;
                 int x = Util.Limit(0, tooltip.CenterOnScreen ? (Global.VirtualScreenWidth - textWidth) / 2 : cursorPosition!.X - textWidth / 2,
                     Global.VirtualScreenWidth - textWidth);
-                int y = cursorPosition!.Y - text.LineCount * Global.GlyphLineHeight - 1;
+                int y = tooltip.ShowBelow
+                    ? cursorPosition!.Y + 16 + 1
+                    : cursorPosition!.Y - text.LineCount * Global.GlyphLineHeight - 1;
                 if (textWidth < Global.VirtualScreenWidth - 1)
                 {
                     if (x == 0)
@@ -5104,12 +5123,7 @@ namespace Ambermoon.UI
 
                 if (elapsed >= animationTime)
                 {
-                    portraitAnimation.PrimarySprite!.Y = 1;
-                    portraitAnimation.PrimarySprite.DisplayLayer = portraitAnimation.InitialDisplayLayer;
-                    portraitAnimation.SecondarySprite!.Delete();
-                    var tempAnimation = portraitAnimation;
-                    portraitAnimation = null;
-                    tempAnimation.OnFinished();
+                    FinishPortraitAnimation();
                 }
                 else
                 {
@@ -5896,7 +5910,7 @@ namespace Ambermoon.UI
                 {
                     foreach (var tooltip in tooltips)
                     {
-                        if (tooltip!.Area!.Contains(position))
+                        if (tooltip!.Enabled && tooltip.Area!.Contains(position))
                         {
                             SetActiveTooltip(position, tooltip);
                             consumed = true;

@@ -1,0 +1,111 @@
+# The madman quest in a different order (original game and Advanced, any language):
+# 1) the T A R amulet (Thornahuun) is found first, before anybody told about the madman
+# 2) Theresa is given only one part (she needs both, keeps nothing)
+# 3) chest 39 with the B O S amulet is opened, still without Clementine
+# 4) the madman is watched through the bars before Clementine told about him
+# 5) Clementine tells about him afterwards
+# 6) Theresa gets the B O S amulet this time (give 263, the other chain) and unites the parts
+# Expected: "Find the second part" becomes active with the first part (shown although the madman is
+# unknown, source Clementine) and completes with the second; "Visit the madman" is completed directly
+# when watching him (completion trigger on an inactive step), Clementine's story changes nothing.
+waitidle 20000
+dismissall
+cheat give 138 10
+cheat level 50
+talkwait
+dismissall
+cheat light 3
+# --- 1) Thornahuun's T A R amulet
+goto 433 5 7
+talkwait
+trigger 5 6
+talkwait
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+count 264 1
+closewindow
+talkwait
+quest Madman_VisitTheMadman Inactive
+quest Madman_FindTheSecondPartOfTheAmulet Active
+quest Madman_UniteTheAmulet Inactive
+# --- 2) Theresa with only one part
+goto 287 26 14
+wait 2000
+dismissall
+talk 22
+talkwait
+giveitem 264
+talkwait 20000
+leave
+talkwait
+waitidle 5000
+count 264 1
+count 265 0
+quest Madman_FindTheSecondPartOfTheAmulet Active
+quest Madman_UniteTheAmulet Inactive
+# --- 3) chest 39 (267, 18,6)
+cheat light 3
+goto 267 18 7
+trigger 18 6 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+count 263 1
+quest Madman_FindTheSecondPartOfTheAmulet Completed
+quest Madman_UniteTheAmulet Active
+quest Madman_VisitTheMadman Inactive
+# --- 4) watch the madman
+cheat teleport 267 12 11
+wait 2000
+dismissall
+trigger 10 12
+talkwait
+dismissall
+eventbit 267 4 1
+var 8182 0
+quest Madman_VisitTheMadman Completed
+# --- 5) Clementine's story
+goto 266 40 6
+wait 2000
+dismissall
+talk 6
+talkwait
+say 20
+talkwait
+say 21
+talkwait
+leave
+talkwait
+waitidle 5000
+var 8182 1
+quest Madman_VisitTheMadman Completed
+quest Madman_UniteTheAmulet Active
+# --- 6) Theresa gets the B O S amulet this time
+goto 287 26 14
+wait 2000
+dismissall
+talk 22
+talkwait
+giveitem 263
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+count 265 1
+quest Madman_UniteTheAmulet Completed
+quest Madman_GiveTheAmuletToTheMadman Active
+reloadquests
+log after reload
+quests
+quest Madman_VisitTheMadman Completed
+quest Madman_FindTheSecondPartOfTheAmulet Completed
+quest Madman_UniteTheAmulet Completed
+quest Madman_GiveTheAmuletToTheMadman Active
+quest Madman_KillTheMadman Inactive
+exit

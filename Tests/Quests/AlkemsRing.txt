@@ -1,0 +1,84 @@
+# Alkem's ring, played the normal way (original game and Advanced, any language)
+# Start: --load 0 (hero alone in grandfather's house, map 258)
+#
+# Sources (dump_en, identical in dump_v5):
+# - Alkem = NPC 18, alchemist tower level 2 (map 282, 12,13). Talking adds the keywords 54 "Magic ring",
+#   55 "Library", 56 "Shop". Keyword 54 creates the key to the crypt (item 289) and sets global var 82.
+#   (If Nelvin, party member 10, is in the party he adds text 8, same key and var.)
+# - Crypt door: world map 107 (42,26 / 42,27), door index 15, key 289, no lockpicking. The key has
+#   DestroyAfterUsage, so it is gone after the door was opened. On success it teleports to map 283 (13,38).
+# - Ring: old crypt (map 283) chain 39 at 10..12,3..5 (Move trigger) = treasure 57 = Alkem's ring (288).
+#   Afterwards char 1 (monster group 34, lich lord etc.) is shown and attacks; not needed for the quest.
+# - Give the ring to Alkem (GiveItem 288): text 11, reward, sets global var 81.
+waitidle 20000
+dismissall
+cheat light 3
+cheat godmode 1
+quest AlkemsRing_EnterTheCrypt Inactive
+quest AlkemsRing_FindTheRing Inactive
+quest AlkemsRing_ReturnTheRing Inactive
+# --- talk to Alkem (NPC 18), ask about the magic ring (keyword 54), he gives the key to the crypt
+cheat teleport 282 12 14
+wait 2000
+dismissall
+talk 18
+talkwait
+say 54
+talkwait
+takeitems
+count 289 1
+leave
+talkwait
+waitidle 5000
+var 82 1
+quest AlkemsRing_EnterTheCrypt Active
+quest AlkemsRing_FindTheRing Inactive
+quest AlkemsRing_ReturnTheRing Inactive
+# --- the crypt door on world map 107 (door 15, key 289). Stand south of it and walk into it.
+goto 107 42 28
+trigger 42 27
+talkwait
+usekey 289
+talkwait
+# the door teleports into the old crypt (map 283, 13,38)
+wait 2000
+dismissall
+state
+count 289 0
+quest AlkemsRing_EnterTheCrypt Completed
+quest AlkemsRing_FindTheRing Active
+quest AlkemsRing_ReturnTheRing Inactive
+# --- the ring lies in the dust in the north of the crypt (chain 39, Move trigger, treasure 57)
+cheat light 3
+goto 283 11 4
+talkwait
+takeloot
+count 288 1
+closewindow
+talkwait
+quest AlkemsRing_FindTheRing Completed
+quest AlkemsRing_ReturnTheRing Active
+# a coffin bursts open and an undead attacks (char 1 is shown) - leave the crypt instead of fighting
+goto 107 42 28
+wait 2000
+dismissall
+# --- give the ring back to Alkem
+talk 18
+talkwait
+giveitem 288
+talkwait 20000
+leave
+talkwait
+waitidle 5000
+var 81 1
+count 288 0
+quest AlkemsRing_ReturnTheRing Completed
+# --- persistence
+reloadquests
+log after reload
+quests
+quest AlkemsRing_EnterTheCrypt Completed
+# The ring was given away, returning it (81) keeps "Find the ring" completed after loading.
+quest AlkemsRing_FindTheRing Completed
+quest AlkemsRing_ReturnTheRing Completed
+exit

@@ -61,6 +61,7 @@ internal class ModConfiguration(IConfiguration configuration, ModOptions modOpti
     public GraphicFilterOverlay GraphicFilterOverlay { get => configuration.GraphicFilterOverlay; set => configuration.GraphicFilterOverlay = value; }
     public Effects Effects { get => configuration.Effects; set => configuration.Effects = value; }
     public bool ShowPyrdacorLogo { get => configuration.ShowPyrdacorLogo; set => configuration.ShowPyrdacorLogo = value; }
+    public bool ShowCompletedQuests { get => configuration.ShowCompletedQuests; set => configuration.ShowCompletedQuests = value; }
     public GameLanguage Language { get => configuration.Language; set => configuration.Language = value; }
     public bool LegacyMode { get => configuration.LegacyMode; set => configuration.LegacyMode = value; }
     public bool ExtendedSavegameSlots { get => configuration.ExtendedSavegameSlots; set => configuration.ExtendedSavegameSlots = value; }

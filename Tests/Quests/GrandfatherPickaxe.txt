@@ -1,0 +1,49 @@
+# Grandfather's quest: the cave-in is removed with a pick-axe from somewhere else, Tolimar is skipped
+# (original game and Advanced, any language)
+waitidle 20000
+dismissall
+cheat light 3
+cheat give 138 10
+talk 1
+talkwait
+say 0
+talkwait
+leave
+talkwait
+waitidle 5000
+goto 259 10 16
+trigger 10 17 Eye
+answer 1
+talkwait
+quest Grandfather_FindHisEquipment Active
+goto 260 25 8
+talkwait
+dismissall
+quest Grandfather_TellGrandfatherAboutCaveIn Active
+quest Grandfather_FindHisEquipment Blocked
+# a pick-axe from the thieves' guild for example
+cheat give 142 1
+goto 260 26 10
+useitem 142
+talkwait
+dismissall
+var 11 1
+quest Grandfather_RemoveCaveIn Completed
+quest Grandfather_TellGrandfatherAboutCaveIn Completed
+quest Grandfather_FindHisEquipment Active
+quest GoldenHorseshoes_FindHorseshoes Inactive
+goto 261 11 11
+trigger 11 11 Eye
+talkwait
+usekey 138
+takeloot
+closewindow
+talkwait
+quest Grandfather_FindHisEquipment Completed
+reloadquests
+quest Grandfather_RemoveCaveIn Completed
+quest Grandfather_TellGrandfatherAboutCaveIn Completed
+quest Grandfather_FindHisEquipment Completed
+quest Grandfather_ReturnToGrandfather Active
+quests
+exit

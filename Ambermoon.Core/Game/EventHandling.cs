@@ -863,7 +863,11 @@ partial class GameCore
                 {
                     CurrentSavegame.UnlockChest(chestEvent.RealChestIndex - 1);
                     currentWindow.Window = Window.Chest; // This avoids returning to locked screen when closing chest window.
-                    ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true, true));
+                    ExecuteNextUpdateCycle(() =>
+                    {
+                        QuestLog?.CheckChestUnlock(chestEvent.ChestIndex + 1);
+                        ShowChest(chestEvent, false, false, map, position, true, true);
+                    });
                 }, null, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                 chestEvent.UnlockFailedEventIndex == 0xffff ? null : () => (map ?? Map!).TriggerEventChain(this, EventTrigger.Always,
                 (uint)position.X, (uint)position.Y, (map ?? Map!).Events[(int)chestEvent.UnlockFailedEventIndex], true),
@@ -915,6 +919,7 @@ partial class GameCore
                 }
 
                 CurrentSavegame.UnlockDoor(doorEvent.DoorIndex);
+                QuestLog?.CheckDoorUnlock(doorEvent.DoorIndex);
 
                 if (unlockText != null)
                 {
@@ -1013,6 +1018,7 @@ partial class GameCore
 
         void Exit()
         {
+            scriptLockItemUser = null;
             CloseWindow(abortAction);
         }
 
@@ -1057,10 +1063,30 @@ partial class GameCore
 
         itemGrid.ItemClicked += (ItemGrid _, int _, ItemSlot itemSlot) =>
         {
+            scriptLockItemUser = null;
             UntrapMouse();
             nextClickHandler = null;
             layout.ShowChestMessage(null);
             CheckKey(itemSlot, true, true);
+        };
+
+        scriptLockItemUser = itemIndex =>
+        {
+            int slot = Array.FindIndex(CurrentPartyMember.Inventory.Slots, s => !s.Empty && s.ItemIndex == itemIndex);
+
+            if (slot == -1)
+                return false;
+
+            scriptLockItemUser = null;
+            StartUseItems();
+            // the item animation needs a visible slot
+            while (!itemGrid.SlotVisible(slot) && itemGrid.Scroll(true))
+                ;
+            UntrapMouse();
+            nextClickHandler = null;
+            layout.ShowChestMessage(null);
+            CheckKey(CurrentPartyMember.Inventory.Slots[slot], true, true);
+            return true;
         };
 
         void CheckKey(ItemSlot itemSlot, bool showItemsAfterwards, bool removeItemFromCharacter)
@@ -1769,9 +1795,14 @@ partial class GameCore
                     case RewardEvent.RewardOperation.Increase:
                         if (partyMember.Level >= 50 && Features.HasFlag(Features.LevelShards))
                         {
+                            uint levelBefore = partyMember.Level;
                             for (int i = 0; i < rewardEvent.Value; i++)
                                 partyMember.AddLevelShardEffects(RandomInt, Features);
-                            followAction?.Invoke();
+                            // show the level up window like the original does
+                            if (partyMember.Level != levelBefore)
+                                ShowLevelUpWindow(partyMember, followAction);
+                            else
+                                followAction?.Invoke();
                             return;
                         }
                         long levelUps = Util.Limit(0, rewardEvent.Value, 50 - partyMember.Level);

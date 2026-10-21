@@ -118,6 +118,7 @@ internal class Configuration : IConfiguration
 			string l when l.StartsWith("cz") => GameLanguage.Czech,
 			_ => GameLanguage.English
     };
+    public bool ShowCompletedQuests { get; set; } = true;
 
     public void RequestSave() => SaveRequested?.Invoke();
 

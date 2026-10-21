@@ -70,6 +70,7 @@ partial class GameCore
         UIText? moveItemMessage = null;
         layout.DraggedItemDropped += DraggedItemDropped;
         closeWindowHandler = _ => CleanUp();
+        scriptConversation = new(SayWord, ShowItem, GiveItem, () => Exit(true), TakeCreatedItems, GiveGoldAmount, AskToJoin);
 
         void SetText(string text, Action? followAction = null)
         {
@@ -115,6 +116,8 @@ partial class GameCore
 
                 if (string.Compare(keyword, expectedKeyword, true) == 0)
                 {
+                    QuestLog?.CheckEvent(conversationPartner, e, conversationPartner);
+
                     currentInteractionType = InteractionType.Keyword;
                     conversationEvent = e;
                     layout.ButtonsDisabled = true;
@@ -137,6 +140,7 @@ partial class GameCore
 
             void Abort()
             {
+                scriptConversationItemSelector = null;
                 itemGrid.HideTooltip();
                 itemGrid.ItemClicked -= ItemClicked;
                 message?.Destroy();
@@ -195,6 +199,12 @@ partial class GameCore
                 }
                 else
                 {
+                    QuestLog?.CheckEvent(conversationPartner, conversationEvent, conversationPartner);
+
+                    // The create event already advanced to the next event (e.g. setting a global
+                    // variable after the reward), so it must not be skipped.
+                    void ContinueAfterCreate() => HandleEvent(null);
+
                     void HandleInteraction()
                     {
                         HandleNextEvent(eventType =>
@@ -244,14 +254,14 @@ partial class GameCore
                                         }, new Position(215, 75), false);
                                     }
                                     else
-                                        ExecuteNextUpdateCycle(() => HandleNextEvent(null));
+                                        ExecuteNextUpdateCycle(ContinueAfterCreate);
                                 }
                                 else // Show item
                                 {
                                     if (eventType == EventType.Interact)
                                         MoveBack(() => HandleNextEvent(null));
                                     else
-                                        ExecuteNextUpdateCycle(() => HandleNextEvent(null));
+                                        ExecuteNextUpdateCycle(ContinueAfterCreate);
                                 }
                             }
                             else if (eventType == EventType.Invalid) // End of event chain
@@ -271,6 +281,7 @@ partial class GameCore
             }
             void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
             {
+                scriptConversationItemSelector = null;
                 itemGrid.ItemClicked -= ItemClicked;
                 nextClickHandler = null;
                 UntrapMouse();
@@ -280,6 +291,13 @@ partial class GameCore
                 itemGrid.PlayMoveAnimation(itemSlot, new Position(215, 75), () => CheckItem(itemSlot), 650);
             }
             itemGrid.ItemClicked += ItemClicked;
+            scriptConversationItemSelector = slotIndex =>
+            {
+                // the item animation needs a visible slot
+                while (!itemGrid.SlotVisible(slotIndex) && itemGrid.Scroll(true))
+                    ;
+                ItemClicked(itemGrid, slotIndex, CurrentPartyMember.Inventory.Slots[slotIndex]);
+            };
         }
 
         void ShowItem()
@@ -301,29 +319,37 @@ partial class GameCore
                 CurrentPartyMember.Gold, gold =>
                 {
                     ClosePopup();
-                    var @event = GetFirstMatchingEvent(e => e.Interaction == InteractionType.GiveGold);
-                    if (@event != null)
-                    {
-                        if (gold < @event.Value)
-                        {
-                            SetText(DataNameProvider.MoreGoldNeeded);
-                        }
-                        else
-                        {
-                            conversationEvent = @event;
-                            layout.ButtonsDisabled = true;
-                            currentInteractionType = InteractionType.GiveGold;
-                            amount = @event.Value;
-                            aborted = false;
-                            lastEventStatus = true;
-                            HandleNextEvent();
-                        }
-                    }
-                    else
-                    {
-                        SetText(DataNameProvider.NotInterestedInGold);
-                    }
+                    GiveGoldAmount(gold);
                 });
+        }
+
+        void GiveGoldAmount(uint gold)
+        {
+            aborted = false;
+            var @event = GetFirstMatchingEvent(e => e.Interaction == InteractionType.GiveGold);
+            if (@event != null)
+            {
+                if (gold < @event.Value)
+                {
+                    SetText(DataNameProvider.MoreGoldNeeded);
+                }
+                else
+                {
+                    QuestLog?.CheckEvent(conversationPartner, @event, conversationPartner);
+
+                    conversationEvent = @event;
+                    layout.ButtonsDisabled = true;
+                    currentInteractionType = InteractionType.GiveGold;
+                    amount = @event.Value;
+                    aborted = false;
+                    lastEventStatus = true;
+                    HandleNextEvent();
+                }
+            }
+            else
+            {
+                SetText(DataNameProvider.NotInterestedInGold);
+            }
         }
 
         void GiveFood()
@@ -372,6 +398,8 @@ partial class GameCore
             if (character is PartyMember &&
                 (conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.JoinParty)) != null)
             {
+                QuestLog?.CheckEvent(conversationPartner, conversationEvent, conversationPartner);
+
                 layout.ButtonsDisabled = true;
                 currentInteractionType = InteractionType.JoinParty;
                 aborted = false;
@@ -421,6 +449,8 @@ partial class GameCore
 
                 if ((conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.LeaveParty)) != null)
                 {
+                    QuestLog?.CheckEvent(conversationPartner, conversationEvent, conversationPartner);
+
                     currentInteractionType = InteractionType.LeaveParty;
                     layout.ButtonsDisabled = true;
                     aborted = false;
@@ -495,6 +525,27 @@ partial class GameCore
             }
         }
 
+        int TakeCreatedItems()
+        {
+            int partyMemberSlot = SlotFromPartyMember(CurrentPartyMember!)!.Value;
+            int taken = 0;
+
+            bool anyItem = false;
+
+            foreach (var itemSlot in createdItemSlots.Where(s => !s.Empty))
+            {
+                anyItem = true;
+
+                if (DropItem(partyMemberSlot, null, itemSlot) == 0)
+                    ++taken;
+            }
+
+            ShowCreatedItems();
+
+            // -1: there are items but they could not be taken (weight or no free slot)
+            return anyItem && taken == 0 ? -1 : taken;
+        }
+
         void CreateItem(uint itemIndex, uint amount)
         {
             // Note: Multiple items can be created. While at least one
@@ -552,6 +603,8 @@ partial class GameCore
 
                     if (conversationEvent != null)
                     {
+                        QuestLog?.CheckEvent(conversationPartner, conversationEvent, conversationPartner);
+
                         currentInteractionType = InteractionType.Leave;
                         layout.ButtonsDisabled = true;
                         aborted = false;
@@ -572,6 +625,8 @@ partial class GameCore
 
         void CleanUp()
         {
+            scriptConversation = null;
+            scriptConversationItemSelector = null;
             layout.DraggedItemDropped -= DraggedItemDropped;
             ActivePlayerChanged -= SwitchPlayer;
             ConversationTextActive = false;

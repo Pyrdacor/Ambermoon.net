@@ -170,6 +170,8 @@ partial class GameCore
         if (disableTimeEvents)
             return;
 
+        ProcessDisease();
+
         void Age(PartyMember partyMember, Action finishAction)
             => AgePlayer(partyMember, finishAction, 1);
 

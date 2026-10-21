@@ -1,0 +1,64 @@
+# The witch master: Bralum (NPC 25) in the labyrinth of the gnomes (map 409) asks for help against Nera, the son of
+# the witch Mera. Nera lives behind a riddlemouth in the cellar of the witch's house (map 412, answer "Nera").
+# (original game and Advanced, any language)
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest WitchMaster_HearBralumsProblem Inactive
+# --- Bralum
+goto 409 8 6
+dismissall
+talk 25
+talkwait
+quest WitchMaster_HearBralumsProblem Active
+say 80
+talkwait
+quest WitchMaster_HearBralumsProblem Completed
+quest WitchMaster_FindNerasLair Active
+leave
+talkwait
+waitidle 5000
+# --- the riddlemouth in the cellar of the witch's house
+goto 412 8 7
+trigger 8 6 Eye
+answer 81
+talkwait
+eventbit 412 2 1
+quest WitchMaster_FindNerasLair Completed
+quest WitchMaster_DefeatNera Active
+# --- Nera appears in the passage and attacks (the other monsters in the cellar are removed first)
+cheat berserk
+goto 412 7 12
+talkwait 30000
+waitbattle 15000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+count 342 1
+quest WitchMaster_DefeatNera Completed
+quest WitchMaster_ShowTheRingToBralum Active
+# --- Bralum gets to see the ring
+goto 409 8 6
+dismissall
+talk 25
+talkwait
+showitem 342
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 129 1
+quest WitchMaster_ShowTheRingToBralum Completed
+mainquest WitchMaster Completed
+reloadquests
+quest WitchMaster_HearBralumsProblem Completed
+quest WitchMaster_FindNerasLair Completed
+quest WitchMaster_DefeatNera Completed
+quest WitchMaster_ShowTheRingToBralum Completed
+mainquest WitchMaster Completed
+exit

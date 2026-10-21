@@ -1,0 +1,48 @@
+# The witch master: Kasimir, the tomcat (NPC 36, Advanced), also teaches the keyword "Problem" when you talk to him,
+# and every typed word is added to the known words. Neither must start Bralum's quest, only his own conversation does.
+# Old savegames are migrated when loaded: the known keyword only counts if Kasimir was not met. (Advanced, any language)
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest WitchMaster_HearBralumsProblem Inactive
+# --- type "Problem" in the conversation with grandfather
+talk 1
+talkwait
+say 80
+talkwait
+leave
+talkwait
+waitidle 5000
+quest WitchMaster_HearBralumsProblem Inactive
+reloadquests
+quest WitchMaster_HearBralumsProblem Inactive
+# --- Kasimir (map 273) mentions his problem in his greeting
+goto 273 10 10
+dismissall
+talk 36
+talkwait
+leave
+talkwait
+waitidle 5000
+var 53 1
+quest WitchMaster_HearBralumsProblem Inactive
+reloadquests
+quest WitchMaster_HearBralumsProblem Inactive
+# like an old savegame (the keyword sources were not tracked yet): Kasimir was met, so the keyword doesn't count
+setvar 8171 0
+reloadquests
+var 8171 1
+quest WitchMaster_HearBralumsProblem Inactive
+# --- Bralum (map 409) mentions the problem of the gnomes in his greeting
+goto 409 8 6
+dismissall
+talk 25
+talkwait
+quest WitchMaster_HearBralumsProblem Active
+leave
+talkwait
+waitidle 5000
+reloadquests
+quest WitchMaster_HearBralumsProblem Active
+exit

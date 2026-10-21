@@ -1,0 +1,19 @@
+# Monster eye bought before the quest log knew the quest (old savegame without the custom variable 8184)
+waitidle 20000
+dismissall
+cheat give gold 6000
+goto 263 13 18
+dismissall
+talk 35
+talkwait
+givegold 5000
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+# simulate a savegame from before the quest log existed
+setvar 8184 0
+reloadquests
+quest Monstereye_BuyIt Completed
+exit

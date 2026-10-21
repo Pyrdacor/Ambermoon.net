@@ -1104,6 +1104,9 @@ public class Cheats
                 break;
         }
 
+        if (remainingAmount != amount)
+            game.ItemsAddedExternally(itemIndex, (uint)(amount - remainingAmount));
+
         if (remainingAmount == amount)
         {
             WriteLine("There was no space to add the items.");

@@ -1,0 +1,99 @@
+# The gatekeepers of Cavetown (Ambermoon Advanced episode 1, any language): Jeff (NPC 43) wants a blind brandy (409,
+# sold in the inn) for his gatekeeper key (413). Luke (NPC 44) looks for a treasure, the old treasure map (410) is dug
+# up in the eye of the vortex (map 370, 9,16). He drops the second key (414). Behind both doors of the gatekeepers'
+# house (map 376) a pressure plate opens the passage through the rocks for ships.
+waitidle 20000
+dismissall
+cheat netsrak
+quest Gatekeepers_BringJeffABlindBrandy Inactive
+# --- the gatekeepers
+goto 376 36 10
+dismissall
+talk 43
+talkwait
+leave
+talkwait
+waitidle 5000
+var 8174 1
+quest Gatekeepers_BringJeffABlindBrandy Active
+goto 376 23 6
+dismissall
+talk 44
+talkwait
+leave
+talkwait
+waitidle 5000
+quest Gatekeepers_FindLukesTreasureMap Active
+# --- the blind brandy from the inn
+cheat give 409 1
+goto 376 36 10
+dismissall
+talk 43
+talkwait
+giveitem 409
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 250 1
+count 413 1
+quest Gatekeepers_BringJeffABlindBrandy Completed
+# --- digging up the treasure map in the eye of the vortex
+cheat give 143 1
+goto 370 9 17
+dismissall
+trigger 9 16 item:143
+talkwait
+takeloot
+closewindow
+talkwait
+count 410 1
+quest Gatekeepers_FindLukesTreasureMap Completed
+quest Gatekeepers_GiveTheTreasureMapToLuke Active
+goto 376 23 6
+dismissall
+talk 44
+talkwait
+giveitem 410
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 251 1
+count 414 1
+quest Gatekeepers_GiveTheTreasureMapToLuke Completed
+quest Gatekeepers_OpenThePassageForShips Active
+reloadquests
+quest Gatekeepers_GiveTheTreasureMapToLuke Completed
+quest Gatekeepers_OpenThePassageForShips Active
+# --- both doors and the pressure plate
+goto 376 10 13
+dismissall
+trigger 10 12 Eye
+talkwait
+usekey 413
+talkwait
+goto 376 4 9
+dismissall
+trigger 4 8 Eye
+talkwait
+usekey 414
+talkwait
+goto 376 11 5
+dismissall
+trigger 11 4 Move
+talkwait
+eventbit 376 11 1
+quest Gatekeepers_OpenThePassageForShips Completed
+mainquest Gatekeepers Completed
+reloadquests
+quest Gatekeepers_BringJeffABlindBrandy Completed
+quest Gatekeepers_FindLukesTreasureMap Completed
+quest Gatekeepers_GiveTheTreasureMapToLuke Completed
+quest Gatekeepers_OpenThePassageForShips Completed
+mainquest Gatekeepers Completed
+exit

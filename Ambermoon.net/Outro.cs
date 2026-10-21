@@ -65,7 +65,7 @@ namespace Ambermoon
             this.outroFontLarge = outroFontLarge;
             this.renderView = renderView;
             renderLayer = renderView.GetLayer(Layer.OutroGraphics);
-            picture = renderView.SpriteFactory.Create(160, 128, true, 1) as ILayerSprite;
+            picture = renderView.SpriteFactory.CreateLayered(160, 128, 1);
             picture.Layer = renderLayer;
             picture.PaletteIndex = paletteOffset = renderView.GraphicInfoProvider.FirstOutroPaletteIndex;
             picture.Visible = false;

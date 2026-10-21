@@ -1,0 +1,80 @@
+# The mystic tower (Ambermoon Advanced episode 3, any language): Targor (party member 13) brings his notes (507).
+# At three places (pond, map 85; lonely tree, map 102; mountain pass, map 134) he feels a strange energy, then the
+# mystic tower (map 478) rises. In its test Targor alone has to defeat a demon with the mystic imitation.
+waitidle 20000
+dismissall
+cheat invite 13
+talkwait
+dismissall
+cheat netsrak
+cheat light 3
+# the notes come with Targor (the quest log notices them with the next event)
+count 507 1
+# --- the three places
+goto 85 45 29
+talkwait
+eventbit 85 1 1
+quest MysticTower_VisitThePond Completed
+quest MysticTower_VisitTheLonelyTree Active
+goto 102 33 27
+talkwait
+eventbit 102 1 1
+quest MysticTower_VisitTheLonelyTree Completed
+quest MysticTower_VisitTheMountains Active
+goto 134 6 36
+talkwait 30000
+eventbit 134 1 1
+quest MysticTower_VisitTheMountains Completed
+quest MysticTower_EnterTheMysticTower Active
+# --- the stone head lets Targor in
+goto 478 10 15
+trigger 10 14 Eye
+talkwait
+eventbit 478 2 1
+quest MysticTower_EnterTheMysticTower Completed
+quest MysticTower_PassTheTestOfHighMysticism Active
+reloadquests
+quest MysticTower_EnterTheMysticTower Completed
+quest MysticTower_PassTheTestOfHighMysticism Active
+# --- the test: the friends die, Targor learns the mystic imitation at the glass orbs and fights the demon
+cheat berserk
+goto 478 10 9
+trigger 10 8 Eye
+wait 2000
+# the stone head explains the test
+dismiss
+wait 1500
+# take the test
+yes
+wait 3000
+# the friends are dead, Targor becomes the leader
+activate 2
+talkwait
+state
+goto 478 8 5
+trigger 7 5 Eye
+talkwait
+goto 478 12 5
+trigger 13 5 Eye
+talkwait
+var 374 1
+goto 478 10 5
+trigger 10 4 Move
+talkwait 30000
+waitbattle 15000
+cheat win
+talkwait 30000
+takeloot optional
+closewindow
+talkwait
+var 371 1
+quest MysticTower_PassTheTestOfHighMysticism Completed
+mainquest MysticTower Completed
+reloadquests
+quest MysticTower_VisitThePond Completed
+quest MysticTower_VisitTheLonelyTree Completed
+quest MysticTower_VisitTheMountains Completed
+quest MysticTower_EnterTheMysticTower Completed
+quest MysticTower_PassTheTestOfHighMysticism Completed
+mainquest MysticTower Completed
+exit

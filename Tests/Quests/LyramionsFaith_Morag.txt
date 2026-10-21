@@ -1,0 +1,140 @@
+# Lyramion's Faith on Morag up to the end (original game and Advanced, any language)
+# The earlier part of the story (up to leaving the forest moon) is tested in LyramionsFaith.txt. Here the party
+# left the forest moon with the yellow navstone (custom global variable 8177) and arrives on Morag:
+# prison of S'angrila (439) -> S'riel (NPC 32, variable 222) -> S'riel's palace (444, chest 117: map, key to
+# S'orel's palace, first crystal string) -> S'orel's palace (445, door 33, chest 119: second string) -> the other
+# councillors carry the remaining strings -> Matthias in Illien (NPC 29: elven harp, then the strings) ->
+# crystal wall in the temple (431 11,24) -> the Moranian machine (453).
+waitidle 20000
+dismissall
+# languages (Morag) and enough strength to carry everything (no quest relevance)
+cheat netsrak
+cheat level 50
+talkwait
+dismissall
+cheat light 3
+cheat give 138 10
+setvar 8177 1
+reloadquests
+quest LyramionsFaith_FindAWayToLeaveForestMoon Completed
+quest LyramionsFaith_FlyToMorag Active
+quest LyramionsFaith_TalkToSriel Inactive
+quest LyramionsFaith_CollectTheCrystalStrings Inactive
+# --- leaving the airship on Morag (437 2,9) leads to the prison of S'angrila (439, arrival text at 7-9,13)
+goto 437 2 9
+talkwait
+dismissall
+state
+eventbit 439 2 1
+quest LyramionsFaith_FlyToMorag Completed
+quest LyramionsFaith_TalkToSriel Active
+# like a savegame from before the quest log (1.14.0) without variable 8177: the explored Morag airship (437)
+# means that the party left the forest moon
+setvar 8177 0
+reloadquests
+var 8177 1
+quest LyramionsFaith_FindAWayToLeaveForestMoon Completed
+quest LyramionsFaith_FlyToMorag Completed
+# --- S'riel in his cell teaches Morag and brings the party into his palace where a guard attacks at once,
+# the other monsters there are removed
+talk 32
+talkwait 30000
+waitbattle 10000 optional
+cheat win
+wait 1500
+cheat berserk
+talkwait
+takeloot optional
+closewindow
+talkwait
+var 222 1
+quest LyramionsFaith_TalkToSriel Completed
+quest LyramionsFaith_SearchSrielsPalace Active
+quest LyramionsFaith_CollectTheCrystalStrings Active
+# --- chest 117 in S'riel's palace (444 3,5)
+goto 444 3 5
+trigger 3 5 Eye
+talkwait
+usekey 138
+takeloot
+closewindow
+talkwait
+count 354 1
+count 388 1
+quest LyramionsFaith_SearchSrielsPalace Completed
+quest LyramionsFaith_CollectTheCrystalStrings Active
+quests
+# --- S'orel's palace (445): door 33 with the palace key, chest 119 with the next crystal string
+goto 445 5 4
+cheat berserk
+dismissall
+trigger 5 4 Eye
+talkwait
+usekey 388
+talkwait
+goto 445 10 3
+trigger 10 3 Eye
+talkwait
+usekey 138
+takeloot
+closewindow
+talkwait
+count 354 2
+quest LyramionsFaith_CollectTheCrystalStrings Active
+# the other five strings are carried by the councillors S'arin, S'endar, S'trog, S'kat and S'lorwin
+cheat give 354 5
+count 354 7
+quest LyramionsFaith_CollectTheCrystalStrings Completed
+quest LyramionsFaith_HaveTheHarpStrung Active
+# --- Matthias in Illien (map 418): the elven harp for 10000 gold, then the seven strings
+cheat give gold 10000
+goto 418 21 20
+dismissall
+talk 29
+talkwait
+givegold 10000
+talkwait
+takeitems
+count 158 1
+giveitem 354
+talkwait 20000
+takeitems
+count 159 1
+leave
+talkwait
+waitidle 5000
+quest LyramionsFaith_HaveTheHarpStrung Completed
+quest LyramionsFaith_ShatterTheCrystalWall Active
+reloadquests
+# the strings were used for the harp
+quest LyramionsFaith_CollectTheCrystalStrings Completed
+quest LyramionsFaith_HaveTheHarpStrung Completed
+# --- the crystal wall in the entry hall of the temple
+goto 431 11 24
+trigger 11 24 item:159
+talkwait
+dismissall
+eventbit 431 3 1
+quest LyramionsFaith_ShatterTheCrystalWall Completed
+quest LyramionsFaith_DestroyTheMoranianMachine Active
+mainquest LyramionsFaith Active
+# --- the Moranian machine behind the wall (453)
+goto 453 5 6
+talkwait
+waitbattle 20000
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
+eventbit 453 4 1
+quest LyramionsFaith_DestroyTheMoranianMachine Completed
+reloadquests
+quest LyramionsFaith_FlyToMorag Completed
+quest LyramionsFaith_TalkToSriel Completed
+quest LyramionsFaith_SearchSrielsPalace Completed
+quest LyramionsFaith_CollectTheCrystalStrings Completed
+quest LyramionsFaith_HaveTheHarpStrung Completed
+quest LyramionsFaith_ShatterTheCrystalWall Completed
+quest LyramionsFaith_DestroyTheMoranianMachine Completed
+exit

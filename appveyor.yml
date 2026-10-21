@@ -85,6 +85,9 @@ before_build:
   - ps: |
       if ($env:APPVEYOR_REPO_BRANCH -match '^android-v\d+\.\d+\.\d+$') {
         dotnet workload install android
+        # the image has no Android SDK platform for API level 36 which the project targets
+        dotnet build AmbermoonAndroid/AmbermoonAndroid.csproj -t:InstallAndroidDependencies -f net9.0-android36.0 "-p:AndroidSdkDirectory=C:\Program Files (x86)\Android\android-sdk" -p:AcceptAndroidSDKLicenses=True
+        if ($LASTEXITCODE -ne 0) { throw "Installing the Android dependencies failed with exit code $LASTEXITCODE" }
         dotnet restore AmbermoonAndroid/AmbermoonAndroid.csproj
       } else {
         dotnet restore Ambermoon.net.sln --verbosity normal
@@ -111,15 +114,43 @@ artifacts:
     name: AmbermoonAndroid
   - path: com.pyrdacor.AmbermoonAndroid-Signed.apk
     name: AmbermoonAndroidSigned
+  # app bundle for the Play Store (uploaded manually, not deployed to GitHub)
+  - path: com.pyrdacor.AmbermoonAndroid-Signed.aab
+    name: AmbermoonAndroidBundle
   - path: nuget\*.nupkg
     name: NugetPackages
 
 after_build:
     - ps: |
         if ($env:APPVEYOR_REPO_BRANCH -match '^android-v\d+\.\d+\.\d+$') {
-          dotnet publish AmbermoonAndroid/AmbermoonAndroid.csproj -c Release -f net9.0-android35.0 -p:DefineConstants="GLES" -p:AndroidPackageFormat=apk
-          Copy-Item "./AmbermoonAndroid/bin/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid.apk" "com.pyrdacor.AmbermoonAndroid.apk"
-          Copy-Item "./AmbermoonAndroid/bin/Release/net9.0-android35.0/publish/com.pyrdacor.AmbermoonAndroid-Signed.apk" "com.pyrdacor.AmbermoonAndroid-Signed.apk"
+          $tfm = 'net9.0-android36.0'
+          $signing = @()
+          # Release signing for the Play Store (see docs/AndroidSigning.md). The secrets are secure
+          # environment variables of the AppVeyor project and are never written to the log.
+          if ($env:KEYSTORE_SECRET -and $env:KEYSTORE_SALT -and $env:ANDROID_KEYSTORE_PASS -and (Test-Path "AmbermoonAndroid/ambermoon.keystore.enc")) {
+            iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/appveyor/secure-file/master/install.ps1'))
+            # the .exe explicitly, appveyor-tools also contains an extensionless bash script with the same name
+            appveyor-tools\secure-file.exe -decrypt AmbermoonAndroid\ambermoon.keystore.enc -secret $env:KEYSTORE_SECRET -salt $env:KEYSTORE_SALT -out AmbermoonAndroid\ambermoon.keystore
+            if ($LASTEXITCODE -ne 0) { throw "The keystore could not be decrypted (secure-file exit code $LASTEXITCODE)" }
+            $signing = @('-p:AndroidKeyStore=true', '-p:AndroidSigningKeyStore=ambermoon.keystore', '-p:AndroidSigningKeyAlias=ambermoon',
+              '-p:AndroidSigningKeyPass=env:ANDROID_KEYSTORE_PASS', '-p:AndroidSigningStorePass=env:ANDROID_KEYSTORE_PASS')
+          } else {
+            Write-Warning "No release signing secrets available, the packages are signed with the debug key."
+          }
+          dotnet publish AmbermoonAndroid/AmbermoonAndroid.csproj -c Release -f $tfm -p:DefineConstants="GLES" '-p:AndroidPackageFormats=aab%3Bapk' @signing
+          $publishExitCode = $LASTEXITCODE
+          Remove-Item "AmbermoonAndroid/ambermoon.keystore" -ErrorAction SilentlyContinue
+          if ($publishExitCode -ne 0) { throw "dotnet publish failed with exit code $publishExitCode" }
+          # publish only copies the app bundle into the publish folder, the APK stays in the output folder
+          $outputDir = "./AmbermoonAndroid/bin/Release/$tfm"
+          foreach ($package in @('com.pyrdacor.AmbermoonAndroid-Signed.aab', 'com.pyrdacor.AmbermoonAndroid-Signed.apk')) {
+            $file = Get-ChildItem $outputDir -Recurse -Filter $package | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            if ($file -eq $null) {
+              Get-ChildItem $outputDir -Recurse -Include *.apk, *.aab | ForEach-Object { Write-Host $_.FullName }
+              throw "$package was not created"
+            }
+            Copy-Item $file.FullName $package
+          }
         } else {
           if ($env:APPVEYOR_REPO_TAG -eq $true) {
             ./publish.ps1
@@ -245,5 +276,5 @@ deploy:
   - provider: NuGet
     name: NugetPackages
     api_key:
-      secure: WhJobR60j2QZs4Ve0Jv1fbr6tocp/x8vscNPWq5jX6RNc8AYsrr4MRfEIX2fq+Rx
+      secure: jPgWw/hg2EQXIrf9T3IaJcw/WB0qXAcYGKDRu3qZk4WG/2Rq/3pb+B2v9e2ePTeU
     skip_symbols: true

@@ -117,6 +117,7 @@ namespace AmbermoonAndroid
 			_ => GameLanguage.English
 		};
 		public string ExternalMusicPath { get; set; } = "music";
+		public bool ShowCompletedQuests { get; set; } = true;
 
         public void RequestSave() => SaveRequested?.Invoke();
 

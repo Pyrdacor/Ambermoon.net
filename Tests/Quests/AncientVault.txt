@@ -1,0 +1,153 @@
+# The ancient vault and the unknown world (Ambermoon Advanced episode 3, any language): below the wasps' nest lies
+# the ancient vault (map 380). The ancient book (362, chest 222 in the antique area) belongs on its pedestal, then the
+# trials of intelligence, dexterity and strength end at green lights. The guardian gives the green carved sphere (488)
+# for the teleporter machine (map 369). In the unknown world Sheera (NPC 72) needs ten triis (493) to reactivate the
+# portal, the krondirs' liquid charges them. The exit (map 384) leads back to Lyramion.
+waitidle 20000
+dismissall
+cheat level 30
+talkwait
+dismissall
+cheat netsrak
+cheat light 3
+cheat give 138 5
+quest AncientVault_PlaceTheAncientBook Inactive
+# --- the ancient book in the antique area
+goto 366 19 11
+dismissall
+cheat berserk
+dismissall
+trigger 19 10 Eye
+talkwait
+usekey 138
+takeloot
+closewindow
+talkwait
+count 362 1
+quest AncientVault_PlaceTheAncientBook Active
+# --- the pedestal in the vault
+goto 380 11 13
+dismissall
+cheat berserk
+dismissall
+trigger 11 14 item:362
+talkwait
+var 328 1
+quest AncientVault_PlaceTheAncientBook Completed
+quest AncientVault_PassTheTrials Active
+# --- the green lights at the end of the three trials
+goto 380 5 23
+dismissall
+trigger 5 24 Eye
+talkwait
+var 344 1
+goto 380 17 23
+dismissall
+trigger 17 24 Eye
+talkwait
+var 345 1
+quest AncientVault_PassTheTrials Active
+goto 380 11 17
+dismissall
+trigger 11 18 Eye
+talkwait
+dismissall
+var 346 1
+quest AncientVault_PassTheTrials Completed
+quest AncientVault_ReceiveTheGuardiansReward Active
+# --- the guardian
+goto 380 17 5
+dismissall
+trigger 17 4 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+var 347 1
+count 488 1
+quest AncientVault_ReceiveTheGuardiansReward Completed
+mainquest AncientVault Completed
+quest UnknownWorld_ActivateTheTeleporter Active
+# --- the teleporter machine
+goto 369 16 8
+dismissall
+trigger 16 7 item:488
+talkwait
+var 355 1
+quest UnknownWorld_ActivateTheTeleporter Completed
+quest UnknownWorld_MeetSheera Active
+goto 369 16 4
+talkwait
+dismissall
+state
+cheat berserk
+dismissall
+# --- Sheera in the krondir cave
+goto 382 5 11
+dismissall
+talk 72
+talkwait
+leave
+talkwait
+waitidle 5000
+var 356 1
+quest UnknownWorld_MeetSheera Completed
+quest UnknownWorld_CollectTriis Active
+# the triis are the crystals on the foreheads of the krondirs
+cheat give 493 9
+quest UnknownWorld_CollectTriis Active
+cheat give 493 1
+quest UnknownWorld_CollectTriis Completed
+quest UnknownWorld_ChargeTheTriis Active
+reloadquests
+quest UnknownWorld_CollectTriis Completed
+quest UnknownWorld_ChargeTheTriis Active
+# --- Sheera charges one trii, the liquid of the krondirs charges the others
+goto 382 5 11
+dismissall
+talk 72
+talkwait
+giveitem 493
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 358 1
+count 494 1
+goto 382 16 7
+dismissall
+trigger 16 6 item:493
+talkwait
+trigger 16 6 item:493
+talkwait
+trigger 16 6 item:493
+talkwait
+trigger 16 6 item:493
+talkwait
+trigger 16 6 item:493
+talkwait
+trigger 16 6 item:493
+talkwait
+trigger 16 6 item:493
+talkwait
+trigger 16 6 item:493
+talkwait
+trigger 16 6 item:493
+talkwait
+count 494 10
+var 360 1
+quest UnknownWorld_ChargeTheTriis Completed
+quest UnknownWorld_ReturnToLyramion Active
+# --- the exit back to Lyramion
+goto 384 3 6
+talkwait
+dismissall
+var 354 1
+quest UnknownWorld_ReturnToLyramion Completed
+mainquest UnknownWorld Completed
+reloadquests
+mainquest AncientVault Completed
+mainquest UnknownWorld Completed
+exit

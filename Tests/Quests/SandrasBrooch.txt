@@ -1,0 +1,83 @@
+# Sandra's brooch (Ambermoon Advanced episode 2, any language): Sandra's brooch (434) lies in the wine cellar of
+# Crystal (chest 172 at map 470). Sandra (NPC 5) then transfers the essences of the mystic creatures (438-443) into
+# Kasimir (party member 16) who has to be in the party.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+cheat give 138 5
+quest SandrasBrooch_ReturnTheBroochToSandra Inactive
+# --- the brooch in the wine cellar of Crystal
+# the monsters of the wine cellar are removed from its entrance first
+goto 470 18 18
+dismissall
+cheat berserk
+dismissall
+goto 470 28 4
+trigger 28 3 Eye
+talkwait
+usekey 138
+takeloot
+closewindow
+talkwait
+count 434 1
+quest SandrasBrooch_ReturnTheBroochToSandra Active
+# --- Sandra gets her brooch
+goto 266 40 6
+dismissall
+talk 5
+talkwait
+giveitem 434
+talkwait
+var 54 1
+quest SandrasBrooch_ReturnTheBroochToSandra Completed
+quest SandrasBrooch_TransferTheEssencesIntoKasimir Active
+# without Kasimir in the party nothing happens
+cheat give 438 1
+giveitem 438
+talkwait
+var 262 0
+leave
+talkwait
+waitidle 5000
+# --- with Kasimir the six essences are transferred
+cheat invite 16
+talkwait
+dismissall
+cheat give 439 1
+cheat give 440 1
+cheat give 441 1
+cheat give 442 1
+cheat give 443 1
+goto 266 40 6
+dismissall
+talk 5
+talkwait
+giveitem 438
+talkwait
+giveitem 439
+talkwait
+giveitem 440
+talkwait
+var 264 1
+quest SandrasBrooch_TransferTheEssencesIntoKasimir Active
+giveitem 441
+talkwait
+giveitem 442
+talkwait
+giveitem 443
+talkwait 20000
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 262 1
+var 267 1
+quest SandrasBrooch_TransferTheEssencesIntoKasimir Completed
+mainquest SandrasBrooch Completed
+reloadquests
+quest SandrasBrooch_ReturnTheBroochToSandra Completed
+quest SandrasBrooch_TransferTheEssencesIntoKasimir Completed
+mainquest SandrasBrooch Completed
+exit

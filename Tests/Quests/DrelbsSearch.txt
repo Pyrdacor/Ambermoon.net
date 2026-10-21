@@ -1,0 +1,114 @@
+# Drelb's search (Ambermoon Advanced episode 3, any language): Drelb (NPC 73), the search trainer of the gnomes,
+# hides six things in the labyrinth of the gnomes (map 409) once its monsters are defeated. Each hiding place needs
+# a better searching skill, the last one holds Drelb's certificate (496).
+waitidle 20000
+dismissall
+# carry weight and a searching skill for all hiding places (no quest relevance)
+cheat netsrak
+setskill Searching 120
+cheat light 3
+quest DrelbsSearch_DefeatTheMonstersInTheMine Inactive
+# --- Drelb
+goto 476 7 10
+dismissall
+talk 73
+talkwait
+var 362 1
+quest DrelbsSearch_DefeatTheMonstersInTheMine Active
+# monsters remain
+say 159
+talkwait
+var 369 0
+leave
+talkwait
+waitidle 5000
+# --- the monsters in the labyrinth of the gnomes
+goto 409 8 6
+cheat berserk
+dismissall
+goto 476 7 10
+dismissall
+talk 73
+talkwait
+# the quest log notices the defeated monsters with the next event (in the game with the battle loot)
+quest DrelbsSearch_DefeatTheMonstersInTheMine Completed
+quest DrelbsSearch_AskDrelbAboutHisSearch Active
+say 159
+talkwait
+var 369 1
+quest DrelbsSearch_AskDrelbAboutHisSearch Completed
+quest DrelbsSearch_FindTheHidingPlaces Active
+leave
+talkwait
+waitidle 5000
+# --- the hiding places in the order of the needed searching skill
+goto 409 18 14
+trigger 18 13 Eye
+talkwait
+takeloot optional
+closewindow
+talkwait
+var 364 1
+goto 409 7 15
+trigger 7 14 Eye
+talkwait
+takeloot optional
+closewindow
+talkwait
+var 365 1
+goto 409 22 19
+trigger 22 18 Eye
+talkwait
+takeloot optional
+closewindow
+talkwait
+var 366 1
+goto 409 7 18
+trigger 7 17 Eye
+talkwait
+takeloot optional
+closewindow
+talkwait
+var 367 1
+goto 409 7 23
+trigger 7 22 Eye
+talkwait
+takeloot optional
+closewindow
+talkwait
+var 368 1
+quest DrelbsSearch_FindTheHidingPlaces Active
+reloadquests
+quest DrelbsSearch_FindTheHidingPlaces Active
+goto 409 23 22
+trigger 23 23 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 496 1
+quest DrelbsSearch_FindTheHidingPlaces Completed
+quest DrelbsSearch_GiveTheCertificateToDrelb Active
+# --- Drelb gets the certificate
+goto 476 7 10
+dismissall
+talk 73
+talkwait
+giveitem 496
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 363 1
+count 497 1
+quest DrelbsSearch_GiveTheCertificateToDrelb Completed
+mainquest DrelbsSearch Completed
+reloadquests
+quest DrelbsSearch_DefeatTheMonstersInTheMine Completed
+quest DrelbsSearch_AskDrelbAboutHisSearch Completed
+quest DrelbsSearch_FindTheHidingPlaces Completed
+quest DrelbsSearch_GiveTheCertificateToDrelb Completed
+mainquest DrelbsSearch Completed
+exit

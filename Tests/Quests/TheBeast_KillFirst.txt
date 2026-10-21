@@ -1,0 +1,34 @@
+# The beast is killed before Norel was met (original game and Advanced, any language).
+# Meeting the beast starts the quest, Norel only gets the amulet then.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+goto 415 13 9
+talkwait 30000
+quest TheBeast_KillTheBeast Active
+quest TheBeast_AskNorelAboutKay Inactive
+waitbattle 15000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+quest TheBeast_KillTheBeast Completed
+quest TheBeast_BringTheAmuletToNorel Active
+goto 414 15 14
+dismissall
+talk 27
+talkwait
+giveitem 348
+talkwait
+takeitems
+leave
+talkwait
+waitidle 5000
+quest TheBeast_AskNorelAboutKay Completed
+quest TheBeast_BringTheAmuletToNorel Completed
+mainquest TheBeast Completed
+reloadquests
+mainquest TheBeast Completed
+exit

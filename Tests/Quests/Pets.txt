@@ -1,0 +1,88 @@
+# Pets (Ambermoon Advanced episode 1, any language): the hungry tomcat Kasimir (NPC 36) in Spannenberg needs food.
+# Ferdinand (NPC 40), the gardener, gives his cat to animal lovers with a refurbished house (Your House) and his dog
+# to friends of the cat. The pets are befriended with the cat toy (404) and the dog toy (405) in the house (map 458).
+waitidle 20000
+dismissall
+# language of animals and carry weight (no quest relevance)
+cheat netsrak
+quest Pets_FeedTheHungryTomcat Inactive
+# --- Kasimir
+cheat give 406 1
+goto 273 18 6
+dismissall
+talk 36
+talkwait
+var 53 1
+quest Pets_FeedTheHungryTomcat Active
+giveitem 406
+talkwait
+waitidle 5000
+quest Pets_FeedTheHungryTomcat Completed
+# --- Ferdinand (the house was refurbished in the quest "Your House")
+setvar 225 1
+cheat give gold 2000
+goto 457 11 9
+dismissall
+talk 40
+talkwait
+quest Pets_AdoptACat Active
+say 17
+talkwait
+givegold 1000
+talkwait
+waitidle 5000
+var 230 1
+quest Pets_AdoptACat Completed
+quest Pets_BefriendTheCat Active
+# --- the cat toy in the house
+cheat give 404 1
+goto 458 26 24
+trigger 26 23 item:404
+talkwait
+var 232 1
+quest Pets_BefriendTheCat Completed
+quest Pets_AdoptADog Active
+# --- Ferdinand's dog
+goto 457 11 9
+dismissall
+talk 40
+talkwait
+say 119
+talkwait
+waitidle 5000
+var 231 1
+quest Pets_AdoptADog Completed
+quest Pets_BefriendTheDog Active
+cheat give 405 1
+goto 458 14 24
+trigger 14 23 item:405
+talkwait
+var 233 1
+quest Pets_BefriendTheDog Completed
+quest Pets_ReturnToFerdinand Active
+reloadquests
+quest Pets_BefriendTheDog Completed
+quest Pets_ReturnToFerdinand Active
+# --- Ferdinand's reward
+goto 457 11 9
+dismissall
+talk 40
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 234 1
+count 208 1
+quest Pets_ReturnToFerdinand Completed
+mainquest Pets Completed
+reloadquests
+quest Pets_FeedTheHungryTomcat Completed
+quest Pets_AdoptACat Completed
+quest Pets_BefriendTheCat Completed
+quest Pets_AdoptADog Completed
+quest Pets_BefriendTheDog Completed
+quest Pets_ReturnToFerdinand Completed
+mainquest Pets Completed
+exit

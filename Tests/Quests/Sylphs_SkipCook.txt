@@ -1,0 +1,51 @@
+# Sylphs edge case: Lady Heidi is asked about the FAIRIES directly, without talking to the cook first
+# (original game and Advanced, any language). The keyword is typed (say 24), the player never learned it.
+# Expected log:
+# - "Talk to Lady Heidi" goes Inactive -> Completed directly (variable 8179), "Find the hidden item in the tree" active.
+# - The chain of office quest starts at the same time (variable 8185).
+# - Talking to the cook afterwards must not change anything (its activation needs the step to be Inactive).
+waitidle 20000
+dismissall
+quest Sylphs_TalkToLadyHeidi Inactive
+quest ChainOfOffice_FindIt Inactive
+talk 9
+talkwait
+say 24
+talkwait
+leave
+talkwait
+waitidle 5000
+var 8190 0
+var 8179 1
+var 8185 1
+quest Sylphs_TalkToLadyHeidi Completed
+quest Sylphs_FindTheHiddenItemInTheTree Active
+quest Sylphs_FindTheSylphs Inactive
+quest ChainOfOffice_FindIt Active
+# --- the cook afterwards
+goto 269 24 12
+wait 2000
+dismissall
+interact 1
+talkwait
+var 8190 1
+quest Sylphs_TalkToLadyHeidi Completed
+quest Sylphs_FindTheHiddenItemInTheTree Active
+# --- asking Heidi again with the other keyword (FAIRY) changes nothing
+talk 9
+talkwait
+say 25
+talkwait
+leave
+talkwait
+waitidle 5000
+quest Sylphs_TalkToLadyHeidi Completed
+quest Sylphs_FindTheHiddenItemInTheTree Active
+reloadquests
+log after reload
+quest Sylphs_TalkToLadyHeidi Completed
+quest Sylphs_FindTheHiddenItemInTheTree Active
+quest Sylphs_FindTheSylphs Inactive
+quest ChainOfOffice_FindIt Active
+quests
+exit

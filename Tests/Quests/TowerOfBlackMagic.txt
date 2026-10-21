@@ -1,0 +1,191 @@
+# Tower of black magic played the normal way (original game and Advanced, any language)
+# Nelvin (party member 10, map character 2 in the alchemist tower 282) tells about the sphere of
+# opening (keyword 52 "Mage" -> keyword 53 "Sphere of opening") -> the sphere is used in the gate
+# house (292, standing on 6,5 next to the altar, event bit 292:3) -> torture chamber (293:2)
+# -> flame of life (295, 6-8,6-8 around the flame, event bit 295:3) -> the four icewater flasks
+# (chest 62: 296 4,10, chest 63: 297 13,5, chest 64: 297 11,3, chest 65: 298 3,8) are poured into the
+# stone face (295, stand on 8,3, global variables 99-102) -> Luminor (298) -> his key opens the
+# cells (293, 8,17, global variables 27 and 32).
+# The sphere of opening is carried by Nelvin. The script can neither let him join (no join command)
+# nor take it from his inventory, so the hero gets it with a cheat (the quest step itself is real).
+waitidle 20000
+dismissall
+cheat give 138 10
+# only to survive traps and monsters in the tower (no quest relevance)
+cheat level 50
+talkwait
+dismissall
+cheat light 3
+quest TowerOfBlackMagic_OpenTheTower Inactive
+# --- Nelvin in the alchemist tower (map 282, map character 2)
+goto 282 11 5
+talkwait
+interact 2
+talkwait
+# "Mage"
+say 52
+talkwait
+quest TowerOfBlackMagic_OpenTheTower Active
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Inactive
+# "Sphere of opening" (he shows the sphere)
+say 53
+talkwait
+leave
+talkwait
+waitidle 5000
+quest TowerOfBlackMagic_OpenTheTower Active
+# --- the gate house (map 292): use the sphere next to the altar
+cheat give 287 1
+goto 292 6 5
+talkwait
+useitem 287
+talkwait
+dismissall
+eventbit 292 3 1
+quest TowerOfBlackMagic_OpenTheTower Completed
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Inactive
+quest TowerOfBlackMagic_WeakenLuminor Inactive
+quest TowerOfBlackMagic_DefeatLuminor Inactive
+# --- Luminor's torture chamber (map 293)
+cheat teleport 293 11 4
+wait 2000
+dismissall
+trigger 11 3
+talkwait
+dismissall
+eventbit 293 2 1
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Active
+quest TowerOfBlackMagic_DefeatLuminor Active
+quest TowerOfBlackMagic_WeakenLuminor Inactive
+# --- the flame of life (map 295): the voice tells about Luminor's power
+cheat light 3
+goto 295 8 3
+talkwait
+trigger 7 6
+talkwait
+dismissall
+eventbit 295 3 1
+# hearing about the flame of life does not show the sub quest (spoiler)
+quest TowerOfBlackMagic_WeakenLuminor Inactive
+# --- the four icewater flasks
+goto 296 4 10
+talkwait
+trigger 4 10 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+count 316 1
+# a monster walks around the chests of this floor, fight it first
+goto 297 11 5
+waitbattle 15000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+goto 297 13 5
+talkwait
+trigger 13 5 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+goto 297 11 3
+talkwait
+trigger 11 3 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+goto 298 3 8
+talkwait
+trigger 3 8 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+count 316 4
+# owning icewater does not show the sub quest either, only pouring the first one
+quest TowerOfBlackMagic_WeakenLuminor Inactive
+# --- pour them into the stone face (295, stand on 8,3 in front of the face at 8,2)
+goto 295 8 3
+talkwait
+useitem 316
+talkwait
+dismissall
+var 99 1
+quest TowerOfBlackMagic_WeakenLuminor Active
+useitem 316
+talkwait
+dismissall
+var 100 1
+useitem 316
+talkwait
+dismissall
+var 101 1
+quest TowerOfBlackMagic_WeakenLuminor Active
+useitem 316
+talkwait
+dismissall
+var 102 1
+count 316 0
+quest TowerOfBlackMagic_WeakenLuminor Completed
+quest TowerOfBlackMagic_DefeatLuminor Active
+# --- Luminor (map 298), now the weakest form (map character 5) appears
+goto 298 10 10
+talkwait
+trigger 10 10
+talkwait
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+count 315 1
+closewindow
+talkwait
+quest TowerOfBlackMagic_DefeatLuminor Completed
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Active
+# --- the cell door (293, 8,17), standing outside the cell
+goto 293 8 18
+# use Luminor's key from the inventory (Sabine might stand right behind the door)
+useitem 315
+talkwait 20000
+dismissall
+var 32 1
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Completed
+# captain Torle was among the prisoners, he gives his new boat as a reward
+quest TowerOfBlackMagic_TalkToCaptainTorle Active
+mainquest TowerOfBlackMagic Active
+reloadquests
+quest TowerOfBlackMagic_TalkToCaptainTorle Active
+# --- captain Torle in his boatyard (map 271)
+hour 12
+goto 271 5 5
+dismissall
+talk 11
+talkwait
+leave
+talkwait
+waitidle 5000
+var 33 1
+quest TowerOfBlackMagic_TalkToCaptainTorle Completed
+mainquest TowerOfBlackMagic Completed
+reloadquests
+log after reload
+quests
+quest TowerOfBlackMagic_OpenTheTower Completed
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Completed
+quest TowerOfBlackMagic_WeakenLuminor Completed
+quest TowerOfBlackMagic_DefeatLuminor Completed
+quest TowerOfBlackMagic_TalkToCaptainTorle Completed
+mainquest TowerOfBlackMagic Completed
+exit

@@ -1,0 +1,115 @@
+# Sylphs edge case: everything is found by exploring, nobody in Spannenberg told about the fairies
+# (original game and Advanced, any language)
+# 1) The weird stone is found in the tree first: "Find the hidden item" Inactive -> Completed, "Find the sylphs" active,
+#    "Talk to Lady Heidi" stays Inactive (hidden).
+# 2) Selena is visited BEFORE Sariel taught Sylphic: the party does not speak her language, the conversation is
+#    refused ("you don't speak the same language"), variable 79 stays 0 and "Rescue Selena" stays Inactive.
+# 3) Sariel (FindTheSylphs completed) and Selena (RescueSelena completed).
+# 4) "Talk to Lady Heidi" is completed as soon as the quest went on without her (sylph cave door opened, Sariel or
+#    Selena), so the main quest can be completed. Talking to the cook afterwards changes nothing.
+waitidle 20000
+dismissall
+# no netsrak cheat here: Selena must not understand the hero before Sariel taught Sylphic
+# --- 1) the tree
+goto 155 40 18
+# the tree can't be entered
+trigger 40 18 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 283 1
+quest Sylphs_TalkToLadyHeidi Inactive
+quest Sylphs_FindTheHiddenItemInTheTree Completed
+quest Sylphs_FindTheSylphs Active
+quest Sylphs_RescueSelena Inactive
+# --- 2) orc cave first: Reg for the prison key, then the cell
+cheat light 3
+goto 280 15 10
+talkwait
+# Reg walks up to the party and attacks
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 284 1
+goto 280 7 13
+trigger 6 13 Hand
+talkwait
+usekey 284
+talkwait
+waitidle 5000
+goto 280 5 13
+talkwait
+waitidle 5000
+# Selena speaks only Sylphic: only a message popup is shown, no conversation
+interact 1
+talkwait
+dismissall
+var 79 0
+quest Sylphs_RescueSelena Inactive
+# --- 3) the sylph cave
+cheat light 3
+goto 279 16 3
+trigger 16 4 Hand
+talkwait
+usekey 283
+talkwait
+waitidle 5000
+goto 279 16 5
+talkwait
+waitidle 5000
+talk 17
+talkwait
+say 49
+talkwait
+leave
+talkwait
+waitidle 5000
+var 78 1
+quest Sylphs_FindTheSylphs Completed
+quest Sylphs_RescueSelena Active
+# back to Selena, now with Sylphic
+cheat light 3
+goto 280 5 13
+wait 1000
+dismissall
+interact 1
+talkwait
+leave
+talkwait
+waitidle 5000
+var 79 1
+quest Sylphs_RescueSelena Completed
+quest Sylphs_TalkToLadyHeidi Completed
+reloadquests
+log after reload (main quest should be completed or at least have no hidden open step)
+quests
+quest Sylphs_FindTheHiddenItemInTheTree Completed
+quest Sylphs_FindTheSylphs Completed
+quest Sylphs_RescueSelena Completed
+quest Sylphs_TalkToLadyHeidi Completed
+# --- 4) the cook now activates the first step although the quest is done
+goto 269 24 12
+wait 2000
+dismissall
+interact 1
+talkwait
+# the cook changes nothing, the step stays completed
+quest Sylphs_TalkToLadyHeidi Completed
+talk 9
+talkwait
+say 24
+talkwait
+leave
+talkwait
+waitidle 5000
+quest Sylphs_TalkToLadyHeidi Completed
+reloadquests
+quest Sylphs_TalkToLadyHeidi Completed
+quest Sylphs_RescueSelena Completed
+exit

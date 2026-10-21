@@ -174,7 +174,7 @@ internal class TouchPad
             ILayerSprite CreateSprite(int texWidth, int texHeight, int width, int height, byte displayLayer, uint textureIndex, byte? alpha = null)
             {
                 var sprite = alpha == null
-                    ? renderView.SpriteFactory.Create(width, height, true, displayLayer) as ILayerSprite
+                    ? renderView.SpriteFactory.CreateLayered(width, height, displayLayer)
                     : renderView.SpriteFactory.CreateWithAlpha(width, height, displayLayer);
                 sprite.Visible = false;
                 sprite.TextureSize = new(texWidth, texHeight);
@@ -593,7 +593,8 @@ internal class TouchPad
             }
         }
 
-        enabled = background != null && background.Visible && game.InputEnable;
+        // popups like the quest log may overlap the touchpad, their buttons must receive the taps
+        enabled = background != null && background.Visible && game.InputEnable && !game.PopupActive;
 
         if (background != null)
             disableOverlay.Visible = background.Visible && !game.InputEnable && !game.HideMobileTouchpadDisableOverlay;

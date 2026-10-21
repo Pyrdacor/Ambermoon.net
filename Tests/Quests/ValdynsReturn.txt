@@ -1,0 +1,78 @@
+# Valdyn's return played the normal way (original game and Advanced, any language)
+# The necklace in Luminor's tower (296, decision at 8,4 behind the sphere door 19 at 8,9) opens the
+# light gate, Valdyn (party member 12) appears (event bit 296:9) -> S'Krel (NPC 34, Morag's tower 452)
+# trades the Morag water-bottle (398) for the yellow carved sphere (367, global variable 218)
+# -> entering the teleporter room in the antique area (369, 10,6) with the sphere and Valdyn
+# (event bit 369:11).
+# Limitations: the sphere door is bypassed with goto. The water bottle is sold by merchant 18 on
+# Morag (no buy command, so it is given by cheat). Valdyn has to be in the party for 369:11; the
+# script has no join command, so he is invited by cheat (his join event only sets variable 98).
+waitidle 20000
+dismissall
+# S'Krel speaks Moranian only (also maxes the stats)
+cheat netsrak
+cheat level 50
+talkwait
+dismissall
+cheat light 3
+quest ValdynsReturn_FindAWayHome Inactive
+# --- the necklace in the ball of light (296, 8,4), the decision is answered with yes
+goto 296 8 5
+talkwait
+trigger 8 4
+talkwait 20000
+dismissall
+eventbit 296 9 1
+quest ValdynsReturn_FindAWayHome Active
+quest ValdynsReturn_UseTheYellowSphere Inactive
+# talking to Valdyn (map character 1) changes nothing
+interact 1
+talkwait
+leave
+talkwait
+waitidle 5000
+quest ValdynsReturn_FindAWayHome Active
+# --- S'Krel (34) on Morag
+cheat give 398 1
+goto 452 14 8
+wait 2000
+dismissall
+talk 34
+talkwait
+showitem 398
+talkwait
+quest ValdynsReturn_FindAWayHome Active
+giveitem 398
+talkwait 20000
+var 218 1
+takeitems
+leave
+talkwait
+waitidle 5000
+count 367 1
+quest ValdynsReturn_FindAWayHome Completed
+quest ValdynsReturn_UseTheYellowSphere Active
+# --- the teleporter room (369, 10,6) with the sphere and Valdyn
+cheat invite 12
+wait 2000
+dismissall
+cheat light 3
+goto 369 10 7
+talkwait
+trigger 10 6
+talkwait
+# monsters of the antique area might attack
+waitbattle 5000 optional
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
+eventbit 369 11 1
+quest ValdynsReturn_UseTheYellowSphere Completed
+reloadquests
+log after reload
+quests
+quest ValdynsReturn_FindAWayHome Completed
+quest ValdynsReturn_UseTheYellowSphere Completed
+exit

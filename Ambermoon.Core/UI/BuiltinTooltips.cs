@@ -152,8 +152,21 @@ namespace Ambermoon.UI
             }
         }
 
-        public static string GetConditionTooltip(GameLanguage gameLanguage, Condition condition, PartyMember partyMember) => condition == Condition.Aging
-            ? string.Format(ConditionTooltips[gameLanguage][condition], partyMember.Attributes[Attribute.Age].MaxValue) : ConditionTooltips[gameLanguage][condition];
+        public static string GetConditionTooltip(GameLanguage gameLanguage, Condition condition, PartyMember partyMember,
+            Features features, uint maxBattlePoisonDamage)
+        {
+            bool extendedCurseEffects = features.HasFlag(Features.ExtendedCurseEffects);
+            string tooltip = extendedCurseEffects && ExtendedCurseEffectsConditionTooltips[gameLanguage].TryGetValue(condition, out var extendedTooltip)
+                ? extendedTooltip
+                : ConditionTooltips[gameLanguage][condition];
+
+            return condition switch
+            {
+                Condition.Aging => string.Format(tooltip, partyMember.Attributes[Attribute.Age].CurrentValue, partyMember.Attributes[Attribute.Age].MaxValue),
+                Condition.Poisoned when extendedCurseEffects => string.Format(tooltip, maxBattlePoisonDamage),
+                _ => tooltip
+            };
+        }
 
         static ImmutableDictionary<Attribute, (Features, ImmutableDictionary<GameLanguage, string>)> CreateFeatureBasedAttributeTooltips()
         {
@@ -426,21 +439,21 @@ namespace Ambermoon.UI
                 // Blind
                 { Condition.Blind, "Der Charakter kann nicht sehen.^Lichtradius auf 2D-Karten nicht vorhanden.^Völlige Dunkelheit auf 3D-Karten." },
                 // Drugged
-                { Condition.Drugged, "Der Charakter steht unter Drogeneinfluss.^Steuerung erschwert und visuelle Effekte." },
+                { Condition.Drugged, "Der Charakter steht unter Drogeneinfluss.^Steuerung erschwert und visuelle Effekte.^Er kann keine Zauber wirken." },
                 // Exhausted
-                { Condition.Exhausted, "Alle Attribute temporär halbiert.^Kann durch Schlafen beseitigt werden." },
+                { Condition.Exhausted, "Alle Attribute und Fähigkeiten^temporär halbiert.^Kann durch Schlafen beseitigt werden." },
                 // Unused
                 { Condition.Fleeing, "" },
                 // Lamed
                 { Condition.Lamed, "Keine Bewegung und kein Angriff möglich." },
                 // Poisoned
-                { Condition.Poisoned, "Der Charakter erleidet Schaden pro^Kampfrunde und sonst jede Stunde." },
+                { Condition.Poisoned, "Der Charakter erleidet Schaden pro^Kampfrunde und sonst jede Stunde.^^Schaden pro Kampfrunde: 1-5^Schaden pro Stunde: 1-5" },
                 // Petrified
                 { Condition.Petrified, "Das Inventar ist nicht verfügbar.^Der Charakter kann keine Aktion^ausführen und altert nicht." },
                 // Diseased
                 { Condition.Diseased, "Der Charakter verliert jeden Tag^dauerhaft einen Punkt eines^zufälligen Attributs." },
                 // Aging
-                { Condition.Aging, "Der Charakter altert pro Tag um ein Jahr.^Je nach Rasse stirbt er ab^einem bestimmten Alter.^^Maximalalter: {0}" },
+                { Condition.Aging, "Der Charakter altert pro Tag um ein Jahr.^Je nach Rasse stirbt er ab^einem bestimmten Alter.^^Alter: {0}^Maximalalter: {1}" },
                 // DeadCorpse
                 { Condition.DeadCorpse, "Der Charakter nimmt nicht an Kämpfen teil.^Er kann nicht kommunizieren." },
                 // DeadAshes
@@ -461,21 +474,21 @@ namespace Ambermoon.UI
                 // Blind
                 { Condition.Blind, "The character can not see.^Light radius on 2D maps is disabled.^Complete darkness on 3D maps." },
                 // Drugged
-                { Condition.Drugged, "The charater is under the influence of drugs.^Complicated control and visual effects." },
+                { Condition.Drugged, "The character is under the influence of drugs.^Complicated control and visual effects.^The character can not cast spells." },
                 // Exhausted
-                { Condition.Exhausted, "All attributes halved temporarly.^Can be removed by sleeping." },
+                { Condition.Exhausted, "All attributes and skills halved temporarily.^Can be removed by sleeping." },
                 // Unused
                 { Condition.Fleeing, "" },
                 // Lamed
                 { Condition.Lamed, "No movement or attack is possible." },
                 // Poisoned
-                { Condition.Poisoned, "The character receives damage^every battle round or hour." },
+                { Condition.Poisoned, "The character receives damage^every battle round or hour.^^Damage per battle round: 1-5^Damage per hour: 1-5" },
                 // Petrified
                 { Condition.Petrified, "The inventory is not accessible.^The character can not take any^action and does not age." },
                 // Diseased
                 { Condition.Diseased, "The character loses a point of^a random attribute every day." },
                 // Aging
-                { Condition.Aging, "The character ages every day.^Dependent on his race he will^eventually die at a specific age.^^Max age: {0}" },
+                { Condition.Aging, "The character ages every day.^Dependent on his race he will^eventually die at a specific age.^^Age: {0}^Max age: {1}" },
                 // DeadCorpse
                 { Condition.DeadCorpse, "The character does not participate in battles.^He can not communicate." },
                 // DeadAshes
@@ -496,21 +509,21 @@ namespace Ambermoon.UI
                 // Blind
                 { Condition.Blind, "Le personnage ne peut pas voir.^La zone lumineuse sur les cartes 2D est désactivée.^Les cartes 3D sont complètement sombres." },
                 // Drugged
-                { Condition.Drugged, "Le personnage est sous l'influence de drogues.^Le contrôle est difficile et il y a des effets visuels." },
+                { Condition.Drugged, "Le personnage est sous l'influence de drogues.^Le contrôle est difficile et il y a des effets visuels.^Le personnage ne peut pas lancer de sorts." },
                 // Exhausted
-                { Condition.Exhausted, "Tous les attributs sont temporairement réduits de moitié.^Cette réduction peut être supprimée en dormant." },
+                { Condition.Exhausted, "Tous les attributs et compétences sont^temporairement réduits de moitié.^Cette réduction peut être supprimée en dormant." },
                 // Unused
                 { Condition.Fleeing, "" },
                 // Lamed
                 { Condition.Lamed, "Aucun mouvement ou attaque n'est possible." },
                 // Poisoned
-                { Condition.Poisoned, "Le personnage reçoit des dégâts^à chaque round ou heure de combat." },
+                { Condition.Poisoned, "Le personnage reçoit des dégâts à chaque^round de combat ou sinon chaque heure.^^Dégâts par round de combat : 1-5^Dégâts par heure : 1-5" },
                 // Petrified
                 { Condition.Petrified, "L'inventaire n'est pas accessible.^Le personnage ne peut faire aucune^action et ne vieillit pas." },
                 // Diseased
                 { Condition.Diseased, "Le personnage perd un point d'un^attribut aléatoire chaque jour." },
                 // Aging
-                { Condition.Aging, "Le personnage vieillit chaque jour.^En fonction de sa race, il finira^par mourir à un âge précis.^^Age maximum : {0}" },
+                { Condition.Aging, "Le personnage vieillit chaque jour.^En fonction de sa race, il finira^par mourir à un âge précis.^^Âge : {0}^Âge maximum : {1}" },
                 // DeadCorpse
                 { Condition.DeadCorpse, "Le personnage ne participe pas aux combats,^il ne peut pas communiquer." },
                 // DeadAshes
@@ -531,21 +544,21 @@ namespace Ambermoon.UI
                 // Blind
                 { Condition.Blind, "Postać nie widzi.^Zasięg wzroku na mapach 2D jest wyzerowany.^Całkowita ciemność na mapach 3D." },
                 // Drugged
-                { Condition.Drugged, "Postać jest pod wpływem narkotyków.^Utrudnion sterowanie i efekty wizualne." },
+                { Condition.Drugged, "Postać jest pod wpływem narkotyków.^Utrudnione sterowanie i efekty wizualne.^Postać nie może rzucać zaklęć." },
                 // Exhausted
-                { Condition.Exhausted, "Wszystkie atrybuty są tymczasowo zmniejszone o połowę.^Można usunąć przez przespanie się." },
+                { Condition.Exhausted, "Wszystkie atrybuty i umiejętności są^tymczasowo zmniejszone o połowę.^Można usunąć przez przespanie się." },
                 // Unused
                 { Condition.Fleeing, "" },
                 // Lamed
                 { Condition.Lamed, "Nie jest możliwy ruch ani atak." },
                 // Poisoned
-                { Condition.Poisoned, "Postać otrzymuje obrażenia^co rundę lub co godzinę." },
+                { Condition.Poisoned, "Postać otrzymuje obrażenia^co rundę lub co godzinę.^^Obrażenia na rundę walki: 1-5^Obrażenia na godzinę: 1-5" },
                 // Petrified
                 { Condition.Petrified, "Ekwipunek jest niedostępny.^Postać nie może wykonać żadnej^akcji i nie starzeje się." },
                 // Diseased
                 { Condition.Diseased, "Postać traci codziennie punkt^losowo wybranej cechy." },
                 // Aging
-                { Condition.Aging, "Postać starzeje się każdego dnia.^W zależności od rasy ostatecznie umrze w określonym wieku.^^Maksymalny wiek: {0}" },
+                { Condition.Aging, "Postać starzeje się każdego dnia.^W zależności od rasy ostatecznie umrze w określonym wieku.^^Wiek: {0}^Maksymalny wiek: {1}" },
                 // DeadCorpse
                 { Condition.DeadCorpse, "Postać nie bierze udziału w walce.^Nie może się komunikować." },
                 // DeadAshes
@@ -566,21 +579,21 @@ namespace Ambermoon.UI
 				// Blind
 				{ Condition.Blind, "Postava nevidí.^Poloměr světla na 2D mapách je vypnutý.^Úplná tma na 3D mapách." },
 				// Drugged
-				{ Condition.Drugged, "Postava je pod vlivem.^Závratě a nekoordinovanost pohybů." },
+				{ Condition.Drugged, "Postava je pod vlivem.^Závratě a nekoordinovanost pohybů.^Postava nemůže sesílat kouzla." },
 				// Exhausted
-				{ Condition.Exhausted, "Všechny atributy se dočasně sníží na polovinu.^Může být odstraněno spánkem." },
+				{ Condition.Exhausted, "Všechny atributy a dovednosti se^dočasně sníží na polovinu.^Může být odstraněno spánkem." },
 				// Unused
 				{ Condition.Fleeing, "" },
 				// Lamed
 				{ Condition.Lamed, "Není možný žádný pohyb ani útok." },
 				// Poisoned
-				{ Condition.Poisoned, "Postava dostává poškození^každé bojové kolo nebo hodinu." },
+				{ Condition.Poisoned, "Postava dostává poškození^každé bojové kolo nebo hodinu.^^Poškození za bojové kolo: 1-5^Poškození za hodinu: 1-5" },
 				// Petrified
 				{ Condition.Petrified, "Inventář není přístupný.^Postava nemůže provádět žádné^akce a nestárne." },
 				// Diseased
 				{ Condition.Diseased, "Postava ztrácí každý den bod^náhodného atributu." },
 				// Aging
-				{ Condition.Aging, "Postava stárne každým dnem.^Závisí to na její rase.^nakonec zemře v určitém věku.^^Max. věk: {0}" },
+				{ Condition.Aging, "Postava stárne každým dnem.^Závisí to na její rase.^nakonec zemře v určitém věku.^^Věk: {0}^Max. věk: {1}" },
 				// DeadCorpse
 				{ Condition.DeadCorpse, "Postava se neúčastní bitev.^Nemůže komunikovat." },
 				// DeadAshes
@@ -589,6 +602,51 @@ namespace Ambermoon.UI
 				{ Condition.DeadDust, "Postava se neúčastní bitev.^Nemůže komunikovat.^Její prach se musí přeměnit v popel^a pak na tělo, aby mohla být vzkříšena." }
 			}.ToImmutableDictionary() }
 		}.ToImmutableDictionary();
+
+        // Replaces the condition tooltips above if the extended curse effects are active (Ambermoon Advanced)
+        static readonly ImmutableDictionary<GameLanguage, ImmutableDictionary<Condition, string>> ExtendedCurseEffectsConditionTooltips = new Dictionary<GameLanguage, ImmutableDictionary<Condition, string>>
+        {
+            { GameLanguage.German, new Dictionary<Condition, string>
+            {
+                { Condition.Blind, "Der Charakter kann nicht sehen.^Lichtradius auf 2D-Karten nicht vorhanden.^Völlige Dunkelheit auf 3D-Karten.^^-50% Treffer- und Paradechance im Kampf." },
+                { Condition.Drugged, "Der Charakter steht unter Drogeneinfluss.^Steuerung erschwert und visuelle Effekte.^^-25% Chance Zauber zu wirken.^-25% Trefferchance im Kampf." },
+                { Condition.Poisoned, "Der Charakter erleidet Schaden pro^Kampfrunde und sonst jede Stunde.^^Schaden pro Kampfrunde: 1-{0}^Schaden pro Stunde: 1-5" },
+                { Condition.Diseased, "Der Charakter verliert jeden Tag^dauerhaft einen Punkt eines^zufälligen Attributs.^^Schaden und Abwehr werden^im Kampf halbiert." },
+                { Condition.Aging, "Der Charakter altert pro Tag um ein Jahr.^Je nach Rasse stirbt er ab^einem bestimmten Alter.^^Im Kampf pro Runde -10% (max. -50%)^auf Treffer- und Paradechance,^Schaden und Abwehr.^Nicht zusätzlich zu den Mali^durch Blindheit oder Krankheit.^^Alter: {0}^Maximalalter: {1}" }
+            }.ToImmutableDictionary() },
+            { GameLanguage.English, new Dictionary<Condition, string>
+            {
+                { Condition.Blind, "The character can not see.^Light radius on 2D maps is disabled.^Complete darkness on 3D maps.^^-50% hit and block chance in battle." },
+                { Condition.Drugged, "The character is under the influence of drugs.^Complicated control and visual effects.^^-25% chance to cast spells.^-25% hit chance in battle." },
+                { Condition.Poisoned, "The character receives damage^every battle round or hour.^^Damage per battle round: 1-{0}^Damage per hour: 1-5" },
+                { Condition.Diseased, "The character loses a point of^a random attribute every day.^^Damage and defense are halved^in battle." },
+                { Condition.Aging, "The character ages every day.^Dependent on his race he will^eventually die at a specific age.^^In battle -10% per round (max -50%)^to hit and block chance,^damage and defense.^Does not add to the penalties^of blindness or disease.^^Age: {0}^Max age: {1}" }
+            }.ToImmutableDictionary() },
+            { GameLanguage.French, new Dictionary<Condition, string>
+            {
+                { Condition.Blind, "Le personnage ne peut pas voir.^La zone lumineuse sur les cartes 2D est désactivée.^Les cartes 3D sont complètement sombres.^^-50% de chance de toucher et^de blocage en combat." },
+                { Condition.Drugged, "Le personnage est sous l'influence de drogues.^Le contrôle est difficile et il y a des effets visuels.^^-25% de chance de lancer des sorts.^-25% de chance de toucher en combat." },
+                { Condition.Poisoned, "Le personnage reçoit des dégâts à chaque^round de combat ou sinon chaque heure.^^Dégâts par round de combat : 1-{0}^Dégâts par heure : 1-5" },
+                { Condition.Diseased, "Le personnage perd un point d'un^attribut aléatoire chaque jour.^^Les dégâts et la défense sont^réduits de moitié en combat." },
+                { Condition.Aging, "Le personnage vieillit chaque jour.^En fonction de sa race, il finira^par mourir à un âge précis.^^En combat, -10% par round (max. -50%)^aux chances de toucher et de blocage,^aux dégâts et à la défense.^Ne s'ajoute pas aux malus de^la cécité ou de la maladie.^^Âge : {0}^Âge maximum : {1}" }
+            }.ToImmutableDictionary() },
+            { GameLanguage.Polish, new Dictionary<Condition, string>
+            {
+                { Condition.Blind, "Postać nie widzi.^Zasięg wzroku na mapach 2D jest wyzerowany.^Całkowita ciemność na mapach 3D.^^-50% szansy na trafienie^i zablokowanie w walce." },
+                { Condition.Drugged, "Postać jest pod wpływem narkotyków.^Utrudnione sterowanie i efekty wizualne.^^-25% szansy na rzucenie zaklęcia.^-25% szansy na trafienie w walce." },
+                { Condition.Poisoned, "Postać otrzymuje obrażenia^co rundę lub co godzinę.^^Obrażenia na rundę walki: 1-{0}^Obrażenia na godzinę: 1-5" },
+                { Condition.Diseased, "Postać traci codziennie punkt^losowo wybranej cechy.^^Obrażenia i obrona są w walce^zmniejszone o połowę." },
+                { Condition.Aging, "Postać starzeje się każdego dnia.^W zależności od rasy ostatecznie umrze w określonym wieku.^^W walce -10% na rundę (maks. -50%)^do szansy na trafienie i zablokowanie,^obrażeń i obrony.^Nie sumuje się z karami^za ślepotę lub chorobę.^^Wiek: {0}^Maksymalny wiek: {1}" }
+            }.ToImmutableDictionary() },
+            { GameLanguage.Czech, new Dictionary<Condition, string>
+            {
+                { Condition.Blind, "Postava nevidí.^Poloměr světla na 2D mapách je vypnutý.^Úplná tma na 3D mapách.^^-50% šance na zásah^a zablokování v boji." },
+                { Condition.Drugged, "Postava je pod vlivem.^Závratě a nekoordinovanost pohybů.^^-25% šance seslat kouzlo.^-25% šance na zásah v boji." },
+                { Condition.Poisoned, "Postava dostává poškození^každé bojové kolo nebo hodinu.^^Poškození za bojové kolo: 1-{0}^Poškození za hodinu: 1-5" },
+                { Condition.Diseased, "Postava ztrácí každý den bod^náhodného atributu.^^Poškození a obrana jsou v boji^sníženy na polovinu." },
+                { Condition.Aging, "Postava stárne každým dnem.^Závisí to na její rase.^nakonec zemře v určitém věku.^^V boji -10% za kolo (max. -50%)^k šanci na zásah a zablokování,^poškození a obraně.^Nesčítá se s postihy^za slepotu nebo nemoc.^^Věk: {0}^Max. věk: {1}" }
+            }.ToImmutableDictionary() }
+        }.ToImmutableDictionary();
 
         static readonly ImmutableDictionary<GameLanguage, string[]> SecondaryStatTooltips = new Dictionary<GameLanguage, string[]>
         {

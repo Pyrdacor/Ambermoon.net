@@ -1,0 +1,141 @@
+# Sandra's daughter played the normal way (original game and Advanced, any language)
+# Sandra (NPC 5, map 266) asks for Sabine (keyword 14 "Daughter") and gives Sandra's key (257)
+# -> chest 37 in her room (266, 39,5, no lockpicking, key 257) holds the Burnville key (258)
+# -> door of the Burnville tunnel (284, 17,3, door 16, key 258)
+# -> Sabine's diary (treasure 59 in the house of healers of Burnville, 286, 2-4,19, event bit 286:7)
+# -> Luminor's torture chamber (293, arrival 10-12,3, event bit 293:2)
+# -> Luminor (298, appears at 9,12 when entering the hall) drops Luminor's key (315)
+# -> cell door (293, 8,17, door 18, key 315) sets global variables 27 and 32
+# -> talking to Sandra again (custom global variable 8181).
+# The tower floors 294-297 are skipped with goto (Luminor can be reached without them in this test).
+waitidle 20000
+dismissall
+cheat give 138 10
+# only to survive traps and monsters in the tunnel and the tower (no quest relevance)
+cheat level 50
+talkwait
+dismissall
+# --- Sandra (5) in the house of healers (map 266)
+goto 266 40 6
+wait 2000
+dismissall
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Inactive
+talk 5
+talkwait
+# her greeting only adds the keywords 13-15
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Inactive
+# talking to Sandra before the rescue must not complete the last step
+quest SandrasDaughter_ReturnToSandra Inactive
+# "Daughter"
+say 14
+talkwait
+var 28 1
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Active
+quest SandrasDaughter_RescueSabine Inactive
+quest SandrasDaughter_ReturnToSandra Inactive
+takeitems
+leave
+talkwait
+waitidle 5000
+count 257 1
+var 8181 0
+# --- chest 37 in Sandra's room (266, 39,5) only opens with Sandra's key
+goto 266 39 5
+trigger 39 5 Eye
+talkwait
+usekey 257
+talkwait
+takeloot
+closewindow
+talkwait
+count 258 1
+# the chest is no quest step
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Active
+# --- the Burnville tunnel (map 284): door 16 at 17,3 needs the Burnville key
+cheat light 3
+goto 284 17 4
+talkwait
+trigger 17 3 Eye
+talkwait
+usekey 258
+talkwait
+eventbit 284 4 1
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Active
+# --- Sabine's diary in the house of healers of Burnville (map 286, bookcase 2-4,19)
+goto 286 3 20
+talkwait
+trigger 3 19 Eye
+talkwait
+takeloot
+count 300 1
+closewindow
+talkwait
+eventbit 286 7 1
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Completed
+quest SandrasDaughter_RescueSabine Active
+quest SandrasDaughter_ReturnToSandra Inactive
+# the diary alone does not reveal the tower quest
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Inactive
+quest TowerOfBlackMagic_DefeatLuminor Inactive
+# --- Luminor's torture chamber (map 293): Sabine and the prisoners
+cheat teleport 293 11 4
+wait 2000
+dismissall
+trigger 11 3
+talkwait
+dismissall
+eventbit 293 2 1
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Completed
+quest SandrasDaughter_RescueSabine Active
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Active
+quest TowerOfBlackMagic_DefeatLuminor Active
+# --- Luminor in the top floor of the tower (map 298). Entering the hall (9-10,9-13) lets him
+# appear at 9,12 and he attacks. No icewater was used, so the strongest Luminor appears.
+cheat light 3
+goto 298 10 10
+talkwait
+trigger 10 10
+talkwait
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+count 315 1
+closewindow
+talkwait
+quest TowerOfBlackMagic_DefeatLuminor Completed
+# the key alone does not free Sabine
+quest SandrasDaughter_RescueSabine Active
+quest SandrasDaughter_ReturnToSandra Inactive
+# --- the cell door (293, 8,17) opens with Luminor's key, stand south of it (outside the cell)
+goto 293 8 18
+# use Luminor's key from the inventory (Sabine might stand right behind the door)
+useitem 315
+talkwait 20000
+dismissall
+var 27 1
+var 32 1
+eventbit 293 3 1
+quest SandrasDaughter_RescueSabine Completed
+quest SandrasDaughter_ReturnToSandra Active
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Completed
+# --- back to Sandra, she thanks for the rescue
+goto 266 40 6
+wait 2000
+dismissall
+talk 5
+talkwait
+var 8181 1
+quest SandrasDaughter_ReturnToSandra Completed
+leave
+talkwait
+waitidle 5000
+reloadquests
+log after reload
+quests
+quest SandrasDaughter_GoToBurnvilleAndFindSabine Completed
+quest SandrasDaughter_RescueSabine Completed
+quest SandrasDaughter_ReturnToSandra Completed
+quest TowerOfBlackMagic_FreeThePeopleOfBurnville Completed
+quest TowerOfBlackMagic_DefeatLuminor Completed
+exit

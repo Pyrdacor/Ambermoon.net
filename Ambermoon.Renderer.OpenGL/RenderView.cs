@@ -577,10 +577,12 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                         }
                         else
                         {
+                            // The viewport y is measured from the bottom of the window, so the offset
+                            // of the render area (letterbox bars at the bottom) is added.
                             State.Gl.Viewport
                             (
                                 viewport.X + mapViewArea.X,
-                                viewport.Height - (viewport.Y + mapViewArea.Y + mapViewArea.Height),
+                                viewport.Y + viewport.Height - (mapViewArea.Y + mapViewArea.Height),
                                 (uint)mapViewArea.Width, (uint)mapViewArea.Height
                             );
                         }

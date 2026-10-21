@@ -1,0 +1,155 @@
+# The mystic tower played on foot (Ambermoon Advanced episode 3, any language): the party starts next to Targor
+# in his house (map 410, he stands at 5,18), he joins and brings his notes (507). The party walks with walkto
+# (fights on the way are won with the win cheat) and flies on the world map (fly cheat) to the three places of his
+# notes (pond, map 85; lonely tree, map 102; mountain pass, map 134). Then the mystic tower rises (world map 133,
+# entrance at 48,25). Inside a torch (130) opens the way to the key 509 of the door to the middle of the tower.
+# In its test Targor alone learns the mystic imitation and defeats the demon.
+# Route: house of Targor (map 410, exit at 18,9) -> town (map 409, the wall at 2,9 opens the way to the exit at
+# 3,23) -> world map 182 -> ...
+# All walks use "fight": battles are won with the win cheat and texts on the way are confirmed. A walkto is
+# repeated after a possible interruption, the map number skips it if the party left the map already.
+waitidle 20000
+dismissall
+# a torch is needed in the mystic tower (no quest relevance)
+cheat give 130
+quest MysticTower_VisitThePond Inactive
+# --- Targor joins (map character 1)
+goto 410 5 17
+settle
+interact 1
+talkwait
+join
+talkwait
+leave
+talkwait
+waitidle 5000
+count 507 1
+# --- out of the house and the town to the world map
+walkto 18 9 fight 410
+settle
+walkto 18 9 fight 410
+settle
+# the upper part of the town is separated from the exit, the wall at 2,9 opens the passage at 4,10 by hand
+walkto 3 9 fight 409
+settle
+trigger 2 9 Hand
+talkwait
+settle
+eventbit 409 12 1
+walkto 3 23 fight 409
+settle
+walkto 3 23 fight 409
+settle
+state
+# --- the pond west of Illien: Targor feels a strange energy. Events are ignored while flying, so the party lands
+# (on land next to the water, landing in the water would make it swim)
+cheat fly
+flyto 85 44 29
+land
+settle
+eventbit 85 1 1
+quest MysticTower_VisitThePond Completed
+quest MysticTower_VisitTheLonelyTree Active
+# --- the lonely tree
+cheat fly
+flyto 102 33 27
+land
+settle
+eventbit 102 1 1
+quest MysticTower_VisitTheLonelyTree Completed
+quest MysticTower_VisitTheMountains Active
+# --- the mountain pass: the third symbol, the mystic tower rises
+cheat fly
+flyto 134 6 36
+land
+settle
+eventbit 134 1 1
+quest MysticTower_VisitTheMountains Completed
+quest MysticTower_EnterTheMysticTower Active
+# --- the mystic tower (world map 133)
+cheat fly
+flyto 133 48 25
+land
+settle
+state
+# --- the stone head lets Targor in
+cheat light 3
+walkto 10 15 fight 478
+settle
+trigger 10 14 Eye
+talkwait
+settle
+eventbit 478 2 1
+quest MysticTower_EnterTheMysticTower Completed
+quest MysticTower_PassTheTestOfHighMysticism Active
+# --- the way to the test: through the passage at 8,13 to the left side (a fight at 5,13), the torch opens the wall
+# at 4,12, behind it a chest holds the key 509 for the door at 12,13, the right side leads to the middle of the tower
+walkto 5 14 fight 478
+settle
+walkto 5 12 fight 478
+settle
+trigger 4 12 item:130
+talkwait
+settle
+eventbit 478 13 1
+walkto 3 13 fight 478
+settle
+trigger 3 14 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 509 1
+walkto 11 13 fight 478
+settle
+trigger 12 13 Eye
+talkwait
+usekey 509
+talkwait
+settle
+eventbit 478 12 1
+# --- the test: the stone head explains it, the friends die, Targor becomes the leader
+walkto 10 9 fight 478
+settle
+trigger 10 8 Eye
+wait 2000
+dismiss
+wait 1500
+# take the test
+yes
+wait 3000
+activate 2
+talkwait
+state
+# --- Targor learns the mystic imitation at the glass orbs
+walkto 8 5 fight 478
+settle
+trigger 7 5 Eye
+talkwait
+walkto 12 5 fight 478
+settle
+trigger 13 5 Eye
+talkwait
+var 374 1
+# --- the demon
+walkto 10 5 fight 478
+settle
+trigger 10 4 Move
+talkwait 30000
+waitbattle 15000
+cheat win
+talkwait 30000
+takeloot optional
+closewindow
+talkwait
+var 371 1
+quest MysticTower_PassTheTestOfHighMysticism Completed
+mainquest MysticTower Completed
+reloadquests
+quest MysticTower_VisitThePond Completed
+quest MysticTower_VisitTheLonelyTree Completed
+quest MysticTower_VisitTheMountains Completed
+quest MysticTower_EnterTheMysticTower Completed
+quest MysticTower_PassTheTestOfHighMysticism Completed
+mainquest MysticTower Completed
+exit

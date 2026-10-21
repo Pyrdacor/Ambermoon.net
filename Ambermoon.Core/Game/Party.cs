@@ -193,7 +193,7 @@ partial class GameCore
                 if (battleRoundActiveSprite != null)
                     battleRoundActiveSprite.Visible = false;
                 currentBattleInfo = null;
-                currentBattle = null;
+                ResetCurrentBattle();
                 CloseWindow(() =>
                 {
                     InputEnable = true;
@@ -866,6 +866,9 @@ partial class GameCore
 
             if (CanSee())
             {
+                // TODO: Only the tile the player walks on or the whole revealed area (the loop below)?
+                QuestLog?.CheckExploration(Map.Index, (uint)player3D!.Position.X + 1, (uint)player3D.Position.Y + 1);
+
                 var labdata = MapManager.GetLabdataForMap(Map);
 
                 for (int y = -1; y <= 1; ++y)
@@ -1321,10 +1324,13 @@ partial class GameCore
         return null;
     }
 
-    internal void ProcessPoisonDamage(uint times, Action<bool>? followAction = null)
+    internal void ProcessPoisonDamage(uint times, Action<bool>? followAction = null, bool battle = false)
     {
-        uint GetDamage()
+        uint GetDamage(PartyMember partyMember)
         {
+            if (battle)
+                return GetBattlePoisonDamage(partyMember);
+
             uint damage = 0;
 
             for (uint i = 0; i < times; ++i)
@@ -1333,8 +1339,29 @@ partial class GameCore
             return damage;
         }
 
-        DamageAllPartyMembers(_ => GetDamage(),
+        DamageAllPartyMembers(GetDamage,
             p => p.Alive && p.Conditions.HasFlag(Condition.Poisoned), null, followAction);
+    }
+
+    /// <summary>
+    /// Poison damage per battle round. With the extended curse effects (Advanced) it is
+    /// a random value between 1 and 5% of the total max hit points, but at most 20
+    /// for party members and bosses and 35 for other monsters. Otherwise 1-5 hit points.
+    /// </summary>
+    internal uint GetBattlePoisonDamage(Character character)
+    {
+        return (uint)RandomInt(1, (int)GetMaxBattlePoisonDamage(character));
+    }
+
+    internal uint GetMaxBattlePoisonDamage(Character character)
+    {
+        if (!Features.HasFlag(Features.ExtendedCurseEffects))
+            return 5;
+
+        uint limit = character is Monster && !character.BattleFlags.HasFlag(BattleFlags.Boss) ? 35u : 20u;
+
+        // the limit is applied before the random so high max hit points won't always deal the max damage
+        return Util.Limit(1u, character.HitPoints.TotalMaxValue * 5 / 100, limit);
     }
 
     void Sleep(bool inn, int healing)
@@ -1443,6 +1470,41 @@ partial class GameCore
         else // sleep 8 hours
         {
             layout.ShowClickChestMessage(DataNameProvider.Sleep8Hours, () => Start(false));
+        }
+    }
+
+    /// <summary>
+    /// Diseased party members lose one point of a random attribute each day.
+    /// </summary>
+    void ProcessDisease()
+    {
+        Attribute[] attributes = [Attribute.Strength, Attribute.Intelligence, Attribute.Dexterity, Attribute.Speed,
+            Attribute.Stamina, Attribute.Charisma, Attribute.Luck, Attribute.AntiMagic];
+
+        foreach (var partyMember in PartyMembers)
+        {
+            if (!partyMember.Alive || !partyMember.Conditions.HasFlag(Condition.Diseased) ||
+                partyMember.Conditions.HasFlag(Condition.Petrified))
+                continue;
+
+            // while exhausted the real value is stored and the current value is halved
+            bool exhausted = partyMember.Conditions.HasFlag(Condition.Exhausted);
+            var reducibleAttributes = attributes.Where(a => (exhausted ? partyMember.Attributes[a].StoredValue : partyMember.Attributes[a].CurrentValue) != 0).ToArray();
+
+            if (reducibleAttributes.Length == 0)
+                continue;
+
+            var attribute = partyMember.Attributes[reducibleAttributes[RandomInt(0, reducibleAttributes.Length - 1)]];
+
+            if (exhausted)
+            {
+                --attribute.StoredValue;
+                attribute.CurrentValue = Math.Min(attribute.CurrentValue, attribute.StoredValue);
+            }
+            else
+            {
+                --attribute.CurrentValue;
+            }
         }
     }
 

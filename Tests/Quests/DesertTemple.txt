@@ -1,0 +1,86 @@
+# The desert temple (Ambermoon Advanced episode 2, any language): with the book of mystic creatures (268) the sighing
+# desert (map 45) swallows the party now and then (25% per step) into the desert temple (map 469). The face puzzle
+# (levers in maps 469 and 474) opens the passages of peace (map 474) with three riddlemouths and Marla.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest DesertTemple_FindMarlaInTheDesert Inactive
+quest DesertTemple_SolveTheFacePuzzle Inactive
+# the book of mystic creatures is from another quest
+setvar 268 1
+reloadquests
+quest DesertTemple_FindMarlaInTheDesert Active
+quest DesertTemple_SolveTheFacePuzzle Inactive
+# --- where the sand drops the party into the desert temple (event 45:2 teleports to 469 10,9)
+goto 469 10 9
+dismissall
+cheat berserk
+dismissall
+quest DesertTemple_FindMarlaInTheDesert Completed
+quest DesertTemple_SolveTheFacePuzzle Active
+# the exploration of the drop position persists
+reloadquests
+quest DesertTemple_FindMarlaInTheDesert Completed
+quest DesertTemple_SolveTheFacePuzzle Active
+# the other levers of the face (maps 469 and 474) are already set: one eye is still open, the mouth still closed
+setvar 273 0
+setvar 277 1
+setvar 274 1
+setvar 275 1
+setvar 276 1
+setvar 278 0
+setvar 279 0
+goto 469 4 9
+dismissall
+trigger 3 9 Hand
+talkwait
+var 286 1
+quest DesertTemple_SolveTheFacePuzzle Completed
+quest DesertTemple_AnswerTheRiddlemouths Active
+# --- the three riddlemouths in the passages of peace
+goto 474 3 18
+dismissall
+cheat berserk
+dismissall
+trigger 3 17 Eye
+answer 129
+talkwait
+eventbit 474 2 1
+quest DesertTemple_AnswerTheRiddlemouths Active
+goto 474 7 18
+trigger 7 17 Eye
+answer 131
+talkwait
+eventbit 474 3 1
+goto 474 12 16
+trigger 12 15 Eye
+answer 133
+talkwait
+eventbit 474 4 1
+quest DesertTemple_AnswerTheRiddlemouths Completed
+quest DesertTemple_DefeatMarla Active
+reloadquests
+quest DesertTemple_AnswerTheRiddlemouths Completed
+quest DesertTemple_DefeatMarla Active
+# --- Marla
+goto 474 9 8
+talkwait 30000
+waitbattle 15000
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
+eventbit 474 32 1
+# the victory sets global var 272, otherwise the Desert of Sighs swallows the party again (fixed in the AA 1.33 data of the remake)
+var 272 1
+quest DesertTemple_DefeatMarla Completed
+mainquest DesertTemple Completed
+reloadquests
+quest DesertTemple_FindMarlaInTheDesert Completed
+quest DesertTemple_SolveTheFacePuzzle Completed
+quest DesertTemple_AnswerTheRiddlemouths Completed
+quest DesertTemple_DefeatMarla Completed
+mainquest DesertTemple Completed
+exit

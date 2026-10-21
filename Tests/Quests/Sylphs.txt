@@ -1,0 +1,127 @@
+# Sylphs, normal playthrough (original game and Advanced, any language)
+# - The cook: text popup map character 1 (0-based 0) at 24,11 in the house of the baron (map 269) -> custom variable 8190.
+# - Lady Heidi (NPC 9), keyword FAIRIES (24) or FAIRY (25), only typed by the player -> custom variables 8179 (and 8185 chain of office).
+# - The WEIRD STONE (283) is treasure 51 in the hole of a tree at 40,18 on world map 155 (text 0, sets event bit 155:1).
+#   Careful: the area east of it (40,14 ... 44,18 and 12 more tiles, chain 2) starts an orc fight (monster group 29).
+# - Sylph cave (map 279): door 10 at 16,4 (hand, key 283, no lockpicking). Behind it, 16,5 / 15,6 / 16,6 / 17,6 (chain 4)
+#   show text 4 and make Sariel (NPC 17, map character 1) appear.
+# - Sariel: Talk adds SYLPH (48) and SISTER (49); SISTER teaches Sylphic and sets variable 78.
+# - Selena (party member 9) is map character 1 at 4,15 in the orc cave (map 280), in the cell behind door 14 at 6,13
+#   (hand, PRISON KEY 284, no lockpicking). The prison key is carried by Reg the hill giant (see OrcPlague.txt).
+#   Leaving her conversation (or letting her join) sets variable 79. She only speaks Sylphic.
+waitidle 20000
+dismissall
+# carry the heavy loot (no quest relevance)
+cheat netsrak
+quest Sylphs_TalkToLadyHeidi Inactive
+quest Sylphs_FindTheHiddenItemInTheTree Inactive
+quest Sylphs_FindTheSylphs Inactive
+quest Sylphs_RescueSelena Inactive
+# --- the cook of the baron
+goto 269 24 12
+wait 2000
+dismissall
+interact 1
+talkwait
+var 8190 1
+quest Sylphs_TalkToLadyHeidi Active
+quest Sylphs_FindTheHiddenItemInTheTree Inactive
+# --- Lady Heidi tells about the fairies
+talk 9
+talkwait
+say 24
+talkwait
+var 8179 1
+quest Sylphs_TalkToLadyHeidi Completed
+quest Sylphs_FindTheHiddenItemInTheTree Active
+quest Sylphs_FindTheSylphs Inactive
+leave
+talkwait
+waitidle 5000
+# --- the hole in the tree next to the sylph cave (world map 155). The treasure opens when arriving on it.
+goto 155 40 18
+# the tree can't be entered
+trigger 40 18 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 283 1
+eventbit 155 1 1
+quest Sylphs_FindTheHiddenItemInTheTree Completed
+quest Sylphs_FindTheSylphs Active
+quest Sylphs_RescueSelena Inactive
+# --- the door in the sylph cave, opened with the weird stone (stand north of it)
+cheat light 3
+goto 279 16 3
+trigger 16 4 Hand
+talkwait
+usekey 283
+talkwait
+waitidle 5000
+eventbit 279 3 1
+# the sylphs flee, only Sariel stays
+goto 279 16 5
+talkwait
+waitidle 5000
+eventbit 279 4 1
+# --- Sariel
+talk 17
+talkwait
+say 48
+talkwait
+quest Sylphs_FindTheSylphs Active
+say 49
+talkwait
+var 78 1
+quest Sylphs_FindTheSylphs Completed
+quest Sylphs_RescueSelena Active
+# leaving: she teleports away
+leave
+talkwait
+waitidle 5000
+# --- orc cave: Reg carries the prison key
+cheat light 3
+goto 280 15 10
+talkwait
+# Reg walks up to the party and attacks
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 284 1
+quest Sylphs_RescueSelena Active
+# --- the cell door (stand east of it in the corridor)
+goto 280 7 13
+trigger 6 13 Hand
+talkwait
+usekey 284
+talkwait
+waitidle 5000
+eventbit 280 3 1
+# entering the cell shows text 6 (chain 8)
+goto 280 5 13
+talkwait
+waitidle 5000
+# --- talk to Selena (party member, map character 1) and leave without taking her along
+interact 1
+talkwait
+var 79 0
+quest Sylphs_RescueSelena Active
+leave
+talkwait
+waitidle 5000
+var 79 1
+quest Sylphs_RescueSelena Completed
+reloadquests
+log after reload
+quests
+quest Sylphs_TalkToLadyHeidi Completed
+quest Sylphs_FindTheHiddenItemInTheTree Completed
+quest Sylphs_FindTheSylphs Completed
+quest Sylphs_RescueSelena Completed
+exit

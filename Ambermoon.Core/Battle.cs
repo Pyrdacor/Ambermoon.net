@@ -703,7 +703,7 @@ namespace Ambermoon
         void PoisonDamageMonster(Monster monster, Action followAction)
         {
             var animation = layout.GetMonsterBattleAnimation(monster)!;
-            uint damage = (uint)game.RandomInt(1, 5);
+            uint damage = game.GetBattlePoisonDamage(monster);
 
             void EndHurt()
             {
@@ -761,7 +761,7 @@ namespace Ambermoon
         /// <param name="battleTicks">Battle ticks when starting the round.</param>
         internal void StartRound(PlayerBattleAction[] playerBattleActions, uint battleTicks)
         {
-            game.ProcessPoisonDamage(1, _ =>
+            game.ProcessPoisonDamage(1, battle: true, followAction: _ =>
             {
                 // Remove all died party members from the battle field
                 foreach (var partyMember in partyMembers.Where(p => p != null && !p.Alive))
@@ -4582,7 +4582,7 @@ namespace Ambermoon
 
                     if (partyMember.Conditions.HasFlag(Condition.Blind))
                         parryMalus = 50;
-                    else if (attacker.Conditions.HasFlag(Condition.Aging) && agingValues.TryGetValue(attacker, out uint agingValue))
+                    else if (partyMember.Conditions.HasFlag(Condition.Aging) && agingValues.TryGetValue(partyMember, out uint agingValue))
                         parryMalus = agingValue;
 
                     if (partyMember.BattleFlags.HasFlag(BattleFlags.Boss))

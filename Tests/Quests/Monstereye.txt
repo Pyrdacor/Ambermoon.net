@@ -1,0 +1,27 @@
+# Monster eye: Sandire (35) in Spannenberg (map 263) sells it for 5000 gold (original game and Advanced, any language)
+waitidle 20000
+dismissall
+cheat give gold 6000
+goto 263 13 18
+dismissall
+quest Monstereye_BuyIt Inactive
+talk 35
+talkwait
+quest Monstereye_BuyIt Active
+# not enough gold
+givegold 4000
+talkwait
+var 221 0
+quest Monstereye_BuyIt Active
+givegold 5000
+talkwait 20000
+var 221 1
+takeitems
+count 386 1
+quest Monstereye_BuyIt Completed
+leave
+talkwait
+waitidle 5000
+reloadquests
+quest Monstereye_BuyIt Completed
+exit

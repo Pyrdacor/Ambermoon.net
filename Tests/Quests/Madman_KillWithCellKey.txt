@@ -1,0 +1,81 @@
+# The madman is killed (original game and Advanced, any language): the cell key (261) from chest 39
+# opens his cell door (267, 5,12, door 5, no lockpicking), entering the cell (4-6,11) starts the
+# fight (monster group 16), afterwards the madman is hidden and 267:6 is disabled without global
+# variable 29.
+# Expected: "Kill the madman" appears completed, the amulet steps ("Find the second part" was active
+# because the B O S amulet was found) become inactive and stay inactive after loading,
+# "Visit the madman" stays completed.
+waitidle 20000
+dismissall
+cheat give 138 10
+cheat level 50
+talkwait
+dismissall
+goto 266 40 6
+wait 2000
+dismissall
+talk 6
+talkwait
+say 20
+talkwait
+say 21
+talkwait
+leave
+talkwait
+waitidle 5000
+quest Madman_VisitTheMadman Active
+cheat light 3
+cheat teleport 267 12 11
+wait 2000
+dismissall
+trigger 10 12
+talkwait
+dismissall
+quest Madman_VisitTheMadman Completed
+# --- chest 39 (267, 18,6)
+goto 267 18 7
+trigger 18 6 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+count 261 1
+quest Madman_FindTheSecondPartOfTheAmulet Active
+quest Madman_KillTheMadman Inactive
+# --- open the cell door with the cell key (stand south of it)
+goto 267 5 13
+trigger 5 12 Eye
+talkwait
+usekey 261
+talkwait
+dismissall
+quest Madman_KillTheMadman Inactive
+# --- enter the cell, the madman attacks
+goto 267 5 11
+talkwait
+trigger 5 11
+waitbattle 15000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+eventbit 267 6 1
+var 29 0
+quest Madman_KillTheMadman Completed
+quest Madman_VisitTheMadman Completed
+quest Madman_FindTheSecondPartOfTheAmulet Inactive
+quest Madman_UniteTheAmulet Inactive
+quest Madman_GiveTheAmuletToTheMadman Inactive
+reloadquests
+log after reload
+quests
+quest Madman_KillTheMadman Completed
+quest Madman_VisitTheMadman Completed
+quest Madman_FindTheSecondPartOfTheAmulet Inactive
+quest Madman_UniteTheAmulet Inactive
+quest Madman_GiveTheAmuletToTheMadman Inactive
+exit

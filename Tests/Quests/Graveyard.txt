@@ -1,0 +1,50 @@
+# Graveyard: Aman (3) wants the brooch of the graveyard's gardener (original game and Advanced, any language)
+waitidle 20000
+dismissall
+goto 264 29 21
+dismissall
+talk 3
+talkwait
+say 4
+talkwait
+quest Graveyard_FindTheGardener Inactive
+say 6
+talkwait
+quest Graveyard_FindTheGardener Active
+quest Graveyard_GetBroochFromGravedigger Inactive
+leave
+talkwait
+waitidle 5000
+# the hole in the hedge of the graveyard (Spannenberg, map 263) where the gardener (zombie master) appears and attacks
+goto 263 9 5
+trigger 9 4
+talkwait
+waitbattle 15000
+quest Graveyard_FindTheGardener Completed
+quest Graveyard_GetBroochFromGravedigger Active
+cheat win
+talkwait
+takeloot
+count 238 1
+quest Graveyard_GetBroochFromGravedigger Completed
+quest Graveyard_ReturnBroochToAman Active
+closewindow
+talkwait
+goto 264 29 21
+dismissall
+talk 3
+talkwait
+giveitem 238
+talkwait 20000
+var 12 1
+quest Graveyard_ReturnBroochToAman Completed
+quest ThiefGuild_Enter Active
+takeitems
+leave
+talkwait
+waitidle 5000
+reloadquests
+quest Graveyard_FindTheGardener Completed
+quest Graveyard_GetBroochFromGravedigger Completed
+quest Graveyard_ReturnBroochToAman Completed
+exit

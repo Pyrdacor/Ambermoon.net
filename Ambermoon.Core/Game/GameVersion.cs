@@ -44,6 +44,6 @@ public class GameVersion
     /// </summary>
     public string? SavegameFolder;
 
-    internal const string RemakeReleaseDate = "11-08-2026";
+    internal const string RemakeReleaseDate = "18-10-2026";
 }
 

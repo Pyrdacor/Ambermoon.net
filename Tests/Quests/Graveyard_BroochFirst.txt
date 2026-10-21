@@ -1,0 +1,35 @@
+# Graveyard: the gardener is killed and the brooch found before Aman asked for it (original game and Advanced)
+waitidle 20000
+dismissall
+goto 263 9 5
+trigger 9 4
+talkwait
+waitbattle 15000
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+count 238 1
+# found before anybody asked: the steps are completed, the return step is shown
+quest Graveyard_FindTheGardener Completed
+quest Graveyard_GetBroochFromGravedigger Completed
+quest Graveyard_ReturnBroochToAman Active
+# Aman takes the brooch without asking for it first
+goto 264 29 21
+dismissall
+talk 3
+talkwait
+giveitem 238
+talkwait 20000
+var 12 1
+quest Graveyard_ReturnBroochToAman Completed
+takeitems
+leave
+talkwait
+waitidle 5000
+reloadquests
+quest Graveyard_FindTheGardener Completed
+quest Graveyard_GetBroochFromGravedigger Completed
+quest Graveyard_ReturnBroochToAman Completed
+exit

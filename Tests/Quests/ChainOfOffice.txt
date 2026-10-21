@@ -1,0 +1,59 @@
+# Chain of office, normal playthrough (original game and Advanced, any language)
+# - Lady Heidi (NPC 9) with FAIRIES (24) / FAIRY (25) tells the story -> custom variable 8185 (and 8179 for the sylphs).
+#   Baron George (NPC 8) reacts to the same keywords (text 4) and also sets 8185.
+# - CHAIN OF OFFICE (269): chest 52 in the sylph cave (map 279, 20,13, open), behind door 10 (weird stone).
+#   The chest also holds a gold goblet (wine trophies), silver cutlery, wishing coins, a wind pearl and 2489 gold.
+# - Giving the chain to the Baron: text 12, variable 31, creates the wind pearl 135, +100 exp.
+waitidle 20000
+dismissall
+quest ChainOfOffice_FindIt Inactive
+quest ChainOfOffice_ReturnIt Inactive
+# --- Lady Heidi
+talk 9
+talkwait
+say 24
+talkwait
+leave
+talkwait
+waitidle 5000
+var 8185 1
+quest ChainOfOffice_FindIt Active
+quest ChainOfOffice_ReturnIt Inactive
+# --- the chest in the sylph cave (the door is skipped by the teleport, see Sylphs.txt for the door)
+cheat light 3
+goto 279 20 13
+trigger 20 13 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+waitidle 5000
+count 269 1
+quest ChainOfOffice_FindIt Completed
+quest ChainOfOffice_ReturnIt Active
+reloadquests
+quest ChainOfOffice_FindIt Completed
+quest ChainOfOffice_ReturnIt Active
+# --- show it to the Baron (text only), then give it
+talk 8
+talkwait
+showitem 269
+talkwait
+var 31 0
+quest ChainOfOffice_ReturnIt Active
+giveitem 269
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+var 31 1
+count 269 0
+quest ChainOfOffice_ReturnIt Completed
+# --- persistence: the chain is gone, FindIt must stay completed via variable 31
+reloadquests
+log after reload
+quests
+quest ChainOfOffice_FindIt Completed
+quest ChainOfOffice_ReturnIt Completed
+exit

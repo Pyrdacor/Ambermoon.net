@@ -1,0 +1,116 @@
+# The gral temple (Ambermoon Advanced episode 3, any language): Melvin (NPC 47) in Snakesign tells the legend of his
+# ancestor Melvin, who heard a ghost whisper "Gral" in the swamps. Saying "Gral" at night in front of the mountains
+# (map 183, 36,20) opens the gral temple (map 475): gral key (chest 262) for the inner door (door 52), heavy stone
+# (treasure 263) on the altar, Diokhar. The ancestor's remains with the emerald necklace (483) lie in the old sewers.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest GralTemple_AskMelvinAboutHisFamily Inactive
+# --- Melvin
+goto 420 6 15
+dismissall
+talk 47
+talkwait
+quest GralTemple_AskMelvinAboutHisFamily Active
+say 146
+talkwait
+say 147
+talkwait
+var 310 1
+quest GralTemple_AskMelvinAboutHisFamily Completed
+quest GralTemple_SayGralAtNight Active
+leave
+talkwait
+waitidle 5000
+# --- "Gral" at night in front of the mountains
+goto 183 36 22
+hour 23
+trigger 36 21 Mouth
+answer 150
+talkwait
+eventbit 183 1 1
+quest GralTemple_SayGralAtNight Completed
+quest GralTemple_OpenTheInnerDoor Active
+quest GralTemple_FindMelvinsRemains Active
+# --- the gral temple, its monsters are removed
+goto 475 31 14
+cheat berserk
+dismissall
+trigger 31 13 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 478 1
+goto 475 10 20
+trigger 10 19 Eye
+talkwait
+usekey 478
+talkwait
+waitidle 5000
+quest GralTemple_OpenTheInnerDoor Completed
+quest GralTemple_PlaceTheHeavyStoneOnTheAltar Active
+goto 475 21 5
+trigger 21 4 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 481 1
+goto 475 31 5
+trigger 31 4 item:481
+talkwait
+eventbit 475 29 1
+quest GralTemple_PlaceTheHeavyStoneOnTheAltar Completed
+quest GralTemple_DefeatDiokhar Active
+# --- Diokhar: the first contact only shows him, then he is fought
+goto 475 14 5
+talkwait
+trigger 14 4 Move
+talkwait 30000
+waitbattle 15000
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
+eventbit 475 36 1
+var 315 1
+quest GralTemple_DefeatDiokhar Completed
+# --- the remains in the old sewers
+goto 477 13 4
+trigger 13 3 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 483 1
+quest GralTemple_FindMelvinsRemains Completed
+quest GralTemple_BringTheNecklaceToMelvin Active
+reloadquests
+quest GralTemple_FindMelvinsRemains Completed
+quest GralTemple_BringTheNecklaceToMelvin Active
+# --- Melvin sees the necklace
+goto 420 6 15
+dismissall
+talk 47
+talkwait
+showitem 483
+talkwait
+leave
+talkwait
+waitidle 5000
+var 322 1
+quest GralTemple_BringTheNecklaceToMelvin Completed
+mainquest GralTemple Completed
+reloadquests
+quest GralTemple_AskMelvinAboutHisFamily Completed
+quest GralTemple_SayGralAtNight Completed
+quest GralTemple_OpenTheInnerDoor Completed
+quest GralTemple_PlaceTheHeavyStoneOnTheAltar Completed
+quest GralTemple_DefeatDiokhar Completed
+quest GralTemple_FindMelvinsRemains Completed
+quest GralTemple_BringTheNecklaceToMelvin Completed
+mainquest GralTemple Completed
+exit

@@ -1,0 +1,46 @@
+# Valdyn's return: S'Krel's yellow sphere is obtained before the necklace was touched, i.e. before
+# Valdyn ever came to Lyramion (original game and Advanced, any language).
+# Expected: the log does not show Valdyn's quest before Valdyn was met (both steps hidden until
+# 296:9). Touching the necklace afterwards completes "Find a way home" and activates "Use the
+# yellow sphere".
+waitidle 20000
+dismissall
+# S'Krel speaks Moranian only (also maxes the stats)
+cheat netsrak
+cheat level 50
+talkwait
+dismissall
+cheat give 398 1
+goto 452 14 8
+wait 2000
+dismissall
+talk 34
+talkwait
+giveitem 398
+talkwait 20000
+var 218 1
+takeitems
+leave
+talkwait
+waitidle 5000
+count 367 1
+eventbit 296 9 0
+# the quest log waits until Valdyn came through the light gate
+quest ValdynsReturn_FindAWayHome Inactive
+quest ValdynsReturn_UseTheYellowSphere Inactive
+quests
+# --- now Valdyn arrives
+cheat light 3
+goto 296 8 5
+talkwait
+trigger 8 4
+talkwait 20000
+dismissall
+eventbit 296 9 1
+quest ValdynsReturn_FindAWayHome Completed
+quest ValdynsReturn_UseTheYellowSphere Active
+reloadquests
+log after reload
+quest ValdynsReturn_FindAWayHome Completed
+quest ValdynsReturn_UseTheYellowSphere Active
+exit

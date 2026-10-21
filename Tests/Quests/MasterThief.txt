@@ -1,0 +1,162 @@
+# The highest thieves' test (Ambermoon Advanced episode 3, any language): Aman (NPC 3) is attacked by knights in
+# the weapons chamber of Gemstone (map 407). Afterwards he prepares the cellar of the thieves' guild in Spannenberg
+# (map 265): trap, lock and dexterity doors, the riddle of the barrels (items 514-518), the stealth cloak (513) for
+# Aman's key (512) and the test of stealth behind the torches. Aman then reveals himself as the head of the guild.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+# the thief skills for the doors (no quest relevance)
+setskill FindTraps 99
+setskill DisarmTraps 99
+setskill LockPicking 99
+setattr Dexterity 120
+# the thieves' guild quest: Aman got the brooch, the riddlemouth is answered with "Silk"
+# (Aman then waits in the weapons chamber of Gemstone)
+setvar 12 1
+goto 265 15 13
+talkwait
+trigger 15 14 Eye
+answer 7
+talkwait 20000
+dismissall
+quest MasterThief_HelpAmanAgainstTheKnights Inactive
+# --- Aman in the weapons chamber of Gemstone
+goto 407 7 11
+dismissall
+talk 3
+talkwait
+waitidle 5000
+var 376 1
+quest MasterThief_HelpAmanAgainstTheKnights Active
+# the knights appear and are defeated
+goto 407 12 6
+talkwait
+eventbit 407 4 1
+cheat berserk
+dismissall
+goto 407 7 11
+dismissall
+talk 3
+talkwait
+waitidle 5000
+var 375 1
+quest MasterThief_HelpAmanAgainstTheKnights Completed
+quest MasterThief_MeetAmanInTheThievesGuild Active
+# --- Aman in the cellar of the thieves' guild
+goto 265 24 15
+dismissall
+talk 3
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 377 1
+count 510 1
+quest MasterThief_MeetAmanInTheThievesGuild Completed
+quest MasterThief_SolveTheBarrelRiddle Active
+# --- the trap, lock and dexterity doors (the guards of the test are removed)
+cheat berserk
+dismissall
+goto 265 22 5
+trigger 22 4 Eye
+talkwait
+var 379 1
+eventbit 265 34 1
+goto 265 24 8
+trigger 24 7 Eye
+talkwait
+eventbit 265 35 1
+goto 265 29 8
+trigger 30 8 Eye
+talkwait
+eventbit 265 36 1
+# --- the wine room, Aman appears, the old items from the barrel
+goto 265 31 8
+talkwait
+goto 265 29 6
+trigger 29 5 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 514 1
+# the right barrels for the items
+goto 265 31 3
+trigger 32 3 item:515
+talkwait
+goto 265 31 5
+trigger 32 5 item:518
+talkwait
+goto 265 31 7
+trigger 32 7 item:517
+talkwait
+goto 265 31 9
+trigger 32 9 item:514
+talkwait
+goto 265 31 11
+trigger 32 11 item:516
+talkwait
+var 391 1
+quest MasterThief_SolveTheBarrelRiddle Completed
+quest MasterThief_ShowTheCloakToAman Active
+goto 265 31 7
+trigger 32 7 Eye
+talkwait
+takeloot
+closewindow
+talkwait
+count 513 1
+# --- Aman sees the stealth cloak
+goto 265 22 22
+dismissall
+talk 3
+talkwait
+showitem 513
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 380 1
+count 512 1
+quest MasterThief_ShowTheCloakToAman Completed
+quest MasterThief_PassTheTestOfStealth Active
+reloadquests
+quest MasterThief_ShowTheCloakToAman Completed
+quest MasterThief_PassTheTestOfStealth Active
+# --- Aman's door, the switches behind the torches
+goto 265 22 23
+trigger 23 23 Eye
+talkwait
+usekey 512
+talkwait
+goto 265 33 23
+trigger 34 23 Hand
+talkwait
+goto 265 27 23
+trigger 28 23 Hand
+talkwait
+quest MasterThief_PassTheTestOfStealth Completed
+quest MasterThief_TalkToAman Active
+# --- Aman, the head of the thieves' guild
+goto 265 26 19
+dismissall
+talk 3
+talkwait
+waitidle 5000
+var 378 1
+quest MasterThief_TalkToAman Completed
+mainquest MasterThief Completed
+reloadquests
+quest MasterThief_HelpAmanAgainstTheKnights Completed
+quest MasterThief_MeetAmanInTheThievesGuild Completed
+quest MasterThief_SolveTheBarrelRiddle Completed
+quest MasterThief_ShowTheCloakToAman Completed
+quest MasterThief_PassTheTestOfStealth Completed
+quest MasterThief_TalkToAman Completed
+mainquest MasterThief Completed
+exit

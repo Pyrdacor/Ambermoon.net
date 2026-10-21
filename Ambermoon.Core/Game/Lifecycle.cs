@@ -391,7 +391,7 @@ partial class GameCore
             }
         };
         GameTime.HourChanged += hours => GameTime_HoursPassed(hours, true);
-        currentBattle = null;
+        ResetCurrentBattle();
 
         ClearPartyMembers();
 
@@ -454,6 +454,8 @@ partial class GameCore
 
         InputEnable = true;
         paused = false;
+
+        CreateQuestLog();
 
         if (layout.ButtonGridPage == 1)
             ToggleButtonGridPage();
@@ -535,8 +537,11 @@ partial class GameCore
         if (SavegameManager.HasCrashSavegame())
         {
             Ingame = true;
+            QuestLogIconVisible = false;
             ShowDecisionPopup(GetCustomText(CustomTexts.Index.LoadCrashedGame), response =>
             {
+                QuestLogIconVisible = true;
+
                 if (response == PopupTextEvent.Response.Yes)
                 {
                     LoadGame(99, false, true);
@@ -744,6 +749,7 @@ partial class GameCore
     {
         drugOverlay?.Delete();
         ouchSprite?.Delete();
+        questLogIcon?.Delete();
         mobileClickIndicator?.Delete();
 
         Util.SafeCall(UntrapMouse);

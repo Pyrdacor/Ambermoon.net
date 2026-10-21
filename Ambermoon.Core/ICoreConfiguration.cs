@@ -137,6 +137,7 @@ public interface ICoreConfiguration
     Movement3D Movement3D { get; set; }
     bool TurnWithArrowKeys { get; set; }
     GameLanguage Language { get; set; }
+    bool ShowCompletedQuests { get; set; }
     bool LegacyMode { get; set; }
     bool ExtendedSavegameSlots { get; set; }
     bool ShowAdvancedLogo { get; set; }

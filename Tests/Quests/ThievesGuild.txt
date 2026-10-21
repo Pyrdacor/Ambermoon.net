@@ -1,0 +1,109 @@
+# Thieves' guild played the normal way (ORIGINAL game, any language; Aman's conversation differs a lot
+# in Ambermoon Advanced, so the graveyard part only works with the original).
+# Aman (NPC 3, inn 264) wants the necromancer brooch (238) of the gardener (zombie master appearing at
+# the hedge of the graveyard, 263 9,4) and gives the password "Silk" (keyword 7, global variable 12)
+# -> the riddlemouth in the rogue's wine cellar (265, 15,14) is answered with "Silk" (event bit
+# 265:4) -> test of thieves (sign at 265 15,12): chest 34 (5,10, door key I), the doors and finally
+# the reward chest 36 (7,5, lockpicking) completes the test (ChestUnlockedTrigger 36).
+# The doors of the test are bypassed with goto (chest 36 is locked from the start, verified in the
+# initial savegame: chests 34/36 locked, 35 is the open well treasure).
+waitidle 20000
+dismissall
+cheat give 138 10
+# only to survive the fights/traps (no quest relevance)
+cheat level 20
+talkwait
+dismissall
+quest ThiefGuild_Enter Inactive
+# --- Aman (3) in the inn (map 264)
+goto 264 29 21
+wait 2000
+dismissall
+talk 3
+talkwait
+say 4
+talkwait
+say 6
+talkwait
+leave
+talkwait
+waitidle 5000
+quest Graveyard_FindTheGardener Active
+quest ThiefGuild_Enter Inactive
+# --- the gardener at the hole in the hedge (263, 9,4) attacks right away
+cheat teleport 263 9 5
+wait 2000
+dismissall
+trigger 9 4
+talkwait
+waitbattle 15000
+cheat win
+talkwait
+takeloot
+count 238 1
+closewindow
+talkwait
+quest ThiefGuild_Enter Inactive
+# --- give the brooch to Aman, he tells the password
+goto 264 29 21
+wait 2000
+dismissall
+talk 3
+talkwait
+giveitem 238
+talkwait 20000
+var 12 1
+quest Graveyard_ReturnBroochToAman Completed
+quest ThiefGuild_Enter Active
+quest ThiefGuild_PassTheTest Inactive
+takeitems
+leave
+talkwait
+waitidle 5000
+# --- the riddlemouth in the wine cellar (265, mouth at 15,14, stand on 15,13)
+cheat light 3
+goto 265 15 13
+talkwait
+trigger 15 14 Eye
+# "Silk"
+answer 7
+talkwait
+dismissall
+eventbit 265 4 1
+quest ThiefGuild_Enter Completed
+quest ThiefGuild_PassTheTest Active
+# the sign of the test changes nothing
+trigger 15 12 Eye
+talkwait
+quest ThiefGuild_PassTheTest Active
+# --- chest 34 (265, 5,10) with door key I is no quest step
+goto 265 5 10
+talkwait
+trigger 5 10 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+count 246 1
+quest ThiefGuild_PassTheTest Active
+# --- the reward chest 36 (265, 7,5)
+goto 265 7 5
+talkwait
+trigger 7 5 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+# not every item fits into the inventory of the lone hero (weight), the quest only needs the opened chest
+quest ThiefGuild_PassTheTest Completed
+reloadquests
+log after reload
+quests
+quest Graveyard_ReturnBroochToAman Completed
+quest ThiefGuild_Enter Completed
+quest ThiefGuild_PassTheTest Completed
+exit

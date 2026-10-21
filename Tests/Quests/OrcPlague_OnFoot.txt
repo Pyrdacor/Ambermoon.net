@@ -1,0 +1,170 @@
+# Orc plague played on foot (original game and Advanced, any language): the party walks through the maps with
+# walkto (fights on the way are won with the win cheat) and flies on the world map (fly cheat).
+# Route: grandfather's house (map 258) -> world map 157 -> Spannenberg (map 263, entrance at world map 156 39,14)
+# -> house of Baron George (map 269, door at 263 16,7) -> world map 139 -> orc cave (map 280, entrance at 139 34,37)
+# -> through the lever puzzle of the cave to Reg the hill giant (appears after the text at 280 15,10)
+# -> back to Baron George -> his reward chest 131 (269 11,3) is opened with the key he gives for the head.
+# All walks use "fight": battles are won with the win cheat and texts on the way are confirmed. A walkto is
+# repeated after a possible interruption (e.g. a text), the map number skips it if the party already
+# left the map (e.g. through a door).
+waitidle 20000
+dismissall
+# Gryban carries the heavy head of the hill giant, netsrak maximizes the strength of the party (no quest relevance)
+cheat invite Gryban
+settle
+cheat netsrak
+# only his armor and his sword are kept, otherwise the head is still too heavy
+dropitems 2
+quest OrcPlague_DefeatTheOrcLeader Inactive
+quest OrcPlague_ReturnToGeorg Inactive
+# --- leave grandfather's house (exit at the bottom) to the world map
+walkto 16 30 fight 258
+settle
+walkto 16 30 fight 258
+settle
+# --- fly to Spannenberg and land at the town entrance
+cheat fly
+flyto 156 39 14
+land
+settle
+# --- through Spannenberg to the house of Baron George
+walkto 16 7 fight 263
+settle
+walkto 16 7 fight 263
+settle
+walkto 17 20 fight 269
+settle
+# --- Baron George tells about his problems (map character 2)
+interact 2
+talkwait
+quest OrcPlague_DefeatTheOrcLeader Active
+say 23
+talkwait
+leave
+talkwait
+waitidle 5000
+# --- out of the house and the town
+walkto 17 25 fight 269
+settle
+walkto 17 25 fight 269
+settle
+walkto 16 30 fight 263
+settle
+walkto 16 30 fight 263
+settle
+# --- fly to the orc cave and land at its entrance
+cheat fly
+flyto 139 34 37
+land
+settle
+cheat light 3
+# --- the lever puzzle of the orc cave: levers are pulled by hand from the field next to them (the question is
+# answered with yes), cracked walls are opened by hand, the riddlemouth wants the dictionary word 50
+walkto 23 11 fight
+trigger 24 11 Hand
+talkwait
+settle
+eventbit 280 4 1
+walkto 23 9 fight
+trigger 23 8 Eye
+answer 50
+talkwait
+settle
+eventbit 280 5 1
+walkto 24 4 fight
+trigger 24 3 Hand
+talkwait
+settle
+eventbit 280 10 1
+walkto 24 7 fight
+trigger 25 7 Hand
+talkwait
+settle
+eventbit 280 6 1
+walkto 17 5 fight
+trigger 16 5 Hand
+talkwait
+settle
+eventbit 280 11 1
+walkto 4 3 fight
+trigger 3 3 Hand
+talkwait
+settle
+eventbit 280 12 1
+walkto 8 17 fight
+trigger 9 17 Hand
+talkwait
+settle
+eventbit 280 17 1
+walkto 17 10 fight
+trigger 17 9 Hand
+talkwait
+settle
+eventbit 280 13 1
+walkto 10 10 fight
+trigger 10 9 Hand
+talkwait
+settle
+eventbit 280 14 1
+# --- Reg appears after the text at 15,10, walks up to the party and attacks
+walkto 15 10 fight
+talkwait
+eventbit 280 9 1
+waitbattle 20000
+cheat win
+talkwait
+# Gryban (slot 2) takes the head of the hill giant (the rest of the loot is too heavy)
+activate 2
+takeloot 268
+closewindow
+talkwait
+waitidle 5000
+count 268 1
+quest OrcPlague_DefeatTheOrcLeader Completed
+quest OrcPlague_ReturnToGeorg Active
+# --- back to the entrance and out of the cave
+walkto 21 19 fight 280
+settle
+walkto 21 19 fight 280
+settle
+# --- fly back to Spannenberg (the whole town is the entrance, coming from the cave its west side) and walk to
+# Baron George
+cheat fly
+flyto 156 29 14
+land
+settle
+walkto 16 7 fight 263
+settle
+walkto 16 7 fight 263
+settle
+walkto 17 20 fight 269
+settle
+# --- give him the head of the hill giant, he gives the key to his chest
+interact 2
+talkwait
+giveitem 268
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+count 268 0
+count 402 1
+quest OrcPlague_ReturnToGeorg Completed
+mainquest OrcPlague Completed
+# --- the reward chest (chest 131 at 11,3) is opened with his key
+walkto 11 4 fight
+settle
+trigger 11 3 Eye
+talkwait
+usekey 402
+talkwait
+takeloot
+closewindow
+talkwait
+count 402 0
+reloadquests
+quest OrcPlague_DefeatTheOrcLeader Completed
+quest OrcPlague_ReturnToGeorg Completed
+mainquest OrcPlague Completed
+exit

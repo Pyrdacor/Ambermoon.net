@@ -1,0 +1,135 @@
+# The madman healed with the T A R B O S amulet, played the normal way (original game and Advanced,
+# any language).
+# Clementine (NPC 6, map 266) tells about the madman (keyword 20 "Cellar" -> keyword 21 "Madman",
+# custom global variable 8182) -> watching him through the bars (267, 10,11-13, event bit 267:4)
+# -> chest 39 in the corridor (267, 18,6) holds the cell key (261), the old robe (262) and the
+# B O S amulet (263) -> Thornahuun (map monster 1 in the Tarbos coffin hall 433, appears when
+# walking on 3-7,6) drops the T A R amulet (264) -> Theresa (NPC 22, house of art 287) unites both
+# parts (265) -> giving 265 to the madman (NPC 7) sets global variable 29.
+# The Amberstar door of the coffin hall (door 31 at 433 8,9) is bypassed with goto.
+waitidle 20000
+dismissall
+cheat give 138 10
+# only to survive the fights/traps (no quest relevance)
+cheat level 50
+talkwait
+dismissall
+# --- Clementine (6) in the house of healers (map 266)
+goto 266 40 6
+wait 2000
+dismissall
+talk 6
+talkwait
+say 20
+talkwait
+quest Madman_VisitTheMadman Inactive
+say 21
+talkwait
+var 8182 1
+quest Madman_VisitTheMadman Active
+quest Madman_FindTheSecondPartOfTheAmulet Inactive
+leave
+talkwait
+waitidle 5000
+# --- watch the madman through the bars (map 267)
+cheat light 3
+cheat teleport 267 12 11
+wait 2000
+dismissall
+trigger 10 12
+talkwait
+dismissall
+eventbit 267 4 1
+quest Madman_VisitTheMadman Completed
+quest Madman_FindTheSecondPartOfTheAmulet Inactive
+# talking to him changes nothing
+talk 7
+talkwait
+leave
+talkwait
+waitidle 5000
+quest Madman_FindTheSecondPartOfTheAmulet Inactive
+# --- chest 39 in the corridor (267, 18,6)
+goto 267 18 7
+trigger 18 6 Eye
+talkwait
+usekey 138
+talkwait
+takeloot
+closewindow
+talkwait
+count 263 1
+count 261 1
+quest Madman_FindTheSecondPartOfTheAmulet Active
+quest Madman_UniteTheAmulet Inactive
+# showing the half to the madman only shows a text
+talk 7
+talkwait
+showitem 263
+talkwait
+leave
+talkwait
+waitidle 5000
+quest Madman_FindTheSecondPartOfTheAmulet Active
+# --- Thornahuun in the Tarbos coffin hall (map 433)
+cheat light 3
+goto 433 5 7
+talkwait
+trigger 5 6
+talkwait
+waitbattle 20000
+cheat win
+talkwait
+takeloot
+count 264 1
+closewindow
+talkwait
+quest Madman_FindTheSecondPartOfTheAmulet Completed
+quest Madman_UniteTheAmulet Active
+quest Madman_GiveTheAmuletToTheMadman Inactive
+# --- Theresa (22) in Burnville unites the parts
+goto 287 26 14
+wait 2000
+dismissall
+talk 22
+talkwait
+showitem 264
+talkwait
+quest Madman_UniteTheAmulet Active
+giveitem 264
+talkwait 20000
+takeitems
+leave
+talkwait
+waitidle 5000
+count 263 0
+count 264 0
+count 265 1
+quest Madman_UniteTheAmulet Completed
+quest Madman_GiveTheAmuletToTheMadman Active
+# --- give the amulet to the madman (he ends the conversation himself with an Exit event)
+cheat teleport 267 12 11
+wait 2000
+dismissall
+talk 7
+talkwait
+showitem 265
+talkwait
+quest Madman_GiveTheAmuletToTheMadman Active
+giveitem 265
+talkwait 20000
+waitidle 5000
+var 29 1
+eventbit 267 6 1
+quest Madman_GiveTheAmuletToTheMadman Completed
+# 267:6 is also disabled by the healing, but 29 is set first, so this is no kill
+quest Madman_KillTheMadman Inactive
+reloadquests
+log after reload
+quests
+quest Madman_VisitTheMadman Completed
+quest Madman_FindTheSecondPartOfTheAmulet Completed
+quest Madman_UniteTheAmulet Completed
+quest Madman_GiveTheAmuletToTheMadman Completed
+quest Madman_KillTheMadman Inactive
+exit

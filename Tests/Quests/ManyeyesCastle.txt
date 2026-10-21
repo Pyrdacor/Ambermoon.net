@@ -1,0 +1,83 @@
+# Manyeyes' castle (Ambermoon Advanced episode 1, any language): Tristan (NPC 41) in the inn of Cavetown gives the
+# key of his office (412) in Manyeyes' castle (door 39 in Cavetown, map 374). The office leads into the castle
+# (map 461), the guardian waits on the upper floor (map 462) and the curse is banished in the cellar (map 463).
+# The switch at 461 3,17 which unlocks the main door of the castle (246) is only reachable at the end.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest ManyeyesCastle_OpenTristansOffice Inactive
+# --- Tristan
+goto 375 3 23
+dismissall
+talk 41
+talkwait
+takeitems
+talkwait
+leave
+talkwait
+waitidle 5000
+var 245 1
+count 412 1
+quest ManyeyesCastle_OpenTristansOffice Active
+# --- the office door in Cavetown
+# standing in front of the door shows its lock
+goto 374 16 9
+usekey 412
+talkwait
+closewindow
+talkwait
+quest ManyeyesCastle_OpenTristansOffice Completed
+quest ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor Active
+# the main door is shown early, but it can only be opened at the end
+quest ManyeyesCastle_OpenTheCastle Blocked
+quest ManyeyesCastle_BanishManyeyesCurse Inactive
+# --- the guardian on the upper floor
+goto 462 23 12
+dismissall
+cheat berserk
+dismissall
+trigger 23 11 Move
+talkwait 30000
+waitbattle 15000
+cheat win
+talkwait
+takeloot optional
+closewindow
+talkwait
+var 247 1
+quest ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor Completed
+quest ManyeyesCastle_BanishManyeyesCurse Active
+quest ManyeyesCastle_OpenTheCastle Blocked
+reloadquests
+quest ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor Completed
+quest ManyeyesCastle_BanishManyeyesCurse Active
+quest ManyeyesCastle_OpenTheCastle Blocked
+# --- the cellar: its monsters are defeated, then the curse is banished at the wall
+goto 463 4 16
+dismissall
+cheat berserk
+dismissall
+trigger 4 17 Hand
+talkwait
+var 249 1
+quest ManyeyesCastle_BanishManyeyesCurse Completed
+quest ManyeyesCastle_OpenTheCastle Active
+mainquest ManyeyesCastle Active
+# --- the switch for the main door of the castle
+goto 461 4 17
+dismissall
+cheat berserk
+dismissall
+trigger 3 17 Hand
+talkwait
+var 246 1
+quest ManyeyesCastle_OpenTheCastle Completed
+mainquest ManyeyesCastle Completed
+reloadquests
+quest ManyeyesCastle_OpenTristansOffice Completed
+quest ManyeyesCastle_DefeatTheGuardianOfTheUpperFloor Completed
+quest ManyeyesCastle_BanishManyeyesCurse Completed
+quest ManyeyesCastle_OpenTheCastle Completed
+mainquest ManyeyesCastle Completed
+exit

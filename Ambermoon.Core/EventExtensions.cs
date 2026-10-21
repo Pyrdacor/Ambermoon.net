@@ -49,13 +49,14 @@ namespace Ambermoon
         {
             eventProvider = null;
 
+            game.QuestLog?.CheckEvent(conversationPartner is NPC npc ? npc : map, @event, conversationPartner);
+
             // Note: Aborted means that an event is not even executed. It does not mean that a decision
             // box is answered with No for example. It is used when:
             // - A condition of a condition event is not met and there is no event that is triggered in that case.
             // - A text popup does not accept the given trigger.
             // This is important in 3D when there might be an event on the current block and on the next one.
             // For example buttons use 2 events (one for Eye interaction and one for Hand interaction).
-
             aborted = false;
             var events = conversationPartner == null ? map.Events : conversationPartner.Events;
 
@@ -1203,10 +1204,13 @@ namespace Ambermoon
                 case EventType.Delay:
                     if (@event is not DelayEvent delayEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid delay event.");
-                    game.StartSequence();
+                    game.CursorType = CursorType.VideoWait;
+                    game.StartSequence();                    
                     game.AddTimedEvent(TimeSpan.FromMilliseconds(delayEvent.Milliseconds), () =>
                     {
                         game.EndSequence(false);
+                        game.CursorType = CursorType.Sword;
+                        game.UpdateCursor();
 
                         if (@event.Next != null)
                             TriggerEventChain(map, game, EventTrigger.Always, x, y, @event.Next, true);

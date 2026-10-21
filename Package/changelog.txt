@@ -1,3 +1,38 @@
+Version 1.14
+============
+
+- Added a quest log for the original game and Ambermoon Advanced
+- Added original versions 1.22
+- Disease now permanently reduces a random attribute by 1 each day
+- More detailed curse tooltips in the character stats (if stats tooltips are enabled), with own texts for Ambermoon Advanced
+- Advanced: Poison deals 1-5% of the max hit points per battle round (at most 20 for party members and bosses, 35 for other monsters)
+- Advanced: Spell learning point costs now match Ambermoon Advanced episode 4
+- Advanced: Fixed the aging malus for parrying
+- Advanced: Fixes from episode 4 for the data of version 1.33:
+  - The Desert of Sighs no longer swallows the party again after Marla was defeated
+  - Alkem now gives spell learning points for his ring instead of max strength
+  - English: Ten wrong messages (e.g. "Load which saved game?" when a weapon was dropped) and the food messages which said gold
+  - English: The desert golem was called undead paladin
+  - German: Names of the spells Erfahrungstausch and Wespe reiten, some text typos
+  - Goto points of Dor Grestin and the gardening shed in Spannenberg no longer share their state with other goto points
+  - Magic works in Ship's End again
+  - The shared amber chest is no longer saved in Ferrin's storage cellar and in the mine of Dor Kiredon
+  - Many wall decorations, curtains, beds and logs are no longer walkable
+- Auto battle now restores the correct battle speed and no longer leaves the round text on screen
+- Fixed the 3D map position if the screen has black bars at the top and bottom (e.g. on some tablets)
+- Fixed possible crashes when monsters move in battle
+- Fixed wrong idle frame of scaled monsters in battle
+- Fixed a skipped event after items were created when showing or giving an item
+- Fixed corrupt maps (e.g. the airship in Morag) after using the explore cheat
+- Quest log: Quests which start with a keyword only start in the conversation with the right character (e.g. Kasimir no longer starts the quest of Bralum)
+- Quest log: Fixed the counter of the golden horseshoes which increased when a horseshoe was moved
+- Android: The movement touchpad no longer blocks the buttons of the quest log
+- Quest log: Better progress for savegames from before the quest log (orc plague, thief plague, golden horseshoes, leaving the forest moon)
+- Quest log: The tower of black magic now leads to captain Torle after the people of Burnville were freed
+- Linux/Mac: The patcher can be started again to install new versions
+- Command line options for automated testing
+
+
 Version 1.13
 ============
 

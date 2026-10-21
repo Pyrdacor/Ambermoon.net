@@ -1,0 +1,64 @@
+# The beast: Norel the forest ranger (NPC 27) misses his apprentice Kay, a beast lives in the cave in the north
+# of Darlogna (map 415). The beast is Kay himself, his amulet (348) is brought to Norel.
+# (original game and Advanced, any language)
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+quest TheBeast_AskNorelAboutKay Inactive
+# --- Norel's hut (map 414)
+goto 414 15 14
+dismissall
+talk 27
+talkwait
+quest TheBeast_AskNorelAboutKay Active
+quest TheBeast_KillTheBeast Inactive
+say 83
+talkwait
+var 169 1
+takeitems
+count 349 1
+quest TheBeast_AskNorelAboutKay Completed
+quest TheBeast_KillTheBeast Active
+leave
+talkwait
+waitidle 5000
+# --- the beast attacks in its cave
+goto 415 13 9
+talkwait 30000
+waitbattle 15000
+eventbit 415 4 1
+cheat win
+talkwait
+takeloot
+closewindow
+talkwait
+count 348 1
+quest TheBeast_KillTheBeast Completed
+quest TheBeast_BringTheAmuletToNorel Active
+# the dead beast turns into a young man
+trigger 14 11 Move
+talkwait
+eventbit 415 5 1
+# --- Norel gets the amulet and gives the xenobil wood
+goto 414 15 14
+dismissall
+talk 27
+talkwait
+showitem 348
+talkwait
+takeitems
+talkwait
+var 168 1
+count 320 1
+quest TheBeast_BringTheAmuletToNorel Completed
+mainquest TheBeast Completed
+leave
+talkwait
+waitidle 5000
+reloadquests
+quest TheBeast_AskNorelAboutKay Completed
+quest TheBeast_KillTheBeast Completed
+quest TheBeast_BringTheAmuletToNorel Completed
+mainquest TheBeast Completed
+exit

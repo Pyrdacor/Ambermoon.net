@@ -2,12 +2,10 @@
 
 namespace Ambermoon.Data
 {
-    public interface IConversationPartner
+    public interface IConversationPartner : IEventProvider
     {
         int LookAtTextIndex { get; }
         List<string> Texts { get; }
-        List<Event> Events { get; }
-        List<Event> EventList { get; }
         Language SpokenLanguages { get; set; }
         ExtendedLanguage SpokenExtendedLanguages { get; set; }
     }
