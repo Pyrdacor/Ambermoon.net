@@ -286,6 +286,15 @@ The themes are JSON files in the folder `themes` of the mod (`Ambermoon.Mod.Ambe
 - **Combat values** are calculated from the level (the floor number plus `LevelOffset`): hit points, spell points, attack, defense, magic attack and defense, attributes, skills, experience and gold. The optional `Factors` scale each of these values. Bosses are 1 level higher and get extra factors (e.g. 2.5 times the hit points).
 - **Bosses:** `Boss` is the boss of the 5th floor of the theme, `BossGroup` the boss with minions of the 10th floor. Without them, the global boss lists of the mod are used. Themes without monsters use the original monster groups.
 
+### Releasing Ambermoon DC
+
+The GitHub workflow `Release Ambermoon DC` (`.github/workflows/release-ambermoon-dc.yml`) builds the mod, runs the tests, packs it into `AmbermoonDC-<version>.mod` and publishes it as a GitHub release with the tag `ambermoon-dc-v<version>`:
+
+1. Increase `Version` (and `ReleaseDate`) in `Ambermoon.Mod.AmbermoonDC/mod.json`.
+2. Push the tag `ambermoon-dc-v<version>` (e.g. `ambermoon-dc-v1.1`), or run the workflow manually in the Actions tab with `publish` checked.
+
+Without `publish` the workflow only builds the `.mod` file as a workflow artifact. The release is never marked as the latest release of the repository, which stays the game.
+
 For testing, the environment variables `AMBERMOON_DC_SEED` and `AMBERMOON_DC_START_FLOOR` set the seed and the first floor of a new game. They only work in debug builds of the mod.
 
 

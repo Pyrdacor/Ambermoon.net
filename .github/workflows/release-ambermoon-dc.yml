@@ -1,0 +1,98 @@
+# Builds, tests and packs the Ambermoon DC mod and publishes it as a GitHub release.
+#
+# Release: increase "Version" in Ambermoon.Mod.AmbermoonDC/mod.json, then either
+# - push the tag ambermoon-dc-v<Version> (e.g. ambermoon-dc-v1.1), or
+# - run this workflow manually (Actions > Release Ambermoon DC > Run workflow) with "publish" checked.
+# Without "publish" the workflow only builds the .mod file as an artifact (for testing).
+name: Release Ambermoon DC
+
+on:
+  push:
+    tags:
+      - 'ambermoon-dc-v*'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Create the GitHub release ambermoon-dc-v<Version from mod.json>'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-ambermoon-dc
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Read the mod version
+        id: version
+        run: |
+          version=$(python3 -c "import json; print(json.load(open('Ambermoon.Mod.AmbermoonDC/mod.json', encoding='utf-8-sig'))['Version'])")
+          tag="ambermoon-dc-v$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Mod version $version (tag $tag)"
+
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "$tag" ]; then
+            echo "::error::The tag $GITHUB_REF_NAME doesn't match the version $version in mod.json (expected $tag)."
+            exit 1
+          fi
+
+      - name: Build
+        run: dotnet build Ambermoon.Mod.AmbermoonDC/Ambermoon.Mod.AmbermoonDC.csproj -c Release
+
+      # Manifest, asset mod and theme tests and 60 generated floors in English and German.
+      # They use the builtin game data (Ambermoon.net/versions.dat).
+      - name: Test
+        run: dotnet run --project Ambermoon.Mod.Tests/Ambermoon.Mod.Tests.csproj -c Release -- all
+
+      - name: Pack
+        run: |
+          dotnet run --project Ambermoon.ModPacker/Ambermoon.ModPacker.csproj -c Release -- \
+            pack Ambermoon.Mod.AmbermoonDC/bin/Release/net8.0/mod/AmbermoonDC "AmbermoonDC-${{ steps.version.outputs.version }}.mod"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AmbermoonDC-${{ steps.version.outputs.version }}
+          path: AmbermoonDC-${{ steps.version.outputs.version }}.mod
+          if-no-files-found: error
+
+      - name: Create the release
+        if: github.ref_type == 'tag' || inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "::error::The release $TAG already exists. Increase the version in Ambermoon.Mod.AmbermoonDC/mod.json."
+            exit 1
+          fi
+
+          cat > release-notes.md << NOTES
+          Ambermoon DC $VERSION, a dungeon crawler mod for Ambermoon.net.
+
+          **Installation:** Put \`AmbermoonDC-$VERSION.mod\` into the \`Mods\` folder next to the Ambermoon.net executable (create the folder if needed). The mod then appears in the version selector. Ambermoon.net with mod support and the original game data (1.19 or newer) are needed.
+
+          See [Modding.md](https://github.com/${{ github.repository }}/blob/$TAG/Modding.md#ambermoon-dc) for details.
+          NOTES
+
+          # The mod release must never become the "latest" release of the repository (that is the game).
+          gh release create "$TAG" "AmbermoonDC-$VERSION.mod" \
+            --title "Ambermoon DC $VERSION" \
+            --notes-file release-notes.md \
+            --target "$GITHUB_SHA" \
+            --latest=false
