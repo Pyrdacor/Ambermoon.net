@@ -36,3 +36,4 @@ obj
 /AmbermoonAndroid/PublishAndroid.ps1
 /AmbermoonAndroid/AmbermoonAndroid.csproj.user
 /Ambermoon.net/Mods
+*.tmp
