@@ -2112,8 +2112,8 @@ namespace Ambermoon.UI
         }
 
         uint lastButtonMoveTicks = 0;
-        internal static readonly CursorType[] MoveButtonCursorMapping2D = new CursorType[9]
-        {
+        internal static readonly CursorType[] MoveButtonCursorMapping2D =
+        [
             CursorType.ArrowUpLeft,
             CursorType.ArrowUp,
             CursorType.ArrowUpRight,
@@ -2123,9 +2123,9 @@ namespace Ambermoon.UI
             CursorType.ArrowDownLeft,
             CursorType.ArrowDown,
             CursorType.ArrowDownRight
-        };
-        internal static readonly CursorType[] MoveButtonCursorMapping3D = new CursorType[9]
-        {
+        ];
+        internal static readonly CursorType[] MoveButtonCursorMapping3D =
+        [
             CursorType.ArrowTurnLeft,
             CursorType.ArrowForward,
             CursorType.ArrowTurnRight,
@@ -2135,8 +2135,7 @@ namespace Ambermoon.UI
             CursorType.ArrowRotateLeft,
             CursorType.ArrowBackward,
             CursorType.ArrowRotateRight
-        };
-        internal CursorType[] GetMoveButtonCursorMapping() => Type == LayoutType.Map2D ? MoveButtonCursorMapping2D : MoveButtonCursorMapping3D;
+        ];
         static CursorType CombineMoveCursorTypes2D(List<CursorType> cursorTypes)
         {
             bool left = cursorTypes.Contains(CursorType.ArrowUpLeft) ||
@@ -2215,7 +2214,7 @@ namespace Ambermoon.UI
             }
 
             // All other combinations won't work.
-            return new CursorType[0];
+            return [];
         }
 
         string GetTooltip(Button.TooltipType tooltipType) => Button.GetTooltip(game.GameLanguage, tooltipType);

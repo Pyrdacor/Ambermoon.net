@@ -1008,9 +1008,7 @@ partial class GameCore
         }
 
         if (allInputDisabled)
-            return;
-
-        
+            return;        
 
         if (nextClickHandler != null)
         {
@@ -1181,13 +1179,17 @@ partial class GameCore
                 var cursorType = CursorType.Sword;
                 layout.Click(relativePosition, buttons, ref cursorType, CurrentTicks, pickingNewLeader, pickingTargetPlayer, pickingTargetInventory, keyModifiers);
                 disableUntrapping = true;
-                CursorType = cursorType;
 
-                if (!allInputDisabled && InputEnable && !pickingNewLeader && !pickingTargetPlayer && !pickingTargetInventory)
+                if (CursorType != CursorType.VideoWait)
                 {
-                    layout.Hover(relativePosition, ref cursorType); // Update cursor
-                    if (cursor.Type != CursorType.None)
-                        CursorType = cursorType;
+                    CursorType = cursorType;
+
+                    if (!allInputDisabled && InputEnable && !pickingNewLeader && !pickingTargetPlayer && !pickingTargetInventory)
+                    {
+                        layout.Hover(relativePosition, ref cursorType); // Update cursor
+                        if (cursor.Type != CursorType.None)
+                            CursorType = cursorType;
+                    }
                 }
 
                 disableUntrapping = false;

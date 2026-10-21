@@ -1200,10 +1200,13 @@ namespace Ambermoon
                 case EventType.Delay:
                     if (@event is not DelayEvent delayEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid delay event.");
-                    game.StartSequence();
+                    game.CursorType = CursorType.VideoWait;
+                    game.StartSequence();                    
                     game.AddTimedEvent(TimeSpan.FromMilliseconds(delayEvent.Milliseconds), () =>
                     {
                         game.EndSequence(false);
+                        game.CursorType = CursorType.Sword;
+                        game.UpdateCursor();
 
                         if (@event.Next != null)
                             TriggerEventChain(map, game, EventTrigger.Always, x, y, @event.Next, true);

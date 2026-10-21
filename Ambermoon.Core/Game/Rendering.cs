@@ -475,6 +475,9 @@ partial class GameCore
         {
             cursor.UpdatePosition(cursorPosition, this);
 
+            if (cursor.Type == CursorType.VideoWait)
+                return; // Delay event is active, don't change cursor
+
             if (!InputEnable)
             {
                 if (layout.FreeTextScrollingActive)
