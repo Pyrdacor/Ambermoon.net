@@ -1,0 +1,123 @@
+{
+  "Id": "firetower",
+  "Name": { "en": "Burning Halls", "de": "Brennende Hallen" },
+  "Palettes": [ 6, 16, 18, 24 ],
+  "CombatBackground": 0,
+  "WallHeight": 300,
+  "FloorTexture": 5,
+  "FloorColor": 4,
+  "CeilingTexture": 2,
+  "CeilingColor": 9,
+  "Music": [ 26, 19 ],
+  "Walls": [
+    { "Texture": 111, "Weight": 4, "Color": 4 },
+    { "Texture": 112, "Weight": 2, "Color": 4 },
+    { "Texture": 115, "Color": 4 }
+  ],
+  "Door": { "Closed": 110, "Open": 0 },
+  "Chest": { "Labdata": 2, "Object": 25 },
+  "Exit": { "Labdata": 2, "Object": 20 },
+  "Entrance": { "Labdata": 2, "Object": 21 },
+  "Teleporter": { "Labdata": 9, "Object": 16 },
+  "Decorations": [
+    { "Labdata": 9, "Object": 6 },
+    { "Labdata": 9, "Object": 18 },
+    { "Labdata": 9, "Object": 22 },
+    { "Labdata": 9, "Object": 23 },
+    { "Labdata": 9, "Object": 24 },
+    { "Labdata": 9, "Object": 1 }
+  ],
+  "Obstacles": [
+    { "Labdata": 9, "Object": 17 },
+    { "Labdata": 9, "Object": 31 },
+    { "Labdata": 9, "Object": 32 },
+    { "Labdata": 6, "Object": 26 }
+  ],
+  "Monsters": [
+    {
+      "Id": "imp",
+      "Template": 37,
+      "Name": { "en": "Fire Imp", "de": "Feuerkobold" },
+      "Sprite": { "Labdata": 26, "Object": 7 },
+      "Element": "Fire",
+      "Flags": "Demon",
+      "Spells": [ "Firebeam" ],
+      "SpellChance": 40,
+      "Weight": 3,
+      "Factors": { "HitPoints": 0.8 }
+    },
+    {
+      "Id": "gargoyle",
+      "Template": 29,
+      "Name": { "en": "Gargoyle", "de": "Gargoyle" },
+      "Sprite": { "Labdata": 26, "Object": 7 },
+      "Element": "Wind",
+      "Flags": "Demon",
+      "Weight": 2,
+      "Factors": { "Defense": 1.4 }
+    },
+    {
+      "Id": "firedemon",
+      "Template": 35,
+      "Name": { "en": "Fire Demon", "de": "Feuerdämon" },
+      "Sprite": { "Labdata": 30, "Object": 6 },
+      "Element": "Fire",
+      "Flags": "Demon",
+      "Spells": [ "Fireball" ],
+      "SpellChance": 40,
+      "MinFloor": 2,
+      "Factors": { "Attack": 1.2, "Experience": 1.3 }
+    },
+    {
+      "Id": "firegiant",
+      "Template": 22,
+      "Name": { "en": "Fire Giant", "de": "Feuerriese" },
+      "Sprite": { "Labdata": 6, "Object": 5 },
+      "Element": "Fire",
+      "Spells": [ "Firebeam", "Fireball" ],
+      "SpellChance": 30,
+      "MaxCount": 2,
+      "MinFloor": 3,
+      "Factors": { "HitPoints": 1.5, "Attack": 1.3, "Experience": 1.6 }
+    },
+    {
+      "Id": "firedragon",
+      "Template": 23,
+      "Name": { "en": "Fire Dragon", "de": "Feuerdrache" },
+      "Sprite": { "Labdata": 9, "Object": 20 },
+      "Element": "Fire",
+      "Spells": [ "Firebeam", "Fireball", "Firestorm" ],
+      "SpellChance": 50,
+      "AttacksPerRound": 2,
+      "MaxCount": 1,
+      "MinFloor": 4,
+      "Factors": { "HitPoints": 1.8, "Defense": 1.3, "Experience": 2.0, "Gold": 3.0 }
+    },
+    {
+      "Id": "flamelord",
+      "Template": 24,
+      "Name": { "en": "Flame Lord", "de": "Flammenfürst" },
+      "Sprite": { "Labdata": 9, "Object": 19 },
+      "Element": "Fire",
+      "Flags": "Demon",
+      "Spells": [ "Fireball", "Firestorm", "Firepillar" ],
+      "SpellChance": 70,
+      "AttacksPerRound": 2,
+      "BossOnly": true
+    },
+    {
+      "Id": "hellord",
+      "Template": 44,
+      "Name": { "en": "Thornahuun", "de": "Thornahuun" },
+      "Sprite": { "Labdata": 5, "Object": 29 },
+      "Element": "Fire",
+      "Flags": "Demon",
+      "Spells": [ "Fireball", "Firepillar", "Fear" ],
+      "SpellChance": 60,
+      "BossOnly": true,
+      "Factors": { "HitPoints": 1.2, "Attack": 1.2 }
+    }
+  ],
+  "Boss": { "Monster": "flamelord" },
+  "BossGroup": { "Boss": "hellord", "Minions": [ "firedemon", "imp" ] }
+}

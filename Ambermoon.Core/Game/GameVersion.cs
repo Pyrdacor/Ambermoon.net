@@ -34,6 +34,15 @@ public class GameVersion
     public bool MergeWithPrevious;
     public bool ExternalData;
     public required Func<IGameData> DataProvider;
+    /// <summary>
+    /// Optional: Returns a text the player has to confirm before this version is
+    /// started (e.g. to trust the code of a mod) or null if no confirmation is needed.
+    /// </summary>
+    public Func<GameLanguage, string?>? ConfirmationProvider;
+    /// <summary>
+    /// Optional name of the savegame folder (used by mods).
+    /// </summary>
+    public string? SavegameFolder;
 
     internal const string RemakeReleaseDate = "18-10-2026";
 }

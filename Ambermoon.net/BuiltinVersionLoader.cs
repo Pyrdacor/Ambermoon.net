@@ -14,7 +14,6 @@ namespace Ambermoon
         public uint Offset;
         public uint Size;
         public Stream SourceStream;
-        public string ModPath;
     }
 
     static class BuiltinVersionLoader

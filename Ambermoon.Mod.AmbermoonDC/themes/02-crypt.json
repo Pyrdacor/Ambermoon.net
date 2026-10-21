@@ -1,0 +1,114 @@
+{
+  "Id": "crypt",
+  "Name": { "en": "Forgotten Crypt", "de": "Vergessene Gruft" },
+  "Palettes": [ 6, 21, 23, 25 ],
+  "CombatBackground": 2,
+  "WallHeight": 380,
+  "FloorTexture": 14,
+  "FloorColor": 13,
+  "CeilingTexture": 13,
+  "CeilingColor": 5,
+  "Music": [ 24 ],
+  "Walls": [
+    { "Texture": 89, "Weight": 3, "Color": 13 },
+    { "Texture": 88, "Weight": 2, "Color": 13 }
+  ],
+  "Door": { "Closed": 85, "Open": 0 },
+  "Chest": { "Labdata": 2, "Object": 25 },
+  "Exit": { "Labdata": 2, "Object": 20 },
+  "Entrance": { "Labdata": 2, "Object": 21 },
+  "Teleporter": { "Labdata": 5, "Object": 2 },
+  "Decorations": [
+    { "Labdata": 7, "Object": 7 },
+    { "Labdata": 7, "Object": 9 },
+    { "Labdata": 7, "Object": 10 },
+    { "Labdata": 7, "Object": 11 },
+    { "Labdata": 2, "Object": 5 }
+  ],
+  "Obstacles": [
+    { "Labdata": 7, "Object": 14 },
+    { "Labdata": 7, "Object": 15 },
+    { "Labdata": 7, "Object": 16 },
+    { "Labdata": 7, "Object": 18 },
+    { "Labdata": 7, "Object": 21 },
+    { "Labdata": 7, "Object": 27 }
+  ],
+  "Monsters": [
+    {
+      "Id": "skeleton",
+      "Template": 6,
+      "Name": { "en": "Skeleton", "de": "Skelett" },
+      "Sprite": { "Labdata": 7, "Object": 8 },
+      "Element": "Undead",
+      "Flags": "Undead",
+      "Weight": 3,
+      "Morale": 100
+    },
+    {
+      "Id": "zombie",
+      "Template": 7,
+      "Name": { "en": "Zombie", "de": "Zombie" },
+      "Sprite": { "Labdata": 7, "Object": 8 },
+      "Element": "Undead",
+      "Flags": "Undead",
+      "Weight": 2,
+      "Morale": 100,
+      "Factors": { "HitPoints": 1.3, "Attack": 0.9, "Attributes": 0.8 }
+    },
+    {
+      "Id": "ghoul",
+      "Template": 19,
+      "Name": { "en": "Ghoul", "de": "Ghul" },
+      "Sprite": { "Labdata": 7, "Object": 8 },
+      "Element": "Undead",
+      "Flags": "Undead",
+      "Spells": [ "Lame" ],
+      "SpellChance": 25,
+      "MinFloor": 2,
+      "Morale": 100,
+      "Factors": { "Attack": 1.2, "Experience": 1.2 }
+    },
+    {
+      "Id": "banshee",
+      "Template": 20,
+      "Name": { "en": "Banshee", "de": "Todesfee" },
+      "Sprite": { "Labdata": 7, "Object": 8 },
+      "Element": "Undead",
+      "Flags": "Undead",
+      "Spells": [ "Fear", "Blind", "Iceball" ],
+      "SpellChance": 70,
+      "MaxCount": 2,
+      "MinFloor": 3,
+      "Morale": 100,
+      "Factors": { "HitPoints": 0.8, "Attack": 0.7, "MagicAttack": 1.5, "Experience": 1.3 }
+    },
+    {
+      "Id": "necromancer",
+      "Template": 8,
+      "Name": { "en": "Necromancer", "de": "Totenbeschwörer" },
+      "Sprite": { "Labdata": 7, "Object": 8 },
+      "Class": "Mage",
+      "Element": "Undead",
+      "Flags": "Undead",
+      "Spells": [ "CauseDisease", "Lame", "Poison", "Blind", "Iceball" ],
+      "SpellChance": 80,
+      "BossOnly": true,
+      "Factors": { "Attack": 0.8, "SpellPoints": 1.5 }
+    },
+    {
+      "Id": "lich",
+      "Template": 21,
+      "Name": { "en": "Lich Lord", "de": "Lichfürst" },
+      "Sprite": { "Labdata": 7, "Object": 8 },
+      "Class": "Mage",
+      "Element": "Undead",
+      "Flags": "Undead",
+      "Spells": [ "Winddevil", "Windhowler", "Thunderbolt", "Fear" ],
+      "SpellChance": 80,
+      "BossOnly": true,
+      "Factors": { "SpellPoints": 2.0 }
+    }
+  ],
+  "Boss": { "Monster": "necromancer" },
+  "BossGroup": { "Boss": "lich", "Minions": [ "skeleton", "ghoul" ] }
+}

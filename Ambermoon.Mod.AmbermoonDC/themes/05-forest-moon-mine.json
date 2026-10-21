@@ -1,0 +1,95 @@
+{
+  "Id": "forestmoonmine",
+  "Name": { "en": "Forest Moon Mine", "de": "Waldmondmine" },
+  "Palettes": [ 12, 11 ],
+  "CombatBackground": 7,
+  "WallHeight": 270,
+  "FloorTexture": 12,
+  "FloorColor": 8,
+  "CeilingTexture": 13,
+  "CeilingColor": 9,
+  "Music": [ 19, 26 ],
+  "Walls": [
+    { "Texture": 116, "Weight": 3, "Color": 7 },
+    { "Texture": 133, "Weight": 2, "Color": 7 },
+    { "Texture": 156, "Color": 3 }
+  ],
+  "Door": { "Closed": 134, "Open": 135, "Color": 13 },
+  "Chest": { "Texture": 165, "Width": 32, "Height": 28 },
+  "Exit": { "Labdata": 14, "Object": 28 },
+  "Entrance": { "Labdata": 14, "Object": 29 },
+  "RecruitSprite": { "Labdata": 14, "Object": 36 },
+  "Decorations": [
+    { "Labdata": 14, "Object": 14 },
+    { "Labdata": 14, "Object": 15 },
+    { "Labdata": 14, "Object": 17 },
+    { "Labdata": 14, "Object": 19 },
+    { "Labdata": 14, "Object": 4 },
+    { "Labdata": 14, "Object": 6 },
+    { "Labdata": 14, "Object": 8 },
+    { "Labdata": 14, "Object": 10 }
+  ],
+  "Obstacles": [
+    { "Labdata": 14, "Object": 1 },
+    { "Labdata": 14, "Object": 27 },
+    { "Labdata": 14, "Object": 30 },
+    { "Labdata": 14, "Object": 26 },
+    { "Labdata": 17, "Object": 27 }
+  ],
+  "Monsters": [
+    {
+      "Id": "tornak",
+      "Template": 54,
+      "Name": { "en": "Tornak", "de": "Tornak" },
+      "Sprite": { "Texture": 371, "Width": 96, "Height": 88, "MappedWidth": 288, "MappedHeight": 264, "Frames": 3 },
+      "Flags": "Animal",
+      "Weight": 3,
+      "MaxCount": 3,
+      "Morale": 70
+    },
+    {
+      "Id": "tornakbrute",
+      "Template": 55,
+      "Name": { "en": "Tornak Brute", "de": "Tornakbulle" },
+      "Sprite": { "Texture": 371, "Width": 96, "Height": 88, "MappedWidth": 288, "MappedHeight": 264, "Frames": 3 },
+      "Flags": "Animal",
+      "MaxCount": 2,
+      "MinFloor": 3,
+      "Morale": 90,
+      "Factors": { "HitPoints": 1.6, "Attack": 1.2, "Defense": 1.3, "Experience": 1.6 }
+    },
+    {
+      "Id": "gizzek",
+      "Template": 56,
+      "Name": { "en": "Gizzek", "de": "Gizzek" },
+      "Sprite": { "Texture": 372, "Width": 96, "Height": 75, "MappedWidth": 288, "MappedHeight": 225, "Frames": 3 },
+      "Flags": "Animal",
+      "AttacksPerRound": 2,
+      "Weight": 2,
+      "Factors": { "HitPoints": 0.7, "Defense": 1.4, "Experience": 0.9 }
+    },
+    {
+      "Id": "gizzekqueen",
+      "Template": 57,
+      "Name": { "en": "Gizzek Queen", "de": "Gizzekkönigin" },
+      "Sprite": { "Texture": 372, "Width": 96, "Height": 75, "MappedWidth": 384, "MappedHeight": 300, "Frames": 3 },
+      "Flags": "Animal",
+      "Spells": [ "Lame", "Thunderbolt", "Rockfall" ],
+      "SpellChance": 40,
+      "AttacksPerRound": 3,
+      "BossOnly": true
+    },
+    {
+      "Id": "tornakmother",
+      "Template": 55,
+      "Name": { "en": "Tornak Mother", "de": "Tornakmutter" },
+      "Sprite": { "Texture": 371, "Width": 96, "Height": 88, "MappedWidth": 384, "MappedHeight": 352, "Frames": 3 },
+      "Flags": "Animal",
+      "AttacksPerRound": 2,
+      "BossOnly": true,
+      "Factors": { "HitPoints": 1.3, "Attack": 1.2 }
+    }
+  ],
+  "Boss": { "Monster": "gizzekqueen" },
+  "BossGroup": { "Boss": "tornakmother", "Minions": [ "tornak", "gizzek" ] }
+}

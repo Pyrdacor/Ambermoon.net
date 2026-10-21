@@ -1,0 +1,338 @@
+# Modding
+
+Ambermoon.net supports mods. A mod is applied on top of a base game the player already has (the original Ambermoon or Ambermoon Advanced in any language). Mods never contain the original game data.
+
+There are two kinds of mods. Both can be combined in a single mod.
+
+- **Asset mods** change or add data: graphics, music, maps, monsters, items and so on. They don't need any programming.
+- **Code mods** contain a .NET assembly which hooks into the game with C# code.
+
+Mods with code are only started after the player has confirmed once that they trust the mod. If the mod assembly changes (for example after an update), the player is asked again.
+
+
+## Installing mods
+
+Put the mod folder or the packed `.mod` file into the `Mods` folder next to the Ambermoon.net executable. You can change this path with the configuration option `ModPath`.
+
+Each mod is shown in the version selector. It is offered in every language of the base game it needs, so you can choose the language with the flags as usual. The version list can be scrolled if there are more than 5 entries.
+
+Each mod uses its own savegames, which are stored in the folder `Saves/mod_<id>_<language>`.
+
+You can also start a mod directly with the command line option `--mod <id>`. The game then starts in the configured language. The version selector and the trust question are skipped, because you chose the mod explicitly.
+
+
+## Creating a mod
+
+The mod packer tool (project `Ambermoon.ModPacker`) helps with the setup:
+
+```
+AmbermoonModPacker new MyMod my-mod "My Mod"   # creates the folder MyMod with a mod.json
+AmbermoonModPacker validate MyMod              # checks the mod
+AmbermoonModPacker pack MyMod                  # checks the mod and creates my-mod.mod
+```
+
+While you develop a mod, you can put the folder directly into the `Mods` folder. A packed `.mod` file is a zip archive of the mod folder. If a folder and a `.mod` file have the same id, the folder is used.
+
+
+### mod.json
+
+Every mod needs a `mod.json` at its root:
+
+```json
+{
+  "Id": "my-mod",
+  "Name": "My Mod",
+  "Description": "What the mod is about",
+  "Version": "1.0",
+  "Authors": [ "Me" ],
+  "ReleaseDate": "2026-10-13",
+  "ApiVersion": 1,
+  "Base": {
+    "Game": "Original",
+    "MinVersion": "1.19"
+  },
+  "Assembly": "MyMod.dll",
+  "Options": {
+    "AutoBattleRounds": 5,
+    "ShowFog": true
+  }
+}
+```
+
+| Key | Description |
+| --- | --- |
+| Id | Unique id. Only letters, digits, `-`, `_` and `.` are allowed. It is used for the savegame folder. |
+| Name | Shown in the version selector (the first 20 characters). |
+| Version | Version as `Major.Minor`. |
+| ApiVersion | Version of the mod API the mod was made for (currently 1). |
+| Base.Game | `Original`, `Advanced` or `Any`. |
+| Base.MinVersion | Optional minimum version of the base game, e.g. `1.20`. |
+| Assembly | Optional path of the mod assembly. Leave it out for asset-only mods. |
+| Options | Optional default values for game options (see below). |
+
+### Option defaults
+
+A mod can provide default values for some game options with `Options`. They are only defaults, the player can still change everything:
+
+- The first time the mod is used, its defaults are stored in a mod config file (`Saves/mods/options/<id>.json`).
+- While the mod is active, an option is read from this file and only if it isn't there from the normal configuration.
+- When the player changes an option (in the options menu or with F7 for the battle speed), the new value is written to the normal configuration and the option is removed from the mod config file. From then on the choice of the player is used, also in later sessions.
+- Defaults which a newer version of the mod adds are added once. Defaults the player already changed are never added again.
+
+Only these options can have mod defaults: `BattleSpeed` (0 to 100 in steps of 10), `AutoBattleRounds` (0 = off, 5, 10 or 15), `AutoDerune`, `ShowButtonTooltips`, `ShowPlayerStatsTooltips`, `ShowFloor`, `ShowCeiling`, `ShowFog`, `ShowSaveLoadMessage`, `Movement3D` (`WASD` or `WASDQE`) and `TurnWithArrowKeys`. Options like the resolution, window mode, music, volume, language or graphic filters stay under the control of the player. Other options or values of the wrong type make the manifest invalid.
+
+
+## Asset mods
+
+All asset files are placed inside the folder `assets` of the mod. The file name is always the index of the changed object. Maps, monsters, monster groups, items, party members and NPCs use 1-based indices like the game data. Graphics are 0-based.
+
+| File | Content |
+| --- | --- |
+| `assets/maps/{index}.json` | A patch for an existing map, or a complete new map (see below). |
+| `assets/monsters/{index}.json` | A patch for a monster. New monsters need a `"Template"` monster to copy. |
+| `assets/monstergroups/{index}.json` | A monster group: `{ "Monsters": [[6 indices], [6 indices], [6 indices]] }`, 0 = empty. |
+| `assets/items/{index}.json` | A patch for an item. New items need a `"Template"` item to copy. |
+| `assets/partymembers/{index}.json` | A patch for a party member of the initial savegame. |
+| `assets/npcs/{index}.json` | A patch for an NPC. |
+| `assets/graphics/{GraphicType}/{index}.png` | Replaces a graphic. The size must be the same as the original. |
+| `assets/music/{song}.mp3` | Replaces a song. See [CustomMusic.md](CustomMusic.md) for the song numbers. |
+
+A patch only contains the properties you want to change, using the property names of the data classes in `Ambermoon.Data.Common`. Enums can be given by name, and flags as comma separated names.
+
+```json
+// assets/monsters/2.json
+{ "Name": "HUGE SPIDER", "DefeatExperience": 99 }
+
+// assets/monsters/120.json (a new monster)
+{ "Template": 2, "Name": "COPY SPIDER" }
+
+// assets/maps/258.json
+{ "Texts": [ "MY HOUSE" ], "MusicIndex": 3 }
+```
+
+The graphic types are `Player`, `Portrait`, `Item`, `Layout`, `LabBackground`, `Cursor`, `Pics80x80`, `UIElements`, `EventPictures`, `TravelGfx`, `Transports`, `NPC`, `CombatBackground`, `CombatGraphics`, `BattleFieldIcons`, `AutomapGraphics` and `RiddlemouthGraphics`. Colors are mapped to the nearest color of the primary UI palette. You can use another palette with an additional `{index}.json` like `{ "Palette": 6 }`. Pixels with an alpha value below 128 become transparent.
+
+
+### New maps
+
+A complete map is described as a grid of characters and a legend:
+
+```json
+{
+  "Type": "Map3D",
+  "Width": 5,
+  "Height": 5,
+  "Labdata": 2,
+  "Palette": 6,
+  "Music": 18,
+  "Flags": "Dungeon, Automapper, CanRest, CanUseMagic",
+  "Texts": [ "MY DUNGEON", "Hello adventurer!" ],
+  "Legend": {
+    "#": { "Wall": 1 },
+    ".": {},
+    "T": { "Event": 1, "Automap": "Exit" },
+    "C": { "Object": 25, "Event": 2, "Automap": "Chest" }
+  },
+  "Grid": [
+    "#####",
+    "#.T.#",
+    "#...#",
+    "#C..#",
+    "#####"
+  ],
+  "Events": [
+    { "Type": "MapText", "TextIndex": 1, "PopupTrigger": "Move, EyeCursor", "EventImageIndex": 255, "Next": 3 },
+    { "Type": "Chest", "ChestIndex": 0, "TextIndex": 255 },
+    { "Type": "Teleport", "MapIndex": 258, "X": 2, "Y": 15, "Direction": "Down", "Transition": "MapChange" }
+  ],
+  "Characters": [
+    { "Type": "Monster", "Index": 5, "Graphic": 13, "Flags": "RandomMovement", "CollisionClass": 1,
+      "CombatBackground": 7, "Positions": [ { "X": 4, "Y": 4 } ] }
+  ]
+}
+```
+
+- 3D maps use `Wall` and `Object` (indices of the labdata) in the legend. 2D maps use `Back` and `Front` (tile indices of the tileset, given as `Tileset`).
+- `Event` in the legend and in characters references an event by its 1-based position in `Events`. Each referenced event is an entry point. A map can have up to 64 of them.
+- `Next` links events to a chain (1-based, 0 = end). Branch targets of conditions, doors, chests etc. are 0-based indices into `Events`, and 65535 means none.
+- Every event needs a `Type` (see `EventType` in `Ambermoon.Data.Common/Event.cs`). The other properties are those of the matching event class.
+- Positions of characters and of teleport targets are 1-based. A map can have up to 32 characters.
+- New maps should use the indices 529 to 767.
+
+
+## Code mods
+
+A code mod is a .NET 8 class library which references `Ambermoon.Mod`. It must contain exactly one public class which derives from `ModBase`. The project `Ambermoon.Mod.AmbermoonDC` is a complete example. After each build it creates a ready-to-use mod folder in `bin/<configuration>/net8.0/mod/`.
+
+```csharp
+public class MyMod : ModBase
+{
+    public override void OnInitialize()
+    {
+        // The base game data with the asset changes is loaded. The game does not exist yet.
+        Api.GetMonster(2)!.Name = "BIG SPIDER";
+    }
+
+    public override void OnGameStarting(Savegame savegame, bool newGame)
+    {
+        if (newGame)
+        {
+            savegame.CurrentMapIndex = 300;
+            savegame.CurrentMapX = 10;
+            savegame.CurrentMapY = 10;
+        }
+    }
+
+    public override void OnMapChanged(Map map) => Api.Log($"Entered {map.Name}");
+}
+```
+
+### Hooks
+
+Override the virtual methods of `ModBase` or subscribe to the events of the same name in `Api`.
+
+| Hook | When |
+| --- | --- |
+| `OnInitialize()` | Once after the game data is loaded. New monsters must be added here, because the battle graphics are prepared when the game is created. |
+| `OnGameStarting(savegame, newGame)` | Before a new or loaded game starts. The savegame can still be changed. |
+| `OnGameStarted(newGame)` | After the first map is shown. |
+| `OnUpdate(deltaTime)` | Every frame while ingame and not paused. |
+| `OnMapChanged(map)` | When a map was entered. |
+| `OnPlayerMoved(map, x, y, mapChange)` | After each step (1-based position). |
+| `OnEvent(map, event, trigger, x, y)` | Before a map event is executed. Return `false` to skip it and the rest of its chain. The event can also be changed here, e.g. the target of a teleport. |
+| `OnBattleStarting(monsterGroupIndex)` | Before a battle. The monster group can still be replaced. |
+| `OnBattleEnded(monsterGroupIndex, monstersDefeated, partyDefeated)` | After a battle. |
+| `OnLevelUp(partyMember)` | When a party member reaches a new level. |
+| `OnPartyMemberJoined(partyMember)` / `OnPartyMemberLeft(partyMember)` | When characters join or leave the party. |
+| `OnSaving(data)` / `OnLoading(data)` | Store and restore the state of the mod with each savegame. `OnLoading` is not called for new games. |
+
+### ModApi
+
+- **Data:** `GameData`, `Maps`, `Characters`, `Items`, `SetMap`, `GetMap`, `GetLabdata`, `SetMonsterGroup`, `GetMonsterGroup`, `GetMonster`, `CloneMonster` and `GetItem`.
+- **State:** `IsIngame`, `Game`, `Savegame`, `CurrentMap`, `PartyMembers` and `CanShowMessage`.
+- **Actions:** `Teleport`, `StartBattle`, `ShowMessage`, `AskQuestion`, `RandomInt` and `ResetMapState` (clears the saved state of a map before it is replaced).
+- **Helpers:** `Source` gives access to the files of the mod and `Log` writes to the console.
+- `CharacterHelper` equips items, adds items to inventories and raises the level of party members with the same stat changes as the game.
+- `EventFactory` creates map events with all their raw data initialized.
+- `LabdataBuilder` creates new 3D labdata from the global 3D textures of the base game (walls with overlays from `Wall3D.amb`/`Overlay3D.amb`, objects from `Object3D.amb`, floors and ceilings from `Floors.amb`) or copies objects of the original labdata. Register the result with `Maps.SetLabdata`.
+
+Mod assemblies are loaded into their own load context. Further assemblies the mod needs can be put next to the mod assembly.
+
+
+## Ambermoon DC
+
+Ambermoon DC (`Ambermoon.Mod.AmbermoonDC`) is a dungeon crawler built as a code mod for the original Ambermoon:
+
+- The party starts on floor 1 of an endless dungeon. Each floor is generated from a seed when it is entered and has a way down to the next floor.
+- Every 5 floors a random dungeon theme is chosen (never the same one twice in a row). A theme defines the look, the music and the monsters of its floors (see below).
+- Monsters roam the floors. Some wander and chase the party, others only move when they see it. Deeper floors have stronger monsters.
+- Some floors have a pair of teleporters which connects two distant rooms.
+- Every 5th floor a boss guards the way down, every 10th floor a boss with minions. Boss floors have extra treasure, and the boss drops an item which is an upgrade for one of the party members.
+- Floors 2, 7, 12, 17, ... have a chest with a good piece of equipment which is an upgrade for one of the party members (the one on floor 2 is a weapon). Together with the boss loot the party finds good equipment every 2 or 3 floors. Story items (like the sword of Mando) are never part of the loot.
+- The mod provides these option defaults: auto battle with 5 rounds, floor, ceiling and distance fog are shown. The player can change them as usual.
+- Up to floor 15 monsters can't cast curses (lame, poison, petrify, disease, aging, irritation, madness, sleep, fear, blindness, drugs and dissolve victim). Damage spells are allowed.
+- Every 12th floor a random companion wanders around and can be asked to join. Name, race, gender, portrait, class, attributes, skills, spells and the (short) dialogues are random. Level and equipment fit the depth. Party members can be dismissed as usual. Dismissed companions are gone, their party member slot is reused for later companions.
+- Secret rooms are hidden behind illusory walls or behind walls which open when touched.
+- From floor 4 on the floors are dark, so you need torches or light spells.
+
+### Dungeon themes
+
+The themes are JSON files in the folder `themes` of the mod (`Ambermoon.Mod.AmbermoonDC/themes`). Every file is one theme, they are used in the order of their file names. To add a theme, add a file there. All texture indices refer to the global 3D textures of the original game, so walls, objects and sprites of different original labdata can be combined freely.
+
+```json
+{
+  "Id": "crypt",
+  "Name": { "en": "Forgotten Crypt", "de": "Vergessene Gruft" },
+  "Palettes": [ 6, 21, 23, 25 ],
+  "CombatBackground": 2,
+  "WallHeight": 380,
+  "FloorTexture": 14, "FloorColor": 13,
+  "CeilingTexture": 13, "CeilingColor": 5,
+  "Music": [ 24 ],
+  "BossMusic": 26,
+  "Walls": [
+    { "Texture": 89, "Weight": 3 },
+    { "Texture": 88 }
+  ],
+  "Door": { "Closed": 85, "Open": 0 },
+  "Chest": { "Labdata": 2, "Object": 25 },
+  "Exit": { "Labdata": 2, "Object": 20 },
+  "Entrance": { "Labdata": 2, "Object": 21 },
+  "Teleporter": { "Labdata": 5, "Object": 2 },
+  "Decorations": [ { "Labdata": 7, "Object": 7 } ],
+  "Obstacles": [ { "Texture": 33, "Width": 48, "Height": 39 } ],
+  "Monsters": [
+    {
+      "Id": "skeleton",
+      "Template": 6,
+      "Name": { "en": "Skeleton", "de": "Skelett" },
+      "Sprite": { "Labdata": 7, "Object": 8 },
+      "Element": "Undead",
+      "Flags": "Undead",
+      "Spells": [ "Lame" ],
+      "SpellChance": 25,
+      "Factors": { "HitPoints": 1.2, "Attack": 0.9 }
+    }
+  ],
+  "Boss": { "Monster": "skeleton", "Factors": { "HitPoints": 1.5 } },
+  "BossGroup": { "Boss": "skeleton", "Minions": [ "skeleton" ] }
+}
+```
+
+- **Palettes:** All 3D textures use the palette of the map, so each floor uses one of the `Palettes` of its theme. The palette also colors the frame around the 3D view. Run `dotnet run --project Ambermoon.Mod.Tests -- palettes [details]` to see which palettes fit a theme: *original* palettes are used with all textures of the theme in the original game, *similar* palettes have nearly the same 16 colors the textures use (see `ThemePalettes`). The tests fail if a theme uses a palette which doesn't fit. Textures of original maps with other palettes (e.g. the mine of the forest moon with palette 12) only fit to themes which use them together with textures of the same palettes.
+- **Look:** `FloorTexture`/`CeilingTexture` are indices into `Floors.amb` (0 = only use the color). `Walls` are 1 to 3 variations (texture index into `Wall3D.amb` plus optional overlays from `Overlay3D.amb`), each is also used as illusory wall for the secret passages. The open door texture should be transparent. If it is 0, the door disappears when it is opened.
+- **Objects:** Either a copy of an object of an original labdata (`Labdata` and `Object`, 1-based) or a single texture of `Object3D.amb` (`Texture`, `Width`, `Height` and optionally `MappedWidth`, `MappedHeight`, `Frames` and `Z`). `Exit` is the way down (hole, stairs, ladder), `Entrance` the blocked way up at the start. `Decorations` are walkable (bones, stones, junk), `Obstacles` block movement (barrels, coffins, statues). They are only placed where they block nothing. `Teleporter` is optional. `RecruitSprite` is the sprite of the companions (default: the person of labdata 6). The sprites of the original monsters are only added if the theme has no monsters or no bosses.
+- **Monsters:** Each monster uses an original monster as `Template` for its battle graphic, animations and palette. Name (up to 15 characters), `Sprite` on the map, `Class`, `Element`, `Flags` (battle flags like `Undead`), `Spells`, `SpellChance`, `AttacksPerRound` and `Morale` come from the theme. `Weight` sets how often a monster appears, `MaxCount` how many of it can be in a group, `MinFloor` (1 to 5) on which floor of the theme it appears first and `BossOnly` limits it to the bosses.
+- **Combat values** are calculated from the level (the floor number plus `LevelOffset`): hit points, spell points, attack, defense, magic attack and defense, attributes, skills, experience and gold. The optional `Factors` scale each of these values. Bosses are 1 level higher and get extra factors (e.g. 2.5 times the hit points).
+- **Bosses:** `Boss` is the boss of the 5th floor of the theme, `BossGroup` the boss with minions of the 10th floor. Without them, the global boss lists of the mod are used. Themes without monsters use the original monster groups.
+
+For testing, the environment variables `AMBERMOON_DC_SEED` and `AMBERMOON_DC_START_FLOOR` set the seed and the first floor of a new game. They only work in debug builds of the mod.
+
+
+## Tests
+
+`Ambermoon.Mod.Tests` contains headless tests for the mod system and Ambermoon DC. They use the builtin game data (`Ambermoon.net/versions.dat`):
+
+```
+dotnet run --project Ambermoon.Mod.Tests             # all tests
+dotnet run --project Ambermoon.Mod.Tests -- render 10 # prints floor 10 of Ambermoon DC as text
+```
+
+Scenario scripts (`--script`) support the commands `save <slot>` and `load <slot>` to test savegames of mods.
+
+
+## Known limitations
+
+These things are not supported (yet):
+
+**Mod system**
+- Only one mod can be active at a time. Mods can't depend on or be combined with other mods.
+- Mods only work with the original Amiga game data (builtin versions or extracted data). The newer Pyrdacor game data format is not supported as a base.
+- Mods are not available on Android. The Android frontend does not list or load mods, and it was not built or tested with the mod changes.
+- Mod code is not sandboxed. The trust question is the only protection.
+- The version selector shows only the first 20 characters of a mod name and has no scroll bar (use the mouse wheel or the arrow keys).
+
+**Asset mods**
+- Graphics can only be replaced for the graphic types listed above. Battle graphics of monsters, 3D textures (walls, objects, floors and ceilings), tilesets, fonts and intro/outro graphics can't be replaced.
+- Replaced graphics must have the same size as the original ones.
+- General texts (UI texts, the dictionary, places, intro and outro texts) can't be changed. Only texts of maps, items, monsters and characters can be changed with patches.
+- Merchants, places, initial chest contents and the initial savegame can't be changed with asset files (code mods can change the savegame in `OnGameStarting`).
+- Only MP3 files are supported for music, no Sonic Arranger songs.
+- New map definitions were only tested with 3D maps. 2D maps (especially world maps) may need properties which are not covered by the JSON format.
+- New monsters need an existing monster as template. Their battle graphic is the one of the template.
+
+**Code mods**
+- New monsters (with new indices) must be added in `OnInitialize`. Monsters added later have no battle graphic.
+- Party members can only use the existing party member slots (1 to 15), as the texts of party members are not stored in savegames. Mods which change party member texts must restore them after loading (see Ambermoon DC).
+- Maps with indices of 768 and above lose tile changes when a game is loaded. Use 529 to 767 for new maps.
+- Dismissing party members only works on maps of the world Lyramion.
+- The battle loot can only be changed through the inventory and gold of the monsters. There is no hook to add extra loot after a battle.
+
+**Ambermoon DC**
+- Only the original game is supported as base, not Ambermoon Advanced.
+- All texts of the mod exist in English and German. Other languages use the English texts.
+- There are 5 themes so far (caves, crypt, dwarven mines, burning halls, forest moon mine). Some theme monsters share map sprites, as there are only a few monster sprites in the original game.
+- The first 4 themes are made of textures of maps with palette 6. Their other palettes are only similar variants, which also give the frame around the 3D view another color. The forest moon mine uses the palettes of the forest moon (12 and 11), only the map sprite of the Gizzek comes from a map with palette 11.
+- The combat value formula of the theme monsters was only tested roughly against the original monsters.
+- Random companions can only use the portraits the original game has for their race and gender, so some combinations don't exist (e.g. there are no female gnomes).
+- The balancing was not tested beyond a few floors. The hero is alone until floor 12 and the floors are dark from floor 4 on.

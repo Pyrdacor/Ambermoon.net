@@ -32,6 +32,20 @@ partial class GameCore
 
     public event Action? QuitRequested;
 
+    /// <summary>
+    /// Hooks used by the mod system. Set it before the game is started.
+    /// </summary>
+    public IGameModHooks? ModHooks { get; set; }
+    /// <summary>
+    /// Must be set by derived classes right before <see cref="Start"/> is called for a new game.
+    /// </summary>
+    protected bool StartingNewGame { get; set; } = false;
+    /// <summary>
+    /// True if the player sees the map and can act (no window, popup, battle, fade or teleport).
+    /// </summary>
+    internal bool IdleOnMap => Ingame && !paused && !allInputDisabled && InputEnable && !WindowOrPopupActive &&
+        !BattleActive && !Teleporting && !Fading && Map != null;
+
     internal bool Ingame { get; private set; } = false;
     internal uint CurrentTicks { get; private set; } = 0;
     internal uint CurrentMapTicks { get; private set; } = 0;
@@ -88,6 +102,9 @@ partial class GameCore
 
         if (!proceed)
             return;
+
+        if (Ingame && !paused)
+            ModHooks?.Update(deltaTime);
 
         for (int i = timedEvents.Count - 1; i >= 0; --i)
         {
@@ -305,6 +322,10 @@ partial class GameCore
         }
         changedMaps.Clear();
 
+        bool newGame = StartingNewGame;
+        StartingNewGame = false;
+        ModHooks?.GameStarting(savegame, newGame);
+
         Ingame = true;
         CurrentSavegame = savegame;
         GameTime = new SavegameTime(savegame);
@@ -455,6 +476,8 @@ partial class GameCore
         }
 
         PlayerMoved(false, new Position(player.Position), false);
+
+        ModHooks?.GameStarted(newGame);
 
         void CheckWeight(PartyMember partyMember)
         {

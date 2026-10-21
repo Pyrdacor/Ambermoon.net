@@ -21,30 +21,49 @@ namespace Ambermoon
         };
         readonly ICoreConfiguration configuration;
         readonly Dictionary<Song, ISong> externalSongs = [];
+        readonly Dictionary<Song, ISong> modSongs = [];
         IAudioOutput audioOutput = null;
         IAudioStream currentStream = null;
         protected static readonly Song[] Songs = EnumHelper.GetValues<Song>().Skip(1).ToArray();
         readonly ISongManager songManager = null;
         readonly Lock startMutex = new();
 
-        public MusicManager(ICoreConfiguration configuration, IGameData gameData)
+        /// <param name="modMusicFiles">Song number to MP3 file path of the active mod (optional).
+        /// Mod songs are always used, independent of the external music setting.</param>
+        public MusicManager(ICoreConfiguration configuration, IGameData gameData, IReadOnlyDictionary<int, string> modMusicFiles = null)
         {
             songManager = gameData.SongManager;
 
             this.configuration = configuration;
 
             LoadExternalSongs();
+
+            if (modMusicFiles != null)
+            {
+                foreach (var modMusicFile in modMusicFiles)
+                {
+                    if (!Enum.IsDefined(typeof(Song), modMusicFile.Key) || !modMusicFile.Value.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var song = (Song)modMusicFile.Key;
+                    var music = LoadMp3(this, song, modMusicFile.Value);
+
+                    if (music != null)
+                        modSongs[song] = music;
+                }
+            }
         }
 
         public void Dispose()
         {
-            foreach (var song in externalSongs)
+            foreach (var song in externalSongs.Concat(modSongs))
             {
                 if (song.Value is IDisposable d)
                     d.Dispose();
             }
 
             externalSongs.Clear();
+            modSongs.Clear();
         }
 
         static ExternalSong LoadMp3(MusicManager musicManager, Song song, string filename)
@@ -130,6 +149,9 @@ namespace Ambermoon
 
         public ISong GetSong(Song index)
         {
+            if (modSongs.TryGetValue(index, out var modSong))
+                return modSong;
+
             if (configuration.ExternalMusic)
             {
                 if (externalSongs.TryGetValue(index, out var song))
