@@ -48,4 +48,9 @@ public interface IGameModHooks
     void LevelUp(PartyMember partyMember);
     void PartyMemberJoined(PartyMember partyMember);
     void PartyMemberLeft(PartyMember partyMember);
+    /// <summary>
+    /// The quests of the mod which are shown in the quest log instead of the quests of the
+    /// original game. If null (the mod has no quests), the quest log is disabled.
+    /// </summary>
+    UI.IQuestLogSource? QuestLogSource { get; }
 }

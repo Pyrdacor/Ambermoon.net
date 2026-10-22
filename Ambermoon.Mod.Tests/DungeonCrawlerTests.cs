@@ -99,9 +99,24 @@ static partial class Tests
                 // Determinism: the same seed and floor result in the same layout.
                 var again = FloorGenerator.Generate(mod.State.Seed, floor);
                 Check(SameLayout(layout, again), $"Floor {floor}: layout is deterministic");
+
+                // Simulate defeating the boss.
+                if (layout.IsBossFloor)
+                    mod.OnBattleEnded(FloorBuilderTestAccess.BossGroupIndex, true, false);
             }
 
             Check(party.Count(p => p != 0) > 1, "Recruits were offered");
+
+            // Milestone quests (updated by the mod code)
+            var quests = api.Quests;
+            Check(quests.HasQuests, "Ambermoon DC has quests");
+            Check(new[] { "floor10", "floor25", "floor50" }.All(s => quests.GetState(s) == UI.QuestState.Completed), "Depth milestones are completed");
+            Check(quests.GetState("floor100") == UI.QuestState.Active && quests.GetAmount("floor100") == floors, "The next depth milestone shows the progress");
+            Check(new[] { "boss1", "bossgroup", "boss5", "boss10" }.All(s => quests.GetState(s) == UI.QuestState.Completed), "Boss milestones are completed");
+            Check(quests.GetState("recruit") == UI.QuestState.Active, "Companion quest waits for a companion");
+            var entries = quests.GetEntries(language == "German" ? GameLanguage.German : GameLanguage.English);
+            Check(entries.Count == 3 && entries[0].SubEntries[3].Text.EndsWith($"({floors}/100)"), "Quest log entries show the progress");
+            Console.WriteLine($"  Quest log: {string.Join(" | ", entries.Select(e => e.Text + ": " + string.Join(", ", e.SubEntries.Where(s => s.State != UI.QuestState.Inactive).Select(s => s.Text))))}");
             var loaded = SavegameRoundTrip(gameData, savegame);
 
             if (loaded != null)
@@ -130,6 +145,7 @@ static partial class Tests
     static class FloorBuilderTestAccess
     {
         public static uint MapIndex(int floor) => FloorBuilder.MapIndexForFloor(floor);
+        public const uint BossGroupIndex = FloorBuilder.FirstMonsterGroupIndex;
     }
 
     static bool SameLayout(FloorLayout a, FloorLayout b)

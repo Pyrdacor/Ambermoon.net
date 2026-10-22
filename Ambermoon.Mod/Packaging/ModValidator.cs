@@ -40,6 +40,18 @@ public static class ModValidator
         if (manifest?.HasCode == true && !source.Exists(manifest.Assembly!))
             errors.Add($"The mod assembly '{manifest.Assembly}' is missing.");
 
+        if (source.Exists(ModQuests.FileName))
+        {
+            try
+            {
+                ModQuests.Parse(source.ReadAllText(ModQuests.FileName));
+            }
+            catch (Exception ex)
+            {
+                errors.Add(ex.Message);
+            }
+        }
+
         const string assets = ModAssetApplier.AssetFolder;
         var knownFolders = IndexedAssetFolders.Concat(["graphics", "music"]).ToHashSet();
 

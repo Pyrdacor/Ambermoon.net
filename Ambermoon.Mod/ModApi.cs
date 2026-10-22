@@ -32,7 +32,14 @@ public class ModApi
         Manifest = manifest;
         Source = source;
         GameData = gameData;
+        Quests = ModQuests.Load(this, source);
     }
+
+    /// <summary>
+    /// The quests of the mod (from "quests.json"). They replace the quests of the original game.
+    /// If the mod has no quests, the quest log is disabled.
+    /// </summary>
+    public ModQuests Quests { get; }
 
     internal void AttachGame(GameCore game) => this.game = game;
 
