@@ -1,0 +1,84 @@
+{
+  "Quests": [
+    {
+      "Id": "depths",
+      "Name": { "en": "Into the Depths", "de": "In die Tiefe" },
+      "Steps": [
+        {
+          "Id": "floor10",
+          "Text": { "en": "Reach floor 10", "de": "Erreiche Ebene 10" },
+          "Hint": { "en": "Find the way down on each floor.", "de": "Finde auf jeder Ebene den Weg nach unten." },
+          "Active": true,
+          "Amount": 10
+        },
+        {
+          "Id": "floor25",
+          "Text": { "en": "Reach floor 25", "de": "Erreiche Ebene 25" },
+          "Amount": 25,
+          "ActivateOn": [ { "Type": "StepCompleted", "Step": "floor10" } ]
+        },
+        {
+          "Id": "floor50",
+          "Text": { "en": "Reach floor 50", "de": "Erreiche Ebene 50" },
+          "Amount": 50,
+          "ActivateOn": [ { "Type": "StepCompleted", "Step": "floor25" } ]
+        },
+        {
+          "Id": "floor100",
+          "Text": { "en": "Reach floor 100", "de": "Erreiche Ebene 100" },
+          "Amount": 100,
+          "ActivateOn": [ { "Type": "StepCompleted", "Step": "floor50" } ]
+        }
+      ]
+    },
+    {
+      "Id": "guardians",
+      "Name": { "en": "Guardians of the Deep", "de": "Wächter der Tiefe" },
+      "Steps": [
+        {
+          "Id": "boss1",
+          "Text": { "en": "Defeat a guardian", "de": "Besiege einen Wächter" },
+          "Hint": { "en": "Every 5th floor is guarded.", "de": "Jede 5. Ebene wird bewacht." },
+          "Active": true
+        },
+        {
+          "Id": "bossgroup",
+          "Text": { "en": "Defeat a guardian and its minions", "de": "Besiege einen Wächter mit Gefolge" },
+          "Hint": { "en": "Every 10th floor is guarded by a group.", "de": "Jede 10. Ebene wird von einer Gruppe bewacht." },
+          "ActivateOn": [ { "Type": "StepCompleted", "Step": "boss1" } ]
+        },
+        {
+          "Id": "boss5",
+          "Text": { "en": "Defeat 5 guardians", "de": "Besiege 5 Wächter" },
+          "Amount": 5,
+          "ActivateOn": [ { "Type": "StepCompleted", "Step": "boss1" } ]
+        },
+        {
+          "Id": "boss10",
+          "Text": { "en": "Defeat 10 guardians", "de": "Besiege 10 Wächter" },
+          "Amount": 10,
+          "ActivateOn": [ { "Type": "StepCompleted", "Step": "boss5" } ]
+        }
+      ]
+    },
+    {
+      "Id": "companions",
+      "Name": { "en": "Companions", "de": "Gefährten" },
+      "Steps": [
+        {
+          "Id": "recruit",
+          "Text": { "en": "Find a companion", "de": "Finde einen Gefährten" },
+          "Hint": { "en": "Every 12th floor someone wanders around.", "de": "Auf jeder 12. Ebene ist jemand unterwegs." },
+          "Active": true,
+          "CompleteOn": [ { "Type": "PartyMemberJoined" } ]
+        },
+        {
+          "Id": "fullparty",
+          "Text": { "en": "Gather a full party", "de": "Stelle eine volle Gruppe zusammen" },
+          "Amount": 6,
+          "ActivateOn": [ { "Type": "StepCompleted", "Step": "recruit" } ]
+        }
+      ]
+    }
+  ]
+}

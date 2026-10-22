@@ -149,6 +149,30 @@ public class AmbermoonDCMod : ModBase
 
         if (floor > 1)
             pendingMessages.Enqueue(message);
+
+        UpdateQuests(floor, state.BossesDefeated);
+    }
+
+    // Quest steps with an amount, in the order they are activated (see quests.json).
+    static readonly string[] FloorQuests = ["floor10", "floor25", "floor50", "floor100"];
+    static readonly string[] BossQuests = ["boss5", "boss10"];
+
+    void UpdateQuests(int floor, int bossesDefeated)
+    {
+        var quests = Api.Quests;
+
+        if (!quests.HasQuests)
+            return;
+
+        // Completing a step activates the next one, so the steps are updated in order.
+        foreach (var step in FloorQuests)
+            quests.SetAmount(step, floor);
+
+        if (bossesDefeated > 0)
+            quests.Complete("boss1");
+
+        foreach (var step in BossQuests)
+            quests.SetAmount(step, bossesDefeated);
     }
 
     static void PlacePartyAtStart(Savegame savegame, FloorLayout layout)
@@ -178,7 +202,28 @@ public class AmbermoonDCMod : ModBase
     public override void OnBattleEnded(uint monsterGroupIndex, bool monstersDefeated, bool partyDefeated)
     {
         if (monstersDefeated && currentLayout?.Boss != null && monsterGroupIndex == FloorBuilder.FirstMonsterGroupIndex)
+        {
             pendingMessages.Enqueue(Texts.BossDefeated);
+            state!.BossesDefeated++;
+            UpdateQuests(state.Floor, state.BossesDefeated);
+
+            if (currentLayout.IsBossWithMinionsFloor && Api.Quests.HasQuests)
+                Api.Quests.Complete("bossgroup");
+        }
+    }
+
+    public override void OnPartyMemberJoined(PartyMember partyMember) => UpdatePartyQuest(partyMember, true);
+
+    public override void OnPartyMemberLeft(PartyMember partyMember) => UpdatePartyQuest(partyMember, false);
+
+    void UpdatePartyQuest(PartyMember partyMember, bool joined)
+    {
+        if (!Api.Quests.HasQuests)
+            return;
+
+        // The hooks may be called before or after the party changed.
+        var party = Api.PartyMembers.Where(p => p != partyMember).Count();
+        Api.Quests.SetAmount("fullparty", party + (joined ? 1 : 0));
     }
 
     public override void OnUpdate(double deltaTime)

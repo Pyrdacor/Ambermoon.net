@@ -32,10 +32,23 @@ partial class GameCore
 
     public event Action? QuitRequested;
 
+    IGameModHooks? modHooks;
+
     /// <summary>
     /// Hooks used by the mod system. Set it before the game is started.
     /// </summary>
-    public IGameModHooks? ModHooks { get; set; }
+    public IGameModHooks? ModHooks
+    {
+        get => modHooks;
+        set
+        {
+            modHooks = value;
+
+            // Mods without quests have no quest log.
+            if (!QuestLogAvailable)
+                questLogIcon.Visible = false;
+        }
+    }
     /// <summary>
     /// Must be set by derived classes right before <see cref="Start"/> is called for a new game.
     /// </summary>

@@ -353,7 +353,12 @@ public partial class QuestLog
     private readonly IGameRenderView renderView;
     private readonly UIText[] texts = new UIText[TextLineCount];
     private readonly Tooltip[] tooltips = new Tooltip[TextLineCount];
-    private readonly Dictionary<MainQuestType, bool> questGroups = []; // boolean = expanded
+    private readonly Dictionary<object, bool> questGroups = []; // key = main quest type or external key, boolean = expanded
+    /// <summary>
+    /// External quests (e.g. of a mod). If set, the quests of the original game are not used.
+    /// </summary>
+    private readonly IQuestLogSource? source;
+    private readonly HashSet<string> completedExternalQuests = [];
     private readonly List<CollapseIndicator> collapseIndicators = [];
     internal MainQuest[] Quests { get; }
     internal bool Open { get; private set; } = false;
@@ -375,10 +380,10 @@ public partial class QuestLog
         private readonly Position position;
         private readonly IColoredRect[] rects = new IColoredRect[6];
 
-        // the main quest itself, the index of the displayed quests differs from the index in Quests
-        public MainQuestType QuestType { get; }
+        // the main quest itself (main quest type or external key)
+        public object QuestType { get; }
 
-        public CollapseIndicator(Position position, Popup popup, bool expanded, MainQuestType questType)
+        public CollapseIndicator(Position position, Popup popup, bool expanded, object questType)
         {
             this.position = position;
             QuestType = questType;
@@ -444,6 +449,17 @@ public partial class QuestLog
         CheckExploration(0, 0, 0);
         CheckChestUnlock(uint.MaxValue);
         CheckDoorUnlock(uint.MaxValue);
+    }
+
+    /// <summary>
+    /// Creates a quest log which shows external quests (e.g. of a mod) instead of the quests of the original game.
+    /// </summary>
+    public QuestLog(GameCore game, IGameRenderView renderView, IQuestLogSource source)
+    {
+        this.game = game;
+        this.renderView = renderView;
+        this.source = source;
+        Quests = [];
     }
 
     internal QuestState GetMainQuestState(MainQuestType questType) => Quests.First(q => q.Type == questType).ToCompoundState();
@@ -749,6 +765,63 @@ public partial class QuestLog
         }
     }
 
+    /// <summary>
+    /// A displayed line of the quest log.
+    /// </summary>
+    /// <param name="Key">Main quest key for headers (they can be collapsed), null for steps.</param>
+    private record Line(object? Key, bool Expanded, string Text, TextColor Color, string? Tooltip);
+
+    private List<Line> GetLines(Func<QuestState, bool> filter)
+    {
+        var lines = new List<Line>();
+
+        if (source != null)
+        {
+            foreach (var quest in source.GetEntries(game.GameLanguage))
+            {
+                var state = quest.State;
+
+                if (!filter(state))
+                    continue;
+
+                if (!questGroups.ContainsKey(quest.Key))
+                    questGroups.Add(quest.Key, true);
+
+                if (state == QuestState.Completed && completedExternalQuests.Add(quest.Key))
+                    questGroups[quest.Key] = false; // collapse completed quests
+
+                bool expanded = questGroups[quest.Key];
+                lines.Add(new(quest.Key, expanded, " " + TruncateText(quest.Text, true), state.ToColor(), null));
+
+                if (expanded)
+                {
+                    // Like the original quests: active first, completed last (stable otherwise)
+                    foreach (var subQuest in quest.SubEntries.Where(s => filter(s.State)).OrderBy(s => s.State))
+                        lines.Add(new(null, false, "  " + TruncateText(subQuest.Text, false), subQuest.State.ToColor(), subQuest.Tooltip));
+                }
+            }
+
+            return lines;
+        }
+
+        foreach (var quest in Quests.Where(quest => filter(quest.ToCompoundState())))
+        {
+            bool expanded = questGroups[quest.Type];
+            lines.Add(new(quest.Type, expanded, " " + GetMainQuestText(quest.Type), quest.ToCompoundState().ToColor(), null));
+
+            if (!expanded)
+                continue;
+
+            foreach (var subQuest in quest.SubQuests.Where(s => filter(s.State)).OrderBy(q => q, new SubQuestSorter(quest)))
+            {
+                lines.Add(new(null, false, "  " + GetSubQuestText(subQuest.Type, subQuest.CurrentAmount, subQuest.MinAmount),
+                    subQuest.State.ToColor(), QuestTexts.Source.Get(game.GameLanguage) + subQuest.GetSourceInfo(game)));
+            }
+        }
+
+        return lines;
+    }
+
     private void Redraw()
     {
         foreach (var collapseIndicator in collapseIndicators)
@@ -760,23 +833,8 @@ public partial class QuestLog
             ? state => state != QuestState.Inactive
             : state => state != QuestState.Inactive && state != QuestState.Completed;
 
-        var quests = Quests.Where(quest => filter(quest.ToCompoundState())).ToArray();
-
-        int visibleLines = 0;
-
-        for (int i = 0; i < quests.Length; i++)
-        {
-            if (questGroups[quests[i].Type])
-            {
-                visibleLines += 1 + quests[i].SubQuests.Where(s => filter(s.State)).Count();
-            }
-            else
-            {
-                visibleLines += 1;
-            }
-        }
-
-        int scrollRange = Math.Max(0, visibleLines - TextLineCount);
+        var lines = GetLines(filter);
+        int scrollRange = Math.Max(0, lines.Count - TextLineCount);
 
         if (scrollbar == null)
         {
@@ -800,107 +858,31 @@ public partial class QuestLog
         var area = Area;
         var textArea = new Rect(area.Left + 16 + 3, area.Top + 16 - 2 + 1, area.Width - 32 - 16, area.Height - 32 - 16);
 
-        int questIndex = 0;
-        int subIndex = 0;
-        int y = textArea.Y;
-        bool header = true;
-        int textIndex = 0;
-        int iterationIndex = 0;
-
-        while (true)
+        for (int i = 0; i < TextLineCount; i++)
         {
-            if (questIndex == quests.Length)
+            int lineIndex = scrollOffset + i;
+            var text = texts[i];
+            var tooltip = tooltips[i];
+
+            if (lineIndex >= lines.Count)
             {
-                for (int j = textIndex; j < TextLineCount; j++)
-                {
-                    texts[j].Visible = false;
-                    tooltips[j].Enabled = false;
-                }
-                break;
+                text.Visible = false;
+                tooltip.Enabled = false;
+                continue;
             }
 
-            var quest = quests[questIndex];
-            var subQuests = quest.SubQuests.Where(s => filter(s.State)).OrderBy(q => q, new SubQuestSorter(quest)).ToArray();
+            var line = lines[lineIndex];
+            int y = textArea.Y + i * 7;
 
-            if (!header && subIndex == subQuests.Length)
-            {
-                questIndex++;
-                subIndex = 0;
-                header = true;
+            if (line.Key != null)
+                collapseIndicators.Add(new(new Position(textArea.Left, y + 1), popup!, line.Expanded, line.Key));
 
-                if (questIndex == quests.Length)
-                {
-                    for (int j = textIndex; j < TextLineCount; j++)
-                    {
-                        texts[j].Visible = false;
-                        tooltips[j].Enabled = false;
-                    }
-                    break;
-                }
+            tooltip.Text = line.Tooltip ?? "";
+            tooltip.Enabled = line.Tooltip != null;
 
-                quest = quests[questIndex];
-            }
-
-            if (header)
-            {
-                bool expanded = questGroups[quests[questIndex].Type];
-
-                if (iterationIndex >= scrollOffset)
-                {
-                    collapseIndicators.Add(new(new Position(textArea.Left, y + 1), popup!, expanded, quest.Type));
-
-                    tooltips[textIndex].Enabled = false;
-
-                    var text = texts[textIndex++];
-                    text.SetText(renderView.TextProcessor.CreateText(" " + GetMainQuestText(quest.Type)));
-                    text.SetTextColor(quest.ToCompoundState().ToColor());
-                    text.Visible = true;
-
-                    y += 7;
-                }
-
-                if (expanded)
-                    header = false; // if group is expanded, switch to no header
-                else
-                    questIndex++; // otherwise go to next main quest
-            }
-            else
-            {
-                var subQuest = subQuests[subIndex++];
-
-                while (subQuest.State == QuestState.Inactive)
-                {
-                    if (subIndex == subQuests.Length)
-                    {
-                        header = true;
-                        questIndex++;
-                        break;
-                    }
-
-                    subQuest = subQuests[subIndex++];
-                }
-
-                if (header)
-                    continue;
-
-                if (iterationIndex >= scrollOffset)
-                {
-                    var tooptip = tooltips[textIndex];
-                    tooptip.Text = QuestTexts.Source.Get(game.GameLanguage) + subQuest.GetSourceInfo(game);
-                    tooptip.Enabled = true;
-
-                    var text = texts[textIndex++];
-                    text.SetText(renderView.TextProcessor.CreateText("  " + GetSubQuestText(subQuest.Type, subQuest.CurrentAmount, subQuest.MinAmount)));
-                    text.SetTextColor(subQuest.State.ToColor());
-                    text.Visible = true;
-                    y += 7;
-                }
-            }
-
-            iterationIndex++;
-
-            if (textIndex == texts.Length)
-                break;
+            text.SetText(renderView.TextProcessor.CreateText(line.Text));
+            text.SetTextColor(line.Color);
+            text.Visible = true;
         }
     }
 }

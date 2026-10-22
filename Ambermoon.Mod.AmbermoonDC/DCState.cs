@@ -26,4 +26,8 @@ internal class DCState
     /// are not stored in savegames, so they are restored when a game is loaded.
     /// </summary>
     public Dictionary<uint, List<string>> RecruitTexts { get; set; } = [];
+    /// <summary>
+    /// Number of defeated bosses (for the quests).
+    /// </summary>
+    public int BossesDefeated { get; set; }
 }

@@ -212,12 +212,45 @@ Override the virtual methods of `ModBase` or subscribe to the events of the same
 - **State:** `IsIngame`, `Game`, `Savegame`, `CurrentMap`, `PartyMembers` and `CanShowMessage`.
 - **Actions:** `Teleport`, `StartBattle`, `ShowMessage`, `AskQuestion`, `RandomInt` and `ResetMapState` (clears the saved state of a map before it is replaced).
 - **Helpers:** `Source` gives access to the files of the mod and `Log` writes to the console.
+- **Quests:** `Quests` changes the progress of the quests of the mod (see [Quests](#quests)).
 - `CharacterHelper` equips items, adds items to inventories and raises the level of party members with the same stat changes as the game.
 - `EventFactory` creates map events with all their raw data initialized.
 - `LabdataBuilder` creates new 3D labdata from the global 3D textures of the base game (walls with overlays from `Wall3D.amb`/`Overlay3D.amb`, objects from `Object3D.amb`, floors and ceilings from `Floors.amb`) or copies objects of the original labdata. Register the result with `Maps.SetLabdata`.
 
 Mod assemblies are loaded into their own load context. Further assemblies the mod needs can be put next to the mod assembly.
 
+
+## Quests
+
+Mods never show the quests of the original game in the quest log. A mod can define its own quests in a `quests.json` at its root. If a mod has no quests, the quest log is disabled (no icon, the shortcut does nothing).
+
+```json
+{
+  "Quests": [
+    {
+      "Id": "cave",
+      "Name": { "en": "The old cave", "de": "Die alte Höhle" },
+      "Steps": [
+        { "Id": "enter", "Text": { "en": "Enter the cave" }, "Active": true,
+          "CompleteOn": [ { "Type": "Map", "Map": 260 } ] },
+        { "Id": "lever", "Text": { "en": "Pull the lever" }, "Hint": { "en": "It is in the north." },
+          "ActivateOn": [ { "Type": "StepCompleted", "Step": "enter" } ],
+          "CompleteOn": [ { "Type": "Event", "Map": 260, "X": 12, "Y": 3, "EventType": "Action" } ] },
+        { "Id": "spiders", "Text": { "en": "Defeat spiders" }, "Amount": 3, "Active": true, "Requires": [ "lever" ],
+          "CompleteOn": [ { "Type": "Battle", "MonsterGroup": 2 } ] }
+      ]
+    }
+  ]
+}
+```
+
+- A quest consists of steps. Texts are given per language (`en`, `de`, `fr`, `pl`, `cz`; English is the fallback). `Hint` is shown when hovering a step.
+- A step is inactive until it is activated (`Active` for the start of a new game or `ActivateOn`). An active step is completed by one of its `CompleteOn` triggers. Inactive steps are not shown.
+- `Requires`: the step is shown as blocked (and can't be completed) until these steps are completed.
+- `Amount`: the step shows its progress like `(2/3)`. Each fired completion trigger adds 1, item triggers show the number of carried items. The step is completed when the amount is reached.
+- Triggers (`Type`): `StepCompleted` (`Step`), `Map` (the party enters `Map`, optionally at `X`/`Y`), `Event` (a map event of `Map` is executed, optionally at `X`/`Y` and of an `EventType`), `Item` (the party carries `Amount` items with the index `Item`), `Battle` (a battle is won, optionally against `MonsterGroup`), `PartyMemberJoined` (optionally `PartyMember`) and `Level` (a party member reaches `Level`).
+- Code mods can change the progress with `Api.Quests`: `Activate`, `Complete`, `SetAmount`, `AddAmount`, `GetState`, `GetAmount` and the event `StepCompleted`.
+- The progress is stored with each savegame (as mod data) and reset for new games. Steps which are added by a newer mod version start in their initial state.
 
 ## Ambermoon DC
 
@@ -230,6 +263,7 @@ Ambermoon DC (`Ambermoon.Mod.AmbermoonDC`) is a dungeon crawler built as a code 
 - Every 5th floor a boss guards the way down, every 10th floor a boss with minions. Boss floors have extra treasure, and the boss drops an item which is an upgrade for one of the party members.
 - Floors 2, 7, 12, 17, ... have a chest with a good piece of equipment which is an upgrade for one of the party members (the one on floor 2 is a weapon). Together with the boss loot the party finds good equipment every 2 or 3 floors. Story items (like the sword of Mando) are never part of the loot.
 - The mod provides these option defaults: auto battle with 5 rounds, floor, ceiling and distance fog are shown. The player can change them as usual.
+- The quest log shows milestones: reaching floors 10, 25, 50 and 100, defeating guardians and finding companions.
 - Up to floor 15 monsters can't cast curses (lame, poison, petrify, disease, aging, irritation, madness, sleep, fear, blindness, drugs and dissolve victim). Damage spells are allowed.
 - Every 12th floor a random companion wanders around and can be asked to join. Name, race, gender, portrait, class, attributes, skills, spells and the (short) dialogues are random. Level and equipment fit the depth. Party members can be dismissed as usual. Dismissed companions are gone, their party member slot is reused for later companions.
 - Secret rooms are hidden behind illusory walls or behind walls which open when touched.
