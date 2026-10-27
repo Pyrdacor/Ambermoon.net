@@ -16,8 +16,14 @@ partial class GameCore
     protected bool QuestLogIconVisible
     {
         get => questLogIcon.Visible;
-        set => questLogIcon.Visible = value;
+        set => questLogIcon.Visible = value && QuestLogAvailable;
     }
+
+    /// <summary>
+    /// Mods never use the quests of the original game. They can provide own quests.
+    /// If a mod has no quests, there is no quest log (no icon, no shortcut).
+    /// </summary>
+    bool QuestLogAvailable => ModHooks == null || ModHooks.QuestLogSource != null;
 
     public bool IsQuestLogEnabled
     {
@@ -92,6 +98,17 @@ partial class GameCore
 
     void CreateQuestLog()
     {
+        if (ModHooks != null)
+        {
+            var source = ModHooks.QuestLogSource;
+            QuestLog = source == null ? null : new(this, renderView, source);
+
+            if (QuestLog == null)
+                questLogIcon.Visible = false;
+
+            return;
+        }
+
         QuestLog = new(this, renderView, renderView.GameData.Advanced,
             renderView.GameData.Advanced ? GetCurrentAdvancedEpisode() : 0);
     }

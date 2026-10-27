@@ -1,0 +1,121 @@
+{
+  "Id": "dwarfmines",
+  "Name": { "en": "Dwarven Mines", "de": "Zwergenminen" },
+  "Palettes": [ 6, 19, 22, 26 ],
+  "CombatBackground": 3,
+  "WallHeight": 300,
+  "FloorTexture": 1,
+  "FloorColor": 4,
+  "CeilingTexture": 13,
+  "CeilingColor": 6,
+  "Music": [ 17, 19 ],
+  "Walls": [
+    { "Texture": 92, "Weight": 3 },
+    { "Texture": 93 },
+    { "Texture": 94 }
+  ],
+  "Door": { "Closed": 90, "Open": 0 },
+  "Chest": { "Labdata": 2, "Object": 25 },
+  "Exit": { "Labdata": 2, "Object": 20 },
+  "Entrance": { "Labdata": 2, "Object": 21 },
+  "Decorations": [
+    { "Labdata": 29, "Object": 1 },
+    { "Labdata": 29, "Object": 2 },
+    { "Labdata": 29, "Object": 4 },
+    { "Labdata": 29, "Object": 6 },
+    { "Labdata": 29, "Object": 9 },
+    { "Labdata": 6, "Object": 3 },
+    { "Labdata": 6, "Object": 28 },
+    { "Labdata": 6, "Object": 15 }
+  ],
+  "Obstacles": [
+    { "Texture": 33, "Width": 48, "Height": 39 },
+    { "Labdata": 29, "Object": 12 },
+    { "Labdata": 29, "Object": 13 },
+    { "Labdata": 6, "Object": 27 },
+    { "Labdata": 5, "Object": 20 }
+  ],
+  "Monsters": [
+    {
+      "Id": "orc",
+      "Template": 16,
+      "Name": { "en": "Mine Orc", "de": "Minenork" },
+      "Sprite": { "Labdata": 6, "Object": 4 },
+      "Weight": 3,
+      "Morale": 60
+    },
+    {
+      "Id": "orcwarrior",
+      "Template": 17,
+      "Name": { "en": "Orc Warrior", "de": "Orkkrieger" },
+      "Sprite": { "Labdata": 6, "Object": 4 },
+      "MinFloor": 2,
+      "Factors": { "HitPoints": 1.2, "Attack": 1.2, "Experience": 1.2 }
+    },
+    {
+      "Id": "looter",
+      "Template": 9,
+      "Name": { "en": "Looter", "de": "Plünderer" },
+      "Sprite": { "Labdata": 4, "Object": 14 },
+      "Class": "Thief",
+      "Weight": 2,
+      "Morale": 50,
+      "Factors": { "HitPoints": 0.8, "Defense": 0.7, "Gold": 2.5 }
+    },
+    {
+      "Id": "minespider",
+      "Template": 33,
+      "Name": { "en": "Mine Spider", "de": "Minenspinne" },
+      "Sprite": { "Labdata": 29, "Object": 11 },
+      "Flags": "Animal",
+      "Spells": [ "Poison", "Lame" ],
+      "SpellChance": 30
+    },
+    {
+      "Id": "minelizard",
+      "Template": 32,
+      "Name": { "en": "Mine Lizard", "de": "Minenechse" },
+      "Sprite": { "Labdata": 29, "Object": 10 },
+      "Flags": "Animal",
+      "MaxCount": 3,
+      "MinFloor": 2,
+      "Factors": { "HitPoints": 1.3, "Defense": 1.3 }
+    },
+    {
+      "Id": "golem",
+      "Template": 14,
+      "Name": { "en": "Stone Golem", "de": "Steingolem" },
+      "Sprite": { "Labdata": 5, "Object": 1 },
+      "Element": "Earth",
+      "Spells": [ "Mudsling", "Rockfall" ],
+      "SpellChance": 30,
+      "MaxCount": 2,
+      "MinFloor": 3,
+      "Morale": 100,
+      "Factors": { "HitPoints": 1.6, "Defense": 1.5, "Attributes": 0.9, "Experience": 1.5 }
+    },
+    {
+      "Id": "granitegolem",
+      "Template": 15,
+      "Name": { "en": "Granite Golem", "de": "Granitgolem" },
+      "Sprite": { "Labdata": 5, "Object": 1 },
+      "Element": "Earth",
+      "Spells": [ "Rockfall", "Earthslide", "Earthquake" ],
+      "SpellChance": 50,
+      "AttacksPerRound": 2,
+      "BossOnly": true,
+      "Factors": { "Defense": 1.5 }
+    },
+    {
+      "Id": "orcchief",
+      "Template": 17,
+      "Name": { "en": "Orc Chieftain", "de": "Orkhäuptling" },
+      "Sprite": { "Labdata": 6, "Object": 4 },
+      "AttacksPerRound": 3,
+      "BossOnly": true,
+      "Factors": { "Attack": 1.2 }
+    }
+  ],
+  "Boss": { "Monster": "granitegolem" },
+  "BossGroup": { "Boss": "orcchief", "Minions": [ "orc", "orcwarrior" ] }
+}

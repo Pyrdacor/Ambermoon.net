@@ -25,6 +25,8 @@ namespace Ambermoon;
 ///                             'timeout ms' (default 15000).
 ///   screenshot &lt;name&gt;         save a screenshot to Screenshots/&lt;name&gt;.png
 ///   state                     print map, position, window and popup state
+///   save &lt;slot&gt; [name]        save the game to the given slot (1-based)
+///   load &lt;slot&gt;               load the game from the given slot (1-based)
 ///   var &lt;index&gt; [0|1]        print a global variable, optionally check it
 ///   count &lt;item&gt; [amount]     print the amount of an item in the party, optionally check it
 ///   waitbattle [timeout ms] [optional]
@@ -462,6 +464,12 @@ sealed class ScenarioScript
                         break;
                     case "state":
                         Console.WriteLine("  " + game.ScriptState());
+                        break;
+                    case "save":
+                        game.SaveGame(int.Parse(parts[1]), parts.Length > 2 ? string.Join(' ', parts.Skip(2)) : "Scenario");
+                        break;
+                    case "load":
+                        game.LoadGame(int.Parse(parts[1]));
                         break;
                     case "var":
                     {

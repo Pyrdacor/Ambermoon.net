@@ -776,6 +776,12 @@ partial class GameCore
             CurrentSavegame.CharacterDirection = player.Direction;
         }
 
+        if (ModHooks != null && Map != null)
+        {
+            var hookMap = Is3D ? Map : renderMap2D!.GetMapFromTile((uint)player!.Position.X, (uint)player.Position.Y) ?? Map;
+            ModHooks.PlayerMoved(hookMap, 1u + (uint)(player!.Position.X % Map.Width), 1u + (uint)(player.Position.Y % Map.Height), mapChange);
+        }
+
         // Enable/disable transport button and show transports
         if (!WindowActive)
         {
@@ -2006,6 +2012,8 @@ partial class GameCore
 
     void ShowLevelUpWindow(PartyMember partyMember, Action finishedEvent)
     {
+        ModHooks?.LevelUp(partyMember);
+
         bool allInputWasDisabled = allInputDisabled;
         bool inputWasEnabled = InputEnable;
         InputEnable = false;

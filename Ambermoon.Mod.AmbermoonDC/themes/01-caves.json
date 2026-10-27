@@ -1,0 +1,96 @@
+{
+  "Id": "caves",
+  "Name": { "en": "Old Caves", "de": "Alte Höhlen" },
+  "Palettes": [ 6, 19, 22, 25 ],
+  "CombatBackground": 7,
+  "WallHeight": 300,
+  "FloorTexture": 6,
+  "FloorColor": 8,
+  "CeilingTexture": 6,
+  "CeilingColor": 9,
+  "Music": [ 18, 17 ],
+  "Walls": [
+    { "Texture": 116, "Weight": 4 },
+    { "Texture": 116, "Overlays": [ { "Texture": 28, "X": 96, "Y": 0, "Width": 32, "Height": 80 } ] },
+    { "Texture": 116, "Overlays": [ { "Texture": 30, "X": 32, "Y": 0, "Width": 32, "Height": 80 } ] }
+  ],
+  "Door": { "Closed": 117, "Open": 118 },
+  "Chest": { "Labdata": 2, "Object": 25 },
+  "Exit": { "Labdata": 2, "Object": 20 },
+  "Entrance": { "Labdata": 2, "Object": 21 },
+  "Teleporter": { "Labdata": 5, "Object": 2 },
+  "Decorations": [
+    { "Labdata": 2, "Object": 2 },
+    { "Labdata": 2, "Object": 3 },
+    { "Labdata": 2, "Object": 4 },
+    { "Labdata": 2, "Object": 9 },
+    { "Labdata": 2, "Object": 10 },
+    { "Labdata": 2, "Object": 19 },
+    { "Labdata": 6, "Object": 13 },
+    { "Labdata": 6, "Object": 15 }
+  ],
+  "Obstacles": [
+    { "Labdata": 2, "Object": 7 },
+    { "Labdata": 2, "Object": 8 },
+    { "Texture": 33, "Width": 48, "Height": 39 }
+  ],
+  "Monsters": [
+    {
+      "Id": "newt",
+      "Template": 1,
+      "Name": { "en": "Cave Newt", "de": "Höhlenmolch" },
+      "Sprite": { "Labdata": 2, "Object": 13 },
+      "Element": "Water",
+      "Weight": 2,
+      "Factors": { "HitPoints": 0.7, "Attack": 0.8, "Experience": 0.7 }
+    },
+    {
+      "Id": "spider",
+      "Template": 2,
+      "Name": { "en": "Cave Spider", "de": "Höhlenspinne" },
+      "Sprite": { "Labdata": 2, "Object": 14 },
+      "Weight": 3,
+      "Factors": { "HitPoints": 0.9 }
+    },
+    {
+      "Id": "venomspider",
+      "Template": 3,
+      "Name": { "en": "Venom Spider", "de": "Giftspinne" },
+      "Sprite": { "Labdata": 2, "Object": 14 },
+      "Spells": [ "Poison" ],
+      "SpellChance": 30,
+      "MinFloor": 2,
+      "Factors": { "HitPoints": 0.8, "Experience": 1.2 }
+    },
+    {
+      "Id": "lizard",
+      "Template": 4,
+      "Name": { "en": "Cave Lizard", "de": "Höhlenechse" },
+      "Sprite": { "Labdata": 2, "Object": 13 },
+      "MaxCount": 3,
+      "MinFloor": 3,
+      "Factors": { "HitPoints": 1.2, "Attack": 1.1, "Experience": 1.2 }
+    },
+    {
+      "Id": "gigantula",
+      "Template": 5,
+      "Name": { "en": "Gigantula", "de": "Gigantula" },
+      "Sprite": { "Labdata": 2, "Object": 26 },
+      "Spells": [ "Poison", "Mudsling", "Earthslide" ],
+      "SpellChance": 60,
+      "BossOnly": true
+    },
+    {
+      "Id": "spiderqueen",
+      "Template": 5,
+      "Name": { "en": "Spider Queen", "de": "Spinnenkönigin" },
+      "Sprite": { "Labdata": 2, "Object": 26 },
+      "Spells": [ "Poison", "Lame", "Rockfall", "Earthslide" ],
+      "SpellChance": 70,
+      "BossOnly": true,
+      "Factors": { "HitPoints": 1.2, "SpellPoints": 1.5 }
+    }
+  ],
+  "Boss": { "Monster": "gigantula" },
+  "BossGroup": { "Boss": "spiderqueen", "Minions": [ "spider", "venomspider" ] }
+}

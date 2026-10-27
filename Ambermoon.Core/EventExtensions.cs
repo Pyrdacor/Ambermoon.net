@@ -60,6 +60,10 @@ namespace Ambermoon
             aborted = false;
             var events = conversationPartner == null ? map.Events : conversationPartner.Events;
 
+            // Mods can skip map events (and the rest of their chain).
+            if (conversationPartner == null && game.ModHooks?.EventExecuting(map, @event, trigger, x, y) == false)
+                return null;
+
             switch (@event.Type)
             {
                 case EventType.Teleport:

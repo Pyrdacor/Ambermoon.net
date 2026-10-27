@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -9,5 +9,26 @@
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Mod\Ambermoon.Mod.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="mod.json" CopyToOutputDirectory="PreserveNewest" />
+    <ThemeFile Include="themes\*.json" />
+    <None Include="quests.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ambermoon.Mod.Tests" />
+  </ItemGroup>
+
+  <!-- The mod folder (mod.json + quests.json + mod assembly + themes) is created in the output folder after each build.
+       Copy it to the "Mods" folder of Ambermoon.net or pack it with the mod packer. -->
+  <Target Name="CreateModFolder" AfterTargets="Build">
+    <PropertyGroup>
+      <ModOutputDir>$(OutDir)mod/AmbermoonDC/</ModOutputDir>
+    </PropertyGroup>
+    <Copy SourceFiles="mod.json;quests.json;$(OutDir)$(TargetFileName)" DestinationFolder="$(ModOutputDir)" />
+    <Copy SourceFiles="@(ThemeFile)" DestinationFolder="$(ModOutputDir)themes/" />
+    <Copy SourceFiles="$(OutDir)$(TargetName).pdb" DestinationFolder="$(ModOutputDir)" Condition="Exists('$(OutDir)$(TargetName).pdb')" />
+  </Target>
 
 </Project>

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Ambermoon.Data.Legacy
 {
-    public class MapManager : IMapManager
+    public class MapManager : IModifiableMapManager
     {
         readonly Dictionary<uint, Map> maps = new(530);
         readonly Dictionary<uint, Tileset> tilesets = new(10);
@@ -66,6 +66,8 @@ namespace Ambermoon.Data.Legacy
         }
 
         public Map GetMap(uint index) => maps.TryGetValue(index, out var map) ? map : null;
+        public void SetMap(Map map) => maps[map.Index] = map;
+        public void SetLabdata(uint index, Labdata labdata) => this.labdata[index] = labdata;
         public Tileset GetTilesetForMap(Map map) => tilesets[map.TilesetOrLabdataIndex];
         public Labdata GetLabdataForMap(Map map) => labdata[map.TilesetOrLabdataIndex];
     }
