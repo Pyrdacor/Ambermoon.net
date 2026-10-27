@@ -1157,6 +1157,10 @@ partial class GameCore
                                 Cast();
                         }
 
+                        // Exchanging exp with yourself does nothing, so don't waste the transfer stone or SP
+                        if (spell == Spell.ExpExchange && target != null && caster.Index == target.Index)
+                            return;
+
                         if (consumeHandler != null)
                         {
                             // Don't waste items on dead players

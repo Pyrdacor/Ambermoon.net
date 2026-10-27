@@ -942,7 +942,9 @@ namespace Ambermoon
                                 if (actionEvent.Value == 1) // Add
                                 {
                                     int numberToAdd = Math.Max(1, (int)actionEvent.Count);
-                                    foreach (var partyMember in game.PartyMembers)
+                                    var activePartyMember = game.CurrentPartyMember;
+                                    // The active party member gets the items first (stable sort keeps the party order)
+                                    foreach (var partyMember in game.PartyMembers.OrderBy(p => p == activePartyMember ? 0 : 1))
                                     {
                                         numberToAdd = game.DropItem(partyMember, itemIndex, numberToAdd);
 

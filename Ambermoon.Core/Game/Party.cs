@@ -180,9 +180,54 @@ partial class GameCore
         }
     }
 
+    /// <summary>
+    /// Checks if anything can still change the battle (like the Amiga).
+    /// Mad, asleep, panicked, lamed and petrified participants are incapable
+    /// (lamed party members too, even if they could still cast spells).
+    /// The battle goes on if a party member is capable, any participant is only
+    /// panicked (he will flee) or a party member is only asleep while a monster
+    /// is capable (it can wake him up). Otherwise it is a stalemate (game over).
+    /// </summary>
+    bool CanBattleGoOn()
+    {
+        const Condition incapable = Condition.Crazy | Condition.Sleep | Condition.Panic | Condition.Lamed | Condition.Petrified;
+        var partyMembers = PartyMembers.Where(p => p.Alive && currentBattle!.GetSlotFromCharacter(p) != -1 &&
+            !currentBattle.HasPartyMemberFled(p)).Select(p => p.Conditions & incapable).ToList();
+        var monsters = currentBattle!.Monsters.Where(m => m.Alive).Select(m => m.Conditions & incapable).ToList();
+
+        if (partyMembers.Count == 0)
+            return false;
+
+        return partyMembers.Any(c => c == Condition.None) ||
+            partyMembers.Concat(monsters).Any(c => c == Condition.Panic) ||
+            (partyMembers.Any(c => c == Condition.Sleep) && monsters.Any(c => c == Condition.None));
+    }
+
     bool RecheckActivePartyMember(out bool gameOver)
     {
         gameOver = false;
+
+        void GameOver()
+        {
+            if (battleRoundActiveSprite != null)
+                battleRoundActiveSprite.Visible = false;
+            currentBattleInfo = null;
+            ResetCurrentBattle();
+            CloseWindow(() =>
+            {
+                InputEnable = true;
+                Hook_GameOver();
+            });
+        }
+
+        // Stalemate check after each round (e.g. all party members are lamed or mad)
+        if (BattleActive && !BattleRoundActive && !CanBattleGoOn())
+        {
+            layout.ClearBattleFieldSlotColors();
+            GameOver();
+            gameOver = true;
+            return true;
+        }
 
         if (!CurrentPartyMember!.Conditions.CanSelect() || currentBattle?.GetSlotFromCharacter(CurrentPartyMember) == -1)
         {
@@ -190,15 +235,17 @@ partial class GameCore
 
             if (!PartyMembers.Any(p => p.Conditions.CanSelect()))
             {
-                if (battleRoundActiveSprite != null)
-                    battleRoundActiveSprite.Visible = false;
-                currentBattleInfo = null;
-                ResetCurrentBattle();
-                CloseWindow(() =>
+                if (BattleActive && CanBattleGoOn())
                 {
-                    InputEnable = true;
-                    Hook_GameOver();
-                });
+                    // Nobody can be controlled, but the battle is not decided yet (e.g. members are asleep and
+                    // can be woken up, or someone panicked flees). The monsters keep acting, so the next round
+                    // starts automatically. If a round is running, RoundFinished checks again afterwards.
+                    if (!BattleRoundActive)
+                        ExecuteNextUpdateCycle(() => StartBattleRound(true));
+                    return false;
+                }
+
+                GameOver();
                 gameOver = true;
                 return true;
             }

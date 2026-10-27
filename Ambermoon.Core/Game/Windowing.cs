@@ -242,6 +242,22 @@ partial class GameCore
 
                     slot -= 2; // used on two-handed secondary hand slot -> switch to primary hand slot
                 }
+                else
+                {
+                    // Like on the Amiga: a two-handed weapon can't be equipped while a shield (or
+                    // another left hand item) is equipped, and a left hand item can't be equipped
+                    // next to a two-handed weapon (red cross = item index 0 in the left hand).
+                    // Otherwise the shield was lost or a red cross ended up in the inventory.
+                    var item = ItemManager!.GetItem(itemSlot.ItemIndex);
+                    var leftHand = CurrentInventory!.Equipment.Slots[EquipmentSlot.LeftHand];
+
+                    if ((item.NumberOfHands == 2 && !leftHand.Empty && leftHand.ItemIndex != 0) ||
+                        (item.EquipmentSlot == EquipmentSlot.LeftHand && item.NumberOfHands != 0 && !leftHand.Empty && leftHand.ItemIndex == 0))
+                    {
+                        layout.SetInventoryMessage(DataNameProvider.NotEnoughFreeHands, true);
+                        return;
+                    }
+                }
 
                 var targetSlot = layout.TryEquipmentDrop(itemSlot);
 

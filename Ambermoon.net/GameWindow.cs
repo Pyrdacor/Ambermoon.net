@@ -2204,8 +2204,8 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
             window.StateChanged += Window_StateChanged;
             window.Closing += () =>
             {
-                audioOutput.Stop();
-                audioOutput.Dispose();
+                audioOutput?.Stop();
+                audioOutput?.Dispose();
                 cheatTaskCancellationTokenSource.Cancel();
             };
             window.Run();

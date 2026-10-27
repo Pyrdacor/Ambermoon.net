@@ -957,7 +957,10 @@ partial class GameCore
                     BattlePlayerSwitched();
                 }
                 else
+                {
                     AddCurrentPlayerActionVisuals();
+                    UpdateBattleButtons(); // e.g. the weapon broke or a condition changed
+                }
                 UpdateBattleStatus();
                 if (currentBattle != null)
                 {
@@ -1251,6 +1254,17 @@ partial class GameCore
             layout.UpdateCharacterStatus(partyMemberSlot, CurrentPartyMember!.Conditions.CanSelect() ? null : GetDisabledStatusGraphic(CurrentPartyMember));
         }
 
+        UpdateBattleButtons();
+    }
+
+    /// <summary>
+    /// Enables or disables the battle buttons for the current party member.
+    /// This is also needed after each round as conditions or the damage
+    /// (e.g. a broken weapon) may have changed.
+    /// </summary>
+    void UpdateBattleButtons()
+    {
+        int battleFieldSlot = currentBattle!.GetSlotFromCharacter(CurrentPartyMember!);
         layout.EnableButton(0, battleFieldSlot >= 24 && CurrentPartyMember!.CanFlee()); // flee button, only enable in last row
         layout.EnableButton(3, CurrentPartyMember!.CanMove()); // Note: If no slot is available the button still is enabled but after clicking you get "You can't move anywhere".
         layout.EnableButton(4, currentBattle.CanPartyMoveForward);
