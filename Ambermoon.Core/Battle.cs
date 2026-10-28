@@ -3118,11 +3118,11 @@ namespace Ambermoon
                 case Spell.MagicSwordAttack:
                 {
                     // Deals 100% to 125% of the total attack damage to an enemy row in range.
-                    // The damage is increased by 10% per additional APR (1 APR is 100% damage, 2 APR is 110% damage, etc).
+                    // The damage is multiplied by 1 + (APR - 1) * 0.5 (1 APR: x1, 3 APR: x2, 5 APR: x3).
                     // The caster is healed by 10% of the damage dealt.
                     uint damageAmount = (uint)Math.Max(caster.BaseAttackDamage + caster.BonusAttackDamage, 1);
-                    uint aprBonus = caster.AttacksPerRound > 1 ? ((uint)caster.AttacksPerRound - 1) * 10u : 0u;
-                    damageAmount += damageAmount * aprBonus / 100;
+                    uint attacksPerRound = Math.Max(1u, caster.AttacksPerRound);
+                    damageAmount = damageAmount * (attacksPerRound + 1) / 2;
                     uint minDamage = Math.Max(damageAmount, 1);
                     uint maxDamage = Math.Max((125 * damageAmount) / 100, 1);
                     uint dealtDamage = DealDamage(minDamage, maxDamage - minDamage);
