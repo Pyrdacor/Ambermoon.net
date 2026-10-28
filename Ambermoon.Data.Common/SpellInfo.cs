@@ -74,7 +74,7 @@ namespace Ambermoon.Data
         };
 
         public static bool TargetsMultipleEnemies(this SpellTarget spellTarget) =>
-            spellTarget == SpellTarget.EnemyRow || spellTarget == SpellTarget.AllEnemies;
+            spellTarget == SpellTarget.EnemyRow || spellTarget == SpellTarget.AllEnemies || spellTarget == SpellTarget.EnemiesInCloseRange;
 
         public static SpellTargetType GetTargetType(this SpellTarget spellTarget) => spellTarget switch
         {

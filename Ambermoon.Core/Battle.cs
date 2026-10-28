@@ -3145,15 +3145,21 @@ namespace Ambermoon
                     break;
                 case Spell.MagicSwordAttack:
                 {
-                    // Deals 100% to 125% of the total attack damage to an enemy row in range.
+                    // Deals 100% to 125% of the total attack damage to all enemies around the caster.
                     // The damage is multiplied by 1 + (APR - 1) * 0.5 (1 APR: x1, 3 APR: x2, 5 APR: x3).
+                    // 50% to 100% of the target's defense multiplied by the APR is subtracted (like the Amiga).
                     // The caster is healed by 10% of the damage dealt.
-                    uint damageAmount = (uint)Math.Max(caster.BaseAttackDamage + caster.BonusAttackDamage, 1);
-                    uint attacksPerRound = Math.Max(1u, caster.AttacksPerRound);
+                    int damageAmount = Math.Max(caster.BaseAttackDamage + caster.BonusAttackDamage, 1);
+                    int attacksPerRound = Math.Max(1, (int)caster.AttacksPerRound);
                     damageAmount = damageAmount * (attacksPerRound + 1) / 2;
-                    uint minDamage = Math.Max(damageAmount, 1);
-                    uint maxDamage = Math.Max((125 * damageAmount) / 100, 1);
-                    uint dealtDamage = DealDamage(minDamage, maxDamage - minDamage);
+                    damageAmount += game.RandomInt(0, damageAmount / 4);
+                    damageAmount -= game.RandomInt(50, 100) * GetPhysicalDefense(target!) * attacksPerRound / 100;
+                    if (damageAmount <= 0)
+                    {
+                        ShowSpellFailMessage(caster, game.SpellInfos[spell], caster.Name + game.DataNameProvider.BattleMessageAttackDidNoDamage, finishAction);
+                        return;
+                    }
+                    uint dealtDamage = DealDamage((uint)damageAmount, 0);
                     caster.HitPoints.CurrentValue += Math.Min(dealtDamage / 10, caster.HitPoints.TotalMaxValue - caster.HitPoints.CurrentValue);
                     if (caster is PartyMember castingMember)
                         layout.FillCharacterBars(castingMember);
@@ -4681,12 +4687,8 @@ namespace Ambermoon
 
             attackDamage = game.AddAttributeDamageBonus(attacker, attackDamage);
 
-            int defense = target.BaseDefense + target.BonusDefense + (int)target.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
-
             if (attackDamage > 0 && attacker is PartyMember)
                 attackDamage = (attackDamage * (100 + (int)game.CurrentSavegame!.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
-            if (defense > 0 && target is PartyMember)
-                defense = (defense * (100 + (int)game.CurrentSavegame!.GetActiveSpellLevel(ActiveSpellType.Protection))) / 100;
 
             if (game.Features.HasFlag(Features.ExtendedCurseEffects))
             {
@@ -4705,7 +4707,23 @@ namespace Ambermoon
                     attackDamageMalus >>= 1;
 
                 attackDamage = Math.Max(0, attackDamage * (100 - attackDamageMalus) / 100);
+            }
 
+            return (game.RandomInt(50, 100) * attackDamage) / 100 - (game.RandomInt(50, 100) * GetPhysicalDefense(target)) / 100;
+        }
+
+        /// <summary>
+        /// Defense against physical attacks (without the random factor).
+        /// </summary>
+        int GetPhysicalDefense(Character target)
+        {
+            int defense = target.BaseDefense + target.BonusDefense + (int)target.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
+
+            if (defense > 0 && target is PartyMember)
+                defense = (defense * (100 + (int)game.CurrentSavegame!.GetActiveSpellLevel(ActiveSpellType.Protection))) / 100;
+
+            if (game.Features.HasFlag(Features.ExtendedCurseEffects))
+            {
                 int defenseMalus = 0;
 
                 if (target.Conditions.HasFlag(Condition.Diseased))
@@ -4723,7 +4741,7 @@ namespace Ambermoon
                 defense = Math.Max(0, defense * (100 - defenseMalus) / 100);
             }
 
-            return (game.RandomInt(50, 100) * attackDamage) / 100 - (game.RandomInt(50, 100) * defense) / 100;
+            return defense;
         }
 
         uint CalculateSpellDamage(Character caster, Character target, uint baseDamage, uint variableDamage)
