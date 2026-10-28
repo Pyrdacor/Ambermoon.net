@@ -3278,7 +3278,7 @@ namespace Ambermoon
               0, 100, 100, 100, 100, 100, 100, 100, // Mental spells
             125,   0, 150, 150, 100, 100, 100, 100, // Spirit spells
             100, 100,   0, 100, 100, 100, 100, 100, // Physical spells
-            100, 100, 100,   0, 100, 100, 100, 100, // Undead spells
+            125,  50, 200,   0,  75,  75,  75,  75, // Undead spells (and weapons)
              75, 100, 100,  75,   0,  50, 100, 150, // Earth spells
              75, 100, 100,  75, 150,   0,  50, 100, // Wind spells
              75,  75, 100, 125, 100, 150,   0,  50, // Fire spells
