@@ -371,7 +371,9 @@ partial class GameCore
         var item = ItemManager.GetItem(itemSlot.ItemIndex);
         bool cursed = itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed) || item.Flags.HasFlag(ItemFlags.Accursed);
         int factor = cursed ? -1 : 1;
-        var detailsPopup = itemPopup.AddPopup(new Position(32, 52), 12, 6);
+        // Equipment shows the element and the minimum level in an additional row.
+        bool equipment = item.EquipmentSlot != EquipmentSlot.None;
+        var detailsPopup = itemPopup.AddPopup(new Position(32, 52), 12, equipment ? 7 : 6);
 
         void AddValueDisplay(Position position, string formatString, int value)
         {
@@ -402,11 +404,18 @@ partial class GameCore
                 $"{DataNameProvider.GetSpellName(item.Spell)} ({(itemSlot.NumRemainingCharges > 99 ? "**" : itemSlot.NumRemainingCharges.ToString())})",
                 TextColor.White);
         }
+        if (equipment)
+        {
+            detailsPopup.AddText(new Position(48, 124), DataNameProvider.ElementHeader, TextColor.LightOrange);
+            detailsPopup.AddText(new Position(128, 124), DataNameProvider.MinLevelHeader, TextColor.LightOrange);
+            detailsPopup.AddText(new Position(48, 131), DataNameProvider.GetElementName(item.Element), TextColor.White);
+            detailsPopup.AddText(new Position(128, 131), item.MinLevel == 0 ? "-" : item.MinLevel.ToString(), TextColor.White);
+        }
         if (cursed)
         {
             var contentArea = detailsPopup.ContentArea;
             AddAnimatedText((area, text, color, align) => detailsPopup.AddText(area, text, color, align),
-                new Rect(contentArea.X, 127, contentArea.Width, Global.GlyphLineHeight), DataNameProvider.Cursed,
+                new Rect(contentArea.X, equipment ? 141 : 127, contentArea.Width, Global.GlyphLineHeight), DataNameProvider.Cursed,
                 TextAlign.Center, () => layout.PopupActive && itemPopup?.HasChildPopup == true, 50, false);
         }
     }

@@ -272,6 +272,9 @@
         public string ThisCantBeMoved => executableData.Messages.GetEntry(Messages.Index.ThisCantBeMoved);
         public string ElementLabel => executableData.Messages.GetEntry(Messages.Index.ElementLabel);
         public string ItemMustBeEquipped => executableData.Messages.GetEntry(Messages.Index.ItemMustBeEquipped);
+        public string NotExperiencedEnoughToEquip => executableData.Messages.GetEntry(Messages.Index.NotExperiencedEnoughToEquip);
+        public string ElementHeader => executableData.Messages.GetEntry(Messages.Index.ElementHeader);
+        public string MinLevelHeader => executableData.Messages.GetEntry(Messages.Index.MinLevelHeader);
 
 
         #region Conversations

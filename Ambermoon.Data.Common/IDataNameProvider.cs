@@ -218,6 +218,9 @@ namespace Ambermoon.Data
         string ThisCantBeMoved { get; }
         string ElementLabel { get; }
         string ItemMustBeEquipped { get; }
+        string NotExperiencedEnoughToEquip { get; }
+        string ElementHeader { get; }
+        string MinLevelHeader { get; }
         string MountTheWasp { get; }
 
 

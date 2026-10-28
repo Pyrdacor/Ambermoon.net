@@ -67,6 +67,12 @@ namespace Ambermoon.Data
             set => SpecialValue = (byte)value;
         }
         /// <summary>
+        /// Minimum level to equip the item (0 = none). Used only for equipment.
+        /// 
+        /// Note that this is the same as <see cref="TextSubIndex"/>.
+        /// </summary>
+        public uint MinLevel => EquipmentSlot == EquipmentSlot.None ? 0u : TextSubIndex;
+        /// <summary>
         /// Used only for special items.
         /// 
         /// Note that this is the same as <see cref="SpecialValue"/>.

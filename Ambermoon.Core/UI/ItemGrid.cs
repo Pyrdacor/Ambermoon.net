@@ -237,6 +237,11 @@ internal class ItemGrid
                 layout.SetInventoryMessage(game.DataNameProvider.WrongSexToEquipItem, true);
                 return null;
             }
+            if (item.MinLevel != 0 && game.CurrentInventory.Level < item.MinLevel)
+            {
+                layout.SetInventoryMessage(game.DataNameProvider.NotExperiencedEnoughToEquip, true);
+                return null;
+            }
             if (game.BattleActive && !item.Flags.HasFlag(ItemFlags.RemovableDuringFight))
             {
                 layout.SetInventoryMessage(game.DataNameProvider.CannotEquipInFight, true);

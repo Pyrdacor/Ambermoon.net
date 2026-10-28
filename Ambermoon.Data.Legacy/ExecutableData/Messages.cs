@@ -403,6 +403,9 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             ExtendedLanguage7,
             ExtendedLanguage8,
             ItemMustBeEquipped,
+            NotExperiencedEnoughToEquip,
+            ElementHeader,
+            MinLevelHeader,
             Count
         }
 

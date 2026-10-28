@@ -8,6 +8,8 @@ internal class DataNameProvider(string versionString, string infoString, Diction
 {
     private string GetUIText(UITextIndex index) => texts[MessageTextType.UI][(int)index];
     private string GetMessage(Messages.Index index) => texts[MessageTextType.Message][(int)index];
+    // Messages added later may be missing in older data
+    private string GetOptionalMessage(Messages.Index index) => texts[MessageTextType.Message].TryGetValue((int)index, out var text) ? text : "";
 
     public string On => GetUIText(UITextIndex.On);
     public string Off => GetUIText(UITextIndex.Off);
@@ -293,7 +295,10 @@ internal class DataNameProvider(string versionString, string infoString, Diction
     public string CannotExchangeExpWithDead => GetMessage(Messages.Index.CannotExchangeExpWithDead);
     public string ThisCantBeMoved => GetMessage(Messages.Index.ThisCantBeMoved);
     public string ElementLabel => GetMessage(Messages.Index.ElementLabel);
-    public string ItemMustBeEquipped => (int)Messages.Index.ItemMustBeEquipped < texts[MessageTextType.Message].Count ? GetMessage(Messages.Index.ItemMustBeEquipped) : "";
+    public string ItemMustBeEquipped => GetOptionalMessage(Messages.Index.ItemMustBeEquipped);
+    public string NotExperiencedEnoughToEquip => GetOptionalMessage(Messages.Index.NotExperiencedEnoughToEquip);
+    public string ElementHeader => GetOptionalMessage(Messages.Index.ElementHeader);
+    public string MinLevelHeader => GetOptionalMessage(Messages.Index.MinLevelHeader);
 
 
     #region Conversations
