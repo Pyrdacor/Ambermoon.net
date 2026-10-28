@@ -302,6 +302,11 @@ namespace Ambermoon
                         provider = eventProvider = new EventProvider();
                     bool eventStatus = lastEventStatus;
                     void Reward(PartyMember partyMember, Action followAction) => game.RewardPlayer(partyMember, rewardEvent, followAction);
+                    // Dead and petrified party members are not rewarded, except for condition removal (e.g. revival)
+                    bool removeConditions = rewardEvent.TypeOfReward == RewardEvent.RewardType.Conditions &&
+                        rewardEvent.Operation == RewardEvent.RewardOperation.Remove;
+                    bool CanBeRewarded(PartyMember partyMember) => removeConditions ||
+                        (partyMember.Alive && !partyMember.Conditions.HasFlag(Condition.Petrified));
                     void Done()
                     {
                         if (rewardEvent.Next != null)
@@ -328,7 +333,7 @@ namespace Ambermoon
                         }
                         case RewardEvent.RewardTarget.FirstAnimal:
                         {
-                            var animal = game.PartyMembers.FirstOrDefault(p => p.Race == Race.Animal);
+                            var animal = game.PartyMembers.FirstOrDefault(p => p.Race == Race.Animal && CanBeRewarded(p));
 
                             if (animal == null)
                             {
@@ -348,22 +353,17 @@ namespace Ambermoon
                                     ? (Func<PartyMember, uint>)(_ => rewardEvent.Value) : p => rewardEvent.Value * p.HitPoints.TotalMaxValue / 100;
 
                                 // Note: Rewards damage silently.
-                                game.DamageAllPartyMembers(damageProvider, p => p.Alive, null, _ => Done(), Condition.None, false);
+                                game.DamageAllPartyMembers(damageProvider, CanBeRewarded, null, _ => Done(), Condition.None, false);
                             }
                             else
                             {
-                                // Allow condition removal for dead party members
-                                Func<PartyMember, bool> filter = rewardEvent.TypeOfReward == RewardEvent.RewardType.Conditions &&
-                                    rewardEvent.Operation == RewardEvent.RewardOperation.Remove
-                                    ? _ => true : p => p.Alive;
-
-                                game.ForeachPartyMember(Reward, filter, Done);
+                                game.ForeachPartyMember(Reward, CanBeRewarded, Done);
                             }
                             break;
                         default:
                             if (rewardEvent.Target >= RewardEvent.RewardTarget.AllButFirstPartyMember)
                             {
-                                Func<PartyMember, bool> filter = p => p.Alive && p.Index != 1u + (uint)rewardEvent.Target - (uint)RewardEvent.RewardTarget.AllButFirstPartyMember;
+                                Func<PartyMember, bool> filter = p => CanBeRewarded(p) && p.Index != 1u + (uint)rewardEvent.Target - (uint)RewardEvent.RewardTarget.AllButFirstPartyMember;
 
 								if (rewardEvent.TypeOfReward == RewardEvent.RewardType.HitPoints &&
 								    (rewardEvent.Operation == RewardEvent.RewardOperation.Decrease ||
@@ -384,7 +384,7 @@ namespace Ambermoon
 							}
                             else if (rewardEvent.Target >= RewardEvent.RewardTarget.FirstPartyMember)
                             {
-								var partyMember = game.PartyMembers.FirstOrDefault(p => p.Index == 1u + (uint)rewardEvent.Target - (uint)RewardEvent.RewardTarget.FirstPartyMember);
+								var partyMember = game.PartyMembers.FirstOrDefault(p => p.Index == 1u + (uint)rewardEvent.Target - (uint)RewardEvent.RewardTarget.FirstPartyMember && CanBeRewarded(p));
 
 								if (partyMember == null)
 								{
