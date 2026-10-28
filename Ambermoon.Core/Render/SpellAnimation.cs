@@ -774,14 +774,8 @@ namespace Ambermoon.Render
 					this.finishAction?.Invoke();
                     break;
                 case Spell.MagicSwordAttack:
-                    if (fromMonster)
-                    {
-                        this.finishAction?.Invoke();
-                    }
-                    else
-                    {
-                        battle!.PlayBattleEffectAnimation(BattleEffect.PlayerAttack, (uint)startPosition, game.CurrentAnimationTicks, this.finishAction);
-                    }
+                    // The sword swing is shown on each target in MoveTo.
+                    this.finishAction?.Invoke();
                     break;
                 case Spell.ShowMonsterLP:
 				case Spell.ShowElements:
@@ -1651,19 +1645,29 @@ namespace Ambermoon.Render
 				case Spell.MysticDecay:
                 case Spell.MagicSwordAttack:
                 {
-                    // Note: The hurt animation comes first so we immediately call the passed finish action
-                    // which will display the hurt animation.
-                    finishAction?.Invoke(game.CurrentBattleTicks, true, false); // Play hurt animation but do not finish.
-                    this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks, false, true); // This is called after the animation to finish.
-
-                    float endScale = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
-                    game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
+                    void HurtAndDrain()
                     {
-                        byte displayLayer = (byte)(fromMonster ? 255 : ((tile / 6) * 60 + 60));
-                        AddAnimation(spell == Spell.LPStealer ? CombatGraphicIndex.BlueBeam : CombatGraphicIndex.GreenBeam, 1,
-                            GetTargetPosition(tile), GetSourcePosition(), BattleEffects.GetFlyDuration((uint)tile, (uint)startPosition),
-                            fromMonster ? 2.5f: endScale, fromMonster ? endScale : 2.5f, displayLayer);
-                    });
+                        // Note: The hurt animation comes first so we immediately call the passed finish action
+                        // which will display the hurt animation.
+                        finishAction?.Invoke(game.CurrentBattleTicks, true, false); // Play hurt animation but do not finish.
+                        this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks, false, true); // This is called after the animation to finish.
+
+                        float endScale = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
+                        {
+                            byte displayLayer = (byte)(fromMonster ? 255 : ((tile / 6) * 60 + 60));
+                            AddAnimation(spell == Spell.LPStealer ? CombatGraphicIndex.BlueBeam : CombatGraphicIndex.GreenBeam, 1,
+                                GetTargetPosition(tile), GetSourcePosition(), BattleEffects.GetFlyDuration((uint)tile, (uint)startPosition),
+                                fromMonster ? 2.5f: endScale, fromMonster ? endScale : 2.5f, displayLayer);
+                        });
+                    }
+
+                    // The magic sword attack first shows a sword swing on the target (party members only, like their weapon attacks).
+                    // Note: Battle effects use the battle ticks.
+                    if (spell == Spell.MagicSwordAttack && !fromMonster)
+                        battle!.PlayBattleEffectAnimation(BattleEffect.PlayerAttack, (uint)tile, game.CurrentBattleTicks, HurtAndDrain);
+                    else
+                        HurtAndDrain();
                     break;
                 }
                 case Spell.MagicalProjectile:
