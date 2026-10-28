@@ -4267,8 +4267,30 @@ namespace Ambermoon
                         }
                         else // single target spell
                         {
-                            PickBestTargetTile();
-                            spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.SingleEnemy).ToList();
+                            var singleTargetSpells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.SingleEnemy).ToList();
+
+                            if (singleTargetSpells.Count != 0)
+                            {
+                                PickBestTargetTile();
+                                spells = singleTargetSpells;
+                            }
+                            // Without single target spells fall back to the other spells (like the Amiga):
+                            // row in weapon range, row, all.
+                            else if (spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange))
+                            {
+                                PickBestTargetRow(true);
+                                spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange).ToList();
+                            }
+                            else if (spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow))
+                            {
+                                PickBestTargetRow(false);
+                                spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow).ToList();
+                            }
+                            else
+                            {
+                                targetTileOrRow = 0;
+                                spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.AllEnemies).ToList();
+                            }
                         }
                         // This might happen if the monster only has All or Row spells and the prio forces to use a Single or Row spell.
                         if (spells.Count == 0)
