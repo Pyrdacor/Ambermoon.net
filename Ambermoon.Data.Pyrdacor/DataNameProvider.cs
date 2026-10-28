@@ -363,6 +363,8 @@ internal class DataNameProvider(string versionString, string infoString, Diction
     public string BattleMessageCannotPenetrateMagicalAura => GetMessage(Messages.Index.CannotPenetrateMagicalAura);
     public string BattleMessageAttackFailed => GetMessage(Messages.Index.AttackFailed);
     public string BattleMessageImmuneToAttack => GetMessage(Messages.Index.ImmuneToAttack);
+    public string BattleMessageImmuneToAttackElementSuffix => GetOptionalMessage(Messages.Index.ImmuneToAttackElementSuffix);
+    public string BattleMessageImmuneToNeutralAttack => GetOptionalMessage(Messages.Index.ImmuneToNeutralAttack);
     public string BattleMessageAttackWasParried => GetMessage(Messages.Index.AttackWasDeflected);
     public string BattleMessageAttackDidNoDamage => GetMessage(Messages.Index.AttackDidNoDamage);
     public string BattleMessageMadeCriticalHit => GetMessage(Messages.Index.MadeCriticalHit);

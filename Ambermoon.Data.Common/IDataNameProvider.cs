@@ -286,6 +286,8 @@ namespace Ambermoon.Data
         string BattleMessageCannotPenetrateMagicalAura { get; }
         string BattleMessageAttackFailed { get; }
         string BattleMessageImmuneToAttack { get; }
+        string BattleMessageImmuneToAttackElementSuffix { get; }
+        string BattleMessageImmuneToNeutralAttack { get; }
         string BattleMessageAttackWasParried { get; }
         string BattleMessageAttackDidNoDamage { get; }
         string BattleMessageMadeCriticalHit { get; }

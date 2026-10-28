@@ -339,6 +339,8 @@
         public string BattleMessageCannotPenetrateMagicalAura => executableData.Messages.GetEntry(Messages.Index.CannotPenetrateMagicalAura);
         public string BattleMessageAttackFailed => executableData.Messages.GetEntry(Messages.Index.AttackFailed);
         public string BattleMessageImmuneToAttack => executableData.Messages.GetEntry(Messages.Index.ImmuneToAttack);
+        public string BattleMessageImmuneToAttackElementSuffix => executableData.Messages.GetEntry(Messages.Index.ImmuneToAttackElementSuffix);
+        public string BattleMessageImmuneToNeutralAttack => executableData.Messages.GetEntry(Messages.Index.ImmuneToNeutralAttack);
         public string BattleMessageAttackWasParried => executableData.Messages.GetEntry(Messages.Index.AttackWasDeflected);
         public string BattleMessageAttackDidNoDamage => executableData.Messages.GetEntry(Messages.Index.AttackDidNoDamage);
         public string BattleMessageMadeCriticalHit => executableData.Messages.GetEntry(Messages.Index.MadeCriticalHit);

@@ -406,6 +406,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             NotExperiencedEnoughToEquip,
             ElementHeader,
             MinLevelHeader,
+            ImmuneToAttackElementSuffix,
+            ImmuneToNeutralAttack,
             Count
         }
 

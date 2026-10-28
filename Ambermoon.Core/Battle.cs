@@ -1565,8 +1565,18 @@ namespace Ambermoon
                                 layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageDidPointsOfDamage, damage), textColor);
                                 break;
                             case AttackResult.Immune:
-                                layout.SetBattleMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToAttack + game.DataNameProvider.GetElementName(battleAction.Character.GetCharacterWeaponElement(game.ItemManager)), textColor);
+                            {
+                                // "<target> is immune to an attack with the <element> element" or "... with neutral element".
+                                // Older data only has "<target> is immune to an attack with element <element>".
+                                var element = battleAction.Character.GetCharacterWeaponElement(game.ItemManager);
+                                string neutralMessage = game.DataNameProvider.BattleMessageImmuneToNeutralAttack;
+                                string message = element == ItemElement.None && neutralMessage.Length != 0
+                                    ? neutralMessage
+                                    : game.DataNameProvider.BattleMessageImmuneToAttack + game.DataNameProvider.GetElementName(element) +
+                                        game.DataNameProvider.BattleMessageImmuneToAttackElementSuffix;
+                                layout.SetBattleMessage(target.Name + message, textColor);
                                 break;
+                            }
                         }
                         Proceed(() => ActionFinished(true));
                     }
