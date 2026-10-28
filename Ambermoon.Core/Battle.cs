@@ -3149,6 +3149,12 @@ namespace Ambermoon
                     // The damage is multiplied by 1 + (APR - 1) * 0.5 (1 APR: x1, 3 APR: x2, 5 APR: x3).
                     // 50% to 100% of the target's defense multiplied by the APR is subtracted (like the Amiga).
                     // The caster is healed by 10% of the damage dealt.
+                    // Like a weapon attack there is no damage at all if the target has the element of the weapon.
+                    if (GetWeaponElementFactor(caster, target!) == 0)
+                    {
+                        ShowSpellFailMessage(caster, game.SpellInfos[spell], caster.Name + game.DataNameProvider.BattleMessageAttackDidNoDamage, finishAction);
+                        return;
+                    }
                     int damageAmount = Math.Max(caster.BaseAttackDamage + caster.BonusAttackDamage, 1);
                     int attacksPerRound = Math.Max(1, (int)caster.AttacksPerRound);
                     damageAmount = damageAmount * (attacksPerRound + 1) / 2;
