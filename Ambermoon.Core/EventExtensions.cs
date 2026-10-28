@@ -1201,8 +1201,30 @@ namespace Ambermoon
                     lastEventStatus = true;
                     break;
                 case EventType.RemovePartyMember:
-                    // TODO
+                {
+                    if (@event is not RemovePartyMemberEvent removePartyMemberEvent)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid remove party member event.");
+                    EventProvider? provider = null;
+                    if (conversationPartner != null)
+                        provider = eventProvider = new EventProvider();
+                    void Continue()
+                    {
+                        if (conversationPartner == null)
+                        {
+                            if (@event.Next != null)
+                                TriggerEventChain(map, game, EventTrigger.Always, x, y, @event.Next, true);
+                        }
+                        else
+                            provider?.Provide(@event.Next);
+                    }
+                    // Like the Amiga the event status tells if the character was in the party.
+                    lastEventStatus = game.RemovePartyMember(removePartyMemberEvent, Continue);
+                    if (lastEventStatus)
+                        return null; // continued after the removal animation
+                    if (conversationPartner != null)
+                        eventProvider = null; // not in the party -> just continue
                     break;
+                }
                 case EventType.Delay:
                     if (@event is not DelayEvent delayEvent)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid delay event.");

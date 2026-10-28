@@ -1354,6 +1354,97 @@ partial class GameCore
         spellListScrollOffsets[slot] = 0;
     }
 
+    /// <summary>
+    /// Remove party member event (like the Amiga): the character leaves the party (never the
+    /// first slot) and its equipment and inventory are put into the given chests. Items which
+    /// don't fit into a chest are lost. Gold and food stay with the character.
+    /// </summary>
+    /// <returns>false if the character is not in the party</returns>
+    internal bool RemovePartyMember(RemovePartyMemberEvent removePartyMemberEvent, Action followAction)
+    {
+        int slot = Enumerable.Range(1, MaxPartyMembers - 1)
+            .FirstOrDefault(i => GetPartyMember(i)?.Index == removePartyMemberEvent.CharacterIndex);
+
+        if (slot == 0)
+            return false;
+
+        var partyMember = GetPartyMember(slot)!;
+        // Ambermoon Advanced: bit 0/1 of the first unused byte marks an extended chest (index + 256)
+        byte chestFlags = removePartyMemberEvent.Unused?.Length > 0 ? removePartyMemberEvent.Unused[0] : (byte)0;
+        var equipmentChest = GetChest(1u + removePartyMemberEvent.ChestIndexEquipment + ((chestFlags & 0x1) != 0 ? 256u : 0u));
+        var inventoryChest = GetChest(1u + removePartyMemberEvent.ChestIndexInventory + ((chestFlags & 0x2) != 0 ? 256u : 0u));
+
+        void MoveToChest(ItemSlot itemSlot, Chest chest)
+        {
+            var item = itemSlot.Copy();
+            var chestSlots = Enumerable.Range(0, Chest.SlotsPerRow * Chest.SlotRows).Select(chest.GetSlot).ToList();
+
+            if (ItemManager.GetItem(item.ItemIndex).Flags.HasFlag(ItemFlags.Stackable))
+            {
+                foreach (var chestSlot in chestSlots.Where(s => s.ItemIndex == item.ItemIndex))
+                {
+                    if (chestSlot.Add(item) == 0)
+                        return;
+                }
+            }
+
+            chestSlots.FirstOrDefault(s => s.Empty)?.Add(item);
+        }
+
+        foreach (var itemSlot in partyMember.Equipment.Slots.Values)
+        {
+            if (itemSlot.Empty)
+                continue;
+
+            // Note: Item index 0 is the second hand of a two-handed weapon.
+            if (itemSlot.ItemIndex != 0)
+            {
+                EquipmentRemoved(partyMember, itemSlot.ItemIndex, itemSlot.Amount, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
+                MoveToChest(itemSlot, equipmentChest);
+            }
+
+            itemSlot.Clear();
+        }
+
+        partyMember.NumberOfOccupiedHands = 0;
+        partyMember.NumberOfOccupiedFingers = 0;
+
+        foreach (var itemSlot in partyMember.Inventory.Slots)
+        {
+            if (itemSlot.Empty || itemSlot.ItemIndex == 0)
+                continue;
+
+            InventoryItemRemoved(itemSlot.ItemIndex, itemSlot.Amount, partyMember);
+            MoveToChest(itemSlot, inventoryChest);
+            itemSlot.Clear();
+        }
+
+        // The character is shown on its map again (like leaving via conversation).
+        var characterBit = partyMember.CharacterBitIndex;
+        if (characterBit == 0xffff)
+            characterBit = PartyMemberCharacterBits[partyMember.Index];
+        bool wasActive = partyMember == CurrentPartyMember;
+
+        RemovePartyMember(slot, false, () =>
+        {
+            if (wasActive)
+            {
+                // The Amiga asks for a new leader, here the first possible one is chosen.
+                int newSlot = Enumerable.Range(0, MaxPartyMembers).FirstOrDefault(i => GetPartyMember(i)?.Conditions.CanSelect() == true, -1);
+
+                if (newSlot != -1)
+                    SetActivePartyMember(newSlot);
+            }
+
+            followAction?.Invoke();
+        });
+        CurrentSavegame!.CurrentPartyMemberIndices[slot] = 0;
+        SetMapCharacterBit(1u + ((uint)characterBit >> 5), (uint)characterBit & 0x1f, false);
+        ModHooks?.PartyMemberLeft(partyMember);
+
+        return true;
+    }
+
     void ClearPartyMembers()
     {
         for (int i = 0; i < GameCore.MaxPartyMembers; ++i)
