@@ -298,6 +298,31 @@ partial class GameCore
         }
     }
 
+    // savegames of older game data versions may lack new party members, chests or merchants
+    void AddMissingInitialSavegameData(Savegame savegame)
+    {
+        Savegame initialSavegame;
+
+        try
+        {
+            initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
+        }
+        catch
+        {
+            return;
+        }
+
+        static void AddMissing<T>(Dictionary<uint, T> target, Dictionary<uint, T> source)
+        {
+            foreach (var entry in source)
+                target.TryAdd(entry.Key, entry.Value);
+        }
+
+        AddMissing(savegame.PartyMembers, initialSavegame.PartyMembers);
+        AddMissing(savegame.Chests, initialSavegame.Chests);
+        AddMissing(savegame.Merchants, initialSavegame.Merchants);
+    }
+
     public void Start(Savegame savegame, Action? postAction = null)
     {
         lastPlayedSong = null;
@@ -319,6 +344,8 @@ partial class GameCore
 
         bool newGame = StartingNewGame;
         StartingNewGame = false;
+        if (!newGame)
+            AddMissingInitialSavegameData(savegame);
         ModHooks?.GameStarting(savegame, newGame);
 
         Ingame = true;
