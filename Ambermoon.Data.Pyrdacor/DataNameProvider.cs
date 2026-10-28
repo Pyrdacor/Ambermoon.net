@@ -93,7 +93,7 @@ internal class DataNameProvider(string versionString, string infoString, Diction
     }
     public string GetElementName(ItemElement element)
     {
-        return GetMessage(Messages.Index.ElementNone + (int)element);
+        return GetMessage(Messages.Index.ElementNone + (element == ItemElement.None ? 0 : 1 + (int)element));
     }
     public string GetExtendedLanguageName(ExtendedLanguage language)
     {

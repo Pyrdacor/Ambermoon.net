@@ -73,7 +73,8 @@
         }
         public string GetElementName(ItemElement element)
         {
-            return executableData.Messages.GetEntry(Messages.Index.ElementNone + (int)element);
+            // Element names: none, mental, spirit, ... (an item element is the index in this list without "none")
+            return executableData.Messages.GetEntry(Messages.Index.ElementNone + (element == ItemElement.None ? 0 : 1 + (int)element));
         }
         public string GetExtendedLanguageName(ExtendedLanguage language)
         {

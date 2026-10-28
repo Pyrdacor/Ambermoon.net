@@ -1565,7 +1565,7 @@ namespace Ambermoon
                                 layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageDidPointsOfDamage, damage), textColor);
                                 break;
                             case AttackResult.Immune:
-                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageImmuneToAttack + game.DataNameProvider.GetElementName(battleAction.Character.GetCharacterWeaponElement(game.ItemManager)), textColor);
+                                layout.SetBattleMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToAttack + game.DataNameProvider.GetElementName(battleAction.Character.GetCharacterWeaponElement(game.ItemManager)), textColor);
                                 break;
                         }
                         Proceed(() => ActionFinished(true));
@@ -4493,6 +4493,35 @@ namespace Ambermoon
             return ((byte)target.AdvancedMonsterFlags & (1 << (byte)element)) != 0;
         }
 
+        /// <summary>
+        /// Damage factor in percent of the attacker's weapon element against the target (like the Amiga).
+        /// Attacks without element always deal 100%. Attacks with the element of the target
+        /// deal no damage and can't be critical hits. Otherwise the element table of the spells is used.
+        /// </summary>
+        int GetWeaponElementFactor(Character attacker, Character target)
+        {
+            if (!game.Features.HasFlag(Features.ItemElements))
+                return 100;
+
+            var element = attacker.GetCharacterWeaponElement(game.ItemManager);
+
+            if (element == ItemElement.None)
+                return 100;
+
+            if (((uint)target.Element & (1u << (int)element)) != 0)
+                return 0;
+
+            int worstBonus = 255;
+
+            for (int i = 0; i < 8; ++i)
+            {
+                if (((uint)target.Element & (1u << i)) != 0)
+                    worstBonus = Math.Min(worstBonus, SpellBonusTable[(int)element * 8 + i]);
+            }
+
+            return worstBonus == 255 ? 100 : worstBonus;
+        }
+
         AttackResult ProcessAttack(Character attacker, int attackedSlot, out int damage, out bool abortAttacking)
         {
             damage = 0;
@@ -4561,7 +4590,9 @@ namespace Ambermoon
             if (protectedCharacters.Contains(target))
 				return AttackResult.Blocked;
 
-			if (game.RollDice100() < attacker.Skills[Skill.CriticalHit].TotalCurrentValue)
+            int elementFactor = GetWeaponElementFactor(attacker, target);
+
+			if (elementFactor != 0 && game.RollDice100() < attacker.Skills[Skill.CriticalHit].TotalCurrentValue)
             {
                 if (target is not Monster bossMonster || !bossMonster.BattleFlags.HasFlag(BattleFlags.Boss))
                 {
@@ -4571,6 +4602,9 @@ namespace Ambermoon
             }
 
             damage = CalculatePhysicalDamage(attacker, target);
+
+            if (damage > 0)
+                damage = damage * elementFactor / 100;
 
 			if (target is Monster monsterTarget && weakenedMonsters.Contains(monsterTarget))
 			{
