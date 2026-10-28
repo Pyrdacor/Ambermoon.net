@@ -270,6 +270,7 @@
         public string CannotExchangeExpWithDead => executableData.Messages.GetEntry(Messages.Index.CannotExchangeExpWithDead);
         public string ThisCantBeMoved => executableData.Messages.GetEntry(Messages.Index.ThisCantBeMoved);
         public string ElementLabel => executableData.Messages.GetEntry(Messages.Index.ElementLabel);
+        public string ItemMustBeEquipped => executableData.Messages.GetEntry(Messages.Index.ItemMustBeEquipped);
 
 
         #region Conversations

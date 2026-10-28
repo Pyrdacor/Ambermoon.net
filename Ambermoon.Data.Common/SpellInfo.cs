@@ -42,8 +42,8 @@ namespace Ambermoon.Data
     {
         None = -1,
         SingleFriend,
-        FriendRow, // This is not used in Ambermoon and we don't need it. Instead we use it for "Enemy row" but in weapon range for Advanced.
-        EnemyRowInWeaponRange = FriendRow,
+        FriendRow, // This is not used in Ambermoon and we don't need it. Instead we use it for "all enemies in close range" (the 8 surrounding tiles) for Advanced.
+        EnemiesInCloseRange = FriendRow,
         AllFriends,
         SingleEnemy,
         EnemyRow,
@@ -68,7 +68,7 @@ namespace Ambermoon.Data
         {
             SpellTarget.SingleEnemy => true,
             SpellTarget.EnemyRow => true,
-            SpellTarget.EnemyRowInWeaponRange => true,
+            SpellTarget.EnemiesInCloseRange => true,
             SpellTarget.AllEnemies => true,
             _ => false
         };
@@ -252,7 +252,7 @@ namespace Ambermoon.Data
             { Spell.SelfReviving, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.All } },
             { Spell.ExpExchange, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.Lyramion } },
             { Spell.MountWasp, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.WorldMapOnly, Worlds = WorldFlag.ForestMoon } },
-            { Spell.MagicSwordAttack, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.EnemyRowInWeaponRange, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
+            { Spell.MagicSwordAttack, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.EnemiesInCloseRange, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
         }.ToImmutableDictionary();
 
         static readonly ImmutableDictionary<Spell, uint> adjustedSLP = new Dictionary<Spell, uint>

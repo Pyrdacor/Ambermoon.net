@@ -139,7 +139,7 @@ partial class Battle
                 spellThread *= 3;
             else if (spellInfo.Target == SpellTarget.EnemyRow)
                 spellThread *= 2;
-            else if (spellInfo.Target == SpellTarget.EnemyRowInWeaponRange)
+            else if (spellInfo.Target == SpellTarget.EnemiesInCloseRange)
                 spellThread = spellThread * 3 / 2;
 
             magicThreat = Math.Max(magicThreat, (int)spellThread);

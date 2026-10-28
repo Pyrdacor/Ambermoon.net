@@ -402,6 +402,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             ExtendedLanguage6,
             ExtendedLanguage7,
             ExtendedLanguage8,
+            ItemMustBeEquipped,
             Count
         }
 

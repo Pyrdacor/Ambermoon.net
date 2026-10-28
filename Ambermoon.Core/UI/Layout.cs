@@ -3006,6 +3006,14 @@ namespace Ambermoon.UI
 
                     // Note: itemGrids[0] is inventory and itemGrids[1] is equipment
                     bool equipped = itemGrid == itemGrids[1];
+
+                    // The magic sword attack is a weapon attack, so the item must be equipped.
+                    if (item.Spell == Spell.MagicSwordAttack && !equipped)
+                    {
+                        string message = game.DataNameProvider.ItemMustBeEquipped;
+                        SetInventoryMessage(message.Length == 0 ? game.DataNameProvider.ItemHasNoEffectHere : message, true);
+                        return;
+                    }
                     var caster = game.CurrentInventory;
                     game.CloseWindow(() =>
                     {

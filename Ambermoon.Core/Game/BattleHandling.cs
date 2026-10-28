@@ -22,7 +22,6 @@ partial class GameCore
         PickPlayerAction,
         PickEnemySpellTarget,
         PickEnemySpellTargetRow,
-        PickEnemySpellTargetRowInRange,
         PickFriendSpellTarget,
         PickMoveSpot,
         PickAttackSpot,
@@ -779,8 +778,17 @@ partial class GameCore
                 case SpellTarget.EnemyRow:
                     SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTargetRow);
                     break;
-                case SpellTarget.EnemyRowInWeaponRange:
-                    SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTargetRowInRange);
+                case SpellTarget.EnemiesInCloseRange:
+                    // All enemies around the caster are hit, so there is nothing to pick.
+                    // The targets are determined when the spell is cast.
+                    if (currentBattle!.GetCloseRangeEnemies(currentPickingActionMember!).Count == 0)
+                    {
+                        if (currentPickingActionMember == CurrentPartyMember)
+                            SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotReachAnyone, TextColor.BrightGray);
+                        break;
+                    }
+                    SetPlayerBattleAction(Battle.BattleActionType.CastSpell,
+                        Battle.CreateCastSpellParameter(0, pickedSpell, spellItemSlotIndex, spellItemIsEquipped));
                     break;
                 case SpellTarget.BattleField:
                     if (spell == Spell.Blink)
@@ -1652,25 +1660,8 @@ partial class GameCore
                 break;
             }
             case PlayerBattleAction.PickEnemySpellTargetRow:
-            case PlayerBattleAction.PickEnemySpellTargetRowInRange:
             {
-                int minRow = 0;
-                int maxRow = 3;
-
-                if (currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRowInRange)
-                {
-                    var caster = currentPickingActionMember!;
-
-                    if (!caster.HasLongRangedWeapon(ItemManager))
-                    {
-                        int casterRow = currentBattle.GetSlotFromCharacter(caster!) / 6;
-
-                        minRow = Math.Max(casterRow - 1, 0);
-                        maxRow = Math.Min(casterRow + 1, 3);
-                    }
-                }
-
-                if (row < minRow || row > maxRow)
+                if (row > 3)
                 {
                     return;
                 }
@@ -1811,7 +1802,6 @@ partial class GameCore
                 break;
             }
             case PlayerBattleAction.PickEnemySpellTargetRow:
-            case PlayerBattleAction.PickEnemySpellTargetRowInRange:
             {
                 RemoveCurrentPlayerActionVisuals();
                 TrapMouse(Global.BattleFieldArea);

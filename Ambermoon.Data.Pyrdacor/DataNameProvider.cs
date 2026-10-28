@@ -293,6 +293,7 @@ internal class DataNameProvider(string versionString, string infoString, Diction
     public string CannotExchangeExpWithDead => GetMessage(Messages.Index.CannotExchangeExpWithDead);
     public string ThisCantBeMoved => GetMessage(Messages.Index.ThisCantBeMoved);
     public string ElementLabel => GetMessage(Messages.Index.ElementLabel);
+    public string ItemMustBeEquipped => (int)Messages.Index.ItemMustBeEquipped < texts[MessageTextType.Message].Count ? GetMessage(Messages.Index.ItemMustBeEquipped) : "";
 
 
     #region Conversations

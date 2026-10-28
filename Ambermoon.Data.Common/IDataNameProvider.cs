@@ -217,6 +217,7 @@ namespace Ambermoon.Data
         string CannotExchangeExpWithDead { get; }
         string ThisCantBeMoved { get; }
         string ElementLabel { get; }
+        string ItemMustBeEquipped { get; }
         string MountTheWasp { get; }
 
 

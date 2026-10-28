@@ -1810,8 +1810,13 @@ namespace Ambermoon
                     void CastSpellOnRow(CharacterType characterType, int row, Action finishAction)
                     {
                         var targets = Enumerable.Range(0, 6).Select(column => battleField[5 - column + row * 6])
-                            .Where(c => c?.Type == characterType).ToList();
+                            .Where(c => c?.Type == characterType).Select(c => c!).ToList();
 
+                        CastSpellOnTargets(targets, finishAction);
+                    }
+
+                    void CastSpellOnTargets(List<Character> targets, Action finishAction)
+                    {
                         if (targets.Count == 0)
                         {
                             finishAction?.Invoke();
@@ -1897,8 +1902,21 @@ namespace Ambermoon
                                 case SpellTarget.AllFriends:
                                     CastSpellOnAll(battleAction.Character.Type, () => EndCast());
                                     break;
+                                case SpellTarget.EnemiesInCloseRange:
+                                {
+                                    // All enemies on the 8 tiles around the caster at the time of casting (magic sword attack)
+                                    var targets = GetCloseRangeEnemies(battleAction.Character);
+                                    if (targets.Count == 0)
+                                    {
+                                        layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
+                                            battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
+                                        Proceed(() => EndCast());
+                                        return;
+                                    }
+                                    CastSpellOnTargets(targets, () => EndCast());
+                                    break;
+                                }
                                 case SpellTarget.EnemyRow:
-                                case SpellTarget.EnemyRowInWeaponRange:
                                 {
                                     var enemyType = battleAction.Character.Type == CharacterType.Monster ?
                                         CharacterType.PartyMember : CharacterType.Monster;
@@ -3475,28 +3493,16 @@ namespace Ambermoon
                 {
                     if (canCast && monster.HasAnySpell() && monster.Conditions.CanCastSpell(game.Features) && CanCastAnySpell(monster))
                     {
-                        if (HasRangeDependentSpell(monster))
+                        // Close range spells (magic sword attack) need an enemy on the surrounding tiles.
+                        // If the monster has no other spell, it moves closer instead.
+                        if (GetAvailableMonsterSpells(monster).All(spell => SpellInfos.Entries[spell].Target == SpellTarget.EnemiesInCloseRange) &&
+                            GetCloseRangeEnemies(monster).Count == 0)
                         {
-                            if (!monster.HasLongRangedWeapon(game.ItemManager))
-                            {
-                                int monsterRow = GetCharacterPosition(monster) / 6;
-                                var partyMemberRowDistances = partyMembers
-                                    .OfType<PartyMember>()
-                                    .Where(p => p.Alive && !fledCharacters.Contains(p))
-                                    .Select(GetCharacterPosition)
-                                    .Select(pos => pos / 6)
-                                    .Distinct()
-                                    .Select(row => Math.Abs(row - monsterRow));
+                            if (monster.CanMove() && MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
+                                return BattleActionType.Move;
 
-                                if (!partyMemberRowDistances.Any(dist => dist <= 1))
-                                {
-                                    if (monster.CanMove() && MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
-                                        return BattleActionType.Move;
-
-                                    canCast = false;
-                                    continue;
-                                }
-                            }
+                            canCast = false;
+                            continue;
                         }
 
                         return BattleActionType.CastSpell;
@@ -3623,9 +3629,28 @@ namespace Ambermoon
             return GetAvailableMonsterSpells(monster).Count != 0;
         }
 
-        bool HasRangeDependentSpell(Monster monster)
+        /// <summary>
+        /// Enemies on the 8 tiles around the character (targets of the magic sword attack).
+        /// </summary>
+        internal List<Character> GetCloseRangeEnemies(Character character)
         {
-            return GetAvailableMonsterSpells(monster).Any(spell => SpellInfos.Entries[spell].Target == SpellTarget.EnemyRowInWeaponRange);
+            int position = GetCharacterPosition(character);
+            int column = position % 6;
+            int row = position / 6;
+            var enemies = new List<Character>();
+
+            for (int y = Math.Max(0, row - 1); y <= Math.Min(4, row + 1); ++y)
+            {
+                for (int x = Math.Max(0, column - 1); x <= Math.Min(5, column + 1); ++x)
+                {
+                    var target = battleField[x + y * 6];
+
+                    if (target != null && target.Type != character.Type && target.Alive && !fledCharacters.Contains(target))
+                        enemies.Add(target);
+                }
+            }
+
+            return enemies;
         }
 
         static int GetMoveRange(Character character)
@@ -4165,6 +4190,20 @@ namespace Ambermoon
                     var averagePrio = maxDamagePlayers.Average(x => x.Prio);
                     var spells = GetAvailableMonsterSpells(monster);
                     uint targetTileOrRow = 0;
+                    var closeRangeEnemies = GetCloseRangeEnemies(monster);
+
+                    // Close range spells (magic sword attack) need enemies on the surrounding tiles.
+                    // Their targets are determined when the spell is cast.
+                    if (closeRangeEnemies.Count == 0)
+                        spells = spells.Where(s => game.SpellInfos[s].Target != SpellTarget.EnemiesInCloseRange).ToList();
+
+                    if (spells.Count == 0)
+                        return 0; // This will abort casting and disallow casting in this round.
+
+                    double GetCloseRangePrio() => averagePlayerDamage
+                        .Select((d, i) => new { Damage = d, Player = partyMembers[i] })
+                        .Where(x => x.Player != null && closeRangeEnemies.Contains(x.Player))
+                        .Average(x => (double)getPrio(x.Damage));
 
                     void PickBestTargetTile()
                     {
@@ -4172,29 +4211,11 @@ namespace Ambermoon
                         targetTileOrRow = (uint)GetCharacterPosition(players[game.RandomInt(0, players.Count - 1)].Player!);
                     }
 
-                    void PickBestTargetRow(bool reachableOnly)
+                    void PickBestTargetRow()
                     {
                         var rows = maxDamagePlayers.GroupBy(x => x.Row).Select(g => new { Row = g.Key, Prio = g.Average(x => x.Prio) });
-                        int monsterRow = GetCharacterPosition(monster) / 6;
-
-                        if (reachableOnly && !monster.HasLongRangedWeapon(game.ItemManager))
-                        {
-                            rows = rows.Where(r => Math.Abs(r.Row - monsterRow) <= 1);
-
-                            if (rows.Count() == 0)
-                            {
-                                rows = partyMembers
-                                    .OfType<PartyMember>()
-                                    .Select(p => GetCharacterPosition(p) / 6)
-                                    .Distinct()
-                                    .Where(row => Math.Abs(row - monsterRow) <= 1)
-                                    .Order()
-                                    .Select(row => new { Row = row, Prio = 1.0 });
-                            }
-                        }
-
                         var maxRowPrio = rows.Max(r => r.Prio);
-                        targetTileOrRow = (uint)(rows.FirstOrDefault(row => row.Prio == maxRowPrio)?.Row ?? Math.Min(4, monsterRow + 1));
+                        targetTileOrRow = (uint)rows.First(row => row.Prio == maxRowPrio).Row;
                     }
 
                     if (spells.Count == 1)
@@ -4207,11 +4228,9 @@ namespace Ambermoon
                                 PickBestTargetTile();
                                 break;
                             case SpellTarget.EnemyRow:
-                                PickBestTargetRow(false);
+                                PickBestTargetRow();
                                 break;
-                            case SpellTarget.EnemyRowInWeaponRange:
-                                PickBestTargetRow(true);
-                                break;
+                            case SpellTarget.EnemiesInCloseRange:
                             case SpellTarget.AllEnemies:
                                 targetTileOrRow = 0;
                                 break;
@@ -4230,39 +4249,29 @@ namespace Ambermoon
                                 PickBestTargetTile();
                                 spells = singleTargetSpells;
                             }
-                            else
+                            else if (spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemiesInCloseRange))
                             {
-                                var rowTargetSpells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow || game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange).ToList();
-
-                                if (rowTargetSpells.Count != 0)
-                                {
-                                    if (rowTargetSpells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange))
-                                    {
-                                        PickBestTargetRow(true);
-                                        spells = rowTargetSpells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange).ToList();
-                                    }
-                                    else
-                                    {
-                                        PickBestTargetRow(false);
-                                        spells = rowTargetSpells;
-                                    }
-                                }
-
-                                // Otherwise pick from all spells
+                                spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemiesInCloseRange).ToList();
                             }
+                            else if (spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow))
+                            {
+                                PickBestTargetRow();
+                                spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow).ToList();
+                            }
+
+                            // Otherwise pick from all spells
                         }
                         else if (averagePrio >= 75 && spells.Any(s => game.SpellInfos[s].Target == SpellTarget.AllEnemies))
                         {
                             spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.AllEnemies).ToList();
                         }
-                        else if (averagePrio >= 50 && spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange))
+                        else if (spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemiesInCloseRange) && GetCloseRangePrio() >= 50)
                         {
-                            PickBestTargetRow(true);
-                            spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange).ToList();
+                            spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemiesInCloseRange).ToList();
                         }
                         else if (averagePrio >= 50 && spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow))
                         {
-                            PickBestTargetRow(false);
+                            PickBestTargetRow();
                             spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow).ToList();
                         }
                         else // single target spell
@@ -4275,15 +4284,14 @@ namespace Ambermoon
                                 spells = singleTargetSpells;
                             }
                             // Without single target spells fall back to the other spells (like the Amiga):
-                            // row in weapon range, row, all.
-                            else if (spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange))
+                            // enemies in close range, row, all.
+                            else if (spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemiesInCloseRange))
                             {
-                                PickBestTargetRow(true);
-                                spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRowInWeaponRange).ToList();
+                                spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemiesInCloseRange).ToList();
                             }
                             else if (spells.Any(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow))
                             {
-                                PickBestTargetRow(false);
+                                PickBestTargetRow();
                                 spells = spells.Where(s => game.SpellInfos[s].Target == SpellTarget.EnemyRow).ToList();
                             }
                             else
