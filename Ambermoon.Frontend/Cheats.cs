@@ -213,6 +213,15 @@ public class Cheats
                 MysticMap
             )
         },
+        { "automap",
+            Create
+            (
+                "Shows the fully revealed automap of the current 3D map." + Environment.NewLine +
+                "Also works on maps without automapper. The exploration is not changed." + Environment.NewLine +
+                "Usage: automap",
+                FullAutomap
+            )
+        },
         { "where",
             Create
             (
@@ -1503,6 +1512,18 @@ public class Cheats
         game.ActivateMysticMap();
 
         WriteLine("The mystic map was activated.");
+        WriteLine();
+    }
+
+    static void FullAutomap(GameCore game, string[] args)
+    {
+        WriteLine();
+
+        if (game.ShowFullAutomap())
+            WriteLine("The automap is shown.");
+        else
+            WriteLine("The automap can only be shown in the map view of a 3D map.");
+
         WriteLine();
     }
 

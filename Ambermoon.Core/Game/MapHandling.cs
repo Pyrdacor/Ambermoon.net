@@ -274,6 +274,38 @@ partial class GameCore
         return true;
     }
 
+    /// <summary>
+    /// Shows the fully revealed automap with all icons of the current 3D map.
+    /// This also works on maps without automapper and doesn't change the exploration in the savegame.
+    /// </summary>
+    public bool ShowFullAutomap()
+    {
+        if (!Ingame || Map is null || !Is3D || currentWindow.Window != Window.MapView)
+            return false;
+
+        var mapIndex = Map.Index;
+        var oldAutomap = CurrentSavegame!.Automaps.TryGetValue(mapIndex, out var automap) ? automap : null;
+
+        CurrentSavegame.Automaps[mapIndex] = new Automap { ExplorationBits = Enumerable.Repeat((byte)0xff, (Map.Width * Map.Height + 7) / 8).ToArray() };
+
+        ShowAutomap(new AutomapOptions
+        {
+            SecretDoorsVisible = true,
+            MonstersVisible = true,
+            PersonsVisible = true,
+            TrapsVisible = true,
+            ShowGotoPoints = true
+        }, () =>
+        {
+            if (oldAutomap != null)
+                CurrentSavegame.Automaps[mapIndex] = oldAutomap;
+            else
+                CurrentSavegame.Automaps.Remove(mapIndex);
+        });
+
+        return true;
+    }
+
     public bool ActivateTransport(TravelType travelType)
     {
         if (travelType == TravelType.Walk ||
