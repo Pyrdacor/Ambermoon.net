@@ -61,6 +61,7 @@ namespace Ambermoon;
 ///                             on that tile, e.g. if the tile can't be entered)
 ///   interact &lt;char&gt; [trigger]  interact with a map character (1-based index, default Mouth),
 ///                             e.g. for text popup characters
+///   pickspell &lt;spell&gt;        pick a spell (Ambermoon.Data.Spell name) as the battle action of the active party member
 ///   activate &lt;slot&gt;           make the party member in slot 1-6 the active one
 ///   setvar &lt;index&gt; &lt;0|1&gt;      set a global variable
 ///   setskill &lt;skill&gt; &lt;value&gt;  set a skill (Ambermoon.Data.Skill name) of the active party member
@@ -582,6 +583,9 @@ sealed class ScenarioScript
                     }
                     case "seteventbit":
                         game.ScriptSetEventBit(uint.Parse(parts[1]), uint.Parse(parts[2]), parts[3] == "1");
+                        break;
+                    case "pickspell":
+                        game.ScriptPickBattleSpell(Enum.Parse<Ambermoon.Data.Spell>(parts[1]));
                         break;
                     case "activate":
                         if (!game.ScriptSetActivePartyMember(int.Parse(parts[1])))

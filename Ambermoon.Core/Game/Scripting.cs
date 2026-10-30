@@ -209,6 +209,11 @@ partial class GameCore
         return true;
     }
 
+    /// <summary>
+    /// Picks a spell as the battle action of the active party member (like picking it in the spell list).
+    /// </summary>
+    public void ScriptPickBattleSpell(Spell spell) => PickBattleSpell(spell);
+
     public void ScriptSetGlobalVariable(uint index, bool value) => CurrentSavegame!.SetGlobalVariable(index, value);
 
     /// <summary>

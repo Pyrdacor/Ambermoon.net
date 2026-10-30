@@ -1149,6 +1149,16 @@ partial class GameCore
         ActivateLight(180, level);
     }
 
+    public void ActivateClairvoyance(uint level)
+    {
+        CurrentSavegame!.ActivateSpell(ActiveSpellType.Clairvoyance, 180, level * 20);
+    }
+
+    public void ActivateMysticMap()
+    {
+        CurrentSavegame!.ActivateSpell(ActiveSpellType.MysticMap, 180, 1);
+    }
+
     void ActivateLight(uint duration, uint level)
     {
         CurrentSavegame!.ActivateSpell(ActiveSpellType.Light, duration, level);

@@ -195,6 +195,24 @@ public class Cheats
                 Light
             )
         },
+        { "clairvoyance",
+            Create
+            (
+                "Gives the party clairvoyance." + Environment.NewLine +
+                "Usage: clairvoyance [level]" + Environment.NewLine +
+                "Levels 1 to 3 are possible." + Environment.NewLine +
+                "Defaults to max level",
+                Clairvoyance
+            )
+        },
+        { "mysticmap",
+            Create
+            (
+                "Activates the mystic map." + Environment.NewLine +
+                "Usage: mysticmap",
+                MysticMap
+            )
+        },
         { "where",
             Create
             (
@@ -1463,6 +1481,28 @@ public class Cheats
         game.ActivateLight(lightLevel);
 
         WriteLine($"Light level {lightLevel} was granted.");
+        WriteLine();
+    }
+
+    static void Clairvoyance(GameCore game, string[] args)
+    {
+        WriteLine();
+
+        uint level = args.Length < 1 ? 3 : uint.TryParse(args[0], out uint i) ? i : 3;
+        level = Util.Limit(1, level, 3);
+        game.ActivateClairvoyance(level);
+
+        WriteLine($"Clairvoyance level {level} was granted.");
+        WriteLine();
+    }
+
+    static void MysticMap(GameCore game, string[] args)
+    {
+        WriteLine();
+
+        game.ActivateMysticMap();
+
+        WriteLine("The mystic map was activated.");
         WriteLine();
     }
 
