@@ -4583,7 +4583,7 @@ namespace Ambermoon
             {
                 uint hitMalus = 0;
 
-                if (!attacker.BattleFlags.HasFlag(BattleFlags.Boss) && attacker.Conditions.HasFlag(Condition.Drugged))
+                if (attacker.Conditions.HasFlag(Condition.Drugged))
                 {
                     hitMalus = 25;
                 }
