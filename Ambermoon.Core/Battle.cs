@@ -275,6 +275,7 @@ namespace Ambermoon
         public IEnumerable<Monster> Monsters => battleField.Where(c => c?.Type == CharacterType.Monster).Cast<Monster>();
         public IEnumerable<PartyMember> PartyMembers => battleField.Where(c => c?.Type == CharacterType.PartyMember).Cast<PartyMember>();
         public IEnumerable<Character> Characters => battleField.Where(c => c != null).Cast<Character>();
+        internal Character?[] BattleField => battleField;
         public Character? GetCharacterAt(int index) => battleField[index];
         public Character? GetCharacterAt(int column, int row) => GetCharacterAt(column + row * 6);
         public int GetSlotFromCharacter(Character character) => battleField.ToList().IndexOf(character);
@@ -3210,7 +3211,8 @@ namespace Ambermoon
                     ShowSpellFailMessage(caster, game.SpellInfos[spell], caster.Name + game.DataNameProvider.BattleMessageAttackDidNoDamage, finishAction);
                     return;
                 }
-                uint dealtDamage = DealDamage((uint)damageAmount, 0);
+                // These are weapon attacks, so there is no spell damage bonus.
+                uint dealtDamage = DealDamage((uint)damageAmount, 0, false);
                 caster.HitPoints.CurrentValue += Math.Min(dealtDamage / healDivisor, caster.HitPoints.TotalMaxValue - caster.HitPoints.CurrentValue);
                 if (caster is PartyMember castingMember)
                     layout.FillCharacterBars(castingMember);

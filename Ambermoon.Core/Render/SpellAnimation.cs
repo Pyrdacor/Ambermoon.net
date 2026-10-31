@@ -768,7 +768,6 @@ namespace Ambermoon.Render
                 case Spell.Windhowler:
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
-                case Spell.MagicArrowHail:
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.GhostWeapon:
@@ -785,6 +784,34 @@ namespace Ambermoon.Render
                     // The sword swing is shown on each target in MoveTo.
                     this.finishAction?.Invoke();
                     break;
+                case Spell.MagicArrowHail:
+                {
+                    // One volley: Some arrows fly to each enemy at the same time. The hits follow in MoveTo.
+                    var enemyType = fromMonster ? CharacterType.PartyMember : CharacterType.Monster;
+                    var effect = fromMonster ? BattleEffect.MonsterArrowAttack : BattleEffect.PlayerArrowAttack;
+                    var graphic = fromMonster ? CombatGraphicIndex.ArrowGreenMonster : CombatGraphicIndex.ArrowGreenHuman;
+                    var targets = Enumerable.Range(0, 30).Where(tile => battle!.GetCharacterAt(tile)?.Type == enemyType).ToList();
+
+                    if (targets.Count == 0)
+                    {
+                        this.finishAction?.Invoke();
+                        break;
+                    }
+
+                    foreach (var tile in targets)
+                    {
+                        var info = BattleEffects.GetEffectInfo(renderView, effect, (uint)startPosition, (uint)tile, battle!.BattleField)![0];
+
+                        for (int i = 0; i < 3; ++i)
+                        {
+                            var offset = new Position(game.RandomInt(-8, 8), game.RandomInt(-6, 6));
+                            AddAnimation(graphic, (int)info.FrameCount, info.StartPosition + offset, info.EndPosition + offset, info.Duration * (uint)(4 + i) / 4,
+                                info.StartScale, info.EndScale, info.EndDisplayLayer, null, null, BattleAnimation.AnimationScaleType.Both,
+                                BattleAnimation.HorizontalAnchor.Center, BattleAnimation.VerticalAnchor.Center, info.MirrorX);
+                        }
+                    }
+                    break;
+                }
                 case Spell.ShowMonsterLP:
 				case Spell.ShowElements:
 				case Spell.ForeseeMagic:
@@ -1654,6 +1681,7 @@ namespace Ambermoon.Render
                 case Spell.SPStealer:
 				case Spell.MysticDecay:
                 case Spell.MagicSwordAttack:
+                case Spell.MagicArrowHail:
                 {
                     void HurtAndDrain()
                     {
@@ -1695,7 +1723,6 @@ namespace Ambermoon.Render
                 }
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
-                case Spell.MagicArrowHail:
                 {
                     // Both spells use the same animation. For magical arrows it is just called multiple times.
                     var monsterRow = (MonsterRow)(fromMonster ? startPosition / 6 : tile / 6);
