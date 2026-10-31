@@ -151,6 +151,7 @@
         ExpExchange = 204, // Advanced only
         MountWasp = 205, // Advanced only
         MagicSwordAttack = 206, // Advanced only
+        MagicArrowHail = 207, // Advanced only
     }
 
     public enum HealingSpell : byte
@@ -307,6 +308,7 @@
 					spell == Spell.MagicalProjectile ||
                     spell == Spell.MagicalArrows ||
                     spell == Spell.MagicSwordAttack ||
+                    spell == Spell.MagicArrowHail ||
                     (spell >= Spell.Mudsling && spell <= Spell.Iceshower);
         }
 
@@ -321,6 +323,7 @@
 				   spell == Spell.MagicalProjectile ||
                    spell == Spell.MagicalArrows ||
                    spell == Spell.MagicSwordAttack ||
+                   spell == Spell.MagicArrowHail ||
                    (spell >= Spell.Mudsling && spell <= Spell.Iceshower);
         }
 
@@ -330,12 +333,13 @@
                    spell == Spell.SPStealer ||
                    spell == Spell.GhostWeapon ||
                    spell == Spell.MagicSwordAttack ||
+                   spell == Spell.MagicArrowHail ||
                    SpellInfos.Entries[spell].SpellSchool == SpellSchool.Destruction;
         }
 
         public static bool IsPhysicallyBlocked(this Spell spell)
         {
-            return spell == Spell.MagicSwordAttack;
+            return spell == Spell.MagicSwordAttack || spell == Spell.MagicArrowHail;
         }
     }
 }

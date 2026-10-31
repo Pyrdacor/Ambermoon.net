@@ -124,7 +124,7 @@ partial class Battle
             else spellThread = spell switch
             {
                 Spell.LPStealer or Spell.SPStealer => (uint)monster.Level * 3 / 2,
-                Spell.GhostWeapon or Spell.GhostInferno or Spell.MagicSwordAttack => (uint)(monster.BaseAttackDamage + monster.BonusAttackDamage),
+                Spell.GhostWeapon or Spell.GhostInferno or Spell.MagicSwordAttack or Spell.MagicArrowHail => (uint)(monster.BaseAttackDamage + monster.BonusAttackDamage),
                 Spell.MagicalProjectile or Spell.MagicalArrows => monster.Level,
                 Spell.Petrify or Spell.DissolveVictim => 200,
                 Spell.CauseMadness => 100,

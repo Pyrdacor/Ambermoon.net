@@ -353,6 +353,7 @@ namespace Ambermoon.Render
                 case Spell.Iceball:
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
+                case Spell.MagicArrowHail:
                 case Spell.MagicSwordAttack:
                 {
                     Position position;
@@ -456,6 +457,7 @@ namespace Ambermoon.Render
                 case Spell.ElementToWater:
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
+                case Spell.MagicArrowHail:
                 case Spell.Lame:
                 case Spell.Poison:
                 case Spell.Petrify:
@@ -761,6 +763,7 @@ namespace Ambermoon.Render
                 case Spell.Windhowler:
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
+                case Spell.MagicArrowHail:
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.GhostWeapon:
@@ -1672,6 +1675,7 @@ namespace Ambermoon.Render
                 }
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
+                case Spell.MagicArrowHail:
                 {
                     // Both spells use the same animation. For magical arrows it is just called multiple times.
                     var monsterRow = (MonsterRow)(fromMonster ? startPosition / 6 : tile / 6);

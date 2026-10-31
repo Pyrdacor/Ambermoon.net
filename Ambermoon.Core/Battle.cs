@@ -3145,6 +3145,7 @@ namespace Ambermoon
                     break;
                 case Spell.MagicSwordAttack:
                 {
+                    // Close range: The damage uses strength as the primary attribute (+ STR / 25 + DEX / 50).
                     // Deals 100% to 125% of the total attack damage to all enemies around the caster.
                     // The damage is multiplied by 1 + (APR - 1) * 0.5 (1 APR: x1, 3 APR: x2, 5 APR: x3).
                     // 50% to 100% of the target's defense multiplied by the APR is subtracted (like the Amiga).
@@ -3155,20 +3156,29 @@ namespace Ambermoon
                         ShowSpellFailMessage(caster, game.SpellInfos[spell], caster.Name + game.DataNameProvider.BattleMessageAttackDidNoDamage, finishAction);
                         return;
                     }
-                    int damageAmount = Math.Max(caster.BaseAttackDamage + caster.BonusAttackDamage, 1);
                     int attacksPerRound = Math.Max(1, (int)caster.AttacksPerRound);
-                    damageAmount = damageAmount * (attacksPerRound + 1) / 2;
-                    damageAmount += game.RandomInt(0, damageAmount / 4);
-                    damageAmount -= game.RandomInt(50, 100) * GetPhysicalDefense(target!) * attacksPerRound / 100;
-                    if (damageAmount <= 0)
+                    int attackDamage = caster.BaseAttackDamage + caster.BonusAttackDamage +
+                        (int)caster.Attributes[Attribute.Strength].TotalCurrentValue / 25 +
+                        (int)caster.Attributes[Attribute.Dexterity].TotalCurrentValue / 50;
+                    DealWeaponSpellDamage(Math.Max(attackDamage, 1) * (attacksPerRound + 1) / 2, attacksPerRound, 10);
+                    return;
+                }
+                case Spell.MagicArrowHail:
+                {
+                    // Long range: The damage uses dexterity as the primary attribute (+ DEX / 25 + STR / 50).
+                    // Deals 100% to 125% of that to all enemies. As it can reach all of them,
+                    // the damage is only multiplied by 1 + (APR - 1) * 0.25 (1 APR: x1, 3 APR: x1.5, 5 APR: x2).
+                    // The rest is identical to the magic sword attack but the caster is healed by 5% of the damage dealt.
+                    if (GetWeaponElementFactor(caster, target!) == 0)
                     {
                         ShowSpellFailMessage(caster, game.SpellInfos[spell], caster.Name + game.DataNameProvider.BattleMessageAttackDidNoDamage, finishAction);
                         return;
                     }
-                    uint dealtDamage = DealDamage((uint)damageAmount, 0);
-                    caster.HitPoints.CurrentValue += Math.Min(dealtDamage / 10, caster.HitPoints.TotalMaxValue - caster.HitPoints.CurrentValue);
-                    if (caster is PartyMember castingMember)
-                        layout.FillCharacterBars(castingMember);
+                    int attacksPerRound = Math.Max(1, (int)caster.AttacksPerRound);
+                    int attackDamage = caster.BaseAttackDamage + caster.BonusAttackDamage +
+                        (int)caster.Attributes[Attribute.Dexterity].TotalCurrentValue / 25 +
+                        (int)caster.Attributes[Attribute.Strength].TotalCurrentValue / 50;
+                    DealWeaponSpellDamage(Math.Max(attackDamage, 1) * (attacksPerRound + 3) / 4, attacksPerRound, 20);
                     return;
                 }
                 default:
@@ -3177,6 +3187,21 @@ namespace Ambermoon
             }
 
             finishAction?.Invoke();
+
+            void DealWeaponSpellDamage(int damageAmount, int attacksPerRound, uint healDivisor)
+            {
+                damageAmount += game.RandomInt(0, damageAmount / 4);
+                damageAmount -= game.RandomInt(50, 100) * GetPhysicalDefense(target!) * attacksPerRound / 100;
+                if (damageAmount <= 0)
+                {
+                    ShowSpellFailMessage(caster, game.SpellInfos[spell], caster.Name + game.DataNameProvider.BattleMessageAttackDidNoDamage, finishAction);
+                    return;
+                }
+                uint dealtDamage = DealDamage((uint)damageAmount, 0);
+                caster.HitPoints.CurrentValue += Math.Min(dealtDamage / healDivisor, caster.HitPoints.TotalMaxValue - caster.HitPoints.CurrentValue);
+                if (caster is PartyMember castingMember)
+                    layout.FillCharacterBars(castingMember);
+            }
 
             uint DealDamage(uint baseDamage, uint variableDamage, bool useSpellBonusDamage = true)
             {
