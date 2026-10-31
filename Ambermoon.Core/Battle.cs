@@ -3163,6 +3163,19 @@ namespace Ambermoon
                     DealWeaponSpellDamage(Math.Max(attackDamage, 1) * (attacksPerRound + 1) / 2, attacksPerRound, 10);
                     return;
                 }
+                case Spell.EnergyAbsorption:
+                {
+                    // Deals 50% to 100% of the caster level per target, modified by the usual spell damage bonus.
+                    // The caster gains 5% of the damage as LP and SP.
+                    uint level = Math.Max(1u, caster.Level);
+                    uint minDamage = (level + 1) / 2;
+                    uint gain = DealDamage(minDamage, level - minDamage) / 20;
+                    caster.HitPoints.CurrentValue += Math.Min(gain, caster.HitPoints.TotalMaxValue - caster.HitPoints.CurrentValue);
+                    caster.SpellPoints.CurrentValue += Math.Min(gain, caster.SpellPoints.TotalMaxValue - caster.SpellPoints.CurrentValue);
+                    if (caster is PartyMember castingMember)
+                        layout.FillCharacterBars(castingMember);
+                    return;
+                }
                 case Spell.MagicArrowHail:
                 {
                     // Long range: The damage uses dexterity as the primary attribute (+ DEX / 25 + STR / 50).

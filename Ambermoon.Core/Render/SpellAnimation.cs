@@ -67,6 +67,22 @@ namespace Ambermoon.Render
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects)!;
         }
 
+        Position GetLightningPosition(int position)
+        {
+            if (fromMonster) // target is party member
+            {
+                var targetPosition = Layout.GetPlayerSlotCenterPosition(position % 6);
+                targetPosition.Y = Global.CombatBackgroundArea.Center.Y;
+                return targetPosition;
+            }
+            else // target is monster
+            {
+                int row = position / 6;
+                int yOffset = Util.Round(32 * renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)row)) + 16;
+                return Layout.GetMonsterCombatGroundPosition(renderView, position) - new Position(0, yOffset);
+            }
+        }
+
         void ShowOverlay(Color color)
         {
             colorOverlay?.Delete();
@@ -355,6 +371,7 @@ namespace Ambermoon.Render
                 case Spell.MagicalArrows:
                 case Spell.MagicArrowHail:
                 case Spell.MagicSwordAttack:
+                case Spell.EnergyAbsorption:
                 {
                     Position position;
                     if (fromMonster)
@@ -477,6 +494,7 @@ namespace Ambermoon.Render
                 case Spell.Icestorm:
                 case Spell.Iceshower:
                 case Spell.MagicSwordAttack:
+                case Spell.EnergyAbsorption:
                 {
                     Position targetPosition;
                     if (fromMonster) // target is party member
@@ -509,20 +527,7 @@ namespace Ambermoon.Render
                     }
                 }
                 case Spell.Thunderbolt:
-                {
-                    if (fromMonster) // target is party member
-                    {
-                        var targetPosition = Layout.GetPlayerSlotCenterPosition(position % 6);
-                        targetPosition.Y = Global.CombatBackgroundArea.Center.Y;
-                        return targetPosition;
-                    }
-                    else // target is monster
-                    {
-                        int row = position / 6;
-                        int yOffset = Util.Round(32 * renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)row)) + 16;
-                        return Layout.GetMonsterCombatGroundPosition(renderView, position) - new Position(0, yOffset);
-                    }
-                }
+                    return GetLightningPosition(position);
                 case Spell.Mudsling:
                 case Spell.Rockfall:
                 {
@@ -948,9 +953,11 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Thunderbolt:
+                case Spell.EnergyAbsorption: // upside down thunderbolt
                 {
-                    var rowPosition = GetTargetPosition(targetRow * 6);
-                    var rowEndPosition = GetTargetPosition(targetRow * 6 + 5);
+                    bool upwards = spell == Spell.EnergyAbsorption;
+                    var rowPosition = GetLightningPosition(targetRow * 6);
+                    var rowEndPosition = GetLightningPosition(targetRow * 6 + 5);
                     int numLightnings = 10;
                     void PlayLightning()
                     {
@@ -959,7 +966,7 @@ namespace Ambermoon.Render
                         game.AddTimedEvent(TimeSpan.FromMilliseconds(whiteDuration), () =>
                         {
                             var position = rowPosition + new Position(game.RandomInt(0, rowEndPosition.X - rowPosition.X), 0);
-                            var endPosition = new Position(Util.Limit(rowPosition.X, position.X + game.RandomInt(-20, 20), rowEndPosition.X), position.Y);
+                            var endPosition = new Position(Util.Limit(rowPosition.X, position.X + game.RandomInt(-20, 20), rowEndPosition.X), position.Y - (upwards ? 16 : 0));
                             var scale = 1.5f * (fromMonster ? 2.0f : renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
                             byte displayLayer = fromMonster ? (byte)255 : (byte)(targetRow * 60 + 60);
                             uint duration = (uint)Util.Round((250.0f - whiteDuration) * 0.001f * GameCore.TicksPerSecond);
@@ -968,7 +975,7 @@ namespace Ambermoon.Render
                             AddAnimation(CombatGraphicIndex.Lightning, 1, position, endPosition, duration,
                                 scale, scale, displayLayer, (--numLightnings == 0) ? null : PlayLightning, null,
                                 BattleAnimation.AnimationScaleType.Both, BattleAnimation.HorizontalAnchor.Center,
-                                BattleAnimation.VerticalAnchor.Center, game.RandomInt(0, 1) == 0);
+                                BattleAnimation.VerticalAnchor.Center, game.RandomInt(0, 1) == 0).MirrorY = upwards;
                         }, true);
                     }
                     PlayLightning();
@@ -1671,6 +1678,19 @@ namespace Ambermoon.Render
                         battle!.PlayBattleEffectAnimation(BattleEffect.PlayerAttack, (uint)tile, game.CurrentBattleTicks, HurtAndDrain);
                     else
                         HurtAndDrain();
+                    break;
+                }
+                case Spell.EnergyAbsorption:
+                {
+                    // First the green beam, then the blue one. The target is hurt at the end.
+                    float endScale = renderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                    byte displayLayer = (byte)(fromMonster ? 255 : ((tile / 6) * 60 + 60));
+                    void PlayBeam(CombatGraphicIndex beam, Action? next)
+                    {
+                        AddAnimation(beam, 1, GetTargetPosition(tile), GetSourcePosition(), BattleEffects.GetFlyDuration((uint)tile, (uint)startPosition),
+                            fromMonster ? 2.5f : endScale, fromMonster ? endScale : 2.5f, displayLayer, next);
+                    }
+                    PlayBeam(CombatGraphicIndex.GreenBeam, () => PlayBeam(CombatGraphicIndex.BlueBeam, null));
                     break;
                 }
                 case Spell.MagicalProjectile:

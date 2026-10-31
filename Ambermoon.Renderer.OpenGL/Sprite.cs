@@ -35,6 +35,7 @@ internal class Sprite : RenderNode, ISprite
     byte paletteIndex = 0;
     Size textureSize = null;
     bool mirrorX = false;
+    bool mirrorY = false;
     byte? maskColor = null;
 
     public Sprite(int width, int height, int textureAtlasX, int textureAtlasY, Rect virtualScreen)
@@ -111,6 +112,20 @@ internal class Sprite : RenderNode, ISprite
                 return;
 
             mirrorX = value;
+
+            UpdateTextureAtlasOffset();
+        }
+    }
+
+    public bool MirrorY
+    {
+        get => mirrorY;
+        set
+        {
+            if (mirrorY == value)
+                return;
+
+            mirrorY = value;
 
             UpdateTextureAtlasOffset();
         }

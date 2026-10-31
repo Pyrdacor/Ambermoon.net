@@ -254,6 +254,7 @@ namespace Ambermoon.Data
             { Spell.MountWasp, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.WorldMapOnly, Worlds = WorldFlag.ForestMoon } },
             { Spell.MagicSwordAttack, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.EnemiesInCloseRange, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.MagicArrowHail, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.AllEnemies, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
+            { Spell.EnergyAbsorption, new SpellInfo { SP = 80, SLP = 0, Target = SpellTarget.EnemyRow, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
         }.ToImmutableDictionary();
 
         static readonly ImmutableDictionary<Spell, uint> adjustedSLP = new Dictionary<Spell, uint>

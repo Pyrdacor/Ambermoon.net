@@ -407,7 +407,9 @@ public class RenderBuffer : IDisposable
             int oldWidth = spriteSize.Width;
             int oldHeight = spriteSize.Height;
             sprite.ClipArea.ClipRect(position, spriteSize);
-            textureAtlasOffset.Y += Util.Round((position.Y - oldY) / textureHeightFactor);
+            textureAtlasOffset.Y += sprite.MirrorY
+                ? Util.Round((oldY + oldHeight - position.Y - spriteSize.Height) / textureHeightFactor)
+                : Util.Round((position.Y - oldY) / textureHeightFactor);
             textureSize.Width -= Util.Round((oldWidth - spriteSize.Width) / textureWidthFactor);
             textureSize.Height -= Util.Round((oldHeight - spriteSize.Height) / textureHeightFactor);
 
@@ -451,20 +453,14 @@ public class RenderBuffer : IDisposable
         {
             textureSize *= (int)textureFactor;
 
-            if (sprite.MirrorX)
-            {
-                int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y, index);
-                textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)textureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
-                textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 2);
-                textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 3);
-            }
-            else
-            {
-                int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)textureAtlasOffset.Y, index);
-                textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
-                textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 2);
-                textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 3);
-            }
+            short left = (short)(sprite.MirrorX ? textureAtlasOffset.X + textureSize.Width : textureAtlasOffset.X);
+            short right = (short)(sprite.MirrorX ? textureAtlasOffset.X : textureAtlasOffset.X + textureSize.Width);
+            short top = (short)(sprite.MirrorY ? textureAtlasOffset.Y + textureSize.Height : textureAtlasOffset.Y);
+            short bottom = (short)(sprite.MirrorY ? textureAtlasOffset.Y : textureAtlasOffset.Y + textureSize.Height);
+            int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add(left, top, index);
+            textureAtlasOffsetBuffer.Add(right, top, textureAtlasOffsetBufferIndex + 1);
+            textureAtlasOffsetBuffer.Add(right, bottom, textureAtlasOffsetBufferIndex + 2);
+            textureAtlasOffsetBuffer.Add(left, bottom, textureAtlasOffsetBufferIndex + 3);
         }
 
         if (baseLineBuffer != null)
@@ -858,7 +854,9 @@ public class RenderBuffer : IDisposable
             int oldWidth = spriteSize.Width;
             int oldHeight = spriteSize.Height;
             sprite.ClipArea.ClipRect(position, spriteSize);
-            textureAtlasOffset.Y += Util.Round((position.Y - oldY) / textureHeightFactor);
+            textureAtlasOffset.Y += sprite.MirrorY
+                ? Util.Round((oldY + oldHeight - position.Y - spriteSize.Height) / textureHeightFactor)
+                : Util.Round((position.Y - oldY) / textureHeightFactor);
             textureSize.Width -= Util.Round((oldWidth - spriteSize.Width) / textureWidthFactor);
             textureSize.Height -= Util.Round((oldHeight - spriteSize.Height) / textureHeightFactor);
 
@@ -876,20 +874,14 @@ public class RenderBuffer : IDisposable
 
         textureSize *= (int)textureFactor;
 
-        if (sprite.MirrorX)
-        {
-            textureAtlasOffsetBuffer.Update(index, (short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y);
-            textureAtlasOffsetBuffer.Update(index + 1, (short)textureAtlasOffset.X, (short)textureAtlasOffset.Y);
-            textureAtlasOffsetBuffer.Update(index + 2, (short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height));
-            textureAtlasOffsetBuffer.Update(index + 3, (short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height));
-        }
-        else
-        {
-            textureAtlasOffsetBuffer.Update(index, (short)textureAtlasOffset.X, (short)textureAtlasOffset.Y);
-            textureAtlasOffsetBuffer.Update(index + 1, (short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y);
-            textureAtlasOffsetBuffer.Update(index + 2, (short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height));
-            textureAtlasOffsetBuffer.Update(index + 3, (short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height));
-        }
+        short left = (short)(sprite.MirrorX ? textureAtlasOffset.X + textureSize.Width : textureAtlasOffset.X);
+        short right = (short)(sprite.MirrorX ? textureAtlasOffset.X : textureAtlasOffset.X + textureSize.Width);
+        short top = (short)(sprite.MirrorY ? textureAtlasOffset.Y + textureSize.Height : textureAtlasOffset.Y);
+        short bottom = (short)(sprite.MirrorY ? textureAtlasOffset.Y : textureAtlasOffset.Y + textureSize.Height);
+        textureAtlasOffsetBuffer.Update(index, left, top);
+        textureAtlasOffsetBuffer.Update(index + 1, right, top);
+        textureAtlasOffsetBuffer.Update(index + 2, right, bottom);
+        textureAtlasOffsetBuffer.Update(index + 3, left, bottom);
     }
 
     public void UpdateTextureAtlasOffset(int index, Render.ISurface3D surface)

@@ -56,6 +56,12 @@ namespace Ambermoon.Render
             set;
         }
 
+        bool MirrorY
+        {
+            get;
+            set;
+        }
+
         /// <summary>
         /// If not null and not 0, each non-transparent pixel
         /// is filled with this color.

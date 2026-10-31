@@ -113,6 +113,12 @@ namespace Ambermoon.Render
             Scale = startScale = initialScale;
         }
 
+        public bool MirrorY
+        {
+            get => sprite.MirrorY;
+            set => sprite.MirrorY = value;
+        }
+
         public bool Visible
         {
             get => sprite.Visible;

@@ -152,6 +152,7 @@
         MountWasp = 205, // Advanced only
         MagicSwordAttack = 206, // Advanced only
         MagicArrowHail = 207, // Advanced only
+        EnergyAbsorption = 208, // Advanced only
     }
 
     public enum HealingSpell : byte
@@ -309,6 +310,7 @@
                     spell == Spell.MagicalArrows ||
                     spell == Spell.MagicSwordAttack ||
                     spell == Spell.MagicArrowHail ||
+                    spell == Spell.EnergyAbsorption ||
                     (spell >= Spell.Mudsling && spell <= Spell.Iceshower);
         }
 
@@ -324,6 +326,7 @@
                    spell == Spell.MagicalArrows ||
                    spell == Spell.MagicSwordAttack ||
                    spell == Spell.MagicArrowHail ||
+                   spell == Spell.EnergyAbsorption ||
                    (spell >= Spell.Mudsling && spell <= Spell.Iceshower);
         }
 
@@ -334,6 +337,7 @@
                    spell == Spell.GhostWeapon ||
                    spell == Spell.MagicSwordAttack ||
                    spell == Spell.MagicArrowHail ||
+                   spell == Spell.EnergyAbsorption ||
                    SpellInfos.Entries[spell].SpellSchool == SpellSchool.Destruction;
         }
 
