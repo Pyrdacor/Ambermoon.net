@@ -575,8 +575,8 @@ public sealed class ItemData : IMutableIndex, IIndexedData, IEquatable<ItemData>
         dataWriter.Write((byte)Damage);
         dataWriter.Write((byte)AmmunitionType);
         dataWriter.Write((byte)UsedAmmunitionType);
-        dataWriter.Write((byte)PenaltySkill1);
-        dataWriter.Write((byte)PenaltySkill2);
+        dataWriter.Write((byte)(PenaltyValue1 == 0 ? 0 : (int)PenaltySkill1 + 1));
+        dataWriter.Write((byte)(PenaltyValue2 == 0 ? 0 : (int)PenaltySkill2 + 1));
         dataWriter.Write((byte)PenaltyValue1);
         dataWriter.Write((byte)PenaltyValue2);
         dataWriter.Write((byte)(_specialIndex ?? 0));
@@ -635,14 +635,17 @@ public sealed class ItemData : IMutableIndex, IIndexedData, IEquatable<ItemData>
         itemData.AmmunitionType = itemData.Type == ItemType.Ammunition ? ammunitionType : AmmunitionType.None;
         var usedAmmunitionType = (AmmunitionType)dataReader.ReadByte();
         itemData.UsedAmmunitionType = itemData.Type == ItemType.LongRangeWeapon ? usedAmmunitionType : AmmunitionType.None;
-        var penaltySkill1 = (Skill)dataReader.ReadByte();
-        itemData.PenaltySkill1 = itemData.Type.IsEquipment() ? penaltySkill1 : Skill.Attack;
-        var penaltySkill2 = (Skill)dataReader.ReadByte();
-        itemData.PenaltySkill2 = itemData.Type.IsEquipment() ? penaltySkill2 : Skill.Attack;
+        // Note: The skills are 1-based like in the original code. 0 means no penalty.
+        int penaltySkill1 = dataReader.ReadByte();
+        int penaltySkill2 = dataReader.ReadByte();
         uint penaltyValue1 = dataReader.ReadByte();
-        itemData.PenaltyValue1 = itemData.Type.IsEquipment() ? penaltyValue1 : 0;
         uint penaltyValue2 = dataReader.ReadByte();
-        itemData.PenaltyValue2 = itemData.Type.IsEquipment() ? penaltyValue2 : 0;
+        bool usePenalty1 = itemData.Type.IsEquipment() && penaltySkill1 != 0;
+        bool usePenalty2 = itemData.Type.IsEquipment() && penaltySkill2 != 0;
+        itemData.PenaltySkill1 = usePenalty1 ? (Skill)(penaltySkill1 - 1) : Skill.Attack;
+        itemData.PenaltySkill2 = usePenalty2 ? (Skill)(penaltySkill2 - 1) : Skill.Attack;
+        itemData.PenaltyValue1 = usePenalty1 ? penaltyValue1 : 0;
+        itemData.PenaltyValue2 = usePenalty2 ? penaltyValue2 : 0;
         itemData._specialIndex = dataReader.ReadByte();
         uint textSubIndex = dataReader.ReadByte();
         itemData.TextSubIndex = itemData.Type == ItemType.TextScroll ? textSubIndex : null;

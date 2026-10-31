@@ -47,8 +47,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             WriteSignedByte(item.Damage);
             dataWriter.WriteEnumAsByte(item.AmmunitionType);
             dataWriter.WriteEnumAsByte(item.UsedAmmunitionType);
-            dataWriter.WriteEnumAsByte(item.SkillPenalty1);
-            dataWriter.WriteEnumAsByte(item.SkillPenalty2);
+            dataWriter.Write((byte)(item.SkillPenalty1Value == 0 ? 0 : (int)item.SkillPenalty1 + 1));
+            dataWriter.Write((byte)(item.SkillPenalty2Value == 0 ? 0 : (int)item.SkillPenalty2 + 1));
             dataWriter.Write((byte)item.SkillPenalty1Value);
             dataWriter.Write((byte)item.SkillPenalty2Value);
             dataWriter.Write(item.SpecialValue);

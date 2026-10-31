@@ -33,19 +33,21 @@ namespace Ambermoon.Data.Legacy.Serialization
             item.Damage = (sbyte)dataReader.ReadByte();
             item.AmmunitionType = (AmmunitionType)dataReader.ReadByte();
             item.UsedAmmunitionType = (AmmunitionType)dataReader.ReadByte();
-            // TODO: There are 4 items in Ambermoon which use this:
-            // - Whip: 01 00 0A 00
-            // - Banded Armour: 00 00 04 00
-            // - Plate Armour: 00 00 06 00
-            // - Knight's Armour: 00 00 08 00
-            // Only the whip has an effect of -10 Attack skill
-            // as for the other 3 the first or second byte is 0.
-            // Either the data is wrong or the original code.
-            // But it's hard to reverse engineer the meaning this way.
-            item.SkillPenalty1 = (Skill)dataReader.ReadByte();
-            item.SkillPenalty2 = (Skill)dataReader.ReadByte();
-            item.SkillPenalty1Value = dataReader.ReadByte();
-            item.SkillPenalty2Value = dataReader.ReadByte();
+            // Note: The skills are 1-based like in the original code. 0 means no penalty.
+            int penaltySkill1 = dataReader.ReadByte();
+            int penaltySkill2 = dataReader.ReadByte();
+            uint penaltyValue1 = dataReader.ReadByte();
+            uint penaltyValue2 = dataReader.ReadByte();
+            if (penaltySkill1 != 0)
+            {
+                item.SkillPenalty1 = (Skill)(penaltySkill1 - 1);
+                item.SkillPenalty1Value = penaltyValue1;
+            }
+            if (penaltySkill2 != 0)
+            {
+                item.SkillPenalty2 = (Skill)(penaltySkill2 - 1);
+                item.SkillPenalty2Value = penaltyValue2;
+            }
             item.SpecialValue = dataReader.ReadByte();
             item.TextSubIndex = dataReader.ReadByte();
             item.SpellSchool = (SpellSchool)dataReader.ReadByte();

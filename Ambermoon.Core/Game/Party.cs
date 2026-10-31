@@ -1291,6 +1291,10 @@ partial class GameCore
                     partyMember.Attributes[item.Attribute.Value].BonusValue += factor * item.AttributeValue;
                 if (item.Skill != null)
                     partyMember.Skills[item.Skill.Value].BonusValue += factor * item.SkillValue;
+                if (item.SkillPenalty1Value != 0)
+                    partyMember.Skills[item.SkillPenalty1].BonusValue -= (int)item.SkillPenalty1Value;
+                if (item.SkillPenalty2Value != 0)
+                    partyMember.Skills[item.SkillPenalty2].BonusValue -= (int)item.SkillPenalty2Value;
             }
         }
 
