@@ -489,7 +489,11 @@ partial class GameCore
         switch (transition)
         {
             case TeleportEvent.TransitionType.Teleporter:
-                RunTransition();
+                // Like on the Amiga this only jumps directly inside the current map.
+                if (teleportEvent.MapIndex == 0 || teleportEvent.MapIndex == Map!.Index)
+                    RunTransition();
+                else
+                    Fade(RunTransition);
                 break;
             case TeleportEvent.TransitionType.WindGate:
                 if (CurrentSavegame!.IsSpecialItemActive(SpecialItemPurpose.WindChain))

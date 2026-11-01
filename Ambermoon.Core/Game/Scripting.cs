@@ -83,6 +83,10 @@ partial class GameCore
         if (scriptConversation == null)
             return "no conversation is active";
 
+        // Like the buttons this must wait for running sequences (e.g. the item flying back).
+        if (allInputDisabled)
+            return "the input is disabled";
+
         int slot = Array.FindIndex(CurrentPartyMember!.Inventory.Slots, s => !s.Empty && s.ItemIndex == itemIndex);
 
         if (slot == -1)

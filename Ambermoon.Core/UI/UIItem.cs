@@ -42,7 +42,11 @@ namespace Ambermoon.UI
             get => sprite?.DisplayLayer == 100;
             set
             {
-                sprite!.DisplayLayer = (byte)(value ? 100 : 0);
+                // The item grid might have been initialized again while an animation of this item was running.
+                if (sprite == null)
+                    return;
+
+                sprite.DisplayLayer = (byte)(value ? 100 : 0);
 
                 if (brokenOverlay != null)
                     brokenOverlay.DisplayLayer = (byte)(sprite.DisplayLayer + 1);
@@ -98,6 +102,9 @@ namespace Ambermoon.UI
 
         public void Update(bool itemTypeChanged)
         {
+            if (sprite == null) // already destroyed
+                return;
+
             if (itemTypeChanged)
             {
                 if (Item.ItemIndex == 0 && Item.Amount != 0) // second hand slot
