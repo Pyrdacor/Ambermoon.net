@@ -7,7 +7,7 @@
 
 
             ------------------------------------------------------------------
-            | Ambermoon rewrite by Pyrdacor - Version 1.14.3 - October 2026  |
+            | Ambermoon rewrite by Pyrdacor - Version 1.15.0 - November 2026 |
             ------------------------------------------------------------------
 
 
@@ -26,6 +26,8 @@ This package includes the playable assembly for Ambermoon.net and some additiona
 - Walkthrough.txt: An english walkthrough written by Michael Böhnisch in 1999 and kindly
                    provided by Alexander Holland from the Thalion Webshrine.
 - AmbermoonMap.pdf: A scan of the Ambermoon map that was part of the original package.
+- AmbermoonMap.html: The Ambermoon map as a zoomable page with the place names in German,
+                    English, French, Polish and Czech. Open it in a web browser.
 - AmbermoonRuneTable.png: A scan of the rune table that was part of the original package.
 - AmbermoonManualEnglish.pdf: A translated manual by Victor Chaves (format edited by me).
 

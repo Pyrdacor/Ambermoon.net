@@ -1,3 +1,23 @@
+Version 1.15
+============
+
+- The item 'Map of Lyramion' now shows the painted world map of the original package in the whole window. It can be moved and zoomed (mouse wheel, pinch on Android) and is available in German, English, French, Polish and Czech
+- On 2D maps the map button and the key M open the world map if a party member owns the item
+- The world map and the rune alphabet can no longer be dropped (they can still be sold or stored)
+- Added AmbermoonMap.html to view the world map in a web browser
+- Audio: The music follows a lost device and a changed default device and starts without a restart if a device becomes available later
+- Audio: Fixed a crash if the audio device can't be initialized
+- Added mod support and the Ambermoon DC dungeon crawler mod
+- Improved the music with a new SonicArranger version
+- Battle: Drugged bosses get half the hit penalty like on the Amiga
+- Battle: No game over while members are asleep or panicked, stalemate detection and fixes for battle buttons and two-handed weapons
+- Items: Item penalty skills are 1-based like on the Amiga and the penalties are kept after loading
+- Rewards: Dead and petrified party members are not rewarded for all targets
+- Added the event which removes a party member, equipment and inventory are put into chests like on the Amiga
+- Loading older savegames adds missing party members, chests and merchants from the initial savegame
+- Teleporter events fade on a map change like on the Amiga
+- Fixed a crash if an item grid is initialized during an item animation
+
 Version 1.14
 ============
 
