@@ -55,6 +55,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "{#MyDistPath}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyResourcePath}\Package\AmbermoonMap.pdf"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyResourcePath}\Package\AmbermoonMap.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyResourcePath}\Package\AmbermoonMapLayers\*"; DestDir: "{app}\AmbermoonMapLayers"; Flags: ignoreversion
 Source: "{#MyResourcePath}\Package\AmbermoonRuneTable.png"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyResourcePath}\Package\Walkthrough.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyResourcePath}\Package\readme.txt"; DestDir: "{app}"; Flags: ignoreversion

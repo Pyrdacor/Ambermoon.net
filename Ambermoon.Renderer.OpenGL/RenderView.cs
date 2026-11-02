@@ -71,6 +71,8 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     readonly OrientationPolicy orientationPolicy;
     readonly DeviceType deviceType;
     Rotation rotation = Rotation.None;
+    FullscreenImage fullscreenImage = null;
+    bool showCursorOnFullscreenImage = false;
     readonly SortedDictionary<Layer, RenderLayer> layers = new SortedDictionary<Layer, RenderLayer>();
     readonly SpriteFactory spriteFactory = null;
     readonly ColoredRectFactory coloredRectFactory = null;
@@ -101,6 +103,7 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     public Rect RenderScreenArea => new(renderScreenArea);
     public bool IsLandscapeRatio { get; } = true;
     public bool ShowImageLayerOnly { get; set; } = false;
+    public Size WindowSize => windowSize;
     public ISpriteFactory SpriteFactory => spriteFactory;
     public IColoredRectFactory ColoredRectFactory => coloredRectFactory;
     public int? DrugColorComponent { get; set; } = null;
@@ -490,6 +493,24 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
             (uint)viewport.Width, (uint)viewport.Height);
     }
 
+    public void ShowFullscreenImage(int width, int height, byte[] rgbaData, bool showCursor)
+    {
+        fullscreenImage?.Dispose();
+        fullscreenImage = new FullscreenImage(State, width, height, rgbaData);
+        showCursorOnFullscreenImage = showCursor;
+    }
+
+    public void SetFullscreenImageArea(float x, float y, float width, float height)
+    {
+        fullscreenImage?.SetArea(x, y, width, height);
+    }
+
+    public void HideFullscreenImage()
+    {
+        fullscreenImage?.Dispose();
+        fullscreenImage = null;
+    }
+
     public void Render(FloatPosition viewportOffset)
     {
         if (disposed)
@@ -516,6 +537,26 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
         try
         {
             context.SetRotation(rotation);
+
+            if (fullscreenImage != null)
+            {
+                State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
+                State.Gl.Viewport(0, 0, (uint)frameBufferSize.Width, (uint)frameBufferSize.Height);
+                State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
+                fullscreenImage.Render();
+
+                if (showCursorOnFullscreenImage)
+                {
+                    var viewport = RenderScreenArea;
+                    State.RestoreModelViewMatrix(Matrix4.Identity);
+                    State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
+                    State.Gl.Viewport(viewport.X, viewport.Y, (uint)viewport.Width, (uint)viewport.Height);
+                    layers[Layer.Cursor].Render();
+                }
+
+                return;
+            }
 
             bool render3DMap = !ShowImageLayerOnly && layers[Layer.Map3D].Visible;
             var viewOffset = new Position

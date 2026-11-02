@@ -323,6 +323,10 @@ partial class GameCore
     /// player would do it via the inventory (including item consumption and
     /// map event triggering). Returns false if the item is not in the inventory.
     /// </summary>
+    public void ScriptShowWorldMap() => ShowWorldMap();
+
+    public void ScriptDropInventoryItem(int slot) => layout.ScriptDropInventoryItem(slot);
+
     public bool ScriptUseItem(uint itemIndex)
     {
         if (CurrentPartyMember == null || WindowOrPopupActive)

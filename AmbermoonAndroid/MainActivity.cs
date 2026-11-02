@@ -25,6 +25,7 @@ public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
     private GameWindow gameWindow;
     private MusicManager musicManager;
     private GestureDetector gestureDetector;
+    private ScaleGestureDetector scaleGestureDetector;
     private InputMethodManager imm;
     private ConsoleOverlayManager console;
     private EditText hiddenEditText;
@@ -40,8 +41,20 @@ public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
         longPressHandler = new Handler(Looper.MainLooper);
     }
 
+    private sealed class PinchListener(MainActivity activity) : ScaleGestureDetector.SimpleOnScaleGestureListener
+    {
+        public override bool OnScale(ScaleGestureDetector detector)
+        {
+            var focus = new Position(Util.Round(detector.FocusX), Util.Round(detector.FocusY));
+            activity.gameWindow.OnPinchZoom(detector.ScaleFactor, focus);
+            return true;
+        }
+    }
+
     public override bool DispatchTouchEvent(MotionEvent e)
     {
+        scaleGestureDetector?.OnTouchEvent(e);
+
         switch (e.Action)
         {
             case MotionEventActions.Down:
@@ -158,6 +171,7 @@ public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
         };
 
         gestureDetector = new GestureDetector(this, this);
+        scaleGestureDetector = new ScaleGestureDetector(this, new PinchListener(this));
 
         console = ConsoleOverlayManager.GetInstance(this);
         console.Initialize();

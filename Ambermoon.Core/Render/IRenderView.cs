@@ -51,6 +51,16 @@ public interface IRenderView : IRenderLayerFactory
     Size ScreenToView(Size size);
     Rect ScreenToView(Rect rect);
     void TakeScreenshot(Action<int, int, byte[]> dataHandler);
+    /// <summary>
+    /// Displays an RGBA image instead of the game until it is hidden.
+    /// </summary>
+    void ShowFullscreenImage(int width, int height, byte[] rgbaData, bool showCursor);
+    /// <summary>
+    /// Sets the area of the fullscreen image relative to the window size (top-left origin).
+    /// </summary>
+    void SetFullscreenImageArea(float x, float y, float width, float height);
+    void HideFullscreenImage();
+    Size WindowSize { get; }
     Rect RenderScreenArea { get; }
     WindowMode WindowMode { get; set; }
     bool AllowFramebuffer { get; }

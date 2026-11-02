@@ -677,6 +677,17 @@ class GameWindow
         }
     }
 
+    internal void OnPinchZoom(float factor, Position focus)
+    {
+        if (Game == null)
+            return;
+
+        lock (touchActions)
+        {
+            touchActions.Add(() => Game?.OnPinchZoom(factor, focus));
+        }
+    }
+
     internal void OnKeyChar(char ch)
     {
         if (ch == '\n')

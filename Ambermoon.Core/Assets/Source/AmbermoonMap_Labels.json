@@ -1,0 +1,1254 @@
+{
+ "imageWidth": 3090,
+ "imageHeight": 2368,
+ "labels": [
+  {
+   "key": "Suempfe der Daemmerung",
+   "source": "proposed",
+   "de": "Sümpfe der Dämmerung",
+   "deRect": [
+    1289,
+    37,
+    325,
+    44
+   ],
+   "en": "Swamps of Twilight",
+   "enRect": [
+    1321,
+    36,
+    263,
+    44
+   ],
+   "fr": "Marais du Crépuscule",
+   "frRect": [
+    1305,
+    36,
+    293,
+    42
+   ],
+   "pl": "Bagna Zmierzchu",
+   "plRect": [
+    1336,
+    37,
+    233,
+    43
+   ],
+   "cz": "Močály soumraku",
+   "czRect": [
+    1330,
+    36,
+    246,
+    43
+   ]
+  },
+  {
+   "key": "Feste Godsbane",
+   "source": "game",
+   "de": "Feste Godsbane",
+   "deRect": [
+    1313,
+    232,
+    249,
+    40
+   ],
+   "en": "Castle Godsbane",
+   "enRect": [
+    1299,
+    231,
+    276,
+    40
+   ],
+   "fr": "Forteresse Godsbane",
+   "frRect": [
+    1277,
+    232,
+    319,
+    39
+   ],
+   "pl": "Zamek Godsbane",
+   "plRect": [
+    1295,
+    232,
+    283,
+    40
+   ],
+   "cz": "Zámek Godsbane",
+   "czRect": [
+    1295,
+    232,
+    283,
+    40
+   ]
+  },
+  {
+   "key": "Oase",
+   "source": "game",
+   "de": "Oase",
+   "deRect": [
+    1905,
+    450,
+    62,
+    25
+   ],
+   "en": "Oasis",
+   "enRect": [
+    1901,
+    445,
+    70,
+    30
+   ],
+   "fr": "Oasis",
+   "frRect": [
+    1901,
+    445,
+    70,
+    30
+   ],
+   "pl": "Oaza",
+   "plRect": [
+    1901,
+    450,
+    70,
+    25
+   ],
+   "cz": "Oáza",
+   "czRect": [
+    1901,
+    450,
+    70,
+    25
+   ]
+  },
+  {
+   "key": "Seufzerwueste",
+   "source": "proposed",
+   "de": "Seufzerwüste",
+   "deRect": [
+    2183,
+    401,
+    264,
+    67
+   ],
+   "en": "Desert of Sighs",
+   "enRect": [
+    2166,
+    401,
+    300,
+    67
+   ],
+   "fr": "Désert des Soupirs",
+   "frRect": [
+    2131,
+    401,
+    370,
+    65
+   ],
+   "pl": "Pustynia Westchnień",
+   "plRect": [
+    2118,
+    404,
+    396,
+    59
+   ],
+   "cz": "Poušť vzdechů",
+   "czRect": [
+    2169,
+    401,
+    295,
+    49
+   ]
+  },
+  {
+   "key": "Adlerhorst",
+   "source": "game",
+   "de": "Adlerhorst",
+   "deRect": [
+    945,
+    588,
+    146,
+    33
+   ],
+   "en": "Eyrie",
+   "enRect": [
+    984,
+    589,
+    69,
+    43
+   ],
+   "fr": "Nid d'Aigle",
+   "frRect": [
+    944,
+    588,
+    150,
+    45
+   ],
+   "pl": "Eyrie",
+   "plRect": [
+    984,
+    589,
+    69,
+    43
+   ],
+   "cz": "Eyrie",
+   "czRect": [
+    984,
+    589,
+    69,
+    43
+   ]
+  },
+  {
+   "key": "Illien",
+   "source": "game",
+   "de": "Illien",
+   "deRect": [
+    1383,
+    754,
+    94,
+    44
+   ],
+   "en": "Illien",
+   "enRect": [
+    1383,
+    754,
+    94,
+    44
+   ],
+   "fr": "Illien",
+   "frRect": [
+    1383,
+    754,
+    94,
+    44
+   ],
+   "pl": "Illien",
+   "plRect": [
+    1383,
+    754,
+    94,
+    44
+   ],
+   "cz": "Illien",
+   "czRect": [
+    1383,
+    754,
+    94,
+    44
+   ]
+  },
+  {
+   "key": "Turm des Alchimisten",
+   "source": "game",
+   "de": "Turm des Alchemisten",
+   "deRect": [
+    1831,
+    842,
+    292,
+    32
+   ],
+   "en": "Tower of the Alchemist",
+   "enRect": [
+    1827,
+    842,
+    300,
+    44
+   ],
+   "fr": "Tour de l'Alchimiste",
+   "frRect": [
+    1845,
+    842,
+    263,
+    32
+   ],
+   "pl": "Wieża Alchemików",
+   "plRect": [
+    1849,
+    842,
+    256,
+    32
+   ],
+   "cz": "Věž alchymistů",
+   "czRect": [
+    1876,
+    842,
+    204,
+    43
+   ]
+  },
+  {
+   "key": "Neulake",
+   "source": "game",
+   "de": "Newlake",
+   "deRect": [
+    1163,
+    1039,
+    125,
+    36
+   ],
+   "en": "Newlake",
+   "enRect": [
+    1163,
+    1039,
+    125,
+    36
+   ],
+   "fr": "Newlake",
+   "frRect": [
+    1163,
+    1039,
+    125,
+    36
+   ],
+   "pl": "Newlake",
+   "plRect": [
+    1163,
+    1039,
+    125,
+    36
+   ],
+   "cz": "Newlake",
+   "czRect": [
+    1163,
+    1039,
+    125,
+    36
+   ]
+  },
+  {
+   "key": "Ebene von Thal",
+   "source": "proposed",
+   "de": "Ebene von Thal",
+   "deRect": [
+    620,
+    1065,
+    209,
+    115
+   ],
+   "en": "Plain of Thal",
+   "enRect": [
+    631,
+    1070,
+    186,
+    104
+   ],
+   "fr": "Plaine de Thal",
+   "frRect": [
+    624,
+    1067,
+    201,
+    111
+   ],
+   "pl": "Równina Thal",
+   "plRect": [
+    624,
+    1067,
+    202,
+    111
+   ],
+   "cz": "Planina Thal",
+   "czRect": [
+    631,
+    1070,
+    187,
+    105
+   ]
+  },
+  {
+   "key": "Schwarzberge",
+   "source": "proposed",
+   "de": "Schwarzberge",
+   "deRect": [
+    882,
+    1103,
+    195,
+    47
+   ],
+   "en": "Black Mountains",
+   "enRect": [
+    857,
+    1103,
+    246,
+    34
+   ],
+   "fr": "Monts Noirs",
+   "frRect": [
+    890,
+    1103,
+    181,
+    34
+   ],
+   "pl": "Czarne Góry",
+   "plRect": [
+    887,
+    1109,
+    186,
+    40
+   ],
+   "cz": "Černé hory",
+   "czRect": [
+    901,
+    1102,
+    157,
+    48
+   ]
+  },
+  {
+   "key": "Das rote Auge Tarbos",
+   "source": "game",
+   "de": "Das rote Auge von Tarbos",
+   "deRect": [
+    1443,
+    1163,
+    360,
+    46
+   ],
+   "en": "The Red Eye of Tarbos",
+   "enRect": [
+    1464,
+    1163,
+    315,
+    46
+   ],
+   "fr": "L'Oeil rouge de Tarbos",
+   "frRect": [
+    1467,
+    1163,
+    310,
+    46
+   ],
+   "pl": "Czerwone Oko Tarbosa",
+   "plRect": [
+    1461,
+    1163,
+    325,
+    34
+   ],
+   "cz": "Rudé oko Tarbose",
+   "czRect": [
+    1499,
+    1163,
+    246,
+    34
+   ]
+  },
+  {
+   "key": "Wueste Hoimon",
+   "source": "game",
+   "de": "Wüste Hoimon",
+   "deRect": [
+    2316,
+    1091,
+    289,
+    43
+   ],
+   "en": "Hoimon Desert",
+   "enRect": [
+    2321,
+    1091,
+    282,
+    43
+   ],
+   "fr": "Désert Hoimon",
+   "frRect": [
+    2321,
+    1091,
+    280,
+    43
+   ],
+   "pl": "Pustynia Hoimon",
+   "plRect": [
+    2294,
+    1091,
+    333,
+    59
+   ],
+   "cz": "Hoimonská poušť",
+   "czRect": [
+    2295,
+    1090,
+    331,
+    60
+   ]
+  },
+  {
+   "key": "Spannenberg",
+   "source": "game",
+   "de": "Spannenberg",
+   "deRect": [
+    2138,
+    1282,
+    206,
+    52
+   ],
+   "en": "Spannenberg",
+   "enRect": [
+    2138,
+    1282,
+    206,
+    52
+   ],
+   "fr": "Spannenberg",
+   "frRect": [
+    2138,
+    1282,
+    206,
+    52
+   ],
+   "pl": "Spannenberg",
+   "plRect": [
+    2138,
+    1282,
+    206,
+    52
+   ],
+   "cz": "Spannenberg",
+   "czRect": [
+    2138,
+    1282,
+    206,
+    52
+   ]
+  },
+  {
+   "key": "Westsee",
+   "source": "proposed",
+   "de": "Westsee",
+   "deRect": [
+    87,
+    1275,
+    193,
+    47
+   ],
+   "en": "West Sea",
+   "enRect": [
+    68,
+    1275,
+    233,
+    47
+   ],
+   "fr": "Mer de l'Ouest",
+   "frRect": [
+    1,
+    1263,
+    372,
+    60
+   ],
+   "pl": "Morze Zachodnie",
+   "plRect": [
+    0,
+    1263,
+    398,
+    59
+   ],
+   "cz": "Západní moře",
+   "czRect": [
+    14,
+    1263,
+    344,
+    79
+   ]
+  },
+  {
+   "key": "Ostsee",
+   "source": "proposed",
+   "de": "Ostsee",
+   "deRect": [
+    2768,
+    1367,
+    146,
+    45
+   ],
+   "en": "East Sea",
+   "enRect": [
+    2742,
+    1367,
+    200,
+    46
+   ],
+   "fr": "Mer de l'Est",
+   "frRect": [
+    2699,
+    1355,
+    287,
+    58
+   ],
+   "pl": "Morze Wschodnie",
+   "plRect": [
+    2672,
+    1364,
+    338,
+    45
+   ],
+   "cz": "Východní moře",
+   "czRect": [
+    2668,
+    1357,
+    343,
+    74
+   ]
+  },
+  {
+   "key": "Meras Insel",
+   "source": "game",
+   "de": "Meras Insel",
+   "deRect": [
+    652,
+    1346,
+    279,
+    90
+   ],
+   "en": "Mera's Island",
+   "enRect": [
+    632,
+    1340,
+    323,
+    110
+   ],
+   "fr": "Île de Mera",
+   "frRect": [
+    645,
+    1335,
+    278,
+    98
+   ],
+   "pl": "Wyspa Mera",
+   "plRect": [
+    627,
+    1344,
+    320,
+    99
+   ],
+   "cz": "Ostrov Mery",
+   "czRect": [
+    643,
+    1342,
+    299,
+    97
+   ]
+  },
+  {
+   "key": "Selidor Ebene",
+   "source": "proposed",
+   "de": "Selidor-Ebene",
+   "deRect": [
+    698,
+    1470,
+    208,
+    37
+   ],
+   "en": "Selidor Plain",
+   "enRect": [
+    704,
+    1470,
+    198,
+    37
+   ],
+   "fr": "Plaine de Selidor",
+   "frRect": [
+    677,
+    1470,
+    255,
+    37
+   ],
+   "pl": "Równina Selidor",
+   "plRect": [
+    676,
+    1470,
+    257,
+    37
+   ],
+   "cz": "Selidorská planina",
+   "czRect": [
+    668,
+    1471,
+    270,
+    46
+   ]
+  },
+  {
+   "key": "Furt von Zendor",
+   "source": "proposed",
+   "de": "Furt von Zendor",
+   "deRect": [
+    2013,
+    1468,
+    259,
+    38
+   ],
+   "en": "Ford of Zendor",
+   "enRect": [
+    2027,
+    1468,
+    231,
+    52
+   ],
+   "fr": "Gué de Zendor",
+   "frRect": [
+    2028,
+    1468,
+    229,
+    37
+   ],
+   "pl": "Bród Zendor",
+   "plRect": [
+    2046,
+    1468,
+    193,
+    37
+   ],
+   "cz": "Brod Zendor",
+   "czRect": [
+    2046,
+    1468,
+    193,
+    37
+   ]
+  },
+  {
+   "key": "Waldreich",
+   "source": "proposed",
+   "de": "Waldreich",
+   "deRect": [
+    513,
+    1638,
+    157,
+    35
+   ],
+   "en": "Forest Realm",
+   "enRect": [
+    500,
+    1638,
+    184,
+    35
+   ],
+   "fr": "Royaume des Forêts",
+   "frRect": [
+    452,
+    1639,
+    280,
+    47
+   ],
+   "pl": "Leśne Królestwo",
+   "plRect": [
+    480,
+    1638,
+    223,
+    35
+   ],
+   "cz": "Lesní říše",
+   "czRect": [
+    527,
+    1645,
+    128,
+    28
+   ]
+  },
+  {
+   "key": "Gralsuempfe",
+   "source": "proposed",
+   "de": "Gralsümpfe",
+   "deRect": [
+    1180,
+    1570,
+    166,
+    47
+   ],
+   "en": "Gral Swamps",
+   "enRect": [
+    1167,
+    1570,
+    190,
+    45
+   ],
+   "fr": "Marais de Gral",
+   "frRect": [
+    1152,
+    1570,
+    222,
+    34
+   ],
+   "pl": "Bagna Gral",
+   "plRect": [
+    1178,
+    1570,
+    169,
+    46
+   ],
+   "cz": "Močály Gral",
+   "czRect": [
+    1170,
+    1570,
+    186,
+    46
+   ]
+  },
+  {
+   "key": "Zebabs Turm",
+   "source": "game",
+   "de": "Lebabs Turm",
+   "deRect": [
+    1519,
+    1665,
+    181,
+    34
+   ],
+   "en": "Lebab's Tower",
+   "enRect": [
+    1515,
+    1665,
+    191,
+    34
+   ],
+   "fr": "Tour de Lebab",
+   "frRect": [
+    1508,
+    1665,
+    199,
+    34
+   ],
+   "pl": "Wieża Lebaba",
+   "plRect": [
+    1508,
+    1665,
+    201,
+    34
+   ],
+   "cz": "Lebabova věž",
+   "czRect": [
+    1519,
+    1665,
+    180,
+    34
+   ]
+  },
+  {
+   "key": "Burnville",
+   "source": "game",
+   "de": "Burnville",
+   "deRect": [
+    1939,
+    1745,
+    131,
+    34
+   ],
+   "en": "Burnville",
+   "enRect": [
+    1939,
+    1745,
+    131,
+    34
+   ],
+   "fr": "Burnville",
+   "frRect": [
+    1939,
+    1745,
+    131,
+    34
+   ],
+   "pl": "Burnville",
+   "plRect": [
+    1939,
+    1745,
+    131,
+    34
+   ],
+   "cz": "Burnville",
+   "czRect": [
+    1939,
+    1745,
+    131,
+    34
+   ]
+  },
+  {
+   "key": "Windtore",
+   "source": "game",
+   "de": "Windtore",
+   "deRect": [
+    860,
+    1763,
+    147,
+    35
+   ],
+   "en": "Wind Gates",
+   "enRect": [
+    841,
+    1763,
+    185,
+    35
+   ],
+   "fr": "Portes du Vent",
+   "frRect": [
+    838,
+    1766,
+    193,
+    32
+   ],
+   "pl": "Wrota Wiatru",
+   "plRect": [
+    837,
+    1768,
+    195,
+    29
+   ],
+   "cz": "Větrné brány",
+   "czRect": [
+    837,
+    1764,
+    191,
+    47
+   ]
+  },
+  {
+   "key": "Bollgar Berge",
+   "source": "proposed",
+   "de": "Bollgar-Berge",
+   "deRect": [
+    2028,
+    1818,
+    176,
+    90
+   ],
+   "en": "Bollgar Mountains",
+   "enRect": [
+    2003,
+    1813,
+    222,
+    100
+   ],
+   "fr": "Monts Bollgar",
+   "frRect": [
+    2022,
+    1816,
+    189,
+    88
+   ],
+   "pl": "Góry Bollgar",
+   "plRect": [
+    2033,
+    1822,
+    169,
+    79
+   ],
+   "cz": "Bollgarské hory",
+   "czRect": [
+    2017,
+    1815,
+    195,
+    101
+   ]
+  },
+  {
+   "key": "Insel der Winde",
+   "source": "game",
+   "de": "Insel der Winde",
+   "deRect": [
+    753,
+    1881,
+    287,
+    107
+   ],
+   "en": "Island of Winds",
+   "enRect": [
+    751,
+    1878,
+    291,
+    131
+   ],
+   "fr": "Île des Vents",
+   "frRect": [
+    767,
+    1909,
+    237,
+    78
+   ],
+   "pl": "Wyspa Wiatrów",
+   "plRect": [
+    751,
+    1871,
+    295,
+    124
+   ],
+   "cz": "Ostrov větrů",
+   "czRect": [
+    770,
+    1903,
+    243,
+    85
+   ]
+  },
+  {
+   "key": "Pyramionische Inseln",
+   "source": "game",
+   "de": "Lyramionische Inseln",
+   "deRect": [
+    2402,
+    1645,
+    631,
+    234
+   ],
+   "en": "Lyramion Islands",
+   "enRect": [
+    2443,
+    1651,
+    552,
+    188
+   ],
+   "fr": "Îles de Lyramion",
+   "frRect": [
+    2450,
+    1660,
+    526,
+    167
+   ],
+   "pl": "Wyspy Lyramionu",
+   "plRect": [
+    2420,
+    1660,
+    594,
+    187
+   ],
+   "cz": "Lyramionské ostrovy",
+   "czRect": [
+    2407,
+    1642,
+    624,
+    232
+   ]
+  },
+  {
+   "key": "Sansris Insel",
+   "source": "game",
+   "de": "Sansris Insel",
+   "deRect": [
+    1466,
+    1878,
+    281,
+    82
+   ],
+   "en": "Sansri's Island",
+   "enRect": [
+    1445,
+    1877,
+    326,
+    90
+   ],
+   "fr": "Île de Sansrie",
+   "frRect": [
+    1453,
+    1881,
+    301,
+    82
+   ],
+   "pl": "Wyspa Sansri",
+   "plRect": [
+    1438,
+    1894,
+    333,
+    71
+   ],
+   "cz": "Ostrov Sansri",
+   "czRect": [
+    1453,
+    1892,
+    310,
+    69
+   ]
+  },
+  {
+   "key": "Luminors Turm",
+   "source": "game",
+   "de": "Luminors Turm",
+   "deRect": [
+    1836,
+    1957,
+    131,
+    73
+   ],
+   "en": "Luminor's Tower",
+   "enRect": [
+    1833,
+    1957,
+    138,
+    73
+   ],
+   "fr": "Tour de Luminor",
+   "frRect": [
+    1845,
+    1956,
+    144,
+    74
+   ],
+   "pl": "Wieża Luminora",
+   "plRect": [
+    1854,
+    1957,
+    142,
+    73
+   ],
+   "cz": "Luminorova věž",
+   "czRect": [
+    1818,
+    1957,
+    168,
+    73
+   ]
+  },
+  {
+   "key": "Snakesign",
+   "source": "game",
+   "de": "Snakesign",
+   "deRect": [
+    1529,
+    1980,
+    128,
+    42
+   ],
+   "en": "Snakesign",
+   "enRect": [
+    1529,
+    1980,
+    128,
+    42
+   ],
+   "fr": "Snakesign",
+   "frRect": [
+    1529,
+    1980,
+    128,
+    42
+   ],
+   "pl": "Snakesign",
+   "plRect": [
+    1529,
+    1980,
+    128,
+    42
+   ],
+   "cz": "Snakesign",
+   "czRect": [
+    1529,
+    1980,
+    128,
+    42
+   ]
+  },
+  {
+   "key": "Thuna-Wueste",
+   "source": "proposed",
+   "de": "Thuna- Wüste",
+   "deRect": [
+    1142,
+    1958,
+    154,
+    114
+   ],
+   "en": "Thuna Desert",
+   "enRect": [
+    1146,
+    1958,
+    141,
+    114
+   ],
+   "fr": "Désert de Thuna",
+   "frRect": [
+    1119,
+    1966,
+    165,
+    107
+   ],
+   "pl": "Pustynia Thuna",
+   "plRect": [
+    1140,
+    1959,
+    166,
+    113
+   ],
+   "cz": "Poušť Thuna",
+   "czRect": [
+    1140,
+    1966,
+    138,
+    107
+   ]
+  },
+  {
+   "key": "Titanenriff",
+   "source": "proposed",
+   "de": "Titanenriff",
+   "deRect": [
+    2100,
+    2071,
+    156,
+    44
+   ],
+   "en": "Titan Reef",
+   "enRect": [
+    2104,
+    2071,
+    147,
+    44
+   ],
+   "fr": "Récif des Titans",
+   "frRect": [
+    2072,
+    2071,
+    208,
+    44
+   ],
+   "pl": "Rafa Tytanów",
+   "plRect": [
+    2080,
+    2071,
+    193,
+    44
+   ],
+   "cz": "Útes Titánů",
+   "czRect": [
+    2096,
+    2070,
+    162,
+    32
+   ]
+  },
+  {
+   "key": "Lichburg",
+   "source": "proposed",
+   "de": "Lichtung",
+   "deRect": [
+    384,
+    2020,
+    130,
+    48
+   ],
+   "en": "Glade",
+   "enRect": [
+    406,
+    2020,
+    87,
+    35
+   ],
+   "fr": "Clairière",
+   "frRect": [
+    386,
+    2020,
+    128,
+    36
+   ],
+   "pl": "Polana",
+   "plRect": [
+    398,
+    2020,
+    103,
+    35
+   ],
+   "cz": "Mýtina",
+   "czRect": [
+    391,
+    2021,
+    118,
+    47
+   ]
+  }
+ ]
+}

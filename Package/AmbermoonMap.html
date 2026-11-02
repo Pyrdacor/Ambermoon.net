@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ambermoon Map of Lyramion</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0b1420;
+  --bar: #142235;
+  --fg: #e6ecf5;
+  --muted: #a4b3c9;
+  --line: #36506f;
+  --accent: #e0a93b;
+  --on-accent: #1a1204;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg); color: var(--fg);
+  font: 15px/1.4 "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+}
+header {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+  padding: 8px max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));
+  background: var(--bar); border-bottom: 1px solid var(--line);
+}
+h1 { margin: 0; font-size: 18px; font-weight: 400; }
+.group { display: flex; flex-wrap: wrap; gap: 4px; }
+.hint { color: var(--muted); font-size: 13px; margin-left: auto; }
+button {
+  font: inherit; color: var(--fg); background: transparent; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 3px; padding: 4px 10px; min-height: 32px;
+}
+button:hover { border-color: var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+#view { position: relative; flex: 1; min-height: 0; overflow: hidden; cursor: grab; touch-action: none; user-select: none; }
+#view.dragging { cursor: grabbing; }
+#stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+#stage img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; max-width: none; pointer-events: none; -webkit-user-drag: none; }
+@media (max-width: 720px) { .hint { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Map of Lyramion</h1>
+  <div class="group" id="languages" role="group" aria-label="Language"></div>
+  <div class="group">
+    <button id="zoomOut" type="button" aria-label="Zoom out">&minus;</button>
+    <button id="zoomIn" type="button" aria-label="Zoom in">+</button>
+    <button id="fit" type="button">Fit</button>
+    <button id="labels" type="button" aria-pressed="true">Labels</button>
+  </div>
+  <span class="hint">Mouse wheel or pinch to zoom, drag to move</span>
+</header>
+<main id="view">
+  <div id="stage">
+    <img id="map" src="AmbermoonMapLayers/AmbermoonMap_NoText.jpg" alt="Painted map of the Lyramion islands" draggable="false">
+    <img id="text" alt="Place names" draggable="false">
+  </div>
+</main>
+<script>
+(function () {
+  var WIDTH = 3090, HEIGHT = 2368, MAX_SCALE = 3;
+  var LANGUAGES = [["de", "Deutsch"], ["en", "English"], ["fr", "Français"], ["pl", "Polski"], ["cz", "Čeština"]];
+  var view = document.getElementById("view"), stage = document.getElementById("stage"), text = document.getElementById("text");
+  var languages = document.getElementById("languages"), labels = document.getElementById("labels");
+  var scale = 1, x = 0, y = 0, pointers = {}, pinch = null;
+
+  stage.style.width = WIDTH + "px";
+  stage.style.height = HEIGHT + "px";
+
+  function fitScale() { return Math.min(view.clientWidth / WIDTH, view.clientHeight / HEIGHT); }
+
+  function apply() {
+    var w = WIDTH * scale, h = HEIGHT * scale;
+    // the map stays centered if it is smaller than the window and otherwise can't leave it
+    x = w <= view.clientWidth ? (view.clientWidth - w) / 2 : Math.min(0, Math.max(view.clientWidth - w, x));
+    y = h <= view.clientHeight ? (view.clientHeight - h) / 2 : Math.min(0, Math.max(view.clientHeight - h, y));
+    stage.style.transform = "translate(" + x + "px," + y + "px) scale(" + scale + ")";
+  }
+
+  function zoomAt(factor, px, py) {
+    var next = Math.min(MAX_SCALE, Math.max(fitScale(), scale * factor));
+    x = px - (px - x) * next / scale;
+    y = py - (py - y) * next / scale;
+    scale = next;
+    apply();
+  }
+
+  function fit() { scale = fitScale(); apply(); }
+
+  function setLanguage(code) {
+    text.src = "AmbermoonMapLayers/AmbermoonMap_TextLayer_" + code + ".png";
+    document.documentElement.lang = code === "cz" ? "cs" : code;
+    Array.prototype.forEach.call(languages.children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.code === code)); });
+    if (location.hash.slice(1) !== code) history.replaceState(null, "", "#" + code);
+  }
+
+  function startLanguage() {
+    var codes = LANGUAGES.map(function (l) { return l[0]; });
+    var wanted = location.hash.slice(1);
+    if (codes.indexOf(wanted) >= 0) return wanted;
+    var browser = (navigator.language || "en").slice(0, 2).toLowerCase();
+    if (browser === "cs") browser = "cz";
+    return codes.indexOf(browser) >= 0 ? browser : "en";
+  }
+
+  LANGUAGES.forEach(function (language) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.textContent = language[1];
+    b.dataset.code = language[0];
+    b.onclick = function () { setLanguage(language[0]); };
+    languages.appendChild(b);
+  });
+
+  function center() { return [view.clientWidth / 2, view.clientHeight / 2]; }
+  document.getElementById("zoomIn").onclick = function () { var c = center(); zoomAt(1.3, c[0], c[1]); };
+  document.getElementById("zoomOut").onclick = function () { var c = center(); zoomAt(1 / 1.3, c[0], c[1]); };
+  document.getElementById("fit").onclick = fit;
+  labels.onclick = function () {
+    text.hidden = !text.hidden;
+    labels.setAttribute("aria-pressed", String(!text.hidden));
+  };
+
+  function local(e) {
+    var r = view.getBoundingClientRect();
+    return [e.clientX - r.left, e.clientY - r.top];
+  }
+
+  view.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    var p = local(e);
+    zoomAt(Math.pow(1.0015, -e.deltaY * (e.deltaMode === 1 ? 30 : 1)), p[0], p[1]);
+  }, { passive: false });
+
+  view.addEventListener("pointerdown", function (e) {
+    view.setPointerCapture(e.pointerId);
+    pointers[e.pointerId] = local(e);
+    pinch = null;
+    view.classList.add("dragging");
+  });
+
+  view.addEventListener("pointermove", function (e) {
+    var last = pointers[e.pointerId];
+    if (!last) return;
+    var now = local(e);
+    pointers[e.pointerId] = now;
+    var ids = Object.keys(pointers);
+    if (ids.length === 1) {
+      x += now[0] - last[0];
+      y += now[1] - last[1];
+      apply();
+    } else if (ids.length === 2) {
+      var a = pointers[ids[0]], b = pointers[ids[1]];
+      var distance = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      var mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      if (pinch && pinch.distance > 0) {
+        x += mid[0] - pinch.mid[0];
+        y += mid[1] - pinch.mid[1];
+        zoomAt(distance / pinch.distance, mid[0], mid[1]);
+      }
+      pinch = { distance: distance, mid: mid };
+    }
+  });
+
+  function release(e) {
+    delete pointers[e.pointerId];
+    pinch = null;
+    if (!Object.keys(pointers).length) view.classList.remove("dragging");
+  }
+  view.addEventListener("pointerup", release);
+  view.addEventListener("pointercancel", release);
+
+  window.addEventListener("keydown", function (e) {
+    var c = center();
+    if (e.key === "+" || e.key === "=") zoomAt(1.3, c[0], c[1]);
+    else if (e.key === "-") zoomAt(1 / 1.3, c[0], c[1]);
+    else if (e.key === "0") fit();
+    else if (e.key === "ArrowLeft") { x += 80; apply(); }
+    else if (e.key === "ArrowRight") { x -= 80; apply(); }
+    else if (e.key === "ArrowUp") { y += 80; apply(); }
+    else if (e.key === "ArrowDown") { y -= 80; apply(); }
+  });
+
+  var wasFitted = true;
+  window.addEventListener("resize", function () {
+    if (wasFitted && Math.abs(scale - fitScale()) > 0) fit(); else { scale = Math.max(scale, fitScale()); apply(); }
+  });
+  view.addEventListener("pointerdown", function () { wasFitted = false; });
+  view.addEventListener("wheel", function () { wasFitted = false; }, { passive: true });
+
+  window.addEventListener("hashchange", function () { setLanguage(startLanguage()); });
+
+  setLanguage(startLanguage());
+  fit();
+})();
+</script>
+</body>
+</html>

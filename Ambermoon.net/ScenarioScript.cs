@@ -16,6 +16,9 @@ namespace Ambermoon;
 ///   waitidle [timeout ms]     wait until no window/popup is open (default timeout 10000)
 ///   cheat &lt;command&gt;           execute a cheat console command (e.g. teleport, give)
 ///   useitem &lt;item index&gt;      use an item of the active party member like via the inventory
+///   dropslot &lt;slot&gt;           drop the item in the 0-based slot of the opened inventory like via the drop button
+///   char &lt;character&gt;          enter a character like via the keyboard
+///   worldmap                  show the world map directly (not via the item)
 ///   key &lt;key&gt;                 press and release a key (Ambermoon.Key name, e.g. Return, Escape)
 ///   click &lt;x&gt; &lt;y&gt; [right]     click at window pixel coordinates
 ///   dismiss                   close an open popup (left click in the window center)
@@ -341,6 +344,15 @@ sealed class ScenarioScript
                     case "useitem":
                         if (!game.ScriptUseItem(uint.Parse(parts[1])))
                             Report(false, $"item {parts[1]} could not be used ({game.ScriptState()})");
+                        break;
+                    case "dropslot":
+                        game.ScriptDropInventoryItem(int.Parse(parts[1]));
+                        break;
+                    case "char":
+                        game.OnKeyChar(parts[1][0]);
+                        break;
+                    case "worldmap":
+                        game.ScriptShowWorldMap();
                         break;
                     case "key":
                         var key = Enum.Parse<Key>(parts[1], true);

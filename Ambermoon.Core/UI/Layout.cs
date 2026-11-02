@@ -2309,7 +2309,9 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(3, ButtonType.Transport, !TransportEnabled, game.ToggleTransport, false, GetTooltip(Button.TooltipType.Transport));
                         buttonGrid.SetButton(4, ButtonType.Spells, game?.CanUseSpells() != true, () => game!.CastSpell(false), false, GetTooltip(Button.TooltipType.Spells));
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true || game?.TravelType.CanCampOn() != true, () => game!.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
-                        buttonGrid.SetButton(6, ButtonType.Map, true, null, false, null);
+                        bool hasWorldMap = game!.HasWorldMapItem;
+                        buttonGrid.SetButton(6, ButtonType.Map, !hasWorldMap, hasWorldMap ? () => game.ShowWorldMap() : null,
+                            false, hasWorldMap ? GetTooltip(Button.TooltipType.Automap) : null);
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game!.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
                         buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
                     }
@@ -2931,7 +2933,7 @@ namespace Ambermoon.UI
 
                 void ShowText()
                 {
-                    if (game.CoreConfiguration.AutoDerune && item.Index == 145) // Special case: rune alphabet
+                    if (game.CoreConfiguration.AutoDerune && item.Index == GameCore.RuneAlphabetItemIndex) // Special case: rune alphabet
                     {
                         game.Pause();
                         game.InputEnable = false;
@@ -2944,6 +2946,11 @@ namespace Ambermoon.UI
                             game.ResetCursor();
                         });
                         game.CursorType = CursorType.Click;
+                    }
+                    else if (item.Index == GameCore.WorldMapItemIndex) // Special case: map of Lyramion
+                    {
+                        game.InputEnable = wasInputEnabled; // disabled above only for the usage of the item
+                        game.ShowWorldMap();
                     }
                     else if (!ShowTextItem(item.TextIndex, item.TextSubIndex))
                         throw new AmbermoonException(ExceptionScope.Data, $"Invalid text index for item '{item.Name}'");
@@ -3582,11 +3589,13 @@ namespace Ambermoon.UI
             game.ShowItemPopup(itemSlot, game.UpdateCursor);
         }
 
+        internal void ScriptDropInventoryItem(int slot) => DropItem(itemGrids[0], slot, itemGrids[0].GetItemSlot(slot)!);
+
         void DropItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
             var item = itemManager.GetItem(itemSlot.ItemIndex);
 
-            if (!item.Flags.HasFlag(ItemFlags.NotImportant))
+            if (!item.Flags.HasFlag(ItemFlags.NotImportant) || !GameCore.CanDropItem(item.Index))
             {
                 itemGrid.HideTooltip();
                 SetInventoryMessage(game.DataNameProvider.ItemIsImportant, true);

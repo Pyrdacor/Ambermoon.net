@@ -111,6 +111,16 @@ partial class GameCore
 
     public void Update(double deltaTime)
     {
+        if (worldMapViewer != null)
+        {
+            worldMapViewer.Update();
+            UpdateWorldMapCursor(lastMousePosition); // timed events might change it
+        }
+        else
+        {
+            UpdateWorldMapButton();
+        }
+
         Hook_PreUpdate(deltaTime, out bool proceed);
 
         if (!proceed)

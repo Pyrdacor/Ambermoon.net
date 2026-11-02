@@ -41,8 +41,17 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="StbImageSharp" Version="2.30.15" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.13" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\WorldMap.jpg" LogicalName="Ambermoon.Assets.WorldMap.jpg" />
+    <EmbeddedResource Include="Assets\WorldMapText_de.png" LogicalName="Ambermoon.Assets.WorldMapText_de.png" />
+    <EmbeddedResource Include="Assets\WorldMapText_en.png" LogicalName="Ambermoon.Assets.WorldMapText_en.png" />
+    <EmbeddedResource Include="Assets\WorldMapText_fr.png" LogicalName="Ambermoon.Assets.WorldMapText_fr.png" />
+    <EmbeddedResource Include="Assets\WorldMapText_pl.png" LogicalName="Ambermoon.Assets.WorldMapText_pl.png" />
+    <EmbeddedResource Include="Assets\WorldMapText_cz.png" LogicalName="Ambermoon.Assets.WorldMapText_cz.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Data.Common\Ambermoon.Data.Common.csproj" />

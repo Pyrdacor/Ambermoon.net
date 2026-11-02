@@ -191,6 +191,14 @@ partial class GameCore
 
     public virtual void OnMouseMove(Position position, MouseButtons buttons)
     {
+        if (worldMapViewer != null)
+        {
+            worldMapViewer.OnMouseMove(position, buttons);
+            lastMousePosition = new Position(position);
+            UpdateWorldMapCursor(position);
+            return;
+        }
+
         if (Trapped)
         {
             var trappedPosition = position + trappedMousePositionOffset;
@@ -235,6 +243,12 @@ partial class GameCore
 
     public virtual void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
     {
+        if (worldMapViewer != null)
+        {
+            worldMapViewer.OnMouseWheel(yScroll, mousePosition);
+            return;
+        }
+
         if (allInputDisabled)
             return;
 
@@ -428,11 +442,15 @@ partial class GameCore
 
     public virtual void OnFingerDown(Position position)
     {
+        worldMapViewer?.OnFingerDown(position);
+
         lastMobileAutomapFingerPosition = renderView.ScreenToGame(position);
     }
 
     public virtual void OnFingerUp(Position position)
     {
+        worldMapViewer?.OnFingerUp();
+
         lastMobileAutomapFingerPosition = renderView.ScreenToGame(position);
 
         if (!CoreConfiguration.IsMobile)
@@ -448,6 +466,12 @@ partial class GameCore
 
     public virtual void OnFingerMoveTo(Position position)
     {
+        if (worldMapViewer != null)
+        {
+            worldMapViewer.OnFingerMoveTo(position);
+            return;
+        }
+
         if (!CoreConfiguration.IsMobile)
             return;
 
@@ -463,7 +487,13 @@ partial class GameCore
     }
 
     public virtual void OnKeyDown(Key key, KeyModifiers modifiers, bool tapped = false)
-    {      
+    {
+        if (worldMapViewer != null)
+        {
+            worldMapViewer.OnKeyDown(key);
+            return;
+        }
+      
         if (allInputDisabled || pickingNewLeader || GameOverButtonsVisible)
             return;
 
@@ -685,6 +715,12 @@ partial class GameCore
 
     public virtual void OnKeyUp(Key key, KeyModifiers modifiers)
     {
+        if (worldMapViewer != null)
+        {
+            worldMapViewer.OnKeyUp(key);
+            return;
+        }
+
         if (allInputDisabled || pickingTargetPlayer || pickingTargetInventory)
             return;
 
@@ -724,6 +760,9 @@ partial class GameCore
 
     public virtual void OnKeyChar(char keyChar)
     {
+        if (worldMapViewer != null)
+            return;
+
         if (allInputDisabled)
             return;
 
@@ -772,13 +811,24 @@ partial class GameCore
 
         if (!WindowActive && !layout.PopupActive)
         {
-            if (char.ToLower(keyChar) == 'm' && Ingame && is3D)
-                ShowAutomap();
+            if (char.ToLower(keyChar) == 'm' && Ingame)
+            {
+                if (is3D)
+                    ShowAutomap();
+                else if (InputEnable && HasWorldMapItem)
+                    ShowWorldMap();
+            }
         }
     }
 
     public void OnLongPress(Position position)
     {
+        if (worldMapViewer != null)
+        {
+            worldMapViewer.OnLongPress();
+            return;
+        }
+
         if (!CoreConfiguration.IsMobile)
             return;
 
@@ -941,6 +991,12 @@ partial class GameCore
 
     public virtual void OnMouseUp(Position cursorPosition, MouseButtons buttons)
     {
+        if (worldMapViewer != null)
+        {
+            worldMapViewer.OnMouseUp(buttons);
+            return;
+        }
+
         lastMousePosition = new Position(cursorPosition);
 
         if (allInputDisabled)
@@ -996,6 +1052,12 @@ partial class GameCore
 
     public virtual void OnMouseDown(Position position, MouseButtons buttons, KeyModifiers keyModifiers = KeyModifiers.None)
     {
+        if (worldMapViewer != null)
+        {
+            worldMapViewer.OnMouseDown(position, buttons);
+            return;
+        }
+
         lastMousePosition = new Position(position);
 
         // Special case to abort multiple monster start animations in battle
