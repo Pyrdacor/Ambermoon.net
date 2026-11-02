@@ -19,11 +19,12 @@ namespace Ambermoon.Audio.OpenAL
         readonly int sampleRate;
         readonly bool sample8Bit;
         readonly IAudioStream audioStream;
+        readonly Func<bool> deviceConnected;
         int bufferPosition = 0;
         readonly object mutex = new();
         Task playbackTask;
 
-        public AudioBuffers(AL al, uint source, int channels, int sampleRate, bool sample8Bit, IAudioStream audioStream)
+        public AudioBuffers(AL al, uint source, int channels, int sampleRate, bool sample8Bit, IAudioStream audioStream, Func<bool> deviceConnected)
         {
             this.al = al;
             this.source = source;
@@ -31,6 +32,7 @@ namespace Ambermoon.Audio.OpenAL
             this.sampleRate = sampleRate;
             this.sample8Bit = sample8Bit;
             this.audioStream = audioStream;
+            this.deviceConnected = deviceConnected;
         }
 
         public void Dispose()
@@ -74,17 +76,21 @@ namespace Ambermoon.Audio.OpenAL
 
         async Task PlaybackLoopAsync(CancellationToken cancellationToken)
         {
+            void RemoveBuffers(int count)
+            {
+                count = Math.Min(count, queuedBuffers.Count);
+
+                for (int i = 0; i < count; ++i)
+                {
+                    var buffer = queuedBuffers.Dequeue();
+                    al.SourceUnqueueBuffers(source, [buffer.Index]);
+                    buffer.Dispose();
+                }
+            }
+
             void SetupNextBuffers(int count = 1)
             {
-                if (queuedBuffers.Count != 0)
-                {
-                    for (int i = 0; i < Math.Min(count, queuedBuffers.Count); ++i)
-                    {
-                        var buffer = queuedBuffers.Dequeue();
-                        al.SourceUnqueueBuffers(source, [buffer.Index]);
-                        buffer.Dispose();
-                    }
-                }
+                RemoveBuffers(count);
                 var newBuffers = new uint[count];
                 for (int i = 0; i < count && !cancellationToken.IsCancellationRequested; ++i)
                 {
@@ -107,14 +113,9 @@ namespace Ambermoon.Audio.OpenAL
                 {
                     al.SourceQueueBuffers(source, newBuffers);
                 }
-                else if (queuedBuffers.Count != 0)
+                else
                 {
-                    for (int i = 0; i < Math.Min(count, queuedBuffers.Count); ++i)
-                    {
-                        var buffer = queuedBuffers.Dequeue();
-                        al.SourceUnqueueBuffers(source, [buffer.Index]);
-                        buffer.Dispose();
-                    }
+                    RemoveBuffers(count);
                 }
             }
 
@@ -134,14 +135,35 @@ namespace Ambermoon.Audio.OpenAL
             {
                 // Wait for a buffer to finish playing
                 int buffersProcessed;
+                bool restart = false;
                 do
                 {
                     await Task.Delay(5, CancellationToken.None);
+                    al.GetSourceProperty(source, GetSourceInteger.SourceState, out int state);
+
+                    if (state != (int)SourceState.Playing)
+                    {
+                        // a lost device stops the source, so wait until it is back
+                        if (!deviceConnected())
+                        {
+                            buffersProcessed = 0;
+                            continue;
+                        }
+
+                        restart = true;
+                    }
+
                     al.GetSourceProperty(source, GetSourceInteger.BuffersProcessed, out buffersProcessed);
-                } while (buffersProcessed == 0 && !cancellationToken.IsCancellationRequested);
+                } while (buffersProcessed == 0 && !restart && !cancellationToken.IsCancellationRequested);
 
                 if (!cancellationToken.IsCancellationRequested)
-                    SetupNextBuffers(buffersProcessed);
+                {
+                    if (buffersProcessed != 0)
+                        SetupNextBuffers(buffersProcessed);
+
+                    if (restart)
+                        al.SourcePlay(source);
+                }
             }
 
             // Stop playing the source

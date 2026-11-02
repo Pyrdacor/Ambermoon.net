@@ -14,7 +14,7 @@ partial class GameCore
             return;
 
         gamePaused = true;
-        audioWasEnabled = AudioOutput?.Available == true && AudioOutput?.Enabled == true;
+        audioWasEnabled = AudioOutput?.Enabled == true;
         musicWasPlaying = currentSong != null;
         gameWasPaused = paused;
 

@@ -421,7 +421,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
         {
             configuration.Music = !configuration.Music;
             audioOutput.Enabled = configuration.Music;
-            if (audioOutput.Available && audioOutput.Enabled)
+            if (audioOutput.Enabled)
                 Game?.ContinueMusic();
             Game?.ExternalMusicChanged();
         }
@@ -1037,7 +1037,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
         {
             audioOutput = new AudioOutput();
             audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
-            audioOutput.Enabled = audioOutput.Available && configuration.Music;
+            audioOutput.Enabled = configuration.Music;
             if (PyrdacorLogoEnabled)
             {
                 logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(DataReader.FromData(Resources.Song), 0, false, false));
@@ -1552,7 +1552,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
             {
                 Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f
             };
-            audioOutput.Enabled = audioOutput.Available && configuration.Music;
+            audioOutput.Enabled = configuration.Music;
 
             if (PyrdacorLogoEnabled)
             {

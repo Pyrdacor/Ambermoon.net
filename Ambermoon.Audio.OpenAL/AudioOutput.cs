@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data.Audio;
 using Silk.NET.OpenAL;
+using Silk.NET.OpenAL.Extensions.Soft;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,11 +10,16 @@ namespace Ambermoon.Audio.OpenAL;
 public unsafe class AudioOutput : IAudioOutput, IDisposable
 {
     const int ALC_FREQUENCY = 0x1007;
+    const int ALC_CONNECTED = 0x313;
+    const int ALC_DEFAULT_ALL_DEVICES_SPECIFIER = 0x1012;
+    const int ALC_ALL_DEVICES_SPECIFIER = 0x1013;
+    static readonly TimeSpan DeviceCheckInterval = TimeSpan.FromSeconds(1);
     readonly AL al = null;
     readonly ALContext alContext = null;
-    readonly Device* device = null;
-    readonly Context* context = null;
-    readonly uint source = 0;
+    Device* device = null;
+    Context* context = null;
+    ReopenDevices reopenDevices = null;
+    uint source = 0;
     bool disposed = false;
     float volume = 1.0f;
     bool enabled = true;
@@ -21,6 +27,12 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
     readonly Dictionary<IAudioStream, AudioBuffers> audioBuffers = [];
     AudioBuffers currentBuffer = null;
     volatile CancellationTokenSource cancellationTokenSource;
+    readonly object deviceLock = new();
+    readonly CancellationTokenSource deviceMonitorCancellation = new();
+    readonly Thread deviceMonitorThread = null;
+    // what should be played as soon as a device is available
+    (IAudioStream Stream, int Channels, int SampleRate, bool Sample8Bit)? pendingStream = null;
+    bool playRequested = false;
 
     public AudioOutput()
     {
@@ -43,38 +55,105 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
             }
         }
 
-        device = alContext.OpenDevice("");
-
-        Available = device != null;
-
-        if (Available)
+        if (TryOpenDevice())
         {
-            context = alContext.CreateContext(device, null);
-
-            // the context is null if the device can't be initialized (e.g. if the system rejects it)
-            if (context != null)
-                alContext.MakeContextCurrent(context);
-
-            if (context == null || al.GetError() != AudioError.NoError)
-            {
-                Available = false;
-                if (context != null)
-                    alContext.DestroyContext(context);
-                alContext.CloseDevice(device);
-                al.Dispose();
-                alContext.Dispose();
-                disposed = true;
-                return;
-            }
-            source = al.GenSource();
-            al.SetSourceProperty(source, SourceBoolean.Looping, false);
-            al.SetSourceProperty(source, SourceFloat.Gain, 1.0f);
-
             int deviceFrequency = 0;
             alContext.GetContextProperty(device, (GetContextInteger)ALC_FREQUENCY, 1, &deviceFrequency);
 
+            // this is not changed later as already created songs rely on it
             if (deviceFrequency > 0)
                 SampleRate = deviceFrequency;
+        }
+
+        deviceMonitorThread = new Thread(MonitorDevice) { IsBackground = true };
+        deviceMonitorThread.Start();
+    }
+
+    bool TryOpenDevice()
+    {
+        var newDevice = alContext.OpenDevice("");
+
+        if (newDevice == null)
+            return false;
+
+        // the context is null if the device can't be initialized (e.g. if the system rejects it)
+        var newContext = alContext.CreateContext(newDevice, null);
+
+        if (newContext != null)
+            alContext.MakeContextCurrent(newContext);
+
+        if (newContext == null || al.GetError() != AudioError.NoError)
+        {
+            if (newContext != null)
+                alContext.DestroyContext(newContext);
+            alContext.CloseDevice(newDevice);
+            return false;
+        }
+
+        lock (deviceLock)
+        {
+            device = newDevice;
+            context = newContext;
+            alContext.TryGetExtension(device, out reopenDevices);
+            source = al.GenSource();
+            al.SetSourceProperty(source, SourceBoolean.Looping, false);
+            al.SetSourceProperty(source, SourceFloat.Gain, volume);
+            Available = true;
+
+            if (pendingStream is var (stream, channels, sampleRate, sample8Bit))
+            {
+                StreamData(stream, channels, sampleRate, sample8Bit);
+
+                if (playRequested)
+                    Start();
+            }
+
+            playRequested = false;
+            pendingStream = null;
+        }
+
+        return true;
+    }
+
+    bool IsDeviceConnected()
+    {
+        int connected = 1;
+        alContext.GetContextProperty(device, (GetContextInteger)ALC_CONNECTED, 1, &connected);
+        return connected != 0;
+    }
+
+    // there is no notification about lost or new devices so we have to poll
+    void MonitorDevice()
+    {
+        string triedDefaultDevice = null;
+
+        while (!deviceMonitorCancellation.Token.WaitHandle.WaitOne(DeviceCheckInterval))
+        {
+            if (!Available)
+            {
+                TryOpenDevice();
+                continue;
+            }
+
+            // OpenAL does not follow a changed default device on its own and it
+            // only updates the default device if the device list is queried
+            alContext.GetContextProperty(null, (GetContextString)ALC_ALL_DEVICES_SPECIFIER);
+            string defaultDevice = alContext.GetContextProperty(null, (GetContextString)ALC_DEFAULT_ALL_DEVICES_SPECIFIER);
+            string currentDevice = alContext.GetContextProperty(device, (GetContextString)ALC_ALL_DEVICES_SPECIFIER);
+
+            if (defaultDevice == currentDevice)
+                triedDefaultDevice = null;
+
+            bool defaultChanged = !string.IsNullOrEmpty(defaultDevice) && defaultDevice != currentDevice && defaultDevice != triedDefaultDevice;
+
+            if (!IsDeviceConnected() || defaultChanged)
+            {
+                // only try a default device once so that we don't reopen all the time if it can't be used
+                if (defaultChanged)
+                    triedDefaultDevice = defaultDevice;
+
+                reopenDevices?.ReopenDevice(device, null, null); // keeps context, source and buffers
+            }
         }
     }
 
@@ -96,16 +175,22 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
         get => enabled;
         set
         {
-            if (enabled == value)
-                return;
-
-            if (!value && Available && Streaming)
+            lock (deviceLock)
             {
-                Stop();
-                Reset();
-            }
+                if (enabled == value)
+                    return;
 
-            enabled = value;                
+                if (!value)
+                    playRequested = false;
+
+                if (!value && Available && Streaming)
+                {
+                    Stop();
+                    Reset();
+                }
+
+                enabled = value;
+            }
         }
     }
 
@@ -124,13 +209,16 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
         {
             value = Math.Max(0.0f, Math.Min(value, 1.0f));
 
-            if (Util.FloatEqual(volume, value))
-                return;
+            lock (deviceLock)
+            {
+                if (Util.FloatEqual(volume, value))
+                    return;
 
-            volume = value;
+                volume = value;
 
-            if (Available)
-                al.SetSourceProperty(source, SourceFloat.Gain, volume);
+                if (Available)
+                    al.SetSourceProperty(source, SourceFloat.Gain, volume);
+            }
         }
     }
 
@@ -138,6 +226,10 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
     {
         if (disposed)
             return;
+
+        deviceMonitorCancellation.Cancel();
+        deviceMonitorThread?.Join();
+        deviceMonitorCancellation.Dispose();
 
         if (Streaming)
             Stop();
@@ -152,9 +244,10 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
                 audioBuffer.Value?.Dispose();
             alContext.DestroyContext(context);
             alContext.CloseDevice(device);
-            al.Dispose();
-            alContext.Dispose();
         }
+
+        al?.Dispose();
+        alContext?.Dispose();
 
         streaming = false;
         Enabled = false;
@@ -167,25 +260,34 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
     /// </summary>
     public void Start()
     {
-        if (!Available || !Enabled)
-            return;
+        lock (deviceLock)
+        {
+            if (!Enabled)
+                return;
 
-        if (Streaming)
-            return;
+            if (!Available)
+            {
+                playRequested = pendingStream != null;
+                return;
+            }
 
-        if (source == 0)
-            throw new NotSupportedException("Start was called without a valid source.");
+            if (Streaming)
+                return;
 
-        if (currentBuffer == null)
-            return;
+            if (source == 0)
+                throw new NotSupportedException("Start was called without a valid source.");
 
-        streaming = true;
+            if (currentBuffer == null)
+                return;
 
-        var cts = new CancellationTokenSource();
-        var old = Interlocked.Exchange(ref cancellationTokenSource, cts);
+            streaming = true;
 
-        old?.Dispose();
-        currentBuffer?.Play(cts.Token);
+            var cts = new CancellationTokenSource();
+            var old = Interlocked.Exchange(ref cancellationTokenSource, cts);
+
+            old?.Dispose();
+            currentBuffer?.Play(cts.Token);
+        }
     }
 
     /// <summary>
@@ -193,25 +295,30 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
     /// </summary>
     public void Stop()
     {
-        if (!Available || !Enabled)
-            return;
+        lock (deviceLock)
+        {
+            playRequested = false;
 
-        if (!Streaming)
-            return;
+            if (!Available || !Enabled)
+                return;
 
-        if (source == 0)
-            throw new NotSupportedException("Stop was called without a valid source.");
+            if (!Streaming)
+                return;
 
-        streaming = false;
-        var cts = Interlocked.Exchange(ref cancellationTokenSource, null);
-        cts?.Cancel();
+            if (source == 0)
+                throw new NotSupportedException("Stop was called without a valid source.");
 
-        if (currentBuffer != null)
-            currentBuffer.Stop();
-        else
-            al.SourceStop(source);
+            streaming = false;
+            var cts = Interlocked.Exchange(ref cancellationTokenSource, null);
+            cts?.Cancel();
 
-        cts?.Dispose();
+            if (currentBuffer != null)
+                currentBuffer.Stop();
+            else
+                al.SourceStop(source);
+
+            cts?.Dispose();
+        }
     }
 
     /// <summary>
@@ -219,13 +326,19 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
     /// </summary>
     public void StreamData(IAudioStream audioStream, int channels = 1, int sampleRate = 44100, bool sample8Bit = true)
     {
-        if (!Available)
-            return;
+        lock (deviceLock)
+        {
+            if (!Available)
+            {
+                pendingStream = (audioStream, channels, sampleRate, sample8Bit);
+                return;
+            }
 
-        if (!audioBuffers.TryGetValue(audioStream, out var buffer))
-            currentBuffer = audioBuffers[audioStream] = new AudioBuffers(al, source, channels, sampleRate, sample8Bit, audioStream);
-        else
-            currentBuffer = buffer;
+            if (!audioBuffers.TryGetValue(audioStream, out var buffer))
+                currentBuffer = audioBuffers[audioStream] = new AudioBuffers(al, source, channels, sampleRate, sample8Bit, audioStream, IsDeviceConnected);
+            else
+                currentBuffer = buffer;
+        }
     }
 
     /// <summary>
@@ -233,9 +346,12 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
     /// </summary>
     public void Reset()
     {
-        if (!Available)
-            return;
+        lock (deviceLock)
+        {
+            if (!Available)
+                return;
 
-        al.SetSourceProperty(source, SourceInteger.Buffer, 0u);
+            al.SetSourceProperty(source, SourceInteger.Buffer, 0u);
+        }
     }
 }

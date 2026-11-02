@@ -1767,7 +1767,7 @@ namespace Ambermoon.UI
             {
                 game.CoreConfiguration.Music = !game.CoreConfiguration.Music;
                 game.AudioOutput.Enabled = game.CoreConfiguration.Music;
-                if (game.AudioOutput.Available && game.AudioOutput.Enabled)
+                if (game.AudioOutput.Enabled)
                     game.ContinueMusic();
                 SetMusic();
                 changedConfiguration = true;
