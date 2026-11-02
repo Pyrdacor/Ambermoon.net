@@ -541,7 +541,8 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
             if (fullscreenImage != null)
             {
                 State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
-                State.Gl.Viewport(0, 0, (uint)frameBufferSize.Width, (uint)frameBufferSize.Height);
+                // the frame buffer size only covers the game area and not the whole window
+                State.Gl.Viewport(0, 0, (uint)Misc.Round(windowSize.Width * frameBufferWindowPixelRatio), (uint)Misc.Round(windowSize.Height * frameBufferWindowPixelRatio));
                 State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
                 State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
                 fullscreenImage.Render();
