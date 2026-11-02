@@ -7,9 +7,9 @@ Version 1.15
 - Added AmbermoonMap.html to view the world map in a web browser
 - Audio: The music follows a lost device and a changed default device and starts without a restart if a device becomes available later
 - Audio: Fixed a crash if the audio device can't be initialized
-- Added mod support and the Ambermoon DC dungeon crawler mod
+- Added mod support
 - Improved the music with a new SonicArranger version
-- Battle: Drugged bosses get half the hit penalty like on the Amiga
+- Battle: Drugged bosses get half the hit penalty like on the Amiga (Advanced only)
 - Battle: No game over while members are asleep or panicked, stalemate detection and fixes for battle buttons and two-handed weapons
 - Items: Item penalty skills are 1-based like on the Amiga and the penalties are kept after loading
 - Rewards: Dead and petrified party members are not rewarded for all targets
