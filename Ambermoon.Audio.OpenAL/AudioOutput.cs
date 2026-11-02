@@ -50,8 +50,12 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
         if (Available)
         {
             context = alContext.CreateContext(device, null);
-            alContext.MakeContextCurrent(context);
-            if (al.GetError() != AudioError.NoError)
+
+            // the context is null if the device can't be initialized (e.g. if the system rejects it)
+            if (context != null)
+                alContext.MakeContextCurrent(context);
+
+            if (context == null || al.GetError() != AudioError.NoError)
             {
                 Available = false;
                 if (context != null)
@@ -66,16 +70,18 @@ public unsafe class AudioOutput : IAudioOutput, IDisposable
             al.SetSourceProperty(source, SourceBoolean.Looping, false);
             al.SetSourceProperty(source, SourceFloat.Gain, 1.0f);
 
-            int deviceFrequency = 44100;
+            int deviceFrequency = 0;
             alContext.GetContextProperty(device, (GetContextInteger)ALC_FREQUENCY, 1, &deviceFrequency);
-            SampleRate = deviceFrequency;
+
+            if (deviceFrequency > 0)
+                SampleRate = deviceFrequency;
         }
     }
 
     /// <summary>
     /// <inheritdoc/>
     /// </summary>
-    public int SampleRate { get; }
+    public int SampleRate { get; } = 44100; // songs are also created without an available audio device
 
     /// <summary>
     /// <inheritdoc/>
