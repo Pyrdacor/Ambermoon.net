@@ -1,0 +1,55 @@
+# Builds the NuGet packages and publishes them to nuget.org with trusted publishing (no API key).
+#
+# Requirements on nuget.org: a trusted publishing policy for this repository and this workflow file
+# (publish-nuget.yml). Packages of a version which is already published are skipped.
+name: Publish NuGet packages
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # required to get the short-lived API key from nuget.org
+
+concurrency:
+  group: publish-nuget
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build the packages
+        shell: pwsh
+        run: |
+          $projects = 'Ambermoon.Common', 'Ambermoon.Data.Common', 'Ambermoon.Data.Legacy', 'Ambermoon.Data.FileSystems', 'Ambermoon.Data.GameDataRepository'
+          New-Item -ItemType Directory -Force nuget | Out-Null
+          foreach ($project in $projects) {
+            # the projects create their package on build
+            dotnet build "$project/$project.csproj" -c Release
+            if ($LASTEXITCODE -ne 0) { throw "Build of $project failed" }
+            Copy-Item "$project/bin/Release/*.nupkg" nuget/
+          }
+          Get-ChildItem nuget
+
+      - name: Log in to nuget.org
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: rschneckenhaus
+
+      - name: Push the packages
+        shell: pwsh
+        run: dotnet nuget push "nuget/*.nupkg" --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate

@@ -117,8 +117,6 @@ artifacts:
   # app bundle for the Play Store (uploaded manually, not deployed to GitHub)
   - path: com.pyrdacor.AmbermoonAndroid-Signed.aab
     name: AmbermoonAndroidBundle
-  - path: nuget\*.nupkg
-    name: NugetPackages
 
 after_build:
     - ps: |
@@ -155,7 +153,6 @@ after_build:
           if ($env:APPVEYOR_REPO_TAG -eq $true) {
             ./publish.ps1
           }
-          ./nuget.ps1
         }
 
 test: false
@@ -273,8 +270,3 @@ deploy:
     on:
       APPVEYOR_REPO_TAG: true
       APPVEYOR_REPO_TAG_NAME: /^android-v\d+\.\d+\.\d+$/
-  - provider: NuGet
-    name: NugetPackages
-    api_key:
-      secure: jPgWw/hg2EQXIrf9T3IaJcw/WB0qXAcYGKDRu3qZk4WG/2Rq/3pb+B2v9e2ePTeU
-    skip_symbols: true
