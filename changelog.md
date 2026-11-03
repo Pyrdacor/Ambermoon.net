@@ -2,6 +2,7 @@
 
 ## 1.15.0 - Fifteenth patch (November 2026)
 
+- Version [1.15.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.15.1): New quest 'Secrets of the Forest Moon', Kire's letter reworked and several quest log fixes.
 - Version [1.15.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.15.0): Painted world map with five languages (item, map button and key M), the world map and the rune alphabet can no longer be dropped, audio follows device changes, mod support and many fixes.
 
 ## 1.14.0 - Fourteenth patch (October 2026)

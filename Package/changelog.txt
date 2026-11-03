@@ -17,6 +17,12 @@ Version 1.15
 - Loading older savegames adds missing party members, chests and merchants from the initial savegame
 - Teleporter events fade on a map change like on the Amiga
 - Fixed a crash if an item grid is initialized during an item animation
+- Quest log: New quest 'Secrets of the Forest Moon' (ruins, metal door in the mine, antique area and navstone machine)
+- Quest log: Kire's letter now leads to Dorina's cave southwest of Dor Grestin, Leira tells about Ketnar
+- Quest log: The windchain, the recipe for the demon sleep and Kire's note stay completed after they were used or stored
+- Quest log: Fixed the counter of collected essences while giving them to Sandra
+- Quest log: The unknown world is completed when Sheera gets the ten charged triis (Advanced)
+- World map: The Czech map names the castle 'Pevnost Godsbane'
 
 Version 1.14
 ============
