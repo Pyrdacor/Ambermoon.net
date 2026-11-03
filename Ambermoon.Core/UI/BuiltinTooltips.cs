@@ -640,7 +640,7 @@ namespace Ambermoon.UI
             }.ToImmutableDictionary() },
             { GameLanguage.Czech, new Dictionary<Condition, string>
             {
-                { Condition.Blind, "Postava nevidí.^Poloměr světla na 2D mapách je vypnutý.^Úplná tma na 3D mapách.^^-50% šance na zásah^a zablokování v boji." },
+                { Condition.Blind, "Postava nevidí.^Poloměr světla na 2D mapách je vypnutý.^Úplná tma na 3D mapách.^^-50% šance na zásah^a parírování v boji." },
                 { Condition.Drugged, "Postava je pod vlivem.^Závratě a nekoordinovanost pohybů.^^-25% šance seslat kouzlo.^-25% šance na zásah v boji." },
                 { Condition.Poisoned, "Postava dostává poškození^každé bojové kolo nebo hodinu.^^Poškození za bojové kolo: 1-{0}^Poškození za hodinu: 1-5" },
                 { Condition.Diseased, "Postava ztrácí každý den bod^náhodného atributu.^^Poškození a obrana jsou v boji^sníženy na polovinu." },
