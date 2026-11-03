@@ -20,7 +20,9 @@ if ($isWindows) {
   7z a Ambermoon.net-Windows32Bit.zip "./Ambermoon.net/Ambermoon.net.exe" "./AmbermoonPatcher/bin/Any CPU/Release/net8.0/win-x86/publish/AmbermoonPatcher.exe" "./Ambermoon.net/x86/api-ms-win-core-winrt-l1-1-0.dll" "./Package/*" -mx5
   $scriptPath = "InnoSetupScript.iss"
   $scriptContent = Get-Content $scriptPath -Raw
-  $versionWithoutPrefix = $env:APPVEYOR_REPO_TAG_NAME -replace '^v'
+  # AppVeyor provides the tag name, GitHub Actions sets RELEASE_TAG
+  $tagName = if ($env:RELEASE_TAG) { $env:RELEASE_TAG } else { $env:APPVEYOR_REPO_TAG_NAME }
+  $versionWithoutPrefix = $tagName -replace '^v'
   $newScriptContent = $scriptContent -replace '#define MyAppVersion "[\d\.]+"', ('#define MyAppVersion "{0}"' -f $versionWithoutPrefix)
   $newScriptPath = "setup.iss"
   $newScriptContent | Set-Content $newScriptPath
@@ -51,7 +53,10 @@ if ($isWindows) {
   dotnet publish -c Release ./Ambermoon.ConcatFiles/Ambermoon.ConcatFiles.csproj -r osx-x64 --no-restore --nologo
   Write-Host Pack zips for Mac
   sudo xcode-select -p
-  sudo xcode-select -s /Applications/Xcode-14.1.app
+  # the AppVeyor image needs this Xcode version for codesign, other machines use their default
+  if (Test-Path /Applications/Xcode-14.1.app) {
+    sudo xcode-select -s /Applications/Xcode-14.1.app
+  }
   mkdir -p ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
   cp -r ./Ambermoon.net/Mac/* ./bundle/Ambermoon.net/
   cp "./Ambermoon.net/bin/Any CPU/Release/net9.0/osx-x64/publish/Ambermoon.net" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/

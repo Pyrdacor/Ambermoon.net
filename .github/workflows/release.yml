@@ -1,0 +1,180 @@
+# Builds the release packages of Ambermoon.net for Windows, Linux, Mac and Android in parallel.
+#
+# This is a test replacement for the AppVeyor pipeline (appveyor.yml). It only runs manually
+# (Actions > Release > Run workflow) and doesn't react to tags yet, so AppVeyor still makes the real releases.
+# Without "publish" the packages are only uploaded as workflow artifacts.
+#
+# Android release signing uses the same encrypted keystore as AppVeyor (see docs/AndroidSigning.md).
+# It needs the repository secrets KEYSTORE_SECRET, KEYSTORE_SALT and ANDROID_KEYSTORE_PASS. Without them
+# the packages are signed with the debug key.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version without prefix (e.g. 1.15.1), used for the installer and the release tags'
+        required: true
+      platforms:
+        description: 'Platforms to build'
+        type: choice
+        default: all
+        options: [all, windows, linux, mac, android]
+      publish:
+        description: 'Upload the packages to the draft releases v<version> and android-v<version>'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  RELEASE_TAG: v${{ inputs.version }}
+
+jobs:
+  # the desktop platforms to build (a job condition can't use the matrix)
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      desktop: ${{ steps.platforms.outputs.desktop }}
+    steps:
+      - id: platforms
+        shell: python
+        run: |
+          import json, os
+          # the oldest available Ubuntu, so the binaries work with older glibc versions
+          all_platforms = [
+              {"platform": "windows", "os": "windows-latest"},
+              {"platform": "linux", "os": "ubuntu-22.04"},
+              {"platform": "mac", "os": "macos-latest"},
+          ]
+          wanted = "${{ inputs.platforms }}"
+          selected = [p for p in all_platforms if wanted in ("all", p["platform"])]
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write("desktop=" + json.dumps(selected) + "\n")
+
+  desktop:
+    needs: setup
+    if: needs.setup.outputs.desktop != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.setup.outputs.desktop) }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Install 7-Zip
+        if: matrix.platform == 'mac'
+        run: brew install p7zip
+
+      - name: Install Inno Setup
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          if (!(Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
+
+      - name: Restore
+        run: dotnet restore Ambermoon.net.sln
+
+      - name: Publish
+        shell: pwsh
+        run: ./publish.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ambermoon.net-${{ matrix.platform }}
+          if-no-files-found: error
+          path: |
+            Ambermoon.net-Windows.zip
+            Ambermoon.net-Windows32Bit.zip
+            AmbermoonInstall.exe
+            Ambermoon.net-Linux.tar.gz
+            Ambermoon.net-Mac.zip
+            Ambermoon.net-Mac-ARM.zip
+
+      - name: Upload to the draft release
+        if: inputs.publish
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          files=$(ls Ambermoon.net-*.zip Ambermoon.net-*.tar.gz AmbermoonInstall.exe 2>/dev/null)
+          gh release view "$RELEASE_TAG" > /dev/null 2>&1 || gh release create "$RELEASE_TAG" --draft --title "$RELEASE_TAG" --notes "" --target "$GITHUB_SHA"
+          gh release upload "$RELEASE_TAG" $files --clobber
+
+  android:
+    if: inputs.platforms == 'all' || inputs.platforms == 'android'
+    runs-on: windows-latest
+    env:
+      KEYSTORE_SECRET: ${{ secrets.KEYSTORE_SECRET }}
+      KEYSTORE_SALT: ${{ secrets.KEYSTORE_SALT }}
+      ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Install the Android workload and dependencies
+        shell: pwsh
+        run: |
+          dotnet workload install android
+          dotnet build AmbermoonAndroid/AmbermoonAndroid.csproj -t:InstallAndroidDependencies -f net9.0-android36.0 "-p:AndroidSdkDirectory=$env:ANDROID_HOME" -p:AcceptAndroidSDKLicenses=True
+          if ($LASTEXITCODE -ne 0) { throw "Installing the Android dependencies failed with exit code $LASTEXITCODE" }
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          $tfm = 'net9.0-android36.0'
+          $signing = @()
+          if ($env:KEYSTORE_SECRET -and $env:KEYSTORE_SALT -and $env:ANDROID_KEYSTORE_PASS) {
+            iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/appveyor/secure-file/master/install.ps1'))
+            appveyor-tools\secure-file.exe -decrypt AmbermoonAndroid\ambermoon.keystore.enc -secret $env:KEYSTORE_SECRET -salt $env:KEYSTORE_SALT -out AmbermoonAndroid\ambermoon.keystore
+            if ($LASTEXITCODE -ne 0) { throw "The keystore could not be decrypted (secure-file exit code $LASTEXITCODE)" }
+            $signing = @('-p:AndroidKeyStore=true', '-p:AndroidSigningKeyStore=ambermoon.keystore', '-p:AndroidSigningKeyAlias=ambermoon',
+              '-p:AndroidSigningKeyPass=env:ANDROID_KEYSTORE_PASS', '-p:AndroidSigningStorePass=env:ANDROID_KEYSTORE_PASS')
+          } else {
+            Write-Warning "No release signing secrets available, the packages are signed with the debug key."
+          }
+          dotnet publish AmbermoonAndroid/AmbermoonAndroid.csproj -c Release -f $tfm -p:DefineConstants="GLES" '-p:AndroidPackageFormats=aab%3Bapk' "-p:AndroidSdkDirectory=$env:ANDROID_HOME" @signing
+          $publishExitCode = $LASTEXITCODE
+          Remove-Item "AmbermoonAndroid/ambermoon.keystore" -ErrorAction SilentlyContinue
+          if ($publishExitCode -ne 0) { throw "dotnet publish failed with exit code $publishExitCode" }
+          # publish only copies the app bundle into the publish folder, the APK stays in the output folder
+          $outputDir = "./AmbermoonAndroid/bin/Release/$tfm"
+          foreach ($package in @('com.pyrdacor.AmbermoonAndroid-Signed.aab', 'com.pyrdacor.AmbermoonAndroid-Signed.apk')) {
+            $file = Get-ChildItem $outputDir -Recurse -Filter $package | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            if ($file -eq $null) { throw "$package was not created" }
+            Copy-Item $file.FullName $package
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ambermoon.net-android
+          if-no-files-found: error
+          path: |
+            com.pyrdacor.AmbermoonAndroid-Signed.aab
+            com.pyrdacor.AmbermoonAndroid-Signed.apk
+
+      # the app bundle is uploaded to the Play Store manually, only the APK goes to the release
+      - name: Upload to the draft release
+        if: inputs.publish
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="android-$RELEASE_TAG"
+          gh release view "$tag" > /dev/null 2>&1 || gh release create "$tag" --draft --title "$tag" --notes "" --target "$GITHUB_SHA"
+          gh release upload "$tag" com.pyrdacor.AmbermoonAndroid-Signed.apk --clobber
