@@ -63,6 +63,9 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.setup.outputs.desktop) }}
     runs-on: ${{ matrix.os }}
+    env:
+      # like on AppVeyor, publish.ps1 expects the output in bin/Any CPU/...
+      Platform: Any CPU
     steps:
       - uses: actions/checkout@v4
 
