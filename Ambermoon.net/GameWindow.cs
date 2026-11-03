@@ -82,6 +82,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
     Func<Game.Game> gameCreator = null;
     MusicManager musicManager = null;
     AudioOutput audioOutput = null;
+    TolkScreenReader screenReader = null;
     IRenderText infoText = null;
     IFontProvider fontProvider = null;
     DateTime? initializeErrorTime = null;
@@ -351,6 +352,10 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
         {
             var monitor = Silk.NET.Windowing.Window.GetWindowPlatform(false)?.GetMainMonitor() ?? null;
             window.Center(monitor);
+        }
+        else if (key == Silk.NET.Input.Key.F12)
+        {
+            Game?.RepeatLastSpokenText();
         }
         else if (key == Silk.NET.Input.Key.F11)
         {
@@ -1168,6 +1173,11 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
 
                             if (features.HasFlag(Features.Mod))
                                 activeMod?.AttachGame(game);
+
+                            if (configuration.ScreenReader)
+                                game.ScreenReader = screenReader ??= TolkScreenReader.TryCreate();
+                            else if (scenarioScript != null)
+                                game.ScreenReader = new ConsoleScreenReader(); // lets scenario scripts check the spoken texts
 
                             game.QuitRequested += window.Close;
                             game.MousePositionChanged += position =>
@@ -2322,6 +2332,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
             {
                 audioOutput?.Stop();
                 audioOutput?.Dispose();
+                screenReader?.Dispose();
                 cheatTaskCancellationTokenSource.Cancel();
             };
             window.Run();

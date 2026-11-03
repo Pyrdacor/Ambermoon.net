@@ -76,6 +76,7 @@ partial class GameCore
         {
             conversationText!.Visible = true;
             conversationText.SetText(ProcessText(text));
+            Speak(text);
             conversationText.Clicked += TextClicked;
             CursorType = CursorType.Click;
             InputEnable = false;

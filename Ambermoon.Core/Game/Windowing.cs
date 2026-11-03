@@ -39,6 +39,7 @@ partial class GameCore
             ? DataNameProvider.GetWorldName(map.World)
             : map.Name;
         windowTitle!.Text = ProcessText(mapName);
+        AnnounceMapName(map, mapName);
         windowTitle.PaletteIndex = UIPaletteIndex;
         windowTitle.TextColor = TextColor.BrightGray;
     }
@@ -817,6 +818,7 @@ partial class GameCore
 
         Pause();
         InputEnable = false;
+        Speak(text);
         // Simple text popup
         var popup = layout.OpenTextPopup(ProcessText(text), () =>
         {
@@ -937,7 +939,9 @@ partial class GameCore
 
     internal void ShowTextPopup(Map map, PopupTextEvent popupTextEvent, Action<PopupTextEvent.Response>? responseHandler)
     {
-        var text = ProcessText(map.GetText((int)popupTextEvent.TextIndex, DataNameProvider.TextBlockMissing));
+        string rawText = map.GetText((int)popupTextEvent.TextIndex, DataNameProvider.TextBlockMissing);
+        var text = ProcessText(rawText);
+        Speak(rawText);
 
         if (popupTextEvent.HasImage)
         {
@@ -955,6 +959,7 @@ partial class GameCore
         int minLines = 3, byte displayLayerOffset = 0, TextAlign textAlign = TextAlign.Left,
         bool canAbort = true)
     {
+        Speak(text);
         var popup = layout.OpenYesNoPopup
         (
             ProcessText(text),

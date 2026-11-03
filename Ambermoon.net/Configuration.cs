@@ -81,6 +81,8 @@ internal class Configuration : IConfiguration
     public bool? CacheMusic { get; set; } = null;
     public bool AutoDerune { get; set; } = true;
     public bool EnableCheats { get; set; } = false;
+    // Speaks texts with a screen reader (Windows only, needs Tolk.dll next to the executable)
+    public bool ScreenReader { get; set; } = false;
     public bool ShowButtonTooltips { get; set; } = true;
     public bool ShowFantasyIntro { get; set; } = true;
     public bool ShowIntro { get; set; } = true;

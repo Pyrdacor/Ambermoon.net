@@ -3449,6 +3449,7 @@ namespace Ambermoon.UI
             {
                 var bounds = new Rect(114, 46, 189, 48);
                 ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
+                game.Speak(message);
             }
             else
             {
@@ -3461,6 +3462,7 @@ namespace Ambermoon.UI
             var bounds = new Rect(114, 46, 189, 48);
             ChestText?.Destroy();
             ChestText = AddScrollableText(bounds, game.ProcessText(message, bounds));
+            game.Speak(message);
             ChestText.Clicked += scrolledToEnd =>
             {
                 if (scrolledToEnd)
@@ -3752,6 +3754,7 @@ namespace Ambermoon.UI
             }
             else
             {
+                game.Speak(message);
                 if (waitForClick)
                 {
                     foreach (var itemGrid in itemGrids)
