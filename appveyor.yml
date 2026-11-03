@@ -1,3 +1,6 @@
+# Only the tagged commit is needed, the full history is about 2 GB
+clone_depth: 1
+
 init:
   - ps: |
       $tag = $env:APPVEYOR_REPO_TAG_NAME
