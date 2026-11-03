@@ -56,6 +56,15 @@ closewindow
 talkwait
 count 134 1
 quest Windgates_CreateTheWindChain Completed
+# using the windchain turns it into an active special item, the quest stays completed after loading
+useitem 134
+wait 1000
+dismiss
+wait 800
+closewindow
+talkwait
+dismissall
+count 134 0
 reloadquests
 quest Windgates_CreateTheConstructionStaff Completed
 quest Windgates_CreateTheWindChain Completed

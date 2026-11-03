@@ -1,4 +1,4 @@
-# Kire's letter without asking Ketnar: the optional step is completed when Dorina is found
+# Kire's letter without asking Leira or Ketnar: entering Dorina's cave completes the other steps
 # (original game and Advanced, any language)
 waitidle 20000
 dismissall
@@ -11,7 +11,12 @@ takeitems
 leave
 talkwait
 waitidle 5000
-quest KiresLetter_ShowTheLetterToKetnar Active
+# without asking Leira the Ketnar step stays inactive
+quest KiresLetter_ShowTheLetterToKetnar Inactive
+goto 346 14 4
+dismissall
+quest KiresLetter_FindDorina Completed
+quest KiresLetter_GiveTheLetterToDorina Active
 goto 347 13 24
 dismissall
 talk 57

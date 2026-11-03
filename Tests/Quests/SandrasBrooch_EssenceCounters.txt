@@ -1,0 +1,65 @@
+# Sandra's brooch: the counters of collected and transferred essences while transferring them one by one
+# Crystal (chest 172 at map 470). Sandra (NPC 5) then transfers the essences of the mystic creatures (438-443) into
+# Kasimir (party member 16) who has to be in the party.
+waitidle 20000
+dismissall
+cheat netsrak
+cheat light 3
+cheat give 138 5
+quest SandrasBrooch_ReturnTheBroochToSandra Inactive
+# --- the brooch in the wine cellar of Crystal
+# the monsters of the wine cellar are removed from its entrance first
+goto 470 18 18
+dismissall
+cheat berserk
+dismissall
+goto 470 28 4
+trigger 28 3 Eye
+talkwait
+usekey 138
+takeloot
+closewindow
+talkwait
+count 434 1
+quest SandrasBrooch_ReturnTheBroochToSandra Active
+# --- Sandra gets her brooch
+goto 266 40 6
+dismissall
+talk 5
+talkwait
+giveitem 434
+talkwait
+var 54 1
+quest SandrasBrooch_ReturnTheBroochToSandra Completed
+quest SandrasBrooch_TransferTheEssencesIntoKasimir Active
+# the conversation with Sandra is still open
+leave
+talkwait
+waitidle 5000
+setvar 268 1
+cheat invite 16
+talkwait
+dismissall
+cheat give 438 1
+cheat give 439 1
+reloadquests
+quest MysticCreatures_CollectTheEssences Active 2
+quest SandrasBrooch_TransferTheEssencesIntoKasimir Active 0
+goto 266 40 6
+dismissall
+talk 5
+talkwait
+giveitem 438
+talkwait
+quest MysticCreatures_CollectTheEssences Active 2
+quest SandrasBrooch_TransferTheEssencesIntoKasimir Active 1
+giveitem 439
+talkwait
+quest MysticCreatures_CollectTheEssences Active 2
+quest SandrasBrooch_TransferTheEssencesIntoKasimir Active 2
+leave
+talkwait
+waitidle 5000
+reloadquests
+quest MysticCreatures_CollectTheEssences Active 2
+quest SandrasBrooch_TransferTheEssencesIntoKasimir Active 2

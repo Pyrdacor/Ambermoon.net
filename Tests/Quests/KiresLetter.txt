@@ -16,11 +16,25 @@ var 52 1
 takeitems
 count 280 1
 quest KiresLetter_FindDorina Active
-quest KiresLetter_ShowTheLetterToKetnar Active
+quest KiresLetter_ShowTheLetterToKetnar Inactive
 quest KiresLetter_GiveTheLetterToDorina Inactive
 leave
 talkwait
 waitidle 5000
+# --- Leira in the council hall of Dor Grestin (map 341) is asked about Kire and tells about Ketnar
+goto 341 24 17
+dismissall
+talk 60
+talkwait
+say 44
+talkwait
+var 70 1
+quest KiresLetter_ShowTheLetterToKetnar Active
+leave
+talkwait
+waitidle 5000
+goto 337 37 15
+dismissall
 # --- Ketnar reads the letter and tells the password of Dorina's tree
 talk 58
 talkwait
@@ -29,16 +43,24 @@ talkwait
 var 66 1
 quest KiresLetter_ShowTheLetterToKetnar Completed
 quest KiresLetter_FindDorina Active
+quest KiresLetter_GiveTheLetterToDorina Inactive
 leave
 talkwait
 waitidle 5000
-# --- Dorina in her cave (map 347)
+# --- Dorina's cave (map 346, entered from the forest at 14,4)
+goto 346 14 4
+dismissall
+quest KiresLetter_FindDorina Completed
+quest KiresLetter_GiveTheLetterToDorina Active
+reloadquests
+quest KiresLetter_FindDorina Completed
+quest KiresLetter_GiveTheLetterToDorina Active
+# --- Dorina in the lower cave (map 347)
 goto 347 13 24
 dismissall
 talk 57
 talkwait
 var 61 1
-quest KiresLetter_FindDorina Completed
 quest KiresLetter_GiveTheLetterToDorina Active
 giveitem 280
 talkwait 20000

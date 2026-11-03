@@ -58,6 +58,7 @@ public enum MainQuestType
     SapphireThistles,
     AncientVault,
     UnknownWorld,
+    SecretsOfTheForestMoon,
 }
 
 public enum SubQuestType
@@ -314,6 +315,14 @@ public enum SubQuestType
     BrotherhoodOfTarbos_DefeatThornahuun, // after meeting Thornahuun in the coffin hall
     // Ambermoon Picture
     AmbermoonPicture_DeliverThePicture, // after getting the picture from Dieter Rottermund
+    // Secrets of the Forest Moon
+    SecretsOfTheForestMoon_AskKetnarAboutRuins, // after Kire's reward for bringing Dorina back
+    SecretsOfTheForestMoon_FindTheRuins, // after asking Ketnar about ruins
+    SecretsOfTheForestMoon_ExploreTheRuins, // after finding the ruins
+    SecretsOfTheForestMoon_FindTheMetalDoor, // after Kire's reward for bringing Dorina back
+    SecretsOfTheForestMoon_OpenTheMetalDoor, // after finding the metal door in the mine
+    SecretsOfTheForestMoon_ExploreTheAntiqueArea, // after opening the metal door
+    SecretsOfTheForestMoon_CreateANavstone, // after taking engraved discs in the antique area
     // ...
 }
 
@@ -806,8 +815,10 @@ file class PredicateTrigger(GameCore game, TriggerType triggerType, Func<GameCor
 /// Counts the set global variables and the owned items. The sub quest's
 /// current amount is updated and the state changes once the count reaches
 /// the sub quest's min amount (or 1 if there is none).
+/// If paired is set, each item belongs to the global variable at the same position and
+/// a pair is only counted once (e.g. an essence which was given away sets the variable).
 /// </summary>
-file class CountTrigger(GameCore game, TriggerType triggerType, uint[] globalVariables, uint[]? itemIndices = null, uint? requiredCount = null) : IQuestTrigger
+file class CountTrigger(GameCore game, TriggerType triggerType, uint[] globalVariables, uint[]? itemIndices = null, uint? requiredCount = null, bool paired = false) : IQuestTrigger
 {
     public QuestState OldState => triggerType.GetOldState();
     public QuestState NewState => triggerType.GetNewState();
@@ -818,12 +829,23 @@ file class CountTrigger(GameCore game, TriggerType triggerType, uint[] globalVar
             return false;
 
         var savegame = game.CurrentSavegame!;
-        uint count = (uint)globalVariables.Count(index => index == globalVariableBeingSet || savegame.GetGlobalVariable(index));
+        bool IsSet(uint index) => index == globalVariableBeingSet || savegame.GetGlobalVariable(index);
+        uint count;
 
-        if (itemIndices != null)
+        if (paired && itemIndices != null)
         {
-            foreach (var itemIndex in itemIndices)
-                count += game.GetTotalItemCount(itemIndex);
+            // the item is still owned while the event which sets its variable is checked
+            count = (uint)globalVariables.Where((index, i) => IsSet(index) || game.GetTotalItemCount(itemIndices[i]) != 0).Count();
+        }
+        else
+        {
+            count = (uint)globalVariables.Count(IsSet);
+
+            if (itemIndices != null)
+            {
+                foreach (var itemIndex in itemIndices)
+                    count += game.GetTotalItemCount(itemIndex);
+            }
         }
 
         uint minAmount = requiredCount ?? (NewState == QuestState.Completed ? subQuest.MinAmount ?? 1 : 1);
@@ -893,6 +915,18 @@ partial class QuestLog
             return (@event is ActionEvent e && e.TypeOfAction == ActionEvent.ActionType.SetEventBit && e.ObjectIndex == (mapIndex - 1) * 64 + eventIndex - 1 && e.Value != 0) ||
                 game.CurrentSavegame!.GetEventBit(mapIndex, eventIndex - 1);
         }
+
+        // Near the ancient metal door in the third level of the mine (map 354)
+        IQuestTrigger ReachedTheMetalDoor(TriggerType triggerType) => new OrTrigger<ExplorationTrigger, ExplorationTrigger>(game, triggerType,
+            (g, t) => new ExplorationTrigger(g, t, 354, 16, 18),
+            (g, t) => new ExplorationTrigger(g, t, 354, 15, 18));
+
+        // Dorina's cave (map 346) is entered from the forest at 14,4. Talking to Dorina (61) or giving her the letter (45)
+        // also counts, e.g. for savegames from before.
+        IQuestTrigger EnteredDorinasCave(TriggerType triggerType) => new OrTrigger<ExplorationTrigger, PredicateTrigger>(game, triggerType,
+            (g, t) => new ExplorationTrigger(g, t, 346, 14, 4),
+            (g, t) => new PredicateTrigger(g, t, (g, e) => IsGlobalVariableSet(g, e, 61) || IsGlobalVariableSet(g, e, 45) ||
+                (g.CurrentSavegame!.Automaps.TryGetValue(346, out var cave) && cave.ExplorationBits.Any(bits => bits != 0))));
 
         static bool IsGlobalVariableSet(GameCore game, Event? @event, uint index)
         {
@@ -1413,7 +1447,7 @@ partial class QuestLog
                             new GlobalVariableTrigger(game, TriggerType.Activation, 268),
                             // Complete: the essences of Isdir, Pyrdacor, Marla, Lugthir, Fargon and Gunbar are owned or
                             // were transferred into Kasimir by Sandra
-                            new CountTrigger(game, TriggerType.Completion, [262, 263, 264, 265, 266, 267], [438, 439, 440, 441, 442, 443]),
+                            new CountTrigger(game, TriggerType.Completion, [262, 263, 264, 265, 266, 267], [438, 439, 440, 441, 442, 443], paired: true),
                         ],
                         MinAmount = 6,
                         SourceType = QuestSourceType.Item,
@@ -2030,8 +2064,12 @@ partial class QuestLog
                         [
                             // Activate
                             new PreviousSubQuestCompletedTrigger(),
-                            // Complete: ten triis (the crystals of the krondirs, charged or not) or the portal works again
-                            new CountTrigger(game, TriggerType.Completion, [360], [493, 494]),
+                            // Complete: ten triis (the crystals of the krondirs, charged or not) or they were given to Sheera
+                            // (she disappears then, character 1 of map 382). Global variable 360 is already set at four
+                            // charged triis, so it is not counted.
+                            new OrTrigger<CountTrigger, CharacterVisibilityTrigger>(game, TriggerType.Completion,
+                                (g, t) => new CountTrigger(g, t, [], [493, 494]),
+                                (g, t) => new CharacterVisibilityTrigger(g, t, 382, 1, false)),
                         ],
                         MinAmount = 10,
                         SourceType = QuestSourceType.NPC,
@@ -2044,8 +2082,11 @@ partial class QuestLog
                         [
                             // Activate
                             new PreviousSubQuestCompletedTrigger(),
-                            // Complete: Sheera charged a trii and the krondirs' liquid charged the others, the portal works
-                            new GlobalVariableTrigger(game, TriggerType.Completion, 360),
+                            // Complete: Sheera charged a trii and the krondirs' liquid charged the others (ten charged triis)
+                            // or they were given to Sheera already
+                            new OrTrigger<CountTrigger, CharacterVisibilityTrigger>(game, TriggerType.Completion,
+                                (g, t) => new CountTrigger(g, t, [], [494], 10),
+                                (g, t) => new CharacterVisibilityTrigger(g, t, 382, 1, false)),
                         ],
                         SourceType = QuestSourceType.NPC,
                         SourceIndex = 72, // Sheera
@@ -2058,8 +2099,9 @@ partial class QuestLog
                         [
                             // Activate
                             new PreviousSubQuestCompletedTrigger(),
-                            // Complete: left the unknown world through the exit
-                            new GlobalVariableTrigger(game, TriggerType.Completion, 354),
+                            // Complete: the ten charged triis were given to Sheera (map 382, she disappears with them).
+                            // Global variable 354 is not used as map 384 sets it on the way to Dor Kiredon (Gadlon).
+                            new CharacterVisibilityTrigger(game, TriggerType.Completion, 382, 1, false),
                         ],
                         SourceType = QuestSourceType.NPC,
                         SourceIndex = 72, // Sheera
@@ -2447,8 +2489,10 @@ partial class QuestLog
                     [
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
-                        // Completion
-                        new ItemObtainedTrigger(game, TriggerType.Completion, 381), // Kire's note
+                        // Completion: own Kire's note or found it already (it might be thrown away or stored)
+                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 381), // Kire's note
+                            (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_FoundKiresNote)),
                     ],
                     SourceType = QuestSourceType.Item,
                     SourceIndex = 370, // Hangard key
@@ -2460,10 +2504,9 @@ partial class QuestLog
                     [
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
-                        // Completion: own the green navstone or opened its chest (the navstone is used up when flying)
-                        new OrTrigger<ItemObtainedTrigger, ChestUnlockedTrigger>(game, TriggerType.Completion,
-                            (g, t) => new ItemObtainedTrigger(g, t, 378), // Green navstone
-                            (g, t) => new ChestUnlockedTrigger(g, t, 116)),
+                        // Completion: opened the chest of the green navstone with the chest key. The navstone itself is
+                        // not checked as it is used up when flying and other green navstones can be found later.
+                        new ChestUnlockedTrigger(game, TriggerType.Completion, 116),
                     ],
                     SourceType = QuestSourceType.Item,
                     SourceIndex = 381, // Kire's note
@@ -2569,8 +2612,10 @@ partial class QuestLog
                     [
                         // Activate
                         new PreviousSubQuestCompletedTrigger(),
-                        // Completion
-                        new ItemObtainedTrigger(game, TriggerType.Completion, 345), // Recipe
+                        // Completion: own the recipe or brewed the demon sleep already (the recipe might be stored away then)
+                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 345), // Recipe
+                            (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_BrewedDemonSleep)),
                     ],
                     SourceType = QuestSourceType.Custom,
                     SourceIndex = (uint)QuestTexts.CustomSourceName.Shandra,
@@ -3575,10 +3620,8 @@ partial class QuestLog
                     [
                         // Activate: Kire told about his wife Dorina and gave a letter for her
                         new GlobalVariableTrigger(game, TriggerType.Activation, 52),
-                        // Complete: talked to Dorina in her cave (or she got the letter already)
-                        new OrTrigger<GlobalVariableTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
-                            (g, t) => new GlobalVariableTrigger(g, t, 61),
-                            (g, t) => new GlobalVariableTrigger(g, t, 45)),
+                        // Complete: entered Dorina's cave
+                        EnteredDorinasCave(TriggerType.Completion),
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 55, // Kire
@@ -3588,23 +3631,25 @@ partial class QuestLog
                     Type = SubQuestType.KiresLetter_ShowTheLetterToKetnar,
                     Triggers =
                     [
-                        // Activate: optional, Kire's son knows where Dorina lives
-                        new GlobalVariableTrigger(game, TriggerType.Activation, 52),
-                        // Complete: Ketnar saw the letter (66) or Dorina was found without him
-                        new PredicateTrigger(game, TriggerType.Completion, (g, e) =>
-                            IsGlobalVariableSet(g, e, 66) || IsGlobalVariableSet(g, e, 61) || IsGlobalVariableSet(g, e, 45)),
+                        // Activate: Leira in the council hall of Dor Grestin was asked about Kire (70)
+                        // or saw the letter (71), she tells about his son Ketnar
+                        new PredicateTrigger(game, TriggerType.Activation, (g, e) => IsGlobalVariableSet(g, e, 70) || IsGlobalVariableSet(g, e, 71)),
+                        // Complete: Ketnar saw the letter (66) or entered Dorina's cave
+                        new OrTrigger<GlobalVariableTrigger, IQuestTrigger>(game, TriggerType.Completion,
+                            (g, t) => new GlobalVariableTrigger(g, t, 66),
+                            (g, t) => EnteredDorinasCave(t)),
                     ],
                     SourceType = QuestSourceType.NPC,
-                    SourceIndex = 55, // Kire
+                    SourceIndex = 60, // Leira
                 },
                 mainQuest => new SubQuest(this, mainQuest)
                 {
                     Type = SubQuestType.KiresLetter_GiveTheLetterToDorina,
                     Triggers =
                     [
-                        // Activate: found Dorina
-                        new GlobalVariableTrigger(game, TriggerType.Activation, 61),
-                        // Complete: Dorina got the letter
+                        // Activate: entered Dorina's cave
+                        EnteredDorinasCave(TriggerType.Activation),
+                        // Complete: Dorina got the letter (45), she brings the party to Kire's residence in Dor Kiredon then
                         new GlobalVariableTrigger(game, TriggerType.Completion, 45),
                     ],
                     SourceType = QuestSourceType.NPC,
@@ -3623,6 +3668,111 @@ partial class QuestLog
                     ],
                     SourceType = QuestSourceType.NPC,
                     SourceIndex = 57, // Dorina
+                }
+            ),
+            #endregion
+            #region Secrets of the Forest Moon
+            QuestFactory.CreateMainQuest(this, MainQuestType.SecretsOfTheForestMoon,
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SecretsOfTheForestMoon_AskKetnarAboutRuins,
+                    Triggers =
+                    [
+                        // Activate: Kire's reward for bringing Dorina back, he tells to ask Ketnar about ruins
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 55),
+                        // Complete: Ketnar was asked about "ruins" after Dorina got the letter
+                        new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_AskedKetnarAboutRuins),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 55, // Kire
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SecretsOfTheForestMoon_FindTheRuins,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: the text in front of the ruins (forest moon map 307, 16,18) was shown once
+                        new GlobalVariableTrigger(game, TriggerType.Completion, 219),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 58, // Ketnar
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SecretsOfTheForestMoon_ExploreTheRuins,
+                    Triggers =
+                    [
+                        // Activate: found the ruins
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 219),
+                        // Complete: took Dreblin's notes (241) from the skeleton of the dwarf in the ruins (map 342, chest 256)
+                        new OrTrigger<ItemObtainedTrigger, GlobalVariableTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 241),
+                            (g, t) => new GlobalVariableTrigger(g, t, GlobalVar_FoundDreblinsNotes)),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 58, // Ketnar
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SecretsOfTheForestMoon_FindTheMetalDoor,
+                    Triggers =
+                    [
+                        // Activate: Kire's reward for bringing Dorina back
+                        new GlobalVariableTrigger(game, TriggerType.Activation, 55),
+                        // Complete: reached the ancient metal door in the third level of the mine (map 354)
+                        ReachedTheMetalDoor(TriggerType.Completion),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 55, // Kire
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SecretsOfTheForestMoon_OpenTheMetalDoor,
+                    Triggers =
+                    [
+                        // Activate: reached the metal door
+                        ReachedTheMetalDoor(TriggerType.Activation),
+                        // Complete: the door (21,17) was opened with the right number
+                        new TileChangeTrigger(game, TriggerType.Completion, 354, 21, 17, 119),
+                    ],
+                    // the number is only known from Dreblin's notes in the ruins
+                    RequiredCompletedQuests = [SubQuestType.SecretsOfTheForestMoon_ExploreTheRuins],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 55, // Kire
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SecretsOfTheForestMoon_ExploreTheAntiqueArea,
+                    Triggers =
+                    [
+                        // Activate: the metal door was opened
+                        new TileChangeTrigger(game, TriggerType.Activation, 354, 21, 17, 119),
+                        // Complete: took engraved discs from a wall compartment of map 369: yellow (364, chest 220),
+                        // green (368, chest 214) or blue (369, chest 213)
+                        new OrTrigger<ItemObtainedTrigger, PredicateTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 364, 368, 369),
+                            (g, t) => new PredicateTrigger(g, t, (g, e) => g.CurrentSavegame!.GetGlobalVariable(GlobalVar_TookEngravedDiscs))),
+                    ],
+                    // the discs are used up, so this is kept in the savegame
+                    PostCompletionAction = _ => game.CurrentSavegame!.SetGlobalVariable(GlobalVar_TookEngravedDiscs, true),
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 55, // Kire
+                },
+                mainQuest => new SubQuest(this, mainQuest)
+                {
+                    Type = SubQuestType.SecretsOfTheForestMoon_CreateANavstone,
+                    Final = true,
+                    Triggers =
+                    [
+                        // Activate
+                        new PreviousSubQuestCompletedTrigger(),
+                        // Complete: took a navstone from the machine in the antique area (map 369, treasures 210-212)
+                        new GlobalVariableTrigger(game, TriggerType.Completion, GlobalVar_CreatedNavstone),
+                    ],
+                    SourceType = QuestSourceType.NPC,
+                    SourceIndex = 55, // Kire
                 }
             ),
             #endregion
@@ -3873,8 +4023,11 @@ partial class QuestLog
                         new DoorUnlockedTrigger(game, TriggerType.Activation, 23),
                         // Complete: twelve windpearls and the pearl chain formed the windchain. Global variable 128
                         // is reset when the chain is taken. Advanced also sets global variable 229 but Theodorus
-                        // sets it as well, so only the windchain itself is checked.
-                        new ItemObtainedTrigger(game, TriggerType.Completion, 134),
+                        // sets it as well, so only the windchain itself is checked. Once the windchain was used it is
+                        // no longer an item but an active special item.
+                        new OrTrigger<ItemObtainedTrigger, PredicateTrigger>(game, TriggerType.Completion,
+                            (g, t) => new ItemObtainedTrigger(g, t, 134), // Windchain
+                            (g, t) => new PredicateTrigger(g, t, (g, e) => g.CurrentSavegame!.IsSpecialItemActive(SpecialItemPurpose.WindChain))),
                     ],
                     SourceType = QuestSourceType.Item,
                     SourceIndex = 339, // Windgate book

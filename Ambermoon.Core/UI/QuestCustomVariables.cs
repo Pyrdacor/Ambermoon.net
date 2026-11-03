@@ -126,6 +126,11 @@ partial class QuestLog
     const uint GlobalVar_KeywordProblem = 8157u;
     const uint GlobalVar_KeywordCurse = 8156u;
     const uint GlobalVar_KeywordDonner = 8155u;
+    const uint GlobalVar_FoundKiresNote = 8154u;
+    const uint GlobalVar_AskedKetnarAboutRuins = 8153u;
+    const uint GlobalVar_FoundDreblinsNotes = 8152u;
+    const uint GlobalVar_TookEngravedDiscs = 8151u;
+    const uint GlobalVar_CreatedNavstone = 8150u;
 
     static Func<IConversationPartner, bool> FromNPC(params uint[] npcIndices) => partner => partner is NPC npc && npcIndices.Contains(npc.Index);
     static Func<IConversationPartner, bool> FromPartyMember(uint partyMemberIndex) => partner => partner is PartyMember partyMember && partyMember.Index == partyMemberIndex;
@@ -155,6 +160,10 @@ partial class QuestLog
         Derive(GlobalVar_ReturnedHorseshoesToTolimar, horseshoesReturned);
         // The airship of Morag (map 437) can only be entered by flying there from the forest moon.
         Derive(GlobalVar_LeftForestMoon, savegame.Automaps.TryGetValue(437, out var moragAirship) && moragAirship.ExplorationBits.Any(bits => bits != 0));
+        // Kire's note (381) lies with the chest key (384) for the green navstone (chest 116), which flies the airship
+        // to the forest moon (map 436).
+        Derive(GlobalVar_FoundKiresNote, game.GetTotalItemCount(381) != 0 || game.GetTotalItemCount(384) != 0 || !savegame.IsChestLocked(116 - 1) ||
+            (savegame.Automaps.TryGetValue(436, out var forestMoonAirship) && forestMoonAirship.ExplorationBits.Any(bits => bits != 0)));
     }
 
     private void InitCustomGlobalVariableEvents()
@@ -202,6 +211,28 @@ partial class QuestLog
             (npc, @event) => npc.Index == 9 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Keyword &&
                 (c.KeywordIndex == 24 || c.KeywordIndex == 25),
             GlobalVar_HeidiToldAboutFairies));
+
+        // Kire's note and the chest key are found in the airship (treasure 112 at the skeleton). The note might be
+        // thrown away or stored later, so this keeps the hangar step completed.
+        customGlobalVariableEvents.Add(new CustomGlobalVariableMapEvent(this, game,
+            (map, @event) => map.Index >= 435 && map.Index <= 437 && @event is ChestEvent c && c.RealChestIndex == 112,
+            GlobalVar_FoundKiresNote));
+
+        // Ketnar (58) tells about the ruins (keyword 114) once Dorina got Kire's letter (45)
+        customGlobalVariableEvents.Add(new CustomGlobalVariableNPCEvent(this, game,
+            (npc, @event) => npc.Index == 58 && @event is ConversationEvent c && c.Interaction == ConversationEvent.InteractionType.Keyword &&
+                c.KeywordIndex == 114 && game.CurrentSavegame!.GetGlobalVariable(45),
+            GlobalVar_AskedKetnarAboutRuins));
+
+        // Dreblin's notes lie at the skeleton of a dwarf in the ruins (map 342, chest 256). They might be stored later.
+        customGlobalVariableEvents.Add(new CustomGlobalVariableMapEvent(this, game,
+            (map, @event) => map.Index == 342 && @event is ChestEvent c && c.RealChestIndex == 256,
+            GlobalVar_FoundDreblinsNotes));
+
+        // The machine in the antique area (map 369) creates a blue, green or yellow navstone (treasures 210-212)
+        customGlobalVariableEvents.Add(new CustomGlobalVariableMapEvent(this, game,
+            (map, @event) => map.Index == 369 && @event is ChestEvent c && c.RealChestIndex >= 210 && c.RealChestIndex <= 212,
+            GlobalVar_CreatedNavstone));
 
         // The demon sleep was brewed in the witch's cellar (map 412): the treasure with the potion is shown.
         // The potion is used up at the temple, so this keeps the step completed.
