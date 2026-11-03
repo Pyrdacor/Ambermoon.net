@@ -206,6 +206,10 @@ public class ModAssetApplier(IModSource source, IGameData gameData)
 
         if (json.ContainsKey(nameof(MapDefinition.Grid)))
         {
+            // like the validator and ModApi.AddMap: maps from 768 on lose their tile changes when a game is loaded
+            if (index > 767)
+                throw new InvalidDataException($"Map index {index} is too large for a new map. Valid map indices are 1 to 767.");
+
             var definition = json.ToObject<MapDefinition>(JsonSerializer.Create(ModJson.Settings))!;
             var map = definition.CreateMap(index);
 
