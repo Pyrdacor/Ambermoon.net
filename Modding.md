@@ -473,7 +473,7 @@ Mods never show the quests of the original game in the quest log. A mod can defi
 
 ## Ambermoon DC
 
-Ambermoon DC (`Ambermoon.Mod.AmbermoonDC`) is a dungeon crawler built as a code mod for the original Ambermoon:
+Ambermoon DC (`Ambermoon.Mod.AmbermoonDC`) is a dungeon crawler built as a code mod for the original Ambermoon. It is not part of the game downloads. Get the `.mod` file from the [Ambermoon DC releases](https://github.com/Pyrdacor/Ambermoon.net/releases?q=ambermoon-dc) and put it into the `Mods` folder (see [Installing mods](#installing-mods)).
 
 - The party starts on floor 1 of an endless dungeon. Each floor is generated from a seed when it is entered and has a way down to the next floor.
 - Every 5 floors a random dungeon theme is chosen (never the same one twice in a row). A theme defines the look, the music and the monsters of its floors (see below).

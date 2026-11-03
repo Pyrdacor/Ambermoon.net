@@ -187,7 +187,7 @@ I also provide the Atari tracks [here](https://ambermoon-net.pyrdacor.net/downlo
 
 ## Mods
 
-Ambermoon.net can be extended with mods: new graphics, music, maps, monsters and items, or C# code which hooks into the game. Ambermoon DC, a dungeon crawler with endless generated floors, is included as an example. See [Modding](Modding.md) for details.
+Ambermoon.net can be extended with mods: new graphics, music, maps, monsters and items, or C# code which hooks into the game. Ambermoon DC, a dungeon crawler with endless generated floors, is available as a separate download ([Ambermoon DC releases](https://github.com/Pyrdacor/Ambermoon.net/releases?q=ambermoon-dc)). See [Modding](Modding.md) for details.
 
 
 ## Special thanks
