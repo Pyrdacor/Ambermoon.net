@@ -360,6 +360,7 @@ partial class GameCore
 
         Ingame = true;
         CurrentSavegame = savegame;
+        UpdateObtainedItemOptions(savegame);
         GameTime = new SavegameTime(savegame);
         lastSwimDamageHour = GameTime.Hour;
         lastSwimDamageMinute = GameTime.Minute;

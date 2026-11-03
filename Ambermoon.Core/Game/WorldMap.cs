@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.UI;
 
 namespace Ambermoon;
@@ -19,6 +20,35 @@ partial class GameCore
     internal static bool CanDropItem(uint itemIndex) => itemIndex != WorldMapItemIndex && itemIndex != RuneAlphabetItemIndex;
 
     internal bool WorldMapOpen => worldMapViewer != null;
+
+    void RememberObtainedItem(uint itemIndex)
+    {
+        if (itemIndex == WorldMapItemIndex)
+            CurrentSavegame?.SetGameOption(Option.ObtainedMapOfLyramion, true);
+        else if (itemIndex == RuneAlphabetItemIndex)
+            CurrentSavegame?.SetGameOption(Option.ObtainedRuneAlphabet, true);
+    }
+
+    void UpdateObtainedItemOptions(Savegame savegame)
+    {
+        // Older versions stored the options of the events in bit 0 (the shift was applied twice). Only
+        // the yellow sphere (15) and Valdyn's talk with Sheera (14) are set by events and only the sphere
+        // is used, so this is kept as the sphere. It was treated like this before as well.
+        if ((savegame.GameOptions & 0x0001) != 0)
+        {
+            savegame.GameOptions &= 0xfffe;
+            savegame.SetGameOption(Option.FoundYellowSphere, true);
+        }
+
+        bool Owns(uint itemIndex) => savegame.PartyMembers.Values.Any(partyMember => partyMember != null &&
+            partyMember.Inventory.Slots.Concat(partyMember.Equipment.Slots.Values).Any(slot => !slot.Empty && slot.ItemIndex == itemIndex));
+
+        // Michael (NPC 19) sets global variable 96 when he gives the map of Lyramion
+        if (savegame.GetGlobalVariable(96) || Owns(WorldMapItemIndex))
+            savegame.SetGameOption(Option.ObtainedMapOfLyramion, true);
+        if (Owns(RuneAlphabetItemIndex))
+            savegame.SetGameOption(Option.ObtainedRuneAlphabet, true);
+    }
 
     /// <summary>
     /// Any party member owns the map of Lyramion.

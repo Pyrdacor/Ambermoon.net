@@ -817,6 +817,8 @@ partial class GameCore
                     ShowAutomap();
                 else if (InputEnable && HasWorldMapItem)
                     ShowWorldMap();
+                else if (InputEnable && CurrentSavegame!.IsGameOptionActive(Data.Enumerations.Option.ObtainedMapOfLyramion))
+                    ShowMessagePopup(CustomTexts.GetText(GameLanguage, CustomTexts.Index.WorldMapItemNeeded));
             }
         }
     }

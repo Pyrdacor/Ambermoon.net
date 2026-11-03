@@ -41,6 +41,7 @@ namespace Ambermoon
             GameLoaded,
             InitialGameLoaded,
             MobileTargetOutOfReach,
+            WorldMapItemNeeded,
         }
 
         static readonly ImmutableDictionary<GameLanguage, ImmutableDictionary<Index, string>> entries = new Dictionary<GameLanguage, ImmutableDictionary<Index, string>>
@@ -58,7 +59,8 @@ namespace Ambermoon
                     { Index.GameSaved, "Gespeichert als ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "~INK 22~Spielstand {0}~INK 31~ wurde geladen."},
                     { Index.InitialGameLoaded, "~INK 22~Initialer Spielstand~INK 31~ wurde geladen."},
-					{ Index.MobileTargetOutOfReach, "Außer Reichweite"}
+					{ Index.MobileTargetOutOfReach, "Außer Reichweite"},
+					{ Index.WorldMapItemNeeded, "Ihr benötigt die Karte von Lyramion im Inventar, um die Weltkarte anzuzeigen." }
 				}.ToImmutableDictionary()
             },
             { GameLanguage.English, new Dictionary<Index, string>
@@ -74,7 +76,8 @@ namespace Ambermoon
                     { Index.GameSaved, "Saved as ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "~INK 22~Savegame {0}~INK 31~ was loaded."},
                     { Index.InitialGameLoaded, "~INK 22~Initial savegame~INK 31~ was loaded."},
-					{ Index.MobileTargetOutOfReach, "Out of reach"}
+					{ Index.MobileTargetOutOfReach, "Out of reach"},
+					{ Index.WorldMapItemNeeded, "You need the Lyramion map item in your inventory to show the world map." }
 				}.ToImmutableDictionary()
             },
             { GameLanguage.French, new Dictionary<Index, string>
@@ -90,7 +93,8 @@ namespace Ambermoon
                     { Index.GameSaved, "Sauvegardé en tant que ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "La ~INK 22~sauvegarde {0}~INK 31~ a été chargée."},
                     { Index.InitialGameLoaded, "La ~INK 22~sauvegarde initiale~INK 31~ a été chargée."},
-					{ Index.MobileTargetOutOfReach, "Hors de portée"}
+					{ Index.MobileTargetOutOfReach, "Hors de portée"},
+					{ Index.WorldMapItemNeeded, "Vous avez besoin de la carte de Lyramion dans votre inventaire pour afficher la carte du monde." }
 				}.ToImmutableDictionary()
             },
             { GameLanguage.Polish, new Dictionary<Index, string>
@@ -106,7 +110,8 @@ namespace Ambermoon
                     { Index.GameSaved, "Zapisano jako ~INK 22~'{0}'~INK 31~."},
                     { Index.GameLoaded, "~INK 22~Zapis {0}~INK 31~ został wczytany."},
                     { Index.InitialGameLoaded, "~INK 22~Zapis startowy~INK 31~ został wczytany."},
-					{ Index.MobileTargetOutOfReach, "Poza zasięgiem"}
+					{ Index.MobileTargetOutOfReach, "Poza zasięgiem"},
+					{ Index.WorldMapItemNeeded, "Aby wyświetlić mapę świata, potrzebujesz mapy Lyramionu w ekwipunku." }
 				}.ToImmutableDictionary()
             },
             { GameLanguage.Czech, new Dictionary<Index, string>
@@ -122,7 +127,8 @@ namespace Ambermoon
 					{ Index.GameSaved, "Uloženo jako ~INK 22~'{0}'~INK 31~."},
 					{ Index.GameLoaded, "~INK 22~Savegame {0}~INK 31~ načteno."},
 					{ Index.InitialGameLoaded, "~INK 22~Počáteční uložení~INK 31~ načteno."},
-					{ Index.MobileTargetOutOfReach, "Mimo dosah"}
+					{ Index.MobileTargetOutOfReach, "Mimo dosah"},
+					{ Index.WorldMapItemNeeded, "K zobrazení mapy světa potřebujete mít v inventáři mapu Lyramionu." }
 				}.ToImmutableDictionary()
 			}
         }.ToImmutableDictionary();
