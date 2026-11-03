@@ -404,7 +404,7 @@ namespace Ambermoon.UI
 	            // Attack
 	            "Útok^^Šance zasáhnout nepřítele.^^V současné době {0}% šance na zásah",
 				// Parry
-	            "Blokování^^Šance zablokovat nepřátelský útok.^Je k tomu nutná bojová akce 'Parírování'.^^Současná {0}% šance na zablokování",
+	            "Parírování^^Šance zablokovat nepřátelský útok.^Je k tomu nutná bojová akce 'Parírování'.^^Současná {0}% šance na parírování",
 				// Swim
 	            "Plavání^^Snížení poškození při plavání.^^V současné době {0}% snížení poškození",
 				// Crit
