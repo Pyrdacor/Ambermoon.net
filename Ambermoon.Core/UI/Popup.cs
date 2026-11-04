@@ -169,7 +169,7 @@ namespace Ambermoon.UI
         }
 
         public IRenderText AddText(Position position, string text, TextColor textColor, bool shadow = true,
-            byte displayLayer = 1, char? fallbackChar = null)
+            byte displayLayer = 1, char? fallbackChar = null, string? speechText = null)
         {
             position = Global.GetTextRect(renderView, new Rect(position, new Size(Global.GlyphWidth, Global.GlyphLineHeight))).Position;
             var renderText = renderView.RenderTextFactory.Create(
@@ -182,12 +182,14 @@ namespace Ambermoon.UI
             renderText.Y = position.Y;            
             renderText.Visible = true;
             texts.Add(new UIText(renderText));
+            game.Speak(speechText ?? text, false);
             return renderText;
         }
 
         public UIText AddText(Rect bounds, string text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
             bool shadow = true, byte displayLayer = 1, bool scrolling = false, Layout? layout = null)
         {
+            game.Speak(text, false);
             return AddText(bounds, renderView.TextProcessor.CreateText(text), textColor, textAlign,
                 shadow, (byte)Util.Min(255, displayLayer), scrolling, layout);
         }

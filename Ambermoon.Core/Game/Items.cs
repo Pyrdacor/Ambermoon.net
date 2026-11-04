@@ -302,7 +302,10 @@ partial class GameCore
 
             if (item.Classes.HasFlag(classFlag))
             {
-                popup.AddText(new Position(177 + column * 54, 107 + row * Global.GlyphLineHeight), DataNameProvider.GetClassName(@class), TextColor.White);
+                string className = DataNameProvider.GetClassName(@class);
+                // No abbreviations for the screen reader. Classes without a name (e.g. monster) are not displayed and not spoken.
+                popup.AddText(new Position(177 + column * 54, 107 + row * Global.GlyphLineHeight), className, TextColor.White,
+                    speechText: string.IsNullOrWhiteSpace(className) ? "" : ScreenReaderTexts.GetFullClassName(GameLanguage, @class));
 
                 if (++row == 5)
                 {

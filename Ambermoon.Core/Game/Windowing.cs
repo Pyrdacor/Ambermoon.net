@@ -140,6 +140,7 @@ partial class GameCore
 
             CurrentInventoryIndex = slot;
             var partyMember = GetPartyMember(slot);
+            bool fromStats = currentWindow.Window == Window.Stats;
 
             layout.Reset(switchedFromOtherPartyMember);
             ShowMap(false);
@@ -151,6 +152,10 @@ partial class GameCore
             SetActivePartyMember(SlotFromPartyMember(CurrentPartyMember!)!.Value, false);
 
             windowTitle!.Text = renderView.TextProcessor.CreateText(DataNameProvider.InventoryTitleString);
+
+            if (!fromStats)
+                Speak(DataNameProvider.InventoryTitleString);
+
             windowTitle.PaletteIndex = UIPaletteIndex;
             windowTitle.TextColor = TextColor.White;
             windowTitle.Visible = true;
@@ -1005,6 +1010,7 @@ partial class GameCore
         int offsetY = conversation ? -6 : 0;
 
         characterInfoTexts.Clear();
+        textPanelSpeech.Clear();
         characterInfoPanels.Clear();
         characterInfoStatTooltips.Clear();
         layout.FillArea(new Rect(208, offsetY + 49, 96, 80), GetUIColor(28), false);
@@ -1237,6 +1243,7 @@ partial class GameCore
 
             if (!characterInfoPanels.ContainsKey(characterInfo))
                 characterInfoPanels[characterInfo] = layout.AddPanel(area, 2);
+            textPanelSpeech[characterInfo] = (new Rect(area), text ?? "");
             if (!characterInfoTexts.TryGetValue(characterInfo, out UIText? value))
             {
                 characterInfoTexts[characterInfo] = layout.AddText(area.CreateOffset(0, 1),
@@ -1257,6 +1264,7 @@ partial class GameCore
                 value1.Destroy();
                 characterInfoTexts.Remove(characterInfo);
             }
+            textPanelSpeech.Remove(characterInfo);
         }
     }
 
@@ -1289,6 +1297,7 @@ partial class GameCore
             return;
         }
 
+        StopSpeaking();
         ResetMapCharacterInteraction(Map!);
         layout.SetCharacterHealSymbol(null);
 
@@ -1296,6 +1305,7 @@ partial class GameCore
         closeWindowHandler = null;
 
         characterInfoTexts.Clear();
+        textPanelSpeech.Clear();
         characterInfoPanels.Clear();
         characterInfoStatTooltips.Clear();
         CurrentInventoryIndex = null;

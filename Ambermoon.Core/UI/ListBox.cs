@@ -43,6 +43,7 @@ namespace Ambermoon.UI
         int editingItem = -1;
         readonly bool canEdit = false;
         readonly Position relativeHoverBoxOffset;
+        readonly bool withIndex;
         int ScrollRange => items.Count - itemAreas.Count;
         public bool Editing => editingItem != -1;
         public Rect Bounds { get; private set; }
@@ -62,6 +63,7 @@ namespace Ambermoon.UI
             this.maxItems = maxItems;
             this.canEdit = canEdit;
             this.colorProvider = colorProvider;
+            this.withIndex = withIndex;
             Bounds = new Rect(area);
 
             popup.AddSunkenBox(area);
@@ -77,13 +79,14 @@ namespace Ambermoon.UI
                 if (withIndex)
                 {
                     int y = itemBasePosition.Y + i * itemHeight;
-                    itemIndices.Add(popup.AddText(new Position(itemBasePosition.X, y), $"{i + 1,2}", color, true, 4));
-                    itemTexts.Add(popup.AddText(new Position(itemBasePosition.X + 17, y), items[i].Key, color, true, 4, fallbackChar));
+                    // the screen reader speaks the items on hover only
+                    itemIndices.Add(popup.AddText(new Position(itemBasePosition.X, y), $"{i + 1,2}", color, true, 4, null, ""));
+                    itemTexts.Add(popup.AddText(new Position(itemBasePosition.X + 17, y), items[i].Key, color, true, 4, fallbackChar, ""));
                 }
                 else
                 {
                     itemTexts.Add(popup.AddText(new Position(itemBasePosition.X, itemBasePosition.Y + i * itemHeight),
-                        items[i].Key, color, true, 4, fallbackChar));
+                        items[i].Key, color, true, 4, fallbackChar, ""));
                 }
                 itemAreas.Add(new Rect(itemBasePosition.X, itemBasePosition.Y + i * itemHeight, area.Right - itemBasePosition.X - 1, itemHeight));
             }
@@ -174,7 +177,17 @@ namespace Ambermoon.UI
             }
 
             if (hoveredItem != index)
+            {
                 HoverItem?.Invoke(scrollOffset + index);
+
+                if (index != -1)
+                {
+                    int itemIndex = scrollOffset + index;
+                    string name = items[itemIndex].Key;
+                    // only savegame lists have an index
+                    game.Speak(withIndex ? ScreenReaderTexts.GetSavegame(game.GameLanguage, itemIndex + 1, name) : name);
+                }
+            }
 
             hoveredItem = index;
 

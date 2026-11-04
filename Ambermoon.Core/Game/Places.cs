@@ -145,7 +145,7 @@ partial class GameCore
         }
 
         void UpdateGoldDisplay()
-            => characterInfoTexts[CharacterInfo.ChestGold].SetText(renderView.TextProcessor.CreateText($"{DataNameProvider.GoldName}^{place.AvailableGold}"));
+            => SetTextPanelText(CharacterInfo.ChestGold, $"{DataNameProvider.GoldName}^{place.AvailableGold}");
 
         placeSetup?.Invoke(UpdateGoldDisplay, itemGrid);
         ActivePlayerChanged += activePlayerSwitchedHandler;
@@ -1895,6 +1895,6 @@ partial class GameCore
         closeWindowHandler = _ => CleanUp();
 
         void UpdateGoldDisplay()
-            => characterInfoTexts[CharacterInfo.ChestGold].SetText(renderView.TextProcessor.CreateText($"{DataNameProvider.GoldName}^{merchant.AvailableGold}"));
+            => SetTextPanelText(CharacterInfo.ChestGold, $"{DataNameProvider.GoldName}^{merchant.AvailableGold}");
     }
 }

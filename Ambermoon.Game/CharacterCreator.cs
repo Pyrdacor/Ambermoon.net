@@ -70,9 +70,16 @@ namespace Ambermoon.Game
             39, 40, 41, 47, 52
         ];
 
+        readonly Data.GameLanguage gameLanguage;
+        readonly string maleName;
+        readonly string femaleName;
+
         public CharacterCreator(IGameRenderView renderView, Game game, Action<string, bool, int> selectHandler)
         {
             this.renderView = renderView;
+            gameLanguage = game.GameLanguage;
+            maleName = game.DataNameProvider.GetGenderName(Data.Gender.Male);
+            femaleName = game.DataNameProvider.GetGenderName(Data.Gender.Female);
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)!;
             var fontTextureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Text)!;
             var spriteFactory = renderView.SpriteFactory;
@@ -125,21 +132,26 @@ namespace Ambermoon.Game
             maleButton.ButtonType = ButtonType.Male;
             maleButton.Visible = true;
             maleButton.LeftClickAction = () => ChangeMale(false);
+            maleButton.SpeechLabel = maleName;
             femaleButton = CreateButton(game, offset + new Position(16, 45));
             femaleButton.ButtonType = ButtonType.Female;
             femaleButton.Visible = true;
             femaleButton.LeftClickAction = () => ChangeMale(true);
+            femaleButton.SpeechLabel = femaleName;
             leftButton = CreateButton(game, offset + new Position(64 + 8, 35));
             leftButton.ButtonType = ButtonType.MoveLeft;
             leftButton.Visible = true;
             leftButton.LeftClickAction = () => SwapPortrait(-1);
+            leftButton.SpeechLabel = ScreenReaderTexts.GetPreviousPortrait(gameLanguage);
             rightButton = CreateButton(game, offset + new Position(160 - 8, 35));
             rightButton.ButtonType = ButtonType.MoveRight;
             rightButton.Visible = true;
             rightButton.LeftClickAction = () => SwapPortrait(1);
+            rightButton.SpeechLabel = ScreenReaderTexts.GetNextPortrait(gameLanguage);
             okButton = CreateButton(game, new Position(windowArea.Right - 16 - 32, windowArea.Bottom - 16 - 17));
             okButton.ButtonType = ButtonType.Ok;
             okButton.ToggleButton = game.Configuration.IsMobile;
+            okButton.SpeechLabel = ScreenReaderTexts.GetOk(gameLanguage);
             okButton.Visible = true;
             okButton.LeftClickAction = () =>
             {
@@ -149,6 +161,7 @@ namespace Ambermoon.Game
             };
             tutorialButton = CreateButton(game, new Position(okButton.Area.X, maleButton.Area.Y));
 			tutorialButton.ButtonType = ButtonType.ReadScroll;
+            tutorialButton.SpeechLabel = Tutorial.GetIntroductionTooltip(game.GameLanguage);
 			tutorialButton.Visible = true;
             tutorialButton.Disabled = game.Configuration.FirstStart;
             tutorialButton.Pressed = game.Configuration.FirstStart;
@@ -215,6 +228,9 @@ namespace Ambermoon.Game
             fadeArea.Y = 0;
             fadeArea.Visible = true;
             fadeInStartTime = DateTime.Now;
+
+            ScreenReaderOutput.Speak(headerText);
+            ScreenReaderOutput.Speak(ScreenReaderTexts.GetName(gameLanguage, nameInput.Text), false);
         }
 
         void DestroyAndFadeOut()
@@ -251,6 +267,7 @@ namespace Ambermoon.Game
             isFemale = female;
             portraitIndex = isFemale ? FemalePortraitIndices[0] : MalePortraitIndices[0];
             UpdatePortrait();
+            ScreenReaderOutput.Speak(isFemale ? femaleName : maleName);
         }
 
         void SwapPortrait(int offset)
@@ -264,6 +281,7 @@ namespace Ambermoon.Game
                 portraitIndex = portraits[(listIndex + offset + portraits.Length) % portraits.Length];
 
             UpdatePortrait();
+            ScreenReaderOutput.Speak(ScreenReaderTexts.GetPortrait(gameLanguage, portraits.ToList().IndexOf(portraitIndex) + 1, portraits.Length));
         }
 
         void UpdatePortrait()
@@ -403,6 +421,20 @@ namespace Ambermoon.Game
                 nameInput?.KeyChar(keyChar);
                 return;
             }
+        }
+
+        public void OnMouseMove(Position position)
+        {
+            if (fadeIn || fadeOut || !ScreenReaderOutput.Active)
+                return;
+
+            position = renderView.ScreenToGame(position);
+            maleButton?.Hover(position);
+            femaleButton?.Hover(position);
+            leftButton?.Hover(position);
+            rightButton?.Hover(position);
+            okButton?.Hover(position);
+            tutorialButton?.Hover(position);
         }
 
         public void OnMouseUp(Position position, MouseButtons buttons)

@@ -830,6 +830,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
         // This will ensure that the intro is destroyed if the main menu opens.
         intro?.Destroy();
         intro = null;
+        ScreenReaderOutput.SetLanguage(gameLanguage);
         mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
             GetText(gameLanguage, 0), GetText(gameLanguage, 1), PlayMusic, fromIntro);
         mainMenu.Closed += closeAction =>
@@ -1175,9 +1176,11 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
                                 activeMod?.AttachGame(game);
 
                             if (configuration.ScreenReader)
-                                game.ScreenReader = screenReader ??= TolkScreenReader.TryCreate();
+                                game.ScreenReader = screenReader ??= (OperatingSystem.IsWindows() ? TolkScreenReader.TryCreate() : null);
                             else if (scenarioScript != null)
                                 game.ScreenReader = new ConsoleScreenReader(); // lets scenario scripts check the spoken texts
+
+                            ScreenReaderOutput.SetLanguage(gameLanguage);
 
                             game.QuitRequested += window.Close;
                             game.MousePositionChanged += position =>
@@ -1726,6 +1729,10 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
                             return;
                         }
                     }
+
+                    // the version selector already speaks
+                    if (configuration.ScreenReader)
+                        ScreenReaderOutput.ScreenReader = screenReader ??= (OperatingSystem.IsWindows() ? TolkScreenReader.TryCreate() : null);
 
                     versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager,
                         gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption, configuration);
@@ -2332,7 +2339,8 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
             {
                 audioOutput?.Stop();
                 audioOutput?.Dispose();
-                screenReader?.Dispose();
+                if (OperatingSystem.IsWindows())
+                    screenReader?.Dispose();
                 cheatTaskCancellationTokenSource.Cancel();
             };
             window.Run();

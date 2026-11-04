@@ -103,12 +103,12 @@ namespace Ambermoon.UI
                 button?.HideTooltip();
         }
 
-        public void Hover(Position position)
+        public void Hover(Position position, bool showTooltips = true)
         {
             foreach (var button in buttons)
             {
                 if (button != null && !button.Disabled && button.Visible)
-                    button.Hover(position);
+                    button.Hover(position, showTooltips);
             }
         }
 

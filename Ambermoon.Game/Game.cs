@@ -378,6 +378,7 @@ public class Game : GameCore
         }
         else
         {
+            characterCreator?.OnMouseMove(position);
             base.OnMouseMove(position, buttons);
         }
     }

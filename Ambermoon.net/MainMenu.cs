@@ -26,6 +26,7 @@ namespace Ambermoon
         UI.UIText loadingText;
         List<KeyValuePair<Rect, Text>> mainMenuTexts = new(4);
         int hoveredTextIndex = -1;
+        readonly string[] texts;
         DateTime? hoverStartTime = null;
         const int HoverColorTime = 125;
         const int FadeInTime = 1000;
@@ -55,6 +56,7 @@ namespace Ambermoon
             this.cursor = cursor;
             this.continueLoadingText = continueLoadingText;
             this.newLoadingText = newLoadingText;
+            this.texts = texts;
             this.playMusicAction = playMusicAction;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MainMenuGraphics);
 
@@ -129,6 +131,7 @@ namespace Ambermoon
             {
                 loadingText.SetText(renderView.TextProcessor.CreateText(continued ? continueLoadingText : newLoadingText));
                 loadingText.Visible = true;
+                ScreenReaderOutput.Speak(continued ? continueLoadingText : newLoadingText);
                 finished?.Invoke();
             });
             mainMenuFader.Start(FadeOutTime, true);            
@@ -227,6 +230,9 @@ namespace Ambermoon
                     {
                         hoveredTextIndex = i;
                         hoverStartTime = DateTime.Now;
+
+                        if (mainMenuTexts[i].Value.Visible)
+                            ScreenReaderOutput.Speak(texts[i]);
                     }
                     return;
                 }

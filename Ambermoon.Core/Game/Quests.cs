@@ -8,6 +8,7 @@ namespace Ambermoon;
 partial class GameCore
 {
     readonly ILayerSprite questLogIcon;
+    bool questLogIconHovered = false;
 
     internal QuestLog? QuestLog { get; private set; }
 

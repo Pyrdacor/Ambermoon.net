@@ -352,6 +352,9 @@ public partial class QuestLog
     private readonly GameCore game;
     private readonly IGameRenderView renderView;
     private readonly UIText[] texts = new UIText[TextLineCount];
+    // what the screen reader says when a line is hovered (null for empty lines)
+    private readonly string?[] lineSpeech = new string?[TextLineCount];
+    private int hoveredLine = -1;
     private readonly Tooltip[] tooltips = new Tooltip[TextLineCount];
     private readonly Dictionary<object, bool> questGroups = []; // key = main quest type or external key, boolean = expanded
     /// <summary>
@@ -579,11 +582,34 @@ public partial class QuestLog
     {
         bool consumed = false;
 
+        if (ScreenReaderOutput.Active)
+        {
+            int hovered = -1;
+
+            for (int i = 0; i < TextLineCount; i++)
+            {
+                if (lineSpeech[i] != null && tooltips[i]?.Area?.Contains(position) == true)
+                {
+                    hovered = i;
+                    break;
+                }
+            }
+
+            // the quest name first, then the tooltip
+            if (hovered != hoveredLine)
+            {
+                hoveredLine = hovered;
+
+                if (hovered != -1)
+                    ScreenReaderOutput.Speak(lineSpeech[hovered]);
+            }
+        }
+
         foreach (var tooltip in tooltips)
         {
             if (tooltip.Enabled && tooltip.Area?.Contains(position) == true)
             {
-                game.Layout.SetActiveTooltip(position, tooltip);
+                game.Layout.SetActiveTooltip(position, tooltip, false);
                 consumed = true;
                 break;
             }
@@ -615,6 +641,7 @@ public partial class QuestLog
     {
         var area = Area;
 
+        game.Speak(ScreenReaderTexts.GetQuestLog(game.GameLanguage));
         popup = game.Layout.OpenPopup(area.Position, Columns, Rows, true, false, 8);
 
         var boxArea = new Rect(area.Left + 16 + 3 - 2, area.Top + 16 - 2, area.Width - 32 - 16 + 3, area.Height - 32 - 16 + 2);
@@ -623,6 +650,7 @@ public partial class QuestLog
         var closeButton = popup.AddButton(new Position(area.Right - 16 - Button.Width - 4, area.Bottom - 16 - Button.Height + 2));
         closeButton.ButtonType = Data.Enumerations.ButtonType.Ok;
         closeButton.LeftClickAction = () => game.Layout.ClosePopup();
+        closeButton.SpeechLabel = ScreenReaderTexts.GetOk(game.GameLanguage);
         closeButton.Visible = true;
 
         popup.Closed += () =>
@@ -664,7 +692,8 @@ public partial class QuestLog
         }
         void AddLegendText(string text)
         {
-            popup.AddText(new Position(legendAreaX, legendAreaY), text, TextColor.LightGray);
+            // the state is spoken with each quest instead
+            popup.AddText(new Position(legendAreaX, legendAreaY), text, TextColor.LightGray, speechText: "");
             legendAreaX += text.Length * Global.GlyphWidth + 4;
         }
         AddColorRect(QuestState.Active.ToColor());
@@ -681,11 +710,25 @@ public partial class QuestLog
         eyeButton.LeftClickAction = ToggleCompletedQuests;
         eyeButton.Tooltip = game.CoreConfiguration.ShowButtonTooltips ? QuestTexts.ShowCompletedQuestsTooltip.Get(game.GameLanguage) : null;
         eyeButton.TooltipColor = TextColor.Yellow;
+        eyeButton.SpeechLabel = QuestTexts.ShowCompletedQuestsTooltip.Get(game.GameLanguage);
         eyeButton.Visible = true;
 
         Redraw();
 
         Open = true;
+    }
+
+    private string GetLineSpeech(Line line)
+    {
+        string state = line.State switch
+        {
+            QuestState.Completed => QuestTexts.LegendCompleted.Get(game.GameLanguage),
+            QuestState.Blocked => QuestTexts.LegendBlocked.Get(game.GameLanguage),
+            _ => QuestTexts.LegendActive.Get(game.GameLanguage)
+        };
+        string speech = $"{line.SpeechText.Trim()}, {state}";
+
+        return line.Tooltip == null ? speech : $"{speech}. {line.Tooltip}";
     }
 
     private static string TruncateText(string text, bool header)
@@ -769,7 +812,7 @@ public partial class QuestLog
     /// A displayed line of the quest log.
     /// </summary>
     /// <param name="Key">Main quest key for headers (they can be collapsed), null for steps.</param>
-    private record Line(object? Key, bool Expanded, string Text, TextColor Color, string? Tooltip);
+    private record Line(object? Key, bool Expanded, string Text, TextColor Color, string? Tooltip, QuestState State, string SpeechText);
 
     private List<Line> GetLines(Func<QuestState, bool> filter)
     {
@@ -791,13 +834,13 @@ public partial class QuestLog
                     questGroups[quest.Key] = false; // collapse completed quests
 
                 bool expanded = questGroups[quest.Key];
-                lines.Add(new(quest.Key, expanded, " " + TruncateText(quest.Text, true), state.ToColor(), null));
+                lines.Add(new(quest.Key, expanded, " " + TruncateText(quest.Text, true), state.ToColor(), null, state, quest.Text));
 
                 if (expanded)
                 {
                     // Like the original quests: active first, completed last (stable otherwise)
                     foreach (var subQuest in quest.SubEntries.Where(s => filter(s.State)).OrderBy(s => s.State))
-                        lines.Add(new(null, false, "  " + TruncateText(subQuest.Text, false), subQuest.State.ToColor(), subQuest.Tooltip));
+                        lines.Add(new(null, false, "  " + TruncateText(subQuest.Text, false), subQuest.State.ToColor(), subQuest.Tooltip, subQuest.State, subQuest.Text));
                 }
             }
 
@@ -807,7 +850,8 @@ public partial class QuestLog
         foreach (var quest in Quests.Where(quest => filter(quest.ToCompoundState())))
         {
             bool expanded = questGroups[quest.Type];
-            lines.Add(new(quest.Type, expanded, " " + GetMainQuestText(quest.Type), quest.ToCompoundState().ToColor(), null));
+            lines.Add(new(quest.Type, expanded, " " + GetMainQuestText(quest.Type), quest.ToCompoundState().ToColor(), null,
+                quest.ToCompoundState(), QuestTexts.GetMainQuestText(game.GameLanguage, quest.Type)));
 
             if (!expanded)
                 continue;
@@ -815,7 +859,8 @@ public partial class QuestLog
             foreach (var subQuest in quest.SubQuests.Where(s => filter(s.State)).OrderBy(q => q, new SubQuestSorter(quest)))
             {
                 lines.Add(new(null, false, "  " + GetSubQuestText(subQuest.Type, subQuest.CurrentAmount, subQuest.MinAmount),
-                    subQuest.State.ToColor(), QuestTexts.Source.Get(game.GameLanguage) + subQuest.GetSourceInfo(game)));
+                    subQuest.State.ToColor(), QuestTexts.Source.Get(game.GameLanguage) + subQuest.GetSourceInfo(game),
+                    subQuest.State, GetSubQuestText(subQuest.Type, subQuest.CurrentAmount, subQuest.MinAmount)));
             }
         }
 
@@ -868,10 +913,12 @@ public partial class QuestLog
             {
                 text.Visible = false;
                 tooltip.Enabled = false;
+                lineSpeech[i] = null;
                 continue;
             }
 
             var line = lines[lineIndex];
+            lineSpeech[i] = GetLineSpeech(line);
             int y = textArea.Y + i * 7;
 
             if (line.Key != null)

@@ -1069,6 +1069,9 @@ namespace Ambermoon.UI
             if (popup != null && !popup.CanAbort && !force)
                 return;
 
+            if (popup != null)
+                game.StopSpeaking();
+
             activePopup = null;
             ClosePopup(popup!, raiseEvent);
         }
@@ -4741,8 +4744,16 @@ namespace Ambermoon.UI
             buttonGrid?.HideTooltips();
         }
 
-        internal void SetActiveTooltip(Position? cursorPosition, Tooltip? tooltip)
+        internal void SetActiveTooltip(Position? cursorPosition, Tooltip? tooltip, bool speak = true)
         {
+            if (tooltip != null)
+            {
+                if (speak)
+                    game.SpeakTooltip(tooltip.Text);
+            }
+            else if (activeTooltipText != null)
+                game.SpeakTooltip(null);
+
             if (tooltip == null) // remove
             {
                 if (activeTooltipText != null)
@@ -5887,7 +5898,45 @@ namespace Ambermoon.UI
                 HideTooltip();
                 buttonGrid?.Hover(position);
             }
+            else if (ScreenReaderOutput.Active)
+            {
+                // the screen reader speaks the tooltips also if they are not displayed
+                buttonGrid?.Hover(position, false);
+            }
         }
+
+        static readonly (SpecialItemPurpose Purpose, Rect Area)[] SpecialItemAreas =
+        [
+            (SpecialItemPurpose.MapLocation, new Rect(208, 49, 32, 24)),
+            (SpecialItemPurpose.Compass, new Rect(208, 73, 32, 32)),
+            (SpecialItemPurpose.MonsterEye, new Rect(240, 49, 32, 32)),
+            (SpecialItemPurpose.WindChain, new Rect(240, 89, 32, 15)),
+            (SpecialItemPurpose.Clock, new Rect(272, 49, 32, 24)),
+            (SpecialItemPurpose.DayTime, new Rect(272, 73, 32, 32))
+        ];
+        string? hoveredElementSpeech = null;
+
+        SpecialItemPurpose? GetHoveredSpecialItem(Position position)
+        {
+            foreach (var (purpose, area) in SpecialItemAreas)
+            {
+                if (area.Contains(position) && (specialItemSprites.ContainsKey(purpose) || specialItemTexts.ContainsKey(purpose)))
+                    return purpose;
+            }
+
+            return null;
+        }
+
+        string GetSpecialItemSpeech(SpecialItemPurpose specialItem) => specialItem switch
+        {
+            SpecialItemPurpose.Compass => ScreenReaderTexts.GetDirection(game.GameLanguage, game.PlayerAngle),
+            SpecialItemPurpose.MonsterEye => ScreenReaderTexts.GetMonsterEye(game.GameLanguage, game.MonsterSeesPlayer),
+            SpecialItemPurpose.DayTime => ScreenReaderTexts.GetDayTime(game.GameLanguage, game.GameTime!.GetDayTime()),
+            SpecialItemPurpose.WindChain => ScreenReaderTexts.GetWindChain(game.GameLanguage),
+            SpecialItemPurpose.MapLocation => ScreenReaderTexts.GetLocation(game.GameLanguage, game.PartyPosition.X + 1, game.PartyPosition.Y + 1),
+            SpecialItemPurpose.Clock => ScreenReaderTexts.GetClock(game.GameLanguage, (int)game.GameTime!.Hour, (int)game.GameTime.Minute),
+            _ => ""
+        };
 
         public bool Hover(Position position, ref CursorType cursorType)
         {
@@ -5926,7 +5975,26 @@ namespace Ambermoon.UI
 
             if (!consumed)
             {
-                if (!game.BattleRoundActive)
+                if (ScreenReaderOutput.Active)
+                {
+                    // special items (compass, clock, ...) and text panels (gold, food, ...)
+                    var specialItem = GetHoveredSpecialItem(position);
+                    string? speech = specialItem != null ? GetSpecialItemSpeech(specialItem.Value) : game.GetTextPanelSpeech(position);
+
+                    if (specialItem != null)
+                    {
+                        SetActiveTooltip(position, null);
+                        consumed = true;
+                    }
+
+                    if (speech != hoveredElementSpeech)
+                    {
+                        hoveredElementSpeech = speech;
+                        game.SpeakTooltip(speech);
+                    }
+                }
+
+                if (!consumed && !game.BattleRoundActive)
                 {
                     foreach (var tooltip in tooltips)
                     {

@@ -882,6 +882,8 @@ internal class ItemGrid
 
     public void HideTooltip()
     {
+        if (hoveredItemName != null)
+            game.SpeakTooltip(null);
         hoveredItemName?.Delete();
         hoveredItemName = null;
         hoveredItemPrice?.Delete();
@@ -902,6 +904,13 @@ internal class ItemGrid
         {
             var item = itemManager.GetItem(items[slot.Value]!.Item.ItemIndex);
             var itemNameText = renderView.TextProcessor.CreateText(item.Name);
+            var hoveredSlot = items[slot.Value]!.Item;
+            string speech = item.Name;
+            if (hoveredSlot.Stacked)
+                speech += ", " + ScreenReaderTexts.GetAmount(game.GameLanguage, hoveredSlot.Amount, hoveredSlot.Unlimited);
+            if (showPrice)
+                speech += ", " + ScreenReaderTexts.GetPrice(game.GameLanguage, item.Price);
+            game.SpeakTooltip(speech);
             int textWidth = itemNameText.MaxLineSize * Global.GlyphWidth;
             int textYOffset = Global.GlyphLineHeight - renderView.FontProvider.GetFont().GlyphHeight;
 

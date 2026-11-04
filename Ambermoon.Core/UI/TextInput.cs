@@ -134,6 +134,8 @@ namespace Ambermoon.UI
 
         public bool Empty => string.IsNullOrEmpty(currentInput);
 
+        internal string CurrentInput => currentInput;
+
         public bool Whitespace => string.IsNullOrWhiteSpace(currentInput);
 
         public static TextInput? FocusedInput { get; private set; } = null;
@@ -238,6 +240,7 @@ namespace Ambermoon.UI
                 UpdateText();
             }
 
+            ScreenReaderOutput.Speak(currentInput);
             FocusChanged?.Invoke();
         }
 
@@ -252,6 +255,8 @@ namespace Ambermoon.UI
                 if (AutoSubmit)
                     Submit();
 
+                // the full text once more after Return or when the focus is lost otherwise
+                ScreenReaderOutput.Speak(Text);
                 FocusChanged?.Invoke();
             }
         }
@@ -347,6 +352,7 @@ namespace Ambermoon.UI
             {
                 currentInput += ch;
                 UpdateText();
+                ScreenReaderOutput.Speak(ch.ToString());
             }
 
             return true;
@@ -362,8 +368,10 @@ namespace Ambermoon.UI
                 case Key.Backspace:
                     if (currentInput.Length != 0)
                     {
+                        string removed = currentInput[^1..];
                         currentInput = currentInput.Remove(currentInput.Length - 1);
                         UpdateText();
+                        ScreenReaderOutput.Speak(removed);
                     }
                     break;
                 case Key.Return:

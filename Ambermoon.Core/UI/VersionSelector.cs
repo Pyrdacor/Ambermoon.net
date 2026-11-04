@@ -101,6 +101,7 @@ namespace Ambermoon.UI
             }
         }
         uint ticks = 0;
+        string? lastHoverSpeech = null;
 
 		public event Action<int, Func<IGameData>, bool>? Closed;
 
@@ -369,6 +370,7 @@ namespace Ambermoon.UI
                 new Rect(0, 0, versionAreas[0].Width - 4, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             confirmationText!.Text = wrappedText;
             confirmationText.Visible = true;
+            ScreenReaderOutput.Speak(text);
             ShowLanguageButtons(false);
             ShowButton(cancelButton!, true);
             ShowSaveOptionButton(false);
@@ -699,6 +701,8 @@ namespace Ambermoon.UI
             if (ConfirmationActive && key != Key.Return && key != Key.Space)
                 return;
 
+            int previousVersion = SelectedVersion;
+
             switch (key)
             {
                 case Key.Up:
@@ -732,6 +736,9 @@ namespace Ambermoon.UI
                     break;
                 }
             }
+
+            if (SelectedVersion != previousVersion)
+                ScreenReaderOutput.Speak(GetVersionSpeech(SelectedVersion));
 
             if (!IsSelectedVersionFromExternalData())
                 HideTooltip();
@@ -819,6 +826,66 @@ namespace Ambermoon.UI
             UpdateFlags();
             UpdateSaveOptionTexts();
             UpdateVersionTexts(configuration.Language);
+
+            // initially and after a language change
+            ScreenReaderOutput.SetLanguage(configuration.Language);
+            ScreenReaderOutput.Speak(GetHeaderText().Replace("(?)", "").Trim().TrimEnd(':'));
+            ScreenReaderOutput.Speak(GetVersionSpeech(selectedVersion), false);
+            lastHoverSpeech = null;
+        }
+
+        string GetVersionSpeech(int index)
+        {
+            var gameVersions = mergedGameVersions[index];
+            var gameVersion = gameVersions.FirstOrDefault(v => v.Language == selectedVersionLanguages[index]) ?? gameVersions.First();
+
+            return $"{gameVersion.Info.Trim()}, {gameVersion.Version.Trim()}, {GetLanguageText(gameVersion.Language)}";
+        }
+
+        void SpeakHoveredElement(Position position)
+        {
+            string? speech = null;
+
+            if (okButton!.Visible && okButton.Area.Contains(position))
+                speech = ScreenReaderTexts.GetOk(configuration.Language);
+            else if (cancelButton!.Visible && cancelButton.Area.Contains(position))
+                speech = ScreenReaderTexts.GetCancel(configuration.Language);
+            else if (!ConfirmationActive)
+            {
+                for (int i = 0; i < versionAreas.Count; ++i)
+                {
+                    if (versionAreas[i].Contains(position) && scrollOffset + i < versionCount)
+                        speech = GetVersionSpeech(scrollOffset + i);
+                }
+
+                for (int i = 0; i < languageChangeButtons.Count; ++i)
+                {
+                    var button = languageChangeButtons[i];
+
+                    if (position.X >= button.X && position.X < button.X + button.Width &&
+                        position.Y >= button.Y && position.Y < button.Y + button.Height)
+                        speech = GetLanguageText((GameLanguage)i);
+                }
+
+                if (IsSelectedVersionFromExternalData())
+                {
+                    if (changeSaveOptionButton!.Visible && changeSaveOptionButton.Area.Contains(position))
+                        speech = GetSavegameOptionText(1 - selectedSaveOption);
+                    else if (saveOptionTooltip.Area!.Contains(position))
+                        speech = GetSavegameOptionText(selectedSaveOption) + ". " + GetSavegameOptionTooltip(selectedSaveOption);
+                }
+
+                if (gameDataVersionTooltipArea!.Contains(position))
+                    speech = GetVersionInfoTooltip();
+            }
+
+            if (speech != lastHoverSpeech)
+            {
+                lastHoverSpeech = speech;
+
+                if (speech != null)
+                    ScreenReaderOutput.Speak(speech);
+            }
         }
 
         void HighlightVersion(int index)
@@ -869,6 +936,9 @@ namespace Ambermoon.UI
 
             position = renderView.ScreenToGame(position);
 
+            if (ScreenReaderOutput.Active)
+                SpeakHoveredElement(position);
+
             if (ConfirmationActive)
                 return;
 
@@ -908,6 +978,8 @@ namespace Ambermoon.UI
                     SelectedVersion = (SelectedVersion - 1 + versionCount) % versionCount;
                 else
                     SelectedVersion = (SelectedVersion + 1) % versionCount;
+
+                ScreenReaderOutput.Speak(GetVersionSpeech(SelectedVersion));
 
                 if (!IsSelectedVersionFromExternalData())
                     HideTooltip();

@@ -506,6 +506,8 @@ namespace Ambermoon.UI
             tooltip.Visible = false;
         }
 
+        bool speechHovered = false;
+
         public string? Tooltip
         {
             get => tooltipText;
@@ -805,9 +807,24 @@ namespace Ambermoon.UI
             return false;
         }
 
-        public void Hover(Position position)
+        /// <summary>
+        /// Spoken by the screen reader on hover if there is no tooltip.
+        /// </summary>
+        public string? SpeechLabel { get; set; }
+
+        public void Hover(Position position, bool showTooltip = true)
         {
-            if (!string.IsNullOrEmpty(tooltipText) && Area.Contains(position))
+            bool hovered = Area.Contains(position);
+
+            if (hovered != speechHovered)
+            {
+                speechHovered = hovered;
+
+                if (hovered)
+                    ScreenReaderOutput.Speak(string.IsNullOrWhiteSpace(tooltipText) ? SpeechLabel : tooltipText);
+            }
+
+            if (showTooltip && !string.IsNullOrEmpty(tooltipText) && hovered)
                 SetTooltip(tooltipText);
             else
                 HideTooltip();

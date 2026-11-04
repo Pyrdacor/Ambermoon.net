@@ -239,6 +239,19 @@ partial class GameCore
 
         if (QuestLog?.Open == true)
             QuestLog.Hover(renderView.ScreenToGame(position));
+
+        if (ScreenReaderOutput.Active)
+        {
+            bool iconHovered = QuestLogIconVisible && QuestLog?.Open != true && QuestLogIconArea.Contains(renderView.ScreenToGame(position));
+
+            if (iconHovered != questLogIconHovered)
+            {
+                questLogIconHovered = iconHovered;
+
+                if (iconHovered)
+                    Speak(ScreenReaderTexts.GetQuestLog(GameLanguage));
+            }
+        }
     }
 
     public virtual void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
