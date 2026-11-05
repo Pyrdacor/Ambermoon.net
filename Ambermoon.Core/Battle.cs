@@ -353,6 +353,7 @@ namespace Ambermoon
                 HasStartAnimation = true;
                 animationStartTicks = 0;
                 startAnimationRunning = true;
+                game.CursorType = CursorType.VideoWait; // Ambermoon Advanced: wait cursor during the start animations
                 currentlyAnimatedMonster = startAnimationMonsters.First();
 
                 foreach (var monster in startAnimationMonsters.Skip(1))
@@ -418,6 +419,9 @@ namespace Ambermoon
                 {
                     var animationType = currentAction.Action.ToAnimationType();
 
+                    if (animationType == MonsterAnimationType.Move)
+                        animationType = currentMonster.MoveAnimationType;
+
                     if (animationType != null)
                     {
                         if (idleAnimationRunning) // idle animation still running
@@ -465,6 +469,8 @@ namespace Ambermoon
                         game.EndSequence();
                         animationStartTicks = null;
                         startAnimationRunning = false;
+                        game.CursorType = CursorType.Sword;
+                        game.UpdateCursor();
                         if (currentlyAnimatedMonster != null)
                             layout.ResetMonsterCombatSprite(currentlyAnimatedMonster);
                         SetupNextIdleAnimation(normalizedBattleTicks);
@@ -1400,8 +1406,14 @@ namespace Ambermoon
 
                         var newDisplayPosition = layout.GetMonsterCombatCenterPosition((int)battleAction.ActionParameter % 6, (int)newRow, monster);
                         animation!.AnimationFinished += MoveAnimationFinished;
-                        var frames = monster.GetAnimationFrameIndices(MonsterAnimationType.Move);
-                        animation.Play(frames, (uint)Math.Max(Math.Abs(newRow - currentRow), Math.Abs(newColumn - currentColumn)) * GameCore.TicksPerSecond / (2 * (uint)frames.Length),
+                        var moveAnimationType = monster.MoveAnimationType;
+                        var frames = monster.GetAnimationFrameIndices(moveAnimationType);
+                        uint distance = (uint)Math.Max(Math.Abs(newRow - currentRow), Math.Abs(newColumn - currentColumn));
+                        // Ambermoon Advanced: the separate move animation uses a fixed frame duration, so longer animations are slower
+                        uint ticksPerFrame = moveAnimationType == MonsterAnimationType.AdvancedMove
+                            ? distance * GameCore.TicksPerSecond / 12
+                            : distance * GameCore.TicksPerSecond / (2 * (uint)frames.Length);
+                        animation.Play(frames, ticksPerFrame,
                             battleTicks, newDisplayPosition, layout.RenderView.GraphicInfoProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
                         currentBattleAnimation = animation;
                         currentlyAnimatedMonster = monster;

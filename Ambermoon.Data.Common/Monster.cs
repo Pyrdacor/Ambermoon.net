@@ -80,6 +80,13 @@ namespace Ambermoon.Data
 
         public int GetAnimationFrameCount(MonsterAnimationType animationType) => Animations[(int)animationType].UsedAmount;
 
+        /// <summary>
+        /// Animation for moving on the battlefield. Uses the AdvancedMove animation if present,
+        /// otherwise the Move animation (which is also the idle animation).
+        /// </summary>
+        public MonsterAnimationType MoveAnimationType => Animations[(int)MonsterAnimationType.AdvancedMove].UsedAmount != 0
+            ? MonsterAnimationType.AdvancedMove : MonsterAnimationType.Move;
+
         public int[] GetAnimationFrameIndices(MonsterAnimationType animationType)
         {
             var animation = Animations[(int)animationType];
