@@ -3556,11 +3556,17 @@ namespace Ambermoon
             }
 
             List<BattleActionType> possibleActions = [];
-            bool canAttackRanged = true;
-            bool canAttackMelee = true;
+            // Monsters which can neither attack nor move (e.g. lamed) would just do nothing when picking
+            // an attack. Like in the original they try the remaining options instead, so they cast if possible.
+            bool canAttackOrMove = monster.Conditions.CanAttack() || monster.CanMove();
+            bool canAttackRanged = canAttackOrMove;
+            bool canAttackMelee = canAttackOrMove;
 
             while (true)
             {
+                if (!canAttackRanged && !canAttackMelee && !canCast)
+                    return BattleActionType.None;
+
                 int rand = game.RandomInt(0, 15);
 
                 if (rand < 8)
