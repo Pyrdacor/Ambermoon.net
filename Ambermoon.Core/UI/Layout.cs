@@ -1973,17 +1973,8 @@ namespace Ambermoon.UI
             exitButton.ButtonType = ButtonType.Exit;
             exitButton.Disabled = false;
             exitButton.InstantAction = false;
-            exitButton.LeftClickAction = () =>
-            {
-                FullscreenOptionUpdateRequested -= UpdateFullscreenOption;
-                ClosePopup();
-                CloseOptionMenu();
-                if (changedConfiguration)
-                {
-                    game.CoreConfiguration.EnableCheats = cheatsEnabled;
-                    game.NotifyConfigurationChange(windowChange);
-                }
-            };
+            // only close the popup, the rest is done in the Closed event (also used when closing by right click)
+            exitButton.LeftClickAction = () => ClosePopup();
             exitButton.Visible = true;
 
             ShowOptions();
@@ -2044,6 +2035,13 @@ namespace Ambermoon.UI
                 BattleSpeedChanged -= SetBattleSpeed;
                 MusicChanged -= SetMusic;
                 VolumeChanged -= SetVolume;
+                FullscreenOptionUpdateRequested -= UpdateFullscreenOption;
+
+                if (changedConfiguration)
+                {
+                    game.CoreConfiguration.EnableCheats = cheatsEnabled;
+                    game.NotifyConfigurationChange(windowChange);
+                }
             };
         }
 

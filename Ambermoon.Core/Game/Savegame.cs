@@ -75,12 +75,19 @@ partial class GameCore
         Action<Action>? preLoadAction = null, bool exitWhenFailing = true, Action<int>? postAction = null,
         bool updateSlot = false)
     {
+        bool questLogIconWasVisible = QuestLogIconVisible;
+
         void Failed()
         {
             if (exitWhenFailing)
+            {
                 Exit();
+            }
             else
+            {
+                QuestLogIconVisible = questLogIconWasVisible;
                 ClosePopup();
+            }
         }
 
         int totalSavegames = Provider_NumSavegameSlots();
@@ -91,6 +98,10 @@ partial class GameCore
         {
             if (showError)
             {
+                // Without a running game (e.g. loading at startup) the quest log icon must not be shown with the error message.
+                if (CurrentSavegame == null)
+                    QuestLogIconVisible = false;
+
                 if (loadInitialOnError && slot != 0)
                 {
                     savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, 0, totalSavegames);
@@ -104,8 +115,11 @@ partial class GameCore
                     {
                         void ProceedWithInitial()
                         {
-                            ShowMessagePopup(GetCustomText(CustomTexts.Index.FailedToLoadSavegameUseInitial),
-                                () => this.Start(savegame), TextAlign.Center, 200);
+                            ShowMessagePopup(GetCustomText(CustomTexts.Index.FailedToLoadSavegameUseInitial), () =>
+                            {
+                                QuestLogIconVisible = true;
+                                this.Start(savegame);
+                            }, TextAlign.Center, 200);
                         }
                         if (preLoadAction != null)
                             preLoadAction?.Invoke(ProceedWithInitial);
