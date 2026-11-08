@@ -474,6 +474,8 @@ public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
     public bool OnDown(MotionEvent e)
     {
         longPressHandler.RemoveCallbacksAndMessages(null);
+        accumulatedScrollX = 0;
+        accumulatedScrollY = 0;
 
         if (e.PointerCount == 1)
         {
@@ -506,6 +508,8 @@ public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
 
     private const int SCROLL_DELAY = 100; // 100 ms
     private double lastScrollTime = 0;
+    private float accumulatedScrollX = 0;
+    private float accumulatedScrollY = 0;
 
     public bool OnScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
     {
@@ -513,18 +517,23 @@ public class MainActivity : SilkActivity, GestureDetector.IOnGestureListener
 
         var now = DateTime.Now.TimeOfDay.TotalMilliseconds;
 
+        // the distances are only those since the last scroll event (a few pixels),
+        // so they are accumulated until a scroll step is triggered
+        accumulatedScrollX += distanceX;
+        accumulatedScrollY += distanceY;
+
         if (now - lastScrollTime < SCROLL_DELAY)
             return true;
 
         // scroll distance should be 10 virtual pixels minimum
         float widthThreshold = 10.0f * gameWindow.Width / Global.VirtualScreenWidth;
         float heightThreshold = 10.0f * gameWindow.Height / Global.VirtualScreenHeight;
-        if (Math.Abs(distanceX) < widthThreshold)
-            distanceX = 0;
-        if (Math.Abs(distanceY) < heightThreshold)
-            distanceY = 0;
+        distanceX = Math.Abs(accumulatedScrollX) < widthThreshold ? 0 : accumulatedScrollX;
+        distanceY = Math.Abs(accumulatedScrollY) < heightThreshold ? 0 : accumulatedScrollY;
         if (distanceX == 0 && distanceY == 0)
             return true;
+        accumulatedScrollX = 0;
+        accumulatedScrollY = 0;
         var coords = new MotionEvent.PointerCoords();
         e2.GetPointerCoords(0, coords);
         var position = new Position(Util.Round(coords.X), Util.Round(coords.Y));

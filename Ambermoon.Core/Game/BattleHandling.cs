@@ -1430,7 +1430,8 @@ partial class GameCore
             action.Parameter = parameter;
             int slot = SlotFromPartyMember(currentPickingActionMember!)!.Value;
             layout.UpdateCharacterStatus(slot, actionType.ToStatusGraphic(parameter, ItemManager));
-            AddCurrentPlayerActionVisuals(action);
+            // Note: The battle field only shows the target of the active party member. The target of
+            // this party member is shown when it becomes the active one (AddCurrentPlayerActionVisuals).
         }
     }
 
@@ -1499,6 +1500,27 @@ partial class GameCore
 
             return false;
         });
+    }
+
+    /// <summary>
+    /// Picks a party member by its portrait as the target of a friend spell (also from an item)
+    /// or as the member to blink. Returns false if no such target is picked at the moment.
+    /// </summary>
+    internal bool PickBattleFriendTargetByPortrait(int partyMemberSlot)
+    {
+        if (currentBattle == null || currentBattle.RoundActive ||
+            (currentPlayerBattleAction != PlayerBattleAction.PickFriendSpellTarget &&
+            currentPlayerBattleAction != PlayerBattleAction.PickMemberToBlink))
+            return false;
+
+        var partyMember = GetPartyMember(partyMemberSlot);
+        int position = partyMember == null ? -1 : currentBattle.GetSlotFromCharacter(partyMember);
+
+        // party members which are not on the battle field (e.g. fled) can't be picked
+        if (position >= 0)
+            BattleFieldSlotClicked(position % 6, position / 6, MouseButtons.Left);
+
+        return true;
     }
 
     void BattleFieldSlotClicked(int column, int row, MouseButtons mouseButtons)
@@ -1827,7 +1849,8 @@ partial class GameCore
                     );
                 }
                 RemoveCurrentPlayerActionVisuals();
-                TrapMouse(Global.BattleFieldArea);
+                // the party members can also be picked by their portraits
+                TrapMouse(new Rect(0, 0, Global.VirtualScreenWidth, Global.BattleFieldArea.Bottom));
                 blinkingHighlight = true;
                 layout.SetBattleMessage(playerBattleAction == PlayerBattleAction.PickMemberToBlink
                     ? DataNameProvider.BattleMessageWhoToBlink
