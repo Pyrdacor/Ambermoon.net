@@ -138,6 +138,8 @@ partial class GameCore
             }
 
             CurrentInventoryIndex = slot;
+            // the item grids belong to this party member, CurrentInventoryIndex might already be reset (e.g. when the window is closed)
+            int inventoryPartyMemberIndex = slot;
             var partyMember = GetPartyMember(slot);
 
             layout.Reset(switchedFromOtherPartyMember);
@@ -291,7 +293,7 @@ partial class GameCore
                     {
                         RemoveEquipment(targetSlot.Value, itemSlot, 1);
                         AddInventoryItem(slot, itemSlot, 1);
-                        RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(targetSlot.Value + 1), ItemManager!.GetItem(itemSlot.ItemIndex));
+                        RecheckBattleEquipment(inventoryPartyMemberIndex, (EquipmentSlot)(targetSlot.Value + 1), ItemManager!.GetItem(itemSlot.ItemIndex));
                     }
 
                     UpdateOccupiedHandsAndFingers();
@@ -343,7 +345,7 @@ partial class GameCore
                 inventoryGrid.SetItem(targetSlot, targetItemSlot);
                 itemGrid.SetItem(slot, itemSlot);
 
-                RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slot + 1), ItemManager.GetItem(targetItemSlot.ItemIndex));
+                RecheckBattleEquipment(inventoryPartyMemberIndex, (EquipmentSlot)(slot + 1), ItemManager.GetItem(targetItemSlot.ItemIndex));
                 UpdateOccupiedHandsAndFingers();
             }
             layout.AddItemGrid(equipmentGrid);
@@ -360,9 +362,9 @@ partial class GameCore
             }
             void RemoveEquipment(int slotIndex, ItemSlot itemSlot, int amount, bool updateSlot = true)
             {
-                RecheckUsedBattleItem(CurrentInventoryIndex.Value, slotIndex, true);
+                RecheckUsedBattleItem(inventoryPartyMemberIndex, slotIndex, true);
                 var item = ItemManager!.GetItem(itemSlot.ItemIndex);
-                EquipmentRemoved(item, amount, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
+                EquipmentRemoved(partyMember, item, amount, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
 
                 if (updateSlot)
                 {
@@ -383,7 +385,7 @@ partial class GameCore
                 if (item.Flags.HasFlag(ItemFlags.Accursed))
                     itemSlot.Flags |= ItemSlotFlags.Cursed;
 
-                EquipmentAdded(item, amount);
+                EquipmentAdded(item, amount, partyMember);
 
                 if (item.NumberOfHands == 2 && slotIndex == (int)EquipmentSlot.RightHand - 1)
                 {
@@ -397,20 +399,20 @@ partial class GameCore
             }
             void RemoveInventoryItem(int slotIndex, ItemSlot itemSlot, int amount)
             {
-                RecheckUsedBattleItem(CurrentInventoryIndex.Value, slotIndex, false);
-                InventoryItemRemoved(ItemManager!.GetItem(itemSlot.ItemIndex), amount);
+                RecheckUsedBattleItem(inventoryPartyMemberIndex, slotIndex, false);
+                InventoryItemRemoved(ItemManager!.GetItem(itemSlot.ItemIndex), amount, partyMember);
                 UpdateCharacterInfo();
             }
             void AddInventoryItem(int slotIndex, ItemSlot itemSlot, int amount)
             {
-                InventoryItemAdded(ItemManager!.GetItem(itemSlot.ItemIndex), amount);
+                InventoryItemAdded(ItemManager!.GetItem(itemSlot.ItemIndex), amount, partyMember);
                 UpdateCharacterInfo();
             }
             equipmentGrid.ItemExchanged += (int slotIndex, ItemSlot draggedItem, int draggedAmount, ItemSlot droppedItem) =>
             {
                 RemoveEquipment(slotIndex, draggedItem, draggedAmount);
                 AddEquipment(slotIndex, droppedItem, droppedItem.Amount);
-                RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), ItemManager!.GetItem(draggedItem.ItemIndex));
+                RecheckBattleEquipment(inventoryPartyMemberIndex, (EquipmentSlot)(slotIndex + 1), ItemManager!.GetItem(draggedItem.ItemIndex));
             };
             equipmentGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount, bool updateSlot) =>
             {
@@ -425,12 +427,12 @@ partial class GameCore
                     }
                 }
                 // TODO: When resetting the item back to the slot (even just dropping it there) the previous battle action should be restored.
-                RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), ItemManager!.GetItem(itemSlot.ItemIndex));
+                RecheckBattleEquipment(inventoryPartyMemberIndex, (EquipmentSlot)(slotIndex + 1), ItemManager!.GetItem(itemSlot.ItemIndex));
             };
             equipmentGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot, int amount) =>
             {
                 AddEquipment(slotIndex, itemSlot, amount);
-                RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), null);
+                RecheckBattleEquipment(inventoryPartyMemberIndex, (EquipmentSlot)(slotIndex + 1), null);
             };
             inventoryGrid.ItemExchanged += (int slotIndex, ItemSlot draggedItem, int draggedAmount, ItemSlot droppedItem) =>
             {
