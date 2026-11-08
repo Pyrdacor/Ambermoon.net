@@ -23,6 +23,21 @@ Version 1.15
 - Quest log: Fixed the counter of collected essences while giving them to Sandra
 - Quest log: The unknown world is completed when Sheera gets the ten charged triis (Advanced)
 - World map: The Czech map names the castle 'Pevnost Godsbane'
+- Battle: Bosses play their appear animation first, summoned monsters appear afterwards
+- Battle: Monsters which can neither attack nor move try their spells instead of doing nothing
+- Battle: The targets of friend spells and items and the member to blink can also be picked by the portraits
+- Battle: Only the target of the active party member is highlighted on the battle field
+- Advanced: Monsters can have a separate move animation
+- Android: Scrollbars react to scroll gestures (e.g. in the inventory)
+- Fixed the garbled text of the credits
+- Duplicated items add to the total weight
+- Fixed a possible crash when moving items in the inventory
+- The eye button of the item info no longer stays pressed when the extended info is closed by clicking it
+- The exit button of the options popup only closes the popup, closing it by right click also applies changed options
+- The quest log icon is hidden during the outro and the credits and if a savegame can't be loaded at startup
+- The savegame remembers that the map of Lyramion and the rune alphabet were obtained, the key M shows a message without the map
+- Fixed the storage of game options in savegames
+- Czech: Corrected the tooltips for parry and blindness
 
 Version 1.14
 ============
