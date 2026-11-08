@@ -346,9 +346,11 @@ namespace Ambermoon
 
             effectAnimations = [];
 
-            var startAnimationMonsters = Monsters.Where(m => m.Animations[(int)MonsterAnimationType.Start].UsedAmount != 0);
+            // Ambermoon Advanced: bosses appear first, so summoned monsters can appear after them
+            var startAnimationMonsters = Monsters.Where(m => m.Animations[(int)MonsterAnimationType.Start].UsedAmount != 0)
+                .OrderBy(m => m.BattleFlags.HasFlag(BattleFlags.Boss) ? 0 : 1).ToList();
 
-            if (startAnimationMonsters.Any())
+            if (startAnimationMonsters.Count != 0)
             {
                 HasStartAnimation = true;
                 animationStartTicks = 0;
