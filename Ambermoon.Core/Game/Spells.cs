@@ -572,6 +572,9 @@ partial class GameCore
                         }
                         else
                         {
+                            // the copy adds to the total weight
+                            InventoryItemAdded(item, 1, CurrentInventory);
+                            UpdateCharacterInfo();
                             finishAction?.Invoke();
                         }
                     });
