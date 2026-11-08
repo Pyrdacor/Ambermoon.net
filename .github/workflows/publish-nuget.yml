@@ -52,4 +52,9 @@ jobs:
 
       - name: Push the packages
         shell: pwsh
-        run: dotnet nuget push "nuget/*.nupkg" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        # each package with its full path, the pattern nuget/*.nupkg was reported as a missing file
+        run: |
+          foreach ($package in Get-ChildItem nuget -Filter *.nupkg) {
+            dotnet nuget push $package.FullName --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+            if ($LASTEXITCODE -ne 0) { throw "Pushing $($package.Name) failed" }
+          }
