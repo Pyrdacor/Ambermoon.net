@@ -731,6 +731,25 @@ partial class GameCore
     /// of the party member in slot 1-6 (e.g. so a strong party member can carry something heavy).
     /// Returns the number of dropped item slots or null if there is no such party member.
     /// </summary>
+    /// <summary>
+    /// Identifies an inventory item (1-based slot) of a party member like the identification spell.
+    /// </summary>
+    public bool ScriptIdentifyItem(int partyMemberSlot, int inventorySlot)
+    {
+        var partyMember = GetPartyMember(partyMemberSlot - 1);
+
+        if (partyMember == null || inventorySlot < 1 || inventorySlot > partyMember.Inventory.Slots.Length)
+            return false;
+
+        var itemSlot = partyMember.Inventory.Slots[inventorySlot - 1];
+
+        if (itemSlot.Empty)
+            return false;
+
+        itemSlot.Flags |= ItemSlotFlags.Identified;
+        return true;
+    }
+
     public int? ScriptDropItems(int slot)
     {
         var partyMember = GetPartyMember(slot - 1);

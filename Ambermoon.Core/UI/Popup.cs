@@ -496,6 +496,10 @@ namespace Ambermoon.UI
 
         public bool TestButtonRightClick(Position position)
         {
+            // see Click
+            if (popup != null)
+                return false;
+
             // Note: RightMouseDown may remove buttons or close the popup.
             for (int i = buttons.Count - 1; i >= 0; --i)
             {
@@ -512,6 +516,11 @@ namespace Ambermoon.UI
         public bool Click(Position position, MouseButtons mouseButtons, out bool ignoreNextMouseUp)
         {
             ignoreNextMouseUp = false;
+
+            // While a child popup is open, the mouse up only closes it. So nothing below
+            // (like buttons) must be pressed as it would never be released.
+            if (popup != null)
+                return true;
 
             if (mouseButtons == MouseButtons.Left && listBox?.Editing == true)
             {

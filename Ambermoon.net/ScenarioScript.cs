@@ -698,6 +698,11 @@ sealed class ScenarioScript
                         // moves the mouse to a game position (320x200), e.g. to show a tooltip
                         host.Hover(host.GameToWindow(new Position(int.Parse(parts[1]), int.Parse(parts[2]))));
                         break;
+                    case "identify":
+                        // identify <party member slot> <inventory slot>
+                        if (!game.ScriptIdentifyItem(int.Parse(parts[1]), int.Parse(parts[2])))
+                            Report(false, $"inventory slot {parts[2]} of party member {parts[1]} could not be identified");
+                        break;
                     case "dropitems":
                     {
                         int? dropped = game.ScriptDropItems(int.Parse(parts[1]));
