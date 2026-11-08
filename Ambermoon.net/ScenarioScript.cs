@@ -562,6 +562,9 @@ sealed class ScenarioScript
                     case "leave":
                         ReportError(game.ScriptLeaveConversation());
                         break;
+                    case "outro":
+                        game.ScriptStartOutro();
+                        break;
                     case "talkwait":
                         talkTimeout = DateTime.Now.AddMilliseconds(parts.Length > 1 ? int.Parse(parts[1]) : 15000);
                         talkQuietTime = parts.Length > 2 ? int.Parse(parts[2]) : 2000;

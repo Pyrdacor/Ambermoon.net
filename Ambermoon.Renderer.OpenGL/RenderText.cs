@@ -51,6 +51,8 @@ internal class RenderText : RenderNode, IRenderText
     protected readonly int characterWidth = CharacterWidth;
     protected readonly int characterHeight = CharacterHeight;
     protected readonly int lineHeight = LineHeight;
+    // size of a glyph inside the texture atlas (the character size might be scaled by a size factor, e.g. for sub-pixel text)
+    readonly Size textureSize = new(CharacterWidth, CharacterHeight);
 
     public RenderText(byte defaultTextPaletteIndex, Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping)
         : base(0, 0, virtualScreen)
@@ -75,9 +77,10 @@ internal class RenderText : RenderNode, IRenderText
 
     public RenderText(byte defaultTextPaletteIndex, Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
         IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign,
-        int characterWidth = CharacterWidth, int characterHeight = CharacterHeight, int lineHeight = LineHeight)
+        int characterWidth = CharacterWidth, int characterHeight = CharacterHeight, int lineHeight = LineHeight, int sizeFactor = 1)
         : base(text.MaxLineSize * characterWidth, text.LineCount * characterHeight - (lineHeight - characterHeight), virtualScreen)
     {
+        textureSize = new(characterWidth / sizeFactor, characterHeight / sizeFactor);
         paletteIndex = defaultTextPaletteIndex;
         this.glyphTextureMapping = glyphTextureMapping;
         this.bounds = bounds;
@@ -418,7 +421,7 @@ internal class RenderText : RenderNode, IRenderText
                 PaletteIndex = PaletteIndex,
                 Visible = Visible,
                 ClipArea = ClipArea,
-                TextureSize = new Size(characterWidth, characterHeight),
+                TextureSize = new Size(textureSize),
             };
 
             characterSprites.Add(sprite);
@@ -438,7 +441,7 @@ internal class RenderText : RenderNode, IRenderText
                     Layer = Layer,
                     PaletteIndex = PaletteIndex,                        
                     Visible = Visible,
-                    TextureSize = new Size(characterWidth, characterHeight),
+                    TextureSize = new Size(textureSize),
                 };
                 shadowSprite.ClipArea = ClipArea;
 
@@ -536,7 +539,7 @@ public class RenderTextFactory(Rect virtualScreen) : IRenderTextFactory
     {
         return new RenderText(defaultTextPaletteIndex, new(positionFactor * VirtualScreen.Position, sizeFactor * VirtualScreen.Size),
             GlyphTextureMapping, layer, text, textColor, shadow, new(positionFactor * bounds.Position, sizeFactor * bounds.Size),
-            textAlign, sizeFactor * RenderText.CharacterWidth, sizeFactor * RenderText.CharacterHeight, sizeFactor * RenderText.LineHeight);
+            textAlign, sizeFactor * RenderText.CharacterWidth, sizeFactor * RenderText.CharacterHeight, sizeFactor * RenderText.LineHeight, sizeFactor);
     }
 
     public IRenderText CreateDigits(byte defaultTextPaletteIndex, IRenderLayer layer, IText digits, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)

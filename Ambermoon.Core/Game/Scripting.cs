@@ -160,6 +160,11 @@ partial class GameCore
     }
 
     /// <summary>
+    /// Starts the outro like the teleport event at the end of the game.
+    /// </summary>
+    public void ScriptStartOutro() => Hook_Outro();
+
+    /// <summary>
     /// Triggers the map events at the given 1-based map position.
     /// </summary>
     public bool ScriptTriggerMapEvent(EventTrigger trigger, uint x, uint y)
