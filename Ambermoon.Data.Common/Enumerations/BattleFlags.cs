@@ -12,5 +12,6 @@ public enum BattleFlags : byte
     Animal = 0x08,
     EarthSpellDamageBonus = 0x10,
     WindSpellDamageBonus = 0x20,
-    FireSpellDamageBonus = 0x40
+    FireSpellDamageBonus = 0x40,
+    Passive = 0x80 // Ambermoon Advanced: never attacks, moves or flees (only casts if possible), but is not lamed
 }

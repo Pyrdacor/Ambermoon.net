@@ -224,6 +224,7 @@ namespace Ambermoon
         readonly Queue<BattleAction> roundBattleActions = [];
         readonly Character?[] battleField = new Character?[6 * 5];
         readonly List<PartyMember> parryingPlayers = new(GameCore.MaxPartyMembers);
+        readonly List<Monster> parryingMonsters = []; // Ambermoon Advanced: monsters which do nothing else parry like in the original
         readonly List<Character> fledCharacters = [];
         readonly List<PartyMember> hurriedPlayers = [];
         readonly Dictionary<int, int> monsterSizeDisplayLayerMapping = [];
@@ -582,7 +583,11 @@ namespace Ambermoon
             if (roundBattleActions.Count == 0)
             {
                 // Check for monster advance at end of round
-                if (!anyMonsterWantedToFlee && CanMonstersMoveForward && PartyMembers.Count(p => p.Alive && !p.Conditions.HasFlag(Condition.Petrified) && !fledCharacters.Contains(p)) > 1)
+                // Ambermoon Advanced: all monsters advance together, so none of them may be passive, unable to move
+                // (lamed, asleep, petrified), mad or panicked
+                if (!anyMonsterWantedToFlee && CanMonstersMoveForward && PartyMembers.Count(p => p.Alive && !p.Conditions.HasFlag(Condition.Petrified) && !fledCharacters.Contains(p)) > 1 &&
+                    Monsters.Where(m => m.Alive && !fledCharacters.Contains(m)).All(m => m.CanMove() && !m.BattleFlags.HasFlag(BattleFlags.Passive) &&
+                        !m.Conditions.HasFlag(Condition.Crazy) && !m.Conditions.HasFlag(Condition.Panic)))
                 {
                     var firstMonster = Monsters.FirstOrDefault(c => c.Alive && !fledCharacters.Contains(c)); // take any existing one to avoid NullRef exception
                     if (firstMonster != null)
@@ -807,6 +812,7 @@ namespace Ambermoon
                         .ThenBy(c => c!.Type)
                         .ToList();
                     parryingPlayers.Clear();
+                    parryingMonsters.Clear();
 
                     foreach (var droppedWeaponMonster in droppedWeaponMonsters)
                     {
@@ -936,7 +942,8 @@ namespace Ambermoon
 
         void AddMonsterActions(Monster monster, List<int> forbiddenMonsterMoveSpots)
         {
-            bool wantsToFlee = MonsterWantsToFlee(monster);
+            // Ambermoon Advanced: passive monsters never flee
+            bool wantsToFlee = !monster.BattleFlags.HasFlag(BattleFlags.Passive) && MonsterWantsToFlee(monster);
 
             if (wantsToFlee)
                 anyMonsterWantedToFlee = true;
@@ -950,7 +957,12 @@ namespace Ambermoon
                 action = PickMonsterAction(monster, wantsToFlee, forbiddenMonsterMoveSpots, canCast);
 
                 if (action == BattleActionType.None) // do nothing
+                {
+                    // Ambermoon Advanced: like in the original the monster parries instead
+                    if (monster.Conditions.CanParry())
+                        parryingMonsters.Add(monster);
                     return;
+                }
 
                 actionParameter = PickActionParameter(action, monster, wantsToFlee, forbiddenMonsterMoveSpots);
 
@@ -1734,17 +1746,17 @@ namespace Ambermoon
                             return;
                         }
 
-                        if (target is PartyMember targetPlayer)
+                        if (target is PartyMember targetPlayer && (spell == Spell.Hurry || spell == Spell.MassHurry))
                         {
-                            if ((spell == Spell.Hurry || spell == Spell.MassHurry) && !hurriedPlayers.Contains(targetPlayer))
+                            if (!hurriedPlayers.Contains(targetPlayer))
                                 hurriedPlayers.Add(targetPlayer);
-                            else if (spell.IsPhysicallyBlocked() && IsParryingSuccessfully(targetPlayer, battleAction.Character))
-                            {
-                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackWasParried,
-                                    battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
-                                finishAction?.Invoke();
-                                return;
-                            }
+                        }
+                        else if (spell.IsPhysicallyBlocked() && IsParryingSuccessfully(target, battleAction.Character))
+                        {
+                            layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackWasParried,
+                                battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
+                            finishAction?.Invoke();
+                            return;
                         }
 
                         game.CurrentSpellTarget = target;
@@ -2441,6 +2453,10 @@ namespace Ambermoon
                 game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember)!.Value, 0);
                 game.UpdateBattleStatus(partyMember);
                 layout.UpdateCharacterNameColors(game.CurrentSavegame!.ActivePartyMemberSlot);
+            }
+            else if (target is Monster monster && !condition.CanParry())
+            {
+                parryingMonsters.Remove(monster);
             }
 
             void SkipActions()
@@ -3539,6 +3555,11 @@ namespace Ambermoon
         BattleActionType PickMonsterAction(Monster monster, bool wantsToFlee, List<int> forbiddenMonsterMoveSpots, bool canCast)
         {
             var position = GetCharacterPosition(monster);
+            // Ambermoon Advanced: passive monsters never attack, move or flee, they only cast if possible
+            bool passive = monster.BattleFlags.HasFlag(BattleFlags.Passive);
+
+            if (passive)
+                wantsToFlee = false;
 
             if (position < 6 && wantsToFlee && monster.CanFlee())
             {
@@ -3552,15 +3573,15 @@ namespace Ambermoon
                     return BattleActionType.Move;
             }
 
-            if (monster.Conditions.HasFlag(Condition.Crazy))
+            if (!passive && monster.Conditions.HasFlag(Condition.Crazy))
             {
                 return AttackOrMove(true);
             }
 
             List<BattleActionType> possibleActions = [];
-            // Monsters which can neither attack nor move (e.g. lamed) would just do nothing when picking
+            // Monsters which can neither attack nor move (e.g. lamed or passive) would just do nothing when picking
             // an attack. Like in the original they try the remaining options instead, so they cast if possible.
-            bool canAttackOrMove = monster.Conditions.CanAttack() || monster.CanMove();
+            bool canAttackOrMove = !passive && (monster.Conditions.CanAttack() || monster.CanMove());
             bool canAttackRanged = canAttackOrMove;
             bool canAttackMelee = canAttackOrMove;
 
@@ -3580,7 +3601,7 @@ namespace Ambermoon
                         if (GetAvailableMonsterSpells(monster).All(spell => SpellInfos.Entries[spell].Target == SpellTarget.EnemiesInCloseRange) &&
                             GetCloseRangeEnemies(monster).Count == 0)
                         {
-                            if (monster.CanMove() && MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
+                            if (!passive && monster.CanMove() && MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
                                 return BattleActionType.Move;
 
                             canCast = false;
@@ -4707,8 +4728,7 @@ namespace Ambermoon
                 }
             }
 
-            // Note: Monsters can't parry.
-            if (target is PartyMember partyMember && IsParryingSuccessfully(partyMember, attacker))
+            if (IsParryingSuccessfully(target, attacker))
             {
                 return AttackResult.Blocked;
             }
@@ -4716,9 +4736,10 @@ namespace Ambermoon
             return AttackResult.Damage;
         }
 
-        bool IsParryingSuccessfully(PartyMember partyMember, Character attacker)
+        bool IsParryingSuccessfully(Character partyMember, Character attacker)
         {
-            if (parryingPlayers.Contains(partyMember))
+            // Ambermoon Advanced: monsters which do nothing else parry too (like in the original)
+            if (partyMember is PartyMember player ? parryingPlayers.Contains(player) : partyMember is Monster monster && parryingMonsters.Contains(monster))
             {
                 long parryChance = partyMember.Skills[Skill.Parry].TotalCurrentValue;
 
