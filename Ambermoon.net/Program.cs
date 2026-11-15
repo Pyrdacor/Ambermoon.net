@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 namespace Ambermoon
@@ -45,6 +46,54 @@ namespace Ambermoon
 
         [STAThread]
         static void Main(string[] args)
+        {
+            // Main must not reference any types from other Ambermoon assemblies.
+            // Otherwise a failure to load them (e.g. because a security software
+            // blocked the extracted DLL) happens before Main runs and can't be
+            // caught. All the real work is done in Run.
+            try
+            {
+                Run(args);
+            }
+            catch (Exception ex) when (ex is FileLoadException || ex is FileNotFoundException || ex is BadImageFormatException)
+            {
+                OutputAssemblyLoadError(ex);
+                Environment.Exit(1);
+            }
+        }
+
+        static void OutputAssemblyLoadError(Exception ex)
+        {
+            string fileName = (ex as FileLoadException)?.FileName ?? (ex as FileNotFoundException)?.FileName ?? (ex as BadImageFormatException)?.FileName;
+            string error = $"Failed to load a game component ({ex.GetType().Name}, HRESULT 0x{ex.HResult:X8})." + Environment.NewLine +
+                $"File: {fileName ?? "unknown"}" + Environment.NewLine +
+                $"Message: {ex.Message}" + Environment.NewLine + Environment.NewLine +
+                "The game extracts its components to a temporary folder on startup." + Environment.NewLine +
+                "Possible fixes:" + Environment.NewLine +
+                $" - Delete the folder \"{Path.Combine(Path.GetTempPath(), ".net", "Ambermoon.net")}\" and start the game again." + Environment.NewLine +
+                " - Check if your antivirus software blocked or quarantined the file and add an exception." + Environment.NewLine +
+                " - On Windows 11, Smart App Control may block unsigned files (HRESULT 0x800711C7)." + Environment.NewLine +
+                "   You can set a different extraction folder with the environment variable DOTNET_BUNDLE_EXTRACT_BASE_DIR." + Environment.NewLine;
+
+            Console.WriteLine(error);
+
+            try
+            {
+                // Don't use Configuration here as it might need the assembly which failed to load.
+                string directory = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
+                File.WriteAllText(Path.Combine(directory, "error.txt"), error + Environment.NewLine + ex);
+            }
+            catch
+            {
+                // ignore
+            }
+
+            Console.WriteLine("Press return to exit");
+            Console.ReadLine();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void Run(string[] args)
         {
             CommandLineOptions commandLineOptions;
 
@@ -217,8 +266,11 @@ namespace Ambermoon
 
                 if (tempRegex.IsMatch(appFolder))
                 {
-                    TryDeleteDirectory(appFolder, true);
-
+                    // Note: The own extraction folder is not touched anymore. Deleting its content
+                    // on exit forced a re-extraction on every start and could leave the folder in a
+                    // broken state (e.g. files which are pending deletion because a virus scanner
+                    // still holds a handle), which leads to a FileLoadException on the next start.
+                    // Only folders of other (older) versions are removed.
                     foreach (var directory in Directory.GetDirectories(Path.GetDirectoryName(appFolder)))
                     {
                         if (appFolder != directory && tempRegex.IsMatch(directory))
