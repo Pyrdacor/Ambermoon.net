@@ -1,3 +1,17 @@
+Version 1.16
+============
+
+- Immersive mode on 2D and 3D maps (key I or the icon at the upper right): the map covers the whole screen and shows much more of it, only the names of the party members stay visible
+- Immersive mode: A translucent bar below the names shows the map name, a compass, the clock and the special items, the coordinates are shown at the bottom center and the active spells at the lower left
+- Immersive mode: The action buttons can be shown or hidden by the arrow at the right, the num pad keys always work
+- The action buttons show the actions (eye, hand, mouth, etc) by default, a small arrow below them toggles the movement buttons (right click and Return work as well)
+- The quest log is opened by the key F7, the battle speed has no key anymore (it can be changed in the options)
+- Battle: Monsters can parry
+- Battle: Monsters only advance if no monster is passive, lamed, crazy or panicked
+- Battle: Monsters with the new passive battle flag never attack, move or flee
+- The map name uses the same color as the other UI texts
+- Tooltips disappear when the mouse moves onto the map
+
 Version 1.15
 ============
 
