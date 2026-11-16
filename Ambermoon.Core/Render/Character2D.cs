@@ -135,7 +135,7 @@ namespace Ambermoon.Render
                 sprite.TextureAtlasOffset = textureOffset + new Position(0, (currentAnimationInfo.FrameHeight - RenderMap2D.TILE_HEIGHT) * textureFactor);
                 topSprite.Layer = layer;
                 topSprite.PaletteIndex = (byte)paletteIndexProvider();
-                topSprite.ClipArea = GameCore.Map2DViewArea;
+                topSprite.ClipArea = Global.Map2DRenderArea;
                 topSprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
                 topSprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y +
                     RenderMap2D.TILE_HEIGHT - currentAnimationInfo.FrameHeight;
@@ -152,7 +152,7 @@ namespace Ambermoon.Render
             }            
             sprite.Layer = layer;
             sprite.PaletteIndex = (byte)paletteIndexProvider();
-            sprite.ClipArea = GameCore.Map2DViewArea;
+            sprite.ClipArea = Global.Map2DRenderArea;
             UpdateBaseline();
             Position = startPosition;
         }
@@ -173,7 +173,7 @@ namespace Ambermoon.Render
                     sprite.TextureAtlasOffset += new Position(0, topSprite.Height * textureFactor);
                     topSprite.Layer = sprite.Layer!;
                     topSprite.PaletteIndex = sprite.PaletteIndex;
-                    topSprite.ClipArea = GameCore.Map2DViewArea;
+                    topSprite.ClipArea = Global.Map2DRenderArea;
                     topSprite.X = sprite.X;
                     topSprite.Y = sprite.Y;
                     sprite.Y += topSprite.Height;
@@ -198,10 +198,10 @@ namespace Ambermoon.Render
         /// </summary>
         internal void RefreshView()
         {
-            sprite.ClipArea = GameCore.Map2DViewArea;
+            sprite.ClipArea = Global.Map2DRenderArea;
 
             if (topSprite != null)
-                topSprite.ClipArea = GameCore.Map2DViewArea;
+                topSprite.ClipArea = Global.Map2DRenderArea;
 
             if (Position.X < 0 || Position.Y < 0) // not on the map (uint.MaxValue)
                 return;
@@ -398,9 +398,9 @@ namespace Ambermoon.Render
                     sprite.X = topSprite.X;
                     sprite.Y = topSprite.Y + topSprite.Height;
                     topSprite.PaletteIndex = sprite.PaletteIndex;
-                    topSprite.Visible = GameCore.Map2DViewArea.IntersectsWith(DisplayArea);
+                    topSprite.Visible = Global.Map2DRenderArea.IntersectsWith(DisplayArea);
                 }
-                sprite.Visible = GameCore.Map2DViewArea.IntersectsWith(DisplayArea);
+                sprite.Visible = Global.Map2DRenderArea.IntersectsWith(DisplayArea);
                 bool hidePlayer = tileType == Data.Map.TileType.Invisible && game.CanSee();
                 if (sprite.Visible && hidePlayer)
                     sprite.Visible = false;

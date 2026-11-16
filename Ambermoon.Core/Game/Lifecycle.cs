@@ -808,7 +808,9 @@ partial class GameCore
         Fading = true;
         if (changeInputEnableState)
             allInputDisabled = true;
-        layout.AddFadeEffect(new Rect(0, 36, Global.VirtualScreenWidth, Global.VirtualScreenHeight - 36), Render.Color.Black, FadeEffectType.FadeInAndOut, FadeTime);
+        // in immersive mode the map also covers the portrait area
+        int fadeY = layout.ImmersiveActive ? 0 : 36;
+        layout.AddFadeEffect(new Rect(0, fadeY, Global.VirtualScreenWidth, Global.VirtualScreenHeight - fadeY), Render.Color.Black, FadeEffectType.FadeInAndOut, FadeTime);
         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), () =>
         {
             midFadeAction?.Invoke();

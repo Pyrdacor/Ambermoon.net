@@ -133,6 +133,7 @@ namespace Ambermoon.UI
         readonly int size;
         readonly bool horizontal;
         int pixels = -1;
+        int offsetX = 0;
         int offsetY = 0;
 
         internal Bar(List<IColoredRect> filledAreas, IColoredRect area, int size, bool horizontal)
@@ -162,6 +163,24 @@ namespace Ambermoon.UI
         }
 
         /// <summary>
+        /// Horizontal offset of the bar (active spells are arranged differently in the immersive mode).
+        /// </summary>
+        internal int OffsetX
+        {
+            get => offsetX;
+            set
+            {
+                if (offsetX == value)
+                    return;
+
+                offsetX = value;
+
+                if (pixels > 0)
+                    area.X = barArea.Left + offsetX;
+            }
+        }
+
+        /// <summary>
         /// Fills the bar dependent on the given value.
         /// </summary>
         /// <param name="percentage">Value in the range 0 to 1 (0 to 100%).</param>
@@ -181,14 +200,14 @@ namespace Ambermoon.UI
             }
             else if (horizontal)
             {
-                area.X = barArea.Left;
+                area.X = barArea.Left + offsetX;
                 area.Y = barArea.Top + offsetY;
                 area.Resize(pixels, barArea.Height);
                 area.Visible = true;
             }
             else
             {
-                area.X = barArea.Left;
+                area.X = barArea.Left + offsetX;
                 area.Y = barArea.Bottom - pixels + offsetY;
                 area.Resize(barArea.Width, pixels);
                 area.Visible = true;
@@ -764,20 +783,27 @@ namespace Ambermoon.UI
             UpdateImmersiveUI();
         }
 
+        int optionMenuOverlayCount = 0;
+
         public void OpenOptionMenu()
         {
             OptionMenuOpen = true;
             game.InputEnable = false;
             game.Pause();
-            // The overlay graphic is 320x144. In the immersive mode it covers the center of the screen.
-            var area = ImmersiveActive ? new Rect(0, (Global.VirtualScreenHeight - 144) / 2, Global.VirtualScreenWidth, 144) : Type switch
-            {
-                LayoutType.Map2D => GameCore.Map2DViewArea,
-                LayoutType.Map3D => GameCore.Map3DViewArea,
-                LayoutType.Battle => Global.CombatBackgroundArea,
-                _ => throw new AmbermoonException(ExceptionScope.Application, "Open option menu from the current window is not supported.")
-            };
-            AddSprite(area, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.MapDisableOverlay), game.UIPaletteIndex, 1);
+            // The overlay graphic is 320x144. In the immersive mode it covers everything but the button grid.
+            Rect[] overlayAreas = ImmersiveActive ? GetImmersiveOptionMenuOverlayAreas() :
+            [
+                Type switch
+                {
+                    LayoutType.Map2D => GameCore.Map2DViewArea,
+                    LayoutType.Map3D => GameCore.Map3DViewArea,
+                    LayoutType.Battle => Global.CombatBackgroundArea,
+                    _ => throw new AmbermoonException(ExceptionScope.Application, "Open option menu from the current window is not supported.")
+                }
+            ];
+            foreach (var overlayArea in overlayAreas)
+                AddSprite(overlayArea, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.MapDisableOverlay), game.UIPaletteIndex, 1);
+            optionMenuOverlayCount = overlayAreas.Length;
             string versionString = game.GetFullVersion();
             Rect boxArea;
             Rect textArea;
@@ -820,8 +846,12 @@ namespace Ambermoon.UI
             OptionMenuOpen = false;
             additionalSprites.Last()?.Delete(); // info box
             additionalSprites.Remove(additionalSprites.Last());
-            additionalSprites.Last()?.Delete(); // map disable overlay
-            additionalSprites.Remove(additionalSprites.Last());
+            for (int i = 0; i < optionMenuOverlayCount; ++i)
+            {
+                additionalSprites.Last()?.Delete(); // map disable overlay
+                additionalSprites.Remove(additionalSprites.Last());
+            }
+            optionMenuOverlayCount = 0;
             texts.Last()?.Destroy(); // version string
             texts.Remove(texts.Last());
             UpdateLayoutButtons(ticksPerMovement);
@@ -4044,6 +4074,7 @@ namespace Ambermoon.UI
             {
                 specialItemSprites?.Clear(); // sprites are destroyed above
                 specialItemTexts?.Clear(); // texts are destroyed above
+                immersiveDefaultPositions.Clear();
             });
             Util.SafeCall(() =>
             {

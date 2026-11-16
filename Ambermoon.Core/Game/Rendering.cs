@@ -92,8 +92,8 @@ partial class GameCore
             var playerArea = player2D!.DisplayArea;
             ouchSprite.X = playerArea.X + 16;
             ouchSprite.Y = playerArea.Y - 24;
-            ouchSprite.Resize(Math.Min(32, Map2DViewArea.Right - ouchSprite.X),
-                Math.Min(23, Map2DViewArea.Bottom - ouchSprite.Y));
+            ouchSprite.Resize(Math.Min(32, Global.Map2DRenderArea.Right - ouchSprite.X),
+                Math.Min(23, Global.Map2DRenderArea.Bottom - ouchSprite.Y));
         }
 
         ouchSprite.Visible = true;

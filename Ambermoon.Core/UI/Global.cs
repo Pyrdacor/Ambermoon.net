@@ -38,9 +38,30 @@ namespace Ambermoon
         public static int Map2DViewY { get; private set; } = DefaultMap2DViewY;
         public static int Map2DViewWidth => RenderMap2D.NUM_VISIBLE_TILES_X * RenderMap2D.TILE_WIDTH;
         public static int Map2DViewHeight => RenderMap2D.NUM_VISIBLE_TILES_Y * RenderMap2D.TILE_HEIGHT;
-        // tiles of the immersive 2D map view (odd numbers so the player is in the center)
-        public const int ImmersiveMap2DTilesX = 21;
-        public const int ImmersiveMap2DTilesY = 13;
+        // Tiles of the immersive 2D map view. These are odd numbers so the player is in the center.
+        // They fit into the screen, so the map borders are fully visible (with black borders around).
+        // Around them an additional ring of tiles is drawn which is partially visible at the screen
+        // edges, so the black borders only appear at the map borders (see Map2DViewMargin).
+        public const int ImmersiveMap2DTilesX = 19;
+        public const int ImmersiveMap2DTilesY = 11;
+        // The world map has no borders, so it just shows more tiles which are cut at the screen edges.
+        public const int ImmersiveWorldMap2DTilesX = 21;
+        public const int ImmersiveWorldMap2DTilesY = 13;
+        /// <summary>
+        /// Number of additionally drawn tiles at each side of the 2D map view.
+        /// They are only drawn if they are inside the map.
+        /// </summary>
+        public static int Map2DViewMargin { get; private set; } = 0;
+        /// <summary>
+        /// The area where 2D map tiles and characters are drawn (the view plus the margin).
+        /// </summary>
+        public static Rect Map2DRenderArea => new
+        (
+            Map2DViewX - Map2DViewMargin * RenderMap2D.TILE_WIDTH,
+            Map2DViewY - Map2DViewMargin * RenderMap2D.TILE_HEIGHT,
+            Map2DViewWidth + 2 * Map2DViewMargin * RenderMap2D.TILE_WIDTH,
+            Map2DViewHeight + 2 * Map2DViewMargin * RenderMap2D.TILE_HEIGHT
+        );
 
         /// <summary>
         /// Sets the size and position of the 2D map view. In the immersive mode
@@ -54,16 +75,19 @@ namespace Ambermoon
                 RenderMap2D.SetVisibleTiles(RenderMap2D.DEFAULT_VISIBLE_TILES_X, RenderMap2D.DEFAULT_VISIBLE_TILES_Y);
                 Map2DViewX = DefaultMap2DViewX;
                 Map2DViewY = DefaultMap2DViewY;
+                Map2DViewMargin = 0;
                 return;
             }
 
-            int tilesX = ImmersiveMap2DTilesX;
-            int tilesY = ImmersiveMap2DTilesY;
+            int tilesX = ImmersiveWorldMap2DTilesX;
+            int tilesY = ImmersiveWorldMap2DTilesY;
+            Map2DViewMargin = 0;
 
             if (map != null && !map.IsWorldMap)
             {
-                tilesX = Math.Min(tilesX, map.Width);
-                tilesY = Math.Min(tilesY, map.Height);
+                tilesX = Math.Min(ImmersiveMap2DTilesX, map.Width);
+                tilesY = Math.Min(ImmersiveMap2DTilesY, map.Height);
+                Map2DViewMargin = 1;
             }
 
             RenderMap2D.SetVisibleTiles(tilesX, tilesY);

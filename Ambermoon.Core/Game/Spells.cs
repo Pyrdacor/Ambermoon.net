@@ -355,7 +355,7 @@ partial class GameCore
                         var position = new Position(Global.Map2DViewX - (int)travelInfoEagle.Width, targetPosition.Y - (int)travelInfoEagle.Height);
                         var eagle = layout.AddMapCharacterSprite(new Rect(position, new Size((int)travelInfoEagle.Width, (int)travelInfoEagle.Height)),
                             Graphics.TravelGraphicOffset + (uint)TravelType.Eagle * 4 + 1, ushort.MaxValue);
-                        eagle.ClipArea = Map2DViewArea;
+                        eagle.ClipArea = Global.Map2DRenderArea;
                         AddTimedEvent(TimeSpan.FromMilliseconds(200), AnimateEagle);
                         void AnimateEagle()
                         {

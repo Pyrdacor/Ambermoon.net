@@ -74,13 +74,14 @@ partial class GameCore
                 renderMap2D.RefreshView(player.Position);
 
             player2D?.RefreshView();
-            ouchSprite.ClipArea = Map2DViewArea;
+            var renderArea = Global.Map2DRenderArea;
+            ouchSprite.ClipArea = renderArea;
 
             if (fow2D != null)
             {
-                fow2D.Resize(Global.Map2DViewWidth, Global.Map2DViewHeight);
-                fow2D.X = Global.Map2DViewX;
-                fow2D.Y = Global.Map2DViewY;
+                fow2D.Resize(renderArea.Width, renderArea.Height);
+                fow2D.X = renderArea.X;
+                fow2D.Y = renderArea.Y;
 
                 if (player2D != null)
                     fow2D.Center = player2D.DisplayArea.Center;

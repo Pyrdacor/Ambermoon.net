@@ -19,6 +19,7 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using System;
@@ -63,6 +64,21 @@ namespace Ambermoon.UI
         DateTime lastImmersiveAnimationTime = DateTime.MinValue;
         ILayerSprite? immersiveButtonsArrow = null;
         ILayerSprite? immersiveItemsArrow = null;
+        // the buttons have transparent parts, so they get a black background
+        IColoredRect? immersiveButtonsBackground = null;
+        // In the immersive mode the special items are arranged in two columns at the right
+        // (to the left of the arrow). The positions of the normal mode are kept here.
+        const int ImmersiveItemsTop = 10; // below the names
+        const int ImmersiveItemsRightColumnX = 272; // monster eye, compass, day time and windchain
+        const int ImmersiveItemsLeftColumnX = 240; // coordinates, clock and active spells
+        static readonly Rect ImmersiveItemsArea = new(ImmersiveItemsLeftColumnX, ImmersiveItemsTop, 64, 120);
+        readonly System.Collections.Generic.Dictionary<object, Position> immersiveDefaultPositions = [];
+        static readonly Rect DefaultCompassTextClipArea = new(208, 86, 32, 7);
+
+        /// <summary>
+        /// The arrow for the special items is only shown if at least one special item or spell is active.
+        /// </summary>
+        bool HasImmersiveItems => specialItemSprites.Count != 0 || specialItemTexts.Count != 0 || activeSpellSprites.Count != 0;
 
         /// <summary>
         /// True if the immersive mode is active and the map is shown.
@@ -107,6 +123,18 @@ namespace Ambermoon.UI
         }
 
         /// <summary>
+        /// The option menu overlay covers everything but the button grid. The rows 142 overlap
+        /// so that the dither pattern stays aligned (odd y offsets would shift it).
+        /// </summary>
+        static Rect[] GetImmersiveOptionMenuOverlayAreas() =>
+        [
+            new(0, 0, Global.VirtualScreenWidth, Global.ButtonGridY),
+            new(0, 142, Global.ButtonGridX, Global.VirtualScreenHeight - 142),
+            new(Global.ButtonGridArea.Right, 142, Global.VirtualScreenWidth - Global.ButtonGridArea.Right, Global.VirtualScreenHeight - 142),
+            new(Global.ButtonGridX, Global.ButtonGridArea.Bottom, Global.ButtonGridArea.Width, Global.VirtualScreenHeight - Global.ButtonGridArea.Bottom)
+        ];
+
+        /// <summary>
         /// Returns true if the given position is on a visible UI element of the immersive
         /// mode (and not on the map). Those positions are handled by the layout.
         /// </summary>
@@ -118,13 +146,13 @@ namespace Ambermoon.UI
             if (!ImmersiveActive)
                 return false;
 
-            if (ImmersiveButtonsArrowArea.Contains(position) || ImmersiveItemsArrowArea.Contains(position))
+            if (!OptionMenuOpen && (ImmersiveButtonsArrowArea.Contains(position) || (HasImmersiveItems && ImmersiveItemsArrowArea.Contains(position))))
                 return true;
 
             if ((immersiveButtonsExpanded || OptionMenuOpen) && Global.ButtonGridArea.Contains(position))
                 return true;
 
-            if (immersiveItemsExpanded && Global.UpperRightArea.Contains(position))
+            if (immersiveItemsExpanded && HasImmersiveItems && ImmersiveItemsArea.Contains(position))
                 return true;
 
             return ImmersiveNamesArea.Contains(position);
@@ -143,7 +171,8 @@ namespace Ambermoon.UI
                 return true;
             }
 
-            if (!ImmersiveActive || buttons != MouseButtons.Left)
+            // nothing can be collapsed while the option menu is open
+            if (!ImmersiveActive || OptionMenuOpen || buttons != MouseButtons.Left)
                 return false;
 
             if (ImmersiveButtonsArrowArea.Contains(position))
@@ -152,7 +181,7 @@ namespace Ambermoon.UI
                 return true;
             }
 
-            if (ImmersiveItemsArrowArea.Contains(position))
+            if (HasImmersiveItems && ImmersiveItemsArrowArea.Contains(position))
             {
                 ToggleImmersiveItems();
                 return true;
@@ -174,12 +203,24 @@ namespace Ambermoon.UI
 
             // the buttons of the option menu are always shown
             buttonGrid.Concealed = active && !immersiveButtonsExpanded && !OptionMenuOpen;
+
+            if (immersiveButtonsBackground == null)
+            {
+                var area = Global.ButtonGridArea;
+                immersiveButtonsBackground = RenderView.ColoredRectFactory.Create(area.Width, area.Height, Render.Color.Black, 1);
+                immersiveButtonsBackground.Layer = renderLayer;
+                immersiveButtonsBackground.X = area.X;
+                immersiveButtonsBackground.Y = area.Y;
+            }
+
+            immersiveButtonsBackground.Visible = active && buttonGrid.Visible && !buttonGrid.Concealed;
+
             UpdateImmersiveItems();
 
             immersiveButtonsArrow ??= CreateImmersiveIcon(ImmersiveButtonsArrowArea);
             immersiveItemsArrow ??= CreateImmersiveIcon(ImmersiveItemsArrowArea);
-            UpdateImmersiveArrow(immersiveButtonsArrow, active, immersiveButtonsExpanded);
-            UpdateImmersiveArrow(immersiveItemsArrow, active, immersiveItemsExpanded);
+            UpdateImmersiveArrow(immersiveButtonsArrow, active && !OptionMenuOpen, immersiveButtonsExpanded);
+            UpdateImmersiveArrow(immersiveItemsArrow, active && !OptionMenuOpen && HasImmersiveItems, immersiveItemsExpanded);
 
             if (immersiveIcon == null)
             {
@@ -193,7 +234,14 @@ namespace Ambermoon.UI
 
         void UpdateImmersiveItems()
         {
-            bool visible = !ImmersiveActive || immersiveItemsExpanded;
+            bool active = ImmersiveActive;
+            bool visible = !active || (immersiveItemsExpanded && HasImmersiveItems);
+
+            // The arrow appears or disappears when the first special item is added or the last is removed.
+            if (immersiveItemsArrow != null)
+                immersiveItemsArrow.Visible = active && !OptionMenuOpen && HasImmersiveItems;
+
+            ArrangeImmersiveItems(active);
 
             foreach (var specialItemSprite in specialItemSprites.Values)
                 specialItemSprite.Visible = visible;
@@ -205,6 +253,98 @@ namespace Ambermoon.UI
                 activeSpellDurationBackground.Visible = visible;
             foreach (var activeSpellDurationBar in activeSpellDurationBars.Values)
                 activeSpellDurationBar.Visible = visible; // empty bars are out of the screen
+        }
+
+        Position GetImmersiveDefaultPosition(object element, Position currentPosition)
+        {
+            if (!immersiveDefaultPositions.TryGetValue(element, out var position))
+            {
+                position = new Position(currentPosition);
+                immersiveDefaultPositions.Add(element, position);
+            }
+
+            return position;
+        }
+
+        /// <summary>
+        /// Arranges the special items in two columns at the right in the immersive mode
+        /// (only the active ones without gaps) or moves them back to their normal positions.
+        /// </summary>
+        void ArrangeImmersiveItems(bool immersive)
+        {
+            // Right column: monster eye, compass, day time and windchain
+            int y = ImmersiveItemsTop;
+
+            foreach (var purpose in new[] { SpecialItemPurpose.MonsterEye, SpecialItemPurpose.Compass, SpecialItemPurpose.DayTime, SpecialItemPurpose.WindChain })
+            {
+                if (!specialItemSprites.TryGetValue(purpose, out var itemSprite))
+                    continue;
+
+                var defaultPosition = GetImmersiveDefaultPosition(itemSprite, new Position(itemSprite.X, itemSprite.Y));
+                var position = immersive ? new Position(ImmersiveItemsRightColumnX, y) : defaultPosition;
+                itemSprite.X = position.X;
+                itemSprite.Y = position.Y;
+
+                if (purpose == SpecialItemPurpose.Compass && specialItemTexts.TryGetValue(SpecialItemPurpose.Compass, out var compassText))
+                {
+                    // the compass text moves with the compass
+                    int offsetX = position.X - defaultPosition.X;
+                    int offsetY = position.Y - defaultPosition.Y;
+                    var defaultTextPosition = GetImmersiveDefaultPosition(compassText, compassText.Area.Position);
+                    compassText.SetPosition(new Position(defaultTextPosition.X + offsetX, defaultTextPosition.Y + offsetY));
+                    compassText.Clip(DefaultCompassTextClipArea.CreateModified(offsetX, offsetY, 0, 0));
+                }
+
+                if (immersive)
+                    y += itemSprite.Height + 1;
+            }
+
+            // Left column: coordinates, clock and the active spells (two per row)
+            y = ImmersiveItemsTop;
+
+            foreach (var purpose in new[] { SpecialItemPurpose.MapLocation, SpecialItemPurpose.Clock })
+            {
+                if (!specialItemTexts.TryGetValue(purpose, out var itemText))
+                    continue;
+
+                var defaultPosition = GetImmersiveDefaultPosition(itemText, itemText.Area.Position);
+                itemText.SetPosition(immersive ? new Position(ImmersiveItemsLeftColumnX, y) : defaultPosition);
+
+                if (immersive)
+                    y += (purpose == SpecialItemPurpose.MapLocation ? 2 : 1) * Global.GlyphLineHeight + 2;
+            }
+
+            int index = 0;
+
+            foreach (var activeSpell in EnumHelper.GetValues<ActiveSpellType>())
+            {
+                if (!activeSpellSprites.TryGetValue(activeSpell, out var spellSprite))
+                    continue;
+
+                var defaultPosition = GetImmersiveDefaultPosition(spellSprite, new Position(spellSprite.X, spellSprite.Y));
+                var position = immersive
+                    ? new Position(ImmersiveItemsLeftColumnX + (index % 2) * 16, y + (index / 2) * 22)
+                    : defaultPosition;
+                int offsetX = position.X - defaultPosition.X;
+                int offsetY = position.Y - defaultPosition.Y;
+                spellSprite.X = position.X;
+                spellSprite.Y = position.Y;
+
+                if (activeSpellDurationBackgrounds.TryGetValue(activeSpell, out var durationBackground))
+                {
+                    var defaultBackgroundPosition = GetImmersiveDefaultPosition(durationBackground, new Position(durationBackground.X, durationBackground.Y));
+                    durationBackground.X = defaultBackgroundPosition.X + offsetX;
+                    durationBackground.Y = defaultBackgroundPosition.Y + offsetY;
+                }
+
+                if (activeSpellDurationBars.TryGetValue(activeSpell, out var durationBar))
+                {
+                    durationBar.OffsetX = offsetX;
+                    durationBar.OffsetY = offsetY;
+                }
+
+                ++index;
+            }
         }
 
         ILayerSprite CreateImmersiveIcon(Rect area)

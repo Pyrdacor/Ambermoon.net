@@ -45,7 +45,10 @@ namespace Ambermoon.Render
         // the immersive mode shows more tiles (see Global.SetMap2DView)
         public static int NUM_VISIBLE_TILES_X { get; private set; } = DEFAULT_VISIBLE_TILES_X;
         public static int NUM_VISIBLE_TILES_Y { get; private set; } = DEFAULT_VISIBLE_TILES_Y;
-        static int NUM_TILES => NUM_VISIBLE_TILES_X * NUM_VISIBLE_TILES_Y;
+        // the drawn tiles include the margin around the view (see Global.Map2DViewMargin)
+        static int NUM_RENDER_TILES_X => NUM_VISIBLE_TILES_X + 2 * Global.Map2DViewMargin;
+        static int NUM_RENDER_TILES_Y => NUM_VISIBLE_TILES_Y + 2 * Global.Map2DViewMargin;
+        static int NUM_TILES => NUM_RENDER_TILES_X * NUM_RENDER_TILES_Y;
 
         internal static void SetVisibleTiles(int tilesX, int tilesY)
         {
@@ -117,18 +120,37 @@ namespace Ambermoon.Render
             }
 
             int index = 0;
+            var renderArea = Global.Map2DRenderArea;
 
-            for (int row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
+            for (int row = 0; row < NUM_RENDER_TILES_Y; ++row)
             {
-                for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
+                for (int column = 0; column < NUM_RENDER_TILES_X; ++column)
                 {
-                    backgroundTileSprites[index].X = Global.Map2DViewX + column * TILE_WIDTH;
-                    backgroundTileSprites[index].Y = Global.Map2DViewY + row * TILE_HEIGHT;
-                    foregroundTileSprites[index].X = Global.Map2DViewX + column * TILE_WIDTH;
-                    foregroundTileSprites[index].Y = Global.Map2DViewY + row * TILE_HEIGHT;
+                    backgroundTileSprites[index].X = renderArea.X + column * TILE_WIDTH;
+                    backgroundTileSprites[index].Y = renderArea.Y + row * TILE_HEIGHT;
+                    foregroundTileSprites[index].X = renderArea.X + column * TILE_WIDTH;
+                    foregroundTileSprites[index].Y = renderArea.Y + row * TILE_HEIGHT;
                     ++index;
                 }
             }
+        }
+
+        /// <summary>
+        /// Returns the tile for the given render column and row (which includes the margin)
+        /// or null if it is outside the map (only possible inside the margin).
+        /// </summary>
+        Map.Tile? GetRenderTile(int column, int row)
+        {
+            long x = ScrollX + column - Global.Map2DViewMargin;
+            long y = ScrollY + row - Global.Map2DViewMargin;
+
+            if (x < 0 || y < 0)
+                return null;
+
+            if (!worldMap && (x >= Map!.Width || y >= Map.Height))
+                return null;
+
+            return this[(uint)x, (uint)y];
         }
 
         /// <summary>
@@ -148,7 +170,7 @@ namespace Ambermoon.Render
                 mapCharacter.RefreshView();
 
             foreach (var transport in mapTransports)
-                transport.Sprite.ClipArea = GameCore.Map2DViewArea;
+                transport.Sprite.ClipArea = Global.Map2DRenderArea;
         }
 
         public void Update(uint ticks, ITime gameTime, bool monstersCanMoveImmediately, Position? lastPlayerPosition)
@@ -161,11 +183,17 @@ namespace Ambermoon.Render
 
 				int index = 0;
 
-                for (int row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
+                for (int row = 0; row < NUM_RENDER_TILES_Y; ++row)
                 {
-                    for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
+                    for (int column = 0; column < NUM_RENDER_TILES_X; ++column)
                     {
-						var tile = this[ScrollX + (uint)column, ScrollY + (uint)row];
+						var tile = GetRenderTile(column, row);
+
+                        if (tile == null)
+                        {
+                            ++index;
+                            continue;
+                        }
 
                         if (tile.BackTileIndex != 0)
                         {
@@ -534,7 +562,7 @@ namespace Ambermoon.Render
             var sprite = renderView.SpriteFactory.Create(info.Width, info.Height, false);
             var offset = new Position((TILE_WIDTH - info.Width) / 2 - 2, (TILE_HEIGHT - info.Height) / 2 - 2);
             sprite.Layer = renderView.GetLayer(Layer.Characters);
-            sprite.ClipArea = GameCore.Map2DViewArea;
+            sprite.ClipArea = Global.Map2DRenderArea;
             sprite.BaseLineOffset = TILE_HEIGHT / 2;
             sprite.PaletteIndex = (byte)game.GetPlayerPaletteIndex();
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.TransportGraphicOffset + travelType.AsStationaryImageIndex());
@@ -546,10 +574,13 @@ namespace Ambermoon.Render
 
         internal void UpdateTile(uint x, uint y)
         {
-            if (x < ScrollX || y < ScrollY || x >= ScrollX + NUM_VISIBLE_TILES_X || y >= ScrollY + NUM_VISIBLE_TILES_Y)
+            int column = (int)x - (int)ScrollX + Global.Map2DViewMargin;
+            int row = (int)y - (int)ScrollY + Global.Map2DViewMargin;
+
+            if (column < 0 || row < 0 || column >= NUM_RENDER_TILES_X || row >= NUM_RENDER_TILES_Y)
                 return; // not visible
 
-            int spriteIndex = (int)(x - ScrollX + (y - ScrollY) * NUM_VISIBLE_TILES_X);
+            int spriteIndex = column + row * NUM_RENDER_TILES_X;
             var tile = this[x, y];
 
             if (tile.BackTileIndex == 0)
@@ -596,11 +627,19 @@ namespace Ambermoon.Render
             lastUpdateMap = Map;
             lastUpdateScroll = new Position((int)ScrollX, (int)ScrollY);
 
-            for (uint row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
+            for (int row = 0; row < NUM_RENDER_TILES_Y; ++row)
             {
-                for (uint column = 0; column < NUM_VISIBLE_TILES_X; ++column)
+                for (int column = 0; column < NUM_RENDER_TILES_X; ++column)
                 {
-                    var tile = this[ScrollX + column, ScrollY + row];
+                    var tile = GetRenderTile(column, row);
+
+                    if (tile == null) // outside the map (margin)
+                    {
+                        backgroundTileSprites[index].Visible = false;
+                        foregroundTileSprites[index].Visible = false;
+                        ++index;
+                        continue;
+                    }
 
                     backgroundTileSprites[index].Layer = backLayer;
                     backgroundTileSprites[index].TextureAtlasWidth = textureAtlas!.Texture.Width;
