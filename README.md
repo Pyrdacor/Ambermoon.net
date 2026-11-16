@@ -127,7 +127,7 @@ I will also post updates about releases and interesting stuff on twitter: https:
 
 ## Important controls
 
-**Please also have a look [here](Controls.md).**
+**All controls are listed [here](Controls.md).**
 
 Key | Description
 --- | ---
@@ -135,12 +135,18 @@ Up or W | Move up (2D) or forward (3D)
 Down or S| Move down (2D) or backward (3D)
 Left or A | Move left (2D) or turn left (3D)
 Right or D | Move right (2D) or turn right (3D)
-F11 | Toggle fullscreen mode
 ESC | Close ingame windows, stop item dragging/specific cursors/etc
 Num1-Num9 | Action buttons 1-9 (button panel in the lower right corner)
 1-6 | Set party member 1-6 as active
 F1-F6 | Open inventory of party member 1-6
+F7 | Open or close the quest log
+F8 / F9 / F10 | Change the graphic filter, the graphic overlay or the color effect
+F11 | Switch between window, fullscreen and fullsized window
+M | World map (2D, needs the map of Lyramion) or automap (3D)
+I | Toggle the immersive mode on maps (the map covers the whole screen)
 Ctrl + 0-9 | Quicksave into save slot 1-10 (0 saves into slot 10)
+Ctrl + Shift + 0-9 | Quickload from save slot 1-10 (0 loads slot 10)
+Ctrl + M | Toggle the music (Ctrl + Comma and Ctrl + Period change the volume)
 PrintScreen or Ctrl + P | Saves a screenshot to the folder "Screenshots" next to the program (or in config folder if you have no permissions to write there)
 
 ### Left clicks

@@ -362,23 +362,9 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
 
             Game?.PostFullscreenChanged();
         }
-        else if (key == Silk.NET.Input.Key.F6)
-        {
-            Game?.ToggleQuestLog();
-        }
         else if (key == Silk.NET.Input.Key.F7)
         {
-            if (Game != null && !Game.BattleRoundActive)
-            {
-                var gameConfiguration = GameConfiguration;
-
-                if (GetModifiers(keyboard) == KeyModifiers.None)
-                    gameConfiguration.BattleSpeed = gameConfiguration.BattleSpeed >= 100 ? 0 : gameConfiguration.BattleSpeed + 10;
-                else
-                    gameConfiguration.BattleSpeed = gameConfiguration.BattleSpeed <= 0 ? 100 : gameConfiguration.BattleSpeed - 10;
-
-                Game?.ExternalBattleSpeedChanged();
-            }
+            Game?.ToggleQuestLog();
         }
         else if (key == Silk.NET.Input.Key.F8)
         {
@@ -1079,10 +1065,9 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
 
             logoPyrdacor?.Initialize(textureAtlasManager);
             AdvancedLogo.Initialize(textureAtlasManager, () => Resources.Advanced);
-            textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
-            {
-                { QuestLog.IconGraphicIndex, questLogIcon }
-            });
+            var miscGraphics = ImmersiveGraphics.GetGraphics();
+            miscGraphics.Add(QuestLog.IconGraphicIndex, questLogIcon);
+            textureAtlasManager.AddFromGraphics(Layer.Misc, miscGraphics);
             return textureAtlasManager;
         });
         renderView.SetTextureFactor(Layer.Text, 2);

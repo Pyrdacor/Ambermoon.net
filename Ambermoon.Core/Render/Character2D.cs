@@ -193,6 +193,36 @@ namespace Ambermoon.Render
             }
         }
 
+        /// <summary>
+        /// Applies a changed map view (immersive mode) to the sprite position and clip area.
+        /// </summary>
+        internal void RefreshView()
+        {
+            sprite.ClipArea = GameCore.Map2DViewArea;
+
+            if (topSprite != null)
+                topSprite.ClipArea = GameCore.Map2DViewArea;
+
+            if (Position.X < 0 || Position.Y < 0) // not on the map (uint.MaxValue)
+                return;
+
+            var drawOffset = drawOffsetProvider?.Invoke(Direction) ?? new Position();
+
+            if (topSprite == null)
+            {
+                sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
+                sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
+            }
+            else
+            {
+                topSprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
+                topSprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y +
+                    RenderMap2D.TILE_HEIGHT - CurrentAnimationInfo.FrameHeight;
+                sprite.X = topSprite.X;
+                sprite.Y = topSprite.Y + topSprite.Height;
+            }
+        }
+
         public virtual void Destroy()
         {
             sprite?.Delete();
@@ -384,7 +414,7 @@ namespace Ambermoon.Render
                 if (this is Player2D)
                     Map.CheckIfMonstersSeePlayer(x, y);
                 else if (this is MapCharacter2D monster && monster.IsMonster)
-                    Map.CheckIfMonsterSeesPlayer(monster, sprite.Visible);
+                    Map.CheckIfMonsterSeesPlayer(monster, sprite.Visible && Map.IsInDefaultView(Position));
             }
         }
 

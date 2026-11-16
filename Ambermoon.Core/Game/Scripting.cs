@@ -270,6 +270,15 @@ partial class GameCore
     public MapFlags? ScriptGetMapFlags(uint mapIndex) => MapManager.GetMap(mapIndex)?.Flags;
 
     /// <summary>
+    /// Returns the size and type of a map, e.g. "21x13 2D".
+    /// </summary>
+    public string? ScriptGetMapSize(uint mapIndex)
+    {
+        var map = MapManager.GetMap(mapIndex);
+        return map == null ? null : $"{map.Width}x{map.Height} {(map.Type == MapType.Map3D ? "3D" : "2D")}";
+    }
+
+    /// <summary>
     /// Returns the name and the savegame bit index of a goto point (1-based) of a map.
     /// </summary>
     public (string Name, uint Bit)? ScriptGetGotoPoint(uint mapIndex, int index)

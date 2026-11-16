@@ -40,9 +40,18 @@ namespace Ambermoon.Render
 
         public const int TILE_WIDTH = 16;
         public const int TILE_HEIGHT = 16;
-        public const int NUM_VISIBLE_TILES_X = 11; // maps will always be at least 11x11 in size
-        public const int NUM_VISIBLE_TILES_Y = 9; // maps will always be at least 11x11 in size
-        const int NUM_TILES = NUM_VISIBLE_TILES_X * NUM_VISIBLE_TILES_Y;
+        public const int DEFAULT_VISIBLE_TILES_X = 11; // maps will always be at least 11x11 in size
+        public const int DEFAULT_VISIBLE_TILES_Y = 9; // maps will always be at least 11x11 in size
+        // the immersive mode shows more tiles (see Global.SetMap2DView)
+        public static int NUM_VISIBLE_TILES_X { get; private set; } = DEFAULT_VISIBLE_TILES_X;
+        public static int NUM_VISIBLE_TILES_Y { get; private set; } = DEFAULT_VISIBLE_TILES_Y;
+        static int NUM_TILES => NUM_VISIBLE_TILES_X * NUM_VISIBLE_TILES_Y;
+
+        internal static void SetVisibleTiles(int tilesX, int tilesY)
+        {
+            NUM_VISIBLE_TILES_X = tilesX;
+            NUM_VISIBLE_TILES_Y = tilesY;
+        }
         readonly GameCore game;
         public Map? Map { get; private set; } = null;
         Map[]? adjacentMaps = null;
@@ -50,8 +59,8 @@ namespace Ambermoon.Render
         readonly IMapManager? mapManager = null;
         readonly IGameRenderView? renderView = null;
         ITextureAtlas? textureAtlas = null;
-        readonly List<IAnimatedSprite> backgroundTileSprites = new(NUM_TILES);
-        readonly List<IAnimatedSprite> foregroundTileSprites = new(NUM_TILES);
+        readonly List<IAnimatedSprite> backgroundTileSprites = new(DEFAULT_VISIBLE_TILES_X * DEFAULT_VISIBLE_TILES_Y);
+        readonly List<IAnimatedSprite> foregroundTileSprites = new(DEFAULT_VISIBLE_TILES_X * DEFAULT_VISIBLE_TILES_Y);
         readonly List<Transport> mapTransports = [];
         uint ticksPerFrame = 0;
         bool worldMap = false;
@@ -74,28 +83,72 @@ namespace Ambermoon.Render
             this.renderView = renderView;
             mapAnimation = new(game);
 
-            var spriteFactory = renderView.SpriteFactory;
+            CreateTileSprites();
 
-            for (int row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
+            SetMap(map, initialScrollX, initialScrollY);
+        }
+
+        /// <summary>
+        /// Creates the tile sprites for the current view size (see Global.SetMap2DView)
+        /// or only repositions them if the number of visible tiles is still the same.
+        /// </summary>
+        void CreateTileSprites()
+        {
+            if (backgroundTileSprites.Count != NUM_TILES)
             {
-                for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
+                backgroundTileSprites.ForEach(sprite => sprite.Delete());
+                foregroundTileSprites.ForEach(sprite => sprite.Delete());
+                backgroundTileSprites.Clear();
+                foregroundTileSprites.Clear();
+
+                var spriteFactory = renderView!.SpriteFactory;
+
+                for (int i = 0; i < NUM_TILES; ++i)
                 {
                     var backgroundSprite = spriteFactory.CreateAnimated(TILE_WIDTH, TILE_HEIGHT, 0, 1);
                     var foregroundSprite = spriteFactory.CreateAnimated(TILE_WIDTH, TILE_HEIGHT, 0, 1);
 
                     backgroundSprite.Visible = true;
-                    backgroundSprite.X = Global.Map2DViewX + column * TILE_WIDTH;
-                    backgroundSprite.Y = Global.Map2DViewY + row * TILE_HEIGHT;
                     foregroundSprite.Visible = false;
-                    foregroundSprite.X = Global.Map2DViewX + column * TILE_WIDTH;
-                    foregroundSprite.Y = Global.Map2DViewY + row * TILE_HEIGHT;
 
                     backgroundTileSprites.Add(backgroundSprite);
                     foregroundTileSprites.Add(foregroundSprite);
                 }
             }
 
-            SetMap(map, initialScrollX, initialScrollY);
+            int index = 0;
+
+            for (int row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
+            {
+                for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
+                {
+                    backgroundTileSprites[index].X = Global.Map2DViewX + column * TILE_WIDTH;
+                    backgroundTileSprites[index].Y = Global.Map2DViewY + row * TILE_HEIGHT;
+                    foregroundTileSprites[index].X = Global.Map2DViewX + column * TILE_WIDTH;
+                    foregroundTileSprites[index].Y = Global.Map2DViewY + row * TILE_HEIGHT;
+                    ++index;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Applies a changed view size (immersive mode) to the tiles, characters and transports.
+        /// </summary>
+        internal void RefreshView(Position playerPosition)
+        {
+            if (Map == null)
+                return;
+
+            uint x = (uint)playerPosition.X;
+            uint y = (uint)playerPosition.Y;
+            LimitScrollOffset(ref x, ref y);
+            ScrollTo(x, y, true);
+
+            foreach (var mapCharacter in mapCharacters.Values)
+                mapCharacter.RefreshView();
+
+            foreach (var transport in mapTransports)
+                transport.Sprite.ClipArea = GameCore.Map2DViewArea;
         }
 
         public void Update(uint ticks, ITime gameTime, bool monstersCanMoveImmediately, Position? lastPlayerPosition)
@@ -287,6 +340,27 @@ namespace Ambermoon.Render
                 (int)ScrollX + position.X / TILE_WIDTH,
                 (int)ScrollY + position.Y / TILE_HEIGHT
             );
+        }
+
+        /// <summary>
+        /// Returns true if the position would be visible in the default view (11x9 tiles).
+        /// The immersive mode shows more tiles but monsters should only notice the
+        /// player in the area of the default view like before.
+        /// </summary>
+        internal bool IsInDefaultView(Position position)
+        {
+            if (NUM_VISIBLE_TILES_X == DEFAULT_VISIBLE_TILES_X && NUM_VISIBLE_TILES_Y == DEFAULT_VISIBLE_TILES_Y)
+                return true;
+
+            if (Map == null || Map.IsWorldMap)
+                return true;
+
+            var playerPosition = game.RenderPlayer.Position;
+            int scrollX = Util.Limit(0, playerPosition.X - DEFAULT_VISIBLE_TILES_X / 2, Map.Width - DEFAULT_VISIBLE_TILES_X);
+            int scrollY = Util.Limit(0, playerPosition.Y - DEFAULT_VISIBLE_TILES_Y / 2, Map.Height - DEFAULT_VISIBLE_TILES_Y);
+
+            return position.X >= scrollX && position.X < scrollX + DEFAULT_VISIBLE_TILES_X &&
+                position.Y >= scrollY && position.Y < scrollY + DEFAULT_VISIBLE_TILES_Y;
         }
 
         public Position GetCenterPosition()
@@ -866,6 +940,10 @@ namespace Ambermoon.Render
         {
             if (!forceUpdate && ScrollX == x && ScrollY == y)
                 return;
+
+            // the view size might have changed (immersive mode and its view size depends on the map size)
+            if (forceUpdate)
+                CreateTileSprites();
 
             ScrollX = x;
             ScrollY = y;

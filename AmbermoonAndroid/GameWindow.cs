@@ -250,15 +250,7 @@ class GameWindow
 
         if (key == Silk.NET.Input.Key.F7)
         {
-            if (!Game.BattleRoundActive)
-            {
-                if (GetModifiers(keyboard) == KeyModifiers.None)
-                    configuration.BattleSpeed = configuration.BattleSpeed >= 100 ? 0 : configuration.BattleSpeed + 10;
-                else
-                    configuration.BattleSpeed = configuration.BattleSpeed <= 0 ? 100 : configuration.BattleSpeed - 10;
-
-                Game?.ExternalBattleSpeedChanged();
-            }
+            Game?.ToggleQuestLog();
         }
         else if (key == Silk.NET.Input.Key.F8)
         {
@@ -855,10 +847,9 @@ class GameWindow
                 introFontLarge.GlyphGraphics, introGraphics, features, 10);
             logoPyrdacor?.Initialize(textureAtlasManager);
             AdvancedLogo.Initialize(textureAtlasManager, FileProvider.GetAdvancedLogoData);
-            textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
-            {
-                { QuestLog.IconGraphicIndex, questLogIcon }
-            });
+            var miscGraphics = ImmersiveGraphics.GetGraphics();
+            miscGraphics.Add(QuestLog.IconGraphicIndex, questLogIcon);
+            textureAtlasManager.AddFromGraphics(Layer.Misc, miscGraphics);
             var graphics = TutorialFinger.GetGraphics(1u); // Donate button is 0
             graphics.Add(0u, FileProvider.GetDonateButton());
             textureAtlasManager.AddFromGraphics(Layer.MobileOverlays, graphics);

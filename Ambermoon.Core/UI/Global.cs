@@ -22,6 +22,7 @@
 using Ambermoon.Data;
 using Ambermoon.Render;
 using Ambermoon.UI;
+using System;
 using System.Linq;
 
 namespace Ambermoon
@@ -30,14 +31,76 @@ namespace Ambermoon
     {
         public const int LayoutX = 0;
         public const int LayoutY = 37;
-        public const int Map2DViewX = 16;
-        public const int Map2DViewY = 49;
-        public const int Map2DViewWidth = RenderMap2D.NUM_VISIBLE_TILES_X * RenderMap2D.TILE_WIDTH;
-        public const int Map2DViewHeight = RenderMap2D.NUM_VISIBLE_TILES_Y * RenderMap2D.TILE_HEIGHT;
-        public const int Map3DViewX = 32;
-        public const int Map3DViewY = 49;
-        public const int Map3DViewWidth = 144;
-        public const int Map3DViewHeight = 144;
+        public const int DefaultMap2DViewX = 16;
+        public const int DefaultMap2DViewY = 49;
+        // The 2D map view is larger in the immersive mode (see SetMap2DView).
+        public static int Map2DViewX { get; private set; } = DefaultMap2DViewX;
+        public static int Map2DViewY { get; private set; } = DefaultMap2DViewY;
+        public static int Map2DViewWidth => RenderMap2D.NUM_VISIBLE_TILES_X * RenderMap2D.TILE_WIDTH;
+        public static int Map2DViewHeight => RenderMap2D.NUM_VISIBLE_TILES_Y * RenderMap2D.TILE_HEIGHT;
+        // tiles of the immersive 2D map view (odd numbers so the player is in the center)
+        public const int ImmersiveMap2DTilesX = 21;
+        public const int ImmersiveMap2DTilesY = 13;
+
+        /// <summary>
+        /// Sets the size and position of the 2D map view. In the immersive mode
+        /// it covers the whole screen. Maps which are smaller than the view are
+        /// centered with a black border around them.
+        /// </summary>
+        internal static void SetMap2DView(bool immersive, Map? map)
+        {
+            if (!immersive)
+            {
+                RenderMap2D.SetVisibleTiles(RenderMap2D.DEFAULT_VISIBLE_TILES_X, RenderMap2D.DEFAULT_VISIBLE_TILES_Y);
+                Map2DViewX = DefaultMap2DViewX;
+                Map2DViewY = DefaultMap2DViewY;
+                return;
+            }
+
+            int tilesX = ImmersiveMap2DTilesX;
+            int tilesY = ImmersiveMap2DTilesY;
+
+            if (map != null && !map.IsWorldMap)
+            {
+                tilesX = Math.Min(tilesX, map.Width);
+                tilesY = Math.Min(tilesY, map.Height);
+            }
+
+            RenderMap2D.SetVisibleTiles(tilesX, tilesY);
+            Map2DViewX = (VirtualScreenWidth - tilesX * RenderMap2D.TILE_WIDTH) / 2;
+            Map2DViewY = (VirtualScreenHeight - tilesY * RenderMap2D.TILE_HEIGHT) / 2;
+        }
+        public const int DefaultMap3DViewX = 32;
+        public const int DefaultMap3DViewY = 49;
+        public const int DefaultMap3DViewWidth = 144;
+        public const int DefaultMap3DViewHeight = 144;
+        // The 3D map view covers the whole screen in the immersive mode (see SetMap3DView).
+        public static int Map3DViewX { get; private set; } = DefaultMap3DViewX;
+        public static int Map3DViewY { get; private set; } = DefaultMap3DViewY;
+        public static int Map3DViewWidth { get; private set; } = DefaultMap3DViewWidth;
+        public static int Map3DViewHeight { get; private set; } = DefaultMap3DViewHeight;
+
+        /// <summary>
+        /// Sets the size and position of the 3D map view. In the immersive mode it
+        /// covers the whole screen, so more of the map is visible at the sides.
+        /// </summary>
+        internal static void SetMap3DView(bool immersive)
+        {
+            if (immersive)
+            {
+                Map3DViewX = 0;
+                Map3DViewY = 0;
+                Map3DViewWidth = VirtualScreenWidth;
+                Map3DViewHeight = VirtualScreenHeight;
+            }
+            else
+            {
+                Map3DViewX = DefaultMap3DViewX;
+                Map3DViewY = DefaultMap3DViewY;
+                Map3DViewWidth = DefaultMap3DViewWidth;
+                Map3DViewHeight = DefaultMap3DViewHeight;
+            }
+        }
         public const int ButtonGridX = 208;
         public const int ButtonGridY = 143;
         public const int InventoryX = 109;

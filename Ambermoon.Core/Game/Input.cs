@@ -820,6 +820,10 @@ partial class GameCore
                 else if (InputEnable && CurrentSavegame!.IsGameOptionActive(Data.Enumerations.Option.ObtainedMapOfLyramion))
                     ShowMessagePopup(CustomTexts.GetText(GameLanguage, CustomTexts.Index.WorldMapItemNeeded));
             }
+            else if (char.ToLower(keyChar) == 'i' && Ingame)
+            {
+                ToggleImmersiveMode();
+            }
         }
     }
 
@@ -843,7 +847,7 @@ partial class GameCore
         {
             var relativePosition = renderView.ScreenToGame(position);
 
-            if (!mapViewArea.Contains(relativePosition))
+            if (!mapViewArea.Contains(relativePosition) || IsOnImmersiveUI(relativePosition))
             {
                 /*if (Global.UpperRightArea.Contains(relativePosition))
                 {
@@ -1089,7 +1093,8 @@ partial class GameCore
             var relativePosition = renderView.ScreenToGame(position);
 
             if (!WindowActive && !layout.PopupActive && InputEnable && !pickingNewLeader &&
-                !pickingTargetPlayer && !pickingTargetInventory && mapViewArea.Contains(relativePosition))
+                !pickingTargetPlayer && !pickingTargetInventory && mapViewArea.Contains(relativePosition) &&
+                !IsOnImmersiveUI(relativePosition))
             {
                 // click into the map area
                 if (buttons == MouseButtons.Right)
@@ -1231,7 +1236,6 @@ partial class GameCore
                     ToggleQuestLog();
                     return;
                 }
-
                 if (QuestLog?.Open == true)
                 {
                     CursorType = CursorType.Sword;

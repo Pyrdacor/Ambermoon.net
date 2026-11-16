@@ -132,6 +132,8 @@ namespace Ambermoon.UI
         readonly Rect barArea;
         readonly int size;
         readonly bool horizontal;
+        int pixels = -1;
+        int offsetY = 0;
 
         internal Bar(List<IColoredRect> filledAreas, IColoredRect area, int size, bool horizontal)
             : base(filledAreas, area)
@@ -142,13 +144,31 @@ namespace Ambermoon.UI
         }
 
         /// <summary>
+        /// Vertical offset of the bar (portraits move up in the immersive mode).
+        /// </summary>
+        internal int OffsetY
+        {
+            get => offsetY;
+            set
+            {
+                if (offsetY == value)
+                    return;
+
+                offsetY = value;
+
+                if (pixels > 0)
+                    area.Y = horizontal ? barArea.Top + offsetY : barArea.Bottom - pixels + offsetY;
+            }
+        }
+
+        /// <summary>
         /// Fills the bar dependent on the given value.
         /// </summary>
         /// <param name="percentage">Value in the range 0 to 1 (0 to 100%).</param>
         /// <param name="forceNotEmpty">If true at least 1 pixel remaings.</param>
         public void Fill(float percentage, bool forceNotEmpty = false)
         {
-            int pixels = Util.Round(size * percentage);
+            pixels = Util.Round(size * percentage);
 
             if (forceNotEmpty && pixels == 0)
                 pixels = 1;
@@ -162,14 +182,14 @@ namespace Ambermoon.UI
             else if (horizontal)
             {
                 area.X = barArea.Left;
-                area.Y = barArea.Top;
+                area.Y = barArea.Top + offsetY;
                 area.Resize(pixels, barArea.Height);
                 area.Visible = true;
             }
             else
             {
                 area.X = barArea.Left;
-                area.Y = barArea.Bottom - pixels;
+                area.Y = barArea.Bottom - pixels + offsetY;
                 area.Resize(barArea.Width, pixels);
                 area.Visible = true;
             }
@@ -276,7 +296,7 @@ namespace Ambermoon.UI
         Both = 5 // Only used by blink
     }
 
-    internal class Layout
+    internal partial class Layout
     {
         // There are a few possibilities:
         // 1. Move item from a player inventory directly to another player via his portrait.
@@ -741,6 +761,7 @@ namespace Ambermoon.UI
             buttonGrid.Visible = layoutType != LayoutType.None && layoutType != LayoutType.Event && layoutType != LayoutType.Automap;
 
             UpdateLayoutButtons(ticksPerMovement);
+            UpdateImmersiveUI();
         }
 
         public void OpenOptionMenu()
@@ -748,7 +769,8 @@ namespace Ambermoon.UI
             OptionMenuOpen = true;
             game.InputEnable = false;
             game.Pause();
-            var area = Type switch
+            // The overlay graphic is 320x144. In the immersive mode it covers the center of the screen.
+            var area = ImmersiveActive ? new Rect(0, (Global.VirtualScreenHeight - 144) / 2, Global.VirtualScreenWidth, 144) : Type switch
             {
                 LayoutType.Map2D => GameCore.Map2DViewArea,
                 LayoutType.Map3D => GameCore.Map3DViewArea,
@@ -763,6 +785,11 @@ namespace Ambermoon.UI
             {
                 boxArea = new Rect(88, 64, 144, 40);
                 textArea = new Rect(88, 67, 144, 40);
+            }
+            else if (ImmersiveActive)
+            {
+                boxArea = new Rect(88, 80, 144, 40);
+                textArea = new Rect(88, 83, 144, 40);
             }
             else
             {
@@ -784,6 +811,8 @@ namespace Ambermoon.UI
 
             if (game.BattleActive)
                 game.HideAutoBattleRounds();
+
+            UpdateImmersiveUI(); // the option buttons are always shown
         }
 
         void CloseOptionMenu()
@@ -796,6 +825,7 @@ namespace Ambermoon.UI
             texts.Last()?.Destroy(); // version string
             texts.Remove(texts.Last());
             UpdateLayoutButtons(ticksPerMovement);
+            UpdateImmersiveUI();
             if (game.BattleActive)
                 game.SetupBattleButtons();
             game.Resume();
@@ -4119,13 +4149,13 @@ namespace Ambermoon.UI
                 var overlaySprite = (RenderView.SpriteFactory.Create(32, 34, true, 1) as ILayerSprite)!;
                 overlaySprite.Layer = renderLayer;
                 overlaySprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
-                overlaySprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
-                overlaySprite.ClipArea = Global.PartyMemberPortraitAreas[slot].CreateModified(1, 1, -2, -2);
+                overlaySprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1 + portraitOffsetY;
+                overlaySprite.ClipArea = GetPortraitClipArea(slot);
                 overlaySprite.TextureAtlasOffset = sprite.TextureAtlasOffset;
                 overlaySprite.PaletteIndex = game.PrimaryUIPaletteIndex;
                 overlaySprite.Visible = true;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(newGraphicIndex);
-                sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1 + yOffset;
+                sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1 + yOffset + portraitOffsetY;
 
                 portraitAnimation = new PortraitAnimation
                 {
@@ -4341,8 +4371,8 @@ namespace Ambermoon.UI
             var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, true, 2);
             sprite.Layer = renderLayer;
             sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
-            sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
-            sprite.ClipArea = Global.PartyMemberPortraitAreas[slot].CreateModified(1, 1, -2, -2);
+            sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1 + portraitOffsetY;
+            sprite.ClipArea = GetPortraitClipArea(slot);
             bool animation = false;
             if (initialize)
             {
@@ -4381,8 +4411,7 @@ namespace Ambermoon.UI
                         text = portraitNames[slot] = RenderView.RenderTextFactory.Create(
                             game.PrimaryUIPaletteIndex, 
                             textLayer, name, TextColor.PartyMember, true,
-                            GetTextRect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6),
-                            TextAlign.Center);
+                            GetPortraitNameArea(slot), TextAlign.Center);
                     }
                     else
                     {
@@ -4407,7 +4436,7 @@ namespace Ambermoon.UI
                 sprite = portraitBackgrounds[slot] ??= RenderView.SpriteFactory.Create(32, 34, true, 0);
                 sprite.Layer = renderLayer;
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
-                sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
+                sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1 + portraitOffsetY;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground);
                 sprite.PaletteIndex = (byte)(RenderView.GraphicInfoProvider.PrimaryUIPaletteIndex + 3 - 1);
                 sprite.Visible = true;
@@ -4423,7 +4452,7 @@ namespace Ambermoon.UI
             sprite.Layer = renderLayer;
             sprite.PaletteIndex = game.PrimaryUIPaletteIndex;
             sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 33;
-            sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 2;
+            sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 2 + portraitOffsetY;
 
             if (graphicIndex != null)
             {
@@ -4502,6 +4531,9 @@ namespace Ambermoon.UI
                 CreateArea(new Rect(baseLocation.X + 2 + index * 16, baseLocation.Y + 18, 12, 2), game.GetUIColor(31), 3), 12, true);
             activeSpellDurationBars.Add(activeSpellType, durationBar);
             durationBar.Fill(activeSpell.Duration / 200.0f);
+
+            if (!battle)
+                UpdateImmersiveItems();
         }
 
         public void RemoveAllActiveSpells()
@@ -4620,6 +4652,8 @@ namespace Ambermoon.UI
             default:
                 throw new AmbermoonException(ExceptionScope.Application, $"Invalid special item: {specialItem}");
             };
+
+            UpdateImmersiveItems();
         }
 
         void UpdateSpecialItems()
@@ -5129,7 +5163,13 @@ namespace Ambermoon.UI
                 }
 
                 UpdateSpecialItems();
+
+                // the duration bars of active spells are shown when they are filled
+                if (ImmersiveActive)
+                    UpdateImmersiveItems();
             }
+
+            UpdateImmersiveAnimation();
 
             if (portraitAnimation != null)
             {
@@ -5147,15 +5187,15 @@ namespace Ambermoon.UI
                     switch (portraitAnimation.Movement)
                     {
                         case PortraitAnimation.MoveType.MovePrimary:
-                            portraitAnimation.PrimarySprite!.Y = 1 + portraitAnimation.Offset;
+                            portraitAnimation.PrimarySprite!.Y = 1 + portraitAnimation.Offset + portraitOffsetY;
                             portraitAnimation.PrimarySprite.DisplayLayer = (byte)Math.Min(255, portraitAnimation.InitialDisplayLayer + 10);
                             break;
                         case PortraitAnimation.MoveType.MoveSecondary:
-                            portraitAnimation.SecondarySprite!.Y = 1 + portraitAnimation.Offset;
+                            portraitAnimation.SecondarySprite!.Y = 1 + portraitAnimation.Offset + portraitOffsetY;
                             portraitAnimation.SecondarySprite.DisplayLayer = (byte)Math.Min(255, portraitAnimation.InitialDisplayLayer + 10);
                             break;
                         case PortraitAnimation.MoveType.MoveBoth:
-                            portraitAnimation.PrimarySprite!.Y = 1 + portraitAnimation.Offset;
+                            portraitAnimation.PrimarySprite!.Y = 1 + portraitAnimation.Offset + portraitOffsetY;
                             portraitAnimation.SecondarySprite!.Y = portraitAnimation.PrimarySprite.Y + portraitAnimation.PrimarySprite.Height;
                             portraitAnimation.SecondarySprite.DisplayLayer = portraitAnimation.PrimarySprite.DisplayLayer = portraitAnimation.InitialDisplayLayer;
                             break;
@@ -5409,6 +5449,9 @@ namespace Ambermoon.UI
             uint currentTicks, bool pickingNewLeader = false, bool pickingTargetPlayer = false,
             bool pickingTargetInventory = false, KeyModifiers keyModifiers = KeyModifiers.None)
         {
+            if (ImmersiveClick(position, buttons))
+                return true;
+
             if (pickingTargetPlayer)
             {
                 if (buttons == MouseButtons.Right)

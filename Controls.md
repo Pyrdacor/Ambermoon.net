@@ -4,24 +4,27 @@
 
 Input | Action
 --- | ---
-1 to 6 | Select party member 1 to 6
-F1 to F6 | Open inventory of party member 1 to 6
-F7 | Change battle speed (use Ctrl, Shift or Alt to change backwards)
-F8 | Change graphic filter (use Ctrl, Shift or Alt to change backwards)
-F9 | Change graphic overlay (use Ctrl, Shift or Alt to change backwards)
-F10 | Change color effect (use Ctrl, Shift or Alt to change backwards)
-PrintScreen | Take screenshot (stored in folder Screenshots)
-Ctrl + P | Take screenshot (stored in folder Screenshots)
-Ctrl + M | Toggle music
-Ctrl + , | Lower volume
-Ctrl + . | Increase volume
-Escape | Generally aborts or closes things
-Return | Generally submits or closes things, toggle the action buttons in map view
-Space | Generally closes things, in 3D you can active events or NPCs with it
+1 to 6 | Select party member 1 to 6 as the active one
+F1 to F6 | Open the inventory of party member 1 to 6
+F7 | Open or close the quest log
+F8 | Change the graphic filter (hold Ctrl, Shift or Alt to change backwards)
+F9 | Change the graphic overlay (hold Ctrl, Shift or Alt to change backwards)
+F10 | Change the color effect (hold Ctrl, Shift or Alt to change backwards)
+F11 | Switch between window, fullscreen and fullsized window
+PrintScreen | Take a screenshot (stored in the folder Screenshots)
+Ctrl + P | Take a screenshot (stored in the folder Screenshots)
+Ctrl + M | Toggle the music
+Ctrl + , | Lower the volume
+Ctrl + . | Increase the volume
 Ctrl + 0 to 9 | Quick save in slots 1 to 10 (0 is slot 10)
 Ctrl + Shift + 0 to 9 | Quick load from slots 1 to 10 (0 is slot 10)
 Ctrl + Shift + C | Center the window on the main monitor
-NumPad 1 to 9 | Action buttons in lower right corner (see below)
+Escape | Generally aborts or closes things
+Return | Generally submits or closes things, toggles the action buttons in the map view
+Space | Generally closes things, in 3D it activates events or NPCs in front of you
+NumPad 1 to 9 | Action buttons in the lower right corner (see below)
+
+The battle speed can be changed in the options (it no longer has a key).
 
 ![NumPad Example 1](docs/action_buttons_0.png "Move buttons")
 
@@ -31,13 +34,34 @@ NumPad 1 to 9 | Action buttons in lower right corner (see below)
 
 ## Map
 
-You can toggle the action buttons on the lower right with either a right click on them or the return key. Num pad enter key will work as well.
+Input | Action
+--- | ---
+Up or W | Move up (2D) or forward (3D)
+Down or S | Move down (2D) or backward (3D)
+Left or A | Move left (2D) or turn left (3D)
+Right or D | Move right (2D) or turn right (3D)
+Q and E | Turn left and right in 3D if the 3D movement option is set to WASDQE (A and D strafe then)
+M | Show the world map in 2D (if a party member owns the map of Lyramion) or the automap in 3D
+I | Toggle the immersive mode
+Space | Interact with things in front of you (3D)
+
+If the option "turn with arrow keys" is active, the left and right arrow keys turn in 3D.
+
+You can toggle the action buttons on the lower right with either a right click on them or the return key. The num pad enter key works as well.
+
+#### Immersive mode
+
+The key I or the icon in the upper right corner toggles the immersive mode on 2D and 3D maps. The map then covers the whole screen and you see much more of it. The portraits move up and only the names of the party members stay visible. You can still click the names to select a party member or right click them to open the inventory.
+
+The small arrows at the right show or hide the action buttons and the special items (compass, clock, etc). The num pad keys always work, even if the action buttons are hidden. Windows like the inventory are shown as usual and the immersive mode returns when you close them.
 
 #### 2D Maps
 
 You can right click on the map to transform the cursor into a crosshair cursor. Using it will perform any suitable interaction of the following type: Eye, Hand or Mouth.
 
 Hovering over the player the cursor becomes Zzz. Left clicking will wait for 5 minutes.
+
+The mouse wheel changes the cursor. Clicking the mouse wheel shows the crosshair or mouth cursor.
 
 #### 3D Maps
 
@@ -49,7 +73,25 @@ Left clicking in the center (Zzz) will wait for 5 minutes.
 
 Right clicking in the center will interact with things in front of you.
 
+#### World map and automap
+
+Input | Action
+--- | ---
+Escape, Space or M | Close the world map or the automap (Return closes the world map as well)
+Mouse wheel | Zoom the world map
+Drag with the left mouse button | Move the world map
+
 <div style="page-break-after: always"></div>
+
+## Lists and scrollable areas
+
+Input | Action
+--- | ---
+Up and Down | Scroll by one line (or one row of items)
+Page Up and Page Down | Scroll by one page
+Home (Pos1) and End | Scroll to the start or to the end
+
+The mouse wheel works as well.
 
 ## Amount popups
 
@@ -81,16 +123,23 @@ Right clicking a stack of items will take all of them immediately. Left clicks w
 
 Dragging items can be aborted with right click or escape key.
 
-
 ## Battle
 
-The default battle speed requires you to click after actions. All other speeds (+x%) will execute battle actions automatically at a given pace.
+Input | Action
+--- | ---
+Space or left click | Acknowledge battle actions and texts
+Escape | Abort the selection of a target or a battle field position
 
-You can click or hit the space key to acknowledge battle actions and texts.
+The default battle speed requires you to click after actions. All other speeds (+x%) will execute battle actions automatically at a given pace. The battle speed can be changed in the options.
 
-Changing the battle speed is forbidden during an active battle round. This means if the battle actions are currently performed. You still can change the battle speed between rounds when you setup your actions.
+The targets of spells and items for your own party members can be selected on the battle field or by their portraits.
 
+## Version selection, main menu and character creation
 
-
-
-*to be continued ...*
+Input | Action
+--- | ---
+Up and Down | Select a game data version (version selection)
+Page Up / Home and Page Down / End | Select the first or the last game data version
+Return or Space | Start the selected version, or continue or start a game in the main menu
+Up/Left and Down/Right | Change the portrait (character creation)
+Return | Confirm the character (character creation)

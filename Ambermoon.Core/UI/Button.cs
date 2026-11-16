@@ -455,6 +455,7 @@ namespace Ambermoon.UI
         bool rightMouse = false;
         bool disabled = false;
         bool visible = true;
+        bool concealed = false;
         DateTime pressedTime = DateTime.MinValue;
         uint lastActionTimeInTicks = 0;
         uint? continuousActionDelayInTicks = null;
@@ -674,7 +675,7 @@ namespace Ambermoon.UI
             set
             {
                 disabled = value;
-                disableOverlay.Visible = Visible && disabled;
+                disableOverlay.Visible = Visible && !concealed && disabled;
             }
         }
 
@@ -688,10 +689,37 @@ namespace Ambermoon.UI
 
                 visible = value;
 
-                frameSprite.Visible = visible;
-                iconSprite.Visible = visible;
-                disableOverlay.Visible = visible && disabled;
+                UpdateSpriteVisibility();
             }
+        }
+
+        /// <summary>
+        /// A concealed button is not displayed but still works (e.g. with the num pad keys).
+        /// This is used for the action buttons in the immersive mode.
+        /// </summary>
+        internal bool Concealed
+        {
+            get => concealed;
+            set
+            {
+                if (concealed == value)
+                    return;
+
+                concealed = value;
+
+                if (concealed)
+                    HideTooltip();
+
+                UpdateSpriteVisibility();
+            }
+        }
+
+        void UpdateSpriteVisibility()
+        {
+            bool show = visible && !concealed;
+            frameSprite.Visible = show;
+            iconSprite.Visible = show;
+            disableOverlay.Visible = show && disabled;
         }
 
         public byte PaletteIndex

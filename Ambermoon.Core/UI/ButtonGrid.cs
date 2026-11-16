@@ -36,6 +36,7 @@ namespace Ambermoon.UI
         bool rightMouseDown = false;
         readonly Rect area;
         bool visible = true;
+        bool concealed = false;
         public readonly static Rect[] ButtonAreas = new Rect[9];
 
         static ButtonGrid()
@@ -103,8 +104,31 @@ namespace Ambermoon.UI
                 button?.HideTooltip();
         }
 
+        /// <summary>
+        /// Concealed buttons are not displayed but still work with the num pad keys (immersive mode).
+        /// </summary>
+        public bool Concealed
+        {
+            get => concealed;
+            set
+            {
+                if (concealed == value)
+                    return;
+
+                concealed = value;
+
+                foreach (var button in buttons)
+                    button.Concealed = concealed;
+            }
+        }
+
+        public Rect Area => area;
+
         public void Hover(Position position)
         {
+            if (concealed)
+                return;
+
             foreach (var button in buttons)
             {
                 if (button != null && !button.Disabled && button.Visible)
@@ -141,6 +165,10 @@ namespace Ambermoon.UI
             if (Disabled)
                 return false;
 
+            // concealed buttons can't be clicked but still be used with the num pad keys
+            if (concealed)
+                return false;
+
             if (mouseButtons == MouseButtons.Left)
             {
                 for (int i = 0; i < 9; ++i)
@@ -151,7 +179,7 @@ namespace Ambermoon.UI
             }
             else if (mouseButtons == MouseButtons.Right)
             {
-                if (area.Contains(position))
+                if (visible && area.Contains(position))
                     rightMouseDown = true;
             }
 

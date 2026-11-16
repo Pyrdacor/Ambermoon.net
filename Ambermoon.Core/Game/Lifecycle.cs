@@ -633,6 +633,8 @@ partial class GameCore
 
         layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false, Map?.UseTravelTypes == true, TravelType.Walk));
         is3D = false;
+        // the view size depends on the immersive mode and the map size
+        Global.SetMap2DView(layout.ImmersiveActive, map);
         int xOffset = (int)playerX - RenderMap2D.NUM_VISIBLE_TILES_X / 2;
         int yOffset = (int)playerY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2;
 
@@ -692,6 +694,7 @@ partial class GameCore
             renderView.GetLayer((Layer)i).Visible = true;
 
         mapViewArea = Map2DViewArea;
+        ApplyImmersiveMode();
 
         PlayerMoved(true, null, true);
     }
@@ -706,6 +709,8 @@ partial class GameCore
         is3D = true;
         TravelType = TravelType.Walk;
         renderMap2D?.Destroy();
+        // the view size depends on the immersive mode (the sky etc. is created with the map)
+        Global.SetMap3DView(layout.ImmersiveActive);
         renderMap3D!.SetMap(map, playerX, playerY, direction, CurrentPartyMember?.Race ?? Race.Human, true);
         UpdateUIPalette(true);
         mapInitAction?.Invoke(map);
@@ -729,6 +734,7 @@ partial class GameCore
             renderView.GetLayer((Layer)i).Visible = false;
 
         mapViewArea = Map3DViewArea;
+        ApplyImmersiveMode();
 
         PlayerMoved(true, null, true);
     }

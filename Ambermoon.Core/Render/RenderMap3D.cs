@@ -780,40 +780,51 @@ namespace Ambermoon.Render
         /// </summary>
         class SkySprite
         {
-            ILayerSprite? leftSprite;
-            ILayerSprite? rightSprite;
+            // The sky texture is 144 pixels wide. The immersive view is wider so more parts are needed.
+            readonly List<ILayerSprite> sprites = [];
 
             public SkySprite(int y, Func<int, int, ILayerSprite> creator)
             {
-                leftSprite = creator(Global.Map3DViewX, Global.Map3DViewY + y);
-                rightSprite = creator(Global.Map3DViewX + leftSprite.Width, Global.Map3DViewY + y);
-                leftSprite.Visible = true;
-                rightSprite.Visible = true;
+                var sprite = creator(Global.Map3DViewX, Global.Map3DViewY + y);
+                sprite.Visible = true;
+                sprites.Add(sprite);
+                int count = Global.Map3DViewWidth / sprite.Width + 2;
+
+                for (int i = 1; i < count; ++i)
+                {
+                    sprite = creator(Global.Map3DViewX + i * sprite.Width, Global.Map3DViewY + y);
+                    sprite.Visible = true;
+                    sprites.Add(sprite);
+                }
             }
 
             public void Destroy()
             {
-                leftSprite?.Delete();
-                rightSprite?.Delete();
-
-                leftSprite = null;
-                rightSprite = null;
+                sprites.ForEach(sprite => sprite.Delete());
+                sprites.Clear();
             }
 
             public void ScrollTo(int x)
             {
-                if (leftSprite == null || rightSprite == null)
+                if (sprites.Count == 0)
                     return;
 
-                while (x <= -Global.Map3DViewWidth)
-                    x += Global.Map3DViewWidth;
-                while (x > 0)
-                    x -= Global.Map3DViewWidth;
+                int width = sprites[0].Width;
 
-                leftSprite.X = Global.Map3DViewX + x;
-                rightSprite.X = leftSprite.X + leftSprite.Width;
+                while (x <= -width)
+                    x += width;
+                while (x > 0)
+                    x -= width;
+
+                for (int i = 0; i < sprites.Count; ++i)
+                    sprites[i].X = Global.Map3DViewX + x + i * width;
             }
         }
+
+        // One full turn scrolls the sky by 8 sky widths (144 pixels each) in the default view.
+        // The immersive view is higher, so the sky scrolls faster (it must be a multiple of 144).
+        static int SkyScrollWidth => Math.Max(1, Util.Round(8.0f * Global.Map3DViewHeight / Global.DefaultMap3DViewHeight)) * 144;
+        static int StarAreaWidth => SkyScrollWidth;
 
         public const int FloorTextureWidth = 64;
         public const int FloorTextureHeight = 64;
@@ -904,11 +915,23 @@ namespace Ambermoon.Render
 
             EnsureLabBackgroundGraphics(renderView.GraphicInfoProvider);
 
-            // Create stars
-            var starLayer = renderView.GetLayer(Layer.Map3DBackground);
+            CreateStars();
+
+            if (map != null)
+                SetMap(map, playerX, playerY, playerDirection, game.CurrentPartyMember?.Race ?? Race.Human);
+
+            camera.Turned += CameraTurned;
+        }
+
+        void CreateStars()
+        {
+            stars.ForEach(star => star.Value.Delete());
+            stars.Clear();
+
+            var starLayer = renderView!.GetLayer(Layer.Map3DBackground);
             int x = 0;
             var random = new Random();
-            const int starAreaWidth = 8 * Global.Map3DViewWidth;
+            int starAreaWidth = StarAreaWidth;
             for (int y = 4; y < 36; ++y)
             {
                 x %= starAreaWidth;
@@ -925,11 +948,43 @@ namespace Ambermoon.Render
                     x += starAreaWidth * 2 / 3 + (int)(random.Next() % (starAreaWidth / 3));
                 }
             }
+        }
 
-            if (map != null)
-                SetMap(map, playerX, playerY, playerDirection, game.CurrentPartyMember?.Race ?? Race.Human);
+        /// <summary>
+        /// The aspect ratio depends on the wall height and the size of the view (immersive mode).
+        /// </summary>
+        void UpdateAspect()
+        {
+            if (labdata == null)
+                return;
 
-            camera.Turned += CameraTurned;
+            renderView!.AspectProcessor?.Invoke(ReferenceWallHeight / labdata.WallHeight *
+                Global.Map3DViewWidth / Global.Map3DViewHeight);
+        }
+
+        /// <summary>
+        /// Applies a changed view size (immersive mode) to the sky, floor, ceiling and camera.
+        /// The game has to update the sky and light afterwards.
+        /// </summary>
+        internal void RefreshView()
+        {
+            if (Map == null || labdata == null)
+                return;
+
+            floorColor?.Delete();
+            ceilingColor?.Delete();
+            horizonSprite?.Destroy();
+            horizonSprite = null;
+            horizonFog?.Delete();
+            horizonFog = null;
+            skyColors?.ForEach(c => c?.Delete());
+            skyColors = null;
+
+            SetupBackground();
+            CreateStars();
+            SetFog(Map, labdata);
+            UpdateAspect();
+            CameraTurned(camera!.Angle);
         }
 
         void CameraTurned(float angle)
@@ -939,7 +994,7 @@ namespace Ambermoon.Render
             while (angle >= 360.0f)
                 angle -= 360.0f;
 
-            int scrollX = Util.Round(8.0f * -144.0f * angle / 360.0f);
+            int scrollX = Util.Round(-SkyScrollWidth * angle / 360.0f);
 
             if (horizonSprite != null)
                 horizonSprite.ScrollTo(scrollX);
@@ -978,7 +1033,7 @@ namespace Ambermoon.Render
                     sprite.Y = y;
                     return sprite;
                 });
-                horizonFog = renderView.ColoredRectFactory.Create(144, 21, Color.Transparent, 50);
+                horizonFog = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, 21, Color.Transparent, 50);
                 horizonFog.Layer = renderView.GetLayer(Layer.Map3DBackgroundFog);
                 horizonFog.X = Global.Map3DViewX;
                 horizonFog.Y = Global.Map3DViewY + ceilingColor.Height - 21;
@@ -1034,12 +1089,13 @@ namespace Ambermoon.Render
                 EnsureChangeableBlocks();
                 UpdateSurfaces();
                 SetupBackground();
+                CreateStars(); // the star area depends on the view size (immersive mode)
                 SetFog(map, labdata);
                 AddCharacters();
 
                 SetCameraHeight(race);
 
-                renderView!.AspectProcessor?.Invoke(ReferenceWallHeight / labdata.WallHeight);
+                UpdateAspect();
 
                 MapChanged?.Invoke(map);
             }
@@ -1864,16 +1920,20 @@ namespace Ambermoon.Render
 
             if (canSee)
             {
+                // The sky parts are given for the default view height. The immersive view is higher.
+                float skyScale = (float)Global.Map3DViewHeight / Global.DefaultMap3DViewHeight;
                 skyColors = skyParts.Select(part =>
                 {
-                    var skyColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth + 1, part.Height, new Color(part.Color), 1);
+                    int y = Util.Round(part.Y * skyScale);
+                    int height = Math.Max(1, Util.Round((part.Y + part.Height) * skyScale) - y);
+                    var skyColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth + 1, height, new Color(part.Color), 1);
                     skyColor.X = Global.Map3DViewX;
-                    skyColor.Y = Global.Map3DViewY - 1 + part.Y;
+                    skyColor.Y = Global.Map3DViewY - 1 + y;
                     skyColor.Layer = ceilingColor!.Layer;
                     skyColor.Visible = true;
                     return skyColor;
                 }).ToList();
-                UpdateStars(Util.Round(8.0f * -144.0f * camera!.Angle / 360.0f));
+                UpdateStars(Util.Round(-SkyScrollWidth * camera!.Angle / 360.0f));
                 renderView.SetSkyColorReplacement(labdata!.CeilingColorIndex, skyColors.Last().Color);
             }
             stars.ForEach(s => s.Value.Visible = canSee && (time.Hour >= 19 || time.Hour < 7));            
@@ -1884,7 +1944,7 @@ namespace Ambermoon.Render
             if (Map == null)
                 return;
 
-            const int starAreaWidth = 8 * Global.Map3DViewWidth;
+            int starAreaWidth = StarAreaWidth;
             bool showStars = game.GameTime!.Hour >= 19 || game.GameTime.Hour < 7;
             var starColor = !showStars ? null
                 : game.GameTime.Hour < 5 || game.GameTime.Hour >= 21 ? game.GetPaletteColor((int)Map.PaletteIndex, 31)

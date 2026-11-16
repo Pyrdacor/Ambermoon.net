@@ -303,9 +303,10 @@ partial class GameCore
 
     #region Map
 
-    internal static readonly Rect Map2DViewArea = new(Global.Map2DViewX, Global.Map2DViewY,
+    // Note: This changes in the immersive mode (see Global.SetMap2DView).
+    internal static Rect Map2DViewArea => new(Global.Map2DViewX, Global.Map2DViewY,
         Global.Map2DViewWidth, Global.Map2DViewHeight);
-    internal static readonly Rect Map3DViewArea = new(Global.Map3DViewX, Global.Map3DViewY,
+    internal static Rect Map3DViewArea => new(Global.Map3DViewX, Global.Map3DViewY,
         Global.Map3DViewWidth, Global.Map3DViewHeight);
 
     RenderMap2D? renderMap2D = null;    
@@ -523,7 +524,7 @@ partial class GameCore
 
             var relativePosition = renderView.ScreenToGame(cursorPosition);
 
-            if (!WindowActive && !layout.PopupActive && (mapViewArea.Contains(relativePosition) || clickMoveActive))
+            if (!WindowActive && !layout.PopupActive && ((mapViewArea.Contains(relativePosition) && !IsOnImmersiveUI(relativePosition)) || clickMoveActive))
             {
                 // Change arrow cursors when hovering the map
                 if (Ingame && cursor.Type >= CursorType.Sword && cursor.Type <= CursorType.Wait)

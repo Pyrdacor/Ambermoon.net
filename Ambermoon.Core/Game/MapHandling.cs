@@ -94,6 +94,8 @@ partial class GameCore
                 if (CurrentSavegame!.ActiveSpells[(int)activeSpell] != null)
                     layout.AddActiveSpell(activeSpell, CurrentSavegame.ActiveSpells[(int)activeSpell], false);
             }
+
+            ApplyImmersiveMode();
         }
     }
 
@@ -928,7 +930,11 @@ partial class GameCore
         CloseWindow(() =>
         {
             Pause();
-            var popup = layout.OpenPopup(Map2DViewArea.Position, 11, 9, true, false);
+            // the popup has the size of the default 2D map view (centered in the immersive mode)
+            var popupPosition = layout.ImmersiveActive
+                ? new Position((Global.VirtualScreenWidth - 11 * 16) / 2, (Global.VirtualScreenHeight - 9 * 16) / 2)
+                : new Position(Global.DefaultMap2DViewX, Global.DefaultMap2DViewY);
+            var popup = layout.OpenPopup(popupPosition, 11, 9, true, false);
             var contentArea = popup.ContentArea;
 
             CursorType = CursorType.Sword;

@@ -665,7 +665,7 @@ sealed class ScenarioScript
                     {
                         var flags = game.ScriptGetMapFlags(uint.Parse(parts[1]));
                         string flagsText = flags == null ? "unknown map" : $"0x{(uint)flags.Value:x4}";
-                        Console.WriteLine($"  map {parts[1]} flags: {flagsText}");
+                        Console.WriteLine($"  map {parts[1]} flags: {flagsText} size: {game.ScriptGetMapSize(uint.Parse(parts[1]))}");
                         if (parts.Length > 2)
                             Report(flags != null && (uint)flags.Value == Convert.ToUInt32(parts[2], 16), $"map {parts[1]} flags are {flagsText}, expected {parts[2]}");
                         break;
