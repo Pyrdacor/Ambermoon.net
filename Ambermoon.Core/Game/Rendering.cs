@@ -329,7 +329,9 @@ partial class GameCore
     Position? lastPlayerPosition = null;
 
     internal IRenderPlayer RenderPlayer => Is3D ? player3D! : player2D!;
-    internal int PlayerAngle => Is3D ? Util.Round(player3D!.Angle) : (int)player2D!.Direction.ToAngle();
+    // the player might not exist yet while a map is started
+    internal bool PlayerAvailable => Is3D ? player3D != null : player2D != null;
+    internal int PlayerAngle =>Is3D ? Util.Round(player3D!.Angle) : (int)player2D!.Direction.ToAngle();
     internal CharacterDirection PlayerDirection => Is3D ? player3D!.Direction : player2D!.Direction;
 
     #endregion
@@ -383,6 +385,9 @@ partial class GameCore
         }
 
         ouchSprite.PaletteIndex = currentUIPaletteIndex;
+        // the window title (e.g. map name) must use the same palette as the other UI texts
+        if (windowTitle != null)
+            windowTitle.PaletteIndex = currentUIPaletteIndex;
         layout.UpdateUIPalette(currentUIPaletteIndex);
         cursor.UpdatePalette(this);
     }
@@ -526,6 +531,10 @@ partial class GameCore
 
             if (!WindowActive && !layout.PopupActive && ((mapViewArea.Contains(relativePosition) && !IsOnImmersiveUI(relativePosition)) || clickMoveActive))
             {
+                // the layout is not hovered here, so tooltips (e.g. of the map name in the immersive mode) must be hidden
+                if (layout.TooltipActive)
+                    layout.HideTooltip();
+
                 // Change arrow cursors when hovering the map
                 if (Ingame && cursor.Type >= CursorType.Sword && cursor.Type <= CursorType.Wait)
                 {

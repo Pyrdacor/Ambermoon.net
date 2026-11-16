@@ -201,6 +201,13 @@ namespace Ambermoon.Render
                     AddTexture(Layer.UI, Graphics.UICustomGraphicOffset + (uint)i, uiElementGraphics[i]);
                 }
                 AddTexture(Layer.UI, Graphics.UICustomGraphicOffset + (uint)uiElementGraphics.Count, GameCore.AutoBattleButton);
+
+                // frameless special item graphics for the immersive mode
+                var framelessGraphics = UI.ImmersiveGraphics.CreateFramelessSpecialItemGraphics(uiGraphic =>
+                    uiElementGraphics[(int)(Graphics.GetUIGraphicIndex(uiGraphic) - Graphics.UICustomGraphicOffset)]);
+
+                foreach (var framelessGraphic in framelessGraphics)
+                    AddTexture(Layer.UI, framelessGraphic.Key, framelessGraphic.Value);
             }
             else if (graphicInfoProvider is IGraphicAtlasProvider graphicAtlasProvider)
             {

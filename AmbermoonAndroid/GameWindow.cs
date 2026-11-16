@@ -849,6 +849,16 @@ class GameWindow
             AdvancedLogo.Initialize(textureAtlasManager, FileProvider.GetAdvancedLogoData);
             var miscGraphics = ImmersiveGraphics.GetGraphics();
             miscGraphics.Add(QuestLog.IconGraphicIndex, questLogIcon);
+            var buttonPageArrow = new Graphic();
+            new GraphicReader().ReadGraphic(buttonPageArrow, new DataReader(FileProvider.GetButtonPageArrow()), new GraphicInfo
+            {
+                GraphicFormat = GraphicFormat.Palette3Bit,
+                Width = 8,
+                Height = 6,
+                Alpha = true,
+                PaletteOffset = 24
+            });
+            miscGraphics.Add(ImmersiveGraphics.ButtonPageArrowGraphicIndex, buttonPageArrow);
             textureAtlasManager.AddFromGraphics(Layer.Misc, miscGraphics);
             var graphics = TutorialFinger.GetGraphics(1u); // Donate button is 0
             graphics.Add(0u, FileProvider.GetDonateButton());

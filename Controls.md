@@ -47,13 +47,13 @@ Space | Interact with things in front of you (3D)
 
 If the option "turn with arrow keys" is active, the left and right arrow keys turn in 3D.
 
-You can toggle the action buttons on the lower right with either a right click on them or the return key. The num pad enter key works as well.
+The action buttons on the lower right show the actions (eye, hand, mouth, etc) by default. You can toggle them to the movement buttons and back with either a right click on them or the return key. The num pad enter key works as well. You can also click the small arrow at the lower right corner below the buttons.
 
 #### Immersive mode
 
 The key I or the icon in the upper right corner toggles the immersive mode on 2D and 3D maps. The map then covers the whole screen and you see much more of it. The portraits move up and only the names of the party members stay visible. You can still click the names to select a party member or right click them to open the inventory.
 
-The small arrows at the right show or hide the action buttons and the special items (compass, clock, etc). The num pad keys always work, even if the action buttons are hidden. Windows like the inventory are shown as usual and the immersive mode returns when you close them.
+A small bar below the names shows the map name, the compass, the clock and the other special items. Hover over a shortened map name to see the full name. The coordinates are shown at the bottom center and the active spells at the lower left. The small arrow at the right shows or hides the action buttons. The num pad keys always work, even if the action buttons are hidden. Windows like the inventory are shown as usual and the immersive mode returns when you close them.
 
 #### 2D Maps
 

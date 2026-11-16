@@ -582,7 +582,9 @@ namespace Ambermoon.UI
         public bool PopupActive => activePopup != null;
         public bool PopupDisableButtons => activePopup?.DisableButtons == true;
         public bool PopupClickCursor => activePopup?.ClickCursor == true;
-        public int ButtonGridPage { get; private set; } = 0;
+        // 0: movement, 1: actions (eye, hand, mouth, etc)
+        public int ButtonGridPage { get; private set; }
+        public static int DefaultButtonGridPage(bool mobile) => mobile ? 0 : 1;
         uint? ticksPerMovement = null;
         internal IGameRenderView RenderView { get; }
         public bool TransportEnabled { get; set; } = false;
@@ -598,6 +600,7 @@ namespace Ambermoon.UI
             renderLayer = renderView.GetLayer(Layer.UI);
             textLayer = renderView.GetLayer(Layer.Text);
             this.itemManager = itemManager;
+            ButtonGridPage = DefaultButtonGridPage(game.CoreConfiguration.IsMobile);
             byte paletteIndex = (byte)(renderView.GraphicInfoProvider.PrimaryUIPaletteIndex - 1);
 
             GlyphHeight = renderView.FontProvider.GetFont().GlyphHeight;
@@ -2156,6 +2159,9 @@ namespace Ambermoon.UI
         {
             buttonGrid.PaletteIndex = palette;
             sprite.PaletteIndex = palette;
+
+            if (buttonPageArrow != null)
+                buttonPageArrow.PaletteIndex = palette;
 
             foreach (var specialItemSprite in specialItemSprites)
                 specialItemSprite.Value.PaletteIndex = palette;
@@ -4693,15 +4699,13 @@ namespace Ambermoon.UI
             if (specialItemTexts.ContainsKey(SpecialItemPurpose.Compass))
                 specialItemTexts[SpecialItemPurpose.Compass].SetText(game.ProcessText(GetCompassString()));
 
-            // Update monster eye
-            if (specialItemSprites.ContainsKey(SpecialItemPurpose.MonsterEye))
-                specialItemSprites[SpecialItemPurpose.MonsterEye].TextureAtlasOffset =
-                    textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(game.MonsterSeesPlayer ? UIGraphic.MonsterEyeActive : UIGraphic.MonsterEyeInactive));
+            // Update monster eye (in the immersive mode without frame)
+            if (specialItemSprites.TryGetValue(SpecialItemPurpose.MonsterEye, out var monsterEyeSprite))
+                ApplySpecialItemGraphic(SpecialItemPurpose.MonsterEye, monsterEyeSprite);
 
-            // Update daytime display
-            if (specialItemSprites.ContainsKey(SpecialItemPurpose.DayTime))
-                specialItemSprites[SpecialItemPurpose.DayTime].TextureAtlasOffset =
-                    textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Night + (int)game.GameTime!.GetDayTime()));
+            // Update daytime display (in the immersive mode without frame)
+            if (specialItemSprites.TryGetValue(SpecialItemPurpose.DayTime, out var dayTimeSprite))
+                ApplySpecialItemGraphic(SpecialItemPurpose.DayTime, dayTimeSprite);
 
             // Update map location
             if (specialItemTexts.ContainsKey(SpecialItemPurpose.MapLocation))
@@ -4794,6 +4798,8 @@ namespace Ambermoon.UI
             if (activeTooltip == tooltip)
                 HideTooltip();
         }
+
+        internal bool TooltipActive => activeTooltip != null;
 
         internal void HideTooltip()
         {

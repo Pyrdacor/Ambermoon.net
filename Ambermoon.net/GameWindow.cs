@@ -1067,6 +1067,16 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
             AdvancedLogo.Initialize(textureAtlasManager, () => Resources.Advanced);
             var miscGraphics = ImmersiveGraphics.GetGraphics();
             miscGraphics.Add(QuestLog.IconGraphicIndex, questLogIcon);
+            var buttonPageArrow = new Graphic();
+            new GraphicReader().ReadGraphic(buttonPageArrow, new DataReader(Resources.ButtonPageArrow), new GraphicInfo
+            {
+                GraphicFormat = GraphicFormat.Palette3Bit,
+                Width = 8,
+                Height = 6,
+                Alpha = true,
+                PaletteOffset = 24
+            });
+            miscGraphics.Add(ImmersiveGraphics.ButtonPageArrowGraphicIndex, buttonPageArrow);
             textureAtlasManager.AddFromGraphics(Layer.Misc, miscGraphics);
             return textureAtlasManager;
         });

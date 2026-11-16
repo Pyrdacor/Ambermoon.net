@@ -46,5 +46,7 @@ namespace Ambermoon
         internal static byte[] LoadingBarGreen => (byte[])ResourceManager.GetObject("lbar_green", Culture);
 
         internal static byte[] QuestLog => (byte[])ResourceManager.GetObject("QuestLog", Culture);
+
+        internal static byte[] ButtonPageArrow => (byte[])ResourceManager.GetObject("ButtonPageArrow", Culture);
     }
 }

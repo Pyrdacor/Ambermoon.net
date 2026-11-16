@@ -234,7 +234,8 @@ public class RenderLayer : IRenderLayer, IDisposable
         { Layer.UI, new ()
         {
             BaseZ = 0.70f,
-            EnableBlending = false,
+            // blending is used for translucent colored rects (e.g. the bar of the immersive mode)
+            EnableBlending = true,
             SupportColoredRects = true
         } },
         { Layer.Items, new ()

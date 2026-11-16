@@ -708,7 +708,8 @@ public class RenderView : RenderLayerFactory, IRenderView, IDisposable
                             (0x800000 >> (8 * (DrugColorComponent.Value % 3))))));
                     State.Gl.BlendFunc(BlendingFactor.DstColor, BlendingFactor.OneMinusConstantColor);
                 }
-                else if (layer.Key == Layer.MobileOverlays)
+                // the alpha is accumulated, so translucent UI looks the same over 2D maps (frame buffer) and 3D maps
+                else if (layer.Key == Layer.MobileOverlays || layer.Key == Layer.UI)
                 {
                     State.Gl.BlendFuncSeparate(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha, BlendingFactor.One, BlendingFactor.OneMinusSrcAlpha);
                 }

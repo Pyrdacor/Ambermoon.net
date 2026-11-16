@@ -490,7 +490,9 @@ partial class GameCore
 
         CreateQuestLog();
 
-        if (layout.ButtonGridPage == 1)
+        // The actions (eye, hand, mouth, etc) are the default page. On mobile devices the buttons
+        // are empty and the movement page is needed for the movement by long presses.
+        if (layout.ButtonGridPage != Layout.DefaultButtonGridPage(CoreConfiguration.IsMobile))
             ToggleButtonGridPage();
 
         if (!is3D)
@@ -662,11 +664,14 @@ partial class GameCore
         if (renderMap2D!.Map != map)
         {
             renderMap2D!.SetMap(map, (uint)xOffset, (uint)yOffset);
+            // like in Start3D, the map init action (e.g. map name) uses the UI palette of the new map
+            UpdateUIPalette(true);
             mapInitAction?.Invoke(map);
         }
         else
         {
             renderMap2D.ScrollTo((uint)xOffset, (uint)yOffset, true);
+            UpdateUIPalette(true);
             mapInitAction?.Invoke(map);
             renderMap2D.AddCharacters(map);
             renderMap2D.InvokeMapChange();

@@ -99,6 +99,8 @@ namespace AmbermoonAndroid
 
         public static byte[] GetQuestLogIcon() => LoadData(Resource.Raw.QuestLog);
 
+        public static byte[] GetButtonPageArrow() => LoadData(Resource.Raw.button_page_arrow);
+
         private static Graphic GetGraphic(int id)
 		{
 			return LoadGraphic(GetBitmap(id));

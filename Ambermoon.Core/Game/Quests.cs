@@ -46,12 +46,22 @@ partial class GameCore
         }
     }
 
+    /// <summary>
+    /// In the immersive mode the icon moves up to the names.
+    /// </summary>
+    internal void SetQuestLogIconY(int y)
+    {
+        if (questLogIcon != null)
+            questLogIcon.Y = y;
+    }
+
     ILayerSprite CreateQuestLogIcon()
     {
         var icon = (renderView.SpriteFactory.Create(16, 16, true) as ILayerSprite)!;
         icon.Layer = renderView.GetLayer(Layer.Misc);
         icon.PaletteIndex = PrimaryUIPaletteIndex;
         icon.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Misc)!.GetOffset(QuestLog.IconGraphicIndex);
+        icon.DisplayLayer = 50; // above the background of the immersive mode
         icon.X = 0;
         icon.Y = 8;
         icon.Visible = true;

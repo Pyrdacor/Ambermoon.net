@@ -44,6 +44,8 @@ namespace Ambermoon.Render
         public const uint RiddlemouthOffset = 3300u;
         public const uint RiddlemouthEyeIndex = RiddlemouthOffset;
         public const uint RiddlemouthMouthIndex = RiddlemouthOffset + 1;
+        // special item graphics without their frame for the immersive mode (see ImmersiveGraphics)
+        public const uint FramelessSpecialItemOffset = 3400u;
 
         // We load 3 things into the same layer -> GraphicType.UIElements
         // 1. Our own UI elements like scrollbars, etc (see UICustomGraphic)

@@ -41,6 +41,7 @@ partial class GameCore
         windowTitle!.Text = ProcessText(mapName);
         windowTitle.PaletteIndex = UIPaletteIndex;
         windowTitle.TextColor = TextColor.BrightGray;
+        layout.SetImmersiveMapName(mapName);
     }
 
     public void UpdateInventory()

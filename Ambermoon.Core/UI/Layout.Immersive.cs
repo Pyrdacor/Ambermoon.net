@@ -23,30 +23,54 @@ using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using System;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI
 {
     // In the immersive mode the map covers the whole screen. Only the names of the
-    // party members stay visible at the top (the portraits move up). The action buttons
-    // and the special items (compass, clock, etc) can be shown without the UI frame
-    // by small arrows at the right.
+    // party members stay visible at the top (the portraits move up). Below them a small
+    // bar shows the map name, the compass, the clock and the other special items.
+    // The active spells are shown at the lower left. The action buttons can be shown
+    // without the UI frame by a small arrow at the right.
+    // The idea of the bar was taken from the Immersive Edition of A5Projects
+    // (https://github.com/A5Projects/Ambermoon.net).
     internal partial class Layout
     {
         // The portraits move up until they are out of the screen. The names stay at the top.
         const int ImmersivePortraitOffset = -36;
         const int ImmersiveNameOffset = -30;
         const int ImmersiveAnimationDuration = 250; // ms
-        // the arrows are right next to the button grid and the special items
+        // the arrow is right next to the button grid
         public static readonly Rect ImmersiveButtonsArrowArea = new(Global.VirtualScreenWidth - ImmersiveGraphics.IconSize,
             Global.ButtonGridY + (3 * Button.Height - ImmersiveGraphics.IconSize) / 2, ImmersiveGraphics.IconSize, ImmersiveGraphics.IconSize);
-        public static readonly Rect ImmersiveItemsArrowArea = new(Global.VirtualScreenWidth - ImmersiveGraphics.IconSize,
-            Global.UpperRightArea.Y + (Global.UpperRightArea.Height - ImmersiveGraphics.IconSize) / 2, ImmersiveGraphics.IconSize, ImmersiveGraphics.IconSize);
+        // A small arrow at the lower right switches the page of the button grid (in the immersive
+        // mode only if the buttons are shown). The clickable area has a border of 1 pixel around it.
+        public static readonly Rect ButtonPageArrowArea = new(310, 188, 8, 6);
+        static readonly Rect ButtonPageArrowClickArea = ButtonPageArrowArea.CreateModified(-1, -1, 2, 2);
+        // The bar below the names (between the quest log icon and the immersive icon).
+        static readonly Rect ImmersiveHudArea = new(17, 8, Global.VirtualScreenWidth - 2 * 17, 16);
+        const int ImmersiveHudTextY = 11;
+        const int ImmersiveHudIconSize = 16; // special item graphics are shown at half size
+        // The compass shows the directions on a horizontal strip which scrolls under a fixed pointer.
+        static readonly Rect ImmersiveCompassArea = new(Global.VirtualScreenWidth / 2 - 32, ImmersiveHudTextY - 2, 64, 10);
+        const int ImmersiveCompassBearingSpacing = 24; // pixels per 45 degrees
+        // the coordinates are shown centered at the bottom (left of the button grid)
+        const int ImmersiveCoordinatesBackgroundY = Global.VirtualScreenHeight - 10;
+        const int ImmersiveCoordinatesTextY = ImmersiveCoordinatesBackgroundY + 2;
+        // the active spells are shown at the lower left
+        static readonly Position ImmersiveActiveSpellsPosition = new(2, Global.VirtualScreenHeight - 22);
         // the clickable area of the names at the top
         static readonly Rect ImmersiveNamesArea = new(Global.PartyMemberPortraitAreas[0].Left, 0,
             Global.PartyMemberPortraitAreas[^1].Right - Global.PartyMemberPortraitAreas[0].Left, 8);
-        // the icon to toggle the immersive mode is the horizontal mirror of the quest log icon (0, 8)
-        public static readonly Rect ImmersiveIconArea = new(Global.VirtualScreenWidth - ImmersiveGraphics.IconSize, 8,
+        // The icon to toggle the immersive mode is the horizontal mirror of the quest log icon (0, 8).
+        // In the immersive mode both icons move up to the names.
+        public const int IconY = 8;
+        public const int ImmersiveIconY = 0;
+        public Rect ImmersiveIconArea => new(Global.VirtualScreenWidth - ImmersiveGraphics.IconSize, ImmersiveActive ? ImmersiveIconY : IconY,
             ImmersiveGraphics.IconSize, ImmersiveGraphics.IconSize + 2);
+        // the background of the names and the bar
+        static readonly Rect ImmersiveTopBackgroundArea = new(0, 0, Global.VirtualScreenWidth, 24);
+        static readonly Render.Color ImmersiveBackgroundColor = new(16, 15, 12, 95);
         ILayerSprite? immersiveIcon = null;
 
         /// <summary>
@@ -56,29 +80,35 @@ namespace Ambermoon.UI
 
         bool immersive = false;
         bool immersiveButtonsExpanded = false;
-        bool immersiveItemsExpanded = false;
         int portraitOffsetY = 0;
         int portraitNameOffsetY = 0;
         float immersiveAnimationProgress = 0.0f; // 0 = normal, 1 = immersive
         bool immersiveAnimating = false;
         DateTime lastImmersiveAnimationTime = DateTime.MinValue;
         ILayerSprite? immersiveButtonsArrow = null;
-        ILayerSprite? immersiveItemsArrow = null;
+        ILayerSprite? buttonPageArrow = null;
+        IColoredRect? buttonPageArrowBackground = null;
+        Tooltip? buttonPageArrowTooltip = null;
         // the buttons have transparent parts, so they get a black background
         IColoredRect? immersiveButtonsBackground = null;
-        // In the immersive mode the special items are arranged in two columns at the right
-        // (to the left of the arrow). The positions of the normal mode are kept here.
-        const int ImmersiveItemsTop = 10; // below the names
-        const int ImmersiveItemsRightColumnX = 272; // monster eye, compass, day time and windchain
-        const int ImmersiveItemsLeftColumnX = 240; // coordinates, clock and active spells
-        static readonly Rect ImmersiveItemsArea = new(ImmersiveItemsLeftColumnX, ImmersiveItemsTop, 64, 120);
+        // the bar below the names
+        IColoredRect? immersiveHudBackground = null;
+        IColoredRect? immersiveCoordinatesBackground = null;
+        readonly System.Collections.Generic.List<IColoredRect> immersiveCompassFrame = [];
+        readonly System.Collections.Generic.List<UIText> immersiveCompassLabels = [];
+        readonly System.Collections.Generic.List<IColoredRect> immersiveCompassTicks = [];
+        int? shownImmersiveCompassAngle = null;
+        UIText? immersiveMapNameText = null;
+        UIText? immersiveClockText = null;
+        UIText? immersiveCoordinatesText = null;
+        Tooltip? immersiveMapNameTooltip = null;
+        string immersiveMapName = "";
+        string? shownImmersiveMapName = null;
+        string? shownImmersiveClock = null;
+        string? shownImmersiveCoordinates = null;
+        // The special item sprites and the active spells are moved in the immersive mode.
+        // The positions of the normal mode are kept here.
         readonly System.Collections.Generic.Dictionary<object, Position> immersiveDefaultPositions = [];
-        static readonly Rect DefaultCompassTextClipArea = new(208, 86, 32, 7);
-
-        /// <summary>
-        /// The arrow for the special items is only shown if at least one special item or spell is active.
-        /// </summary>
-        bool HasImmersiveItems => specialItemSprites.Count != 0 || specialItemTexts.Count != 0 || activeSpellSprites.Count != 0;
 
         /// <summary>
         /// True if the immersive mode is active and the map is shown.
@@ -116,11 +146,25 @@ namespace Ambermoon.UI
             UpdateImmersiveUI();
         }
 
-        public void ToggleImmersiveItems()
+        /// <summary>
+        /// The map name is shown in the bar of the immersive mode (the window title is hidden).
+        /// </summary>
+        internal void SetImmersiveMapName(string mapName)
         {
-            immersiveItemsExpanded = !immersiveItemsExpanded;
-            UpdateImmersiveUI();
+            immersiveMapName = mapName;
+            shownImmersiveMapName = null; // forces an update
+            UpdateImmersiveHud();
         }
+
+        bool ButtonPageArrowVisible => (Type == LayoutType.Map2D || Type == LayoutType.Map3D) && !OptionMenuOpen &&
+            (!ImmersiveActive || (buttonGrid.Visible && !buttonGrid.Concealed));
+
+        /// <summary>
+        /// The page can only be switched by the arrow if it could be switched
+        /// by a right click or the return key as well.
+        /// </summary>
+        bool CanSwitchButtonGridPage => game.InputEnable && !game.ScriptAllInputDisabled && !game.WindowActive && !PopupActive &&
+            !OptionMenuOpen && !game.Fading && game.CursorType == CursorType.Sword;
 
         /// <summary>
         /// The option menu overlay covers everything but the button grid. The rows 142 overlap
@@ -143,16 +187,23 @@ namespace Ambermoon.UI
             if (ImmersiveIconVisible && ImmersiveIconArea.Contains(position))
                 return true;
 
+            if (ButtonPageArrowVisible && ButtonPageArrowClickArea.Contains(position))
+                return true;
+
             if (!ImmersiveActive)
                 return false;
 
-            if (!OptionMenuOpen && (ImmersiveButtonsArrowArea.Contains(position) || (HasImmersiveItems && ImmersiveItemsArrowArea.Contains(position))))
+            if (!OptionMenuOpen && ImmersiveButtonsArrowArea.Contains(position))
                 return true;
 
             if ((immersiveButtonsExpanded || OptionMenuOpen) && Global.ButtonGridArea.Contains(position))
                 return true;
 
-            if (immersiveItemsExpanded && HasImmersiveItems && ImmersiveItemsArea.Contains(position))
+            if (ImmersiveHudArea.Contains(position))
+                return true;
+
+            if (immersiveCoordinatesBackground?.Visible == true &&
+                new Rect(immersiveCoordinatesBackground.X, immersiveCoordinatesBackground.Y, immersiveCoordinatesBackground.Width, immersiveCoordinatesBackground.Height).Contains(position))
                 return true;
 
             return ImmersiveNamesArea.Contains(position);
@@ -171,6 +222,14 @@ namespace Ambermoon.UI
                 return true;
             }
 
+            if (ButtonPageArrowVisible && ButtonPageArrowClickArea.Contains(position))
+            {
+                if (buttons == MouseButtons.Left && CanSwitchButtonGridPage)
+                    ToggleButtonGridPage();
+
+                return true;
+            }
+
             // nothing can be collapsed while the option menu is open
             if (!ImmersiveActive || OptionMenuOpen || buttons != MouseButtons.Left)
                 return false;
@@ -178,12 +237,6 @@ namespace Ambermoon.UI
             if (ImmersiveButtonsArrowArea.Contains(position))
             {
                 ToggleImmersiveButtons();
-                return true;
-            }
-
-            if (HasImmersiveItems && ImmersiveItemsArrowArea.Contains(position))
-            {
-                ToggleImmersiveItems();
                 return true;
             }
 
@@ -218,9 +271,9 @@ namespace Ambermoon.UI
             UpdateImmersiveItems();
 
             immersiveButtonsArrow ??= CreateImmersiveIcon(ImmersiveButtonsArrowArea);
-            immersiveItemsArrow ??= CreateImmersiveIcon(ImmersiveItemsArrowArea);
             UpdateImmersiveArrow(immersiveButtonsArrow, active && !OptionMenuOpen, immersiveButtonsExpanded);
-            UpdateImmersiveArrow(immersiveItemsArrow, active && !OptionMenuOpen && HasImmersiveItems, immersiveItemsExpanded);
+
+            UpdateButtonGridPageIndicator();
 
             if (immersiveIcon == null)
             {
@@ -230,29 +283,341 @@ namespace Ambermoon.UI
 
             // only on maps (also in the normal mode to activate the immersive mode)
             immersiveIcon.Visible = Type == LayoutType.Map2D || Type == LayoutType.Map3D;
+            immersiveIcon.Y = ImmersiveIconArea.Y;
+            game.SetQuestLogIconY(active ? ImmersiveIconY : IconY);
+        }
+
+        /// <summary>
+        /// The small arrow at the lower right switches the page of the button grid (movement or actions)
+        /// when it is clicked. Many players don't know that the page can be switched by a right click
+        /// or the return key otherwise.
+        /// </summary>
+        void UpdateButtonGridPageIndicator()
+        {
+            if (buttonPageArrow == null)
+            {
+                buttonPageArrow = (RenderView.SpriteFactory.Create(ButtonPageArrowArea.Width, ButtonPageArrowArea.Height, true, 50) as ILayerSprite)!;
+                buttonPageArrow.Layer = RenderView.GetLayer(Layer.Misc);
+                buttonPageArrow.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Misc)!.GetOffset(ImmersiveGraphics.ButtonPageArrowGraphicIndex);
+                buttonPageArrow.X = ButtonPageArrowArea.X;
+                buttonPageArrow.Y = ButtonPageArrowArea.Y;
+            }
+
+            if (buttonPageArrowBackground == null)
+            {
+                // in the immersive mode the arrow gets a black background with a border of 1 pixel
+                var area = ButtonPageArrowClickArea;
+                buttonPageArrowBackground = RenderView.ColoredRectFactory.Create(area.Width, area.Height, Render.Color.Black, 49);
+                buttonPageArrowBackground.Layer = RenderView.GetLayer(Layer.Misc);
+                buttonPageArrowBackground.X = area.X;
+                buttonPageArrowBackground.Y = area.Y;
+            }
+
+            bool arrowVisible = ButtonPageArrowVisible;
+            // same palette as the buttons (on maps the palette of the map)
+            buttonPageArrow.PaletteIndex = game.UIPaletteIndex;
+            buttonPageArrow.Visible = arrowVisible;
+            buttonPageArrowBackground.Visible = arrowVisible && ImmersiveActive;
+
+            if (buttonPageArrowTooltip == null || !tooltips.Contains(buttonPageArrowTooltip))
+            {
+                buttonPageArrowTooltip = AddTooltip(ButtonPageArrowClickArea,
+                    ImmersiveGraphics.GetButtonPageTooltip(game.GameLanguage), TextColor.White); // like the button tooltips
+            }
+
+            buttonPageArrowTooltip.Enabled = arrowVisible;
+
+            if (!arrowVisible && activeTooltip == buttonPageArrowTooltip)
+                HideTooltip();
         }
 
         void UpdateImmersiveItems()
         {
             bool active = ImmersiveActive;
-            bool visible = !active || (immersiveItemsExpanded && HasImmersiveItems);
-
-            // The arrow appears or disappears when the first special item is added or the last is removed.
-            if (immersiveItemsArrow != null)
-                immersiveItemsArrow.Visible = active && !OptionMenuOpen && HasImmersiveItems;
 
             ArrangeImmersiveItems(active);
 
-            foreach (var specialItemSprite in specialItemSprites.Values)
-                specialItemSprite.Visible = visible;
+            // In the immersive mode the compass ball, the coordinates and the clock are replaced
+            // by own elements in the bar. The other special items are shown in the bar at half size.
+            foreach (var specialItemSprite in specialItemSprites)
+                specialItemSprite.Value.Visible = !active || specialItemSprite.Key != SpecialItemPurpose.Compass;
             foreach (var specialItemText in specialItemTexts.Values)
-                specialItemText.Visible = visible;
+                specialItemText.Visible = !active;
             foreach (var activeSpellSprite in activeSpellSprites.Values)
-                activeSpellSprite.Visible = visible;
+                activeSpellSprite.Visible = true;
             foreach (var activeSpellDurationBackground in activeSpellDurationBackgrounds.Values)
-                activeSpellDurationBackground.Visible = visible;
+                activeSpellDurationBackground.Visible = true;
             foreach (var activeSpellDurationBar in activeSpellDurationBars.Values)
-                activeSpellDurationBar.Visible = visible; // empty bars are out of the screen
+                activeSpellDurationBar.Visible = true; // empty bars are out of the screen
+
+            UpdateImmersiveHud();
+        }
+
+        UIText CreateImmersiveHudText(Rect area, TextAlign textAlign = TextAlign.Left)
+        {
+            var text = new UIText(RenderView, game.UIPaletteIndex, RenderView.TextProcessor.CreateText(""),
+                GetTextRect(area), 3, TextColor.BrightGray, true, textAlign, false);
+            text.Visible = false;
+            return text;
+        }
+
+        IColoredRect CreateImmersiveHudArea(Rect area, Render.Color color, byte displayLayer)
+        {
+            var coloredRect = RenderView.ColoredRectFactory.Create(area.Width, area.Height, color, displayLayer);
+            coloredRect.Layer = renderLayer;
+            coloredRect.X = area.X;
+            coloredRect.Y = area.Y;
+            coloredRect.Visible = false;
+            return coloredRect;
+        }
+
+        static void SetImmersiveHudText(UIText text, ref string? shownText, string newText, IGameRenderView renderView)
+        {
+            if (shownText == newText)
+                return;
+
+            shownText = newText;
+            text.SetText(renderView.TextProcessor.CreateText(newText));
+        }
+
+        /// <summary>
+        /// Updates the bar below the names: map name at the left, compass in the center,
+        /// coordinates, special item icons and clock at the right.
+        /// </summary>
+        void UpdateImmersiveHud()
+        {
+            bool active = ImmersiveActive;
+
+            if (!active && immersiveHudBackground == null)
+                return;
+
+            var translucent = ImmersiveBackgroundColor;
+            immersiveHudBackground ??= CreateImmersiveHudArea(ImmersiveTopBackgroundArea, translucent, 1);
+            immersiveMapNameText ??= CreateImmersiveHudText(new Rect(ImmersiveHudArea.X + 3, ImmersiveHudTextY, ImmersiveHudArea.Width - 6, 7));
+            immersiveClockText ??= CreateImmersiveHudText(new Rect(ImmersiveHudArea.Right - 33, ImmersiveHudTextY, 30, 7));
+            immersiveCoordinatesText ??= CreateImmersiveHudText(new Rect(0, ImmersiveCoordinatesTextY, 13 * Global.GlyphWidth, 7));
+
+            bool hasCompass = specialItemSprites.ContainsKey(SpecialItemPurpose.Compass);
+            bool hasClock = specialItemTexts.ContainsKey(SpecialItemPurpose.Clock);
+            bool hasCoordinates = specialItemTexts.ContainsKey(SpecialItemPurpose.MapLocation);
+
+            immersiveHudBackground.Visible = active;
+            if (hasCompass)
+                EnsureImmersiveCompass();
+            SetImmersiveCompassVisible(active && hasCompass);
+            immersiveClockText.Visible = active && hasClock;
+            immersiveCoordinatesText.Visible = active && hasCoordinates;
+            immersiveMapNameText.Visible = active;
+
+            foreach (var text in new[] { immersiveMapNameText, immersiveClockText, immersiveCoordinatesText })
+                text.PaletteIndex = game.UIPaletteIndex;
+            foreach (var label in immersiveCompassLabels)
+                label.PaletteIndex = game.UIPaletteIndex;
+
+            if (!active)
+            {
+                if (immersiveCoordinatesBackground != null)
+                    immersiveCoordinatesBackground.Visible = false;
+
+                if (immersiveMapNameTooltip != null)
+                    immersiveMapNameTooltip.Enabled = false;
+
+                return;
+            }
+
+            if (hasCompass && game.PlayerAvailable)
+                UpdateImmersiveCompass();
+
+            // Right side from right to left: clock, day time, monster eye, windchain
+            int x = ImmersiveHudArea.Right - 3;
+
+            if (hasClock)
+            {
+                SetImmersiveHudText(immersiveClockText, ref shownImmersiveClock, $"{game.GameTime!.Hour,2}:{game.GameTime.Minute:00}", RenderView);
+                x -= 5 * Global.GlyphWidth + 2;
+            }
+
+            foreach (var purpose in new[] { SpecialItemPurpose.DayTime, SpecialItemPurpose.MonsterEye, SpecialItemPurpose.WindChain })
+            {
+                if (specialItemSprites.TryGetValue(purpose, out var itemSprite))
+                {
+                    x -= itemSprite.Width + 2;
+                    itemSprite.X = x;
+                    itemSprite.Y = ImmersiveHudArea.Y + (ImmersiveHudArea.Height - itemSprite.Height) / 2;
+                }
+            }
+
+            if (hasCoordinates)
+            {
+                // centered at the bottom (the last glyph has 1 pixel spacing at the right)
+                string coordinates = $"X:{game.PartyPosition.X + 1} Y:{game.PartyPosition.Y + 1}";
+                int width = coordinates.Length * Global.GlyphWidth - 1;
+                int textX = (Global.VirtualScreenWidth - width) / 2;
+                SetImmersiveHudText(immersiveCoordinatesText, ref shownImmersiveCoordinates, coordinates, RenderView);
+                immersiveCoordinatesText.SetPosition(new Position(textX, ImmersiveCoordinatesTextY));
+                var backgroundArea = new Rect(textX - 3, ImmersiveCoordinatesBackgroundY, width + 6, Global.VirtualScreenHeight - ImmersiveCoordinatesBackgroundY);
+                immersiveCoordinatesBackground ??= CreateImmersiveHudArea(backgroundArea, translucent, 1);
+                immersiveCoordinatesBackground.Resize(backgroundArea.Width, backgroundArea.Height);
+                immersiveCoordinatesBackground.X = backgroundArea.X;
+                immersiveCoordinatesBackground.Y = backgroundArea.Y;
+                immersiveCoordinatesBackground.Visible = true;
+            }
+            else if (immersiveCoordinatesBackground != null)
+            {
+                immersiveCoordinatesBackground.Visible = false;
+            }
+
+            // Map name at the left. It is shortened if there is not enough space.
+            int nameRight = (hasCompass ? ImmersiveCompassArea.X : x) - 4;
+            int nameX = ImmersiveHudArea.X + 3;
+            int maxCharacters = Math.Max(4, (nameRight - nameX) / Global.GlyphWidth);
+            string mapName = immersiveMapName;
+            bool truncated = mapName.Length > maxCharacters;
+
+            if (truncated)
+                mapName = mapName[..(maxCharacters - 3)].TrimEnd() + "...";
+
+            SetImmersiveHudText(immersiveMapNameText, ref shownImmersiveMapName, mapName, RenderView);
+
+            // tooltips are removed when the layout is reset
+            if (immersiveMapNameTooltip == null || !tooltips.Contains(immersiveMapNameTooltip))
+            {
+                immersiveMapNameTooltip = AddTooltip(new Rect(0, 0, 0, 0), immersiveMapName, TextColor.BrightGray);
+                immersiveMapNameTooltip.ShowBelow = true;
+            }
+
+            immersiveMapNameTooltip.Area = new Rect(nameX, ImmersiveHudTextY - 1, mapName.Length * Global.GlyphWidth, Global.GlyphLineHeight + 1);
+            immersiveMapNameTooltip.Text = immersiveMapName;
+            immersiveMapNameTooltip.Enabled = truncated && !OptionMenuOpen;
+        }
+
+        /// <summary>
+        /// Creates the compass of the bar: a black face with a metal rim, a small pointer at the top
+        /// and the directions with small ticks between them. The idea is taken from the Immersive Edition
+        /// of A5Projects.
+        /// </summary>
+        void EnsureImmersiveCompass()
+        {
+            if (immersiveCompassFrame.Count != 0)
+                return;
+
+            var area = ImmersiveCompassArea;
+            var interior = area.CreateModified(1, 1, -2, -2);
+            int center = area.X + area.Width / 2;
+
+            void AddFrame(Rect bounds, Render.Color color, byte displayLayer = 3) =>
+                immersiveCompassFrame.Add(CreateImmersiveHudArea(bounds, color, displayLayer));
+
+            AddFrame(area, new Render.Color(5, 8, 9), 2);
+            AddFrame(new Rect(area.X, area.Y, area.Width, 1), new Render.Color(69, 80, 82));
+            AddFrame(new Rect(area.X, area.Bottom - 1, area.Width, 1), new Render.Color(35, 43, 46));
+            AddFrame(new Rect(area.X, area.Y + 1, 1, area.Height - 2), new Render.Color(46, 56, 60));
+            AddFrame(new Rect(area.Right - 1, area.Y + 1, 1, area.Height - 2), new Render.Color(27, 34, 37));
+            // the pointer (a small arrow pointing down)
+            var pointerColor = new Render.Color(191, 207, 203);
+            AddFrame(new Rect(center - 1, area.Y, 3, 1), pointerColor, 4);
+            AddFrame(new Rect(center, area.Y + 1, 1, 1), pointerColor, 4);
+
+            // The directions start with west and continue clockwise ("W N-W N ..."). Only the first 8 are needed.
+            var directions = game.DataNameProvider.CompassDirections.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            for (int i = 0; i < 8; ++i)
+            {
+                string direction = directions[i].Replace("-", "");
+                var label = CreateImmersiveHudText(new Rect(center, ImmersiveHudTextY, direction.Length * Global.GlyphWidth, 7));
+                label.SetText(RenderView.TextProcessor.CreateText(direction));
+                label.Clip(interior);
+                immersiveCompassLabels.Add(label);
+
+                var tick = CreateImmersiveHudArea(new Rect(center, area.Y + 4, 1, 3), new Render.Color(140, 162, 161), 3);
+                tick.ClipArea = interior;
+                immersiveCompassTicks.Add(tick);
+            }
+
+            shownImmersiveCompassAngle = null;
+        }
+
+        void SetImmersiveCompassVisible(bool visible)
+        {
+            foreach (var rect in immersiveCompassFrame)
+                rect.Visible = visible;
+            foreach (var label in immersiveCompassLabels)
+                label.Visible = visible;
+            foreach (var tick in immersiveCompassTicks)
+                tick.Visible = visible;
+        }
+
+        /// <summary>
+        /// Scrolls the directions of the compass pixel by pixel according to the player angle.
+        /// </summary>
+        void UpdateImmersiveCompass()
+        {
+            int angle = (game.PlayerAngle % 360 + 360) % 360;
+
+            if (shownImmersiveCompassAngle == angle)
+                return;
+
+            shownImmersiveCompassAngle = angle;
+            var area = ImmersiveCompassArea;
+            int center = area.X + area.Width / 2;
+
+            // the difference is wrapped so the strip never jumps while turning through north
+            int Offset(float bearing) => Util.Round(((bearing - angle + 540.0f) % 360.0f - 180.0f) * ImmersiveCompassBearingSpacing / 45.0f);
+
+            for (int i = 0; i < 8; ++i)
+            {
+                int bearing = (i * 45 + 270) % 360; // the first direction is west
+                var label = immersiveCompassLabels[i];
+                int width = label.Area.Width;
+                label.SetPosition(new Position(center + Offset(bearing) - width / 2, ImmersiveHudTextY));
+                immersiveCompassTicks[i].X = center + Offset(bearing + 22.5f);
+            }
+        }
+
+        UIGraphic? GetSpecialItemGraphic(SpecialItemPurpose specialItem) => specialItem switch
+        {
+            SpecialItemPurpose.MonsterEye => game.MonsterSeesPlayer ? UIGraphic.MonsterEyeActive : UIGraphic.MonsterEyeInactive,
+            SpecialItemPurpose.DayTime => UIGraphic.Night + (int)game.GameTime!.GetDayTime(),
+            SpecialItemPurpose.WindChain => UIGraphic.Windchain,
+            _ => null
+        };
+
+        /// <summary>
+        /// Sets the graphic of a special item sprite. In the immersive mode the graphic is shown
+        /// at half size and without its frame (if the frameless graphic is available).
+        /// </summary>
+        void ApplySpecialItemGraphic(SpecialItemPurpose specialItem, ILayerSprite sprite)
+        {
+            var graphic = GetSpecialItemGraphic(specialItem);
+
+            if (graphic == null)
+                return;
+
+            bool immersive = ImmersiveActive;
+            uint? framelessIndex = immersive ? ImmersiveGraphics.GetFramelessGraphicIndex(graphic.Value) : null;
+            uint textureIndex;
+            Size textureSize;
+
+            if (framelessIndex != null)
+            {
+                textureIndex = framelessIndex.Value;
+                textureSize = ImmersiveGraphics.GetFramelessGraphicSize(graphic.Value)!;
+            }
+            else
+            {
+                textureIndex = Graphics.GetUIGraphicIndex(graphic.Value);
+                textureSize = new Size(32, specialItem == SpecialItemPurpose.WindChain ? 15 : 32);
+            }
+
+            var size = immersive ? new Size((textureSize.Width + 1) / 2, (textureSize.Height + 1) / 2) : textureSize;
+
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset(textureIndex);
+
+            if (sprite.TextureSize != textureSize)
+                sprite.TextureSize = textureSize;
+
+            if (sprite.Width != size.Width || sprite.Height != size.Height)
+                sprite.Resize(size.Width, size.Height);
         }
 
         Position GetImmersiveDefaultPosition(object element, Position currentPosition)
@@ -267,51 +632,26 @@ namespace Ambermoon.UI
         }
 
         /// <summary>
-        /// Arranges the special items in two columns at the right in the immersive mode
-        /// (only the active ones without gaps) or moves them back to their normal positions.
+        /// Shrinks the special item sprites to half size for the bar of the immersive mode
+        /// (the bar positions them) and moves the active spells to the lower left.
+        /// In the normal mode everything is moved back to the normal positions and sizes.
         /// </summary>
         void ArrangeImmersiveItems(bool immersive)
         {
-            // Right column: monster eye, compass, day time and windchain
-            int y = ImmersiveItemsTop;
-
-            foreach (var purpose in new[] { SpecialItemPurpose.MonsterEye, SpecialItemPurpose.Compass, SpecialItemPurpose.DayTime, SpecialItemPurpose.WindChain })
+            foreach (var specialItemSprite in specialItemSprites)
             {
-                if (!specialItemSprites.TryGetValue(purpose, out var itemSprite))
-                    continue;
+                if (specialItemSprite.Key == SpecialItemPurpose.Compass)
+                    continue; // the compass ball is hidden in the immersive mode
 
+                var itemSprite = specialItemSprite.Value;
                 var defaultPosition = GetImmersiveDefaultPosition(itemSprite, new Position(itemSprite.X, itemSprite.Y));
-                var position = immersive ? new Position(ImmersiveItemsRightColumnX, y) : defaultPosition;
-                itemSprite.X = position.X;
-                itemSprite.Y = position.Y;
+                ApplySpecialItemGraphic(specialItemSprite.Key, itemSprite);
 
-                if (purpose == SpecialItemPurpose.Compass && specialItemTexts.TryGetValue(SpecialItemPurpose.Compass, out var compassText))
+                if (!immersive)
                 {
-                    // the compass text moves with the compass
-                    int offsetX = position.X - defaultPosition.X;
-                    int offsetY = position.Y - defaultPosition.Y;
-                    var defaultTextPosition = GetImmersiveDefaultPosition(compassText, compassText.Area.Position);
-                    compassText.SetPosition(new Position(defaultTextPosition.X + offsetX, defaultTextPosition.Y + offsetY));
-                    compassText.Clip(DefaultCompassTextClipArea.CreateModified(offsetX, offsetY, 0, 0));
+                    itemSprite.X = defaultPosition.X;
+                    itemSprite.Y = defaultPosition.Y;
                 }
-
-                if (immersive)
-                    y += itemSprite.Height + 1;
-            }
-
-            // Left column: coordinates, clock and the active spells (two per row)
-            y = ImmersiveItemsTop;
-
-            foreach (var purpose in new[] { SpecialItemPurpose.MapLocation, SpecialItemPurpose.Clock })
-            {
-                if (!specialItemTexts.TryGetValue(purpose, out var itemText))
-                    continue;
-
-                var defaultPosition = GetImmersiveDefaultPosition(itemText, itemText.Area.Position);
-                itemText.SetPosition(immersive ? new Position(ImmersiveItemsLeftColumnX, y) : defaultPosition);
-
-                if (immersive)
-                    y += (purpose == SpecialItemPurpose.MapLocation ? 2 : 1) * Global.GlyphLineHeight + 2;
             }
 
             int index = 0;
@@ -323,7 +663,7 @@ namespace Ambermoon.UI
 
                 var defaultPosition = GetImmersiveDefaultPosition(spellSprite, new Position(spellSprite.X, spellSprite.Y));
                 var position = immersive
-                    ? new Position(ImmersiveItemsLeftColumnX + (index % 2) * 16, y + (index / 2) * 22)
+                    ? new Position(ImmersiveActiveSpellsPosition.X + index * 16, ImmersiveActiveSpellsPosition.Y)
                     : defaultPosition;
                 int offsetX = position.X - defaultPosition.X;
                 int offsetY = position.Y - defaultPosition.Y;
