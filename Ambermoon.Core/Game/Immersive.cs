@@ -13,6 +13,12 @@ partial class GameCore
     }
 
     /// <summary>
+    /// True if the immersive mode is active and a map is shown.
+    /// The mobile touchpad uses a compact layout then.
+    /// </summary>
+    public bool ImmersiveActive => layout?.ImmersiveActive == true;
+
+    /// <summary>
     /// The immersive mode can be toggled on maps with the key I or the icon at the upper right.
     /// The map then covers the whole screen and only the names of the party members stay.
     /// </summary>

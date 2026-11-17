@@ -2,7 +2,7 @@
 
 ## 1.16.0 - Sixteenth patch (November 2026)
 
-- Version [1.16.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.16.0): Immersive mode on maps (key I) with collapsible portraits (key P) and a bar for map name, compass, clock and special items, actions are the default button page with a small arrow to toggle the movement buttons, quest log on F7, monsters can parry and a passive battle flag.
+- Version [1.16.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.16.0): Immersive mode on maps (key I) with collapsible portraits (key P) and a bar for map name, compass, clock and special items, compact touchpad on Android, actions are the default button page with a small arrow to toggle the movement buttons, quest log on F7, monsters can parry and a passive battle flag.
 
 ## 1.15.0 - Fifteenth patch (November 2026)
 

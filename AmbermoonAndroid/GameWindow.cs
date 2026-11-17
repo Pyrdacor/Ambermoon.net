@@ -1010,7 +1010,7 @@ class GameWindow
                             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.MobileOverlays);
 
                             tutorialFinger = new TutorialFinger(renderView);
-                            touchPad = new TouchPad(renderView, touchPadArea);
+                            touchPad = new TouchPad(renderView, touchPadArea, renderView.RenderScreenArea.Size);
                             touchPad.Show(false);
 
                             enableCheatsRequest?.Invoke(configuration.EnableCheats);

@@ -21,10 +21,22 @@ internal class TouchPad
     long tappedArrowTimestamp = 0;
     const int ShowTappedArrowDuration = 200;
     bool enabled = false;
+    bool shown = false;
+    // In the immersive mode only the 4 small circles and the big circle are shown at the lower right.
+    bool immersive = false;
     int iconPage = -1;
     readonly HashSet<GameCore.MobileIconAction> iconsActive = [];
+    readonly Size screenSize;
+    readonly double scaleX;
+    readonly double scaleY;
+    // screen positions of the texture origin (normal mode: both are the touchpad area position)
+    Position smallCirclesOrigin = new();
+    Position bigCircleOrigin = new();
 
     readonly ILayerSprite background;
+    // 0 to 3: small circles (index x * 2 + y like the icon slots), 4: big circle
+    readonly ILayerSprite[] immersiveCircles = new ILayerSprite[5];
+    readonly ILayerSprite[] immersiveDisableOverlays = new ILayerSprite[5];
     readonly ILayerSprite[] arrows = new ILayerSprite[4];
     readonly ILayerSprite activeMarker;
     readonly ILayerSprite disableOverlay;
@@ -46,6 +58,17 @@ internal class TouchPad
     const int IconX2 = 1116;
     const int IconY1 = 186;
     const int IconY2 = 528;
+    // Areas of the circles inside the touchpad graphic (with their outline).
+    // They are cut out for the immersive mode.
+    static readonly Rect[] RelativeSmallCircleAreas =
+    [
+        new(134, 184, 274, 280), // left top
+        new(134, 526, 274, 280), // left bottom
+        new(1114, 184, 274, 280), // right top
+        new(1114, 526, 274, 280), // right bottom
+    ];
+    static readonly Rect RelativeBigCircleArea = new(398, 122, 728, 728);
+    const int ImmersiveCirclesGraphicIndex = 20; // 4 small circles, then the big circle
     static readonly Size[] IconSizes =
     [
         new(24, 9), // eye
@@ -81,7 +104,61 @@ internal class TouchPad
 
     public Direction? Direction { get; private set; } = null;
 
-    public bool ContainsPosition(Position position) => area.Contains(position);
+    public bool ContainsPosition(Position position)
+    {
+        if (!immersive)
+            return area.Contains(position);
+
+        // only the circles are shown, taps between them reach the map
+        return immersiveCircles.Any(circle => EllipseContains(new Rect(circle.X, circle.Y, circle.Width, circle.Height), position));
+    }
+
+    static bool EllipseContains(Rect rect, Position position)
+    {
+        if (rect.Width <= 0 || rect.Height <= 0)
+            return false;
+
+        double dx = (position.X + 0.5 - (rect.X + rect.Width * 0.5)) / (rect.Width * 0.5);
+        double dy = (position.Y + 0.5 - (rect.Y + rect.Height * 0.5)) / (rect.Height * 0.5);
+
+        return dx * dx + dy * dy <= 1.0;
+    }
+
+    /// <summary>
+    /// Cuts a circle out of the touchpad graphic. The pixels outside the circle are transparent.
+    /// </summary>
+    static Graphic CutCircle(Graphic source, Rect area)
+    {
+        var data = new byte[area.Width * area.Height * 4];
+        double radiusX = area.Width * 0.5;
+        double radiusY = area.Height * 0.5;
+
+        for (int y = 0; y < area.Height; y++)
+        {
+            for (int x = 0; x < area.Width; x++)
+            {
+                int sourceIndex = ((area.Y + y) * source.Width + area.X + x) * 4;
+                int targetIndex = (y * area.Width + x) * 4;
+                double dx = (x + 0.5 - radiusX) / radiusX;
+                double dy = (y + 0.5 - radiusY) / radiusY;
+                // smooth edge of about 1 pixel
+                double coverage = Math.Clamp((1.0 - Math.Sqrt(dx * dx + dy * dy)) * Math.Min(radiusX, radiusY) + 0.5, 0.0, 1.0);
+
+                data[targetIndex + 0] = source.Data[sourceIndex + 0];
+                data[targetIndex + 1] = source.Data[sourceIndex + 1];
+                data[targetIndex + 2] = source.Data[sourceIndex + 2];
+                data[targetIndex + 3] = (byte)Math.Round(source.Data[sourceIndex + 3] * coverage);
+            }
+        }
+
+        return new Graphic
+        {
+            Width = area.Width,
+            Height = area.Height,
+            IndexedGraphic = false,
+            Data = data
+        };
+    }
 
     public static Dictionary<uint, Graphic> GetGraphics(uint offset)
     {
@@ -150,7 +227,10 @@ internal class TouchPad
                 wait,
                 battlePositions,
                 options,
-                @switch
+                @switch,
+                // immersive mode (index 20 to 24)
+                ..RelativeSmallCircleAreas.Select(circleArea => CutCircle(background, circleArea)),
+                CutCircle(background, RelativeBigCircleArea)
             ];
 
             return graphics.Select((gfx, index) => new { gfx, index }).ToDictionary(b => offset + (uint)b.index, b => b.gfx);
@@ -161,12 +241,15 @@ internal class TouchPad
         }
     }
 
-    public TouchPad(IGameRenderView renderView, Rect touchPadArea)
+    public TouchPad(IGameRenderView renderView, Rect touchPadArea, Size screenSize)
     {
         try
         {
             area = new(touchPadArea);
+            this.screenSize = new(screenSize);
             threshold = area.Width / 10; // 10% of the width is the threshold for touchpad movement
+            // the sprites are moved in the immersive mode, so the whole screen is used for the visibility check
+            var screenArea = new Rect(0, 0, screenSize.Width, screenSize.Height);
 
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Images);
             var layer = renderView.GetLayer(Layer.Images);
@@ -181,7 +264,7 @@ internal class TouchPad
                 sprite.Layer = layer;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(GraphicOffset + textureIndex);
                 // Important for visibility check, otherwise the virtual screen is used!
-                sprite.ClipArea = area;
+                sprite.ClipArea = screenArea;
 
                 if (alpha != null && sprite is IAlphaSprite alphaSprite)
                 {
@@ -191,65 +274,47 @@ internal class TouchPad
                 return sprite;
             }
 
-            double scaleX = area.Width / 1526.0f;
-            double scaleY = area.Height / 994.0f;
+            scaleX = area.Width / 1526.0f;
+            scaleY = area.Height / 994.0f;
 
             background = CreateSprite(1526, 994, area.Width, area.Height, 11, 0);
-            background.X = area.X;
-            background.Y = area.Y;
-
             disableOverlay = CreateSprite(DisableOverlayWidth, DisableOverlayHeight, area.Width, area.Height, 17, 6);
-            disableOverlay.X = background.X;
-            disableOverlay.Y = background.Y;
+
+            for (int i = 0; i < immersiveCircles.Length; i++)
+            {
+                var circleArea = i < 4 ? RelativeSmallCircleAreas[i] : RelativeBigCircleArea;
+                int width = Util.Round(scaleX * circleArea.Width);
+                int height = Util.Round(scaleY * circleArea.Height);
+                immersiveCircles[i] = CreateSprite(circleArea.Width, circleArea.Height, width, height, 11, (uint)(ImmersiveCirclesGraphicIndex + i));
+                immersiveDisableOverlays[i] = CreateSprite(IconDisableOverlayWidth, IconDisableOverlayHeight, width, height, 17, 8);
+            }
 
             var relativeArea = RelativeMarkerArea;
             activeMarker = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 14, 1, 128);
-            activeMarker.X = background.X + Util.Round(scaleX * relativeArea.X);
-            activeMarker.Y = background.Y + Util.Round(scaleY * relativeArea.Y);
 
             for (int a = 0; a < 4; a++)
             {
                 relativeArea = RelativeArrowAreas[a];
-                var arrow = arrows[a] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 14, (uint)(2 + a));
-
-                arrow.X = background.X + Util.Round(scaleX * relativeArea.X);
-                arrow.Y = background.Y + Util.Round(scaleY * relativeArea.Y);
+                arrows[a] = CreateSprite(relativeArea.Width, relativeArea.Height, Util.Round(scaleX * relativeArea.Width), Util.Round(scaleY * relativeArea.Height), 14, (uint)(2 + a));
             }
 
             arrowHitRadius = (5 * arrows.SelectMany<ILayerSprite, int>(arrow => [arrow.Width, arrow.Height]).Max() / 4) / 2;
 
-            for (int i = 0; i < 4; i++)
-            {
-                int iconX = i < 2 ? IconX1 : IconX2;
-                int iconY = i % 2 == 0 ? IconY1 : IconY2;
-                relativeArea = new(iconX, iconY, 270, 276);
-
-                var iconBackgroundX = background.X + Util.Round(scaleX * relativeArea.X);
-                var iconBackgroundY = background.Y + Util.Round(scaleY * relativeArea.Y);
-                var iconBackgroundWidth = Util.Round(scaleX * 270);
-                var iconBackgroundHeight = Util.Round(scaleY * 276);
-
-                iconAreas[i / 2, i % 2] = new(iconBackgroundX, iconBackgroundY, iconBackgroundWidth, iconBackgroundHeight);
-            }
+            var iconAreaSize = new Size(Util.Round(scaleX * 270), Util.Round(scaleY * 276));
 
             for (int i = 0; i < IconSizes.Length; i++)
             {
-                var iconLocation = IconLocations[i];
-
-                relativeArea = new(iconAreas[iconLocation.X, iconLocation.Y]);
-
                 var iconSize = IconSizes[i];
-                var baseSize = 0.9f * relativeArea.Size;
+                var baseSize = 0.9f * iconAreaSize;
                 var maxSize = (float)IconSizes.Max(s => Math.Max(s.Width, s.Height));
                 var factorX = iconSize.Width / maxSize;
                 var factorY = iconSize.Height / maxSize;
                 var iconDisplaySize = baseSize * new FloatSize(factorX, factorY);
 
-                var icon = icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(iconDisplaySize.Width), Util.Round(iconDisplaySize.Height), 14, (uint)(9 + i));
-
-                icon.X = relativeArea.X + (relativeArea.Width - icon.Width) / 2;
-                icon.Y = relativeArea.Y + (relativeArea.Height - icon.Height) / 2;
+                icons[i] = CreateSprite(iconSize.Width, iconSize.Height, Util.Round(iconDisplaySize.Width), Util.Round(iconDisplaySize.Height), 14, (uint)(9 + i));
             }
+
+            Arrange();
 
             iconDisableOverlayFactory = (int x, int y) =>
             {
@@ -270,6 +335,111 @@ internal class TouchPad
         {
             throw;
         }
+    }
+
+    Position ToScreen(Position origin, int relativeX, int relativeY) =>
+        new(origin.X + Util.Round(scaleX * relativeX), origin.Y + Util.Round(scaleY * relativeY));
+
+    /// <summary>
+    /// Positions all elements. In the immersive mode the right circles touch the right
+    /// border and the bottom circles (and the big circle) touch the bottom border.
+    /// </summary>
+    void Arrange()
+    {
+        if (immersive)
+        {
+            var rightBottomCircle = RelativeSmallCircleAreas[3];
+            smallCirclesOrigin = new(screenSize.Width - Util.Round(scaleX * rightBottomCircle.Right),
+                screenSize.Height - Util.Round(scaleY * rightBottomCircle.Bottom));
+            bigCircleOrigin = new(smallCirclesOrigin.X, screenSize.Height - Util.Round(scaleY * RelativeBigCircleArea.Bottom));
+        }
+        else
+        {
+            smallCirclesOrigin = new(area.X, area.Y);
+            bigCircleOrigin = new(area.X, area.Y);
+        }
+
+        background.X = area.X;
+        background.Y = area.Y;
+        disableOverlay.X = area.X;
+        disableOverlay.Y = area.Y;
+
+        for (int i = 0; i < immersiveCircles.Length; i++)
+        {
+            var circleArea = i < 4 ? RelativeSmallCircleAreas[i] : RelativeBigCircleArea;
+            var position = ToScreen(i < 4 ? smallCirclesOrigin : bigCircleOrigin, circleArea.X, circleArea.Y);
+            immersiveCircles[i].X = immersiveDisableOverlays[i].X = position.X;
+            immersiveCircles[i].Y = immersiveDisableOverlays[i].Y = position.Y;
+        }
+
+        var markerPosition = ToScreen(bigCircleOrigin, RelativeMarkerArea.X, RelativeMarkerArea.Y);
+        activeMarker.X = markerPosition.X;
+        activeMarker.Y = markerPosition.Y;
+
+        for (int a = 0; a < 4; a++)
+        {
+            var arrowPosition = ToScreen(bigCircleOrigin, RelativeArrowAreas[a].X, RelativeArrowAreas[a].Y);
+            arrows[a].X = arrowPosition.X;
+            arrows[a].Y = arrowPosition.Y;
+        }
+
+        for (int i = 0; i < 4; i++)
+        {
+            int iconX = i < 2 ? IconX1 : IconX2;
+            int iconY = i % 2 == 0 ? IconY1 : IconY2;
+            var iconAreaPosition = ToScreen(smallCirclesOrigin, iconX, iconY);
+
+            iconAreas[i / 2, i % 2] = new(iconAreaPosition.X, iconAreaPosition.Y, Util.Round(scaleX * 270), Util.Round(scaleY * 276));
+        }
+
+        for (int i = 0; i < icons.Length; i++)
+        {
+            var iconLocation = IconLocations[i];
+            var iconArea = iconAreas[iconLocation.X, iconLocation.Y];
+            var icon = icons[i];
+
+            icon.X = iconArea.X + (iconArea.Width - icon.Width) / 2;
+            icon.Y = iconArea.Y + (iconArea.Height - icon.Height) / 2;
+        }
+
+        // the overlays of disabled icons are recreated at the new positions by the next update
+        foreach (var iconDisableOverlay in iconDisableOverlays.Values)
+            iconDisableOverlay.Delete();
+
+        iconDisableOverlays.Clear();
+    }
+
+    Position MovementCenter => immersive
+        ? ToScreen(bigCircleOrigin, RelativeBigCircleArea.X + RelativeBigCircleArea.Width / 2, RelativeBigCircleArea.Y + RelativeBigCircleArea.Height / 2)
+        : new(background.X + background.Width / 2, background.Y + background.Height / 2);
+
+    void SetImmersive(bool immersive)
+    {
+        if (this.immersive == immersive)
+            return;
+
+        this.immersive = immersive;
+
+        // a running movement is stopped
+        active = false;
+        arrowClicked = false;
+        tappedArrowIndex = -1;
+        Direction = null;
+        activeMarker.Visible = false;
+
+        foreach (var arrow in arrows)
+            arrow.Visible = false;
+
+        Arrange();
+        UpdateFrameVisibility();
+    }
+
+    void UpdateFrameVisibility()
+    {
+        background.Visible = shown && !immersive;
+
+        foreach (var circle in immersiveCircles)
+            circle.Visible = shown && immersive;
     }
 
     public int IconPage
@@ -304,7 +474,7 @@ internal class TouchPad
                 iconsActive.Add(GameCore.MobileIconAction.Options);
             }
 
-            if (background?.Visible == true)
+            if (shown)
             {
                 for (int i = 0; i < icons.Length; i++)
                 {
@@ -318,7 +488,8 @@ internal class TouchPad
 
     public void Show(bool show)
     {
-        background.Visible = show;
+        shown = show;
+        UpdateFrameVisibility();
 
         for (int i = 0; i < icons.Length; i++)
             icons[i].Visible = show && iconsActive.Contains((GameCore.MobileIconAction)i);
@@ -329,6 +500,9 @@ internal class TouchPad
         {
             activeMarker.Visible = false;
             disableOverlay.Visible = false;
+
+            foreach (var immersiveDisableOverlay in immersiveDisableOverlays)
+                immersiveDisableOverlay.Visible = false;
 
             foreach (var iconDisableOverlay in iconDisableOverlays.Values)
                 iconDisableOverlay.Visible = false;
@@ -349,6 +523,12 @@ internal class TouchPad
         background.Delete();
         activeMarker.Delete();
         disableOverlay.Delete();
+
+        foreach (var circle in immersiveCircles)
+            circle.Delete();
+
+        foreach (var immersiveDisableOverlay in immersiveDisableOverlays)
+            immersiveDisableOverlay.Delete();
 
         foreach (var arrow in arrows)
             arrow.Delete();
@@ -372,7 +552,7 @@ internal class TouchPad
         if (!enabled)
             return false;
 
-        if (area.Contains(position))
+        if (ContainsPosition(position))
         {
             Key[] keys = [Key.W, Key.D, Key.S, Key.A];
 
@@ -419,6 +599,9 @@ internal class TouchPad
                     }
                 }
             }
+
+            // the map below the circles must not receive the tap
+            return immersive;
         }
 
         return false;
@@ -470,7 +653,7 @@ internal class TouchPad
         if (active)
             return true;
 
-        if (area.Contains(position))
+        if (ContainsPosition(position))
         {
             active = true;
             arrowClicked = false;
@@ -513,7 +696,7 @@ internal class TouchPad
         if (!active)
             return false;
 
-        var center = new Position(background.X + background.Width / 2, background.Y + background.Height / 2);
+        var center = MovementCenter;
         int xdist = position.X - center.X;
         int ydist = position.Y - center.Y;
 
@@ -593,15 +776,21 @@ internal class TouchPad
             }
         }
 
-        // popups like the quest log may overlap the touchpad, their buttons must receive the taps
-        enabled = background != null && background.Visible && game.InputEnable && !game.PopupActive;
+        SetImmersive(game.ImmersiveActive);
 
-        if (background != null)
-            disableOverlay.Visible = background.Visible && !game.InputEnable && !game.HideMobileTouchpadDisableOverlay;
+        // popups like the quest log may overlap the touchpad, their buttons must receive the taps
+        enabled = shown && game.InputEnable && !game.PopupActive;
+
+        bool inputDisabled = shown && !game.InputEnable && !game.HideMobileTouchpadDisableOverlay;
+        disableOverlay.Visible = inputDisabled && !immersive;
+
+        // in the immersive mode only the circles are dimmed
+        foreach (var immersiveDisableOverlay in immersiveDisableOverlays)
+            immersiveDisableOverlay.Visible = inputDisabled && immersive;
 
         bool[] iconsDisabled = [false, false, false];
 
-        if (background?.Visible == true && IconPage == 1)
+        if (shown && IconPage == 1)
         {
             if (game.Is3D)
             {
@@ -614,7 +803,7 @@ internal class TouchPad
                 icons[(int)GameCore.MobileIconAction.Transport].Visible = true;
             }
 
-            if (!disableOverlay.Visible)
+            if (!inputDisabled)
             {
                 if (!game.Is3D && !game.TransportEnabled)
                 {
@@ -630,7 +819,7 @@ internal class TouchPad
             }
         }
 
-        if (background?.Visible == true && IconPage == 1 && !disableOverlay.Visible && !game.SpellBookEnabled)
+        if (shown && IconPage == 1 && !inputDisabled && !game.SpellBookEnabled)
         {
             var location = IconLocations[(int)GameCore.MobileIconAction.SpellBook];
             iconsDisabled[location.Y + location.X * 2] = true;

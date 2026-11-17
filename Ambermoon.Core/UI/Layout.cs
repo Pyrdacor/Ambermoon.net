@@ -1683,7 +1683,7 @@ namespace Ambermoon.UI
             AddOption((index, _) => ToggleBattleSpeed());
             AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => Toggle3DMovement());
             AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleTurnWithArrowKeys());
-            AddOption((index, _) => ToggleTooltips());
+            AddOption(game.CoreConfiguration.IsMobile ? null : (index, _) => ToggleTooltips());
             AddOption((index, _) => TogglePlayerStatsTooltips());
             AddOption((index, _) => ToggleFloorAndCeiling());
             AddOption(game.CoreConfiguration.ShowFloor && game.CoreConfiguration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
@@ -5961,7 +5961,8 @@ namespace Ambermoon.UI
 
         public void HoverButtonGrid(Position position)
         {
-            if (game.CoreConfiguration.ShowButtonTooltips)
+            // on mobile devices a tap triggers the button, so there are no tooltips
+            if (game.CoreConfiguration.ShowButtonTooltips && !game.CoreConfiguration.IsMobile)
             {
                 HideTooltip();
                 buttonGrid?.Hover(position);

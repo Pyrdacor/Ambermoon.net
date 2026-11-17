@@ -6,6 +6,7 @@ Version 1.16
 - Immersive mode: The portraits can be collapsed by the small arrow below the immersive icon or the key P, then only the names of the party members stay visible
 - Immersive mode: The action buttons can be shown or hidden by the arrow at the right, the num pad keys always work
 - Immersive mode: The mode and the portrait state are stored in the configuration (ImmersiveMode and ImmersiveModeShowPortraits)
+- Android: In the immersive mode only the circles of the touchpad are shown at the lower right, the arrows of the action buttons and the button tooltips are not available on Android
 - The action buttons show the actions (eye, hand, mouth, etc) by default, a small arrow below them toggles the movement buttons (right click and Return work as well)
 - The quest log is opened by the key F7, the battle speed has no key anymore (it can be changed in the options)
 - Battle: Monsters can parry

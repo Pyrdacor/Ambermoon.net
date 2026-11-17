@@ -679,7 +679,7 @@ public partial class QuestLog
         eyeButton.ToggleButton = true;
         eyeButton.Pressed = game.CoreConfiguration.ShowCompletedQuests;
         eyeButton.LeftClickAction = ToggleCompletedQuests;
-        eyeButton.Tooltip = game.CoreConfiguration.ShowButtonTooltips ? QuestTexts.ShowCompletedQuestsTooltip.Get(game.GameLanguage) : null;
+        eyeButton.Tooltip = game.CoreConfiguration.ShowButtonTooltips && !game.CoreConfiguration.IsMobile ?QuestTexts.ShowCompletedQuestsTooltip.Get(game.GameLanguage) : null;
         eyeButton.TooltipColor = TextColor.Yellow;
         eyeButton.Visible = true;
 

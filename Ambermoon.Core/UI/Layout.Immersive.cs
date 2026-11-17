@@ -192,8 +192,11 @@ namespace Ambermoon.UI
             UpdateImmersiveHud();
         }
 
-        bool ButtonPageArrowVisible => (Type == LayoutType.Map2D || Type == LayoutType.Map3D) && !OptionMenuOpen &&
+        // on mobile devices the touchpad covers the button grid, so both arrows are not shown there
+        bool ButtonPageArrowVisible => !game.CoreConfiguration.IsMobile && (Type == LayoutType.Map2D || Type == LayoutType.Map3D) && !OptionMenuOpen &&
             (!ImmersiveActive || (buttonGrid.Visible && !buttonGrid.Concealed));
+
+        bool ImmersiveButtonsArrowVisible => !game.CoreConfiguration.IsMobile && ImmersiveActive && !OptionMenuOpen;
 
         /// <summary>
         /// The page can only be switched by the arrow if it could be switched
@@ -229,7 +232,7 @@ namespace Ambermoon.UI
             if (!ImmersiveActive)
                 return false;
 
-            if (!OptionMenuOpen && ImmersiveButtonsArrowArea.Contains(position))
+            if (ImmersiveButtonsArrowVisible && ImmersiveButtonsArrowArea.Contains(position))
                 return true;
 
             if (!OptionMenuOpen && ImmersivePortraitsArrowClickArea.Contains(position))
@@ -273,7 +276,7 @@ namespace Ambermoon.UI
             if (!ImmersiveActive || OptionMenuOpen || buttons != MouseButtons.Left)
                 return false;
 
-            if (ImmersiveButtonsArrowArea.Contains(position))
+            if (ImmersiveButtonsArrowVisible && ImmersiveButtonsArrowArea.Contains(position))
             {
                 ToggleImmersiveButtons();
                 return true;
@@ -348,7 +351,7 @@ namespace Ambermoon.UI
                 immersiveButtonsArrow.Y = arrowArea.Y + (arrowArea.Height - arrowSize.Height) / 2;
             }
 
-            UpdateImmersiveArrow(immersiveButtonsArrow, active && !OptionMenuOpen, immersiveButtonsExpanded);
+            UpdateImmersiveArrow(immersiveButtonsArrow, ImmersiveButtonsArrowVisible, immersiveButtonsExpanded);
 
             UpdateButtonGridPageIndicator();
 
@@ -392,9 +395,11 @@ namespace Ambermoon.UI
             }
 
             immersivePortraitsArrowTooltip.Area = clickArea;
-            immersivePortraitsArrowTooltip.Enabled = visible;
+            // tooltips of controls are not useful on mobile devices (a tap triggers the control)
+            bool tooltipEnabled = visible && !game.CoreConfiguration.IsMobile;
+            immersivePortraitsArrowTooltip.Enabled = tooltipEnabled;
 
-            if (!visible && activeTooltip == immersivePortraitsArrowTooltip)
+            if (!tooltipEnabled && activeTooltip == immersivePortraitsArrowTooltip)
                 HideTooltip();
         }
 
