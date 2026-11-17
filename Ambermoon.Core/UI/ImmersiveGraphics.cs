@@ -24,6 +24,7 @@ using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI;
@@ -40,7 +41,22 @@ public static class ImmersiveGraphics
     // The arrow to switch the button grid page in the normal mode. It is a 8x6 3-bit
     // palette graphic (palette offset 24) which is loaded from the resources.
     public const uint ButtonPageArrowGraphicIndex = 1006u;
+    // small arrows (8x6) to expand or collapse the portraits in the immersive mode
+    public const uint PortraitsArrowUpGraphicIndex = 1007u;
+    public const uint PortraitsArrowDownGraphicIndex = 1008u;
     public const int IconSize = 16;
+
+    // Same style as the button page arrow (UI palette colors 29 and 31).
+    // . = transparent, M = medium, B = bright
+    static readonly string[] PortraitsArrowUp =
+    [
+        "...B....",
+        "..BMB...",
+        ".BMMMB..",
+        "BMMMMMB.",
+        "..MBM...",
+        "..MBM...",
+    ];
 
     // . = transparent, D = dark outline, W = bright
     static readonly string[] ImmersiveIcon =
@@ -94,6 +110,40 @@ public static class ImmersiveGraphics
 
     public static string GetButtonPageTooltip(GameLanguage gameLanguage) =>
         buttonPageTooltips.TryGetValue(gameLanguage, out var tooltip) ? tooltip : buttonPageTooltips[GameLanguage.English];
+
+    static readonly Dictionary<GameLanguage, string> portraitsTooltips = new()
+    {
+        { GameLanguage.English, "Toggle portraits (P)" },
+        { GameLanguage.German, "Portraits umschalten (P)" },
+        { GameLanguage.French, "Afficher/masquer les portraits (P)" },
+        { GameLanguage.Polish, "Przełącz portrety (P)" },
+        { GameLanguage.Czech, "Přepnout portréty (P)" },
+    };
+
+    public static string GetPortraitsTooltip(GameLanguage gameLanguage) =>
+        portraitsTooltips.TryGetValue(gameLanguage, out var tooltip) ? tooltip : portraitsTooltips[GameLanguage.English];
+
+    static Graphic CreateSmallArrow(string[] rows, bool flipVertically)
+    {
+        int width = rows[0].Length;
+        int height = rows.Length;
+        var graphic = new Graphic(width, height, 0);
+
+        for (int y = 0; y < height; ++y)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                graphic.Data[x + y * width] = rows[flipVertically ? height - 1 - y : y][x] switch
+                {
+                    'M' => 29,
+                    'B' => 31,
+                    _ => 0 // transparent
+                };
+            }
+        }
+
+        return graphic;
+    }
 
     // The special item graphics (windchain, monster eye and the day time pictures) are
     // shown without their frame in the immersive mode. The frame uses this color index.
@@ -220,10 +270,80 @@ public static class ImmersiveGraphics
         return graphic;
     }
 
-    public static Dictionary<uint, Graphic> GetGraphics() => new()
+    /// <summary>
+    /// Size of the arrows which show or hide the action buttons.
+    /// </summary>
+    public static Size ButtonsArrowSize { get; private set; } = new(IconSize, IconSize);
+    /// <summary>
+    /// Size of the arrows which expand or collapse the portraits.
+    /// </summary>
+    public static Size PortraitsArrowSize { get; private set; } = new(8, 6);
+
+    // The tips of the 2D movement cursors (up, down, left, right) are used as arrows.
+    // The area of each tip inside the 16x16 cursor graphic.
+    static readonly Rect CursorTipUpArea = new(2, 2, 11, 7);
+    static readonly Rect CursorTipDownArea = new(3, 7, 11, 7);
+    static readonly Rect CursorTipLeftArea = new(2, 3, 7, 11);
+    static readonly Rect CursorTipRightArea = new(7, 2, 7, 11);
+    const byte CursorOutlineColorIndex = 26;
+
+    /// <summary>
+    /// Cuts the tip of a movement cursor. The side where the shaft starts is closed with the outline color.
+    /// </summary>
+    static Graphic CutCursorTip(Graphic cursor, Rect area, CursorType direction)
     {
-        { ImmersiveIconGraphicIndex, CreateGraphic(ImmersiveIcon, false) },
-        { ArrowLeftGraphicIndex, CreateGraphic(ArrowLeft, false) },
-        { ArrowRightGraphicIndex, CreateGraphic(ArrowLeft, true) },
-    };
+        var tip = new Graphic(area.Width, area.Height, 0);
+
+        for (int y = 0; y < area.Height; ++y)
+        {
+            for (int x = 0; x < area.Width; ++x)
+            {
+                byte color = cursor.Data[area.X + x + (area.Y + y) * cursor.Width];
+                bool shaftSide = direction switch
+                {
+                    CursorType.ArrowUp => y == area.Height - 1,
+                    CursorType.ArrowDown => y == 0,
+                    CursorType.ArrowLeft => x == area.Width - 1,
+                    _ => x == 0
+                };
+                tip.Data[x + y * area.Width] = color != 0 && shaftSide ? CursorOutlineColorIndex : color;
+            }
+        }
+
+        return tip;
+    }
+
+    /// <summary>
+    /// Creates the graphics of the immersive mode. If the cursor graphics are given (not available
+    /// if the game data only provides a graphic atlas), the arrows are the tips of the movement cursors.
+    /// </summary>
+    public static Dictionary<uint, Graphic> GetGraphics(IReadOnlyList<Graphic>? cursorGraphics)
+    {
+        var graphics = new Dictionary<uint, Graphic>
+        {
+            { ImmersiveIconGraphicIndex, CreateGraphic(ImmersiveIcon, false) }
+        };
+
+        if (cursorGraphics != null && cursorGraphics.Count > (int)CursorType.ArrowRight &&
+            cursorGraphics.Take((int)CursorType.ArrowRight + 1).Skip(1).All(cursor => cursor.Width == 16 && cursor.Height == 16))
+        {
+            graphics.Add(ArrowLeftGraphicIndex, CutCursorTip(cursorGraphics[(int)CursorType.ArrowLeft], CursorTipLeftArea, CursorType.ArrowLeft));
+            graphics.Add(ArrowRightGraphicIndex, CutCursorTip(cursorGraphics[(int)CursorType.ArrowRight], CursorTipRightArea, CursorType.ArrowRight));
+            graphics.Add(PortraitsArrowUpGraphicIndex, CutCursorTip(cursorGraphics[(int)CursorType.ArrowUp], CursorTipUpArea, CursorType.ArrowUp));
+            graphics.Add(PortraitsArrowDownGraphicIndex, CutCursorTip(cursorGraphics[(int)CursorType.ArrowDown], CursorTipDownArea, CursorType.ArrowDown));
+            ButtonsArrowSize = new Size(CursorTipLeftArea.Width, CursorTipLeftArea.Height);
+            PortraitsArrowSize = new Size(CursorTipUpArea.Width, CursorTipUpArea.Height);
+        }
+        else
+        {
+            graphics.Add(ArrowLeftGraphicIndex, CreateGraphic(ArrowLeft, false));
+            graphics.Add(ArrowRightGraphicIndex, CreateGraphic(ArrowLeft, true));
+            graphics.Add(PortraitsArrowUpGraphicIndex, CreateSmallArrow(PortraitsArrowUp, false));
+            graphics.Add(PortraitsArrowDownGraphicIndex, CreateSmallArrow(PortraitsArrowUp, true));
+            ButtonsArrowSize = new Size(IconSize, IconSize);
+            PortraitsArrowSize = new Size(8, 6);
+        }
+
+        return graphics;
+    }
 }

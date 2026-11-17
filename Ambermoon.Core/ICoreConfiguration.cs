@@ -141,6 +141,14 @@ public interface ICoreConfiguration
     bool LegacyMode { get; set; }
     bool ExtendedSavegameSlots { get; set; }
     bool ShowAdvancedLogo { get; set; }
+    /// <summary>
+    /// The immersive mode on maps (stored when it is toggled).
+    /// </summary>
+    bool ImmersiveMode { get; set; }
+    /// <summary>
+    /// The portraits are expanded in the immersive mode (stored when they are toggled).
+    /// </summary>
+    bool ImmersiveModeShowPortraits { get; set; }
     [Obsolete("Now the fantasy intro is shown instead.")]
     bool? ShowThalionLogo { get; set; }
     bool ShowFantasyIntro { get; set; }

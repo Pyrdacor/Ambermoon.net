@@ -47,29 +47,51 @@ namespace Ambermoon.UI
         // mode only if the buttons are shown). The clickable area has a border of 1 pixel around it.
         public static readonly Rect ButtonPageArrowArea = new(310, 188, 8, 6);
         static readonly Rect ButtonPageArrowClickArea = ButtonPageArrowArea.CreateModified(-1, -1, 2, 2);
+        // The portraits can be expanded in the immersive mode (like in the Immersive Edition of A5Projects).
+        // Then the bar, the quest log icon and the immersive icon move down below the portraits.
+        const int ImmersiveHudShift = 28;
+        int immersiveHudOffsetY = ImmersiveHudShift;
+        int immersiveTopIconY = IconY;
+        // stored in the configuration
+        bool immersivePortraitsExpanded
+        {
+            get => game.CoreConfiguration.ImmersiveModeShowPortraits;
+            set => game.CoreConfiguration.ImmersiveModeShowPortraits = value;
+        }
         // The bar below the names (between the quest log icon and the immersive icon).
-        static readonly Rect ImmersiveHudArea = new(17, 8, Global.VirtualScreenWidth - 2 * 17, 16);
-        const int ImmersiveHudTextY = 11;
-        const int ImmersiveHudIconSize = 16; // special item graphics are shown at half size
+        Rect ImmersiveHudArea => new(17, 8 + immersiveHudOffsetY, Global.VirtualScreenWidth - 2 * 17, 16);
+        int ImmersiveHudTextY => 11 + immersiveHudOffsetY;
         // The compass shows the directions on a horizontal strip which scrolls under a fixed pointer.
-        static readonly Rect ImmersiveCompassArea = new(Global.VirtualScreenWidth / 2 - 32, ImmersiveHudTextY - 2, 64, 10);
+        Rect ImmersiveCompassArea => new(Global.VirtualScreenWidth / 2 - 32, ImmersiveHudTextY - 2, 64, 10);
+        // the small arrow below the immersive icon expands or collapses the portraits
+        Rect ImmersivePortraitsArrowArea => new(Global.VirtualScreenWidth - (ImmersiveGraphics.IconSize + ImmersiveGraphics.PortraitsArrowSize.Width) / 2,
+            ImmersiveIconArea.Y + ImmersiveGraphics.IconSize + 2, ImmersiveGraphics.PortraitsArrowSize.Width, ImmersiveGraphics.PortraitsArrowSize.Height);
+        Rect ImmersivePortraitsArrowClickArea => ImmersivePortraitsArrowArea.CreateModified(-1, -1, 2, 2);
         const int ImmersiveCompassBearingSpacing = 24; // pixels per 45 degrees
         // the coordinates are shown centered at the bottom (left of the button grid)
         const int ImmersiveCoordinatesBackgroundY = Global.VirtualScreenHeight - 10;
         const int ImmersiveCoordinatesTextY = ImmersiveCoordinatesBackgroundY + 2;
         // the active spells are shown at the lower left
         static readonly Position ImmersiveActiveSpellsPosition = new(2, Global.VirtualScreenHeight - 22);
-        // the clickable area of the names at the top
-        static readonly Rect ImmersiveNamesArea = new(Global.PartyMemberPortraitAreas[0].Left, 0,
-            Global.PartyMemberPortraitAreas[^1].Right - Global.PartyMemberPortraitAreas[0].Left, 8);
+        // the clickable area of the names (or the portraits) at the top
+        Rect ImmersiveNamesArea => new(Global.PartyMemberPortraitAreas[0].Left, 0,
+            Global.PartyMemberPortraitAreas[^1].Right - Global.PartyMemberPortraitAreas[0].Left,
+            Math.Max(8, Global.PartyMemberPortraitArea.Height + portraitOffsetY));
         // The icon to toggle the immersive mode is the horizontal mirror of the quest log icon (0, 8).
         // In the immersive mode both icons move up to the names.
         public const int IconY = 8;
         public const int ImmersiveIconY = 0;
-        public Rect ImmersiveIconArea => new(Global.VirtualScreenWidth - ImmersiveGraphics.IconSize, ImmersiveActive ? ImmersiveIconY : IconY,
+        public Rect ImmersiveIconArea => new(Global.VirtualScreenWidth - ImmersiveGraphics.IconSize, ImmersiveActive ? immersiveTopIconY : IconY,
             ImmersiveGraphics.IconSize, ImmersiveGraphics.IconSize + 2);
-        // the background of the names and the bar
-        static readonly Rect ImmersiveTopBackgroundArea = new(0, 0, Global.VirtualScreenWidth, 24);
+        // the background of the names (if the portraits are collapsed) and the bar
+        Rect ImmersiveTopBackgroundArea
+        {
+            get
+            {
+                int top = Math.Max(0, Global.PartyMemberPortraitArea.Height + portraitOffsetY);
+                return new(0, top, Global.VirtualScreenWidth, ImmersiveHudArea.Bottom - top);
+            }
+        }
         static readonly Render.Color ImmersiveBackgroundColor = new(16, 15, 12, 95);
         ILayerSprite? immersiveIcon = null;
 
@@ -89,6 +111,9 @@ namespace Ambermoon.UI
         ILayerSprite? buttonPageArrow = null;
         IColoredRect? buttonPageArrowBackground = null;
         Tooltip? buttonPageArrowTooltip = null;
+        ILayerSprite? immersivePortraitsArrow = null;
+        IColoredRect? immersivePortraitsBackground = null;
+        Tooltip? immersivePortraitsArrowTooltip = null;
         // the buttons have transparent parts, so they get a black background
         IColoredRect? immersiveButtonsBackground = null;
         // the bar below the names
@@ -147,6 +172,17 @@ namespace Ambermoon.UI
         }
 
         /// <summary>
+        /// Expands or collapses the portraits in the immersive mode (animated).
+        /// </summary>
+        public void ToggleImmersivePortraits()
+        {
+            immersivePortraitsExpanded = !immersivePortraitsExpanded;
+            lastImmersiveAnimationTime = DateTime.Now;
+            immersiveAnimating = ImmersiveActive;
+            UpdateImmersiveUI();
+        }
+
+        /// <summary>
         /// The map name is shown in the bar of the immersive mode (the window title is hidden).
         /// </summary>
         internal void SetImmersiveMapName(string mapName)
@@ -196,6 +232,9 @@ namespace Ambermoon.UI
             if (!OptionMenuOpen && ImmersiveButtonsArrowArea.Contains(position))
                 return true;
 
+            if (!OptionMenuOpen && ImmersivePortraitsArrowClickArea.Contains(position))
+                return true;
+
             if ((immersiveButtonsExpanded || OptionMenuOpen) && Global.ButtonGridArea.Contains(position))
                 return true;
 
@@ -240,6 +279,12 @@ namespace Ambermoon.UI
                 return true;
             }
 
+            if (ImmersivePortraitsArrowClickArea.Contains(position))
+            {
+                ToggleImmersivePortraits();
+                return true;
+            }
+
             return false;
         }
 
@@ -252,7 +297,28 @@ namespace Ambermoon.UI
             bool active = ImmersiveActive;
 
             if (Type != LayoutType.None)
-                sprite.Visible = !active;
+            {
+                // In the immersive mode only the part behind the (expanded) portraits is shown.
+                int portraitsBottom = Global.PartyMemberPortraitArea.Height + portraitOffsetY;
+                sprite.ClipArea = active
+                    ? new Rect(0, 0, Global.VirtualScreenWidth, Math.Max(0, portraitsBottom))
+                    : new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
+                sprite.Visible = !active || portraitsBottom > 0;
+
+                // black area between the map and the (expanded) portraits
+                if (immersivePortraitsBackground == null)
+                {
+                    immersivePortraitsBackground = RenderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, 1, Render.Color.Black, 0);
+                    immersivePortraitsBackground.Layer = renderLayer;
+                    immersivePortraitsBackground.X = 0;
+                    immersivePortraitsBackground.Y = 0;
+                }
+
+                if (active && portraitsBottom > 0)
+                    immersivePortraitsBackground.Resize(Global.VirtualScreenWidth, portraitsBottom);
+
+                immersivePortraitsBackground.Visible = active && portraitsBottom > 0;
+            }
 
             // the buttons of the option menu are always shown
             buttonGrid.Concealed = active && !immersiveButtonsExpanded && !OptionMenuOpen;
@@ -270,7 +336,18 @@ namespace Ambermoon.UI
 
             UpdateImmersiveItems();
 
-            immersiveButtonsArrow ??= CreateImmersiveIcon(ImmersiveButtonsArrowArea);
+            if (immersiveButtonsArrow == null)
+            {
+                // the arrow is centered in its clickable area
+                var arrowArea = ImmersiveButtonsArrowArea;
+                var arrowSize = ImmersiveGraphics.ButtonsArrowSize;
+                immersiveButtonsArrow = (RenderView.SpriteFactory.Create(arrowSize.Width, arrowSize.Height, true, 50) as ILayerSprite)!;
+                immersiveButtonsArrow.Layer = RenderView.GetLayer(Layer.Misc);
+                immersiveButtonsArrow.PaletteIndex = game.PrimaryUIPaletteIndex;
+                immersiveButtonsArrow.X = arrowArea.X + (arrowArea.Width - arrowSize.Width) / 2;
+                immersiveButtonsArrow.Y = arrowArea.Y + (arrowArea.Height - arrowSize.Height) / 2;
+            }
+
             UpdateImmersiveArrow(immersiveButtonsArrow, active && !OptionMenuOpen, immersiveButtonsExpanded);
 
             UpdateButtonGridPageIndicator();
@@ -284,7 +361,41 @@ namespace Ambermoon.UI
             // only on maps (also in the normal mode to activate the immersive mode)
             immersiveIcon.Visible = Type == LayoutType.Map2D || Type == LayoutType.Map3D;
             immersiveIcon.Y = ImmersiveIconArea.Y;
-            game.SetQuestLogIconY(active ? ImmersiveIconY : IconY);
+            game.SetQuestLogIconY(active ? immersiveTopIconY : IconY);
+
+            UpdateImmersivePortraitsArrow(active && !OptionMenuOpen);
+        }
+
+        void UpdateImmersivePortraitsArrow(bool visible)
+        {
+            var area = ImmersivePortraitsArrowArea;
+            var clickArea = ImmersivePortraitsArrowClickArea;
+
+            if (immersivePortraitsArrow == null)
+            {
+                immersivePortraitsArrow = (RenderView.SpriteFactory.Create(area.Width, area.Height, true, 50) as ILayerSprite)!;
+                immersivePortraitsArrow.Layer = RenderView.GetLayer(Layer.Misc);
+            }
+
+            // an up arrow collapses the portraits, a down arrow expands them
+            immersivePortraitsArrow.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Misc)!.GetOffset(immersivePortraitsExpanded
+                ? ImmersiveGraphics.PortraitsArrowUpGraphicIndex : ImmersiveGraphics.PortraitsArrowDownGraphicIndex);
+            immersivePortraitsArrow.PaletteIndex = game.PrimaryUIPaletteIndex; // like the portrait bar
+            immersivePortraitsArrow.X = area.X;
+            immersivePortraitsArrow.Y = area.Y;
+            immersivePortraitsArrow.Visible = visible;
+
+            if (immersivePortraitsArrowTooltip == null || !tooltips.Contains(immersivePortraitsArrowTooltip))
+            {
+                immersivePortraitsArrowTooltip = AddTooltip(clickArea, ImmersiveGraphics.GetPortraitsTooltip(game.GameLanguage), TextColor.White);
+                immersivePortraitsArrowTooltip.ShowBelow = true;
+            }
+
+            immersivePortraitsArrowTooltip.Area = clickArea;
+            immersivePortraitsArrowTooltip.Enabled = visible;
+
+            if (!visible && activeTooltip == immersivePortraitsArrowTooltip)
+                HideTooltip();
         }
 
         /// <summary>
@@ -425,6 +536,12 @@ namespace Ambermoon.UI
                 return;
             }
 
+            // the bar moves down if the portraits are expanded
+            var hudBackgroundArea = ImmersiveTopBackgroundArea;
+            immersiveHudBackground.Resize(hudBackgroundArea.Width, hudBackgroundArea.Height);
+            immersiveHudBackground.X = hudBackgroundArea.X;
+            immersiveHudBackground.Y = hudBackgroundArea.Y;
+
             if (hasCompass && game.PlayerAvailable)
                 UpdateImmersiveCompass();
 
@@ -433,6 +550,7 @@ namespace Ambermoon.UI
 
             if (hasClock)
             {
+                immersiveClockText.SetPosition(new Position(ImmersiveHudArea.Right - 33, ImmersiveHudTextY));
                 SetImmersiveHudText(immersiveClockText, ref shownImmersiveClock, $"{game.GameTime!.Hour,2}:{game.GameTime.Minute:00}", RenderView);
                 x -= 5 * Global.GlyphWidth + 2;
             }
@@ -478,6 +596,7 @@ namespace Ambermoon.UI
                 mapName = mapName[..(maxCharacters - 3)].TrimEnd() + "...";
 
             SetImmersiveHudText(immersiveMapNameText, ref shownImmersiveMapName, mapName, RenderView);
+            immersiveMapNameText.SetPosition(new Position(nameX, ImmersiveHudTextY));
 
             // tooltips are removed when the layout is reset
             if (immersiveMapNameTooltip == null || !tooltips.Contains(immersiveMapNameTooltip))
@@ -711,8 +830,13 @@ namespace Ambermoon.UI
         /// </summary>
         void UpdateImmersiveAnimation()
         {
+            // The compass follows the player angle (it only changes something if the angle changed).
+            // At the start of a map the player might not be available when the bar is created.
+            if (ImmersiveActive && immersiveCompassFrame.Count != 0 && game.PlayerAvailable)
+                UpdateImmersiveCompass();
+
             // Outside of the map (e.g. in windows or battles) the portraits are always shown.
-            float target = ImmersiveActive ? 1.0f : 0.0f;
+            float target = ImmersiveActive && !immersivePortraitsExpanded ? 1.0f : 0.0f;
 
             if (immersiveAnimationProgress == target)
             {
@@ -790,6 +914,47 @@ namespace Ambermoon.UI
 
             for (int i = 0; i < GameCore.MaxPartyMembers; ++i)
                 portraitNames[i]?.Place(GetPortraitNameArea(i), TextAlign.Center);
+
+            // the bar and the icons follow the portraits
+            int hudOffsetY = Util.Round(ImmersiveHudShift * (1.0f - immersiveAnimationProgress));
+            int topIconY = Util.Round(IconY * (1.0f - immersiveAnimationProgress));
+
+            if (hudOffsetY != immersiveHudOffsetY || topIconY != immersiveTopIconY)
+                MoveImmersiveHud(hudOffsetY, topIconY);
+        }
+
+        void MoveImmersiveHud(int hudOffsetY, int topIconY)
+        {
+            int delta = hudOffsetY - immersiveHudOffsetY;
+            immersiveHudOffsetY = hudOffsetY;
+            immersiveTopIconY = topIconY;
+
+            if (immersiveCompassFrame.Count != 0)
+            {
+                var interior = ImmersiveCompassArea.CreateModified(1, 1, -2, -2);
+
+                foreach (var rect in immersiveCompassFrame)
+                    rect.Y += delta;
+
+                foreach (var tick in immersiveCompassTicks)
+                {
+                    tick.Y += delta;
+                    tick.ClipArea = interior;
+                }
+
+                // move the labels first, otherwise they are outside the new clip area and are dropped
+                foreach (var label in immersiveCompassLabels)
+                {
+                    var labelArea = label.Area;
+                    label.SetPosition(new Position(labelArea.X, labelArea.Y + delta));
+                    label.Clip(interior);
+                }
+
+                shownImmersiveCompassAngle = null; // the labels are placed again
+            }
+
+            if (Type == LayoutType.Map2D || Type == LayoutType.Map3D)
+                UpdateImmersiveUI();
         }
     }
 }

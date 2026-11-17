@@ -91,6 +91,8 @@ namespace AmbermoonAndroid
         public bool ShowPlayerStatsTooltips { get; set; } = true;
         public bool ShowPyrdacorLogo { get; set; } = true;
         public bool ShowAdvancedLogo { get; set; } = true;
+        public bool ImmersiveMode { get; set; } = false;
+        public bool ImmersiveModeShowPortraits { get; set; } = true;
         [Obsolete("Now the fantasy intro is shown instead.")]
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public bool? ShowThalionLogo { get; set; } = null;

@@ -847,7 +847,7 @@ class GameWindow
                 introFontLarge.GlyphGraphics, introGraphics, features, 10);
             logoPyrdacor?.Initialize(textureAtlasManager);
             AdvancedLogo.Initialize(textureAtlasManager, FileProvider.GetAdvancedLogoData);
-            var miscGraphics = ImmersiveGraphics.GetGraphics();
+            var miscGraphics = ImmersiveGraphics.GetGraphics((graphicProvider as IGraphicProvider)?.GetGraphics(GraphicType.Cursor));
             miscGraphics.Add(QuestLog.IconGraphicIndex, questLogIcon);
             var buttonPageArrow = new Graphic();
             new GraphicReader().ReadGraphic(buttonPageArrow, new DataReader(FileProvider.GetButtonPageArrow()), new GraphicInfo

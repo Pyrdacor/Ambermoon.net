@@ -824,6 +824,10 @@ partial class GameCore
             {
                 ToggleImmersiveMode();
             }
+            else if (char.ToLower(keyChar) == 'p' && Ingame)
+            {
+                ToggleImmersivePortraits();
+            }
         }
     }
 

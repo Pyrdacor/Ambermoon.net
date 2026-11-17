@@ -5,7 +5,12 @@ namespace Ambermoon;
 
 partial class GameCore
 {
-    bool immersiveMode = false;
+    // stored in the configuration, so the immersive mode is kept after a restart
+    bool immersiveMode
+    {
+        get => CoreConfiguration.ImmersiveMode;
+        set => CoreConfiguration.ImmersiveMode = value;
+    }
 
     /// <summary>
     /// The immersive mode can be toggled on maps with the key I or the icon at the upper right.
@@ -21,6 +26,19 @@ partial class GameCore
         immersiveMode = !immersiveMode;
         layout.SetImmersive(immersiveMode);
         ApplyImmersiveMode();
+    }
+
+    /// <summary>
+    /// In the immersive mode the portraits can be expanded or collapsed with the key P
+    /// or the small arrow below the immersive icon.
+    /// </summary>
+    public void ToggleImmersivePortraits()
+    {
+        if (!layout.ImmersiveActive || WindowActive || layout.PopupActive || layout.OptionMenuOpen || !InputEnable ||
+            allInputDisabled || BattleActive || layout.IsDragging)
+            return;
+
+        layout.ToggleImmersivePortraits();
     }
 
     /// <summary>

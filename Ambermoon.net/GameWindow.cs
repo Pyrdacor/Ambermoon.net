@@ -1065,7 +1065,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
 
             logoPyrdacor?.Initialize(textureAtlasManager);
             AdvancedLogo.Initialize(textureAtlasManager, () => Resources.Advanced);
-            var miscGraphics = ImmersiveGraphics.GetGraphics();
+            var miscGraphics = ImmersiveGraphics.GetGraphics((graphicInfoProvider as IGraphicProvider)?.GetGraphics(GraphicType.Cursor));
             miscGraphics.Add(QuestLog.IconGraphicIndex, questLogIcon);
             var buttonPageArrow = new Graphic();
             new GraphicReader().ReadGraphic(buttonPageArrow, new DataReader(Resources.ButtonPageArrow), new GraphicInfo

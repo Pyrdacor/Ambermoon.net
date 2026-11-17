@@ -66,6 +66,8 @@ internal class ModConfiguration(IConfiguration configuration, ModOptions modOpti
     public bool LegacyMode { get => configuration.LegacyMode; set => configuration.LegacyMode = value; }
     public bool ExtendedSavegameSlots { get => configuration.ExtendedSavegameSlots; set => configuration.ExtendedSavegameSlots = value; }
     public bool ShowAdvancedLogo { get => configuration.ShowAdvancedLogo; set => configuration.ShowAdvancedLogo = value; }
+    public bool ImmersiveMode { get => configuration.ImmersiveMode; set => configuration.ImmersiveMode = value; }
+    public bool ImmersiveModeShowPortraits { get => configuration.ImmersiveModeShowPortraits; set => configuration.ImmersiveModeShowPortraits = value; }
     public bool ShowFantasyIntro { get => configuration.ShowFantasyIntro; set => configuration.ShowFantasyIntro = value; }
     public bool ShowIntro { get => configuration.ShowIntro; set => configuration.ShowIntro = value; }
     public bool ExternalMusic { get => configuration.ExternalMusic; set => configuration.ExternalMusic = value; }

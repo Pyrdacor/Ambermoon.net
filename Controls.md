@@ -43,6 +43,7 @@ Right or D | Move right (2D) or turn right (3D)
 Q and E | Turn left and right in 3D if the 3D movement option is set to WASDQE (A and D strafe then)
 M | Show the world map in 2D (if a party member owns the map of Lyramion) or the automap in 3D
 I | Toggle the immersive mode
+P | Expand or collapse the portraits in the immersive mode
 Space | Interact with things in front of you (3D)
 
 If the option "turn with arrow keys" is active, the left and right arrow keys turn in 3D.
@@ -51,9 +52,9 @@ The action buttons on the lower right show the actions (eye, hand, mouth, etc) b
 
 #### Immersive mode
 
-The key I or the icon in the upper right corner toggles the immersive mode on 2D and 3D maps. The map then covers the whole screen and you see much more of it. The portraits move up and only the names of the party members stay visible. You can still click the names to select a party member or right click them to open the inventory.
+The key I or the icon in the upper right corner toggles the immersive mode on 2D and 3D maps. The map then covers the whole screen and you see much more of it. The portraits stay visible at the top. The small arrow below the icon in the upper right corner or the key P collapses them, then only the names of the party members stay visible. You can still click the names to select a party member or right click them to open the inventory.
 
-A small bar below the names shows the map name, the compass, the clock and the other special items. Hover over a shortened map name to see the full name. The coordinates are shown at the bottom center and the active spells at the lower left. The small arrow at the right shows or hides the action buttons. The num pad keys always work, even if the action buttons are hidden. Windows like the inventory are shown as usual and the immersive mode returns when you close them.
+A small bar below the portraits or names shows the map name, the compass, the clock and the other special items. Hover over a shortened map name to see the full name. The coordinates are shown at the bottom center and the active spells at the lower left. The small arrow at the right shows or hides the action buttons. The num pad keys always work, even if the action buttons are hidden. Windows like the inventory are shown as usual and the immersive mode returns when you close them.
 
 #### 2D Maps
 
