@@ -76,6 +76,14 @@ internal class Camera3D : ICamera3D
         state.PushModelViewMatrix(currentMatrix);
     }
 
+    /// <summary>
+    /// Transforms a world position into view space (camera at the origin, looking to -Z).
+    /// </summary>
+    internal void WorldToView(ref float x, ref float y, ref float z)
+    {
+        currentMatrix.MultiplyVector(ref x, ref y, ref z);
+    }
+
     private void UpdateMatrix()
     {
         currentMatrix.Reset();

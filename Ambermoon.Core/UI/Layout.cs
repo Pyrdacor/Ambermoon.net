@@ -1270,7 +1270,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 24;
+        const int OptionCount = 25;
         const int OptionsPerPage = 7;
 
         static readonly ImmutableDictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
@@ -1306,7 +1306,8 @@ namespace Ambermoon.UI
                     // Page 4
                     "Info beim Speichern/Laden",
                     "Cheats aktivieren",
-                    "Auto-Kampf"
+                    "Auto-Kampf",
+                    "Realistische Beleuchtung"
                 }
             },
             {
@@ -1340,7 +1341,8 @@ namespace Ambermoon.UI
                     // Page 4
                     "Show save/load info",
                     "Enable cheats",
-                    "Auto-Battle"
+                    "Auto-Battle",
+                    "Realistic lighting"
                 }
             },
             {
@@ -1374,7 +1376,8 @@ namespace Ambermoon.UI
                     // Page 4
                     "Messages de sauvegarde",
                     "Activer les cheats",
-                    "Combat automatique"
+                    "Combat automatique",
+                    "Éclairage réaliste"
                 }
             },
             {
@@ -1408,7 +1411,8 @@ namespace Ambermoon.UI
                     // Page 4
                     "Pokaż inf. zapis/odczyt",
                     "Włącz cheaty",
-                    "Automatyczna walka"
+                    "Automatyczna walka",
+                    "Realistyczne oświetlenie"
                 }
             },
             {
@@ -1442,7 +1446,8 @@ namespace Ambermoon.UI
                     // Page 4
                     "Info o uložení/nahrání",
                     "Povolit cheaty",
-                    "Automatický boj"
+                    "Automatický boj",
+                    "Realistické osvětlení"
                 }
             }
         }.ToImmutableDictionary();
@@ -1699,6 +1704,7 @@ namespace Ambermoon.UI
             AddOption((index, _) => ToggleSaveLoadInfo());
             AddOption((index, _) => ToggleCheats());
             AddOption((index, _) => ToggleAutoBattle());
+            AddOption((index, _) => ToggleRealisticLighting());
 
             void UpdateFullscreenOption()
             {
@@ -1783,6 +1789,7 @@ namespace Ambermoon.UI
             void SetSaveLoadInfo() => SetOptionString(21, game.CoreConfiguration.ShowSaveLoadMessage ? on : off);
             void SetCheats() => SetOptionString(22, cheatsEnabled ? on : off);
             void SetAutoBattle() => SetOptionString(23, AutoBattleOptions[game.GameLanguage][Util.Limit(0, game.CoreConfiguration.AutoBattleRounds / 5, 3)]);
+            void SetRealisticLighting() => SetOptionString(24, game.CoreConfiguration.RealisticLighting ? on : off);
 
             void UpdateShowFogOption() => SetOptionAction(13, game.CoreConfiguration.ShowFloor && game.CoreConfiguration.ShowCeiling ? ((index, _) => ToggleFog()) : nullOptionAction);
 
@@ -1822,6 +1829,7 @@ namespace Ambermoon.UI
                         SetSaveLoadInfo();
                         SetCheats();
                         SetAutoBattle();
+                        SetRealisticLighting();
                         break;
                 }
             }
@@ -1986,6 +1994,13 @@ namespace Ambermoon.UI
 
                 SetAutoBattle();
                 changedConfiguration = true;
+            }
+            void ToggleRealisticLighting()
+            {
+                game.CoreConfiguration.RealisticLighting = !game.CoreConfiguration.RealisticLighting;
+                SetRealisticLighting();
+                changedConfiguration = true;
+                game.RealisticLightingChanged();
             }
             void ToggleAutoDerune()
             {

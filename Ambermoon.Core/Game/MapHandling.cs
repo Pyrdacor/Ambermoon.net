@@ -772,6 +772,9 @@ partial class GameCore
         if (map == null)
             return;
 
+        if (mapChange)
+            realisticAmbientInitialized = false; // no smooth transition to the new map
+
         void ChangeLightRadius(int lastRadius, int newRadius)
         {
             var oldMap = map;
@@ -905,13 +908,18 @@ partial class GameCore
         {
             fow2D!.Visible = false;
             var light3D = Get3DLight();
-            renderView.SetLight(light3D);
+            // With realistic lighting the darkness is done by the ambient light of the shaders.
+            // But nothing is visible when blind.
+            renderView.SetLight(RealisticLightingEnabled
+                ? (CurrentPartyMember!.Conditions.HasFlag(Condition.Blind) ? 0.0f : 1.0f)
+                : light3D);
             uint lightBuffIntensity = Map!.Flags.HasFlag(MapFlags.Outdoor)
                 ? (uint)Math.Max(0, (customOutdoorLightIntensity ?? lightIntensity) - (long)GetDaytimeLightIntensity())
                 : lightIntensity;
 
             renderMap3D!.UpdateSky(lightEffectProvider, GameTime!, lightBuffIntensity);
-            renderMap3D.SetColorLightFactor(light3D);
+            if (!RealisticLightingEnabled)
+                renderMap3D.SetColorLightFactor(light3D);
             renderMap3D.SetFog(Map, MapManager.GetLabdataForMap(Map));
         }
         else // 2D

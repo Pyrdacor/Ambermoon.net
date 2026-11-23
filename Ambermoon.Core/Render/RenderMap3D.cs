@@ -855,6 +855,24 @@ namespace Ambermoon.Render
         readonly Dictionary<uint, List<ICollisionBody>> blockCollisionBodies = [];
         readonly Dictionary<uint, List<ISurface3D>> walls = [];
         readonly Dictionary<uint, List<MapObject>> objects = [];
+        /// <summary>
+        /// Light sources (realistic lighting) by block index. Positions are in world space.
+        /// </summary>
+        readonly Dictionary<uint, List<WorldLightSource>> blockLightSources = [];
+
+        internal readonly record struct WorldLightSource(float X, float Y, float Z, LightSourceInfo Info, int Seed);
+
+        internal IEnumerable<WorldLightSource> WorldLightSources => blockLightSources.Values.SelectMany(lights => lights);
+
+        void AddLightSource(uint blockIndex, float x, float y, float z, LightSourceInfo info)
+        {
+            int seed = (int)(blockIndex * 7919 + (uint)Util.Round(x * 61.0f) + (uint)Util.Round(z * 97.0f) + (uint)Util.Round(y * 13.0f));
+
+            if (!blockLightSources.TryGetValue(blockIndex, out var lights))
+                blockLightSources.Add(blockIndex, lights = []);
+
+            lights.Add(new WorldLightSource(x, y, z, info, seed));
+        }
         readonly Dictionary<uint, MapCharacter> mapCharacters = [];
         static readonly Dictionary<uint, ITextureAtlas> labdataTextures = []; // contains all textures for a labdata (floor, walls, objects and overlays)
         static Graphic[]? labBackgroundGraphics = null;
@@ -1062,8 +1080,10 @@ namespace Ambermoon.Render
                 byte cb = paletteReplacement.ColorData[ceilingIndex + 2];
                 floorColor.Color = new Color(fr, fg, fb);
                 ceilingColor.Color = new Color(cr, cg, cb);
-                baseFloorColor = null;
-                baseCeilingColor = null;
+                // The realistic lighting needs the base colors to apply the daylight.
+                bool realisticLighting = game.CoreConfiguration.RealisticLighting;
+                baseFloorColor = realisticLighting ? new Color(floorColor.Color) : null;
+                baseCeilingColor = realisticLighting ? new Color(ceilingColor.Color) : null;
             }
             else
             {
@@ -1242,6 +1262,7 @@ namespace Ambermoon.Render
 
             walls.Clear();
             objects.Clear();
+            blockLightSources.Clear();
             mapCharacters.Clear();
 
             blockCollisionBodies.Clear();
@@ -1609,6 +1630,13 @@ namespace Ambermoon.Render
                     objectInfo.Flags.HasFlag(Tileset.TileFlags.No3DAnimation),
                     objectInfo.NumAnimationFrames, 8.0f));
 
+                if (LightSources.TryGetObject3DLight(objectInfo.TextureIndex, out var lightSource))
+                {
+                    // Billboards are positioned at their top center, floor billboards at their center.
+                    float lightY = floorObject ? y + 0.05f : y - 0.4f * mapObject.Height;
+                    AddLightSource(blockIndex, x, lightY, z, lightSource);
+                }
+
                 // Small objects should not block
                 if (objectInfo.MappedTextureWidth >= BlockSize / 5)
                 {
@@ -1682,8 +1710,53 @@ namespace Ambermoon.Render
                     labdataChangeableBlocks[Map.TilesetOrLabdataIndex].Contains(Map.PositionToTileIndex(mapX, mapY));
             }
 
+            var wallData = labdata.Walls[(int)wallIndex];
+            LightSources.TryGetWall3DLight(wallData.TextureIndex, out var wallLight);
+            bool wallEmitsLight = wallLight.Radius > 0.0f;
+            bool overlaysEmitLight = wallData.Overlays?.Any(overlay => LightSources.TryGetWallOverlay3DLight(overlay.TextureIndex, out _)) == true;
+
+            void AddWallLightSources(WallOrientation wallOrientation, float x, float z)
+            {
+                // Offset of the light in front of the wall face
+                const float lightDistance = 0.2f * Global.DistancePerBlock;
+                // x/z: start of the wall face, (dirX, dirZ): direction along the face,
+                // (normalX, normalZ): direction out of the wall into the free block
+                var (dirX, dirZ, normalX, normalZ) = wallOrientation switch
+                {
+                    WallOrientation.Normal => (1.0f, 0.0f, 0.0f, -1.0f),
+                    WallOrientation.Rotated90 => (0.0f, 1.0f, 1.0f, 0.0f),
+                    WallOrientation.Rotated180 => (-1.0f, 0.0f, 0.0f, 1.0f),
+                    _ => (0.0f, -1.0f, -1.0f, 0.0f)
+                };
+
+                void Add(float u, float v, LightSourceInfo info)
+                {
+                    float lightX = x + dirX * u * Global.DistancePerBlock + normalX * lightDistance;
+                    float lightZ = z + dirZ * u * Global.DistancePerBlock + normalZ * lightDistance;
+                    AddLightSource(blockIndex, lightX, wallHeight * (1.0f - v), lightZ, info);
+                }
+
+                if (wallEmitsLight)
+                    Add(wallLight.U, wallLight.V, wallLight);
+
+                if (overlaysEmitLight)
+                {
+                    foreach (var overlay in wallData.Overlays!)
+                    {
+                        if (LightSources.TryGetWallOverlay3DLight(overlay.TextureIndex, out var overlayLight))
+                        {
+                            Add((overlay.PositionX + overlayLight.U * overlay.TextureWidth) / TextureWidth,
+                                (overlay.PositionY + overlayLight.V * overlay.TextureHeight) / TextureHeight, overlayLight);
+                        }
+                    }
+                }
+            }
+
             void AddSurface(WallOrientation wallOrientation, float x, float z)
             {
+                if (wallEmitsLight || overlaysEmitLight)
+                    AddWallLightSources(wallOrientation, x, z);
+
                 var wall = surfaceFactory.Create(SurfaceType.Wall, Global.DistancePerBlock, wallHeight,
                     TextureWidth, TextureHeight, TextureWidth, TextureHeight, alpha, 1, 0.0f, wallOrientation,
                     Map.Flags.HasFlag(MapFlags.Outdoor) ? labdata.CeilingColorIndex : 0);
@@ -1744,6 +1817,8 @@ namespace Ambermoon.Render
                 objects.Remove(index);
             }
 
+            blockLightSources.Remove(index);
+
             blockCollisionBodies.Remove(index);
 
             for (int i = 0; i < characterBlockingBlocks.Length; ++i)
@@ -1792,6 +1867,7 @@ namespace Ambermoon.Render
                                 value2?.ForEach(wall => wall?.Delete());
 
                             walls.Remove(adjacentIndex);
+                            blockLightSources.Remove(adjacentIndex);
                             blockCollisionBodies.Remove(adjacentIndex);
 
                             for (int i = 0; i < characterBlockingBlocks.Length; ++i)
@@ -1881,6 +1957,25 @@ namespace Ambermoon.Render
             SetColors(null);            
         }
 
+        /// <summary>
+        /// Used by the realistic lighting to tint the floor and ceiling colors.
+        /// </summary>
+        public void SetColorLight(float r, float g, float b)
+        {
+            static Color Apply(Color color, float r, float g, float b) => new
+            (
+                (byte)Util.Limit(0, Util.Round(color.R * r), 255),
+                (byte)Util.Limit(0, Util.Round(color.G * g), 255),
+                (byte)Util.Limit(0, Util.Round(color.B * b), 255),
+                color.A
+            );
+
+            if (baseFloorColor is not null)
+                floorColor!.Color = Apply(baseFloorColor, r, g, b);
+            if (baseCeilingColor is not null)
+                ceilingColor!.Color = Apply(baseCeilingColor, r, g, b);
+        }
+
         public void SetColorLightFactor(float lightFactor)
         {
             if (baseFloorColor is not null)
@@ -1898,10 +1993,15 @@ namespace Ambermoon.Render
             }
 
             var skyParts = lightEffectProvider.GetSkyParts(Map, time.Hour, time.Minute);
-            var paletteReplacement = lightEffectProvider.GetLightPaletteReplacement(Map, time.Hour, time.Minute,
+            // With realistic lighting the daylight is applied by the shaders.
+            // So the palette replacement of the full daylight is used.
+            bool realisticLighting = game.CoreConfiguration.RealisticLighting;
+            var paletteReplacement = realisticLighting
+                ? lightEffectProvider.GetLightPaletteReplacement(Map, 12, 0, 0, renderView!.GraphicInfoProvider)
+                : lightEffectProvider.GetLightPaletteReplacement(Map, time.Hour, time.Minute,
                 buffLightIntensity, renderView!.GraphicInfoProvider);
             var horizonPaletteReplacement = lightEffectProvider.GetLightPaletteReplacement(Map, time.Hour, time.Minute,
-                0, renderView.GraphicInfoProvider);
+                0, renderView!.GraphicInfoProvider);
 
             renderView.PaletteReplacement = paletteReplacement;
             renderView.HorizonPaletteReplacement = horizonPaletteReplacement;

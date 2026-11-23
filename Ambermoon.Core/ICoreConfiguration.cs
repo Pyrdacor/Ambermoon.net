@@ -133,6 +133,12 @@ public interface ICoreConfiguration
     bool ShowFloor { get; set; }
     bool ShowCeiling { get; set; }
     bool ShowFog { get; set; }    
+    /// <summary>
+    /// Realistic lighting: the light spell lights a flickering cone in front of the
+    /// party, light sources like torches or fireplaces emit light and day and night
+    /// use smooth color grading instead of palette changes.
+    /// </summary>
+    bool RealisticLighting { get; set; }
     bool ShowSaveLoadMessage { get; set; }
     Movement3D Movement3D { get; set; }
     bool TurnWithArrowKeys { get; set; }

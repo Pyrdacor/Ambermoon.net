@@ -99,6 +99,7 @@ namespace AmbermoonAndroid
         public bool ShowFloor { get; set; } = true;
         public bool ShowCeiling { get; set; } = true;
 		public bool ShowFog { get; set; } = true;
+		public bool RealisticLighting { get; set; } = false;
 		public bool ExtendedSavegameSlots { get; set; } = true;
         [Obsolete("Use AdditionalSavegameSlots instead.")]
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

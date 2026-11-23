@@ -32,6 +32,7 @@ internal class ModConfiguration(IConfiguration configuration, ModOptions modOpti
     public bool ShowFloor { get => Get(configuration.ShowFloor); set { configuration.ShowFloor = value; Changed(); } }
     public bool ShowCeiling { get => Get(configuration.ShowCeiling); set { configuration.ShowCeiling = value; Changed(); } }
     public bool ShowFog { get => Get(configuration.ShowFog); set { configuration.ShowFog = value; Changed(); } }
+    public bool RealisticLighting { get => Get(configuration.RealisticLighting); set { configuration.RealisticLighting = value; Changed(); } }
     public bool ShowSaveLoadMessage { get => Get(configuration.ShowSaveLoadMessage); set { configuration.ShowSaveLoadMessage = value; Changed(); } }
     public Movement3D Movement3D { get => Get(configuration.Movement3D); set { configuration.Movement3D = value; Changed(); } }
     public bool TurnWithArrowKeys { get => Get(configuration.TurnWithArrowKeys); set { configuration.TurnWithArrowKeys = value; Changed(); } }
