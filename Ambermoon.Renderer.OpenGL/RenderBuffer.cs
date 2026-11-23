@@ -669,11 +669,11 @@ public class RenderBuffer : IDisposable
 
         if (billboardOrientationBuffer != null)
         {
-            byte floor = surface.Type == Ambermoon.Render.SurfaceType.BillboardFloor ? (byte)1 : (byte)0;
-            int billboardOrientationBufferIndex = billboardOrientationBuffer.Add(floor, index);
-            billboardOrientationBuffer.Add(floor, billboardOrientationBufferIndex + 1);
-            billboardOrientationBuffer.Add(floor, billboardOrientationBufferIndex + 2);
-            billboardOrientationBuffer.Add(floor, billboardOrientationBufferIndex + 3);
+            byte orientation = BillboardOrientation(surface);
+            int billboardOrientationBufferIndex = billboardOrientationBuffer.Add(orientation, index);
+            billboardOrientationBuffer.Add(orientation, billboardOrientationBufferIndex + 1);
+            billboardOrientationBuffer.Add(orientation, billboardOrientationBufferIndex + 2);
+            billboardOrientationBuffer.Add(orientation, billboardOrientationBufferIndex + 3);
         }
 
         if (extrudeBuffer != null)
@@ -969,6 +969,28 @@ public class RenderBuffer : IDisposable
             alphaBuffer.Update(index + 1, alpha);
             alphaBuffer.Update(index + 2, alpha);
             alphaBuffer.Update(index + 3, alpha);
+        }
+    }
+
+    /// <summary>
+    /// Bit 0: floor billboard, bits 1-7: self-illumination (realistic lighting) from 0 to 127.
+    /// </summary>
+    static byte BillboardOrientation(Render.ISurface3D surface)
+    {
+        int floor = surface.Type == Ambermoon.Render.SurfaceType.BillboardFloor ? 1 : 0;
+        int emissive = Math.Clamp((int)Math.Round(surface.Emissive * 127.0f), 0, 127);
+        return (byte)(floor | (emissive << 1));
+    }
+
+    public void UpdateBillboardOrientation(int index, Render.ISurface3D surface)
+    {
+        if (billboardOrientationBuffer != null)
+        {
+            byte orientation = BillboardOrientation(surface);
+            billboardOrientationBuffer.Update(index, orientation);
+            billboardOrientationBuffer.Update(index + 1, orientation);
+            billboardOrientationBuffer.Update(index + 2, orientation);
+            billboardOrientationBuffer.Update(index + 3, orientation);
         }
     }
 

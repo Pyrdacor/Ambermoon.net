@@ -65,6 +65,7 @@ partial class GameCore
     readonly RealisticLighting2D realisticLighting2D = new();
     readonly List<(int X, int Y, uint MapX, uint MapY, LightSourceInfo Info)> realisticLightSources2D = [];
     readonly List<(float Score, RenderMap3D.WorldLightSource Light)> realisticLightSources3D = [];
+    int realisticLightCandidates3D = 0;
     bool realisticLightingActive = false;
     double realisticLightingTime = 0.0;
     float realisticAmbientR = 1.0f;
@@ -94,6 +95,7 @@ partial class GameCore
             return;
 
         realisticLightingActive = false;
+        ClearRealisticLightmap();
         renderView.SetRealisticLighting3D(null);
         renderView.SetRealisticLighting2D(null);
     }
@@ -129,6 +131,10 @@ partial class GameCore
 
         string On(bool active) => active ? "on" : "off";
         lines.Add($"Realistic lighting is {On(RealisticLightingEnabled)}.");
+
+        if (Is3D)
+            lines.Add($"Light sources: {renderMap3D!.StaticLightSources.Count()} static (all in the lightmap), {renderMap3D.CharacterLightSources.Count} on map characters; " +
+                $"{realisticLighting3D.LightCount} of {realisticLightCandidates3D} moving or flickering lights near and in view get dynamic light (max {RealisticLighting3D.MaxLights}).");
 
         if (Is3D)
         {
@@ -463,7 +469,12 @@ partial class GameCore
             var candidates = realisticLightSources3D;
             candidates.Clear();
 
-            foreach (var light in renderMap3D!.WorldLightSources)
+            // All static light sources are in the lightmap. The dynamic lights are the moving
+            // ones (map characters) and the flickering of the nearest static ones.
+            UpdateRealisticLightmap(map);
+
+            foreach (var light in renderMap3D!.CharacterLightSources.Concat(renderMap3D.StaticLightSources
+                .Where(light => light.Info.Flicker > 0.0f || light.Info.Pulse > 0.0f)))
             {
                 float dx = light.X - cameraX;
                 float dz = light.Z - cameraZ;
@@ -479,9 +490,11 @@ partial class GameCore
                 if (distance - radius > maxDistance)
                     continue;
 
-                candidates.Add((distance - radius, light));
+                // Moving lights come first as they are not part of the lightmap.
+                candidates.Add((light.Moving ? -1000.0f + distance : distance - radius, light));
             }
 
+            realisticLightCandidates3D = candidates.Count;
             int count = Math.Min(RealisticLighting3D.MaxLights, candidates.Count);
             float limitScore = float.MaxValue;
 
@@ -498,7 +511,8 @@ partial class GameCore
                 var light = candidates[i].Light;
                 var info = light.Info;
                 float flicker = LightFactor(time, light.Seed, info);
-                float intensity = info.Intensity * flicker;
+                // Static lights are in the lightmap with their base intensity, so only the difference is added.
+                float intensity = info.Intensity * (light.Moving ? flicker : flicker - 1.0f);
 
                 // Lights which are far away or near the light limit fade out so that switching lights is not visible.
                 float fade = Math.Clamp(1.0f - (candidates[i].Score - (maxDistance - 3.0f)) / 3.0f, 0.0f, 1.0f);
@@ -510,7 +524,7 @@ partial class GameCore
                     X = light.X,
                     Y = light.Y,
                     Z = light.Z,
-                    Radius = info.Radius * Global.DistancePerBlock * (0.95f + 0.05f * flicker),
+                    Radius = info.Radius * Global.DistancePerBlock,
                     R = info.R * intensity,
                     G = info.G * intensity,
                     B = info.B * intensity
@@ -527,6 +541,93 @@ partial class GameCore
         float torchAmount = lighting.TorchRange > 0.0f ? 0.25f * Luminance(lighting.TorchR, lighting.TorchG, lighting.TorchB) : 0.0f;
         renderMap3D!.SetColorLight(Math.Min(1.0f, lighting.AmbientR + torchAmount), Math.Min(1.0f, lighting.AmbientG + torchAmount * 0.8f),
             Math.Min(1.0f, lighting.AmbientB + torchAmount * 0.6f));
+    }
+
+    const int LightmapTexelsPerBlock = 8;
+    const int LightmapMarginBlocks = 1;
+    Map? realisticLightmapMap = null;
+    int realisticLightmapVersion = -1;
+
+    void ClearRealisticLightmap()
+    {
+        if (realisticLightmapMap == null)
+            return;
+
+        realisticLightmapMap = null;
+        realisticLightmapVersion = -1;
+        renderView.SetRealisticLightmap(0, 0, null, 0.0f, 0.0f, 0.0f);
+    }
+
+    /// <summary>
+    /// Calculates the light of all static light sources of the 3D map into a texture.
+    /// So any number of light sources can be shown and nothing switches on or off by distance.
+    /// </summary>
+    void UpdateRealisticLightmap(Map map)
+    {
+        int version = renderMap3D!.StaticLightSourcesVersion;
+
+        if (realisticLightmapMap == map && realisticLightmapVersion == version)
+            return;
+
+        realisticLightmapMap = map;
+        realisticLightmapVersion = version;
+
+        const float texelsPerUnit = LightmapTexelsPerBlock / Global.DistancePerBlock;
+        int width = (map.Width + 2 * LightmapMarginBlocks) * LightmapTexelsPerBlock;
+        int height = (map.Height + 2 * LightmapMarginBlocks) * LightmapTexelsPerBlock;
+        // World x goes from 0 to the map width, world z from -map height to 0.
+        float originX = -LightmapMarginBlocks * Global.DistancePerBlock;
+        float originZ = (-map.Height - LightmapMarginBlocks) * Global.DistancePerBlock;
+        var light = new float[width * height * 3];
+
+        foreach (var source in renderMap3D.StaticLightSources)
+        {
+            var info = source.Info;
+            float radius = info.Radius * Global.DistancePerBlock;
+
+            if (radius <= 0.0f || info.Intensity <= 0.0f)
+                continue;
+
+            float r = info.R * info.Intensity, g = info.G * info.Intensity, b = info.B * info.Intensity;
+            int minX = Math.Max(0, (int)Math.Floor((source.X - radius - originX) * texelsPerUnit));
+            int maxX = Math.Min(width - 1, (int)Math.Ceiling((source.X + radius - originX) * texelsPerUnit));
+            int minY = Math.Max(0, (int)Math.Floor((source.Z - radius - originZ) * texelsPerUnit));
+            int maxY = Math.Min(height - 1, (int)Math.Ceiling((source.Z + radius - originZ) * texelsPerUnit));
+            float radiusSquared = radius * radius;
+
+            for (int y = minY; y <= maxY; ++y)
+            {
+                float dz = originZ + (y + 0.5f) / texelsPerUnit - source.Z;
+
+                for (int x = minX; x <= maxX; ++x)
+                {
+                    float dx = originX + (x + 0.5f) / texelsPerUnit - source.X;
+                    float att = 1.0f - (dx * dx + dz * dz) / radiusSquared;
+
+                    if (att <= 0.0f)
+                        continue;
+
+                    att *= att;
+                    int index = (x + y * width) * 3;
+                    light[index] += r * att;
+                    light[index + 1] += g * att;
+                    light[index + 2] += b * att;
+                }
+            }
+        }
+
+        var data = new byte[width * height * 4];
+        static byte Encode(float value) => (byte)Math.Clamp((int)Math.Round(value / 2.0f * 255.0f), 0, 255); // the shader multiplies by 2
+
+        for (int i = 0; i < width * height; ++i)
+        {
+            data[i * 4] = Encode(light[i * 3]);
+            data[i * 4 + 1] = Encode(light[i * 3 + 1]);
+            data[i * 4 + 2] = Encode(light[i * 3 + 2]);
+            data[i * 4 + 3] = 255;
+        }
+
+        renderView.SetRealisticLightmap(width, height, data, originX, originZ, texelsPerUnit);
     }
 
     void UpdateRealisticLighting2D(Map map, bool blind, uint spellLevel, LightSourceInfo? torch, float torchVisibility)
@@ -621,6 +722,7 @@ partial class GameCore
 
         renderView.SetRealisticLighting2D(lighting);
         renderView.SetRealisticLighting3D(null);
+        ClearRealisticLightmap();
 
         // The overlay is needed for darkness or glowing lights
         fow2D!.Visible = lighting.Darkness > 0.001f || count != 0;

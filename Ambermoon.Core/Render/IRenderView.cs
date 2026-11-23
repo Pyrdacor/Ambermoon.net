@@ -94,6 +94,12 @@ public interface IGameRenderView : IRenderView
     /// </summary>
     void SetRealisticLighting3D(RealisticLighting3D? lighting);
     /// <summary>
+    /// Sets the lightmap with the light of all static light sources of the 3D map (null removes it).
+    /// The data is RGBA with the light divided by 2. The texel (0, 0) starts at the world position
+    /// (originX, originZ) and there are texelsPerUnit texels per world unit.
+    /// </summary>
+    void SetRealisticLightmap(int width, int height, byte[]? rgbaData, float originX, float originZ, float texelsPerUnit);
+    /// <summary>
     /// Sets the realistic lighting of the 2D view which is drawn by the fog of war overlay (null disables it).
     /// </summary>
     void SetRealisticLighting2D(RealisticLighting2D? lighting);

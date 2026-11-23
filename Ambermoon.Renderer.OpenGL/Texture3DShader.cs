@@ -51,6 +51,18 @@ internal class Texture3DShader : ColorShader
     internal static readonly string DefaultRealisticLightPosName = "rlLightPos";
     internal static readonly string DefaultRealisticLightColorName = "rlLightColor";
     internal static readonly string DefaultRealisticLightCountName = "rlLightCount";
+    internal static readonly string DefaultRealisticLightmapName = "rlLightmap";
+    internal static readonly string DefaultRealisticLightmapRectName = "rlLightmapRect";
+    internal static readonly string DefaultRealisticUseLightmapName = "rlUseLightmap";
+    /// <summary>
+    /// Values in the lightmap are stored divided by this factor to allow light above 1.
+    /// </summary>
+    internal const float LightmapScale = 2.0f;
+    internal const int LightmapTextureUnit = 2;
+    /// <summary>
+    /// Lightmap of the static light sources of the current map (realistic lighting) or null.
+    /// </summary>
+    internal static Texture Lightmap { get; set; } = null;
     internal const int MaxRealisticLights = 32;
 
     /// <summary>
@@ -67,11 +79,19 @@ internal class Texture3DShader : ColorShader
         $"uniform vec4 {DefaultRealisticLightPosName}[{MaxRealisticLights}];",
         $"uniform vec4 {DefaultRealisticLightColorName}[{MaxRealisticLights}];",
         $"uniform int {DefaultRealisticLightCountName};",
+        $"uniform sampler2D {DefaultRealisticLightmapName};",
+        $"uniform vec4 {DefaultRealisticLightmapRectName};", // xy: world origin (x, z), zw: texture coordinates per world unit
+        $"uniform float {DefaultRealisticUseLightmapName};",
         $"in vec3 viewPos;",
+        $"in vec3 worldPos;",
         $"",
         $"vec3 RealisticLight(vec3 normal)",
         $"{{",
         $"    vec3 lightColor = {DefaultRealisticAmbientName};",
+        $"    // static light sources (all of them, precalculated)",
+        $"    if ({DefaultRealisticUseLightmapName} > 0.5f)",
+        $"        lightColor += texture({DefaultRealisticLightmapName}, (worldPos.xz - {DefaultRealisticLightmapRectName}.xy) * {DefaultRealisticLightmapRectName}.zw).rgb * {LightmapScale.ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture)}f;",
+        $"    // dynamic lights: moving light sources and the flickering of the nearest static ones (can be negative)",
         $"    if ({DefaultRealisticTorchName}.a > 0.0f)",
         $"    {{",
         $"        vec3 toFrag = viewPos - {DefaultRealisticTorchPosName};",
@@ -95,7 +115,7 @@ internal class Texture3DShader : ColorShader
         $"        float lambert = mix(0.6f, 1.0f, abs(dot(normal, toFrag / max(d, 0.0001f))));",
         $"        lightColor += {DefaultRealisticLightColorName}[i].rgb * att * lambert;",
         $"    }}",
-        $"    return min(lightColor, vec3(1.5f));",
+        $"    return clamp(lightColor, vec3(0.0f), vec3(1.5f));",
         $"}}",
         $"",
         $"vec3 RealisticNormal()",
@@ -199,6 +219,7 @@ internal class Texture3DShader : ColorShader
         $"flat out vec2 varTextureSize;",
         $"flat out float alphaEnabled;",
         $"out vec3 viewPos;",
+        $"out vec3 worldPos;",
         $"",
         $"void main()",
         $"{{",
@@ -210,6 +231,7 @@ internal class Texture3DShader : ColorShader
         $"    alphaEnabled = float({DefaultAlphaName});",
         $"    vec4 localPos = {DefaultModelViewMatrixName} * vec4({DefaultPositionName}, 1.0f);",
         $"    viewPos = localPos.xyz;",
+        $"    worldPos = {DefaultPositionName};",
         $"    gl_Position = {DefaultProjectionMatrixName} * localPos;",
         $"    dist = gl_Position.z;",
         $"}}"
@@ -295,6 +317,18 @@ internal class Texture3DShader : ColorShader
     public void DisableRealisticLighting()
     {
         shaderProgram.SetInput(DefaultRealisticEnabledName, 0.0f);
+    }
+
+    /// <summary>
+    /// originX/originZ: world position of the lightmap's corner, texelsPerUnit: lightmap texels per world unit.
+    /// </summary>
+    public void SetRealisticLightmap(bool use, float originX, float originZ, float texelsPerUnit, int width, int height)
+    {
+        shaderProgram.SetInput(DefaultRealisticUseLightmapName, use ? 1.0f : 0.0f);
+        shaderProgram.SetInput(DefaultRealisticLightmapName, LightmapTextureUnit);
+
+        if (use)
+            shaderProgram.SetInputVector4(DefaultRealisticLightmapRectName, originX, originZ, texelsPerUnit / width, texelsPerUnit / height);
     }
 
     /// <summary>

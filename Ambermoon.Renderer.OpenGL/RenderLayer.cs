@@ -502,6 +502,7 @@ public class RenderLayer : IRenderLayer, IDisposable
                     }
 
                     shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
+                    BindRealisticLightmap();
                 }
                 else if (Layer == Layer.Billboards3D)
                 {
@@ -523,6 +524,7 @@ public class RenderLayer : IRenderLayer, IDisposable
                     }
 
                     shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
+                    BindRealisticLightmap();
                 }
                 else if (Layer == Layer.Text || Layer == Layer.SmallDigits)
                 {
@@ -727,6 +729,26 @@ public class RenderLayer : IRenderLayer, IDisposable
     public void UpdateExtrude(int index, float extrude)
     {
         RenderBuffer.UpdateExtrude(index, extrude);
+    }
+
+    /// <summary>
+    /// Binds the lightmap of the realistic lighting to its texture unit (if there is one).
+    /// </summary>
+    void BindRealisticLightmap()
+    {
+        var lightmap = Texture3DShader.Lightmap;
+
+        if (lightmap == null)
+            return;
+
+        state.Gl.ActiveTexture(GLEnum.Texture0 + Texture3DShader.LightmapTextureUnit);
+        state.Gl.BindTexture(GLEnum.Texture2D, lightmap.Index);
+        state.Gl.ActiveTexture(GLEnum.Texture0);
+    }
+
+    public void UpdateBillboardOrientation(int index, Render.ISurface3D surface)
+    {
+        RenderBuffer.UpdateBillboardOrientation(index, surface);
     }
 
     public void UpdatePaletteIndex(int index, byte paletteIndex)

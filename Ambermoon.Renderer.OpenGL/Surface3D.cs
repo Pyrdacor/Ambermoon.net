@@ -133,6 +133,25 @@ internal class Surface3D : ISurface3D
 
     public float Height { get; private set; }
 
+    float emissive = 0.0f;
+
+    public float Emissive
+    {
+        get => emissive;
+        set
+        {
+            value = System.Math.Clamp(value, 0.0f, 1.0f);
+
+            if (emissive == value)
+                return;
+
+            emissive = value;
+
+            if (drawIndex != -1) // -1 means not attached to a layer
+                (Layer as RenderLayer).UpdateBillboardOrientation(drawIndex, this);
+        }
+    }
+
     public float Extrude
     {
         get => extrude;

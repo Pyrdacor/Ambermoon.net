@@ -1162,6 +1162,34 @@ public class GameRenderView : RenderView, IGameRenderView, IDisposable
         Apply(textureShader);
     }
 
+    public void SetRealisticLightmap(int width, int height, byte[] rgbaData, float originX, float originZ, float texelsPerUnit)
+    {
+        var billboardShader = (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader;
+        var textureShader = (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader;
+
+        Texture3DShader.Lightmap?.Dispose();
+        Texture3DShader.Lightmap = null;
+
+        if (rgbaData == null || width <= 0 || height <= 0)
+        {
+            billboardShader.SetRealisticLightmap(false, 0, 0, 0, 1, 1);
+            textureShader.SetRealisticLightmap(false, 0, 0, 0, 1, 1);
+            return;
+        }
+
+        var lightmap = new Texture(State, width, height, Ambermoon.Render.Texture.PixelFormat.RGBA8, rgbaData);
+        // The light is interpolated between the texels.
+        State.Gl.ActiveTexture(GLEnum.Texture0 + Texture3DShader.LightmapTextureUnit);
+        State.Gl.BindTexture(GLEnum.Texture2D, lightmap.Index);
+        State.Gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.Linear);
+        State.Gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)GLEnum.Linear);
+        State.Gl.ActiveTexture(GLEnum.Texture0);
+        Texture3DShader.Lightmap = lightmap;
+
+        billboardShader.SetRealisticLightmap(true, originX, originZ, texelsPerUnit, width, height);
+        textureShader.SetRealisticLightmap(true, originX, originZ, texelsPerUnit, width, height);
+    }
+
     public void SetRealisticLighting2D(RealisticLighting2D lighting)
     {
         var fowLayer = GetLayer(Layer.FOW) as RenderLayer;

@@ -72,6 +72,10 @@ namespace Ambermoon.Render
         IRenderLayer Layer { get; set; }
         WallOrientation WallOrientation { get; }
         float Extrude { get; set; }
+        /// <summary>
+        /// Self-illumination of billboards (realistic lighting): 0 = none, 1 = always fully lit.
+        /// </summary>
+        float Emissive { get; set; }
 
         void Delete();
 

@@ -178,7 +178,7 @@ namespace Ambermoon.Render
                 {
                     bool floorObject = objectPosition.Object.Flags.HasFlag(Tileset.TileFlags.Floor);
                     float y = floorObject ? surface.Y + 0.05f : surface.Y - 0.4f * surface.Height;
-                    lightSources.Add(new WorldLightSource(surface.X, y, surface.Z, info, (int)(characterIndex * 7919 + textureIndex * 31)));
+                    lightSources.Add(new WorldLightSource(surface.X, y, surface.Z, info, (int)(characterIndex * 7919 + textureIndex * 31), true));
                 }
 
                 foreach (var child in children)
@@ -884,7 +884,22 @@ namespace Ambermoon.Render
         /// </summary>
         readonly Dictionary<uint, List<WorldLightSource>> blockLightSources = [];
 
-        internal readonly record struct WorldLightSource(float X, float Y, float Z, LightSourceInfo Info, int Seed);
+        internal readonly record struct WorldLightSource(float X, float Y, float Z, LightSourceInfo Info, int Seed, bool Moving = false);
+
+        /// <summary>
+        /// Changes whenever the static light sources (walls and objects of the map blocks) change.
+        /// </summary>
+        internal int StaticLightSourcesVersion { get; private set; } = 0;
+
+        /// <summary>
+        /// Light sources of the map blocks (walls and objects). They never move.
+        /// </summary>
+        internal IEnumerable<WorldLightSource> StaticLightSources => blockLightSources.Values.SelectMany(lights => lights);
+
+        /// <summary>
+        /// Self-illumination of a billboard which emits light.
+        /// </summary>
+        internal static float EmissiveFor(LightSourceInfo info) => Math.Clamp(info.Intensity * Math.Max(info.R, Math.Max(info.G, info.B)) * 1.2f, 0.0f, 1.0f);
 
         readonly List<WorldLightSource> characterLightSources = [];
 
@@ -897,7 +912,12 @@ namespace Ambermoon.Render
         /// <summary>
         /// All light sources of the map: lights of map blocks (walls and objects) and of visible map characters.
         /// </summary>
-        internal IEnumerable<WorldLightSource> WorldLightSources
+        internal IEnumerable<WorldLightSource> WorldLightSources => StaticLightSources.Concat(CharacterLightSources);
+
+        /// <summary>
+        /// Light sources of the visible map characters (they can move, appear and disappear).
+        /// </summary>
+        internal List<WorldLightSource> CharacterLightSources
         {
             get
             {
@@ -906,7 +926,7 @@ namespace Ambermoon.Render
                 foreach (var mapCharacter in mapCharacters.Values)
                     mapCharacter.CollectLightSources(characterLightSources);
 
-                return blockLightSources.Values.SelectMany(lights => lights).Concat(characterLightSources);
+                return characterLightSources;
             }
         }
 
@@ -918,6 +938,7 @@ namespace Ambermoon.Render
                 blockLightSources.Add(blockIndex, lights = []);
 
             lights.Add(new WorldLightSource(x, y, z, info, seed));
+            ++StaticLightSourcesVersion;
         }
         readonly Dictionary<uint, MapCharacter> mapCharacters = [];
         static readonly Dictionary<uint, ITextureAtlas> labdataTextures = []; // contains all textures for a labdata (floor, walls, objects and overlays)
@@ -1309,6 +1330,7 @@ namespace Ambermoon.Render
             walls.Clear();
             objects.Clear();
             blockLightSources.Clear();
+            ++StaticLightSourcesVersion;
             mapCharacters.Clear();
 
             blockCollisionBodies.Clear();
@@ -1612,6 +1634,8 @@ namespace Ambermoon.Render
             initialPosition.Offset(-1, -1);
             UpdateCharacterSurfaceCoordinates(initialPosition, mapObject, objectPosition);
             mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
+            if (LightSources.TryGetObject3DLight(objectInfo.TextureIndex, out var characterLight))
+                mapObject.Emissive = EmissiveFor(characterLight);
             var mapCharacter = new MapCharacter(game, this, mapObject, characterIndex, characterReference,
                 objectPosition, objectInfo.TextureIndex, parent, objectInfo.Flags.HasFlag(Tileset.TileFlags.WaveAnimation),
 				objectInfo.Flags.HasFlag(Tileset.TileFlags.No3DAnimation), objectInfo.NumAnimationFrames, 8.0f);
@@ -1678,6 +1702,7 @@ namespace Ambermoon.Render
 
                 if (LightSources.TryGetObject3DLight(objectInfo.TextureIndex, out var lightSource))
                 {
+                    mapObject.Emissive = EmissiveFor(lightSource);
                     // Billboards are positioned at their top center, floor billboards at their center.
                     float lightY = floorObject ? y + 0.05f : y - 0.4f * mapObject.Height;
                     AddLightSource(blockIndex, x, lightY, z, lightSource);
@@ -1863,7 +1888,8 @@ namespace Ambermoon.Render
                 objects.Remove(index);
             }
 
-            blockLightSources.Remove(index);
+            if (blockLightSources.Remove(index))
+                ++StaticLightSourcesVersion;
 
             blockCollisionBodies.Remove(index);
 
@@ -1913,7 +1939,8 @@ namespace Ambermoon.Render
                                 value2?.ForEach(wall => wall?.Delete());
 
                             walls.Remove(adjacentIndex);
-                            blockLightSources.Remove(adjacentIndex);
+                            if (blockLightSources.Remove(adjacentIndex))
+                                ++StaticLightSourcesVersion;
                             blockCollisionBodies.Remove(adjacentIndex);
 
                             for (int i = 0; i < characterBlockingBlocks.Length; ++i)
