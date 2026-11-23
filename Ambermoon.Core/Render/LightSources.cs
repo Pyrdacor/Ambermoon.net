@@ -79,30 +79,15 @@ public static class LightSources
         { 121, Embers }, // brazier with glowing coals
         { 141, Campfire }, // campfire with stones
         { 142, Candle }, // candle on a candlestick
-        { 144, Fire }, // big animated flame
+        { 144, Fire.WithRadius(5.0f) with { R = 1.0f, G = 0.45f, B = 0.18f } }, // big animated flame (reddish)
         { 149, Candle }, // small candle
-        { 151, Candle.WithIntensity(0.8f) }, // small flames on the floor
         // Glowing plants (mostly on the forest moon)
-        { 186, GlowPlantOrange.WithRadius(1.2f) }, // plant with orange bulbs
-        { 187, GlowPlantOrange.WithRadius(1.2f) }, // orange flower
         { 204, GlowPlantOrange }, // flowers with orange heads
         { 205, GlowPlantWhite }, // flowers with white heads
-        { 232, GlowPlantOrange.WithRadius(1.2f) }, // bush with orange berries
-        { 233, GlowPlantOrange }, // big bush with orange berries
-        { 235, GlowPlantOrange }, // plant with orange blossoms
-        { 237, GlowPlantOrange.WithIntensity(0.3f) }, // big orange blossom
-        { 242, GlowPlantOrange.WithIntensity(0.25f).WithRadius(1.0f) }, // small orange flower
-        { 244, GlowPlantOrange.WithIntensity(0.25f).WithRadius(1.0f) }, // small orange flower
-        { 248, GlowPlantOrange.WithIntensity(0.25f).WithRadius(1.0f) }, // orange mushroom
         { 257, GlowPlantGreen }, // glowing swamp plant
         { 258, GlowPlantGreen }, // bubbling green plant
         // Krondir cave (Ambermoon Advanced)
-        // The plants light the whole cave (says the text when entering it).
-        { 182, GlowPlantWhite.WithIntensity(0.6f).WithRadius(2.5f) }, // plant with white curls
-        { 189, GlowPlantOrange.WithIntensity(0.6f).WithRadius(2.0f) }, // glowing roots
-        { 190, GlowPlantOrange.WithIntensity(0.6f).WithRadius(2.0f) },
-        { 191, GlowPlantOrange.WithIntensity(0.6f).WithRadius(2.0f) },
-        { 391, GlowPlantOrange.WithIntensity(0.9f).WithRadius(3.5f) }, // tree with glowing orange bulbs
+        // Some of the plants light the cave (says the text when entering it).
         { 394, GlowPlantWhite.WithIntensity(0.9f).WithRadius(3.5f) }, // plant with glowing white orbs
         { 395, GlowPlantWhite.WithIntensity(0.8f).WithRadius(3.0f) }, // glowing spot on the floor
         { 397, GlowPlantOrange.WithIntensity(0.7f).WithRadius(2.5f) }, // plant with orange fruits
@@ -113,10 +98,10 @@ public static class LightSources
         { 276, Fire.WithRadius(3.0f) }, // fire pit in a stone ring
         { 314, MagicOrange.WithIntensity(0.5f) }, // glowing tube
         { 356, Lightning }, // lightning
-        { 358, MagicOrange.WithIntensity(0.5f) }, // machines with glowing tubes
-        { 359, MagicOrange.WithIntensity(0.5f) },
-        { 360, MagicOrange.WithIntensity(0.4f) },
-        { 361, MagicOrange }, // orb with a glowing core
+        { 358, MagicOrange.WithIntensity(0.5f).WithRadius(1.5f) }, // machines with glowing tubes
+        { 359, MagicOrange.WithIntensity(0.5f).WithRadius(1.5f) },
+        { 360, MagicOrange.WithIntensity(0.4f).WithRadius(1.5f) },
+        { 361, MagicOrange.WithRadius(1.5f) }, // orb with a glowing core
         { 364, MagicOrange.WithIntensity(0.5f) with { Flicker = 0.5f } }, // pulsing lights
         { 365, MagicOrange.WithIntensity(0.5f) with { Flicker = 0.5f } },
     };
@@ -134,10 +119,10 @@ public static class LightSources
     /// </summary>
     public static readonly Dictionary<uint, LightSourceInfo> Wall3DOverlayTextures = new()
     {
-        { 15, Torch.At(0.5f, 0.25f) }, // pillar with a fire bowl at the top (left)
-        { 16, Torch.At(0.5f, 0.25f) }, // pillar with a fire bowl at the top (right)
-        { 56, Lantern.WithIntensity(0.8f) }, // small lamp next to a door (left)
-        { 57, Lantern.WithIntensity(0.8f) }, // small lamp next to a door (right)
+        { 15, Torch.WithRadius(1.0f).At(0.5f, 0.25f) }, // pillar with a fire bowl at the top (left)
+        { 16, Torch.WithRadius(1.0f).At(0.5f, 0.25f) }, // pillar with a fire bowl at the top (right)
+        { 56, Lantern.WithIntensity(0.8f).WithRadius(1.5f) }, // small lamp next to a door (left)
+        { 57, Lantern.WithIntensity(0.8f).WithRadius(1.5f) }, // small lamp next to a door (right)
     };
 
     /// <summary>
@@ -174,7 +159,7 @@ public static class LightSources
         Add(6, Embers, 216, 361, 364); // braziers and cauldron
         // Tileset 7
         for (uint graphicIndex = 70; graphicIndex <= 105; graphicIndex += 5)
-            Add(7, Lava, graphicIndex); // lava
+            Add(7, Lava.WithRadius(3.0f), graphicIndex); // lava
         // Tileset 8
         Add(8, Fire, 210, 214, 218, 222, 268); // walls of fire, fire bowl
         Add(8, Fire, 332, 336, 340, 344, 348, 352); // burning logs, fire bowls
