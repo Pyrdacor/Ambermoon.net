@@ -106,6 +106,7 @@ public static class LightSources
         { 361, MagicOrange.WithRadius(1.5f) }, // orb with a glowing core
         // Lamps, portals and energy
         { 201, new(1.0f, 0.80f, 0.60f, 0.8f, 2.5f, 0.1f) }, // light on the floor
+        { 259, new(0.85f, 0.95f, 1.0f, 0.8f, 2.5f, 0.0f) }, // daylight falling through an opening in the ceiling (entrance of the old ruins)
         { 275, new LightSourceInfo(1.0f, 0.55f, 0.30f, 1.0f, 3.0f, 0.4f).WithPulse(1.2f) }, // portal with an electric glow
         { 346, new LightSourceInfo(1.0f, 0.80f, 0.40f, 1.0f, 3.0f, 0.0f).WithPulse(0.8f) }, // pulsing portal shaped like a ceiling lamp
         { 363, new LightSourceInfo(1.0f, 0.65f, 0.35f, 0.7f, 2.0f, 0.0f).WithPulse(0.7f) }, // pulsing floor light
