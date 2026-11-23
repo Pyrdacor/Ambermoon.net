@@ -96,6 +96,17 @@ public static class LightSources
         { 248, GlowPlantOrange.WithIntensity(0.25f).WithRadius(1.0f) }, // orange mushroom
         { 257, GlowPlantGreen }, // glowing swamp plant
         { 258, GlowPlantGreen }, // bubbling green plant
+        // Krondir cave (Ambermoon Advanced)
+        // The plants light the whole cave (says the text when entering it).
+        { 182, GlowPlantWhite.WithIntensity(0.6f).WithRadius(2.5f) }, // plant with white curls
+        { 189, GlowPlantOrange.WithIntensity(0.6f).WithRadius(2.0f) }, // glowing roots
+        { 190, GlowPlantOrange.WithIntensity(0.6f).WithRadius(2.0f) },
+        { 191, GlowPlantOrange.WithIntensity(0.6f).WithRadius(2.0f) },
+        { 391, GlowPlantOrange.WithIntensity(0.9f).WithRadius(3.5f) }, // tree with glowing orange bulbs
+        { 394, GlowPlantWhite.WithIntensity(0.9f).WithRadius(3.5f) }, // plant with glowing white orbs
+        { 395, GlowPlantWhite.WithIntensity(0.8f).WithRadius(3.0f) }, // glowing spot on the floor
+        { 397, GlowPlantOrange.WithIntensity(0.7f).WithRadius(2.5f) }, // plant with orange fruits
+        { 398, Lava.WithRadius(2.0f) }, // lava pool
         { 202, MagicOrange.WithIntensity(0.9f) with { Flicker = 0.8f } }, // fire orb
         { 203, Fire }, // flame column
         { 262, MagicOrange }, // glowing flask

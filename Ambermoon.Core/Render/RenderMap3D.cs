@@ -161,6 +161,23 @@ namespace Ambermoon.Render
                 children.Add(child);
             }
 
+            /// <summary>
+            /// Adds the light sources (realistic lighting) of this character and its sub-objects
+            /// if they are currently visible (e.g. lamps which are only shown at some daytimes).
+            /// </summary>
+            public void CollectLightSources(List<WorldLightSource> lightSources)
+            {
+                if (surface.Visible && LightSources.TryGetObject3DLight(textureIndex, out var info))
+                {
+                    bool floorObject = objectPosition.Object.Flags.HasFlag(Tileset.TileFlags.Floor);
+                    float y = floorObject ? surface.Y + 0.05f : surface.Y - 0.4f * surface.Height;
+                    lightSources.Add(new WorldLightSource(surface.X, y, surface.Z, info, (int)(characterIndex * 7919 + textureIndex * 31)));
+                }
+
+                foreach (var child in children)
+                    child.CollectLightSources(lightSources);
+            }
+
             public void Destroy()
             {
                 children.ForEach(c => c?.Destroy());
@@ -862,7 +879,23 @@ namespace Ambermoon.Render
 
         internal readonly record struct WorldLightSource(float X, float Y, float Z, LightSourceInfo Info, int Seed);
 
-        internal IEnumerable<WorldLightSource> WorldLightSources => blockLightSources.Values.SelectMany(lights => lights);
+        readonly List<WorldLightSource> characterLightSources = [];
+
+        /// <summary>
+        /// All light sources of the map: lights of map blocks (walls and objects) and of visible map characters.
+        /// </summary>
+        internal IEnumerable<WorldLightSource> WorldLightSources
+        {
+            get
+            {
+                characterLightSources.Clear();
+
+                foreach (var mapCharacter in mapCharacters.Values)
+                    mapCharacter.CollectLightSources(characterLightSources);
+
+                return blockLightSources.Values.SelectMany(lights => lights).Concat(characterLightSources);
+            }
+        }
 
         void AddLightSource(uint blockIndex, float x, float y, float z, LightSourceInfo info)
         {

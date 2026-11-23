@@ -211,6 +211,21 @@ namespace Ambermoon.Render
                     }
                 }
             }
+
+            // Map characters with tile graphics (e.g. lamps which are only there at some daytimes)
+            foreach (var mapCharacter in mapCharacters.Values)
+            {
+                if (!mapCharacter.TryGetLightSource(out var info))
+                    continue;
+
+                var position = mapCharacter.Position;
+
+                if (position.X < startX || position.X >= endX || position.Y < startY || position.Y >= endY)
+                    continue;
+
+                var area = mapCharacter.DisplayArea;
+                lightSources.Add((area.Center.X, area.Center.Y, (uint)position.X, (uint)position.Y, info));
+            }
         }
 
         public void Update(uint ticks, ITime gameTime, bool monstersCanMoveImmediately, Position? lastPlayerPosition)
