@@ -24,6 +24,7 @@ using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon;
 
@@ -97,6 +98,166 @@ partial class GameCore
         renderView.SetRealisticLighting2D(null);
     }
 
+    static string DescribeLight(LightSourceInfo? info)
+    {
+        if (info is not { } l)
+            return "no light";
+
+        var text = FormattableString.Invariant($"light: color {l.R:0.00}/{l.G:0.00}/{l.B:0.00}, intensity {l.Intensity:0.00}, radius {l.Radius:0.0}, flicker {l.Flicker:0.00}");
+
+        if (l.Pulse > 0.0f)
+            text += FormattableString.Invariant($", pulse {l.Pulse:0.0}/s");
+
+        return text;
+    }
+
+    /// <summary>
+    /// Describes the graphics on the player's position and up to 3 tiles in front of the player
+    /// with their indices and light sources. Used by the cheat "lightinfo" to find graphics
+    /// which should emit light (see <see cref="LightSources"/>).
+    /// </summary>
+    public List<string> GetLightSourceReport()
+    {
+        var lines = new List<string>();
+        var map = Map;
+
+        if (!Ingame || map == null || (Is3D ? renderMap3D == null || player3D == null : renderMap2D == null || player2D == null))
+        {
+            lines.Add("Only available on a map.");
+            return lines;
+        }
+
+        string On(bool active) => active ? "on" : "off";
+        lines.Add($"Realistic lighting is {On(RealisticLightingEnabled)}.");
+
+        if (Is3D)
+        {
+            var labdata = MapManager.GetLabdataForMap(map);
+            var camera = player3D!.Camera;
+            camera.GetForwardPosition(1.0f, out float forwardX, out float forwardZ, false, false);
+            forwardX = camera.X - forwardX;
+            forwardZ = camera.Z - forwardZ;
+            float worldX = -camera.X;
+            float worldZ = -camera.Z;
+            var blocks = new List<(int X, int Y)>();
+
+            // Walk along the view direction in small steps and collect the blocks.
+            for (float distance = 0.0f; distance <= 3.6f * Global.DistancePerBlock; distance += 0.1f * Global.DistancePerBlock)
+            {
+                int x = (int)Math.Floor((worldX + forwardX * distance) / Global.DistancePerBlock);
+                int y = (int)Math.Floor((worldZ + forwardZ * distance) / Global.DistancePerBlock + map.Height);
+
+                if (x < 0 || y < 0 || x >= map.Width || y >= map.Height)
+                    break;
+
+                if (!blocks.Contains((x, y)))
+                    blocks.Add((x, y));
+
+                var block = map.Blocks[x, y];
+
+                // Stop behind the first wall which blocks the view
+                if (block.WallIndex != 0 && blocks.Count > 1)
+                {
+                    var wall = labdata.Walls[((int)block.WallIndex - 1) % labdata.Walls.Count];
+
+                    if (!wall.Flags.HasFlag(Tileset.TileFlags.Transparency))
+                        break;
+                }
+            }
+
+            lines.Add($"Map {map.Index} (3D, labdata {map.TilesetOrLabdataIndex}), position {blocks[0].X + 1},{blocks[0].Y + 1}, {blocks.Count - 1} block(s) in front");
+
+            foreach (var (x, y) in blocks)
+            {
+                var block = map.Blocks[x, y];
+                string where = x == blocks[0].X && y == blocks[0].Y ? "here" : "ahead";
+
+                if (block.WallIndex != 0)
+                {
+                    var wall = labdata.Walls[((int)block.WallIndex - 1) % labdata.Walls.Count];
+                    lines.Add($"  Block {x + 1},{y + 1} ({where}): wall {block.WallIndex}, wall texture {wall.TextureIndex} ({DescribeLight(LightSources.TryGetWall3DLight(wall.TextureIndex, out var wallLight) ? wallLight : null)})");
+
+                    foreach (var overlay in wall.Overlays ?? [])
+                        lines.Add($"    overlay {overlay.TextureIndex} ({DescribeLight(LightSources.TryGetWallOverlay3DLight(overlay.TextureIndex, out var overlayLight) ? overlayLight : null)})");
+                }
+                else if (block.ObjectIndex != 0)
+                {
+                    var obj = labdata.Objects[((int)block.ObjectIndex - 1) % labdata.Objects.Count];
+                    lines.Add($"  Block {x + 1},{y + 1} ({where}): object {block.ObjectIndex}");
+
+                    foreach (var subObject in obj.SubObjects)
+                    {
+                        uint texture = subObject.Object.TextureIndex;
+                        lines.Add($"    object texture {texture} ({DescribeLight(LightSources.TryGetObject3DLight(texture, out var objectLight) ? objectLight : null)})");
+                    }
+                }
+                else
+                {
+                    lines.Add($"  Block {x + 1},{y + 1} ({where}): empty");
+                }
+
+                foreach (var character in renderMap3D!.CharacterTextureInfos)
+                {
+                    if (character.Position.X != x || character.Position.Y != y)
+                        continue;
+
+                    lines.Add($"    map character {character.Index + 1}{(character.Visible ? "" : " (hidden)")}");
+
+                    foreach (var texture in character.Textures.Distinct())
+                        lines.Add($"      object texture {texture} ({DescribeLight(LightSources.TryGetObject3DLight(texture, out var characterLight) ? characterLight : null)})");
+                }
+            }
+        }
+        else
+        {
+            var tileset = renderMap2D!.Tileset;
+            var position = player2D!.Position;
+            var direction = player2D.Direction;
+            int dx = direction == CharacterDirection.Left ? -1 : direction == CharacterDirection.Right ? 1 : 0;
+            int dy = direction == CharacterDirection.Up ? -1 : direction == CharacterDirection.Down ? 1 : 0;
+            int maxX = map.IsWorldMap ? map.Width * 2 : map.Width;
+            int maxY = map.IsWorldMap ? map.Height * 2 : map.Height;
+
+            lines.Add($"Map {map.Index} (2D, tileset {tileset?.Index}), position {position.X + 1},{position.Y + 1}, looking {direction}");
+
+            if (tileset == null)
+                return lines;
+
+            string Tile(uint tileIndex)
+            {
+                if (tileIndex == 0 || tileIndex > tileset.Tiles.Length)
+                    return "none";
+
+                uint graphicIndex = tileset.Tiles[tileIndex - 1].GraphicIndex;
+                return $"tile {tileIndex}, graphic {graphicIndex} ({DescribeLight(LightSources.TryGetTile2DLight(tileset.Index, graphicIndex, out var tileLight) ? tileLight : null)})";
+            }
+
+            for (int i = 0; i <= 3; ++i)
+            {
+                int x = position.X + dx * i;
+                int y = position.Y + dy * i;
+
+                if (x < 0 || y < 0 || x >= maxX || y >= maxY)
+                    break;
+
+                var tile = renderMap2D[(uint)x, (uint)y];
+                lines.Add($"  Tile {x + 1},{y + 1} ({(i == 0 ? "here" : i + " ahead")}):");
+                lines.Add($"    background {Tile(tile.BackTileIndex)}");
+                lines.Add($"    foreground {Tile(tile.FrontTileIndex)}");
+
+                foreach (var character in renderMap2D.MapCharacters)
+                {
+                    if (character.Position.X != x || character.Position.Y != y || character.TileGraphicIndex is not uint graphicIndex)
+                        continue;
+
+                    lines.Add($"    map character with graphic {graphicIndex}{(character.Active && character.Visible ? "" : " (hidden)")} ({DescribeLight(LightSources.TryGetTile2DLight(tileset.Index, graphicIndex, out var characterLight) ? characterLight : null)})");
+                }
+            }
+        }
+
+        return lines;
+    }
+
     /// <summary>
     /// Value noise in the range 0 to 1.
     /// </summary>
@@ -132,6 +293,19 @@ partial class GameCore
         float dip = Math.Max(0.0f, Noise(time * 2.3, seed + 31) - 0.75f) * 1.2f;
 
         return Math.Max(0.4f, 1.0f + amount * (0.07f * waves + 0.09f * noise - dip));
+    }
+
+    /// <summary>
+    /// Brightness factor of a light source: flickering and an optional regular pulsing.
+    /// </summary>
+    static float LightFactor(double time, int seed, LightSourceInfo info)
+    {
+        float factor = Flicker(time, seed, info.Flicker);
+
+        if (info.Pulse > 0.0f)
+            factor *= 0.7f + 0.3f * (float)Math.Sin(2.0 * Math.PI * info.Pulse * time + (seed % 628) * 0.01);
+
+        return factor;
     }
 
     static (float R, float G, float B) GetDaylight(uint hour, uint minute)
@@ -323,7 +497,7 @@ partial class GameCore
             {
                 var light = candidates[i].Light;
                 var info = light.Info;
-                float flicker = Flicker(time, light.Seed, info.Flicker);
+                float flicker = LightFactor(time, light.Seed, info);
                 float intensity = info.Intensity * flicker;
 
                 // Lights which are far away or near the light limit fade out so that switching lights is not visible.
@@ -436,7 +610,7 @@ partial class GameCore
             {
                 var info = lightSource.Info;
                 int seed = (int)(lightSource.MapX * 7919 + lightSource.MapY * 104729);
-                float flicker = Flicker(time, seed, info.Flicker);
+                float flicker = LightFactor(time, seed, info);
                 float radius = (8.0f + info.Radius * 16.0f) * (0.95f + 0.05f * flicker);
                 float glow = 0.16f * info.Intensity * flicker;
                 AddLight(lightSource.X, lightSource.Y, radius, Math.Min(1.0f, info.Intensity), info.R * glow, info.G * glow, info.B * glow);

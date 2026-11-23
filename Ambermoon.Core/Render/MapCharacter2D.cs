@@ -56,6 +56,13 @@ namespace Ambermoon.Render
         public static void Reset() => interacting = false;
 
         /// <summary>
+        /// Tile graphic index if this character uses a tile graphic (used by the light info cheat).
+        /// </summary>
+        internal uint? TileGraphicIndex => characterReference.CharacterFlags.HasFlag(Flags.UseTileset) &&
+            characterReference.GraphicIndex != 0 && characterReference.GraphicIndex <= tileset.Tiles.Length
+            ? tileset.Tiles[characterReference.GraphicIndex - 1].GraphicIndex : null;
+
+        /// <summary>
         /// Light source (realistic lighting) of a visible map character which uses a tile graphic (e.g. a lamp).
         /// </summary>
         internal bool TryGetLightSource(out LightSourceInfo info)

@@ -173,6 +173,9 @@ namespace Ambermoon.Render
                 transport.Sprite.ClipArea = Global.Map2DRenderArea;
         }
 
+        internal Tileset? Tileset => tileset;
+        internal IEnumerable<MapCharacter2D> MapCharacters => mapCharacters.Values;
+
         /// <summary>
         /// Light sources (realistic lighting) of the visible tiles and some tiles around them.
         /// The positions are the tile centers in virtual screen coordinates.

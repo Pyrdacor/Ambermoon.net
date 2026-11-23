@@ -29,7 +29,7 @@ ShowThalionLogo | If active the Thalion logo is shown at start, otherwise it is 
 ShowSaveLoadMessage | If active a popup is shown after saving and loading a game | true or false | false
 ShowFloor | If active the 3D floor texture is shown, otherwise only a color | true or false | true
 ShowCeiling | If active the 3D ceiling texture is shown, otherwise only a color | true or false | true
-RealisticLighting | If active the light spell lights a flickering cone in front of the party (3D) or a soft circle around it (2D), light sources like torches, candles, fireplaces or lava emit light and day and night change smoothly with colored light (dark blue nights, golden sunsets). Towns in 3D follow the daytime as well. The light sources are listed in Ambermoon.Core/Render/LightSources.cs. | true or false | false
+RealisticLighting | If active the light spell lights a flickering cone in front of the party (3D) or a soft circle around it (2D), light sources like torches, candles, fireplaces or lava emit light and day and night change smoothly with colored light (dark blue nights, golden sunsets). Towns in 3D follow the daytime as well. The light sources are listed in Ambermoon.Core/Render/LightSources.cs. The cheat console command `lightinfo` shows the graphics in front of the party with their indices and light. | true or false | false
 GraphicFilter | Graphic filter to use | None, Smooth, Blur | None
 GraphicFilterOverlay | Overlay to use | None, Lines, Grid, Scanlines, CRT | None
 Effects | Additional graphic effects to use | None, Grayscale, Sepia | None

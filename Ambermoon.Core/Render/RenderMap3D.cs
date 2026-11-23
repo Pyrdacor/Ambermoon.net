@@ -162,6 +162,13 @@ namespace Ambermoon.Render
             }
 
             /// <summary>
+            /// Object texture indices of this character and its sub-objects (used by the light info cheat).
+            /// </summary>
+            public IEnumerable<uint> TextureIndices => children.Select(c => c.textureIndex).Prepend(textureIndex);
+
+            public bool IsVisible => surface.Visible;
+
+            /// <summary>
             /// Adds the light sources (realistic lighting) of this character and its sub-objects
             /// if they are currently visible (e.g. lamps which are only shown at some daytimes).
             /// </summary>
@@ -880,6 +887,12 @@ namespace Ambermoon.Render
         internal readonly record struct WorldLightSource(float X, float Y, float Z, LightSourceInfo Info, int Seed);
 
         readonly List<WorldLightSource> characterLightSources = [];
+
+        /// <summary>
+        /// Map characters with their 0-based position, visibility and object texture indices (used by the light info cheat).
+        /// </summary>
+        internal IEnumerable<(uint Index, Position Position, bool Visible, uint[] Textures)> CharacterTextureInfos =>
+            mapCharacters.Select(c => (c.Key, c.Value.Position, c.Value.IsVisible, c.Value.TextureIndices.ToArray()));
 
         /// <summary>
         /// All light sources of the map: lights of map blocks (walls and objects) and of visible map characters.

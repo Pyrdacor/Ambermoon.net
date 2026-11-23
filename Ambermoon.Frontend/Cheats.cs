@@ -195,6 +195,16 @@ public class Cheats
                 Light
             )
         },
+        { "lightinfo",
+            Create
+            (
+                "Shows the graphics at your position and in front of you" + Environment.NewLine +
+                "with their indices and if they emit light (realistic lighting)." + Environment.NewLine +
+                "Use it to find graphics which should glow but don't." + Environment.NewLine +
+                "Usage: lightinfo",
+                LightInfo
+            )
+        },
         { "clairvoyance",
             Create
             (
@@ -1490,6 +1500,16 @@ public class Cheats
         game.ActivateLight(lightLevel);
 
         WriteLine($"Light level {lightLevel} was granted.");
+        WriteLine();
+    }
+
+    static void LightInfo(GameCore game, string[] args)
+    {
+        WriteLine();
+
+        foreach (var line in game.GetLightSourceReport())
+            WriteLine(line);
+
         WriteLine();
     }
 

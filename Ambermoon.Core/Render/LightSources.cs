@@ -34,9 +34,11 @@ namespace Ambermoon.Render;
 /// <param name="Flicker">Amount of flickering (0 = steady, 1 = like a torch).</param>
 /// <param name="U">Horizontal position of the light inside the wall graphic or overlay (0 = left, 1 = right).</param>
 /// <param name="V">Vertical position of the light inside the wall graphic or overlay (0 = top, 1 = bottom).</param>
+/// <param name="Pulse">Regular pulsing in pulses per second (0 = no pulsing).</param>
 public readonly record struct LightSourceInfo(float R, float G, float B, float Intensity, float Radius, float Flicker = 1.0f,
-    float U = 0.5f, float V = 0.5f)
+    float U = 0.5f, float V = 0.5f, float Pulse = 0.0f)
 {
+    public LightSourceInfo WithPulse(float pulse) => this with { Pulse = pulse };
     public LightSourceInfo WithIntensity(float intensity) => this with { Intensity = intensity };
     public LightSourceInfo WithRadius(float radius) => this with { Radius = radius };
     public LightSourceInfo At(float u, float v) => this with { U = u, V = v };
@@ -102,6 +104,13 @@ public static class LightSources
         { 359, MagicOrange.WithIntensity(0.5f).WithRadius(1.5f) },
         { 360, MagicOrange.WithIntensity(0.4f).WithRadius(1.5f) },
         { 361, MagicOrange.WithRadius(1.5f) }, // orb with a glowing core
+        // Lamps, portals and energy
+        { 201, new(1.0f, 0.80f, 0.60f, 0.8f, 2.5f, 0.1f) }, // light on the floor
+        { 275, new LightSourceInfo(1.0f, 0.55f, 0.30f, 1.0f, 3.0f, 0.4f).WithPulse(1.2f) }, // portal with an electric glow
+        { 346, new LightSourceInfo(1.0f, 0.80f, 0.40f, 1.0f, 3.0f, 0.0f).WithPulse(0.8f) }, // pulsing portal shaped like a ceiling lamp
+        { 363, new LightSourceInfo(1.0f, 0.65f, 0.35f, 0.7f, 2.0f, 0.0f).WithPulse(0.7f) }, // pulsing floor light
+        { 387, new(1.0f, 0.55f, 0.30f, 0.5f, 1.8f, 0.3f) }, // energy guardian (faint glow)
+        { 390, Lantern.WithRadius(3.5f) with { Flicker = 0.1f } }, // ceiling lamp
         { 364, MagicOrange.WithIntensity(0.5f) with { Flicker = 0.5f } }, // pulsing lights
         { 365, MagicOrange.WithIntensity(0.5f) with { Flicker = 0.5f } },
     };
@@ -148,7 +157,7 @@ public static class LightSources
         Add(4, Fireplace, 477); // fireplace
         Add(4, Embers, 586, 589); // cauldron above fire, brazier
         Add(4, Torch, 648, 660); // walls with torches
-        Add(4, Fireplace.WithIntensity(0.6f), 640, 652); // walls with fire at the bottom
+        Add(4, Fireplace.WithIntensity(0.6f), 636, 640, 652); // fireplace parts (upper corner, walls with fire at the bottom)
         // Tileset 5
         Add(5, Fireplace, 279); // fireplace
         Add(5, Fireplace.WithIntensity(0.7f), 283); // side of the fireplace
@@ -160,6 +169,11 @@ public static class LightSources
         // Tileset 7
         for (uint graphicIndex = 70; graphicIndex <= 105; graphicIndex += 5)
             Add(7, Lava.WithRadius(3.0f), graphicIndex); // lava
+        Add(7, Torch, 717, 722); // tops of burning torches
+        // Tileset 9
+        Add(9, new LightSourceInfo(1.0f, 0.55f, 0.25f, 0.6f, 2.0f, 0.4f), 277); // fire thistle
+        // Tileset 10
+        Add(10, Lava.WithRadius(3.0f), 17, 23, 29, 35); // lava
         // Tileset 8
         Add(8, Fire, 210, 214, 218, 222, 268); // walls of fire, fire bowl
         Add(8, Fire, 332, 336, 340, 344, 348, 352); // burning logs, fire bowls
