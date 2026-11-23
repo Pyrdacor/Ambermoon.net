@@ -51,7 +51,7 @@ internal class Texture3DShader : ColorShader
     internal static readonly string DefaultRealisticLightPosName = "rlLightPos";
     internal static readonly string DefaultRealisticLightColorName = "rlLightColor";
     internal static readonly string DefaultRealisticLightCountName = "rlLightCount";
-    internal const int MaxRealisticLights = 16;
+    internal const int MaxRealisticLights = 32;
 
     /// <summary>
     /// Uniforms and the light function of the realistic lighting.

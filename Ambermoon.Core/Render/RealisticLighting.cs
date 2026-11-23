@@ -43,7 +43,7 @@ public struct RealisticPointLight
 /// </summary>
 public class RealisticLighting3D
 {
-    public const int MaxLights = 16;
+    public const int MaxLights = 32;
 
     /// <summary>
     /// Ambient light (daylight, darkness of dungeons, etc).

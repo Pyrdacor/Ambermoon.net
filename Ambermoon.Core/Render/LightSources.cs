@@ -61,6 +61,10 @@ public static class LightSources
     public static readonly LightSourceInfo Lava = new(1.0f, 0.40f, 0.14f, 0.9f, 2.5f, 0.25f);
     public static readonly LightSourceInfo MagicOrange = new(1.0f, 0.68f, 0.40f, 0.9f, 2.5f, 0.15f);
     public static readonly LightSourceInfo Lightning = new(0.85f, 0.80f, 1.0f, 1.1f, 3.0f, 1.0f);
+    // Faint shimmer of glowing plants
+    public static readonly LightSourceInfo GlowPlantOrange = new(1.0f, 0.65f, 0.35f, 0.35f, 1.6f, 0.15f);
+    public static readonly LightSourceInfo GlowPlantWhite = new(0.80f, 0.90f, 1.0f, 0.35f, 1.6f, 0.15f);
+    public static readonly LightSourceInfo GlowPlantGreen = new(0.55f, 1.0f, 0.55f, 0.3f, 1.8f, 0.15f);
 
     /// <summary>
     /// 3D object textures (key is the object texture index, see <see cref="Data.Labdata.ObjectInfo.TextureIndex"/>).
@@ -78,6 +82,20 @@ public static class LightSources
         { 144, Fire }, // big animated flame
         { 149, Candle }, // small candle
         { 151, Candle.WithIntensity(0.8f) }, // small flames on the floor
+        // Glowing plants (mostly on the forest moon)
+        { 186, GlowPlantOrange.WithRadius(1.2f) }, // plant with orange bulbs
+        { 187, GlowPlantOrange.WithRadius(1.2f) }, // orange flower
+        { 204, GlowPlantOrange }, // flowers with orange heads
+        { 205, GlowPlantWhite }, // flowers with white heads
+        { 232, GlowPlantOrange.WithRadius(1.2f) }, // bush with orange berries
+        { 233, GlowPlantOrange }, // big bush with orange berries
+        { 235, GlowPlantOrange }, // plant with orange blossoms
+        { 237, GlowPlantOrange.WithIntensity(0.3f) }, // big orange blossom
+        { 242, GlowPlantOrange.WithIntensity(0.25f).WithRadius(1.0f) }, // small orange flower
+        { 244, GlowPlantOrange.WithIntensity(0.25f).WithRadius(1.0f) }, // small orange flower
+        { 248, GlowPlantOrange.WithIntensity(0.25f).WithRadius(1.0f) }, // orange mushroom
+        { 257, GlowPlantGreen }, // glowing swamp plant
+        { 258, GlowPlantGreen }, // bubbling green plant
         { 202, MagicOrange.WithIntensity(0.9f) with { Flicker = 0.8f } }, // fire orb
         { 203, Fire }, // flame column
         { 262, MagicOrange }, // glowing flask

@@ -279,7 +279,13 @@ partial class GameCore
             var camera = player3D!.Camera;
             float cameraX = -camera.X;
             float cameraZ = -camera.Z;
+            // The camera stores the negated world position, so the direction is negated as well.
+            camera.GetForwardPosition(1.0f, out float forwardX, out float forwardZ, false, false);
+            forwardX = camera.X - forwardX;
+            forwardZ = camera.Z - forwardZ;
             const float maxDistance = 12.0f * Global.DistancePerBlock;
+            // Lights near the selection limit fade out over this score range.
+            const float limitFadeRange = 2.0f * Global.DistancePerBlock;
             var candidates = realisticLightSources3D;
             candidates.Clear();
 
@@ -287,8 +293,14 @@ partial class GameCore
             {
                 float dx = light.X - cameraX;
                 float dz = light.Z - cameraZ;
-                float distance = (float)Math.Sqrt(dx * dx + dz * dz);
                 float radius = light.Info.Radius * Global.DistancePerBlock;
+
+                // Everything visible is in front of the camera. A light which is further behind
+                // the camera than its radius can't light anything visible.
+                if (dx * forwardX + dz * forwardZ < -radius)
+                    continue;
+
+                float distance = (float)Math.Sqrt(dx * dx + dz * dz);
 
                 if (distance - radius > maxDistance)
                     continue;
@@ -296,10 +308,16 @@ partial class GameCore
                 candidates.Add((distance - radius, light));
             }
 
-            if (candidates.Count > RealisticLighting3D.MaxLights)
-                candidates.Sort((a, b) => a.Score.CompareTo(b.Score));
-
             int count = Math.Min(RealisticLighting3D.MaxLights, candidates.Count);
+            float limitScore = float.MaxValue;
+
+            if (candidates.Count > RealisticLighting3D.MaxLights)
+            {
+                candidates.Sort((a, b) => a.Score.CompareTo(b.Score));
+                // Lights near the limit fade out smoothly. Otherwise lights would suddenly
+                // switch on when they become one of the nearest lights.
+                limitScore = candidates[RealisticLighting3D.MaxLights].Score;
+            }
 
             for (int i = 0; i < count; ++i)
             {
@@ -308,8 +326,9 @@ partial class GameCore
                 float flicker = Flicker(time, light.Seed, info.Flicker);
                 float intensity = info.Intensity * flicker;
 
-                // Lights which are far away fade out so that switching lights is not visible.
+                // Lights which are far away or near the light limit fade out so that switching lights is not visible.
                 float fade = Math.Clamp(1.0f - (candidates[i].Score - (maxDistance - 3.0f)) / 3.0f, 0.0f, 1.0f);
+                fade = Math.Min(fade, Math.Clamp((limitScore - candidates[i].Score) / limitFadeRange, 0.0f, 1.0f));
                 intensity *= fade;
 
                 lighting.Lights[i] = new RealisticPointLight
