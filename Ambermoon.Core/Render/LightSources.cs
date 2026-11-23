@@ -111,6 +111,13 @@ public static class LightSources
         { 363, new LightSourceInfo(1.0f, 0.65f, 0.35f, 0.7f, 2.0f, 0.0f).WithPulse(0.7f) }, // pulsing floor light
         { 387, new(1.0f, 0.55f, 0.30f, 0.5f, 1.8f, 0.3f) }, // energy guardian (faint glow)
         { 390, Lantern.WithRadius(3.5f) with { Flicker = 0.1f } }, // ceiling lamp
+        { 31, new LightSourceInfo(0.95f, 0.90f, 0.75f, 0.45f, 1.8f, 1.0f).WithPulse(1.5f) }, // teleporter field (faint changing flashes)
+        { 58, new(0.80f, 0.80f, 0.82f, 0.25f, 1.2f, 0.05f) }, // glass orb (very faint greyish shimmer)
+        { 138, new LightSourceInfo(1.0f, 0.70f, 0.40f, 0.6f, 1.2f, 0.2f).WithPulse(1.0f) }, // small pulsing light
+        { 330, new(1.0f, 0.70f, 0.30f, 0.15f, 1.0f, 0.05f) }, // amber (extremely faint shimmer)
+        { 368, new(1.0f, 0.60f, 0.30f, 0.2f, 1.2f, 0.1f) }, // machine with orange lights (extremely faint)
+        { 369, new(1.0f, 0.60f, 0.30f, 0.2f, 1.2f, 0.1f) },
+        { 384, new LightSourceInfo(1.0f, 0.60f, 0.30f, 0.6f, 1.8f, 0.3f).WithPulse(0.6f) }, // glowing tubes (changing orange light)
         { 364, MagicOrange.WithIntensity(0.5f) with { Flicker = 0.5f } }, // pulsing lights
         { 365, MagicOrange.WithIntensity(0.5f) with { Flicker = 0.5f } },
     };
@@ -132,6 +139,10 @@ public static class LightSources
         { 16, Torch.WithRadius(1.0f).At(0.5f, 0.25f) }, // pillar with a fire bowl at the top (right)
         { 56, Lantern.WithIntensity(0.8f).WithRadius(1.5f) }, // small lamp next to a door (left)
         { 57, Lantern.WithIntensity(0.8f).WithRadius(1.5f) }, // small lamp next to a door (right)
+        { 55, MagicOrange.WithIntensity(0.4f).WithRadius(1.5f) with { Flicker = 0.1f } }, // small orange lights on a door
+        { 71, new(1.0f, 0.90f, 0.60f, 0.2f, 1.5f, 0.0f) }, // round window (very faint yellowish light)
+        { 88, new LightSourceInfo(1.0f, 0.60f, 0.30f, 0.35f, 1.5f, 0.2f).At(0.5f, 0.75f) }, // pedestal with orange lights (faint glimmer)
+        { 107, new(1.0f, 0.92f, 0.65f, 0.15f, 1.2f, 0.0f) }, // wall with a spot of light (very faint yellowish)
     };
 
     /// <summary>
@@ -157,7 +168,7 @@ public static class LightSources
         Add(4, Fireplace, 477); // fireplace
         Add(4, Embers, 586, 589); // cauldron above fire, brazier
         Add(4, Torch, 648, 660); // walls with torches
-        Add(4, Fireplace.WithIntensity(0.6f), 636, 640, 652); // fireplace parts (upper corner, walls with fire at the bottom)
+        Add(4, Fireplace.WithIntensity(0.6f), 636, 640, 644, 652); // fireplace parts (upper corners, walls with fire at the bottom)
         // Tileset 5
         Add(5, Fireplace, 279); // fireplace
         Add(5, Fireplace.WithIntensity(0.7f), 283); // side of the fireplace
@@ -170,6 +181,8 @@ public static class LightSources
         for (uint graphicIndex = 70; graphicIndex <= 105; graphicIndex += 5)
             Add(7, Lava.WithRadius(3.0f), graphicIndex); // lava
         Add(7, Torch, 717, 722); // tops of burning torches
+        Add(7, Lava.WithRadius(3.0f), 353, 358, 388); // lava between rocks
+        Add(7, Torch.WithIntensity(0.4f).WithRadius(1.5f), 601); // faint torch flicker
         // Tileset 9
         Add(9, new LightSourceInfo(1.0f, 0.55f, 0.25f, 0.6f, 2.0f, 0.4f), 277); // fire thistle
         // Tileset 10
