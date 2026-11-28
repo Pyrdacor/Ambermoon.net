@@ -14,6 +14,8 @@ Version 1.16
 - Battle: Monsters with the new passive battle flag never attack, move or flee
 - The map name uses the same color as the other UI texts
 - Tooltips disappear when the mouse moves onto the map
+- Item details only show the element and the minimum level if the game data supports them, missing texts of older game data are empty instead of "This text block doesn't exist!"
+- Fixed a crash of the battle position window after a party member left the party, battle positions of existing savegames are repaired
 
 Version 1.15
 ============
