@@ -290,7 +290,7 @@ A mod can provide default values for some game options with `Options`. They are 
 - When the player changes an option (in the options menu or with F7 for the battle speed), the new value is written to the normal configuration and the option is removed from the mod config file. From then on the choice of the player is used, also in later sessions.
 - Defaults which a newer version of the mod adds are added once. Defaults the player already changed are never added again.
 
-Only these options can have mod defaults: `BattleSpeed` (0 to 100 in steps of 10), `AutoBattleRounds` (0 = off, 5, 10 or 15), `AutoDerune`, `ShowButtonTooltips`, `ShowPlayerStatsTooltips`, `ShowFloor`, `ShowCeiling`, `ShowFog`, `ShowSaveLoadMessage`, `Movement3D` (`WASD` or `WASDQE`) and `TurnWithArrowKeys`. Options like the resolution, window mode, music, volume, language or graphic filters stay under the control of the player. Other options or values of the wrong type make the manifest invalid.
+Only these options can have mod defaults: `BattleSpeed` (0 to 100 in steps of 10), `AutoBattleRounds` (0 = off, 5, 10 or 15), `AutoDerune`, `ShowButtonTooltips`, `ShowPlayerStatsTooltips`, `ShowFloor`, `ShowCeiling`, `ShowFog`, `RealisticLighting`, `ShowSaveLoadMessage`, `Movement3D` (`WASD` or `WASDQE`) and `TurnWithArrowKeys`. Options like the resolution, window mode, music, volume, language or graphic filters stay under the control of the player. Other options or values of the wrong type make the manifest invalid.
 
 
 ## Asset mods

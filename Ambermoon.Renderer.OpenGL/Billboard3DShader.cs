@@ -29,8 +29,8 @@ internal class Billboard3DShader : Texture3DShader
     internal static readonly string DefaultBillboardOrientationName = "orientation";
     internal static readonly string DefaultExtrudeName = "extrude";
 
-    static string[] Billboard3DFragmentShader(State state) => new string[]
-    {
+    static string[] Billboard3DFragmentShader(State state) =>
+    [
         GetFragmentShaderHeader(state),
         $"uniform sampler2D {DefaultSamplerName};",
         $"uniform sampler2D {DefaultPaletteName};",
@@ -49,9 +49,14 @@ internal class Billboard3DShader : Texture3DShader
         $"flat in float palIndex;",
         $"flat in vec2 varTextureEndCoord;",
         $"flat in vec2 varTextureSize;",
+        .. RealisticLightingFragmentCode,
+        $"flat in float emissive;", // light sources are self-illuminated
         $"",
         $"void main()",
         $"{{",
+        $"    // derivatives must be calculated before any branching",
+        $"    vec3 normal = RealisticNormal();",
+        $"    vec3 rl = vec3(1.0f);",
         $"    {DefaultFragmentOutColorName} = vec4(0);",
         $"    vec2 realTexCoord = varTexCoord;",
         $"    if (realTexCoord.x >= varTextureEndCoord.x)",
@@ -68,24 +73,32 @@ internal class Billboard3DShader : Texture3DShader
         $"    else if (abs(colorIndex - {DefaultSkyColorIndexName}) < 0.001f)",
         $"        {DefaultFragmentOutColorName} = {DefaultSkyReplaceColorName};",
         $"    else",
+        $"    {{",
         $"        {DefaultFragmentOutColorName} = vec4(pixelColor.rgb + vec3({DefaultLightName}) - vec3(1), pixelColor.a);",
+        $"        if ({DefaultRealisticEnabledName} > 0.5f)",
+        $"        {{",
+        $"            rl = max(RealisticLight(normal), vec3(emissive));",
+        $"            {DefaultFragmentOutColorName}.rgb = min(vec3(1.0f), {DefaultFragmentOutColorName}.rgb * rl);",
+        $"        }}",
+        $"    }}",
         $"    ",
         $"    if ({DefaultFogColorName}.a > 0.001f)",
         $"    {{",
         $"        float fogFactor = {DefaultFogColorName}.a * ({DefaultSkyColorIndexName} < 31.5f && drawY > 0.0f ? min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, dist / ({DefaultFogDistanceName} * (1.0f + 2.5f * drawY))) : min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, dist / {DefaultFogDistanceName}));",
-        $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * (1.0f - fogFactor) + fogFactor * {DefaultFogColorName};",
+        $"        vec4 fogColor = vec4({DefaultFogColorName}.rgb * min(rl, vec3(1.0f)), {DefaultFogColorName}.a);",
+        $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * (1.0f - fogFactor) + fogFactor * fogColor;",
         $"    }}",
         $"    if ({DefaultFadeName} < 0.9999f)",
         $"    {{",
         $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * {DefaultFadeName};",
         $"    }}",
         $"}}"
-    };
+    ];
     // Note: gl_FragDepth = 0.5 * depth + 0.5 is basically (far-near)/2 * depth + (far+near)/2 with far = 1.0 and near = 0.0 (gl_DepthRange uses 0.0 to 1.0).
     // If the depth range is changed, this formula has to be adjusted accordingly!
 
-    static string[] Billboard3DVertexShader(State state) => new string[]
-    {
+    static string[] Billboard3DVertexShader(State state) =>
+    [
         GetVertexShaderHeader(state),
         $"in vec3 {DefaultPositionName};",
         $"in vec3 {DefaultBillboardCenterName};",
@@ -101,6 +114,9 @@ internal class Billboard3DShader : Texture3DShader
         $"out vec2 varTexCoord;",
         $"out float dist;",
         $"out float drawY;",
+        $"out vec3 viewPos;",
+        $"out vec3 worldPos;",
+        $"flat out float emissive;",
         $"flat out float palIndex;",
         $"flat out vec2 varTextureEndCoord;",
         $"flat out vec2 varTextureSize;",
@@ -109,7 +125,7 @@ internal class Billboard3DShader : Texture3DShader
         $"{{",
         $"    vec3 offset = ({DefaultPositionName} - {DefaultBillboardCenterName});",
         $"    vec4 localPos = {DefaultModelViewMatrixName} * vec4({DefaultBillboardCenterName}, 1);",
-        $"    if ({DefaultBillboardOrientationName} == 0u) // normal billboard",
+        $"    if (({DefaultBillboardOrientationName} & 1u) == 0u) // normal billboard",
         $"    {{",
         $"        localPos += vec4(offset.xy, {DefaultExtrudeName}, 0);",
         $"    }}",
@@ -126,8 +142,11 @@ internal class Billboard3DShader : Texture3DShader
         $"    gl_Position = {DefaultProjectionMatrixName} * localPos;",
         $"    dist = gl_Position.z;",
         $"    drawY = localPos.y;",
+        $"    viewPos = localPos.xyz;",
+        $"    worldPos = {DefaultBillboardCenterName};",
+        $"    emissive = float({DefaultBillboardOrientationName} >> 1u) / 127.0f;",
         $"}}"
-    };
+    ];
 
     Billboard3DShader(State state)
         : this(state, Billboard3DFragmentShader(state), Billboard3DVertexShader(state))

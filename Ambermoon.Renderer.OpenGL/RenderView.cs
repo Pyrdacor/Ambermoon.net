@@ -1111,4 +1111,128 @@ public class GameRenderView : RenderView, IGameRenderView, IDisposable
         (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetFog(fogColor, distance);
         (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetFog(fogColor, distance);
     }
+
+    bool realisticLighting3DActive = false;
+    bool realisticLighting2DActive = false;
+    readonly float[] realisticLightPositions = new float[4 * Math.Max(Texture3DShader.MaxRealisticLights, FowShader.MaxRealisticLights)];
+    readonly float[] realisticLightColors = new float[4 * Math.Max(Texture3DShader.MaxRealisticLights, FowShader.MaxRealisticLights)];
+
+    public void SetRealisticLighting3D(RealisticLighting3D lighting)
+    {
+        var billboardShader = (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader;
+        var textureShader = (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader;
+
+        if (lighting == null || camera3D is not Camera3D camera)
+        {
+            if (realisticLighting3DActive)
+            {
+                realisticLighting3DActive = false;
+                billboardShader.DisableRealisticLighting();
+                textureShader.DisableRealisticLighting();
+            }
+
+            return;
+        }
+
+        realisticLighting3DActive = true;
+        int count = Math.Min(lighting.LightCount, Texture3DShader.MaxRealisticLights);
+
+        for (int i = 0; i < count; ++i)
+        {
+            var light = lighting.Lights[i];
+            float x = light.X;
+            float y = light.Y;
+            float z = light.Z;
+            camera.WorldToView(ref x, ref y, ref z);
+            realisticLightPositions[i * 4 + 0] = x;
+            realisticLightPositions[i * 4 + 1] = y;
+            realisticLightPositions[i * 4 + 2] = z;
+            realisticLightPositions[i * 4 + 3] = light.Radius;
+            realisticLightColors[i * 4 + 0] = light.R;
+            realisticLightColors[i * 4 + 1] = light.G;
+            realisticLightColors[i * 4 + 2] = light.B;
+            realisticLightColors[i * 4 + 3] = 1.0f;
+        }
+
+        void Apply(Texture3DShader shader) => shader.SetRealisticLighting(lighting.AmbientR, lighting.AmbientG, lighting.AmbientB,
+            lighting.TorchR, lighting.TorchG, lighting.TorchB, lighting.TorchRange, lighting.TorchX, lighting.TorchY, lighting.TorchZ,
+            realisticLightPositions, realisticLightColors, count);
+
+        Apply(billboardShader);
+        Apply(textureShader);
+    }
+
+    public void SetRealisticLightmap(int width, int height, byte[] rgbaData, float originX, float originZ, float texelsPerUnit)
+    {
+        var billboardShader = (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader;
+        var textureShader = (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader;
+
+        Texture3DShader.Lightmap?.Dispose();
+        Texture3DShader.Lightmap = null;
+
+        if (rgbaData == null || width <= 0 || height <= 0)
+        {
+            billboardShader.SetRealisticLightmap(false, 0, 0, 0, 1, 1);
+            textureShader.SetRealisticLightmap(false, 0, 0, 0, 1, 1);
+            return;
+        }
+
+        var lightmap = new Texture(State, width, height, Ambermoon.Render.Texture.PixelFormat.RGBA8, rgbaData);
+        // The light is interpolated between the texels.
+        State.Gl.ActiveTexture(GLEnum.Texture0 + Texture3DShader.LightmapTextureUnit);
+        State.Gl.BindTexture(GLEnum.Texture2D, lightmap.Index);
+        State.Gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.Linear);
+        State.Gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)GLEnum.Linear);
+        State.Gl.ActiveTexture(GLEnum.Texture0);
+        Texture3DShader.Lightmap = lightmap;
+
+        billboardShader.SetRealisticLightmap(true, originX, originZ, texelsPerUnit, width, height);
+        textureShader.SetRealisticLightmap(true, originX, originZ, texelsPerUnit, width, height);
+    }
+
+    public void SetRealisticLighting2D(RealisticLighting2D lighting)
+    {
+        var fowLayer = GetLayer(Layer.FOW) as RenderLayer;
+        var fowShader = fowLayer.RenderBuffer.FowShader;
+
+        if (lighting == null)
+        {
+            if (realisticLighting2DActive)
+            {
+                realisticLighting2DActive = false;
+                fowShader.DisableRealisticLighting();
+            }
+
+            return;
+        }
+
+        realisticLighting2DActive = true;
+        int count = Math.Min(lighting.LightCount, FowShader.MaxRealisticLights);
+        var positionTransformation = fowLayer.PositionTransformation;
+        var sizeTransformation = fowLayer.SizeTransformation;
+
+        for (int i = 0; i < count; ++i)
+        {
+            var light = lighting.Lights[i];
+            var position = new FloatPosition(light.X, light.Y);
+            var radius = new FloatSize(light.Radius, light.Radius);
+
+            if (positionTransformation != null)
+                position = positionTransformation(position);
+            if (sizeTransformation != null)
+                radius = sizeTransformation(radius);
+
+            realisticLightPositions[i * 4 + 0] = position.X;
+            realisticLightPositions[i * 4 + 1] = position.Y;
+            realisticLightPositions[i * 4 + 2] = light.Z;
+            realisticLightPositions[i * 4 + 3] = radius.Width;
+            realisticLightColors[i * 4 + 0] = light.R;
+            realisticLightColors[i * 4 + 1] = light.G;
+            realisticLightColors[i * 4 + 2] = light.B;
+            realisticLightColors[i * 4 + 3] = 1.0f;
+        }
+
+        fowShader.SetRealisticLighting(lighting.TintR, lighting.TintG, lighting.TintB, lighting.Darkness,
+            realisticLightPositions, realisticLightColors, count);
+    }
 }

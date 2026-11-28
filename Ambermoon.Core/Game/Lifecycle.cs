@@ -271,6 +271,8 @@ partial class GameCore
 
             if (!WindowActive && player2D != null)
                 fow2D!.Center = player2D.DisplayArea.Center;
+
+            UpdateRealisticLighting(deltaTime);
         }
 
         layout.Update(CurrentTicks);

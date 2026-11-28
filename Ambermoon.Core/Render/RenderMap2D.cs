@@ -173,6 +173,64 @@ namespace Ambermoon.Render
                 transport.Sprite.ClipArea = Global.Map2DRenderArea;
         }
 
+        internal Tileset? Tileset => tileset;
+        internal IEnumerable<MapCharacter2D> MapCharacters => mapCharacters.Values;
+
+        /// <summary>
+        /// Light sources (realistic lighting) of the visible tiles and some tiles around them.
+        /// The positions are the tile centers in virtual screen coordinates.
+        /// </summary>
+        internal void CollectLightSources(int margin, List<(int X, int Y, uint MapX, uint MapY, LightSourceInfo Info)> lightSources)
+        {
+            lightSources.Clear();
+
+            if (Map == null || tileset == null)
+                return;
+
+            int maxX = adjacentMaps == null ? Map.Width : Map.Width * 2;
+            int maxY = adjacentMaps == null ? Map.Height : Map.Height * 2;
+            int startX = Math.Max(0, (int)ScrollX - margin);
+            int startY = Math.Max(0, (int)ScrollY - margin);
+            int endX = Math.Min(maxX, (int)ScrollX + NUM_VISIBLE_TILES_X + margin);
+            int endY = Math.Min(maxY, (int)ScrollY + NUM_VISIBLE_TILES_Y + margin);
+
+            for (int y = startY; y < endY; ++y)
+            {
+                for (int x = startX; x < endX; ++x)
+                {
+                    var tile = this[(uint)x, (uint)y];
+                    LightSourceInfo info = default;
+                    bool found = false;
+
+                    if (tile.FrontTileIndex != 0 && tile.FrontTileIndex <= tileset.Tiles.Length)
+                        found = LightSources.TryGetTile2DLight(tileset.Index, tileset.Tiles[(int)tile.FrontTileIndex - 1].GraphicIndex, out info);
+                    if (!found && tile.BackTileIndex != 0 && tile.BackTileIndex <= tileset.Tiles.Length)
+                        found = LightSources.TryGetTile2DLight(tileset.Index, tileset.Tiles[(int)tile.BackTileIndex - 1].GraphicIndex, out info);
+
+                    if (found)
+                    {
+                        lightSources.Add((Global.Map2DViewX + (x - (int)ScrollX) * TILE_WIDTH + TILE_WIDTH / 2,
+                            Global.Map2DViewY + (y - (int)ScrollY) * TILE_HEIGHT + TILE_HEIGHT / 2, (uint)x, (uint)y, info));
+                    }
+                }
+            }
+
+            // Map characters with tile graphics (e.g. lamps which are only there at some daytimes)
+            foreach (var mapCharacter in mapCharacters.Values)
+            {
+                if (!mapCharacter.TryGetLightSource(out var info))
+                    continue;
+
+                var position = mapCharacter.Position;
+
+                if (position.X < startX || position.X >= endX || position.Y < startY || position.Y >= endY)
+                    continue;
+
+                var area = mapCharacter.DisplayArea;
+                lightSources.Add((area.Center.X, area.Center.Y, (uint)position.X, (uint)position.Y, info));
+            }
+        }
+
         public void Update(uint ticks, ITime gameTime, bool monstersCanMoveImmediately, Position? lastPlayerPosition)
         {
             uint frame = ticks / ticksPerFrame;

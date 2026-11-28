@@ -29,6 +29,7 @@ public class ModOptions
         { nameof(ICoreConfiguration.ShowFloor), typeof(bool) },
         { nameof(ICoreConfiguration.ShowCeiling), typeof(bool) },
         { nameof(ICoreConfiguration.ShowFog), typeof(bool) },
+        { nameof(ICoreConfiguration.RealisticLighting), typeof(bool) },
         { nameof(ICoreConfiguration.ShowSaveLoadMessage), typeof(bool) },
         { nameof(ICoreConfiguration.Movement3D), typeof(Movement3D) },
         { nameof(ICoreConfiguration.TurnWithArrowKeys), typeof(bool) },

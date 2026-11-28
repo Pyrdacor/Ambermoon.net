@@ -44,6 +44,87 @@ internal class Texture3DShader : ColorShader
     internal static readonly string DefaultFogColorName = "fogColor";
     internal static readonly string DefaultFogDistanceName = "fogDist";
     internal static readonly string DefaultFadeName = "fade";
+    internal static readonly string DefaultRealisticEnabledName = "rlEnabled";
+    internal static readonly string DefaultRealisticAmbientName = "rlAmbient";
+    internal static readonly string DefaultRealisticTorchName = "rlTorch";
+    internal static readonly string DefaultRealisticTorchPosName = "rlTorchPos";
+    internal static readonly string DefaultRealisticLightPosName = "rlLightPos";
+    internal static readonly string DefaultRealisticLightColorName = "rlLightColor";
+    internal static readonly string DefaultRealisticLightCountName = "rlLightCount";
+    internal static readonly string DefaultRealisticLightmapName = "rlLightmap";
+    internal static readonly string DefaultRealisticLightmapRectName = "rlLightmapRect";
+    internal static readonly string DefaultRealisticUseLightmapName = "rlUseLightmap";
+    /// <summary>
+    /// Values in the lightmap are stored divided by this factor to allow light above 1.
+    /// </summary>
+    internal const float LightmapScale = 2.0f;
+    internal const int LightmapTextureUnit = 2;
+    /// <summary>
+    /// Lightmap of the static light sources of the current map (realistic lighting) or null.
+    /// </summary>
+    internal static Texture Lightmap { get; set; } = null;
+    internal const int MaxRealisticLights = 32;
+
+    /// <summary>
+    /// Uniforms and the light function of the realistic lighting.
+    /// The fragment shader needs the input "viewPos" (position in view space).
+    /// RealisticLight returns the light color which is multiplied with the pixel color.
+    /// </summary>
+    protected static string[] RealisticLightingFragmentCode =>
+    [
+        $"uniform float {DefaultRealisticEnabledName};",
+        $"uniform vec3 {DefaultRealisticAmbientName};",
+        $"uniform vec4 {DefaultRealisticTorchName};",
+        $"uniform vec3 {DefaultRealisticTorchPosName};",
+        $"uniform vec4 {DefaultRealisticLightPosName}[{MaxRealisticLights}];",
+        $"uniform vec4 {DefaultRealisticLightColorName}[{MaxRealisticLights}];",
+        $"uniform int {DefaultRealisticLightCountName};",
+        $"uniform sampler2D {DefaultRealisticLightmapName};",
+        $"uniform vec4 {DefaultRealisticLightmapRectName};", // xy: world origin (x, z), zw: texture coordinates per world unit
+        $"uniform float {DefaultRealisticUseLightmapName};",
+        $"in vec3 viewPos;",
+        $"in vec3 worldPos;",
+        $"",
+        $"vec3 RealisticLight(vec3 normal)",
+        $"{{",
+        $"    vec3 lightColor = {DefaultRealisticAmbientName};",
+        $"    // static light sources (all of them, precalculated)",
+        $"    if ({DefaultRealisticUseLightmapName} > 0.5f)",
+        $"        lightColor += texture({DefaultRealisticLightmapName}, (worldPos.xz - {DefaultRealisticLightmapRectName}.xy) * {DefaultRealisticLightmapRectName}.zw).rgb * {LightmapScale.ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture)}f;",
+        $"    // dynamic lights: moving light sources and the flickering of the nearest static ones (can be negative)",
+        $"    if ({DefaultRealisticTorchName}.a > 0.0f)",
+        $"    {{",
+        $"        vec3 toFrag = viewPos - {DefaultRealisticTorchPosName};",
+        $"        float d = length(toFrag);",
+        $"        vec3 dir = toFrag / max(d, 0.0001f);",
+        $"        float att = clamp(1.0f - d * d / ({DefaultRealisticTorchName}.a * {DefaultRealisticTorchName}.a), 0.0f, 1.0f);",
+        $"        att *= att;",
+        $"        float cone = mix(0.5f, 1.0f, smoothstep(0.3f, 0.85f, -dir.z));",
+        $"        float lambert = mix(0.6f, 1.0f, abs(dot(normal, dir)));",
+        $"        lightColor += {DefaultRealisticTorchName}.rgb * att * cone * lambert;",
+        $"    }}",
+        $"    for (int i = 0; i < {MaxRealisticLights}; ++i)",
+        $"    {{",
+        $"        if (i >= {DefaultRealisticLightCountName})",
+        $"            break;",
+        $"        vec3 toFrag = viewPos - {DefaultRealisticLightPosName}[i].xyz;",
+        $"        float d = length(toFrag);",
+        $"        float r = {DefaultRealisticLightPosName}[i].w;",
+        $"        float att = clamp(1.0f - d * d / (r * r), 0.0f, 1.0f);",
+        $"        att *= att;",
+        $"        float lambert = mix(0.6f, 1.0f, abs(dot(normal, toFrag / max(d, 0.0001f))));",
+        $"        lightColor += {DefaultRealisticLightColorName}[i].rgb * att * lambert;",
+        $"    }}",
+        $"    return clamp(lightColor, vec3(0.0f), vec3(1.5f));",
+        $"}}",
+        $"",
+        $"vec3 RealisticNormal()",
+        $"{{",
+        $"    vec3 n = cross(dFdx(viewPos), dFdy(viewPos));",
+        $"    float l = length(n);",
+        $"    return l > 0.0000001f ? n / l : vec3(0.0f, 0.0f, 1.0f);",
+        $"}}",
+    ];
 
     // The palette has a size of 32xNumPalettes pixels.
     // Each row represents one palette of 32 colors.
@@ -69,9 +150,13 @@ internal class Texture3DShader : ColorShader
         $"flat in vec2 varTextureEndCoord;",
         $"flat in vec2 varTextureSize;",
         $"flat in float alphaEnabled;",
+        .. RealisticLightingFragmentCode,
         $"",
         $"void main()",
         $"{{",
+        $"    // derivatives must be calculated before any branching",
+        $"    vec3 normal = RealisticNormal();",
+        $"    vec3 rl = vec3(1.0f);",
         $"    {DefaultFragmentOutColorName} = vec4(0);",
         $"    vec2 realTexCoord = varTexCoord;",
         $"    if (realTexCoord.x >= varTextureEndCoord.x)",
@@ -92,12 +177,21 @@ internal class Texture3DShader : ColorShader
         $"            {DefaultFragmentOutColorName} = {DefaultSkyReplaceColorName};",
         $"    }}",
         $"    else",
+        $"    {{",
         $"        {DefaultFragmentOutColorName} = vec4(max(vec3(0), pixelColor.rgb + vec3({DefaultLightName}) - vec3(1)), pixelColor.a);",
+        $"        if ({DefaultRealisticEnabledName} > 0.5f)",
+        $"        {{",
+        $"            rl = RealisticLight(normal);",
+        $"            {DefaultFragmentOutColorName}.rgb = min(vec3(1.0f), {DefaultFragmentOutColorName}.rgb * rl);",
+        $"        }}",
+        $"    }}",
         $"    ",
         $"    if ({DefaultFogColorName}.a > 0.001f)",
         $"    {{",
         $"        float fogFactor = {DefaultFogColorName}.a * min({DefaultSkyColorIndexName} < 31.5f ? 0.8f : 1.0f, dist / {DefaultFogDistanceName});",
-        $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * (1.0f - fogFactor) + fogFactor * {DefaultFogColorName};",
+        $"        // with realistic lighting the fog is only visible where light is",
+        $"        vec4 fogColor = vec4({DefaultFogColorName}.rgb * min(rl, vec3(1.0f)), {DefaultFogColorName}.a);",
+        $"        {DefaultFragmentOutColorName} = {DefaultFragmentOutColorName} * (1.0f - fogFactor) + fogFactor * fogColor;",
         $"    }}",
         $"    if ({DefaultFadeName} < 0.9999f)",
         $"    {{",
@@ -124,6 +218,8 @@ internal class Texture3DShader : ColorShader
         $"flat out vec2 varTextureEndCoord;",
         $"flat out vec2 varTextureSize;",
         $"flat out float alphaEnabled;",
+        $"out vec3 viewPos;",
+        $"out vec3 worldPos;",
         $"",
         $"void main()",
         $"{{",
@@ -133,7 +229,10 @@ internal class Texture3DShader : ColorShader
         $"    varTextureEndCoord = atlasFactor * vec2({DefaultTexEndCoordName}.x, {DefaultTexEndCoordName}.y);",
         $"    varTextureSize = atlasFactor * vec2({DefaultTexSizeName}.x, {DefaultTexSizeName}.y);",
         $"    alphaEnabled = float({DefaultAlphaName});",
-        $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4({DefaultPositionName}, 1.0f);",
+        $"    vec4 localPos = {DefaultModelViewMatrixName} * vec4({DefaultPositionName}, 1.0f);",
+        $"    viewPos = localPos.xyz;",
+        $"    worldPos = {DefaultPositionName};",
+        $"    gl_Position = {DefaultProjectionMatrixName} * localPos;",
         $"    dist = gl_Position.z;",
         $"}}"
     ];
@@ -213,6 +312,43 @@ internal class Texture3DShader : ColorShader
     public void SetFade(float fade)
     {
         shaderProgram.SetInput(DefaultFadeName, fade);
+    }
+
+    public void DisableRealisticLighting()
+    {
+        shaderProgram.SetInput(DefaultRealisticEnabledName, 0.0f);
+    }
+
+    /// <summary>
+    /// originX/originZ: world position of the lightmap's corner, texelsPerUnit: lightmap texels per world unit.
+    /// </summary>
+    public void SetRealisticLightmap(bool use, float originX, float originZ, float texelsPerUnit, int width, int height)
+    {
+        shaderProgram.SetInput(DefaultRealisticUseLightmapName, use ? 1.0f : 0.0f);
+        shaderProgram.SetInput(DefaultRealisticLightmapName, LightmapTextureUnit);
+
+        if (use)
+            shaderProgram.SetInputVector4(DefaultRealisticLightmapRectName, originX, originZ, texelsPerUnit / width, texelsPerUnit / height);
+    }
+
+    /// <summary>
+    /// Light positions are in view space (xyz) with the radius in w.
+    /// </summary>
+    public void SetRealisticLighting(float ambientR, float ambientG, float ambientB,
+        float torchR, float torchG, float torchB, float torchRange, float torchX, float torchY, float torchZ,
+        float[] lightPositions, float[] lightColors, int lightCount)
+    {
+        shaderProgram.SetInput(DefaultRealisticEnabledName, 1.0f);
+        shaderProgram.SetInputVector3(DefaultRealisticAmbientName, ambientR, ambientG, ambientB);
+        shaderProgram.SetInputVector4(DefaultRealisticTorchName, torchR, torchG, torchB, torchRange);
+        shaderProgram.SetInputVector3(DefaultRealisticTorchPosName, torchX, torchY, torchZ);
+        shaderProgram.SetInput(DefaultRealisticLightCountName, lightCount);
+
+        if (lightCount > 0)
+        {
+            shaderProgram.SetInputVector4Array(DefaultRealisticLightPosName, lightPositions, lightCount);
+            shaderProgram.SetInputVector4Array(DefaultRealisticLightColorName, lightColors, lightCount);
+        }
     }
 
     public new static Texture3DShader Create(State state) => new Texture3DShader(state);
