@@ -356,8 +356,47 @@ partial class GameCore
         battlePositionDragHandler?.Invoke(position);
     }
 
+    /// <summary>
+    /// Ensures that each party member has its own valid battle position (0 to 11).
+    /// Older savegames can contain the same position for two party members, e.g. after
+    /// a character left the party (the slots moved on saving but the positions didn't).
+    /// </summary>
+    internal void FixBattlePositions()
+    {
+        if (CurrentSavegame == null)
+            return;
+
+        var battlePositions = CurrentSavegame.BattlePositions;
+        var usedPositions = new HashSet<byte>();
+        var slotsToFix = new List<int>();
+
+        for (int slot = 0; slot < MaxPartyMembers; ++slot)
+        {
+            if (GetPartyMember(slot) == null)
+                continue;
+
+            if (battlePositions[slot] > 11 || !usedPositions.Add(battlePositions[slot]))
+                slotsToFix.Add(slot);
+        }
+
+        foreach (int slot in slotsToFix)
+        {
+            // Use a free position, preferably in the back row.
+            for (int position = 11; position >= 0; --position)
+            {
+                if (usedPositions.Add((byte)position))
+                {
+                    battlePositions[slot] = (byte)position;
+                    break;
+                }
+            }
+        }
+    }
+
     internal void ShowBattlePositionWindow()
     {
+        FixBattlePositions();
+
         Fade(() =>
         {
             SetWindow(Window.BattlePositions);

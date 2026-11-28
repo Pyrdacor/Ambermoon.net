@@ -437,6 +437,7 @@ partial class GameCore
                 AddPartyMember(i, partyMember);
             }
         }
+        FixBattlePositions();
         CurrentPartyMember = GetPartyMember(CurrentSavegame.ActivePartyMemberSlot);
 
         if (CurrentPartyMember == null)

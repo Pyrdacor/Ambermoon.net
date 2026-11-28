@@ -157,9 +157,20 @@ namespace Ambermoon.Data.Legacy.Serialization
                 dataWriter.Write((ushort)(activeSpell?.Level ?? 0));
             }
 
-            var memberIndices = savegame.CurrentPartyMemberIndices.Where(i => i != 0).ToArray();
+            // The party members are stored without gaps (e.g. after a character left the party).
+            // The battle positions and the active slot have to move along with them.
+            var memberSlots = Enumerable.Range(0, 6).Where(i => savegame.CurrentPartyMemberIndices[i] != 0).ToArray();
+            var memberIndices = memberSlots.Select(i => savegame.CurrentPartyMemberIndices[i]).ToArray();
+            int activeSlot = Math.Max(0, Array.IndexOf(memberSlots, savegame.ActivePartyMemberSlot));
+            var battlePositions = memberSlots.Select(i => savegame.BattlePositions[i]).ToList();
+            // Unused entries get positions which no party member uses.
+            for (int p = 11; battlePositions.Count < 6 && p >= 0; --p)
+            {
+                if (!battlePositions.Contains((byte)p))
+                    battlePositions.Add((byte)p);
+            }
             dataWriter.Write((ushort)memberIndices.Length); // party member count
-            dataWriter.Write((ushort)(1 + savegame.ActivePartyMemberSlot));
+            dataWriter.Write((ushort)(1 + activeSlot));
 
             for (int i = 0; i < 6; ++i)
                 dataWriter.Write((ushort)(i < memberIndices.Length ? memberIndices[i] : 0));
@@ -213,7 +224,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             unknownBytes = 0x35e4 - dataWriter.Position;
             dataWriter.Write(Enumerable.Repeat((byte)0, unknownBytes).ToArray());
 
-            dataWriter.Write(savegame.BattlePositions);
+            dataWriter.Write(battlePositions.ToArray());
 
             foreach (var tileChangeEvents in savegame.TileChangeEvents)
             {

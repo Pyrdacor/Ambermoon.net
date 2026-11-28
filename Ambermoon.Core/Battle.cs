@@ -298,6 +298,8 @@ namespace Ambermoon
             NeedsClickForNextAction = needsClickForNextAction;
 
             // place characters
+            game.FixBattlePositions();
+
             for (int i = 0; i < partyMembers.Length; ++i)
             {
                 if (partyMembers[i] != null && partyMembers[i]!.Alive)
