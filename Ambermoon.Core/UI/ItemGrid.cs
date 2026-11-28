@@ -237,7 +237,7 @@ internal class ItemGrid
                 layout.SetInventoryMessage(game.DataNameProvider.WrongSexToEquipItem, true);
                 return null;
             }
-            if (item.MinLevel != 0 && game.CurrentInventory.Level < item.MinLevel)
+            if (game.Features.HasFlag(Features.ItemMinLevel) && item.MinLevel != 0 && game.CurrentInventory.Level < item.MinLevel)
             {
                 layout.SetInventoryMessage(game.DataNameProvider.NotExperiencedEnoughToEquip, true);
                 return null;

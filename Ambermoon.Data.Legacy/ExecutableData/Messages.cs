@@ -427,10 +427,11 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.AddRange(formatMessages.Skip(6).Select(FixMessage));
             entries.AddRange(messages);
 
-            string textBlockMissingMessage = entries.Count <= (int)Index.TextBlockMissing ? "" : GetEntry(Index.TextBlockMissing);
-
+            // Messages of newer features are missing in older game data. They stay empty
+            // (never the "text block missing" message) as the features which use them are
+            // not active for such data and some code falls back to other texts if empty.
             while (entries.Count < (int)Index.Count)
-                entries.Add(textBlockMissingMessage);
+                entries.Add("");
         }
 
         static string FixMessage(string message)

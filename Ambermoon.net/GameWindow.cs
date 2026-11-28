@@ -1603,7 +1603,7 @@ class GameWindow(string id = "MainWindow") : IContextProvider, IScenarioScriptHo
                         Language = additionalVersionInfo.Value.Language.ToGameLanguage(),
                         Info = "From external data",
                         DataProvider = configuration.GameVersionIndex == versions.Count ? (() => gameData) : LoadGameDataFromDataPath,
-                        Features = additionalVersionInfo.Value.Advanced ? Features.AmbermoonAdvanced | Features.AdvancedMonsterFlags | Features.ItemElements | Features.ExtendedLanguages | Features.LevelShards : Features.None, // TODO
+                        Features = additionalVersionInfo.Value.Advanced ? Features.AmbermoonAdvanced | Features.AdvancedMonsterFlags | Features.ItemElements | Features.ItemMinLevel | Features.ExtendedLanguages | Features.LevelShards : Features.None, // TODO
                         MergeWithPrevious = false,
                         ExternalData = true
                     });

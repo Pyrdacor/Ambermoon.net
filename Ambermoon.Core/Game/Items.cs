@@ -372,9 +372,13 @@ partial class GameCore
         var item = ItemManager.GetItem(itemSlot.ItemIndex);
         bool cursed = itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed) || item.Flags.HasFlag(ItemFlags.Accursed);
         int factor = cursed ? -1 : 1;
-        // Equipment shows the element and the minimum level in an additional row.
+        // Equipment shows the element and the minimum level in an additional row
+        // but only if the game version supports them (newer features).
         bool equipment = item.EquipmentSlot != EquipmentSlot.None;
-        var detailsPopup = itemPopup.AddPopup(new Position(32, 52), 12, equipment ? 7 : 6);
+        bool showElement = equipment && Features.HasFlag(Features.ItemElements);
+        bool showMinLevel = equipment && Features.HasFlag(Features.ItemMinLevel);
+        bool extraRow = showElement || showMinLevel;
+        var detailsPopup = itemPopup.AddPopup(new Position(32, 52), 12, extraRow ? 7 : 6);
 
         void AddValueDisplay(Position position, string formatString, int value)
         {
@@ -405,18 +409,28 @@ partial class GameCore
                 $"{DataNameProvider.GetSpellName(item.Spell)} ({(itemSlot.NumRemainingCharges > 99 ? "**" : itemSlot.NumRemainingCharges.ToString())})",
                 TextColor.White);
         }
-        if (equipment)
+        if (extraRow)
         {
-            detailsPopup.AddText(new Position(48, 124), DataNameProvider.ElementHeader, TextColor.LightOrange);
-            detailsPopup.AddText(new Position(128, 124), DataNameProvider.MinLevelHeader, TextColor.LightOrange);
-            detailsPopup.AddText(new Position(48, 131), DataNameProvider.GetElementName(item.Element), TextColor.White);
-            detailsPopup.AddText(new Position(128, 131), item.MinLevel == 0 ? "-" : item.MinLevel.ToString(), TextColor.White);
+            int x = 48;
+
+            if (showElement)
+            {
+                detailsPopup.AddText(new Position(x, 124), DataNameProvider.ElementHeader, TextColor.LightOrange);
+                detailsPopup.AddText(new Position(x, 131), DataNameProvider.GetElementName(item.Element), TextColor.White);
+                x = 128;
+            }
+
+            if (showMinLevel)
+            {
+                detailsPopup.AddText(new Position(x, 124), DataNameProvider.MinLevelHeader, TextColor.LightOrange);
+                detailsPopup.AddText(new Position(x, 131), item.MinLevel == 0 ? "-" : item.MinLevel.ToString(), TextColor.White);
+            }
         }
         if (cursed)
         {
             var contentArea = detailsPopup.ContentArea;
             AddAnimatedText((area, text, color, align) => detailsPopup.AddText(area, text, color, align),
-                new Rect(contentArea.X, equipment ? 141 : 127, contentArea.Width, Global.GlyphLineHeight), DataNameProvider.Cursed,
+                new Rect(contentArea.X, extraRow ? 141 : 127, contentArea.Width, Global.GlyphLineHeight), DataNameProvider.Cursed,
                 TextAlign.Center, () => layout.PopupActive && itemPopup?.HasChildPopup == true, 50, false);
         }
     }
